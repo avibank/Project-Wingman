@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, Plane, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Flame, Star, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check, Volume2, VolumeX } from "lucide-react";
 
 // ---- Small localStorage helpers (safe if run outside a browser) ----
 function loadJSON(key, fallback) {
@@ -15,6 +15,27 @@ function saveJSON(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     /* ignore */
+  }
+}
+
+// ---- Tasteful correct-answer chime, respects the mute setting ----
+function playChime() {
+  if (!loadJSON("pw-sound", true)) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    /* ignore — audio isn't essential */
   }
 }
 
@@ -196,6 +217,15 @@ const NAV = [
   { id: "pdf", label: "Library", icon: FileText },
 ];
 
+// Custom delta-wing "Concorde" silhouette, used for the discussion send button
+function ConcordeIcon({ size = 17, style, className }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style} className={className}>
+      <path d="M12 1 L13 10 L22 19 L13 17 L13 22 L11 22 L11 17 L2 19 L11 10 Z" />
+    </svg>
+  );
+}
+
 function Placard({ children }) {
   return (
     <span className="placard">
@@ -254,6 +284,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   const choose = (idx) => {
     if (picked !== null) return;
     setPicked(idx);
+    if (idx === q.answer) playChime();
     setScore((s) => ({ correct: s.correct + (idx === q.answer ? 1 : 0), seen: s.seen + 1 }));
   };
 
@@ -276,16 +307,44 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
 
   if (done) {
     const pct = Math.round((score.correct / questions.length) * 100);
+    const isRough = pct < 50;
+    const statusLine =
+      pct >= 90 ? `Cruising at ${pct}%` :
+      pct >= 70 ? `Steady altitude — ${pct}%` :
+      pct >= 50 ? `Light turbulence — ${pct}%` :
+      `Holding pattern — ${pct}%`;
     return (
       <div className="exam-done">
         <Dial value={pct} size={100} />
-        <h3>Set complete</h3>
+        <div className="landing-strip">
+          <ConcordeIcon size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
+          <div className="runway" />
+        </div>
+        <h3>{statusLine}</h3>
         <p>{score.correct} of {questions.length} correct — {chapterTitle}</p>
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
           .exam-done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; }
           .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: var(--text); margin: 6px 0 0; font-size: 16px; }
           .exam-done p { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+          .landing-strip { position: relative; height: 34px; width: 100%; max-width: 220px; margin: 4px 0; }
+          .runway { position: absolute; left: 0; right: 0; bottom: 6px; height: 2px; background: var(--border); }
+          .landing-plane { position: absolute; bottom: 8px; color: var(--accent); }
+          .landing-plane.is-smooth { animation: landSmooth 1.4s ease-out forwards; }
+          .landing-plane.is-rough { animation: landRough 1.6s ease-out forwards; }
+          @keyframes landSmooth {
+            0% { left: -10%; bottom: 26px; opacity: 0; transform: rotate(20deg); }
+            70% { opacity: 1; }
+            100% { left: 85%; bottom: 8px; transform: rotate(0deg); opacity: 1; }
+          }
+          @keyframes landRough {
+            0% { left: -10%; bottom: 26px; opacity: 0; transform: rotate(25deg); }
+            40% { bottom: 4px; }
+            55% { bottom: 14px; }
+            70% { bottom: 2px; }
+            85% { bottom: 10px; }
+            100% { left: 85%; bottom: 6px; transform: rotate(-5deg); opacity: 1; }
+          }
         `}</style>
       </div>
     );
@@ -381,9 +440,26 @@ function ChaptersPanel() {
   };
 
   const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
+  const allDone = completed.size === CHAPTERS.length;
+  const streakVal = parseInt(localStorage.getItem("pw-streak") || "0", 10);
 
   return (
     <div className="chapters-wrap">
+      <div className="cloud-layer" aria-hidden="true">
+        <span className="cloud cloud-a" />
+        <span className="cloud cloud-b" />
+        <span className="cloud cloud-c" />
+      </div>
+      {allDone && (
+        <div className="blackbox">
+          <div className="blackbox-title"><Check size={12} /> FLIGHT RECORDER — ALL CHAPTERS COMPLETE</div>
+          <div className="blackbox-grid">
+            <div><span>{CHAPTERS.length}</span><label>Chapters flown</label></div>
+            <div><span>{streakVal}</span><label>Day streak</label></div>
+            <div><span>{bookmarks.size}</span><label>Bookmarked Qs</label></div>
+          </div>
+        </div>
+      )}
       <div className="chapters-search">
         <Search size={15} />
         <input placeholder="Search chapters…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -455,11 +531,24 @@ function ChaptersPanel() {
         {filtered.length === 0 && <p className="chapters-empty">No chapters match "{query}".</p>}
       </div>
       <style>{`
-        .chapters-wrap { display: flex; flex-direction: column; gap: 16px; }
-        .chapters-search { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); }
+        .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
+        .cloud-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .cloud { position: absolute; width: 220px; height: 60px; background: radial-gradient(ellipse at center, var(--text) 0%, transparent 70%); opacity: 0.035; border-radius: 50%; filter: blur(6px); }
+        .cloud-a { top: 4%; left: -15%; animation: driftA 60s linear infinite; }
+        .cloud-b { top: 32%; left: -25%; animation: driftB 90s linear infinite; }
+        .cloud-c { top: 62%; left: -20%; animation: driftA 75s linear infinite reverse; }
+        @keyframes driftA { from { transform: translateX(0); } to { transform: translateX(140vw); } }
+        @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
+        .blackbox { position: relative; z-index: 1; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 14px; padding: 14px 16px; }
+        .blackbox-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--good); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+        .blackbox-grid { display: flex; gap: 22px; }
+        .blackbox-grid div { display: flex; flex-direction: column; }
+        .blackbox-grid span { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); font-weight: 700; }
+        .blackbox-grid label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.04em; }
+        .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .chapters-search input:focus { outline: none; }
-        .chapters { display: flex; flex-direction: column; gap: 12px; }
+        .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
         .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
         .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); }
         .chapter.is-open { border-color: var(--border-hover); }
@@ -540,7 +629,7 @@ function DiscussPanel() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && post()}
         />
-        <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={17} style={{ transform: "rotate(45deg)" }} /></button>
+        <button className="discuss-send" onClick={post} aria-label="Post"><ConcordeIcon size={18} style={{ transform: "rotate(45deg)" }} /></button>
       </div>
       <style>{`
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
@@ -626,11 +715,21 @@ export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
+  const [soundOn, setSoundOn] = useState(() => loadJSON("pw-sound", true));
   const [streak, setStreak] = useState(0);
+  const [boarding, setBoarding] = useState(true);
+  const [ticket] = useState(() => ({
+    seat: `${Math.ceil(Math.random() * 30)}${["A", "B", "C", "D", "E", "F"][Math.floor(Math.random() * 6)]}`,
+    gate: String.fromCharCode(65 + Math.floor(Math.random() * 6)) + (Math.floor(Math.random() * 20) + 1),
+  }));
 
   useEffect(() => {
     saveJSON("pw-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    saveJSON("pw-sound", soundOn);
+  }, [soundOn]);
 
   useEffect(() => {
     const today = new Date().toDateString();
@@ -647,6 +746,23 @@ export default function App() {
 
   return (
     <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
+      {boarding && (
+        <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
+          <div className="boarding-pass">
+            <div className="boarding-pass-top">
+              <span className="boarding-pass-airline">PROJECT WINGMAN AIRWAYS</span>
+              <ConcordeIcon size={22} style={{ transform: "rotate(45deg)" }} />
+            </div>
+            <div className="boarding-pass-route">AVBANK <ChevronRight size={14} /> JT.01</div>
+            <div className="boarding-pass-row">
+              <div><label>SEAT</label><span>{ticket.seat}</span></div>
+              <div><label>GATE</label><span>{ticket.gate}</span></div>
+              <div><label>STATUS</label><span>BOARDING</span></div>
+            </div>
+            <div className="boarding-pass-barcode" />
+          </div>
+        </div>
+      )}
       <header className="topbar">
         <div className="brand">
           <Gauge size={20} color="var(--accent)" />
@@ -655,9 +771,14 @@ export default function App() {
         <div className="topbar-right">
           {streak > 0 && (
             <span className="streak-badge" title="Consecutive days active">
-              <Flame size={13} /> {streak}
+              <span className="contrail" style={{ width: Math.min(streak, 10) * 3 }} />
+              <ConcordeIcon size={11} style={{ transform: "rotate(90deg)" }} />
+              <span className="streak-num">{streak}</span>
             </span>
           )}
+          <button className="theme-toggle" onClick={() => setSoundOn(!soundOn)} aria-label="Toggle sound">
+            {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
+          </button>
           <button className="theme-toggle" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label="Toggle theme">
             {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
           </button>
@@ -719,7 +840,9 @@ export default function App() {
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
         .topbar-right { display: flex; align-items: center; gap: 10px; }
-        .streak-badge { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #F2A93B; background: rgba(242,169,59,0.12); border: 1px solid rgba(242,169,59,0.35); padding: 5px 9px; border-radius: 10px; }
+        .streak-badge { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--border-hover); padding: 5px 9px; border-radius: 10px; }
+        .contrail { height: 2px; border-radius: 2px; background: linear-gradient(to right, transparent, var(--accent)); }
+        .streak-num { min-width: 10px; }
         .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--muted2); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
         .module-select { display: flex; gap: 6px; }
@@ -736,6 +859,23 @@ export default function App() {
         .content--full { max-width: none; padding: 0 22px; }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background: var(--accent-hover); }
+        .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; animation: boardingFade 1.8s ease forwards; }
+        .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: 18px; padding: 22px; }
+        .boarding-pass-top { display: flex; align-items: center; justify-content: space-between; color: var(--accent); margin-bottom: 14px; }
+        .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: var(--muted2); }
+        .boarding-pass-route { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .boarding-pass-row { display: flex; gap: 22px; margin-bottom: 16px; }
+        .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
+        .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
+        .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
+        @keyframes boardingFade {
+          0% { opacity: 1; }
+          75% { opacity: 1; }
+          100% { opacity: 0; visibility: hidden; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .boarding-overlay { animation-duration: 0.4s; }
+        }
       `}</style>
     </div>
   );
