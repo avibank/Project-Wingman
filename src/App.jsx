@@ -467,7 +467,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <Gauge size={20} color="#6FA0F0" />
-          <span>AVBANK</span>
+          <span>Project Wingman</span>
         </div>
         <div className="module-select">
           {MODULES.map((m) => (
@@ -500,7 +500,7 @@ export default function App() {
         ))}
       </nav>
  
-      <main className="content">
+      <main className={`content ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
         {tab === "chapters" && <ChaptersPanel />}
         {tab === "discuss" && <DiscussPanel />}
         {tab === "pdf" && <PdfPanel />}
@@ -523,10 +523,10 @@ export default function App() {
         .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #66768F; font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
         .tab.is-active { color: #E8EDF2; border-bottom-color: #6FA0F0; }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; }
+        .content--full { max-width: none; padding: 0 22px; }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: #6FA0F0; color: #0E1830; border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background: #8FB8F5; }
       `}</style>
     </div>
   );
 }
- 
