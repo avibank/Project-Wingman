@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Send, CheckCircle2, XCircle, Lock } from "lucide-react";
+import { useState, useRef } from "react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, Plane, CheckCircle2, XCircle, Lock, X } from "lucide-react";
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 const MODULES = [
@@ -367,8 +367,9 @@ function ChaptersPanel() {
         .chapter-meta { font-size: 11.5px; color: #66768F; font-family: 'JetBrains Mono', monospace; }
         .chapter-chevron { color: #66768F; transition: transform 0.2s ease; }
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
-        .chapter-body { padding: 0 16px 20px; border-top: 1px solid rgba(111,160,240,0.12); padding-top: 16px; }
-        .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: #0B1526; border: 1px solid #22314A; position: relative; overflow: hidden; margin-bottom: 18px; }
+        .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid rgba(111,160,240,0.12); }
+        @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
+        .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: #0B1526; border: 1px solid #22314A; position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: #0B1526; border: none; }
         .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
         .chapter-quiz-head { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #66768F; margin-bottom: 12px; }
@@ -380,11 +381,23 @@ function ChaptersPanel() {
 function DiscussPanel() {
   const [comments, setComments] = useState(SEED_COMMENTS.ch2);
   const [text, setText] = useState("");
+  const [pendingImage, setPendingImage] = useState(null);
+  const fileRef = useRef(null);
+
+  const onFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPendingImage(reader.result);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   const post = () => {
-    if (!text.trim()) return;
-    setComments((c) => [...c, { id: `c${c.length + 1}`, user: "You", text, time: "now" }]);
+    if (!text.trim() && !pendingImage) return;
+    setComments((c) => [...c, { id: `c${c.length + 1}`, user: "You", text, image: pendingImage, time: "now" }]);
     setText("");
+    setPendingImage(null);
   };
 
   return (
@@ -399,22 +412,31 @@ function DiscussPanel() {
             <div className="discuss-avatar">{c.user.charAt(0)}</div>
             <div>
               <div className="discuss-meta"><strong>{c.user}</strong><span>{c.time}</span></div>
-              <p>{c.text}</p>
+              {c.text && <p>{c.text}</p>}
+              {c.image && <img src={c.image} alt="attachment" className="discuss-img" />}
             </div>
           </div>
         ))}
       </div>
+      {pendingImage && (
+        <div className="discuss-preview">
+          <img src={pendingImage} alt="attachment preview" />
+          <button onClick={() => setPendingImage(null)} aria-label="Remove attachment"><X size={13} /></button>
+        </div>
+      )}
       <div className="discuss-input">
+        <input type="file" accept="image/*" ref={fileRef} onChange={onFileChange} style={{ display: "none" }} />
+        <button className="discuss-attach" onClick={() => fileRef.current?.click()} aria-label="Attach photo"><Plus size={18} strokeWidth={2.5} /></button>
         <input
           placeholder="Ask a question about this lesson…"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && post()}
         />
-        <button onClick={post} aria-label="Post"><Send size={16} /></button>
+        <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={17} style={{ transform: "rotate(45deg)" }} /></button>
       </div>
       <style>{`
-        .discuss { display: flex; flex-direction: column; height: calc(100vh - 230px); min-height: 360px; }
+        .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
         .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 16px; max-width: 640px; width: 100%; flex-shrink: 0; }
         .discuss-count { font-size: 12px; color: #8291AC; }
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
@@ -423,10 +445,17 @@ function DiscussPanel() {
         .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: #E8EDF2; margin-bottom: 3px; }
         .discuss-meta span { font-size: 11px; color: #66768F; }
         .discuss-item p { margin: 0; font-size: 13.5px; color: #b9c4cf; line-height: 1.5; }
-        .discuss-input { flex-shrink: 0; display: flex; gap: 8px; border-top: 1px solid rgba(111,160,240,0.12); padding-top: 14px; max-width: 640px; margin: 0 auto; width: 100%; }
-        .discuss-input input { flex: 1; background: #101B2D; border: 1px solid #22314A; border-radius: 12px; padding: 10px 12px; color: #E8EDF2; font-size: 13.5px; }
-        .discuss-input input:focus { outline: none; border-color: #6FA0F0; }
-        .discuss-input button { background: #6FA0F0; border: none; border-radius: 12px; width: 38px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; }
+        .discuss-img { display: block; max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; border: 1px solid #22314A; }
+        .discuss-preview { position: relative; max-width: 640px; margin: 8px auto 0; width: fit-content; }
+        .discuss-preview img { max-height: 90px; border-radius: 10px; border: 1px solid #22314A; display: block; }
+        .discuss-preview button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #0E1830; border: 1px solid #22314A; color: #E8EDF2; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: #101B2D; border: 1px solid #22314A; border-radius: 32px; padding: 8px; min-height: 58px; }
+        .discuss-attach { background: #E5484D; border: none; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 8px rgba(229,72,77,0.35); }
+        .discuss-attach:hover { background: #f05c61; }
+        .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 4px; color: #E8EDF2; font-size: 13.5px; }
+        .discuss-input input:focus { outline: none; }
+        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
+        .discuss-send:hover { background: #4bd88e; }
       `}</style>
     </div>
   );
