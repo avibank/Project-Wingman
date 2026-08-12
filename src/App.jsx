@@ -414,18 +414,19 @@ function DiscussPanel() {
         <button onClick={post} aria-label="Post"><Send size={16} /></button>
       </div>
       <style>{`
-        .discuss-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .discuss { display: flex; flex-direction: column; height: calc(100vh - 230px); min-height: 360px; }
+        .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 16px; max-width: 640px; width: 100%; flex-shrink: 0; }
         .discuss-count { font-size: 12px; color: #8291AC; }
-        .discuss-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px; }
+        .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1E2C46; color: #6FA0F0; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
         .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: #E8EDF2; margin-bottom: 3px; }
         .discuss-meta span { font-size: 11px; color: #66768F; }
         .discuss-item p { margin: 0; font-size: 13.5px; color: #b9c4cf; line-height: 1.5; }
-        .discuss-input { display: flex; gap: 8px; border-top: 1px solid rgba(111,160,240,0.12); padding-top: 14px; }
+        .discuss-input { flex-shrink: 0; display: flex; gap: 8px; border-top: 1px solid rgba(111,160,240,0.12); padding-top: 14px; max-width: 640px; margin: 0 auto; width: 100%; }
         .discuss-input input { flex: 1; background: #101B2D; border: 1px solid #22314A; border-radius: 12px; padding: 10px 12px; color: #E8EDF2; font-size: 13.5px; }
         .discuss-input input:focus { outline: none; border-color: #6FA0F0; }
-        .discuss-input button { background: #6FA0F0; border: none; border-radius: 12px; width: 38px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; }
+        .discuss-input button { background: #6FA0F0; border: none; border-radius: 12px; width: 38px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; }
       `}</style>
     </div>
   );
@@ -505,3 +506,29 @@ export default function App() {
         {tab === "discuss" && <DiscussPanel />}
         {tab === "pdf" && <PdfPanel />}
       </main>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        * { box-sizing: border-box; }
+        html, body, #root { height: 100%; margin: 0; background: #0B1526; }
+        .app { font-family: 'Inter', sans-serif; background: #0B1526; color: #E8EDF2; min-height: 100vh; padding: 0 0 40px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid rgba(111,160,240,0.12); }
+        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: #E8EDF2; }
+        .module-select { display: flex; gap: 6px; }
+        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #101B2D; border: 1px solid #22314A; color: #8291AC; padding: 6px 11px; border-radius: 10px; cursor: pointer; }
+        .module-chip.is-active { color: #6FA0F0; border-color: #6FA0F0; background: rgba(111,160,240,0.10); }
+        .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+        .module-banner { padding: 26px 22px 18px; }
+        .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; }
+        .module-banner p { color: #8291AC; font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
+        .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid rgba(111,160,240,0.12); }
+        .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #66768F; font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
+        .tab.is-active { color: #E8EDF2; border-bottom-color: #6FA0F0; }
+        .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; }
+        .content--full { max-width: none; padding: 0 22px; }
+        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: #6FA0F0; color: #0E1830; border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { background: #8FB8F5; }
+      `}</style>
+    </div>
+  );
+}
