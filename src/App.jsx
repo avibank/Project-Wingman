@@ -1,5 +1,22 @@
-import { useState, useRef } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, Plane, CheckCircle2, XCircle, Lock, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, Plane, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Flame, Star, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+
+// ---- Small localStorage helpers (safe if run outside a browser) ----
+function loadJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function saveJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignore */
+  }
+}
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 const MODULES = [
@@ -190,9 +207,9 @@ function Placard({ children }) {
           letter-spacing: 0.08em;
           padding: 2px 7px;
           border-radius: 3px;
-          background: rgba(111,160,240,0.14);
-          color: #6FA0F0;
-          border: 1px solid rgba(111,160,240,0.4);
+          background: var(--accent-soft);
+          color: var(--accent);
+          border: 1px solid var(--border-hover);
           text-transform: uppercase;
         }
       `}</style>
@@ -206,13 +223,13 @@ function Dial({ value, size = 96 }) {
   const offset = c - (value / 100) * c;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1E2C46" strokeWidth="7" />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth="7" />
       <circle
         cx={size / 2}
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#6FA0F0"
+        stroke="var(--accent)"
         strokeWidth="7"
         strokeDasharray={c}
         strokeDashoffset={offset}
@@ -220,14 +237,14 @@ function Dial({ value, size = 96 }) {
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
         style={{ transition: "stroke-dashoffset 0.6s ease" }}
       />
-      <text x="50%" y="50%" textAnchor="middle" dy="0.35em" fill="#E8EDF2" fontSize="20" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">
+      <text x="50%" y="50%" textAnchor="middle" dy="0.35em" fill="var(--text)" fontSize="20" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">
         {value}%
       </text>
     </svg>
   );
 }
 
-function ChapterQuiz({ questions, chapterTitle }) {
+function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleBookmark }) {
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState({ correct: 0, seen: 0 });
@@ -246,6 +263,7 @@ function ChapterQuiz({ questions, chapterTitle }) {
       setPicked(null);
     } else {
       setDone(true);
+      onComplete?.();
     }
   };
 
@@ -266,18 +284,29 @@ function ChapterQuiz({ questions, chapterTitle }) {
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
           .exam-done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; }
-          .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: #E8EDF2; margin: 6px 0 0; font-size: 16px; }
-          .exam-done p { color: #8291AC; font-size: 13px; margin: 0 0 8px; }
+          .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: var(--text); margin: 6px 0 0; font-size: 16px; }
+          .exam-done p { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
         `}</style>
       </div>
     );
   }
 
+  const bookmarked = bookmarks.has(q.id);
+
   return (
     <div className="exam">
       <div className="exam-head">
         <span className="exam-count">Question {i + 1} of {questions.length}</span>
-        <Dial value={score.seen ? Math.round((score.correct / score.seen) * 100) : 0} size={44} />
+        <div className="exam-head-right">
+          <button
+            className={`exam-bookmark ${bookmarked ? "is-on" : ""}`}
+            onClick={() => onToggleBookmark(q.id)}
+            aria-label={bookmarked ? "Remove bookmark" : "Bookmark this question"}
+          >
+            <Star size={15} fill={bookmarked ? "currentColor" : "none"} />
+          </button>
+          <Dial value={score.seen ? Math.round((score.correct / score.seen) * 100) : 0} size={44} />
+        </div>
       </div>
       <p className="exam-stem">{q.stem}</p>
       <div className="exam-options">
@@ -287,8 +316,8 @@ function ChapterQuiz({ questions, chapterTitle }) {
             <button key={idx} className={`exam-opt exam-opt--${state}`} onClick={() => choose(idx)}>
               <span className="exam-opt-letter">{String.fromCharCode(65 + idx)}</span>
               <span>{opt}</span>
-              {state === "correct" && <CheckCircle2 size={16} color="#4CAF7D" />}
-              {state === "wrong" && <XCircle size={16} color="#E08585" />}
+              {state === "correct" && <CheckCircle2 size={16} color="var(--good)" />}
+              {state === "wrong" && <XCircle size={16} color="var(--bad)" />}
             </button>
           );
         })}
@@ -300,14 +329,18 @@ function ChapterQuiz({ questions, chapterTitle }) {
       )}
       <style>{`
         .exam-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .exam-count { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8291AC; }
-        .exam-stem { font-family: 'Space Grotesk', sans-serif; font-size: 16px; color: #E8EDF2; line-height: 1.4; margin: 0 0 16px; }
+        .exam-head-right { display: flex; align-items: center; gap: 10px; }
+        .exam-count { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); }
+        .exam-bookmark { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .exam-bookmark:hover { border-color: var(--accent); color: var(--accent); }
+        .exam-bookmark.is-on { color: #F2C230; border-color: #F2C230; }
+        .exam-stem { font-family: 'Space Grotesk', sans-serif; font-size: 16px; color: var(--text); line-height: 1.4; margin: 0 0 16px; }
         .exam-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-        .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: 14px; border: 1px solid #22314A; background: #0E1A2C; color: #E8EDF2; font-size: 13.5px; cursor: pointer; }
-        .exam-opt:hover { border-color: #33456B; }
-        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #66768F; border: 1px solid #2A3A56; border-radius: 8px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .exam-opt--correct { border-color: #4CAF7D; background: rgba(76,175,125,0.08); }
-        .exam-opt--wrong { border-color: #E08585; background: rgba(224,102,90,0.08); }
+        .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-size: 13.5px; cursor: pointer; }
+        .exam-opt:hover { border-color: var(--border-hover); }
+        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted2); border: 1px solid var(--border); border-radius: 8px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
+        .exam-opt--wrong { border-color: var(--bad); background: rgba(224,102,90,0.08); }
         .exam-opt--correct span:last-child, .exam-opt--wrong span:last-child { margin-left: auto; }
       `}</style>
     </div>
@@ -316,63 +349,137 @@ function ChapterQuiz({ questions, chapterTitle }) {
 
 function ChaptersPanel() {
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
+  const [query, setQuery] = useState("");
+  const [completed, setCompleted] = useState(() => new Set(loadJSON("pw-completed", [])));
+  const [bookmarks, setBookmarks] = useState(() => new Set(loadJSON("pw-bookmarks", [])));
+  const [feedback, setFeedback] = useState(() => loadJSON("pw-feedback", {}));
+
+  const markComplete = (id) => {
+    setCompleted((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      saveJSON("pw-completed", [...next]);
+      return next;
+    });
+  };
+
+  const toggleBookmark = (qId) => {
+    setBookmarks((prev) => {
+      const next = new Set(prev);
+      next.has(qId) ? next.delete(qId) : next.add(qId);
+      saveJSON("pw-bookmarks", [...next]);
+      return next;
+    });
+  };
+
+  const giveFeedback = (chapterId, value) => {
+    setFeedback((prev) => {
+      const next = { ...prev, [chapterId]: value };
+      saveJSON("pw-feedback", next);
+      return next;
+    });
+  };
+
+  const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div className="chapters">
-      {CHAPTERS.map((ch) => {
-        const isOpen = openId === ch.id;
-        return (
-          <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
-            <button className="chapter-head" onClick={() => setOpenId(isOpen ? null : ch.id)}>
-              <span className="chapter-code">{ch.code}</span>
-              <span className="chapter-title">{ch.title}</span>
-              <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
-              <ChevronRight size={16} className="chapter-chevron" />
-            </button>
-            {isOpen && (
-              <div className="chapter-body">
-                <div className="chapter-video">
-                  {ch.clip.includes("youtube.com/embed") ? (
-                    <iframe
+    <div className="chapters-wrap">
+      <div className="chapters-search">
+        <Search size={15} />
+        <input placeholder="Search chapters…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+      <div className="chapters">
+        {filtered.map((ch) => {
+          const isOpen = openId === ch.id;
+          const isDone = completed.has(ch.id);
+          const fb = feedback[ch.id];
+          return (
+            <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
+              <button className="chapter-head" onClick={() => setOpenId(isOpen ? null : ch.id)}>
+                <span className="chapter-code">{ch.code}</span>
+                <span className="chapter-title">{ch.title}</span>
+                {isDone && (
+                  <span className="chapter-done" title="Completed"><Check size={12} strokeWidth={3} /></span>
+                )}
+                <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
+                <ChevronRight size={16} className="chapter-chevron" />
+              </button>
+              {isOpen && (
+                <div className="chapter-body">
+                  <div className="chapter-video">
+                    {ch.clip.includes("youtube.com/embed") ? (
+                      <iframe
+                        key={ch.id}
+                        className="player-video"
+                        src={ch.clip}
+                        title={ch.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video key={ch.id} className="player-video" controls preload="metadata">
+                        <source src={ch.clip} type="video/mp4" />
+                      </video>
+                    )}
+                    {ch.isPlaceholder && (
+                      <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="chapter-quiz-head">Practice questions for this chapter</div>
+                    <ChapterQuiz
                       key={ch.id}
-                      className="player-video"
-                      src={ch.clip}
-                      title={ch.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
+                      questions={ch.questions}
+                      chapterTitle={ch.title}
+                      onComplete={() => markComplete(ch.id)}
+                      bookmarks={bookmarks}
+                      onToggleBookmark={toggleBookmark}
                     />
-                  ) : (
-                    <video key={ch.id} className="player-video" controls preload="metadata">
-                      <source src={ch.clip} type="video/mp4" />
-                    </video>
-                  )}
-                  {ch.isPlaceholder && (
-                    <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
-                  )}
+                    <div className="chapter-feedback">
+                      {fb ? (
+                        <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
+                      ) : (
+                        <>
+                          <span>Was this chapter helpful?</span>
+                          <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
+                          <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="chapter-quiz-head">Practice questions for this chapter</div>
-                <ChapterQuiz key={ch.id} questions={ch.questions} chapterTitle={ch.title} />
-              </div>
-            )}
-          </div>
-        );
-      })}
+              )}
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <p className="chapters-empty">No chapters match "{query}".</p>}
+      </div>
       <style>{`
+        .chapters-wrap { display: flex; flex-direction: column; gap: 16px; }
+        .chapters-search { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); }
+        .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
+        .chapters-search input:focus { outline: none; }
         .chapters { display: flex; flex-direction: column; gap: 12px; }
-        .chapter { border: 1px solid #22314A; border-radius: 16px; overflow: hidden; background: #101B2D; }
-        .chapter.is-open { border-color: #33456B; }
-        .chapter-head { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
-        .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6FA0F0; }
-        .chapter-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: #E8EDF2; }
-        .chapter-meta { font-size: 11.5px; color: #66768F; font-family: 'JetBrains Mono', monospace; }
-        .chapter-chevron { color: #66768F; transition: transform 0.2s ease; }
+        .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); }
+        .chapter.is-open { border-color: var(--border-hover); }
+        .chapter-head { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
+        .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); }
+        .chapter-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
+        .chapter-done { width: 18px; height: 18px; border-radius: 50%; background: var(--good); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .chapter-meta { font-size: 11.5px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
+        .chapter-chevron { color: var(--muted2); transition: transform 0.2s ease; }
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
-        .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid rgba(111,160,240,0.12); }
+        .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
-        .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: #0B1526; border: 1px solid #22314A; position: relative; overflow: hidden; }
-        .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: #0B1526; border: none; }
+        .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
         .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
-        .chapter-quiz-head { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #66768F; margin-bottom: 12px; }
+        .chapter-quiz-head { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin-bottom: 12px; }
+        .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--muted); }
+        .chapter-feedback button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .chapter-feedback button:hover { border-color: var(--accent); color: var(--accent); }
+        .chapter-feedback-thanks { color: var(--good); }
       `}</style>
     </div>
   );
@@ -438,21 +545,21 @@ function DiscussPanel() {
       <style>{`
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
         .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 16px; max-width: 640px; width: 100%; flex-shrink: 0; }
-        .discuss-count { font-size: 12px; color: #8291AC; }
+        .discuss-count { font-size: 12px; color: var(--muted); }
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
         .discuss-item { display: flex; gap: 12px; }
-        .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1E2C46; color: #6FA0F0; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
-        .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: #E8EDF2; margin-bottom: 3px; }
-        .discuss-meta span { font-size: 11px; color: #66768F; }
-        .discuss-item p { margin: 0; font-size: 13.5px; color: #b9c4cf; line-height: 1.5; }
-        .discuss-img { display: block; max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; border: 1px solid #22314A; }
+        .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
+        .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+        .discuss-meta span { font-size: 11px; color: var(--muted2); }
+        .discuss-item p { margin: 0; font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
+        .discuss-img { display: block; max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; border: 1px solid var(--border); }
         .discuss-preview { position: relative; max-width: 640px; margin: 8px auto 0; width: fit-content; }
-        .discuss-preview img { max-height: 90px; border-radius: 10px; border: 1px solid #22314A; display: block; }
-        .discuss-preview button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #0E1830; border: 1px solid #22314A; color: #E8EDF2; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: #101B2D; border: 1px solid #22314A; border-radius: 32px; padding: 8px; min-height: 58px; }
+        .discuss-preview img { max-height: 90px; border-radius: 10px; border: 1px solid var(--border); display: block; }
+        .discuss-preview button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
         .discuss-attach { background: #E5484D; border: none; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; animation: pulseRed 2.4s ease-in-out infinite; }
         .discuss-attach:hover { background: #f05c61; }
-        .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 4px; color: #E8EDF2; font-size: 13.5px; }
+        .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 4px; color: var(--text); font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
         .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: pulseGreen 2.4s ease-in-out infinite; animation-delay: 1.2s; }
         .discuss-send:hover { background: #4bd88e; }
@@ -474,27 +581,42 @@ function DiscussPanel() {
 }
 
 function PdfPanel() {
+  const [query, setQuery] = useState("");
+  const filtered = PDFS.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
+
   return (
-    <div className="pdf-list">
-      {PDFS.map((p) => (
-        <div key={p.id} className="pdf-row">
-          <div className="pdf-icon"><FileText size={18} color="#6FA0F0" /></div>
-          <div className="pdf-meta">
-            <div className="pdf-title">{p.title}</div>
-            <div className="pdf-sub">{p.pages} pages · {p.size}</div>
+    <div className="pdf-wrap">
+      <div className="pdf-search">
+        <Search size={15} />
+        <input placeholder="Search the library…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+      <div className="pdf-list">
+        {filtered.map((p) => (
+          <div key={p.id} className="pdf-row">
+            <div className="pdf-icon"><FileText size={18} color="var(--accent)" /></div>
+            <div className="pdf-meta">
+              <div className="pdf-title">{p.title}</div>
+              <div className="pdf-sub">{p.pages} pages · {p.size}</div>
+            </div>
+            <button className="pdf-open">Open</button>
           </div>
-          <button className="pdf-open">Open</button>
-        </div>
-      ))}
+        ))}
+        {filtered.length === 0 && <p className="pdf-empty">No files match "{query}".</p>}
+      </div>
       <style>{`
+        .pdf-wrap { display: flex; flex-direction: column; gap: 16px; }
+        .pdf-search { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); }
+        .pdf-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
+        .pdf-search input:focus { outline: none; }
         .pdf-list { display: flex; flex-direction: column; gap: 10px; }
-        .pdf-row { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid #22314A; border-radius: 14px; background: #101B2D; }
-        .pdf-icon { width: 36px; height: 36px; border-radius: 12px; background: rgba(111,160,240,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .pdf-title { font-size: 14px; color: #E8EDF2; }
-        .pdf-sub { font-size: 11.5px; color: #66768F; margin-top: 2px; }
+        .pdf-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .pdf-row { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); }
+        .pdf-icon { width: 36px; height: 36px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pdf-title { font-size: 14px; color: var(--text); }
+        .pdf-sub { font-size: 11.5px; color: var(--muted2); margin-top: 2px; }
         .pdf-meta { flex: 1; }
-        .pdf-open { background: transparent; border: 1px solid #33456B; color: #E8EDF2; border-radius: 10px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; }
-        .pdf-open:hover { border-color: #6FA0F0; color: #6FA0F0; }
+        .pdf-open { background: transparent; border: 1px solid var(--border-hover); color: var(--text); border-radius: 10px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; }
+        .pdf-open:hover { border-color: var(--accent); color: var(--accent); }
       `}</style>
     </div>
   );
@@ -503,26 +625,55 @@ function PdfPanel() {
 export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
+  const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    saveJSON("pw-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem("pw-last-visit");
+    let current = parseInt(localStorage.getItem("pw-streak") || "0", 10);
+    if (lastVisit !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      current = lastVisit === yesterday ? current + 1 : 1;
+      localStorage.setItem("pw-last-visit", today);
+      localStorage.setItem("pw-streak", String(current));
+    }
+    setStreak(current);
+  }, []);
 
   return (
-    <div className="app">
+    <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
       <header className="topbar">
         <div className="brand">
-          <Gauge size={20} color="#6FA0F0" />
+          <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
         </div>
-        <div className="module-select">
-          {MODULES.map((m) => (
-            <button
-              key={m.code}
-              className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
-              onClick={() => m.status === "active" && setModule(m)}
-              disabled={m.status === "locked"}
-            >
-              {m.status === "locked" && <Lock size={11} />}
-              {m.code}
-            </button>
-          ))}
+        <div className="topbar-right">
+          {streak > 0 && (
+            <span className="streak-badge" title="Consecutive days active">
+              <Flame size={13} /> {streak}
+            </span>
+          )}
+          <button className="theme-toggle" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label="Toggle theme">
+            {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
+          </button>
+          <div className="module-select">
+            {MODULES.map((m) => (
+              <button
+                key={m.code}
+                className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
+                onClick={() => m.status === "active" && setModule(m)}
+                disabled={m.status === "locked"}
+              >
+                {m.status === "locked" && <Lock size={11} />}
+                {m.code}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -552,23 +703,39 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
         * { box-sizing: border-box; }
         html, body, #root { height: 100%; margin: 0; background: #0B1526; }
-        .app { font-family: 'Inter', sans-serif; background: #0B1526; color: #E8EDF2; min-height: 100vh; padding: 0 0 40px; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid rgba(111,160,240,0.12); }
-        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: #E8EDF2; }
+        .app {
+          --bg: #0B1526; --panel: #101B2D; --panel-alt: #0E1A2C; --border: #22314A; --border-hover: #33456B;
+          --border-soft: rgba(111,160,240,0.12); --text: #E8EDF2; --text-soft: #b9c4cf; --muted: #8291AC; --muted2: #66768F;
+          --accent: #6FA0F0; --accent-hover: #8FB8F5; --accent-soft: rgba(111,160,240,0.10); --on-accent: #0E1830;
+          --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
+          font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 40px; transition: background 0.2s ease, color 0.2s ease;
+        }
+        .app.theme-light {
+          --bg: #F4F6FB; --panel: #FFFFFF; --panel-alt: #F0F3F9; --border: #D7DEEA; --border-hover: #B9C6DC;
+          --border-soft: rgba(61,111,209,0.12); --text: #16202E; --text-soft: #48556B; --muted: #5B6B85; --muted2: #7A8AA3;
+          --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
+          --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
+        }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); }
+        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .streak-badge { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #F2A93B; background: rgba(242,169,59,0.12); border: 1px solid rgba(242,169,59,0.35); padding: 5px 9px; border-radius: 10px; }
+        .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--muted2); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
         .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #101B2D; border: 1px solid #22314A; color: #8291AC; padding: 6px 11px; border-radius: 10px; cursor: pointer; }
-        .module-chip.is-active { color: #6FA0F0; border-color: #6FA0F0; background: rgba(111,160,240,0.10); }
+        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 11px; border-radius: 10px; cursor: pointer; }
+        .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
         .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
         .module-banner { padding: 26px 22px 18px; }
-        .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; }
-        .module-banner p { color: #8291AC; font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
-        .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid rgba(111,160,240,0.12); }
-        .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #66768F; font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
-        .tab.is-active { color: #E8EDF2; border-bottom-color: #6FA0F0; }
+        .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; color: var(--text); }
+        .module-banner p { color: var(--muted); font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
+        .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
+        .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted2); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
+        .tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; }
         .content--full { max-width: none; padding: 0 22px; }
-        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: #6FA0F0; color: #0E1830; border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
-        .btn-primary:hover { background: #8FB8F5; }
+        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { background: var(--accent-hover); }
       `}</style>
     </div>
   );
