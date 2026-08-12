@@ -33,6 +33,17 @@ function tierColor(pct) {
   return "var(--muted2)";
 }
 
+function tierLabel(pct) {
+  if (pct >= 90) return "Gold";
+  if (pct >= 70) return "Silver";
+  if (pct >= 50) return "Bronze";
+  return "Attempted";
+}
+
+function getNum(key, fallback = 0) {
+  return parseInt(localStorage.getItem(key) || String(fallback), 10);
+}
+
 // Called on every answered question — awards XP, tracks totals and the daily goal
 function recordAnswer(correct) {
   const today = new Date().toDateString();
@@ -354,30 +365,50 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   const [wrongQuestions, setWrongQuestions] = useState([]);
   const q = questions[i];
 
-  const choose = (idx) => {
-    if (picked !== null) return;
-    setPicked(idx);
-    const correct = idx === q.answer;
-    if (correct) {
-      setFlashIdx(idx);
-      setTimeout(() => setFlashIdx(null), 500);
-    } else {
-      setWrongQuestions((w) => [...w, q]);
-    }
-    recordAnswer(correct);
-    setScore((s) => ({ correct: s.correct + (correct ? 1 : 0), seen: s.seen + 1 }));
-  };
-
-  const next = () => {
+  const advance = (currentScore) => {
     if (i + 1 < questions.length) {
       setI(i + 1);
       setPicked(null);
     } else {
-      const pct = Math.round((score.correct / questions.length) * 100);
+      const pct = Math.round((currentScore.correct / questions.length) * 100);
       setDone(true);
       onComplete?.(pct, wrongQuestions);
     }
   };
+
+  const choose = (idx) => {
+    if (picked !== null) return;
+    setPicked(idx);
+    const correct = idx === q.answer;
+    const updatedScore = { correct: score.correct + (correct ? 1 : 0), seen: score.seen + 1 };
+    if (correct) {
+      setFlashIdx(idx);
+      setTimeout(() => setFlashIdx(null), 500);
+      setTimeout(() => advance(updatedScore), 900);
+    } else {
+      setWrongQuestions((w) => [...w, q]);
+    }
+    recordAnswer(correct);
+    setScore(updatedScore);
+  };
+
+  const next = () => advance(score);
+
+  // Keyboard support: 1-4 or A-D to pick an answer, Enter to continue after a wrong answer
+  useEffect(() => {
+    if (done) return;
+    const handler = (e) => {
+      const key = e.key.toLowerCase();
+      const map = { "1": 0, "2": 1, "3": 2, "4": 3, a: 0, b: 1, c: 2, d: 3 };
+      if (key in map && map[key] < q.options.length) {
+        choose(map[key]);
+      } else if (key === "enter" && picked !== null) {
+        next();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
 
   const restart = () => {
     setI(0);
@@ -492,8 +523,8 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
           );
         })}
       </div>
-      {picked !== null && (
-        <button className="btn-primary" onClick={next}>
+      {picked !== null && picked !== q.answer && (
+        <button className="btn-primary exam-continue" onClick={next}>
           {i + 1 < questions.length ? "Next question" : "See results"} <ChevronRight size={16} />
         </button>
       )}
@@ -518,6 +549,10 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
           40% { box-shadow: 0 0 18px rgba(76,175,125,0.55); }
           100% { box-shadow: 0 0 0 rgba(76,175,125,0); }
         }
+        .exam-opt:focus-visible, .exam-bookmark:focus-visible, .btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        @media (max-width: 720px) {
+          .exam-continue { position: sticky; bottom: 12px; width: 100%; }
+        }
       `}</style>
     </div>
   );
@@ -538,13 +573,13 @@ function ChaptersPanel() {
   const [bookmarks, setBookmarks] = useState(() => new Set(loadJSON("pw-bookmarks", [])));
   const [feedback, setFeedback] = useState(() => loadJSON("pw-feedback", {}));
   const [seen, setSeen] = useState(new Set());
-  const [checklistId, setChecklistId] = useState(null);
   const [toast, setToast] = useState(null);
   const [bestScores, setBestScores] = useState(() => loadJSON("pw-best-scores", {}));
   const [badges, setBadges] = useState(() => new Set(loadJSON("pw-badges", [])));
   const [reviewQueue, setReviewQueue] = useState(() => loadJSON("pw-review", []));
   const [reviewing, setReviewing] = useState(false);
   const [statsTick, setStatsTick] = useState(0); // bump to re-read localStorage-backed stats
+  const [loadedVideos, setLoadedVideos] = useState(new Set());
 
   const markComplete = (id, pct, wrongQuestions) => {
     setCompleted((prev) => {
@@ -629,12 +664,8 @@ function ChaptersPanel() {
     }
     setOpenId(ch.id);
     if (!seen.has(ch.id)) {
-      setChecklistId(ch.id);
       setToast(`NOW BOARDING — ${ch.code}`);
-      setTimeout(() => {
-        setChecklistId(null);
-        setSeen((s) => new Set(s).add(ch.id));
-      }, 1500);
+      setSeen((s) => new Set(s).add(ch.id));
       setTimeout(() => setToast(null), 2200);
     }
   };
@@ -642,7 +673,6 @@ function ChaptersPanel() {
   const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
   const allDone = completed.size === CHAPTERS.length;
   const streakVal = parseInt(localStorage.getItem("pw-streak") || "0", 10);
-  const trivia = TRIVIA[Math.floor(Date.now() / 86400000) % TRIVIA.length];
 
   // Gamification stats (re-read whenever statsTick changes, since they live in localStorage)
   const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10);
@@ -722,7 +752,6 @@ function ChaptersPanel() {
         </div>
       )}
 
-      <div className="trivia-card">✈ Did you know: {trivia}</div>
       {allDone && (
         <div className="blackbox">
           <div className="blackbox-title"><Check size={12} /> FLIGHT RECORDER — ALL CHAPTERS COMPLETE</div>
@@ -737,77 +766,77 @@ function ChaptersPanel() {
         <Search size={15} />
         <input placeholder="Search chapters…" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
+      {!seen.size && (
+        <div className="chapters-hint">Tap a chapter below to begin ↓</div>
+      )}
       <div className="chapters">
         {filtered.map((ch) => {
           const isOpen = openId === ch.id;
           const isDone = completed.has(ch.id);
           const best = bestScores[ch.id];
           const fb = feedback[ch.id];
-          const showChecklist = checklistId === ch.id;
+          const videoLoaded = loadedVideos.has(ch.id);
           return (
             <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
               <button className="chapter-head" onClick={() => openChapter(ch)}>
                 <span className="chapter-code">{ch.code}</span>
                 <span className="chapter-title">{ch.title}</span>
                 {isDone && (
-                  <span className="chapter-done" style={{ background: tierColor(best) }} title={`Best score: ${best}%`}><Check size={12} strokeWidth={3} /></span>
+                  <span className="chapter-done" style={{ background: tierColor(best) }} title={`${tierLabel(best)} — best score ${best}%`}><Check size={12} strokeWidth={3} /></span>
                 )}
                 <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
                 <ChevronRight size={16} className="chapter-chevron" />
               </button>
               {isOpen && (
-                <div className="chapter-body">
-                  {showChecklist ? (
-                    <div className="preflight">
-                      <div className="preflight-item"><Check size={12} /> Video loaded</div>
-                      <div className="preflight-item"><Check size={12} /> Questions ready</div>
-                      <div className="preflight-item"><Check size={12} /> Cleared for study</div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="chapter-video">
-                        {ch.clip.includes("youtube.com/embed") ? (
-                          <iframe
-                            key={ch.id}
-                            className="player-video"
-                            src={ch.clip}
-                            title={ch.title}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
-                        ) : (
-                          <video key={ch.id} className="player-video" controls preload="metadata">
-                            <source src={ch.clip} type="video/mp4" />
-                          </video>
-                        )}
-                        {ch.isPlaceholder && (
-                          <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="chapter-quiz-head">Practice questions for this chapter</div>
-                        <ChapterQuiz
-                          key={ch.id}
-                          questions={ch.questions}
-                          chapterTitle={ch.title}
-                          onComplete={(pct, wrongQuestions) => markComplete(ch.id, pct, wrongQuestions)}
-                          bookmarks={bookmarks}
-                          onToggleBookmark={toggleBookmark}
-                        />
-                        <div className="chapter-feedback">
-                          {fb ? (
-                            <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
-                          ) : (
-                            <>
-                              <span>Was this chapter helpful?</span>
-                              <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
-                              <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </>
+                <div className="chapter-body chapter-body-opening">
+                  <div className="chapter-video">
+                    {!videoLoaded && !ch.isPlaceholder && <div className="video-skeleton" />}
+                    {ch.clip.includes("youtube.com/embed") ? (
+                      <iframe
+                        key={ch.id}
+                        className="player-video"
+                        src={ch.clip}
+                        title={ch.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        onLoad={() => setLoadedVideos((prev) => new Set(prev).add(ch.id))}
+                      />
+                    ) : (
+                      <video key={ch.id} className="player-video" controls preload="metadata" onLoadedData={() => setLoadedVideos((prev) => new Set(prev).add(ch.id))}>
+                        <source src={ch.clip} type="video/mp4" />
+                      </video>
+                    )}
+                    {ch.isPlaceholder && (
+                      <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
+                    )}
+                  </div>
+                  {ch.clip.includes("youtube.com/embed") && (
+                    <a className="video-fallback" href={ch.clip.replace("/embed/", "/watch?v=")} target="_blank" rel="noreferrer">
+                      Trouble loading? Open on YouTube directly
+                    </a>
                   )}
+                  <div>
+                    <div className="chapter-quiz-head">Practice questions for this chapter</div>
+                    <ChapterQuiz
+                      key={ch.id}
+                      questions={ch.questions}
+                      chapterTitle={ch.title}
+                      onComplete={(pct, wrongQuestions) => markComplete(ch.id, pct, wrongQuestions)}
+                      bookmarks={bookmarks}
+                      onToggleBookmark={toggleBookmark}
+                    />
+                    <div className="chapter-feedback">
+                      {fb ? (
+                        <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
+                      ) : (
+                        <>
+                          <span>Was this chapter helpful?</span>
+                          <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
+                          <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -837,7 +866,7 @@ function ChaptersPanel() {
         .trophy-badge { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #D4AF37; border: 1px solid rgba(212,175,55,0.4); background: rgba(212,175,55,0.1); padding: 3px 8px; border-radius: 20px; }
         .review-card { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: var(--text); }
         .review-card .btn-primary { padding: 8px 14px; font-size: 12.5px; }
-        .trivia-card { position: relative; z-index: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; color: var(--muted); }
+        .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); padding: 4px 0; }
         .blackbox { position: relative; z-index: 1; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 14px; padding: 14px 16px; }
         .blackbox-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--good); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .blackbox-grid { display: flex; gap: 22px; }
@@ -860,12 +889,12 @@ function ChaptersPanel() {
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
         .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); min-height: 60px; }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
-        .preflight { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px 0; }
-        .preflight-item { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--good); opacity: 0; animation: checklistIn 0.3s ease forwards; }
-        .preflight-item:nth-child(1) { animation-delay: 0.1s; }
-        .preflight-item:nth-child(2) { animation-delay: 0.5s; }
-        .preflight-item:nth-child(3) { animation-delay: 0.9s; }
-        @keyframes checklistIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+        .chapter-body-opening { animation: chapterOpen 0.28s ease-out; }
+        @keyframes chapterOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: 14px; }
+        @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .video-fallback { display: block; font-size: 11px; color: var(--muted2); text-decoration: none; margin-top: 6px; }
+        .video-fallback:hover { color: var(--accent); }
         .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
         .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
@@ -925,24 +954,28 @@ function DiscussPanel() {
         <div className="leaderboard">🏆 You're the most active flyer today — {myPosts} post{myPosts === 1 ? "" : "s"} and counting.</div>
       )}
       <div className="discuss-list">
-        {comments.map((c) => (
-          <div key={c.id} className="discuss-item">
-            <div className="discuss-avatar">{c.user.charAt(0)}</div>
-            <div>
-              <div className="discuss-meta"><strong>{c.user}</strong><span>{c.time}</span></div>
-              {c.text && <p>{c.text}</p>}
-              {c.image && <img src={c.image} alt="attachment" className="discuss-img" />}
-              <div className="discuss-reactions">
-                <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => toggleReaction(c.id, "thumbsUp")}>
-                  <ThumbsUp size={12} /> {c.reactions?.thumbsUp || 0}
-                </button>
-                <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => toggleReaction(c.id, "heart")}>
-                  <Heart size={12} /> {c.reactions?.heart || 0}
-                </button>
+        {comments.length === 0 ? (
+          <div className="discuss-empty">Be the first to ask a question about this chapter.</div>
+        ) : (
+          comments.map((c) => (
+            <div key={c.id} className="discuss-item">
+              <div className="discuss-avatar">{c.user.charAt(0)}</div>
+              <div>
+                <div className="discuss-meta"><strong>{c.user}</strong><span>{c.time}</span></div>
+                {c.text && <p>{c.text}</p>}
+                {c.image && <img src={c.image} alt="attachment" className="discuss-img" />}
+                <div className="discuss-reactions">
+                  <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => toggleReaction(c.id, "thumbsUp")}>
+                    <ThumbsUp size={12} /> {c.reactions?.thumbsUp || 0}
+                  </button>
+                  <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => toggleReaction(c.id, "heart")}>
+                    <Heart size={12} /> {c.reactions?.heart || 0}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
       {pendingImage && (
         <div className="discuss-preview">
@@ -967,6 +1000,7 @@ function DiscussPanel() {
         .discuss-count { font-size: 12px; color: var(--muted); }
         .leaderboard { max-width: 640px; margin: 0 auto 12px; width: 100%; font-size: 12px; color: var(--muted); background: var(--panel-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; flex-shrink: 0; }
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
+        .discuss-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 0; }
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
         .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: var(--text); margin-bottom: 3px; }
@@ -1050,12 +1084,13 @@ export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
-  const [livery, setLivery] = useState(() => loadJSON("pw-livery", "blue"));
   const [streak, setStreak] = useState(0);
   const [freezes, setFreezes] = useState(1);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
   const [scrollPct, setScrollPct] = useState(0);
+  const [storageWarning, setStorageWarning] = useState(false);
+  const scrollPositions = useRef({});
   const [ticket] = useState(() => ({
     seat: `${Math.ceil(Math.random() * 30)}${["A", "B", "C", "D", "E", "F"][Math.floor(Math.random() * 6)]}`,
     gate: String.fromCharCode(65 + Math.floor(Math.random() * 6)) + (Math.floor(Math.random() * 20) + 1),
@@ -1066,8 +1101,14 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    saveJSON("pw-livery", livery);
-  }, [livery]);
+    // Detect whether localStorage actually works here (some private-browsing modes block it)
+    try {
+      localStorage.setItem("pw-storage-check", "1");
+      localStorage.removeItem("pw-storage-check");
+    } catch {
+      setStorageWarning(true);
+    }
+  }, []);
 
   useEffect(() => {
     const today = new Date().toDateString();
@@ -1096,10 +1137,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let raf = null;
     const onScroll = () => {
-      const h = document.documentElement;
-      const pct = h.scrollHeight > h.clientHeight ? h.scrollTop / (h.scrollHeight - h.clientHeight) : 0;
-      setScrollPct(Math.min(1, Math.max(0, pct)));
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        const h = document.documentElement;
+        const pct = h.scrollHeight > h.clientHeight ? h.scrollTop / (h.scrollHeight - h.clientHeight) : 0;
+        setScrollPct(Math.min(1, Math.max(0, pct)));
+        raf = null;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
@@ -1112,15 +1158,22 @@ export default function App() {
     setTimeout(() => setPaToast(null), 1600);
   };
 
-  const totalAnswered = parseInt(localStorage.getItem("pw-total-answered") || "0", 10);
-  const LIVERIES = [
-    { id: "blue", color: "#3D6FD1", unlocked: true, hint: "Default livery" },
-    { id: "red", color: "#E5484D", unlocked: streak >= 2, hint: streak >= 2 ? "Unlocked" : "Unlocks at a 2-day streak" },
-    { id: "green", color: "#2FA84F", unlocked: totalAnswered >= 10, hint: totalAnswered >= 10 ? "Unlocked" : "Unlocks after answering 10 questions" },
-  ];
+  const switchTab = (nextTab) => {
+    scrollPositions.current[tab] = window.scrollY;
+    setTab(nextTab);
+    requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
+  };
+
+  const resetProgress = () => {
+    if (!window.confirm("Reset all progress on this device? This can't be undone.")) return;
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("pw-"))
+      .forEach((k) => localStorage.removeItem(k));
+    window.location.reload();
+  };
 
   return (
-    <div className={`app ${theme === "light" ? "theme-light" : ""} livery-${livery}`}>
+    <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
@@ -1136,9 +1189,16 @@ export default function App() {
             </div>
             <div className="boarding-pass-barcode" />
           </div>
+          <div className="boarding-trivia">
+            <span className="boarding-trivia-label">TIP</span>
+            {TRIVIA[Math.floor(Date.now() / 86400000) % TRIVIA.length]}
+          </div>
         </div>
       )}
       {paToast && <div className="pa-toast">{paToast}</div>}
+      {storageWarning && (
+        <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
+      )}
       <header className="topbar">
         <div className="brand">
           <Gauge size={20} color="var(--accent)" />
@@ -1149,20 +1209,6 @@ export default function App() {
             <WindsockIcon size={20} active={streak > 0} />
             <span className="streak-num">{streak}</span>
           </span>
-          <div className="livery-picker" role="group" aria-label="Choose accent color">
-            {LIVERIES.map((l) => (
-              <button
-                key={l.id}
-                className={`livery-swatch ${livery === l.id ? "is-active" : ""} ${!l.unlocked ? "is-locked" : ""}`}
-                style={{ background: l.unlocked ? l.color : "var(--border)" }}
-                onClick={() => l.unlocked && setLivery(l.id)}
-                aria-label={`${l.id} livery — ${l.hint}`}
-                title={l.hint}
-              >
-                {!l.unlocked && <Lock size={8} />}
-              </button>
-            ))}
-          </div>
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
           </button>
@@ -1196,7 +1242,7 @@ export default function App() {
 
       <nav className="tabbar">
         {NAV.map((n) => (
-          <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => setTab(n.id)}>
+          <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => switchTab(n.id)}>
             <n.icon size={15} />
             {n.label}
           </button>
@@ -1209,13 +1255,15 @@ export default function App() {
         {tab === "pdf" && <PdfPanel />}
       </main>
 
-      <div className="flight-progress" aria-hidden="true">
-        <div className="runway-lights">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <span key={i} className={`runway-dot ${i < Math.floor(scrollPct * 12) ? "is-lit" : ""}`} />
-          ))}
+      <div className="flight-progress">
+        <div className="runway-lights" aria-hidden="true">
+          {Array.from({ length: 12 }).map((_, i) => {
+            const lit = i < Math.floor(scrollPct * 12);
+            const zone = i >= 10 ? "red" : i >= 8 ? "amber" : "white";
+            return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
+          })}
         </div>
-        <span className="distance-flown">{Math.round(scrollPct * 2400)} nm flown</span>
+        <button className="reset-progress" onClick={resetProgress}>Reset progress</button>
       </div>
 
       <style>{`
@@ -1235,8 +1283,6 @@ export default function App() {
           --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
           --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
         }
-        .app.livery-red { --accent: #E5484D; --accent-hover: #F0777B; --accent-soft: rgba(229,72,77,0.12); }
-        .app.livery-green { --accent: #2FA84F; --accent-hover: #4BC96C; --accent-soft: rgba(47,168,79,0.12); }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1245,10 +1291,6 @@ export default function App() {
         .windsock.is-active { animation: sockWave 1.8s ease-in-out infinite; transform-origin: left center; }
         .windsock.is-idle { transform: rotate(6deg); }
         @keyframes sockWave { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
-        .livery-picker { display: flex; gap: 5px; align-items: center; }
-        .livery-swatch { width: 16px; height: 16px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--muted2); }
-        .livery-swatch.is-active { border-color: var(--text); }
-        .livery-swatch.is-locked { cursor: not-allowed; }
         .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--muted2); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
         .module-select { display: flex; gap: 6px; }
@@ -1267,7 +1309,7 @@ export default function App() {
         @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background: var(--accent-hover); }
-        .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; animation: boardingFade 1.8s ease forwards; }
+        .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; animation: boardingFade 2.4s ease forwards; }
         .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: 18px; padding: 22px; }
         .boarding-pass-top { display: flex; align-items: center; justify-content: space-between; color: var(--accent); margin-bottom: 14px; }
         .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: var(--muted2); }
@@ -1276,9 +1318,11 @@ export default function App() {
         .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
         .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
         .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
+        .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+        .boarding-trivia-label { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: 6px; padding: 2px 6px; }
         @keyframes boardingFade {
           0% { opacity: 1; }
-          75% { opacity: 1; }
+          80% { opacity: 1; }
           100% { opacity: 0; visibility: hidden; }
         }
         .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
@@ -1286,8 +1330,12 @@ export default function App() {
         .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
         .runway-lights { display: flex; gap: 4px; }
         .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
-        .runway-dot.is-lit { background: #F2C230; box-shadow: 0 0 5px rgba(242,194,48,0.8); }
-        .distance-flown { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); }
+        .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
+        .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
+        .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
+        .reset-progress { background: transparent; border: none; color: var(--muted2); font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+        .reset-progress:hover { color: var(--accent); }
+        .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 12px; text-align: center; padding: 8px 16px; }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
           .content-taxi { animation: none; }
