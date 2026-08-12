@@ -450,12 +450,24 @@ function DiscussPanel() {
         .discuss-preview img { max-height: 90px; border-radius: 10px; border: 1px solid #22314A; display: block; }
         .discuss-preview button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #0E1830; border: 1px solid #22314A; color: #E8EDF2; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: #101B2D; border: 1px solid #22314A; border-radius: 32px; padding: 8px; min-height: 58px; }
-        .discuss-attach { background: #E5484D; border: none; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 8px rgba(229,72,77,0.35); }
+        .discuss-attach { background: #E5484D; border: none; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; animation: pulseRed 2.4s ease-in-out infinite; }
         .discuss-attach:hover { background: #f05c61; }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 4px; color: #E8EDF2; font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
-        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
+        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: pulseGreen 2.4s ease-in-out infinite; }
         .discuss-send:hover { background: #4bd88e; }
+        @keyframes pulseRed {
+          0%, 100% { box-shadow: 0 0 5px rgba(229,72,77,0.3); }
+          50% { box-shadow: 0 0 15px rgba(229,72,77,0.85); }
+        }
+        @keyframes pulseGreen {
+          0%, 100% { box-shadow: 0 0 5px rgba(52,199,123,0.3); }
+          50% { box-shadow: 0 0 15px rgba(52,199,123,0.85); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .discuss-attach, .discuss-send { animation: none; box-shadow: 0 0 8px rgba(229,72,77,0.35); }
+          .discuss-send { box-shadow: 0 0 8px rgba(52,199,123,0.35); }
+        }
       `}</style>
     </div>
   );
