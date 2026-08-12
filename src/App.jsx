@@ -454,15 +454,15 @@ function DiscussPanel() {
         .discuss-attach:hover { background: #f05c61; }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 4px; color: #E8EDF2; font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
-        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: pulseGreen 2.4s ease-in-out infinite; }
+        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: pulseGreen 2.4s ease-in-out infinite; animation-delay: 1.2s; }
         .discuss-send:hover { background: #4bd88e; }
         @keyframes pulseRed {
-          0%, 100% { box-shadow: 0 0 5px rgba(229,72,77,0.3); }
-          50% { box-shadow: 0 0 15px rgba(229,72,77,0.85); }
+          0%, 100% { box-shadow: 0 0 3px rgba(229,72,77,0.15); opacity: 0.55; }
+          50% { box-shadow: 0 0 16px rgba(229,72,77,0.9); opacity: 1; }
         }
         @keyframes pulseGreen {
-          0%, 100% { box-shadow: 0 0 5px rgba(52,199,123,0.3); }
-          50% { box-shadow: 0 0 15px rgba(52,199,123,0.85); }
+          0%, 100% { box-shadow: 0 0 3px rgba(52,199,123,0.15); opacity: 0.55; }
+          50% { box-shadow: 0 0 16px rgba(52,199,123,0.9); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
           .discuss-attach, .discuss-send { animation: none; box-shadow: 0 0 8px rgba(229,72,77,0.35); }
