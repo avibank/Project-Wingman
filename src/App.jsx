@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check, Volume2, VolumeX } from "lucide-react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 
 // ---- Small localStorage helpers (safe if run outside a browser) ----
 function loadJSON(key, fallback) {
@@ -15,27 +15,6 @@ function saveJSON(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     /* ignore */
-  }
-}
-
-// ---- Tasteful correct-answer chime, respects the mute setting ----
-function playChime() {
-  if (!loadJSON("pw-sound", true)) return;
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.35);
-  } catch {
-    /* ignore — audio isn't essential */
   }
 }
 
@@ -217,11 +196,20 @@ const NAV = [
   { id: "pdf", label: "Library", icon: FileText },
 ];
 
-// Custom delta-wing "Concorde" silhouette, used for the discussion send button
+// Custom delta-wing "Concorde" silhouette, used for the streak contrail badge
 function ConcordeIcon({ size = 17, style, className }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style} className={className}>
       <path d="M12 1 L13 10 L22 19 L13 17 L13 22 L11 22 L11 17 L2 19 L11 10 Z" />
+    </svg>
+  );
+}
+
+// Boeing 747-style silhouette (rounded nose, swept main wings, small tail wings), used for the landing plane and the discussion send button
+function Boeing747Icon({ size = 17, style, className }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style} className={className}>
+      <path d="M12 2 L14 8 L23 17 L14 15 L17 22 L12 19 L7 22 L10 15 L1 17 L10 8 Z" />
     </svg>
   );
 }
@@ -284,7 +272,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   const choose = (idx) => {
     if (picked !== null) return;
     setPicked(idx);
-    if (idx === q.answer) playChime();
     setScore((s) => ({ correct: s.correct + (idx === q.answer ? 1 : 0), seen: s.seen + 1 }));
   };
 
@@ -317,7 +304,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
       <div className="exam-done">
         <Dial value={pct} size={100} />
         <div className="landing-strip">
-          <ConcordeIcon size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
+          <Boeing747Icon size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
           <div className="runway" />
         </div>
         <h3>{statusLine}</h3>
@@ -629,7 +616,7 @@ function DiscussPanel() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && post()}
         />
-        <button className="discuss-send" onClick={post} aria-label="Post"><ConcordeIcon size={18} style={{ transform: "rotate(45deg)" }} /></button>
+        <button className="discuss-send" onClick={post} aria-label="Post"><Boeing747Icon size={18} style={{ transform: "rotate(45deg)" }} /></button>
       </div>
       <style>{`
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
@@ -715,7 +702,6 @@ export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
-  const [soundOn, setSoundOn] = useState(() => loadJSON("pw-sound", true));
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
   const [ticket] = useState(() => ({
@@ -726,10 +712,6 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-theme", theme);
   }, [theme]);
-
-  useEffect(() => {
-    saveJSON("pw-sound", soundOn);
-  }, [soundOn]);
 
   useEffect(() => {
     const today = new Date().toDateString();
@@ -776,9 +758,6 @@ export default function App() {
               <span className="streak-num">{streak}</span>
             </span>
           )}
-          <button className="theme-toggle" onClick={() => setSoundOn(!soundOn)} aria-label="Toggle sound">
-            {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
-          </button>
           <button className="theme-toggle" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label="Toggle theme">
             {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
           </button>
