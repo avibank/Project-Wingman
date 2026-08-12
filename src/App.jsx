@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Send, CheckCircle2, XCircle, Lock } from "lucide-react";
- 
+
 // ---- Mock content: Jet Turbine Fundamentals ----
 const MODULES = [
   { code: "JT", name: "Jet Turbine Fundamentals", status: "active", questions: 10 },
   { code: "PROP", name: "Propulsion Systems (coming soon)", status: "locked", questions: 0 },
 ];
- 
+
 const CHAPTERS = [
   {
     id: "ch1",
@@ -159,26 +159,26 @@ const CHAPTERS = [
     ],
   },
 ];
- 
+
 const SEED_COMMENTS = {
   ch2: [
     { id: "c1", user: "Yousef A.", text: "Why does fuel get added right after the compressor and not later in the flow?", time: "2h ago" },
     { id: "c2", user: "Sara K.", text: "@Yousef because that's where pressure is highest — the diagram at 6:40 shows the flame stays anchored in the chamber, not further downstream.", time: "1h ago" },
   ],
 };
- 
+
 const PDFS = [
   { id: "p1", title: "JT.02 — Combustion Chamber: Study Notes", pages: 10, size: "980 KB" },
   { id: "p2", title: "JT.03 — Turbine Section: Summary Sheet", pages: 6, size: "520 KB" },
   { id: "p3", title: "Jet Turbine Fundamentals — Key Terms Reference", pages: 4, size: "300 KB" },
 ];
- 
+
 const NAV = [
   { id: "chapters", label: "Chapters", icon: ClipboardCheck },
   { id: "discuss", label: "Discussion", icon: MessageSquare },
   { id: "pdf", label: "Library", icon: FileText },
 ];
- 
+
 function Placard({ children }) {
   return (
     <span className="placard">
@@ -199,7 +199,7 @@ function Placard({ children }) {
     </span>
   );
 }
- 
+
 function Dial({ value, size = 96 }) {
   const r = (size - 10) / 2;
   const c = 2 * Math.PI * r;
@@ -226,20 +226,20 @@ function Dial({ value, size = 96 }) {
     </svg>
   );
 }
- 
+
 function ChapterQuiz({ questions, chapterTitle }) {
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState({ correct: 0, seen: 0 });
   const [done, setDone] = useState(false);
   const q = questions[i];
- 
+
   const choose = (idx) => {
     if (picked !== null) return;
     setPicked(idx);
     setScore((s) => ({ correct: s.correct + (idx === q.answer ? 1 : 0), seen: s.seen + 1 }));
   };
- 
+
   const next = () => {
     if (i + 1 < questions.length) {
       setI(i + 1);
@@ -248,14 +248,14 @@ function ChapterQuiz({ questions, chapterTitle }) {
       setDone(true);
     }
   };
- 
+
   const restart = () => {
     setI(0);
     setPicked(null);
     setScore({ correct: 0, seen: 0 });
     setDone(false);
   };
- 
+
   if (done) {
     const pct = Math.round((score.correct / questions.length) * 100);
     return (
@@ -272,7 +272,7 @@ function ChapterQuiz({ questions, chapterTitle }) {
       </div>
     );
   }
- 
+
   return (
     <div className="exam">
       <div className="exam-head">
@@ -313,10 +313,10 @@ function ChapterQuiz({ questions, chapterTitle }) {
     </div>
   );
 }
- 
+
 function ChaptersPanel() {
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
- 
+
   return (
     <div className="chapters">
       {CHAPTERS.map((ch) => {
@@ -376,17 +376,17 @@ function ChaptersPanel() {
     </div>
   );
 }
- 
+
 function DiscussPanel() {
   const [comments, setComments] = useState(SEED_COMMENTS.ch2);
   const [text, setText] = useState("");
- 
+
   const post = () => {
     if (!text.trim()) return;
     setComments((c) => [...c, { id: `c${c.length + 1}`, user: "You", text, time: "now" }]);
     setText("");
   };
- 
+
   return (
     <div className="discuss">
       <div className="discuss-head">
@@ -430,7 +430,7 @@ function DiscussPanel() {
     </div>
   );
 }
- 
+
 function PdfPanel() {
   return (
     <div className="pdf-list">
@@ -457,11 +457,11 @@ function PdfPanel() {
     </div>
   );
 }
- 
+
 export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
- 
+
   return (
     <div className="app">
       <header className="topbar">
@@ -483,14 +483,14 @@ export default function App() {
           ))}
         </div>
       </header>
- 
+
       <div className="module-banner">
         <div>
           <h1>{module.name}</h1>
           <p>Aviation Fundamentals · {module.questions} questions in bank</p>
         </div>
       </div>
- 
+
       <nav className="tabbar">
         {NAV.map((n) => (
           <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => setTab(n.id)}>
@@ -499,34 +499,9 @@ export default function App() {
           </button>
         ))}
       </nav>
- 
+
       <main className={`content ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
         {tab === "chapters" && <ChaptersPanel />}
         {tab === "discuss" && <DiscussPanel />}
         {tab === "pdf" && <PdfPanel />}
       </main>
- 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-        * { box-sizing: border-box; }
-        .app { font-family: 'Inter', sans-serif; background: #0B1526; color: #E8EDF2; min-height: 100%; padding: 0 0 40px; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid rgba(111,160,240,0.12); }
-        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: #E8EDF2; }
-        .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #101B2D; border: 1px solid #22314A; color: #8291AC; padding: 6px 11px; border-radius: 10px; cursor: pointer; }
-        .module-chip.is-active { color: #6FA0F0; border-color: #6FA0F0; background: rgba(111,160,240,0.10); }
-        .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
-        .module-banner { padding: 26px 22px 18px; }
-        .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; }
-        .module-banner p { color: #8291AC; font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
-        .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid rgba(111,160,240,0.12); }
-        .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #66768F; font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
-        .tab.is-active { color: #E8EDF2; border-bottom-color: #6FA0F0; }
-        .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; }
-        .content--full { max-width: none; padding: 0 22px; }
-        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: #6FA0F0; color: #0E1830; border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
-        .btn-primary:hover { background: #8FB8F5; }
-      `}</style>
-    </div>
-  );
-}
