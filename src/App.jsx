@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check, Plane, Heart } from "lucide-react";
 
 // ---- Small localStorage helpers (safe if run outside a browser) ----
 function loadJSON(key, fallback) {
@@ -179,8 +179,8 @@ const CHAPTERS = [
 
 const SEED_COMMENTS = {
   ch2: [
-    { id: "c1", user: "Yousef A.", text: "Why does fuel get added right after the compressor and not later in the flow?", time: "2h ago" },
-    { id: "c2", user: "Sara K.", text: "@Yousef because that's where pressure is highest — the diagram at 6:40 shows the flame stays anchored in the chamber, not further downstream.", time: "1h ago" },
+    { id: "c1", user: "Yousef A.", text: "Why does fuel get added right after the compressor and not later in the flow?", time: "2h ago", reactions: { thumbsUp: 2, heart: 0 } },
+    { id: "c2", user: "Sara K.", text: "@Yousef because that's where pressure is highest — the diagram at 6:40 shows the flame stays anchored in the chamber, not further downstream.", time: "1h ago", reactions: { thumbsUp: 3, heart: 1 } },
   ],
 };
 
@@ -196,20 +196,30 @@ const NAV = [
   { id: "pdf", label: "Library", icon: FileText },
 ];
 
-// Custom delta-wing "Concorde" silhouette, used for the streak contrail badge
-function ConcordeIcon({ size = 17, style, className }) {
+// Windsock streak indicator — striped and waving while a streak is active, dim and drooping when idle
+function WindsockIcon({ size = 20, active }) {
+  const activePath = "M2 5 L22 3 L18 7 L24 7 L18 11 L22 15 L2 13 Z";
+  const idlePath = "M2 6 L18 6 L13 9 L18 11 L13 14 L18 16 L2 12 Z";
+  const clipId = active ? "sockClipActive" : "sockClipIdle";
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style} className={className}>
-      <path d="M12 1 L13 10 L22 19 L13 17 L13 22 L11 22 L11 17 L2 19 L11 10 Z" />
-    </svg>
-  );
-}
-
-// Boeing 747-style silhouette (rounded nose, swept main wings, small tail wings), used for the landing plane and the discussion send button
-function Boeing747Icon({ size = 17, style, className }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style} className={className}>
-      <path d="M12 2 L14 8 L23 17 L14 15 L17 22 L12 19 L7 22 L10 15 L1 17 L10 8 Z" />
+    <svg width={size} height={size * 0.75} viewBox="0 0 26 18" className={`windsock ${active ? "is-active" : "is-idle"}`}>
+      <defs>
+        <clipPath id={clipId}>
+          <path d={active ? activePath : idlePath} />
+        </clipPath>
+      </defs>
+      {active ? (
+        <g clipPath={`url(#${clipId})`}>
+          <rect x="0" y="0" width="26" height="18" fill="#fff" />
+          <rect x="0" y="0" width="4" height="18" fill="#E5844D" />
+          <rect x="8" y="0" width="4" height="18" fill="#E5844D" />
+          <rect x="16" y="0" width="4" height="18" fill="#E5844D" />
+          <rect x="24" y="0" width="4" height="18" fill="#E5844D" />
+        </g>
+      ) : (
+        <path d={idlePath} fill="var(--muted2)" opacity="0.6" />
+      )}
+      <line x1="1" y1="0" x2="1" y2="18" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -236,9 +246,27 @@ function Placard({ children }) {
 }
 
 function Dial({ value, size = 96 }) {
+  const [display, setDisplay] = useState(0);
+  const prevRef = useRef(0);
+  useEffect(() => {
+    const start = prevRef.current;
+    const end = value;
+    const duration = 600;
+    const t0 = performance.now();
+    let raf;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      setDisplay(Math.round(start + (end - start) * p));
+      if (p < 1) raf = requestAnimationFrame(step);
+      else prevRef.current = end;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+
   const r = (size - 10) / 2;
   const c = 2 * Math.PI * r;
-  const offset = c - (value / 100) * c;
+  const offset = c - (display / 100) * c;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth="7" />
@@ -253,10 +281,10 @@ function Dial({ value, size = 96 }) {
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: "stroke-dashoffset 0.6s ease" }}
+        style={{ transition: "stroke-dashoffset 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
       />
       <text x="50%" y="50%" textAnchor="middle" dy="0.35em" fill="var(--text)" fontSize="20" fontFamily="'Space Grotesk', sans-serif" fontWeight="600">
-        {value}%
+        {display}%
       </text>
     </svg>
   );
@@ -267,11 +295,16 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState({ correct: 0, seen: 0 });
   const [done, setDone] = useState(false);
+  const [flashIdx, setFlashIdx] = useState(null);
   const q = questions[i];
 
   const choose = (idx) => {
     if (picked !== null) return;
     setPicked(idx);
+    if (idx === q.answer) {
+      setFlashIdx(idx);
+      setTimeout(() => setFlashIdx(null), 500);
+    }
     setScore((s) => ({ correct: s.correct + (idx === q.answer ? 1 : 0), seen: s.seen + 1 }));
   };
 
@@ -295,6 +328,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   if (done) {
     const pct = Math.round((score.correct / questions.length) * 100);
     const isRough = pct < 50;
+    const isPerfect = pct === 100;
     const statusLine =
       pct >= 90 ? `Cruising at ${pct}%` :
       pct >= 70 ? `Steady altitude — ${pct}%` :
@@ -302,16 +336,28 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
       `Holding pattern — ${pct}%`;
     return (
       <div className="exam-done">
+        {isPerfect && (
+          <div className="confetti" aria-hidden="true">
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <Plane
+                key={idx}
+                size={14}
+                className="confetti-plane"
+                style={{ left: `${idx * 10 + Math.random() * 5}%`, animationDelay: `${idx * 0.08}s` }}
+              />
+            ))}
+          </div>
+        )}
         <Dial value={pct} size={100} />
         <div className="landing-strip">
-          <Boeing747Icon size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
+          <Plane size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
           <div className="runway" />
         </div>
         <h3>{statusLine}</h3>
         <p>{score.correct} of {questions.length} correct — {chapterTitle}</p>
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
-          .exam-done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; }
+          .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
           .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: var(--text); margin: 6px 0 0; font-size: 16px; }
           .exam-done p { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
           .landing-strip { position: relative; height: 34px; width: 100%; max-width: 220px; margin: 4px 0; }
@@ -331,6 +377,12 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
             70% { bottom: 2px; }
             85% { bottom: 10px; }
             100% { left: 85%; bottom: 6px; transform: rotate(-5deg); opacity: 1; }
+          }
+          .confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+          .confetti-plane { position: absolute; top: -20px; color: var(--accent); opacity: 0.9; animation: confettiFall 1.6s ease-in forwards; }
+          @keyframes confettiFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(220px) rotate(340deg); opacity: 0; }
           }
         `}</style>
       </div>
@@ -359,7 +411,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         {q.options.map((opt, idx) => {
           const state = picked === null ? "idle" : idx === q.answer ? "correct" : idx === picked ? "wrong" : "idle";
           return (
-            <button key={idx} className={`exam-opt exam-opt--${state}`} onClick={() => choose(idx)}>
+            <button key={idx} className={`exam-opt exam-opt--${state} ${flashIdx === idx ? "is-flash" : ""}`} onClick={() => choose(idx)}>
               <span className="exam-opt-letter">{String.fromCharCode(65 + idx)}</span>
               <span>{opt}</span>
               {state === "correct" && <CheckCircle2 size={16} color="var(--good)" />}
@@ -388,10 +440,24 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
         .exam-opt--wrong { border-color: var(--bad); background: rgba(224,102,90,0.08); }
         .exam-opt--correct span:last-child, .exam-opt--wrong span:last-child { margin-left: auto; }
+        .exam-opt.is-flash { animation: flashGlow 0.5s ease-out; }
+        @keyframes flashGlow {
+          0% { box-shadow: 0 0 0 rgba(76,175,125,0); }
+          40% { box-shadow: 0 0 18px rgba(76,175,125,0.55); }
+          100% { box-shadow: 0 0 0 rgba(76,175,125,0); }
+        }
       `}</style>
     </div>
   );
 }
+
+const TRIVIA = [
+  "The Boeing 747's wingspan (68.4 m) is longer than the Wright brothers' first powered flight (36.5 m).",
+  "A jet engine can process enough air per second to fill a small house.",
+  "Concorde could cross the Atlantic in under 3.5 hours — faster than the Earth's own rotation beneath it.",
+  "At a typical 35,000 ft cruising altitude, the sky above starts to look noticeably darker.",
+  "Some turbine blades spin at speeds exceeding 10,000 RPM.",
+];
 
 function ChaptersPanel() {
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
@@ -399,6 +465,9 @@ function ChaptersPanel() {
   const [completed, setCompleted] = useState(() => new Set(loadJSON("pw-completed", [])));
   const [bookmarks, setBookmarks] = useState(() => new Set(loadJSON("pw-bookmarks", [])));
   const [feedback, setFeedback] = useState(() => loadJSON("pw-feedback", {}));
+  const [seen, setSeen] = useState(new Set());
+  const [checklistId, setChecklistId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const markComplete = (id) => {
     setCompleted((prev) => {
@@ -426,9 +495,28 @@ function ChaptersPanel() {
     });
   };
 
+  const openChapter = (ch) => {
+    const isOpen = openId === ch.id;
+    if (isOpen) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(ch.id);
+    if (!seen.has(ch.id)) {
+      setChecklistId(ch.id);
+      setToast(`NOW BOARDING — ${ch.code}`);
+      setTimeout(() => {
+        setChecklistId(null);
+        setSeen((s) => new Set(s).add(ch.id));
+      }, 1500);
+      setTimeout(() => setToast(null), 2200);
+    }
+  };
+
   const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
   const allDone = completed.size === CHAPTERS.length;
   const streakVal = parseInt(localStorage.getItem("pw-streak") || "0", 10);
+  const trivia = TRIVIA[Math.floor(Date.now() / 86400000) % TRIVIA.length];
 
   return (
     <div className="chapters-wrap">
@@ -437,6 +525,8 @@ function ChaptersPanel() {
         <span className="cloud cloud-b" />
         <span className="cloud cloud-c" />
       </div>
+      {toast && <div className="boarding-toast">{toast}</div>}
+      <div className="trivia-card">✈ Did you know: {trivia}</div>
       {allDone && (
         <div className="blackbox">
           <div className="blackbox-title"><Check size={12} /> FLIGHT RECORDER — ALL CHAPTERS COMPLETE</div>
@@ -456,9 +546,10 @@ function ChaptersPanel() {
           const isOpen = openId === ch.id;
           const isDone = completed.has(ch.id);
           const fb = feedback[ch.id];
+          const showChecklist = checklistId === ch.id;
           return (
             <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
-              <button className="chapter-head" onClick={() => setOpenId(isOpen ? null : ch.id)}>
+              <button className="chapter-head" onClick={() => openChapter(ch)}>
                 <span className="chapter-code">{ch.code}</span>
                 <span className="chapter-title">{ch.title}</span>
                 {isDone && (
@@ -469,47 +560,57 @@ function ChaptersPanel() {
               </button>
               {isOpen && (
                 <div className="chapter-body">
-                  <div className="chapter-video">
-                    {ch.clip.includes("youtube.com/embed") ? (
-                      <iframe
-                        key={ch.id}
-                        className="player-video"
-                        src={ch.clip}
-                        title={ch.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <video key={ch.id} className="player-video" controls preload="metadata">
-                        <source src={ch.clip} type="video/mp4" />
-                      </video>
-                    )}
-                    {ch.isPlaceholder && (
-                      <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="chapter-quiz-head">Practice questions for this chapter</div>
-                    <ChapterQuiz
-                      key={ch.id}
-                      questions={ch.questions}
-                      chapterTitle={ch.title}
-                      onComplete={() => markComplete(ch.id)}
-                      bookmarks={bookmarks}
-                      onToggleBookmark={toggleBookmark}
-                    />
-                    <div className="chapter-feedback">
-                      {fb ? (
-                        <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
-                      ) : (
-                        <>
-                          <span>Was this chapter helpful?</span>
-                          <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
-                          <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
-                        </>
-                      )}
+                  {showChecklist ? (
+                    <div className="preflight">
+                      <div className="preflight-item"><Check size={12} /> Video loaded</div>
+                      <div className="preflight-item"><Check size={12} /> Questions ready</div>
+                      <div className="preflight-item"><Check size={12} /> Cleared for study</div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="chapter-video">
+                        {ch.clip.includes("youtube.com/embed") ? (
+                          <iframe
+                            key={ch.id}
+                            className="player-video"
+                            src={ch.clip}
+                            title={ch.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video key={ch.id} className="player-video" controls preload="metadata">
+                            <source src={ch.clip} type="video/mp4" />
+                          </video>
+                        )}
+                        {ch.isPlaceholder && (
+                          <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="chapter-quiz-head">Practice questions for this chapter</div>
+                        <ChapterQuiz
+                          key={ch.id}
+                          questions={ch.questions}
+                          chapterTitle={ch.title}
+                          onComplete={() => markComplete(ch.id)}
+                          bookmarks={bookmarks}
+                          onToggleBookmark={toggleBookmark}
+                        />
+                        <div className="chapter-feedback">
+                          {fb ? (
+                            <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
+                          ) : (
+                            <>
+                              <span>Was this chapter helpful?</span>
+                              <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
+                              <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -526,6 +627,9 @@ function ChaptersPanel() {
         .cloud-c { top: 62%; left: -20%; animation: driftA 75s linear infinite reverse; }
         @keyframes driftA { from { transform: translateX(0); } to { transform: translateX(140vw); } }
         @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
+        .boarding-toast { position: relative; z-index: 2; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; }
+        @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+        .trivia-card { position: relative; z-index: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; color: var(--muted); }
         .blackbox { position: relative; z-index: 1; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 14px; padding: 14px 16px; }
         .blackbox-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--good); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .blackbox-grid { display: flex; gap: 22px; }
@@ -546,8 +650,14 @@ function ChaptersPanel() {
         .chapter-meta { font-size: 11.5px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
         .chapter-chevron { color: var(--muted2); transition: transform 0.2s ease; }
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
-        .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); }
+        .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); min-height: 60px; }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
+        .preflight { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px 0; }
+        .preflight-item { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--good); opacity: 0; animation: checklistIn 0.3s ease forwards; }
+        .preflight-item:nth-child(1) { animation-delay: 0.1s; }
+        .preflight-item:nth-child(2) { animation-delay: 0.5s; }
+        .preflight-item:nth-child(3) { animation-delay: 0.9s; }
+        @keyframes checklistIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
         .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
         .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
@@ -565,6 +675,7 @@ function DiscussPanel() {
   const [comments, setComments] = useState(SEED_COMMENTS.ch2);
   const [text, setText] = useState("");
   const [pendingImage, setPendingImage] = useState(null);
+  const [reacted, setReacted] = useState(new Set());
   const fileRef = useRef(null);
 
   const onFileChange = (e) => {
@@ -578,10 +689,23 @@ function DiscussPanel() {
 
   const post = () => {
     if (!text.trim() && !pendingImage) return;
-    setComments((c) => [...c, { id: `c${c.length + 1}`, user: "You", text, image: pendingImage, time: "now" }]);
+    setComments((c) => [...c, { id: `c${c.length + 1}`, user: "You", text, image: pendingImage, time: "now", reactions: { thumbsUp: 0, heart: 0 } }]);
     setText("");
     setPendingImage(null);
   };
+
+  const toggleReaction = (commentId, type) => {
+    const key = `${commentId}-${type}`;
+    const already = reacted.has(key);
+    setComments((cs) => cs.map((c) => (c.id === commentId ? { ...c, reactions: { ...c.reactions, [type]: c.reactions[type] + (already ? -1 : 1) } } : c)));
+    setReacted((r) => {
+      const next = new Set(r);
+      already ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const myPosts = comments.filter((c) => c.user === "You").length;
 
   return (
     <div className="discuss">
@@ -589,6 +713,9 @@ function DiscussPanel() {
         <Placard>JT.02 · Combustion Chamber</Placard>
         <span className="discuss-count">{comments.length} threads</span>
       </div>
+      {myPosts > 0 && (
+        <div className="leaderboard">🏆 You're the most active flyer today — {myPosts} post{myPosts === 1 ? "" : "s"} and counting.</div>
+      )}
       <div className="discuss-list">
         {comments.map((c) => (
           <div key={c.id} className="discuss-item">
@@ -597,6 +724,14 @@ function DiscussPanel() {
               <div className="discuss-meta"><strong>{c.user}</strong><span>{c.time}</span></div>
               {c.text && <p>{c.text}</p>}
               {c.image && <img src={c.image} alt="attachment" className="discuss-img" />}
+              <div className="discuss-reactions">
+                <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => toggleReaction(c.id, "thumbsUp")}>
+                  <ThumbsUp size={12} /> {c.reactions?.thumbsUp || 0}
+                </button>
+                <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => toggleReaction(c.id, "heart")}>
+                  <Heart size={12} /> {c.reactions?.heart || 0}
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -616,12 +751,13 @@ function DiscussPanel() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && post()}
         />
-        <button className="discuss-send" onClick={post} aria-label="Post"><Boeing747Icon size={18} style={{ transform: "rotate(45deg)" }} /></button>
+        <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
       </div>
       <style>{`
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
-        .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 16px; max-width: 640px; width: 100%; flex-shrink: 0; }
+        .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 10px; max-width: 640px; width: 100%; flex-shrink: 0; }
         .discuss-count { font-size: 12px; color: var(--muted); }
+        .leaderboard { max-width: 640px; margin: 0 auto 12px; width: 100%; font-size: 12px; color: var(--muted); background: var(--panel-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; flex-shrink: 0; }
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
@@ -629,6 +765,10 @@ function DiscussPanel() {
         .discuss-meta span { font-size: 11px; color: var(--muted2); }
         .discuss-item p { margin: 0; font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
         .discuss-img { display: block; max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; border: 1px solid var(--border); }
+        .discuss-reactions { display: flex; gap: 6px; margin-top: 6px; }
+        .discuss-reactions button { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
+        .discuss-reactions button:hover { border-color: var(--accent); color: var(--accent); }
+        .discuss-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .discuss-preview { position: relative; max-width: 640px; margin: 8px auto 0; width: fit-content; }
         .discuss-preview img { max-height: 90px; border-radius: 10px; border: 1px solid var(--border); display: block; }
         .discuss-preview button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -702,8 +842,11 @@ export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
+  const [livery, setLivery] = useState(() => loadJSON("pw-livery", "blue"));
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
+  const [paToast, setPaToast] = useState(null);
+  const [scrollPct, setScrollPct] = useState(0);
   const [ticket] = useState(() => ({
     seat: `${Math.ceil(Math.random() * 30)}${["A", "B", "C", "D", "E", "F"][Math.floor(Math.random() * 6)]}`,
     gate: String.fromCharCode(65 + Math.floor(Math.random() * 6)) + (Math.floor(Math.random() * 20) + 1),
@@ -712,6 +855,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    saveJSON("pw-livery", livery);
+  }, [livery]);
 
   useEffect(() => {
     const today = new Date().toDateString();
@@ -726,14 +873,31 @@ export default function App() {
     setStreak(current);
   }, []);
 
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement;
+      const pct = h.scrollHeight > h.clientHeight ? h.scrollTop / (h.scrollHeight - h.clientHeight) : 0;
+      setScrollPct(Math.min(1, Math.max(0, pct)));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+    setPaToast("CABIN CREW, DOORS TO MANUAL");
+    setTimeout(() => setPaToast(null), 1600);
+  };
+
   return (
-    <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
+    <div className={`app ${theme === "light" ? "theme-light" : ""} livery-${livery}`}>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
             <div className="boarding-pass-top">
               <span className="boarding-pass-airline">PROJECT WINGMAN AIRWAYS</span>
-              <ConcordeIcon size={22} style={{ transform: "rotate(45deg)" }} />
+              <Plane size={22} style={{ transform: "rotate(45deg)" }} />
             </div>
             <div className="boarding-pass-route">AVBANK <ChevronRight size={14} /> JT.01</div>
             <div className="boarding-pass-row">
@@ -745,20 +909,33 @@ export default function App() {
           </div>
         </div>
       )}
+      {paToast && <div className="pa-toast">{paToast}</div>}
       <header className="topbar">
         <div className="brand">
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
         </div>
         <div className="topbar-right">
-          {streak > 0 && (
-            <span className="streak-badge" title="Consecutive days active">
-              <span className="contrail" style={{ width: Math.min(streak, 10) * 3 }} />
-              <ConcordeIcon size={11} style={{ transform: "rotate(90deg)" }} />
-              <span className="streak-num">{streak}</span>
-            </span>
-          )}
-          <button className="theme-toggle" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label="Toggle theme">
+          <span className="streak-badge" title={streak > 0 ? "Consecutive days active" : "No active streak"}>
+            <WindsockIcon size={20} active={streak > 0} />
+            <span className="streak-num">{streak}</span>
+          </span>
+          <div className="livery-picker" role="group" aria-label="Choose accent color">
+            {[
+              { id: "blue", color: "#3D6FD1" },
+              { id: "red", color: "#E5484D" },
+              { id: "green", color: "#2FA84F" },
+            ].map((l) => (
+              <button
+                key={l.id}
+                className={`livery-swatch ${livery === l.id ? "is-active" : ""}`}
+                style={{ background: l.color }}
+                onClick={() => setLivery(l.id)}
+                aria-label={`${l.id} livery`}
+              />
+            ))}
+          </div>
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
           </button>
           <div className="module-select">
@@ -793,11 +970,20 @@ export default function App() {
         ))}
       </nav>
 
-      <main className={`content ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
+      <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
         {tab === "chapters" && <ChaptersPanel />}
         {tab === "discuss" && <DiscussPanel />}
         {tab === "pdf" && <PdfPanel />}
       </main>
+
+      <div className="flight-progress" aria-hidden="true">
+        <div className="runway-lights">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <span key={i} className={`runway-dot ${i < Math.floor(scrollPct * 12) ? "is-lit" : ""}`} />
+          ))}
+        </div>
+        <span className="distance-flown">{Math.round(scrollPct * 2400)} nm flown</span>
+      </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -808,7 +994,7 @@ export default function App() {
           --border-soft: rgba(111,160,240,0.12); --text: #E8EDF2; --text-soft: #b9c4cf; --muted: #8291AC; --muted2: #66768F;
           --accent: #6FA0F0; --accent-hover: #8FB8F5; --accent-soft: rgba(111,160,240,0.10); --on-accent: #0E1830;
           --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
-          font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 40px; transition: background 0.2s ease, color 0.2s ease;
+          font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; transition: background 0.2s ease, color 0.2s ease;
         }
         .app.theme-light {
           --bg: #F4F6FB; --panel: #FFFFFF; --panel-alt: #F0F3F9; --border: #D7DEEA; --border-hover: #B9C6DC;
@@ -816,12 +1002,19 @@ export default function App() {
           --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
           --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
         }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); }
+        .app.livery-red { --accent: #E5484D; --accent-hover: #F0777B; --accent-soft: rgba(229,72,77,0.12); }
+        .app.livery-green { --accent: #2FA84F; --accent-hover: #4BC96C; --accent-soft: rgba(47,168,79,0.12); }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
-        .topbar-right { display: flex; align-items: center; gap: 10px; }
-        .streak-badge { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--border-hover); padding: 5px 9px; border-radius: 10px; }
-        .contrail { height: 2px; border-radius: 2px; background: linear-gradient(to right, transparent, var(--accent)); }
+        .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .streak-badge { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text); background: var(--panel); border: 1px solid var(--border); padding: 5px 9px; border-radius: 10px; }
         .streak-num { min-width: 10px; }
+        .windsock.is-active { animation: sockWave 1.8s ease-in-out infinite; transform-origin: left center; }
+        .windsock.is-idle { transform: rotate(6deg); }
+        @keyframes sockWave { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+        .livery-picker { display: flex; gap: 5px; align-items: center; }
+        .livery-swatch { width: 16px; height: 16px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+        .livery-swatch.is-active { border-color: var(--text); }
         .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--muted2); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
         .module-select { display: flex; gap: 6px; }
@@ -836,6 +1029,8 @@ export default function App() {
         .tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; }
         .content--full { max-width: none; padding: 0 22px; }
+        .content-taxi { animation: taxiIn 0.35s ease; }
+        @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background: var(--accent-hover); }
         .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; animation: boardingFade 1.8s ease forwards; }
@@ -852,8 +1047,17 @@ export default function App() {
           75% { opacity: 1; }
           100% { opacity: 0; visibility: hidden; }
         }
+        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
+        @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+        .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
+        .runway-lights { display: flex; gap: 4px; }
+        .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+        .runway-dot.is-lit { background: #F2C230; box-shadow: 0 0 5px rgba(242,194,48,0.8); }
+        .distance-flown { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
+          .content-taxi { animation: none; }
+          .windsock.is-active { animation: none; }
         }
       `}</style>
     </div>
