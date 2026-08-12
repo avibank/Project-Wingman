@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, Plane, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Flame, Star, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Flame, Star, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 
 // ---- Small localStorage helpers (safe if run outside a browser) ----
 function loadJSON(key, fallback) {
@@ -195,6 +195,15 @@ const NAV = [
   { id: "discuss", label: "Discussion", icon: MessageSquare },
   { id: "pdf", label: "Library", icon: FileText },
 ];
+
+// Custom delta-wing "Concorde" silhouette, used for the discussion send button
+function ConcordeIcon({ size = 17, style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style}>
+      <path d="M12 1 L13 10 L22 19 L13 17 L13 22 L11 22 L11 17 L2 19 L11 10 Z" />
+    </svg>
+  );
+}
 
 function Placard({ children }) {
   return (
@@ -540,7 +549,7 @@ function DiscussPanel() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && post()}
         />
-        <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={17} style={{ transform: "rotate(45deg)" }} /></button>
+        <button className="discuss-send" onClick={post} aria-label="Post"><ConcordeIcon size={18} style={{ transform: "rotate(45deg)" }} /></button>
       </div>
       <style>{`
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
