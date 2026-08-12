@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check, Plane, Heart } from "lucide-react";
+import { Play, FileText, MessageSquare, ClipboardCheck, Gauge, ChevronRight, Plus, CheckCircle2, XCircle, Lock, X, Sun, Moon, Search, Star, ThumbsUp, ThumbsDown, Check, Plane, Heart, Award } from "lucide-react";
 
 // ---- Small localStorage helpers (safe if run outside a browser) ----
 function loadJSON(key, fallback) {
@@ -15,6 +15,40 @@ function saveJSON(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     /* ignore */
+  }
+}
+
+// ---- Gamification helpers ----
+function rankForXP(xp) {
+  if (xp >= 600) return { stripes: 4, gold: true };
+  if (xp >= 300) return { stripes: 3, gold: false };
+  if (xp >= 100) return { stripes: 2, gold: false };
+  return { stripes: 1, gold: false };
+}
+
+function tierColor(pct) {
+  if (pct >= 90) return "#D4AF37"; // gold
+  if (pct >= 70) return "#B9C2CC"; // silver
+  if (pct >= 50) return "#B5762C"; // bronze
+  return "var(--muted2)";
+}
+
+// Called on every answered question — awards XP, tracks totals and the daily goal
+function recordAnswer(correct) {
+  const today = new Date().toDateString();
+  const total = parseInt(localStorage.getItem("pw-total-answered") || "0", 10) + 1;
+  localStorage.setItem("pw-total-answered", String(total));
+
+  if (localStorage.getItem("pw-daily-date") !== today) {
+    localStorage.setItem("pw-daily-date", today);
+    localStorage.setItem("pw-daily-count", "0");
+  }
+  const dailyCount = parseInt(localStorage.getItem("pw-daily-count") || "0", 10) + 1;
+  localStorage.setItem("pw-daily-count", String(dailyCount));
+
+  if (correct) {
+    const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10) + 5;
+    localStorage.setItem("pw-xp", String(xp));
   }
 }
 
@@ -224,6 +258,27 @@ function WindsockIcon({ size = 20, active }) {
   );
 }
 
+// Rank shown as epaulette-style stripes (and a star at the top rank) instead of a text label
+function RankInsignia({ stripes = 1, gold = false, size = 14 }) {
+  return (
+    <span className="rank-insignia">
+      <span className="rank-stripes">
+        {Array.from({ length: stripes }).map((_, i) => (
+          <span key={i} className={`rank-stripe ${gold ? "is-gold" : ""}`} />
+        ))}
+      </span>
+      {gold && <Award size={size} className="rank-star" fill="currentColor" />}
+      <style>{`
+        .rank-insignia { display: inline-flex; align-items: center; gap: 4px; }
+        .rank-stripes { display: inline-flex; flex-direction: column; gap: 2px; }
+        .rank-stripe { display: block; width: 16px; height: 3px; background: var(--accent); border-radius: 1px; }
+        .rank-stripe.is-gold { background: #D4AF37; }
+        .rank-star { color: #D4AF37; }
+      `}</style>
+    </span>
+  );
+}
+
 function Placard({ children }) {
   return (
     <span className="placard">
@@ -296,16 +351,21 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   const [score, setScore] = useState({ correct: 0, seen: 0 });
   const [done, setDone] = useState(false);
   const [flashIdx, setFlashIdx] = useState(null);
+  const [wrongQuestions, setWrongQuestions] = useState([]);
   const q = questions[i];
 
   const choose = (idx) => {
     if (picked !== null) return;
     setPicked(idx);
-    if (idx === q.answer) {
+    const correct = idx === q.answer;
+    if (correct) {
       setFlashIdx(idx);
       setTimeout(() => setFlashIdx(null), 500);
+    } else {
+      setWrongQuestions((w) => [...w, q]);
     }
-    setScore((s) => ({ correct: s.correct + (idx === q.answer ? 1 : 0), seen: s.seen + 1 }));
+    recordAnswer(correct);
+    setScore((s) => ({ correct: s.correct + (correct ? 1 : 0), seen: s.seen + 1 }));
   };
 
   const next = () => {
@@ -313,8 +373,9 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
       setI(i + 1);
       setPicked(null);
     } else {
+      const pct = Math.round((score.correct / questions.length) * 100);
       setDone(true);
-      onComplete?.();
+      onComplete?.(pct, wrongQuestions);
     }
   };
 
@@ -322,32 +383,26 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     setI(0);
     setPicked(null);
     setScore({ correct: 0, seen: 0 });
+    setWrongQuestions([]);
     setDone(false);
   };
 
   if (done) {
     const pct = Math.round((score.correct / questions.length) * 100);
     const isRough = pct < 50;
-    const isPerfect = pct === 100;
     const statusLine =
       pct >= 90 ? `Cruising at ${pct}%` :
       pct >= 70 ? `Steady altitude — ${pct}%` :
       pct >= 50 ? `Light turbulence — ${pct}%` :
       `Holding pattern — ${pct}%`;
+
+    // Fake local leaderboard — a handful of seeded scores, plus your own, ranked by score
+    const board = [78, 92, 61, 45, pct]
+      .map((p, idx) => ({ p, isYou: idx === 4 }))
+      .sort((a, b) => b.p - a.p);
+
     return (
       <div className="exam-done">
-        {isPerfect && (
-          <div className="confetti" aria-hidden="true">
-            {Array.from({ length: 10 }).map((_, idx) => (
-              <Plane
-                key={idx}
-                size={14}
-                className="confetti-plane"
-                style={{ left: `${idx * 10 + Math.random() * 5}%`, animationDelay: `${idx * 0.08}s` }}
-              />
-            ))}
-          </div>
-        )}
         <Dial value={pct} size={100} />
         <div className="landing-strip">
           <Plane size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
@@ -355,35 +410,52 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         </div>
         <h3>{statusLine}</h3>
         <p>{score.correct} of {questions.length} correct — {chapterTitle}</p>
+        <div className="leaderboard-mini">
+          <div className="leaderboard-mini-head">This chapter's leaderboard</div>
+          {board.map((row, idx) => {
+            const r = rankForXP(row.p * 6);
+            return (
+              <div key={idx} className={`leaderboard-row ${row.isYou ? "is-you" : ""}`}>
+                <span className="leaderboard-pos">{idx + 1}</span>
+                <RankInsignia stripes={r.stripes} gold={r.gold} size={12} />
+                <span className="leaderboard-pct">{row.p}%</span>
+                {row.isYou && <span className="leaderboard-you">YOU</span>}
+              </div>
+            );
+          })}
+        </div>
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
           .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
           .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: var(--text); margin: 6px 0 0; font-size: 16px; }
           .exam-done p { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
-          .landing-strip { position: relative; height: 34px; width: 100%; max-width: 220px; margin: 4px 0; }
-          .runway { position: absolute; left: 0; right: 0; bottom: 6px; height: 2px; background: var(--border); }
-          .landing-plane { position: absolute; bottom: 8px; color: var(--accent); }
-          .landing-plane.is-smooth { animation: landSmooth 1.4s ease-out forwards; }
-          .landing-plane.is-rough { animation: landRough 1.6s ease-out forwards; }
+          .landing-strip { position: relative; height: 50px; width: 100%; max-width: 220px; margin: 4px 0; }
+          .runway { position: absolute; left: 0; right: 0; bottom: 8px; height: 2px; background: var(--border); }
+          .landing-plane { position: absolute; color: var(--accent); }
+          .landing-plane.is-smooth { animation: landSmooth 1.6s ease-out forwards; }
+          .landing-plane.is-rough { animation: landRough 1.8s ease-out forwards; }
           @keyframes landSmooth {
-            0% { left: -10%; bottom: 26px; opacity: 0; transform: rotate(20deg); }
-            70% { opacity: 1; }
-            100% { left: 85%; bottom: 8px; transform: rotate(0deg); opacity: 1; }
+            0% { left: -10%; top: -6px; opacity: 0; transform: rotate(-14deg); }
+            20% { opacity: 1; }
+            75% { left: 62%; top: 22px; transform: rotate(-5deg); }
+            100% { left: 85%; top: 34px; transform: rotate(0deg); opacity: 1; }
           }
           @keyframes landRough {
-            0% { left: -10%; bottom: 26px; opacity: 0; transform: rotate(25deg); }
-            40% { bottom: 4px; }
-            55% { bottom: 14px; }
-            70% { bottom: 2px; }
-            85% { bottom: 10px; }
-            100% { left: 85%; bottom: 6px; transform: rotate(-5deg); opacity: 1; }
+            0% { left: -10%; top: -6px; opacity: 0; transform: rotate(-16deg); }
+            20% { opacity: 1; }
+            60% { left: 55%; top: 24px; transform: rotate(-8deg); }
+            72% { top: 34px; }
+            80% { top: 14px; }
+            90% { top: 30px; }
+            100% { left: 85%; top: 34px; transform: rotate(-2deg); opacity: 1; }
           }
-          .confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-          .confetti-plane { position: absolute; top: -20px; color: var(--accent); opacity: 0.9; animation: confettiFall 1.6s ease-in forwards; }
-          @keyframes confettiFall {
-            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(220px) rotate(340deg); opacity: 0; }
-          }
+          .leaderboard-mini { width: 100%; max-width: 260px; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-top: 4px; }
+          .leaderboard-mini-head { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
+          .leaderboard-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12.5px; color: var(--muted); }
+          .leaderboard-row.is-you { color: var(--text); font-weight: 600; }
+          .leaderboard-pos { width: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+          .leaderboard-pct { margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+          .leaderboard-you { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 4px; }
         `}</style>
       </div>
     );
@@ -468,14 +540,51 @@ function ChaptersPanel() {
   const [seen, setSeen] = useState(new Set());
   const [checklistId, setChecklistId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [bestScores, setBestScores] = useState(() => loadJSON("pw-best-scores", {}));
+  const [badges, setBadges] = useState(() => new Set(loadJSON("pw-badges", [])));
+  const [reviewQueue, setReviewQueue] = useState(() => loadJSON("pw-review", []));
+  const [reviewing, setReviewing] = useState(false);
+  const [statsTick, setStatsTick] = useState(0); // bump to re-read localStorage-backed stats
 
-  const markComplete = (id) => {
+  const markComplete = (id, pct, wrongQuestions) => {
     setCompleted((prev) => {
       const next = new Set(prev);
       next.add(id);
       saveJSON("pw-completed", [...next]);
       return next;
     });
+
+    setBestScores((prev) => {
+      const next = { ...prev, [id]: Math.max(prev[id] || 0, pct) };
+      saveJSON("pw-best-scores", next);
+      return next;
+    });
+
+    const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10) + 20;
+    localStorage.setItem("pw-xp", String(xp));
+
+    if (wrongQuestions?.length) {
+      const due = new Date(Date.now() + 86400000).toDateString();
+      setReviewQueue((prev) => {
+        const existingIds = new Set(prev.map((r) => r.id));
+        const additions = wrongQuestions.filter((wq) => !existingIds.has(wq.id)).map((wq) => ({ ...wq, due }));
+        const next = [...prev, ...additions];
+        saveJSON("pw-review", next);
+        return next;
+      });
+    }
+
+    const newBadges = new Set(badges);
+    if (pct === 100) newBadges.add("perfect");
+    const totalAnswered = parseInt(localStorage.getItem("pw-total-answered") || "0", 10);
+    if (totalAnswered >= 100) newBadges.add("century");
+    if (new Date().getHours() < 8) newBadges.add("early");
+    if (newBadges.size !== badges.size) {
+      setBadges(newBadges);
+      saveJSON("pw-badges", [...newBadges]);
+    }
+
+    setStatsTick((t) => t + 1);
   };
 
   const toggleBookmark = (qId) => {
@@ -493,6 +602,23 @@ function ChaptersPanel() {
       saveJSON("pw-feedback", next);
       return next;
     });
+  };
+
+  const startReview = () => setReviewing(true);
+
+  const finishReview = (pct, stillWrong) => {
+    const today = new Date().toDateString();
+    // Clear anything due today from the queue; anything missed again gets rescheduled
+    setReviewQueue((prev) => {
+      const dueIds = new Set(dueReview.map((q) => q.id));
+      const stillWrongIds = new Set(stillWrong.map((q) => q.id));
+      const kept = prev.filter((q) => !dueIds.has(q.id) || stillWrongIds.has(q.id));
+      const rescheduled = kept.map((q) => (stillWrongIds.has(q.id) ? { ...q, due: new Date(Date.now() + 86400000).toDateString() } : q));
+      saveJSON("pw-review", rescheduled);
+      return rescheduled;
+    });
+    setReviewing(false);
+    setStatsTick((t) => t + 1);
   };
 
   const openChapter = (ch) => {
@@ -518,6 +644,44 @@ function ChaptersPanel() {
   const streakVal = parseInt(localStorage.getItem("pw-streak") || "0", 10);
   const trivia = TRIVIA[Math.floor(Date.now() / 86400000) % TRIVIA.length];
 
+  // Gamification stats (re-read whenever statsTick changes, since they live in localStorage)
+  const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10);
+  const rank = rankForXP(xp);
+  const totalAnswered = parseInt(localStorage.getItem("pw-total-answered") || "0", 10);
+  const flightHours = (totalAnswered * 3 / 60).toFixed(1);
+  const today = new Date().toDateString();
+  const dailyCount = localStorage.getItem("pw-daily-date") === today ? parseInt(localStorage.getItem("pw-daily-count") || "0", 10) : 0;
+  const dailyGoal = 10;
+  const dueReview = reviewQueue.filter((q) => new Date(q.due) <= new Date());
+
+  const BADGE_INFO = {
+    perfect: { label: "Perfect Landing", hint: "Scored 100% on a chapter" },
+    century: { label: "Century Club", hint: "Answered 100 questions" },
+    early: { label: "Early Riser", hint: "Studied before 8am" },
+  };
+
+  if (reviewing) {
+    return (
+      <div className="chapters-wrap">
+        <div className="review-head">
+          <button className="review-back" onClick={() => setReviewing(false)}>← Back to chapters</button>
+          <span>Review Queue</span>
+        </div>
+        <ChapterQuiz
+          questions={dueReview}
+          chapterTitle="Review Queue"
+          onComplete={finishReview}
+          bookmarks={bookmarks}
+          onToggleBookmark={toggleBookmark}
+        />
+        <style>{`
+          .review-head { display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.06em; }
+          .review-back { background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 12px; }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="chapters-wrap">
       <div className="cloud-layer" aria-hidden="true">
@@ -526,6 +690,38 @@ function ChaptersPanel() {
         <span className="cloud cloud-c" />
       </div>
       {toast && <div className="boarding-toast">{toast}</div>}
+
+      <div className="flightlog">
+        <div className="flightlog-rank">
+          <RankInsignia stripes={rank.stripes} gold={rank.gold} size={16} />
+          <span>{xp} XP</span>
+        </div>
+        <div className="flightlog-goal">
+          <div className="flightlog-goal-label">
+            <span>Daily goal</span>
+            <span>{Math.min(dailyCount, dailyGoal)}/{dailyGoal}</span>
+          </div>
+          <div className="flightlog-goal-bar"><div className="flightlog-goal-fill" style={{ width: `${Math.min(100, (dailyCount / dailyGoal) * 100)}%` }} /></div>
+        </div>
+        <div className="flightlog-hours">✈ {flightHours} flight hrs</div>
+        {badges.size > 0 && (
+          <div className="trophy-case">
+            {[...badges].map((b) => (
+              <span key={b} className="trophy-badge" title={BADGE_INFO[b]?.hint}><Award size={12} /> {BADGE_INFO[b]?.label}</span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {dueReview.length > 0 && (
+        <div className="review-card">
+          <div>
+            <strong>{dueReview.length}</strong> question{dueReview.length === 1 ? "" : "s"} ready for review
+          </div>
+          <button className="btn-primary" onClick={startReview}>Start Review</button>
+        </div>
+      )}
+
       <div className="trivia-card">✈ Did you know: {trivia}</div>
       {allDone && (
         <div className="blackbox">
@@ -545,6 +741,7 @@ function ChaptersPanel() {
         {filtered.map((ch) => {
           const isOpen = openId === ch.id;
           const isDone = completed.has(ch.id);
+          const best = bestScores[ch.id];
           const fb = feedback[ch.id];
           const showChecklist = checklistId === ch.id;
           return (
@@ -553,7 +750,7 @@ function ChaptersPanel() {
                 <span className="chapter-code">{ch.code}</span>
                 <span className="chapter-title">{ch.title}</span>
                 {isDone && (
-                  <span className="chapter-done" title="Completed"><Check size={12} strokeWidth={3} /></span>
+                  <span className="chapter-done" style={{ background: tierColor(best) }} title={`Best score: ${best}%`}><Check size={12} strokeWidth={3} /></span>
                 )}
                 <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
                 <ChevronRight size={16} className="chapter-chevron" />
@@ -593,7 +790,7 @@ function ChaptersPanel() {
                           key={ch.id}
                           questions={ch.questions}
                           chapterTitle={ch.title}
-                          onComplete={() => markComplete(ch.id)}
+                          onComplete={(pct, wrongQuestions) => markComplete(ch.id, pct, wrongQuestions)}
                           bookmarks={bookmarks}
                           onToggleBookmark={toggleBookmark}
                         />
@@ -629,6 +826,17 @@ function ChaptersPanel() {
         @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
         .boarding-toast { position: relative; z-index: 2; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+        .flightlog { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
+        .flightlog-rank { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); }
+        .flightlog-goal { flex: 1; min-width: 140px; }
+        .flightlog-goal-label { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); margin-bottom: 4px; }
+        .flightlog-goal-bar { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; }
+        .flightlog-goal-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; }
+        .flightlog-hours { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); white-space: nowrap; }
+        .trophy-case { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+        .trophy-badge { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #D4AF37; border: 1px solid rgba(212,175,55,0.4); background: rgba(212,175,55,0.1); padding: 3px 8px; border-radius: 20px; }
+        .review-card { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: var(--text); }
+        .review-card .btn-primary { padding: 8px 14px; font-size: 12.5px; }
         .trivia-card { position: relative; z-index: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; color: var(--muted); }
         .blackbox { position: relative; z-index: 1; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 14px; padding: 14px 16px; }
         .blackbox-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--good); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
@@ -844,6 +1052,7 @@ export default function App() {
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [livery, setLivery] = useState(() => loadJSON("pw-livery", "blue"));
   const [streak, setStreak] = useState(0);
+  const [freezes, setFreezes] = useState(1);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
   const [scrollPct, setScrollPct] = useState(0);
@@ -864,13 +1073,26 @@ export default function App() {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem("pw-last-visit");
     let current = parseInt(localStorage.getItem("pw-streak") || "0", 10);
+    let freezeCount = parseInt(localStorage.getItem("pw-freezes") ?? "1", 10);
     if (lastVisit !== today) {
       const yesterday = new Date(Date.now() - 86400000).toDateString();
-      current = lastVisit === yesterday ? current + 1 : 1;
+      if (lastVisit === yesterday) {
+        current += 1;
+      } else if (lastVisit && freezeCount > 0) {
+        // A day was missed, but a streak freeze covers it
+        freezeCount -= 1;
+      } else {
+        current = 1;
+      }
+      if (current > 0 && current % 7 === 0) freezeCount = Math.min(1, freezeCount + 1);
       localStorage.setItem("pw-last-visit", today);
       localStorage.setItem("pw-streak", String(current));
+      localStorage.setItem("pw-freezes", String(freezeCount));
+      const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10) + 10;
+      localStorage.setItem("pw-xp", String(xp));
     }
     setStreak(current);
+    setFreezes(freezeCount);
   }, []);
 
   useEffect(() => {
@@ -889,6 +1111,13 @@ export default function App() {
     setPaToast("CABIN CREW, DOORS TO MANUAL");
     setTimeout(() => setPaToast(null), 1600);
   };
+
+  const totalAnswered = parseInt(localStorage.getItem("pw-total-answered") || "0", 10);
+  const LIVERIES = [
+    { id: "blue", color: "#3D6FD1", unlocked: true, hint: "Default livery" },
+    { id: "red", color: "#E5484D", unlocked: streak >= 2, hint: streak >= 2 ? "Unlocked" : "Unlocks at a 2-day streak" },
+    { id: "green", color: "#2FA84F", unlocked: totalAnswered >= 10, hint: totalAnswered >= 10 ? "Unlocked" : "Unlocks after answering 10 questions" },
+  ];
 
   return (
     <div className={`app ${theme === "light" ? "theme-light" : ""} livery-${livery}`}>
@@ -916,40 +1145,44 @@ export default function App() {
           <span>Project Wingman</span>
         </div>
         <div className="topbar-right">
-          <span className="streak-badge" title={streak > 0 ? "Consecutive days active" : "No active streak"}>
+          <span className="streak-badge" title={streak > 0 ? `Consecutive days active${freezes > 0 ? " · 1 streak freeze available" : ""}` : "No active streak"}>
             <WindsockIcon size={20} active={streak > 0} />
             <span className="streak-num">{streak}</span>
           </span>
           <div className="livery-picker" role="group" aria-label="Choose accent color">
-            {[
-              { id: "blue", color: "#3D6FD1" },
-              { id: "red", color: "#E5484D" },
-              { id: "green", color: "#2FA84F" },
-            ].map((l) => (
+            {LIVERIES.map((l) => (
               <button
                 key={l.id}
-                className={`livery-swatch ${livery === l.id ? "is-active" : ""}`}
-                style={{ background: l.color }}
-                onClick={() => setLivery(l.id)}
-                aria-label={`${l.id} livery`}
-              />
+                className={`livery-swatch ${livery === l.id ? "is-active" : ""} ${!l.unlocked ? "is-locked" : ""}`}
+                style={{ background: l.unlocked ? l.color : "var(--border)" }}
+                onClick={() => l.unlocked && setLivery(l.id)}
+                aria-label={`${l.id} livery — ${l.hint}`}
+                title={l.hint}
+              >
+                {!l.unlocked && <Lock size={8} />}
+              </button>
             ))}
           </div>
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
           </button>
           <div className="module-select">
-            {MODULES.map((m) => (
-              <button
-                key={m.code}
-                className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
-                onClick={() => m.status === "active" && setModule(m)}
-                disabled={m.status === "locked"}
-              >
-                {m.status === "locked" && <Lock size={11} />}
-                {m.code}
-              </button>
-            ))}
+            {MODULES.map((m) => {
+              const xpNow = parseInt(localStorage.getItem("pw-xp") || "0", 10);
+              const xpNeeded = 500;
+              return (
+                <button
+                  key={m.code}
+                  className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
+                  onClick={() => m.status === "active" && setModule(m)}
+                  disabled={m.status === "locked"}
+                  title={m.status === "locked" ? (xpNow >= xpNeeded ? "Content coming soon" : `${xpNeeded - xpNow} more XP to unlock`) : undefined}
+                >
+                  {m.status === "locked" && <Lock size={11} />}
+                  {m.code}
+                </button>
+              );
+            })}
           </div>
         </div>
       </header>
@@ -1013,8 +1246,9 @@ export default function App() {
         .windsock.is-idle { transform: rotate(6deg); }
         @keyframes sockWave { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
         .livery-picker { display: flex; gap: 5px; align-items: center; }
-        .livery-swatch { width: 16px; height: 16px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+        .livery-swatch { width: 16px; height: 16px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--muted2); }
         .livery-swatch.is-active { border-color: var(--text); }
+        .livery-swatch.is-locked { cursor: not-allowed; }
         .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--muted2); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
         .module-select { display: flex; gap: 6px; }
