@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Gauge, ChevronRight, Lock, Sun, Moon, Plane } from "lucide-react";
+import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
-import { WindsockIcon } from "./components/icons.jsx";
+import ProfileMenu from "./components/ProfileMenu.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 
@@ -11,6 +11,7 @@ export default function App() {
   const [tab, setTab] = useState("chapters");
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
+  const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
@@ -25,6 +26,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    saveJSON("pw-reduce-motion", reduceMotion);
+  }, [reduceMotion]);
 
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
@@ -86,7 +91,7 @@ export default function App() {
   };
 
   return (
-    <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
+    <div className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
@@ -118,13 +123,6 @@ export default function App() {
           <span>Project Wingman</span>
         </div>
         <div className="topbar-right">
-          <span className="streak-badge" title={streak > 0 ? "Consecutive days active" : "No active streak"}>
-            <WindsockIcon size={20} active={streak > 0} />
-            <span className="streak-num">{streak}</span>
-          </span>
-          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-            {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
-          </button>
           <div className="module-select">
             {MODULES.map((m) => (
               <button
@@ -139,6 +137,14 @@ export default function App() {
               </button>
             ))}
           </div>
+          <ProfileMenu
+            streak={streak}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            reduceMotion={reduceMotion}
+            onToggleReduceMotion={() => setReduceMotion((r) => !r)}
+            onResetProgress={resetProgress}
+          />
         </div>
       </header>
 
@@ -172,7 +178,6 @@ export default function App() {
             return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
           })}
         </div>
-        <button className="reset-progress" onClick={resetProgress}>Reset progress</button>
       </div>
 
       <style>{`
@@ -195,13 +200,6 @@ export default function App() {
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .streak-badge { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text); background: var(--panel); border: 1px solid var(--border); padding: 5px 9px; border-radius: 10px; }
-        .streak-num { min-width: 10px; }
-        .windsock.is-active { animation: sockWave 1.8s ease-in-out infinite; transform-origin: left center; }
-        .windsock.is-idle { transform: rotate(6deg); }
-        @keyframes sockWave { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
-        .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--muted2); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
         .module-select { display: flex; gap: 6px; }
         .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 11px; border-radius: 10px; cursor: pointer; }
         .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
@@ -242,14 +240,13 @@ export default function App() {
         .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
         .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
-        .reset-progress { background: transparent; border: none; color: var(--muted2); font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-        .reset-progress:hover { color: var(--accent); }
         .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 12px; text-align: center; padding: 8px 16px; }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
           .content-taxi { animation: none; }
-          .windsock.is-active { animation: none; }
         }
+        .app.reduce-motion .boarding-overlay { animation-duration: 0.4s; }
+        .app.reduce-motion .content-taxi { animation: none; }
       `}</style>
     </div>
   );
