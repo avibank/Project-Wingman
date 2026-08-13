@@ -38,19 +38,24 @@ function StreakMenu({ streak }) {
             <svg viewBox="0 0 220 110" className="streak-scene-bg">
               <defs>
                 <linearGradient id="streakSky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--accent)" stopOpacity={streak > 0 ? "0.4" : "0.15"} />
-                  <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.03" />
+                  <stop offset="0%" stopColor="#4FA6E8" />
+                  <stop offset="100%" stopColor="#BFE3FF" />
+                </linearGradient>
+                <linearGradient id="streakGrass" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#7ED957" />
+                  <stop offset="100%" stopColor="#4CAF50" />
                 </linearGradient>
               </defs>
               <rect x="0" y="0" width="220" height="110" fill="url(#streakSky)" />
-              <circle cx="180" cy="22" r="12" fill="var(--accent)" opacity={streak > 0 ? "0.3" : "0.12"} />
-              <path d="M0,82 Q55,64 110,80 T220,72 L220,110 L0,110 Z" fill="var(--good)" opacity={streak > 0 ? "0.45" : "0.2"} />
-              <g opacity={streak > 0 ? "0.55" : "0.3"} fill="var(--text)">
-                <rect x="172" y="48" width="7" height="30" />
-                <rect x="166" y="39" width="19" height="11" rx="2" />
-                <rect x="173" y="34" width="4" height="6" />
+              <g className="streak-clouds" fill="#FFFFFF">
+                <ellipse cx="40" cy="24" rx="18" ry="8" opacity="0.95" />
+                <ellipse cx="55" cy="20" rx="14" ry="7" opacity="0.95" />
+                <ellipse cx="150" cy="16" rx="16" ry="7" opacity="0.9" />
+                <ellipse cx="165" cy="20" rx="12" ry="6" opacity="0.9" />
               </g>
-              <line x1="58" y1="82" x2="58" y2="34" stroke="var(--muted2)" strokeWidth="2" />
+              <path d="M0,66 Q55,58 110,66 T220,64 L220,110 L0,110 Z" fill="url(#streakGrass)" />
+              <line x1="60" y1="80" x2="60" y2="32" stroke="#8A5A44" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="60" cy="32" r="2.5" fill="#8A5A44" />
             </svg>
             <div className="streak-scene-sock">
               <WindsockIcon size={44} active={streak > 0} />
@@ -82,7 +87,10 @@ function StreakMenu({ streak }) {
         @keyframes streakIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .streak-scene { position: relative; width: 100%; height: 110px; border-radius: 10px; overflow: hidden; background: var(--panel-alt); }
         .streak-scene-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
-        .streak-scene-sock { position: absolute; left: 38px; top: 6px; color: var(--accent); }
+        .streak-scene-sock { position: absolute; left: 40px; top: 4px; color: var(--accent); }
+        .streak-clouds { animation: cloudDrift 14s ease-in-out infinite alternate; }
+        @keyframes cloudDrift { from { transform: translateX(0); } to { transform: translateX(10px); } }
+        .app.reduce-motion .streak-clouds { animation: none; }
         .streak-stats { display: flex; justify-content: space-between; margin-top: 12px; gap: 6px; }
         .streak-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
         .streak-stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
