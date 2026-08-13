@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, SlidersHorizontal, Settings, ChevronRight } from "lucide-react";
+import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight } from "lucide-react";
 
 function ProfileMenu({ onNavigate }) {
   const [open, setOpen] = useState(false);
@@ -46,6 +46,11 @@ function ProfileMenu({ onNavigate }) {
           <button className="profile-row" onClick={() => go("account")}>
             <Settings size={15} />
             <span>Account Settings</span>
+            <ChevronRight size={14} className="profile-row-arrow" />
+          </button>
+          <button className="profile-row" onClick={() => go("features")}>
+            <FlaskConical size={15} />
+            <span>Features</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
         </div>
