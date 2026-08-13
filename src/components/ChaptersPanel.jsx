@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
+import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS } from "../data.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 
@@ -13,6 +14,7 @@ function ChaptersPanel() {
   const [seen, setSeen] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [loadedVideos, setLoadedVideos] = useState(new Set());
+  const [rightTab, setRightTab] = useState("quiz");
 
   const markComplete = (id) => {
     setCompleted((prev) => {
@@ -47,6 +49,7 @@ function ChaptersPanel() {
       return;
     }
     setOpenId(ch.id);
+    setRightTab("quiz");
     if (!seen.has(ch.id)) {
       setToast(`NOW BOARDING — ${ch.code}`);
       setSeen((s) => new Set(s).add(ch.id));
@@ -117,27 +120,41 @@ function ChaptersPanel() {
                       Trouble loading? Open on YouTube directly
                     </a>
                   )}
-                  <div>
-                    <div className="chapter-quiz-head">Practice questions for this chapter</div>
-                    <ChapterQuiz
-                      key={ch.id}
-                      questions={ch.questions}
-                      chapterTitle={ch.title}
-                      onComplete={() => markComplete(ch.id)}
-                      bookmarks={bookmarks}
-                      onToggleBookmark={toggleBookmark}
-                    />
-                    <div className="chapter-feedback">
-                      {fb ? (
-                        <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
-                      ) : (
-                        <>
-                          <span>Was this chapter helpful?</span>
-                          <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
-                          <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
-                        </>
-                      )}
+                  <div className="chapter-side">
+                    <div className="chapter-side-tabs">
+                      <button className={`chapter-side-tab ${rightTab === "quiz" ? "is-active" : ""}`} onClick={() => setRightTab("quiz")}>
+                        <ClipboardCheck size={13} /> Quiz
+                      </button>
+                      <button className={`chapter-side-tab ${rightTab === "comments" ? "is-active" : ""}`} onClick={() => setRightTab("comments")}>
+                        <MessageSquare size={13} /> Comments
+                      </button>
                     </div>
+
+                    {rightTab === "quiz" ? (
+                      <>
+                        <ChapterQuiz
+                          key={ch.id}
+                          questions={ch.questions}
+                          chapterTitle={ch.title}
+                          onComplete={() => markComplete(ch.id)}
+                          bookmarks={bookmarks}
+                          onToggleBookmark={toggleBookmark}
+                        />
+                        <div className="chapter-feedback">
+                          {fb ? (
+                            <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
+                          ) : (
+                            <>
+                              <span>Was this chapter helpful?</span>
+                              <button onClick={() => giveFeedback(ch.id, "up")} aria-label="Helpful"><ThumbsUp size={14} /></button>
+                              <button onClick={() => giveFeedback(ch.id, "down")} aria-label="Not helpful"><ThumbsDown size={14} /></button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <ChapterComments key={ch.id} chapterId={ch.id} />
+                    )}
                   </div>
                 </div>
               )}
@@ -183,7 +200,9 @@ function ChaptersPanel() {
         .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
         .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
-        .chapter-quiz-head { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin-bottom: 12px; }
+        .chapter-side-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: 10px; padding: 4px; margin-bottom: 14px; }
+        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 12px; padding: 7px; border-radius: 7px; cursor: pointer; }
+        .chapter-side-tab.is-active { background: var(--panel); color: var(--text); }
         .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--muted); }
         .chapter-feedback button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .chapter-feedback button:hover { border-color: var(--accent); color: var(--accent); }
