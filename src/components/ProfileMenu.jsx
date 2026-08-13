@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight } from "lucide-react";
+import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn } from "lucide-react";
 
-function ProfileMenu({ onNavigate }) {
+function ProfileMenu({ onNavigate, session }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -33,6 +33,12 @@ function ProfileMenu({ onNavigate }) {
       </button>
       {open && (
         <div className="profile-dropdown">
+          <button className="profile-row profile-row--auth" onClick={() => go("auth")}>
+            <LogIn size={15} />
+            <span className="profile-row-truncate">{session ? session.user.email : "Sign In"}</span>
+            <ChevronRight size={14} className="profile-row-arrow" />
+          </button>
+          <div className="profile-divider" />
           <button className="profile-row" onClick={() => go("personalize")}>
             <Palette size={15} />
             <span>Personalize</span>
@@ -64,6 +70,8 @@ function ProfileMenu({ onNavigate }) {
         .profile-row { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; color: var(--text); font-size: 13px; padding: 9px 8px; border-radius: 8px; cursor: pointer; text-align: left; }
         .profile-row:hover { background: var(--panel-alt); }
         .profile-row-arrow { margin-left: auto; color: var(--muted2); }
+        .profile-row-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-divider { height: 1px; background: var(--border-soft); margin: 6px 4px; }
       `}</style>
     </div>
   );
