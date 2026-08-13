@@ -4,11 +4,13 @@ import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
+import SettingsPage from "./components/SettingsPage.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 
 export default function App() {
   const [tab, setTab] = useState("chapters");
+  const [settingsPage, setSettingsPage] = useState(null);
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
@@ -137,38 +139,47 @@ export default function App() {
               </button>
             ))}
           </div>
-          <ProfileMenu
-            streak={streak}
+          <ProfileMenu streak={streak} onNavigate={setSettingsPage} />
+        </div>
+      </header>
+
+      {settingsPage ? (
+        <main className="content content-taxi">
+          <SettingsPage
+            page={settingsPage}
+            onBack={() => setSettingsPage(null)}
             theme={theme}
             onToggleTheme={toggleTheme}
             reduceMotion={reduceMotion}
             onToggleReduceMotion={() => setReduceMotion((r) => !r)}
             onResetProgress={resetProgress}
           />
-        </div>
-      </header>
+        </main>
+      ) : (
+        <>
+          <div className="module-banner">
+            <div>
+              <h1>{module.name}</h1>
+              <p>Aviation Fundamentals · {module.questions} questions in bank</p>
+            </div>
+          </div>
 
-      <div className="module-banner">
-        <div>
-          <h1>{module.name}</h1>
-          <p>Aviation Fundamentals · {module.questions} questions in bank</p>
-        </div>
-      </div>
+          <nav className="tabbar">
+            {NAV.map((n) => (
+              <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => switchTab(n.id)}>
+                <n.icon size={15} />
+                {n.label}
+              </button>
+            ))}
+          </nav>
 
-      <nav className="tabbar">
-        {NAV.map((n) => (
-          <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => switchTab(n.id)}>
-            <n.icon size={15} />
-            {n.label}
-          </button>
-        ))}
-      </nav>
-
-      <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
-        {tab === "chapters" && <ChaptersPanel />}
-        {tab === "discuss" && <DiscussPanel />}
-        {tab === "pdf" && <PdfPanel />}
-      </main>
+          <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
+            {tab === "chapters" && <ChaptersPanel />}
+            {tab === "discuss" && <DiscussPanel />}
+            {tab === "pdf" && <PdfPanel />}
+          </main>
+        </>
+      )}
 
       <div className="flight-progress">
         <div className="runway-lights" aria-hidden="true">
