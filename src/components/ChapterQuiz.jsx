@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 import Dial from "./Dial.jsx";
-import { RankInsignia } from "./icons.jsx";
-import { recordAnswer, rankForXP } from "../lib/gamification.js";
 
 function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleBookmark }) {
   const [i, setI] = useState(0);
@@ -10,7 +8,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
   const [score, setScore] = useState({ correct: 0, seen: 0 });
   const [done, setDone] = useState(false);
   const [flashIdx, setFlashIdx] = useState(null);
-  const [wrongQuestions, setWrongQuestions] = useState([]);
   const q = questions[i];
 
   const advance = (currentScore) => {
@@ -20,7 +17,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     } else {
       const pct = Math.round((currentScore.correct / questions.length) * 100);
       setDone(true);
-      onComplete?.(pct, wrongQuestions);
+      onComplete?.(pct);
     }
   };
 
@@ -33,10 +30,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
       setFlashIdx(idx);
       setTimeout(() => setFlashIdx(null), 500);
       setTimeout(() => advance(updatedScore), 900);
-    } else {
-      setWrongQuestions((w) => [...w, q]);
     }
-    recordAnswer(correct);
     setScore(updatedScore);
   };
 
@@ -62,7 +56,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     setI(0);
     setPicked(null);
     setScore({ correct: 0, seen: 0 });
-    setWrongQuestions([]);
     setDone(false);
   };
 
@@ -75,11 +68,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
       pct >= 50 ? `Light turbulence — ${pct}%` :
       `Holding pattern — ${pct}%`;
 
-    // Fake local leaderboard — a handful of seeded scores, plus your own, ranked by score
-    const board = [78, 92, 61, 45, pct]
-      .map((p, idx) => ({ p, isYou: idx === 4 }))
-      .sort((a, b) => b.p - a.p);
-
     return (
       <div className="exam-done">
         <Dial value={pct} size={100} />
@@ -89,20 +77,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         </div>
         <h3>{statusLine}</h3>
         <p>{score.correct} of {questions.length} correct — {chapterTitle}</p>
-        <div className="leaderboard-mini">
-          <div className="leaderboard-mini-head">This chapter's leaderboard</div>
-          {board.map((row, idx) => {
-            const r = rankForXP(row.p * 6);
-            return (
-              <div key={idx} className={`leaderboard-row ${row.isYou ? "is-you" : ""}`}>
-                <span className="leaderboard-pos">{idx + 1}</span>
-                <RankInsignia stripes={r.stripes} gold={r.gold} size={12} />
-                <span className="leaderboard-pct">{row.p}%</span>
-                {row.isYou && <span className="leaderboard-you">YOU</span>}
-              </div>
-            );
-          })}
-        </div>
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
           .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
@@ -128,13 +102,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
             90% { top: 30px; }
             100% { left: 85%; top: 34px; transform: rotate(-2deg); opacity: 1; }
           }
-          .leaderboard-mini { width: 100%; max-width: 260px; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-top: 4px; }
-          .leaderboard-mini-head { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 8px; }
-          .leaderboard-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12.5px; color: var(--muted); }
-          .leaderboard-row.is-you { color: var(--text); font-weight: 600; }
-          .leaderboard-pos { width: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-          .leaderboard-pct { margin-left: auto; font-family: 'JetBrains Mono', monospace; }
-          .leaderboard-you { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 4px; }
         `}</style>
       </div>
     );
