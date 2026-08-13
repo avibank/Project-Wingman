@@ -6,12 +6,15 @@ import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
+import AuthPage from "./components/AuthPage.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
+import { supabase } from "./lib/supabaseClient.js";
 
 export default function App() {
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
+  const [session, setSession] = useState(null);
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
@@ -43,6 +46,14 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-test-streak-value", testStreakValue);
   }, [testStreakValue]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
@@ -153,11 +164,15 @@ export default function App() {
             ))}
           </div>
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
-          <ProfileMenu onNavigate={setSettingsPage} />
+          <ProfileMenu onNavigate={setSettingsPage} session={session} />
         </div>
       </header>
 
-      {settingsPage ? (
+      {settingsPage === "auth" ? (
+        <main className="content content-taxi">
+          <AuthPage session={session} onBack={() => setSettingsPage(null)} />
+        </main>
+      ) : settingsPage ? (
         <main className="content content-taxi">
           <SettingsPage
             page={settingsPage}
