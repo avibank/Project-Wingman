@@ -160,13 +160,6 @@ const CHAPTERS = [
   },
 ];
 
-const SEED_COMMENTS = {
-  ch2: [
-    { id: "c1", user: "Yousef A.", text: "Why does fuel get added right after the compressor and not later in the flow?", time: "2h ago", reactions: { thumbsUp: 2, heart: 0 } },
-    { id: "c2", user: "Sara K.", text: "@Yousef because that's where pressure is highest — the diagram at 6:40 shows the flame stays anchored in the chamber, not further downstream.", time: "1h ago", reactions: { thumbsUp: 3, heart: 1 } },
-  ],
-};
-
 const PDFS = [
   { id: "p1", title: "JT.02 — Combustion Chamber: Study Notes", pages: 10, size: "980 KB" },
   { id: "p2", title: "JT.03 — Turbine Section: Summary Sheet", pages: 6, size: "520 KB" },
@@ -187,4 +180,4 @@ const TRIVIA = [
   "Some turbine blades spin at speeds exceeding 10,000 RPM.",
 ];
 
-export { MODULES, CHAPTERS, SEED_COMMENTS, PDFS, NAV, TRIVIA };
+export { MODULES, CHAPTERS, PDFS, NAV, TRIVIA };
