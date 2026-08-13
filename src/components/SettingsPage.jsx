@@ -1,10 +1,11 @@
-import { ChevronLeft, Sun, Moon, RotateCcw } from "lucide-react";
+import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical } from "lucide-react";
 
-function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress }) {
+function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress, testStreakInactive, onToggleTestStreakInactive }) {
   const TITLES = {
     personalize: "Personalize",
     accessibility: "Accessibility",
     account: "Account Settings",
+    features: "Features",
   };
 
   return (
@@ -52,6 +53,21 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
         </div>
       )}
 
+      {page === "features" && (
+        <div className="settings-block">
+          <p className="settings-note settings-note-top">
+            <FlaskConical size={13} /> Temporary testing area — lets you preview toggleable features in both states without needing real data. Not meant for the final version.
+          </p>
+          <div className="settings-row" onClick={onToggleTestStreakInactive}>
+            <span className={`settings-switch ${testStreakInactive ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+            <div>
+              <div className="settings-row-title">Preview inactive streak</div>
+              <div className="settings-row-sub">Shows the windsock and weekly propellers as dark/frozen, as if your streak were 0</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .settings-page { max-width: 560px; }
         .settings-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
@@ -65,6 +81,7 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
         .settings-row-title { font-size: 14px; color: var(--text); font-weight: 600; }
         .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
         .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
+        .settings-note-top { display: flex; align-items: flex-start; gap: 6px; padding: 4px 8px 12px; }
         .settings-switch { width: 34px; height: 20px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
         .settings-switch.is-on { background: var(--accent); }
         .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
