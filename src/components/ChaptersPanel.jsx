@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, Award } from "lucide-react";
+import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
-import { RankInsignia } from "./icons.jsx";
 import { CHAPTERS } from "../data.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
-import { rankForXP, tierColor, tierLabel } from "../lib/gamification.js";
 
 function ChaptersPanel() {
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
@@ -14,52 +12,15 @@ function ChaptersPanel() {
   const [feedback, setFeedback] = useState(() => loadJSON("pw-feedback", {}));
   const [seen, setSeen] = useState(new Set());
   const [toast, setToast] = useState(null);
-  const [bestScores, setBestScores] = useState(() => loadJSON("pw-best-scores", {}));
-  const [badges, setBadges] = useState(() => new Set(loadJSON("pw-badges", [])));
-  const [reviewQueue, setReviewQueue] = useState(() => loadJSON("pw-review", []));
-  const [reviewing, setReviewing] = useState(false);
-  const [statsTick, setStatsTick] = useState(0); // bump to re-read localStorage-backed stats
   const [loadedVideos, setLoadedVideos] = useState(new Set());
 
-  const markComplete = (id, pct, wrongQuestions) => {
+  const markComplete = (id) => {
     setCompleted((prev) => {
       const next = new Set(prev);
       next.add(id);
       saveJSON("pw-completed", [...next]);
       return next;
     });
-
-    setBestScores((prev) => {
-      const next = { ...prev, [id]: Math.max(prev[id] || 0, pct) };
-      saveJSON("pw-best-scores", next);
-      return next;
-    });
-
-    const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10) + 20;
-    localStorage.setItem("pw-xp", String(xp));
-
-    if (wrongQuestions?.length) {
-      const due = new Date(Date.now() + 86400000).toDateString();
-      setReviewQueue((prev) => {
-        const existingIds = new Set(prev.map((r) => r.id));
-        const additions = wrongQuestions.filter((wq) => !existingIds.has(wq.id)).map((wq) => ({ ...wq, due }));
-        const next = [...prev, ...additions];
-        saveJSON("pw-review", next);
-        return next;
-      });
-    }
-
-    const newBadges = new Set(badges);
-    if (pct === 100) newBadges.add("perfect");
-    const totalAnswered = parseInt(localStorage.getItem("pw-total-answered") || "0", 10);
-    if (totalAnswered >= 100) newBadges.add("century");
-    if (new Date().getHours() < 8) newBadges.add("early");
-    if (newBadges.size !== badges.size) {
-      setBadges(newBadges);
-      saveJSON("pw-badges", [...newBadges]);
-    }
-
-    setStatsTick((t) => t + 1);
   };
 
   const toggleBookmark = (qId) => {
@@ -79,23 +40,6 @@ function ChaptersPanel() {
     });
   };
 
-  const startReview = () => setReviewing(true);
-
-  const finishReview = (pct, stillWrong) => {
-    const today = new Date().toDateString();
-    // Clear anything due today from the queue; anything missed again gets rescheduled
-    setReviewQueue((prev) => {
-      const dueIds = new Set(dueReview.map((q) => q.id));
-      const stillWrongIds = new Set(stillWrong.map((q) => q.id));
-      const kept = prev.filter((q) => !dueIds.has(q.id) || stillWrongIds.has(q.id));
-      const rescheduled = kept.map((q) => (stillWrongIds.has(q.id) ? { ...q, due: new Date(Date.now() + 86400000).toDateString() } : q));
-      saveJSON("pw-review", rescheduled);
-      return rescheduled;
-    });
-    setReviewing(false);
-    setStatsTick((t) => t + 1);
-  };
-
   const openChapter = (ch) => {
     const isOpen = openId === ch.id;
     if (isOpen) {
@@ -111,46 +55,6 @@ function ChaptersPanel() {
   };
 
   const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
-  const allDone = completed.size === CHAPTERS.length;
-  const streakVal = parseInt(localStorage.getItem("pw-streak") || "0", 10);
-
-  // Gamification stats (re-read whenever statsTick changes, since they live in localStorage)
-  const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10);
-  const rank = rankForXP(xp);
-  const totalAnswered = parseInt(localStorage.getItem("pw-total-answered") || "0", 10);
-  const flightHours = (totalAnswered * 3 / 60).toFixed(1);
-  const today = new Date().toDateString();
-  const dailyCount = localStorage.getItem("pw-daily-date") === today ? parseInt(localStorage.getItem("pw-daily-count") || "0", 10) : 0;
-  const dailyGoal = 10;
-  const dueReview = reviewQueue.filter((q) => new Date(q.due) <= new Date());
-
-  const BADGE_INFO = {
-    perfect: { label: "Perfect Landing", hint: "Scored 100% on a chapter" },
-    century: { label: "Century Club", hint: "Answered 100 questions" },
-    early: { label: "Early Riser", hint: "Studied before 8am" },
-  };
-
-  if (reviewing) {
-    return (
-      <div className="chapters-wrap">
-        <div className="review-head">
-          <button className="review-back" onClick={() => setReviewing(false)}>← Back to chapters</button>
-          <span>Review Queue</span>
-        </div>
-        <ChapterQuiz
-          questions={dueReview}
-          chapterTitle="Review Queue"
-          onComplete={finishReview}
-          bookmarks={bookmarks}
-          onToggleBookmark={toggleBookmark}
-        />
-        <style>{`
-          .review-head { display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.06em; }
-          .review-back { background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 12px; }
-        `}</style>
-      </div>
-    );
-  }
 
   return (
     <div className="chapters-wrap">
@@ -161,47 +65,6 @@ function ChaptersPanel() {
       </div>
       {toast && <div className="boarding-toast">{toast}</div>}
 
-      <div className="flightlog">
-        <div className="flightlog-rank">
-          <RankInsignia stripes={rank.stripes} gold={rank.gold} size={16} />
-          <span>{xp} XP</span>
-        </div>
-        <div className="flightlog-goal">
-          <div className="flightlog-goal-label">
-            <span>Daily goal</span>
-            <span>{Math.min(dailyCount, dailyGoal)}/{dailyGoal}</span>
-          </div>
-          <div className="flightlog-goal-bar"><div className="flightlog-goal-fill" style={{ width: `${Math.min(100, (dailyCount / dailyGoal) * 100)}%` }} /></div>
-        </div>
-        <div className="flightlog-hours">✈ {flightHours} flight hrs</div>
-        {badges.size > 0 && (
-          <div className="trophy-case">
-            {[...badges].map((b) => (
-              <span key={b} className="trophy-badge" title={BADGE_INFO[b]?.hint}><Award size={12} /> {BADGE_INFO[b]?.label}</span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {dueReview.length > 0 && (
-        <div className="review-card">
-          <div>
-            <strong>{dueReview.length}</strong> question{dueReview.length === 1 ? "" : "s"} ready for review
-          </div>
-          <button className="btn-primary" onClick={startReview}>Start Review</button>
-        </div>
-      )}
-
-      {allDone && (
-        <div className="blackbox">
-          <div className="blackbox-title"><Check size={12} /> FLIGHT RECORDER — ALL CHAPTERS COMPLETE</div>
-          <div className="blackbox-grid">
-            <div><span>{CHAPTERS.length}</span><label>Chapters flown</label></div>
-            <div><span>{streakVal}</span><label>Day streak</label></div>
-            <div><span>{bookmarks.size}</span><label>Bookmarked Qs</label></div>
-          </div>
-        </div>
-      )}
       <div className="chapters-search">
         <Search size={15} />
         <input placeholder="Search chapters…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -213,7 +76,6 @@ function ChaptersPanel() {
         {filtered.map((ch) => {
           const isOpen = openId === ch.id;
           const isDone = completed.has(ch.id);
-          const best = bestScores[ch.id];
           const fb = feedback[ch.id];
           const videoLoaded = loadedVideos.has(ch.id);
           return (
@@ -222,7 +84,7 @@ function ChaptersPanel() {
                 <span className="chapter-code">{ch.code}</span>
                 <span className="chapter-title">{ch.title}</span>
                 {isDone && (
-                  <span className="chapter-done" style={{ background: tierColor(best) }} title={`${tierLabel(best)} — best score ${best}%`}><Check size={12} strokeWidth={3} /></span>
+                  <span className="chapter-done" title="Completed"><Check size={12} strokeWidth={3} /></span>
                 )}
                 <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
                 <ChevronRight size={16} className="chapter-chevron" />
@@ -261,7 +123,7 @@ function ChaptersPanel() {
                       key={ch.id}
                       questions={ch.questions}
                       chapterTitle={ch.title}
-                      onComplete={(pct, wrongQuestions) => markComplete(ch.id, pct, wrongQuestions)}
+                      onComplete={() => markComplete(ch.id)}
                       bookmarks={bookmarks}
                       onToggleBookmark={toggleBookmark}
                     />
@@ -295,24 +157,7 @@ function ChaptersPanel() {
         @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
         .boarding-toast { position: relative; z-index: 2; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
-        .flightlog { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
-        .flightlog-rank { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); }
-        .flightlog-goal { flex: 1; min-width: 140px; }
-        .flightlog-goal-label { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); margin-bottom: 4px; }
-        .flightlog-goal-bar { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; }
-        .flightlog-goal-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; }
-        .flightlog-hours { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); white-space: nowrap; }
-        .trophy-case { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
-        .trophy-badge { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #D4AF37; border: 1px solid rgba(212,175,55,0.4); background: rgba(212,175,55,0.1); padding: 3px 8px; border-radius: 20px; }
-        .review-card { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: var(--text); }
-        .review-card .btn-primary { padding: 8px 14px; font-size: 12.5px; }
         .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); padding: 4px 0; }
-        .blackbox { position: relative; z-index: 1; background: var(--panel-alt); border: 1px solid var(--border-hover); border-radius: 14px; padding: 14px 16px; }
-        .blackbox-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--good); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-        .blackbox-grid { display: flex; gap: 22px; }
-        .blackbox-grid div { display: flex; flex-direction: column; }
-        .blackbox-grid span { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); font-weight: 700; }
-        .blackbox-grid label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.04em; }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .chapters-search input:focus { outline: none; }
