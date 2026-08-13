@@ -15,6 +15,7 @@ export default function App() {
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
+  const [testStreakInactive, setTestStreakInactive] = useState(() => loadJSON("pw-test-streak-inactive", false));
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
@@ -33,6 +34,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-reduce-motion", reduceMotion);
   }, [reduceMotion]);
+
+  useEffect(() => {
+    saveJSON("pw-test-streak-inactive", testStreakInactive);
+  }, [testStreakInactive]);
 
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
@@ -142,7 +147,7 @@ export default function App() {
               </button>
             ))}
           </div>
-          <StreakMenu streak={streak} />
+          <StreakMenu streak={streak} forceInactive={testStreakInactive} />
           <ProfileMenu onNavigate={setSettingsPage} />
         </div>
       </header>
@@ -157,6 +162,8 @@ export default function App() {
             reduceMotion={reduceMotion}
             onToggleReduceMotion={() => setReduceMotion((r) => !r)}
             onResetProgress={resetProgress}
+            testStreakInactive={testStreakInactive}
+            onToggleTestStreakInactive={() => setTestStreakInactive((t) => !t)}
           />
         </main>
       ) : (
