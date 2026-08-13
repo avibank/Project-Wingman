@@ -1,6 +1,6 @@
-import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical } from "lucide-react";
+import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical, Minus, Plus } from "lucide-react";
 
-function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress, testStreakInactive, onToggleTestStreakInactive }) {
+function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
   const TITLES = {
     personalize: "Personalize",
     accessibility: "Accessibility",
@@ -58,13 +58,24 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
           <p className="settings-note settings-note-top">
             <FlaskConical size={13} /> Temporary testing area — lets you preview toggleable features in both states without needing real data. Not meant for the final version.
           </p>
-          <div className="settings-row" onClick={onToggleTestStreakInactive}>
-            <span className={`settings-switch ${testStreakInactive ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+          <div className="settings-row" onClick={onToggleTestStreakOverride}>
+            <span className={`settings-switch ${testStreakOverrideOn ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
             <div>
-              <div className="settings-row-title">Preview inactive streak</div>
-              <div className="settings-row-sub">Shows the windsock and weekly propellers as dark/frozen, as if your streak were 0</div>
+              <div className="settings-row-title">Override streak value</div>
+              <div className="settings-row-sub">Preview the windsock and weekly propellers at any streak count</div>
             </div>
           </div>
+          {testStreakOverrideOn && (
+            <div className="settings-stepper">
+              <button className="settings-stepper-btn" onClick={() => onChangeTestStreakValue(Math.max(0, testStreakValue - 1))} aria-label="Decrease">
+                <Minus size={14} />
+              </button>
+              <span className="settings-stepper-value">{testStreakValue}</span>
+              <button className="settings-stepper-btn" onClick={() => onChangeTestStreakValue(testStreakValue + 1)} aria-label="Increase">
+                <Plus size={14} />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -86,6 +97,10 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
         .settings-switch.is-on { background: var(--accent); }
         .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
         .settings-switch.is-on .settings-switch-knob { transform: translateX(14px); }
+        .settings-stepper { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 10px 14px 14px; }
+        .settings-stepper-btn { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .settings-stepper-value { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
       `}</style>
     </div>
   );
