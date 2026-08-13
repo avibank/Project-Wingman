@@ -4,6 +4,7 @@ import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
+import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
@@ -53,6 +54,8 @@ export default function App() {
       localStorage.setItem("pw-last-visit", today);
       localStorage.setItem("pw-streak", String(current));
     }
+    const longest = Math.max(parseInt(localStorage.getItem("pw-longest-streak") || "0", 10), current);
+    localStorage.setItem("pw-longest-streak", String(longest));
     setStreak(current);
   }, []);
 
@@ -139,7 +142,8 @@ export default function App() {
               </button>
             ))}
           </div>
-          <ProfileMenu streak={streak} onNavigate={setSettingsPage} />
+          <StreakMenu streak={streak} />
+          <ProfileMenu onNavigate={setSettingsPage} />
         </div>
       </header>
 
