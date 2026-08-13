@@ -12,7 +12,6 @@ export default function App() {
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [streak, setStreak] = useState(0);
-  const [freezes, setFreezes] = useState(1);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
   const [scrollPct, setScrollPct] = useState(0);
@@ -41,26 +40,13 @@ export default function App() {
     const today = new Date().toDateString();
     const lastVisit = localStorage.getItem("pw-last-visit");
     let current = parseInt(localStorage.getItem("pw-streak") || "0", 10);
-    let freezeCount = parseInt(localStorage.getItem("pw-freezes") ?? "1", 10);
     if (lastVisit !== today) {
       const yesterday = new Date(Date.now() - 86400000).toDateString();
-      if (lastVisit === yesterday) {
-        current += 1;
-      } else if (lastVisit && freezeCount > 0) {
-        // A day was missed, but a streak freeze covers it
-        freezeCount -= 1;
-      } else {
-        current = 1;
-      }
-      if (current > 0 && current % 7 === 0) freezeCount = Math.min(1, freezeCount + 1);
+      current = lastVisit === yesterday ? current + 1 : 1;
       localStorage.setItem("pw-last-visit", today);
       localStorage.setItem("pw-streak", String(current));
-      localStorage.setItem("pw-freezes", String(freezeCount));
-      const xp = parseInt(localStorage.getItem("pw-xp") || "0", 10) + 10;
-      localStorage.setItem("pw-xp", String(xp));
     }
     setStreak(current);
-    setFreezes(freezeCount);
   }, []);
 
   useEffect(() => {
@@ -132,7 +118,7 @@ export default function App() {
           <span>Project Wingman</span>
         </div>
         <div className="topbar-right">
-          <span className="streak-badge" title={streak > 0 ? `Consecutive days active${freezes > 0 ? " · 1 streak freeze available" : ""}` : "No active streak"}>
+          <span className="streak-badge" title={streak > 0 ? "Consecutive days active" : "No active streak"}>
             <WindsockIcon size={20} active={streak > 0} />
             <span className="streak-num">{streak}</span>
           </span>
@@ -140,22 +126,18 @@ export default function App() {
             {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
           </button>
           <div className="module-select">
-            {MODULES.map((m) => {
-              const xpNow = parseInt(localStorage.getItem("pw-xp") || "0", 10);
-              const xpNeeded = 500;
-              return (
-                <button
-                  key={m.code}
-                  className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
-                  onClick={() => m.status === "active" && setModule(m)}
-                  disabled={m.status === "locked"}
-                  title={m.status === "locked" ? (xpNow >= xpNeeded ? "Content coming soon" : `${xpNeeded - xpNow} more XP to unlock`) : undefined}
-                >
-                  {m.status === "locked" && <Lock size={11} />}
-                  {m.code}
-                </button>
-              );
-            })}
+            {MODULES.map((m) => (
+              <button
+                key={m.code}
+                className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
+                onClick={() => m.status === "active" && setModule(m)}
+                disabled={m.status === "locked"}
+                title={m.status === "locked" ? "Content coming soon" : undefined}
+              >
+                {m.status === "locked" && <Lock size={11} />}
+                {m.code}
+              </button>
+            ))}
           </div>
         </div>
       </header>
