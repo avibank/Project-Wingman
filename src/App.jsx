@@ -15,7 +15,8 @@ export default function App() {
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
-  const [testStreakInactive, setTestStreakInactive] = useState(() => loadJSON("pw-test-streak-inactive", false));
+  const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
+  const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
@@ -36,8 +37,12 @@ export default function App() {
   }, [reduceMotion]);
 
   useEffect(() => {
-    saveJSON("pw-test-streak-inactive", testStreakInactive);
-  }, [testStreakInactive]);
+    saveJSON("pw-test-streak-override-on", testStreakOverrideOn);
+  }, [testStreakOverrideOn]);
+
+  useEffect(() => {
+    saveJSON("pw-test-streak-value", testStreakValue);
+  }, [testStreakValue]);
 
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
@@ -147,7 +152,7 @@ export default function App() {
               </button>
             ))}
           </div>
-          <StreakMenu streak={streak} forceInactive={testStreakInactive} />
+          <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
           <ProfileMenu onNavigate={setSettingsPage} />
         </div>
       </header>
@@ -162,8 +167,10 @@ export default function App() {
             reduceMotion={reduceMotion}
             onToggleReduceMotion={() => setReduceMotion((r) => !r)}
             onResetProgress={resetProgress}
-            testStreakInactive={testStreakInactive}
-            onToggleTestStreakInactive={() => setTestStreakInactive((t) => !t)}
+            testStreakOverrideOn={testStreakOverrideOn}
+            onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
+            testStreakValue={testStreakValue}
+            onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
       ) : (
