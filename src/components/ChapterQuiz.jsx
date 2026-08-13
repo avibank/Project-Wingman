@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
-import Dial from "./Dial.jsx";
 
 function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleBookmark }) {
   const [i, setI] = useState(0);
@@ -63,20 +62,19 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     const pct = Math.round((score.correct / questions.length) * 100);
     const isRough = pct < 50;
     const statusLine =
-      pct >= 90 ? `Cruising at ${pct}%` :
-      pct >= 70 ? `Steady altitude — ${pct}%` :
-      pct >= 50 ? `Light turbulence — ${pct}%` :
-      `Holding pattern — ${pct}%`;
+      pct >= 90 ? "Cruising" :
+      pct >= 70 ? "Steady altitude" :
+      pct >= 50 ? "Light turbulence" :
+      "Holding pattern";
 
     return (
       <div className="exam-done">
-        <Dial value={pct} size={100} />
         <div className="landing-strip">
           <Plane size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
           <div className="runway" />
         </div>
         <h3>{statusLine}</h3>
-        <p>{score.correct} of {questions.length} correct — {chapterTitle}</p>
+        <p>{chapterTitle}</p>
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
           .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
@@ -121,7 +119,6 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
           >
             <Star size={15} fill={bookmarked ? "currentColor" : "none"} />
           </button>
-          <Dial value={score.seen ? Math.round((score.correct / score.seen) * 100) : 0} size={44} />
         </div>
       </div>
       <p className="exam-stem">{q.stem}</p>
