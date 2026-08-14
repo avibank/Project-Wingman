@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { ChevronLeft, Mail, Lock, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, Mail, Lock, LogOut, RotateCw } from "lucide-react";
 import { supabase } from "../lib/supabaseClient.js";
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 function AuthPage({ onBack, session }) {
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
@@ -8,12 +10,19 @@ function AuthPage({ onBack, session }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
+  const [pendingEmail, setPendingEmail] = useState(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setMessage(null);
     setLoading(true);
 
     if (mode === "signup") {
@@ -22,16 +31,40 @@ function AuthPage({ onBack, session }) {
       if (error) {
         setError(error.message);
       } else {
-        setMessage("Check your email to confirm your account before signing in.");
+        setPendingEmail(email);
+        setResendCooldown(RESEND_COOLDOWN_SECONDS);
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setLoading(false);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
+        setLoading(false);
         setError(error.message);
-      } else {
-        onBack();
+        return;
       }
+      // Safety check: Supabase should already block unconfirmed accounts from signing in,
+      // but we verify it ourselves too, in case that enforcement doesn't apply as expected.
+      if (!data.user?.email_confirmed_at) {
+        await supabase.auth.signOut();
+        setLoading(false);
+        setError("Please confirm your email before signing in — check your inbox for the confirmation link.");
+        return;
+      }
+      setLoading(false);
+      onBack();
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !pendingEmail) return;
+    setLoading(true);
+    setResendMessage(null);
+    const { error } = await supabase.auth.resend({ type: "signup", email: pendingEmail });
+    setLoading(false);
+    if (error) {
+      setResendMessage({ type: "error", text: error.message });
+    } else {
+      setResendMessage({ type: "success", text: "Confirmation email sent again." });
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     }
   };
 
@@ -59,6 +92,33 @@ function AuthPage({ onBack, session }) {
           </div>
           <button className="auth-signout-btn" onClick={handleSignOut} disabled={loading}>
             <LogOut size={15} /> {loading ? "Signing out…" : "Sign out"}
+          </button>
+        </div>
+        <style>{authStyles}</style>
+      </div>
+    );
+  }
+
+  if (pendingEmail) {
+    return (
+      <div className="auth-page">
+        <button className="auth-back" onClick={() => setPendingEmail(null)}>
+          <ChevronLeft size={16} /> Use a different email
+        </button>
+        <h1 className="auth-title">Check your email</h1>
+        <div className="auth-block auth-pending">
+          <div className="auth-avatar-icon auth-avatar-icon--lg"><Mail size={20} /></div>
+          <p className="auth-pending-text">
+            We sent a confirmation link to <strong>{pendingEmail}</strong>. Click it, then come back here and sign in.
+          </p>
+
+          {resendMessage && (
+            <p className={resendMessage.type === "error" ? "auth-error" : "auth-message"}>{resendMessage.text}</p>
+          )}
+
+          <button className="auth-resend-btn" onClick={handleResend} disabled={resendCooldown > 0 || loading}>
+            <RotateCw size={14} />
+            {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : loading ? "Sending…" : "Resend confirmation email"}
           </button>
         </div>
         <style>{authStyles}</style>
@@ -102,7 +162,6 @@ function AuthPage({ onBack, session }) {
         </label>
 
         {error && <p className="auth-error">{error}</p>}
-        {message && <p className="auth-message">{message}</p>}
 
         <button type="submit" className="btn-primary auth-submit" disabled={loading}>
           {loading ? "Please wait…" : mode === "signin" ? "Sign In" : "Create Account"}
@@ -134,6 +193,13 @@ const authStyles = `
   .auth-signed-in-email { font-size: 14px; color: var(--text); font-weight: 600; }
   .auth-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 13px; padding: 10px; border-radius: 10px; cursor: pointer; }
   .auth-signout-btn:hover { background: rgba(224,102,90,0.08); }
+  .auth-pending { align-items: center; text-align: center; }
+  .auth-avatar-icon--lg { width: 48px; height: 48px; border-radius: 12px; }
+  .auth-pending-text { font-size: 13.5px; color: var(--text-soft); line-height: 1.5; margin: 0; }
+  .auth-pending-text strong { color: var(--text); }
+  .auth-resend-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--text); font-size: 13px; padding: 10px 16px; border-radius: 10px; cursor: pointer; width: 100%; }
+  .auth-resend-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .auth-resend-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
 export default AuthPage;
