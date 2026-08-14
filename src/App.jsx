@@ -48,9 +48,17 @@ export default function App() {
   }, [testStreakValue]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const applyIfConfirmed = (nextSession) => {
+      if (nextSession && !nextSession.user?.email_confirmed_at) {
+        supabase.auth.signOut();
+        setSession(null);
+        return;
+      }
+      setSession(nextSession);
+    };
+    supabase.auth.getSession().then(({ data }) => applyIfConfirmed(data.session));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
+      applyIfConfirmed(newSession);
     });
     return () => listener.subscription.unsubscribe();
   }, []);
