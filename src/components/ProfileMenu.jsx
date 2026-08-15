@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 
-function ProfileMenu({ onNavigate, session }) {
+function ProfileMenu({ onNavigate }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     if (!open) return;
@@ -35,7 +37,7 @@ function ProfileMenu({ onNavigate, session }) {
         <div className="profile-dropdown">
           <button className="profile-row profile-row--auth" onClick={() => go("auth")}>
             <LogIn size={15} />
-            <span className="profile-row-truncate">{session ? session.user.email : "Sign In"}</span>
+            <span className="profile-row-truncate">{isSignedIn ? user.primaryEmailAddress?.emailAddress : "Sign In"}</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           <div className="profile-divider" />
