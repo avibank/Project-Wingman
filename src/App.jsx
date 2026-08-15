@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
@@ -9,12 +10,12 @@ import SettingsPage from "./components/SettingsPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
-import { supabase } from "./lib/supabaseClient.js";
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export default function App() {
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
-  const [session, setSession] = useState(null);
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
@@ -46,22 +47,6 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-test-streak-value", testStreakValue);
   }, [testStreakValue]);
-
-  useEffect(() => {
-    const applyIfConfirmed = (nextSession) => {
-      if (nextSession && !nextSession.user?.email_confirmed_at) {
-        supabase.auth.signOut();
-        setSession(null);
-        return;
-      }
-      setSession(nextSession);
-    };
-    supabase.auth.getSession().then(({ data }) => applyIfConfirmed(data.session));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      applyIfConfirmed(newSession);
-    });
-    return () => listener.subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
@@ -125,6 +110,7 @@ export default function App() {
   };
 
   return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
     <div className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
@@ -172,13 +158,13 @@ export default function App() {
             ))}
           </div>
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
-          <ProfileMenu onNavigate={setSettingsPage} session={session} />
+          <ProfileMenu onNavigate={setSettingsPage} />
         </div>
       </header>
 
       {settingsPage === "auth" ? (
         <main className="content content-taxi">
-          <AuthPage session={session} onBack={() => setSettingsPage(null)} />
+          <AuthPage onBack={() => setSettingsPage(null)} />
         </main>
       ) : settingsPage ? (
         <main className="content content-taxi">
@@ -301,5 +287,6 @@ export default function App() {
         .app.reduce-motion .content-taxi { animation: none; }
       `}</style>
     </div>
+    </ClerkProvider>
   );
 }
