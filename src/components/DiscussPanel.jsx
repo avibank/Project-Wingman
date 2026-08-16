@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plane, ThumbsUp, Heart } from "lucide-react";
+import { Plane, ThumbsUp, Heart, Trash2 } from "lucide-react";
 import { Placard } from "./icons.jsx";
-import { fetchComments, postComment, toggleReaction, getGuestName, setGuestName } from "../lib/comments.js";
+import { fetchComments, postComment, toggleReaction, deleteComment, getGuestName, setGuestName } from "../lib/comments.js";
+import { useIsAdmin } from "../lib/admin.js";
 
 function DiscussPanel() {
   const [comments, setComments] = useState([]);
@@ -10,6 +11,7 @@ function DiscussPanel() {
   const [name, setName] = useState("");
   const [nameSaved, setNameSaved] = useState(!!getGuestName());
   const [reacted, setReacted] = useState(new Set());
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     let active = true;
@@ -52,6 +54,12 @@ function DiscussPanel() {
     });
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this comment?")) return;
+    const ok = await deleteComment(id);
+    if (ok) setComments((cs) => cs.filter((c) => c.id !== id));
+  };
+
   const myName = getGuestName();
   const myPosts = myName ? comments.filter((c) => c.author === myName).length : 0;
 
@@ -73,7 +81,7 @@ function DiscussPanel() {
           comments.map((c) => (
             <div key={c.id} className="discuss-item">
               <div className="discuss-avatar">{c.author.charAt(0).toUpperCase()}</div>
-              <div>
+              <div className="discuss-item-body">
                 <div className="discuss-meta"><strong>{c.author}</strong></div>
                 {c.text && <p>{c.text}</p>}
                 <div className="discuss-reactions">
@@ -83,6 +91,11 @@ function DiscussPanel() {
                   <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")}>
                     <Heart size={12} /> {c.reactions?.heart || 0}
                   </button>
+                  {isAdmin && (
+                    <button className="discuss-delete" onClick={() => handleDelete(c.id)} aria-label="Delete comment">
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -121,6 +134,8 @@ function DiscussPanel() {
         .discuss-reactions button { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
         .discuss-reactions button:hover { border-color: var(--accent); color: var(--accent); }
         .discuss-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .discuss-delete { margin-left: auto; }
+        .discuss-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
         .discuss-name { max-width: 640px; margin: 0 auto; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--text); flex-shrink: 0; }
         .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 14px; color: var(--text); font-size: 13.5px; }
