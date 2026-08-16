@@ -140,7 +140,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                 </button>
               </div>
               <div className="profile-identity-label">{photoUploading ? "Uploading photo…" : "Signed in as"}</div>
-              <div className="profile-identity-name">{user.fullName || user.primaryEmailAddress?.emailAddress}</div>
+              <div className="profile-identity-name">{captionName}</div>
             </div>
             <button className="profile-signout-btn" onClick={() => signOut().then(onBack)}>
               <LogOut size={15} /> Sign out
