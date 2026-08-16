@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, FlaskConical, ChevronRight, LogIn, ShieldCheck } from "lucide-react";
+import { User, FlaskConical, ChevronRight, LogIn, ShieldCheck, TrendingUp, BookMarked } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useIsAdmin } from "../lib/admin.js";
 
@@ -41,6 +41,17 @@ function ProfileMenu({ onNavigate }) {
             <LogIn size={15} />
             <span className="profile-row-truncate">{isSignedIn ? user.primaryEmailAddress?.emailAddress : "Sign In"}</span>
             {isAdmin && <span className="profile-admin-badge"><ShieldCheck size={10} /> ADMIN</span>}
+            <ChevronRight size={14} className="profile-row-arrow" />
+          </button>
+          <div className="profile-divider" />
+          <button className="profile-row" onClick={() => go("progress")}>
+            <TrendingUp size={15} />
+            <span>Progress</span>
+            <ChevronRight size={14} className="profile-row-arrow" />
+          </button>
+          <button className="profile-row" onClick={() => go("bookmarks")}>
+            <BookMarked size={15} />
+            <span>Bookmarks</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           {isAdmin && (
