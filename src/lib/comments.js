@@ -10,10 +10,10 @@ export async function fetchComments(chapterId) {
   return data || [];
 }
 
-export async function postComment(chapterId, author, text) {
+export async function postComment(chapterId, author, text, userId = null) {
   const { data, error } = await supabase
     .from("comments")
-    .insert({ chapter_id: chapterId, author, text })
+    .insert({ chapter_id: chapterId, author, text, user_id: userId })
     .select()
     .single();
   if (error) {
@@ -38,12 +38,4 @@ export async function deleteComment(id) {
     return false;
   }
   return true;
-}
-
-export function getGuestName() {
-  return localStorage.getItem("pw-guest-name");
-}
-
-export function setGuestName(name) {
-  localStorage.setItem("pw-guest-name", name);
 }
