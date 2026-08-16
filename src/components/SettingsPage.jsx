@@ -1,6 +1,26 @@
-import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical, Minus, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical, Minus, Plus, Check } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 
 function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
+  const { user } = useUser();
+  const [nickname, setNickname] = useState("");
+  const [showNicknameOnly, setShowNicknameOnly] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setNickname(user.unsafeMetadata?.nickname || "");
+      setShowNicknameOnly(!!user.unsafeMetadata?.showNicknameOnly);
+    }
+  }, [user]);
+
+  const saveNickname = async () => {
+    if (!user) return;
+    await user.update({ unsafeMetadata: { ...user.unsafeMetadata, nickname: nickname.trim(), showNicknameOnly } });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
   const TITLES = {
     personalize: "Personalize",
     accessibility: "Accessibility",
@@ -49,6 +69,30 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
 
       {page === "account" && (
         <div className="settings-block">
+          {user && (
+            <div className="settings-nickname-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Nickname</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Shown alongside (or instead of) your real name in Comments and Discussion</div>
+              <div className="settings-nickname-input-row">
+                <input
+                  className="settings-nickname-input"
+                  placeholder="e.g. SkyCadet"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                />
+                <button className="settings-nickname-save" onClick={saveNickname}>
+                  {saved ? <Check size={14} /> : "Save"}
+                </button>
+              </div>
+              <div className="settings-row" onClick={() => setShowNicknameOnly((s) => !s)}>
+                <span className={`settings-switch ${showNicknameOnly ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+                <div>
+                  <div className="settings-row-title">Show nickname only</div>
+                  <div className="settings-row-sub">Hides your real name for privacy — only your nickname is shown</div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="settings-row settings-row--danger" onClick={onResetProgress}>
             <div className="settings-row-icon"><RotateCcw size={16} /></div>
             <div>
@@ -108,6 +152,11 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
         .settings-stepper-btn { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
         .settings-stepper-value { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
+        .settings-nickname-block { border-bottom: 1px solid var(--border-soft); margin-bottom: 6px; padding-bottom: 6px; }
+        .settings-nickname-input-row { display: flex; gap: 8px; padding: 0 14px 10px; }
+        .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; }
+        .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
+        .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
       `}</style>
     </div>
   );
