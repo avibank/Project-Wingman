@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical, Minus, Plus, Check } from "lucide-react";
+import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical, Minus, Plus, Check, BookMarked, Flame, CheckCircle2 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
+import { loadJSON, getNum } from "../lib/storage.js";
+import { CHAPTERS } from "../data.js";
 
 function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
   const { user } = useUser();
@@ -26,7 +28,13 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
     accessibility: "Accessibility",
     account: "Account Settings",
     features: "Features",
+    progress: "My Progress",
   };
+
+  const completedChapters = loadJSON("pw-completed", []);
+  const bookmarkCount = loadJSON("pw-bookmarks", []).length;
+  const longestStreak = getNum("pw-longest-streak", 0);
+  const totalChapters = CHAPTERS.length;
 
   return (
     <div className="settings-page">
@@ -34,6 +42,33 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
         <ChevronLeft size={16} /> Back
       </button>
       <h1 className="settings-title">{TITLES[page]}</h1>
+
+      {page === "progress" && (
+        <div className="settings-block settings-progress">
+          <div className="progress-stat">
+            <div className="progress-stat-icon"><CheckCircle2 size={18} /></div>
+            <div>
+              <div className="progress-stat-value">{completedChapters.length} <span className="progress-stat-of">/ {totalChapters}</span></div>
+              <div className="progress-stat-label">Chapters completed</div>
+            </div>
+          </div>
+          <div className="progress-stat">
+            <div className="progress-stat-icon"><Flame size={18} /></div>
+            <div>
+              <div className="progress-stat-value">{longestStreak}</div>
+              <div className="progress-stat-label">Longest streak (days)</div>
+            </div>
+          </div>
+          <div className="progress-stat">
+            <div className="progress-stat-icon"><BookMarked size={18} /></div>
+            <div>
+              <div className="progress-stat-value">{bookmarkCount}</div>
+              <div className="progress-stat-label">Bookmarked questions</div>
+            </div>
+          </div>
+          <p className="settings-note">Progress is tracked on this device only.</p>
+        </div>
+      )}
 
       {page === "personalize" && (
         <div className="settings-block">
@@ -157,6 +192,12 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
         .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; }
         .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
         .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
+        .settings-progress { display: flex; flex-direction: column; gap: 2px; padding: 8px; }
+        .progress-stat { display: flex; align-items: center; gap: 14px; padding: 12px; }
+        .progress-stat-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+        .progress-stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+        .progress-stat-of { font-size: 14px; color: var(--muted2); font-weight: 500; }
+        .progress-stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
       `}</style>
     </div>
   );
