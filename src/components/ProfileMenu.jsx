@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn, ShieldCheck, TrendingUp, BookMarked } from "lucide-react";
+import { User, FlaskConical, ChevronRight, LogIn, ShieldCheck } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useIsAdmin } from "../lib/admin.js";
 
@@ -37,44 +37,21 @@ function ProfileMenu({ onNavigate }) {
       </button>
       {open && (
         <div className="profile-dropdown">
-          <button className="profile-row profile-row--auth" onClick={() => go("auth")}>
+          <button className="profile-row profile-row--auth" onClick={() => go(isSignedIn ? "profile" : "auth")}>
             <LogIn size={15} />
             <span className="profile-row-truncate">{isSignedIn ? user.primaryEmailAddress?.emailAddress : "Sign In"}</span>
             {isAdmin && <span className="profile-admin-badge"><ShieldCheck size={10} /> ADMIN</span>}
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
-          <div className="profile-divider" />
-          <button className="profile-row" onClick={() => go("progress")}>
-            <TrendingUp size={15} />
-            <span>My Progress</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
-          <button className="profile-row" onClick={() => go("bookmarks")}>
-            <BookMarked size={15} />
-            <span>My Bookmarks</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
-          <button className="profile-row" onClick={() => go("personalize")}>
-            <Palette size={15} />
-            <span>Personalize</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
-          <button className="profile-row" onClick={() => go("accessibility")}>
-            <SlidersHorizontal size={15} />
-            <span>Accessibility</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
-          <button className="profile-row" onClick={() => go("account")}>
-            <Settings size={15} />
-            <span>Account Settings</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
           {isAdmin && (
-            <button className="profile-row" onClick={() => go("features")}>
-              <FlaskConical size={15} />
-              <span>Features</span>
-              <ChevronRight size={14} className="profile-row-arrow" />
-            </button>
+            <>
+              <div className="profile-divider" />
+              <button className="profile-row" onClick={() => go("features")}>
+                <FlaskConical size={15} />
+                <span>Features</span>
+                <ChevronRight size={14} className="profile-row-arrow" />
+              </button>
+            </>
           )}
         </div>
       )}
