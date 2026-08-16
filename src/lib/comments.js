@@ -31,6 +31,15 @@ export async function toggleReaction(comment, type, alreadyReacted) {
   return nextReactions;
 }
 
+export async function deleteComment(id) {
+  const { error } = await supabase.from("comments").delete().eq("id", id);
+  if (error) {
+    console.error(error);
+    return false;
+  }
+  return true;
+}
+
 export function getGuestName() {
   return localStorage.getItem("pw-guest-name");
 }
