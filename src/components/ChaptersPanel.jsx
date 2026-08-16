@@ -5,7 +5,7 @@ import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS } from "../data.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 
-function ChaptersPanel() {
+function ChaptersPanel({ onSignIn }) {
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
   const [query, setQuery] = useState("");
   const [completed, setCompleted] = useState(() => new Set(loadJSON("pw-completed", [])));
@@ -153,7 +153,7 @@ function ChaptersPanel() {
                         </div>
                       </>
                     ) : (
-                      <ChapterComments key={ch.id} chapterId={ch.id} />
+                      <ChapterComments key={ch.id} chapterId={ch.id} onSignIn={onSignIn} />
                     )}
                   </div>
                 </div>
