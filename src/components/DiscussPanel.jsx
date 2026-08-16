@@ -5,7 +5,7 @@ import { Placard } from "./icons.jsx";
 import { fetchComments, postComment, toggleReaction, deleteComment, uploadCommentPhoto } from "../lib/comments.js";
 import { useIsAdmin } from "../lib/admin.js";
 
-function DiscussPanel({ onSignIn }) {
+function DiscussPanel({ onSignIn, calmLights }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -134,7 +134,7 @@ function DiscussPanel({ onSignIn }) {
               onChange={handleFileChange}
             />
             <button
-              className="discuss-attach"
+              className={`discuss-attach ${calmLights ? "is-calm" : ""}`}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               aria-label="Attach photo"
@@ -147,7 +147,7 @@ function DiscussPanel({ onSignIn }) {
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && post()}
             />
-            <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
+            <button className={`discuss-send ${calmLights ? "is-calm" : ""}`} onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
           </div>
         </div>
       ) : (
@@ -181,24 +181,20 @@ function DiscussPanel({ onSignIn }) {
         .discuss-input { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 14px; color: var(--text); font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
-        .discuss-attach { background: #E5484D; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: #2A0C0D; cursor: pointer; flex-shrink: 0; animation: blinkRed 1.8s steps(1, end) infinite; }
+        .discuss-attach { background: #E5484D; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: #2A0C0D; cursor: pointer; flex-shrink: 0; animation: pulseRed 4s ease-in-out infinite; }
         .discuss-attach:hover { background: #f05a5f; }
         .discuss-attach:disabled { opacity: 0.5; cursor: not-allowed; animation: none; }
-        @keyframes blinkRed {
-          0%, 82% { box-shadow: 0 0 2px rgba(229,72,77,0.15); opacity: 0.45; }
-          86% { box-shadow: 0 0 20px rgba(229,72,77,1); opacity: 1; }
-          90% { box-shadow: 0 0 2px rgba(229,72,77,0.15); opacity: 0.45; }
-          94% { box-shadow: 0 0 20px rgba(229,72,77,1); opacity: 1; }
-          98%, 100% { box-shadow: 0 0 2px rgba(229,72,77,0.15); opacity: 0.45; }
+        .discuss-attach.is-calm { background: var(--avatar-bg); color: var(--accent); animation: none; box-shadow: none; opacity: 1; }
+        @keyframes pulseRed {
+          0%, 100% { box-shadow: 0 0 2px rgba(229,72,77,0.15); opacity: 0.6; }
+          50% { box-shadow: 0 0 9px rgba(229,72,77,0.55); opacity: 0.95; }
         }
-        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: blinkGreen 1.8s steps(1, end) infinite; }
+        .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: pulseGreen 4s ease-in-out infinite; animation-delay: 2s; }
         .discuss-send:hover { background: #4bd88e; }
-        @keyframes blinkGreen {
-          0%, 82% { box-shadow: 0 0 2px rgba(52,199,123,0.15); opacity: 0.45; }
-          86% { box-shadow: 0 0 20px rgba(52,199,123,1); opacity: 1; }
-          90% { box-shadow: 0 0 2px rgba(52,199,123,0.15); opacity: 0.45; }
-          94% { box-shadow: 0 0 20px rgba(52,199,123,1); opacity: 1; }
-          98%, 100% { box-shadow: 0 0 2px rgba(52,199,123,0.15); opacity: 0.45; }
+        .discuss-send.is-calm { background: var(--avatar-bg); color: var(--accent); animation: none; box-shadow: none; opacity: 1; }
+        @keyframes pulseGreen {
+          0%, 100% { box-shadow: 0 0 2px rgba(52,199,123,0.15); opacity: 0.6; }
+          50% { box-shadow: 0 0 9px rgba(52,199,123,0.55); opacity: 0.95; }
         }
         @media (prefers-reduced-motion: reduce) {
           .discuss-send, .discuss-attach { animation: none; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
