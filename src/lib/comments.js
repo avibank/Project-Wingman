@@ -10,10 +10,10 @@ export async function fetchComments(chapterId) {
   return data || [];
 }
 
-export async function postComment(chapterId, author, text, userId = null) {
+export async function postComment(chapterId, author, text, userId = null, imageUrl = null) {
   const { data, error } = await supabase
     .from("comments")
-    .insert({ chapter_id: chapterId, author, text, user_id: userId })
+    .insert({ chapter_id: chapterId, author, text, user_id: userId, image_url: imageUrl })
     .select()
     .single();
   if (error) {
@@ -21,6 +21,26 @@ export async function postComment(chapterId, author, text, userId = null) {
     return null;
   }
   return data;
+}
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
+
+export async function uploadCommentPhoto(file) {
+  if (!file.type.startsWith("image/")) {
+    return { error: "Only image files can be attached." };
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    return { error: "Photo is too large (max 5MB)." };
+  }
+  const ext = file.name.split(".").pop();
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error: uploadError } = await supabase.storage.from("comment-photos").upload(path, file);
+  if (uploadError) {
+    console.error(uploadError);
+    return { error: "Upload failed, please try again." };
+  }
+  const { data } = supabase.storage.from("comment-photos").getPublicUrl(path);
+  return { url: data.publicUrl };
 }
 
 export async function toggleReaction(comment, type, alreadyReacted) {
