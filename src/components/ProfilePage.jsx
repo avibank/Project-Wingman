@@ -7,6 +7,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
   const { user } = useUser();
   const { signOut } = useClerk();
   const photoInputRef = useRef(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const [nickname, setNickname] = useState("");
   const [showNicknameOnly, setShowNicknameOnly] = useState(false);
@@ -107,6 +108,8 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
   if (!user) return null;
 
+  const captionName = nickname || user.fullName || "Pilot";
+
   return (
     <div className="profile-page">
       <button className="profile-page-back" onClick={onBack}>
@@ -122,25 +125,43 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       {tab === "info" && (
         <>
           <div className="settings-block">
-            <div className="profile-identity-row">
-              <input type="file" accept="image/*" ref={photoInputRef} style={{ display: "none" }} onChange={handlePhotoChange} />
-              <button className="profile-identity-photo-btn" onClick={() => photoInputRef.current?.click()} disabled={photoUploading} aria-label="Change photo">
-                {user.imageUrl ? (
-                  <img className="profile-identity-photo" src={user.imageUrl} alt="" />
-                ) : (
-                  <div className="profile-identity-icon"><Mail size={16} /></div>
-                )}
-                <span className="profile-identity-photo-overlay"><Camera size={12} /></span>
-              </button>
-              <div>
-                <div className="profile-identity-label">{photoUploading ? "Uploading photo…" : "Signed in as"}</div>
-                <div className="profile-identity-name">{user.fullName || user.primaryEmailAddress?.emailAddress}</div>
+            <div className="profile-identity-centered">
+              <div className="profile-identity-photo-wrap">
+                <button className="profile-identity-photo-btn" onClick={() => setShowPhotoModal(true)} aria-label="View photo enlarged">
+                  {user.imageUrl ? (
+                    <img className="profile-identity-photo" src={user.imageUrl} alt="" />
+                  ) : (
+                    <div className="profile-identity-icon"><Mail size={22} /></div>
+                  )}
+                </button>
+                <input type="file" accept="image/*" ref={photoInputRef} style={{ display: "none" }} onChange={handlePhotoChange} />
+                <button className="profile-identity-photo-camera" onClick={() => photoInputRef.current?.click()} disabled={photoUploading} aria-label="Change photo">
+                  <Camera size={13} />
+                </button>
               </div>
+              <div className="profile-identity-label">{photoUploading ? "Uploading photo…" : "Signed in as"}</div>
+              <div className="profile-identity-name">{user.fullName || user.primaryEmailAddress?.emailAddress}</div>
             </div>
             <button className="profile-signout-btn" onClick={() => signOut().then(onBack)}>
               <LogOut size={15} /> Sign out
             </button>
           </div>
+
+          {showPhotoModal && (
+            <div className="photo-modal-overlay" onClick={() => setShowPhotoModal(false)}>
+              <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
+                {user.imageUrl ? (
+                  <img className="photo-modal-image" src={user.imageUrl} alt="" />
+                ) : (
+                  <div className="photo-modal-placeholder"><Mail size={40} /></div>
+                )}
+                <div className="photo-modal-caption">{captionName}</div>
+                <button className="photo-modal-close" onClick={() => setShowPhotoModal(false)} aria-label="Close">
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="settings-block">
             <div className="settings-field-block">
@@ -246,21 +267,21 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
           <div className="settings-row" onClick={onToggleTheme}>
             <div className="settings-row-icon">{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</div>
             <div>
-              <div className="settings-row-title">Theme</div>
+              <div className="settings-row-title">{theme === "light" ? "Day Ops" : "Night Ops"}</div>
               <div className="settings-row-sub">Currently {theme === "light" ? "light" : "dark"} mode — tap to switch</div>
             </div>
           </div>
           <div className="settings-row" onClick={onToggleReduceMotion}>
             <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
             <div>
-              <div className="settings-row-title">Reduce motion</div>
-              <div className="settings-row-sub">Turns off animated transitions across the app</div>
+              <div className="settings-row-title">Smooth Air</div>
+              <div className="settings-row-sub">Reduces motion — turns off animated transitions across the app</div>
             </div>
           </div>
           <div className="settings-row" onClick={onToggleCalmDiscussLights}>
             <span className={`settings-switch ${calmDiscussLights ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
             <div>
-              <div className="settings-row-title">Calm discussion lights</div>
+              <div className="settings-row-title">Lights Out</div>
               <div className="settings-row-sub">Replaces the pulsing red/green buttons in Discussion with a plain navy style</div>
             </div>
           </div>
@@ -299,13 +320,21 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-nickname-save:disabled { opacity: 0.6; cursor: not-allowed; }
         .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
         .settings-cancel-btn { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .profile-identity-row { display: flex; align-items: center; gap: 12px; padding: 14px; }
-        .profile-identity-photo-btn { position: relative; width: 34px; height: 34px; border-radius: 10px; padding: 0; border: none; background: transparent; cursor: pointer; flex-shrink: 0; }
-        .profile-identity-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); }
-        .profile-identity-photo { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; display: block; }
-        .profile-identity-photo-overlay { position: absolute; bottom: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; border: 2px solid var(--panel); }
+        .profile-identity-centered { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 14px 14px; }
+        .profile-identity-photo-wrap { position: relative; margin-bottom: 12px; }
+        .profile-identity-photo-btn { width: 84px; height: 84px; border-radius: 50%; padding: 0; border: none; background: transparent; cursor: pointer; display: block; }
+        .profile-identity-icon { width: 84px; height: 84px; border-radius: 50%; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .profile-identity-photo { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; display: block; }
+        .profile-identity-photo-camera { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; border: 3px solid var(--panel); cursor: pointer; }
+        .profile-identity-photo-camera:disabled { opacity: 0.5; cursor: not-allowed; }
         .profile-identity-label { font-size: 11px; color: var(--muted); }
-        .profile-identity-name { font-size: 14px; color: var(--text); font-weight: 600; }
+        .profile-identity-name { font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
+        .photo-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .photo-modal-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .photo-modal-image { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; object-fit: cover; }
+        .photo-modal-placeholder { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .photo-modal-caption { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+        .photo-modal-close { position: absolute; top: -36px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 13px; padding: 10px; border-radius: 10px; cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
         .profile-signout-btn:hover { background: rgba(224,102,90,0.08); }
         .settings-danger-zone { border-color: rgba(224,102,90,0.4); }
