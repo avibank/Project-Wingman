@@ -7,6 +7,7 @@ import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
+import ProfilePage from "./components/ProfilePage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
@@ -171,10 +172,9 @@ export default function App() {
         <main className="content content-taxi">
           <AuthPage onBack={() => setSettingsPage(null)} />
         </main>
-      ) : settingsPage ? (
+      ) : settingsPage === "profile" ? (
         <main className="content content-taxi">
-          <SettingsPage
-            page={settingsPage}
+          <ProfilePage
             onBack={() => setSettingsPage(null)}
             theme={theme}
             onToggleTheme={toggleTheme}
@@ -183,6 +183,13 @@ export default function App() {
             calmDiscussLights={calmDiscussLights}
             onToggleCalmDiscussLights={() => setCalmDiscussLights((c) => !c)}
             onResetProgress={resetProgress}
+          />
+        </main>
+      ) : settingsPage ? (
+        <main className="content content-taxi">
+          <SettingsPage
+            page={settingsPage}
+            onBack={() => setSettingsPage(null)}
             testStreakOverrideOn={testStreakOverrideOn}
             onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
             testStreakValue={testStreakValue}
