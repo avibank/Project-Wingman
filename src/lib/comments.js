@@ -59,3 +59,19 @@ export async function deleteComment(id) {
   }
   return true;
 }
+
+export const EDIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+export function canEditComment(comment, currentUserId) {
+  if (!currentUserId || comment.user_id !== currentUserId) return false;
+  return Date.now() - new Date(comment.created_at).getTime() < EDIT_WINDOW_MS;
+}
+
+export async function updateCommentText(id, text) {
+  const { data, error } = await supabase.from("comments").update({ text }).eq("id", id).select().single();
+  if (error) {
+    console.error(error);
+    return null;
+  }
+  return data;
+}
