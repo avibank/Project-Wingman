@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { ThumbsUp, Heart, Trash2 } from "lucide-react";
-import { fetchComments, postComment, toggleReaction, deleteComment, getGuestName, setGuestName } from "../lib/comments.js";
+import { ThumbsUp, Heart, Trash2, LogIn } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
+import { fetchComments, postComment, toggleReaction, deleteComment } from "../lib/comments.js";
 import { useIsAdmin } from "../lib/admin.js";
 
-function ChapterComments({ chapterId }) {
+function ChapterComments({ chapterId, onSignIn }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
-  const [name, setName] = useState("");
-  const [nameSaved, setNameSaved] = useState(!!getGuestName());
   const [reacted, setReacted] = useState(new Set());
   const isAdmin = useIsAdmin();
+  const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     let active = true;
@@ -27,15 +27,9 @@ function ChapterComments({ chapterId }) {
   }, [chapterId]);
 
   const handlePost = async () => {
-    if (!text.trim()) return;
-    let author = getGuestName();
-    if (!author) {
-      if (!name.trim()) return;
-      setGuestName(name.trim());
-      setNameSaved(true);
-      author = name.trim();
-    }
-    const newComment = await postComment(chapterId, author, text.trim());
+    if (!text.trim() || !isSignedIn) return;
+    const author = user.fullName || user.primaryEmailAddress?.emailAddress || "Signed-in user";
+    const newComment = await postComment(chapterId, author, text.trim(), user.id);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
@@ -93,23 +87,21 @@ function ChapterComments({ chapterId }) {
         </div>
       )}
 
-      {!nameSaved && (
-        <input
-          className="chapter-comments-name"
-          placeholder="Your name (shown on your comments)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      {isSignedIn ? (
+        <div className="chapter-comments-input">
+          <input
+            placeholder="Ask a question…"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handlePost()}
+          />
+          <button onClick={handlePost}>Post</button>
+        </div>
+      ) : (
+        <button className="chapter-comments-signin" onClick={onSignIn}>
+          <LogIn size={14} /> Sign in to comment
+        </button>
       )}
-      <div className="chapter-comments-input">
-        <input
-          placeholder="Ask a question…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handlePost()}
-        />
-        <button onClick={handlePost}>Post</button>
-      </div>
       <style>{`
         .chapter-comments { display: flex; flex-direction: column; gap: 10px; }
         .chapter-comments-loading, .chapter-comments-empty { font-size: 12.5px; color: var(--muted); text-align: center; padding: 16px 0; }
@@ -123,10 +115,11 @@ function ChapterComments({ chapterId }) {
         .chapter-comment-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .chapter-comment-delete { margin-left: auto; }
         .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
-        .chapter-comments-name { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
         .chapter-comments-input { display: flex; gap: 6px; }
         .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
         .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; }
+        .chapter-comments-signin:hover { border-color: var(--accent); }
       `}</style>
     </div>
   );
