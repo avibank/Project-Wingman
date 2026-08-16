@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Plane, ThumbsUp, Heart, Trash2, LogIn } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plane, ThumbsUp, Heart, Trash2, LogIn, Paperclip, X } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { Placard } from "./icons.jsx";
-import { fetchComments, postComment, toggleReaction, deleteComment } from "../lib/comments.js";
+import { fetchComments, postComment, toggleReaction, deleteComment, uploadCommentPhoto } from "../lib/comments.js";
 import { useIsAdmin } from "../lib/admin.js";
 
 function DiscussPanel({ onSignIn }) {
@@ -10,6 +10,10 @@ function DiscussPanel({ onSignIn }) {
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [reacted, setReacted] = useState(new Set());
+  const [pendingImage, setPendingImage] = useState(null); // { url }
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const fileInputRef = useRef(null);
   const isAdmin = useIsAdmin();
   const { isSignedIn, user } = useUser();
 
@@ -27,12 +31,28 @@ function DiscussPanel({ onSignIn }) {
   }, []);
 
   const post = async () => {
-    if (!text.trim() || !isSignedIn) return;
+    if ((!text.trim() && !pendingImage) || !isSignedIn) return;
     const author = user.fullName || user.primaryEmailAddress?.emailAddress || "Signed-in user";
-    const newComment = await postComment(null, author, text.trim(), user.id);
+    const newComment = await postComment(null, author, text.trim(), user.id, pendingImage?.url || null);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
+      setPendingImage(null);
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    const result = await uploadCommentPhoto(file);
+    setUploading(false);
+    if (result.error) {
+      setUploadError(result.error);
+    } else {
+      setPendingImage({ url: result.url });
     }
   };
 
@@ -77,6 +97,7 @@ function DiscussPanel({ onSignIn }) {
               <div className="discuss-item-body">
                 <div className="discuss-meta"><strong>{c.author}</strong></div>
                 {c.text && <p>{c.text}</p>}
+                {c.image_url && <img className="discuss-photo" src={c.image_url} alt="Attached" />}
                 <div className="discuss-reactions">
                   <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")}>
                     <ThumbsUp size={12} /> {c.reactions?.thumbsUp || 0}
@@ -96,14 +117,38 @@ function DiscussPanel({ onSignIn }) {
         )}
       </div>
       {isSignedIn ? (
-        <div className="discuss-input">
-          <input
-            placeholder="Ask a question about the subject…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && post()}
-          />
-          <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
+        <div className="discuss-composer">
+          {uploadError && <div className="discuss-upload-error">{uploadError}</div>}
+          {pendingImage && (
+            <div className="discuss-pending-image">
+              <img src={pendingImage.url} alt="Attachment preview" />
+              <button onClick={() => setPendingImage(null)} aria-label="Remove photo"><X size={12} /></button>
+            </div>
+          )}
+          <div className="discuss-input">
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+            <button
+              className="discuss-attach"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              aria-label="Attach photo"
+            >
+              <Paperclip size={16} />
+            </button>
+            <input
+              placeholder={uploading ? "Uploading photo…" : "Ask a question about the subject…"}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && post()}
+            />
+            <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
+          </div>
         </div>
       ) : (
         <button className="discuss-signin" onClick={onSignIn}>
@@ -121,15 +166,28 @@ function DiscussPanel({ onSignIn }) {
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
         .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: var(--text); margin-bottom: 3px; }
         .discuss-item p { margin: 0; font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
+        .discuss-photo { display: block; max-width: 260px; width: 100%; border-radius: 10px; margin-top: 8px; border: 1px solid var(--border); }
         .discuss-reactions { display: flex; gap: 6px; margin-top: 6px; }
         .discuss-reactions button { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
         .discuss-reactions button:hover { border-color: var(--accent); color: var(--accent); }
         .discuss-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .discuss-delete { margin-left: auto; }
         .discuss-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
-        .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
+        .discuss-composer { flex-shrink: 0; max-width: 640px; margin: 8px auto 0; width: 100%; }
+        .discuss-upload-error { font-size: 11.5px; color: var(--bad); margin-bottom: 6px; text-align: center; }
+        .discuss-pending-image { position: relative; display: inline-block; margin-bottom: 8px; }
+        .discuss-pending-image img { display: block; height: 64px; border-radius: 10px; border: 1px solid var(--border); }
+        .discuss-pending-image button { position: absolute; top: -6px; right: -6px; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .discuss-input { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 14px; color: var(--text); font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
+        .discuss-attach { background: #E5484D; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: #2A0C0D; cursor: pointer; flex-shrink: 0; animation: pulseRed 2.4s ease-in-out infinite; }
+        .discuss-attach:hover { background: #f05a5f; }
+        .discuss-attach:disabled { opacity: 0.5; cursor: not-allowed; animation: none; }
+        @keyframes pulseRed {
+          0%, 100% { box-shadow: 0 0 3px rgba(229,72,77,0.15); opacity: 0.55; }
+          50% { box-shadow: 0 0 16px rgba(229,72,77,0.9); opacity: 1; }
+        }
         .discuss-send { background: #34C77B; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: #0E1830; cursor: pointer; flex-shrink: 0; animation: pulseGreen 2.4s ease-in-out infinite; }
         .discuss-send:hover { background: #4bd88e; }
         @keyframes pulseGreen {
@@ -137,7 +195,7 @@ function DiscussPanel({ onSignIn }) {
           50% { box-shadow: 0 0 16px rgba(52,199,123,0.9); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .discuss-send { animation: none; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
+          .discuss-send, .discuss-attach { animation: none; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
         }
         .discuss-signin { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 13px; padding: 14px; border-radius: 16px; cursor: pointer; }
         .discuss-signin:hover { border-color: var(--accent); }
