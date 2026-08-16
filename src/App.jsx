@@ -8,6 +8,8 @@ import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
+import ProgressPage from "./components/ProgressPage.jsx";
+import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
@@ -184,6 +186,14 @@ export default function App() {
             onToggleCalmDiscussLights={() => setCalmDiscussLights((c) => !c)}
             onResetProgress={resetProgress}
           />
+        </main>
+      ) : settingsPage === "progress" ? (
+        <main className="content content-taxi">
+          <ProgressPage onBack={() => setSettingsPage(null)} />
+        </main>
+      ) : settingsPage === "bookmarks" ? (
+        <main className="content content-taxi">
+          <BookmarksPage onBack={() => setSettingsPage(null)} />
         </main>
       ) : settingsPage ? (
         <main className="content content-taxi">
