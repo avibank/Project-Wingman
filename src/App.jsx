@@ -19,6 +19,7 @@ export default function App() {
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
+  const [calmDiscussLights, setCalmDiscussLights] = useState(() => loadJSON("pw-calm-discuss-lights", false));
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
   const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
   const [streak, setStreak] = useState(0);
@@ -39,6 +40,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-reduce-motion", reduceMotion);
   }, [reduceMotion]);
+
+  useEffect(() => {
+    saveJSON("pw-calm-discuss-lights", calmDiscussLights);
+  }, [calmDiscussLights]);
 
   useEffect(() => {
     saveJSON("pw-test-streak-override-on", testStreakOverrideOn);
@@ -175,6 +180,8 @@ export default function App() {
             onToggleTheme={toggleTheme}
             reduceMotion={reduceMotion}
             onToggleReduceMotion={() => setReduceMotion((r) => !r)}
+            calmDiscussLights={calmDiscussLights}
+            onToggleCalmDiscussLights={() => setCalmDiscussLights((c) => !c)}
             onResetProgress={resetProgress}
             testStreakOverrideOn={testStreakOverrideOn}
             onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
@@ -201,8 +208,8 @@ export default function App() {
           </nav>
 
           <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
-            {tab === "chapters" && <ChaptersPanel />}
-            {tab === "discuss" && <DiscussPanel />}
+            {tab === "chapters" && <ChaptersPanel onSignIn={() => setSettingsPage("auth")} />}
+            {tab === "discuss" && <DiscussPanel onSignIn={() => setSettingsPage("auth")} calmLights={calmDiscussLights} />}
             {tab === "pdf" && <PdfPanel />}
           </main>
         </>
