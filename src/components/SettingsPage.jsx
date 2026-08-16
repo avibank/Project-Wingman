@@ -1,6 +1,6 @@
 import { ChevronLeft, Sun, Moon, RotateCcw, FlaskConical, Minus, Plus } from "lucide-react";
 
-function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
+function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
   const TITLES = {
     personalize: "Personalize",
     accessibility: "Accessibility",
@@ -34,6 +34,13 @@ function SettingsPage({ page, onBack, theme, onToggleTheme, reduceMotion, onTogg
             <div>
               <div className="settings-row-title">Reduce motion</div>
               <div className="settings-row-sub">Turns off animated transitions across the app</div>
+            </div>
+          </div>
+          <div className="settings-row" onClick={onToggleCalmDiscussLights}>
+            <span className={`settings-switch ${calmDiscussLights ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+            <div>
+              <div className="settings-row-title">Calm discussion lights</div>
+              <div className="settings-row-sub">Replaces the pulsing red/green buttons in Discussion with a plain navy style</div>
             </div>
           </div>
           <p className="settings-note">Quizzes support keyboard shortcuts: press 1-4 or A-D to answer, and Enter to continue.</p>
