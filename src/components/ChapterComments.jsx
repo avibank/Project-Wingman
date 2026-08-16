@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { ThumbsUp, Heart } from "lucide-react";
-import { fetchComments, postComment, toggleReaction, getGuestName, setGuestName } from "../lib/comments.js";
+import { ThumbsUp, Heart, Trash2 } from "lucide-react";
+import { fetchComments, postComment, toggleReaction, deleteComment, getGuestName, setGuestName } from "../lib/comments.js";
+import { useIsAdmin } from "../lib/admin.js";
 
 function ChapterComments({ chapterId }) {
   const [comments, setComments] = useState([]);
@@ -9,6 +10,7 @@ function ChapterComments({ chapterId }) {
   const [name, setName] = useState("");
   const [nameSaved, setNameSaved] = useState(!!getGuestName());
   const [reacted, setReacted] = useState(new Set());
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     let active = true;
@@ -52,6 +54,12 @@ function ChapterComments({ chapterId }) {
     });
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this comment?")) return;
+    const ok = await deleteComment(id);
+    if (ok) setComments((cs) => cs.filter((c) => c.id !== id));
+  };
+
   return (
     <div className="chapter-comments">
       {loading ? (
@@ -63,7 +71,7 @@ function ChapterComments({ chapterId }) {
           {comments.map((c) => (
             <div key={c.id} className="chapter-comment">
               <div className="chapter-comment-avatar">{c.author.charAt(0).toUpperCase()}</div>
-              <div>
+              <div className="chapter-comment-body">
                 <div className="chapter-comment-meta"><strong>{c.author}</strong></div>
                 <p>{c.text}</p>
                 <div className="chapter-comment-reactions">
@@ -73,6 +81,11 @@ function ChapterComments({ chapterId }) {
                   <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")}>
                     <Heart size={11} /> {c.reactions?.heart || 0}
                   </button>
+                  {isAdmin && (
+                    <button className="chapter-comment-delete" onClick={() => handleDelete(c.id)} aria-label="Delete comment">
+                      <Trash2 size={11} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -108,6 +121,8 @@ function ChapterComments({ chapterId }) {
         .chapter-comment-reactions { display: flex; gap: 6px; margin-top: 4px; }
         .chapter-comment-reactions button { display: flex; align-items: center; gap: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 10px; padding: 2px 6px; border-radius: 20px; cursor: pointer; }
         .chapter-comment-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .chapter-comment-delete { margin-left: auto; }
+        .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
         .chapter-comments-name { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
         .chapter-comments-input { display: flex; gap: 6px; }
         .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
