@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft, Mail, LogOut, UserCog, TrendingUp, BookMarked, Sun, Moon, Settings, Check, X, Flame, CheckCircle2, RotateCcw } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, Mail, LogOut, Camera, TrendingUp, BookMarked, Sun, Moon, Check, X, Flame, CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { loadJSON, saveJSON, getNum } from "../lib/storage.js";
 import { CHAPTERS } from "../data.js";
@@ -7,24 +7,104 @@ import { CHAPTERS } from "../data.js";
 function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress }) {
   const [tab, setTab] = useState("overview");
   const { user } = useUser();
-  const { signOut, openUserProfile } = useClerk();
+  const { signOut } = useClerk();
+  const photoInputRef = useRef(null);
 
   const [nickname, setNickname] = useState("");
   const [showNicknameOnly, setShowNicknameOnly] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [nicknameSaved, setNicknameSaved] = useState(false);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [nameSaved, setNameSaved] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [emailStep, setEmailStep] = useState("idle"); // idle | code
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingEmailObj, setPendingEmailObj] = useState(null);
+  const [emailError, setEmailError] = useState(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
       setNickname(user.unsafeMetadata?.nickname || "");
       setShowNicknameOnly(!!user.unsafeMetadata?.showNicknameOnly);
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
     }
   }, [user]);
 
   const saveNickname = async () => {
     if (!user) return;
     await user.update({ unsafeMetadata: { ...user.unsafeMetadata, nickname: nickname.trim(), showNicknameOnly } });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1800);
+    setNicknameSaved(true);
+    setTimeout(() => setNicknameSaved(false), 1800);
+  };
+
+  const saveName = async () => {
+    if (!user) return;
+    await user.update({ firstName: firstName.trim(), lastName: lastName.trim() });
+    setNameSaved(true);
+    setTimeout(() => setNameSaved(false), 1800);
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    setPhotoUploading(true);
+    await user.setProfileImage({ file });
+    setPhotoUploading(false);
+  };
+
+  const startEmailChange = async () => {
+    if (!user || !newEmail.trim()) return;
+    setEmailError(null);
+    setEmailBusy(true);
+    try {
+      const emailObj = await user.createEmailAddress({ email: newEmail.trim() });
+      await emailObj.prepareVerification({ strategy: "email_code" });
+      setPendingEmailObj(emailObj);
+      setEmailStep("code");
+    } catch (err) {
+      setEmailError(err?.errors?.[0]?.message || "Couldn't start email change.");
+    }
+    setEmailBusy(false);
+  };
+
+  const confirmEmailChange = async () => {
+    if (!pendingEmailObj) return;
+    setEmailError(null);
+    setEmailBusy(true);
+    try {
+      await pendingEmailObj.attemptVerification({ code: verificationCode.trim() });
+      await user.update({ primaryEmailAddressId: pendingEmailObj.id });
+      setEmailStep("idle");
+      setNewEmail("");
+      setVerificationCode("");
+      setPendingEmailObj(null);
+    } catch (err) {
+      setEmailError(err?.errors?.[0]?.message || "Invalid code, please try again.");
+    }
+    setEmailBusy(false);
+  };
+
+  const cancelEmailChange = () => {
+    setEmailStep("idle");
+    setVerificationCode("");
+    setPendingEmailObj(null);
+    setEmailError(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE" || !user) return;
+    setDeleting(true);
+    await user.delete();
+    onBack();
   };
 
   const completedChapters = loadJSON("pw-completed", []);
@@ -60,19 +140,20 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         <>
           <div className="settings-block">
             <div className="profile-identity-row">
-              {user.imageUrl ? (
-                <img className="profile-identity-photo" src={user.imageUrl} alt="" />
-              ) : (
-                <div className="profile-identity-icon"><Mail size={16} /></div>
-              )}
+              <input type="file" accept="image/*" ref={photoInputRef} style={{ display: "none" }} onChange={handlePhotoChange} />
+              <button className="profile-identity-photo-btn" onClick={() => photoInputRef.current?.click()} disabled={photoUploading} aria-label="Change photo">
+                {user.imageUrl ? (
+                  <img className="profile-identity-photo" src={user.imageUrl} alt="" />
+                ) : (
+                  <div className="profile-identity-icon"><Mail size={16} /></div>
+                )}
+                <span className="profile-identity-photo-overlay"><Camera size={12} /></span>
+              </button>
               <div>
-                <div className="profile-identity-label">Signed in as</div>
+                <div className="profile-identity-label">{photoUploading ? "Uploading photo…" : "Signed in as"}</div>
                 <div className="profile-identity-name">{user.fullName || user.primaryEmailAddress?.emailAddress}</div>
               </div>
             </div>
-            <button className="profile-manage-btn" onClick={() => openUserProfile()}>
-              <UserCog size={15} /> Manage account (photo, name, email, password)
-            </button>
             <button className="profile-signout-btn" onClick={() => signOut().then(onBack)}>
               <LogOut size={15} /> Sign out
             </button>
@@ -152,38 +233,104 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       )}
 
       {tab === "account" && (
-        <div className="settings-block">
-          <div className="settings-nickname-block">
-            <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Nickname</div>
-            <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Shown alongside (or instead of) your real name in Comments and Discussion</div>
+        <>
+          <div className="settings-block">
+            <div className="settings-field-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Name</div>
+              <div className="settings-two-col">
+                <input className="settings-nickname-input" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <input className="settings-nickname-input" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+              <button className="settings-save-full" onClick={saveName}>
+                {nameSaved ? <Check size={14} /> : "Save name"}
+              </button>
+            </div>
+          </div>
+
+          <div className="settings-block">
+            <div className="settings-field-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Email</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Current: {user.primaryEmailAddress?.emailAddress}</div>
+              {emailStep === "idle" ? (
+                <div className="settings-nickname-input-row">
+                  <input
+                    className="settings-nickname-input"
+                    placeholder="New email address"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                  <button className="settings-nickname-save" onClick={startEmailChange} disabled={emailBusy}>
+                    {emailBusy ? "…" : "Change"}
+                  </button>
+                </div>
+              ) : (
+                <div className="settings-nickname-input-row">
+                  <input
+                    className="settings-nickname-input"
+                    placeholder="Enter verification code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                  />
+                  <button className="settings-nickname-save" onClick={confirmEmailChange} disabled={emailBusy}>
+                    {emailBusy ? "…" : "Confirm"}
+                  </button>
+                  <button className="settings-cancel-btn" onClick={cancelEmailChange} aria-label="Cancel"><X size={14} /></button>
+                </div>
+              )}
+              {emailStep === "code" && <p className="settings-note" style={{ padding: "4px 14px 10px" }}>We sent a code to {newEmail} — enter it above to confirm.</p>}
+              {emailError && <p className="settings-error">{emailError}</p>}
+            </div>
+          </div>
+
+          <div className="settings-block">
+            <div className="settings-nickname-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Nickname</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Shown alongside (or instead of) your real name in Comments and Discussion</div>
+              <div className="settings-nickname-input-row">
+                <input
+                  className="settings-nickname-input"
+                  placeholder="e.g. SkyCadet"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                />
+                <button className="settings-nickname-save" onClick={saveNickname}>
+                  {nicknameSaved ? <Check size={14} /> : "Save"}
+                </button>
+              </div>
+              <div className="settings-row" onClick={() => setShowNicknameOnly((s) => !s)}>
+                <span className={`settings-switch ${showNicknameOnly ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+                <div>
+                  <div className="settings-row-title">Show nickname only</div>
+                  <div className="settings-row-sub">Hides your real name for privacy — only your nickname is shown</div>
+                </div>
+              </div>
+            </div>
+            <div className="settings-row settings-row--danger" onClick={onResetProgress}>
+              <div className="settings-row-icon"><RotateCcw size={16} /></div>
+              <div>
+                <div className="settings-row-title">Reset progress</div>
+                <div className="settings-row-sub">Clears completed chapters, bookmarks, and streak on this device</div>
+              </div>
+            </div>
+            <p className="settings-note">Progress is saved locally on this device only — nothing is sent anywhere.</p>
+          </div>
+
+          <div className="settings-block settings-danger-zone">
+            <div className="settings-row-title" style={{ padding: "10px 14px 4px", color: "var(--bad)" }}>Danger zone</div>
+            <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Permanently deletes your account and everything tied to it. This cannot be undone.</div>
             <div className="settings-nickname-input-row">
               <input
                 className="settings-nickname-input"
-                placeholder="e.g. SkyCadet"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                placeholder='Type "DELETE" to confirm'
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
               />
-              <button className="settings-nickname-save" onClick={saveNickname}>
-                {saved ? <Check size={14} /> : "Save"}
+              <button className="settings-delete-btn" onClick={handleDeleteAccount} disabled={deleteConfirmText !== "DELETE" || deleting}>
+                <Trash2 size={14} /> {deleting ? "Deleting…" : "Delete account"}
               </button>
             </div>
-            <div className="settings-row" onClick={() => setShowNicknameOnly((s) => !s)}>
-              <span className={`settings-switch ${showNicknameOnly ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
-              <div>
-                <div className="settings-row-title">Show nickname only</div>
-                <div className="settings-row-sub">Hides your real name for privacy — only your nickname is shown</div>
-              </div>
-            </div>
           </div>
-          <div className="settings-row settings-row--danger" onClick={onResetProgress}>
-            <div className="settings-row-icon"><RotateCcw size={16} /></div>
-            <div>
-              <div className="settings-row-title">Reset progress</div>
-              <div className="settings-row-sub">Clears completed chapters, bookmarks, and streak on this device</div>
-            </div>
-          </div>
-          <p className="settings-note">Progress is saved locally on this device only — nothing is sent anywhere.</p>
-        </div>
+        </>
       )}
 
       <style>{`
@@ -203,15 +350,21 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
         .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
         .settings-note-top { padding: 12px; }
+        .settings-error { font-size: 12px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
         .settings-switch { width: 34px; height: 20px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
         .settings-switch.is-on { background: var(--accent); }
         .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
         .settings-switch.is-on .settings-switch-knob { transform: translateX(14px); }
+        .settings-field-block { padding-bottom: 10px; }
+        .settings-two-col { display: flex; gap: 8px; padding: 0 14px 10px; }
         .settings-nickname-block { border-bottom: 1px solid var(--border-soft); margin-bottom: 6px; padding-bottom: 6px; }
         .settings-nickname-input-row { display: flex; gap: 8px; padding: 0 14px 10px; }
-        .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; }
+        .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; min-width: 0; }
         .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
         .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
+        .settings-nickname-save:disabled { opacity: 0.6; cursor: not-allowed; }
+        .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
+        .settings-cancel-btn { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .settings-progress { display: flex; flex-direction: column; gap: 2px; padding: 8px; }
         .progress-stat { display: flex; align-items: center; gap: 14px; padding: 12px; }
         .progress-stat-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
@@ -226,14 +379,17 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .bookmark-item-remove { position: absolute; top: 10px; right: 8px; background: transparent; border: none; color: var(--muted2); width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .bookmark-item-remove:hover { background: rgba(224,102,90,0.12); color: var(--bad); }
         .profile-identity-row { display: flex; align-items: center; gap: 12px; padding: 14px; }
-        .profile-identity-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
-        .profile-identity-photo { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+        .profile-identity-photo-btn { position: relative; width: 34px; height: 34px; border-radius: 10px; padding: 0; border: none; background: transparent; cursor: pointer; flex-shrink: 0; }
+        .profile-identity-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .profile-identity-photo { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; display: block; }
+        .profile-identity-photo-overlay { position: absolute; bottom: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; border: 2px solid var(--panel); }
         .profile-identity-label { font-size: 11px; color: var(--muted); }
         .profile-identity-name { font-size: 14px; color: var(--text); font-weight: 600; }
-        .profile-manage-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--accent); font-size: 13px; padding: 10px; border-radius: 10px; cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
-        .profile-manage-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
         .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 13px; padding: 10px; border-radius: 10px; cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
         .profile-signout-btn:hover { background: rgba(224,102,90,0.08); }
+        .settings-danger-zone { border-color: rgba(224,102,90,0.4); }
+        .settings-delete-btn { display: flex; align-items: center; gap: 6px; background: var(--bad); color: #fff; border: none; border-radius: 8px; padding: 0 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .settings-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       `}</style>
     </div>
   );
