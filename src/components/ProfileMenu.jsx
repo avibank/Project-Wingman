@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn, ShieldCheck } from "lucide-react";
+import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn, ShieldCheck, TrendingUp } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useIsAdmin } from "../lib/admin.js";
 
@@ -44,6 +44,11 @@ function ProfileMenu({ onNavigate }) {
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           <div className="profile-divider" />
+          <button className="profile-row" onClick={() => go("progress")}>
+            <TrendingUp size={15} />
+            <span>My Progress</span>
+            <ChevronRight size={14} className="profile-row-arrow" />
+          </button>
           <button className="profile-row" onClick={() => go("personalize")}>
             <Palette size={15} />
             <span>Personalize</span>
