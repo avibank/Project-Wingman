@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn } from "lucide-react";
+import { User, Palette, SlidersHorizontal, Settings, FlaskConical, ChevronRight, LogIn, ShieldCheck } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
+import { useIsAdmin } from "../lib/admin.js";
 
 function ProfileMenu({ onNavigate }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const { isSignedIn, user } = useUser();
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     if (!open) return;
@@ -38,6 +40,7 @@ function ProfileMenu({ onNavigate }) {
           <button className="profile-row profile-row--auth" onClick={() => go("auth")}>
             <LogIn size={15} />
             <span className="profile-row-truncate">{isSignedIn ? user.primaryEmailAddress?.emailAddress : "Sign In"}</span>
+            {isAdmin && <span className="profile-admin-badge"><ShieldCheck size={10} /> ADMIN</span>}
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           <div className="profile-divider" />
@@ -56,11 +59,13 @@ function ProfileMenu({ onNavigate }) {
             <span>Account Settings</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
-          <button className="profile-row" onClick={() => go("features")}>
-            <FlaskConical size={15} />
-            <span>Features</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
+          {isAdmin && (
+            <button className="profile-row" onClick={() => go("features")}>
+              <FlaskConical size={15} />
+              <span>Features</span>
+              <ChevronRight size={14} className="profile-row-arrow" />
+            </button>
+          )}
         </div>
       )}
       <style>{`
@@ -73,6 +78,7 @@ function ProfileMenu({ onNavigate }) {
         .profile-row:hover { background: var(--panel-alt); }
         .profile-row-arrow { margin-left: auto; color: var(--muted2); }
         .profile-row-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-admin-badge { display: flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 20px; padding: 2px 6px; }
         .profile-divider { height: 1px; background: var(--border-soft); margin: 6px 4px; }
       `}</style>
     </div>
