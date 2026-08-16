@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { Plane, ThumbsUp, Heart, Trash2 } from "lucide-react";
+import { Plane, ThumbsUp, Heart, Trash2, LogIn } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 import { Placard } from "./icons.jsx";
-import { fetchComments, postComment, toggleReaction, deleteComment, getGuestName, setGuestName } from "../lib/comments.js";
+import { fetchComments, postComment, toggleReaction, deleteComment } from "../lib/comments.js";
 import { useIsAdmin } from "../lib/admin.js";
 
-function DiscussPanel() {
+function DiscussPanel({ onSignIn }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
-  const [name, setName] = useState("");
-  const [nameSaved, setNameSaved] = useState(!!getGuestName());
   const [reacted, setReacted] = useState(new Set());
   const isAdmin = useIsAdmin();
+  const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     let active = true;
@@ -27,15 +27,9 @@ function DiscussPanel() {
   }, []);
 
   const post = async () => {
-    if (!text.trim()) return;
-    let author = getGuestName();
-    if (!author) {
-      if (!name.trim()) return;
-      setGuestName(name.trim());
-      setNameSaved(true);
-      author = name.trim();
-    }
-    const newComment = await postComment(null, author, text.trim());
+    if (!text.trim() || !isSignedIn) return;
+    const author = user.fullName || user.primaryEmailAddress?.emailAddress || "Signed-in user";
+    const newComment = await postComment(null, author, text.trim(), user.id);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
@@ -60,8 +54,7 @@ function DiscussPanel() {
     if (ok) setComments((cs) => cs.filter((c) => c.id !== id));
   };
 
-  const myName = getGuestName();
-  const myPosts = myName ? comments.filter((c) => c.author === myName).length : 0;
+  const myPosts = isSignedIn ? comments.filter((c) => c.user_id === user.id).length : 0;
 
   return (
     <div className="discuss">
@@ -102,23 +95,21 @@ function DiscussPanel() {
           ))
         )}
       </div>
-      {!nameSaved && (
-        <input
-          className="discuss-name"
-          placeholder="Your name (shown on your comments)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      {isSignedIn ? (
+        <div className="discuss-input">
+          <input
+            placeholder="Ask a question about the subject…"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && post()}
+          />
+          <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
+        </div>
+      ) : (
+        <button className="discuss-signin" onClick={onSignIn}>
+          <LogIn size={15} /> Sign in to join the discussion
+        </button>
       )}
-      <div className="discuss-input">
-        <input
-          placeholder="Ask a question about the subject…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && post()}
-        />
-        <button className="discuss-send" onClick={post} aria-label="Post"><Plane size={18} style={{ transform: "rotate(45deg)" }} /></button>
-      </div>
       <style>{`
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
         .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 10px; max-width: 640px; width: 100%; flex-shrink: 0; }
@@ -136,7 +127,6 @@ function DiscussPanel() {
         .discuss-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .discuss-delete { margin-left: auto; }
         .discuss-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
-        .discuss-name { max-width: 640px; margin: 0 auto; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--text); flex-shrink: 0; }
         .discuss-input { flex-shrink: 0; display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 14px; color: var(--text); font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
@@ -149,6 +139,8 @@ function DiscussPanel() {
         @media (prefers-reduced-motion: reduce) {
           .discuss-send { animation: none; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
         }
+        .discuss-signin { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 13px; padding: 14px; border-radius: 16px; cursor: pointer; }
+        .discuss-signin:hover { border-color: var(--accent); }
       `}</style>
     </div>
   );
