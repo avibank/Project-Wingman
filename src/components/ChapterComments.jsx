@@ -32,7 +32,7 @@ function ChapterComments({ chapterId, onSignIn }) {
 
   const handlePost = async () => {
     if (!text.trim() || !isSignedIn) return;
-    const newComment = await postComment(chapterId, displayName, text.trim(), user.id);
+    const newComment = await postComment(chapterId, displayName, text.trim(), user.id, null, user.fullName || null);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
@@ -87,7 +87,12 @@ function ChapterComments({ chapterId, onSignIn }) {
               <div key={c.id} className="chapter-comment">
                 <div className="chapter-comment-avatar">{c.author.charAt(0).toUpperCase()}</div>
                 <div className="chapter-comment-body">
-                  <div className="chapter-comment-meta"><strong>{c.author}</strong></div>
+                  <div className="chapter-comment-meta">
+                    <strong>{c.author}</strong>
+                    {isAdmin && c.real_name && c.real_name !== c.author && (
+                      <span className="chapter-comment-realname"> ({c.real_name})</span>
+                    )}
+                  </div>
                   {isEditing ? (
                     <div className="chapter-comment-edit">
                       <input value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveEdit(c.id)} autoFocus />
@@ -143,6 +148,7 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
         .chapter-comment-body { flex: 1; min-width: 0; }
         .chapter-comment-meta { font-size: 12px; color: var(--text); margin-bottom: 2px; }
+        .chapter-comment-realname { color: var(--muted2); font-weight: 400; font-size: 11px; }
         .chapter-comment p { margin: 0; font-size: 12.5px; color: var(--text-soft); line-height: 1.4; }
         .chapter-comment-edit { display: flex; gap: 4px; align-items: center; }
         .chapter-comment-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; font-size: 12.5px; color: var(--text); }
