@@ -18,7 +18,7 @@ import { loadJSON, saveJSON } from "./lib/storage.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export default function App() {
-  const [tab, setTab] = useState("chapters");
+  const [tab, setTab] = useState(() => loadJSON("pw-last-tab", "chapters"));
   const [settingsPage, setSettingsPage] = useState(null);
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
@@ -40,6 +40,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    saveJSON("pw-last-tab", tab);
+  }, [tab]);
 
   useEffect(() => {
     saveJSON("pw-reduce-motion", reduceMotion);
