@@ -10,10 +10,10 @@ export async function fetchComments(chapterId) {
   return data || [];
 }
 
-export async function postComment(chapterId, author, text, userId = null, imageUrl = null) {
+export async function postComment(chapterId, author, text, userId = null, imageUrl = null, realName = null) {
   const { data, error } = await supabase
     .from("comments")
-    .insert({ chapter_id: chapterId, author, text, user_id: userId, image_url: imageUrl })
+    .insert({ chapter_id: chapterId, author, text, user_id: userId, image_url: imageUrl, real_name: realName })
     .select()
     .single();
   if (error) {
