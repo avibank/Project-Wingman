@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
 
 function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress }) {
   const [tab, setTab] = useState("info");
   const { user } = useUser();
   const { signOut } = useClerk();
+  const updateUsername = useReverification((newUsername) => user.update({ username: newUsername }));
   const photoInputRef = useRef(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
@@ -44,11 +45,13 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
     setUsernameError(null);
     setUsernameBusy(true);
     try {
-      await user.update({ username: username.trim() });
+      await updateUsername(username.trim());
       setUsernameSaved(true);
       setTimeout(() => setUsernameSaved(false), 1800);
     } catch (err) {
-      setUsernameError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+      if (err?.code !== "reverification_cancelled") {
+        setUsernameError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+      }
     }
     setUsernameBusy(false);
   };
