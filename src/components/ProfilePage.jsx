@@ -9,9 +9,11 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
   const photoInputRef = useRef(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-  const [nickname, setNickname] = useState("");
-  const [showNicknameOnly, setShowNicknameOnly] = useState(false);
-  const [nicknameSaved, setNicknameSaved] = useState(false);
+  const [username, setUsername] = useState("");
+  const [showRealName, setShowRealName] = useState(false);
+  const [usernameSaved, setUsernameSaved] = useState(false);
+  const [usernameError, setUsernameError] = useState(null);
+  const [usernameBusy, setUsernameBusy] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -30,18 +32,32 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
   useEffect(() => {
     if (user) {
-      setNickname(user.unsafeMetadata?.nickname || "");
-      setShowNicknameOnly(!!user.unsafeMetadata?.showNicknameOnly);
+      setUsername(user.username || "");
+      setShowRealName(!!user.unsafeMetadata?.showRealName);
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
     }
   }, [user]);
 
-  const saveNickname = async () => {
+  const saveUsername = async () => {
+    if (!user || !username.trim()) return;
+    setUsernameError(null);
+    setUsernameBusy(true);
+    try {
+      await user.update({ username: username.trim() });
+      setUsernameSaved(true);
+      setTimeout(() => setUsernameSaved(false), 1800);
+    } catch (err) {
+      setUsernameError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+    }
+    setUsernameBusy(false);
+  };
+
+  const toggleShowRealName = async () => {
     if (!user) return;
-    await user.update({ unsafeMetadata: { ...user.unsafeMetadata, nickname: nickname.trim(), showNicknameOnly } });
-    setNicknameSaved(true);
-    setTimeout(() => setNicknameSaved(false), 1800);
+    const next = !showRealName;
+    setShowRealName(next);
+    await user.update({ unsafeMetadata: { ...user.unsafeMetadata, showRealName: next } });
   };
 
   const saveName = async () => {
@@ -108,7 +124,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
   if (!user) return null;
 
-  const captionName = nickname || user.fullName || "Pilot";
+  const captionName = showRealName && user.fullName ? user.fullName : (user.username || user.fullName || "Pilot");
 
   return (
     <div className="profile-page">
@@ -213,24 +229,25 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
           <div className="settings-block">
             <div className="settings-nickname-block">
-              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Nickname</div>
-              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Shown alongside (or instead of) your real name in Comments and Discussion</div>
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Username</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Shown in Comments and Discussion, unless you choose to show your real name instead below</div>
               <div className="settings-nickname-input-row">
                 <input
                   className="settings-nickname-input"
                   placeholder="e.g. SkyCadet"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
-                <button className="settings-nickname-save" onClick={saveNickname}>
-                  {nicknameSaved ? <Check size={14} /> : "Save"}
+                <button className="settings-nickname-save" onClick={saveUsername} disabled={usernameBusy}>
+                  {usernameBusy ? "…" : usernameSaved ? <Check size={14} /> : "Save"}
                 </button>
               </div>
-              <div className="settings-row" onClick={() => setShowNicknameOnly((s) => !s)}>
-                <span className={`settings-switch ${showNicknameOnly ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+              {usernameError && <p className="settings-error">{usernameError}</p>}
+              <div className="settings-row" onClick={toggleShowRealName}>
+                <span className={`settings-switch ${showRealName ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
                 <div>
-                  <div className="settings-row-title">Show nickname only</div>
-                  <div className="settings-row-sub">Hides your real name for privacy — only your nickname is shown</div>
+                  <div className="settings-row-title">Show real name instead</div>
+                  <div className="settings-row-sub">Displays your real name instead of your username throughout the app</div>
                 </div>
               </div>
             </div>
