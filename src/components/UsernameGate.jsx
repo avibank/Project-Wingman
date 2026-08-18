@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, useReverification } from "@clerk/clerk-react";
 import { Plane, Check } from "lucide-react";
 
 function UsernameGate({ children }) {
   const { isLoaded, isSignedIn, user } = useUser();
+  const updateUsername = useReverification((newUsername) => user?.update({ username: newUsername }));
   const [username, setUsername] = useState("");
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -18,9 +19,11 @@ function UsernameGate({ children }) {
     setSaving(true);
     setError(null);
     try {
-      await user.update({ username: trimmed });
+      await updateUsername(trimmed);
     } catch (err) {
-      setError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+      if (err?.code !== "reverification_cancelled") {
+        setError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+      }
     }
     setSaving(false);
   };
