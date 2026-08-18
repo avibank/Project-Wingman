@@ -25,6 +25,7 @@ export default function App() {
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
   const [fontSize, setFontSize] = useState(() => loadJSON("pw-font-size", "medium"));
   const [accentColor, setAccentColor] = useState(() => loadJSON("pw-accent-color", "blue"));
+  const [dyslexiaFont, setDyslexiaFont] = useState(() => loadJSON("pw-dyslexia-font", false));
   const [calmDiscussLights, setCalmDiscussLights] = useState(() => loadJSON("pw-calm-discuss-lights", false));
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
   const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
@@ -58,6 +59,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-accent-color", accentColor);
   }, [accentColor]);
+
+  useEffect(() => {
+    saveJSON("pw-dyslexia-font", dyslexiaFont);
+  }, [dyslexiaFont]);
 
   useEffect(() => {
     saveJSON("pw-calm-discuss-lights", calmDiscussLights);
@@ -135,7 +140,7 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
     <div
-      className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}
+      className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
         "--accent": ACCENT_COLORS[accentColor].accent,
@@ -214,6 +219,8 @@ export default function App() {
             onChangeFontSize={setFontSize}
             accentColor={accentColor}
             onChangeAccentColor={setAccentColor}
+            dyslexiaFont={dyslexiaFont}
+            onToggleDyslexiaFont={() => setDyslexiaFont((d) => !d)}
           />
         </main>
       ) : settingsPage === "progress" ? (
@@ -274,6 +281,18 @@ export default function App() {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        @font-face {
+          font-family: 'OpenDyslexic';
+          src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@master/otf/OpenDyslexic-Regular.otf') format('opentype');
+          font-weight: 400;
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'OpenDyslexic';
+          src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@master/otf/OpenDyslexic-Bold.otf') format('opentype');
+          font-weight: 700;
+          font-display: swap;
+        }
         * { box-sizing: border-box; }
         html, body, #root { height: 100%; margin: 0; background: #0B1526; }
         .app {
@@ -339,6 +358,9 @@ export default function App() {
         }
         .app.reduce-motion .boarding-overlay { animation-duration: 0.4s; }
         .app.reduce-motion .content-taxi { animation: none; }
+        .app.dyslexia-font, .app.dyslexia-font .exam-stem, .app.dyslexia-font .chapter-title, .app.dyslexia-font p, .app.dyslexia-font span, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font button {
+          font-family: 'OpenDyslexic', 'Inter', sans-serif;
+        }
       `}</style>
     </div>
     </ClerkProvider>
