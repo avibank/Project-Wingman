@@ -6,7 +6,7 @@ import { CHAPTERS } from "../data.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 
 function ChaptersPanel({ onSignIn }) {
-  const [openId, setOpenId] = useState(CHAPTERS[0].id);
+  const [openId, setOpenId] = useState(() => loadJSON("pw-last-chapter", CHAPTERS[0].id));
   const [query, setQuery] = useState("");
   const [completed, setCompleted] = useState(() => new Set(loadJSON("pw-completed", [])));
   const [bookmarks, setBookmarks] = useState(() => new Set(loadJSON("pw-bookmarks", [])));
@@ -46,9 +46,11 @@ function ChaptersPanel({ onSignIn }) {
     const isOpen = openId === ch.id;
     if (isOpen) {
       setOpenId(null);
+      saveJSON("pw-last-chapter", null);
       return;
     }
     setOpenId(ch.id);
+    saveJSON("pw-last-chapter", ch.id);
     setRightTab("quiz");
     if (!seen.has(ch.id)) {
       setToast(`NOW BOARDING — ${ch.code}`);
