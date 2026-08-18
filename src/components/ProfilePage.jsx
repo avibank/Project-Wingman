@@ -213,12 +213,12 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
           <div className="settings-block">
             <div className="settings-field-block">
-              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Bio</div>
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Logbook</div>
               <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>A short line about yourself</div>
               <div style={{ padding: "0 14px 10px" }}>
                 <textarea
                   className="settings-bio-textarea"
-                  placeholder="e.g. PPL student at AU Kuwait, working toward my CPL."
+                  placeholder="PPL student at AU Kuwait, working toward my CPL."
                   value={bio}
                   maxLength={BIO_MAX}
                   onChange={(e) => setBio(e.target.value)}
@@ -331,8 +331,8 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
           <div className="settings-row settings-row--static">
             <div className="settings-row-icon"><span style={{ fontSize: 15, fontWeight: 700 }}>Aa</span></div>
             <div style={{ flex: 1 }}>
-              <div className="settings-row-title">Text size</div>
-              <div className="settings-row-sub" style={{ marginBottom: 8 }}>Adjusts the size of chapters, discussion, and library text</div>
+              <div className="settings-row-title">Instrument Scale</div>
+              <div className="settings-row-sub" style={{ marginBottom: 8 }}>Adjusts text size across chapters, discussion, and library — dial in your instrument scale</div>
               <div className="font-size-options">
                 {["small", "medium", "large"].map((size) => (
                   <button
@@ -349,7 +349,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
           <div className="settings-row settings-row--static">
             <div className="settings-row-icon"><span style={{ width: 14, height: 14, borderRadius: "50%", background: ACCENT_COLORS[accentColor].swatch, display: "block" }} /></div>
             <div style={{ flex: 1 }}>
-              <div className="settings-row-title">Accent color</div>
+              <div className="settings-row-title">Livery</div>
               <div className="settings-row-sub" style={{ marginBottom: 8 }}>{ACCENT_COLORS[accentColor].label}</div>
               <div className="accent-swatch-row">
                 {Object.entries(ACCENT_COLORS).map(([key, c]) => (
@@ -382,8 +382,8 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
           <div className="settings-row" onClick={onToggleDyslexiaFont}>
             <span className={`settings-switch ${dyslexiaFont ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
             <div>
-              <div className="settings-row-title">Dyslexia-friendly font</div>
-              <div className="settings-row-sub">Switches body text to a font designed for easier reading</div>
+              <div className="settings-row-title">Plain Language</div>
+              <div className="settings-row-sub">A clearer font for easier reading — designed to help with dyslexia and reading fatigue</div>
             </div>
           </div>
           <p className="settings-note">Quizzes support keyboard shortcuts: press 1-4 or A-D to answer, and Enter to continue.</p>
