@@ -36,7 +36,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
 
   const post = async () => {
     if ((!text.trim() && !pendingImage) || !isSignedIn) return;
-    const newComment = await postComment(null, displayName, text.trim(), user.id, pendingImage?.url || null);
+    const newComment = await postComment(null, displayName, text.trim(), user.id, pendingImage?.url || null, user.fullName || null);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
@@ -116,7 +116,12 @@ function DiscussPanel({ onSignIn, calmLights }) {
               <div key={c.id} className="discuss-item">
                 <div className="discuss-avatar">{c.author.charAt(0).toUpperCase()}</div>
                 <div className="discuss-item-body">
-                  <div className="discuss-meta"><strong>{c.author}</strong></div>
+                  <div className="discuss-meta">
+                    <strong>{c.author}</strong>
+                    {isAdmin && c.real_name && c.real_name !== c.author && (
+                      <span className="discuss-realname">({c.real_name})</span>
+                    )}
+                  </div>
                   {isEditing ? (
                     <div className="discuss-edit">
                       <input value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveEdit(c.id)} autoFocus />
@@ -198,7 +203,8 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
         .discuss-item-body { flex: 1; min-width: 0; }
-        .discuss-meta { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+        .discuss-meta { display: flex; gap: 6px; align-items: baseline; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+        .discuss-realname { color: var(--muted2); font-weight: 400; font-size: 11.5px; }
         .discuss-item p { margin: 0; font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
         .discuss-edit { display: flex; gap: 6px; align-items: center; }
         .discuss-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; color: var(--text); }
