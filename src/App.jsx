@@ -23,6 +23,7 @@ export default function App() {
   const [module, setModule] = useState(MODULES[0]);
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
+  const [fontSize, setFontSize] = useState(() => loadJSON("pw-font-size", "medium"));
   const [calmDiscussLights, setCalmDiscussLights] = useState(() => loadJSON("pw-calm-discuss-lights", false));
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
   const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
@@ -48,6 +49,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-reduce-motion", reduceMotion);
   }, [reduceMotion]);
+
+  useEffect(() => {
+    saveJSON("pw-font-size", fontSize);
+  }, [fontSize]);
 
   useEffect(() => {
     saveJSON("pw-calm-discuss-lights", calmDiscussLights);
@@ -124,7 +129,10 @@ export default function App() {
 
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-    <div className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}>
+    <div
+      className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}
+      style={{ "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1 }}
+    >
     <UsernameGate>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
@@ -191,6 +199,8 @@ export default function App() {
             calmDiscussLights={calmDiscussLights}
             onToggleCalmDiscussLights={() => setCalmDiscussLights((c) => !c)}
             onResetProgress={resetProgress}
+            fontSize={fontSize}
+            onChangeFontSize={setFontSize}
           />
         </main>
       ) : settingsPage === "progress" ? (
@@ -279,8 +289,8 @@ export default function App() {
         .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
         .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted2); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
         .tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
-        .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; }
-        .content--full { max-width: none; padding: 0 22px; }
+        .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
+        .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content-taxi { animation: taxiIn 0.35s ease; }
         @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
