@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
 
-function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress }) {
+function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize }) {
   const [tab, setTab] = useState("info");
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -327,6 +327,24 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
               <div className="settings-row-sub">Currently {theme === "light" ? "light" : "dark"} mode — tap to switch</div>
             </div>
           </div>
+          <div className="settings-row settings-row--static">
+            <div className="settings-row-icon"><span style={{ fontSize: 15, fontWeight: 700 }}>Aa</span></div>
+            <div style={{ flex: 1 }}>
+              <div className="settings-row-title">Text size</div>
+              <div className="settings-row-sub" style={{ marginBottom: 8 }}>Adjusts the size of chapters, discussion, and library text</div>
+              <div className="font-size-options">
+                {["small", "medium", "large"].map((size) => (
+                  <button
+                    key={size}
+                    className={`font-size-btn ${fontSize === size ? "is-active" : ""}`}
+                    onClick={() => onChangeFontSize(size)}
+                  >
+                    {size.charAt(0).toUpperCase() + size.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="settings-row" onClick={onToggleReduceMotion}>
             <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
             <div>
@@ -355,6 +373,11 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }
+        .settings-row--static { cursor: default; }
+        .settings-row--static:hover { background: transparent; }
+        .font-size-options { display: flex; gap: 6px; }
+        .font-size-btn { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px; border-radius: 8px; cursor: pointer; }
+        .font-size-btn.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
         .settings-row-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
         .settings-row--danger .settings-row-icon { color: var(--bad); }
