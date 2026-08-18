@@ -12,7 +12,7 @@ import ProgressPage from "./components/ProgressPage.jsx";
 import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
-import { MODULES, NAV, TRIVIA } from "./data.js";
+import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -24,6 +24,7 @@ export default function App() {
   const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
   const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
   const [fontSize, setFontSize] = useState(() => loadJSON("pw-font-size", "medium"));
+  const [accentColor, setAccentColor] = useState(() => loadJSON("pw-accent-color", "blue"));
   const [calmDiscussLights, setCalmDiscussLights] = useState(() => loadJSON("pw-calm-discuss-lights", false));
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
   const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
@@ -53,6 +54,10 @@ export default function App() {
   useEffect(() => {
     saveJSON("pw-font-size", fontSize);
   }, [fontSize]);
+
+  useEffect(() => {
+    saveJSON("pw-accent-color", accentColor);
+  }, [accentColor]);
 
   useEffect(() => {
     saveJSON("pw-calm-discuss-lights", calmDiscussLights);
@@ -131,7 +136,13 @@ export default function App() {
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
     <div
       className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}
-      style={{ "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1 }}
+      style={{
+        "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
+        "--accent": ACCENT_COLORS[accentColor].accent,
+        "--accent-hover": ACCENT_COLORS[accentColor].hover,
+        "--accent-soft": ACCENT_COLORS[accentColor].soft,
+        "--on-accent": ACCENT_COLORS[accentColor].onAccent,
+      }}
     >
     <UsernameGate>
       {boarding && (
@@ -201,6 +212,8 @@ export default function App() {
             onResetProgress={resetProgress}
             fontSize={fontSize}
             onChangeFontSize={setFontSize}
+            accentColor={accentColor}
+            onChangeAccentColor={setAccentColor}
           />
         </main>
       ) : settingsPage === "progress" ? (
