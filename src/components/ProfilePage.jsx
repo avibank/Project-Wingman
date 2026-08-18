@@ -16,6 +16,11 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
   const [usernameError, setUsernameError] = useState(null);
   const [usernameBusy, setUsernameBusy] = useState(false);
 
+  const [bio, setBio] = useState("");
+  const [bioSaved, setBioSaved] = useState(false);
+  const [bioBusy, setBioBusy] = useState(false);
+  const BIO_MAX = 160;
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
@@ -37,8 +42,18 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       setShowRealName(!!user.unsafeMetadata?.showRealName);
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
+      setBio(user.unsafeMetadata?.bio || "");
     }
   }, [user]);
+
+  const saveBio = async () => {
+    if (!user) return;
+    setBioBusy(true);
+    await user.update({ unsafeMetadata: { ...user.unsafeMetadata, bio: bio.trim() } });
+    setBioBusy(false);
+    setBioSaved(true);
+    setTimeout(() => setBioSaved(false), 1800);
+  };
 
   const saveUsername = async () => {
     if (!user || !username.trim()) return;
@@ -197,6 +212,27 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
           <div className="settings-block">
             <div className="settings-field-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Bio</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>A short line about yourself</div>
+              <div style={{ padding: "0 14px 10px" }}>
+                <textarea
+                  className="settings-bio-textarea"
+                  placeholder="e.g. PPL student at AU Kuwait, working toward my CPL."
+                  value={bio}
+                  maxLength={BIO_MAX}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                />
+                <div className="settings-bio-count">{bio.length}/{BIO_MAX}</div>
+              </div>
+              <button className="settings-save-full" onClick={saveBio} disabled={bioBusy}>
+                {bioBusy ? "…" : bioSaved ? <Check size={14} /> : "Save bio"}
+              </button>
+            </div>
+          </div>
+
+          <div className="settings-block">
+            <div className="settings-field-block">
               <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Email</div>
               <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Current: {user.primaryEmailAddress?.emailAddress}</div>
               {emailStep === "idle" ? (
@@ -336,6 +372,9 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-nickname-input-row { display: flex; gap: 8px; padding: 0 14px 10px; }
         .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; min-width: 0; }
         .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
+        .settings-bio-textarea { width: 100%; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; font-family: inherit; resize: vertical; min-height: 60px; box-sizing: border-box; }
+        .settings-bio-textarea:focus { outline: none; border-color: var(--accent); }
+        .settings-bio-count { text-align: right; font-size: 11px; color: var(--muted2); margin-top: 4px; }
         .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
         .settings-nickname-save:disabled { opacity: 0.6; cursor: not-allowed; }
         .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
