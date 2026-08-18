@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, X, Layers, List } from "lucide-react";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import { CHAPTERS } from "../data.js";
+import FlashcardMode from "./FlashcardMode.jsx";
 
 function BookmarksPage({ onBack }) {
   const [bookmarkIds, setBookmarkIds] = useState(() => loadJSON("pw-bookmarks", []));
+  const [mode, setMode] = useState("list"); // "list" | "cards"
   const allQuestions = CHAPTERS.flatMap((ch) => ch.questions.map((q) => ({ ...q, chapterTitle: ch.title, chapterCode: ch.code })));
   const bookmarkedQuestions = allQuestions.filter((q) => bookmarkIds.includes(q.id));
 
@@ -14,12 +16,28 @@ function BookmarksPage({ onBack }) {
     saveJSON("pw-bookmarks", next);
   };
 
+  if (mode === "cards" && bookmarkedQuestions.length > 0) {
+    return (
+      <div className="bookmarks-page">
+        <FlashcardMode questions={bookmarkedQuestions} onExit={() => setMode("list")} />
+        <style>{`.bookmarks-page { max-width: 560px; }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="bookmarks-page">
       <button className="bookmarks-back" onClick={onBack}>
         <ChevronLeft size={16} /> Back
       </button>
-      <h1 className="bookmarks-title">My Bookmarks</h1>
+      <div className="bookmarks-title-row">
+        <h1 className="bookmarks-title">My Bookmarks</h1>
+        {bookmarkedQuestions.length > 0 && (
+          <button className="bookmarks-flashcard-btn" onClick={() => setMode("cards")}>
+            <Layers size={14} /> Flashcards
+          </button>
+        )}
+      </div>
       <div className="bookmarks-block">
         {bookmarkedQuestions.length === 0 ? (
           <p className="bookmarks-empty">No bookmarked questions yet — tap the star on any quiz question to save it here.</p>
@@ -40,7 +58,10 @@ function BookmarksPage({ onBack }) {
       <style>{`
         .bookmarks-page { max-width: 560px; }
         .bookmarks-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
-        .bookmarks-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 16px; }
+        .bookmarks-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .bookmarks-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0; }
+        .bookmarks-flashcard-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+        .bookmarks-flashcard-btn:hover { background: var(--accent-hover); }
         .bookmarks-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; }
         .bookmarks-empty { font-size: 12.5px; color: var(--muted2); padding: 16px; text-align: center; }
         .bookmarks-list { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
