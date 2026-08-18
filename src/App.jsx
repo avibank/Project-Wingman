@@ -11,6 +11,7 @@ import ProfilePage from "./components/ProfilePage.jsx";
 import ProgressPage from "./components/ProgressPage.jsx";
 import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
+import UsernameGate from "./components/UsernameGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 
@@ -120,6 +121,7 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
     <div className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""}`}>
+    <UsernameGate>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
@@ -241,6 +243,7 @@ export default function App() {
           })}
         </div>
       </div>
+    </UsernameGate>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
