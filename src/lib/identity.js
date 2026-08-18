@@ -3,10 +3,8 @@ import { useUser } from "@clerk/clerk-react";
 export function useDisplayName() {
   const { user } = useUser();
   if (!user) return null;
-  const nickname = user.unsafeMetadata?.nickname?.trim();
-  const showNicknameOnly = !!user.unsafeMetadata?.showNicknameOnly;
+  const showRealName = !!user.unsafeMetadata?.showRealName;
   const fullName = user.fullName || user.primaryEmailAddress?.emailAddress || "Signed-in user";
-  if (nickname && showNicknameOnly) return nickname;
-  if (nickname) return `${fullName} (${nickname})`;
-  return fullName;
+  if (showRealName && user.fullName) return user.fullName;
+  return user.username || fullName;
 }
