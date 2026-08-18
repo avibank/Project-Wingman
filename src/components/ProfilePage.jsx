@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
+import { ACCENT_COLORS } from "../data.js";
 
-function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize }) {
+function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, accentColor, onChangeAccentColor }) {
   const [tab, setTab] = useState("info");
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -345,6 +346,25 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
               </div>
             </div>
           </div>
+          <div className="settings-row settings-row--static">
+            <div className="settings-row-icon"><span style={{ width: 14, height: 14, borderRadius: "50%", background: ACCENT_COLORS[accentColor].swatch, display: "block" }} /></div>
+            <div style={{ flex: 1 }}>
+              <div className="settings-row-title">Accent color</div>
+              <div className="settings-row-sub" style={{ marginBottom: 8 }}>{ACCENT_COLORS[accentColor].label}</div>
+              <div className="accent-swatch-row">
+                {Object.entries(ACCENT_COLORS).map(([key, c]) => (
+                  <button
+                    key={key}
+                    className={`accent-swatch ${accentColor === key ? "is-active" : ""}`}
+                    style={{ background: c.swatch }}
+                    onClick={() => onChangeAccentColor(key)}
+                    aria-label={c.label}
+                    title={c.label}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="settings-row" onClick={onToggleReduceMotion}>
             <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
             <div>
@@ -378,6 +398,9 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .font-size-options { display: flex; gap: 6px; }
         .font-size-btn { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px; border-radius: 8px; cursor: pointer; }
         .font-size-btn.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .accent-swatch-row { display: flex; gap: 10px; }
+        .accent-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+        .accent-swatch.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--border-hover); }
         .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
         .settings-row-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
         .settings-row--danger .settings-row-icon { color: var(--bad); }
