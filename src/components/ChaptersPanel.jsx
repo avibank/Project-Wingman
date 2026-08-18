@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare } from "lucide-react";
+import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS } from "../data.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
+
+const MAX_RECENT = 5;
 
 function ChaptersPanel({ onSignIn }) {
   const [openId, setOpenId] = useState(() => loadJSON("pw-last-chapter", CHAPTERS[0].id));
@@ -15,6 +17,7 @@ function ChaptersPanel({ onSignIn }) {
   const [toast, setToast] = useState(null);
   const [loadedVideos, setLoadedVideos] = useState(new Set());
   const [rightTab, setRightTab] = useState("quiz");
+  const [recentIds, setRecentIds] = useState(() => loadJSON("pw-recent-chapters", []));
 
   const markComplete = (id) => {
     setCompleted((prev) => {
@@ -42,6 +45,14 @@ function ChaptersPanel({ onSignIn }) {
     });
   };
 
+  const pushRecent = (id) => {
+    setRecentIds((prev) => {
+      const next = [id, ...prev.filter((x) => x !== id)].slice(0, MAX_RECENT);
+      saveJSON("pw-recent-chapters", next);
+      return next;
+    });
+  };
+
   const openChapter = (ch) => {
     const isOpen = openId === ch.id;
     if (isOpen) {
@@ -51,6 +62,7 @@ function ChaptersPanel({ onSignIn }) {
     }
     setOpenId(ch.id);
     saveJSON("pw-last-chapter", ch.id);
+    pushRecent(ch.id);
     setRightTab("quiz");
     if (!seen.has(ch.id)) {
       setToast(`NOW BOARDING — ${ch.code}`);
@@ -60,6 +72,7 @@ function ChaptersPanel({ onSignIn }) {
   };
 
   const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
+  const recentChapters = recentIds.map((id) => CHAPTERS.find((ch) => ch.id === id)).filter(Boolean);
 
   return (
     <div className="chapters-wrap">
@@ -74,6 +87,21 @@ function ChaptersPanel({ onSignIn }) {
         <Search size={15} />
         <input placeholder="Search chapters…" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
+
+      {recentChapters.length > 0 && !query && (
+        <div className="recent-row">
+          <div className="recent-row-label"><History size={12} /> Recently viewed</div>
+          <div className="recent-row-scroll">
+            {recentChapters.map((ch) => (
+              <button key={ch.id} className="recent-chip" onClick={() => openChapter(ch)}>
+                <span className="recent-chip-code">{ch.code}</span>
+                <span className="recent-chip-title">{ch.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!seen.size && (
         <div className="chapters-hint">Tap a chapter below to begin ↓</div>
       )}
@@ -180,6 +208,13 @@ function ChaptersPanel({ onSignIn }) {
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .chapters-search input:focus { outline: none; }
+        .recent-row { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }
+        .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted2); text-transform: uppercase; }
+        .recent-row-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+        .recent-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; cursor: pointer; max-width: 160px; text-align: left; }
+        .recent-chip:hover { border-color: var(--accent); }
+        .recent-chip-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
+        .recent-chip-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
         .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
         .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); }
