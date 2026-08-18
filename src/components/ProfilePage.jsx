@@ -1,368 +1,460 @@
-import { useState, useRef, useEffect } from "react";
-import { ClerkProvider } from "@clerk/clerk-react";
-import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
-import ChaptersPanel from "./components/ChaptersPanel.jsx";
-import DiscussPanel from "./components/DiscussPanel.jsx";
-import PdfPanel from "./components/PdfPanel.jsx";
-import ProfileMenu from "./components/ProfileMenu.jsx";
-import StreakMenu from "./components/StreakMenu.jsx";
-import SettingsPage from "./components/SettingsPage.jsx";
-import ProfilePage from "./components/ProfilePage.jsx";
-import ProgressPage from "./components/ProgressPage.jsx";
-import BookmarksPage from "./components/BookmarksPage.jsx";
-import AuthPage from "./components/AuthPage.jsx";
-import UsernameGate from "./components/UsernameGate.jsx";
-import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
-import { loadJSON, saveJSON } from "./lib/storage.js";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
+import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
+import { ACCENT_COLORS } from "../data.js";
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, accentColor, onChangeAccentColor, dyslexiaFont, onToggleDyslexiaFont }) {
+  const [tab, setTab] = useState("info");
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const updateUsername = useReverification((newUsername) => user.update({ username: newUsername }));
+  const photoInputRef = useRef(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-export default function App() {
-  const [tab, setTab] = useState(() => loadJSON("pw-last-tab", "chapters"));
-  const [settingsPage, setSettingsPage] = useState(null);
-  const [module, setModule] = useState(MODULES[0]);
-  const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
-  const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
-  const [fontSize, setFontSize] = useState(() => loadJSON("pw-font-size", "medium"));
-  const [accentColor, setAccentColor] = useState(() => loadJSON("pw-accent-color", "blue"));
-  const [dyslexiaFont, setDyslexiaFont] = useState(() => loadJSON("pw-dyslexia-font", false));
-  const [calmDiscussLights, setCalmDiscussLights] = useState(() => loadJSON("pw-calm-discuss-lights", false));
-  const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
-  const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
-  const [streak, setStreak] = useState(0);
-  const [boarding, setBoarding] = useState(true);
-  const [paToast, setPaToast] = useState(null);
-  const [scrollPct, setScrollPct] = useState(0);
-  const [storageWarning, setStorageWarning] = useState(false);
-  const scrollPositions = useRef({});
-  const [ticket] = useState(() => ({
-    seat: `${Math.ceil(Math.random() * 30)}${["A", "B", "C", "D", "E", "F"][Math.floor(Math.random() * 6)]}`,
-    gate: String.fromCharCode(65 + Math.floor(Math.random() * 6)) + (Math.floor(Math.random() * 20) + 1),
-  }));
+  const [username, setUsername] = useState("");
+  const [showRealName, setShowRealName] = useState(false);
+  const [usernameSaved, setUsernameSaved] = useState(false);
+  const [usernameError, setUsernameError] = useState(null);
+  const [usernameBusy, setUsernameBusy] = useState(false);
+
+  const [bio, setBio] = useState("");
+  const [bioSaved, setBioSaved] = useState(false);
+  const [bioBusy, setBioBusy] = useState(false);
+  const BIO_MAX = 160;
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [nameSaved, setNameSaved] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [emailStep, setEmailStep] = useState("idle"); // idle | code
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingEmailObj, setPendingEmailObj] = useState(null);
+  const [emailError, setEmailError] = useState(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    saveJSON("pw-theme", theme);
-  }, [theme]);
+    if (user) {
+      setUsername(user.username || "");
+      setShowRealName(!!user.unsafeMetadata?.showRealName);
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setBio(user.unsafeMetadata?.bio || "");
+    }
+  }, [user]);
 
-  useEffect(() => {
-    saveJSON("pw-last-tab", tab);
-  }, [tab]);
+  const saveBio = async () => {
+    if (!user) return;
+    setBioBusy(true);
+    await user.update({ unsafeMetadata: { ...user.unsafeMetadata, bio: bio.trim() } });
+    setBioBusy(false);
+    setBioSaved(true);
+    setTimeout(() => setBioSaved(false), 1800);
+  };
 
-  useEffect(() => {
-    saveJSON("pw-reduce-motion", reduceMotion);
-  }, [reduceMotion]);
-
-  useEffect(() => {
-    saveJSON("pw-font-size", fontSize);
-  }, [fontSize]);
-
-  useEffect(() => {
-    saveJSON("pw-accent-color", accentColor);
-  }, [accentColor]);
-
-  useEffect(() => {
-    saveJSON("pw-dyslexia-font", dyslexiaFont);
-  }, [dyslexiaFont]);
-
-  useEffect(() => {
-    saveJSON("pw-calm-discuss-lights", calmDiscussLights);
-  }, [calmDiscussLights]);
-
-  useEffect(() => {
-    saveJSON("pw-test-streak-override-on", testStreakOverrideOn);
-  }, [testStreakOverrideOn]);
-
-  useEffect(() => {
-    saveJSON("pw-test-streak-value", testStreakValue);
-  }, [testStreakValue]);
-
-  useEffect(() => {
-    // Detect whether localStorage actually works here (some private-browsing modes block it)
+  const saveUsername = async () => {
+    if (!user || !username.trim()) return;
+    setUsernameError(null);
+    setUsernameBusy(true);
     try {
-      localStorage.setItem("pw-storage-check", "1");
-      localStorage.removeItem("pw-storage-check");
-    } catch {
-      setStorageWarning(true);
+      await updateUsername(username.trim());
+      setUsernameSaved(true);
+      setTimeout(() => setUsernameSaved(false), 1800);
+    } catch (err) {
+      if (err?.code !== "reverification_cancelled") {
+        setUsernameError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+      }
     }
-  }, []);
+    setUsernameBusy(false);
+  };
 
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const lastVisit = localStorage.getItem("pw-last-visit");
-    let current = parseInt(localStorage.getItem("pw-streak") || "0", 10);
-    if (lastVisit !== today) {
-      const yesterday = new Date(Date.now() - 86400000).toDateString();
-      current = lastVisit === yesterday ? current + 1 : 1;
-      localStorage.setItem("pw-last-visit", today);
-      localStorage.setItem("pw-streak", String(current));
+  const toggleShowRealName = async () => {
+    if (!user) return;
+    const next = !showRealName;
+    setShowRealName(next);
+    await user.update({ unsafeMetadata: { ...user.unsafeMetadata, showRealName: next } });
+  };
+
+  const saveName = async () => {
+    if (!user) return;
+    await user.update({ firstName: firstName.trim(), lastName: lastName.trim() });
+    setNameSaved(true);
+    setTimeout(() => setNameSaved(false), 1800);
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    setPhotoUploading(true);
+    await user.setProfileImage({ file });
+    setPhotoUploading(false);
+  };
+
+  const startEmailChange = async () => {
+    if (!user || !newEmail.trim()) return;
+    setEmailError(null);
+    setEmailBusy(true);
+    try {
+      const emailObj = await user.createEmailAddress({ email: newEmail.trim() });
+      await emailObj.prepareVerification({ strategy: "email_code" });
+      setPendingEmailObj(emailObj);
+      setEmailStep("code");
+    } catch (err) {
+      setEmailError(err?.errors?.[0]?.message || "Couldn't start email change.");
     }
-    const longest = Math.max(parseInt(localStorage.getItem("pw-longest-streak") || "0", 10), current);
-    localStorage.setItem("pw-longest-streak", String(longest));
-    setStreak(current);
-  }, []);
-
-  useEffect(() => {
-    let raf = null;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        const h = document.documentElement;
-        const pct = h.scrollHeight > h.clientHeight ? h.scrollTop / (h.scrollHeight - h.clientHeight) : 0;
-        setScrollPct(Math.min(1, Math.max(0, pct)));
-        raf = null;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-    setPaToast("CABIN CREW, DOORS TO MANUAL");
-    setTimeout(() => setPaToast(null), 1600);
+    setEmailBusy(false);
   };
 
-  const switchTab = (nextTab) => {
-    scrollPositions.current[tab] = window.scrollY;
-    setTab(nextTab);
-    requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
+  const confirmEmailChange = async () => {
+    if (!pendingEmailObj) return;
+    setEmailError(null);
+    setEmailBusy(true);
+    try {
+      await pendingEmailObj.attemptVerification({ code: verificationCode.trim() });
+      await user.update({ primaryEmailAddressId: pendingEmailObj.id });
+      setEmailStep("idle");
+      setNewEmail("");
+      setVerificationCode("");
+      setPendingEmailObj(null);
+    } catch (err) {
+      setEmailError(err?.errors?.[0]?.message || "Invalid code, please try again.");
+    }
+    setEmailBusy(false);
   };
 
-  const resetProgress = () => {
-    if (!window.confirm("Reset all progress on this device? This can't be undone.")) return;
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith("pw-"))
-      .forEach((k) => localStorage.removeItem(k));
-    window.location.reload();
+  const cancelEmailChange = () => {
+    setEmailStep("idle");
+    setVerificationCode("");
+    setPendingEmailObj(null);
+    setEmailError(null);
   };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE" || !user) return;
+    setDeleting(true);
+    await user.delete();
+    onBack();
+  };
+
+  if (!user) return null;
+
+  const captionName = showRealName && user.fullName ? user.fullName : (user.username || user.fullName || "Pilot");
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-    <div
-      className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
-      style={{
-        "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
-        "--accent": ACCENT_COLORS[accentColor].accent,
-        "--accent-hover": ACCENT_COLORS[accentColor].hover,
-        "--accent-soft": ACCENT_COLORS[accentColor].soft,
-        "--on-accent": ACCENT_COLORS[accentColor].onAccent,
-      }}
-    >
-    <UsernameGate>
-      {boarding && (
-        <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
-          <div className="boarding-pass">
-            <div className="boarding-pass-top">
-              <span className="boarding-pass-airline">PROJECT WINGMAN AIRWAYS</span>
-              <Plane size={22} style={{ transform: "rotate(45deg)" }} />
-            </div>
-            <div className="boarding-pass-route">AVBANK <ChevronRight size={14} /> JT.01</div>
-            <div className="boarding-pass-row">
-              <div><label>SEAT</label><span>{ticket.seat}</span></div>
-              <div><label>GATE</label><span>{ticket.gate}</span></div>
-              <div><label>STATUS</label><span>BOARDING</span></div>
-            </div>
-            <div className="boarding-pass-barcode" />
-          </div>
-          <div className="boarding-trivia">
-            <span className="boarding-trivia-label">TIP</span>
-            {TRIVIA[Math.floor(Date.now() / 86400000) % TRIVIA.length]}
-          </div>
-        </div>
-      )}
-      {paToast && <div className="pa-toast">{paToast}</div>}
-      {storageWarning && (
-        <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
-      )}
-      <header className="topbar">
-        <div className="brand">
-          <Gauge size={20} color="var(--accent)" />
-          <span>Project Wingman</span>
-        </div>
-        <div className="topbar-right">
-          <div className="module-select">
-            {MODULES.map((m) => (
-              <button
-                key={m.code}
-                className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
-                onClick={() => m.status === "active" && setModule(m)}
-                disabled={m.status === "locked"}
-                title={m.status === "locked" ? "Content coming soon" : undefined}
-              >
-                {m.status === "locked" && <Lock size={11} />}
-                {m.code}
-              </button>
-            ))}
-          </div>
-          <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
-          <ProfileMenu onNavigate={setSettingsPage} />
-        </div>
-      </header>
+    <div className="profile-page">
+      <button className="profile-page-back" onClick={onBack}>
+        <ChevronLeft size={16} /> Back
+      </button>
+      <h1 className="profile-page-title">Profile</h1>
 
-      {settingsPage === "auth" ? (
-        <main className="content content-taxi">
-          <AuthPage onBack={() => setSettingsPage(null)} />
-        </main>
-      ) : settingsPage === "profile" ? (
-        <main className="content content-taxi">
-          <ProfilePage
-            onBack={() => setSettingsPage(null)}
-            theme={theme}
-            onToggleTheme={toggleTheme}
-            reduceMotion={reduceMotion}
-            onToggleReduceMotion={() => setReduceMotion((r) => !r)}
-            calmDiscussLights={calmDiscussLights}
-            onToggleCalmDiscussLights={() => setCalmDiscussLights((c) => !c)}
-            onResetProgress={resetProgress}
-            fontSize={fontSize}
-            onChangeFontSize={setFontSize}
-            accentColor={accentColor}
-            onChangeAccentColor={setAccentColor}
-            dyslexiaFont={dyslexiaFont}
-            onToggleDyslexiaFont={() => setDyslexiaFont((d) => !d)}
-          />
-        </main>
-      ) : settingsPage === "progress" ? (
-        <main className="content content-taxi">
-          <ProgressPage onBack={() => setSettingsPage(null)} />
-        </main>
-      ) : settingsPage === "bookmarks" ? (
-        <main className="content content-taxi">
-          <BookmarksPage onBack={() => setSettingsPage(null)} />
-        </main>
-      ) : settingsPage ? (
-        <main className="content content-taxi">
-          <SettingsPage
-            page={settingsPage}
-            onBack={() => setSettingsPage(null)}
-            testStreakOverrideOn={testStreakOverrideOn}
-            onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
-            testStreakValue={testStreakValue}
-            onChangeTestStreakValue={setTestStreakValue}
-          />
-        </main>
-      ) : (
+      <div className="profile-page-tabs">
+        <button className={tab === "info" ? "is-active" : ""} onClick={() => setTab("info")}>Edit Info</button>
+        <button className={tab === "preferences" ? "is-active" : ""} onClick={() => setTab("preferences")}>Preferences</button>
+      </div>
+
+      {tab === "info" && (
         <>
-          <div className="module-banner">
-            <div>
-              <h1>{module.name}</h1>
-              <p>Aviation Fundamentals · {module.questions} questions in bank</p>
+          <div className="settings-block">
+            <div className="profile-identity-centered">
+              <div className="profile-identity-photo-wrap">
+                <button className="profile-identity-photo-btn" onClick={() => setShowPhotoModal(true)} aria-label="View photo enlarged">
+                  {user.imageUrl ? (
+                    <img className="profile-identity-photo" src={user.imageUrl} alt="" />
+                  ) : (
+                    <div className="profile-identity-icon"><Mail size={22} /></div>
+                  )}
+                </button>
+                <input type="file" accept="image/*" ref={photoInputRef} style={{ display: "none" }} onChange={handlePhotoChange} />
+                <button className="profile-identity-photo-camera" onClick={() => photoInputRef.current?.click()} disabled={photoUploading} aria-label="Change photo">
+                  <Camera size={13} />
+                </button>
+              </div>
+              <div className="profile-identity-label">{photoUploading ? "Uploading photo…" : "Signed in as"}</div>
+              <div className="profile-identity-name">{captionName}</div>
+            </div>
+            <button className="profile-signout-btn" onClick={() => signOut().then(onBack)}>
+              <LogOut size={15} /> Sign out
+            </button>
+          </div>
+
+          {showPhotoModal && (
+            <div className="photo-modal-overlay" onClick={() => setShowPhotoModal(false)}>
+              <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
+                {user.imageUrl ? (
+                  <img className="photo-modal-image" src={user.imageUrl} alt="" />
+                ) : (
+                  <div className="photo-modal-placeholder"><Mail size={40} /></div>
+                )}
+                <div className="photo-modal-caption">{captionName}</div>
+                <button className="photo-modal-close" onClick={() => setShowPhotoModal(false)} aria-label="Close">
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="settings-block">
+            <div className="settings-field-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Name</div>
+              <div className="settings-two-col">
+                <input className="settings-nickname-input" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <input className="settings-nickname-input" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+              <button className="settings-save-full" onClick={saveName}>
+                {nameSaved ? <Check size={14} /> : "Save name"}
+              </button>
             </div>
           </div>
 
-          <nav className="tabbar">
-            {NAV.map((n) => (
-              <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => switchTab(n.id)}>
-                <n.icon size={15} />
-                {n.label}
+          <div className="settings-block">
+            <div className="settings-field-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Bio</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>A short line about yourself</div>
+              <div style={{ padding: "0 14px 10px" }}>
+                <textarea
+                  className="settings-bio-textarea"
+                  placeholder="e.g. PPL student at AU Kuwait, working toward my CPL."
+                  value={bio}
+                  maxLength={BIO_MAX}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                />
+                <div className="settings-bio-count">{bio.length}/{BIO_MAX}</div>
+              </div>
+              <button className="settings-save-full" onClick={saveBio} disabled={bioBusy}>
+                {bioBusy ? "…" : bioSaved ? <Check size={14} /> : "Save bio"}
               </button>
-            ))}
-          </nav>
+            </div>
+          </div>
 
-          <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
-            {tab === "chapters" && <ChaptersPanel onSignIn={() => setSettingsPage("auth")} />}
-            {tab === "discuss" && <DiscussPanel onSignIn={() => setSettingsPage("auth")} calmLights={calmDiscussLights} />}
-            {tab === "pdf" && <PdfPanel />}
-          </main>
+          <div className="settings-block">
+            <div className="settings-field-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Email</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Current: {user.primaryEmailAddress?.emailAddress}</div>
+              {emailStep === "idle" ? (
+                <div className="settings-nickname-input-row">
+                  <input
+                    className="settings-nickname-input"
+                    placeholder="New email address"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                  <button className="settings-nickname-save" onClick={startEmailChange} disabled={emailBusy}>
+                    {emailBusy ? "…" : "Change"}
+                  </button>
+                </div>
+              ) : (
+                <div className="settings-nickname-input-row">
+                  <input
+                    className="settings-nickname-input"
+                    placeholder="Enter verification code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                  />
+                  <button className="settings-nickname-save" onClick={confirmEmailChange} disabled={emailBusy}>
+                    {emailBusy ? "…" : "Confirm"}
+                  </button>
+                  <button className="settings-cancel-btn" onClick={cancelEmailChange} aria-label="Cancel"><X size={14} /></button>
+                </div>
+              )}
+              {emailStep === "code" && <p className="settings-note" style={{ padding: "4px 14px 10px" }}>We sent a code to {newEmail} — enter it above to confirm.</p>}
+              {emailError && <p className="settings-error">{emailError}</p>}
+            </div>
+          </div>
+
+          <div className="settings-block">
+            <div className="settings-nickname-block">
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Username</div>
+              <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Shown in Comments and Discussion, unless you choose to show your real name instead below</div>
+              <div className="settings-nickname-input-row">
+                <input
+                  className="settings-nickname-input"
+                  placeholder="e.g. SkyCadet"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+                <button className="settings-nickname-save" onClick={saveUsername} disabled={usernameBusy}>
+                  {usernameBusy ? "…" : usernameSaved ? <Check size={14} /> : "Save"}
+                </button>
+              </div>
+              {usernameError && <p className="settings-error">{usernameError}</p>}
+              <div className="settings-row" onClick={toggleShowRealName}>
+                <span className={`settings-switch ${showRealName ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+                <div>
+                  <div className="settings-row-title">Show real name instead</div>
+                  <div className="settings-row-sub">Displays your real name instead of your username throughout the app</div>
+                </div>
+              </div>
+            </div>
+            <div className="settings-row settings-row--danger" onClick={onResetProgress}>
+              <div className="settings-row-icon"><RotateCcw size={16} /></div>
+              <div>
+                <div className="settings-row-title">Reset progress</div>
+                <div className="settings-row-sub">Clears completed chapters, bookmarks, and streak on this device</div>
+              </div>
+            </div>
+            <p className="settings-note">Progress is saved locally on this device only — nothing is sent anywhere.</p>
+          </div>
+
+          <div className="settings-block settings-danger-zone">
+            <div className="settings-row-title" style={{ padding: "10px 14px 4px", color: "var(--bad)" }}>Point of No Return</div>
+            <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Permanently deletes your account and everything tied to it. This cannot be undone.</div>
+            <div className="settings-nickname-input-row">
+              <input
+                className="settings-nickname-input"
+                placeholder='Type "DELETE" to confirm'
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+              />
+              <button className="settings-delete-btn" onClick={handleDeleteAccount} disabled={deleteConfirmText !== "DELETE" || deleting}>
+                <Trash2 size={14} /> {deleting ? "Deleting…" : "Delete account"}
+              </button>
+            </div>
+          </div>
         </>
       )}
 
-      <div className="flight-progress">
-        <div className="runway-lights" aria-hidden="true">
-          {Array.from({ length: 12 }).map((_, i) => {
-            const lit = i < Math.floor(scrollPct * 12);
-            const zone = i >= 10 ? "red" : i >= 8 ? "amber" : "white";
-            return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
-          })}
+      {tab === "preferences" && (
+        <div className="settings-block">
+          <div className="settings-row" onClick={onToggleTheme}>
+            <div className="settings-row-icon">{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</div>
+            <div>
+              <div className="settings-row-title">{theme === "light" ? "Day Ops" : "Night Ops"}</div>
+              <div className="settings-row-sub">Currently {theme === "light" ? "light" : "dark"} mode — tap to switch</div>
+            </div>
+          </div>
+          <div className="settings-row settings-row--static">
+            <div className="settings-row-icon"><span style={{ fontSize: 15, fontWeight: 700 }}>Aa</span></div>
+            <div style={{ flex: 1 }}>
+              <div className="settings-row-title">Text size</div>
+              <div className="settings-row-sub" style={{ marginBottom: 8 }}>Adjusts the size of chapters, discussion, and library text</div>
+              <div className="font-size-options">
+                {["small", "medium", "large"].map((size) => (
+                  <button
+                    key={size}
+                    className={`font-size-btn ${fontSize === size ? "is-active" : ""}`}
+                    onClick={() => onChangeFontSize(size)}
+                  >
+                    {size.charAt(0).toUpperCase() + size.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="settings-row settings-row--static">
+            <div className="settings-row-icon"><span style={{ width: 14, height: 14, borderRadius: "50%", background: ACCENT_COLORS[accentColor].swatch, display: "block" }} /></div>
+            <div style={{ flex: 1 }}>
+              <div className="settings-row-title">Accent color</div>
+              <div className="settings-row-sub" style={{ marginBottom: 8 }}>{ACCENT_COLORS[accentColor].label}</div>
+              <div className="accent-swatch-row">
+                {Object.entries(ACCENT_COLORS).map(([key, c]) => (
+                  <button
+                    key={key}
+                    className={`accent-swatch ${accentColor === key ? "is-active" : ""}`}
+                    style={{ background: c.swatch }}
+                    onClick={() => onChangeAccentColor(key)}
+                    aria-label={c.label}
+                    title={c.label}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="settings-row" onClick={onToggleReduceMotion}>
+            <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+            <div>
+              <div className="settings-row-title">Smooth Air</div>
+              <div className="settings-row-sub">Reduces motion — turns off animated transitions across the app</div>
+            </div>
+          </div>
+          <div className="settings-row" onClick={onToggleCalmDiscussLights}>
+            <span className={`settings-switch ${calmDiscussLights ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+            <div>
+              <div className="settings-row-title">Lights Out</div>
+              <div className="settings-row-sub">Replaces the pulsing red/green buttons in Discussion with a plain navy style</div>
+            </div>
+          </div>
+          <div className="settings-row" onClick={onToggleDyslexiaFont}>
+            <span className={`settings-switch ${dyslexiaFont ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+            <div>
+              <div className="settings-row-title">Dyslexia-friendly font</div>
+              <div className="settings-row-sub">Switches body text to a font designed for easier reading</div>
+            </div>
+          </div>
+          <p className="settings-note">Quizzes support keyboard shortcuts: press 1-4 or A-D to answer, and Enter to continue.</p>
         </div>
-      </div>
-    </UsernameGate>
+      )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-        @font-face {
-          font-family: 'OpenDyslexic';
-          src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@master/otf/OpenDyslexic-Regular.otf') format('opentype');
-          font-weight: 400;
-          font-display: swap;
-        }
-        @font-face {
-          font-family: 'OpenDyslexic';
-          src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@master/otf/OpenDyslexic-Bold.otf') format('opentype');
-          font-weight: 700;
-          font-display: swap;
-        }
-        * { box-sizing: border-box; }
-        html, body, #root { height: 100%; margin: 0; background: #0B1526; }
-        .app {
-          --bg: #0B1526; --panel: #101B2D; --panel-alt: #0E1A2C; --border: #22314A; --border-hover: #33456B;
-          --border-soft: rgba(111,160,240,0.12); --text: #E8EDF2; --text-soft: #b9c4cf; --muted: #8291AC; --muted2: #66768F;
-          --accent: #6FA0F0; --accent-hover: #8FB8F5; --accent-soft: rgba(111,160,240,0.10); --on-accent: #0E1830;
-          --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
-          font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; transition: background 0.2s ease, color 0.2s ease;
-        }
-        .app.theme-light {
-          --bg: #F4F6FB; --panel: #FFFFFF; --panel-alt: #F0F3F9; --border: #D7DEEA; --border-hover: #B9C6DC;
-          --border-soft: rgba(61,111,209,0.12); --text: #16202E; --text-soft: #48556B; --muted: #5B6B85; --muted2: #7A8AA3;
-          --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
-          --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
-        }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; }
-        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
-        .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 11px; border-radius: 10px; cursor: pointer; }
-        .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
-        .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
-        .module-banner { padding: 26px 22px 18px; }
-        .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; color: var(--text); }
-        .module-banner p { color: var(--muted); font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
-        .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
-        .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted2); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
-        .tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
-        .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
-        .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
-        .content-taxi { animation: taxiIn 0.35s ease; }
-        @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
-        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; animation: boardingFade 2.4s ease forwards; }
-        .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: 18px; padding: 22px; }
-        .boarding-pass-top { display: flex; align-items: center; justify-content: space-between; color: var(--accent); margin-bottom: 14px; }
-        .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: var(--muted2); }
-        .boarding-pass-route { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
-        .boarding-pass-row { display: flex; gap: 22px; margin-bottom: 16px; }
-        .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
-        .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
-        .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
-        .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
-        .boarding-trivia-label { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: 6px; padding: 2px 6px; }
-        @keyframes boardingFade {
-          0% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { opacity: 0; visibility: hidden; }
-        }
-        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
-        @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
-        .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
-        .runway-lights { display: flex; gap: 4px; }
-        .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
-        .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
-        .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
-        .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
-        .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 12px; text-align: center; padding: 8px 16px; }
-        @media (prefers-reduced-motion: reduce) {
-          .boarding-overlay { animation-duration: 0.4s; }
-          .content-taxi { animation: none; }
-        }
-        .app.reduce-motion .boarding-overlay { animation-duration: 0.4s; }
-        .app.reduce-motion .content-taxi { animation: none; }
-        .app.dyslexia-font, .app.dyslexia-font .exam-stem, .app.dyslexia-font .chapter-title, .app.dyslexia-font p, .app.dyslexia-font span, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font button {
-          font-family: 'OpenDyslexic', 'Inter', sans-serif;
-        }
+        .profile-page { max-width: 560px; }
+        .profile-page-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
+        .profile-page-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 16px; }
+        .profile-page-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+        .profile-page-tabs button { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 12.5px; padding: 8px 4px; border-radius: 8px; cursor: pointer; }
+        .profile-page-tabs button.is-active { background: var(--panel); color: var(--text); }
+        .settings-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
+        .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; cursor: pointer; }
+        .settings-row:hover { background: var(--panel-alt); }
+        .settings-row--static { cursor: default; }
+        .settings-row--static:hover { background: transparent; }
+        .font-size-options { display: flex; gap: 6px; }
+        .font-size-btn { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px; border-radius: 8px; cursor: pointer; }
+        .font-size-btn.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .accent-swatch-row { display: flex; gap: 10px; }
+        .accent-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+        .accent-swatch.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--border-hover); }
+        .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
+        .settings-row-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+        .settings-row--danger .settings-row-icon { color: var(--bad); }
+        .settings-row-title { font-size: 14px; color: var(--text); font-weight: 600; }
+        .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
+        .settings-error { font-size: 12px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
+        .settings-switch { width: 34px; height: 20px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
+        .settings-switch.is-on { background: var(--accent); }
+        .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
+        .settings-switch.is-on .settings-switch-knob { transform: translateX(14px); }
+        .settings-field-block { padding-bottom: 10px; }
+        .settings-two-col { display: flex; gap: 8px; padding: 0 14px 10px; }
+        .settings-nickname-block { border-bottom: 1px solid var(--border-soft); margin-bottom: 6px; padding-bottom: 6px; }
+        .settings-nickname-input-row { display: flex; gap: 8px; padding: 0 14px 10px; }
+        .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; min-width: 0; }
+        .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
+        .settings-bio-textarea { width: 100%; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; font-family: inherit; resize: vertical; min-height: 60px; box-sizing: border-box; }
+        .settings-bio-textarea:focus { outline: none; border-color: var(--accent); }
+        .settings-bio-count { text-align: right; font-size: 11px; color: var(--muted2); margin-top: 4px; }
+        .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
+        .settings-nickname-save:disabled { opacity: 0.6; cursor: not-allowed; }
+        .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
+        .settings-cancel-btn { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .profile-identity-centered { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 14px 14px; }
+        .profile-identity-photo-wrap { position: relative; margin-bottom: 12px; }
+        .profile-identity-photo-btn { width: 84px; height: 84px; border-radius: 50%; padding: 0; border: none; background: transparent; cursor: pointer; display: block; }
+        .profile-identity-icon { width: 84px; height: 84px; border-radius: 50%; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .profile-identity-photo { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; display: block; }
+        .profile-identity-photo-camera { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; border: 3px solid var(--panel); cursor: pointer; }
+        .profile-identity-photo-camera:disabled { opacity: 0.5; cursor: not-allowed; }
+        .profile-identity-label { font-size: 11px; color: var(--muted); }
+        .profile-identity-name { font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
+        .photo-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .photo-modal-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .photo-modal-image { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; object-fit: cover; }
+        .photo-modal-placeholder { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+        .photo-modal-caption { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+        .photo-modal-close { position: absolute; top: -36px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 13px; padding: 10px; border-radius: 10px; cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
+        .profile-signout-btn:hover { background: rgba(224,102,90,0.08); }
+        .settings-danger-zone { border-color: rgba(224,102,90,0.4); }
+        .settings-delete-btn { display: flex; align-items: center; gap: 6px; background: var(--bad); color: #fff; border: none; border-radius: 8px; padding: 0 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .settings-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       `}</style>
     </div>
-    </ClerkProvider>
   );
 }
+
+export default ProfilePage;
