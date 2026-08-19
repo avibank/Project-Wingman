@@ -15,6 +15,7 @@ import UsernameGate from "./components/UsernameGate.jsx";
 import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 import { useUserProgress } from "./lib/userProgress.js";
+import { triggerHaptic } from "./lib/haptics.js";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -36,6 +37,7 @@ function AppInner() {
   const [fontSize, setFontSize] = useState("medium");
   const [accentColor, setAccentColor] = useState("blue");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
+  const [turbulence, setTurbulence] = useState(true);
   const [calmDiscussLights, setCalmDiscussLights] = useState(false);
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
   const [testStreakValue, setTestStreakValue] = useState(0);
@@ -59,6 +61,7 @@ function AppInner() {
     setFontSize(progress.get("pw-font-size", "medium"));
     setAccentColor(progress.get("pw-accent-color", "blue"));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
+    setTurbulence(progress.get("pw-turbulence", true));
     setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
     setTestStreakOverrideOn(progress.get("pw-test-streak-override-on", false));
     setTestStreakValue(progress.get("pw-test-streak-value", 0));
@@ -94,6 +97,11 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-dyslexia-font", dyslexiaFont);
   }, [dyslexiaFont, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    progress.set("pw-turbulence", turbulence);
+  }, [turbulence, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -159,6 +167,7 @@ function AppInner() {
   };
 
   const switchTab = (nextTab) => {
+    if (turbulence) triggerHaptic();
     scrollPositions.current[tab] = window.scrollY;
     setTab(nextTab);
     requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
@@ -226,7 +235,12 @@ function AppInner() {
               <button
                 key={m.code}
                 className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
-                onClick={() => m.status === "active" && setModule(m)}
+                onClick={() => {
+                  if (m.status === "active") {
+                    if (turbulence) triggerHaptic();
+                    setModule(m);
+                  }
+                }}
                 disabled={m.status === "locked"}
                 title={m.status === "locked" ? "Content coming soon" : undefined}
               >
@@ -261,6 +275,8 @@ function AppInner() {
             onChangeAccentColor={setAccentColor}
             dyslexiaFont={dyslexiaFont}
             onToggleDyslexiaFont={() => setDyslexiaFont((d) => !d)}
+            turbulence={turbulence}
+            onToggleTurbulence={() => setTurbulence((t) => !t)}
           />
         </main>
       ) : settingsPage === "progress" ? (
