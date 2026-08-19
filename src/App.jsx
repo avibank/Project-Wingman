@@ -337,6 +337,7 @@ function AppInner() {
 
       <div className="flight-progress">
         <div className="runway-lights" aria-hidden="true">
+          <div className="runway-trail" style={{ width: `${scrollPct * 100}%` }} />
           {Array.from({ length: 12 }).map((_, i) => {
             const lit = i < Math.floor(scrollPct * 12);
             const zone = i >= 10 ? "red" : i >= 8 ? "amber" : "white";
@@ -423,7 +424,8 @@ function AppInner() {
         .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
         @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
         .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
-        .runway-lights { display: flex; gap: 4px; }
+        .runway-lights { position: relative; display: flex; gap: 4px; }
+        .runway-trail { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 3px; background: linear-gradient(90deg, transparent, var(--accent)); filter: blur(3px); opacity: 0.55; transition: width 0.15s ease; pointer-events: none; }
         .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
         .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
