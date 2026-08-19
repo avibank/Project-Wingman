@@ -246,8 +246,10 @@ function ChaptersPanel({ onSignIn }) {
         .recent-chip-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
         .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
-        .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); }
+        .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .chapter:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.16); }
         .chapter.is-open { border-color: var(--border-hover); }
+        .chapter.is-open:hover { transform: none; }
         .chapter-head { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
         .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); }
         .chapter-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
@@ -261,15 +263,15 @@ function ChaptersPanel({ onSignIn }) {
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
         .chapter-body-opening { animation: chapterOpen 0.28s ease-out; }
         @keyframes chapterOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: 14px; }
+        .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: 12px; }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .video-fallback { display: block; font-size: 11px; color: var(--muted2); text-decoration: none; margin-top: 6px; }
         .video-fallback:hover { color: var(--accent); }
-        .chapter-video { aspect-ratio: 16/9; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .chapter-video { aspect-ratio: 16/9; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
         .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
         .chapter-side-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: 10px; padding: 4px; margin-bottom: 14px; }
-        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 12px; padding: 7px; border-radius: 7px; cursor: pointer; }
+        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 12px; padding: 7px; border-radius: 8px; cursor: pointer; }
         .chapter-side-tab.is-active { background: var(--panel); color: var(--text); }
         .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--muted); }
         .chapter-feedback button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
