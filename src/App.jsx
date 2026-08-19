@@ -352,6 +352,11 @@ function AppInner() {
           font-display: swap;
         }
         * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 10px; border: 2px solid var(--bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        * { scrollbar-width: thin; scrollbar-color: var(--border-hover) var(--bg); }
         html, body, #root { height: 100%; margin: 0; background: #0B1526; }
         .app {
           --bg: #0B1526; --panel: #101B2D; --panel-alt: #0E1A2C; --border: #22314A; --border-hover: #33456B;
