@@ -1,12 +1,21 @@
+import { useState, useEffect } from "react";
 import { ChevronLeft, Flame, BookMarked, CheckCircle2 } from "lucide-react";
-import { loadJSON, getNum } from "../lib/storage.js";
+import { useUserProgress } from "../lib/userProgress.js";
 import { CHAPTERS } from "../data.js";
 
 function ProgressPage({ onBack }) {
-  const completedChapters = loadJSON("pw-completed", []);
-  const bookmarkIds = loadJSON("pw-bookmarks", []);
-  const longestStreak = getNum("pw-longest-streak", 0);
+  const progress = useUserProgress();
+  const [completedChapters, setCompletedChapters] = useState([]);
+  const [bookmarkIds, setBookmarkIds] = useState([]);
+  const [longestStreak, setLongestStreak] = useState(0);
   const totalChapters = CHAPTERS.length;
+
+  useEffect(() => {
+    if (!progress.loaded) return;
+    setCompletedChapters(progress.get("pw-completed", []));
+    setBookmarkIds(progress.get("pw-bookmarks", []));
+    setLongestStreak(progress.get("pw-longest-streak", 0));
+  }, [progress.loaded, progress.isSignedIn]);
 
   return (
     <div className="progress-page">
