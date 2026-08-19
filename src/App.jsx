@@ -46,6 +46,7 @@ function AppInner() {
   const [paToast, setPaToast] = useState(null);
   const [scrollPct, setScrollPct] = useState(0);
   const [storageWarning, setStorageWarning] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const scrollPositions = useRef({});
   const [ticket] = useState(() => ({
@@ -152,6 +153,7 @@ function AppInner() {
         const h = document.documentElement;
         const pct = h.scrollHeight > h.clientHeight ? h.scrollTop / (h.scrollHeight - h.clientHeight) : 0;
         setScrollPct(Math.min(1, Math.max(0, pct)));
+        setHeaderScrolled(window.scrollY > 4);
         raf = null;
       });
     };
@@ -224,7 +226,7 @@ function AppInner() {
       {storageWarning && (
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
-      <header className="topbar">
+      <header className={`topbar ${headerScrolled ? "is-scrolled" : ""}`}>
         <div className="brand">
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
@@ -364,7 +366,8 @@ function AppInner() {
           --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
           --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
         }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
+        .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-select { display: flex; gap: 6px; }
@@ -375,8 +378,10 @@ function AppInner() {
         .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; color: var(--text); }
         .module-banner p { color: var(--muted); font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
         .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
-        .tab { display: flex; align-items: center; gap: 7px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted2); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
-        .tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
+        .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted2); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
+        .tab.is-active { color: var(--text); }
+        .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 0.25s ease, right 0.25s ease; border-radius: 2px 2px 0 0; }
+        .tab.is-active::after { left: 0; right: 0; }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content-taxi { animation: taxiIn 0.35s ease; }
