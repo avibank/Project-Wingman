@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { WindsockIcon } from "./icons.jsx";
+import { useUserProgress } from "../lib/userProgress.js";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -19,8 +20,17 @@ function PropellerIcon({ size = 24, active }) {
 }
 
 function StreakMenu({ streak, overrideStreak }) {
+  const progress = useUserProgress();
   const [open, setOpen] = useState(false);
+  const [longestStreak, setLongestStreak] = useState(0);
+  const [lastVisit, setLastVisit] = useState(null);
   const ref = useRef(null);
+
+  useEffect(() => {
+    if (!progress.loaded) return;
+    setLongestStreak(progress.get("pw-longest-streak", 0));
+    setLastVisit(progress.get("pw-last-visit", null));
+  }, [progress.loaded, progress.isSignedIn]);
 
   useEffect(() => {
     if (!open) return;
@@ -39,8 +49,7 @@ function StreakMenu({ streak, overrideStreak }) {
   }, [open]);
 
   const displayStreak = overrideStreak !== null && overrideStreak !== undefined ? overrideStreak : streak;
-  const longest = Math.max(parseInt(localStorage.getItem("pw-longest-streak") || "0", 10), streak);
-  const lastVisit = localStorage.getItem("pw-last-visit");
+  const longest = Math.max(longestStreak, streak);
   const lastActiveLabel = lastVisit === new Date().toDateString() ? "Today" : lastVisit || "—";
   const litCount = Math.min(displayStreak, 7);
 
