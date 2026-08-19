@@ -1,29 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS } from "../data.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
+import { useUserProgress } from "../lib/userProgress.js";
 
 const MAX_RECENT = 5;
 
 function ChaptersPanel({ onSignIn }) {
-  const [openId, setOpenId] = useState(() => loadJSON("pw-last-chapter", CHAPTERS[0].id));
+  const progress = useUserProgress();
+  const [openId, setOpenId] = useState(CHAPTERS[0].id);
   const [query, setQuery] = useState("");
-  const [completed, setCompleted] = useState(() => new Set(loadJSON("pw-completed", [])));
-  const [bookmarks, setBookmarks] = useState(() => new Set(loadJSON("pw-bookmarks", [])));
-  const [feedback, setFeedback] = useState(() => loadJSON("pw-feedback", {}));
+  const [completed, setCompleted] = useState(new Set());
+  const [bookmarks, setBookmarks] = useState(new Set());
+  const [feedback, setFeedback] = useState({});
   const [seen, setSeen] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [loadedVideos, setLoadedVideos] = useState(new Set());
   const [rightTab, setRightTab] = useState("quiz");
-  const [recentIds, setRecentIds] = useState(() => loadJSON("pw-recent-chapters", []));
+  const [recentIds, setRecentIds] = useState([]);
+  const [chapterProgress, setChapterProgress] = useState({});
+
+  useEffect(() => {
+    if (!progress.loaded) return;
+    setOpenId(progress.get("pw-last-chapter", CHAPTERS[0].id) ?? CHAPTERS[0].id);
+    setCompleted(new Set(progress.get("pw-completed", [])));
+    setBookmarks(new Set(progress.get("pw-bookmarks", [])));
+    setFeedback(progress.get("pw-feedback", {}));
+    setRecentIds(progress.get("pw-recent-chapters", []));
+    setChapterProgress(progress.get("pw-chapter-progress", {}));
+  }, [progress.loaded, progress.isSignedIn]);
 
   const markComplete = (id) => {
     setCompleted((prev) => {
       const next = new Set(prev);
       next.add(id);
-      saveJSON("pw-completed", [...next]);
+      progress.set("pw-completed", [...next]);
       return next;
     });
   };
@@ -32,7 +45,7 @@ function ChaptersPanel({ onSignIn }) {
     setBookmarks((prev) => {
       const next = new Set(prev);
       next.has(qId) ? next.delete(qId) : next.add(qId);
-      saveJSON("pw-bookmarks", [...next]);
+      progress.set("pw-bookmarks", [...next]);
       return next;
     });
   };
@@ -40,7 +53,7 @@ function ChaptersPanel({ onSignIn }) {
   const giveFeedback = (chapterId, value) => {
     setFeedback((prev) => {
       const next = { ...prev, [chapterId]: value };
-      saveJSON("pw-feedback", next);
+      progress.set("pw-feedback", next);
       return next;
     });
   };
@@ -48,7 +61,15 @@ function ChaptersPanel({ onSignIn }) {
   const pushRecent = (id) => {
     setRecentIds((prev) => {
       const next = [id, ...prev.filter((x) => x !== id)].slice(0, MAX_RECENT);
-      saveJSON("pw-recent-chapters", next);
+      progress.set("pw-recent-chapters", next);
+      return next;
+    });
+  };
+
+  const updateChapterProgress = (chapterId, seenCount) => {
+    setChapterProgress((prev) => {
+      const next = { ...prev, [chapterId]: seenCount };
+      progress.set("pw-chapter-progress", next);
       return next;
     });
   };
@@ -57,11 +78,11 @@ function ChaptersPanel({ onSignIn }) {
     const isOpen = openId === ch.id;
     if (isOpen) {
       setOpenId(null);
-      saveJSON("pw-last-chapter", null);
+      progress.set("pw-last-chapter", null);
       return;
     }
     setOpenId(ch.id);
-    saveJSON("pw-last-chapter", ch.id);
+    progress.set("pw-last-chapter", ch.id);
     pushRecent(ch.id);
     setRightTab("quiz");
     if (!seen.has(ch.id)) {
@@ -111,6 +132,8 @@ function ChaptersPanel({ onSignIn }) {
           const isDone = completed.has(ch.id);
           const fb = feedback[ch.id];
           const videoLoaded = loadedVideos.has(ch.id);
+          const seenCount = chapterProgress[ch.id] || 0;
+          const progressPct = Math.min(100, Math.round((seenCount / ch.questions.length) * 100));
           return (
             <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
               <button className="chapter-head" onClick={() => openChapter(ch)}>
@@ -122,6 +145,11 @@ function ChaptersPanel({ onSignIn }) {
                 <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
                 <ChevronRight size={16} className="chapter-chevron" />
               </button>
+              {progressPct > 0 && !isDone && (
+                <div className="chapter-progress-track">
+                  <div className="chapter-progress-fill" style={{ width: `${progressPct}%` }} />
+                </div>
+              )}
               {isOpen && (
                 <div className="chapter-body chapter-body-opening">
                   <div className="chapter-video">
@@ -169,6 +197,7 @@ function ChaptersPanel({ onSignIn }) {
                           onComplete={() => markComplete(ch.id)}
                           bookmarks={bookmarks}
                           onToggleBookmark={toggleBookmark}
+                          onProgressChange={(seenCount) => updateChapterProgress(ch.id, seenCount)}
                         />
                         <div className="chapter-feedback">
                           {fb ? (
@@ -226,6 +255,8 @@ function ChaptersPanel({ onSignIn }) {
         .chapter-meta { font-size: 11.5px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
         .chapter-chevron { color: var(--muted2); transition: transform 0.2s ease; }
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
+        .chapter-progress-track { height: 3px; background: var(--border); margin: 0 16px 4px; border-radius: 2px; overflow: hidden; }
+        .chapter-progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
         .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); min-height: 60px; }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
         .chapter-body-opening { animation: chapterOpen 0.28s ease-out; }
