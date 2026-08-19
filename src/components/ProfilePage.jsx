@@ -3,7 +3,7 @@ import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Tras
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
 import { ACCENT_COLORS } from "../data.js";
 
-function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, accentColor, onChangeAccentColor, dyslexiaFont, onToggleDyslexiaFont }) {
+function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, accentColor, onChangeAccentColor, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
   const [tab, setTab] = useState("info");
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -384,6 +384,13 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
               <div>
                 <div className="settings-row-title">Plain Language</div>
                 <div className="settings-row-sub">A clearer font for easier reading — designed to help with dyslexia and reading fatigue</div>
+              </div>
+            </div>
+            <div className="settings-row" onClick={onToggleTurbulence}>
+              <span className={`settings-switch ${turbulence ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+              <div>
+                <div className="settings-row-title">Turbulence</div>
+                <div className="settings-row-sub">Subtle vibration when switching tabs or modules — Android only, no effect on iPhone or desktop</div>
               </div>
             </div>
           </div>
