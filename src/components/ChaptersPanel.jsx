@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History } from "lucide-react";
+import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS } from "../data.js";
@@ -102,7 +102,12 @@ function ChaptersPanel({ onSignIn }) {
         <span className="cloud cloud-b" />
         <span className="cloud cloud-c" />
       </div>
-      {toast && <div className="boarding-toast">{toast}</div>}
+      {toast && (
+        <div className="boarding-toast">
+          <Plane size={13} className="boarding-toast-plane" style={{ transform: "rotate(45deg)" }} />
+          {toast}
+        </div>
+      )}
 
       <div className="chapters-search">
         <Search size={15} />
@@ -231,7 +236,14 @@ function ChaptersPanel({ onSignIn }) {
         .cloud-c { top: 62%; left: -20%; animation: driftA 75s linear infinite reverse; }
         @keyframes driftA { from { transform: translateX(0); } to { transform: translateX(140vw); } }
         @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
-        .boarding-toast { position: relative; z-index: 2; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; }
+        .boarding-toast { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; overflow: hidden; }
+        .boarding-toast-plane { animation: toastPlaneSlide 2.2s ease-in-out; }
+        @keyframes toastPlaneSlide {
+          0% { transform: translateX(-14px) rotate(45deg); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateX(14px) rotate(45deg); opacity: 0; }
+        }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
         .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); padding: 4px 0; }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
