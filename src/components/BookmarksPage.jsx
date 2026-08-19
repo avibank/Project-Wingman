@@ -1,19 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, X, Layers, List } from "lucide-react";
 import { loadJSON, saveJSON } from "../lib/storage.js";
+import { useUserProgress } from "../lib/userProgress.js";
 import { CHAPTERS } from "../data.js";
 import FlashcardMode from "./FlashcardMode.jsx";
 
 function BookmarksPage({ onBack }) {
-  const [bookmarkIds, setBookmarkIds] = useState(() => loadJSON("pw-bookmarks", []));
+  const progress = useUserProgress();
+  const [bookmarkIds, setBookmarkIds] = useState([]);
   const [mode, setMode] = useState("list"); // "list" | "cards"
   const allQuestions = CHAPTERS.flatMap((ch) => ch.questions.map((q) => ({ ...q, chapterTitle: ch.title, chapterCode: ch.code })));
   const bookmarkedQuestions = allQuestions.filter((q) => bookmarkIds.includes(q.id));
 
+  useEffect(() => {
+    if (!progress.loaded) return;
+    setBookmarkIds(progress.get("pw-bookmarks", []));
+  }, [progress.loaded, progress.isSignedIn]);
+
   const removeBookmark = (qId) => {
     const next = bookmarkIds.filter((id) => id !== qId);
     setBookmarkIds(next);
-    saveJSON("pw-bookmarks", next);
+    progress.set("pw-bookmarks", next);
   };
 
   if (mode === "cards" && bookmarkedQuestions.length > 0) {
