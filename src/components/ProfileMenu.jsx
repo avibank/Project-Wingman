@@ -68,8 +68,8 @@ function ProfileMenu({ onNavigate }) {
       )}
       <style>{`
         .profile-menu { position: relative; }
-        .profile-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); border: 1px solid var(--border); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .profile-avatar:hover { border-color: var(--accent); }
+        .profile-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); border: 1px solid var(--border); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+        .profile-avatar:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 10px var(--accent-soft); }
         .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: 14px; padding: 10px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: profileIn 0.15s ease-out; }
         @keyframes profileIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .profile-row { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; color: var(--text); font-size: 13px; padding: 9px 8px; border-radius: 8px; cursor: pointer; text-align: left; }
