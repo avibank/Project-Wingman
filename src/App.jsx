@@ -19,6 +19,14 @@ import { useUserProgress } from "./lib/userProgress.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export default function App() {
+  return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <AppInner />
+    </ClerkProvider>
+  );
+}
+
+function AppInner() {
   const progress = useUserProgress();
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
@@ -169,7 +177,6 @@ export default function App() {
   };
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
     <div
       className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
       style={{
@@ -394,6 +401,5 @@ export default function App() {
         }
       `}</style>
     </div>
-    </ClerkProvider>
   );
 }
