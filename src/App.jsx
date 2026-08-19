@@ -14,26 +14,29 @@ import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
 import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
+import { useUserProgress } from "./lib/userProgress.js";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export default function App() {
-  const [tab, setTab] = useState(() => loadJSON("pw-last-tab", "chapters"));
+  const progress = useUserProgress();
+  const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
   const [module, setModule] = useState(MODULES[0]);
-  const [theme, setTheme] = useState(() => loadJSON("pw-theme", "dark"));
-  const [reduceMotion, setReduceMotion] = useState(() => loadJSON("pw-reduce-motion", false));
-  const [fontSize, setFontSize] = useState(() => loadJSON("pw-font-size", "medium"));
-  const [accentColor, setAccentColor] = useState(() => loadJSON("pw-accent-color", "blue"));
-  const [dyslexiaFont, setDyslexiaFont] = useState(() => loadJSON("pw-dyslexia-font", false));
-  const [calmDiscussLights, setCalmDiscussLights] = useState(() => loadJSON("pw-calm-discuss-lights", false));
-  const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(() => loadJSON("pw-test-streak-override-on", false));
-  const [testStreakValue, setTestStreakValue] = useState(() => loadJSON("pw-test-streak-value", 0));
+  const [theme, setTheme] = useState("dark");
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [fontSize, setFontSize] = useState("medium");
+  const [accentColor, setAccentColor] = useState("blue");
+  const [dyslexiaFont, setDyslexiaFont] = useState(false);
+  const [calmDiscussLights, setCalmDiscussLights] = useState(false);
+  const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
+  const [testStreakValue, setTestStreakValue] = useState(0);
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
   const [paToast, setPaToast] = useState(null);
   const [scrollPct, setScrollPct] = useState(0);
   const [storageWarning, setStorageWarning] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const scrollPositions = useRef({});
   const [ticket] = useState(() => ({
     seat: `${Math.ceil(Math.random() * 30)}${["A", "B", "C", "D", "E", "F"][Math.floor(Math.random() * 6)]}`,
@@ -41,40 +44,63 @@ export default function App() {
   }));
 
   useEffect(() => {
-    saveJSON("pw-theme", theme);
-  }, [theme]);
+    if (!progress.loaded) return;
+    setTab(progress.get("pw-last-tab", "chapters"));
+    setTheme(progress.get("pw-theme", "dark"));
+    setReduceMotion(progress.get("pw-reduce-motion", false));
+    setFontSize(progress.get("pw-font-size", "medium"));
+    setAccentColor(progress.get("pw-accent-color", "blue"));
+    setDyslexiaFont(progress.get("pw-dyslexia-font", false));
+    setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
+    setTestStreakOverrideOn(progress.get("pw-test-streak-override-on", false));
+    setTestStreakValue(progress.get("pw-test-streak-value", 0));
+    setHydrated(true);
+  }, [progress.loaded, progress.isSignedIn]);
 
   useEffect(() => {
-    saveJSON("pw-last-tab", tab);
-  }, [tab]);
+    if (!hydrated) return;
+    progress.set("pw-theme", theme);
+  }, [theme, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-reduce-motion", reduceMotion);
-  }, [reduceMotion]);
+    if (!hydrated) return;
+    progress.set("pw-last-tab", tab);
+  }, [tab, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-font-size", fontSize);
-  }, [fontSize]);
+    if (!hydrated) return;
+    progress.set("pw-reduce-motion", reduceMotion);
+  }, [reduceMotion, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-accent-color", accentColor);
-  }, [accentColor]);
+    if (!hydrated) return;
+    progress.set("pw-font-size", fontSize);
+  }, [fontSize, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-dyslexia-font", dyslexiaFont);
-  }, [dyslexiaFont]);
+    if (!hydrated) return;
+    progress.set("pw-accent-color", accentColor);
+  }, [accentColor, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-calm-discuss-lights", calmDiscussLights);
-  }, [calmDiscussLights]);
+    if (!hydrated) return;
+    progress.set("pw-dyslexia-font", dyslexiaFont);
+  }, [dyslexiaFont, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-test-streak-override-on", testStreakOverrideOn);
-  }, [testStreakOverrideOn]);
+    if (!hydrated) return;
+    progress.set("pw-calm-discuss-lights", calmDiscussLights);
+  }, [calmDiscussLights, hydrated]);
 
   useEffect(() => {
-    saveJSON("pw-test-streak-value", testStreakValue);
-  }, [testStreakValue]);
+    if (!hydrated) return;
+    progress.set("pw-test-streak-override-on", testStreakOverrideOn);
+  }, [testStreakOverrideOn, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    progress.set("pw-test-streak-value", testStreakValue);
+  }, [testStreakValue, hydrated]);
 
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
@@ -87,19 +113,20 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!progress.loaded) return;
     const today = new Date().toDateString();
-    const lastVisit = localStorage.getItem("pw-last-visit");
-    let current = parseInt(localStorage.getItem("pw-streak") || "0", 10);
+    const lastVisit = progress.get("pw-last-visit", null);
+    let current = progress.get("pw-streak", 0);
     if (lastVisit !== today) {
       const yesterday = new Date(Date.now() - 86400000).toDateString();
       current = lastVisit === yesterday ? current + 1 : 1;
-      localStorage.setItem("pw-last-visit", today);
-      localStorage.setItem("pw-streak", String(current));
+      progress.set("pw-last-visit", today);
+      progress.set("pw-streak", current);
     }
-    const longest = Math.max(parseInt(localStorage.getItem("pw-longest-streak") || "0", 10), current);
-    localStorage.setItem("pw-longest-streak", String(longest));
+    const longest = Math.max(progress.get("pw-longest-streak", 0), current);
+    progress.set("pw-longest-streak", longest);
     setStreak(current);
-  }, []);
+  }, [progress.loaded]);
 
   useEffect(() => {
     let raf = null;
@@ -129,11 +156,15 @@ export default function App() {
     requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
   };
 
-  const resetProgress = () => {
+  const resetProgress = async () => {
     if (!window.confirm("Reset all progress on this device? This can't be undone.")) return;
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith("pw-"))
-      .forEach((k) => localStorage.removeItem(k));
+    if (progress.isSignedIn) {
+      await progress.resetAll();
+    } else {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("pw-"))
+        .forEach((k) => localStorage.removeItem(k));
+    }
     window.location.reload();
   };
 
