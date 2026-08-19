@@ -183,10 +183,10 @@ const TRIVIA = [
 
 const ACCENT_COLORS = {
   blue: { label: "Sky Blue", swatch: "#6FA0F0", accent: "#6FA0F0", hover: "#8FB8F5", soft: "rgba(111,160,240,0.10)", onAccent: "#0E1830" },
-  amber: { label: "Sunset Amber", swatch: "#F2A93B", accent: "#F2A93B", hover: "#F5BE63", soft: "rgba(242,169,59,0.12)", onAccent: "#2A1B04" },
   green: { label: "Runway Green", swatch: "#4CAF7D", accent: "#4CAF7D", hover: "#6BC494", soft: "rgba(76,175,125,0.12)", onAccent: "#06210F" },
   red: { label: "Beacon Red", swatch: "#E5484D", accent: "#E5484D", hover: "#ED6F73", soft: "rgba(229,72,77,0.12)", onAccent: "#2A0C0D" },
-  purple: { label: "Twilight Purple", swatch: "#A78BFA", accent: "#A78BFA", hover: "#BCA6FB", soft: "rgba(167,139,250,0.12)", onAccent: "#1C1033" },
+  amber: { label: "Gauge Amber", swatch: "#E8A33D", accent: "#E8A33D", hover: "#EDB563", soft: "rgba(232,163,61,0.12)", onAccent: "#2A1B04" },
+  grey: { label: "Tarmac Grey", swatch: "#9BA8B8", accent: "#9BA8B8", hover: "#B3BEC9", soft: "rgba(155,168,184,0.12)", onAccent: "#101B26" },
 };
 
 export { MODULES, CHAPTERS, PDFS, NAV, TRIVIA, ACCENT_COLORS };
