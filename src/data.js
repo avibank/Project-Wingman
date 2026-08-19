@@ -182,11 +182,36 @@ const TRIVIA = [
 ];
 
 const ACCENT_COLORS = {
-  blue: { label: "Sky Blue", swatch: "#6FA0F0", accent: "#6FA0F0", hover: "#8FB8F5", soft: "rgba(111,160,240,0.10)", onAccent: "#0E1830" },
-  green: { label: "Runway Green", swatch: "#4CAF7D", accent: "#4CAF7D", hover: "#6BC494", soft: "rgba(76,175,125,0.12)", onAccent: "#06210F" },
-  red: { label: "Beacon Red", swatch: "#E5484D", accent: "#E5484D", hover: "#ED6F73", soft: "rgba(229,72,77,0.12)", onAccent: "#2A0C0D" },
-  amber: { label: "Gauge Amber", swatch: "#E8A33D", accent: "#E8A33D", hover: "#EDB563", soft: "rgba(232,163,61,0.12)", onAccent: "#2A1B04" },
-  grey: { label: "Tarmac Grey", swatch: "#9BA8B8", accent: "#9BA8B8", hover: "#B3BEC9", soft: "rgba(155,168,184,0.12)", onAccent: "#101B26" },
+  blue: {
+    label: "Sky Blue",
+    swatch: "#6FA0F0",
+    dark: { accent: "#6FA0F0", hover: "#8FB8F5", soft: "rgba(111,160,240,0.10)", onAccent: "#0E1830" },
+    light: { accent: "#3D6FD1", hover: "#5A8AE0", soft: "rgba(61,111,209,0.08)", onAccent: "#FFFFFF" },
+  },
+  green: {
+    label: "Runway Green",
+    swatch: "#4CAF7D",
+    dark: { accent: "#4CAF7D", hover: "#6BC494", soft: "rgba(76,175,125,0.12)", onAccent: "#06210F" },
+    light: { accent: "#2F9D64", hover: "#4BB57D", soft: "rgba(47,157,100,0.10)", onAccent: "#FFFFFF" },
+  },
+  red: {
+    label: "Beacon Red",
+    swatch: "#E5484D",
+    dark: { accent: "#E5484D", hover: "#ED6F73", soft: "rgba(229,72,77,0.12)", onAccent: "#2A0C0D" },
+    light: { accent: "#D14F4F", hover: "#DB6B6B", soft: "rgba(209,79,79,0.10)", onAccent: "#FFFFFF" },
+  },
+  amber: {
+    label: "Gauge Amber",
+    swatch: "#E8A33D",
+    dark: { accent: "#E8A33D", hover: "#EDB563", soft: "rgba(232,163,61,0.12)", onAccent: "#2A1B04" },
+    light: { accent: "#C77F1D", hover: "#D89A44", soft: "rgba(199,127,29,0.10)", onAccent: "#FFFFFF" },
+  },
+  grey: {
+    label: "Tarmac Grey",
+    swatch: "#9BA8B8",
+    dark: { accent: "#9BA8B8", hover: "#B3BEC9", soft: "rgba(155,168,184,0.12)", onAccent: "#101B26" },
+    light: { accent: "#5C6B7D", hover: "#7A8AA0", soft: "rgba(92,107,125,0.10)", onAccent: "#FFFFFF" },
+  },
 };
 
 export { MODULES, CHAPTERS, PDFS, NAV, TRIVIA, ACCENT_COLORS };
