@@ -176,15 +176,17 @@ function AppInner() {
     window.location.reload();
   };
 
+  const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
+
   return (
     <div
       className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
-        "--accent": ACCENT_COLORS[accentColor].accent,
-        "--accent-hover": ACCENT_COLORS[accentColor].hover,
-        "--accent-soft": ACCENT_COLORS[accentColor].soft,
-        "--on-accent": ACCENT_COLORS[accentColor].onAccent,
+        "--accent": activeAccent.accent,
+        "--accent-hover": activeAccent.hover,
+        "--accent-soft": activeAccent.soft,
+        "--on-accent": activeAccent.onAccent,
       }}
     >
     <UsernameGate>
