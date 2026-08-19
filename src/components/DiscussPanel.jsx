@@ -6,11 +6,21 @@ import { fetchComments, postComment, toggleReaction, deleteComment, uploadCommen
 import { useIsAdmin } from "../lib/admin.js";
 import { useDisplayName } from "../lib/identity.js";
 
+function nameToGradient(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `linear-gradient(135deg, hsl(${hue}, 60%, 42%), hsl(${(hue + 45) % 360}, 60%, 32%))`;
+}
+
 function DiscussPanel({ onSignIn, calmLights }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [reacted, setReacted] = useState(new Set());
+  const [bounceKey, setBounceKey] = useState(null);
   const [pendingImage, setPendingImage] = useState(null); // { url }
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -69,6 +79,8 @@ function DiscussPanel({ onSignIn, calmLights }) {
       already ? next.delete(key) : next.add(key);
       return next;
     });
+    setBounceKey(key);
+    setTimeout(() => setBounceKey((k) => (k === key ? null : k)), 350);
   };
 
   const handleDelete = async (id) => {
@@ -114,7 +126,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
             const isEditing = editingId === c.id;
             return (
               <div key={c.id} className="discuss-item">
-                <div className="discuss-avatar">{c.author.charAt(0).toUpperCase()}</div>
+                <div className="discuss-avatar" style={{ background: nameToGradient(c.author) }}>{c.author.charAt(0).toUpperCase()}</div>
                 <div className="discuss-item-body">
                   <div className="discuss-meta">
                     <strong>{c.author}</strong>
@@ -131,12 +143,22 @@ function DiscussPanel({ onSignIn, calmLights }) {
                   ) : (
                     c.text && <p>{c.text}</p>
                   )}
-                  {c.image_url && <img className="discuss-photo" src={c.image_url} alt="Attached" />}
+                  {c.image_url && (
+                    <div className="discuss-photo-frame">
+                      <img className="discuss-photo" src={c.image_url} alt="Attached" />
+                    </div>
+                  )}
                   <div className="discuss-reactions">
-                    <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")}>
+                    <button
+                      className={`${reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} ${bounceKey === `${c.id}-thumbsUp` ? "is-bouncing" : ""}`}
+                      onClick={() => handleReaction(c, "thumbsUp")}
+                    >
                       <ThumbsUp size={12} /> {c.reactions?.thumbsUp || 0}
                     </button>
-                    <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")}>
+                    <button
+                      className={`${reacted.has(`${c.id}-heart`) ? "is-on" : ""} ${bounceKey === `${c.id}-heart` ? "is-bouncing" : ""}`}
+                      onClick={() => handleReaction(c, "heart")}
+                    >
                       <Heart size={12} /> {c.reactions?.heart || 0}
                     </button>
                     {editable && !isEditing && (
@@ -201,7 +223,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
         .discuss-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 0; }
         .discuss-item { display: flex; gap: 12px; }
-        .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; }
+        .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
         .discuss-item-body { flex: 1; min-width: 0; }
         .discuss-meta { display: flex; gap: 6px; align-items: baseline; font-size: 13px; color: var(--text); margin-bottom: 3px; }
         .discuss-realname { color: var(--muted2); font-weight: 400; font-size: 11.5px; }
@@ -209,11 +231,19 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-edit { display: flex; gap: 6px; align-items: center; }
         .discuss-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; color: var(--text); }
         .discuss-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .discuss-photo { display: block; max-width: 260px; width: 100%; border-radius: 10px; margin-top: 8px; border: 1px solid var(--border); }
+        .discuss-photo-frame { display: inline-block; margin-top: 10px; padding: 6px 6px 14px; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 14px rgba(0,0,0,0.2); transform: rotate(-1.2deg); transition: transform 0.2s ease; }
+        .discuss-photo-frame:hover { transform: rotate(0deg); }
+        .discuss-photo { display: block; max-width: 260px; width: 100%; border-radius: 2px; }
         .discuss-reactions { display: flex; gap: 6px; margin-top: 6px; }
         .discuss-reactions button { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
         .discuss-reactions button:hover { border-color: var(--accent); color: var(--accent); }
         .discuss-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .discuss-reactions button.is-bouncing { animation: reactionBounce 0.35s ease; }
+        @keyframes reactionBounce {
+          0% { transform: scale(1); }
+          40% { transform: scale(1.25); }
+          100% { transform: scale(1); }
+        }
         .discuss-delete { margin-left: auto; }
         .discuss-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
         .discuss-composer { flex-shrink: 0; max-width: 640px; margin: 8px auto 0; width: 100%; }
@@ -241,6 +271,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
         }
         @media (prefers-reduced-motion: reduce) {
           .discuss-send, .discuss-attach { animation: none; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
+          .discuss-reactions button.is-bouncing { animation: none; }
         }
         .discuss-signin { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 13px; padding: 14px; border-radius: 16px; cursor: pointer; }
         .discuss-signin:hover { border-color: var(--accent); }
