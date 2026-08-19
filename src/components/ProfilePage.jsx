@@ -320,19 +320,19 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       )}
 
       {tab === "preferences" && (
-        <div className="settings-block">
-          <div className="settings-row" onClick={onToggleTheme}>
-            <div className="settings-row-icon">{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</div>
-            <div>
-              <div className="settings-row-title">{theme === "light" ? "Day Ops" : "Night Ops"}</div>
-              <div className="settings-row-sub">Currently {theme === "light" ? "light" : "dark"} mode — tap to switch</div>
+        <>
+          <div className="settings-block">
+            <div className="settings-group-label">Appearance</div>
+            <div className="settings-row" onClick={onToggleTheme}>
+              <div className="settings-row-icon">{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</div>
+              <div>
+                <div className="settings-row-title">{theme === "light" ? "Day Ops" : "Night Ops"}</div>
+                <div className="settings-row-sub">Currently {theme === "light" ? "light" : "dark"} mode — tap to switch</div>
+              </div>
             </div>
-          </div>
-          <div className="settings-row settings-row--static">
-            <div className="settings-row-icon"><span style={{ fontSize: 15, fontWeight: 700 }}>Aa</span></div>
-            <div style={{ flex: 1 }}>
+            <div className="settings-row settings-row--static settings-row--centered">
               <div className="settings-row-title">Instrument Scale</div>
-              <div className="settings-row-sub" style={{ marginBottom: 8 }}>Adjusts text size across chapters, discussion, and library — dial in your instrument scale</div>
+              <div className="settings-row-sub">Adjusts text size across chapters, discussion, and library</div>
               <div className="font-size-options">
                 {["small", "medium", "large"].map((size) => (
                   <button
@@ -345,12 +345,9 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                 ))}
               </div>
             </div>
-          </div>
-          <div className="settings-row settings-row--static">
-            <div className="settings-row-icon"><span style={{ width: 14, height: 14, borderRadius: "50%", background: ACCENT_COLORS[accentColor].swatch, display: "block" }} /></div>
-            <div style={{ flex: 1 }}>
+            <div className="settings-row settings-row--static settings-row--centered">
               <div className="settings-row-title">Livery</div>
-              <div className="settings-row-sub" style={{ marginBottom: 8 }}>{ACCENT_COLORS[accentColor].label}</div>
+              <div className="settings-row-sub">{ACCENT_COLORS[accentColor].label}</div>
               <div className="accent-swatch-row">
                 {Object.entries(ACCENT_COLORS).map(([key, c]) => (
                   <button
@@ -365,29 +362,33 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
               </div>
             </div>
           </div>
-          <div className="settings-row" onClick={onToggleReduceMotion}>
-            <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
-            <div>
-              <div className="settings-row-title">Smooth Air</div>
-              <div className="settings-row-sub">Reduces motion — turns off animated transitions across the app</div>
+
+          <div className="settings-block">
+            <div className="settings-group-label">Accessibility &amp; Motion</div>
+            <div className="settings-row" onClick={onToggleReduceMotion}>
+              <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+              <div>
+                <div className="settings-row-title">Smooth Air</div>
+                <div className="settings-row-sub">Reduces motion — turns off animated transitions across the app</div>
+              </div>
             </div>
-          </div>
-          <div className="settings-row" onClick={onToggleCalmDiscussLights}>
-            <span className={`settings-switch ${calmDiscussLights ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
-            <div>
-              <div className="settings-row-title">Lights Out</div>
-              <div className="settings-row-sub">Replaces the pulsing red/green buttons in Discussion with a plain navy style</div>
+            <div className="settings-row" onClick={onToggleCalmDiscussLights}>
+              <span className={`settings-switch ${calmDiscussLights ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+              <div>
+                <div className="settings-row-title">Lights Out</div>
+                <div className="settings-row-sub">Replaces the pulsing red/green buttons in Discussion with a plain navy style</div>
+              </div>
             </div>
-          </div>
-          <div className="settings-row" onClick={onToggleDyslexiaFont}>
-            <span className={`settings-switch ${dyslexiaFont ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
-            <div>
-              <div className="settings-row-title">Plain Language</div>
-              <div className="settings-row-sub">A clearer font for easier reading — designed to help with dyslexia and reading fatigue</div>
+            <div className="settings-row" onClick={onToggleDyslexiaFont}>
+              <span className={`settings-switch ${dyslexiaFont ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
+              <div>
+                <div className="settings-row-title">Plain Language</div>
+                <div className="settings-row-sub">A clearer font for easier reading — designed to help with dyslexia and reading fatigue</div>
+              </div>
             </div>
           </div>
           <p className="settings-note">Quizzes support keyboard shortcuts: press 1-4 or A-D to answer, and Enter to continue.</p>
-        </div>
+        </>
       )}
 
       <style>{`
@@ -398,15 +399,17 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .profile-page-tabs button { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 12.5px; padding: 8px 4px; border-radius: 8px; cursor: pointer; }
         .profile-page-tabs button.is-active { background: var(--panel); color: var(--text); }
         .settings-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
+        .settings-group-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); padding: 10px 14px 4px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }
-        .settings-row--static { cursor: default; }
+        .settings-row--static { cursor: default; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 18px 14px; }
         .settings-row--static:hover { background: transparent; }
-        .font-size-options { display: flex; gap: 6px; }
-        .font-size-btn { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px; border-radius: 8px; cursor: pointer; }
+        .settings-row--centered .settings-row-sub { margin-bottom: 10px; }
+        .font-size-options { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
+        .font-size-btn { background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px 18px; border-radius: 8px; cursor: pointer; }
         .font-size-btn.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-        .accent-swatch-row { display: flex; gap: 10px; }
-        .accent-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+        .accent-swatch-row { display: flex; gap: 14px; justify-content: center; margin-top: 4px; }
+        .accent-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
         .accent-swatch.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--border-hover); }
         .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
         .settings-row-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
