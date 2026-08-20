@@ -251,7 +251,8 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-pending-image { position: relative; display: inline-block; margin-bottom: 8px; }
         .discuss-pending-image img { display: block; height: 64px; border-radius: 10px; border: 1px solid var(--border); }
         .discuss-pending-image button { position: absolute; top: -6px; right: -6px; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .discuss-input { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; }
+        .discuss-input { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .discuss-input:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 18px 2px var(--accent-soft); }
         .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 14px; color: var(--text); font-size: 13.5px; }
         .discuss-input input:focus { outline: none; }
         .discuss-attach { background: #E5484D; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: #2A0C0D; cursor: pointer; flex-shrink: 0; animation: pulseRed 4s ease-in-out infinite; }
