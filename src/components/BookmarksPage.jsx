@@ -64,7 +64,7 @@ function BookmarksPage({ onBack }) {
       </div>
       <style>{`
         .bookmarks-page { max-width: 560px; }
-        .bookmarks-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
+        .bookmarks-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 12.5px; cursor: pointer; padding: 0; margin-bottom: 18px; }
         .bookmarks-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .bookmarks-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0; }
         .bookmarks-flashcard-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
@@ -74,8 +74,8 @@ function BookmarksPage({ onBack }) {
         .bookmarks-list { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
         .bookmark-item { position: relative; padding: 12px 36px 12px 14px; border-radius: 10px; }
         .bookmark-item:hover { background: var(--panel-alt); }
-        .bookmark-item-chapter { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent); margin-bottom: 4px; }
-        .bookmark-item-stem { font-size: 13px; color: var(--text); line-height: 1.4; }
+        .bookmark-item-chapter { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); margin-bottom: 4px; }
+        .bookmark-item-stem { font-size: 12.5px; color: var(--text); line-height: 1.4; }
         .bookmark-item-remove { position: absolute; top: 10px; right: 8px; background: transparent; border: none; color: var(--muted2); width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .bookmark-item-remove:hover { background: rgba(224,102,90,0.12); color: var(--bad); }
       `}</style>
