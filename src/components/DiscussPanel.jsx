@@ -220,7 +220,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 10px; max-width: 640px; width: 100%; flex-shrink: 0; }
         .discuss-count { font-size: 11.5px; color: var(--muted); }
         .leaderboard { max-width: 640px; margin: 0 auto 12px; width: 100%; font-size: 11.5px; color: var(--muted); background: var(--panel-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; flex-shrink: 0; }
-        .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; }
+        .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); }
         .discuss-empty { text-align: center; color: var(--muted); font-size: 12.5px; padding: 30px 0; }
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
