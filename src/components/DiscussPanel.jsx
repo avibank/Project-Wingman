@@ -116,9 +116,9 @@ function DiscussPanel({ onSignIn, calmLights }) {
       )}
       <div className="discuss-list">
         {loading ? (
-          <div className="discuss-empty">Loading discussion…</div>
+          <div className="discuss-empty">Tuning into the frequency…</div>
         ) : comments.length === 0 ? (
-          <div className="discuss-empty">Be the first to ask a question.</div>
+          <div className="discuss-empty">Frequency's quiet — be the first to key the mic and ask a question.</div>
         ) : (
           comments.map((c) => {
             const isOwn = isSignedIn && c.user_id === user.id;
