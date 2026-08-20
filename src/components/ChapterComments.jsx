@@ -143,7 +143,7 @@ function ChapterComments({ chapterId, onSignIn }) {
       <style>{`
         .chapter-comments { display: flex; flex-direction: column; gap: 10px; }
         .chapter-comments-loading, .chapter-comments-empty { font-size: 12.5px; color: var(--muted); text-align: center; padding: 16px 0; }
-        .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; }
+        .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); }
         .chapter-comment { display: flex; gap: 8px; }
         .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
         .chapter-comment-body { flex: 1; min-width: 0; }
