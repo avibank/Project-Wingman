@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ThumbsUp, Heart, Trash2, LogIn, Pencil, Check, X, MessageSquareOff } from "lucide-react";
+import { ThumbsUp, Heart, Trash2, LogIn, Pencil, Check, X, MessageSquareOff, ShieldCheck } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchComments, postComment, toggleReaction, deleteComment, updateCommentText, canEditComment } from "../lib/comments.js";
 import { useIsAdmin } from "../lib/admin.js";
@@ -32,7 +32,7 @@ function ChapterComments({ chapterId, onSignIn }) {
 
   const handlePost = async () => {
     if (!text.trim() || !isSignedIn) return;
-    const newComment = await postComment(chapterId, displayName, text.trim(), user.id, null, user.fullName || null);
+    const newComment = await postComment(chapterId, displayName, text.trim(), user.id, null, user.fullName || null, isAdmin);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
@@ -98,7 +98,14 @@ function ChapterComments({ chapterId, onSignIn }) {
             const isEditing = editingId === c.id;
             return (
               <div key={c.id} className="chapter-comment">
-                <div className={`chapter-comment-avatar ${isOwn ? "is-own" : ""}`}>{c.author.charAt(0).toUpperCase()}</div>
+                <div className="chapter-comment-avatar-wrap">
+                  <div className={`chapter-comment-avatar ${isOwn ? "is-own" : ""}`}>{c.author.charAt(0).toUpperCase()}</div>
+                  {c.is_admin && (
+                    <span className="chapter-comment-admin-badge" title="Admin">
+                      <ShieldCheck size={8} />
+                    </span>
+                  )}
+                </div>
                 <div className="chapter-comment-body">
                   <div className="chapter-comment-meta">
                     <strong>{c.author}</strong>
@@ -116,7 +123,7 @@ function ChapterComments({ chapterId, onSignIn }) {
                     <p>{c.text}</p>
                   )}
                   <div className="chapter-comment-reactions">
-                                       <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")} aria-label={reacted.has(`${c.id}-thumbsUp`) ? "Remove thumbs up" : "Give thumbs up"}>
+                    <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")} aria-label={reacted.has(`${c.id}-thumbsUp`) ? "Remove thumbs up" : "Give thumbs up"}>
                       <ThumbsUp size={11} /> {c.reactions?.thumbsUp || 0}
                     </button>
                     <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")} aria-label={reacted.has(`${c.id}-heart`) ? "Remove heart" : "Give heart"}>
@@ -171,6 +178,8 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comment { display: flex; gap: 8px; }
         .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
         .chapter-comment-avatar.is-own { box-shadow: 0 0 0 2px var(--accent); }
+        .chapter-comment-avatar-wrap { position: relative; flex-shrink: 0; }
+        .chapter-comment-admin-badge { position: absolute; bottom: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #E8A33D; color: #2A1B04; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--panel); }
         .chapter-comment-body { flex: 1; min-width: 0; }
         .chapter-comment-meta { font-size: 11.5px; color: var(--text); margin-bottom: 2px; }
         .chapter-comment-realname { color: var(--muted2); font-weight: 400; font-size: 10px; }
