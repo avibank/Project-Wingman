@@ -40,6 +40,8 @@ function AppInner() {
   const [accentColor, setAccentColor] = useState("blue");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
+  const [shakeTab, setShakeTab] = useState(null);
+  const [shakeModule, setShakeModule] = useState(null);
   const [calmDiscussLights, setCalmDiscussLights] = useState(false);
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
   const [testStreakValue, setTestStreakValue] = useState(0);
@@ -171,7 +173,13 @@ function AppInner() {
   };
 
   const switchTab = (nextTab) => {
-    if (turbulence) triggerHaptic();
+    if (turbulence) {
+      triggerHaptic();
+      if (!reduceMotion) {
+        setShakeTab(nextTab);
+        setTimeout(() => setShakeTab((t) => (t === nextTab ? null : t)), 220);
+      }
+    }
     scrollPositions.current[tab] = window.scrollY;
     setTab(nextTab);
     requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
@@ -245,10 +253,16 @@ function AppInner() {
             {MODULES.map((m) => (
               <button
                 key={m.code}
-                className={`module-chip ${module.code === m.code ? "is-active" : ""}`}
+                className={`module-chip ${module.code === m.code ? "is-active" : ""} ${shakeModule === m.code ? "is-shaking" : ""}`}
                 onClick={() => {
                   if (m.status === "active") {
-                    if (turbulence) triggerHaptic();
+                    if (turbulence) {
+                      triggerHaptic();
+                      if (!reduceMotion) {
+                        setShakeModule(m.code);
+                        setTimeout(() => setShakeModule((c) => (c === m.code ? null : c)), 220);
+                      }
+                    }
                     setModule(m);
                   }
                 }}
@@ -320,7 +334,7 @@ function AppInner() {
 
           <nav className="tabbar">
             {NAV.map((n) => (
-              <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""}`} onClick={() => switchTab(n.id)}>
+              <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""} ${shakeTab === n.id ? "is-shaking" : ""}`} onClick={() => switchTab(n.id)}>
                 <n.icon size={15} />
                 {n.label}
               </button>
@@ -397,6 +411,13 @@ function AppInner() {
         .tab.is-active { color: var(--text); }
         .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 0.25s ease, right 0.25s ease; border-radius: 2px 2px 0 0; }
         .tab.is-active::after { left: 0; right: 0; }
+        .tab.is-shaking, .module-chip.is-shaking { animation: turbulencePulse 0.22s ease; }
+        @keyframes turbulencePulse {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-2px); }
+          75% { transform: translateX(2px); }
+        }
+        .app.reduce-motion .tab.is-shaking, .app.reduce-motion .module-chip.is-shaking { animation: none; }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content-taxi { animation: taxiIn 0.35s ease; }
