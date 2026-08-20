@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search, SearchX } from "lucide-react";
 import { PDFS } from "../data.js";
 
 function PdfPanel() {
@@ -23,7 +23,12 @@ function PdfPanel() {
             <button className="pdf-open">Open</button>
           </div>
         ))}
-        {filtered.length === 0 && <p className="pdf-empty">No files match "{query}" — nothing on the manifest.</p>}
+        {filtered.length === 0 && (
+          <div className="pdf-empty">
+            <SearchX size={28} className="pdf-empty-icon" />
+            <p>No files match "{query}" — nothing on the manifest.</p>
+          </div>
+        )}
       </div>
       <style>{`
         .pdf-wrap { display: flex; flex-direction: column; gap: 16px; }
@@ -32,7 +37,9 @@ function PdfPanel() {
         .pdf-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .pdf-search input:focus { outline: none; }
         .pdf-list { display: flex; flex-direction: column; gap: 10px; }
-        .pdf-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .pdf-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .pdf-empty-icon { color: var(--muted2); opacity: 0.6; }
+        .pdf-empty p { margin: 0; max-width: 300px; }
         .pdf-row { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         .pdf-icon { width: 36px; height: 36px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .pdf-title { font-size: 13.5px; color: var(--text); }
