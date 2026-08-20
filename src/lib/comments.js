@@ -1,5 +1,4 @@
 import { supabase } from "./supabaseClient.js";
-
 export async function fetchComments(chapterId) {
   const base = supabase.from("comments").select("*").order("created_at", { ascending: true });
   const { data, error } = chapterId ? await base.eq("chapter_id", chapterId) : await base.is("chapter_id", null);
@@ -9,11 +8,10 @@ export async function fetchComments(chapterId) {
   }
   return data || [];
 }
-
-export async function postComment(chapterId, author, text, userId = null, imageUrl = null, realName = null) {
+export async function postComment(chapterId, author, text, userId = null, imageUrl = null, realName = null, isAdmin = false) {
   const { data, error } = await supabase
     .from("comments")
-    .insert({ chapter_id: chapterId, author, text, user_id: userId, image_url: imageUrl, real_name: realName })
+    .insert({ chapter_id: chapterId, author, text, user_id: userId, image_url: imageUrl, real_name: realName, is_admin: isAdmin })
     .select()
     .single();
   if (error) {
@@ -22,9 +20,7 @@ export async function postComment(chapterId, author, text, userId = null, imageU
   }
   return data;
 }
-
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
-
 export async function uploadCommentPhoto(file) {
   if (!file.type.startsWith("image/")) {
     return { error: "Only image files can be attached." };
@@ -42,7 +38,6 @@ export async function uploadCommentPhoto(file) {
   const { data } = supabase.storage.from("comment-photos").getPublicUrl(path);
   return { url: data.publicUrl };
 }
-
 export async function toggleReaction(comment, type, alreadyReacted) {
   const nextCount = Math.max(0, comment.reactions[type] + (alreadyReacted ? -1 : 1));
   const nextReactions = { ...comment.reactions, [type]: nextCount };
@@ -50,7 +45,6 @@ export async function toggleReaction(comment, type, alreadyReacted) {
   if (error) console.error(error);
   return nextReactions;
 }
-
 export async function deleteComment(id) {
   const { error } = await supabase.from("comments").delete().eq("id", id);
   if (error) {
@@ -59,14 +53,11 @@ export async function deleteComment(id) {
   }
   return true;
 }
-
 export const EDIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-
 export function canEditComment(comment, currentUserId) {
   if (!currentUserId || comment.user_id !== currentUserId) return false;
   return Date.now() - new Date(comment.created_at).getTime() < EDIT_WINDOW_MS;
 }
-
 export async function updateCommentText(id, text) {
   const { data, error } = await supabase.from("comments").update({ text }).eq("id", id).select().single();
   if (error) {
