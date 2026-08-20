@@ -30,7 +30,6 @@ export default function App() {
 function AppInner() {
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
-  const [barcodeBars] = useState(() => Array.from({ length: 44 }, () => 2 + Math.floor(Math.random() * 4)));
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
   const [module, setModule] = useState(MODULES[0]);
@@ -227,11 +226,7 @@ function AppInner() {
               <div><label>GATE</label><span>{ticket.gate}</span></div>
               <div><label>STATUS</label><span>BOARDING</span></div>
             </div>
-            <div className="boarding-pass-barcode">
-              {barcodeBars.map((w, i) => (
-                <span key={i} style={{ width: `${w}px` }} />
-              ))}
-            </div>
+            <div className="boarding-pass-barcode" />
           </div>
           <div className="boarding-trivia">
             <span className="boarding-trivia-label">TIP</span>
@@ -433,8 +428,7 @@ function AppInner() {
         .boarding-pass-row { display: flex; gap: 22px; margin-bottom: 16px; }
         .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
         .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
-        .boarding-pass-barcode { display: flex; align-items: stretch; gap: 1.5px; height: 30px; opacity: 0.45; }
-        .boarding-pass-barcode span { display: block; background: var(--text); border-radius: 0.5px; }
+        .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
         .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
         .boarding-trivia-label { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: 6px; padding: 2px 6px; }
         @keyframes boardingFade {
