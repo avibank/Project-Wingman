@@ -139,7 +139,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
             const isEditing = editingId === c.id;
             return (
               <div key={c.id} className="discuss-item">
-                <div className="discuss-avatar" style={{ background: nameToGradient(c.author) }}>{c.author.charAt(0).toUpperCase()}</div>
+                <div className={`discuss-avatar ${isOwn ? "is-own" : ""}`} style={{ background: nameToGradient(c.author) }}>{c.author.charAt(0).toUpperCase()}</div>
                 <div className="discuss-item-body">
                   <div className="discuss-meta">
                     <strong>{c.author}</strong>
@@ -247,6 +247,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
+        .discuss-avatar.is-own { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 0 2px var(--accent); }
         .discuss-item-body { flex: 1; min-width: 0; }
         .discuss-meta { display: flex; gap: 6px; align-items: baseline; font-size: 12.5px; color: var(--text); margin-bottom: 3px; }
         .discuss-realname { color: var(--muted2); font-weight: 400; font-size: 11.5px; }
