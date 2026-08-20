@@ -69,7 +69,7 @@ function BookmarksPage({ onBack }) {
         .bookmarks-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0; }
         .bookmarks-flashcard-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
         .bookmarks-flashcard-btn:hover { background: var(--accent-hover); }
-        .bookmarks-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; }
+        .bookmarks-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         .bookmarks-empty { font-size: 12.5px; color: var(--muted2); padding: 16px; text-align: center; }
         .bookmarks-list { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
         .bookmark-item { position: relative; padding: 12px 36px 12px 14px; border-radius: 10px; }
