@@ -23,7 +23,7 @@ function PdfPanel() {
             <button className="pdf-open">Open</button>
           </div>
         ))}
-        {filtered.length === 0 && <p className="pdf-empty">No files match "{query}".</p>}
+        {filtered.length === 0 && <p className="pdf-empty">No files match "{query}" — nothing on the manifest.</p>}
       </div>
       <style>{`
         .pdf-wrap { display: flex; flex-direction: column; gap: 16px; }
