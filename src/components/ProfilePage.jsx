@@ -389,8 +389,8 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
             <div className="settings-row" onClick={onToggleTurbulence}>
               <span className={`settings-switch ${turbulence ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>
-                <div className="settings-row-title">Turbulence</div>
-                <div className="settings-row-sub">Subtle vibration when switching tabs or modules — Android only, no effect on iPhone or desktop</div>
+                                <div className="settings-row-title">Turbulence</div>
+                <div className="settings-row-sub">Vibration on Android, a gentle visual pulse everywhere else — respects Smooth Air</div>
               </div>
             </div>
           </div>
