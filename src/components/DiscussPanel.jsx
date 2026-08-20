@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plane, ThumbsUp, Heart, Trash2, LogIn, Paperclip, X, Pencil, Check, MessageSquareOff } from "lucide-react";
+import { Plane, ThumbsUp, Heart, Trash2, LogIn, Paperclip, X, Pencil, Check, MessageSquareOff, ShieldCheck } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { Placard } from "./icons.jsx";
 import { fetchComments, postComment, toggleReaction, deleteComment, uploadCommentPhoto, updateCommentText, canEditComment } from "../lib/comments.js";
@@ -46,7 +46,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
 
   const post = async () => {
     if ((!text.trim() && !pendingImage) || !isSignedIn) return;
-    const newComment = await postComment(null, displayName, text.trim(), user.id, pendingImage?.url || null, user.fullName || null);
+    const newComment = await postComment(null, displayName, text.trim(), user.id, pendingImage?.url || null, user.fullName || null, isAdmin);
     if (newComment) {
       setComments((c) => [...c, newComment]);
       setText("");
@@ -139,7 +139,14 @@ function DiscussPanel({ onSignIn, calmLights }) {
             const isEditing = editingId === c.id;
             return (
               <div key={c.id} className="discuss-item">
-                <div className={`discuss-avatar ${isOwn ? "is-own" : ""}`} style={{ background: nameToGradient(c.author) }}>{c.author.charAt(0).toUpperCase()}</div>
+                <div className="discuss-avatar-wrap">
+                  <div className={`discuss-avatar ${isOwn ? "is-own" : ""}`} style={{ background: nameToGradient(c.author) }}>{c.author.charAt(0).toUpperCase()}</div>
+                  {c.is_admin && (
+                    <span className="discuss-admin-badge" title="Admin">
+                      <ShieldCheck size={10} />
+                    </span>
+                  )}
+                </div>
                 <div className="discuss-item-body">
                   <div className="discuss-meta">
                     <strong>{c.author}</strong>
@@ -162,7 +169,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
                     </div>
                   )}
                   <div className="discuss-reactions">
-                                    <button
+                    <button
                       className={`${reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} ${bounceKey === `${c.id}-thumbsUp` ? "is-bouncing" : ""}`}
                       onClick={() => handleReaction(c, "thumbsUp")}
                       aria-label={reacted.has(`${c.id}-thumbsUp`) ? "Remove thumbs up" : "Give thumbs up"}
@@ -250,6 +257,8 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
         .discuss-avatar.is-own { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 0 2px var(--accent); }
+        .discuss-avatar-wrap { position: relative; flex-shrink: 0; }
+        .discuss-admin-badge { position: absolute; bottom: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; background: #E8A33D; color: #2A1B04; display: flex; align-items: center; justify-content: center; border: 2px solid var(--panel); }
         .discuss-item-body { flex: 1; min-width: 0; }
         .discuss-meta { display: flex; gap: 6px; align-items: baseline; font-size: 12.5px; color: var(--text); margin-bottom: 3px; }
         .discuss-realname { color: var(--muted2); font-weight: 400; font-size: 11.5px; }
