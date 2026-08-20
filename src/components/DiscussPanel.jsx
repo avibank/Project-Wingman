@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plane, ThumbsUp, Heart, Trash2, LogIn, Paperclip, X, Pencil, Check } from "lucide-react";
+import { Plane, ThumbsUp, Heart, Trash2, LogIn, Paperclip, X, Pencil, Check, MessageSquareOff } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { Placard } from "./icons.jsx";
 import { fetchComments, postComment, toggleReaction, deleteComment, uploadCommentPhoto, updateCommentText, canEditComment } from "../lib/comments.js";
@@ -116,9 +116,22 @@ function DiscussPanel({ onSignIn, calmLights }) {
       )}
       <div className="discuss-list">
         {loading ? (
-          <div className="discuss-empty">Tuning into the frequency…</div>
+          <div className="discuss-skeleton-list" aria-label="Loading discussion">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="discuss-skeleton-item">
+                <div className="discuss-skeleton-avatar" />
+                <div className="discuss-skeleton-lines">
+                  <div className="discuss-skeleton-line discuss-skeleton-line--short" />
+                  <div className="discuss-skeleton-line discuss-skeleton-line--long" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : comments.length === 0 ? (
-          <div className="discuss-empty">Frequency's quiet — be the first to key the mic and ask a question.</div>
+          <div className="discuss-empty">
+            <MessageSquareOff size={32} className="discuss-empty-icon" />
+            <p>Frequency's quiet — be the first to key the mic and ask a question.</p>
+          </div>
         ) : (
           comments.map((c) => {
             const isOwn = isSignedIn && c.user_id === user.id;
@@ -221,7 +234,17 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-count { font-size: 11.5px; color: var(--muted); }
         .leaderboard { max-width: 640px; margin: 0 auto 12px; width: 100%; font-size: 11.5px; color: var(--muted); background: var(--panel-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; flex-shrink: 0; }
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); }
-        .discuss-empty { text-align: center; color: var(--muted); font-size: 12.5px; padding: 30px 0; }
+        .discuss-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--muted); font-size: 12.5px; padding: 30px 0; }
+        .discuss-empty-icon { color: var(--muted2); opacity: 0.6; }
+        .discuss-empty p { margin: 0; max-width: 280px; }
+        .discuss-skeleton-list { display: flex; flex-direction: column; gap: 16px; padding: 4px; }
+        .discuss-skeleton-item { display: flex; gap: 12px; }
+        .discuss-skeleton-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
+        .discuss-skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+        .discuss-skeleton-line { height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
+        .discuss-skeleton-line--short { width: 35%; }
+        .discuss-skeleton-line--long { width: 80%; }
+        @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .discuss-item { display: flex; gap: 12px; }
         .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
         .discuss-item-body { flex: 1; min-width: 0; }
