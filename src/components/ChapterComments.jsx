@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ThumbsUp, Heart, Trash2, LogIn, Pencil, Check, X } from "lucide-react";
+import { ThumbsUp, Heart, Trash2, LogIn, Pencil, Check, X, MessageSquareOff } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchComments, postComment, toggleReaction, deleteComment, updateCommentText, canEditComment } from "../lib/comments.js";
 import { useIsAdmin } from "../lib/admin.js";
@@ -74,9 +74,22 @@ function ChapterComments({ chapterId, onSignIn }) {
   return (
     <div className="chapter-comments">
       {loading ? (
-        <p className="chapter-comments-loading">Loading comments…</p>
+        <div className="chapter-comments-skeleton" aria-label="Loading comments">
+          {[0, 1].map((i) => (
+            <div key={i} className="chapter-comments-skeleton-item">
+              <div className="chapter-comments-skeleton-avatar" />
+              <div className="chapter-comments-skeleton-lines">
+                <div className="chapter-comments-skeleton-line chapter-comments-skeleton-line--short" />
+                <div className="chapter-comments-skeleton-line chapter-comments-skeleton-line--long" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : comments.length === 0 ? (
-        <p className="chapter-comments-empty">No comments yet — be the first to ask something about this chapter.</p>
+        <div className="chapter-comments-empty">
+          <MessageSquareOff size={24} className="chapter-comments-empty-icon" />
+          <p>No comments yet — be the first to ask something about this chapter.</p>
+        </div>
       ) : (
         <div className="chapter-comments-list">
           {comments.map((c) => {
@@ -142,7 +155,18 @@ function ChapterComments({ chapterId, onSignIn }) {
       )}
       <style>{`
         .chapter-comments { display: flex; flex-direction: column; gap: 10px; }
-        .chapter-comments-loading, .chapter-comments-empty { font-size: 12.5px; color: var(--muted); text-align: center; padding: 16px 0; }
+        .chapter-comments-loading { font-size: 12.5px; color: var(--muted); text-align: center; padding: 16px 0; }
+        .chapter-comments-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 16px 0; }
+        .chapter-comments-empty-icon { color: var(--muted2); opacity: 0.6; }
+        .chapter-comments-empty p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 260px; }
+        .chapter-comments-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 4px; }
+        .chapter-comments-skeleton-item { display: flex; gap: 8px; }
+        .chapter-comments-skeleton-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
+        .chapter-comments-skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-top: 3px; }
+        .chapter-comments-skeleton-line { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
+        .chapter-comments-skeleton-line--short { width: 35%; }
+        .chapter-comments-skeleton-line--long { width: 75%; }
+        @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); }
         .chapter-comment { display: flex; gap: 8px; }
         .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
