@@ -158,7 +158,6 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comment-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .chapter-comment-delete { margin-left: auto; }
         .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
-        .chapter-comments-name { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
         .chapter-comments-input { display: flex; gap: 6px; }
         .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapter-comments-input input:focus { outline: none; border-color: var(--accent-soft); box-shadow: 0 0 8px 1px var(--accent-soft); }
