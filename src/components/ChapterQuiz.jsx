@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 
-function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleBookmark }) {
+function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState({ correct: 0, seen: 0 });
@@ -25,6 +25,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     setPicked(idx);
     const correct = idx === q.answer;
     const updatedScore = { correct: score.correct + (correct ? 1 : 0), seen: score.seen + 1 };
+    onProgressChange?.(updatedScore.seen);
     if (correct) {
       setFlashIdx(idx);
       setTimeout(() => setFlashIdx(null), 500);
@@ -56,6 +57,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     setPicked(null);
     setScore({ correct: 0, seen: 0 });
     setDone(false);
+    onProgressChange?.(0);
   };
 
   if (done) {
@@ -79,7 +81,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         <style>{`
           .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
           .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: var(--text); margin: 6px 0 0; font-size: 16px; }
-          .exam-done p { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+          .exam-done p { color: var(--muted); font-size: 12.5px; margin: 0 0 8px; }
           .landing-strip { position: relative; height: 50px; width: 100%; max-width: 220px; margin: 4px 0; }
           .runway { position: absolute; left: 0; right: 0; bottom: 8px; height: 2px; background: var(--border); }
           .landing-plane { position: absolute; color: var(--accent); }
@@ -151,7 +153,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         .exam-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
         .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-size: 13.5px; cursor: pointer; }
         .exam-opt:hover { border-color: var(--border-hover); }
-        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted2); border: 1px solid var(--border); border-radius: 8px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); border: 1px solid var(--border); border-radius: 8px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
         .exam-opt--wrong { border-color: var(--bad); background: rgba(224,102,90,0.08); }
         .exam-opt--correct span:last-child, .exam-opt--wrong span:last-child { margin-left: auto; }
