@@ -116,10 +116,10 @@ function ChapterComments({ chapterId, onSignIn }) {
                     <p>{c.text}</p>
                   )}
                   <div className="chapter-comment-reactions">
-                    <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")}>
+                                       <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")} aria-label={reacted.has(`${c.id}-thumbsUp`) ? "Remove thumbs up" : "Give thumbs up"}>
                       <ThumbsUp size={11} /> {c.reactions?.thumbsUp || 0}
                     </button>
-                    <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")}>
+                    <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")} aria-label={reacted.has(`${c.id}-heart`) ? "Remove heart" : "Give heart"}>
                       <Heart size={11} /> {c.reactions?.heart || 0}
                     </button>
                     {editable && !isEditing && (
