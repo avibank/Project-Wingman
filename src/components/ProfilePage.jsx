@@ -218,7 +218,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
               <div style={{ padding: "0 14px 10px" }}>
                 <textarea
                   className="settings-bio-textarea"
-                  placeholder="PPL student at AU Kuwait, working toward my CPL."
+                  placeholder=""
                   value={bio}
                   maxLength={BIO_MAX}
                   onChange={(e) => setBio(e.target.value)}
@@ -389,8 +389,8 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
             <div className="settings-row" onClick={onToggleTurbulence}>
               <span className={`settings-switch ${turbulence ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>
-                                <div className="settings-row-title">Turbulence</div>
-                <div className="settings-row-sub">Vibration on Android, a gentle visual pulse everywhere else — respects Smooth Air</div>
+                                         <div className="settings-row-title">Turbulence</div>
+                <div className="settings-row-sub">A subtle nudge when you switch tabs or modules</div>
               </div>
             </div>
           </div>
