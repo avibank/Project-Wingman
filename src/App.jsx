@@ -209,6 +209,18 @@ function AppInner() {
     window.location.reload();
   };
 
+  const switchModule = (m) => {
+    if (m.status !== "active") return;
+    if (turbulence) {
+      triggerHaptic();
+      if (!reduceMotion) {
+        setShakeModule(m.code);
+        setTimeout(() => setShakeModule((c) => (c === m.code ? null : c)), 220);
+      }
+    }
+    setModule(m);
+  };
+
   const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
 
   return (
@@ -262,18 +274,7 @@ function AppInner() {
               <button
                 key={m.code}
                 className={`module-chip ${module.code === m.code ? "is-active" : ""} ${shakeModule === m.code ? "is-shaking" : ""}`}
-                onClick={() => {
-                  if (m.status === "active") {
-                    if (turbulence) {
-                      triggerHaptic();
-                      if (!reduceMotion) {
-                        setShakeModule(m.code);
-                        setTimeout(() => setShakeModule((c) => (c === m.code ? null : c)), 220);
-                      }
-                    }
-                    setModule(m);
-                  }
-                }}
+                onClick={() => switchModule(m)}
                 disabled={m.status === "locked"}
                 title={m.status === "locked" ? "Content coming soon" : undefined}
               >
