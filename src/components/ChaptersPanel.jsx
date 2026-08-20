@@ -225,7 +225,7 @@ function ChaptersPanel({ onSignIn }) {
             </div>
           );
         })}
-        {filtered.length === 0 && <p className="chapters-empty">No chapters match "{query}".</p>}
+        {filtered.length === 0 && <p className="chapters-empty">No chapters match "{query}" — check your heading and try again.</p>}
       </div>
       <style>{`
         .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
