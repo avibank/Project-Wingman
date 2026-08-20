@@ -39,7 +39,7 @@ function ProfileMenu({ onNavigate }) {
         <div className="profile-dropdown">
           <button className="profile-row profile-row--auth" onClick={() => go(isSignedIn ? "profile" : "auth")}>
             <LogIn size={15} />
-            <span className="profile-row-truncate">{isSignedIn ? (user.username || user.fullName || "Pilot") : "Sign In"}</span>
+            <span className="profile-row-truncate">{isSignedIn ? (user.username || user.fullName || "Pilot") : "Sign in"}</span>
             {isAdmin && <span className="profile-admin-badge"><ShieldCheck size={10} /> ADMIN</span>}
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
