@@ -389,7 +389,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
             <div className="settings-row" onClick={onToggleTurbulence}>
               <span className={`settings-switch ${turbulence ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>
-                                         <div className="settings-row-title">Turbulence</div>
+                <div className="settings-row-title">Turbulence</div>
                 <div className="settings-row-sub">A subtle nudge when you switch tabs or modules</div>
               </div>
             </div>
@@ -421,10 +421,10 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
         .settings-row-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
         .settings-row--danger .settings-row-icon { color: var(--bad); }
-        .settings-row-title { font-size: 14px; color: var(--text); font-weight: 600; }
-        .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-        .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
-        .settings-error { font-size: 12px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
+        .settings-row-title { font-size: 13.5px; color: var(--text); font-weight: 600; }
+        .settings-row-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+        .settings-note { font-size: 11.5px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
+        .settings-error { font-size: 11.5px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
         .settings-switch { width: 34px; height: 20px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
         .settings-switch.is-on { background: var(--accent); }
         .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
@@ -437,10 +437,10 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
         .settings-bio-textarea { width: 100%; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13.5px; font-family: inherit; resize: vertical; min-height: 60px; box-sizing: border-box; }
         .settings-bio-textarea:focus { outline: none; border-color: var(--accent); }
-        .settings-bio-count { text-align: right; font-size: 11px; color: var(--muted2); margin-top: 4px; }
-        .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
+        .settings-bio-count { text-align: right; font-size: 11.5px; color: var(--muted2); margin-top: 4px; }
+        .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 0 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
         .settings-nickname-save:disabled { opacity: 0.6; cursor: not-allowed; }
-        .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
+        .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 9px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
         .settings-cancel-btn { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .profile-identity-centered { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 14px 14px; }
         .profile-identity-photo-wrap { position: relative; margin-bottom: 12px; }
@@ -449,7 +449,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .profile-identity-photo { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; display: block; }
         .profile-identity-photo-camera { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; border: 3px solid var(--panel); cursor: pointer; }
         .profile-identity-photo-camera:disabled { opacity: 0.5; cursor: not-allowed; }
-        .profile-identity-label { font-size: 11px; color: var(--muted); }
+        .profile-identity-label { font-size: 11.5px; color: var(--muted); }
         .profile-identity-name { font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
         .photo-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .photo-modal-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
@@ -457,7 +457,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .photo-modal-placeholder { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--accent); }
         .photo-modal-caption { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
         .photo-modal-close { position: absolute; top: -36px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 13px; padding: 10px; border-radius: 10px; cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
+        .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 12.5px; padding: 10px; border-radius: 10px; cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
         .profile-signout-btn:hover { background: rgba(224,102,90,0.08); }
         .settings-danger-zone { border-color: rgba(224,102,90,0.4); }
         .settings-delete-btn { display: flex; align-items: center; gap: 6px; background: var(--bad); color: #fff; border: none; border-radius: 8px; padding: 0 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
