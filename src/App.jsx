@@ -371,6 +371,9 @@ function AppInner() {
           font-display: swap;
         }
         * { box-sizing: border-box; }
+        *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        ::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
+        ::-moz-selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 10px; border: 2px solid var(--bg); }
