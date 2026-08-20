@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Search, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
+import { Play, Search, SearchX, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS } from "../data.js";
@@ -22,6 +22,7 @@ function ChaptersPanel({ onSignIn }) {
   const [rightTab, setRightTab] = useState("quiz");
   const [recentIds, setRecentIds] = useState([]);
   const [chapterProgress, setChapterProgress] = useState({});
+  const [viewedIds, setViewedIds] = useState(new Set());
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -31,6 +32,7 @@ function ChaptersPanel({ onSignIn }) {
     setFeedback(progress.get("pw-feedback", {}));
     setRecentIds(progress.get("pw-recent-chapters", []));
     setChapterProgress(progress.get("pw-chapter-progress", {}));
+    setViewedIds(new Set(progress.get("pw-viewed-chapters", [])));
   }, [progress.loaded, progress.isSignedIn]);
 
   useEffect(() => {
@@ -99,6 +101,14 @@ function ChaptersPanel({ onSignIn }) {
     progress.set("pw-last-chapter", ch.id);
     pushRecent(ch.id);
     setRightTab("quiz");
+    if (!viewedIds.has(ch.id)) {
+      setViewedIds((prev) => {
+        const next = new Set(prev);
+        next.add(ch.id);
+        progress.set("pw-viewed-chapters", [...next]);
+        return next;
+      });
+    }
     if (!seen.has(ch.id)) {
       setToast(`NOW BOARDING — ${ch.code}`);
       setSeen((s) => new Set(s).add(ch.id));
@@ -156,6 +166,7 @@ function ChaptersPanel({ onSignIn }) {
           return (
             <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
               <button className="chapter-head" onClick={() => openChapter(ch)}>
+                {!viewedIds.has(ch.id) && !isDone && <span className="chapter-unread-dot" aria-label="Unopened" />}
                 <span className="chapter-code">{ch.code}</span>
                 <span className="chapter-title">{ch.title}</span>
                 {isDone && (
@@ -239,7 +250,12 @@ function ChaptersPanel({ onSignIn }) {
             </div>
           );
         })}
-        {filtered.length === 0 && <p className="chapters-empty">No chapters match "{query}" — check your heading and try again.</p>}
+        {filtered.length === 0 && (
+          <div className="chapters-empty">
+            <SearchX size={28} className="chapters-empty-icon" />
+            <p>No chapters match "{query}" — check your heading and try again.</p>
+          </div>
+        )}
       </div>
       <style>{`
         .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
@@ -272,12 +288,15 @@ function ChaptersPanel({ onSignIn }) {
         .recent-chip-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
         .recent-chip-title { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
-        .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .chapters-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .chapters-empty-icon { color: var(--muted2); opacity: 0.6; }
+        .chapters-empty p { margin: 0; max-width: 300px; }
         .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
         .chapter:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.16); }
         .chapter.is-open { border-color: var(--border-hover); }
         .chapter.is-open:hover { transform: none; }
-        .chapter-head { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
+        .chapter-head { display: grid; grid-template-columns: auto auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
+        .chapter-unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent-soft); flex-shrink: 0; }
         .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent); }
         .chapter-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
         .chapter-done { width: 18px; height: 18px; border-radius: 50%; background: var(--good); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
