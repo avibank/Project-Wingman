@@ -160,7 +160,8 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
         .chapter-comments-name { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
         .chapter-comments-input { display: flex; gap: 6px; }
-        .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); }
+        .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .chapter-comments-input input:focus { outline: none; border-color: var(--accent-soft); box-shadow: 0 0 8px 1px var(--accent-soft); }
         .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
         .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; }
         .chapter-comments-signin:hover { border-color: var(--accent); }
