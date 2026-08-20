@@ -28,7 +28,7 @@ function PdfPanel() {
       <style>{`
         .pdf-wrap { display: flex; flex-direction: column; gap: 16px; }
         .pdf-search { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-        .pdf-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+                .pdf-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 18px 2px var(--accent-soft); }
         .pdf-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .pdf-search input:focus { outline: none; }
         .pdf-list { display: flex; flex-direction: column; gap: 10px; }
