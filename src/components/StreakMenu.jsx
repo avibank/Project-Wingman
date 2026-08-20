@@ -91,7 +91,7 @@ function StreakMenu({ streak, overrideStreak }) {
         @keyframes streakIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .streak-week { display: flex; justify-content: space-between; background: var(--panel-alt); border-radius: 10px; padding: 14px 8px; }
         .streak-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .streak-day-letter { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted2); }
+        .streak-day-letter { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); }
         .propeller-blades { transform-origin: 50% 50%; stroke: var(--panel); stroke-width: 1; }
         .propeller.is-idle .propeller-blades { fill: var(--muted2); opacity: 0.45; }
         .propeller.is-idle .propeller-hub { fill: var(--muted2); opacity: 0.45; }
@@ -104,7 +104,7 @@ function StreakMenu({ streak, overrideStreak }) {
         .streak-stats { display: flex; justify-content: space-between; margin-top: 12px; gap: 6px; }
         .streak-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
         .streak-stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
-        .streak-stat-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.03em; color: var(--muted2); text-align: center; margin-top: 2px; }
+        .streak-stat-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; color: var(--muted2); text-align: center; margin-top: 2px; }
         .streak-last { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
         .streak-last strong { color: var(--text); }
         .windsock.is-active { animation: sockWave 1.8s ease-in-out infinite; transform-origin: left center; }
