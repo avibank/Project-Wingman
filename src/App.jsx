@@ -395,12 +395,12 @@ function AppInner() {
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 11px; border-radius: 10px; cursor: pointer; }
+        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 11px; border-radius: 10px; cursor: pointer; }
         .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
         .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
         .module-banner { padding: 26px 22px 18px; }
         .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; color: var(--text); }
-        .module-banner p { color: var(--muted); font-size: 13px; margin: 0; font-family: 'JetBrains Mono', monospace; }
+        .module-banner p { color: var(--muted); font-size: 12.5px; margin: 0; font-family: 'JetBrains Mono', monospace; }
         .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
         .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted2); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
         .tab.is-active { color: var(--text); }
@@ -422,11 +422,11 @@ function AppInner() {
         .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; animation: boardingFade 2.4s ease forwards; }
         .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: 18px; padding: 22px; }
         .boarding-pass-top { display: flex; align-items: center; justify-content: space-between; color: var(--accent); margin-bottom: 14px; }
-        .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: var(--muted2); }
+        .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted2); }
         .boarding-pass-welcome { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 10px; }
         .boarding-pass-route { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
         .boarding-pass-row { display: flex; gap: 22px; margin-bottom: 16px; }
-        .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
+        .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
         .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
         .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
         .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
@@ -436,7 +436,7 @@ function AppInner() {
           80% { opacity: 1; }
           100% { opacity: 0; visibility: hidden; }
         }
-        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
+        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
         @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
         .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
         .runway-lights { position: relative; display: flex; gap: 4px; }
@@ -445,7 +445,7 @@ function AppInner() {
         .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
         .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
-        .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 12px; text-align: center; padding: 8px 16px; }
+        .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 11.5px; text-align: center; padding: 8px 16px; }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
           .content-taxi { animation: none; }
