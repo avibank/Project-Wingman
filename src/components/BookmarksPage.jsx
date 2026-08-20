@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, X, Layers } from "lucide-react";
+import { ChevronLeft, X, Layers, Briefcase } from "lucide-react";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import { useUserProgress } from "../lib/userProgress.js";
 import { CHAPTERS } from "../data.js";
@@ -47,7 +47,10 @@ function BookmarksPage({ onBack }) {
       </div>
       <div className="bookmarks-block">
         {bookmarkedQuestions.length === 0 ? (
-          <p className="bookmarks-empty">Your flight bag is empty — tap the star on any quiz question to stow it here.</p>
+          <div className="bookmarks-empty">
+            <Briefcase size={28} className="bookmarks-empty-icon" />
+            <p>Your flight bag is empty — tap the star on any quiz question to stow it here.</p>
+          </div>
         ) : (
           <div className="bookmarks-list">
             {bookmarkedQuestions.map((q) => (
@@ -70,7 +73,9 @@ function BookmarksPage({ onBack }) {
         .bookmarks-flashcard-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
         .bookmarks-flashcard-btn:hover { background: var(--accent-hover); }
         .bookmarks-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .bookmarks-empty { font-size: 12.5px; color: var(--muted2); padding: 16px; text-align: center; }
+        .bookmarks-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 24px 16px; }
+        .bookmarks-empty-icon { color: var(--muted2); opacity: 0.6; }
+        .bookmarks-empty p { margin: 0; font-size: 12.5px; color: var(--muted2); max-width: 260px; }
         .bookmarks-list { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
         .bookmark-item { position: relative; padding: 12px 36px 12px 14px; border-radius: 10px; }
         .bookmark-item:hover { background: var(--panel-alt); }
