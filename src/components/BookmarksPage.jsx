@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, X, Layers, List } from "lucide-react";
+import { ChevronLeft, X, Layers } from "lucide-react";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import { useUserProgress } from "../lib/userProgress.js";
 import { CHAPTERS } from "../data.js";
