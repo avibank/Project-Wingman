@@ -10,6 +10,7 @@ const MAX_RECENT = 5;
 
 function ChaptersPanel({ onSignIn }) {
   const progress = useUserProgress();
+  const [parallaxY, setParallaxY] = useState(0);
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
   const [query, setQuery] = useState("");
   const [completed, setCompleted] = useState(new Set());
@@ -31,6 +32,19 @@ function ChaptersPanel({ onSignIn }) {
     setRecentIds(progress.get("pw-recent-chapters", []));
     setChapterProgress(progress.get("pw-chapter-progress", {}));
   }, [progress.loaded, progress.isSignedIn]);
+
+  useEffect(() => {
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        setParallaxY(window.scrollY * 0.04);
+        raf = null;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const markComplete = (id) => {
     setCompleted((prev) => {
@@ -97,7 +111,7 @@ function ChaptersPanel({ onSignIn }) {
 
   return (
     <div className="chapters-wrap">
-      <div className="cloud-layer" aria-hidden="true">
+      <div className="cloud-layer" aria-hidden="true" style={{ transform: `translateY(${parallaxY}px)` }}>
         <span className="cloud cloud-a" />
         <span className="cloud cloud-b" />
         <span className="cloud cloud-c" />
@@ -259,7 +273,7 @@ function ChaptersPanel({ onSignIn }) {
         .recent-chip-title { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
         .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
-        .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
         .chapter:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.16); }
         .chapter.is-open { border-color: var(--border-hover); }
         .chapter.is-open:hover { transform: none; }
