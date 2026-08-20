@@ -98,7 +98,7 @@ function ChapterComments({ chapterId, onSignIn }) {
             const isEditing = editingId === c.id;
             return (
               <div key={c.id} className="chapter-comment">
-                <div className="chapter-comment-avatar">{c.author.charAt(0).toUpperCase()}</div>
+                <div className={`chapter-comment-avatar ${isOwn ? "is-own" : ""}`}>{c.author.charAt(0).toUpperCase()}</div>
                 <div className="chapter-comment-body">
                   <div className="chapter-comment-meta">
                     <strong>{c.author}</strong>
@@ -170,6 +170,7 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); }
         .chapter-comment { display: flex; gap: 8px; }
         .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
+        .chapter-comment-avatar.is-own { box-shadow: 0 0 0 2px var(--accent); }
         .chapter-comment-body { flex: 1; min-width: 0; }
         .chapter-comment-meta { font-size: 11.5px; color: var(--text); margin-bottom: 2px; }
         .chapter-comment-realname { color: var(--muted2); font-weight: 400; font-size: 10px; }
