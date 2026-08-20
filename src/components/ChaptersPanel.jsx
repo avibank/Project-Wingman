@@ -236,7 +236,7 @@ function ChaptersPanel({ onSignIn }) {
         .cloud-c { top: 62%; left: -20%; animation: driftA 75s linear infinite reverse; }
         @keyframes driftA { from { transform: translateX(0); } to { transform: translateX(140vw); } }
         @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
-        .boarding-toast { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; overflow: hidden; }
+        .boarding-toast { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 10px; text-align: center; animation: toastFade 2.2s ease forwards; overflow: hidden; }
         .boarding-toast-plane { animation: toastPlaneSlide 2.2s ease-in-out; }
         @keyframes toastPlaneSlide {
           0% { transform: translateX(-14px) rotate(45deg); opacity: 0; }
@@ -247,16 +247,16 @@ function ChaptersPanel({ onSignIn }) {
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
         .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); padding: 4px 0; }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-                       .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
+        .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .chapters-search input:focus { outline: none; }
         .recent-row { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }
-        .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted2); text-transform: uppercase; }
+        .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--muted2); text-transform: uppercase; }
         .recent-row-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
         .recent-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; cursor: pointer; max-width: 160px; text-align: left; }
         .recent-chip:hover { border-color: var(--accent); }
         .recent-chip-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
-        .recent-chip-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .recent-chip-title { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
         .chapters-empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
         .chapter { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--panel); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
@@ -264,7 +264,7 @@ function ChaptersPanel({ onSignIn }) {
         .chapter.is-open { border-color: var(--border-hover); }
         .chapter.is-open:hover { transform: none; }
         .chapter-head { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
-        .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); }
+        .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent); }
         .chapter-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
         .chapter-done { width: 18px; height: 18px; border-radius: 50%; background: var(--good); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .chapter-meta { font-size: 11.5px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
@@ -278,13 +278,13 @@ function ChaptersPanel({ onSignIn }) {
         @keyframes chapterOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: 12px; }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .video-fallback { display: block; font-size: 11px; color: var(--muted2); text-decoration: none; margin-top: 6px; }
+        .video-fallback { display: block; font-size: 11.5px; color: var(--muted2); text-decoration: none; margin-top: 6px; }
         .video-fallback:hover { color: var(--accent); }
         .chapter-video { aspect-ratio: 16/9; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
-        .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
+        .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: 8px; border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
         .chapter-side-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: 10px; padding: 4px; margin-bottom: 14px; }
-        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 12px; padding: 7px; border-radius: 8px; cursor: pointer; }
+        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 11.5px; padding: 7px; border-radius: 8px; cursor: pointer; }
         .chapter-side-tab.is-active { background: var(--panel); color: var(--text); }
         .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--muted); }
         .chapter-feedback button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
