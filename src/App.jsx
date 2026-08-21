@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
+import HubPage from "./components/HubPage.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -210,8 +211,9 @@ function AppInner() {
     window.location.reload();
   };
 
-  const enterModule = (m) => {
-    if (m.status !== "active") return;
+  const goToModule = (moduleCode, targetTab = "chapters") => {
+    const m = MODULES.find((x) => x.code === moduleCode);
+    if (!m || m.status !== "active") return;
     if (turbulence) {
       triggerHaptic();
       if (!reduceMotion) {
@@ -221,9 +223,11 @@ function AppInner() {
     }
     setActiveModuleCode(m.code);
     setView("module");
-    setTab("chapters");
+    setTab(targetTab);
     window.scrollTo(0, 0);
   };
+
+  const enterModule = (m) => goToModule(m.code, "chapters");
 
   const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
 
@@ -348,27 +352,12 @@ function AppInner() {
         </main>
       ) : view === "hub" ? (
         <main className="content content-taxi">
-          <div className="hub-placeholder">
-            <p className="eyebrow">Your modules</p>
-            <h1 className="hub-placeholder-title">Hub</h1>
-            <p className="hub-placeholder-sub">Choose a module to continue studying.</p>
-            <div className="hub-module-list">
-              {MODULES.map((m) => (
-                <button
-                  key={m.code}
-                  className={`hub-module-card ${m.status !== "active" ? "is-locked" : ""}`}
-                  onClick={() => enterModule(m)}
-                  disabled={m.status !== "active"}
-                >
-                  <div className="hub-module-code">
-                    {m.status === "locked" && <Lock size={11} />}
-                    {m.code}
-                  </div>
-                  <div className="hub-module-name">{m.name}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <HubPage
+            activeModuleCode={activeModuleCode}
+            onEnterModule={enterModule}
+            onGoToDiscuss={() => goToModule(activeModuleCode, "discuss")}
+            onSignIn={() => setSettingsPage("auth")}
+          />
         </main>
       ) : (
         <>
@@ -509,16 +498,6 @@ function AppInner() {
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
         .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
         .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 11.5px; text-align: center; padding: 8px 16px; }
-        .hub-placeholder .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin: 0 0 6px; }
-        .hub-placeholder-title { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 6px; color: var(--text); }
-        .hub-placeholder-sub { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
-        .hub-module-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-        .hub-module-card { text-align: left; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: border-color 0.2s ease, transform 0.2s ease; }
-        .hub-module-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .hub-module-card.is-locked { opacity: 0.6; cursor: not-allowed; }
-        .hub-module-card.is-locked:hover { border-color: var(--border); transform: none; }
-        .hub-module-code { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-bottom: 6px; }
-        .hub-module-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
           .content-taxi { animation: none; }
