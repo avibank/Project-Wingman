@@ -151,11 +151,15 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         .exam-bookmark.is-on { color: #F2C230; border-color: #F2C230; }
         .exam-stem { font-family: 'Space Grotesk', sans-serif; font-size: 16px; color: var(--text); line-height: 1.4; margin: 0 0 16px; }
         .exam-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-        .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-size: 13.5px; cursor: pointer; }
-        .exam-opt:hover { border-color: var(--border-hover); }
-        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); border: 1px solid var(--border); border-radius: 8px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-size: 13.5px; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease; }
+        .exam-opt:hover { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .exam-opt:active { transform: scale(0.98); }
+        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11.5px; color: var(--text); border: 1.5px solid var(--border-hover); border-radius: 8px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+        .exam-opt:hover .exam-opt-letter { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
         .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
+        .exam-opt--correct .exam-opt-letter { background: var(--good); color: #fff; border-color: var(--good); }
         .exam-opt--wrong { border-color: var(--bad); background: rgba(224,102,90,0.08); }
+        .exam-opt--wrong .exam-opt-letter { background: var(--bad); color: #fff; border-color: var(--bad); }
         .exam-opt--correct span:last-child, .exam-opt--wrong span:last-child { margin-left: auto; }
         .exam-opt.is-flash { animation: flashGlow 0.5s ease-out; }
         @keyframes flashGlow {
