@@ -391,7 +391,7 @@ function AppInner() {
           {Array.from({ length: 12 }).map((_, i) => {
             const lit = i < Math.floor(scrollPct * 12);
             const zone = i >= 10 ? "red" : i >= 8 ? "amber" : "white";
-            return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
+           return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
           })}
         </div>
       </div>
