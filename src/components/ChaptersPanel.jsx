@@ -8,7 +8,7 @@ import { useUserProgress } from "../lib/userProgress.js";
 
 const MAX_RECENT = 5;
 
-function ChaptersPanel({ onSignIn }) {
+function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterConsumed }) {
   const progress = useUserProgress();
   const [parallaxY, setParallaxY] = useState(0);
   const [openId, setOpenId] = useState(CHAPTERS[0].id);
@@ -36,6 +36,28 @@ function ChaptersPanel({ onSignIn }) {
     setViewedIds(new Set(progress.get("pw-viewed-chapters", [])));
     setQuizScores(progress.get("pw-quiz-scores", {}));
   }, [progress.loaded, progress.isSignedIn]);
+
+  // An explicit chapter handed down from the Flight Deck wins over the
+  // restored pw-last-chapter. Passing it as a prop rather than routing it
+  // through storage avoids racing this panel's own progress hydration.
+  useEffect(() => {
+    if (!progress.loaded || !initialChapterId) return;
+    setOpenId(initialChapterId);
+    progress.set("pw-last-chapter", initialChapterId);
+    setViewedIds((prev) => {
+      if (prev.has(initialChapterId)) return prev;
+      const next = new Set(prev);
+      next.add(initialChapterId);
+      progress.set("pw-viewed-chapters", [...next]);
+      return next;
+    });
+    setRecentIds((prev) => {
+      const next = [initialChapterId, ...prev.filter((x) => x !== initialChapterId)].slice(0, MAX_RECENT);
+      progress.set("pw-recent-chapters", next);
+      return next;
+    });
+    onInitialChapterConsumed?.();
+  }, [progress.loaded, initialChapterId]);
 
   useEffect(() => {
     let raf = null;
@@ -108,6 +130,9 @@ function ChaptersPanel({ onSignIn }) {
     }
     setOpenId(ch.id);
     progress.set("pw-last-chapter", ch.id);
+    // Timestamped so the Flight Deck can report how long since real study
+    // activity — pw-last-visit is day-granular and rewritten on every load.
+    progress.set("pw-last-flown", new Date().toISOString());
     pushRecent(ch.id);
     setRightTab("quiz");
     if (!viewedIds.has(ch.id)) {

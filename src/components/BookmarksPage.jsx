@@ -5,10 +5,10 @@ import { useUserProgress } from "../lib/userProgress.js";
 import { CHAPTERS } from "../data.js";
 import FlashcardMode from "./FlashcardMode.jsx";
 
-function BookmarksPage({ onBack }) {
+function BookmarksPage({ onBack, initialMode = "list" }) {
   const progress = useUserProgress();
   const [bookmarkIds, setBookmarkIds] = useState([]);
-  const [mode, setMode] = useState("list"); // "list" | "cards"
+  const [mode, setMode] = useState(initialMode); // "list" | "cards"
   const allQuestions = CHAPTERS.flatMap((ch) => ch.questions.map((q) => ({ ...q, chapterTitle: ch.title, chapterCode: ch.code })));
   const bookmarkedQuestions = allQuestions.filter((q) => bookmarkIds.includes(q.id));
 

@@ -31,6 +31,8 @@ function AppInner() {
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
   const [view, setView] = useState("hub"); // "hub" | "module"
+  const [pendingChapterId, setPendingChapterId] = useState(null);
+  const [bookmarksMode, setBookmarksMode] = useState("list");
   const [activeModuleCode, setActiveModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -205,6 +207,12 @@ function AppInner() {
     window.scrollTo(0, 0);
   };
   const enterModule = (m) => goToModule(m.code, "chapters");
+  // Deep-link into one specific chapter: hand the id to ChaptersPanel directly
+  // so it opens that chapter instead of the restored pw-last-chapter.
+  const goToChapter = (moduleCode, chapterId) => {
+    setPendingChapterId(chapterId);
+    goToModule(moduleCode, "chapters");
+  };
   const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
   return (
     <div
@@ -277,7 +285,12 @@ function AppInner() {
             </div>
           )}
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
-          <ProfileMenu onNavigate={setSettingsPage} />
+          <ProfileMenu
+            onNavigate={(page) => {
+              setBookmarksMode("list");
+              setSettingsPage(page);
+            }}
+          />
         </div>
       </header>
       {settingsPage === "auth" ? (
@@ -311,7 +324,7 @@ function AppInner() {
         </main>
       ) : settingsPage === "bookmarks" ? (
         <main className="content content-taxi">
-          <BookmarksPage onBack={() => setSettingsPage(null)} />
+          <BookmarksPage onBack={() => setSettingsPage(null)} initialMode={bookmarksMode} />
         </main>
       ) : settingsPage ? (
         <main className="content content-taxi">
@@ -329,8 +342,14 @@ function AppInner() {
           <HubPage
             activeModuleCode={activeModuleCode}
             onEnterModule={enterModule}
+            onGoToChapter={goToChapter}
             onGoToDiscuss={() => goToModule(activeModuleCode, "discuss")}
+            onReviewBookmarks={() => {
+              setBookmarksMode("cards");
+              setSettingsPage("bookmarks");
+            }}
             onSignIn={() => setSettingsPage("auth")}
+            streak={streak}
           />
         </main>
       ) : (
@@ -350,7 +369,13 @@ function AppInner() {
             ))}
           </nav>
           <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
-            {tab === "chapters" && <ChaptersPanel onSignIn={() => setSettingsPage("auth")} />}
+            {tab === "chapters" && (
+              <ChaptersPanel
+                onSignIn={() => setSettingsPage("auth")}
+                initialChapterId={pendingChapterId}
+                onInitialChapterConsumed={() => setPendingChapterId(null)}
+              />
+            )}
             {tab === "discuss" && <DiscussPanel onSignIn={() => setSettingsPage("auth")} calmLights={calmDiscussLights} />}
             {tab === "pdf" && <PdfPanel />}
           </main>
