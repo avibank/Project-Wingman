@@ -32,7 +32,8 @@ function AppInner() {
   const { isSignedIn, user } = useUser();
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
-  const [module, setModule] = useState(MODULES[0]);
+  const [view, setView] = useState("hub"); // "hub" | "module"
+  const [activeModuleCode, setActiveModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
@@ -209,7 +210,7 @@ function AppInner() {
     window.location.reload();
   };
 
-  const switchModule = (m) => {
+  const enterModule = (m) => {
     if (m.status !== "active") return;
     if (turbulence) {
       triggerHaptic();
@@ -218,7 +219,10 @@ function AppInner() {
         setTimeout(() => setShakeModule((c) => (c === m.code ? null : c)), 220);
       }
     }
-    setModule(m);
+    setActiveModuleCode(m.code);
+    setView("module");
+    setTab("chapters");
+    window.scrollTo(0, 0);
   };
 
   const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
@@ -268,29 +272,31 @@ function AppInner() {
           className="brand"
           onClick={() => {
             setSettingsPage(null);
-            setTab("chapters");
+            setView("hub");
             window.scrollTo(0, 0);
           }}
-          aria-label="Go to Chapters"
+          aria-label="Go to Hub"
         >
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
         </button>
         <div className="topbar-right">
-          <div className="module-select">
-            {MODULES.map((m) => (
-              <button
-                key={m.code}
-                className={`module-chip ${module.code === m.code ? "is-active" : ""} ${shakeModule === m.code ? "is-shaking" : ""}`}
-                onClick={() => switchModule(m)}
-                disabled={m.status === "locked"}
-                title={m.status === "locked" ? "Content coming soon" : undefined}
-              >
-                {m.status === "locked" && <Lock size={11} />}
-                {m.code}
-              </button>
-            ))}
-          </div>
+          {view === "module" && (
+            <div className="module-select">
+              {MODULES.map((m) => (
+                <button
+                  key={m.code}
+                  className={`module-chip ${activeModuleCode === m.code ? "is-active" : ""} ${shakeModule === m.code ? "is-shaking" : ""}`}
+                  onClick={() => enterModule(m)}
+                  disabled={m.status === "locked"}
+                  title={m.status === "locked" ? "Content coming soon" : undefined}
+                >
+                  {m.status === "locked" && <Lock size={11} />}
+                  {m.code}
+                </button>
+              ))}
+            </div>
+          )}
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
           <ProfileMenu onNavigate={setSettingsPage} />
         </div>
@@ -340,12 +346,36 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
+      ) : view === "hub" ? (
+        <main className="content content-taxi">
+          <div className="hub-placeholder">
+            <p className="eyebrow">Your modules</p>
+            <h1 className="hub-placeholder-title">Hub</h1>
+            <p className="hub-placeholder-sub">Choose a module to continue studying.</p>
+            <div className="hub-module-list">
+              {MODULES.map((m) => (
+                <button
+                  key={m.code}
+                  className={`hub-module-card ${m.status !== "active" ? "is-locked" : ""}`}
+                  onClick={() => enterModule(m)}
+                  disabled={m.status !== "active"}
+                >
+                  <div className="hub-module-code">
+                    {m.status === "locked" && <Lock size={11} />}
+                    {m.code}
+                  </div>
+                  <div className="hub-module-name">{m.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </main>
       ) : (
         <>
           <div className="module-banner">
             <div>
-              <h1>{module.name}</h1>
-              <p>Aviation Fundamentals · {module.questions} questions in bank</p>
+              <h1>{MODULES.find((m) => m.code === activeModuleCode)?.name}</h1>
+              <p>Aviation Fundamentals · {MODULES.find((m) => m.code === activeModuleCode)?.questions} questions in bank</p>
             </div>
           </div>
 
@@ -479,6 +509,16 @@ function AppInner() {
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
         .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
         .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 11.5px; text-align: center; padding: 8px 16px; }
+        .hub-placeholder .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin: 0 0 6px; }
+        .hub-placeholder-title { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 6px; color: var(--text); }
+        .hub-placeholder-sub { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
+        .hub-module-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        .hub-module-card { text-align: left; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: border-color 0.2s ease, transform 0.2s ease; }
+        .hub-module-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .hub-module-card.is-locked { opacity: 0.6; cursor: not-allowed; }
+        .hub-module-card.is-locked:hover { border-color: var(--border); transform: none; }
+        .hub-module-code { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-bottom: 6px; }
+        .hub-module-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
           .content-taxi { animation: none; }
@@ -490,5 +530,6 @@ function AppInner() {
         }
       `}</style>
     </div>
+    </ClerkProvider>
   );
 }
