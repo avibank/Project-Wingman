@@ -24,3 +24,17 @@ export async function enrollInModule(userId, moduleCode) {
   }
   return true;
 }
+
+export async function unenrollFromModule(userId, moduleCode) {
+  if (!userId) return false;
+  const { error } = await supabase
+    .from("enrollments")
+    .delete()
+    .eq("user_id", userId)
+    .eq("module_code", moduleCode);
+  if (error) {
+    console.error(error);
+    return false;
+  }
+  return true;
+}
