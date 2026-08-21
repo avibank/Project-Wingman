@@ -275,10 +275,11 @@ function ChaptersPanel({ onSignIn }) {
           100% { transform: translateX(14px) rotate(45deg); opacity: 0; }
         }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
-        .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted2); padding: 4px 0; }
+        .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); padding: 4px 0; }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
+        .chapters-search input::placeholder { color: var(--muted); }
         .chapters-search input:focus { outline: none; }
         .recent-row { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }
         .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--muted2); text-transform: uppercase; }
@@ -300,7 +301,7 @@ function ChaptersPanel({ onSignIn }) {
         .chapter-code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent); }
         .chapter-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
         .chapter-done { width: 18px; height: 18px; border-radius: 50%; background: var(--good); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .chapter-meta { font-size: 11.5px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
+        .chapter-meta { font-size: 11.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
         .chapter-chevron { color: var(--muted2); transition: transform 0.2s ease; }
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
         .chapter-progress-track { height: 3px; background: var(--border); margin: 0 16px 4px; border-radius: 2px; overflow: hidden; }
@@ -311,7 +312,7 @@ function ChaptersPanel({ onSignIn }) {
         @keyframes chapterOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: 12px; }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .video-fallback { display: block; font-size: 11.5px; color: var(--muted2); text-decoration: none; margin-top: 6px; }
+        .video-fallback { display: block; font-size: 11.5px; color: var(--muted); text-decoration: none; margin-top: 6px; }
         .video-fallback:hover { color: var(--accent); }
         .chapter-video { aspect-ratio: 16/9; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
