@@ -254,7 +254,7 @@ function AppInner() {
             setView("hub");
             window.scrollTo(0, 0);
           }}
-          aria-label="Go to Hub"
+          aria-label="Go to Flight Deck"
         >
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
