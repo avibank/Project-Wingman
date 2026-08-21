@@ -391,7 +391,7 @@ function AppInner() {
           {Array.from({ length: 12 }).map((_, i) => {
             const lit = i < Math.floor(scrollPct * 12);
             const zone = i >= 10 ? "red" : i >= 8 ? "amber" : "white";
-           return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
+            return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
           })}
         </div>
       </div>
@@ -504,7 +504,7 @@ function AppInner() {
         }
         .app.reduce-motion .boarding-overlay { animation-duration: 0.4s; }
         .app.reduce-motion .content-taxi { animation: none; }
-        .app.dyslexia-font, .app.dyslexia-font .exam-stem, .app.dyslexia-font .chapter-title, .app.dyslexia-font p, .app.dyslexia-font span, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font button {
+        .app.dyslexia-font, .app.dyslexia-font .exam-stem, .app.dyslexia-font .chapter-title, .app.dyslexia-font p, .app.dyslexia-font span, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font button {
           font-family: 'OpenDyslexic', 'Inter', sans-serif;
         }
       `}</style>
