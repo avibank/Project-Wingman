@@ -75,7 +75,7 @@ function BookmarksPage({ onBack }) {
         .bookmarks-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         .bookmarks-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 24px 16px; }
         .bookmarks-empty-icon { color: var(--muted2); opacity: 0.6; }
-        .bookmarks-empty p { margin: 0; font-size: 12.5px; color: var(--muted2); max-width: 260px; }
+                .bookmarks-empty p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 260px; }
         .bookmarks-list { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
         .bookmark-item { position: relative; padding: 12px 36px 12px 14px; border-radius: 10px; }
         .bookmark-item:hover { background: var(--panel-alt); }
