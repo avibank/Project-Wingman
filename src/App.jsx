@@ -17,9 +17,7 @@ import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 import { useUserProgress } from "./lib/userProgress.js";
 import { triggerHaptic } from "./lib/haptics.js";
-
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
 export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
@@ -27,7 +25,6 @@ export default function App() {
     </ClerkProvider>
   );
 }
-
 function AppInner() {
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
@@ -58,7 +55,6 @@ function AppInner() {
     seat: `${Math.ceil(Math.random() * 30)}${["A", "B", "C", "D", "E", "F"][Math.floor(Math.random() * 6)]}`,
     gate: String.fromCharCode(65 + Math.floor(Math.random() * 6)) + (Math.floor(Math.random() * 20) + 1),
   }));
-
   useEffect(() => {
     if (!progress.loaded) return;
     setTab(progress.get("pw-last-tab", "chapters"));
@@ -73,57 +69,46 @@ function AppInner() {
     setTestStreakValue(progress.get("pw-test-streak-value", 0));
     setHydrated(true);
   }, [progress.loaded, progress.isSignedIn]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-theme", theme);
   }, [theme, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-last-tab", tab);
   }, [tab, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-reduce-motion", reduceMotion);
   }, [reduceMotion, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-font-size", fontSize);
   }, [fontSize, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-accent-color", accentColor);
   }, [accentColor, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-dyslexia-font", dyslexiaFont);
   }, [dyslexiaFont, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-turbulence", turbulence);
   }, [turbulence, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-calm-discuss-lights", calmDiscussLights);
   }, [calmDiscussLights, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-test-streak-override-on", testStreakOverrideOn);
   }, [testStreakOverrideOn, hydrated]);
-
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-test-streak-value", testStreakValue);
   }, [testStreakValue, hydrated]);
-
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
     try {
@@ -133,7 +118,6 @@ function AppInner() {
       setStorageWarning(true);
     }
   }, []);
-
   useEffect(() => {
     if (!progress.loaded) return;
     const today = new Date().toDateString();
@@ -149,7 +133,6 @@ function AppInner() {
     progress.set("pw-longest-streak", longest);
     setStreak(current);
   }, [progress.loaded]);
-
   useEffect(() => {
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236FA0F0' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.8 19.2 16 11l3.5-3.5c.6-.6.9-1.4.9-2.2 0-.5-.4-.9-.9-.9-.8 0-1.6.3-2.2.9L14 8.8 5.8 7 4.5 8.3l6.7 3.7-3 3-2.5-.3-1 1L7 17l1.3 2.3 1-1-.3-2.5 3-3 3.7 6.7 1.3-1.3Z'/></svg>`;
     const href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -162,7 +145,6 @@ function AppInner() {
     link.type = "image/svg+xml";
     link.href = href;
   }, []);
-
   useEffect(() => {
     let raf = null;
     const onScroll = () => {
@@ -179,13 +161,11 @@ function AppInner() {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
     setPaToast("CABIN CREW, DOORS TO MANUAL");
     setTimeout(() => setPaToast(null), 1600);
   };
-
   const switchTab = (nextTab) => {
     if (turbulence) {
       triggerHaptic();
@@ -198,7 +178,6 @@ function AppInner() {
     setTab(nextTab);
     requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
   };
-
   const resetProgress = async () => {
     if (!window.confirm("Reset all progress on this device? This can't be undone.")) return;
     if (progress.isSignedIn) {
@@ -210,7 +189,6 @@ function AppInner() {
     }
     window.location.reload();
   };
-
   const goToModule = (moduleCode, targetTab = "chapters") => {
     const m = MODULES.find((x) => x.code === moduleCode);
     if (!m || m.status !== "active") return;
@@ -226,11 +204,8 @@ function AppInner() {
     setTab(targetTab);
     window.scrollTo(0, 0);
   };
-
   const enterModule = (m) => goToModule(m.code, "chapters");
-
   const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
-
   return (
     <div
       className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
@@ -305,7 +280,6 @@ function AppInner() {
           <ProfileMenu onNavigate={setSettingsPage} />
         </div>
       </header>
-
       {settingsPage === "auth" ? (
         <main className="content content-taxi">
           <AuthPage onBack={() => setSettingsPage(null)} />
@@ -367,7 +341,6 @@ function AppInner() {
               <p>Aviation Fundamentals · {MODULES.find((m) => m.code === activeModuleCode)?.questions} questions in bank</p>
             </div>
           </div>
-
           <nav className="tabbar">
             {NAV.map((n) => (
               <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""} ${shakeTab === n.id ? "is-shaking" : ""}`} onClick={() => switchTab(n.id)}>
@@ -376,7 +349,6 @@ function AppInner() {
               </button>
             ))}
           </nav>
-
           <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
             {tab === "chapters" && <ChaptersPanel onSignIn={() => setSettingsPage("auth")} />}
             {tab === "discuss" && <DiscussPanel onSignIn={() => setSettingsPage("auth")} calmLights={calmDiscussLights} />}
@@ -384,7 +356,6 @@ function AppInner() {
           </main>
         </>
       )}
-
       <div className="flight-progress">
         <div className="runway-lights" aria-hidden="true">
           <div className="runway-trail" style={{ width: `${scrollPct * 100}%` }} />
@@ -396,7 +367,6 @@ function AppInner() {
         </div>
       </div>
     </UsernameGate>
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
         @font-face {
@@ -509,6 +479,5 @@ function AppInner() {
         }
       `}</style>
     </div>
-    </ClerkProvider>
   );
 }
