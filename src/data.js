@@ -4,7 +4,7 @@ import { ClipboardCheck, MessageSquare, FileText } from "lucide-react";
 // This is where your real question bank, videos, and PDFs will eventually live.
 const MODULES = [
   { code: "JT", name: "Jet Turbine Fundamentals", status: "active", questions: 10 },
-  { code: "PROP", name: "Propulsion Systems (coming soon)", status: "locked", questions: 0 },
+  { code: "PROP", name: "Propulsion Systems", status: "locked", questions: 0 },
 ];
 
 const CHAPTERS = [
