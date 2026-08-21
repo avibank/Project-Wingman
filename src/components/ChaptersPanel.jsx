@@ -308,6 +308,7 @@ function ChaptersPanel({ onSignIn }) {
         .chapter-progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
         .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); min-height: 60px; }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
+        @media (min-width: 1024px) { .chapter-body { grid-template-columns: 1.7fr 1fr; gap: 28px; } }
         .chapter-body-opening { animation: chapterOpen 0.28s ease-out; }
         @keyframes chapterOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: 12px; }
