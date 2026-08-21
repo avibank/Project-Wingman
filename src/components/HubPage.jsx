@@ -3,7 +3,7 @@ import { Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSqu
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
-import { fetchEnrollments, enrollInModule } from "../lib/enrollments.js";
+import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
 import { fetchRecentActivity } from "../lib/comments.js";
 
 function timeAgo(iso) {
@@ -58,6 +58,14 @@ function HubPage({ onEnterModule, onGoToDiscuss, onSignIn }) {
     setEnrolling(moduleCode);
     const ok = await enrollInModule(user.id, moduleCode);
     if (ok) setEnrolledCodes((prev) => [...prev, moduleCode]);
+    setEnrolling(null);
+  };
+
+  const handleUnenroll = async (moduleCode) => {
+    if (!window.confirm("Unenroll from this module? Your progress is kept, but the module will move back to Open Enrollment.")) return;
+    setEnrolling(moduleCode);
+    const ok = await unenrollFromModule(user.id, moduleCode);
+    if (ok) setEnrolledCodes((prev) => prev.filter((c) => c !== moduleCode));
     setEnrolling(null);
   };
 
@@ -142,6 +150,9 @@ function HubPage({ onEnterModule, onGoToDiscuss, onSignIn }) {
                   Continue <ChevronRight size={13} />
                 </button>
               </div>
+              <button className="hub-module-unenroll" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
+                {enrolling === m.code ? "Unenrolling…" : "Unenroll"}
+              </button>
             </div>
           );
         })}
@@ -234,6 +245,9 @@ function HubPage({ onEnterModule, onGoToDiscuss, onSignIn }) {
         .hub-module-progress-text { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
         .hub-module-continue { display: flex; align-items: center; gap: 4px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 6px 11px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
         .hub-module-continue:hover { background: var(--accent-hover); }
+        .hub-module-unenroll { align-self: flex-start; margin-top: 8px; background: transparent; border: none; color: var(--muted2); font-size: 10.5px; cursor: pointer; padding: 0; }
+        .hub-module-unenroll:hover { color: var(--bad); }
+        .hub-module-unenroll:disabled { opacity: 0.5; cursor: not-allowed; }
         .hub-module-enroll { margin-top: auto; background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
         .hub-module-enroll:hover { background: var(--accent-hover); }
         .hub-module-enroll:disabled { opacity: 0.6; cursor: not-allowed; }
