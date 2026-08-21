@@ -23,6 +23,7 @@ function ChaptersPanel({ onSignIn }) {
   const [recentIds, setRecentIds] = useState([]);
   const [chapterProgress, setChapterProgress] = useState({});
   const [viewedIds, setViewedIds] = useState(new Set());
+  const [quizScores, setQuizScores] = useState({});
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -33,6 +34,7 @@ function ChaptersPanel({ onSignIn }) {
     setRecentIds(progress.get("pw-recent-chapters", []));
     setChapterProgress(progress.get("pw-chapter-progress", {}));
     setViewedIds(new Set(progress.get("pw-viewed-chapters", [])));
+    setQuizScores(progress.get("pw-quiz-scores", {}));
   }, [progress.loaded, progress.isSignedIn]);
 
   useEffect(() => {
@@ -48,13 +50,20 @@ function ChaptersPanel({ onSignIn }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const markComplete = (id) => {
+  const markComplete = (id, pct) => {
     setCompleted((prev) => {
       const next = new Set(prev);
       next.add(id);
       progress.set("pw-completed", [...next]);
       return next;
     });
+    if (typeof pct === "number") {
+      setQuizScores((prev) => {
+        const next = { ...prev, [id]: pct };
+        progress.set("pw-quiz-scores", next);
+        return next;
+      });
+    }
   };
 
   const toggleBookmark = (qId) => {
@@ -224,7 +233,7 @@ function ChaptersPanel({ onSignIn }) {
                           key={ch.id}
                           questions={ch.questions}
                           chapterTitle={ch.title}
-                          onComplete={() => markComplete(ch.id)}
+                          onComplete={(pct) => markComplete(ch.id, pct)}
                           bookmarks={bookmarks}
                           onToggleBookmark={toggleBookmark}
                           onProgressChange={(seenCount) => updateChapterProgress(ch.id, seenCount)}
