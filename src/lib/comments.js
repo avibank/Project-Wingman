@@ -8,6 +8,18 @@ export async function fetchComments(chapterId) {
   }
   return data || [];
 }
+export async function fetchRecentActivity(limit = 10) {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data || [];
+}
 export async function postComment(chapterId, author, text, userId = null, imageUrl = null, realName = null, isAdmin = false) {
   const { data, error } = await supabase
     .from("comments")
