@@ -264,10 +264,18 @@ function AppInner() {
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
       <header className={`topbar ${headerScrolled ? "is-scrolled" : ""}`}>
-        <div className="brand">
+        <button
+          className="brand"
+          onClick={() => {
+            setSettingsPage(null);
+            setTab("chapters");
+            window.scrollTo(0, 0);
+          }}
+          aria-label="Go to Chapters"
+        >
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
-        </div>
+        </button>
         <div className="topbar-right">
           <div className="module-select">
             {MODULES.map((m) => (
@@ -410,10 +418,11 @@ function AppInner() {
         }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
         .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
-        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); }
+        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
+        .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 11px; border-radius: 10px; cursor: pointer; }
+        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 10px; border-radius: 10px; cursor: pointer; }
         .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
         .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
         .module-banner { position: relative; padding: 26px 22px 18px; }
