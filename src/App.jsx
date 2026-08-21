@@ -445,6 +445,9 @@ function AppInner() {
         .app.reduce-motion .tab.is-shaking, .app.reduce-motion .module-chip.is-shaking { animation: none; }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
+        @media (min-width: 1024px) {
+          .content { max-width: 1100px; }
+        }
         .content-taxi { animation: taxiIn 0.35s ease; }
         @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
