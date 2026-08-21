@@ -68,7 +68,7 @@ function FlashcardMode({ questions, onExit }) {
         .flashcard-options { display: flex; flex-direction: column; gap: 5px; width: 100%; text-align: left; margin-top: 4px; }
         .flashcard-option { font-size: 11.5px; color: var(--muted); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); }
         .flashcard-option.is-correct { color: var(--good); border-color: var(--good); background: rgba(76,175,125,0.08); }
-        .flashcard-tap { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted2); margin-top: 6px; }
+                .flashcard-tap { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); margin-top: 6px; }
         .flashcards-nav { display: flex; gap: 12px; }
         .flashcards-nav button { width: 40px; height: 40px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .flashcards-nav button:hover { border-color: var(--accent); color: var(--accent); }
