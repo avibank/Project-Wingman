@@ -109,7 +109,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
     <div className="discuss">
       <div className="discuss-head">
         <Placard>Aviation Fundamentals</Placard>
-        <span className="discuss-count">{comments.length} threads</span>
+                <span className="discuss-count">{comments.length} thread{comments.length === 1 ? "" : "s"}</span>
       </div>
       {myPosts > 0 && (
         <div className="leaderboard">🏆 You're the most active flyer today — {myPosts} post{myPosts === 1 ? "" : "s"} and counting.</div>
