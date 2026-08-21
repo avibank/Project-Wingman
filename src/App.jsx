@@ -431,8 +431,9 @@ function AppInner() {
         .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; color: var(--text); }
         .module-banner p { color: var(--muted); font-size: 12.5px; margin: 0; font-family: 'JetBrains Mono', monospace; }
         .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
-                .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted); font-size: 13.5px; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
-        .tab.is-active { color: var(--text); }
+        .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted); font-size: 13.5px; font-weight: 500; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
+        .tab.is-active { color: var(--text); font-weight: 600; }
+        .tab.is-active svg { color: var(--accent); }
         .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 0.25s ease, right 0.25s ease; border-radius: 2px 2px 0 0; }
         .tab.is-active::after { left: 0; right: 0; }
         .tab.is-shaking, .module-chip.is-shaking { animation: turbulencePulse 0.22s ease; }
