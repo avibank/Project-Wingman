@@ -22,7 +22,7 @@ Read only the sections that step needs. §17 lists which.
 | 4 | Safety primitives | §9 | **data layer done** — UI pending |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | **partial** — rail + vocabulary done, Formation and On-your-wing pending |
-| 7 | Ambient glow | §7.6, §2.8 | **maths done + verified** — wiring pending |
+| 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
 | 9 | Comms as chat | §7.8, §2.12 | not started |
 | 10 | Livery picker + wash | §7.11, §2.11 | **done** |
@@ -209,3 +209,53 @@ list and the Library, per CLAUDE.md.
 - **"On your wing"** (§8.2) — the five-rung ranking is written down but nothing
   computes it yet.
 - Long-press → Fly together on a rail face.
+
+## Step 7 — done
+
+`StudyGlow.jsx` is the lighting. Mounted in the expanded chapter body, polling chapter
+presence every 60s, excluding invisible users (§8.3) and anyone blocked in either
+direction. No counter, no faces on the body — the count exists only in the screen-reader
+label, which §13 requires and §7.6's "no counter" rule is about the visual.
+
+Tapping opens the sheet with faces and "Say hi", which lands in that chapter's
+Discussion composer. It had no handler at first, which would have shipped a button
+that does nothing; the button now renders only when a handler exists.
+
+### Two fixes the maths needed
+
+**The gradient was not animatable.** `transition: background 2s` on a
+`radial-gradient` does nothing. `--glow-h` and `--glow-a` are now registered with
+`@property` so they interpolate and the gradient recomputes per frame.
+
+**A hue lerp would have crossed the cold arc.** The circular mean resolves a *set* of
+hues correctly, but the 2s transition between two computed hues is a separate lerp:
+350 → 20 passes through 185. `unwrapHue()` maps the six liveries onto -10 → 88, one
+contiguous arc, so no interpolation can leave it. The engine normalises -10 back to
+350 — verified in the browser, the computed gradient reads `oklch(0.8 0.135 350 / 0.12)`.
+
+Also: `computeGlow` sorted nothing before capping at four, so the cap depended on
+whatever order the caller happened to pass. It now sorts by `last_seen` itself.
+
+### Verified
+
+- Alpha curve n=0..5: `0.03 0.052 0.074 0.096 0.118 0.12`.
+- `circularMean(350, 20) = 5.0`, not 185.
+- The fifth-oldest pilot does not move the hue, but `n` still counts them.
+- Live in the chapter body: three pilots present rendered
+  `oklch(0.8 0.135 55 / 0.096)` — exactly the n=3 row of the curve.
+- The lighting layer computes `pointer-events: none`. Its first draft was a fixed
+  56px strip across the viewport top, which would have swallowed every click on the
+  app chrome behind it.
+
+### Note on the spec's own table
+
+§7.6 lists "four or more 0.120", but its formula gives `0.03 + 0.022×4 = 0.118`. The
+formula is normative and is what is implemented; the table appears to round. The
+difference is 0.002 of alpha.
+
+### Still owed
+
+§7.6 wants the chapter body as a full-bleed single-column route with a 2px cold
+progress hairline and the serif at 17/1.7 on a 66-character measure. It is still an
+accordion row inside `ChaptersPanel`. The glow works there, but the surface it lights
+is not yet the surface the spec describes.

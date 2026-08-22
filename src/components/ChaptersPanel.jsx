@@ -15,6 +15,8 @@ import { useUser } from "@clerk/clerk-react";
 import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
+import StudyGlow from "./StudyGlow.jsx";
+import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
 
@@ -25,6 +27,11 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   const [panel, setPanel] = useState(null); // { kind: "notebook"|"threads", chapter }
   const [counts, setCounts] = useState({});
   const [here, setHere] = useState([]);
+  // §7.6 — the glow is the user's own hue when nobody else is here, and it has
+  // a settings toggle. Default on; the body stays fully usable at 0% glow.
+  const [profile, setProfile] = useState(null);
+  const ownLivery = profile?.livery || "dawn-patrol";
+  const glowEnabled = profile ? profile.glow_enabled !== false : true;
   const progress = useUserProgress();
   const { user } = useUser();
   const displayName = useDisplayName();
@@ -47,6 +54,13 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   const [chapterProgress, setChapterProgress] = useState({});
   const [viewedIds, setViewedIds] = useState(new Set());
   const [quizScores, setQuizScores] = useState({});
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let live = true;
+    fetchProfile(user.id).then((p) => live && setProfile(p)).catch(() => {});
+    return () => { live = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -280,6 +294,10 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
               )}
               {isOpen && (
                 <div className="chapter-body chapter-body-opening">
+                  {/* §7.6 — the body's one social element, and it is lighting,
+                      not an element. At n = 0 it is 3% of the user's own hue. */}
+                  <StudyGlow chapterId={ch.id} ownLivery={ownLivery} enabled={glowEnabled}
+                    onSayHi={() => setPanel({ kind: "threads", chapter: ch })} />
                   <div className="chapter-video">
                     {!ch.clip ? (
                       <div className="video-none">
