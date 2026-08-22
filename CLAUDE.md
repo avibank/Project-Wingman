@@ -7,44 +7,78 @@ aviation students, modeled on UULA. Live at wingman.institute, deployed via Verc
 repo at avibank/Project-Wingman on GitHub.
 
 Aviation-themed naming is a deliberate, consistent design choice throughout — it's for
-AME students, not pilots. Established theme vocabulary: Logbook (bio), Livery (accent
-color), Smooth Air (reduce motion), Lights Out (calm discussion buttons), Plain Language
-(dyslexia-friendly font), Turbulence (haptic/visual feedback), Day Ops/Night Ops (theme),
-Point of No Return (account deletion), Flight Deck (the home/dashboard screen).
+AME students, not pilots. Vocabulary rules changed in the most recent design pass: see
+"Voice" below before adding any themed copy.
 
 ## Tech stack
 
 - React 18 + Vite
 - Clerk for all authentication (email verification, Google OAuth, admin roles via
   publicMetadata.role="admin") — this is the authoritative auth layer
-- Supabase for Comments/Discussion, user progress sync, and module enrollments (NOT
-  auth — Supabase client is effectively "anonymous" from Supabase's own perspective,
-  since real auth is Clerk; RLS policies on all tables are intentionally open
-  (using (true)) because access control happens at the app level)
+- Supabase for all shared data. Clerk owns identity; there is no parallel user table.
+  `user_id` columns hold the Clerk id as `text`, never a Supabase auth uid.
+  RLS is enabled on every table with open `using (true)` policies, because the Supabase
+  client is anonymous from Postgres' point of view and access control happens in the app.
 - Vercel for deployment; GoDaddy for DNS
 
 ## Critical architecture notes
 
-- App.jsx is split into outer App (renders ClerkProvider) and inner AppInner
-  (everything else, including useUser() and useUserProgress()). Never call Clerk
-  hooks outside the ClerkProvider tree — this caused a real production crash once.
-- Navigation model: view state is "hub" or "module". Flight Deck (formerly "Hub") is
-  the landing screen. Clicking into a module sets view="module" and activeModuleCode;
-  Chapters/Discussion/Library nest under whichever module is active.
-- Only the Jet Turbine ("JT") module has real chapter content. ChaptersPanel.jsx reads
-  one global CHAPTERS array from data.js — not yet partitioned per module. Propulsion
-  Systems ("PROP") is status: "locked" in MODULES (no content built yet). Known,
-  deliberate gap, not a bug.
-- All user progress syncs to Supabase via useUserProgress for signed-in users,
-  localStorage fallback for guests. Known inefficiency: multiple components each call
-  useUserProgress() independently, causing redundant fetches — worth consolidating.
-- Module enrollment is real (Supabase enrollments table, self-serve free enroll/unenroll,
-  no payment yet).
+- App.jsx is split into outer App (ClerkProvider + UserProgressProvider) and inner
+  AppInner. Never call Clerk hooks outside the ClerkProvider tree — this caused a real
+  production crash once.
+- Navigation: `view` is "hub" or "module". There is no global tab bar. Home (Flight Deck)
+  is the module launcher; selecting a module opens its hub, whose own tabs are
+  Chapters / Library / Social. Compete was built then deliberately deleted.
+- Progress writes are **patch-only** through the `merge_progress` RPC, and read through a
+  single `UserProgressProvider`. Do not reintroduce whole-object upserts of
+  `user_progress.data` — see NOTES.md, "The progress clobber", for what that caused.
+- Content is partitioned by module code prefix. `chaptersForModule()` and
+  `pdfsForModule()` in data.js are the single source of that partition. Anything that
+  reads the global `CHAPTERS` or `PDFS` array directly is a bug waiting to surface —
+  both the chapter list and the Library have already had exactly this bug.
+- Module enrollment is real (Supabase `enrollments`, self-serve free enroll/unenroll,
+  no payment yet). All five modules are open — nothing is gated.
 
-## Status as of this brief
+## Content
 
-Local build (npm run build) succeeds cleanly. A prior Vercel deploy failed with
-"Command npm run build exited with 1" but the real error was never captured — this may
-already be resolved. npm install reports 3 vulnerabilities (1 moderate, 2 high) and 3
-packages with pending install scripts (@clerk/shared, esbuild, fsevents) — all
-legitimate, well-known packages, safe to approve.
+Five modules, four chapters each (20 total): JT, PROP, AERO, NAV, WX. Every chapter has
+authored `body` prose and quiz questions. Only JT chapters have real video clips; the
+other 16 have `clip: null` and render a "not recorded yet" state. Do not invent YouTube
+ids to fill these.
+
+## Design system
+
+- **Two-layer colour.** Module identity hue (per-module, wayfinding only: badges, rails,
+  rings, motifs) and a universal `--presence` amber (presence, active states, the single
+  primary action per screen). They answer different questions and must not be merged —
+  this was collapsed to one hue once and then explicitly reversed.
+- Accent is driven by `--accent-h/s/l` channels; every other accent token derives from
+  them via `calc()`. Changing the hue re-tints the app. Five user-selectable liveries.
+- `--accent-dim` is for decorative labels; `--accent-tint` is for text that carries
+  meaning (chapter codes). Using dim for the latter makes it unreadable.
+- No glow rings. "Active" reads structurally — a filled top edge, a gradient inside a
+  progress bar. Glow is reserved for presence and the current leg only.
+- Fonts are tokens: `--font-display` (Fraunces), `--font-body` (Inter), `--font-mono`
+  (JetBrains Mono). Numerals are tabular everywhere.
+- Every ambient motion respects the "Smooth Air" preference and `prefers-reduced-motion`.
+
+## Voice
+
+- Never state absence or a zero count. Every empty state names its next action inside the
+  sentence.
+- Use vocabulary student pilots already use: logbook, briefing, debrief, checkride,
+  squawk. Invented lobby slang ("cabin", "channel open", "first voice") was retired.
+- No red on wrong quiz answers — `--calm` instead. Red is for genuine danger states.
+- No guilt language on a broken streak; it resets silently.
+
+## Migrations
+
+`supabase/migrations/` — 0001 social layer, 0002 threaded posts, 0003 reactions and
+attempts and completions, 0004 progress merge. All four have been run against the live
+project. 0004 is not optional: without it, progress does not save.
+
+## Status
+
+`npm run build` succeeds. Nothing in this codebase has been verified against the live
+Supabase or on a physical device — all verification to date used a stubbed backend in a
+desktop browser. See NOTES.md.
