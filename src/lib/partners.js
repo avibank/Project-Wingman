@@ -222,3 +222,16 @@ export async function fetchSharedCompletions(me, them, windowHours = 24) {
   }
   return data || [];
 }
+
+// Your own completions, with the timestamps chapter_completions now carries.
+export async function fetchMyCompletions(userId, moduleCode) {
+  if (!userId) return [];
+  let q = supabase.from("chapter_completions").select("*").eq("user_id", userId);
+  if (moduleCode) q = q.eq("module_code", moduleCode);
+  const { data, error } = await q.order("completed_at", { ascending: false }).limit(30);
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data || [];
+}

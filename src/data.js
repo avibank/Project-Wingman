@@ -778,11 +778,18 @@ const CHAPTERS = [
   },
 ];
 
+// Documents belong to a module. Without this the Library showed Jet Turbine
+// handouts inside every other module, the same way the chapter list once showed
+// every module's chapters.
 const PDFS = [
-  { id: "p1", title: "JT.02 — Combustion Chamber: Study Notes", pages: 10, size: "980 KB" },
-  { id: "p2", title: "JT.03 — Turbine Section: Summary Sheet", pages: 6, size: "520 KB" },
-  { id: "p3", title: "Jet Turbine Fundamentals — Key Terms Reference", pages: 4, size: "300 KB" },
+  { id: "p1", module: "JT", title: "JT.02 — Combustion Chamber: Study Notes", pages: 10, size: "980 KB" },
+  { id: "p2", module: "JT", title: "JT.03 — Turbine Section: Summary Sheet", pages: 6, size: "520 KB" },
+  { id: "p3", module: "JT", title: "Jet Turbine Fundamentals — Key Terms Reference", pages: 4, size: "300 KB" },
 ];
+
+function pdfsForModule(moduleCode) {
+  return PDFS.filter((p) => p.module === moduleCode);
+}
 
 const NAV = [
   { id: "chapters", label: "Chapters", icon: ClipboardCheck },
@@ -842,4 +849,4 @@ function chaptersForModule(moduleCode) {
   return CHAPTERS.filter((ch) => String(ch.code).split(".")[0] === moduleCode);
 }
 
-export { MODULES, CHAPTERS, chaptersForModule, PDFS, NAV, TRIVIA, ACCENT_COLORS };
+export { MODULES, CHAPTERS, chaptersForModule, PDFS, pdfsForModule, NAV, TRIVIA, ACCENT_COLORS };

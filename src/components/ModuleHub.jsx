@@ -88,7 +88,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           />
         )}
 
-        {tab === "pdf" && <PdfPanel />}
+        {tab === "pdf" && <PdfPanel moduleCode={module.code} moduleName={module.name} />}
 
         {tab === "social" && (
           <ModuleSocial moduleCode={module.code} moduleName={module.name} onGoToChapter={onGoToChapter} onSignIn={onSignIn} />

@@ -3,6 +3,12 @@ import { WindsockIcon } from "./icons.jsx";
 import { useUserProgress } from "../lib/userProgress.jsx";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+// Real milestones with a visible payoff. Acknowledged once and stated plainly —
+// no pressure to protect the number, and nothing is said when a streak ends.
+const MILESTONES = [7, 14, 30, 60, 100];
+function milestoneFor(n) {
+  return MILESTONES.includes(n) ? n : null;
+}
 
 function PropellerIcon({ size = 24, active }) {
   return (
@@ -71,6 +77,13 @@ function StreakMenu({ streak, overrideStreak }) {
             ))}
           </div>
 
+          {milestoneFor(displayStreak) && (
+            <p className="streak-milestone">
+              <span className="streak-milestone-mark" aria-hidden="true">✦</span>
+              {displayStreak} days flown. That is the habit doing the work.
+            </p>
+          )}
+
           <div className="streak-stats">
             <div className="streak-stat">
               <span className="streak-stat-value">{displayStreak}</span>
@@ -92,6 +105,10 @@ function StreakMenu({ streak, overrideStreak }) {
         .streak-trigger:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 10px var(--accent-soft); }
         .streak-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 280px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 14px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: streakIn 0.15s ease-out; }
         @keyframes streakIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .streak-milestone { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-soft);
+          background: var(--presence-soft); border: 1px solid color-mix(in srgb, var(--presence) 26%, transparent);
+          border-radius: var(--r-md); padding: 9px 12px; margin: 0 0 12px; }
+        .streak-milestone-mark { color: var(--presence); }
         .streak-week { display: flex; justify-content: space-between; background: var(--panel-alt); border-radius: var(--r-md); padding: 14px 8px; }
         .streak-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .streak-day-letter { font-family: var(--font-mono); font-size: 10px; color: var(--muted2); }

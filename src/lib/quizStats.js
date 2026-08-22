@@ -25,3 +25,19 @@ export async function fetchMissStats(questionId) {
   if (!row) return null;
   return { attempts: Number(row.attempts || 0), missers: Number(row.missers || 0) };
 }
+
+// Recent quiz outcomes for one user, used to build a real timeline.
+export async function fetchMyAttempts(userId, limit = 30) {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from("question_attempts")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data || [];
+}

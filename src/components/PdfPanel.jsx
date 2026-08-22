@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { FileText, Search, SearchX } from "lucide-react";
-import { PDFS } from "../data.js";
+import { pdfsForModule } from "../data.js";
 
-function PdfPanel() {
+function PdfPanel({ moduleCode = "JT", moduleName = "this module" }) {
   const [query, setQuery] = useState("");
-  const filtered = PDFS.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
+  const docs = pdfsForModule(moduleCode);
+  const filtered = docs.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="pdf-wrap">
@@ -26,7 +27,11 @@ function PdfPanel() {
         {filtered.length === 0 && (
           <div className="pdf-empty">
             <SearchX size={28} className="pdf-empty-icon" />
-            <p>No files match "{query}" — nothing on the manifest.</p>
+            {docs.length === 0 ? (
+              <p>Handouts for {moduleName} are still being written. The chapters carry the material meanwhile.</p>
+            ) : (
+              <p>Nothing matches "{query}".</p>
+            )}
           </div>
         )}
       </div>
