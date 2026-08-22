@@ -21,7 +21,7 @@ Read only the sections that step needs. §17 lists which.
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | **done** — image scanning and rate limits still owed |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
-| 6 | Social tab | §7.3, §8.2 | **partial** — rail + vocabulary done, Formation and On-your-wing pending |
+| 6 | Social tab | §7.3, §8.2 | **partial** — rail, vocabulary and On-your-wing done; Formation pending |
 | 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
 | 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
