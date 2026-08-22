@@ -17,7 +17,7 @@ Read only the sections that step needs. §17 lists which.
 | # | Step | Spec sections | State |
 |---|---|---|---|
 | 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
-| 2 | Auto-squadrons + fill ladder | §7.1, §10 | **data + roster done** — onboarding pending |
+| 2 | Auto-squadrons + fill ladder | §7.1, §10 | **done** — needs migration 0005 to place anyone |
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | **data layer done** — UI pending |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
@@ -161,7 +161,22 @@ Four pilots sharing Dawn Patrol's hue took **solid, double, dashed, notched** in
 order. Contrail (15° away, outside the 13° threshold) correctly stayed solid rather
 than consuming a marking. All six liveries resolve to their own oklch tokens.
 
-### Still owed
+### Onboarding
 
-Onboarding (§7.1's three screens) and the `assign_squadron` call. Nothing invokes the
-RPC yet, so no one is ever placed in a squadron.
+`FirstFlight.jsx` is §7.1's three screens, then the livery picker, then the Deck.
+Placement happens after screen 3, because the fill ladder needs both module and
+study-time. Both writes are best-effort — a failed placement drops you on the Deck
+rather than stranding you in onboarding, and the next entry retries.
+
+Screen 1 reads real pilots through `fetchRecentPilots`. With none yet it says
+"You're early. Pick your module and we'll put the next pilots who arrive on your
+wing." — a next action, no zero, and nobody invented (§8.1, §10).
+
+Verified by walking the whole flow in the harness: five modules each showing **4**
+chapters (`chaptersForModule`, not the global 20), Continue disabled until each
+question is answered, step dots tracking, and the picker repainting the root on
+select. Locked liveries are `disabled` and carry their unlock condition as their
+label instead of a bare padlock.
+
+Fixed while wiring: `LiveryPicker` calls `onSelect(id)` unconditionally, so the
+first render — `<LiveryPicker />` with no props — would have thrown on any click.

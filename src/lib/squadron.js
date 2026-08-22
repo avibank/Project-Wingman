@@ -57,6 +57,24 @@ export async function fetchRoster(userId, squadronId) {
   return data || [];
 }
 
+// §7.1 screen 1 shows real pilots who are already flying. If there are none
+// yet, it returns an empty list and the screen says what to do next -- it never
+// backfills. §1, non-negotiable 3.
+export async function fetchRecentPilots(userId, limit = 8) {
+  const { data, error } = await supabase
+    .from("pilot_profiles")
+    .select("user_id, callsign, livery, is_staff, study_time, created_at")
+    .eq("invisible", false)
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+  if (error) return fail(error, []);
+  const blocked = userId ? await fetchBlocks(userId) : [];
+  return (data || [])
+    .filter((p) => p.user_id !== userId && !blocked.includes(p.user_id))
+    .slice(0, limit)
+    .map((p) => ({ ...p, joined_at: p.created_at }));
+}
+
 // §7.1 — a Forming squadron shows real members at full size and renders the
 // remainder as visibly empty seats. Never a placeholder that suggests a person.
 export function seatLayout(roster, target = TARGET_SQUADRON) {
