@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronRight, ChevronLeft, Check, Lock, ThumbsUp, Radio, Compass, BookMarked, Flame } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, CheckCircle2, Lock, ThumbsUp, Radio, Compass, BookMarked, Flame } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
@@ -18,6 +18,8 @@ const DATA_PAUSE_MS = 9000;
 const SWEEP_MS = 520;
 // Tilt limit, kept small so the glass reads curved rather than loose.
 const TILT_MAX_DEG = 5;
+// A completed chapter scoring below this is worth suggesting a retake of.
+const LOW_SCORE_PCT = 70;
 
 function timeAgo(iso) {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -219,6 +221,43 @@ function Gauge({ size, value = 0, arc = true, needle = false, empty = false, lab
       <div className="g-readout">{children}</div>
       {label && <div className="g-label">{label}</div>}
     </div>
+  );
+}
+
+
+// Small arc gauge drawn behind a stat tile's numeric readout. Deliberately
+// lighter than the hero Gauge: no bezel, no ticks, no needle.
+function StatArc({ pct, size = 56 }) {
+  const stroke = 4;
+  const r = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * r;
+  const arcLen = circumference * 0.75;
+  const filled = arcLen * (Math.max(0, Math.min(100, pct)) / 100);
+  const common = {
+    cx: size / 2, cy: size / 2, r, fill: "none",
+    strokeWidth: stroke, strokeLinecap: "round",
+    transform: `rotate(135 ${size / 2} ${size / 2})`,
+  };
+  return (
+    <svg className="fd-stat-arc" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle {...common} style={{ stroke: "var(--g-track)" }} strokeDasharray={`${arcLen} ${circumference}`} />
+      <circle {...common} style={{ stroke: rampColor(pct), transition: "stroke-dasharray 0.6s var(--fd-ease)" }} strokeDasharray={`${filled} ${circumference}`} />
+    </svg>
+  );
+}
+
+// Quick-glance completion ring for module cards.
+function MiniRing({ pct, size = 30 }) {
+  const stroke = 3;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const filled = c * (Math.max(0, Math.min(100, pct)) / 100);
+  const common = { cx: size / 2, cy: size / 2, r, fill: "none", strokeWidth: stroke, strokeLinecap: "round", transform: `rotate(-90 ${size / 2} ${size / 2})` };
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="fd-miniring">
+      <circle {...common} style={{ stroke: "var(--g-track)" }} />
+      <circle {...common} style={{ stroke: "var(--good)", transition: "stroke-dasharray 0.6s var(--fd-ease)" }} strokeDasharray={`${filled} ${c}`} />
+    </svg>
   );
 }
 
@@ -486,6 +525,34 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
     }
   };
 
+  // ---- pre-flight briefing ----------------------------------------------------
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Cleared for departure" : "Evening ops";
+  const firstName = user?.firstName || user?.username || (displayName || "").split(" ")[0] || "";
+  const lastFlown = progress.get("pw-last-flown", null);
+  // pw-last-visit is a toDateString() that App rewrites to today on every load,
+  // so it can never express hours. pw-last-flown carries a real timestamp.
+  const lastFlownLabel = lastFlown ? timeAgo(lastFlown) : null;
+  const hasFlown = Boolean(lastChapterId || recentChapterIds.length || viewedIds.size);
+
+  // ---- smart next action ------------------------------------------------------
+  const unstarted = heroChapters.find((ch) => !completed.has(ch.id) && !viewedIds.has(ch.id));
+  const lowest = Object.entries(quizScores)
+    .filter(([id, sc]) => completed.has(id) && sc < LOW_SCORE_PCT)
+    .sort((a, b) => a[1] - b[1])[0];
+  let suggestion = null;
+  if (unstarted) {
+    suggestion = { kind: "next", label: "Next up", title: unstarted.title, action: () => onGoToChapter(moduleForChapter(unstarted).code, unstarted.id) };
+  } else if (bookmarkCount > 0) {
+    suggestion = { kind: "review", label: "Review", title: `${bookmarkCount} bookmarked question${bookmarkCount === 1 ? "" : "s"}`, action: onReviewBookmarks };
+  } else if (lowest) {
+    const ch = CHAPTERS.find((c) => c.id === lowest[0]);
+    if (ch) suggestion = { kind: "retake", label: "Retake", title: `${ch.title} — scored ${lowest[1]}%`, action: () => onGoToChapter(moduleForChapter(ch).code, ch.id) };
+  }
+
+  const streakShown = useAnimatedValue(streak, animate);
+  const accuracyShown = useAnimatedValue(quizAccuracy ?? 0, animate);
+
   const directoryModules = MODULES.filter((m) => m.code !== heroModule.code);
   const PageIcon = dataPage.icon;
 
@@ -495,6 +562,82 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         <p className="fd-eyebrow">Aviation Fundamentals</p>
         <h1 className="fd-title">Flight Deck</h1>
         <p className="fd-sub">Your modules, your progress, all in one place.</p>
+      </div>
+
+      {/* ---- pre-flight briefing ---- */}
+      <div className="fd-briefing">
+        <div className="fd-sweep" aria-hidden="true" />
+        <div className="fd-brief-main">
+          <p className="fd-eyebrow">Pre-Flight Briefing</p>
+          <div className="fd-brief-greeting">
+            {greeting}{firstName ? `, ${firstName}` : ""}
+          </div>
+          {hasFlown && currentChapter ? (
+            <>
+              <div className="fd-brief-chapter">
+                <span className="fd-brief-mod">{heroModule.name}</span>
+                <span className="fd-brief-sep">·</span>
+                <span className="fd-brief-code">{currentChapter.code}</span> {currentChapter.title}
+              </div>
+              <div className="fd-brief-bar">
+                <div className="fd-brief-fill" style={{ width: `${chapterPercent}%` }} />
+              </div>
+              <div className="fd-brief-meta">
+                <span>{chapterPercent}% through this chapter</span>
+                {lastFlownLabel && <span>· Last flown {lastFlownLabel}</span>}
+                {streak > 0 && <span>· {streak}d streak</span>}
+              </div>
+            </>
+          ) : (
+            <div className="fd-brief-first">
+              <div className="fd-brief-chapter">No flights logged yet — start with {CHAPTERS[0]?.code} {CHAPTERS[0]?.title}.</div>
+            </div>
+          )}
+        </div>
+        <button
+          className="fd-brief-cta"
+          onClick={() => onGoToChapter(heroModule.code, (hasFlown && currentChapter ? currentChapter : CHAPTERS[0])?.id)}
+        >
+          {hasFlown ? "Resume Flight" : "First Flight"} <ChevronRight size={15} />
+        </button>
+      </div>
+
+      {/* ---- smart next action ---- */}
+      {suggestion && (
+        <button className="fd-suggest" onClick={suggestion.action}>
+          <span className="fd-suggest-label">{suggestion.label}</span>
+          <span className="fd-suggest-title">{suggestion.title}</span>
+          <ChevronRight size={14} className="fd-suggest-arrow" />
+        </button>
+      )}
+
+      {/* ---- stat tiles ---- */}
+      <div className="fd-stats">
+        <div className="fd-stat">
+          <CheckCircle2 size={14} className="fd-stat-icon" />
+          <div className="fd-stat-value">{completed.size}<small>/{CHAPTERS.length}</small></div>
+          <div className="fd-stat-label">Checklist items complete</div>
+        </div>
+        <div className="fd-stat fd-stat--gauge">
+          <div className="fd-stat-gauge">
+            <StatArc pct={quizAccuracy === null ? 0 : accuracyShown} />
+            <div className="fd-stat-value fd-stat-value--in">
+              {quizAccuracy === null ? "—" : Math.round(accuracyShown)}
+              {quizAccuracy !== null && <small>%</small>}
+            </div>
+          </div>
+          <div className="fd-stat-label">Quiz accuracy</div>
+        </div>
+        <div className="fd-stat">
+          <Flame size={14} className="fd-stat-icon fd-stat-icon--accent" />
+          <div className="fd-stat-value">{Math.round(streakShown)}<small>d</small></div>
+          <div className="fd-stat-label">Consecutive Days Flown</div>
+        </div>
+        <div className="fd-stat">
+          <BookMarked size={14} className="fd-stat-icon" />
+          <div className="fd-stat-value">{bookmarkCount}</div>
+          <div className="fd-stat-label">Bookmarked questions</div>
+        </div>
       </div>
 
       <div className="fd-hero-wrap">
@@ -606,7 +749,7 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
                   <div className="fd-next-up-label">Next Up</div>
                   <div className="fd-next-up-title">{nextChapter ? `${nextChapter.code} — ${nextChapter.title}` : "Module complete"}</div>
                 </div>
-                <button className="fd-resume" onClick={() => onGoToChapter(currentChapter.id)}>
+                <button className="fd-resume" onClick={() => onGoToChapter(heroModule.code, currentChapter.id)}>
                   Resume Flight <ChevronRight size={15} />
                 </button>
               </div>
@@ -621,6 +764,8 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
 
         <div className="fd-active-strip fd-surface">
           <div className="fd-active-strip-left">
+            <MiniRing pct={modulePercent} />
+            <span className={`fd-light ${modulePercent > 0 ? "is-green" : "is-amber"}`} aria-hidden="true" />
             <span className="fd-flying-badge">Currently Flying</span>
             <span className="fd-active-strip-name">{heroModule.name}</span>
             <span className="fd-active-strip-meta">{modulePercent}%</span>
@@ -636,7 +781,11 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
             const locked = m.status !== "active";
             return (
               <div key={m.code} className="fd-module-card fd-surface">
-                <div className="fd-module-code">{m.code}</div>
+                <div className="fd-module-head">
+                  <span className={`fd-light ${locked ? "is-grey" : isEnrolled ? "is-amber" : "is-grey"}`} aria-hidden="true" />
+                  <div className="fd-module-code">{m.code}</div>
+                  {isEnrolled && !locked && <MiniRing pct={0} size={26} />}
+                </div>
                 <div className="fd-module-name">{m.name}</div>
                 {locked ? (
                   <>
@@ -767,6 +916,63 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         .fd-eyebrow { font-size: 10.5px; margin: 0 0 6px; }
         .fd-title { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; margin: 0 0 6px; color: var(--text); letter-spacing: -0.01em; }
         .fd-sub { color: var(--muted); font-size: 14px; margin: 0; }
+
+        /* ---- pre-flight briefing ---- */
+        .fd { --fd-amber: #D9A441; }
+        .app.theme-light .fd { --fd-amber: #B07C12; }
+        .fd-briefing { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+          margin-top: 26px; padding: 20px 22px; border-radius: var(--r-lg);
+          background: var(--elev-1); border: 1px solid var(--border-soft); box-shadow: var(--shadow-1); }
+        .fd-brief-main { min-width: 0; flex: 1; }
+        .fd-brief-greeting { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; color: var(--text); margin-bottom: 6px; }
+        .fd-brief-chapter { font-size: 13px; color: var(--text-soft); }
+        .fd-brief-mod { color: var(--text); }
+        .fd-brief-sep { color: var(--muted2); margin: 0 6px; }
+        .fd-brief-code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent-muted); }
+        .fd-brief-bar { height: 5px; border-radius: var(--r-pill); background: var(--well); box-shadow: var(--shadow-inset); overflow: hidden; margin: 10px 0 7px; max-width: 420px; }
+        .fd-brief-fill { height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg, var(--g-low), var(--g-mid)); transition: width 0.6s var(--fd-ease); }
+        .fd-brief-meta { display: flex; flex-wrap: wrap; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .fd-brief-cta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; background: var(--accent); color: var(--on-accent); border: none;
+          border-radius: var(--r-md); padding: 12px 18px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; min-height: 44px;
+          box-shadow: var(--hairline), 0 6px 18px color-mix(in srgb, var(--accent) 24%, transparent); transition: background 0.2s var(--fd-ease), transform 0.2s var(--fd-ease); }
+        .fd-brief-cta:hover { background: var(--accent-hover); }
+        .fd-brief-cta:active { transform: scale(0.97); transition-duration: 0.08s; }
+        /* One-time needle sweep on load. */
+        .fd-sweep { position: absolute; top: 0; bottom: 0; width: 1px; pointer-events: none;
+          background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 55%, transparent), transparent);
+          animation: fdSweep 1.15s var(--fd-ease) 1 both; }
+        @keyframes fdSweep { from { left: 0; opacity: 0; } 12% { opacity: 1; } to { left: 100%; opacity: 0; } }
+
+        /* ---- smart next action ---- */
+        .fd-suggest { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer; margin-top: 10px;
+          padding: 12px 16px; border-radius: var(--r-md); background: var(--elev-1); border: 1px solid var(--border-soft); box-shadow: var(--shadow-1);
+          min-height: 44px; transition: border-color 0.15s ease, background 0.15s ease; }
+        .fd-suggest:hover { border-color: var(--border); background: var(--elev-2); }
+        .fd-suggest-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-muted); flex-shrink: 0; }
+        .fd-suggest-title { font-size: 13px; color: var(--text-soft); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .fd-suggest-arrow { color: var(--muted2); flex-shrink: 0; }
+
+        /* ---- stat tiles ---- */
+        .fd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 10px; }
+        @media (max-width: 760px) { .fd-stats { grid-template-columns: repeat(2, 1fr); } }
+        .fd-stat { padding: 14px 16px; border-radius: var(--r-md); background: var(--elev-1); border: 1px solid var(--border-soft); box-shadow: var(--shadow-1); }
+        .fd-stat--gauge { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .fd-stat-icon { color: var(--muted2); margin-bottom: 10px; }
+        .fd-stat-icon--accent { color: var(--accent-muted); }
+        .fd-stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .fd-stat-value small { font-weight: 400; font-size: 11px; color: var(--muted2); }
+        .fd-stat-gauge { position: relative; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
+        .fd-stat-arc { position: absolute; inset: 0; }
+        .fd-stat-value--in { position: relative; font-size: 16px; }
+        .fd-stat-label { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+        /* ---- annunciator lights ---- */
+        .fd-light { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--muted2); }
+        .fd-light.is-green { background: var(--good); box-shadow: 0 0 6px color-mix(in srgb, var(--good) 55%, transparent); }
+        .fd-light.is-amber { background: var(--fd-amber); box-shadow: 0 0 6px color-mix(in srgb, var(--fd-amber) 50%, transparent); }
+        .fd-light.is-grey { background: var(--muted2); opacity: 0.7; }
+        .fd-module-head { display: flex; align-items: center; gap: 8px; }
+        .fd-miniring { flex-shrink: 0; }
 
         /* ---- hero ---- */
         .fd-hero-wrap { position: relative; margin-top: 30px; }
@@ -966,6 +1172,7 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         }
 
         /* Smooth Air / OS reduced motion: a still fallback for every effect above. */
+        .app.reduce-motion .fd-sweep,
         .app.reduce-motion .fd-hero-glow,
         .app.reduce-motion .g.is-empty .g-face::after,
         .app.reduce-motion .fd-empty-dial::after,
@@ -976,10 +1183,11 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         .app.reduce-motion .g { transform: none; }
         .app.reduce-motion .g,
         .app.reduce-motion .g-bloom,
-        .app.reduce-motion .fd-unlock-fill { transition: none; }
+        .app.reduce-motion .fd-unlock-fill,
+        .app.reduce-motion .fd-brief-fill { transition: none; }
         .app.reduce-motion .fd-resume { transform: none !important; }
         @media (prefers-reduced-motion: reduce) {
-          .fd-hero-glow, .g.is-empty .g-face::after, .fd-empty-dial::after, .fd-scan::after, .g-face-slide, .g-spec { animation: none; }
+          .fd-sweep, .fd-hero-glow, .g.is-empty .g-face::after, .fd-empty-dial::after, .fd-scan::after, .g-face-slide, .g-spec { animation: none; }
           .g { transform: none; }
           .g, .g-bloom, .fd-unlock-fill { transition: none; }
         }
