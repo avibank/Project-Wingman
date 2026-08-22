@@ -6,6 +6,9 @@ import { useUserProgress } from "../lib/userProgress.js";
 import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
 import { fetchAllPresence } from "../lib/presence.js";
 import { fetchWingmen } from "../lib/partners.js";
+import { fetchThreadsForModules } from "../lib/discussion.js";
+import { displayNameFor } from "../lib/social.js";
+import { ValueTape, N1Dial, SplitFlap, RadarScope, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
 
 // Only surface a module filter once the roster is big enough to need one.
 const MODULE_FILTER_THRESHOLD = 4;
@@ -94,6 +97,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
   const [enrolling, setEnrolling] = useState(null);
   const [moduleQuery, setModuleQuery] = useState("");
   const [snippet, setSnippet] = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [sectorSignals, setSectorSignals] = useState([]);
 
   const completed = new Set(progress.get("pw-completed", []));
   const quizScores = progress.get("pw-quiz-scores", {});
@@ -130,6 +135,14 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
       const wingIds = new Set(wing.map((w) => w.wingman_user_id));
       const pick = present.find((p) => wingIds.has(p.user_id)) || present[0] || null;
       setSnippet(pick ? { ...pick, isWingman: wingIds.has(pick.user_id) } : null);
+      setContacts(present);
+      // Home is a status board: at most one line per module, never its content.
+      const rows = await fetchThreadsForModules(MODULES.map((m) => m.code), 40);
+      if (!live) return;
+      const seen = new Set();
+      setSectorSignals(
+        rows.filter((r) => (seen.has(r.module_code) ? false : (seen.add(r.module_code), true))).slice(0, 5)
+      );
     })();
     return () => { live = false; };
   }, [user?.id]);
@@ -215,6 +228,11 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
 
   // Stats are context, not destinations — each carries its own empty copy so a
   // new account never renders a bare 0, a dash, or an empty ring.
+  // METAR-style readout: condition reflects whether anything needs attention.
+  const weakCount = Object.entries(quizScores).filter(([id, s]) => completed.has(id) && s < LOW_SCORE_PCT).length;
+  const condition = weakCount > 1 ? "IFR" : weakCount === 1 ? "MVFR" : "VFR";
+  const metar = `${condition} · ${weakCount ? `${weakCount} chapter${weakCount === 1 ? "" : "s"} to re-fly` : "module clear"} · ${completed.size} briefing${completed.size === 1 ? "" : "s"} logged`;
+
   const stats = [
     {
       icon: CheckCircle2,
@@ -274,6 +292,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
       </header>
 
       {/* ---- 1. Jump back in ------------------------------------------------ */}
+      <p className="metar"><span className="metar-dot" aria-hidden="true" />{metar}</p>
+
       <section className="card hub-hero">
         <div className="hero-body">
           <p className="kicker">Jump back in</p>
@@ -315,13 +335,17 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         </div>
 
         <div className="hero-stats">
-          {stats.map((s) => (
-            <div key={s.label} className={`stat ${s.value ? "" : "is-empty"}`}>
-              <s.icon size={13} className="stat-icon" />
-              <div className="stat-label">{s.label}</div>
-              {s.value ? <div className="stat-value">{s.value}</div> : <div className="stat-empty">{s.empty}</div>}
-            </div>
-          ))}
+          <div className="instr-cell"><N1Dial pct={quizAccuracy ?? 0} label={quizAccuracy === null ? "No quizzes yet" : "Quiz accuracy"} size={96} /></div>
+          <div className="instr-cell"><ValueTape value={streak} label="Streak" unit="days" /></div>
+          <div className="instr-cell instr-cell--text">
+            <div className="instr-value">{completed.size ? `${completed.size}/${CHAPTERS.length}` : "—"}</div>
+            <div className="instr-label">Checklist</div>
+          </div>
+          <div className="instr-cell instr-cell--text">
+            <div className="instr-value">{bookmarkCount || "—"}</div>
+            <div className="instr-label">Bookmarks</div>
+          </div>
+          <div className="instr-cell"><RadarScope contacts={contacts} size={112} /></div>
         </div>
       </section>
 
@@ -334,6 +358,20 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           </span>
           <ChevronRight size={14} className="snippet-arrow" />
         </button>
+      )}
+
+      {sectorSignals.length > 0 && (
+        <section className="board">
+          <p className="kicker">Sector board</p>
+          <ul className="board-list">
+            {sectorSignals.map((s) => (
+              <li key={s.id} className="board-row">
+                <span className="board-code" style={{ color: MODULES.find((m) => m.code === s.module_code)?.hue }}>{s.module_code}</span>
+                <SplitFlap text={`${displayNameFor(s)} — cleared into ${s.chapter_id ? (CHAPTERS.find((c) => c.id === s.chapter_id)?.code || s.module_code) : s.module_code}`} className="board-text" />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {/* ---- 2. Module launcher --------------------------------------------- */}
@@ -362,8 +400,9 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
               const isPinned = m.code === inProgressCode || m.code === suggestedCode;
               const state = pct > 0 ? "live" : isEnrolled ? "ready" : "open";
               return (
-                <article key={m.code} className={`card mod is-${state} ${isPinned ? "is-pinned" : ""}`}>
-                  <span className="mod-rail" aria-hidden="true" />
+                <article key={m.code} className={`card mod is-${state} ${isPinned ? "is-pinned" : ""}`} style={{ "--instr-hue": m.hue }}>
+                  <ModuleMotif motif={m.motif} hue={m.hue} />
+                  <span className="mod-rail" aria-hidden="true" style={{ background: m.hue }} />
                   <div className="mod-top">
                     <span className="mono-code">{m.code}</span>
                     {pct > 0 && <ProgressRing pct={pct} size={30} />}
@@ -398,7 +437,27 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         </div>
       </section>
 
+      <InstrumentStyles />
       <style>{`
+        .metar { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+          letter-spacing: 0.08em; color: var(--muted); margin: 0 0 14px; }
+        .metar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good);
+          box-shadow: 0 0 6px color-mix(in srgb, var(--good) 60%, transparent); }
+        .instr-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 10px;
+          border-right: 1px solid var(--border-soft); }
+        .instr-cell:last-child { border-right: none; }
+        .instr-cell--text .instr-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--text);
+          font-variant-numeric: tabular-nums; }
+        .board { margin-top: 12px; }
+        .board-list { list-style: none; margin: 0; padding: 0; border-radius: var(--r-md); overflow: hidden;
+          border: 1px solid var(--border-soft); background: var(--well); box-shadow: var(--shadow-inset); }
+        .board-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border-soft); }
+        .board-row:last-child { border-bottom: none; }
+        .board-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; width: 46px; flex-shrink: 0; }
+        .board-text { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-soft); }
+        .mod { position: relative; }
+        .mod .instr-motif { right: -60px; width: 170px; height: 170px; opacity: 0.05; }
+
         /* ---------- one card system ---------- */
         .card { background: var(--elev-1); border: 1px solid var(--border-soft); border-radius: var(--r-lg);
           box-shadow: var(--shadow-1); padding: 20px; }
@@ -441,7 +500,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .btn-quiet-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
 
         /* stats: a supporting strip, not a second grid of destinations */
-        .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
+        .hero-stats { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
         .stat { padding: 13px 16px; border-right: 1px solid var(--border-soft); min-width: 0; }
         .stat:last-child { border-right: none; }
         .stat-icon { color: var(--muted2); }
@@ -500,6 +559,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           .hub-hero { padding: 0; }
           .hero-body { padding: 18px 16px 16px; }
           .hero-stats { grid-template-columns: repeat(2, 1fr); }
+          .instr-cell { border-right: none; border-bottom: 1px solid var(--border-soft); }
           .stat:nth-child(2) { border-right: none; }
           .stat:nth-child(-n+2) { border-bottom: 1px solid var(--border-soft); }
           .launcher > .mod { flex-basis: 78vw; }

@@ -1,13 +1,15 @@
-import { ClipboardCheck, MessageSquare, FileText } from "lucide-react";
+import { ClipboardCheck, MessageSquare, FileText, Gauge, Users, Trophy } from "lucide-react";
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 // This is where your real question bank, videos, and PDFs will eventually live.
 const MODULES = [
-  { code: "JT", name: "Jet Turbine Fundamentals", status: "active", questions: 10, order: 1 },
-  { code: "PROP", name: "Propulsion Systems", status: "active", questions: 8, order: 2 },
-  { code: "AERO", name: "Aerodynamics & Principles of Flight", status: "active", questions: 8, order: 3 },
-  { code: "NAV", name: "Navigation & Charts", status: "active", questions: 8, order: 4 },
-  { code: "WX", name: "Aviation Weather", status: "active", questions: 8, order: 5 },
+  // hue follows avionics convention rather than decoration: amber = caution/heat,
+  // green = normal, cyan = informational, magenta = active course, white = state.
+  { code: "JT",   name: "Jet Turbine Fundamentals",        status: "active", questions: 10, order: 1, hue: "#E8A33D", motif: "turbine" },
+  { code: "PROP", name: "Propulsion Systems",              status: "active", questions: 8,  order: 2, hue: "#4CAF7D", motif: "manifold" },
+  { code: "AERO", name: "Aerodynamics & Principles of Flight", status: "active", questions: 8, order: 3, hue: "#4FC3D9", motif: "streamlines" },
+  { code: "NAV",  name: "Navigation & Charts",             status: "active", questions: 8,  order: 4, hue: "#C77DD6", motif: "compass" },
+  { code: "WX",   name: "Aviation Weather",                status: "active", questions: 8,  order: 5, hue: "#9FB4CC", motif: "isobars" },
 ];
 
 const CHAPTERS = [
@@ -782,9 +784,12 @@ const PDFS = [
 ];
 
 const NAV = [
+  { id: "overview", label: "Overview", icon: Gauge },
   { id: "chapters", label: "Chapters", icon: ClipboardCheck },
   { id: "discuss", label: "Discussion", icon: MessageSquare },
+  { id: "team", label: "Team & Partners", icon: Users },
   { id: "pdf", label: "Library", icon: FileText },
+  { id: "leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
 

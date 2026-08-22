@@ -7,6 +7,7 @@ import SocialPage from "./components/SocialPage.jsx";
 import { useSocialPrefs } from "./lib/social.js";
 import { fetchEnrollments } from "./lib/enrollments.js";
 import CompetePage from "./components/CompetePage.jsx";
+import ModuleHub from "./components/ModuleHub.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -32,7 +33,6 @@ export default function App() {
 // Four top-level destinations. Home is reached through the brand mark.
 const TOP_LEVEL = [
   { id: "hub", label: "Home" },
-  { id: "academic", label: "Academic" },
   { id: "social", label: "Social" },
   { id: "compete", label: "Compete" },
 ];
@@ -72,7 +72,7 @@ function AppInner() {
   }));
   useEffect(() => {
     if (!progress.loaded) return;
-    setTab(progress.get("pw-last-tab", "chapters"));
+    setTab(progress.get("pw-last-tab", "overview"));
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
@@ -222,7 +222,7 @@ function AppInner() {
     setTab(targetTab);
     window.scrollTo(0, 0);
   };
-  const enterModule = (m) => goToModule(m.code, "chapters");
+  const enterModule = (m) => goToModule(m.code, "overview");
   // Deep-link into one specific chapter: hand the id to ChaptersPanel directly
   // so it opens that chapter instead of the restored pw-last-chapter.
   const goToChapter = (moduleCode, chapterId) => {
@@ -287,15 +287,10 @@ function AppInner() {
           {TOP_LEVEL.map((d) => (
             <button
               key={d.id}
-              className={`toplevel-btn ${(view === d.id || (d.id === "academic" && view === "module")) ? "is-active" : ""}`}
+              className={`toplevel-btn ${view === d.id ? "is-active" : ""}`}
               onClick={() => {
                 setSettingsPage(null);
-                if (d.id === "academic") {
-                  setView("module");
-                  setTab("chapters");
-                } else {
-                  setView(d.id);
-                }
+                setView(d.id);
                 window.scrollTo(0, 0);
               }}
             >
@@ -387,34 +382,17 @@ function AppInner() {
           />
         </main>
       ) : (
-        <>
-          <div className="module-banner">
-            <div>
-              <h1>{MODULES.find((m) => m.code === activeModuleCode)?.name}</h1>
-              <p>Aviation Fundamentals · {MODULES.find((m) => m.code === activeModuleCode)?.questions} questions in bank</p>
-            </div>
-          </div>
-          <nav className="tabbar">
-            {NAV.map((n) => (
-              <button key={n.id} className={`tab ${tab === n.id ? "is-active" : ""} ${shakeTab === n.id ? "is-shaking" : ""}`} onClick={() => switchTab(n.id)}>
-                <n.icon size={15} />
-                {n.label}
-              </button>
-            ))}
-          </nav>
-          <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
-            {tab === "chapters" && (
-              <ChaptersPanel
-                activeModuleCode={activeModuleCode}
-                onSignIn={() => setSettingsPage("auth")}
-                initialChapterId={pendingChapterId}
-                onInitialChapterConsumed={() => setPendingChapterId(null)}
-              />
-            )}
-            {tab === "discuss" && <DiscussPanel onSignIn={() => setSettingsPage("auth")} calmLights={calmDiscussLights} />}
-            {tab === "pdf" && <PdfPanel />}
-          </main>
-        </>
+        <main className="content content-taxi content--full">
+          <ModuleHub
+            moduleCode={activeModuleCode}
+            tab={tab}
+            onTab={switchTab}
+            onSignIn={() => setSettingsPage("auth")}
+            onGoToChapter={goToChapter}
+            initialChapterId={pendingChapterId}
+            onInitialChapterConsumed={() => setPendingChapterId(null)}
+          />
+        </main>
       )}
       <div className="flight-progress">
         <div className="runway-lights" aria-hidden="true">
