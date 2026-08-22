@@ -8,7 +8,7 @@ import { fetchAllPresence } from "../lib/presence.js";
 import { fetchWingmen } from "../lib/partners.js";
 import { fetchThreadsForModules } from "../lib/discussion.js";
 import { displayNameFor } from "../lib/social.js";
-import { ValueTape, N1Dial, SplitFlap, RadarScope, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
+import { ValueTape, N1Dial, SplitFlap, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
 
 // Only surface a module filter once the roster is big enough to need one.
 const MODULE_FILTER_THRESHOLD = 4;
@@ -231,7 +231,9 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
   // METAR-style readout: condition reflects whether anything needs attention.
   const weakCount = Object.entries(quizScores).filter(([id, s]) => completed.has(id) && s < LOW_SCORE_PCT).length;
   const condition = weakCount > 1 ? "IFR" : weakCount === 1 ? "MVFR" : "VFR";
-  const metar = `${condition} · ${weakCount ? `${weakCount} chapter${weakCount === 1 ? "" : "s"} to re-fly` : "module clear"} · ${completed.size} briefing${completed.size === 1 ? "" : "s"} logged`;
+  const metar = weakCount
+    ? `${weakCount} chapter${weakCount === 1 ? "" : "s"} worth another pass`
+    : `${completed.size} chapter${completed.size === 1 ? "" : "s"} complete`;
 
   const stats = [
     {
@@ -296,7 +298,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
 
       <section className="card hub-hero">
         <div className="hero-body">
-          <p className="kicker">Jump back in</p>
+          <p className="kicker">Continue</p>
           {lastChapter ? (
             <>
               <h2 className="hero-chapter">
@@ -345,7 +347,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
             <div className="instr-value">{bookmarkCount || "—"}</div>
             <div className="instr-label">Bookmarks</div>
           </div>
-          <div className="instr-cell"><RadarScope contacts={contacts} size={112} /></div>
         </div>
       </section>
 
@@ -354,7 +355,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           {snippet.isWingman ? <Star size={13} className="snippet-icon" /> : <Radio size={13} className="snippet-icon" />}
           <span className="snippet-text">
             <strong>{snippet.display_name || "A pilot"}</strong>
-            {snippet.isWingman ? " — your wingman — is studying now" : " is studying now"}
+            {snippet.isWingman ? " (your wingman) is studying now" : " is studying now"}
           </span>
           <ChevronRight size={14} className="snippet-arrow" />
         </button>
@@ -362,12 +363,12 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
 
       {sectorSignals.length > 0 && (
         <section className="board">
-          <p className="kicker">Sector board</p>
+          <p className="kicker">Recent activity</p>
           <ul className="board-list">
             {sectorSignals.map((s) => (
               <li key={s.id} className="board-row">
-                <span className="board-code" style={{ color: MODULES.find((m) => m.code === s.module_code)?.hue }}>{s.module_code}</span>
-                <SplitFlap text={`${displayNameFor(s)} — cleared into ${s.chapter_id ? (CHAPTERS.find((c) => c.id === s.chapter_id)?.code || s.module_code) : s.module_code}`} className="board-text" />
+                <span className="board-code" >{s.module_code}</span>
+                <SplitFlap text={`${displayNameFor(s)} posted in ${s.chapter_id ? (CHAPTERS.find((c) => c.id === s.chapter_id)?.code || s.module_code) : s.module_code}`} className="board-text" />
               </li>
             ))}
           </ul>
@@ -400,9 +401,9 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
               const isPinned = m.code === inProgressCode || m.code === suggestedCode;
               const state = pct > 0 ? "live" : isEnrolled ? "ready" : "open";
               return (
-                <article key={m.code} className={`card mod is-${state} ${isPinned ? "is-pinned" : ""}`} style={{ "--instr-hue": m.hue }}>
-                  <ModuleMotif motif={m.motif} hue={m.hue} />
-                  <span className="mod-rail" aria-hidden="true" style={{ background: m.hue }} />
+                <article key={m.code} className={`card mod is-${state} ${isPinned ? "is-pinned" : ""}`}>
+                  <ModuleMotif motif={m.motif} />
+                  <span className="mod-rail" aria-hidden="true" />
                   <div className="mod-top">
                     <span className="mono-code">{m.code}</span>
                     {pct > 0 && <ProgressRing pct={pct} size={30} />}
@@ -441,8 +442,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
       <style>{`
         .metar { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
           letter-spacing: 0.08em; color: var(--muted); margin: 0 0 14px; }
-        .metar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good);
-          box-shadow: 0 0 6px color-mix(in srgb, var(--good) 60%, transparent); }
+        .metar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+           }
         .instr-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 10px;
           border-right: 1px solid var(--border-soft); }
         .instr-cell:last-child { border-right: none; }
@@ -488,7 +489,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
         .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none;
           border-radius: var(--r-md); padding: 12px 18px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px;
-          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 0 0 6px var(--accent-glow), 0 10px 26px var(--accent-glow);
+          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 0 0 1px var(--accent-dim), 0 6px 20px var(--accent-glow);
           transition: background 0.18s ease, transform 0.18s ease; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn-primary:active { transform: scale(0.98); }
@@ -500,7 +501,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .btn-quiet-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
 
         /* stats: a supporting strip, not a second grid of destinations */
-        .hero-stats { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
+        .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
         .stat { padding: 13px 16px; border-right: 1px solid var(--border-soft); min-width: 0; }
         .stat:last-child { border-right: none; }
         .stat-icon { color: var(--muted2); }

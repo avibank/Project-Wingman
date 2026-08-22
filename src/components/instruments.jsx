@@ -6,8 +6,8 @@ import { useState, useEffect, useRef } from "react";
 
 // ---------------------------------------------------------------- module motif
 // Subject-specific texture that sits behind hub content, never in front of it.
-export function ModuleMotif({ motif, hue }) {
-  const common = { stroke: hue, fill: "none", strokeWidth: 1 };
+export function ModuleMotif({ motif }) {
+  const common = { stroke: "currentColor", fill: "none", strokeWidth: 1 };
   return (
     <svg className="instr-motif" viewBox="0 0 200 200" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
       {motif === "turbine" && (
@@ -73,7 +73,7 @@ export function ModuleMotif({ motif, hue }) {
 export function ValueTape({ value = 0, label, unit = "", hue }) {
   const rows = [value + 2, value + 1, value, value - 1, value - 2];
   return (
-    <div className="tape" style={hue ? { "--instr-hue": hue } : undefined}>
+    <div className="tape">
       <div className="tape-window">
         <div className="tape-strip">
           {rows.map((n, i) => (
@@ -102,7 +102,7 @@ export function N1Dial({ pct = 0, label, hue, size = 108 }) {
   const cx = size / 2;
   const deg = START + (Math.max(0, Math.min(100, pct)) / 100) * SWEEP;
   return (
-    <div className="dial" style={hue ? { "--instr-hue": hue } : undefined}>
+    <div className="dial">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <circle cx={cx} cy={cx} r={r} fill="none" strokeWidth="6" className="dial-track"
           strokeDasharray={`${arc} ${c}`} transform={`rotate(${90 + START} ${cx} ${cx})`} />
@@ -190,7 +190,7 @@ export function InstrumentStyles() {
       .bezel { position: relative; overflow: hidden; border-radius: var(--r-lg);
         background: linear-gradient(180deg, var(--elev-2), var(--elev-1));
         border: 1px solid var(--border);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 1px 2px rgba(0,0,0,0.3), 0 14px 34px rgba(0,0,0,0.26); }
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.24), 0 10px 26px rgba(0,0,0,0.20); }
       .bezel::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
         background: linear-gradient(115deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 26%, transparent 46%);
         transform: translateX(var(--sweep, -18%)); transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
@@ -204,7 +204,7 @@ export function InstrumentStyles() {
           radial-gradient(circle 2.5px at 100% 100%, var(--border-hover) 60%, transparent 61%);
         background-repeat: no-repeat; opacity: 0.7; }
 
-      .instr-motif { position: absolute; right: -34px; top: 50%; transform: translateY(-50%);
+      .instr-motif { color: var(--accent); position: absolute; right: -34px; top: 50%; transform: translateY(-50%);
         width: 230px; height: 230px; opacity: 0.055; pointer-events: none; }
 
       /* value tape */
@@ -214,16 +214,16 @@ export function InstrumentStyles() {
       .tape-strip { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
       .tape-row { height: 18.4px; display: flex; align-items: center; justify-content: center;
         font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted2); font-variant-numeric: tabular-nums; }
-      .tape-row.is-current { font-size: 17px; font-weight: 500; color: var(--instr-hue, var(--accent)); }
+      .tape-row.is-current { font-size: 17px; font-weight: 500; color: var(--accent); }
       .tape-box { position: absolute; left: 3px; right: 3px; top: 50%; height: 24px; transform: translateY(-50%);
         border-top: 1px solid var(--border-hover); border-bottom: 1px solid var(--border-hover); }
 
       /* N1 dial */
       .dial { position: relative; display: flex; flex-direction: column; align-items: center; }
       .dial-track { stroke: var(--well); }
-      .dial-fill { stroke: var(--instr-hue, var(--accent)); transition: stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1); }
+      .dial-fill { stroke: var(--accent); transition: stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1); }
       .dial-tick { stroke: var(--muted2); stroke-width: 1.5; opacity: 0.65; }
-      .dial-pointer { stroke: var(--instr-hue, var(--accent)); stroke-width: 2; stroke-linecap: round;
+      .dial-pointer { stroke: var(--accent); stroke-width: 2; stroke-linecap: round;
         transition: transform 0.6s cubic-bezier(0.22,1,0.36,1); }
       .dial-hub { fill: var(--border-hover); }
       .dial-readout { position: absolute; top: 62%; font-family: 'JetBrains Mono', monospace; font-size: 15px;
@@ -243,10 +243,10 @@ export function InstrumentStyles() {
       /* radar */
       .radar { display: flex; flex-direction: column; align-items: center; }
       .radar-ring { stroke: var(--border); stroke-width: 1; opacity: 0.7; }
-      .radar-wedge { fill: var(--good); opacity: 0.10; }
+      .radar-wedge { fill: var(--accent); opacity: 0.08; }
       .radar-sweep { animation: radarSpin 4.2s linear infinite; }
       @keyframes radarSpin { to { transform: rotate(360deg); } }
-      .radar-blip { fill: var(--good); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--good) 70%, transparent)); }
+      .radar-blip { fill: var(--accent); filter: drop-shadow(0 0 3px var(--accent-glow)); }
 
       .app.reduce-motion .bezel::before,
       .app.reduce-motion .tape-strip,

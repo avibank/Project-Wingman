@@ -207,7 +207,7 @@ function NotebookPanel({ chapter, moduleCode, prefs, onCountChange }) {
         .nb-status { display: inline-flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
           letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: var(--r-pill); }
         .nb-status.is-review { color: #D9A441; background: rgba(217,164,65,0.12); }
-        .nb-status.is-ok { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+        .nb-status.is-ok { color: var(--accent); background: var(--accent-soft); }
         .nb-status.is-corrected { color: var(--accent); background: var(--accent-soft); }
         .nb-text { font-size: 13px; line-height: 1.55; color: var(--text-soft); margin: 0; white-space: pre-wrap; }
         .nb-correction { font-size: 12px; color: var(--accent-muted); margin: 6px 0 0; }

@@ -1,28 +1,40 @@
-import { useState, useEffect } from "react";
-import { Radio, Activity, Compass, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { CHAPTERS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
-import { displayNameFor } from "../lib/social.js";
+import { useIsAdmin } from "../lib/admin.js";
+import { useSocialPrefs, displayNameFor } from "../lib/social.js";
 import { fetchModulePresence } from "../lib/presence.js";
-import { fetchThreads } from "../lib/discussion.js";
+import { fetchWingmen } from "../lib/partners.js";
+import {
+  fetchThreads, createThread, fetchPosts, addPost, deletePost,
+  votePost, fetchMyPostVotes, buildTree,
+} from "../lib/discussion.js";
+import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
 
-function when(iso) {
-  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const h = Math.floor(mins / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
+const SUBS = [
+  { id: "feed", label: "Feed" },
+  { id: "threads", label: "Threads" },
+  { id: "team", label: "Team" },
+];
 
-// Social scoped to one module. Every section has a designed sparse state — a
-// motif, a tight hierarchy and a next action — rather than a flat negative line.
-function ModuleSocial({ moduleCode, moduleName, onGoToChapter, onSignIn }) {
+// One connected social space: the feed, the threads, and who's around, rather
+// than three shallow tabs.
+function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const { isSignedIn, user } = useUser();
+  const isAdmin = useIsAdmin();
   const progress = useUserProgress();
-  const [roster, setRoster] = useState([]);
+  const { prefs } = useSocialPrefs();
+
+  const [sub, setSub] = useState("feed");
+  const [sort, setSort] = useState("new");
   const [threads, setThreads] = useState([]);
+  const [open, setOpen] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [votes, setVotes] = useState({});
+  const [roster, setRoster] = useState([]);
+  const [wingmen, setWingmen] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const chapters = chaptersForModule(moduleCode);
@@ -30,148 +42,212 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter, onSignIn }) {
   const viewed = new Set(progress.get("pw-viewed-chapters", []));
   const streak = progress.get("pw-streak", 0);
 
-  useEffect(() => {
-    let live = true;
-    Promise.all([fetchModulePresence(moduleCode, user?.id), fetchThreads({ moduleCode, limit: 12 })]).then(([p, t]) => {
-      if (!live) return;
-      setRoster(p); setThreads(t); setLoading(false);
-    });
-    return () => { live = false; };
+  const load = useCallback(async () => {
+    const [t, p, w] = await Promise.all([
+      fetchThreads({ moduleCode, limit: 20 }),
+      fetchModulePresence(moduleCode, user?.id),
+      user?.id ? fetchWingmen(user.id) : Promise.resolve([]),
+    ]);
+    setThreads(t); setRoster(p); setWingmen(w); setLoading(false);
   }, [moduleCode, user?.id]);
 
-  // Your activity is never blank: it is seeded from the user's own logged
-  // events, which always exist once they have opened anything.
-  const ownEvents = [];
-  chapters.forEach((ch) => {
-    if (completed.has(ch.id)) ownEvents.push({ id: `c-${ch.id}`, kind: "Logged", text: `${ch.code} complete`, chapter: ch });
-    else if (viewed.has(ch.id)) ownEvents.push({ id: `v-${ch.id}`, kind: "Opened", text: `${ch.code} briefing opened`, chapter: ch });
-  });
-  if (streak > 0) ownEvents.unshift({ id: "streak", kind: "Streak", text: `${streak}-day streak running` });
-  ownEvents.unshift({ id: "joined", kind: "Enlisted", text: `Joined ${moduleName}` });
+  useEffect(() => { load(); }, [load]);
 
-  // Genuine module-level aggregates — counts of things that actually exist.
-  const threadCount = threads.length;
-  const contributors = new Set(threads.map((t) => t.user_id)).size;
-  const lastActive = threads[0]?.last_activity_at;
+  useEffect(() => {
+    if (!open) return;
+    fetchPosts(open.id).then(async (rows) => {
+      setPosts(rows);
+      if (user?.id) setVotes(await fetchMyPostVotes(user.id, rows.map((r) => r.id)));
+    });
+  }, [open, user?.id]);
+
+  // Optimistic: the comment shows immediately, then reconciles.
+  const reply = async (parent, body) => {
+    const temp = {
+      id: `temp-${Date.now()}`, thread_id: open.id, parent_id: parent?.id || null, body,
+      author_username: user?.username, author_real_name: user?.fullName,
+      author_display_pref: prefs?.identity_display || "real",
+      user_id: user?.id, is_admin: isAdmin, score: 0, created_at: new Date().toISOString(),
+    };
+    setPosts((p) => [...p, temp]);
+    const saved = await addPost({ threadId: open.id, parentId: parent?.id || null, body, user, prefs, isAdmin });
+    setPosts((p) => p.map((x) => (x.id === temp.id ? saved || x : x)));
+  };
+
+  const vote = async (node, next) => {
+    const delta = next - (votes[node.id] || 0);
+    setVotes((v) => ({ ...v, [node.id]: next }));
+    setPosts((p) => p.map((x) => (x.id === node.id ? { ...x, score: (x.score || 0) + delta } : x)));
+    await votePost(node.id, user?.id, next);
+  };
+
+  const remove = async (node) => {
+    setPosts((p) => p.filter((x) => x.id !== node.id));
+    await deletePost(node.id, user?.id);
+  };
+
+  const startThread = async (title) => {
+    const created = await createThread({ chapterId: null, moduleCode, title, body: null, user, prefs });
+    if (created) setThreads((t) => [created, ...t]);
+  };
+
+  const sorted = [...threads].sort((a, b) =>
+    sort === "top" ? (b.reply_count || 0) - (a.reply_count || 0) : new Date(b.last_activity_at) - new Date(a.last_activity_at)
+  );
+
+  const tree = buildTree(posts.map((p) => ({ ...p, myVote: votes[p.id] })));
+
+  // Your own history, so the feed is never empty on a first visit.
+  const events = [{ id: "join", label: "Joined", text: moduleName }];
+  if (streak > 0) events.push({ id: "streak", label: "Streak", text: `${streak} days` });
+  chapters.forEach((ch) => {
+    if (completed.has(ch.id)) events.push({ id: `c${ch.id}`, label: "Completed", text: `${ch.code} ${ch.title}` });
+    else if (viewed.has(ch.id)) events.push({ id: `v${ch.id}`, label: "Opened", text: `${ch.code} ${ch.title}` });
+  });
 
   return (
-    <div className="msoc">
-      {/* presence */}
-      <section className="msoc-panel bezel">
-        <p className="msoc-kicker"><Radio size={11} /> Studying now</p>
-        {loading ? (
-          <p className="msoc-sub">Scanning the frequency…</p>
-        ) : roster.length > 0 ? (
-          <ul className="msoc-roster">
-            {roster.map((r) => (
-              <li key={r.user_id}>
-                <span className="msoc-live" aria-hidden="true" />
-                {r.display_name || "Pilot"}
-                <span className="msoc-sub">{CHAPTERS.find((c) => c.id === r.chapter_id)?.code || moduleCode}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="msoc-quiet">
-            <span className="msoc-pulse" aria-hidden="true"><span /><span /><span /></span>
-            <div>
-              <p className="msoc-quiet-title">Frequency open</p>
-              <p className="msoc-sub">Be the first — start a session and your squadron sees you go active.</p>
-            </div>
-            <button className="msoc-cta" onClick={() => onGoToChapter(moduleCode, chapters.find((c) => !completed.has(c.id))?.id || chapters[0]?.id)}>
-              Start a session <ChevronRight size={13} />
-            </button>
+    <div className="soc">
+      <div className="soc-subs">
+        {SUBS.map((s) => (
+          <button key={s.id} className={`soc-sub ${sub === s.id ? "is-active" : ""}`} onClick={() => { setSub(s.id); setOpen(null); }}>
+            {s.label}
+          </button>
+        ))}
+        {sub === "threads" && !open && (
+          <div className="soc-sort">
+            <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>New</button>
+            <button className={sort === "top" ? "is-on" : ""} onClick={() => setSort("top")}>Top</button>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* your activity — seeded, never blank */}
-      <section className="msoc-panel bezel">
-        <p className="msoc-kicker"><Activity size={11} /> Your activity</p>
-        <ul className="msoc-log">
-          {ownEvents.slice(0, 6).map((e) => (
-            <li key={e.id}>
-              <span className="msoc-tag">{e.kind}</span>
-              <span className="msoc-log-text">{e.text}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* discovery */}
-      <section className="msoc-panel bezel msoc-wide">
-        <p className="msoc-kicker"><Compass size={11} /> Discovery</p>
-        <div className="msoc-stats">
-          <div><b>{threadCount}</b><span>thread{threadCount === 1 ? "" : "s"} in {moduleCode}</span></div>
-          <div><b>{contributors}</b><span>pilot{contributors === 1 ? "" : "s"} contributing</span></div>
-          <div><b>{chapters.length}</b><span>chapters in sector</span></div>
-          {lastActive && <div><b>{when(lastActive)}</b><span>last transmission</span></div>}
+      {sub === "feed" && (
+        <div className="soc-cols">
+          <div className="soc-main">
+            {roster.length > 0 && (
+              <p className="soc-line">{roster.map((r) => r.display_name || "A pilot").join(", ")} studying now.</p>
+            )}
+            <ul className="soc-events">
+              {events.slice(0, 8).map((e) => (
+                <li key={e.id}><span className="soc-ev-label">{e.label}</span>{e.text}</li>
+              ))}
+            </ul>
+          </div>
+          <aside className="soc-side">
+            <p className="soc-side-title">Recent threads</p>
+            {sorted.length === 0 ? (
+              <p className="soc-muted">No threads yet.</p>
+            ) : (
+              sorted.slice(0, 4).map((t) => (
+                <button key={t.id} className="soc-side-row" onClick={() => { setSub("threads"); setOpen(t); }}>
+                  <span>{t.title}</span>
+                  <span className="soc-muted">{t.reply_count} · {timeAgo(t.last_activity_at)}</span>
+                </button>
+              ))
+            )}
+          </aside>
         </div>
-        {threads.length > 0 ? (
-          <ul className="msoc-threads">
-            {threads.slice(0, 5).map((t) => (
-              <li key={t.id}>
-                <span className="msoc-code">{t.chapter_id ? CHAPTERS.find((c) => c.id === t.chapter_id)?.code || moduleCode : moduleCode}</span>
-                <span className="msoc-thread-title">{t.title}</span>
-                <span className="msoc-sub">{displayNameFor(t)} · {t.reply_count} replies</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="msoc-quiet">
-            <span className="msoc-sweep" aria-hidden="true" />
-            <div>
-              <p className="msoc-quiet-title">No transmissions logged</p>
-              <p className="msoc-sub">Open the first thread for {moduleCode} — questions here reach everyone flying this sector.</p>
-            </div>
-          </div>
-        )}
-      </section>
+      )}
 
+      {sub === "threads" && (open ? (
+        <div className="soc-thread">
+          <button className="soc-back" onClick={() => setOpen(null)}><ChevronLeft size={14} /> Threads</button>
+          <h3 className="soc-thread-title">{open.title}</h3>
+          <p className="soc-muted">{displayNameFor(open)} · {timeAgo(open.created_at)}</p>
+          {open.body && <p className="soc-thread-body">{open.body}</p>}
+          <div className="soc-comments">
+            {tree.map((n) => (
+              <Comment key={n.id} node={n} myVote={votes[n.id]} onVote={vote} onReply={reply} onDelete={remove} />
+            ))}
+          </div>
+          {isSignedIn && <Composer placeholder="Add a comment" onSubmit={(t) => reply(null, t)} />}
+        </div>
+      ) : (
+        <div className="soc-threadlist">
+          {isSignedIn && <Composer placeholder="Start a thread" onSubmit={startThread} />}
+          {loading ? (
+            <p className="soc-muted">Loading…</p>
+          ) : sorted.length === 0 ? (
+            <p className="soc-muted">No threads yet. Start the first one.</p>
+          ) : (
+            sorted.map((t) => (
+              <button key={t.id} className="soc-row" onClick={() => setOpen(t)}>
+                <span className="soc-row-title">{t.title}</span>
+                <span className="soc-muted">{displayNameFor(t)} · {t.reply_count} {t.reply_count === 1 ? "reply" : "replies"} · {timeAgo(t.last_activity_at)}</span>
+              </button>
+            ))
+          )}
+        </div>
+      ))}
+
+      {sub === "team" && (
+        <div className="soc-cols">
+          <div className="soc-main">
+            <p className="soc-side-title">Studying now</p>
+            {roster.length === 0 ? (
+              <p className="soc-muted">Nobody else is in this module right now.</p>
+            ) : (
+              <ul className="soc-people">
+                {roster.map((r) => (
+                  <li key={r.user_id}>
+                    <span className="soc-dot" aria-hidden="true" />
+                    {r.display_name || "Pilot"}
+                    <span className="soc-muted">{CHAPTERS.find((c) => c.id === r.chapter_id)?.code || moduleCode}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <aside className="soc-side">
+            <p className="soc-side-title">Your wingmen</p>
+            {wingmen.length === 0 ? (
+              <p className="soc-muted">You haven't added a wingman yet.</p>
+            ) : (
+              <ul className="soc-people">
+                {wingmen.map((w) => <li key={w.wingman_user_id}>{w.display_name || "Pilot"}</li>)}
+              </ul>
+            )}
+          </aside>
+        </div>
+      )}
+
+      <ThreadStyles />
       <style>{`
-        .msoc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-        .msoc-wide { grid-column: 1 / -1; }
-        .msoc-panel { padding: 18px 20px; }
-        .msoc-kicker { display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
-          letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-tint); opacity: 0.9; margin: 0 0 12px; }
-        .msoc-sub { font-size: 12px; color: var(--muted); margin: 0; }
-        .msoc-quiet { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .msoc-quiet-title { font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; font-weight: 700; color: var(--text-soft); margin: 0 0 3px; }
-        /* breathing presence indicator rather than a flat negative line */
-        .msoc-pulse { position: relative; width: 34px; height: 34px; flex-shrink: 0; }
-        .msoc-pulse span { position: absolute; inset: 0; border-radius: 50%; border: 1px solid var(--accent);
-          opacity: 0; animation: msocPulse 3s ease-out infinite; }
-        .msoc-pulse span:nth-child(2) { animation-delay: 1s; }
-        .msoc-pulse span:nth-child(3) { animation-delay: 2s; }
-        @keyframes msocPulse { 0% { transform: scale(0.35); opacity: 0.55; } 100% { transform: scale(1); opacity: 0; } }
-        .msoc-sweep { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border);
-          background: conic-gradient(from 0deg, var(--accent-glow), transparent 55%); animation: msocSweep 3.6s linear infinite; }
-        @keyframes msocSweep { to { transform: rotate(360deg); } }
-        .msoc-cta { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; background: none;
-          border: 1px solid var(--accent-dim); color: var(--accent); border-radius: var(--r-sm); padding: 9px 13px;
-          font-size: 12px; cursor: pointer; min-height: 38px; }
-        .msoc-cta:hover { background: var(--accent-soft); }
-        .msoc-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; color: var(--text-soft); }
-        .msoc-roster li { display: flex; align-items: center; gap: 8px; }
-        .msoc-live { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px color-mix(in srgb, var(--good) 55%, transparent); }
-        .msoc-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-        .msoc-log li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 12.5px; }
-        .msoc-log li:last-child { border-bottom: none; }
-        .msoc-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-          color: var(--accent); border: 1px solid var(--accent-dim); border-radius: var(--r-pill); padding: 2px 8px; flex-shrink: 0; }
-        .msoc-log-text { color: var(--text-soft); }
-        .msoc-stats { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; }
-        .msoc-stats div { display: flex; flex-direction: column; }
-        .msoc-stats b { font-family: 'JetBrains Mono', monospace; font-size: 17px; color: var(--text); font-variant-numeric: tabular-nums; }
-        .msoc-stats span { font-size: 11px; color: var(--muted); }
-        .msoc-threads { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-        .msoc-threads li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border-soft); font-size: 12.5px; flex-wrap: wrap; }
-        .msoc-threads li:last-child { border-bottom: none; }
-        .msoc-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent-tint); }
-        .msoc-thread-title { color: var(--text); }
-        .app.reduce-motion .msoc-pulse span, .app.reduce-motion .msoc-sweep { animation: none; }
-        @media (prefers-reduced-motion: reduce) { .msoc-pulse span, .msoc-sweep { animation: none; } }
-        @media (max-width: 820px) { .msoc { grid-template-columns: 1fr; } }
+        .soc-subs { display: flex; align-items: center; gap: 4px; margin-bottom: 16px; }
+        .soc-sub { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer;
+          padding: 8px 12px; border-radius: var(--r-sm); min-height: 38px; }
+        .soc-sub:hover { color: var(--text); background: var(--elev-2); }
+        .soc-sub.is-active { color: var(--text); background: var(--elev-2); }
+        .soc-sort { margin-left: auto; display: flex; gap: 2px; }
+        .soc-sort button { background: none; border: none; color: var(--muted2); font-size: 12px; cursor: pointer;
+          padding: 6px 10px; border-radius: var(--r-sm); min-height: 34px; }
+        .soc-sort button.is-on { color: var(--accent); }
+        .soc-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 22px; align-items: start; }
+        @media (max-width: 820px) { .soc-cols { grid-template-columns: 1fr; } }
+        .soc-line { font-size: 13px; color: var(--text-soft); margin: 0 0 14px; }
+        .soc-muted { font-size: 12.5px; color: var(--muted); margin: 0; }
+        .soc-events { list-style: none; margin: 0; padding: 0; }
+        .soc-events li { display: flex; align-items: center; gap: 10px; padding: 9px 0;
+          border-bottom: 1px solid var(--border-soft); font-size: 13px; color: var(--text-soft); }
+        .soc-events li:last-child { border-bottom: none; }
+        .soc-ev-label { font-size: 11px; color: var(--muted2); min-width: 68px; }
+        .soc-side-title { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+        .soc-side-row, .soc-row { display: flex; flex-direction: column; gap: 3px; width: 100%; text-align: left;
+          background: none; border: none; border-bottom: 1px solid var(--border-soft); padding: 10px 0; cursor: pointer; }
+        .soc-side-row:last-child { border-bottom: none; }
+        .soc-side-row span:first-child, .soc-row-title { font-size: 13px; color: var(--text); }
+        .soc-row:hover .soc-row-title, .soc-side-row:hover span:first-child { color: var(--accent); }
+        .soc-threadlist { display: flex; flex-direction: column; gap: 2px; }
+        .soc-threadlist > .composer, .soc-threadlist > .composer-collapsed { margin-bottom: 10px; }
+        .soc-back { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--muted);
+          font-size: 12.5px; cursor: pointer; padding: 4px 0; margin-bottom: 10px; }
+        .soc-back:hover { color: var(--text); }
+        .soc-thread-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
+        .soc-thread-body { font-size: 13.5px; line-height: 1.55; color: var(--text-soft); margin: 10px 0 0; }
+        .soc-comments { margin: 14px 0; }
+        .soc-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 13px; color: var(--text-soft); }
+        .soc-people li { display: flex; align-items: center; gap: 8px; }
+        .soc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
       `}</style>
     </div>
   );

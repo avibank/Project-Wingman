@@ -414,8 +414,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           transition: border-color 0.15s ease, color 0.15s ease; }
         .chip:hover { border-color: var(--border); color: var(--text); }
         .copresence { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
-        .copresence-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good);
-          box-shadow: 0 0 5px color-mix(in srgb, var(--good) 55%, transparent); }
+        .copresence-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+           }
         .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
         .cloud-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         .cloud { position: absolute; width: 220px; height: 60px; background: radial-gradient(ellipse at center, var(--text) 0%, transparent 70%); opacity: 0.035; border-radius: 50%; filter: blur(6px); }

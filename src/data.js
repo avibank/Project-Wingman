@@ -1,15 +1,15 @@
-import { ClipboardCheck, MessageSquare, FileText, Gauge, Users, Radio } from "lucide-react";
+import { ClipboardCheck, FileText, Gauge, Users } from "lucide-react";
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 // This is where your real question bank, videos, and PDFs will eventually live.
 const MODULES = [
-  // hue follows avionics convention rather than decoration: amber = caution/heat,
-  // green = normal, cyan = informational, magenta = active course, white = state.
-  { code: "JT",   name: "Jet Turbine Fundamentals",        status: "active", questions: 10, order: 1, hue: "#E8A33D", motif: "turbine" },
-  { code: "PROP", name: "Propulsion Systems",              status: "active", questions: 8,  order: 2, hue: "#4CAF7D", motif: "manifold" },
-  { code: "AERO", name: "Aerodynamics & Principles of Flight", status: "active", questions: 8, order: 3, hue: "#4FC3D9", motif: "streamlines" },
-  { code: "NAV",  name: "Navigation & Charts",             status: "active", questions: 8,  order: 4, hue: "#C77DD6", motif: "compass" },
-  { code: "WX",   name: "Aviation Weather",                status: "active", questions: 8,  order: 5, hue: "#9FB4CC", motif: "isobars" },
+  // Modules are told apart by their motif, not by a colour of their own: the
+  // app runs on a single accent hue family.
+  { code: "JT",   name: "Jet Turbine Fundamentals",        status: "active", questions: 10, order: 1, motif: "turbine" },
+  { code: "PROP", name: "Propulsion Systems",              status: "active", questions: 8,  order: 2, motif: "manifold" },
+  { code: "AERO", name: "Aerodynamics & Principles of Flight", status: "active", questions: 8, order: 3, motif: "streamlines" },
+  { code: "NAV",  name: "Navigation & Charts",             status: "active", questions: 8,  order: 4, motif: "compass" },
+  { code: "WX",   name: "Aviation Weather",                status: "active", questions: 8,  order: 5, motif: "isobars" },
 ];
 
 const CHAPTERS = [
@@ -786,10 +786,8 @@ const PDFS = [
 const NAV = [
   { id: "overview", label: "Overview", icon: Gauge },
   { id: "chapters", label: "Chapters", icon: ClipboardCheck },
-  { id: "discuss", label: "Discussion", icon: MessageSquare },
-  { id: "team", label: "Team & Partners", icon: Users },
   { id: "pdf", label: "Library", icon: FileText },
-  { id: "social", label: "Social", icon: Radio },
+  { id: "social", label: "Social", icon: Users },
 ];
 
 

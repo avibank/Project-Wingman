@@ -81,11 +81,11 @@ export async function fetchPosts(threadId) {
   return data || [];
 }
 
-export async function addPost({ threadId, body, user, prefs }) {
+export async function addPost({ threadId, parentId = null, body, user, prefs, isAdmin = false }) {
   if (!user?.id || !body?.trim()) return null;
   const { data, error } = await supabase
     .from("discussion_posts")
-    .insert({ thread_id: threadId, body: body.trim(), ...authorFields(user, prefs) })
+    .insert({ thread_id: threadId, parent_id: parentId, is_admin: isAdmin, body: body.trim(), ...authorFields(user, prefs) })
     .select()
     .single();
   if (error) {
@@ -118,4 +118,47 @@ export async function fetchRepliesToUser(userId, limit = 20) {
   }
   const titles = Object.fromEntries((mine || []).map((t) => [t.id, t.title]));
   return (data || []).map((p) => ({ ...p, thread_title: titles[p.thread_id] }));
+}
+
+export async function deletePost(id, userId) {
+  const { error } = await supabase.from("discussion_posts").delete().eq("id", id).eq("user_id", userId);
+  if (error) console.error(error);
+  return !error;
+}
+
+// Re-voting the same way clears the vote, matching the notebook's behaviour.
+export async function votePost(postId, userId, value) {
+  if (!userId) return 0;
+  if (value === 0) {
+    const { error } = await supabase.from("post_votes").delete().eq("post_id", postId).eq("user_id", userId);
+    if (error) console.error(error);
+    return 0;
+  }
+  const { error } = await supabase
+    .from("post_votes")
+    .upsert({ post_id: postId, user_id: userId, value }, { onConflict: "post_id,user_id" });
+  if (error) console.error(error);
+  return value;
+}
+
+export async function fetchMyPostVotes(userId, postIds) {
+  if (!userId || !postIds?.length) return {};
+  const { data, error } = await supabase.from("post_votes").select("post_id,value").eq("user_id", userId).in("post_id", postIds);
+  if (error) {
+    console.error(error);
+    return {};
+  }
+  return Object.fromEntries((data || []).map((r) => [r.post_id, r.value]));
+}
+
+// Flat rows -> a reply tree the UI can indent.
+export function buildTree(posts) {
+  const byId = new Map(posts.map((p) => [p.id, { ...p, replies: [] }]));
+  const roots = [];
+  byId.forEach((node) => {
+    const parent = node.parent_id ? byId.get(node.parent_id) : null;
+    if (parent) parent.replies.push(node);
+    else roots.push(node);
+  });
+  return roots;
 }
