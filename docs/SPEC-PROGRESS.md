@@ -19,7 +19,7 @@ Read only the sections that step needs. §17 lists which.
 | 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
 | 2 | Auto-squadrons + fill ladder | §7.1, §10 | **done** — needs migration 0005 to place anyone |
 | 3 | Presence as a data type | §8.3 | not started |
-| 4 | Safety primitives | §9 | **data layer done** — UI pending |
+| 4 | Safety primitives | §9 | **done** — image scanning and rate limits still owed |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | **partial** — rail + vocabulary done, Formation and On-your-wing pending |
 | 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
@@ -259,3 +259,35 @@ difference is 0.002 of alpha.
 progress hairline and the serif at 17/1.7 on a 66-character measure. It is still an
 accordion row inside `ChaptersPanel`. The glow works there, but the surface it lights
 is not yet the surface the spec describes.
+
+## Step 4 — done
+
+`PilotSheet.jsx` is the one home for block, mute and report, opened from a seat in the
+squadron roster and from a face in the glow sheet. The presence rail keeps tap → their
+chapter, because §7.3 assigns that gesture and long-press to Fly together.
+
+Block is a two-step with the symmetry stated plainly — "you disappear from each other"
+— rather than copy that implies it only hides them from you. Report collects a reason
+and says a person reads it. Red appears on exactly one control, the block confirm.
+
+`BlockedList.jsx` sits in Settings. The block confirm tells people they can undo it
+there, and until this existed nothing in the app called `unblockUser` or `unmuteUser` —
+the sentence was false. Empty state names the action instead of reporting a zero.
+
+Enforcement so far: `squadron_roster` filters blocks in both directions in SQL,
+`fetchRecentPilots` filters them, and the study glow excludes them from `n`. The feed
+and Comms do not filter yet.
+
+### Verified
+
+Walked the whole flow in the harness — menu → block confirm → confirmation, with the
+target removed from the list on success. Rows are 56px. No console errors.
+
+### Still owed from §9
+
+- EXIF stripping, image scanning, and tap-to-reveal for a first-time sender. Needs an
+  upload path, which does not exist yet.
+- The human moderation queue. `reports` rows are written and nothing reads them.
+- Rate limits on composer posts, Calls and Formation invites. These have to be enforced
+  in Postgres to mean anything; a client-side guard would be decoration.
+- Leaving a squadron and being reassigned by the fill ladder.

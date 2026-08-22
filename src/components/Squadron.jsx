@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchSquadron, fetchRoster, seatLayout, assignMarkings } from "../lib/squadron.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import PilotSheet from "./PilotSheet.jsx";
 
 // §7.1 — a squadron below ten is Forming, and says so. It shows its real
 // members at full size rather than padding the grid, and open seats render as
@@ -19,6 +20,7 @@ function OpenSeat() {
 function Squadron({ moduleCode, onOpenPilot }) {
   const { user, isSignedIn } = useUser();
   const [state, setState] = useState({ status: "loading", squadron: null, roster: [] });
+  const [sheet, setSheet] = useState(null);
 
   useEffect(() => {
     if (!isSignedIn || !user?.id || !moduleCode) return;
@@ -63,7 +65,7 @@ function Squadron({ moduleCode, onOpenPilot }) {
       <ul className="sq-grid">
         {state.roster.map((m) => (
           <li key={m.user_id} className="seat">
-            <button className="seat-btn" onClick={() => onOpenPilot?.(m)}>
+            <button className="seat-btn" onClick={() => (onOpenPilot ? onOpenPilot(m) : setSheet(m))}>
               <Tail name={m.callsign} livery={m.livery} marking={m.marking} size={44} staff={m.is_staff} />
               <span className="seat-name">{m.callsign || "Pilot"}</span>
             </button>
@@ -71,6 +73,14 @@ function Squadron({ moduleCode, onOpenPilot }) {
         ))}
         {Array.from({ length: seats.openSeats }, (_, i) => <OpenSeat key={`open-${i}`} />)}
       </ul>
+
+      {sheet && (
+        <PilotSheet
+          pilot={sheet}
+          onClose={() => setSheet(null)}
+          onChanged={() => setState((st) => ({ ...st, roster: st.roster.filter((r) => r.user_id !== sheet.user_id) }))}
+        />
+      )}
 
       <SquadronStyles />
     </div>

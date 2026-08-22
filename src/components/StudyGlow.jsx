@@ -4,6 +4,7 @@ import { fetchChapterPresence } from "../lib/presence.js";
 import { fetchProfiles, fetchBlocks, assignMarkings } from "../lib/squadron.js";
 import { computeGlow } from "../lib/glow.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import PilotSheet from "./PilotSheet.jsx";
 
 // §7.6 — the chapter body's one social element, and it is not an element: it is
 // the lighting. No counter, no faces, no notification. Tapping it opens the
@@ -16,6 +17,7 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
   const [others, setOthers] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [open, setOpen] = useState(false);
+  const [sheet, setSheet] = useState(null);
   const timer = useRef(null);
 
   useEffect(() => {
@@ -80,8 +82,10 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
             <ul className="glow-faces">
               {marked.map((p) => (
                 <li key={p.user_id}>
-                  <Tail name={p.callsign} livery={p.livery} marking={p.marking} size={44} staff={p.is_staff} />
-                  <span className="glow-face-name">{p.callsign}</span>
+                  <button className="glow-face" onClick={() => setSheet(p)}>
+                    <Tail name={p.callsign} livery={p.livery} marking={p.marking} size={44} staff={p.is_staff} />
+                    <span className="glow-face-name">{p.callsign}</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -93,6 +97,15 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
             </div>
           </div>
         </div>
+      )}
+
+      {sheet && (
+        <PilotSheet
+          pilot={sheet}
+          chapterId={chapterId}
+          onClose={() => setSheet(null)}
+          onChanged={() => setOthers((o) => o.filter((x) => x.user_id !== sheet.user_id))}
+        />
       )}
 
       <TailStyles />
@@ -122,7 +135,9 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
         .glow-sheet-title { font-family: var(--font-ui); font-size: 18px; font-weight: 500;
           color: var(--text-1); margin: 0 0 16px; }
         .glow-faces { list-style: none; display: flex; flex-wrap: wrap; gap: 16px 12px; padding: 0; margin: 0 0 24px; }
-        .glow-faces li { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 64px; }
+        .glow-faces li { display: flex; width: 64px; }
+        .glow-face { display: flex; flex-direction: column; align-items: center; gap: 6px;
+          width: 100%; background: none; border: none; padding: 4px 0; cursor: pointer; min-height: 44px; }
         .glow-face-name { font-size: 12px; color: var(--text-3); max-width: 100%;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .glow-sheet-actions { display: flex; gap: 10px; }

@@ -1,4 +1,5 @@
 import { ChevronLeft, FlaskConical, Minus, Plus } from "lucide-react";
+import BlockedList from "./BlockedList.jsx";
 
 function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
   return (
@@ -50,6 +51,8 @@ function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOv
         .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
         .settings-stepper-value { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
       `}</style>
+      <BlockedList />
+
     </div>
   );
 }
