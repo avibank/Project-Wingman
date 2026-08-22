@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
-import { ACCENT_COLORS } from "../data.js";
 import { useSocialPrefs } from "../lib/social.js";
 
-function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, accentColor, onChangeAccentColor, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
+function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
   const [tab, setTab] = useState("info");
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -378,22 +377,6 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                 ))}
               </div>
             </div>
-            <div className="settings-row settings-row--static settings-row--centered">
-              <div className="settings-row-title">Livery</div>
-              <div className="settings-row-sub">{ACCENT_COLORS[accentColor].label}</div>
-              <div className="accent-swatch-row">
-                {Object.entries(ACCENT_COLORS).map(([key, c]) => (
-                  <button
-                    key={key}
-                    className={`accent-swatch ${accentColor === key ? "is-active" : ""}`}
-                    style={{ background: c.swatch }}
-                    onClick={() => onChangeAccentColor(key)}
-                    aria-label={c.label}
-                    title={c.label}
-                  />
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="settings-block">
@@ -454,9 +437,6 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .font-size-options { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
         .font-size-btn { background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px 18px; border-radius: var(--r-sm); cursor: pointer; }
         .font-size-btn.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-        .accent-swatch-row { display: flex; gap: 14px; justify-content: center; margin-top: 4px; }
-        .accent-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
-        .accent-swatch.is-active { border-color: var(--text); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--border-hover); }
         .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
         .settings-row-icon { width: 34px; height: 34px; border-radius: var(--r-md); background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
         .settings-row--danger .settings-row-icon { color: var(--bad); }

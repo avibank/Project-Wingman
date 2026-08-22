@@ -572,3 +572,50 @@ its previous value rather than claiming to have saved.
 The transport. §8.3 wants SSE per squadron with a Redis store on a 5-minute TTL, and
 forbids writing presence to the primary database — which is what the app still does.
 That is step 3 proper and needs infrastructure that does not exist yet.
+
+## §18 audit — colour
+
+§18 asks that every colour derive from a livery token, with zero hardcoded colour
+outside the generated file. Auditing for hex, `rgb()` and `hsl()` across `src/` turned
+up something bigger than a stray value.
+
+### Two colour systems were live at once
+
+`ACCENT_COLORS` — five user-selectable accents, Sky / Runway Green / Beacon Red / Gauge
+Amber / Tarmac Grey — was still wired into App state, still persisted to
+`pw-accent-color`, and still rendered as a swatch row in Profile **labelled "Livery"**.
+Two different controls with the same name doing different jobs.
+
+It was also **completely dead**. Those swatches drove `--accent-h/s/l`, and nothing has
+defined those channels since step 1 aliased `--accent` onto `var(--cold)`. Clicking a
+swatch changed the stored value and repainted nothing. §15's delete list — "any accent
+colour not derived from a livery" — and the fact that it did nothing at all point the
+same way, so it is gone: the constant, the state, the persistence, the prop, the swatch
+row and its CSS.
+
+Livery selection now lives in exactly one place, `PilotSettings`, plus the fleet gallery.
+
+### Red
+
+`.runway-dot.is-lit.is-red` — `#E5484D` on the scroll indicator's last two lights. §15
+says no red anywhere except a genuine destructive confirmation, and a scroll position is
+not a hazard. The zones run cold → warm now, which is also the only colour vocabulary
+this app has.
+
+### The page behind the app
+
+`html, body, #root` hardcoded `#0B1526`, because the generated tokens are scoped to
+`[data-livery][data-variant]` and those attributes sat on the `.app` div — html and body
+are outside it. So a Day livery repainted the app and left the page behind it dark blue.
+The pair is now mirrored onto the root element and the page uses `var(--surface-0)`.
+
+### Left alone deliberately
+
+**Module identity hues** (`#7FB2E8` and the other four in `data.js`) still drive module
+badges, rails and motifs through `--id-hue`. §15 names accents, not wayfinding hues, and
+CLAUDE.md records the two-layer colour decision as deliberate and already reversed once.
+Collapsing it again is a call to make on purpose, not a side effect of a colour audit.
+
+**Neutral shadows and sheens** — `rgb(0 0 0 / 0.20)`, `rgb(255 255 255 / 0.05)` — are
+defined once as `--shadow-*` / `--sheen` tokens in the app block, not per component.
+They carry no hue.

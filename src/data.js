@@ -808,41 +808,7 @@ const TRIVIA = [
   "Some turbine blades spin at speeds exceeding 10,000 RPM.",
 ];
 
-// Liveries are stored as HSL channels, not hex, so the whole app's accent can
-// be re-tinted by changing three numbers. Every accent token downstream is
-// derived from --accent-h/s/l.
-const ACCENT_COLORS = {
-  sky: {
-    label: "Sky Blue",
-    swatch: "hsl(199 89% 58%)",
-    dark: { h: 199, s: 89, l: 58 },
-    light: { h: 199, s: 72, l: 42 },
-  },
-  green: {
-    label: "Runway Green",
-    swatch: "hsl(152 40% 49%)",
-    dark: { h: 152, s: 40, l: 49 },
-    light: { h: 152, s: 54, l: 33 },
-  },
-  red: {
-    label: "Beacon Red",
-    swatch: "hsl(358 76% 59%)",
-    dark: { h: 358, s: 76, l: 59 },
-    light: { h: 358, s: 60, l: 50 },
-  },
-  amber: {
-    label: "Gauge Amber",
-    swatch: "hsl(38 79% 57%)",
-    dark: { h: 38, s: 79, l: 57 },
-    light: { h: 38, s: 74, l: 44 },
-  },
-  grey: {
-    label: "Tarmac Grey",
-    swatch: "hsl(210 18% 66%)",
-    dark: { h: 210, s: 18, l: 66 },
-    light: { h: 210, s: 16, l: 43 },
-  },
-};
+
 
 
 // Chapter codes are "<MODULE>.<NN>", so a module owns every chapter whose
@@ -851,4 +817,4 @@ function chaptersForModule(moduleCode) {
   return CHAPTERS.filter((ch) => String(ch.code).split(".")[0] === moduleCode);
 }
 
-export { MODULES, CHAPTERS, chaptersForModule, PDFS, pdfsForModule, NAV, TRIVIA, ACCENT_COLORS };
+export { MODULES, CHAPTERS, chaptersForModule, PDFS, pdfsForModule, NAV, TRIVIA };

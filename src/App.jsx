@@ -19,7 +19,7 @@ import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
-import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
+import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
@@ -51,7 +51,6 @@ function AppInner() {
   const [variantPin, setVariantPin] = useState(null); // "day" | "night" | null = auto
   const autoVariant = new Date().getHours() >= 7 && new Date().getHours() < 19 ? "day" : "night";
   const variant = variantPin || autoVariant;
-  const [accentColor, setAccentColor] = useState("sky");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
   const [shakeTab, setShakeTab] = useState(null);
@@ -102,10 +101,6 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-font-size", fontSize);
   }, [fontSize, hydrated]);
-  useEffect(() => {
-    if (!hydrated) return;
-    progress.set("pw-accent-color", accentColor);
-  }, [accentColor, hydrated]);
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-dyslexia-font", dyslexiaFont);
@@ -167,6 +162,16 @@ function AppInner() {
     link.type = "image/svg+xml";
     link.href = href;
   }, []);
+  // The generated tokens are scoped to [data-livery][data-variant]. The .app
+  // div carries them, but html and body sit outside it, so the page behind the
+  // app had to hardcode a colour. Mirroring the pair onto the root fixes that
+  // and makes Day actually repaint the whole page.
+  useEffect(() => {
+    const h = document.documentElement;
+    h.setAttribute("data-livery", livery);
+    h.setAttribute("data-variant", variant);
+  }, [livery, variant]);
+
   useEffect(() => {
     let raf = null;
     const onScroll = () => {
@@ -311,8 +316,6 @@ function AppInner() {
             onResetProgress={resetProgress}
             fontSize={fontSize}
             onChangeFontSize={setFontSize}
-            accentColor={accentColor}
-            onChangeAccentColor={setAccentColor}
             dyslexiaFont={dyslexiaFont}
             onToggleDyslexiaFont={() => setDyslexiaFont((d) => !d)}
             turbulence={turbulence}
@@ -372,7 +375,7 @@ function AppInner() {
           <div className="runway-trail" style={{ width: `${scrollPct * 100}%` }} />
           {Array.from({ length: 12 }).map((_, i) => {
             const lit = i < Math.floor(scrollPct * 12);
-            const zone = i >= 10 ? "red" : i >= 8 ? "amber" : "white";
+            const zone = i >= 10 ? "late" : i >= 8 ? "mid" : "early";
             return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
           })}
         </div>
@@ -402,7 +405,7 @@ function AppInner() {
         ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: var(--r-md); border: 2px solid var(--bg); }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
         * { scrollbar-width: thin; scrollbar-color: var(--border-hover) var(--bg); }
-        html, body, #root { height: 100%; margin: 0; background: #0B1526; }
+        html, body, #root { height: 100%; margin: 0; background: var(--surface-0); }
         .app {
           /* Aliases onto the generated livery tokens (src/styles/liveries.css).
              Cold is the machine, warm is people — §2.2. Component-level names
@@ -533,9 +536,11 @@ function AppInner() {
         .runway-lights { position: relative; display: flex; gap: 4px; }
         .runway-trail { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 3px; background: linear-gradient(90deg, transparent, var(--accent)); filter: blur(3px); opacity: 0.55; transition: width 0.15s ease; pointer-events: none; }
         .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
-        .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
-        .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
-        .runway-dot.is-lit.is-red { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
+        /* §15 — no red outside a destructive confirmation, and no colour that
+           is not a livery channel. The zones run cold to warm instead. */
+        .runway-dot.is-lit.is-early { background: var(--cold); }
+        .runway-dot.is-lit.is-mid { background: color-mix(in oklab, var(--cold) 50%, var(--warm)); }
+        .runway-dot.is-lit.is-late { background: var(--warm); }
         .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 11.5px; text-align: center; padding: 8px 16px; }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }
