@@ -4,7 +4,9 @@ import { chaptersForModule } from "../data.js";
 import {
   fetchMessages, sendMessage, fetchPinned, pinToChapter, unpin,
   fetchReactions, fetchMyReactions, toggleReaction, groupMessages,
+  maybePostOpener, takeRateSlot,
 } from "../lib/comms.js";
+import { WINGMAN_ID, WINGMAN_NAME } from "../data/openers.js";
 import { fetchProfiles, fetchSquadron, assignMarkings } from "../lib/squadron.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 import PilotSheet from "./PilotSheet.jsx";
@@ -38,6 +40,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
   const [draft, setDraft] = useState("");
   const [sheet, setSheet] = useState(null);
   const [sending, setSending] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
   const endRef = useRef(null);
 
   const chapters = chaptersForModule(moduleCode);
@@ -62,6 +65,17 @@ function Comms({ moduleCode, currentChapterId = null }) {
   }, [moduleCode, currentChapterId, filterToChapter, user?.id]);
 
   useEffect(() => { load().catch(console.error); }, [load]);
+
+  // §8.1 — offered once per mount. The RPC decides whether the channel is
+  // actually quiet; this only asks.
+  useEffect(() => {
+    if (!isSignedIn || !currentChapterId) return;
+    let live = true;
+    maybePostOpener(moduleCode, currentChapterId)
+      .then((id) => { if (live && id) load(); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [isSignedIn, moduleCode, currentChapterId]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
 
   const marked = Object.fromEntries(
@@ -76,6 +90,12 @@ function Comms({ moduleCode, currentChapterId = null }) {
     const body = draft.trim();
     if (!body || sending) return;
     setSending(true);
+    const allowed = await takeRateSlot(user.id, "message", 30);
+    if (!allowed) {
+      setSending(false);
+      setRateLimited(true);
+      return;
+    }
     setDraft("");
     const saved = await sendMessage({
       moduleCode, squadronId: squadron?.id, userId: user.id, body, chapterId: chipChapter,
@@ -149,14 +169,21 @@ function Comms({ moduleCode, currentChapterId = null }) {
           g.type === "day" ? (
             <div key={g.id} className="cm-day"><span>{dayLabel(g.at)}</span></div>
           ) : (
-            <article key={g.id} className="cm-group">
-              <button className="cm-avatar" onClick={() => setSheet(who(g.user_id))}>
-                <Tail name={who(g.user_id).callsign} livery={who(g.user_id).livery}
-                  marking={who(g.user_id).marking} size={36} staff={who(g.user_id).is_staff} />
-              </button>
+            <article key={g.id} className={`cm-group ${g.user_id === WINGMAN_ID ? "is-system" : ""}`}>
+              {g.user_id === WINGMAN_ID ? (
+                <span className="cm-wingman-mark" aria-hidden="true" />
+              ) : (
+                <button className="cm-avatar" onClick={() => setSheet(who(g.user_id))}>
+                  <Tail name={who(g.user_id).callsign} livery={who(g.user_id).livery}
+                    marking={who(g.user_id).marking} size={36} staff={who(g.user_id).is_staff} />
+                </button>
+              )}
               <div className="cm-stack">
                 <p className="cm-meta">
-                  <span className="cm-sender">{who(g.user_id).callsign}</span>
+                  <span className="cm-sender">
+                    {g.user_id === WINGMAN_ID ? WINGMAN_NAME : who(g.user_id).callsign}
+                  </span>
+                  {g.user_id === WINGMAN_ID && <span className="cm-badge">app</span>}
                   <span className="cm-time">{clock(g.at)}</span>
                 </p>
                 {g.messages.map((m) => {
@@ -166,7 +193,9 @@ function Comms({ moduleCode, currentChapterId = null }) {
                     <div key={m.id} className="cm-msg">
                       {/* §2.8 — a 2px leading edge in the sender's warm channel.
                           The only place another livery touches a message. */}
-                      <span className="cm-edge" style={{ "--edge": `var(--tail-${who(m.user_id).livery})` }} aria-hidden="true" />
+                      <span className="cm-edge"
+                        style={{ "--edge": m.user_id === WINGMAN_ID ? "var(--cold)" : `var(--tail-${who(m.user_id).livery})` }}
+                        aria-hidden="true" />
                       <div className="cm-bubble">
                         {ch && <span className="cm-chip">{ch.code}</span>}
                         <span className="cm-body">{m.body}</span>
@@ -230,10 +259,24 @@ function Comms({ moduleCode, currentChapterId = null }) {
         </div>
       )}
 
+      {rateLimited && (
+        <p className="cm-rate">You've sent a lot in the last hour. Give it a few minutes.</p>
+      )}
+
       {sheet && <PilotSheet pilot={sheet} channelId={moduleCode} onClose={() => setSheet(null)} onChanged={load} />}
 
       <TailStyles />
       <style>{`
+
+        /* §8.1 — Wingman is the app speaking, so it gets a cold mark and a
+           badge, never a tail. A tail would make it look like a person. */
+        .cm-wingman-mark { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+          background: color-mix(in oklab, var(--cold) 18%, var(--surface-2));
+          border: 1px solid color-mix(in oklab, var(--cold) 34%, transparent); }
+        .cm-badge { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+          text-transform: uppercase; padding: 1px 5px; border-radius: 4px;
+          background: var(--surface-2); color: var(--cold); }
+        .cm-rate { font-size: 13px; color: var(--text-2); margin: 0; padding: 8px 14px; }
         .cm { display: flex; flex-direction: column; min-height: 0; }
         .cm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px;
           padding: 12px 16px; border-radius: 16px 16px 0 0;

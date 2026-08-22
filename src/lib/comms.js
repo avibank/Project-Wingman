@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient.js";
 import { fetchBlocks, fetchMutes } from "./squadron.js";
+import { CHAPTER_OPENERS } from "../data/openers.js";
 
 // §7.8 — a channel, not a forum. No threads, no upvotes, no accepted answers,
 // no karma. The only aviation-native additions are the chapter chip, pinning a
@@ -100,3 +101,30 @@ export async function toggleReaction(messageId, userId, emoji, on) {
 }
 
 export { GROUP_WINDOW_MS, groupMessages } from "./commsGrouping.js";
+
+// §8.1 — the app speaks first, but only through the RPC. The quiet check and
+// the insert must be one statement: done client-side they race, and two people
+// opening a quiet channel at the same moment both post. Until 0006 has run this
+// fails soft and no opener appears, which is the correct behaviour — the
+// feature simply is not live.
+export async function maybePostOpener(moduleCode, chapterId) {
+  const opener = CHAPTER_OPENERS[chapterId];
+  if (!moduleCode || !opener) return null;
+  const { data, error } = await supabase.rpc("post_opener_if_quiet", {
+    mod: moduleCode, chap: chapterId, opener,
+  });
+  if (error) return fail(error, null);
+  return data || null;
+}
+
+// §9 — the client asks the database for permission. A refusal is a real answer,
+// not an error to swallow.
+export async function takeRateSlot(userId, kind, perHour) {
+  if (!userId) return false;
+  const { data, error } = await supabase.rpc("rate_limit_take", {
+    uid: userId, k: kind, per_hour: perHour,
+  });
+  // If the function is missing -- 0006 not run -- do not block the user.
+  if (error) { console.error(error); return true; }
+  return data !== false;
+}

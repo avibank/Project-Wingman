@@ -349,6 +349,30 @@ used UTC midnight and passed for the wrong reason — dividers are local-day.
   log that also uses `--surface-1`, is no header at all. Now 14% in oklab over
   `--surface-2`: L 0.318 against the log's 0.19.
 
+### The app speaks first (§8.1)
+
+`src/data/openers.js` holds one authored opener per chapter — twenty of them, each a
+real question about that chapter's material rather than a template with a code
+substituted in. Stored, not generated, so the same sentence is never invented twice
+and a person can edit them.
+
+Wingman renders with a system badge and a cold-channel mark, **never a tail**. A tail
+would make the app look like a person, which §2.9 reserves for people and §8.1
+explicitly rules out. Its message edge is the cold channel for the same reason.
+
+The rule is `shouldSpeak()`, pure and tested: an empty channel speaks; anything inside
+48 hours means it is not quiet — including a previous opener, which is what caps this
+at one per channel per 48h without a separate counter; twenty human messages in a week
+suppresses it and nineteen does not; system messages never count as human; messages
+older than a week do not count at all; and a chapter with no authored opener stays
+quiet rather than falling back to something generic.
+
+**But the client does not decide.** The quiet check and the insert have to be one
+statement — done client-side they race, and two people opening a quiet channel at the
+same moment both post. `post_opener_if_quiet()` in migration 0006 does it under a
+per-channel advisory lock. Until 0006 runs the call fails soft and no opener appears,
+which is right: the feature simply is not live.
+
 ### Still owed from §7.8
 
 - Pasteable images. Blocked on §9 — EXIF stripping, scanning, and tap-to-reveal have to
@@ -495,3 +519,22 @@ assuming one completion row per chapter per user. A second row for the same chap
 a retake, a race, anything not held down by a unique constraint — collided in React.
 The log now keeps the most recent per chapter, which is also what it should have been
 saying: a chapter is finished once.
+
+## Migration 0006 — not yet run
+
+`supabase/migrations/0006_openers_rate_limits_moderation.sql`. Idempotent, safe to
+re-run, and independent of 0005 except that the opener function writes to
+`comms_messages`.
+
+- **`post_opener_if_quiet(mod, chap, opener)`** — §8.1's rule, atomic, under a
+  per-channel advisory lock.
+- **`rate_events` + `rate_limit_take(uid, kind, per_hour)`** — §9's rate limits, in
+  Postgres, because a client-side guard is decoration. Comms now asks for a slot before
+  sending, at 30 messages an hour; a refusal is shown as a plain line, not an error.
+  With the function missing the client is allowed through rather than blocked.
+- **`moderation_queue` view** — §9's human queue, joining a reported message to its body,
+  author and channel, and carrying `waiting` and `past_target` so nobody has to work out
+  whether a report has blown its 24-hour target.
+
+Still owed from §9: EXIF stripping, image scanning, and tap-to-reveal for a first-time
+sender — all blocked on there being an upload path at all.
