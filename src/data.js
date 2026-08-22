@@ -1,4 +1,4 @@
-import { ClipboardCheck, MessageSquare, FileText, Gauge, Users, Trophy } from "lucide-react";
+import { ClipboardCheck, MessageSquare, FileText, Gauge, Users, Radio } from "lucide-react";
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 // This is where your real question bank, videos, and PDFs will eventually live.
@@ -789,7 +789,7 @@ const NAV = [
   { id: "discuss", label: "Discussion", icon: MessageSquare },
   { id: "team", label: "Team & Partners", icon: Users },
   { id: "pdf", label: "Library", icon: FileText },
-  { id: "leaderboard", label: "Leaderboard", icon: Trophy },
+  { id: "social", label: "Social", icon: Radio },
 ];
 
 
@@ -801,38 +801,42 @@ const TRIVIA = [
   "Some turbine blades spin at speeds exceeding 10,000 RPM.",
 ];
 
+// Liveries are stored as HSL channels, not hex, so the whole app's accent can
+// be re-tinted by changing three numbers. Every accent token downstream is
+// derived from --accent-h/s/l.
 const ACCENT_COLORS = {
-  blue: {
+  sky: {
     label: "Sky Blue",
-    swatch: "#6FA0F0",
-    dark: { accent: "#6FA0F0", hover: "#8FB8F5", soft: "rgba(111,160,240,0.10)", onAccent: "#0E1830" },
-    light: { accent: "#3D6FD1", hover: "#5A8AE0", soft: "rgba(61,111,209,0.08)", onAccent: "#FFFFFF" },
+    swatch: "hsl(199 89% 58%)",
+    dark: { h: 199, s: 89, l: 58 },
+    light: { h: 199, s: 72, l: 42 },
   },
   green: {
     label: "Runway Green",
-    swatch: "#4CAF7D",
-    dark: { accent: "#4CAF7D", hover: "#6BC494", soft: "rgba(76,175,125,0.12)", onAccent: "#06210F" },
-    light: { accent: "#2F9D64", hover: "#4BB57D", soft: "rgba(47,157,100,0.10)", onAccent: "#FFFFFF" },
+    swatch: "hsl(152 40% 49%)",
+    dark: { h: 152, s: 40, l: 49 },
+    light: { h: 152, s: 54, l: 33 },
   },
   red: {
     label: "Beacon Red",
-    swatch: "#E5484D",
-    dark: { accent: "#E5484D", hover: "#ED6F73", soft: "rgba(229,72,77,0.12)", onAccent: "#2A0C0D" },
-    light: { accent: "#D14F4F", hover: "#DB6B6B", soft: "rgba(209,79,79,0.10)", onAccent: "#FFFFFF" },
+    swatch: "hsl(358 76% 59%)",
+    dark: { h: 358, s: 76, l: 59 },
+    light: { h: 358, s: 60, l: 50 },
   },
   amber: {
     label: "Gauge Amber",
-    swatch: "#E8A33D",
-    dark: { accent: "#E8A33D", hover: "#EDB563", soft: "rgba(232,163,61,0.12)", onAccent: "#2A1B04" },
-    light: { accent: "#C77F1D", hover: "#D89A44", soft: "rgba(199,127,29,0.10)", onAccent: "#FFFFFF" },
+    swatch: "hsl(38 79% 57%)",
+    dark: { h: 38, s: 79, l: 57 },
+    light: { h: 38, s: 74, l: 44 },
   },
   grey: {
     label: "Tarmac Grey",
-    swatch: "#9BA8B8",
-    dark: { accent: "#9BA8B8", hover: "#B3BEC9", soft: "rgba(155,168,184,0.12)", onAccent: "#101B26" },
-    light: { accent: "#5C6B7D", hover: "#7A8AA0", soft: "rgba(92,107,125,0.10)", onAccent: "#FFFFFF" },
+    swatch: "hsl(210 18% 66%)",
+    dark: { h: 210, s: 18, l: 66 },
+    light: { h: 210, s: 16, l: 43 },
   },
 };
+
 
 // Chapter codes are "<MODULE>.<NN>", so a module owns every chapter whose
 // code carries its prefix. Single source of truth for the partition.

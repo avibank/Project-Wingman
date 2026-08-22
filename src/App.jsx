@@ -3,10 +3,8 @@ import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import HubPage from "./components/HubPage.jsx";
-import SocialPage from "./components/SocialPage.jsx";
 import { useSocialPrefs } from "./lib/social.js";
 import { fetchEnrollments } from "./lib/enrollments.js";
-import CompetePage from "./components/CompetePage.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
@@ -30,19 +28,12 @@ export default function App() {
     </ClerkProvider>
   );
 }
-// Four top-level destinations. Home is reached through the brand mark.
-const TOP_LEVEL = [
-  { id: "hub", label: "Home" },
-  { id: "social", label: "Social" },
-  { id: "compete", label: "Compete" },
-];
-
 function AppInner() {
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
-  const [view, setView] = useState("hub"); // "hub" | "module" | "social" | "compete"
+  const [view, setView] = useState("hub"); // "hub" | "module"
   const [pendingChapterId, setPendingChapterId] = useState(null);
   const { prefs: socialPrefs } = useSocialPrefs();
   const [enrolledCodes, setEnrolledCodes] = useState([]);
@@ -51,7 +42,7 @@ function AppInner() {
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
-  const [accentColor, setAccentColor] = useState("blue");
+  const [accentColor, setAccentColor] = useState("sky");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
   const [shakeTab, setShakeTab] = useState(null);
@@ -76,7 +67,7 @@ function AppInner() {
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setAccentColor(progress.get("pw-accent-color", "blue"));
+    setAccentColor(progress.get("pw-accent-color", "sky"));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
     setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
@@ -229,16 +220,15 @@ function AppInner() {
     setPendingChapterId(chapterId);
     goToModule(moduleCode, "chapters");
   };
-  const activeAccent = ACCENT_COLORS[accentColor][theme === "light" ? "light" : "dark"];
+  const livery = (ACCENT_COLORS[accentColor] || ACCENT_COLORS.sky)[theme === "light" ? "light" : "dark"];
   return (
     <div
       className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
-        "--accent": activeAccent.accent,
-        "--accent-hover": activeAccent.hover,
-        "--accent-soft": activeAccent.soft,
-        "--on-accent": activeAccent.onAccent,
+        "--accent-h": livery.h,
+        "--accent-s": `${livery.s}%`,
+        "--accent-l": `${livery.l}%`,
       }}
     >
     <UsernameGate>
@@ -283,21 +273,6 @@ function AppInner() {
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
         </button>
-        <nav className="toplevel" aria-label="Primary">
-          {TOP_LEVEL.map((d) => (
-            <button
-              key={d.id}
-              className={`toplevel-btn ${view === d.id ? "is-active" : ""}`}
-              onClick={() => {
-                setSettingsPage(null);
-                setView(d.id);
-                window.scrollTo(0, 0);
-              }}
-            >
-              {d.label}
-            </button>
-          ))}
-        </nav>
         <div className="topbar-right">
           
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
@@ -353,18 +328,6 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
-      ) : view === "social" ? (
-        <main className="content content-taxi">
-          <SocialPage
-            prefs={socialPrefs}
-            enrolledCodes={enrolledCodes}
-            onGoToChapter={(moduleCode, chapterId) => (chapterId ? goToChapter(moduleCode, chapterId) : goToModule(moduleCode, "chapters"))}
-          />
-        </main>
-      ) : view === "compete" ? (
-        <main className="content content-taxi">
-          <CompetePage />
-        </main>
       ) : view === "hub" ? (
         <main className="content content-taxi">
           <HubPage
@@ -372,7 +335,7 @@ function AppInner() {
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
             onGoToDiscuss={() => goToModule(activeModuleCode, "discuss")}
-            onGoToSocial={() => { setSettingsPage(null); setView("social"); window.scrollTo(0, 0); }}
+            onGoToSocial={(moduleCode) => goToModule(moduleCode || activeModuleCode, "social")}
             onReviewBookmarks={() => {
               setBookmarksMode("cards");
               setSettingsPage("bookmarks");
@@ -433,7 +396,14 @@ function AppInner() {
         .app {
           --bg: #0B1526; --panel: #101B2D; --panel-alt: #0E1A2C; --border: #22314A; --border-hover: #33456B;
           --border-soft: rgba(111,160,240,0.12); --text: #E8EDF2; --text-soft: #b9c4cf; --muted: #8291AC; --muted2: #66768F;
-          --accent: #6FA0F0; --accent-hover: #8FB8F5; --accent-soft: rgba(111,160,240,0.10); --on-accent: #0E1830;
+          --accent-h: 199; --accent-s: 89%; --accent-l: 58%;
+          --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+          --accent-hover: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 10%));
+          --accent-dim: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) - 15%) / 0.35);
+          --accent-glow: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.18);
+          --accent-tint: hsl(var(--accent-h) calc(var(--accent-s) - 34%) calc(var(--accent-l) + 4%));
+          --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.10);
+          --on-accent: hsl(var(--accent-h) 45% 10%);
           --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
           /* Elevation: four distinct luminance steps rather than one flat navy.
              well < page < card < raised. */
@@ -460,7 +430,14 @@ function AppInner() {
         .app.theme-light {
           --bg: #F4F6FB; --panel: #FFFFFF; --panel-alt: #F0F3F9; --border: #D7DEEA; --border-hover: #B9C6DC;
           --border-soft: rgba(61,111,209,0.12); --text: #16202E; --text-soft: #48556B; --muted: #5B6B85; --muted2: #7A8AA3;
-          --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
+          --accent-h: 199; --accent-s: 72%; --accent-l: 42%;
+          --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+          --accent-hover: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 8%));
+          --accent-dim: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) + 18%) / 0.40);
+          --accent-glow: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.14);
+          --accent-tint: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) - 4%));
+          --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.08);
+          --on-accent: #FFFFFF;
           --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
           --elev-0: #F4F6FB; --elev-1: #FFFFFF; --elev-2: #FFFFFF; --well: #E6EBF4;
           --shadow-1: 0 1px 2px rgba(22,32,46,0.06), 0 4px 12px rgba(22,32,46,0.07);
@@ -475,13 +452,10 @@ function AppInner() {
           --g-high: color-mix(in srgb, var(--accent) 58%, #E8A33D 42%);
           --g-track: color-mix(in srgb, var(--accent) 16%, var(--well) 84%);
         }
+        .app::before { content: ""; position: fixed; left: 50%; top: -280px; width: 1100px; height: 620px;
+          transform: translateX(-50%); pointer-events: none; z-index: 0;
+          background: radial-gradient(closest-side, var(--accent-glow), transparent 72%); filter: blur(28px); }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
-        .toplevel { display: flex; gap: 2px; margin-left: 8px; }
-        .toplevel-btn { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer;
-          padding: 8px 12px; border-radius: var(--r-sm); min-height: 38px; transition: color 0.15s ease, background 0.15s ease; }
-        .toplevel-btn:hover { color: var(--text); background: var(--elev-2); }
-        .toplevel-btn.is-active { color: var(--accent); background: var(--accent-soft); }
-        @media (max-width: 620px) { .toplevel-btn { padding: 8px 9px; font-size: 12px; } }
         .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }

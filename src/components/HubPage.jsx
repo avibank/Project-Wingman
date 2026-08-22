@@ -350,7 +350,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
       </section>
 
       {snippet && (
-        <button className="card social-snippet" onClick={onGoToSocial}>
+        <button className="card social-snippet" onClick={() => onGoToSocial(snippet.module_code)}>
           {snippet.isWingman ? <Star size={13} className="snippet-icon" /> : <Radio size={13} className="snippet-icon" />}
           <span className="snippet-text">
             <strong>{snippet.display_name || "A pilot"}</strong>
@@ -469,8 +469,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .hub-title { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.015em; color: var(--text); margin: 0 0 4px; }
         .hub-sub { font-size: 14px; color: var(--muted); margin: 0; }
         .kicker { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-          color: var(--accent); opacity: 0.85; margin: 0 0 10px; }
-        .mono-code { font-family: 'JetBrains Mono', monospace; font-size: 0.82em; color: var(--accent); letter-spacing: 0.04em; }
+          color: var(--accent-tint); opacity: 0.85; margin: 0 0 10px; }
+        .mono-code { font-family: 'JetBrains Mono', monospace; font-size: 0.82em; color: var(--accent-tint); letter-spacing: 0.04em; }
         .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; min-height: 34px; }
         .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 0; }
         .section-title--sm { font-size: 14px; color: var(--text-soft); }
@@ -488,7 +488,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
         .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none;
           border-radius: var(--r-md); padding: 12px 18px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px;
-          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 6px 18px color-mix(in srgb, var(--accent) 26%, transparent);
+          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 0 0 6px var(--accent-glow), 0 10px 26px var(--accent-glow);
           transition: background 0.18s ease, transform 0.18s ease; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn-primary:active { transform: scale(0.98); }

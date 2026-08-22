@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronRight, Radio, Trophy } from "lucide-react";
+import { ChevronRight, Radio } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS, NAV, PDFS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
@@ -13,6 +13,7 @@ import ChaptersPanel from "./ChaptersPanel.jsx";
 import DiscussPanel from "./DiscussPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
 import ThreadsPanel from "./ThreadsPanel.jsx";
+import ModuleSocial from "./ModuleSocial.jsx";
 
 // Radio-callout phrasing rather than app-notification phrasing.
 function callout(row, chapters) {
@@ -183,14 +184,8 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
 
         {tab === "pdf" && <PdfPanel />}
 
-        {tab === "leaderboard" && (
-          <section className="ov-panel bezel">
-            <Trophy size={16} className="ov-feed-icon" />
-            <p className="ov-kicker" style={{ marginTop: 10 }}>Standings</p>
-            <p className="ov-empty">
-              Scoring isn't built yet — it arrives with Compete. Nothing here is scored or ranked today.
-            </p>
-          </section>
+        {tab === "social" && (
+          <ModuleSocial moduleCode={module.code} moduleName={module.name} onGoToChapter={onGoToChapter} onSignIn={onSignIn} />
         )}
       </div>
 
@@ -217,9 +212,9 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
         .ov-resume { grid-column: 1 / -1; padding: 20px 22px; }
         .ov-panel { padding: 18px 20px; position: relative; }
         .ov-kicker { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
-          color: var(--instr-hue); opacity: 0.9; margin: 0 0 10px; }
+          color: var(--accent-tint); opacity: 0.9; margin: 0 0 10px; }
         .ov-chapter { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 16px; }
-        .ov-code { font-family: 'JetBrains Mono', monospace; font-size: 0.8em; color: var(--instr-hue); }
+        .ov-code { font-family: 'JetBrains Mono', monospace; font-size: 0.8em; color: var(--accent-tint); }
         .ov-empty { font-size: 12.5px; color: var(--muted); margin: 0; }
         .ov-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
         .ov-feed-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--text-soft); }
@@ -233,7 +228,8 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           color: var(--instr-hue); }
 
         /* tactile primary control: a guarded toggle rather than a flat pill */
-        .switch { display: inline-flex; align-items: center; gap: 0; background: var(--well); border: 1px solid var(--border-hover);
+        .switch { display: inline-flex; align-items: center; gap: 0; background: var(--well); border: 1px solid var(--accent-dim);
+          box-shadow: 0 0 0 6px var(--accent-glow), 0 10px 26px var(--accent-glow);
           border-radius: var(--r-pill); padding: 4px 18px 4px 4px; cursor: pointer; min-height: 46px;
           box-shadow: var(--shadow-inset); transition: border-color 0.18s ease; }
         .switch-lever { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; margin-right: 12px;
