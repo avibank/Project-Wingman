@@ -14,6 +14,7 @@ import {
 } from "../lib/discussion.js";
 import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
 import PresenceStrip from "./PresenceStrip.jsx";
+import OnYourWing from "./OnYourWing.jsx";
 
 // One community surface, not three sub-tabs two of which are always blank.
 //
@@ -35,6 +36,7 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const [chips, setChips] = useState({});
   const [myChips, setMyChips] = useState({});
   const [loading, setLoading] = useState(true);
+  const [myChapterId, setMyChapterId] = useState(null);
   // Fixed at mount so the prompt cannot change under someone mid-sentence.
   const [promptIndex] = useState(() => Math.floor(Math.random() * 3));
 
@@ -50,6 +52,11 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     ]);
     setThreads(t);
     setRoster(p);
+
+    // §8.2 ranks by position in the material, so it needs mine: the first
+    // chapter of this module I have not finished.
+    const finished = new Set(done.map((d) => d.chapter_id));
+    setMyChapterId((chapters.find((c) => !finished.has(c.id)) || chapters[chapters.length - 1])?.id ?? null);
 
     // Merge every timestamped event into one stream, newest first.
     const log = [];
@@ -189,6 +196,13 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
           ))}
         </ol>
       )}
+      <OnYourWing
+        moduleCode={moduleCode}
+        people={roster}
+        myChapterId={myChapterId}
+        onOpenPilot={(p) => p.chapter_id && onGoToChapter?.(moduleCode, p.chapter_id)}
+      />
+
       <ThreadStyles />
       <SocialStyles />
     </div>
