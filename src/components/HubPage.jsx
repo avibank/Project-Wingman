@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, Star, Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass, Search } from "lucide-react";
+import { Radio, Star, ChevronRight, Target, Flame, BookMarked, Layers, RotateCcw, Compass, Search } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
@@ -8,7 +8,8 @@ import { fetchAllPresence } from "../lib/presence.js";
 import { fetchWingmen } from "../lib/partners.js";
 import { fetchThreadsForModules } from "../lib/discussion.js";
 import { displayNameFor } from "../lib/social.js";
-import { ValueTape, N1Dial, SplitFlap, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
+import { SplitFlap, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
+import FlightDeck from "./FlightDeck.jsx";
 
 // Only surface a module filter once the roster is big enough to need one.
 const MODULE_FILTER_THRESHOLD = 4;
@@ -184,10 +185,14 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
     onGoToChapter(lastModule.code, lastChapter.id);
   };
 
+  // The opening module and its own first chapter. Read through
+  // chaptersForModule so this cannot drift onto another module's content.
+  const firstModule = MODULES.find((m) => m.code === "JT") || MODULES[0];
+  const firstChapter = chaptersForModule(firstModule?.code)[0] ?? null;
+
   const startFirstFlight = () => {
-    const jt = MODULES.find((m) => m.code === "JT") || MODULES[0];
-    if (CHAPTERS.length) onGoToChapter(jt.code, CHAPTERS[0].id);
-    else onEnterModule(jt);
+    if (firstChapter) onGoToChapter(firstModule.code, firstChapter.id);
+    else onEnterModule(firstModule);
   };
 
   // --- Smart next action ---------------------------------------------------
@@ -280,65 +285,42 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
   });
 
 
+  // §7.2 — one card above the cheatline. Never zero: with no history it is
+  // the invitation, not an empty well.
+  const deckCard = lastChapter
+    ? { code: lastChapter.code, title: lastChapter.title }
+    : { code: firstChapter?.code ?? "JT.1", title: firstChapter?.title ?? "Open your first chapter" };
+
   return (
     <div className="hub">
-      <header className="hub-head">
-        <h1 className="hub-title">Flight Deck</h1>
-        <p className="hub-sub">{greetingLine}</p>
-      </header>
+      <FlightDeck
+        greeting={greetingLine}
+        status={metar}
+        streak={streak}
+        nextChapter={deckCard}
+        onResume={lastChapter ? resumeFlight : startFirstFlight}
+      >
 
-      {/* ---- 1. Jump back in ------------------------------------------------ */}
-      <p className="metar"><span className="metar-dot" aria-hidden="true" />{metar}</p>
-
-      <section className="card hub-hero">
-        <div className="hero-body">
-          <p className="kicker">Continue</p>
-          {lastChapter ? (
-            <>
-              <h2 className="hero-chapter">
-                <span className="mono-code">{lastChapter.code}</span> {lastChapter.title}
-              </h2>
-              <p className="hero-module">{lastModule?.name}</p>
-              <div className="hero-bar" role="progressbar" aria-valuenow={lastChapterPct} aria-valuemin={0} aria-valuemax={100}>
-                <div className="hero-fill" style={{ width: `${lastChapterPct}%` }} />
-              </div>
-              <p className="hero-meta">
-                {lastChapterPct}% through this chapter · {checklistLine}
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="hero-chapter">Open your first chapter</h2>
-              <p className="hero-module">
-                {(MODULES.find((m) => m.code === "JT") || MODULES[0])?.name} · {CHAPTERS.length} chapters
-              </p>
-              <p className="hero-meta">Your first chapter starts the logbook.</p>
-            </>
-          )}
-
-          <div className="hero-actions">
-            <button className="btn-primary" onClick={lastChapter ? resumeFlight : startFirstFlight}>
-              {lastChapter ? "Resume flight" : "Start first chapter"} <ChevronRight size={16} />
+        {/* §7.2 keeps one instrument above the cheatline, so the shortcuts that
+            used to ride the hero live here as rows instead of tiles. */}
+        <div className="deck-shortcuts">
+          {suggestion && (
+            <button className="deck-shortcut" onClick={suggestion.onAct}>
+              <suggestion.icon size={14} />
+              <span className="deck-shortcut-label">{suggestion.label}</span>
+              <span className="deck-shortcut-title">{suggestion.title}</span>
+              <ChevronRight size={14} className="deck-shortcut-arrow" />
             </button>
-            {suggestion && (
-              <button className="btn-quiet" onClick={suggestion.onAct}>
-                <suggestion.icon size={14} />
-                <span className="btn-quiet-label">{suggestion.label}</span>
-                <span className="btn-quiet-title">{suggestion.title}</span>
-              </button>
-            )}
-          </div>
+          )}
+          {bookmarkCount > 0 && (
+            <button className="deck-shortcut" onClick={onReviewBookmarks}>
+              <BookMarked size={14} />
+              <span className="deck-shortcut-label">Squawked</span>
+              <span className="deck-shortcut-title">Review {bookmarkCount}</span>
+              <ChevronRight size={14} className="deck-shortcut-arrow" />
+            </button>
+          )}
         </div>
-
-        <div className="hero-stats">
-          <div className="instr-cell"><N1Dial pct={quizAccuracy ?? 0} label={quizAccuracy === null ? "Take a quiz to set your accuracy" : "Quiz accuracy"} size={96} /></div>
-          <div className="instr-cell"><ValueTape value={streak} label="Streak" unit="days" /></div>
-          <button className="instr-cell instr-cell--text instr-cell--link" onClick={onReviewBookmarks}>
-            <div className="instr-value">{bookmarkCount || "—"}</div>
-            <div className="instr-label">Squawked{bookmarkCount ? " · review" : ""}</div>
-          </button>
-        </div>
-      </section>
 
       {snippet && (
         <button className="card social-snippet" onClick={() => onGoToSocial(snippet.module_code)}>
@@ -433,8 +415,24 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         </div>
       </section>
 
+      </FlightDeck>
+
       <InstrumentStyles />
       <style>{`
+        /* Shortcuts demoted out of the hero: rows, not instruments. */
+        .deck-shortcuts { display: flex; flex-direction: column; gap: 1px; margin-bottom: 20px;
+          border-radius: 14px; overflow: hidden; background: var(--hairline); }
+        .deck-shortcuts:empty { display: none; }
+        .deck-shortcut { display: flex; align-items: center; gap: 10px; width: 100%;
+          padding: 0 16px; min-height: 52px; background: var(--surface-1); border: none;
+          text-align: left; cursor: pointer; color: var(--text-2); }
+        .deck-shortcut:hover { background: var(--surface-2); }
+        .deck-shortcut-label { font-family: var(--font-mono); font-size: 12px;
+          letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+        .deck-shortcut-title { font-size: 15px; color: var(--text-1); flex: 1; min-width: 0;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .deck-shortcut-arrow { flex-shrink: 0; color: var(--text-3); }
+
         .metar { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px;
           letter-spacing: 0.08em; color: var(--muted); margin: 0 0 14px; }
         .metar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);

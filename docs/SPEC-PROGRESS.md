@@ -20,7 +20,7 @@ Read only the sections that step needs. §17 lists which.
 | 2 | Auto-squadrons + fill ladder | §7.1, §10 | **data layer done** — UI pending |
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | **data layer done** — UI pending |
-| 5 | Flight Deck horizon | §7.2, §4 | not started |
+| 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | not started |
 | 7 | Ambient glow | §7.6, §2.8 | **maths done + verified** — wiring pending |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
@@ -89,3 +89,49 @@ the difference is imperceptible, but the worked example in the spec is off by 0.
 - §3 bans Fraunces; it is currently the display face from the previous pass.
 - §6 specifies four root tabs (Deck · Social · Modules · You); the app currently has no
   root tab bar at all, having removed it in a prior pass.
+
+## Step 5 — done
+
+`src/components/FlightDeck.jsx` is the horizon. Above the cheatline: greeting, status
+line, the altimeter tape, one card. Below it, Traffic. Descending compresses your own
+flight into a single line.
+
+Wired into `HubPage.jsx`, replacing the old header + METAR + hero block. Three things
+that used to ride the hero moved rather than vanished, because deleting them would have
+stranded the routes they own:
+
+- The smart suggestion and the squawked-bookmarks count are now rows in
+  `.deck-shortcuts`, below the cheatline. §7.2 allows one instrument above it; these
+  were the fourth and fifth.
+- The N1 quiz-accuracy dial and the checklist tile are gone. Accuracy has no home yet —
+  it belongs to step 11's instrument pass, not here.
+
+Fixed while wiring: `startFirstFlight` read `CHAPTERS[0]` from the global array while
+naming the JT module separately, so a reordered `data.js` would have opened another
+module's chapter under JT's name. It now reads `chaptersForModule()`, per CLAUDE.md.
+
+### Verified
+
+- The condensed strip is `position: fixed`, not sticky. As sticky it stayed in flow at
+  `opacity: 0` and reserved a 68px band that pushed the seam down.
+- Strip button 44px tall, primary card 114px — both clear the §12 target minimum.
+- `backdrop-filter: blur(12px)` present; §4 permits it on this element only.
+- Tape label sits inside its column (9px of slack) instead of overflowing it.
+
+### Not verified
+
+The scroll-linked condense itself. The verification harness runs in a hidden tab
+(`document.hidden === true`, 0 rAF frames in 800ms), and a hidden page never runs the
+"update the rendering" step, so IntersectionObserver never delivers and CSS transitions
+never advance. The class-driven half was verified by toggling `is-condensed` by hand:
+`pointer-events` swaps on both the strip and the flight panel. The IO trigger and the
+240ms transitions have not been seen running.
+
+## Harness
+
+`.claude/launch.json` (gitignored) starts the stubbed preview on :5199. Its `vars.css`
+is generated from App.jsx's own `.app` block by the snippet in this step's history —
+regenerate it after changing tokens, or the harness silently drifts. `index.html` must
+carry `data-livery` and `data-variant="night"` (**not** `"dark"` — the generator emits
+`day`/`night`), otherwise every livery token resolves unset and the page renders black
+on black.
