@@ -619,3 +619,22 @@ Collapsing it again is a call to make on purpose, not a side effect of a colour 
 **Neutral shadows and sheens** — `rgb(0 0 0 / 0.20)`, `rgb(255 255 255 / 0.05)` — are
 defined once as `--shadow-*` / `--sheen` tokens in the app block, not per component.
 They carry no hue.
+
+## §18 audit — bare dashes and zero states
+
+§15 lists "any N/A, any bare —, any blank empty state" for deletion, and §14 forbids
+stating an absence at all. Six survived.
+
+- **Logbook** had four summary tiles rendering `{value || "—"}`. A tile with nothing to
+  report now drops the numeral entirely and gives the whole cell to the sentence that
+  says what to do next — "Study today to start a streak" rather than "— day streak".
+  Both variants measure the same height, so the row does not jump as values arrive.
+  Its accuracy tile also read "no quizzes yet", which states the absence; it now reads
+  "Take a quiz to set your accuracy".
+- **Streak menu** showed "—" for last active. It now says "Open a chapter to log a day".
+- **Presence rail** showed "—" for a pilot whose chapter is outside this module. It now
+  says nothing about where rather than printing a placeholder.
+
+Swept all 13 routes for a line that is nothing but `—`, `-`, `N/A` or `0`: clean. The
+two apparent zeros on the Flight Deck are single characters inside the split-flap
+board — "JT.02" contains one.

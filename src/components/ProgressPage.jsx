@@ -7,6 +7,19 @@ const DAY_MS = 86400000;
 
 // The canonical detail view. Every stat tile elsewhere is a summary that links
 // here, so this page carries the breakdown rather than restating one number.
+
+// A summary cell. With something to report it is a number and its unit; with
+// nothing, it is the invitation alone — never a number and a dash.
+function Tile({ value, suffix = "", unit, invite }) {
+  if (!value) return <div className="prog-tile is-invite"><span>{invite}</span></div>;
+  return (
+    <div className="prog-tile">
+      <b>{value}{suffix}</b>
+      <span>{unit}</span>
+    </div>
+  );
+}
+
 function ProgressPage({ onBack }) {
   const progress = useUserProgress();
   const [completed, setCompleted] = useState([]);
@@ -45,11 +58,19 @@ function ProgressPage({ onBack }) {
       <h1 className="prog-title">Logbook</h1>
       <p className="prog-sub">Everything the app has recorded, in one place.</p>
 
+      {/* §15 — no bare em-dash, and §14 — never state an absence. A tile with
+          nothing to report drops the numeral entirely and gives the whole cell
+          to the sentence that says what to do next. */}
       <section className="prog-summary">
-        <div><b>{done.size || "—"}</b><span>{done.size ? `of ${CHAPTERS.length} chapters` : `${CHAPTERS.length} chapters ahead`}</span></div>
-        <div><b>{accuracy === null ? "—" : `${accuracy}%`}</b><span>{accuracy === null ? "no quizzes yet" : "quiz accuracy"}</span></div>
-        <div><b>{streak || "—"}</b><span>{streak ? `day streak${longest > streak ? ` · best ${longest}` : ""}` : "study today to start a streak"}</span></div>
-        <div><b>{bookmarks.length || "—"}</b><span>{bookmarks.length ? "squawked" : "flag a question to squawk it"}</span></div>
+        <Tile value={done.size} unit={`of ${CHAPTERS.length} chapters`}
+          invite={`${CHAPTERS.length} chapters ahead of you`} />
+        <Tile value={accuracy === null ? 0 : accuracy} suffix="%" unit="quiz accuracy"
+          invite="Take a quiz to set your accuracy" />
+        <Tile value={streak}
+          unit={`day streak${longest > streak ? ` · best ${longest}` : ""}`}
+          invite="Study today to start a streak" />
+        <Tile value={bookmarks.length} unit="squawked"
+          invite="Flag a question to squawk it" />
       </section>
 
       <section className="prog-block">
@@ -108,6 +129,9 @@ function ProgressPage({ onBack }) {
           color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 6px 0; margin-bottom: 10px; }
         .prog-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
         .prog-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 24px; }
+        .prog-tile { display: flex; flex-direction: column; }
+        .prog-tile.is-invite { justify-content: center; }
+        .prog-tile.is-invite span { font-size: 13px; line-height: 1.45; }
         .prog-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-soft);
           border: 1px solid var(--border-soft); border-radius: var(--r-md); overflow: hidden; margin-bottom: 26px; }
         .prog-summary div { background: var(--elev-1); padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }

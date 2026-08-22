@@ -53,7 +53,9 @@ function PresenceStrip({ people = [], moduleCode = null, onOpenPilot }) {
                 <Tail name={p.callsign} livery={p.livery} marking={p.marking} size={40} staff={p.is_staff} />
                 <span className="pstrip-name">{p.callsign}</span>
                 {/* §13 — the code is the readout; presence is never colour alone */}
-                <span className="pstrip-code">{ch?.code || "—"}</span>
+                {/* No dash for a pilot whose chapter is outside this
+                    module — the rail simply says nothing about where. */}
+                {ch && <span className="pstrip-code">{ch.code}</span>}
               </button>
             </li>
           );

@@ -56,7 +56,9 @@ function StreakMenu({ streak, overrideStreak }) {
 
   const displayStreak = overrideStreak !== null && overrideStreak !== undefined ? overrideStreak : streak;
   const longest = Math.max(longestStreak, streak);
-  const lastActiveLabel = lastVisit === new Date().toDateString() ? "Today" : lastVisit || "—";
+  // §14 — never a bare dash. With no history it says what starts one.
+  const lastActiveLabel =
+    lastVisit === new Date().toDateString() ? "Today" : lastVisit || "Open a chapter to log a day";
   const litCount = Math.min(displayStreak, 7);
 
   return (
