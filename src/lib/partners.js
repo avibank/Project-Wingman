@@ -201,3 +201,24 @@ export async function fetchPartnerSuggestions({ userId, moduleCode, course }) {
 
   return { belowThreshold: false, active: present.length, suggestions };
 }
+
+// ------------------------------------------------- shared-completion bump
+// "You and your wingman finished this within the day" — answerable only now
+// that completions carry a timestamp.
+export async function recordCompletion(userId, chapterId, moduleCode) {
+  if (!userId || !chapterId) return;
+  const { error } = await supabase
+    .from("chapter_completions")
+    .upsert({ user_id: userId, chapter_id: chapterId, module_code: moduleCode }, { onConflict: "user_id,chapter_id" });
+  if (error) console.error(error);
+}
+
+export async function fetchSharedCompletions(me, them, windowHours = 24) {
+  if (!me || !them) return [];
+  const { data, error } = await supabase.rpc("shared_completions", { me, them, window_hours: windowHours });
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data || [];
+}

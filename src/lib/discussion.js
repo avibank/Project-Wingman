@@ -162,3 +162,55 @@ export function buildTree(posts) {
   });
   return roots;
 }
+
+// ---------------------------------------------------------- reaction chips
+// Chips are a two-second way to take part: a tap, not a paragraph.
+export const REACTION_KINDS = [
+  { kind: "same", label: "Same" },
+  { kind: "good_catch", label: "Good catch" },
+  { kind: "confused", label: "Still confused" },
+];
+
+export async function fetchReactions(postIds) {
+  if (!postIds?.length) return {};
+  const { data, error } = await supabase.from("post_reactions").select("post_id,user_id,kind").in("post_id", postIds);
+  if (error) {
+    console.error(error);
+    return {};
+  }
+  const out = {};
+  for (const r of data || []) {
+    out[r.post_id] = out[r.post_id] || {};
+    out[r.post_id][r.kind] = (out[r.post_id][r.kind] || 0) + 1;
+  }
+  return out;
+}
+
+export async function fetchMyReactions(userId, postIds) {
+  if (!userId || !postIds?.length) return {};
+  const { data, error } = await supabase.from("post_reactions").select("post_id,kind").eq("user_id", userId).in("post_id", postIds);
+  if (error) {
+    console.error(error);
+    return {};
+  }
+  const out = {};
+  for (const r of data || []) {
+    out[r.post_id] = out[r.post_id] || new Set();
+    out[r.post_id].add(r.kind);
+  }
+  return out;
+}
+
+export async function toggleReactionChip(postId, userId, kind, on) {
+  if (!userId) return false;
+  if (on) {
+    const { error } = await supabase.from("post_reactions").delete().eq("post_id", postId).eq("user_id", userId).eq("kind", kind);
+    if (error) console.error(error);
+    return !error;
+  }
+  const { error } = await supabase
+    .from("post_reactions")
+    .upsert({ post_id: postId, user_id: userId, kind }, { onConflict: "post_id,user_id,kind" });
+  if (error) console.error(error);
+  return !error;
+}

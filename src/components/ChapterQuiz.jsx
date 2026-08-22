@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 
-function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
+function ChapterQuiz({ questions, chapterTitle, chapterId, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
+  const { user } = useUser();
+  const [missStat, setMissStat] = useState(null);
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState({ correct: 0, seen: 0 });
@@ -13,6 +17,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     if (i + 1 < questions.length) {
       setI(i + 1);
       setPicked(null);
+    setMissStat(null);
     } else {
       const pct = Math.round((currentScore.correct / questions.length) * 100);
       setDone(true);
@@ -24,6 +29,12 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
     if (picked !== null) return;
     setPicked(idx);
     const correct = idx === q.answer;
+    // Record the outcome, then read back the aggregate. Company on a hard
+    // question, without ever naming or counting who is online.
+    if (user?.id) {
+      recordAttempt({ userId: user.id, questionId: q.id, chapterId, correct });
+      if (!correct) fetchMissStats(q.id).then(setMissStat);
+    }
     const updatedScore = { correct: score.correct + (correct ? 1 : 0), seen: score.seen + 1 };
     onProgressChange?.(updatedScore.seen);
     if (correct) {
@@ -137,12 +148,20 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
           );
         })}
       </div>
+      {/* Aggregate, anonymous, and true regardless of who is online — the
+          accompaniment the brief asks for, without a headcount. */}
+      {missStat && missStat.missers > 1 && (
+        <p className="exam-company">{missStat.missers} pilots have also missed this one.</p>
+      )}
       {picked !== null && picked !== q.answer && (
         <button className="btn-primary exam-continue" onClick={next}>
           {i + 1 < questions.length ? "Next question" : "See results"} <ChevronRight size={16} />
         </button>
       )}
       <style>{`
+        .exam-company { font-size: 12.5px; color: var(--presence); background: var(--presence-soft);
+          border: 1px solid color-mix(in srgb, var(--presence) 26%, transparent); border-radius: var(--r-md);
+          padding: 9px 13px; margin: 12px 0 0; }
         .exam-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .exam-head-right { display: flex; align-items: center; gap: 10px; }
         .exam-count { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); }

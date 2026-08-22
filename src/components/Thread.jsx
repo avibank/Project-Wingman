@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowBigUp, MessageSquare, Trash2, ChevronDown } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { displayNameFor } from "../lib/social.js";
+import { REACTION_KINDS } from "../lib/discussion.js";
 
 export function timeAgo(iso) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -72,7 +73,7 @@ export function Composer({ placeholder, onSubmit, autoFocus = false, compact = f
 
 // One comment plus its replies. Nesting is drawn with an indent and a
 // connecting rail rather than a nested card.
-export function Comment({ node, depth = 0, myVote, onVote, onReply, onDelete }) {
+export function Comment({ node, depth = 0, myVote, onVote, onReply, onDelete, reactions = {}, mine: myChips, onChip }) {
   const { user } = useUser();
   const [collapsed, setCollapsed] = useState(false);
   const [replying, setReplying] = useState(false);
@@ -110,6 +111,18 @@ export function Comment({ node, depth = 0, myVote, onVote, onReply, onDelete }) 
               </button>
             )}
           </div>
+          {/* two-second participation: a tap, not a paragraph */}
+          <div className="cmt-chips">
+            {REACTION_KINDS.map(({ kind, label }) => {
+              const on = myChips?.has(kind);
+              const count = reactions[kind] || 0;
+              return (
+                <button key={kind} className={`chip-r ${on ? "is-on" : ""}`} onClick={() => onChip?.(node, kind, on)}>
+                  {label}{count > 0 && <span className="chip-n">{count}</span>}
+                </button>
+              );
+            })}
+          </div>
           {replying && (
             <Composer
               compact
@@ -123,7 +136,8 @@ export function Comment({ node, depth = 0, myVote, onVote, onReply, onDelete }) 
       {!collapsed && replies.length > 0 && (
         <div className="cmt-children">
           {replies.map((r) => (
-            <Comment key={r.id} node={r} depth={depth + 1} myVote={r.myVote} onVote={onVote} onReply={onReply} onDelete={onDelete} />
+            <Comment key={r.id} node={r} depth={depth + 1} myVote={r.myVote} onVote={onVote} onReply={onReply}
+              onDelete={onDelete} reactions={r.reactions} mine={r.myChips} onChip={onChip} />
           ))}
         </div>
       )}
@@ -181,6 +195,16 @@ export function ThreadStyles() {
       .cmt:hover > .cmt-main .cmt-del,
       .cmt-del:focus-visible { opacity: 1; }
       .cmt-del:hover { color: var(--bad); }
+      .cmt-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+      .chip-r { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--border-soft);
+        border-radius: var(--r-pill); padding: 4px 11px; color: var(--muted); font-size: 11.5px; cursor: pointer;
+        min-height: 30px; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease; }
+      .chip-r:hover { border-color: var(--border-hover); color: var(--text-soft); }
+      .chip-r.is-on { color: var(--presence); border-color: color-mix(in srgb, var(--presence) 40%, transparent);
+        background: var(--presence-soft); }
+      .chip-n { font-variant-numeric: tabular-nums; opacity: 0.8; }
+      .app.reduce-motion .chip-r { transition: none; }
+
       /* nesting: indent plus a connecting rail */
       .cmt-children { margin-left: 13px; padding-left: 16px; border-left: 1px solid var(--border-soft); }
       @media (max-width: 560px) { .cmt-children { margin-left: 6px; padding-left: 10px; } }

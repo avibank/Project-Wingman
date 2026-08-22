@@ -14,7 +14,7 @@ import { useUserProgress } from "../lib/userProgress.js";
 import { useUser } from "@clerk/clerk-react";
 import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs } from "../lib/social.js";
-import { fetchWingmen, recordStudyDay } from "../lib/partners.js";
+import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
 
 const MAX_RECENT = 5;
 
@@ -41,6 +41,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   // Chapters whose player the user has actually started; until then we show a
   // themed poster instead of YouTube's own chrome.
   const [startedVideos, setStartedVideos] = useState(new Set());
+  const [bump, setBump] = useState(null);
   const [rightTab, setRightTab] = useState("quiz");
   const [recentIds, setRecentIds] = useState([]);
   const [chapterProgress, setChapterProgress] = useState({});
@@ -105,6 +106,20 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
 
   const markComplete = (id, pct) => {
     logStudyDay();
+    if (user?.id) {
+      recordCompletion(user.id, id, activeModuleCode);
+      // If a wingman finished this same chapter nearby in time, say so.
+      fetchWingmen(user.id).then(async (pairs) => {
+        for (const w of pairs) {
+          const shared = await fetchSharedCompletions(user.id, w.wingman_user_id, 24);
+          if (shared.some((s) => s.chapter_id === id)) {
+            setBump(w.display_name || "Your wingman");
+            setTimeout(() => setBump(null), 6000);
+            break;
+          }
+        }
+      });
+    }
     setCompleted((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -354,6 +369,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                           onComplete={(pct) => markComplete(ch.id, pct)}
                           bookmarks={bookmarks}
                           onToggleBookmark={toggleBookmark}
+                          chapterId={ch.id}
                           onProgressChange={(seenCount) => updateChapterProgress(ch.id, seenCount)}
                         />
                         <div className="chapter-feedback">
@@ -385,6 +401,12 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           </div>
         )}
       </div>
+      {bump && (
+        <div className="bump" role="status">
+          <span className="bump-icon" aria-hidden="true">✦</span>
+          {bump} finished this one too. Nice formation.
+        </div>
+      )}
       {panel && (
         <SlideOver
           open
@@ -410,6 +432,16 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         </SlideOver>
       )}
       <style>{`
+        .bump { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 35;
+          display: flex; align-items: center; gap: 9px; background: var(--elev-1);
+          border: 1px solid color-mix(in srgb, var(--presence) 34%, transparent); border-radius: var(--r-pill);
+          padding: 10px 18px; font-size: 13px; color: var(--text); white-space: nowrap;
+          box-shadow: 0 8px 26px rgba(0,0,0,0.4), 0 0 0 5px var(--presence-glow);
+          animation: bumpIn 0.4s cubic-bezier(0.22,1,0.36,1); }
+        .bump-icon { color: var(--presence); }
+        @keyframes bumpIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        .app.reduce-motion .bump { animation: none; }
+        @media (prefers-reduced-motion: reduce) { .bump { animation: none; } }
         .chapter-social { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
         .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--elev-1); border: 1px solid var(--border-soft);
           border-radius: var(--r-pill); padding: 7px 13px; color: var(--text-soft); font-size: 12px; cursor: pointer; min-height: 36px;

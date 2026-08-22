@@ -10,6 +10,7 @@ import { fetchWingmen } from "../lib/partners.js";
 import {
   fetchThreads, createThread, fetchPosts, addPost, deletePost,
   votePost, fetchMyPostVotes, buildTree,
+  fetchReactions, fetchMyReactions, toggleReactionChip,
 } from "../lib/discussion.js";
 import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
 
@@ -57,6 +58,8 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const [open, setOpen] = useState(null);
   const [posts, setPosts] = useState([]);
   const [votes, setVotes] = useState({});
+  const [chips, setChips] = useState({});
+  const [myChips, setMyChips] = useState({});
   const [roster, setRoster] = useState([]);
   const [wingmen, setWingmen] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +86,12 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     if (!open) return;
     fetchPosts(open.id).then(async (rows) => {
       setPosts(rows);
-      if (user?.id) setVotes(await fetchMyPostVotes(user.id, rows.map((r) => r.id)));
+      const ids = rows.map((r) => r.id);
+      setChips(await fetchReactions(ids));
+      if (user?.id) {
+        setVotes(await fetchMyPostVotes(user.id, ids));
+        setMyChips(await fetchMyReactions(user.id, ids));
+      }
     });
   }, [open, user?.id]);
 
@@ -107,6 +115,17 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     await votePost(node.id, user?.id, next);
   };
 
+  // Optimistic, same as votes: the chip flips instantly.
+  const chip = async (node, kind, on) => {
+    setMyChips((m) => {
+      const next = new Set(m[node.id] || []);
+      on ? next.delete(kind) : next.add(kind);
+      return { ...m, [node.id]: next };
+    });
+    setChips((c) => ({ ...c, [node.id]: { ...(c[node.id] || {}), [kind]: Math.max(0, ((c[node.id]?.[kind]) || 0) + (on ? -1 : 1)) } }));
+    await toggleReactionChip(node.id, user?.id, kind, on);
+  };
+
   const remove = async (node) => {
     setPosts((p) => p.filter((x) => x.id !== node.id));
     await deletePost(node.id, user?.id);
@@ -121,7 +140,7 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     sort === "top" ? (b.reply_count || 0) - (a.reply_count || 0) : new Date(b.last_activity_at) - new Date(a.last_activity_at)
   );
 
-  const tree = buildTree(posts.map((p) => ({ ...p, myVote: votes[p.id] })));
+  const tree = buildTree(posts.map((p) => ({ ...p, myVote: votes[p.id], reactions: chips[p.id] || {}, myChips: myChips[p.id] })));
 
   // Your own history, so the feed is never empty on a first visit.
   const events = [{ id: "join", label: "Joined", text: moduleName }];
@@ -187,7 +206,8 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
           {open.body && <p className="soc-thread-body">{open.body}</p>}
           <div className="soc-comments">
             {tree.map((n) => (
-              <Comment key={n.id} node={n} myVote={votes[n.id]} onVote={vote} onReply={reply} onDelete={remove} />
+              <Comment key={n.id} node={n} myVote={votes[n.id]} onVote={vote} onReply={reply} onDelete={remove}
+                reactions={n.reactions} mine={n.myChips} onChip={chip} />
             ))}
           </div>
           {isSignedIn && <Composer placeholder="Add a comment" onSubmit={(t) => reply(null, t)} />}
