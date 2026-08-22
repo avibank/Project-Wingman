@@ -18,7 +18,7 @@ Read only the sections that step needs. §17 lists which.
 |---|---|---|---|
 | 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
 | 2 | Auto-squadrons + fill ladder | §7.1, §10 | **done** — needs migration 0005 to place anyone |
-| 3 | Presence as a data type | §8.3 | not started |
+| 3 | Presence as a data type | §8.3 | **invisible mode done** — transport blocked on Redis/SSE |
 | 4 | Safety primitives | §9 | **done** — image scanning still owed; rate limits in 0006 |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | **done** |
@@ -538,3 +538,37 @@ re-run, and independent of 0005 except that the opener function writes to
 
 Still owed from §9: EXIF stripping, image scanning, and tap-to-reveal for a first-time
 sender — all blocked on there being an upload path at all.
+
+## Step 3 — invisible mode
+
+`PilotSettings.jsx` in Settings: callsign, livery, study time, **Fly invisible**, and
+**Study glow**.
+
+The last two mattered most. Both flags were already honoured everywhere — the glow
+excludes invisible users from `n`, the presence rail and completion tip filter them,
+`ChaptersPanel` reads `glow_enabled` — and **neither could be set anywhere in the app**.
+They were effectively stuck at their defaults. §8.3 calls invisible mode mandatory and
+requires it in settings; §7.6 requires a toggle for the glow.
+
+Invisible mode's copy says what §8.3 requires it to mean: "You still see everyone.
+Nobody sees where you are, and nothing else changes." No penalty, no badge, no reduced
+matching.
+
+Toggles carry an "On"/"Off" readout beside the knob, so state is never position or
+colour alone (§13).
+
+### Fixed while building
+
+`patch()` had no error handling around the save. A rejected promise skipped
+`setBusy(false)`, leaving **every control on the panel disabled for the rest of the
+session** — caught because the harness stub's upsert chain rejects, and the whole panel
+went dead. It is a `finally` now.
+
+Verified in the harness: the save fails against the stub and the toggle rolls back to
+its previous value rather than claiming to have saved.
+
+### Still owed
+
+The transport. §8.3 wants SSE per squadron with a Redis store on a 5-minute TTL, and
+forbids writing presence to the primary database — which is what the app still does.
+That is step 3 proper and needs infrastructure that does not exist yet.
