@@ -19,13 +19,20 @@ function initials(name) {
 }
 
 // Composer that stays out of the way until focused.
-export function Composer({ placeholder, onSubmit, autoFocus = false, compact = false }) {
+export function Composer({ placeholder, onSubmit, autoFocus = false, compact = false, seed = "", seedKey = 0 }) {
   const [open, setOpen] = useState(autoFocus);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(seed);
   const [busy, setBusy] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => { if (open && ref.current) ref.current.focus(); }, [open]);
+  // A tapped prompt opens the composer already filled in, so the blank page
+  // never has to be faced.
+  useEffect(() => {
+    if (!seedKey) return;
+    setText(seed);
+    setOpen(true);
+  }, [seedKey, seed]);
 
   const submit = async () => {
     if (!text.trim()) return;

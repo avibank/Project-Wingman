@@ -246,14 +246,15 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           const seenCount = chapterProgress[ch.id] || 0;
           const progressPct = Math.min(100, Math.round((seenCount / ch.questions.length) * 100));
           return (
-            <div key={ch.id} className={`chapter ${isOpen ? "is-open" : ""}`}>
+            <div key={ch.id} className={`leg ${isOpen ? "is-open" : ""} ${isDone ? "is-done" : ""} ${isOpen && !isDone ? "is-current" : ""}`}>
+              <span className="leg-rail" aria-hidden="true">
+                <span className="leg-node">{isDone ? <Check size={11} strokeWidth={3} /> : <span className="leg-pip" />}</span>
+              </span>
+              <div className={`chapter ${isOpen ? "is-open" : ""}`}>
               <button className="chapter-head" onClick={() => openChapter(ch)}>
                 {!viewedIds.has(ch.id) && !isDone && <span className="chapter-unread-dot" aria-label="Unopened" />}
                 <span className="chapter-code">{ch.code}</span>
                 <span className="chapter-title">{ch.title}</span>
-                {isDone && (
-                  <span className="chapter-done" title="Completed"><Check size={12} strokeWidth={3} /></span>
-                )}
                 <span className="chapter-meta">{ch.questions.length} questions · {ch.duration}</span>
                 <ChevronRight size={16} className="chapter-chevron" />
               </button>
@@ -373,6 +374,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                   </div>
                 </div>
               )}
+              </div>
             </div>
           );
         })}
@@ -450,6 +452,32 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapters-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
         .chapters-empty-icon { color: var(--muted2); opacity: 0.6; }
         .chapters-empty p { margin: 0; max-width: 300px; }
+        /* Chapters as a flight plan: one connected route, waypoint per leg. */
+        .leg { position: relative; display: grid; grid-template-columns: 34px 1fr; align-items: start; }
+        .leg-rail { position: relative; display: flex; justify-content: center; padding-top: 22px; align-self: stretch; }
+        /* the route line, drawn between waypoints rather than around them */
+        .leg-rail::before { content: ""; position: absolute; top: 0; bottom: -14px; width: 2px;
+          background: linear-gradient(180deg, var(--border) 0%, var(--border) 100%); }
+        .leg:first-child .leg-rail::before { top: 22px; }
+        .leg:last-child .leg-rail::before { bottom: auto; height: 22px; }
+        .leg.is-done .leg-rail::before { background: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+        .leg-node { position: relative; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center;
+          justify-content: center; background: var(--elev-1); border: 1px solid var(--border-hover); color: var(--on-accent);
+          flex-shrink: 0; transition: box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease; }
+        .leg-pip { width: 5px; height: 5px; border-radius: 50%; background: var(--muted2); }
+        /* completed legs read as stamped */
+        .leg.is-done .leg-node { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+        /* the leg you are flying is the only thing that glows */
+        .leg.is-current .leg-node { border-color: var(--presence); background: var(--elev-2);
+          box-shadow: 0 0 0 4px var(--presence-glow); animation: legPulse 3.4s ease-in-out infinite; }
+        .leg.is-current .leg-pip { background: var(--presence); }
+        @keyframes legPulse {
+          0%,100% { box-shadow: 0 0 0 3px var(--presence-glow); }
+          50%     { box-shadow: 0 0 0 7px var(--presence-glow); }
+        }
+        .app.reduce-motion .leg.is-current .leg-node { animation: none; }
+        @media (prefers-reduced-motion: reduce) { .leg.is-current .leg-node { animation: none; } }
+        @media (max-width: 560px) { .leg { grid-template-columns: 24px 1fr; } }
         .chapter { border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; background: var(--panel); box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
         .chapter:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.16); }
         .chapter.is-open { border-color: var(--border-hover); }

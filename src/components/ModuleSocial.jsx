@@ -25,6 +25,18 @@ const STUDY_TIPS = [
   "Flag what you guessed, not just what you got wrong — a lucky guess is still a gap.",
 ];
 
+// Prompts are built from the module's own chapters, so they are always
+// relevant and never a blank page. Nothing here implies another user.
+function promptsFor(chapters) {
+  const shapes = [
+    (c) => `What surprised you most in ${c.code}?`,
+    (c) => `Which part of ${c.title.toLowerCase()} took longest to click?`,
+    (c) => `How would you explain ${c.title.toLowerCase()} to someone on day one?`,
+    (c) => `What tripped you up on the ${c.code} quiz?`,
+  ];
+  return chapters.slice(0, 4).map((c, i) => shapes[i % shapes.length](c));
+}
+
 const SUBS = [
   { id: "feed", label: "Feed" },
   { id: "threads", label: "Threads" },
@@ -48,6 +60,8 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const [roster, setRoster] = useState([]);
   const [wingmen, setWingmen] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [seed, setSeed] = useState("");
+  const [seedKey, setSeedKey] = useState(0);
 
   const chapters = chaptersForModule(moduleCode);
   const completed = new Set(progress.get("pw-completed", []));
@@ -180,7 +194,14 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
         </div>
       ) : (
         <div className="soc-threadlist">
-          {isSignedIn && <Composer placeholder="Start a thread" onSubmit={startThread} />}
+          {isSignedIn && <Composer placeholder="Start a thread" onSubmit={startThread} seed={seed} seedKey={seedKey} />}
+          <div className="soc-prompts">
+            {promptsFor(chapters).map((p) => (
+              <button key={p} className="soc-prompt" onClick={() => { setSeed(p); setSeedKey((k) => k + 1); }}>
+                {p}
+              </button>
+            ))}
+          </div>
           {loading ? (
             <p className="soc-muted">Coming up…</p>
           ) : sorted.length === 0 ? (
@@ -275,6 +296,17 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
         .soc-comments { margin: 14px 0; }
         .soc-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 13px; color: var(--text-soft); }
         .soc-people li { display: flex; align-items: center; gap: 8px; }
+        /* prompt cards: swipeable on touch, one tap to open a filled composer */
+        .soc-prompts { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; margin-bottom: 6px;
+          scroll-snap-type: x proximity; scrollbar-width: none; }
+        .soc-prompts::-webkit-scrollbar { display: none; }
+        .soc-prompt { flex: 0 0 auto; max-width: 250px; scroll-snap-align: start; text-align: left;
+          background: var(--elev-1); border: 1px solid var(--border-soft); border-radius: var(--r-md);
+          padding: 11px 14px; color: var(--text-soft); font-size: 12.5px; line-height: 1.4; cursor: pointer;
+          min-height: 44px; transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+        .soc-prompt:hover { border-color: var(--accent-dim); color: var(--text); transform: translateY(-2px); }
+        .app.reduce-motion .soc-prompt { transition: none; }
+        .app.reduce-motion .soc-prompt:hover { transform: none; }
         .soc-pinned { border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 13px 15px; margin-bottom: 16px;
           background: var(--presence-soft); }
         .soc-pin-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
