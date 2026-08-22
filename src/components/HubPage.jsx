@@ -237,12 +237,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
 
   const stats = [
     {
-      icon: CheckCircle2,
-      label: "Checklist",
-      value: completed.size ? `${completed.size}/${CHAPTERS.length}` : null,
-      empty: "Open your first chapter",
-    },
-    {
       icon: Target,
       label: "Quiz accuracy",
       value: quizAccuracy === null ? null : `${quizAccuracy}%`,
@@ -339,14 +333,10 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         <div className="hero-stats">
           <div className="instr-cell"><N1Dial pct={quizAccuracy ?? 0} label={quizAccuracy === null ? "Take a quiz to set your accuracy" : "Quiz accuracy"} size={96} /></div>
           <div className="instr-cell"><ValueTape value={streak} label="Streak" unit="days" /></div>
-          <div className="instr-cell instr-cell--text">
-            <div className="instr-value">{completed.size ? `${completed.size}/${CHAPTERS.length}` : "—"}</div>
-            <div className="instr-label">Checklist</div>
-          </div>
-          <div className="instr-cell instr-cell--text">
+          <button className="instr-cell instr-cell--text instr-cell--link" onClick={onReviewBookmarks}>
             <div className="instr-value">{bookmarkCount || "—"}</div>
-            <div className="instr-label">Bookmarks</div>
-          </div>
+            <div className="instr-label">Squawked{bookmarkCount ? " · review" : ""}</div>
+          </button>
         </div>
       </section>
 
@@ -449,6 +439,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           letter-spacing: 0.08em; color: var(--muted); margin: 0 0 14px; }
         .metar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
            }
+        .instr-cell--link { background: none; border: none; cursor: pointer; }
+        .instr-cell--link:hover .instr-label { color: var(--text-soft); }
         .instr-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 10px;
           border-right: 1px solid var(--border-soft); }
         .instr-cell:last-child { border-right: none; }
@@ -465,11 +457,12 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .mod .instr-motif { color: var(--id-hue, var(--accent)); right: -60px; width: 170px; height: 170px; opacity: 0.07; }
         .mod .mono-code { color: var(--id-hue, var(--accent-tint)); }
         /* Amber is the "come here next" signal, never identity. */
-        .mod.is-suggested { border-color: color-mix(in srgb, var(--presence) 34%, transparent); }
-        .mod.is-suggested::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
-          box-shadow: inset 0 0 34px var(--presence-glow); }
+        /* threshold light: a filled top edge, not a halo */
+        .mod.is-suggested { border-color: var(--border); }
+        .mod.is-suggested::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+          background: var(--presence); pointer-events: none; }
         .mod { transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), border-color 0.15s ease, box-shadow 0.22s ease; }
-        .mod:hover { transform: translateY(-3px); box-shadow: var(--shadow-2), 0 0 28px var(--presence-glow); }
+        .mod:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: var(--border-hover); }
         .app.reduce-motion .mod { transition: none; }
         .app.reduce-motion .mod:hover { transform: none; }
 
@@ -503,7 +496,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
         .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none;
           border-radius: var(--r-md); padding: 12px 18px; font-family: var(--font-display); font-weight: 700; font-size: 13.5px;
-          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 0 0 1px var(--accent-dim), 0 6px 20px var(--accent-glow);
+          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 6px 18px rgba(0,0,0,0.30);
           transition: background 0.18s ease, transform 0.18s ease; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn-primary:active { transform: scale(0.98); }
@@ -515,7 +508,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .btn-quiet-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
 
         /* stats: a supporting strip, not a second grid of destinations */
-        .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
+        .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
         .stat { padding: 13px 16px; border-right: 1px solid var(--border-soft); min-width: 0; }
         .stat:last-child { border-right: none; }
         .stat-icon { color: var(--muted2); }
@@ -557,7 +550,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .mod-lock { color: var(--muted2); }
         .mod-name { font-family: var(--font-display); font-size: 15.5px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.3; }
         .mod-bar { height: 4px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; box-shadow: var(--shadow-inset); }
-        .mod-fill { height: 100%; border-radius: var(--r-pill); background: var(--id-hue, var(--accent)); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .mod-fill { height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg, color-mix(in srgb, var(--id-hue, var(--accent)) 45%, transparent), var(--id-hue, var(--accent))); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
         .mod-fill.is-muted { background: var(--muted2); }
         .mod-meta { font-size: 12px; color: var(--muted); margin: 0; }
         .mod-actions { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 4px; }

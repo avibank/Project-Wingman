@@ -58,6 +58,7 @@ function StreakMenu({ streak, overrideStreak }) {
       <button className="streak-trigger" onClick={() => setOpen((o) => !o)} aria-label="Streak details" aria-expanded={open}>
         <WindsockIcon size={18} active={displayStreak > 0} />
         <span>{displayStreak}</span>
+        <span className="streak-word">day{displayStreak === 1 ? "" : "s"}</span>
       </button>
       {open && (
         <div className="streak-dropdown">
@@ -85,6 +86,8 @@ function StreakMenu({ streak, overrideStreak }) {
       )}
       <style>{`
         .streak-menu { position: relative; }
+        .streak-word { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); letter-spacing: 0.04em; }
+        @media (max-width: 520px) { .streak-word { display: none; } }
         .streak-trigger { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 11.5px; color: var(--text); background: var(--elev-1); border: 1px solid var(--border); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
         .streak-trigger:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 10px var(--accent-soft); }
         .streak-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 280px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 14px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: streakIn 0.15s ease-out; }

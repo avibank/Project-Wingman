@@ -350,6 +350,20 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       </span>
                     )}
                   </div>
+                  <aside className="manifest">
+                    <p className="manifest-label">In this module</p>
+                    <ol className="manifest-list">
+                      {moduleChapters.map((mc) => (
+                        <li key={mc.id} className={`manifest-item ${mc.id === ch.id ? "is-here" : ""} ${completed.has(mc.id) ? "is-done" : ""}`}>
+                          <button onClick={() => mc.id !== ch.id && openChapter(mc)}>
+                            <span className="manifest-code">{mc.code}</span>
+                            <span className="manifest-title">{mc.title}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="manifest-meta">{completed.size} of {moduleChapters.length} logged</p>
+                  </aside>
                   <div className="chapter-side">
                     <div className="chapter-side-tabs">
                       <button className={`chapter-side-tab ${rightTab === "quiz" ? "is-active" : ""}`} onClick={() => setRightTab("quiz")}>
@@ -442,6 +456,21 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         @keyframes bumpIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
         .app.reduce-motion .bump { animation: none; }
         @media (prefers-reduced-motion: reduce) { .bump { animation: none; } }
+        .manifest { grid-column: 1 / -1; border-top: 1px solid var(--border-soft); margin-top: 16px; padding-top: 14px; }
+        .manifest-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+          color: var(--muted); margin: 0 0 9px; }
+        .manifest-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+        .manifest-item button { display: flex; align-items: baseline; gap: 9px; width: 100%; text-align: left; background: none;
+          border: none; padding: 7px 2px; cursor: pointer; font-size: 12.5px; color: var(--muted); }
+        .manifest-item button:hover { color: var(--text-soft); }
+        .manifest-item.is-here button { color: var(--text); cursor: default; }
+        .manifest-item.is-here .manifest-code { color: var(--presence); }
+        .manifest-item.is-done .manifest-title { color: var(--muted2); }
+        .manifest-code { font-family: var(--font-mono); font-size: 10.5px; color: var(--accent-tint); flex-shrink: 0; }
+        .manifest-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .manifest-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted2); margin: 8px 0 0; }
+        @media (min-width: 900px) { .manifest { grid-column: auto; border-top: none; border-left: 1px solid var(--border-soft);
+          margin-top: 0; padding-top: 0; padding-left: 18px; } }
         .chapter-social { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
         .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--elev-1); border: 1px solid var(--border-soft);
           border-radius: var(--r-pill); padding: 7px 13px; color: var(--text-soft); font-size: 12px; cursor: pointer; min-height: 36px;
