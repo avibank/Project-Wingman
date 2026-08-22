@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronRight, Radio } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS, NAV, PDFS, chaptersForModule } from "../data.js";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs, displayNameFor } from "../lib/social.js";
 import { fetchModulePresence } from "../lib/presence.js";

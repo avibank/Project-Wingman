@@ -19,13 +19,15 @@ import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
 import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
-import { useUserProgress } from "./lib/userProgress.js";
+import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <UserProgressProvider>
       <AppInner />
+      </UserProgressProvider>
     </ClerkProvider>
   );
 }

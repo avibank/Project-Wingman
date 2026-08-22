@@ -10,7 +10,7 @@ import { countAnnotations } from "../lib/notebook.js";
 import { countThreads } from "../lib/discussion.js";
 import { fetchChapterPresence, heartbeat } from "../lib/presence.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 import { useUser } from "@clerk/clerk-react";
 import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs } from "../lib/social.js";

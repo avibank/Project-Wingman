@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Flame, BookMarked, CheckCircle2 } from "lucide-react";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 import { CHAPTERS } from "../data.js";
 
 function ProgressPage({ onBack }) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, X, Layers, Briefcase } from "lucide-react";
 import { loadJSON, saveJSON } from "../lib/storage.js";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 import { CHAPTERS } from "../data.js";
 import FlashcardMode from "./FlashcardMode.jsx";
 

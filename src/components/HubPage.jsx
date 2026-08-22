@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Radio, Star, Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass, Search } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS, chaptersForModule } from "../data.js";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
 import { fetchAllPresence } from "../lib/presence.js";
 import { fetchWingmen } from "../lib/partners.js";

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { WindsockIcon } from "./icons.jsx";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 

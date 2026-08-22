@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { CHAPTERS, chaptersForModule } from "../data.js";
-import { useUserProgress } from "../lib/userProgress.js";
+import { useUserProgress } from "../lib/userProgress.jsx";
 import { useIsAdmin } from "../lib/admin.js";
 import { useSocialPrefs, displayNameFor } from "../lib/social.js";
 import { fetchModulePresence } from "../lib/presence.js";
