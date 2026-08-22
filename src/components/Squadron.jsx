@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { fetchSquadron, fetchRoster, seatLayout, assignMarkings } from "../lib/squadron.js";
+import { chaptersForModule } from "../data.js";
+import { fetchSquadron, fetchRoster, seatLayout, assignMarkings, fetchModuleProgress } from "../lib/squadron.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 import PilotSheet from "./PilotSheet.jsx";
+import { RadarScope, InstrumentStyles } from "./instruments.jsx";
 
 // §7.1 — a squadron below ten is Forming, and says so. It shows its real
 // members at full size rather than padding the grid, and open seats render as
@@ -21,6 +23,7 @@ function Squadron({ moduleCode, onOpenPilot }) {
   const { user, isSignedIn } = useUser();
   const [state, setState] = useState({ status: "loading", squadron: null, roster: [] });
   const [sheet, setSheet] = useState(null);
+  const [pcts, setPcts] = useState({});
 
   useEffect(() => {
     if (!isSignedIn || !user?.id || !moduleCode) return;
@@ -31,6 +34,12 @@ function Squadron({ moduleCode, onOpenPilot }) {
       if (!squadron) { setState({ status: "none", squadron: null, roster: [] }); return; }
       const roster = await fetchRoster(user.id, squadron.id);
       if (!live) return;
+      const total = chaptersForModule(moduleCode).length;
+      const progress = await fetchModuleProgress(
+        [...(roster || []).map((r) => r.user_id), user.id], moduleCode, total
+      );
+      if (!live) return;
+      setPcts(progress);
       setState({ status: "ready", squadron, roster: assignMarkings(roster || [], hueOf) });
     })().catch(() => live && setState({ status: "error", squadron: null, roster: [] }));
     return () => { live = false; };
@@ -46,7 +55,7 @@ function Squadron({ moduleCode, onOpenPilot }) {
         <p className="sq-quiet">
           Pick a module and a study time and we'll put you with pilots flying the same material.
         </p>
-        <SquadronStyles />
+      <SquadronStyles />
       </div>
     );
   }
@@ -61,6 +70,15 @@ function Squadron({ moduleCode, onOpenPilot }) {
       </div>
 
       {seats.forming && <p className="sq-forming">{seats.label}</p>}
+
+      {/* This view's one instrument (§5). The roster says who; the scope says
+          where, with radial distance as distance through the module. */}
+      <RadarScope
+        contacts={state.roster.map((m) => ({ ...m, pct: pcts[m.user_id] ?? 0 }))}
+        you={pcts[user?.id] ?? 0}
+        size={148}
+        onPick={(p) => setSheet(p)}
+      />
 
       <ul className="sq-grid">
         {state.roster.map((m) => (
@@ -90,6 +108,7 @@ function Squadron({ moduleCode, onOpenPilot }) {
 function SquadronStyles() {
   return (
     <>
+      <InstrumentStyles />
       <TailStyles />
       <style>{`
         .sq { padding: 4px 0 8px; }

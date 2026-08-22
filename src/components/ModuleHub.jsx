@@ -8,7 +8,7 @@ import { useSocialPrefs, displayNameFor } from "../lib/social.js";
 import { fetchModulePresence } from "../lib/presence.js";
 import { fetchThreads } from "../lib/discussion.js";
 import { fetchWingmen } from "../lib/partners.js";
-import { ModuleMotif, N1Dial, InstrumentStyles } from "./instruments.jsx";
+import { ModuleMotif, ProgressArc, InstrumentStyles } from "./instruments.jsx";
 import ChaptersPanel from "./ChaptersPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
 import ModuleSocial from "./ModuleSocial.jsx";
@@ -67,7 +67,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
             {done}/{chapters.length} chapters complete
           </p>
         </div>
-        <N1Dial pct={pct} label="Module" size={96} />
+        <ProgressArc pct={pct} label="Module" size={96} />
       </header>
 
       <nav className="hub2-tabs" aria-label={`${module.name} sections`}>

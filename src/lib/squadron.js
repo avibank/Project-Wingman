@@ -82,6 +82,28 @@ export async function fetchProfiles(ids = []) {
   return Object.fromEntries((data || []).map((r) => [r.user_id, r]));
 }
 
+// §5 — the radar's radial distance is how far ahead or behind someone is in
+// this module, so it needs a real percentage per member. Anyone with no
+// completions is genuinely at 0, not missing.
+export async function fetchModuleProgress(userIds = [], moduleCode, totalChapters = 0) {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (!ids.length || !moduleCode || !totalChapters) return {};
+  const { data, error } = await supabase
+    .from("chapter_completions")
+    .select("user_id, chapter_id, module_code")
+    .eq("module_code", moduleCode)
+    .in("user_id", ids);
+  if (error) return fail(error, {});
+  const seen = {};
+  for (const row of data || []) {
+    if (row.module_code !== moduleCode) continue;         // belt and braces
+    (seen[row.user_id] = seen[row.user_id] || new Set()).add(row.chapter_id);
+  }
+  return Object.fromEntries(
+    ids.map((id) => [id, Math.round(((seen[id]?.size || 0) / totalChapters) * 100)])
+  );
+}
+
 // §7.1 screen 1 shows real pilots who are already flying. If there are none
 // yet, it returns an empty list and the screen says what to do next -- it never
 // backfills. §1, non-negotiable 3.

@@ -89,37 +89,31 @@ export function ValueTape({ value = 0, label, unit = "", hue }) {
   );
 }
 
-// -------------------------------------------------------------------- N1 dial
-// Radial gauge in the style of an N1 readout: arc sweep, tick ring, digital
-// window beneath the pointer.
-export function N1Dial({ pct = 0, label, hue, size = 108 }) {
+// ---------------------------------------------------------------- progress arc
+// §5 — the speed-dial gauge is gone: no needle, no ticks, no hub. What is left
+// is an indicator, not an instrument, which is the point — a view may hold only
+// one instrument and this was never the one worth spending it on.
+export function ProgressArc({ pct = 0, label, size = 96 }) {
   const START = -120;
   const SWEEP = 240;
-  const r = size / 2 - 12;
+  const r = size / 2 - 8;
   const c = 2 * Math.PI * r;
   const arc = c * (SWEEP / 360);
-  const filled = arc * (Math.max(0, Math.min(100, pct)) / 100);
+  const value = Math.max(0, Math.min(100, pct));
+  const filled = arc * (value / 100);
   const cx = size / 2;
-  const deg = START + (Math.max(0, Math.min(100, pct)) / 100) * SWEEP;
+  const common = {
+    cx, cy: cx, r, fill: "none", strokeWidth: 2, strokeLinecap: "round",
+    transform: `rotate(${90 + START} ${cx} ${cx})`,
+  };
   return (
-    <div className="dial">
+    <div className="arc">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-        <circle cx={cx} cy={cx} r={r} fill="none" strokeWidth="6" className="dial-track"
-          strokeDasharray={`${arc} ${c}`} transform={`rotate(${90 + START} ${cx} ${cx})`} />
-        <circle cx={cx} cy={cx} r={r} fill="none" strokeWidth="6" strokeLinecap="round" className="dial-fill"
-          strokeDasharray={`${filled} ${c}`} transform={`rotate(${90 + START} ${cx} ${cx})`} />
-        {[0, 25, 50, 75, 100].map((t) => {
-          const a = ((START + (t / 100) * SWEEP - 90) * Math.PI) / 180;
-          const ro = r + 8;
-          return <line key={t} className="dial-tick"
-            x1={cx + Math.cos(a) * ro} y1={cx + Math.sin(a) * ro}
-            x2={cx + Math.cos(a) * (ro - 5)} y2={cx + Math.sin(a) * (ro - 5)} />;
-        })}
-        <line className="dial-pointer" x1={cx} y1={cx} x2={cx} y2={cx - r + 8}
-          transform={`rotate(${deg} ${cx} ${cx})`} />
-        <circle className="dial-hub" cx={cx} cy={cx} r="4" />
+        <circle {...common} className="arc-track" strokeDasharray={`${arc} ${c}`} />
+        <circle {...common} className="arc-fill" strokeDasharray={`${filled} ${c}`} />
       </svg>
-      <div className="dial-readout">{Math.round(pct)}<small>%</small></div>
+      {/* §5 — every instrument carries a plain numeric readout beside it. */}
+      <div className="arc-readout">{Math.round(value)}<small>%</small></div>
       <div className="instr-label">{label}</div>
     </div>
   );
@@ -156,26 +150,59 @@ export function SplitFlap({ text, className = "" }) {
 // ------------------------------------------------------------------ radar scope
 // Range rings with a blip per active pilot, positioned deterministically from
 // the user id so a given person keeps the same bearing between renders.
-export function RadarScope({ contacts = [], size = 132 }) {
+// §5 — the radar was decoration: blips at a hashed angle and a hashed radius,
+// signifying nothing. Now radial distance is how far ahead or behind someone is
+// in this module, and angle is arbitrary but stable per member, so a person
+// keeps their bearing between visits. Tapping a dot opens that person.
+//
+// `contacts` are { user_id, callsign, livery, pct }. `pct` is theirs; `you` is
+// yours. Centre is your position.
+export function RadarScope({ contacts = [], you = 0, size = 148, onPick }) {
   const c = size / 2;
+  const usable = c - 12;
+
+  const placed = contacts.map((ct, i) => {
+    const seed = String(ct.user_id ?? i)
+      .split("")
+      .reduce((h, ch) => ch.charCodeAt(0) + ((h << 5) - h), 0);
+    const angle = ((Math.abs(seed) % 360) * Math.PI) / 180;
+    // Full radius = a whole module apart. Clamped so nobody leaves the scope.
+    const delta = Math.max(-100, Math.min(100, (ct.pct ?? 0) - you));
+    const dist = Math.min(1, Math.abs(delta) / 100);
+    return {
+      ...ct, delta, angle,
+      x: c + Math.cos(angle) * usable * dist,
+      y: c + Math.sin(angle) * usable * dist,
+    };
+  });
+
   return (
     <div className="radar">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-        {[0.33, 0.66, 1].map((f) => <circle key={f} className="radar-ring" cx={c} cy={c} r={(size / 2 - 4) * f} fill="none" />)}
-        <line className="radar-ring" x1={c} y1="4" x2={c} y2={size - 4} />
-        <line className="radar-ring" x1="4" y1={c} x2={size - 4} y2={c} />
-        <g className="radar-sweep" style={{ transformOrigin: `${c}px ${c}px` }}>
-          <path d={`M ${c} ${c} L ${c} 4 A ${c - 4} ${c - 4} 0 0 1 ${c + (c - 4) * 0.5} ${c - (c - 4) * 0.866} Z`} className="radar-wedge" />
-        </g>
-        {contacts.map((ct, i) => {
-          const seed = String(ct.user_id || i).split("").reduce((h, ch) => ch.charCodeAt(0) + ((h << 5) - h), 0);
-          const angle = (Math.abs(seed) % 360) * (Math.PI / 180);
-          const dist = 0.32 + ((Math.abs(seed >> 3) % 60) / 100);
-          return <circle key={ct.user_id || i} className="radar-blip"
-            cx={c + Math.cos(angle) * (c - 8) * dist} cy={c + Math.sin(angle) * (c - 8) * dist} r="3" />;
-        })}
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img"
+        aria-label={`${placed.length} squadron members relative to your position`}>
+        {[0.33, 0.66, 1].map((f) => (
+          <circle key={f} className="radar-ring" cx={c} cy={c} r={usable * f} fill="none" />
+        ))}
+        <circle className="radar-you" cx={c} cy={c} r="3" />
+        {placed.map((p) => (
+          <g key={p.user_id} className="radar-contact"
+            onClick={() => onPick?.(p)} style={{ cursor: onPick ? "pointer" : "default" }}>
+            <title>{`${p.callsign || "Pilot"} — ${
+              p.delta === 0 ? "level with you"
+              : p.delta > 0 ? `${Math.round(p.delta)}% ahead`
+              : `${Math.round(-p.delta)}% behind`}`}</title>
+            {/* a generous invisible target: the visible dot is 4px */}
+            <circle cx={p.x} cy={p.y} r="14" fill="transparent" />
+            <circle className={`radar-blip ${p.delta >= 0 ? "is-ahead" : "is-behind"}`}
+              cx={p.x} cy={p.y} r="4" style={{ "--blip": `var(--tail-${p.livery || "dawn-patrol"})` }} />
+          </g>
+        ))}
       </svg>
-      <div className="instr-label">{contacts.length ? `${contacts.length} contact${contacts.length === 1 ? "" : "s"}` : "Check in to appear here"}</div>
+      <div className="instr-label">
+        {placed.length
+          ? `${placed.length} in this module · you at ${Math.round(you)}%`
+          : "Open a chapter and your squadron appears here"}
+      </div>
     </div>
   );
 }
@@ -218,17 +245,14 @@ export function InstrumentStyles() {
       .tape-box { position: absolute; left: 3px; right: 3px; top: 50%; height: 24px; transform: translateY(-50%);
         border-top: 1px solid var(--border-hover); border-bottom: 1px solid var(--border-hover); }
 
-      /* N1 dial */
-      .dial { position: relative; display: flex; flex-direction: column; align-items: center; }
-      .dial-track { stroke: var(--well); }
-      .dial-fill { stroke: var(--accent); transition: stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1); }
-      .dial-tick { stroke: var(--muted2); stroke-width: 1.5; opacity: 0.65; }
-      .dial-pointer { stroke: var(--accent); stroke-width: 2; stroke-linecap: round;
-        transition: transform 0.6s cubic-bezier(0.22,1,0.36,1); }
-      .dial-hub { fill: var(--border-hover); }
-      .dial-readout { position: absolute; top: 62%; font-family: var(--font-mono); font-size: 15px;
-        color: var(--text); font-variant-numeric: tabular-nums; }
-      .dial-readout small { font-size: 0.62em; color: var(--muted2); }
+      /* progress arc */
+      .arc { display: flex; flex-direction: column; align-items: center; position: relative; }
+      .arc-track { stroke: var(--hairline); }
+      .arc-fill { stroke: var(--cold); transition: stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1); }
+      .arc-readout { position: absolute; top: 44%; transform: translateY(-50%);
+        font-family: var(--font-mono); font-size: 20px; color: var(--text-1);
+        font-variant-numeric: tabular-nums; }
+      .arc-readout small { font-size: 12px; color: var(--text-3); }
 
       /* split-flap */
       .flap { display: inline-flex; flex-wrap: wrap; }
@@ -241,22 +265,21 @@ export function InstrumentStyles() {
       }
 
       /* radar */
-      .radar { display: flex; flex-direction: column; align-items: center; }
-      .radar-ring { stroke: var(--border); stroke-width: 1; opacity: 0.7; }
-      .radar-wedge { fill: var(--presence); opacity: 0.09; }
-      .radar-sweep { animation: radarSpin 4.2s linear infinite; }
-      @keyframes radarSpin { to { transform: rotate(360deg); } }
-      .radar-blip { fill: var(--presence); filter: drop-shadow(0 0 3px var(--accent-glow)); }
+      .radar { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      .radar-you { fill: var(--text-1); }
+      .radar-blip { fill: var(--blip); }
+      /* Direction is not carried by colour alone: behind reads as an outline. */
+      .radar-blip.is-behind { fill: none; stroke: var(--blip); stroke-width: 1.5; }
+      .radar-contact:focus-visible { outline: 2px solid var(--warm); }
+      .radar-ring { stroke: var(--hairline); stroke-width: 1; }
 
       .app.reduce-motion .bezel::before,
       .app.reduce-motion .tape-strip,
-      .app.reduce-motion .dial-fill,
-      .app.reduce-motion .dial-pointer { transition: none; }
-      .app.reduce-motion .radar-sweep,
+      .app.reduce-motion .arc-fill { transition: none; }
       .app.reduce-motion .flap-ch.is-flipping { animation: none; }
       @media (prefers-reduced-motion: reduce) {
-        .bezel::before, .tape-strip, .dial-fill, .dial-pointer { transition: none; }
-        .radar-sweep, .flap-ch.is-flipping { animation: none; }
+        .bezel::before, .tape-strip, .arc-fill { transition: none; }
+        .flap-ch.is-flipping { animation: none; }
       }
     `}</style>
   );

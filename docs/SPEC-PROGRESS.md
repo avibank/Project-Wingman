@@ -26,7 +26,7 @@ Read only the sections that step needs. §17 lists which.
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | **partial** — scheduler and notifications pending |
 | 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
 | 10 | Livery picker + wash | §7.11, §2.11 | **done** |
-| 11 | Instruments, Formation, desktop | §5, §7.9, §12 | not started |
+| 11 | Instruments, Formation, desktop | §5, §7.9, §12 | **partial** — instruments done; Formation and desktop pending |
 
 ## Step 1 — done
 
@@ -385,3 +385,43 @@ silently expire", and it should not have depended on cron.
 
 - The scheduler itself, and §11's notification delivery with its caps and quiet window.
 - Rate limits on Calls (§9) — Postgres-side, like the others.
+
+## Step 11 — instruments done
+
+**The speed-dial gauge is gone.** `N1Dial` had a needle, a tick ring and a hub. §5
+deletes it in favour of a thin cold-channel arc, 2px, no ticks, no needle — so it is
+now `ProgressArc`, an *indicator*. That matters: a view may hold one instrument, and
+this was never the one worth spending it on. Its numeric readout stayed.
+
+**The radar is real.** It used to hash the user id into an angle *and* a radius, so a
+blip's distance from centre meant nothing at all. Now radial distance is how far ahead
+or behind that person is in this module, centre is your own position, and the angle is
+still hashed — arbitrary but stable, so someone keeps their bearing between visits.
+Tapping a dot opens that person. `fetchModuleProgress` supplies real percentages from
+`chapter_completions`; anyone with none is genuinely at 0, not missing.
+
+It lives with the squadron roster: the roster says who, the scope says where. That
+makes it the Squadron view's one instrument.
+
+### Verified
+
+With a squadron of three and my own progress at 1 of 4 chapters, the scope read
+"3 in this module · you at 25%" and placed A. Nakamura (3/4) furthest out at "50%
+ahead", M. Iqbal (2/4) halfway at "25% ahead", and K. Osei (1/4) exactly at centre,
+"level with you". Each blip paints in its owner's livery. Ahead is a filled dot,
+behind is an outlined ring — direction is not carried by colour alone (§13).
+
+### Two bugs found by rendering it
+
+- `<InstrumentStyles />` landed inside the not-ready early return rather than the main
+  render, so the radar drew completely unstyled — black blips on no rings.
+- A `.radar-blip { fill: var(--presence) }` rule from the decorative version was still
+  in the sheet, later in source order, and won. The old sweep wedge and its animation
+  went with it.
+
+### Still owed
+
+- **Formation** (§7.9) — 2–6 people on one chapter, a slim rail of tails and positions,
+  no leaderboard, no timer, no score. Tables exist in 0005.
+- **The desktop three-column** (§12). The phone bottom tab bar it depends on is the same
+  IA change noted above, so this is blocked on that decision rather than on code.
