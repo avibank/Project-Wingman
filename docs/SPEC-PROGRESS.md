@@ -24,7 +24,7 @@ Read only the sections that step needs. §17 lists which.
 | 6 | Social tab | §7.3, §8.2 | **partial** — rail + vocabulary done, Formation and On-your-wing pending |
 | 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
-| 9 | Comms as chat | §7.8, §2.12 | not started |
+| 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
 | 10 | Livery picker + wash | §7.11, §2.11 | **done** |
 | 11 | Instruments, Formation, desktop | §5, §7.9, §12 | not started |
 
@@ -291,3 +291,38 @@ target removed from the list on success. Rows are 56px. No console errors.
 - Rate limits on composer posts, Calls and Formation invites. These have to be enforced
   in Postgres to mean anything; a client-side guard would be decoration.
 - Leaving a squadron and being reassigned by the fill ladder.
+
+## Step 9 — partial
+
+`Comms.jsx` is the channel. Avatars left, consecutive messages from one sender grouped,
+day dividers, inline reactions, and every message carrying a 2px leading edge in its
+sender's warm channel (§2.8 case 3). No threads, no upvotes, no accepted answers, no
+karma — the three aviation-native additions are all that was added: a chapter chip, pin
+to chapter, and filter to the chapter you're on.
+
+The squadron livery paints the header via `data-livery` on the Comms container rather
+than on the root, so the surface changes without repainting the rest of the cockpit
+(§2.12 with §2.8).
+
+`groupMessages` lives in `commsGrouping.js` with no client import so its rules are
+testable on their own. Verified: two messages inside the five-minute window group, an
+hour-later message from the same sender starts a new group, and a day boundary breaks a
+group even when the two messages are two minutes apart. The first version of that test
+used UTC midnight and passed for the wrong reason — dividers are local-day.
+
+### Three fixed after seeing it render
+
+- **The log read newest-first.** `fetchMessages` ordered descending and then reversed,
+  which is only correct if the driver honours `.order()`. It now sorts by timestamp
+  itself. A reversed channel is not subtly wrong, it is unreadable.
+- **The pinned strip showed every message**, for the same reason — it now filters
+  `pinned_to` in JS as well as in the query.
+- **The header was invisible.** 8% of the warm channel over `--surface-1`, against a
+  log that also uses `--surface-1`, is no header at all. Now 14% in oklab over
+  `--surface-2`: L 0.318 against the log's 0.19.
+
+### Still owed from §7.8
+
+- Pasteable images. Blocked on §9 — EXIF stripping, scanning, and tap-to-reveal have to
+  exist before an upload path does.
+- Typing indicators. Needs the realtime channel that step 3 is waiting on.
