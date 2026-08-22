@@ -405,7 +405,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .profile-page-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
         .profile-page-tabs button { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 12.5px; padding: 8px 4px; border-radius: var(--r-sm); cursor: pointer; }
         .profile-page-tabs button.is-active { background: var(--panel); color: var(--text); }
-        .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 6px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 8px; margin-bottom: 12px; }
         .settings-group-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); padding: 10px 14px 4px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }

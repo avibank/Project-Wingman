@@ -468,7 +468,7 @@ function AppInner() {
         .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); color: var(--muted); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; }
+        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--elev-1); border: 1px solid var(--border); color: var(--muted); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; }
         .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
         .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
         .module-banner { position: relative; padding: 26px 22px 18px; }

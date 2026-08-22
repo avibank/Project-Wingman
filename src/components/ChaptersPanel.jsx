@@ -310,7 +310,7 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
         }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
         .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); padding: 4px 0; }
-        .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--well); border: 1px solid var(--border); box-shadow: var(--shadow-inset); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
         .chapters-search input::placeholder { color: var(--muted); }
@@ -318,7 +318,7 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
         .recent-row { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }
         .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--muted2); text-transform: uppercase; }
         .recent-row-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
-        .recent-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-md); padding: 8px 12px; cursor: pointer; max-width: 160px; text-align: left; }
+        .recent-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--elev-1); border: 1px solid var(--border); border-radius: var(--r-md); padding: 8px 12px; cursor: pointer; max-width: 160px; text-align: left; }
         .recent-chip:hover { border-color: var(--accent); }
         .recent-chip-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
         .recent-chip-title { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
