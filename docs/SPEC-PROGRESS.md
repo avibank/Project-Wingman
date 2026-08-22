@@ -638,3 +638,53 @@ stating an absence at all. Six survived.
 Swept all 13 routes for a line that is nothing but `—`, `-`, `N/A` or `0`: clean. The
 two apparent zeros on the Flight Deck are single characters inside the split-flap
 board — "JT.02" contains one.
+
+## §18 audit — contrast
+
+§18 asks that a grayscale screenshot of every screen stay legible. Contrast ratio is the
+mechanical proxy, so every text node on all 15 routes was measured: foreground composited
+over its real backdrop, ratios against 4.5:1 for body text and 3:1 for large.
+
+**73 failures.** After the fixes below, **zero**.
+
+### The measurement had to be built correctly first
+
+The first pass reported a ratio of exactly 1.00 almost everywhere, which is not a
+plausible result — it meant the parser was reading `oklch(0.8 0.135 55)` as an RGB
+triple `(0.8, 0.135, 55)`. Everything in this app is authored in oklch. The audit now
+paints each computed colour into a 1×1 canvas and reads the pixel back, so any colour
+space resolves, and composites through translucent ancestors to find the real backdrop.
+
+### The cause was one token
+
+`--text-3` measured **3.37:1 on surface-1 and 3.00:1 on surface-2** at night. Almost
+every failure was that token: seat names, "2 questions ahead", "3 of 12", pinned-message
+bodies, switch state labels.
+
+**§2.13's contrast table verifies `text-1` and `text-2`. It never covered `text-3`.**
+The spec's own table is not wrong; it is silent. And text-3 is not decorative — it
+carries real labels people read.
+
+Raised to the measured minimum, checked against **all six liveries in both variants**
+rather than one representative hue. The worst case is Carrier Deck / night / surface-2:
+
+| | §2.5 as written | now | worst case, all liveries |
+|---|---|---|---|
+| night | L 0.52 | L 0.64 | 3.00 → 4.86 |
+| day | L 0.60 | L 0.515 | 3.41 → 4.82 |
+
+This is a deliberate deviation from §2.5's stated lightness, recorded in the generator
+next to the numbers. The channel hues and every other surface still match the published
+table at 0/255.
+
+### The other real failure
+
+`.video-facade-kicker` — "Briefing video · 14:50" over a YouTube thumbnail, at 2.33:1.
+A scrim cannot guarantee a ratio when the image beneath it is arbitrary, so the label
+carries its own backing now.
+
+### Not counted
+
+Disabled controls. WCAG 1.4.3 exempts inactive components, and the Send button and Save
+button both measure below threshold only while disabled. They are meant to read as
+unavailable.

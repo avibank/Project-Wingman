@@ -654,8 +654,12 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .video-facade { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: none; cursor: pointer;
           background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
         .video-facade-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,14,26,0.35) 0%, rgba(7,14,26,0.78) 100%); }
+        /* Sits over a YouTube thumbnail, so the scrim alone cannot guarantee
+           a ratio -- the image underneath is arbitrary. It carries its own
+           backing and full-strength text: it measured 2.33:1 before. */
         .video-facade-kicker { position: absolute; left: 12px; bottom: 11px; font-family: var(--font-mono); font-size: 10px;
-          letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-soft); opacity: 0.85; }
+          letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-1);
+          background: rgb(0 0 0 / 0.62); padding: 3px 7px; border-radius: 6px; }
         .video-facade-play { position: relative; display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%;
           background: color-mix(in srgb, var(--accent) 92%, transparent); color: var(--on-accent);
           box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.28);

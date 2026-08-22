@@ -27,14 +27,27 @@ const CHANNEL = {
   night: { warm: [0.80, 0.135], cold: [0.78, 0.125] },
   day:   { warm: [0.55, 0.155], cold: [0.52, 0.145] },
 };
+//
+// text-3 deviates from §2.5's stated lightness, deliberately. §2.13's contrast
+// table verifies text-1 and text-2 and never covered text-3, and as specified
+// it measures 3.37:1 on surface-1 and 3.00:1 on surface-2 at night, and 3.41 /
+// 3.88 in day -- under the 4.5:1 body-text floor. It is not decorative text:
+// it carries seat names, chapter positions, "2 questions ahead". Raised to the
+// measured minimum that clears 4.5:1 against the worst-case surface.
+//
+// Checked against all six liveries in both variants, not one representative
+// hue: the worst case is Carrier Deck / night / surface-2.
+//
+//   night  L 0.52 -> 0.64   (worst case across all liveries 3.00 -> 4.86)
+//   day    L 0.60 -> 0.515  (worst case across all liveries 3.41 -> 4.82)
 const SURFACE = {
   night: {
     "surface-0": [0.15, 0.020], "surface-1": [0.19, 0.018], "surface-2": [0.24, 0.016],
-    "text-1": [0.95, 0.010], "text-2": [0.70, 0.012], "text-3": [0.52, 0.012],
+    "text-1": [0.95, 0.010], "text-2": [0.70, 0.012], "text-3": [0.64, 0.012],
   },
   day: {
     "surface-0": [0.980, 0.008], "surface-1": [0.950, 0.008], "surface-2": [0.995, 0.004],
-    "text-1": [0.220, 0.014], "text-2": [0.450, 0.014], "text-3": [0.600, 0.012],
+    "text-1": [0.220, 0.014], "text-2": [0.450, 0.014], "text-3": [0.515, 0.012],
   },
 };
 const HAIRLINE = { night: "rgb(255 255 255 / 0.06)", day: "rgb(0 0 0 / 0.08)" };
