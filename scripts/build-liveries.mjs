@@ -97,6 +97,23 @@ function block(livery, variant) {
   return out.join("\n");
 }
 
+
+// §2.9 — every tail in a squadron is painted in *its owner's* warm hue, so a
+// roster shows six liveries at once under one root. Emit the whole set at root
+// scope, per variant, rather than letting each surface re-derive colour.
+function tailPalette(variant) {
+  const ch = CHANNEL[variant];
+  const out = [`:root[data-variant="${variant}"] {`];
+  for (const l of LIVERIES) {
+    out.push(`  --tail-${l.id}: ${hex(ch.warm[0], ch.warm[1], l.Hw)};`);
+    out.push(`  --tail-${l.id}: ${ok(ch.warm[0], ch.warm[1], l.Hw)};`);
+    out.push(`  --tail-${l.id}-bg: ${hex(0.28, 0.05, l.Hw)};`);
+    out.push(`  --tail-${l.id}-bg: ${ok(0.28, 0.05, l.Hw)};`);
+  }
+  out.push("}");
+  return out.join("\n");
+}
+
 const header = `/* GENERATED — do not edit. Run: node scripts/build-liveries.mjs
  *
  * Derived from docs/SPEC.md §2.3 (channels), §2.5 (surfaces), §2.6 (cheatline).
@@ -105,7 +122,8 @@ const header = `/* GENERATED — do not edit. Run: node scripts/build-liveries.m
  * supersedes it on engines that support it.
  */\n`;
 
-const css = [header, ...LIVERIES.flatMap((l) => [block(l, "night"), block(l, "day")])].join("\n\n") + "\n";
+const css = [header, tailPalette("night"), tailPalette("day"),
+  ...LIVERIES.flatMap((l) => [block(l, "night"), block(l, "day")])].join("\n\n") + "\n";
 writeFileSync(new URL("../src/styles/liveries.css", import.meta.url), css);
 
 // Cross-check the generated fallbacks against the spec's published table.

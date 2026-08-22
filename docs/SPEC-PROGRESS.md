@@ -17,7 +17,7 @@ Read only the sections that step needs. §17 lists which.
 | # | Step | Spec sections | State |
 |---|---|---|---|
 | 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
-| 2 | Auto-squadrons + fill ladder | §7.1, §10 | **data layer done** — UI pending |
+| 2 | Auto-squadrons + fill ladder | §7.1, §10 | **data + roster done** — onboarding pending |
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | **data layer done** — UI pending |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
@@ -135,3 +135,33 @@ regenerate it after changing tokens, or the harness silently drifts. `index.html
 carry `data-livery` and `data-variant="night"` (**not** `"dark"` — the generator emits
 `day`/`night`), otherwise every livery token resolves unset and the page renders black
 on black.
+
+## Step 2 — roster done
+
+`Tail.jsx` is the identity mark from §2.9: hue + marking + initial, one component
+used at every size. Below 16px the initial drops and the marking remains, so an 8px
+presence dot still carries identity without relying on colour.
+
+`Squadron.jsx` renders the roster. Real members at full size; open seats as outlined
+silhouettes labelled "open"; the Forming line when the count is under ten. It never
+pads the grid with anyone who does not exist.
+
+### Fixed while building
+
+The tail first painted itself with `hsl(var(--tail-h) 78% 62%)`. The liveries are
+authored in **oklch**, and the same hue number read as an HSL hue is a different
+colour: Dawn Patrol came out yellow-green instead of `#FFA564` amber. The generator
+now emits a root-scoped `--tail-<livery>` / `--tail-<livery>-bg` palette per variant,
+and the tail reads those. One source of colour, and a roster can show six liveries at
+once under one root. The generator's own check still reports 0/255 deviation.
+
+### Verified in the harness
+
+Four pilots sharing Dawn Patrol's hue took **solid, double, dashed, notched** in join
+order. Contrail (15° away, outside the 13° threshold) correctly stayed solid rather
+than consuming a marking. All six liveries resolve to their own oklch tokens.
+
+### Still owed
+
+Onboarding (§7.1's three screens) and the `assign_squadron` call. Nothing invokes the
+RPC yet, so no one is ever placed in a squadron.
