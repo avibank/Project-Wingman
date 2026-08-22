@@ -1,3 +1,4 @@
+import "./styles/fonts.css";
 import "./styles/liveries.css";
 import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
@@ -376,7 +377,6 @@ function AppInner() {
       </div>
     </UsernameGate>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..700,0..100&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
         @font-face {
           font-family: 'OpenDyslexic';
           src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@master/otf/OpenDyslexic-Regular.otf') format('opentype');
@@ -442,7 +442,10 @@ function AppInner() {
           --sheen: rgb(255 255 255 / 0.08);
           --bezel-hi: rgb(255 255 255 / 0.30); --bezel-mid: rgb(255 255 255 / 0.16); --bezel-lo: rgb(255 255 255 / 0.02);
           --r-sm: 12px; --r-md: 16px; --r-lg: 16px; --r-pill: 999px;
-          --font-display: var(--font-serif);
+          --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+          --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+          --font-serif: "Newsreader", ui-serif, Georgia, serif;
+          --font-display: var(--font-ui);
           --font-body: var(--font-ui);
           font-variant-numeric: tabular-nums;
           font-family: var(--font-ui);

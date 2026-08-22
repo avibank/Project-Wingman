@@ -17,15 +17,15 @@ Read only the sections that step needs. §17 lists which.
 | # | Step | Spec sections | State |
 |---|---|---|---|
 | 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
-| 2 | Auto-squadrons + fill ladder | §7.1, §10 | not started |
+| 2 | Auto-squadrons + fill ladder | §7.1, §10 | **data layer done** — UI pending |
 | 3 | Presence as a data type | §8.3 | not started |
-| 4 | Safety primitives | §9 | not started |
+| 4 | Safety primitives | §9 | **data layer done** — UI pending |
 | 5 | Flight Deck horizon | §7.2, §4 | not started |
 | 6 | Social tab | §7.3, §8.2 | not started |
-| 7 | Ambient glow | §7.6, §2.8 | not started |
+| 7 | Ambient glow | §7.6, §2.8 | **maths done + verified** — wiring pending |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
 | 9 | Comms as chat | §7.8, §2.12 | not started |
-| 10 | Livery picker + wash | §7.11, §2.11 | not started |
+| 10 | Livery picker + wash | §7.11, §2.11 | **done** |
 | 11 | Instruments, Formation, desktop | §5, §7.9, §12 | not started |
 
 ## Step 1 — done
@@ -63,8 +63,9 @@ system, the font pairing, and the tab structure.
 
 These cannot be built without something arriving from outside the repo:
 
-- **Font files.** Instrument Sans, Geist Mono, Newsreader as self-hosted woff2 (§3).
-  All three are OFL; they need downloading into the repo.
+- ~~Font files~~ **resolved.** All three self-hosted as woff2 in `public/fonts` (297KB
+  total, latin subsets), declared in `src/styles/fonts.css`. Fraunces, Inter, JetBrains
+  and Space Grotesk are purged from the codebase per §3.
 - **Presence infrastructure.** §8.3 mandates SSE + in-memory/Redis with a 5-minute TTL
   and forbids writing presence to the primary database. The current implementation is a
   Postgres `presence` table, which the spec disallows. Needs a Redis instance and an SSE
@@ -73,6 +74,13 @@ These cannot be built without something arriving from outside the repo:
   review queue with a 24h first-response target. That is a service dependency and an
   operational commitment, not just code.
 - **Cohort intake.** §7.1's weekly-batch signup is an ops decision.
+
+## Spec discrepancy found
+
+§7.6 gives the glow alpha as `clamp(0.03 + 0.022n, 0.03, 0.12)` and then lists the
+worked example "four or more 0.120". The formula yields **0.118** at n=4; the clamp only
+bites at n=5. The implementation follows the formula, since it is the normative rule and
+the difference is imperceptible, but the worked example in the spec is off by 0.002.
 
 ## Conflicts to resolve before starting
 

@@ -71,7 +71,12 @@ function block(livery, variant) {
   const Hc = coldHue(Hw);
   const ch = CHANNEL[variant];
   const sf = SURFACE[variant];
-  const out = [`:root[data-livery="${livery.id}"][data-variant="${variant}"] {`];
+  // Both selectors: the root paints the app, and any element carrying the pair
+  // paints itself — the fleet page needs six liveries visible at once (§7.11).
+  const out = [
+    `:root[data-livery="${livery.id}"][data-variant="${variant}"],`,
+    `[data-livery="${livery.id}"][data-variant="${variant}"] {`,
+  ];
 
   const pair = (name, [L, C], H) => {
     out.push(`  --${name}: ${hex(L, C, H)};`);

@@ -7,7 +7,8 @@
  */
 
 
-:root[data-livery="aurora"][data-variant="night"] {
+:root[data-livery="aurora"][data-variant="night"],
+[data-livery="aurora"][data-variant="night"] {
   --livery-name: "Aurora";
   --hue-warm: 350;
   --hue-cold: 150;
@@ -32,7 +33,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="aurora"][data-variant="day"] {
+:root[data-livery="aurora"][data-variant="day"],
+[data-livery="aurora"][data-variant="day"] {
   --livery-name: "Aurora";
   --hue-warm: 350;
   --hue-cold: 150;
@@ -57,7 +59,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="sunset-approach"][data-variant="night"] {
+:root[data-livery="sunset-approach"][data-variant="night"],
+[data-livery="sunset-approach"][data-variant="night"] {
   --livery-name: "Sunset Approach";
   --hue-warm: 20;
   --hue-cold: 180;
@@ -82,7 +85,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="sunset-approach"][data-variant="day"] {
+:root[data-livery="sunset-approach"][data-variant="day"],
+[data-livery="sunset-approach"][data-variant="day"] {
   --livery-name: "Sunset Approach";
   --hue-warm: 20;
   --hue-cold: 180;
@@ -107,7 +111,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="carrier-deck"][data-variant="night"] {
+:root[data-livery="carrier-deck"][data-variant="night"],
+[data-livery="carrier-deck"][data-variant="night"] {
   --livery-name: "Carrier Deck";
   --hue-warm: 40;
   --hue-cold: 200;
@@ -132,7 +137,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="carrier-deck"][data-variant="day"] {
+:root[data-livery="carrier-deck"][data-variant="day"],
+[data-livery="carrier-deck"][data-variant="day"] {
   --livery-name: "Carrier Deck";
   --hue-warm: 40;
   --hue-cold: 200;
@@ -157,7 +163,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="dawn-patrol"][data-variant="night"] {
+:root[data-livery="dawn-patrol"][data-variant="night"],
+[data-livery="dawn-patrol"][data-variant="night"] {
   --livery-name: "Dawn Patrol";
   --hue-warm: 55;
   --hue-cold: 215;
@@ -182,7 +189,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="dawn-patrol"][data-variant="day"] {
+:root[data-livery="dawn-patrol"][data-variant="day"],
+[data-livery="dawn-patrol"][data-variant="day"] {
   --livery-name: "Dawn Patrol";
   --hue-warm: 55;
   --hue-cold: 215;
@@ -207,7 +215,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="contrail"][data-variant="night"] {
+:root[data-livery="contrail"][data-variant="night"],
+[data-livery="contrail"][data-variant="night"] {
   --livery-name: "Contrail";
   --hue-warm: 70;
   --hue-cold: 230;
@@ -232,7 +241,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="contrail"][data-variant="day"] {
+:root[data-livery="contrail"][data-variant="day"],
+[data-livery="contrail"][data-variant="day"] {
   --livery-name: "Contrail";
   --hue-warm: 70;
   --hue-cold: 230;
@@ -257,7 +267,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="night-ops"][data-variant="night"] {
+:root[data-livery="night-ops"][data-variant="night"],
+[data-livery="night-ops"][data-variant="night"] {
   --livery-name: "Night Ops";
   --hue-warm: 88;
   --hue-cold: 248;
@@ -282,7 +293,8 @@
   --cheatline-alpha: 0.06;
 }
 
-:root[data-livery="night-ops"][data-variant="day"] {
+:root[data-livery="night-ops"][data-variant="day"],
+[data-livery="night-ops"][data-variant="day"] {
   --livery-name: "Night Ops";
   --hue-warm: 88;
   --hue-cold: 248;
