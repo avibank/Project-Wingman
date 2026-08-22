@@ -1,17 +1,36 @@
 import { useState, useEffect } from "react";
-import { Play, Search, SearchX, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
+import { NotebookPen, Play, Search, SearchX, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
-import { CHAPTERS } from "../data.js";
+import { CHAPTERS, chaptersForModule } from "../data.js";
+import SlideOver from "./SlideOver.jsx";
+import NotebookPanel from "./NotebookPanel.jsx";
+import ThreadsPanel from "./ThreadsPanel.jsx";
+import { countAnnotations } from "../lib/notebook.js";
+import { countThreads } from "../lib/discussion.js";
+import { fetchChapterPresence, heartbeat } from "../lib/presence.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import { useUserProgress } from "../lib/userProgress.js";
+import { useUser } from "@clerk/clerk-react";
+import { useDisplayName } from "../lib/identity.js";
+import { useSocialPrefs } from "../lib/social.js";
+import { fetchWingmen, recordStudyDay } from "../lib/partners.js";
 
 const MAX_RECENT = 5;
 
-function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterConsumed }) {
+function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed }) {
+  // Only this module's chapters — the global list now spans five modules.
+  const moduleChapters = chaptersForModule(activeModuleCode);
+  // Slide-over state for the notebook / discussion entry points.
+  const [panel, setPanel] = useState(null); // { kind: "notebook"|"threads", chapter }
+  const [counts, setCounts] = useState({});
+  const [here, setHere] = useState([]);
   const progress = useUserProgress();
+  const { user } = useUser();
+  const displayName = useDisplayName();
+  const { prefs: socialPrefs } = useSocialPrefs();
   const [parallaxY, setParallaxY] = useState(0);
-  const [openId, setOpenId] = useState(CHAPTERS[0].id);
+  const [openId, setOpenId] = useState(null);
   const [query, setQuery] = useState("");
   const [completed, setCompleted] = useState(new Set());
   const [bookmarks, setBookmarks] = useState(new Set());
@@ -30,7 +49,8 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
 
   useEffect(() => {
     if (!progress.loaded) return;
-    setOpenId(progress.get("pw-last-chapter", CHAPTERS[0].id) ?? CHAPTERS[0].id);
+    const stored = progress.get("pw-last-chapter", null);
+    setOpenId(moduleChapters.some((ch) => ch.id === stored) ? stored : moduleChapters[0]?.id ?? null);
     setCompleted(new Set(progress.get("pw-completed", [])));
     setBookmarks(new Set(progress.get("pw-bookmarks", [])));
     setFeedback(progress.get("pw-feedback", {}));
@@ -75,7 +95,16 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Completing a chapter is what "studied today" means for a joint streak; the
+  // shared count only advances on a day both pilots did so.
+  const logStudyDay = async () => {
+    if (!user?.id) return;
+    const pairs = await fetchWingmen(user.id);
+    await Promise.all(pairs.map((w) => recordStudyDay(user.id, w.wingman_user_id)));
+  };
+
   const markComplete = (id, pct) => {
+    logStudyDay();
     setCompleted((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -124,6 +153,22 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
     });
   };
 
+  // Chip counts and co-presence for whichever chapter is open.
+  useEffect(() => {
+    if (!openId) return;
+    let live = true;
+    Promise.all([countAnnotations(openId), countThreads(openId)]).then(([notes, threads]) => {
+      if (live) setCounts((c) => ({ ...c, [openId]: { notes, threads } }));
+    });
+    const ping = () => {
+      heartbeat({ userId: user?.id, displayName, moduleCode: activeModuleCode, chapterId: openId });
+      fetchChapterPresence(openId, user?.id).then((rows) => live && setHere(rows));
+    };
+    ping();
+    const t = setInterval(ping, 45000);
+    return () => { live = false; clearInterval(t); };
+  }, [openId, activeModuleCode, user?.id, displayName]);
+
   const openChapter = (ch) => {
     const isOpen = openId === ch.id;
     if (isOpen) {
@@ -153,8 +198,8 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
     }
   };
 
-  const filtered = CHAPTERS.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
-  const recentChapters = recentIds.map((id) => CHAPTERS.find((ch) => ch.id === id)).filter(Boolean);
+  const filtered = moduleChapters.filter((ch) => ch.title.toLowerCase().includes(query.toLowerCase()) || ch.code.toLowerCase().includes(query.toLowerCase()));
+  const recentChapters = recentIds.map((id) => moduleChapters.find((ch) => ch.id === id)).filter(Boolean);
 
   return (
     <div className="chapters-wrap">
@@ -220,8 +265,14 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
               {isOpen && (
                 <div className="chapter-body chapter-body-opening">
                   <div className="chapter-video">
-                    {!videoLoaded && !ch.isPlaceholder && startedVideos.has(ch.id) && <div className="video-skeleton" />}
-                    {ch.clip.includes("youtube.com/embed") && !startedVideos.has(ch.id) ? (
+                    {!ch.clip ? (
+                      <div className="video-none">
+                        <Play size={16} />
+                        <span>Briefing video not recorded yet — study material below.</span>
+                      </div>
+                    ) : null}
+                    {ch.clip && !videoLoaded && !ch.isPlaceholder && startedVideos.has(ch.id) && <div className="video-skeleton" />}
+                    {ch.clip && ch.clip.includes("youtube.com/embed") && !startedVideos.has(ch.id) ? (
                       <button
                         className="video-facade"
                         style={{ backgroundImage: `url(https://img.youtube.com/vi/${ch.clip.split("/embed/")[1]?.split(/[?&]/)[0]}/hqdefault.jpg)` }}
@@ -232,7 +283,7 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
                         <span className="video-facade-kicker">Briefing video · {ch.duration}</span>
                         <span className="video-facade-play" aria-hidden="true"><Play size={20} fill="currentColor" /></span>
                       </button>
-                    ) : ch.clip.includes("youtube.com/embed") ? (
+                    ) : ch.clip && ch.clip.includes("youtube.com/embed") ? (
                       <iframe
                         key={ch.id}
                         className="player-video"
@@ -242,20 +293,47 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
                         allowFullScreen
                         onLoad={() => setLoadedVideos((prev) => new Set(prev).add(ch.id))}
                       />
-                    ) : (
+                    ) : ch.clip ? (
                       <video key={ch.id} className="player-video" controls preload="metadata" onLoadedData={() => setLoadedVideos((prev) => new Set(prev).add(ch.id))}>
                         <source src={ch.clip} type="video/mp4" />
                       </video>
-                    )}
-                    {ch.isPlaceholder && (
+                    ) : null}
+                    {ch.isPlaceholder && ch.clip && (
                       <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
                     )}
                   </div>
-                  {ch.clip.includes("youtube.com/embed") && (
+                  {ch.clip && ch.clip.includes("youtube.com/embed") && (
                     <a className="video-fallback" href={ch.clip.replace("/embed/", "/watch?v=")} target="_blank" rel="noreferrer">
                       Trouble loading? Open on YouTube directly
                     </a>
                   )}
+                  {Array.isArray(ch.body) && ch.body.length > 0 && (
+                    <article className="chapter-material">
+                      <p className="material-kicker">Study material</p>
+                      {ch.body.map((sec) => (
+                        <section key={sec.heading} className="material-section">
+                          <h4 className="material-heading">{sec.heading}</h4>
+                          <p className="material-text">{sec.text}</p>
+                        </section>
+                      ))}
+                    </article>
+                  )}
+                  <div className="chapter-social">
+                    <button className="chip" onClick={() => setPanel({ kind: "notebook", chapter: ch })}>
+                      <NotebookPen size={12} /> Notebook · {counts[ch.id]?.notes ?? 0} notes
+                    </button>
+                    <button className="chip" onClick={() => setPanel({ kind: "threads", chapter: ch })}>
+                      <MessageSquare size={12} /> Discussion · {counts[ch.id]?.threads ?? 0} threads
+                    </button>
+                    {here.length > 0 && (
+                      <span className="copresence">
+                        <span className="copresence-dot" aria-hidden="true" />
+                        {here.length === 1
+                          ? `${here[0].display_name || "Another pilot"} is also here right now`
+                          : `${here.length} others are also here right now`}
+                      </span>
+                    )}
+                  </div>
                   <div className="chapter-side">
                     <div className="chapter-side-tabs">
                       <button className={`chapter-side-tab ${rightTab === "quiz" ? "is-active" : ""}`} onClick={() => setRightTab("quiz")}>
@@ -305,7 +383,39 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
           </div>
         )}
       </div>
+      {panel && (
+        <SlideOver
+          open
+          title={panel.kind === "notebook" ? "Notebook" : "Discussion"}
+          subtitle={`${panel.chapter.code} — ${panel.chapter.title}`}
+          onClose={() => setPanel(null)}
+        >
+          {panel.kind === "notebook" ? (
+            <NotebookPanel
+              chapter={panel.chapter}
+              moduleCode={activeModuleCode}
+              prefs={socialPrefs}
+              onCountChange={(n) => setCounts((c) => ({ ...c, [panel.chapter.id]: { ...c[panel.chapter.id], notes: n } }))}
+            />
+          ) : (
+            <ThreadsPanel
+              chapter={panel.chapter}
+              moduleCode={activeModuleCode}
+              prefs={socialPrefs}
+              onCountChange={(n) => setCounts((c) => ({ ...c, [panel.chapter.id]: { ...c[panel.chapter.id], threads: n } }))}
+            />
+          )}
+        </SlideOver>
+      )}
       <style>{`
+        .chapter-social { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--elev-1); border: 1px solid var(--border-soft);
+          border-radius: var(--r-pill); padding: 7px 13px; color: var(--text-soft); font-size: 12px; cursor: pointer; min-height: 36px;
+          transition: border-color 0.15s ease, color 0.15s ease; }
+        .chip:hover { border-color: var(--border); color: var(--text); }
+        .copresence { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+        .copresence-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good);
+          box-shadow: 0 0 5px color-mix(in srgb, var(--good) 55%, transparent); }
         .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
         .cloud-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         .cloud { position: absolute; width: 220px; height: 60px; background: radial-gradient(ellipse at center, var(--text) 0%, transparent 70%); opacity: 0.035; border-radius: 50%; filter: blur(6px); }
@@ -371,6 +481,16 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
         .video-facade:hover .video-facade-play { transform: scale(1.06); background: var(--accent-hover); }
         .video-facade:active .video-facade-play { transform: scale(0.97); }
         .app.reduce-motion .video-facade-play { transition: none; }
+        .video-none { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+          color: var(--muted); font-size: 12.5px; text-align: center; padding: 20px;
+          background: radial-gradient(circle at 50% 40%, var(--elev-2), var(--well)); }
+        .chapter-material { margin-top: 16px; max-width: 62ch; }
+        .material-kicker { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+          color: var(--accent); opacity: 0.85; margin: 0 0 12px; }
+        .material-section { margin-bottom: 16px; }
+        .material-section:last-child { margin-bottom: 0; }
+        .material-heading { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 5px; }
+        .material-text { font-size: 13.5px; line-height: 1.62; color: var(--text-soft); margin: 0; }
         .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: var(--r-md); }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .video-fallback { display: block; font-size: 11.5px; color: var(--muted); text-decoration: none; margin-top: 6px; }

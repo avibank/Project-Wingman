@@ -3,6 +3,10 @@ import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import HubPage from "./components/HubPage.jsx";
+import SocialPage from "./components/SocialPage.jsx";
+import { useSocialPrefs } from "./lib/social.js";
+import { fetchEnrollments } from "./lib/enrollments.js";
+import CompetePage from "./components/CompetePage.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -25,19 +29,29 @@ export default function App() {
     </ClerkProvider>
   );
 }
+// Four top-level destinations. Home is reached through the brand mark.
+const TOP_LEVEL = [
+  { id: "hub", label: "Home" },
+  { id: "academic", label: "Academic" },
+  { id: "social", label: "Social" },
+  { id: "compete", label: "Compete" },
+];
+
 function AppInner() {
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
   const [tab, setTab] = useState("chapters");
   const [settingsPage, setSettingsPage] = useState(null);
-  const [view, setView] = useState("hub"); // "hub" | "module"
+  const [view, setView] = useState("hub"); // "hub" | "module" | "social" | "compete"
   const [pendingChapterId, setPendingChapterId] = useState(null);
+  const { prefs: socialPrefs } = useSocialPrefs();
+  const [enrolledCodes, setEnrolledCodes] = useState([]);
   const [bookmarksMode, setBookmarksMode] = useState("list");
   const [activeModuleCode, setActiveModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
-  const [accentColor, setAccentColor] = useState("amber");
+  const [accentColor, setAccentColor] = useState("blue");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
   const [shakeTab, setShakeTab] = useState(null);
@@ -62,7 +76,7 @@ function AppInner() {
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setAccentColor(progress.get("pw-accent-color", "amber"));
+    setAccentColor(progress.get("pw-accent-color", "blue"));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
     setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
@@ -119,6 +133,11 @@ function AppInner() {
       setStorageWarning(true);
     }
   }, []);
+  useEffect(() => {
+    if (isSignedIn && user?.id) fetchEnrollments(user.id).then(setEnrolledCodes);
+    else setEnrolledCodes([]);
+  }, [isSignedIn, user?.id]);
+
   useEffect(() => {
     if (!progress.loaded) return;
     const today = new Date().toDateString();
@@ -264,6 +283,26 @@ function AppInner() {
           <Gauge size={20} color="var(--accent)" />
           <span>Project Wingman</span>
         </button>
+        <nav className="toplevel" aria-label="Primary">
+          {TOP_LEVEL.map((d) => (
+            <button
+              key={d.id}
+              className={`toplevel-btn ${(view === d.id || (d.id === "academic" && view === "module")) ? "is-active" : ""}`}
+              onClick={() => {
+                setSettingsPage(null);
+                if (d.id === "academic") {
+                  setView("module");
+                  setTab("chapters");
+                } else {
+                  setView(d.id);
+                }
+                window.scrollTo(0, 0);
+              }}
+            >
+              {d.label}
+            </button>
+          ))}
+        </nav>
         <div className="topbar-right">
           
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
@@ -319,6 +358,18 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
+      ) : view === "social" ? (
+        <main className="content content-taxi">
+          <SocialPage
+            prefs={socialPrefs}
+            enrolledCodes={enrolledCodes}
+            onGoToChapter={(moduleCode, chapterId) => (chapterId ? goToChapter(moduleCode, chapterId) : goToModule(moduleCode, "chapters"))}
+          />
+        </main>
+      ) : view === "compete" ? (
+        <main className="content content-taxi">
+          <CompetePage />
+        </main>
       ) : view === "hub" ? (
         <main className="content content-taxi">
           <HubPage
@@ -326,6 +377,7 @@ function AppInner() {
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
             onGoToDiscuss={() => goToModule(activeModuleCode, "discuss")}
+            onGoToSocial={() => { setSettingsPage(null); setView("social"); window.scrollTo(0, 0); }}
             onReviewBookmarks={() => {
               setBookmarksMode("cards");
               setSettingsPage("bookmarks");
@@ -353,6 +405,7 @@ function AppInner() {
           <main key={tab} className={`content content-taxi ${tab === "discuss" || tab === "pdf" ? "content--full" : ""}`}>
             {tab === "chapters" && (
               <ChaptersPanel
+                activeModuleCode={activeModuleCode}
                 onSignIn={() => setSettingsPage("auth")}
                 initialChapterId={pendingChapterId}
                 onInitialChapterConsumed={() => setPendingChapterId(null)}
@@ -445,6 +498,12 @@ function AppInner() {
           --g-track: color-mix(in srgb, var(--accent) 16%, var(--well) 84%);
         }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
+        .toplevel { display: flex; gap: 2px; margin-left: 8px; }
+        .toplevel-btn { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer;
+          padding: 8px 12px; border-radius: var(--r-sm); min-height: 38px; transition: color 0.15s ease, background 0.15s ease; }
+        .toplevel-btn:hover { color: var(--text); background: var(--elev-2); }
+        .toplevel-btn.is-active { color: var(--accent); background: var(--accent-soft); }
+        @media (max-width: 620px) { .toplevel-btn { padding: 8px 9px; font-size: 12px; } }
         .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }

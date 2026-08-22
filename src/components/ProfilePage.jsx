@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
 import { ACCENT_COLORS } from "../data.js";
+import { useSocialPrefs } from "../lib/social.js";
 
 function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, accentColor, onChangeAccentColor, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
   const [tab, setTab] = useState("info");
@@ -12,7 +13,10 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const [username, setUsername] = useState("");
-  const [showRealName, setShowRealName] = useState(false);
+  const [showRealName, setShowRealName] = useState(true);
+  const { prefs: socialPrefs, update: updateSocialPrefs } = useSocialPrefs();
+  const [course, setCourse] = useState("");
+  const [courseSaved, setCourseSaved] = useState(false);
   const [usernameSaved, setUsernameSaved] = useState(false);
   const [usernameError, setUsernameError] = useState(null);
   const [usernameBusy, setUsernameBusy] = useState(false);
@@ -40,7 +44,8 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
   useEffect(() => {
     if (user) {
       setUsername(user.username || "");
-      setShowRealName(!!user.unsafeMetadata?.showRealName);
+      // Default to the real name; only an explicit opt-out switches to username-only.
+      setShowRealName(user.unsafeMetadata?.showRealName !== false);
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
       setBio(user.unsafeMetadata?.bio || "");
@@ -77,6 +82,18 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
     const next = !showRealName;
     setShowRealName(next);
     await user.update({ unsafeMetadata: { ...user.unsafeMetadata, showRealName: next } });
+    // Social rows read identity_display, so the two must not drift apart.
+    await updateSocialPrefs({ identity_display: next ? "real" : "username" });
+  };
+
+  useEffect(() => {
+    if (socialPrefs?.course != null) setCourse(socialPrefs.course);
+  }, [socialPrefs?.course]);
+
+  const saveCourse = async () => {
+    await updateSocialPrefs({ course: course.trim() || null });
+    setCourseSaved(true);
+    setTimeout(() => setCourseSaved(false), 1800);
   };
 
   const saveName = async () => {
@@ -283,6 +300,22 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                 </button>
               </div>
               {usernameError && <p className="settings-error">{usernameError}</p>}
+              <div className="settings-field">
+                <div className="settings-row-title">Course or class</div>
+                <div className="settings-row-sub">Optional. Used only to suggest study partners from your class — not verified, and shown to no one.</div>
+                <div className="settings-inline">
+                  <input
+                    className="settings-input"
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
+                    placeholder="e.g. ATPL-24"
+                    maxLength={40}
+                  />
+                  <button className="settings-save" onClick={saveCourse}>
+                    {courseSaved ? <Check size={14} /> : "Save"}
+                  </button>
+                </div>
+              </div>
               <div className="settings-row" onClick={toggleShowRealName}>
                 <span className={`settings-switch ${showRealName ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
                 <div>
@@ -407,6 +440,12 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .profile-page-tabs button.is-active { background: var(--panel); color: var(--text); }
         .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 8px; margin-bottom: 12px; }
         .settings-group-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); padding: 10px 14px 4px; }
+        .settings-field { padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+        .settings-inline { display: flex; gap: 8px; margin-top: 10px; }
+        .settings-input { flex: 1; min-width: 0; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm);
+          color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 9px 11px; box-shadow: var(--shadow-inset); }
+        .settings-save { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--on-accent);
+          border: none; border-radius: var(--r-sm); padding: 9px 15px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }
         .settings-row--static { cursor: default; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 18px 14px; }

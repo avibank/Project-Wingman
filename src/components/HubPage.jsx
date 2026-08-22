@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass, Search } from "lucide-react";
+import { Radio, Star, Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass, Search } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
-import { MODULES, CHAPTERS } from "../data.js";
+import { MODULES, CHAPTERS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
 import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
-import { fetchRecentActivity } from "../lib/comments.js";
+import { fetchAllPresence } from "../lib/presence.js";
+import { fetchWingmen } from "../lib/partners.js";
 
 // Only surface a module filter once the roster is big enough to need one.
 const MODULE_FILTER_THRESHOLD = 4;
@@ -27,12 +28,6 @@ function timeAgo(iso) {
 function moduleForChapter(chapter) {
   const code = String(chapter.code || "").split(".")[0];
   return MODULES.find((m) => m.code === code) || MODULES[0];
-}
-
-// Only JT has authored chapters today; every other module is legitimately empty
-// until its content is built.
-function chaptersForModule(moduleCode) {
-  return moduleCode === "JT" ? CHAPTERS : [];
 }
 
 // Same formula ChaptersPanel uses, so a chapter reads identically in both places.
@@ -92,14 +87,13 @@ function ProgressRing({ pct, size = 34 }) {
   );
 }
 
-function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmarks, onSignIn, streak = 0 }) {
+function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, onReviewBookmarks, onSignIn, streak = 0 }) {
   const { isSignedIn, user } = useUser();
   const progress = useUserProgress();
   const [enrolledCodes, setEnrolledCodes] = useState([]);
   const [enrolling, setEnrolling] = useState(null);
-  const [activity, setActivity] = useState([]);
-  const [activityLoading, setActivityLoading] = useState(true);
   const [moduleQuery, setModuleQuery] = useState("");
+  const [snippet, setSnippet] = useState(null);
 
   const completed = new Set(progress.get("pw-completed", []));
   const quizScores = progress.get("pw-quiz-scores", {});
@@ -124,12 +118,21 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
     }
   }, [progress.loaded, isSignedIn, user?.id]);
 
+  // A single social line for Home: prefer a wingman, else anyone studying now.
   useEffect(() => {
-    fetchRecentActivity(8).then((data) => {
-      setActivity(data);
-      setActivityLoading(false);
-    });
-  }, []);
+    let live = true;
+    (async () => {
+      const [present, wing] = await Promise.all([
+        fetchAllPresence(user?.id),
+        user?.id ? fetchWingmen(user.id) : Promise.resolve([]),
+      ]);
+      if (!live) return;
+      const wingIds = new Set(wing.map((w) => w.wingman_user_id));
+      const pick = present.find((p) => wingIds.has(p.user_id)) || present[0] || null;
+      setSnippet(pick ? { ...pick, isWingman: wingIds.has(pick.user_id) } : null);
+    })();
+    return () => { live = false; };
+  }, [user?.id]);
 
   const handleEnroll = async (moduleCode) => {
     if (!isSignedIn) {
@@ -244,7 +247,24 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
     ? `${completed.size}/${CHAPTERS.length} items complete`
     : `${CHAPTERS.length} items to fly`;
 
-  const ticker = activity.slice(0, 4);
+  // Per-module progress, used for ordering and for the Suggested Next hint.
+  const moduleStats = MODULES.map((m) => {
+    const chs = chaptersForModule(m.code);
+    const done = chs.filter((ch) => completed.has(ch.id)).length;
+    return { m, chs, done, pct: chs.length ? Math.round((done / chs.length) * 100) : 0 };
+  });
+  const inProgressCode = lastModule?.code ?? moduleStats.find((s) => s.pct > 0 && s.pct < 100)?.m.code ?? null;
+  // A soft recommendation only — every module is open to everyone at any time.
+  const suggestedCode =
+    moduleStats
+      .filter((s) => s.m.code !== inProgressCode && s.pct < 100)
+      .sort((a, b) => (a.m.order ?? 99) - (b.m.order ?? 99))[0]?.m.code ?? null;
+  // Pinned first, in scroll order: what you are flying, then what we suggest.
+  const orderedModules = [...moduleStats].sort((a, b) => {
+    const rank = (s) => (s.m.code === inProgressCode ? 0 : s.m.code === suggestedCode ? 1 : 2);
+    return rank(a) - rank(b) || (a.m.order ?? 99) - (b.m.order ?? 99);
+  });
+
 
   return (
     <div className="hub">
@@ -305,6 +325,17 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
         </div>
       </section>
 
+      {snippet && (
+        <button className="card social-snippet" onClick={onGoToSocial}>
+          {snippet.isWingman ? <Star size={13} className="snippet-icon" /> : <Radio size={13} className="snippet-icon" />}
+          <span className="snippet-text">
+            <strong>{snippet.display_name || "A pilot"}</strong>
+            {snippet.isWingman ? " — your wingman — is studying now" : " is studying now"}
+          </span>
+          <ChevronRight size={14} className="snippet-arrow" />
+        </button>
+      )}
+
       {/* ---- 2. Module launcher --------------------------------------------- */}
       <section className="hub-section">
         <div className="section-head">
@@ -324,94 +355,46 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
         </div>
 
         <div className="launcher">
-          {MODULES.filter((m) => m.name.toLowerCase().includes(moduleQuery.trim().toLowerCase())).map((m) => {
-            const isLocked = m.status !== "active";
-            const isEnrolled = enrolledCodes.includes(m.code);
-            const moduleChapters = chaptersForModule(m.code);
-            const chapterCount = moduleChapters.length;
-            const doneCount = moduleChapters.filter((ch) => completed.has(ch.id)).length;
-            const pct = chapterCount ? Math.round((doneCount / chapterCount) * 100) : 0;
-            // Status reads from the rail colour and the progress indicator, not
-            // from a word: live > ready > locked.
-            const state = isLocked ? "locked" : isEnrolled ? (pct > 0 ? "live" : "ready") : "open";
-            return (
-              <article key={m.code} className={`card mod is-${state}`}>
-                <span className="mod-rail" aria-hidden="true" />
-                <div className="mod-top">
-                  <span className="mono-code">{m.code}</span>
-                  {isLocked ? <Lock size={13} className="mod-lock" /> : isEnrolled && <ProgressRing pct={pct} size={30} />}
-                </div>
-                <h3 className="mod-name">{m.name}</h3>
-
-                {isLocked ? (
-                  <>
-                    <div className="mod-bar">
-                      <div className="mod-fill is-muted" style={{ width: "0%" }} />
-                    </div>
-                    <p className="mod-meta">Opens when Jet Turbine Fundamentals is complete</p>
-                  </>
-                ) : isEnrolled ? (
-                  <>
-                    <div className="mod-bar">
-                      <div className="mod-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <p className="mod-meta">
-                      {doneCount}/{chapterCount} chapters
-                    </p>
-                    <div className="mod-actions">
-                      <button className="btn-secondary" onClick={() => onEnterModule(m)}>
-                        {pct > 0 ? "Continue" : "Begin"} <ChevronRight size={13} />
-                      </button>
-                      <button className="btn-link" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
-                        {enrolling === m.code ? "Leaving…" : "Leave"}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="mod-meta">{chapterCount} chapters · open enrollment</p>
-                    <div className="mod-actions">
+          {orderedModules
+            .filter(({ m }) => m.name.toLowerCase().includes(moduleQuery.trim().toLowerCase()))
+            .map(({ m, chs, done, pct }) => {
+              const isEnrolled = enrolledCodes.includes(m.code);
+              const isPinned = m.code === inProgressCode || m.code === suggestedCode;
+              const state = pct > 0 ? "live" : isEnrolled ? "ready" : "open";
+              return (
+                <article key={m.code} className={`card mod is-${state} ${isPinned ? "is-pinned" : ""}`}>
+                  <span className="mod-rail" aria-hidden="true" />
+                  <div className="mod-top">
+                    <span className="mono-code">{m.code}</span>
+                    {pct > 0 && <ProgressRing pct={pct} size={30} />}
+                  </div>
+                  <h3 className="mod-name">{m.name}</h3>
+                  {m.code === suggestedCode && <span className="mod-suggested">Suggested next</span>}
+                  <div className="mod-bar">
+                    <div className="mod-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="mod-meta">
+                    {done}/{chs.length} chapters
+                  </p>
+                  <div className="mod-actions">
+                    {isEnrolled ? (
+                      <>
+                        <button className="btn-secondary" onClick={() => onEnterModule(m)}>
+                          {pct > 0 ? "Continue" : "Begin"} <ChevronRight size={13} />
+                        </button>
+                        <button className="btn-link" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
+                          {enrolling === m.code ? "Leaving…" : "Leave"}
+                        </button>
+                      </>
+                    ) : (
                       <button className="btn-secondary" onClick={() => handleEnroll(m.code)} disabled={enrolling === m.code}>
                         {enrolling === m.code ? "Joining…" : "Enroll"}
                       </button>
-                    </div>
-                  </>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ---- 3. Activity ticker --------------------------------------------- */}
-      <section className="hub-section hub-section--quiet">
-        <div className="section-head">
-          <h2 className="section-title section-title--sm">Activity</h2>
-          <button className="btn-link" onClick={onGoToDiscuss}>
-            View all
-          </button>
-        </div>
-        <div className="ticker">
-          {activityLoading ? (
-            <p className="ticker-empty">Reading telemetry…</p>
-          ) : ticker.length === 0 ? (
-            <p className="ticker-empty">
-              <MessageSquareOff size={14} /> Nothing from the crew yet.
-            </p>
-          ) : (
-            ticker.map((c) => {
-              const chapter = c.chapter_id ? CHAPTERS.find((ch) => ch.id === c.chapter_id) : null;
-              const author = c.author || "Unknown";
-              return (
-                <button key={c.id} className="tick" onClick={onGoToDiscuss}>
-                  <span className="tick-avatar">{author.charAt(0).toUpperCase()}</span>
-                  <span className="tick-name">{author}</span>
-                  <span className="tick-text">{c.text || (chapter ? chapter.title : "Discussion")}</span>
-                  <span className="tick-time">{timeAgo(c.created_at)}</span>
-                </button>
+                    )}
+                  </div>
+                </article>
               );
-            })
-          )}
+            })}
         </div>
       </section>
 
@@ -466,11 +449,26 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
         .stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 17px; color: var(--text); font-variant-numeric: tabular-nums; }
         .stat-empty { font-size: 11.5px; color: var(--muted2); line-height: 1.35; }
 
+        .social-snippet { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer;
+          margin-top: 12px; padding: 13px 16px; min-height: 44px; transition: border-color 0.15s ease, background 0.15s ease; }
+        .social-snippet:hover { border-color: var(--border); background: var(--elev-2); }
+        .snippet-icon { color: var(--accent); flex-shrink: 0; }
+        .snippet-text { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .snippet-text strong { color: var(--text); font-weight: 600; }
+        .snippet-arrow { color: var(--muted2); flex-shrink: 0; }
+
         /* ---------- 2. module launcher ---------- */
         .module-filter { display: flex; align-items: center; gap: 7px; background: var(--well); border: 1px solid var(--border);
           border-radius: var(--r-sm); padding: 7px 11px; box-shadow: var(--shadow-inset); color: var(--muted); }
         .module-filter input { background: none; border: none; outline: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12.5px; width: 150px; }
-        .launcher { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 14px; }
+        /* Six modules is small enough to scroll rather than paginate. */
+        .launcher { display: flex; gap: 14px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x proximity;
+          scrollbar-width: thin; scrollbar-color: var(--border-hover) transparent; }
+        .launcher > .mod { flex: 0 0 262px; scroll-snap-align: start; }
+        .launcher > .mod.is-pinned { flex-basis: 292px; }
+        .mod-suggested { align-self: flex-start; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.1em;
+          text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+          border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius: var(--r-pill); padding: 3px 9px; }
         .mod { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 9px; padding: 18px 18px 18px 20px;
           transition: border-color 0.15s ease, background 0.15s ease; }
         .mod:hover { border-color: var(--border); background: var(--elev-2); }
@@ -497,18 +495,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
         .btn-link { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; padding: 6px 2px; min-height: 36px; }
         .btn-link:hover { color: var(--text); }
 
-        /* ---------- 3. activity ticker ---------- */
-        .ticker { display: flex; flex-direction: column; }
-        .tick { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none;
-          border-bottom: 1px solid var(--border-soft); padding: 11px 4px; cursor: pointer; min-height: 44px; }
-        .tick:last-child { border-bottom: none; }
-        .tick:hover .tick-text { color: var(--text-soft); }
-        .tick-avatar { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent);
-          display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; }
-        .tick-name { font-size: 12.5px; color: var(--text); flex-shrink: 0; }
-        .tick-text { font-size: 12.5px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .tick-time { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); flex-shrink: 0; }
-        .ticker-empty { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); margin: 0; padding: 14px 4px; }
 
         @media (max-width: 760px) {
           .hub-hero { padding: 0; }
@@ -516,7 +502,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
           .hero-stats { grid-template-columns: repeat(2, 1fr); }
           .stat:nth-child(2) { border-right: none; }
           .stat:nth-child(-n+2) { border-bottom: 1px solid var(--border-soft); }
-          .launcher { grid-template-columns: 1fr; }
+          .launcher > .mod { flex-basis: 78vw; }
+          .launcher > .mod.is-pinned { flex-basis: 82vw; }
           .btn-quiet-title { max-width: 140px; }
         }
 
