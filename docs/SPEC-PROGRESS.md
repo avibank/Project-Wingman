@@ -16,7 +16,7 @@ Read only the sections that step needs. §17 lists which.
 
 | # | Step | Spec sections | State |
 |---|---|---|---|
-| 1 | Livery tokens + cheatline | §2 (all), §2.14 | not started |
+| 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
 | 2 | Auto-squadrons + fill ladder | §7.1, §10 | not started |
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | not started |
@@ -27,6 +27,31 @@ Read only the sections that step needs. §17 lists which.
 | 9 | Comms as chat | §7.8, §2.12 | not started |
 | 10 | Livery picker + wash | §7.11, §2.11 | not started |
 | 11 | Instruments, Formation, desktop | §5, §7.9, §12 | not started |
+
+## Step 1 — done
+
+- `scripts/build-liveries.mjs` generates `src/styles/liveries.css` from the §2.3
+  formulas. Hue is the only input. Run `node scripts/build-liveries.mjs` after any
+  change; never edit the CSS by hand.
+- The generator's sRGB fallbacks were cross-checked against the §2.4 published table:
+  **0/255 maximum deviation across all 24 channel values**, which verifies the oklch
+  implementation rather than assuming it.
+- Root carries `data-livery` / `data-variant`. Day/Night auto-switches on local time
+  with a settings pin overriding (§2.10).
+- The cheatline ships as `.app::before` — warm channel, 40vh, 6% alpha (§2.6).
+- Existing component token names (`--accent`, `--panel`, `--text` …) are now **aliases**
+  onto livery tokens in one block in App.jsx: cold for machine, warm for people (§2.2).
+  This repaints every screen without rewriting each component. The old ACCENT_COLORS
+  livery lookup is removed.
+
+### Still owed on step 1
+
+- The alias block is a bridge, not the destination. §18 wants components referencing
+  livery tokens directly; each later step should replace aliases in the screens it
+  touches rather than leaving the shim permanently.
+- The cheatline must be suppressed on the chapter body (§7.6) — not yet done, because
+  the chapter body is restructured in a later step.
+- `--r-sm/md/lg` were folded to spec radii (12/16/16); sheets at 24 arrive with §7.6.
 
 ## Carried over from the previous product
 

@@ -1,0 +1,308 @@
+/* GENERATED — do not edit. Run: node scripts/build-liveries.mjs
+ *
+ * Derived from docs/SPEC.md §2.3 (channels), §2.5 (surfaces), §2.6 (cheatline).
+ * Hue is the only input; every other value is a constant from the spec. Each
+ * token is emitted twice: an sRGB hex fallback, then the oklch value that
+ * supersedes it on engines that support it.
+ */
+
+
+:root[data-livery="aurora"][data-variant="night"] {
+  --livery-name: "Aurora";
+  --hue-warm: 350;
+  --hue-cold: 150;
+  --warm: #FE98CA;
+  --warm: oklch(0.8 0.135 350);
+  --cold: #79CE8C;
+  --cold: oklch(0.78 0.125 150);
+  --surface-0: #060E07;
+  --surface-0: oklch(0.15 0.02 150);
+  --surface-1: #0E1610;
+  --surface-1: oklch(0.19 0.018 150);
+  --surface-2: #1A211B;
+  --surface-2: oklch(0.24 0.016 150);
+  --text-1: #EAF0EB;
+  --text-1: oklch(0.95 0.01 150);
+  --text-2: #99A19A;
+  --text-2: oklch(0.7 0.012 150);
+  --text-3: #646B65;
+  --text-3: oklch(0.52 0.012 150);
+  --hairline: rgb(255 255 255 / 0.06);
+  --cheatline: linear-gradient(to top, oklch(0.8 0.135 350) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="aurora"][data-variant="day"] {
+  --livery-name: "Aurora";
+  --hue-warm: 350;
+  --hue-cold: 150;
+  --warm: #B0437E;
+  --warm: oklch(0.55 0.155 350);
+  --cold: #007F37;
+  --cold: oklch(0.52 0.145 150);
+  --surface-0: #F5FAF6;
+  --surface-0: oklch(0.98 0.008 150);
+  --surface-1: #EBF0EC;
+  --surface-1: oklch(0.95 0.008 150);
+  --surface-2: #FCFEFC;
+  --surface-2: oklch(0.995 0.004 150);
+  --text-1: #161C17;
+  --text-1: oklch(0.22 0.014 150);
+  --text-2: #505851;
+  --text-2: oklch(0.45 0.014 150);
+  --text-3: #7B827C;
+  --text-3: oklch(0.6 0.012 150);
+  --hairline: rgb(0 0 0 / 0.08);
+  --cheatline: linear-gradient(to top, oklch(0.55 0.155 350) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="sunset-approach"][data-variant="night"] {
+  --livery-name: "Sunset Approach";
+  --hue-warm: 20;
+  --hue-cold: 180;
+  --warm: #FF9899;
+  --warm: oklch(0.8 0.135 20);
+  --cold: #41D1BA;
+  --cold: oklch(0.78 0.125 180);
+  --surface-0: #030E0B;
+  --surface-0: oklch(0.15 0.02 180);
+  --surface-1: #0A1614;
+  --surface-1: oklch(0.19 0.018 180);
+  --surface-2: #17221F;
+  --surface-2: oklch(0.24 0.016 180);
+  --text-1: #E8F1EF;
+  --text-1: oklch(0.95 0.01 180);
+  --text-2: #97A19F;
+  --text-2: oklch(0.7 0.012 180);
+  --text-3: #626B69;
+  --text-3: oklch(0.52 0.012 180);
+  --hairline: rgb(255 255 255 / 0.06);
+  --cheatline: linear-gradient(to top, oklch(0.8 0.135 20) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="sunset-approach"][data-variant="day"] {
+  --livery-name: "Sunset Approach";
+  --hue-warm: 20;
+  --hue-cold: 180;
+  --warm: #BB424A;
+  --warm: oklch(0.55 0.155 20);
+  --cold: #00826C;
+  --cold: oklch(0.52 0.145 180);
+  --surface-0: #F3FAF9;
+  --surface-0: oklch(0.98 0.008 180);
+  --surface-1: #E9F0EF;
+  --surface-1: oklch(0.95 0.008 180);
+  --surface-2: #FBFEFD;
+  --surface-2: oklch(0.995 0.004 180);
+  --text-1: #141D1B;
+  --text-1: oklch(0.22 0.014 180);
+  --text-2: #4D5855;
+  --text-2: oklch(0.45 0.014 180);
+  --text-3: #798380;
+  --text-3: oklch(0.6 0.012 180);
+  --hairline: rgb(0 0 0 / 0.08);
+  --cheatline: linear-gradient(to top, oklch(0.55 0.155 20) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="carrier-deck"][data-variant="night"] {
+  --livery-name: "Carrier Deck";
+  --hue-warm: 40;
+  --hue-cold: 200;
+  --warm: #FF9E79;
+  --warm: oklch(0.8 0.135 40);
+  --cold: #2CCFD7;
+  --cold: oklch(0.78 0.125 200);
+  --surface-0: #020E0E;
+  --surface-0: oklch(0.15 0.02 200);
+  --surface-1: #0A1617;
+  --surface-1: oklch(0.19 0.018 200);
+  --surface-2: #162222;
+  --surface-2: oklch(0.24 0.016 200);
+  --text-1: #E7F1F1;
+  --text-1: oklch(0.95 0.01 200);
+  --text-2: #96A1A1;
+  --text-2: oklch(0.7 0.012 200);
+  --text-3: #616B6C;
+  --text-3: oklch(0.52 0.012 200);
+  --hairline: rgb(255 255 255 / 0.06);
+  --cheatline: linear-gradient(to top, oklch(0.8 0.135 40) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="carrier-deck"][data-variant="day"] {
+  --livery-name: "Carrier Deck";
+  --hue-warm: 40;
+  --hue-cold: 200;
+  --warm: #B9491C;
+  --warm: oklch(0.55 0.155 40);
+  --cold: #007F8A;
+  --cold: oklch(0.52 0.145 200);
+  --surface-0: #F3FAFA;
+  --surface-0: oklch(0.98 0.008 200);
+  --surface-1: #E9F0F0;
+  --surface-1: oklch(0.95 0.008 200);
+  --surface-2: #FAFEFE;
+  --surface-2: oklch(0.995 0.004 200);
+  --text-1: #131D1D;
+  --text-1: oklch(0.22 0.014 200);
+  --text-2: #4D5858;
+  --text-2: oklch(0.45 0.014 200);
+  --text-3: #788283;
+  --text-3: oklch(0.6 0.012 200);
+  --hairline: rgb(0 0 0 / 0.08);
+  --cheatline: linear-gradient(to top, oklch(0.55 0.155 40) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="dawn-patrol"][data-variant="night"] {
+  --livery-name: "Dawn Patrol";
+  --hue-warm: 55;
+  --hue-cold: 215;
+  --warm: #FFA564;
+  --warm: oklch(0.8 0.135 55);
+  --cold: #39CBE9;
+  --cold: oklch(0.78 0.125 215);
+  --surface-0: #030D10;
+  --surface-0: oklch(0.15 0.02 215);
+  --surface-1: #0A1619;
+  --surface-1: oklch(0.19 0.018 215);
+  --surface-2: #172124;
+  --surface-2: oklch(0.24 0.016 215);
+  --text-1: #E7F0F3;
+  --text-1: oklch(0.95 0.01 215);
+  --text-2: #96A0A3;
+  --text-2: oklch(0.7 0.012 215);
+  --text-3: #626B6D;
+  --text-3: oklch(0.52 0.012 215);
+  --hairline: rgb(255 255 255 / 0.06);
+  --cheatline: linear-gradient(to top, oklch(0.8 0.135 55) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="dawn-patrol"][data-variant="day"] {
+  --livery-name: "Dawn Patrol";
+  --hue-warm: 55;
+  --hue-cold: 215;
+  --warm: #B35200;
+  --warm: oklch(0.55 0.155 55);
+  --cold: #007B9C;
+  --cold: oklch(0.52 0.145 215);
+  --surface-0: #F3FAFC;
+  --surface-0: oklch(0.98 0.008 215);
+  --surface-1: #E9F0F2;
+  --surface-1: oklch(0.95 0.008 215);
+  --surface-2: #FBFEFF;
+  --surface-2: oklch(0.995 0.004 215);
+  --text-1: #131C1F;
+  --text-1: oklch(0.22 0.014 215);
+  --text-2: #4D575A;
+  --text-2: oklch(0.45 0.014 215);
+  --text-3: #798285;
+  --text-3: oklch(0.6 0.012 215);
+  --hairline: rgb(0 0 0 / 0.08);
+  --cheatline: linear-gradient(to top, oklch(0.55 0.155 55) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="contrail"][data-variant="night"] {
+  --livery-name: "Contrail";
+  --hue-warm: 70;
+  --hue-cold: 230;
+  --warm: #F5AD53;
+  --warm: oklch(0.8 0.135 70);
+  --cold: #52C6F8;
+  --cold: oklch(0.78 0.125 230);
+  --surface-0: #030D12;
+  --surface-0: oklch(0.15 0.02 230);
+  --surface-1: #0B151A;
+  --surface-1: oklch(0.19 0.018 230);
+  --surface-2: #182125;
+  --surface-2: oklch(0.24 0.016 230);
+  --text-1: #E8F0F4;
+  --text-1: oklch(0.95 0.01 230);
+  --text-2: #97A0A4;
+  --text-2: oklch(0.7 0.012 230);
+  --text-3: #626A6F;
+  --text-3: oklch(0.52 0.012 230);
+  --hairline: rgb(255 255 255 / 0.06);
+  --cheatline: linear-gradient(to top, oklch(0.8 0.135 70) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="contrail"][data-variant="day"] {
+  --livery-name: "Contrail";
+  --hue-warm: 70;
+  --hue-cold: 230;
+  --warm: #A95C00;
+  --warm: oklch(0.55 0.155 70);
+  --cold: #0075AB;
+  --cold: oklch(0.52 0.145 230);
+  --surface-0: #F3FAFD;
+  --surface-0: oklch(0.98 0.008 230);
+  --surface-1: #E9F0F3;
+  --surface-1: oklch(0.95 0.008 230);
+  --surface-2: #FBFEFF;
+  --surface-2: oklch(0.995 0.004 230);
+  --text-1: #141C20;
+  --text-1: oklch(0.22 0.014 230);
+  --text-2: #4E575C;
+  --text-2: oklch(0.45 0.014 230);
+  --text-3: #798286;
+  --text-3: oklch(0.6 0.012 230);
+  --hairline: rgb(0 0 0 / 0.08);
+  --cheatline: linear-gradient(to top, oklch(0.55 0.155 70) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="night-ops"][data-variant="night"] {
+  --livery-name: "Night Ops";
+  --hue-warm: 88;
+  --hue-cold: 248;
+  --warm: #E2B849;
+  --warm: oklch(0.8 0.135 88);
+  --cold: #73BEFF;
+  --cold: oklch(0.78 0.125 248);
+  --surface-0: #050C13;
+  --surface-0: oklch(0.15 0.02 248);
+  --surface-1: #0D151C;
+  --surface-1: oklch(0.19 0.018 248);
+  --surface-2: #192027;
+  --surface-2: oklch(0.24 0.016 248);
+  --text-1: #E9EFF5;
+  --text-1: oklch(0.95 0.01 248);
+  --text-2: #999FA6;
+  --text-2: oklch(0.7 0.012 248);
+  --text-3: #646A70;
+  --text-3: oklch(0.52 0.012 248);
+  --hairline: rgb(255 255 255 / 0.06);
+  --cheatline: linear-gradient(to top, oklch(0.8 0.135 88) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}
+
+:root[data-livery="night-ops"][data-variant="day"] {
+  --livery-name: "Night Ops";
+  --hue-warm: 88;
+  --hue-cold: 248;
+  --warm: #976900;
+  --warm: oklch(0.55 0.155 88);
+  --cold: #006CB7;
+  --cold: oklch(0.52 0.145 248);
+  --surface-0: #F4F9FE;
+  --surface-0: oklch(0.98 0.008 248);
+  --surface-1: #EAEFF4;
+  --surface-1: oklch(0.95 0.008 248);
+  --surface-2: #FBFEFF;
+  --surface-2: oklch(0.995 0.004 248);
+  --text-1: #161B21;
+  --text-1: oklch(0.22 0.014 248);
+  --text-2: #4F565D;
+  --text-2: oklch(0.45 0.014 248);
+  --text-3: #7B8187;
+  --text-3: oklch(0.6 0.012 248);
+  --hairline: rgb(0 0 0 / 0.08);
+  --cheatline: linear-gradient(to top, oklch(0.55 0.155 88) 0%, transparent 100%);
+  --cheatline-alpha: 0.06;
+}

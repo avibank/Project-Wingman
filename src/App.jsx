@@ -1,3 +1,4 @@
+import "./styles/liveries.css";
 import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
@@ -44,6 +45,10 @@ function AppInner() {
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
+  const [livery, setLivery] = useState("dawn-patrol");
+  const [variantPin, setVariantPin] = useState(null); // "day" | "night" | null = auto
+  const autoVariant = new Date().getHours() >= 7 && new Date().getHours() < 19 ? "day" : "night";
+  const variant = variantPin || autoVariant;
   const [accentColor, setAccentColor] = useState("sky");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
@@ -70,6 +75,8 @@ function AppInner() {
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
     setAccentColor(progress.get("pw-accent-color", "sky"));
+    setLivery(progress.get("pw-livery", "dawn-patrol"));
+    setVariantPin(progress.get("pw-variant-pin", null));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
     setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
@@ -222,15 +229,13 @@ function AppInner() {
     setPendingChapterId(chapterId);
     goToModule(moduleCode, "chapters");
   };
-  const livery = (ACCENT_COLORS[accentColor] || ACCENT_COLORS.sky)[theme === "light" ? "light" : "dark"];
   return (
     <div
-      className={`app ${theme === "light" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
+      data-livery={livery}
+      data-variant={variant}
+      className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
-        "--accent-h": livery.h,
-        "--accent-s": `${livery.s}%`,
-        "--accent-l": `${livery.l}%`,
       }}
     >
     <UsernameGate>
@@ -396,82 +401,67 @@ function AppInner() {
         * { scrollbar-width: thin; scrollbar-color: var(--border-hover) var(--bg); }
         html, body, #root { height: 100%; margin: 0; background: #0B1526; }
         .app {
-          --bg: #0B1526; --panel: #101B2D; --panel-alt: #0E1A2C; --border: #22314A; --border-hover: #33456B;
-          --border-soft: rgba(111,160,240,0.12); --text: #E8EDF2; --text-soft: #b9c4cf; --muted: #8291AC; --muted2: #66768F;
-          --accent-h: 199; --accent-s: 89%; --accent-l: 58%;
-          --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
-          --accent-hover: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 10%));
-          --accent-dim: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) - 15%) / 0.35);
-          --accent-glow: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.18);
-          --accent-tint: hsl(var(--accent-h) calc(var(--accent-s) - 34%) calc(var(--accent-l) + 4%));
-          --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.10);
-          --on-accent: hsl(var(--accent-h) 45% 10%);
-          --presence-h: 34; --presence-s: 82%; --presence-l: 60%;
-          --presence: hsl(var(--presence-h) var(--presence-s) var(--presence-l));
-          --presence-soft: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.13);
-          --presence-glow: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.20);
-          --on-presence: hsl(var(--presence-h) 60% 11%);
-          /* Wrong answers are explanatory, not alarming: red is reserved for
-             genuine danger states in aviation content. */
-          --calm: #8FA6C4;
-          --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
-          /* Elevation: four distinct luminance steps rather than one flat navy.
-             well < page < card < raised. */
-          --elev-0: #0B1526; --elev-1: #101B2D; --elev-2: #16233A; --well: #070E1A;
-          --shadow-1: 0 1px 2px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.18);
-          --shadow-2: 0 2px 4px rgba(0,0,0,0.24), 0 16px 36px rgba(0,0,0,0.30);
-          --shadow-inset: inset 0 2px 7px rgba(0,0,0,0.50);
-          --hairline: inset 0 1px 0 rgba(255,255,255,0.05);
-          --sheen: rgba(255,255,255,0.10);
-          --bezel-hi: rgba(255,255,255,0.40); --bezel-mid: rgba(255,255,255,0.22); --bezel-lo: rgba(255,255,255,0.02);
-          /* Secondary interactive text: accent-derived but pulled back, so the
-             single primary CTA per screen keeps full saturation to itself. */
-          --accent-muted: color-mix(in srgb, var(--accent) 52%, var(--muted) 48%);
-          /* One hue ramp for every gauge fill, derived from the live accent:
-             deep/desaturated -> full accent -> hot redline flare. */
-          --g-low: color-mix(in srgb, var(--accent) 46%, #140309 54%);
-          --g-mid: var(--accent);
-          --g-high: color-mix(in srgb, var(--accent) 52%, #FFDCA8 48%);
-          --g-track: color-mix(in srgb, var(--accent) 14%, var(--well) 86%);
-          --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
-          /* One pairing, swappable from here: a warm display face for headings
-             and encouragement, a precise mono for anything numeric. */
-          --font-display: 'Fraunces', Georgia, serif;
-          --font-body: 'Inter', system-ui, sans-serif;
-          --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+          /* Aliases onto the generated livery tokens (src/styles/liveries.css).
+             Cold is the machine, warm is people — §2.2. Component-level names
+             are retained so existing screens repaint without a rewrite; they
+             resolve to livery tokens and nothing else. */
+          --bg: var(--surface-0);
+          --panel: var(--surface-1);
+          --panel-alt: var(--surface-1);
+          --elev-0: var(--surface-0);
+          --elev-1: var(--surface-1);
+          --elev-2: var(--surface-2);
+          --well: var(--surface-0);
+          --border: var(--hairline);
+          --border-soft: var(--hairline);
+          --border-hover: var(--hairline);
+          --text: var(--text-1);
+          --text-soft: var(--text-2);
+          --muted: var(--text-2);
+          --muted2: var(--text-3);
+          --accent: var(--cold);
+          --accent-hover: var(--cold);
+          --accent-tint: var(--cold);
+          --accent-dim: color-mix(in srgb, var(--cold) 35%, transparent);
+          --accent-muted: color-mix(in srgb, var(--cold) 70%, var(--text-2));
+          --accent-soft: color-mix(in srgb, var(--cold) 12%, transparent);
+          --accent-glow: color-mix(in srgb, var(--cold) 18%, transparent);
+          --on-accent: var(--surface-0);
+          --presence: var(--warm);
+          --presence-soft: color-mix(in srgb, var(--warm) 13%, transparent);
+          --presence-glow: color-mix(in srgb, var(--warm) 20%, transparent);
+          --on-presence: var(--surface-0);
+          --good: var(--cold);
+          --bad: var(--text-2);
+          --calm: var(--text-2);
+          --avatar-bg: var(--surface-2);
+          --shadow-1: 0 1px 2px rgb(0 0 0 / 0.20), 0 4px 12px rgb(0 0 0 / 0.18);
+          --shadow-2: 0 2px 4px rgb(0 0 0 / 0.24), 0 16px 36px rgb(0 0 0 / 0.30);
+          --shadow-inset: inset 0 2px 7px rgb(0 0 0 / 0.30);
+          --hairline-inset: inset 0 1px 0 rgb(255 255 255 / 0.05);
+          --sheen: rgb(255 255 255 / 0.08);
+          --bezel-hi: rgb(255 255 255 / 0.30); --bezel-mid: rgb(255 255 255 / 0.16); --bezel-lo: rgb(255 255 255 / 0.02);
+          --r-sm: 12px; --r-md: 16px; --r-lg: 16px; --r-pill: 999px;
+          --font-display: var(--font-serif);
+          --font-body: var(--font-ui);
           font-variant-numeric: tabular-nums;
-          font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; transition: background 0.2s ease, color 0.2s ease;
+          font-family: var(--font-ui);
+          background: var(--surface-0);
+          color: var(--text-1);
+          min-height: 100vh;
+          padding: 0 0 60px;
+          position: relative;
         }
-        .app.theme-light {
-          --bg: #F4F6FB; --panel: #FFFFFF; --panel-alt: #F0F3F9; --border: #D7DEEA; --border-hover: #B9C6DC;
-          --border-soft: rgba(61,111,209,0.12); --text: #16202E; --text-soft: #48556B; --muted: #5B6B85; --muted2: #7A8AA3;
-          --accent-h: 199; --accent-s: 72%; --accent-l: 42%;
-          --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
-          --accent-hover: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 8%));
-          --accent-dim: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) + 18%) / 0.40);
-          --accent-glow: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.14);
-          --accent-tint: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) - 4%));
-          --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.08);
-          --on-accent: #FFFFFF;
-          --presence-h: 34; --presence-s: 74%; --presence-l: 45%;
-          --presence: hsl(var(--presence-h) var(--presence-s) var(--presence-l));
-          --presence-soft: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.12);
-          --presence-glow: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.16);
-          --on-presence: #FFFFFF;
-          --calm: #5B7089;
-          --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
-          --elev-0: #F4F6FB; --elev-1: #FFFFFF; --elev-2: #FFFFFF; --well: #E6EBF4;
-          --shadow-1: 0 1px 2px rgba(22,32,46,0.06), 0 4px 12px rgba(22,32,46,0.07);
-          --shadow-2: 0 2px 4px rgba(22,32,46,0.07), 0 16px 36px rgba(22,32,46,0.11);
-          --shadow-inset: inset 0 2px 7px rgba(22,32,46,0.13);
-          --hairline: inset 0 1px 0 rgba(255,255,255,0.9);
-          --sheen: rgba(255,255,255,0.75);
-          --bezel-hi: rgba(22,32,46,0.26); --bezel-mid: rgba(22,32,46,0.13); --bezel-lo: rgba(255,255,255,0.60);
-          --accent-muted: color-mix(in srgb, var(--accent) 52%, var(--muted) 48%);
-          --g-low: color-mix(in srgb, var(--accent) 42%, #C9B3B8 58%);
-          --g-mid: var(--accent);
-          --g-high: color-mix(in srgb, var(--accent) 58%, #E8A33D 42%);
-          --g-track: color-mix(in srgb, var(--accent) 16%, var(--well) 84%);
+        /* §2.6 — the cheatline: one warm gradient rising from the bottom edge. */
+        .app::before {
+          content: "";
+          position: fixed;
+          left: 0; right: 0; bottom: 0;
+          height: 40vh;
+          pointer-events: none;
+          z-index: 0;
+          opacity: var(--cheatline-alpha, 0.06);
+          background: var(--cheatline);
         }
         .app::before { content: ""; position: fixed; left: 50%; top: -280px; width: 1100px; height: 620px;
           transform: translateX(-50%); pointer-events: none; z-index: 0;
