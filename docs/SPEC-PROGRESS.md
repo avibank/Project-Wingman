@@ -19,7 +19,7 @@ Read only the sections that step needs. §17 lists which.
 | 1 | Livery tokens + cheatline | §2 (all), §2.14 | **done** — see below |
 | 2 | Auto-squadrons + fill ladder | §7.1, §10 | **done** — needs migration 0005 to place anyone |
 | 3 | Presence as a data type | §8.3 | not started |
-| 4 | Safety primitives | §9 | **done** — image scanning and rate limits still owed |
+| 4 | Safety primitives | §9 | **done** — image scanning still owed; rate limits in 0006 |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | **done** |
 | 7 | Ambient glow | §7.6, §2.8 | **done** |
