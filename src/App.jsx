@@ -6,6 +6,7 @@ import HubPage from "./components/HubPage.jsx";
 import { useSocialPrefs } from "./lib/social.js";
 import { fetchEnrollments } from "./lib/enrollments.js";
 import ModuleHub from "./components/ModuleHub.jsx";
+import PresenceGauge from "./components/PresenceGauge.jsx";
 import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -357,6 +358,7 @@ function AppInner() {
           />
         </main>
       )}
+      <PresenceGauge onOpen={() => goToModule(activeModuleCode, "social")} />
       <div className="flight-progress">
         <div className="runway-lights" aria-hidden="true">
           <div className="runway-trail" style={{ width: `${scrollPct * 100}%` }} />
