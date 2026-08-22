@@ -238,7 +238,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const [dataPageIndex, setDataPageIndex] = useState(0);
-  const [slideDir, setSlideDir] = useState(1);
   const [needsMotionPermission, setNeedsMotionPermission] = useState(false);
 
   const pausedUntil = useRef(0);
@@ -312,7 +311,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
     if (reduceMotion || dataPages.length < 2) return;
     const timer = setInterval(() => {
       if (Date.now() < pausedUntil.current) return;
-      setSlideDir(1);
       setDataPageIndex((i) => i + 1);
     }, DATA_PAGE_MS);
     return () => clearInterval(timer);
@@ -320,7 +318,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
 
   const goToDataPage = (i) => {
     pausedUntil.current = Date.now() + DATA_PAUSE_MS;
-    setSlideDir(i > safePageIndex ? 1 : -1);
     setDataPageIndex(((i % dataPages.length) + dataPages.length) % dataPages.length);
   };
 
@@ -549,7 +546,7 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
 
               <div className="fd-dial-col fd-dial-col--data">
                 <Gauge size={128} value={dataShown} arc={dataPage.arc} label={dataPage.label}>
-                  <div key={dataPage.key} className={`g-face-slide ${slideDir > 0 ? "from-right" : "from-left"}`}>
+                  <div key={dataPage.key} className="g-face-slide">
                     <span className="g-value">
                       {PageIcon && <PageIcon size={13} className="g-value-icon" />}
                       {dataPage.display}
@@ -774,9 +771,9 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         /* ---- hero ---- */
         .fd-hero-wrap { position: relative; margin-top: 30px; }
         .fd-hero-glow { position: absolute; inset: -80px; z-index: 0; pointer-events: none;
-          background: radial-gradient(58% 58% at 50% 42%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 74%);
+          background: radial-gradient(58% 58% at 50% 42%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 74%);
           filter: blur(42px); animation: fdHeroPulse 6s ease-in-out infinite; }
-        @keyframes fdHeroPulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.035); } }
+        @keyframes fdHeroPulse { 0%, 100% { opacity: 0.72; transform: scale(1); } 50% { opacity: 1; transform: scale(1.035); } }
         .fd-hero { position: relative; z-index: 1; padding: 30px 32px 26px; border-radius: var(--r-lg);
           background: linear-gradient(180deg, var(--elev-2) 0%, var(--elev-1) 100%);
           border: 1px solid var(--border); box-shadow: var(--hairline), var(--shadow-2); }
@@ -835,10 +832,8 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
           background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--g-mid) 30%, transparent) 42deg, transparent 84deg);
           animation: gSweep 3.2s linear infinite; }
         @keyframes gSweep { to { transform: rotate(360deg); } }
-        .g-face-slide { animation: gSlideIn 0.28s var(--fd-ease); }
-        .g-face-slide.from-left { animation-name: gSlideInLeft; }
-        @keyframes gSlideIn { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes gSlideInLeft { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
+        .g-face-slide { animation: gRecalibrate 0.3s var(--fd-ease); }
+        @keyframes gRecalibrate { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
 
         .fd-data-nav { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 26px; display: flex; align-items: center; gap: 2px; }
         .fd-data-arrow { background: none; border: none; color: var(--muted); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; }
