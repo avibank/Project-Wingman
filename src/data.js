@@ -1,15 +1,16 @@
-import { ClipboardCheck, FileText, Gauge, Users } from "lucide-react";
+import { ClipboardCheck, FileText, Users } from "lucide-react";
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 // This is where your real question bank, videos, and PDFs will eventually live.
 const MODULES = [
-  // Modules are told apart by their motif, not by a colour of their own: the
-  // app runs on a single accent hue family.
-  { code: "JT",   name: "Jet Turbine Fundamentals",        status: "active", questions: 10, order: 1, motif: "turbine" },
-  { code: "PROP", name: "Propulsion Systems",              status: "active", questions: 8,  order: 2, motif: "manifold" },
-  { code: "AERO", name: "Aerodynamics & Principles of Flight", status: "active", questions: 8, order: 3, motif: "streamlines" },
-  { code: "NAV",  name: "Navigation & Charts",             status: "active", questions: 8,  order: 4, motif: "compass" },
-  { code: "WX",   name: "Aviation Weather",                status: "active", questions: 8,  order: 5, motif: "isobars" },
+  // Two-layer colour. This hue is layer one: module identity, used for
+  // wayfinding only — badges, rings, accent lines. Layer two (--presence amber)
+  // sits on top of every module alike and answers "is this alive right now".
+  { code: "JT", hue: "#7FB2E8",   name: "Jet Turbine Fundamentals",        status: "active", questions: 10, order: 1, motif: "turbine" },
+  { code: "PROP", hue: "#7FD1A8", name: "Propulsion Systems",              status: "active", questions: 8,  order: 2, motif: "manifold" },
+  { code: "AERO", hue: "#79C9D9", name: "Aerodynamics & Principles of Flight", status: "active", questions: 8, order: 3, motif: "streamlines" },
+  { code: "NAV", hue: "#B49BE0",  name: "Navigation & Charts",             status: "active", questions: 8,  order: 4, motif: "compass" },
+  { code: "WX", hue: "#9FB4CC",   name: "Aviation Weather",                status: "active", questions: 8,  order: 5, motif: "isobars" },
 ];
 
 const CHAPTERS = [
@@ -784,7 +785,6 @@ const PDFS = [
 ];
 
 const NAV = [
-  { id: "overview", label: "Overview", icon: Gauge },
   { id: "chapters", label: "Chapters", icon: ClipboardCheck },
   { id: "pdf", label: "Library", icon: FileText },
   { id: "social", label: "Social", icon: Users },

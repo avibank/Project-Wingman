@@ -175,7 +175,7 @@ export function RadarScope({ contacts = [], size = 132 }) {
             cx={c + Math.cos(angle) * (c - 8) * dist} cy={c + Math.sin(angle) * (c - 8) * dist} r="3" />;
         })}
       </svg>
-      <div className="instr-label">{contacts.length ? `${contacts.length} contact${contacts.length === 1 ? "" : "s"}` : "No contacts"}</div>
+      <div className="instr-label">{contacts.length ? `${contacts.length} contact${contacts.length === 1 ? "" : "s"}` : "Check in to appear here"}</div>
     </div>
   );
 }
@@ -243,10 +243,10 @@ export function InstrumentStyles() {
       /* radar */
       .radar { display: flex; flex-direction: column; align-items: center; }
       .radar-ring { stroke: var(--border); stroke-width: 1; opacity: 0.7; }
-      .radar-wedge { fill: var(--accent); opacity: 0.08; }
+      .radar-wedge { fill: var(--presence); opacity: 0.09; }
       .radar-sweep { animation: radarSpin 4.2s linear infinite; }
       @keyframes radarSpin { to { transform: rotate(360deg); } }
-      .radar-blip { fill: var(--accent); filter: drop-shadow(0 0 3px var(--accent-glow)); }
+      .radar-blip { fill: var(--presence); filter: drop-shadow(0 0 3px var(--accent-glow)); }
 
       .app.reduce-motion .bezel::before,
       .app.reduce-motion .tape-strip,

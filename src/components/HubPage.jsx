@@ -240,26 +240,26 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
       icon: CheckCircle2,
       label: "Checklist",
       value: completed.size ? `${completed.size}/${CHAPTERS.length}` : null,
-      empty: "Start your first chapter",
+      empty: "Open your first chapter",
     },
     {
       icon: Target,
       label: "Quiz accuracy",
       value: quizAccuracy === null ? null : `${quizAccuracy}%`,
-      empty: "Take your first quiz",
+      empty: "Take a quiz to set your accuracy",
     },
     {
       icon: Flame,
       label: "Streak",
       // Clamp so the count-up never flashes a bare 0 on its first frame.
       value: streak ? `${Math.max(1, streakDisplay)}d` : null,
-      empty: "Fly today to start one",
+      empty: "Study today to start a streak",
     },
     {
       icon: BookMarked,
       label: "Bookmarks",
       value: bookmarkCount ? `${bookmarkCount}` : null,
-      empty: "Flag questions to revisit",
+      empty: "Flag a question to revisit it here",
     },
   ];
 
@@ -314,11 +314,11 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
             </>
           ) : (
             <>
-              <h2 className="hero-chapter">Start your first chapter</h2>
+              <h2 className="hero-chapter">Open your first chapter</h2>
               <p className="hero-module">
                 {(MODULES.find((m) => m.code === "JT") || MODULES[0])?.name} · {CHAPTERS.length} chapters
               </p>
-              <p className="hero-meta">Nothing logged yet — your progress starts on the first briefing.</p>
+              <p className="hero-meta">Your first chapter starts the logbook.</p>
             </>
           )}
 
@@ -337,7 +337,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         </div>
 
         <div className="hero-stats">
-          <div className="instr-cell"><N1Dial pct={quizAccuracy ?? 0} label={quizAccuracy === null ? "No quizzes yet" : "Quiz accuracy"} size={96} /></div>
+          <div className="instr-cell"><N1Dial pct={quizAccuracy ?? 0} label={quizAccuracy === null ? "Take a quiz to set your accuracy" : "Quiz accuracy"} size={96} /></div>
           <div className="instr-cell"><ValueTape value={streak} label="Streak" unit="days" /></div>
           <div className="instr-cell instr-cell--text">
             <div className="instr-value">{completed.size ? `${completed.size}/${CHAPTERS.length}` : "—"}</div>
@@ -399,9 +399,15 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
             .map(({ m, chs, done, pct }) => {
               const isEnrolled = enrolledCodes.includes(m.code);
               const isPinned = m.code === inProgressCode || m.code === suggestedCode;
+              const isSuggested = m.code === suggestedCode;
               const state = pct > 0 ? "live" : isEnrolled ? "ready" : "open";
+              const upNext = chs.find((c) => !completed.has(c.id));
               return (
-                <article key={m.code} className={`card mod is-${state} ${isPinned ? "is-pinned" : ""}`}>
+                <article
+                  key={m.code}
+                  className={`card mod is-${state} ${isPinned ? "is-pinned" : ""} ${isSuggested ? "is-suggested" : ""}`}
+                  style={{ "--id-hue": m.hue }}
+                >
                   <ModuleMotif motif={m.motif} />
                   <span className="mod-rail" aria-hidden="true" />
                   <div className="mod-top">
@@ -409,12 +415,11 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
                     {pct > 0 && <ProgressRing pct={pct} size={30} />}
                   </div>
                   <h3 className="mod-name">{m.name}</h3>
-                  {m.code === suggestedCode && <span className="mod-suggested">Suggested next</span>}
                   <div className="mod-bar">
                     <div className="mod-fill" style={{ width: `${pct}%` }} />
                   </div>
                   <p className="mod-meta">
-                    {done}/{chs.length} chapters
+                    {done}/{chs.length} chapters{upNext ? ` · up next ${upNext.code}` : ""}
                   </p>
                   <div className="mod-actions">
                     {isEnrolled ? (
@@ -457,7 +462,16 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .board-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; width: 46px; flex-shrink: 0; }
         .board-text { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-soft); }
         .mod { position: relative; }
-        .mod .instr-motif { right: -60px; width: 170px; height: 170px; opacity: 0.05; }
+        .mod .instr-motif { color: var(--id-hue, var(--accent)); right: -60px; width: 170px; height: 170px; opacity: 0.07; }
+        .mod .mono-code { color: var(--id-hue, var(--accent-tint)); }
+        /* Amber is the "come here next" signal, never identity. */
+        .mod.is-suggested { border-color: color-mix(in srgb, var(--presence) 34%, transparent); }
+        .mod.is-suggested::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+          box-shadow: inset 0 0 34px var(--presence-glow); }
+        .mod { transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), border-color 0.15s ease, box-shadow 0.22s ease; }
+        .mod:hover { transform: translateY(-3px); box-shadow: var(--shadow-2), 0 0 28px var(--presence-glow); }
+        .app.reduce-motion .mod { transition: none; }
+        .app.reduce-motion .mod:hover { transform: none; }
 
         /* ---------- one card system ---------- */
         .card { background: var(--elev-1); border: 1px solid var(--border-soft); border-radius: var(--r-lg);
@@ -533,7 +547,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           transition: border-color 0.15s ease, background 0.15s ease; }
         .mod:hover { border-color: var(--border); background: var(--elev-2); }
         /* the rail is the status signal — no word badge */
-        .mod-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+        .mod-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--id-hue, var(--accent)); }
         .mod.is-live .mod-rail { opacity: 1; }
         .mod.is-ready .mod-rail { opacity: 0.45; }
         .mod.is-open .mod-rail { opacity: 0.22; }
@@ -543,7 +557,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .mod-lock { color: var(--muted2); }
         .mod-name { font-family: 'Space Grotesk', sans-serif; font-size: 15.5px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.3; }
         .mod-bar { height: 4px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; box-shadow: var(--shadow-inset); }
-        .mod-fill { height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .mod-fill { height: 100%; border-radius: var(--r-pill); background: var(--id-hue, var(--accent)); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
         .mod-fill.is-muted { background: var(--muted2); }
         .mod-meta { font-size: 12px; color: var(--muted); margin: 0; }
         .mod-actions { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 4px; }

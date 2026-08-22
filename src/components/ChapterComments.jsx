@@ -88,7 +88,7 @@ function ChapterComments({ chapterId, onSignIn }) {
       ) : comments.length === 0 ? (
         <div className="chapter-comments-empty">
           <MessageSquareOff size={24} className="chapter-comments-empty-icon" />
-          <p>No comments yet — be the first to ask something about this chapter.</p>
+          <p>Ask the first question about this chapter.</p>
         </div>
       ) : (
         <div className="chapter-comments-list">

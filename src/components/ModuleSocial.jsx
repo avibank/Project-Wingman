@@ -13,6 +13,18 @@ import {
 } from "../lib/discussion.js";
 import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
 
+// Study tips rotate by day so the space has something real in it before anyone
+// else arrives. Not fake activity — no author, no timestamp, no implied user.
+const STUDY_TIPS = [
+  "Read the question stem twice before looking at the options. Most wrong answers are misread, not unknown.",
+  "If two options are opposites, one of them is usually correct. Eliminate the pair that agrees.",
+  "Say the concept out loud in your own words before moving on. If you can't, you haven't got it yet.",
+  "Space your review: a chapter revisited tomorrow sticks better than the same chapter read twice today.",
+  "Work the numbers before you look at the answer choices, so the options can't anchor you.",
+  "When a question mentions altitude, temperature or weight, check which way the effect runs before answering.",
+  "Flag what you guessed, not just what you got wrong — a lucky guess is still a gap.",
+];
+
 const SUBS = [
   { id: "feed", label: "Feed" },
   { id: "threads", label: "Threads" },
@@ -124,6 +136,10 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
       {sub === "feed" && (
         <div className="soc-cols">
           <div className="soc-main">
+            <div className="soc-pinned">
+              <span className="soc-pin-label">Tip of the day</span>
+              <p className="soc-pin-text">{STUDY_TIPS[new Date().getDate() % STUDY_TIPS.length]}</p>
+            </div>
             {roster.length > 0 && (
               <p className="soc-line">{roster.map((r) => r.display_name || "A pilot").join(", ")} studying now.</p>
             )}
@@ -136,7 +152,7 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
           <aside className="soc-side">
             <p className="soc-side-title">Recent threads</p>
             {sorted.length === 0 ? (
-              <p className="soc-muted">No threads yet.</p>
+              <p className="soc-muted">Threads open here every week. Start one.</p>
             ) : (
               sorted.slice(0, 4).map((t) => (
                 <button key={t.id} className="soc-side-row" onClick={() => { setSub("threads"); setOpen(t); }}>
@@ -166,9 +182,12 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
         <div className="soc-threadlist">
           {isSignedIn && <Composer placeholder="Start a thread" onSubmit={startThread} />}
           {loading ? (
-            <p className="soc-muted">Loading…</p>
+            <p className="soc-muted">Coming up…</p>
           ) : sorted.length === 0 ? (
-            <p className="soc-muted">No threads yet. Start the first one.</p>
+            <div className="soc-invite">
+              <p className="soc-invite-title">Open the first thread on {moduleCode}</p>
+              <p className="soc-muted">Threads stay open — someone working through this chapter later will read it.</p>
+            </div>
           ) : (
             sorted.map((t) => (
               <button key={t.id} className="soc-row" onClick={() => setOpen(t)}>
@@ -185,7 +204,12 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
           <div className="soc-main">
             <p className="soc-side-title">Studying now</p>
             {roster.length === 0 ? (
-              <p className="soc-muted">Nobody else is in this module right now.</p>
+              <div className="soc-seats">
+                <span className="soc-seat" aria-hidden="true" />
+                <span className="soc-seat" aria-hidden="true" />
+                <span className="soc-seat" aria-hidden="true" />
+                <p className="soc-muted">Open seats. Check in and you're the first voice in this cabin.</p>
+              </div>
             ) : (
               <ul className="soc-people">
                 {roster.map((r) => (
@@ -201,7 +225,11 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
           <aside className="soc-side">
             <p className="soc-side-title">Your wingmen</p>
             {wingmen.length === 0 ? (
-              <p className="soc-muted">You haven't added a wingman yet.</p>
+              <div className="soc-seats">
+                <span className="soc-seat" aria-hidden="true" />
+                <span className="soc-seat" aria-hidden="true" />
+                <p className="soc-muted">Add a wingman and your streaks fly together.</p>
+              </div>
             ) : (
               <ul className="soc-people">
                 {wingmen.map((w) => <li key={w.wingman_user_id}>{w.display_name || "Pilot"}</li>)}
@@ -247,7 +275,19 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
         .soc-comments { margin: 14px 0; }
         .soc-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 13px; color: var(--text-soft); }
         .soc-people li { display: flex; align-items: center; gap: 8px; }
-        .soc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        .soc-pinned { border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 13px 15px; margin-bottom: 16px;
+          background: var(--presence-soft); }
+        .soc-pin-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+          color: var(--presence); }
+        .soc-pin-text { font-size: 13px; line-height: 1.55; color: var(--text-soft); margin: 6px 0 0; }
+        .soc-invite { border: 1px dashed var(--accent-dim); border-radius: var(--r-md); padding: 22px; text-align: center; }
+        .soc-invite-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 5px; }
+        .soc-seats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .soc-seat { width: 26px; height: 26px; border-radius: 50%; border: 1px dashed var(--border-hover); flex-shrink: 0; }
+        .soc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--presence);
+          box-shadow: 0 0 0 3px var(--presence-soft); animation: presencePulse 3.6s ease-in-out infinite; }
+        @keyframes presencePulse { 0%,100% { box-shadow: 0 0 0 2px var(--presence-soft); } 50% { box-shadow: 0 0 0 6px var(--presence-soft); } }
+        .app.reduce-motion .soc-dot { animation: none; }
       `}</style>
     </div>
   );

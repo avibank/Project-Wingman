@@ -63,7 +63,7 @@ function AppInner() {
   }));
   useEffect(() => {
     if (!progress.loaded) return;
-    setTab(progress.get("pw-last-tab", "overview"));
+    setTab(progress.get("pw-last-tab", "chapters"));
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
@@ -213,7 +213,7 @@ function AppInner() {
     setTab(targetTab);
     window.scrollTo(0, 0);
   };
-  const enterModule = (m) => goToModule(m.code, "overview");
+  const enterModule = (m) => goToModule(m.code, "chapters");
   // Deep-link into one specific chapter: hand the id to ChaptersPanel directly
   // so it opens that chapter instead of the restored pw-last-chapter.
   const goToChapter = (moduleCode, chapterId) => {
@@ -404,6 +404,14 @@ function AppInner() {
           --accent-tint: hsl(var(--accent-h) calc(var(--accent-s) - 34%) calc(var(--accent-l) + 4%));
           --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.10);
           --on-accent: hsl(var(--accent-h) 45% 10%);
+          --presence-h: 34; --presence-s: 82%; --presence-l: 60%;
+          --presence: hsl(var(--presence-h) var(--presence-s) var(--presence-l));
+          --presence-soft: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.13);
+          --presence-glow: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.20);
+          --on-presence: hsl(var(--presence-h) 60% 11%);
+          /* Wrong answers are explanatory, not alarming: red is reserved for
+             genuine danger states in aviation content. */
+          --calm: #8FA6C4;
           --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
           /* Elevation: four distinct luminance steps rather than one flat navy.
              well < page < card < raised. */
@@ -438,6 +446,12 @@ function AppInner() {
           --accent-tint: hsl(var(--accent-h) calc(var(--accent-s) - 30%) calc(var(--accent-l) - 4%));
           --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.08);
           --on-accent: #FFFFFF;
+          --presence-h: 34; --presence-s: 74%; --presence-l: 45%;
+          --presence: hsl(var(--presence-h) var(--presence-s) var(--presence-l));
+          --presence-soft: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.12);
+          --presence-glow: hsl(var(--presence-h) var(--presence-s) var(--presence-l) / 0.16);
+          --on-presence: #FFFFFF;
+          --calm: #5B7089;
           --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
           --elev-0: #F4F6FB; --elev-1: #FFFFFF; --elev-2: #FFFFFF; --well: #E6EBF4;
           --shadow-1: 0 1px 2px rgba(22,32,46,0.06), 0 4px 12px rgba(22,32,46,0.07);
@@ -455,6 +469,8 @@ function AppInner() {
         .app::before { content: ""; position: fixed; left: 50%; top: -280px; width: 1100px; height: 620px;
           transform: translateX(-50%); pointer-events: none; z-index: 0;
           background: radial-gradient(closest-side, var(--accent-glow), transparent 72%); filter: blur(28px); }
+        .app::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.035;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
         .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }

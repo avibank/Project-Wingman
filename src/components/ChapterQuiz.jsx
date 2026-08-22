@@ -132,7 +132,7 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
               <span className="exam-opt-letter">{String.fromCharCode(65 + idx)}</span>
               <span>{opt}</span>
               {state === "correct" && <CheckCircle2 size={16} color="var(--good)" />}
-              {state === "wrong" && <XCircle size={16} color="var(--bad)" />}
+              {state === "wrong" && <XCircle size={16} color="var(--calm)" />}
             </button>
           );
         })}
@@ -158,8 +158,8 @@ function ChapterQuiz({ questions, chapterTitle, onComplete, bookmarks, onToggleB
         .exam-opt:hover .exam-opt-letter { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
         .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
         .exam-opt--correct .exam-opt-letter { background: var(--good); color: #fff; border-color: var(--good); }
-        .exam-opt--wrong { border-color: var(--bad); background: rgba(224,102,90,0.08); }
-        .exam-opt--wrong .exam-opt-letter { background: var(--bad); color: #fff; border-color: var(--bad); }
+        .exam-opt--wrong { border-color: var(--calm); background: color-mix(in srgb, var(--calm) 10%, transparent); }
+        .exam-opt--wrong .exam-opt-letter { background: var(--calm); color: var(--bg); border-color: var(--calm); }
         .exam-opt--correct span:last-child, .exam-opt--wrong span:last-child { margin-left: auto; }
         .exam-opt.is-flash { animation: flashGlow 0.5s ease-out; }
         @keyframes flashGlow {

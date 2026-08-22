@@ -98,7 +98,7 @@ function NotebookPanel({ chapter, moduleCode, prefs, onCountChange }) {
         <p className="nb-empty">Official material only. Turn community notes back on above.</p>
       ) : (
         <>
-          {visible.length === 0 && <p className="nb-empty">No notes on this chapter yet — add the first one.</p>}
+          {visible.length === 0 && <p className="nb-empty">Add the first note — the next pilot through will thank you.</p>}
           {visible.map((row) => {
             const collapsed = row.score <= COLLAPSE_SCORE && !expanded.has(row.id);
             const mine = row.user_id === user?.id;

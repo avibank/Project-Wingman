@@ -79,54 +79,6 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
       </nav>
 
       <div className="hub2-body">
-        {tab === "overview" && (
-          <div className="ov">
-            <section className="ov-resume bezel">
-              <p className="ov-kicker">Up next</p>
-              <h2 className="ov-chapter">
-                <span className="ov-code">{nextChapter?.code}</span> {nextChapter?.title}
-              </h2>
-              <button className="switch" onClick={() => onGoToChapter(module.code, nextChapter?.id)}>
-                <span className="switch-lever" aria-hidden="true" />
-                <span className="switch-label">{pct > 0 ? "Resume" : "Begin"}</span>
-              </button>
-            </section>
-
-            <section className="ov-panel bezel">
-              <p className="ov-kicker">Recent activity</p>
-              {threads.length === 0 ? (
-                <p className="ov-empty">No activity yet.</p>
-              ) : (
-                <ul className="ov-feed">
-                  {threads.slice(0, 4).map((t) => (
-                    <li key={t.id} className="ov-feed-row">
-                      <Radio size={11} className="ov-feed-icon" />
-                      <span className="ov-feed-text">{activityLine(t, chapters)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="ov-panel bezel">
-              <p className="ov-kicker">Studying now</p>
-              {roster.length === 0 ? (
-                <p className="ov-empty">Nobody else is here right now.</p>
-              ) : (
-                <ul className="ov-roster">
-                  {roster.map((r) => (
-                    <li key={r.user_id}>
-                      <span className="ov-live" aria-hidden="true" />
-                      {r.display_name || "Pilot"}
-                      {wingIds.has(r.user_id) && <span className="ov-wing">wingman</span>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-        )}
-
         {tab === "chapters" && (
           <ChaptersPanel
             activeModuleCode={module.code}

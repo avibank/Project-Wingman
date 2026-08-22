@@ -62,7 +62,7 @@ function ThreadsPanel({ chapter, moduleCode, prefs, onCountChange }) {
         <p className="th-meta">{displayNameFor(openThread)} · {when(openThread.created_at)}</p>
         {openThread.body && <p className="th-body">{openThread.body}</p>}
         <div className="th-posts">
-          {posts.length === 0 && <p className="th-empty">No replies yet.</p>}
+          {posts.length === 0 && <p className="th-empty">Reply and keep the thread moving.</p>}
           {posts.map((p) => (
             <div key={p.id} className="th-post">
               <div className="th-meta"><span className="th-author">{displayNameFor(p)}</span> · {when(p.created_at)}</div>
@@ -84,7 +84,7 @@ function ThreadsPanel({ chapter, moduleCode, prefs, onCountChange }) {
 
   return (
     <div className="th">
-      {threads.length === 0 && <p className="th-empty">No threads on this chapter yet — start one below.</p>}
+      {threads.length === 0 && <p className="th-empty">Open the first thread on this chapter.</p>}
       {threads.map((t) => (
         <button key={t.id} className="th-row" onClick={() => setOpenThread(t)}>
           <span className="th-row-title">{t.title}</span>
