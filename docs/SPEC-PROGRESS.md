@@ -21,7 +21,7 @@ Read only the sections that step needs. §17 lists which.
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | **data layer done** — UI pending |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
-| 6 | Social tab | §7.3, §8.2 | not started |
+| 6 | Social tab | §7.3, §8.2 | **partial** — rail + vocabulary done, Formation and On-your-wing pending |
 | 7 | Ambient glow | §7.6, §2.8 | **maths done + verified** — wiring pending |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
 | 9 | Comms as chat | §7.8, §2.12 | not started |
@@ -180,3 +180,32 @@ label instead of a bare padlock.
 
 Fixed while wiring: `LiveryPicker` calls `onSelect(id)` unconditionally, so the
 first render — `<LiveryPicker />` with no props — would have thrown on any click.
+
+## Step 6 — partial
+
+`PresenceStrip.jsx` is §7.3's rail: each face wears its owner's tail, with a mono
+chapter code beneath. It replaces the comma-joined sentence Social used to open with
+("A, B and C studying this module now"), which put names before faces and could not
+show position at all.
+
+Liveries come from `pilot_profiles` via a new `fetchProfiles`. Until migration 0005
+runs, every profile is missing and every tail falls back to Dawn Patrol — the markings
+still separate them, which is the point of §2.9 not relying on colour.
+
+Traffic now uses the spec's vocabulary: `Completed` and `Debrief` both became
+**Logged**, and `Thread` became **Ask**. Composer copy rotates through §7.3's three
+lines, fixed at mount so it cannot change under someone mid-sentence; the middle line
+names a chapter someone is genuinely on and is dropped when nobody is flying.
+
+Hardened while building: the rail resolved chapter codes against the global `CHAPTERS`
+array. The harness surfaced it immediately — a pilot on AERO.01 printed that code
+inside JT's rail. It now resolves through `chaptersForModule()` when given a module,
+and falls back to global only for a cross-module rail. Same bug class as the chapter
+list and the Library, per CLAUDE.md.
+
+### Still owed
+
+- **Formation** as the third Traffic type — needs the `formations` table from 0005.
+- **"On your wing"** (§8.2) — the five-rung ranking is written down but nothing
+  computes it yet.
+- Long-press → Fly together on a rail face.

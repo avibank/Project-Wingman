@@ -13,6 +13,7 @@ import {
   fetchReactions, fetchMyReactions, toggleReactionChip,
 } from "../lib/discussion.js";
 import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
+import PresenceStrip from "./PresenceStrip.jsx";
 
 // One community surface, not three sub-tabs two of which are always blank.
 //
@@ -34,6 +35,8 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const [chips, setChips] = useState({});
   const [myChips, setMyChips] = useState({});
   const [loading, setLoading] = useState(true);
+  // Fixed at mount so the prompt cannot change under someone mid-sentence.
+  const [promptIndex] = useState(() => Math.floor(Math.random() * 3));
 
   const chapters = chaptersForModule(moduleCode);
   const chapterById = Object.fromEntries(CHAPTERS.map((c) => [c.id, c]));
@@ -52,7 +55,7 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     const log = [];
     for (const d of done) {
       const ch = chapterById[d.chapter_id];
-      if (ch) log.push({ id: `c-${d.chapter_id}`, at: d.completed_at, kind: "Completed", text: `${ch.code} ${ch.title}`, chapterId: ch.id });
+      if (ch) log.push({ id: `c-${d.chapter_id}`, at: d.completed_at, kind: "Logged", text: `${ch.code} ${ch.title}`, chapterId: ch.id });
     }
     const byChapter = {};
     for (const a of attempts) {
@@ -63,10 +66,10 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     }
     for (const [cid, s] of Object.entries(byChapter)) {
       const ch = chapterById[cid];
-      if (ch) log.push({ id: `q-${cid}`, at: s.at, kind: "Debrief", text: `${ch.code} — ${s.right}/${s.n} correct`, chapterId: cid });
+      if (ch) log.push({ id: `q-${cid}`, at: s.at, kind: "Logged", text: `${ch.code} — ${s.right}/${s.n} correct`, chapterId: cid });
     }
     for (const th of t) {
-      log.push({ id: `t-${th.id}`, at: th.created_at, kind: "Thread", text: th.title, thread: th, who: displayNameFor(th) });
+      log.push({ id: `t-${th.id}`, at: th.created_at, kind: "Ask", text: th.title, thread: th, who: displayNameFor(th) });
     }
     log.sort((a, b) => new Date(b.at) - new Date(a.at));
     setEntries(log);
@@ -127,6 +130,13 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     if (created) load();
   };
 
+  const liveChapter = roster.map((r) => chapterById[r.chapter_id]).find(Boolean);
+  const composerPrompt = [
+    "Stuck on something? Ask your squadron.",
+    liveChapter ? `Looking for someone to fly ${liveChapter.code} with?` : null,
+    "Just finished a chapter — leave a tip for whoever's next?",
+  ].filter(Boolean)[promptIndex % (liveChapter ? 3 : 2)];
+
   const tree = buildTree(posts.map((p) => ({ ...p, myVote: votes[p.id], reactions: chips[p.id] || {}, myChips: myChips[p.id] })));
 
   if (open) {
@@ -151,14 +161,9 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
 
   return (
     <div className="soc">
-      {roster.length > 0 && (
-        <p className="soc-here">
-          <span className="soc-dot" aria-hidden="true" />
-          {roster.map((r) => r.display_name || "A pilot").join(", ")} studying this module now.
-        </p>
-      )}
+      <PresenceStrip people={roster} moduleCode={moduleCode} onOpenPilot={(p) => p.chapter_id && onGoToChapter?.(moduleCode, p.chapter_id)} />
 
-      {isSignedIn && <Composer placeholder="Ask the group something" onSubmit={startThread} />}
+      {isSignedIn && <Composer placeholder={composerPrompt} onSubmit={startThread} />}
 
       {loading ? (
         <p className="soc-muted">Coming up…</p>

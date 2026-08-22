@@ -57,6 +57,19 @@ export async function fetchRoster(userId, squadronId) {
   return data || [];
 }
 
+// Liveries for a set of user ids, so a presence rail can paint each face in
+// its owner's own tail. Missing rows simply have no profile yet.
+export async function fetchProfiles(ids = []) {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (!unique.length) return {};
+  const { data, error } = await supabase
+    .from("pilot_profiles")
+    .select("user_id, callsign, livery, is_staff")
+    .in("user_id", unique);
+  if (error) return fail(error, {});
+  return Object.fromEntries((data || []).map((r) => [r.user_id, r]));
+}
+
 // §7.1 screen 1 shows real pilots who are already flying. If there are none
 // yet, it returns an empty list and the screen says what to do next -- it never
 // backfills. §1, non-negotiable 3.
