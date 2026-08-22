@@ -16,6 +16,9 @@ import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
 import PresenceStrip from "./PresenceStrip.jsx";
 import OnYourWing from "./OnYourWing.jsx";
 import Squadron from "./Squadron.jsx";
+import { fetchOpenFormationsForModule, joinFormation } from "../lib/formation.js";
+import { fetchProfiles, assignMarkings } from "../lib/squadron.js";
+import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 
 // One community surface, not three sub-tabs two of which are always blank.
 //
@@ -38,6 +41,8 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const [myChips, setMyChips] = useState({});
   const [loading, setLoading] = useState(true);
   const [myChapterId, setMyChapterId] = useState(null);
+  const [formations, setFormations] = useState([]);
+  const [flyerProfiles, setFlyerProfiles] = useState({});
   // Fixed at mount so the prompt cannot change under someone mid-sentence.
   const [promptIndex] = useState(() => Math.floor(Math.random() * 3));
 
@@ -45,12 +50,15 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const chapterById = Object.fromEntries(CHAPTERS.map((c) => [c.id, c]));
 
   const load = useCallback(async () => {
-    const [t, p, done, attempts] = await Promise.all([
+    const [t, p, done, attempts, fms] = await Promise.all([
       fetchThreads({ moduleCode, limit: 20 }),
       fetchModulePresence(moduleCode, user?.id),
       user?.id ? fetchMyCompletions(user.id, moduleCode) : Promise.resolve([]),
       user?.id ? fetchMyAttempts(user.id) : Promise.resolve([]),
+      fetchOpenFormationsForModule(moduleCode),
     ]);
+    setFormations(fms);
+    setFlyerProfiles(await fetchProfiles(fms.flatMap((f) => f.members.map((m) => m.user_id))));
     setThreads(t);
     setRoster(p);
 
@@ -171,7 +179,7 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
           ))}
         </div>
         {isSignedIn && <Composer placeholder="Add a comment" onSubmit={(t) => reply(null, t)} />}
-        <ThreadStyles />
+      <ThreadStyles />
         <SocialStyles />
       </div>
     );
@@ -184,6 +192,41 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
       <PresenceStrip people={roster} moduleCode={moduleCode} onOpenPilot={(p) => p.chapter_id && onGoToChapter?.(moduleCode, p.chapter_id)} />
 
       {isSignedIn && <Composer placeholder={composerPrompt} onSubmit={startThread} />}
+
+      {/* §7.3 — Formation, the second of Traffic's three types. Faces before
+          numbers: who is in it, then how many seats are left. */}
+      {formations.map((f) => {
+        const ch = chapterById[f.chapter_id];
+        const flyers = assignMarkings(
+          f.members.map((m) => ({
+            ...m,
+            callsign: flyerProfiles[m.user_id]?.callsign || "Pilot",
+            livery: flyerProfiles[m.user_id]?.livery || "dawn-patrol",
+            is_staff: flyerProfiles[m.user_id]?.is_staff || false,
+          })),
+          hueOf
+        );
+        const mine = f.members.some((m) => m.user_id === user?.id);
+        return (
+          <div key={f.id} className="soc-formation">
+            <span className="soc-formation-kind">Formation</span>
+            <span className="soc-formation-where">{ch ? `${ch.code} ${ch.title}` : moduleName}</span>
+            <span className="soc-formation-faces">
+              {flyers.map((m) => (
+                <Tail key={m.user_id} name={m.callsign} livery={m.livery}
+                  marking={m.marking} size={26} staff={m.is_staff} />
+              ))}
+            </span>
+            <button
+              className="soc-formation-join"
+              disabled={mine || f.members.length >= 6}
+              onClick={async () => { await joinFormation(f.id, user.id); load(); }}
+            >
+              {mine ? "You're in" : f.members.length >= 6 ? "Full" : "Join"}
+            </button>
+          </div>
+        );
+      })}
 
       {loading ? (
         <p className="soc-muted">Coming up…</p>
@@ -224,7 +267,21 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
 
 function SocialStyles() {
   return (
+    <>
+    <TailStyles />
     <style>{`
+        /* §7.3 Formation item — faces before the count, always. */
+        .soc-formation { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+          padding: 12px 14px; margin-bottom: 8px; border-radius: 14px;
+          background: var(--surface-1); box-shadow: inset 3px 0 0 var(--warm); }
+        .soc-formation-kind { font-family: var(--font-mono); font-size: 11px;
+          letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); }
+        .soc-formation-where { font-size: 14px; color: var(--text-1); flex: 1; min-width: 0; }
+        .soc-formation-faces { display: flex; gap: 4px; }
+        .soc-formation-join { min-height: 40px; padding: 0 14px; border: none; border-radius: 10px;
+          cursor: pointer; background: var(--warm); color: var(--surface-0); font-size: 14px; font-weight: 500; }
+        .soc-formation-join:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
+
       .soc-here { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-soft); margin: 0 0 16px; }
       .soc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--presence); flex-shrink: 0; }
       .soc-muted { font-size: 12.5px; color: var(--muted); margin: 14px 0 0; }
@@ -246,6 +303,7 @@ function SocialStyles() {
       .soc-comments { margin: 14px 0; }
       @media (max-width: 560px) { .soc-kind { width: 60px; } }
     `}</style>
+    </>
   );
 }
 

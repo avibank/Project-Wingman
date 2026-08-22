@@ -21,7 +21,7 @@ Read only the sections that step needs. §17 lists which.
 | 3 | Presence as a data type | §8.3 | not started |
 | 4 | Safety primitives | §9 | **done** — image scanning and rate limits still owed |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
-| 6 | Social tab | §7.3, §8.2 | **partial** — rail, vocabulary and On-your-wing done; Formation pending |
+| 6 | Social tab | §7.3, §8.2 | **done** |
 | 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | **partial** — scheduler and notifications pending |
 | 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
@@ -203,12 +203,15 @@ inside JT's rail. It now resolves through `chaptersForModule()` when given a mod
 and falls back to global only for a cross-module rail. Same bug class as the chapter
 list and the Library, per CLAUDE.md.
 
-### Still owed
+### Completed later in the session
 
-- **Formation** as the third Traffic type — needs the `formations` table from 0005.
-- **"On your wing"** (§8.2) — the five-rung ranking is written down but nothing
-  computes it yet.
-- Long-press → Fly together on a rail face.
+Traffic now carries exactly the three types §7.3 names — **Formation, Logged, Ask** —
+verified by enumerating the rendered kinds. The Formation item shows the chapter, the
+faces of who is in it, then the Join button: faces before numbers.
+`fetchOpenFormationsForModule` drops any formation with no members, because a
+formation nobody is in is over whether or not anything closed it.
+
+Still owed here: long-press → Fly together on a rail face.
 
 ## Step 7 — done
 

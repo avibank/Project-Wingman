@@ -74,3 +74,19 @@ export async function fetchChapterPositions(userIds = [], chapterId) {
   }
   return Object.fromEntries(ids.map((id) => [id, seen[id]?.size || 0]));
 }
+
+// §7.3 — Formation is one of Traffic's three item types: someone opened a live
+// session, with a Join button and the faces of who is in it.
+export async function fetchOpenFormationsForModule(moduleCode) {
+  if (!moduleCode) return [];
+  const { data, error } = await supabase
+    .from("formations").select("*").eq("module_code", moduleCode).is("ended_at", null)
+    .order("started_at", { ascending: false });
+  if (error) return fail(error, []);
+  const open = (data || []).filter((f) => f.module_code === moduleCode && !f.ended_at);
+  const withMembers = await Promise.all(
+    open.map(async (f) => ({ ...f, members: await fetchMembers(f.id) }))
+  );
+  // A formation nobody is in is over, whether or not anything closed it.
+  return withMembers.filter((f) => f.members.length > 0);
+}
