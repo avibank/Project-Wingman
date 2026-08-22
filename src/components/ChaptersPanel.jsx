@@ -402,9 +402,13 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                           bookmarks={bookmarks}
                           onToggleBookmark={toggleBookmark}
                           chapterId={ch.id}
+                          chapterCode={ch.code}
+                          moduleCode={activeModuleCode}
                           onProgressChange={(seenCount) => updateChapterProgress(ch.id, seenCount)}
                         />
-                        <div className="chapter-feedback">
+                        {/* §7.7 — the thumbs belong after the last question,
+                            not beside a quiz you have not started. */}
+                        <div className={`chapter-feedback ${isDone ? "" : "is-hidden"}`}>
                           {fb ? (
                             <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
                           ) : (
@@ -608,6 +612,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapter-side-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: var(--r-md); padding: 4px; margin-bottom: 14px; }
         .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 11.5px; padding: 7px; border-radius: var(--r-sm); cursor: pointer; }
         .chapter-side-tab.is-active { background: var(--panel); color: var(--text); }
+        .chapter-feedback.is-hidden { display: none; }
         .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--muted); }
         .chapter-feedback button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .chapter-feedback button:hover { border-color: var(--accent); color: var(--accent); }

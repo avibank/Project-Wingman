@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
+import CallWingman from "./CallWingman.jsx";
+import CompletionTip from "./CompletionTip.jsx";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 
-function ChapterQuiz({ questions, chapterTitle, chapterId, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
+function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCode, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
   const { user } = useUser();
   const [missStat, setMissStat] = useState(null);
   const [i, setI] = useState(0);
@@ -89,6 +91,7 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, onComplete, bookmarks
         <h3>{statusLine}</h3>
         <p>{chapterTitle}</p>
         <button className="btn-primary" onClick={restart}>Retake set</button>
+        <CompletionTip chapterId={chapterId} chapterCode={chapterCode} moduleCode={moduleCode} />
         <style>{`
           .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
           .exam-done h3 { font-family: var(--font-display); color: var(--text); margin: 6px 0 0; font-size: 16px; }
@@ -152,6 +155,17 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, onComplete, bookmarks
           accompaniment the brief asks for, without a headcount. */}
       {missStat && missStat.missers > 1 && (
         <p className="exam-company">{missStat.missers} pilots have also missed this one.</p>
+      )}
+
+      {/* §7.7 — offered once you have actually answered, so it reads as "I'm
+          stuck on this" rather than as a way past the question. */}
+      {picked !== null && (
+        <CallWingman
+          chapterId={chapterId}
+          chapterCode={chapterCode}
+          moduleCode={moduleCode}
+          questionId={q.id}
+        />
       )}
       {picked !== null && picked !== q.answer && (
         <button className="btn-primary exam-continue" onClick={next}>

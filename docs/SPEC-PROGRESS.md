@@ -23,7 +23,7 @@ Read only the sections that step needs. §17 lists which.
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | **partial** — rail, vocabulary and On-your-wing done; Formation pending |
 | 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
-| 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | not started |
+| 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | **partial** — scheduler and notifications pending |
 | 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
 | 10 | Livery picker + wash | §7.11, §2.11 | **done** |
 | 11 | Instruments, Formation, desktop | §5, §7.9, §12 | not started |
@@ -348,3 +348,40 @@ Overview · Chapters · Comms. What exists is the current navigation with Comms 
 no root tab bar, Social still a module tab, Library still present. CLAUDE.md records
 the absence of a global tab bar as a deliberate past decision, so reversing it is a
 call to make explicitly rather than as a side effect of shipping Comms.
+
+## Step 8 — partial
+
+**Call a wingman** (`CallWingman.jsx`) sits under a quiz question and appears only once
+you have actually answered, so it reads as "I'm stuck on this" rather than as a way past
+the question. Never "Mayday" — the aviation flavour is one warm sweep going outward,
+suppressed under `prefers-reduced-motion`.
+
+**The completion tip** (`CompletionTip.jsx`) is §7.6's single prompt, shown only when at
+least one visible squadron member is genuinely on the chapter, with invisible and blocked
+users excluded from that count. With nobody there the completion screen stays quiet.
+Verified: exactly one social element on the completion screen.
+
+**The thumbs moved.** "Was this chapter helpful?" rendered next to a quiz you had not
+started. §7.7 wants it after the last question, so it is now gated on completion.
+
+### The backstop
+
+`backstop.js` holds the §7.7 stage rules as a pure function, free of any client import.
+The scheduler that fires them does not exist, but *who* gets nudged is a rule rather than
+a schedule, and it is the part that goes wrong quietly.
+
+Verified against a fixture: the 2h/12h/24h boundaries exactly; stage 1 squadron-only,
+most-recently-active first, capped at 3; stage 2 widening so a non-squadron pilot who is
+the most recently active of everyone comes first; stage 3 nudging nobody; at most once
+per call and twice per day per user; and mutes excluded in both directions, with the
+caller never nudged about their own call.
+
+`callState()` derives stage 3 from the call's own age, so **the caller sees the
+"nobody's picked this up yet — post it to Comms?" state whether or not a scheduler ever
+runs**. A 26-hour-old call renders it today. That was the point of §7.7's "never let it
+silently expire", and it should not have depended on cron.
+
+### Still owed
+
+- The scheduler itself, and §11's notification delivery with its caps and quiet window.
+- Rate limits on Calls (§9) — Postgres-side, like the others.
