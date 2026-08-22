@@ -37,11 +37,10 @@ function AppInner() {
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
-  const [accentColor, setAccentColor] = useState("blue");
+  const [accentColor, setAccentColor] = useState("amber");
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
   const [shakeTab, setShakeTab] = useState(null);
-  const [shakeModule, setShakeModule] = useState(null);
   const [calmDiscussLights, setCalmDiscussLights] = useState(false);
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
   const [testStreakValue, setTestStreakValue] = useState(0);
@@ -63,7 +62,7 @@ function AppInner() {
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setAccentColor(progress.get("pw-accent-color", "blue"));
+    setAccentColor(progress.get("pw-accent-color", "amber"));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
     setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
@@ -197,8 +196,6 @@ function AppInner() {
     if (turbulence) {
       triggerHaptic();
       if (!reduceMotion) {
-        setShakeModule(m.code);
-        setTimeout(() => setShakeModule((c) => (c === m.code ? null : c)), 220);
       }
     }
     setActiveModuleCode(m.code);
@@ -268,22 +265,7 @@ function AppInner() {
           <span>Project Wingman</span>
         </button>
         <div className="topbar-right">
-          {view === "module" && (
-            <div className="module-select">
-              {MODULES.map((m) => (
-                <button
-                  key={m.code}
-                  className={`module-chip ${activeModuleCode === m.code ? "is-active" : ""} ${shakeModule === m.code ? "is-shaking" : ""}`}
-                  onClick={() => enterModule(m)}
-                  disabled={m.status === "locked"}
-                  title={m.status === "locked" ? "Content coming soon" : undefined}
-                >
-                  {m.status === "locked" && <Lock size={11} />}
-                  {m.code}
-                </button>
-              ))}
-            </div>
-          )}
+          
           <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
           <ProfileMenu
             onNavigate={(page) => {
@@ -467,10 +449,6 @@ function AppInner() {
         .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--elev-1); border: 1px solid var(--border); color: var(--muted); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; }
-        .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
-        .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
         .module-banner { position: relative; padding: 26px 22px 18px; }
         .module-banner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 100% at 25% 0%, var(--accent-soft), transparent 70%); pointer-events: none; z-index: 0; }
         .module-banner > div { position: relative; z-index: 1; }
@@ -482,13 +460,13 @@ function AppInner() {
         .tab.is-active svg { color: var(--accent); }
         .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 0.25s ease, right 0.25s ease; border-radius: 2px 2px 0 0; }
         .tab.is-active::after { left: 0; right: 0; }
-        .tab.is-shaking, .module-chip.is-shaking { animation: turbulencePulse 0.22s ease; }
+        .tab.is-shaking { animation: turbulencePulse 0.22s ease; }
         @keyframes turbulencePulse {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-2px); }
           75% { transform: translateX(2px); }
         }
-        .app.reduce-motion .tab.is-shaking, .app.reduce-motion .module-chip.is-shaking { animation: none; }
+        .app.reduce-motion .tab.is-shaking { animation: none; }
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
         @media (min-width: 1024px) {

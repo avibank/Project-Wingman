@@ -3,8 +3,8 @@ function WindsockIcon({ size = 20, active }) {
   const idlePath = "M2 6 L18 6 L13 9 L18 11 L13 14 L18 16 L2 12 Z";
   const path = active ? activePath : idlePath;
   const clipId = active ? "sockClipActive" : "sockClipIdle";
-  const base = active ? "#fff" : "var(--border-hover)";
-  const stripe = active ? "#E5844D" : "var(--border)";
+  const base = active ? "var(--text)" : "var(--border-hover)";
+  const stripe = active ? "var(--accent)" : "var(--border)";
   return (
     <svg width={size} height={size * 0.75} viewBox="0 0 26 18" className={`windsock ${active ? "is-active" : "is-idle"}`}>
       <defs>

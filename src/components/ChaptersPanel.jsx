@@ -19,6 +19,9 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
   const [seen, setSeen] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [loadedVideos, setLoadedVideos] = useState(new Set());
+  // Chapters whose player the user has actually started; until then we show a
+  // themed poster instead of YouTube's own chrome.
+  const [startedVideos, setStartedVideos] = useState(new Set());
   const [rightTab, setRightTab] = useState("quiz");
   const [recentIds, setRecentIds] = useState([]);
   const [chapterProgress, setChapterProgress] = useState({});
@@ -217,12 +220,23 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
               {isOpen && (
                 <div className="chapter-body chapter-body-opening">
                   <div className="chapter-video">
-                    {!videoLoaded && !ch.isPlaceholder && <div className="video-skeleton" />}
-                    {ch.clip.includes("youtube.com/embed") ? (
+                    {!videoLoaded && !ch.isPlaceholder && startedVideos.has(ch.id) && <div className="video-skeleton" />}
+                    {ch.clip.includes("youtube.com/embed") && !startedVideos.has(ch.id) ? (
+                      <button
+                        className="video-facade"
+                        style={{ backgroundImage: `url(https://img.youtube.com/vi/${ch.clip.split("/embed/")[1]?.split(/[?&]/)[0]}/hqdefault.jpg)` }}
+                        onClick={() => setStartedVideos((prev) => new Set(prev).add(ch.id))}
+                        aria-label={`Play briefing video: ${ch.title}`}
+                      >
+                        <span className="video-facade-scrim" aria-hidden="true" />
+                        <span className="video-facade-kicker">Briefing video · {ch.duration}</span>
+                        <span className="video-facade-play" aria-hidden="true"><Play size={20} fill="currentColor" /></span>
+                      </button>
+                    ) : ch.clip.includes("youtube.com/embed") ? (
                       <iframe
                         key={ch.id}
                         className="player-video"
-                        src={ch.clip}
+                        src={`${ch.clip}${ch.clip.includes("?") ? "&" : "?"}autoplay=1`}
                         title={ch.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -345,6 +359,18 @@ function ChaptersPanel({ onSignIn, initialChapterId = null, onInitialChapterCons
         @media (min-width: 1024px) { .chapter-body { grid-template-columns: 1.7fr 1fr; gap: 28px; } }
         .chapter-body-opening { animation: chapterOpen 0.28s ease-out; }
         @keyframes chapterOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .video-facade { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: none; cursor: pointer;
+          background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
+        .video-facade-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,14,26,0.35) 0%, rgba(7,14,26,0.78) 100%); }
+        .video-facade-kicker { position: absolute; left: 12px; bottom: 11px; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+          letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-soft); opacity: 0.85; }
+        .video-facade-play { position: relative; display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%;
+          background: color-mix(in srgb, var(--accent) 92%, transparent); color: var(--on-accent);
+          box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.28);
+          transition: transform 0.18s cubic-bezier(0.22,1,0.36,1), background 0.18s ease; }
+        .video-facade:hover .video-facade-play { transform: scale(1.06); background: var(--accent-hover); }
+        .video-facade:active .video-facade-play { transform: scale(0.97); }
+        .app.reduce-motion .video-facade-play { transition: none; }
         .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: var(--r-md); }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .video-fallback { display: block; font-size: 11.5px; color: var(--muted); text-decoration: none; margin-top: 6px; }

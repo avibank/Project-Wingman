@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass } from "lucide-react";
+import { Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass, Search } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
 import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
 import { fetchRecentActivity } from "../lib/comments.js";
 
-// Max tilt in degrees applied to a module card as the cursor moves across it.
-const TILT_MAX_DEG = 5;
+// Only surface a module filter once the roster is big enough to need one.
+const MODULE_FILTER_THRESHOLD = 4;
 // A completed chapter scoring below this is worth suggesting a retake of.
 const LOW_SCORE_PCT = 70;
 
@@ -64,35 +64,6 @@ function useCountUp(target, animate) {
   return n;
 }
 
-// 270-degree arc gauge drawn behind the accuracy readout.
-function AccuracyArc({ pct, size = 58 }) {
-  const stroke = 4;
-  const r = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * r;
-  const arcLen = circumference * 0.75;
-  const filled = arcLen * (Math.max(0, Math.min(100, pct)) / 100);
-  const common = {
-    cx: size / 2,
-    cy: size / 2,
-    r,
-    fill: "none",
-    strokeWidth: stroke,
-    strokeLinecap: "round",
-    transform: `rotate(135 ${size / 2} ${size / 2})`,
-  };
-  return (
-    <svg className="hub-gauge-svg" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle {...common} stroke="var(--border)" strokeDasharray={`${arcLen} ${circumference}`} />
-      <circle
-        {...common}
-        stroke="var(--accent)"
-        strokeDasharray={`${filled} ${circumference}`}
-        style={{ transition: "stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1)" }}
-      />
-    </svg>
-  );
-}
-
 // Quick-glance completion ring for enrolled module cards.
 function ProgressRing({ pct, size = 34 }) {
   const stroke = 3.5;
@@ -113,7 +84,7 @@ function ProgressRing({ pct, size = 34 }) {
       <circle {...common} stroke="var(--border)" />
       <circle
         {...common}
-        stroke="var(--good)"
+        stroke="var(--accent)"
         strokeDasharray={`${filled} ${circumference}`}
         style={{ transition: "stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1)" }}
       />
@@ -128,17 +99,16 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
   const [enrolling, setEnrolling] = useState(null);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [moduleQuery, setModuleQuery] = useState("");
 
   const completed = new Set(progress.get("pw-completed", []));
   const quizScores = progress.get("pw-quiz-scores", {});
   const bookmarkIds = progress.get("pw-bookmarks", []);
   const bookmarkCount = bookmarkIds.length;
-  const longestStreak = progress.get("pw-longest-streak", 0);
   const recentChapterIds = progress.get("pw-recent-chapters", []);
   const chapterProgress = progress.get("pw-chapter-progress", {});
   const viewedIds = new Set(progress.get("pw-viewed-chapters", []));
   const reduceMotion = progress.get("pw-reduce-motion", false);
-  const lastFlown = progress.get("pw-last-flown", null);
 
   const scoreValues = Object.values(quizScores);
   const quizAccuracy = scoreValues.length ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length) : null;
@@ -180,30 +150,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
     setEnrolling(null);
   };
 
-  // Tilt + cursor-follow glow are written straight to the node's style so the
-  // pointer stays ahead of React — re-rendering per mousemove would visibly lag.
-  const handleCardMove = (e) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    card.style.setProperty("--tilt-y", `${(px - 0.5) * TILT_MAX_DEG * 2}deg`);
-    card.style.setProperty("--tilt-x", `${(0.5 - py) * TILT_MAX_DEG * 2}deg`);
-    card.style.setProperty("--glow-x", `${px * 100}%`);
-    card.style.setProperty("--glow-y", `${py * 100}%`);
-    card.style.setProperty("--glow-o", "1");
-  };
-
-  const handleCardLeave = (e) => {
-    const card = e.currentTarget;
-    card.style.setProperty("--tilt-x", "0deg");
-    card.style.setProperty("--tilt-y", "0deg");
-    card.style.setProperty("--glow-o", "0");
-  };
-
-  const tiltProps = { onMouseMove: handleCardMove, onMouseLeave: handleCardLeave };
-
-  const recentChapters = recentChapterIds.map((id) => CHAPTERS.find((ch) => ch.id === id)).filter(Boolean);
 
   // --- Pre-flight briefing -------------------------------------------------
   // pw-last-chapter is cleared when a chapter is collapsed, so fall back to the
@@ -264,446 +210,321 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmark
     }
   }
 
+  // Stats are context, not destinations — each carries its own empty copy so a
+  // new account never renders a bare 0, a dash, or an empty ring.
+  const stats = [
+    {
+      icon: CheckCircle2,
+      label: "Checklist",
+      value: completed.size ? `${completed.size}/${CHAPTERS.length}` : null,
+      empty: "Start your first chapter",
+    },
+    {
+      icon: Target,
+      label: "Quiz accuracy",
+      value: quizAccuracy === null ? null : `${quizAccuracy}%`,
+      empty: "Take your first quiz",
+    },
+    {
+      icon: Flame,
+      label: "Streak",
+      // Clamp so the count-up never flashes a bare 0 on its first frame.
+      value: streak ? `${Math.max(1, streakDisplay)}d` : null,
+      empty: "Fly today to start one",
+    },
+    {
+      icon: BookMarked,
+      label: "Bookmarks",
+      value: bookmarkCount ? `${bookmarkCount}` : null,
+      empty: "Flag questions to revisit",
+    },
+  ];
+
+  const checklistLine = completed.size
+    ? `${completed.size}/${CHAPTERS.length} items complete`
+    : `${CHAPTERS.length} items to fly`;
+
+  const ticker = activity.slice(0, 4);
+
   return (
     <div className="hub">
-      <p className="hub-eyebrow">Aviation Fundamentals</p>
-      <h1 className="hub-title">Flight Deck</h1>
-      <p className="hub-sub">Your modules, your progress, all in one place.</p>
+      <header className="hub-head">
+        <h1 className="hub-title">Flight Deck</h1>
+        <p className="hub-sub">{greetingLine}</p>
+      </header>
 
-      <div className="hub-briefing">
-        <div className="hub-briefing-sweep" aria-hidden="true" />
-        <div className="hub-briefing-head">
-          <div>
-            <div className="hub-briefing-label">Pre-flight briefing</div>
-            <div className="hub-briefing-greet">{greetingLine}</div>
-          </div>
-          <div className="hub-briefing-meta">
-            <span>{lastFlown ? `Last flown ${timeAgo(lastFlown)}` : "No flights logged"}</span>
-            <span className="hub-briefing-dot" aria-hidden="true">·</span>
-            <span>{streak} day streak</span>
-          </div>
-        </div>
+      {/* ---- 1. Jump back in ------------------------------------------------ */}
+      <section className="card hub-hero">
+        <div className="hero-body">
+          <p className="kicker">Jump back in</p>
+          {lastChapter ? (
+            <>
+              <h2 className="hero-chapter">
+                <span className="mono-code">{lastChapter.code}</span> {lastChapter.title}
+              </h2>
+              <p className="hero-module">{lastModule?.name}</p>
+              <div className="hero-bar" role="progressbar" aria-valuenow={lastChapterPct} aria-valuemin={0} aria-valuemax={100}>
+                <div className="hero-fill" style={{ width: `${lastChapterPct}%` }} />
+              </div>
+              <p className="hero-meta">
+                {lastChapterPct}% through this chapter · {checklistLine}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="hero-chapter">Start your first chapter</h2>
+              <p className="hero-module">
+                {(MODULES.find((m) => m.code === "JT") || MODULES[0])?.name} · {CHAPTERS.length} chapters
+              </p>
+              <p className="hero-meta">Nothing logged yet — your progress starts on the first briefing.</p>
+            </>
+          )}
 
-        {lastChapter ? (
-          <div className="hub-briefing-body">
-            <div className="hub-briefing-chapter">
-              <div className="hub-briefing-module">{lastModule?.name}</div>
-              <div className="hub-briefing-title">
-                <span className="hub-briefing-code">{lastChapter.code}</span> {lastChapter.title}
-              </div>
-              <div className="hub-briefing-bar">
-                <div className="hub-briefing-fill" style={{ width: `${lastChapterPct}%` }} />
-              </div>
-              <div className="hub-briefing-pct">{lastChapterPct}% through this chapter</div>
-            </div>
-            <button className="hub-briefing-cta" onClick={resumeFlight}>
-              Resume Flight <ChevronRight size={14} />
+          <div className="hero-actions">
+            <button className="btn-primary" onClick={lastChapter ? resumeFlight : startFirstFlight}>
+              {lastChapter ? "Resume flight" : "Start first chapter"} <ChevronRight size={16} />
             </button>
-          </div>
-        ) : (
-          <div className="hub-briefing-body">
-            <div className="hub-briefing-chapter">
-              <div className="hub-briefing-title">Nothing logged yet</div>
-              <div className="hub-briefing-pct">Start with the first chapter of Jet Turbine Fundamentals.</div>
-            </div>
-            <button className="hub-briefing-cta" onClick={startFirstFlight}>
-              Start first flight <ChevronRight size={14} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {suggestion && (
-        <button className="hub-suggest" onClick={suggestion.onAct}>
-          <suggestion.icon size={15} className="hub-suggest-icon" />
-          <div className="hub-suggest-body">
-            <div className="hub-suggest-label">{suggestion.label}</div>
-            <div className="hub-suggest-title">{suggestion.title}</div>
-          </div>
-          <span className="hub-suggest-action">{suggestion.action} <ChevronRight size={12} /></span>
-        </button>
-      )}
-
-      <div className="hub-stats">
-        <div className="hub-stat-tile">
-          <CheckCircle2 size={15} className="hub-stat-icon" />
-          <div className="hub-stat-value">{completed.size}<small>/{CHAPTERS.length}</small></div>
-          <div className="hub-stat-label">Checklist items complete</div>
-        </div>
-        <div className="hub-stat-tile hub-stat-tile--gauge">
-          <Target size={15} className="hub-stat-icon" />
-          <div className="hub-gauge">
-            <AccuracyArc pct={quizAccuracy ?? 0} />
-            <div className="hub-gauge-value">
-              {quizAccuracy === null ? "—" : quizAccuracy}
-              {quizAccuracy !== null && <small>%</small>}
-            </div>
-          </div>
-          <div className="hub-stat-label">Quiz accuracy</div>
-        </div>
-        <div className="hub-stat-tile">
-          <Flame size={15} className="hub-stat-icon hub-stat-icon--flame" />
-          <div className="hub-stat-value">{streakDisplay}<small>d</small></div>
-          <div className="hub-stat-label">Consecutive Days Flown</div>
-          <div className="hub-stat-sub">Longest {longestStreak}d</div>
-        </div>
-        <div className="hub-stat-tile">
-          <BookMarked size={15} className="hub-stat-icon" />
-          <div className="hub-stat-value">{bookmarkCount}</div>
-          <div className="hub-stat-label">Bookmarked questions</div>
-        </div>
-      </div>
-
-      <div className="hub-section-head">
-        <div className="hub-section-title">Modules</div>
-      </div>
-      <div className="hub-modules">
-        {MODULES.map((m) => {
-          const hasContent = m.status === "active";
-          const isEnrolled = enrolledCodes.includes(m.code);
-          const moduleChapters = chaptersForModule(m.code);
-          const chapterCount = moduleChapters.length;
-          const doneCount = moduleChapters.filter((ch) => completed.has(ch.id)).length;
-          const pct = chapterCount ? Math.round((doneCount / chapterCount) * 100) : 0;
-
-          if (!hasContent) {
-            return (
-              <div key={m.code} className="hub-module-card is-locked">
-                <div className="hub-module-topline">
-                  <div className="hub-module-chip-row">
-                    <span className="hub-status-light is-standby" title="Standby" />
-                    <div className="hub-module-chip hub-module-chip--locked"><Lock size={9} /> Standby</div>
-                  </div>
-                </div>
-                <div className="hub-module-code">{m.code}</div>
-                <div className="hub-module-name">{m.name}</div>
-              </div>
-            );
-          }
-
-          if (!isEnrolled) {
-            return (
-              <div key={m.code} className="hub-module-card hub-module-card--live" {...tiltProps}>
-                <div className="hub-module-topline">
-                  <div className="hub-module-chip-row">
-                    <span className="hub-status-light is-standby" title="Not enrolled" />
-                    <div className="hub-module-chip hub-module-chip--open">Open enrollment</div>
-                  </div>
-                </div>
-                <div className="hub-module-code">{m.code}</div>
-                <div className="hub-module-name">{m.name}</div>
-                <button className="hub-module-enroll" onClick={() => handleEnroll(m.code)} disabled={enrolling === m.code}>
-                  {enrolling === m.code ? "Enrolling…" : "Enroll"}
-                </button>
-              </div>
-            );
-          }
-
-          const started = doneCount > 0;
-          return (
-            <div key={m.code} className="hub-module-card hub-module-card--live" {...tiltProps}>
-              <div className="hub-module-topline">
-                <div className="hub-module-chip-row">
-                  <span
-                    className={`hub-status-light ${started ? "is-live" : "is-ready"}`}
-                    title={started ? "In progress" : "Enrolled, not started"}
-                  />
-                  <div className="hub-module-chip hub-module-chip--active">{started ? "In progress" : "Ready"}</div>
-                </div>
-                <ProgressRing pct={pct} />
-              </div>
-              <div className="hub-module-code">{m.code}</div>
-              <div className="hub-module-name">{m.name}</div>
-              <div className="hub-module-pips">
-                {moduleChapters.map((ch) => (
-                  <div key={ch.id} className={`hub-pip ${completed.has(ch.id) ? "is-done" : ""}`} />
-                ))}
-              </div>
-              <div className="hub-module-foot">
-                <span className="hub-module-progress-text">{pct}% · {doneCount}/{chapterCount} chapters</span>
-                <button className="hub-module-continue" onClick={() => onEnterModule(m)}>
-                  Continue <ChevronRight size={13} />
-                </button>
-              </div>
-              <button className="hub-module-unenroll" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
-                {enrolling === m.code ? "Unenrolling…" : "Unenroll"}
+            {suggestion && (
+              <button className="btn-quiet" onClick={suggestion.onAct}>
+                <suggestion.icon size={14} />
+                <span className="btn-quiet-label">{suggestion.label}</span>
+                <span className="btn-quiet-title">{suggestion.title}</span>
               </button>
+            )}
+          </div>
+        </div>
+
+        <div className="hero-stats">
+          {stats.map((s) => (
+            <div key={s.label} className={`stat ${s.value ? "" : "is-empty"}`}>
+              <s.icon size={13} className="stat-icon" />
+              <div className="stat-label">{s.label}</div>
+              {s.value ? <div className="stat-value">{s.value}</div> : <div className="stat-empty">{s.empty}</div>}
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      </section>
 
-      <div className="hub-columns">
-        <div>
-          <div className="hub-section-head">
-            <div className="hub-section-title">Active Checklist</div>
-          </div>
-          <div className="hub-recent-list">
-            {recentChapters.length === 0 ? (
-              <div className="hub-empty">Open a checklist item to log it here.</div>
-            ) : (
-              recentChapters.map((ch) => (
-                <button key={ch.id} className="hub-recent-item" onClick={() => onGoToChapter(moduleForChapter(ch).code, ch.id)}>
-                  <span className="hub-recent-code">{ch.code}</span>
-                  <span className="hub-recent-title">{ch.title}</span>
-                  <ChevronRight size={13} className="hub-recent-arrow" />
-                </button>
-              ))
-            )}
-          </div>
+      {/* ---- 2. Module launcher --------------------------------------------- */}
+      <section className="hub-section">
+        <div className="section-head">
+          <h2 className="section-title">Modules</h2>
+          {MODULES.length > MODULE_FILTER_THRESHOLD && (
+            <label className="module-filter">
+              <Search size={13} />
+              <input
+                type="search"
+                value={moduleQuery}
+                onChange={(e) => setModuleQuery(e.target.value)}
+                placeholder="Filter modules"
+                aria-label="Filter modules"
+              />
+            </label>
+          )}
         </div>
 
-        <div>
-          <div className="hub-section-head">
-            <div className="hub-section-title">Telemetry Feed</div>
-            <button className="hub-section-link" onClick={onGoToDiscuss}>Open discussion →</button>
-          </div>
-          <div className="hub-activity-list">
-            {activityLoading ? (
-              <div className="hub-empty">Reading telemetry…</div>
-            ) : activity.length === 0 ? (
-              <div className="hub-empty">
-                <MessageSquareOff size={22} className="hub-empty-icon" />
-                <span>No telemetry received yet.</span>
-              </div>
-            ) : (
-              activity.map((c) => {
-                const chapter = c.chapter_id ? CHAPTERS.find((ch) => ch.id === c.chapter_id) : null;
-                const context = chapter ? chapter.title : "Discussion";
-                const author = c.author || "Unknown";
-                return (
-                  <div key={c.id} className="hub-activity-item">
-                    <div className="hub-activity-avatar">{author.charAt(0).toUpperCase()}</div>
-                    <div className="hub-activity-body">
-                      <div className="hub-activity-text">
-                        <strong>{author}</strong> in <span className="hub-activity-tag">{context}</span>
-                        {c.text && <> — "{c.text.length > 70 ? c.text.slice(0, 70) + "…" : c.text}"</>}
-                      </div>
-                      <div className="hub-activity-meta">{timeAgo(c.created_at)}</div>
+        <div className="launcher">
+          {MODULES.filter((m) => m.name.toLowerCase().includes(moduleQuery.trim().toLowerCase())).map((m) => {
+            const isLocked = m.status !== "active";
+            const isEnrolled = enrolledCodes.includes(m.code);
+            const moduleChapters = chaptersForModule(m.code);
+            const chapterCount = moduleChapters.length;
+            const doneCount = moduleChapters.filter((ch) => completed.has(ch.id)).length;
+            const pct = chapterCount ? Math.round((doneCount / chapterCount) * 100) : 0;
+            // Status reads from the rail colour and the progress indicator, not
+            // from a word: live > ready > locked.
+            const state = isLocked ? "locked" : isEnrolled ? (pct > 0 ? "live" : "ready") : "open";
+            return (
+              <article key={m.code} className={`card mod is-${state}`}>
+                <span className="mod-rail" aria-hidden="true" />
+                <div className="mod-top">
+                  <span className="mono-code">{m.code}</span>
+                  {isLocked ? <Lock size={13} className="mod-lock" /> : isEnrolled && <ProgressRing pct={pct} size={30} />}
+                </div>
+                <h3 className="mod-name">{m.name}</h3>
+
+                {isLocked ? (
+                  <>
+                    <div className="mod-bar">
+                      <div className="mod-fill is-muted" style={{ width: "0%" }} />
                     </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                    <p className="mod-meta">Opens when Jet Turbine Fundamentals is complete</p>
+                  </>
+                ) : isEnrolled ? (
+                  <>
+                    <div className="mod-bar">
+                      <div className="mod-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="mod-meta">
+                      {doneCount}/{chapterCount} chapters
+                    </p>
+                    <div className="mod-actions">
+                      <button className="btn-secondary" onClick={() => onEnterModule(m)}>
+                        {pct > 0 ? "Continue" : "Begin"} <ChevronRight size={13} />
+                      </button>
+                      <button className="btn-link" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
+                        {enrolling === m.code ? "Leaving…" : "Leave"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mod-meta">{chapterCount} chapters · open enrollment</p>
+                    <div className="mod-actions">
+                      <button className="btn-secondary" onClick={() => handleEnroll(m.code)} disabled={enrolling === m.code}>
+                        {enrolling === m.code ? "Joining…" : "Enroll"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </article>
+            );
+          })}
         </div>
-      </div>
+      </section>
+
+      {/* ---- 3. Activity ticker --------------------------------------------- */}
+      <section className="hub-section hub-section--quiet">
+        <div className="section-head">
+          <h2 className="section-title section-title--sm">Activity</h2>
+          <button className="btn-link" onClick={onGoToDiscuss}>
+            View all
+          </button>
+        </div>
+        <div className="ticker">
+          {activityLoading ? (
+            <p className="ticker-empty">Reading telemetry…</p>
+          ) : ticker.length === 0 ? (
+            <p className="ticker-empty">
+              <MessageSquareOff size={14} /> Nothing from the crew yet.
+            </p>
+          ) : (
+            ticker.map((c) => {
+              const chapter = c.chapter_id ? CHAPTERS.find((ch) => ch.id === c.chapter_id) : null;
+              const author = c.author || "Unknown";
+              return (
+                <button key={c.id} className="tick" onClick={onGoToDiscuss}>
+                  <span className="tick-avatar">{author.charAt(0).toUpperCase()}</span>
+                  <span className="tick-name">{author}</span>
+                  <span className="tick-text">{c.text || (chapter ? chapter.title : "Discussion")}</span>
+                  <span className="tick-time">{timeAgo(c.created_at)}</span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </section>
 
       <style>{`
-        /* Shared surface treatment: a top-lit gradient fill plus a layered
-           shadow — inset hairline highlight above, ambient drop below. */
-        .hub {
-          --hub-ease: cubic-bezier(0.22, 1, 0.36, 1);
-          --hub-surface: linear-gradient(180deg, color-mix(in srgb, var(--panel) 96%, white 4%) 0%, var(--panel) 100%);
-          --hub-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 4px rgba(0,0,0,0.24), 0 10px 26px rgba(0,0,0,0.30);
-          --hub-shadow-hover: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 8px rgba(0,0,0,0.28), 0 18px 44px rgba(0,0,0,0.38);
-          --hub-amber: #D4A03C;
-          position: relative;
-        }
-        .app.theme-light .hub {
-          --hub-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(22,32,46,0.06), 0 8px 20px rgba(22,32,46,0.08);
-          --hub-shadow-hover: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 5px rgba(22,32,46,0.08), 0 16px 36px rgba(22,32,46,0.14);
-          --hub-amber: #B07D1E;
-        }
-        /* Ambient light from the top-left, scoped to the Flight Deck only. */
-        .hub::before {
-          content: "";
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          z-index: 0;
-          background: radial-gradient(900px 620px at 10% -12%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 62%);
-        }
-        .hub > * { position: relative; z-index: 1; }
-        .hub-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin: 0 0 6px; }
-        .hub-title { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 6px; color: var(--text); }
-        .hub-sub { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
+        /* ---------- one card system ---------- */
+        .card { background: var(--elev-1); border: 1px solid var(--border-soft); border-radius: var(--r-lg);
+          box-shadow: var(--shadow-1); padding: 20px; }
 
-        /* --- Pre-flight briefing --- */
-        .hub-briefing {
-          position: relative; overflow: hidden;
-          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 14px;
-          padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--hub-shadow);
-        }
-        /* One-time needle sweep on load — runs once, never loops. */
-        .hub-briefing-sweep {
-          position: absolute; top: 0; bottom: 0; width: 1px; left: 0; pointer-events: none;
-          background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--accent) 50%, transparent) 50%, transparent 100%);
-          animation: hub-sweep 1.15s var(--hub-ease) 1 both;
-        }
-        @keyframes hub-sweep {
-          from { left: 0%; opacity: 0; }
-          12% { opacity: 1; }
-          to { left: 100%; opacity: 0; }
-        }
-        .hub-briefing-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-        .hub-briefing-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin-bottom: 3px; }
-        .hub-briefing-greet { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
-        .hub-briefing-meta { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
-        .hub-briefing-dot { color: var(--muted2); }
-        .hub-briefing-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-        .hub-briefing-chapter { flex: 1; min-width: 200px; }
-        .hub-briefing-module { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); margin-bottom: 3px; }
-        .hub-briefing-title { font-size: 13.5px; color: var(--text); margin-bottom: 8px; }
-        .hub-briefing-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-right: 4px; }
-        .hub-briefing-bar { height: 4px; border-radius: 2px; background: var(--panel-alt); overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
-        .hub-briefing-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.6s var(--hub-ease); }
-        .hub-briefing-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 5px; }
-        .hub-briefing-cta {
-          display: flex; align-items: center; gap: 5px; flex-shrink: 0;
-          background: var(--accent); color: var(--on-accent); border: none; border-radius: 9px;
-          padding: 9px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
-          box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 9%, transparent);
-          transition: background 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease), transform 0.2s var(--hub-ease);
-        }
-        .hub-briefing-cta:hover { background: var(--accent-hover); box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent); }
-        .hub-briefing-cta:active { transform: scale(0.97); transition-duration: 0.08s; }
+        /* ---------- type scale ----------
+           One heading style, one body style. Uppercase mono is reserved for
+           chapter codes and a single kicker per section. */
+        .hub-head { margin-bottom: 22px; }
+        .hub-title { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.015em; color: var(--text); margin: 0 0 4px; }
+        .hub-sub { font-size: 14px; color: var(--muted); margin: 0; }
+        .kicker { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+          color: var(--accent); opacity: 0.85; margin: 0 0 10px; }
+        .mono-code { font-family: 'JetBrains Mono', monospace; font-size: 0.82em; color: var(--accent); letter-spacing: 0.04em; }
+        .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; min-height: 34px; }
+        .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 0; }
+        .section-title--sm { font-size: 14px; color: var(--text-soft); }
+        .hub-section { margin-top: 30px; }
+        .hub-section--quiet { margin-top: 34px; opacity: 0.92; }
 
-        /* --- Smart suggestion --- */
-        .hub-suggest {
-          display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
-          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px;
-          padding: 11px 14px; margin-bottom: 24px; cursor: pointer; box-shadow: var(--hub-shadow);
-          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
-        }
-        .hub-suggest:hover { transform: translateY(-2px) scale(1.008); border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
-        .hub-suggest:active { transform: translateY(0) scale(0.994); transition-duration: 0.08s; }
-        .hub-suggest-icon { color: var(--accent); flex-shrink: 0; }
-        .hub-suggest-body { flex: 1; min-width: 0; }
-        .hub-suggest-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 2px; }
-        .hub-suggest-title { font-size: 12.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .hub-suggest-action { display: flex; align-items: center; gap: 3px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent); }
+        /* ---------- 1. hero ---------- */
+        .hub-hero { padding: 0; overflow: hidden; }
+        .hero-body { padding: 22px 22px 20px; }
+        .hero-chapter { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; color: var(--text); margin: 0 0 4px; line-height: 1.3; }
+        .hero-module { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+        .hero-bar { height: 6px; border-radius: var(--r-pill); background: var(--well); box-shadow: var(--shadow-inset); overflow: hidden; max-width: 460px; }
+        .hero-fill { height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .hero-meta { font-size: 12.5px; color: var(--muted); margin: 9px 0 0; }
+        .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none;
+          border-radius: var(--r-md); padding: 12px 18px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px;
+          cursor: pointer; min-height: 44px; box-shadow: var(--hairline), 0 6px 18px color-mix(in srgb, var(--accent) 26%, transparent);
+          transition: background 0.18s ease, transform 0.18s ease; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-quiet { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--border-soft);
+          border-radius: var(--r-md); padding: 10px 14px; min-height: 44px; cursor: pointer; color: var(--text-soft); font-size: 13px;
+          transition: border-color 0.15s ease, color 0.15s ease; }
+        .btn-quiet:hover { border-color: var(--border); color: var(--text); }
+        .btn-quiet-label { color: var(--muted); font-size: 12px; }
+        .btn-quiet-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
 
-        .hub-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
-        @media (max-width: 720px) { .hub-stats { grid-template-columns: repeat(2, 1fr); } }
-        .hub-stat-tile {
-          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
-          box-shadow: var(--hub-shadow);
-          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
-        }
-        .hub-stat-tile:hover { transform: translateY(-2px) scale(1.015); border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
-        .hub-stat-icon { color: var(--muted2); margin-bottom: 10px; }
-        .hub-stat-icon--flame { color: var(--accent); }
-        .hub-stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 20px; color: var(--text); }
-        .hub-stat-value small { font-weight: 400; font-size: 11px; color: var(--muted2); }
-        .hub-stat-label { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
-        .hub-stat-sub { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); margin-top: 3px; }
-        /* Accuracy tile: arc gauge sits behind the numeric readout. */
-        .hub-stat-tile--gauge .hub-gauge { position: relative; display: flex; align-items: center; justify-content: center; height: 58px; }
-        .hub-gauge-svg { position: absolute; inset: 0; margin: auto; }
-        .hub-gauge-value { position: relative; z-index: 1; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px; color: var(--text); }
-        .hub-gauge-value small { font-weight: 400; font-size: 10px; color: var(--muted2); }
+        /* stats: a supporting strip, not a second grid of destinations */
+        .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border-soft); background: color-mix(in srgb, var(--well) 45%, transparent); }
+        .stat { padding: 13px 16px; border-right: 1px solid var(--border-soft); min-width: 0; }
+        .stat:last-child { border-right: none; }
+        .stat-icon { color: var(--muted2); }
+        .stat-label { font-size: 11px; color: var(--muted); margin: 5px 0 3px; }
+        .stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 17px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .stat-empty { font-size: 11.5px; color: var(--muted2); line-height: 1.35; }
 
-        .hub-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
-        .hub-section-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
-        .hub-section-link { background: transparent; border: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); cursor: pointer; padding: 0; transition: color 0.2s var(--hub-ease); }
-        .hub-section-link:hover { color: var(--accent); }
-        .hub-modules { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 28px; }
-        .hub-module-card {
-          position: relative;
-          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
-          display: flex; flex-direction: column;
-          box-shadow: var(--hub-shadow);
-        }
-        .hub-module-card.is-locked { opacity: 0.6; }
-        .hub-module-topline { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-        .hub-module-chip-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
-        /* Annunciator lights: the only status colour on the card. */
-        .hub-status-light { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-        .hub-status-light.is-live { background: var(--good); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--good) 35%, transparent); }
-        .hub-status-light.is-ready { background: var(--hub-amber); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--hub-amber) 30%, transparent); }
-        .hub-status-light.is-standby { background: var(--muted2); opacity: 0.55; }
-        /* Interactive cards only: cursor-tracked tilt, lift, and follow glow. */
-        .hub-module-card--live {
-          --tilt-x: 0deg; --tilt-y: 0deg; --lift: 0px; --card-scale: 1;
-          --glow-x: 50%; --glow-y: 50%; --glow-o: 0;
-          transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift)) scale(var(--card-scale));
-          transform-style: preserve-3d;
-          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
-        }
-        .hub-module-card--live::before {
-          content: "";
-          position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-          background: radial-gradient(320px circle at var(--glow-x) var(--glow-y), color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 70%);
-          opacity: var(--glow-o);
-          transition: opacity 0.2s var(--hub-ease);
-        }
-        .hub-module-card--live:hover { --lift: -3px; --card-scale: 1.015; border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
-        .hub-module-card--live:active { --lift: -1px; --card-scale: 0.985; transition-duration: 0.08s; }
-        .hub-module-chip { align-self: flex-start; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
-        .hub-module-chip--active { background: var(--accent-soft); color: var(--accent); }
-        .hub-module-chip--open { background: var(--panel-alt); color: var(--muted); border: 1px solid var(--border); }
-        .hub-module-chip--locked { background: var(--panel-alt); color: var(--muted2); }
-        .hub-module-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); margin-bottom: 3px; }
-        .hub-module-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
-        .hub-module-pips { display: flex; gap: 4px; margin-bottom: 12px; }
-        .hub-pip { flex: 1; height: 4px; border-radius: 2px; background: var(--panel-alt); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
-        .hub-pip.is-done { background: var(--good); }
-        .hub-module-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
-        .hub-module-progress-text { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
-        /* Focal element: primary CTAs carry a low-opacity accent glow. */
-        .hub-module-continue {
-          display: flex; align-items: center; gap: 4px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px;
-          padding: 6px 11px; font-size: 11.5px; font-weight: 600; cursor: pointer;
-          box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 9%, transparent);
-          transition: background 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease), transform 0.2s var(--hub-ease);
-        }
-        .hub-module-continue:hover { background: var(--accent-hover); box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent); }
-        .hub-module-continue:active { transform: scale(0.96); transition-duration: 0.08s; }
-        .hub-module-unenroll { align-self: flex-start; margin-top: 8px; background: transparent; border: none; color: var(--muted2); font-size: 10.5px; cursor: pointer; padding: 0; transition: color 0.2s var(--hub-ease); }
-        .hub-module-unenroll:hover { color: var(--bad); }
-        .hub-module-unenroll:disabled { opacity: 0.5; cursor: not-allowed; }
-        .hub-module-enroll {
-          margin-top: auto; background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px;
-          padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
-          box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 9%, transparent);
-          transition: background 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease), transform 0.2s var(--hub-ease);
-        }
-        .hub-module-enroll:hover { background: var(--accent-hover); box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent); }
-        .hub-module-enroll:active { transform: scale(0.97); transition-duration: 0.08s; }
-        .hub-module-enroll:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
-        .hub-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        @media (max-width: 880px) { .hub-columns { grid-template-columns: 1fr; } }
-        .hub-recent-list { display: flex; flex-direction: column; gap: 6px; }
-        .hub-recent-item {
-          display: flex; align-items: center; gap: 10px; background: var(--hub-surface); border: 1px solid var(--border);
-          border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left;
-          box-shadow: var(--hub-shadow);
-          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
-        }
-        .hub-recent-item:hover { transform: translateY(-2px) scale(1.015); border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
-        .hub-recent-item:active { transform: translateY(0) scale(0.99); transition-duration: 0.08s; }
-        .hub-recent-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent); flex-shrink: 0; }
-        .hub-recent-title { font-size: 12.5px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .hub-recent-arrow { color: var(--muted2); flex-shrink: 0; }
-        .hub-activity-list { background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--hub-shadow); }
-        .hub-activity-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border-soft); transition: background 0.2s var(--hub-ease); }
-        .hub-activity-item:last-child { border-bottom: none; }
-        .hub-activity-item:hover { background: color-mix(in srgb, var(--panel) 94%, white 6%); }
-        .hub-activity-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 600; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
-        .hub-activity-body { flex: 1; min-width: 0; }
-        .hub-activity-text { font-size: 12px; color: var(--text-soft); line-height: 1.5; }
-        .hub-activity-tag { color: var(--accent); }
-        .hub-activity-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); margin-top: 3px; }
-        .hub-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; padding: 20px; text-align: center; background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--hub-shadow); }
-        .hub-empty-icon { color: var(--muted2); opacity: 0.6; }
+        /* ---------- 2. module launcher ---------- */
+        .module-filter { display: flex; align-items: center; gap: 7px; background: var(--well); border: 1px solid var(--border);
+          border-radius: var(--r-sm); padding: 7px 11px; box-shadow: var(--shadow-inset); color: var(--muted); }
+        .module-filter input { background: none; border: none; outline: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12.5px; width: 150px; }
+        .launcher { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 14px; }
+        .mod { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 9px; padding: 18px 18px 18px 20px;
+          transition: border-color 0.15s ease, background 0.15s ease; }
+        .mod:hover { border-color: var(--border); background: var(--elev-2); }
+        /* the rail is the status signal — no word badge */
+        .mod-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+        .mod.is-live .mod-rail { opacity: 1; }
+        .mod.is-ready .mod-rail { opacity: 0.45; }
+        .mod.is-open .mod-rail { opacity: 0.22; }
+        .mod.is-locked .mod-rail { background: var(--muted2); opacity: 0.3; }
+        .mod.is-locked { opacity: 0.62; }
+        .mod-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; }
+        .mod-lock { color: var(--muted2); }
+        .mod-name { font-family: 'Space Grotesk', sans-serif; font-size: 15.5px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.3; }
+        .mod-bar { height: 4px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; box-shadow: var(--shadow-inset); }
+        .mod-fill { height: 100%; border-radius: var(--r-pill); background: var(--accent); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .mod-fill.is-muted { background: var(--muted2); }
+        .mod-meta { font-size: 12px; color: var(--muted); margin: 0; }
+        .mod-actions { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 4px; }
+        .btn-secondary { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent);
+          border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius: var(--r-sm); padding: 9px 14px;
+          font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; transition: background 0.15s ease; }
+        .btn-secondary:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+        .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-link { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; padding: 6px 2px; min-height: 36px; }
+        .btn-link:hover { color: var(--text); }
 
-        /* Smooth Air (and OS-level reduced motion): keep the depth, drop the movement. */
-        .app.reduce-motion .hub-module-card--live,
-        .app.reduce-motion .hub-stat-tile,
-        .app.reduce-motion .hub-recent-item,
-        .app.reduce-motion .hub-suggest,
-        .app.reduce-motion .hub-briefing-cta,
-        .app.reduce-motion .hub-module-continue,
-        .app.reduce-motion .hub-module-enroll { transform: none !important; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s; }
-        .app.reduce-motion .hub-module-card--live::before { opacity: 0 !important; }
-        .app.reduce-motion .hub-briefing-sweep { display: none; }
-        .app.reduce-motion .hub-briefing-fill { transition: none; }
+        /* ---------- 3. activity ticker ---------- */
+        .ticker { display: flex; flex-direction: column; }
+        .tick { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none;
+          border-bottom: 1px solid var(--border-soft); padding: 11px 4px; cursor: pointer; min-height: 44px; }
+        .tick:last-child { border-bottom: none; }
+        .tick:hover .tick-text { color: var(--text-soft); }
+        .tick-avatar { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent);
+          display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; }
+        .tick-name { font-size: 12.5px; color: var(--text); flex-shrink: 0; }
+        .tick-text { font-size: 12.5px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tick-time { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); flex-shrink: 0; }
+        .ticker-empty { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); margin: 0; padding: 14px 4px; }
+
+        @media (max-width: 760px) {
+          .hub-hero { padding: 0; }
+          .hero-body { padding: 18px 16px 16px; }
+          .hero-stats { grid-template-columns: repeat(2, 1fr); }
+          .stat:nth-child(2) { border-right: none; }
+          .stat:nth-child(-n+2) { border-bottom: 1px solid var(--border-soft); }
+          .launcher { grid-template-columns: 1fr; }
+          .btn-quiet-title { max-width: 140px; }
+        }
+
+        .app.reduce-motion .hero-fill,
+        .app.reduce-motion .mod-fill,
+        .app.reduce-motion .btn-primary { transition: none; }
         @media (prefers-reduced-motion: reduce) {
-          .hub-module-card--live, .hub-stat-tile, .hub-recent-item, .hub-suggest, .hub-briefing-cta, .hub-module-continue, .hub-module-enroll { transform: none !important; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s; }
-          .hub-module-card--live::before { opacity: 0 !important; }
-          .hub-briefing-sweep { display: none; }
-          .hub-briefing-fill { transition: none; }
+          .hero-fill, .mod-fill, .btn-primary { transition: none; }
         }
       `}</style>
     </div>
