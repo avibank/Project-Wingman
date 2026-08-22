@@ -22,7 +22,7 @@ Read only the sections that step needs. §17 lists which.
 | 4 | Safety primitives | §9 | **done** — image scanning and rate limits still owed |
 | 5 | Flight Deck horizon | §7.2, §4 | **done** — see below |
 | 6 | Social tab | §7.3, §8.2 | **done** |
-| 7 | Ambient glow | §7.6, §2.8 | **done** — body is still an accordion, not the §7.6 route |
+| 7 | Ambient glow | §7.6, §2.8 | **done** |
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | **partial** — scheduler and notifications pending |
 | 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
 | 10 | Livery picker + wash | §7.11, §2.11 | **done** |
@@ -256,12 +256,37 @@ whatever order the caller happened to pass. It now sorts by `last_seen` itself.
 formula is normative and is what is implemented; the table appears to round. The
 difference is 0.002 of alpha.
 
-### Still owed
+### The body is now the §7.6 surface
 
-§7.6 wants the chapter body as a full-bleed single-column route with a 2px cold
-progress hairline and the serif at 17/1.7 on a 66-character measure. It is still an
-accordion row inside `ChaptersPanel`. The glow works there, but the surface it lights
-is not yet the surface the spec describes.
+Built later in the session. Opening a chapter enters a reader rather than expanding a
+row: full-bleed, single column, no module header, no tab bar, a 2px cold-channel
+hairline at the top edge, and the study material in the serif at 17/1.7.
+
+What the body lost, because §7.6 forbids counters and rails in it:
+
+- The **manifest** — a sidebar listing every chapter in the module.
+- The **Quiz / Comments tab bar**. Comments stay reachable through the Discussion chip.
+- The **copresence line** ("3 others are also here right now") — deleted outright, not
+  moved. The glow says exactly this without a headcount, which is the entire argument
+  of §7.6. The `here` state and `fetchChapterPresence` call that fed it went with it.
+- The **Notebook and Discussion chips**, which carry counts. They moved to after the
+  quiz, a §7.7 surface, rather than being removed — they own routes nothing else reaches.
+
+### Verified by measurement
+
+The prose measures **exactly 66 characters** — measured with a probe span in the
+rendered font, not assumed from the CSS. Newsreader at 17px with a 28.9px line box
+(1.7). Single column at 1280px wide. The hairline moved 0% → 33% on answering one of
+three questions. Zero social elements in the reading surface. Back restores the list,
+the tab bar and the module header.
+
+### Two things the measurement caught
+
+- **The prose column was 135px wide.** `.leg` is a two-column grid — rail, then
+  chapter — and hiding the rail left the chapter sitting in the 34px rail column.
+- **The measure resolved against the wrong font.** `ch` is the width of zero in the
+  element's own font, and `max-width: 66ch` sat on a sans container while the prose
+  rendered in the serif: 665px, which is 64 serif characters, not 66.
 
 ## Step 4 — done
 

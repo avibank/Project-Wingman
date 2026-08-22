@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NotebookPen, Play, Search, SearchX, Check, ChevronRight, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
+import { NotebookPen, Play, Search, SearchX, Check, ChevronRight, ChevronLeft, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
 import { CHAPTERS, chaptersForModule } from "../data.js";
@@ -8,7 +8,7 @@ import NotebookPanel from "./NotebookPanel.jsx";
 import ThreadsPanel from "./ThreadsPanel.jsx";
 import { countAnnotations } from "../lib/notebook.js";
 import { countThreads } from "../lib/discussion.js";
-import { fetchChapterPresence, heartbeat } from "../lib/presence.js";
+import { heartbeat } from "../lib/presence.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useUser } from "@clerk/clerk-react";
@@ -21,13 +21,12 @@ import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
 
-function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed }) {
+function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed, onReadingChange }) {
   // Only this module's chapters — the global list now spans five modules.
   const moduleChapters = chaptersForModule(activeModuleCode);
   // Slide-over state for the notebook / discussion entry points.
   const [panel, setPanel] = useState(null); // { kind: "notebook"|"threads", chapter }
   const [counts, setCounts] = useState({});
-  const [here, setHere] = useState([]);
   // §7.6 — the glow is the user's own hue when nobody else is here, and it has
   // a settings toggle. Default on; the body stays fully usable at 0% glow.
   const [profile, setProfile] = useState(null);
@@ -39,6 +38,9 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   const { prefs: socialPrefs } = useSocialPrefs();
   const [parallaxY, setParallaxY] = useState(0);
   const [openId, setOpenId] = useState(null);
+  // §7.6 — the body is its own surface, not a row that grew. `openId` still
+  // means "where you left off"; `reading` means you are in it.
+  const [reading, setReading] = useState(false);
   const [query, setQuery] = useState("");
   const [completed, setCompleted] = useState(new Set());
   const [bookmarks, setBookmarks] = useState(new Set());
@@ -55,6 +57,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   const [chapterProgress, setChapterProgress] = useState({});
   const [viewedIds, setViewedIds] = useState(new Set());
   const [quizScores, setQuizScores] = useState({});
+
+  useEffect(() => { onReadingChange?.(reading && !!openId); }, [reading, openId, onReadingChange]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -82,6 +86,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   useEffect(() => {
     if (!progress.loaded || !initialChapterId) return;
     setOpenId(initialChapterId);
+    setReading(true);
     progress.set("pw-last-chapter", initialChapterId);
     setViewedIds((prev) => {
       if (prev.has(initialChapterId)) return prev;
@@ -192,20 +197,19 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
     });
     const ping = () => {
       heartbeat({ userId: user?.id, displayName, moduleCode: activeModuleCode, chapterId: openId });
-      fetchChapterPresence(openId, user?.id).then((rows) => live && setHere(rows));
     };
     ping();
     const t = setInterval(ping, 45000);
     return () => { live = false; clearInterval(t); };
   }, [openId, activeModuleCode, user?.id, displayName]);
 
+  const readingChapter = reading ? moduleChapters.find((c) => c.id === openId) || null : null;
+  const readingPct = readingChapter
+    ? Math.min(100, Math.round(((chapterProgress[readingChapter.id] || 0) / readingChapter.questions.length) * 100))
+    : 0;
+
   const openChapter = (ch) => {
-    const isOpen = openId === ch.id;
-    if (isOpen) {
-      setOpenId(null);
-      progress.set("pw-last-chapter", null);
-      return;
-    }
+    setReading(true);
     setOpenId(ch.id);
     progress.set("pw-last-chapter", ch.id);
     // Timestamped so the Flight Deck can report how long since real study
@@ -267,8 +271,21 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
       {!seen.size && (
         <div className="chapters-hint">Tap a chapter below to begin ↓</div>
       )}
-      <div className="chapters">
-        {filtered.map((ch) => {
+      {readingChapter && (
+        <div className="reader-bar">
+          <button className="reader-back" onClick={() => setReading(false)}>
+            <ChevronLeft size={16} /> All chapters
+          </button>
+          <span className="reader-code">{readingChapter.code}</span>
+          {/* §7.6 — a 2px cold-channel progress hairline at the top edge. */}
+          <span className="reader-hairline" aria-hidden="true">
+            <span className="reader-hairline-fill" style={{ width: `${readingPct}%` }} />
+          </span>
+        </div>
+      )}
+
+      <div className={`chapters ${readingChapter ? "is-reading" : ""}`}>
+        {(readingChapter ? [readingChapter] : filtered).map((ch) => {
           const isOpen = openId === ch.id;
           const isDone = completed.has(ch.id);
           const fb = feedback[ch.id];
@@ -361,22 +378,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       ))}
                     </article>
                   )}
-                  <div className="chapter-social">
-                    <button className="chip" onClick={() => setPanel({ kind: "notebook", chapter: ch })}>
-                      <NotebookPen size={12} /> Notebook · {counts[ch.id]?.notes ?? 0} notes
-                    </button>
-                    <button className="chip" onClick={() => setPanel({ kind: "threads", chapter: ch })}>
-                      <MessageSquare size={12} /> Discussion · {counts[ch.id]?.threads ?? 0} threads
-                    </button>
-                    {here.length > 0 && (
-                      <span className="copresence">
-                        <span className="copresence-dot" aria-hidden="true" />
-                        {here.length === 1
-                          ? `${here[0].display_name || "Another pilot"} is also here right now`
-                          : `${here.length} others are also here right now`}
-                      </span>
-                    )}
-                  </div>
                   <aside className="manifest">
                     <p className="manifest-label">In this module</p>
                     <ol className="manifest-list">
@@ -401,7 +402,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       </button>
                     </div>
 
-                    {rightTab === "quiz" ? (
+                    {(readingChapter || rightTab === "quiz") ? (
                       <>
                         <ChapterQuiz
                           key={ch.id}
@@ -417,6 +418,18 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                         />
                         {/* §7.7 — the thumbs belong after the last question,
                             not beside a quiz you have not started. */}
+                        {/* §7.6 — these carry counts, so they sit after the
+                            quiz rather than in the body. The copresence line
+                            they used to sit beside is gone: the glow says it. */}
+                        <div className="chapter-social">
+                          <button className="chip" onClick={() => setPanel({ kind: "notebook", chapter: ch })}>
+                            <NotebookPen size={12} /> Notebook · {counts[ch.id]?.notes ?? 0} notes
+                          </button>
+                          <button className="chip" onClick={() => setPanel({ kind: "threads", chapter: ch })}>
+                            <MessageSquare size={12} /> Discussion · {counts[ch.id]?.threads ?? 0} threads
+                          </button>
+                        </div>
+
                         <div className={`chapter-feedback ${isDone ? "" : "is-hidden"}`}>
                           {fb ? (
                             <span className="chapter-feedback-thanks">Thanks for the feedback!</span>
@@ -477,6 +490,57 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         </SlideOver>
       )}
       <style>{`
+        /* ---- §7.6 the chapter body -------------------------------------- */
+        /* Full-bleed, single column, no tab bar. The list, the leg rail, the
+           filter and the recent row are all gone while you are reading. */
+        .reader-bar { position: sticky; top: 0; z-index: 12; display: flex; align-items: center; gap: 10px;
+          padding: 10px 0 12px; margin: 0 0 8px; background: var(--surface-0); }
+        .reader-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px;
+          padding: 0 8px 0 0; background: none; border: none; cursor: pointer;
+          color: var(--text-2); font-size: 15px; }
+        .reader-back:hover { color: var(--text-1); }
+        .reader-code { font-family: var(--font-mono); font-size: 13px; color: var(--cold); }
+        .reader-hairline { position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+          background: var(--hairline); border-radius: 2px; overflow: hidden; }
+        .reader-hairline-fill { display: block; height: 100%; background: var(--cold);
+          transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+
+        .chapters.is-reading { display: block; }
+        .chapters.is-reading .leg-rail,
+        .chapters.is-reading .chapter-chevron,
+        .chapters.is-reading .chapter-meta,
+        .chapters.is-reading .chapter-unread-dot,
+        .chapters.is-reading .chapter-progress-track,
+        .chapters.is-reading .manifest,
+        .chapters.is-reading .chapter-side-tabs { display: none; }
+        /* The leg is a two-column grid: rail, then chapter. Hiding the rail
+           left the chapter sitting in the 34px rail column. */
+        .chapters.is-reading .leg { display: block; }
+        .chapters.is-reading .leg,
+        .chapters.is-reading .chapter { border: none; background: none; padding-left: 0; margin: 0; }
+        .chapters.is-reading .chapter-head { cursor: default; padding-left: 0; }
+        /* single column at every width */
+        .chapters.is-reading .chapter-body { grid-template-columns: 1fr; padding: 0; border-top: none; }
+
+        /* Study material in the serif, 17/1.7, 66-character measure. */
+        /* The ch unit is the width of zero in the element's own font. Setting the
+           measure on a sans container while the prose renders in the serif
+           resolved 66ch against the wrong font -- 665px came out at 64
+           characters, not 66. */
+        .chapters.is-reading .chapter-material { font-family: var(--font-serif);
+          font-size: 17px; max-width: 66ch; margin: 24px auto 0; }
+        .chapters.is-reading .material-text { font-family: var(--font-serif);
+          font-size: 17px; line-height: 1.7; color: var(--text-1); }
+        .chapters.is-reading .material-heading { font-family: var(--font-serif);
+          font-size: 19px; font-weight: 600; color: var(--text-1); margin: 0 0 8px; }
+        .chapters.is-reading .material-section { margin-bottom: 28px; }
+        .chapters.is-reading .material-kicker { display: none; }
+        .chapters.is-reading .chapter-video,
+        .chapters.is-reading .exam,
+        .chapters.is-reading .exam-done,
+        .chapters.is-reading .chapter-feedback,
+        .chapters.is-reading .chapter-social { max-width: 66ch; margin-left: auto; margin-right: auto; }
+
         .bump { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 35;
           display: flex; align-items: center; gap: 9px; background: var(--elev-1);
           border: 1px solid color-mix(in srgb, var(--presence) 34%, transparent); border-radius: var(--r-pill);
@@ -507,9 +571,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           border-radius: var(--r-pill); padding: 7px 13px; color: var(--text-soft); font-size: 12px; cursor: pointer; min-height: 36px;
           transition: border-color 0.15s ease, color 0.15s ease; }
         .chip:hover { border-color: var(--border); color: var(--text); }
-        .copresence { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
-        .copresence-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
-           }
         .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
         .cloud-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         .cloud { position: absolute; width: 220px; height: 60px; background: radial-gradient(ellipse at center, var(--text) 0%, transparent 70%); opacity: 0.035; border-radius: 50%; filter: blur(6px); }

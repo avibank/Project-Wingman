@@ -21,6 +21,9 @@ function activityLine(row, chapters) {
 
 // Everything a module owns lives here. Nothing module-specific sits in global nav.
 function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onInitialChapterConsumed, onGoToChapter }) {
+  // §7.6 — the chapter body carries no tab bar and no module header. While
+  // someone is reading, this page gets out of the way entirely.
+  const [reading, setReading] = useState(false);
   const module = MODULES.find((m) => m.code === moduleCode) || MODULES[0];
   const chapters = chaptersForModule(module.code);
   const progress = useUserProgress();
@@ -56,7 +59,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
 
   return (
     <div className="hub2">
-      <header className="hub2-head bezel">
+      {!reading && <header className="hub2-head bezel">
         <ModuleMotif motif={module.motif} />
         <div className="hub2-head-main">
           <div className="hub2-badge">
@@ -68,20 +71,21 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           </p>
         </div>
         <ProgressArc pct={pct} label="Module" size={96} />
-      </header>
+      </header>}
 
-      <nav className="hub2-tabs" aria-label={`${module.name} sections`}>
+      {!reading && <nav className="hub2-tabs" aria-label={`${module.name} sections`}>
         {NAV.map((t) => (
           <button key={t.id} className={`hub2-tab ${tab === t.id ? "is-active" : ""}`} onClick={() => onTab(t.id)}>
             <t.icon size={14} />
             <span>{t.label}</span>
           </button>
         ))}
-      </nav>
+      </nav>}
 
       <div className="hub2-body">
         {tab === "chapters" && (
           <ChaptersPanel
+            onReadingChange={setReading}
             activeModuleCode={module.code}
             onSignIn={onSignIn}
             initialChapterId={initialChapterId}
