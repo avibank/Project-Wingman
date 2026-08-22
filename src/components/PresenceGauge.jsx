@@ -87,9 +87,9 @@ function PresenceGauge({ onOpen }) {
         .pg-sweep { animation: pgSpin 4.6s linear infinite; }
         @keyframes pgSpin { to { transform: rotate(360deg); } }
         .pg-blip { fill: var(--presence); }
-        .pg-count { position: relative; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text);
+        .pg-count { position: relative; font-family: var(--font-mono); font-size: 13px; color: var(--text);
           font-variant-numeric: tabular-nums; }
-        .pg-hint { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+        .pg-hint { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
           color: var(--presence); background: var(--elev-1); border: 1px solid var(--border-soft);
           border-radius: var(--r-pill); padding: 5px 11px; white-space: nowrap; }
         .pg-panel { background: var(--elev-1); border: 1px solid var(--border); border-radius: var(--r-md);
@@ -98,7 +98,7 @@ function PresenceGauge({ onOpen }) {
         .pg-list { list-style: none; margin: 0 0 9px; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--text-soft); }
         .pg-list li { display: flex; align-items: center; gap: 8px; }
         .pg-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--presence); flex-shrink: 0; }
-        .pg-where { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); }
+        .pg-where { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--muted2); }
         .pg-link { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; padding: 0; }
         @media (max-width: 640px) { .pg-hint { display: none; } .pg { right: 12px; bottom: 56px; } }
         .app.reduce-motion .pg-dial, .app.reduce-motion .pg-sweep { animation: none; }

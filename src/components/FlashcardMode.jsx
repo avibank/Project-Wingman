@@ -59,12 +59,12 @@ function FlashcardMode({ questions, onExit }) {
         .flashcards { display: flex; flex-direction: column; align-items: center; gap: 16px; }
         .flashcards-head { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .flashcards-exit { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 12.5px; cursor: pointer; padding: 0; }
-        .flashcards-count { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); }
+        .flashcards-count { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
         .flashcard { width: 100%; max-width: 420px; min-height: 240px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 0; cursor: pointer; perspective: 800px; }
         .flashcard-face { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 28px 22px; gap: 14px; min-height: 240px; }
-        .flashcard-hint { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; }
-        .flashcard-front p { font-family: 'Space Grotesk', sans-serif; font-size: 17px; color: var(--text); line-height: 1.4; margin: 0; }
-        .flashcard-answer { display: flex; align-items: center; gap: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--good); margin: 0; }
+        .flashcard-hint { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; }
+        .flashcard-front p { font-family: var(--font-display); font-size: 17px; color: var(--text); line-height: 1.4; margin: 0; }
+        .flashcard-answer { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 15px; color: var(--good); margin: 0; }
         .flashcard-options { display: flex; flex-direction: column; gap: 5px; width: 100%; text-align: left; margin-top: 4px; }
         .flashcard-option { font-size: 11.5px; color: var(--muted); padding: 6px 10px; border-radius: var(--r-sm); border: 1px solid var(--border); }
         .flashcard-option.is-correct { color: var(--good); border-color: var(--good); background: rgba(76,175,125,0.08); }

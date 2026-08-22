@@ -156,7 +156,7 @@ export function ThreadStyles() {
       .composer { display: flex; flex-direction: column; gap: 8px; }
       .composer.is-compact { margin-top: 8px; }
       .composer textarea { width: 100%; resize: vertical; background: var(--well); border: 1px solid var(--border);
-        border-radius: var(--r-md); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 11px 13px; }
+        border-radius: var(--r-md); color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 11px 13px; }
       .composer textarea:focus { outline: none; border-color: var(--accent-dim); }
       .composer-actions { display: flex; justify-content: flex-end; gap: 8px; }
       .btn-ghost { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; padding: 8px 12px; min-height: 38px; }
@@ -170,7 +170,7 @@ export function ThreadStyles() {
       .cmt-main { display: flex; gap: 10px; padding: 10px 0; }
       .cmt-avatar { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--elev-2);
         color: var(--accent); display: flex; align-items: center; justify-content: center;
-        font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; }
+        font-family: var(--font-display); font-weight: 700; font-size: 12px; }
       .cmt-body { flex: 1; min-width: 0; }
       /* one metadata row, not one row per field */
       .cmt-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }

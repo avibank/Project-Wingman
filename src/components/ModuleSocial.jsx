@@ -311,7 +311,7 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
         .soc-back { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--muted);
           font-size: 12.5px; cursor: pointer; padding: 4px 0; margin-bottom: 10px; }
         .soc-back:hover { color: var(--text); }
-        .soc-thread-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
+        .soc-thread-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
         .soc-thread-body { font-size: 13.5px; line-height: 1.55; color: var(--text-soft); margin: 10px 0 0; }
         .soc-comments { margin: 14px 0; }
         .soc-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 13px; color: var(--text-soft); }
@@ -329,11 +329,11 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
         .app.reduce-motion .soc-prompt:hover { transform: none; }
         .soc-pinned { border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 13px 15px; margin-bottom: 16px;
           background: var(--presence-soft); }
-        .soc-pin-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+        .soc-pin-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
           color: var(--presence); }
         .soc-pin-text { font-size: 13px; line-height: 1.55; color: var(--text-soft); margin: 6px 0 0; }
         .soc-invite { border: 1px dashed var(--accent-dim); border-radius: var(--r-md); padding: 22px; text-align: center; }
-        .soc-invite-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 5px; }
+        .soc-invite-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 5px; }
         .soc-seats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .soc-seat { width: 26px; height: 26px; border-radius: 50%; border: 1px dashed var(--border-hover); flex-shrink: 0; }
         .soc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--presence);

@@ -91,7 +91,7 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, onComplete, bookmarks
         <button className="btn-primary" onClick={restart}>Retake set</button>
         <style>{`
           .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
-          .exam-done h3 { font-family: 'Space Grotesk', sans-serif; color: var(--text); margin: 6px 0 0; font-size: 16px; }
+          .exam-done h3 { font-family: var(--font-display); color: var(--text); margin: 6px 0 0; font-size: 16px; }
           .exam-done p { color: var(--muted); font-size: 12.5px; margin: 0 0 8px; }
           .landing-strip { position: relative; height: 50px; width: 100%; max-width: 220px; margin: 4px 0; }
           .runway { position: absolute; left: 0; right: 0; bottom: 8px; height: 2px; background: var(--border); }
@@ -164,16 +164,16 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, onComplete, bookmarks
           padding: 9px 13px; margin: 12px 0 0; }
         .exam-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .exam-head-right { display: flex; align-items: center; gap: 10px; }
-        .exam-count { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); }
+        .exam-count { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
         .exam-bookmark { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .exam-bookmark:hover { border-color: var(--accent); color: var(--accent); }
         .exam-bookmark.is-on { color: #F2C230; border-color: #F2C230; }
-        .exam-stem { font-family: 'Space Grotesk', sans-serif; font-size: 16px; color: var(--text); line-height: 1.4; margin: 0 0 16px; }
+        .exam-stem { font-family: var(--font-display); font-size: 16px; color: var(--text); line-height: 1.4; margin: 0 0 16px; }
         .exam-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
         .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-size: 13.5px; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease; }
         .exam-opt:hover { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
         .exam-opt:active { transform: scale(0.98); }
-        .exam-opt-letter { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11.5px; color: var(--text); border: 1.5px solid var(--border-hover); border-radius: var(--r-sm); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+        .exam-opt-letter { font-family: var(--font-mono); font-weight: 700; font-size: 11.5px; color: var(--text); border: 1.5px solid var(--border-hover); border-radius: var(--r-sm); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
         .exam-opt:hover .exam-opt-letter { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
         .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
         .exam-opt--correct .exam-opt-letter { background: var(--good); color: #fff; border-color: var(--good); }

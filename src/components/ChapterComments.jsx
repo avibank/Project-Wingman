@@ -176,7 +176,7 @@ function ChapterComments({ chapterId, onSignIn }) {
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); }
         .chapter-comment { display: flex; gap: 8px; }
-        .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
+        .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: var(--font-display); }
         .chapter-comment-avatar.is-own { box-shadow: 0 0 0 2px var(--accent); }
         .chapter-comment-avatar-wrap { position: relative; flex-shrink: 0; }
         .chapter-comment-admin-badge { position: absolute; bottom: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #E8A33D; color: #2A1B04; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--panel); }

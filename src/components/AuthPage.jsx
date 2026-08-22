@@ -12,11 +12,11 @@ const clerkAppearance = {
     colorTextSecondary: "var(--muted)",
     colorNeutral: "var(--text)",
     borderRadius: "10px",
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "var(--font-body)",
   },
   elements: {
     card: { boxShadow: "none", border: "1px solid var(--border)" },
-    headerTitle: { fontFamily: "'Space Grotesk', sans-serif" },
+    headerTitle: { fontFamily: "var(--font-display)" },
     footer: { display: "none" },
   },
 };
@@ -51,7 +51,7 @@ function AuthPage({ onBack }) {
 const authStyles = `
   .auth-page { max-width: 420px; }
   .auth-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
-  .auth-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 18px; }
+  .auth-title { font-family: var(--font-display); font-size: 22px; color: var(--text); margin: 0 0 18px; }
   .auth-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
   .auth-tab { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 13px; padding: 8px; border-radius: var(--r-sm); cursor: pointer; }
   .auth-tab.is-active { background: var(--panel); color: var(--text); }

@@ -200,11 +200,11 @@ function NotebookPanel({ chapter, moduleCode, prefs, onCountChange }) {
         .nb-vote { background: none; border: none; color: var(--muted2); cursor: pointer; padding: 2px; line-height: 0; border-radius: 4px; }
         .nb-vote:hover { color: var(--text-soft); }
         .nb-vote.is-on { color: var(--accent); }
-        .nb-score { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .nb-score { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
         .nb-body { flex: 1; min-width: 0; }
         .nb-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
         .nb-author { font-size: 12.5px; color: var(--text); font-weight: 600; }
-        .nb-status { display: inline-flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
+        .nb-status { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9.5px;
           letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: var(--r-pill); }
         .nb-status.is-review { color: #D9A441; background: rgba(217,164,65,0.12); }
         .nb-status.is-ok { color: var(--accent); background: var(--accent-soft); }
@@ -216,7 +216,7 @@ function NotebookPanel({ chapter, moduleCode, prefs, onCountChange }) {
           font-size: 11.5px; cursor: pointer; padding: 4px 0; }
         .nb-link:hover { color: var(--text-soft); }
         .nb-edit, .nb-composer textarea { width: 100%; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm);
-          color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px; box-shadow: var(--shadow-inset); resize: vertical; }
+          color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px; box-shadow: var(--shadow-inset); resize: vertical; }
         .nb-composer { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
         .nb-post { align-self: flex-end; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm);
           padding: 10px 16px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }

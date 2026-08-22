@@ -49,11 +49,11 @@ function ProgressPage({ onBack }) {
       <style>{`
         .progress-page { max-width: 560px; }
         .progress-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
-        .progress-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 16px; }
+        .progress-title { font-family: var(--font-display); font-size: 22px; color: var(--text); margin: 0 0 16px; }
         .progress-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 8px; display: flex; flex-direction: column; gap: 2px; }
         .progress-stat { display: flex; align-items: center; gap: 14px; padding: 12px; }
         .progress-stat-icon { width: 40px; height: 40px; border-radius: var(--r-md); background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
-        .progress-stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+        .progress-stat-value { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); }
         .progress-stat-of { font-size: 14px; color: var(--muted2); font-weight: 500; }
         .progress-stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
       `}</style>

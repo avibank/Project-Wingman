@@ -434,16 +434,16 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       <style>{`
         .profile-page { max-width: 560px; }
         .profile-page-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
-        .profile-page-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 16px; }
+        .profile-page-title { font-family: var(--font-display); font-size: 22px; color: var(--text); margin: 0 0 16px; }
         .profile-page-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
         .profile-page-tabs button { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 12.5px; padding: 8px 4px; border-radius: var(--r-sm); cursor: pointer; }
         .profile-page-tabs button.is-active { background: var(--panel); color: var(--text); }
         .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 8px; margin-bottom: 12px; }
-        .settings-group-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); padding: 10px 14px 4px; }
+        .settings-group-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); padding: 10px 14px 4px; }
         .settings-field { padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
         .settings-inline { display: flex; gap: 8px; margin-top: 10px; }
         .settings-input { flex: 1; min-width: 0; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm);
-          color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 9px 11px; box-shadow: var(--shadow-inset); }
+          color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 9px 11px; box-shadow: var(--shadow-inset); }
         .settings-save { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--on-accent);
           border: none; border-radius: var(--r-sm); padding: 9px 15px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); cursor: pointer; }
@@ -494,7 +494,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .photo-modal-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .photo-modal-image { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; object-fit: cover; }
         .photo-modal-placeholder { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--accent); }
-        .photo-modal-caption { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+        .photo-modal-caption { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; }
         .photo-modal-close { position: absolute; top: -36px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 12.5px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
         .profile-signout-btn:hover { background: rgba(224,102,90,0.08); }

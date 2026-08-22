@@ -50,7 +50,7 @@ function UsernameGate({ children }) {
       <style>{`
         .username-gate { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 20px; }
         .username-gate-card { width: min(360px, 100%); background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 28px 24px; text-align: center; color: var(--accent); }
-        .username-gate-card h1 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); margin: 12px 0 6px; }
+        .username-gate-card h1 { font-family: var(--font-display); font-size: 20px; color: var(--text); margin: 12px 0 6px; }
         .username-gate-card p { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 18px; }
         .username-gate-card form { display: flex; flex-direction: column; gap: 10px; }
         .username-gate-card input { background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-md); padding: 11px 14px; color: var(--text); font-size: 14px; text-align: center; }

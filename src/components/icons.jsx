@@ -30,7 +30,7 @@ function Placard({ children }) {
       {children}
       <style>{`
         .placard {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--font-mono);
           font-size: 10px;
           letter-spacing: 0.08em;
           padding: 2px 7px;

@@ -35,7 +35,7 @@ function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOv
       <style>{`
         .settings-page { max-width: 560px; }
         .settings-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
-        .settings-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 20px; }
+        .settings-title { font-family: var(--font-display); font-size: 22px; color: var(--text); margin: 0 0 20px; }
         .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 8px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }
@@ -48,7 +48,7 @@ function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOv
         .settings-stepper { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 10px 14px 14px; }
         .settings-stepper-btn { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .settings-stepper-value { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
+        .settings-stepper-value { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
       `}</style>
     </div>
   );

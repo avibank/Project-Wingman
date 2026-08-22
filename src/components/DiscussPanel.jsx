@@ -255,7 +255,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-skeleton-line--long { width: 80%; }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .discuss-item { display: flex; gap: 12px; }
-        .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
+        .discuss-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
         .discuss-avatar.is-own { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 0 2px var(--accent); }
         .discuss-avatar-wrap { position: relative; flex-shrink: 0; }
         .discuss-admin-badge { position: absolute; bottom: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; background: #E8A33D; color: #2A1B04; display: flex; align-items: center; justify-content: center; border: 2px solid var(--panel); }

@@ -371,7 +371,7 @@ function AppInner() {
       </div>
     </UsernameGate>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..700,0..100&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
         @font-face {
           font-family: 'OpenDyslexic';
           src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@master/otf/OpenDyslexic-Regular.otf') format('opentype');
@@ -434,8 +434,13 @@ function AppInner() {
           --g-high: color-mix(in srgb, var(--accent) 52%, #FFDCA8 48%);
           --g-track: color-mix(in srgb, var(--accent) 14%, var(--well) 86%);
           --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
+          /* One pairing, swappable from here: a warm display face for headings
+             and encouragement, a precise mono for anything numeric. */
+          --font-display: 'Fraunces', Georgia, serif;
+          --font-body: 'Inter', system-ui, sans-serif;
+          --font-mono: 'JetBrains Mono', ui-monospace, monospace;
           font-variant-numeric: tabular-nums;
-          font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; transition: background 0.2s ease, color 0.2s ease;
+          font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; transition: background 0.2s ease, color 0.2s ease;
         }
         .app.theme-light {
           --bg: #F4F6FB; --panel: #FFFFFF; --panel-alt: #F0F3F9; --border: #D7DEEA; --border-hover: #B9C6DC;
@@ -471,18 +476,22 @@ function AppInner() {
         .app::before { content: ""; position: fixed; left: 50%; top: -280px; width: 1100px; height: 620px;
           transform: translateX(-50%); pointer-events: none; z-index: 0;
           background: radial-gradient(closest-side, var(--accent-glow), transparent 72%); filter: blur(28px); }
+        h1, h2, h3, h4 { font-family: var(--font-display); font-variation-settings: "opsz" 40, "SOFT" 40; letter-spacing: -0.005em; }
+        .app { font-variant-numeric: tabular-nums; }
+        [class*="mono"], [class*="-code"], [class*="-value"], [class*="-count"], [class*="stat"] {
+          font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }
         .app::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.035;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
         .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
-        .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
+        .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-banner { position: relative; padding: 26px 22px 18px; }
         .module-banner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 100% at 25% 0%, var(--accent-soft), transparent 70%); pointer-events: none; z-index: 0; }
         .module-banner > div { position: relative; z-index: 1; }
-        .module-banner h1 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 4px; color: var(--text); }
-        .module-banner p { color: var(--muted); font-size: 12.5px; margin: 0; font-family: 'JetBrains Mono', monospace; }
+        .module-banner h1 { font-family: var(--font-display); font-size: 26px; margin: 0 0 4px; color: var(--text); }
+        .module-banner p { color: var(--muted); font-size: 12.5px; margin: 0; font-family: var(--font-mono); }
         .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
         .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted); font-size: 13.5px; font-weight: 500; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
         .tab.is-active { color: var(--text); font-weight: 600; }
@@ -508,21 +517,21 @@ function AppInner() {
         .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; animation: boardingFade 2.4s ease forwards; }
         .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 22px; }
         .boarding-pass-top { display: flex; align-items: center; justify-content: space-between; color: var(--accent); margin-bottom: 14px; }
-        .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted2); }
-        .boarding-pass-welcome { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 10px; }
-        .boarding-pass-route { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .boarding-pass-airline { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--muted2); }
+        .boarding-pass-welcome { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 10px; }
+        .boarding-pass-route { font-family: var(--font-display); font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
         .boarding-pass-row { display: flex; gap: 22px; margin-bottom: 16px; }
-        .boarding-pass-row label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
-        .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
+        .boarding-pass-row label { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
+        .boarding-pass-row span { font-family: var(--font-display); font-size: 15px; color: var(--text); font-weight: 600; }
         .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
         .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
-        .boarding-trivia-label { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: var(--r-sm); padding: 2px 6px; }
+        .boarding-trivia-label { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: var(--r-sm); padding: 2px 6px; }
         @keyframes boardingFade {
           0% { opacity: 1; }
           80% { opacity: 1; }
           100% { opacity: 0; visibility: hidden; }
         }
-        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: var(--r-md); animation: paFade 1.6s ease forwards; }
+        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: var(--r-md); animation: paFade 1.6s ease forwards; }
         @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
         .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
         .runway-lights { position: relative; display: flex; gap: 4px; }
@@ -539,7 +548,7 @@ function AppInner() {
         .app.reduce-motion .boarding-overlay { animation-duration: 0.4s; }
         .app.reduce-motion .content-taxi { animation: none; }
         .app.dyslexia-font, .app.dyslexia-font .exam-stem, .app.dyslexia-font .chapter-title, .app.dyslexia-font p, .app.dyslexia-font span, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font button {
-          font-family: 'OpenDyslexic', 'Inter', sans-serif;
+          font-family: 'OpenDyslexic', var(--font-body);
         }
       `}</style>
     </div>
