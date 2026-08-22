@@ -455,3 +455,15 @@ surfaces with their own rules.
 With two members present and my own attempt count at 1, the rail read "A. Nakamura —
 2 questions ahead" (3 attempts) and "M. Iqbal — 1 question back" (0 attempts), wearing
 the squadron's Carrier Deck livery, scoped to the container.
+
+## Regression sweep
+
+All 15 harness routes render clean — hub, chapters, social, comms, squadron, first,
+tails, modulehub, settings, profile, progress, bookmarks, livery, pdf, discuss. Zero
+console errors and zero uncaught exceptions on every one.
+
+The sweep found one thing worth fixing: Traffic keyed completions as `c-${chapter_id}`,
+assuming one completion row per chapter per user. A second row for the same chapter —
+a retake, a race, anything not held down by a unique constraint — collided in React.
+The log now keeps the most recent per chapter, which is also what it should have been
+saying: a chapter is finished once.

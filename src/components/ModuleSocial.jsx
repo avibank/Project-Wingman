@@ -61,7 +61,17 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
 
     // Merge every timestamped event into one stream, newest first.
     const log = [];
+    // A chapter is finished once. Keyed by chapter, so a second completion row
+    // for the same chapter -- a retake, a race, anything without a unique
+    // constraint behind it -- would collide in React. Keep the most recent.
+    const latestByChapter = new Map();
     for (const d of done) {
+      const prev = latestByChapter.get(d.chapter_id);
+      if (!prev || new Date(d.completed_at) > new Date(prev.completed_at)) {
+        latestByChapter.set(d.chapter_id, d);
+      }
+    }
+    for (const d of latestByChapter.values()) {
       const ch = chapterById[d.chapter_id];
       if (ch) log.push({ id: `c-${d.chapter_id}`, at: d.completed_at, kind: "Logged", text: `${ch.code} ${ch.title}`, chapterId: ch.id });
     }
