@@ -34,19 +34,19 @@ function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOv
 
       <style>{`
         .settings-page { max-width: 560px; }
-        .settings-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
+        .settings-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
         .settings-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0 0 20px; }
-        .settings-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; }
-        .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; cursor: pointer; }
+        .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 6px; }
+        .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }
         .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
         .settings-note-top { display: flex; align-items: flex-start; gap: 6px; padding: 4px 8px 12px; }
-        .settings-switch { width: 34px; height: 20px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
+        .settings-switch { width: 34px; height: 20px; border-radius: var(--r-md); background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
         .settings-switch.is-on { background: var(--accent); }
         .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
         .settings-switch.is-on .settings-switch-knob { transform: translateX(14px); }
         .settings-stepper { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 10px 14px 14px; }
-        .settings-stepper-btn { width: 32px; height: 32px; border-radius: 8px; background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .settings-stepper-btn { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--panel-alt); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
         .settings-stepper-value { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
       `}</style>

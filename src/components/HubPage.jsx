@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronRight, ChevronLeft, Check, Lock, ThumbsUp, MessageSquareOff, Compass, BookMarked, Flame } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronRight, ChevronLeft, Check, Lock, ThumbsUp, Radio, Compass, BookMarked, Flame } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
@@ -8,17 +8,16 @@ import { useIsAdmin } from "../lib/admin.js";
 import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
 import { fetchRecentActivity, postComment, toggleReaction } from "../lib/comments.js";
 
-// Needle travel: 240 degrees, swept symmetrically about vertical.
+// Dial geometry: 240 degrees of travel, swept symmetrically about vertical.
 const DIAL_START_DEG = -120;
 const DIAL_SWEEP_DEG = 240;
 // Cyclable dial: auto-advance cadence, and how long a manual interaction wins.
 const DATA_PAGE_MS = 4000;
 const DATA_PAUSE_MS = 9000;
-// Streak is shown as a ratio of a weekly goal so it has something to fill against.
-const STREAK_GOAL_DAYS = 7;
-// Horizon travel limits, kept small so the instrument reads alive rather than loose.
-const TILT_MAX_DEG = 11;
-const TILT_MAX_SHIFT = 9;
+// Value animation, per the eased-sweep spec.
+const SWEEP_MS = 520;
+// Tilt limit, kept small so the glass reads curved rather than loose.
+const TILT_MAX_DEG = 5;
 
 function timeAgo(iso) {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -63,139 +62,162 @@ function nameToGradient(str) {
   return `linear-gradient(135deg, hsl(${hue}, 60%, 42%), hsl(${(hue + 45) % 360}, 60%, 32%))`;
 }
 
+// Samples the shared accent ramp at a value: deep and desaturated at the low
+// end, full accent through the middle, hot flare approaching redline. Built from
+// the tokens with color-mix so it tracks whichever livery is selected.
+function rampColor(pct) {
+  const v = Math.max(0, Math.min(100, pct));
+  if (v <= 50) return `color-mix(in srgb, var(--g-mid) ${Math.round((v / 50) * 100)}%, var(--g-low))`;
+  return `color-mix(in srgb, var(--g-high) ${Math.round(((v - 50) / 50) * 100)}%, var(--g-mid))`;
+}
+
 function degForPct(pct) {
   return DIAL_START_DEG + (Math.max(0, Math.min(100, pct)) / 100) * DIAL_SWEEP_DEG;
 }
 
-// Quartile marks only — five ticks, not a ring of clutter.
-const QUARTILE_TICKS = [0, 25, 50, 75, 100];
-
-function Ticks({ marks = QUARTILE_TICKS }) {
-  return (
-    <>
-      {marks.map((m) => (
-        <div key={m} className="fd-tickwrap" style={{ transform: `rotate(${degForPct(m)}deg)` }}>
-          <div className={`fd-tick ${m === 0 || m === 100 ? "fd-tick--major" : ""}`} />
-        </div>
-      ))}
-    </>
-  );
+// Eases a displayed number toward its real value so gauges sweep instead of
+// snapping. Returns the target immediately when motion is suppressed.
+function useAnimatedValue(target, animate) {
+  const [display, setDisplay] = useState(animate ? 0 : target);
+  const fromRef = useRef(animate ? 0 : target);
+  useEffect(() => {
+    if (!animate) {
+      fromRef.current = target;
+      setDisplay(target);
+      return;
+    }
+    const from = fromRef.current;
+    const delta = target - from;
+    if (delta === 0) return;
+    const t0 = performance.now();
+    let raf;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / SWEEP_MS);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(from + delta * eased);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(step);
+    return () => {
+      fromRef.current = target;
+      cancelAnimationFrame(raf);
+    };
+  }, [target, animate]);
+  return display;
 }
 
-// Thin completion arc riding the dial's edge. Used by the two needle-less dials.
-function EdgeRing({ size, pct, quiet = false }) {
-  const stroke = 3;
-  const r = size / 2 - stroke / 2 - 1;
+const MAJOR_TICKS = [0, 25, 50, 75, 100];
+const MINOR_TICKS = [12.5, 37.5, 62.5, 87.5];
+
+// One instrument face, shared by all three widgets: same bezel, same tick
+// hierarchy, same cover glass. Only `needle` and `arc` vary between them.
+function Gauge({ size, value = 0, arc = true, needle = false, empty = false, label, children }) {
+  const stroke = Math.round(size * 0.055);
+  const r = size / 2 - stroke / 2 - size * 0.085;
   const circumference = 2 * Math.PI * r;
-  // Match the needle dials' 240-degree sweep so the cluster reads as one family.
   const arcLen = circumference * (DIAL_SWEEP_DEG / 360);
-  const filled = arcLen * (Math.max(0, Math.min(100, pct)) / 100);
-  const common = {
-    cx: size / 2,
-    cy: size / 2,
-    r,
-    fill: "none",
-    strokeWidth: stroke,
-    strokeLinecap: "round",
-    transform: `rotate(${90 + DIAL_START_DEG} ${size / 2} ${size / 2})`,
+  const filled = arcLen * (Math.max(0, Math.min(100, value)) / 100);
+  const cx = size / 2;
+  const tickOuter = size / 2 - size * 0.035;
+  const labelR = size / 2 - size * 0.165;
+  const gradId = `ndl-${size}`;
+
+  const tick = (pct, major) => {
+    const a = ((degForPct(pct) - 90) * Math.PI) / 180;
+    const len = major ? size * 0.072 : size * 0.04;
+    return (
+      <line
+        key={`${major ? "M" : "m"}${pct}`}
+        x1={cx + Math.cos(a) * tickOuter}
+        y1={cx + Math.sin(a) * tickOuter}
+        x2={cx + Math.cos(a) * (tickOuter - len)}
+        y2={cx + Math.sin(a) * (tickOuter - len)}
+        strokeWidth={major ? 2 : 1}
+        strokeLinecap="round"
+        className={major ? "g-tick g-tick--major" : "g-tick"}
+      />
+    );
   };
-  return (
-    <svg className="fd-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle {...common} stroke="var(--fd-ring-track)" strokeDasharray={`${arcLen} ${circumference}`} />
-      {!quiet && (
-        <circle
-          {...common}
-          stroke="var(--accent)"
-          strokeDasharray={`${filled} ${circumference}`}
-          style={{ transition: "stroke-dasharray 0.7s cubic-bezier(0.22,1,0.36,1)" }}
-        />
-      )}
-    </svg>
-  );
-}
 
-// Left dial: attitude indicator. Horizon reads whole-module progress via the
-// edge ring; the horizon itself is motion-reactive but carries no data.
-function AttitudeDial({ size, pct, motionRef }) {
   return (
-    <div className="fd-shell" style={{ width: size, height: size }}>
-      <div className="fd-bezel" />
-      <div className="fd-face" style={{ width: size, height: size }}>
-        <div className="fd-horizon-layer" ref={motionRef}>
-          <div className="fd-horizon-inner">
-            <div className="fd-sky" />
-            <div className="fd-ground" />
-            <div className="fd-horizon-line" />
-          </div>
-        </div>
-        <Ticks />
-        <div className="fd-vignette" />
-        <div className="fd-glass" />
-      </div>
-      <EdgeRing size={size} pct={pct} />
-      <div className="fd-overlay">
-        <div className="fd-readout fd-readout--sm">
-          <span className="fd-value" style={{ fontSize: 15 }}>
-            {pct}
-            <small>%</small>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Centre dial: airspeed-style face with the one needle in the cluster.
-function ChapterDial({ size, pct }) {
-  return (
-    <div className="fd-shell" style={{ width: size, height: size }}>
-      <div className="fd-bezel" />
-      <div className="fd-face fd-face--instrument" style={{ width: size, height: size }}>
-        <Ticks />
-        <div className="fd-arcmark" />
-        <div className="fd-needle-wrap">
-          <div className="fd-needle" style={{ transform: `translateX(-50%) rotate(${degForPct(pct)}deg)` }} />
-        </div>
-        <div className="fd-hub" />
-        <div className="fd-vignette" />
-        <div className="fd-glass" />
-      </div>
-      <div className="fd-overlay fd-overlay--low">
-        <div className="fd-readout">
-          <span className="fd-value" style={{ fontSize: 20 }}>
-            {pct}
-            <small>%</small>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Right dial: pages through whatever else is worth reading. Ring goes quiet for
-// pages that aren't naturally a ratio.
-function DataDial({ size, page, pageIndex }) {
-  return (
-    <div className="fd-shell" style={{ width: size, height: size }}>
-      <div className="fd-bezel" />
-      <div className="fd-face fd-face--instrument" style={{ width: size, height: size }}>
-        <Ticks />
-        <div className="fd-vignette" />
-        <div className="fd-glass" />
-      </div>
-      <EdgeRing size={size} pct={page.percent ?? 0} quiet={page.percent == null} />
-      <div className="fd-overlay">
-        <div key={pageIndex} className="fd-data-content">
-          {page.percent == null ? (
-            <span className="fd-data-text">{page.display}</span>
-          ) : (
-            <span className="fd-value" style={{ fontSize: 16 }}>
-              {page.display}
-              {page.unit ? <small>{page.unit}</small> : null}
-            </span>
+    <div className={`g ${empty ? "is-empty" : ""}`} style={{ width: size, height: size, "--pctn": Math.round(value) }}>
+      <div className="g-bezel" />
+      <div className="g-face">
+        <div className="g-bloom" style={{ background: `radial-gradient(circle, ${rampColor(value)} 0%, transparent 68%)` }} />
+        <svg className="g-svg" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" style={{ stopColor: "color-mix(in srgb, var(--g-low) 55%, black)" }} />
+              <stop offset="52%" style={{ stopColor: "var(--g-mid)" }} />
+              <stop offset="100%" style={{ stopColor: "color-mix(in srgb, var(--g-high) 78%, white)" }} />
+            </linearGradient>
+          </defs>
+          <g>
+            {MINOR_TICKS.map((t) => tick(t, false))}
+            {MAJOR_TICKS.map((t) => tick(t, true))}
+          </g>
+          <g>
+            {MAJOR_TICKS.map((t) => {
+              const a = ((degForPct(t) - 90) * Math.PI) / 180;
+              return (
+                <text
+                  key={t}
+                  x={cx + Math.cos(a) * labelR}
+                  y={cx + Math.sin(a) * labelR}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="g-ticklabel"
+                >
+                  {t}
+                </text>
+              );
+            })}
+          </g>
+          {arc && (
+            <>
+              <circle
+                cx={cx}
+                cy={cx}
+                r={r}
+                fill="none"
+                strokeWidth={stroke}
+                strokeLinecap="round"
+                style={{ stroke: "var(--g-track)" }}
+                strokeDasharray={`${arcLen} ${circumference}`}
+                transform={`rotate(${90 + DIAL_START_DEG} ${cx} ${cx})`}
+              />
+              <circle
+                cx={cx}
+                cy={cx}
+                r={r}
+                fill="none"
+                strokeWidth={stroke}
+                strokeLinecap="round"
+                style={{ stroke: rampColor(value), transition: "stroke-dasharray 0.1s linear" }}
+                strokeDasharray={`${filled} ${circumference}`}
+                transform={`rotate(${90 + DIAL_START_DEG} ${cx} ${cx})`}
+                className="g-arc"
+              />
+            </>
           )}
-        </div>
+          {needle && (
+            <g transform={`rotate(${degForPct(value)} ${cx} ${cx})`}>
+              <polygon
+                points={`${cx - size * 0.027},${cx + size * 0.03} ${cx + size * 0.027},${cx + size * 0.03} ${cx},${cx - r - stroke * 0.15}`}
+                fill={`url(#${gradId})`}
+                className="g-needle"
+              />
+            </g>
+          )}
+        </svg>
+        {needle && <div className="g-pivot" />}
+        <div className="g-tickglow" />
       </div>
+      <div className="g-glass" />
+      <div className="g-spec" />
+      <div className="g-readout">{children}</div>
+      {label && <div className="g-label">{label}</div>}
     </div>
   );
 }
@@ -216,11 +238,13 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const [dataPageIndex, setDataPageIndex] = useState(0);
+  const [slideDir, setSlideDir] = useState(1);
   const [needsMotionPermission, setNeedsMotionPermission] = useState(false);
 
   const pausedUntil = useRef(0);
-  const horizonRef = useRef(null);
-  const motionEnabled = useRef(false);
+  const clusterRef = useRef(null);
+  const sensorActive = useRef(false);
+  const rafRef = useRef(null);
 
   const completed = new Set(progress.get("pw-completed", []));
   const quizScores = progress.get("pw-quiz-scores", {});
@@ -235,7 +259,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   const scoreValues = Object.values(quizScores);
   const quizAccuracy = scoreValues.length ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length) : null;
 
-  // ---- what the hero is about -------------------------------------------------
   const currentChapter =
     CHAPTERS.find((ch) => ch.id === lastChapterId) ||
     CHAPTERS.find((ch) => ch.id === recentChapterIds[0]) ||
@@ -250,21 +273,24 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   const currentIndex = heroChapters.findIndex((ch) => ch.id === currentChapter?.id);
   const nextChapter = heroChapters.slice(currentIndex + 1).find((ch) => !completed.has(ch.id)) || null;
 
-  // Only pages backed by real data are offered — no padded or invented readings.
+  const nothingStarted = modulePercent === 0 && chapterPercent === 0 && viewedIds.size === 0;
+
+  // A streak has no fixed ceiling, so it is never drawn as a filled arc — it
+  // reads as a digital stat inside the same instrument rather than implying a
+  // maximum that does not exist.
   const dataPages = [];
-  if (quizAccuracy !== null) dataPages.push({ label: "Quiz Accuracy", display: quizAccuracy, unit: "%", percent: quizAccuracy });
-  if (streak > 0)
-    dataPages.push({
-      label: "Study Streak",
-      display: streak,
-      unit: "d",
-      percent: Math.min(100, Math.round((streak / STREAK_GOAL_DAYS) * 100)),
-    });
-  if (bookmarkCount > 0) dataPages.push({ label: "Bookmarked", display: bookmarkCount, unit: "", percent: null });
-  if (nextChapter) dataPages.push({ label: "Next Checkpoint", display: nextChapter.code, unit: "", percent: null });
-  if (!dataPages.length) dataPages.push({ label: "Standby", display: "No data yet", unit: "", percent: null });
-  const safePageIndex = dataPageIndex % dataPages.length;
+  if (quizAccuracy !== null) dataPages.push({ key: "acc", label: "Quiz Accuracy", value: quizAccuracy, arc: true, display: quizAccuracy, unit: "%" });
+  if (streak > 0) dataPages.push({ key: "streak", label: "Study Streak", value: 0, arc: false, display: streak, unit: "d", icon: Flame });
+  if (bookmarkCount > 0) dataPages.push({ key: "saved", label: "Bookmarked", value: 0, arc: false, display: bookmarkCount, unit: "" });
+  if (nextChapter) dataPages.push({ key: "next", label: "Next Checkpoint", value: 0, arc: false, display: nextChapter.code, unit: "" });
+  if (!dataPages.length) dataPages.push({ key: "none", label: "Standby", value: 0, arc: false, display: "—", unit: "" });
+  const safePageIndex = ((dataPageIndex % dataPages.length) + dataPages.length) % dataPages.length;
   const dataPage = dataPages[safePageIndex];
+
+  const animate = !reduceMotion;
+  const modShown = useAnimatedValue(modulePercent, animate);
+  const chapShown = useAnimatedValue(chapterPercent, animate);
+  const dataShown = useAnimatedValue(dataPage.arc ? dataPage.value : 0, animate);
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -282,12 +308,11 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
     });
   }, []);
 
-  // ---- cyclable dial ----------------------------------------------------------
   useEffect(() => {
-    // Smooth Air: no unattended movement. The dots and arrows still page it.
     if (reduceMotion || dataPages.length < 2) return;
     const timer = setInterval(() => {
       if (Date.now() < pausedUntil.current) return;
+      setSlideDir(1);
       setDataPageIndex((i) => i + 1);
     }, DATA_PAGE_MS);
     return () => clearInterval(timer);
@@ -295,56 +320,80 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
 
   const goToDataPage = (i) => {
     pausedUntil.current = Date.now() + DATA_PAUSE_MS;
+    setSlideDir(i > safePageIndex ? 1 : -1);
     setDataPageIndex(((i % dataPages.length) + dataPages.length) % dataPages.length);
   };
 
-  // ---- horizon motion ---------------------------------------------------------
-  // Written straight to the node so a mousemove or a tilt event never costs a
-  // React render.
-  const applyTilt = useCallback((deg, shift) => {
-    const node = horizonRef.current;
-    if (!node) return;
-    node.style.transform = `rotate(${deg}deg) translateY(${shift}px)`;
-  }, []);
-
+  // ---- pointer / device reactivity -------------------------------------------
+  // One listener writes CSS custom properties per gauge; every gradient and
+  // transform that consumes them is painted by CSS, not by per-frame JS.
   useEffect(() => {
-    if (reduceMotion) {
-      applyTilt(0, 0);
-      return;
-    }
+    const cluster = clusterRef.current;
+    if (!cluster || reduceMotion) return;
+
+    const writePointer = (clientX, clientY) => {
+      cluster.querySelectorAll(".g").forEach((g) => {
+        const b = g.getBoundingClientRect();
+        const px = ((clientX - b.left) / b.width) * 100;
+        const py = ((clientY - b.top) / b.height) * 100;
+        g.style.setProperty("--px", `${Math.max(-40, Math.min(140, px))}%`);
+        g.style.setProperty("--py", `${Math.max(-40, Math.min(140, py))}%`);
+        if (!sensorActive.current) {
+          const inside = px >= 0 && px <= 100 && py >= 0 && py <= 100;
+          g.style.setProperty("--tx", `${inside ? ((50 - py) / 50) * TILT_MAX_DEG : 0}deg`);
+          g.style.setProperty("--ty", `${inside ? ((px - 50) / 50) * TILT_MAX_DEG : 0}deg`);
+        }
+      });
+    };
+
+    const onPointerMove = (e) => {
+      if (e.pointerType === "touch") return;
+      if (rafRef.current) return;
+      const { clientX, clientY } = e;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        writePointer(clientX, clientY);
+      });
+    };
+
+    const onLeave = () => {
+      if (sensorActive.current) return;
+      cluster.querySelectorAll(".g").forEach((g) => {
+        g.style.setProperty("--tx", "0deg");
+        g.style.setProperty("--ty", "0deg");
+      });
+    };
+
+    // Device tilt replaces pointer tilt where a real sensor exists. Presence of
+    // the API is not proof of a sensor — desktop Chrome defines it and never
+    // fires — so only a reading with real angles takes over.
     const onOrientation = (e) => {
-      // Desktop browsers define DeviceOrientationEvent but have no sensor, so
-      // the event either never fires or arrives with null angles. Only a reading
-      // with real values proves a sensor exists and should take over from the
-      // cursor — flagging that at listener-registration time left desktop with
-      // neither input driving the horizon.
       if (e.gamma == null && e.beta == null) return;
-      motionEnabled.current = true;
+      sensorActive.current = true;
       const gamma = Math.max(-30, Math.min(30, e.gamma || 0));
       const beta = Math.max(-30, Math.min(30, (e.beta || 0) - 45));
-      applyTilt(gamma * 0.5, beta * 0.35);
-    };
-    const onMouseMove = (e) => {
-      if (motionEnabled.current) return;
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      applyTilt(nx * TILT_MAX_DEG, ny * TILT_MAX_SHIFT);
+      cluster.querySelectorAll(".g").forEach((g) => {
+        g.style.setProperty("--ty", `${(gamma / 30) * TILT_MAX_DEG}deg`);
+        g.style.setProperty("--tx", `${(-beta / 30) * TILT_MAX_DEG}deg`);
+      });
     };
 
     const hasOrientation = typeof window.DeviceOrientationEvent !== "undefined";
     const needsPermission = hasOrientation && typeof window.DeviceOrientationEvent.requestPermission === "function";
     setNeedsMotionPermission(needsPermission);
-    if (hasOrientation && !needsPermission) {
-      window.addEventListener("deviceorientation", onOrientation);
-    }
-    window.addEventListener("mousemove", onMouseMove);
+    if (hasOrientation && !needsPermission) window.addEventListener("deviceorientation", onOrientation);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    cluster.addEventListener("pointerleave", onLeave);
     window.__wingmanOrientationHandler = onOrientation;
     return () => {
       window.removeEventListener("deviceorientation", onOrientation);
-      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("pointermove", onPointerMove);
+      cluster.removeEventListener("pointerleave", onLeave);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
       delete window.__wingmanOrientationHandler;
     };
-  }, [reduceMotion, applyTilt]);
+  }, [reduceMotion]);
 
   const requestMotion = () => {
     const DOE = window.DeviceOrientationEvent;
@@ -380,7 +429,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   };
 
   // ---- checklist --------------------------------------------------------------
-  // Derived from what a chapter actually has: one clip and its question set.
   const toggleViewed = (chapterId) => {
     const next = new Set(viewedIds);
     next.has(chapterId) ? next.delete(chapterId) : next.add(chapterId);
@@ -417,7 +465,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   const handleLike = async (comment) => {
     const key = `${comment.id}-thumbsUp`;
     const already = reacted.has(key);
-    // toggleReaction indexes reactions directly, so hand it a normalised object.
     const safe = { ...comment, reactions: { ...(comment.reactions || {}), thumbsUp: comment.reactions?.thumbsUp || 0 } };
     const nextReactions = await toggleReaction(safe, "thumbsUp", already);
     setActivity((cs) => cs.map((c) => (c.id === comment.id ? { ...c, reactions: nextReactions } : c)));
@@ -438,12 +485,12 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
       setActivity((cs) => [created, ...cs]);
       setDraft("");
       setComposerOpen(false);
-      // A Discussion post is out of module scope, so show where it landed.
       setFeedScope("all");
     }
   };
 
   const directoryModules = MODULES.filter((m) => m.code !== heroModule.code);
+  const PageIcon = dataPage.icon;
 
   return (
     <div className="fd">
@@ -453,7 +500,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         <p className="fd-sub">Your modules, your progress, all in one place.</p>
       </div>
 
-      {/* ---- hero: the one element allowed to glow ---- */}
       <div className="fd-hero-wrap">
         <div className="fd-hero-glow" aria-hidden="true" />
         <div className="fd-hero">
@@ -481,43 +527,54 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
             </div>
           </div>
 
-          <div className="fd-cluster">
+          <div className="fd-cluster" ref={clusterRef}>
             <div className="fd-dial-row">
-              <div className="fd-dial-col">
-                <AttitudeDial size={116} pct={modulePercent} motionRef={horizonRef} />
-                <div className="fd-dial-label">Module</div>
+              <div className="fd-dial-col fd-dial-col--module">
+                <Gauge size={128} value={modShown} empty={nothingStarted} label="Module">
+                  <span className="g-value">
+                    {Math.round(modShown)}
+                    <small>%</small>
+                  </span>
+                </Gauge>
               </div>
 
-              <div className="fd-dial-col fd-dial-col--center">
-                <ChapterDial size={168} pct={chapterPercent} />
-                <div className="fd-dial-label">Current Chapter</div>
+              <div className="fd-dial-col fd-dial-col--chapter">
+                <Gauge size={182} value={chapShown} needle empty={nothingStarted} label="Current Chapter">
+                  <span className="g-value g-value--lg">
+                    {Math.round(chapShown)}
+                    <small>%</small>
+                  </span>
+                </Gauge>
               </div>
 
-              <div className="fd-dial-col">
-                <div className="fd-data-wrap">
-                  {dataPages.length > 1 && (
-                    <button className="fd-data-arrow" onClick={() => goToDataPage(safePageIndex - 1)} aria-label="Previous reading">
-                      <ChevronLeft size={13} />
-                    </button>
-                  )}
-                  <DataDial size={116} page={dataPage} pageIndex={safePageIndex} />
-                  {dataPages.length > 1 && (
-                    <button className="fd-data-arrow" onClick={() => goToDataPage(safePageIndex + 1)} aria-label="Next reading">
-                      <ChevronRight size={13} />
-                    </button>
-                  )}
-                </div>
-                <div className="fd-dial-label">{dataPage.label}</div>
+              <div className="fd-dial-col fd-dial-col--data">
+                <Gauge size={128} value={dataShown} arc={dataPage.arc} label={dataPage.label}>
+                  <div key={dataPage.key} className={`g-face-slide ${slideDir > 0 ? "from-right" : "from-left"}`}>
+                    <span className="g-value">
+                      {PageIcon && <PageIcon size={13} className="g-value-icon" />}
+                      {dataPage.display}
+                      {dataPage.unit ? <small>{dataPage.unit}</small> : null}
+                    </span>
+                  </div>
+                </Gauge>
                 {dataPages.length > 1 && (
-                  <div className="fd-data-dots">
-                    {dataPages.map((p, i) => (
-                      <button
-                        key={p.label}
-                        className={`fd-data-dot ${i === safePageIndex ? "is-active" : ""}`}
-                        onClick={() => goToDataPage(i)}
-                        aria-label={p.label}
-                      />
-                    ))}
+                  <div className="fd-data-nav">
+                    <button className="fd-data-arrow" onClick={() => goToDataPage(safePageIndex - 1)} aria-label="Previous reading">
+                      <ChevronLeft size={14} />
+                    </button>
+                    <div className="fd-data-dots">
+                      {dataPages.map((p, i) => (
+                        <button
+                          key={p.key}
+                          className={`fd-data-dot ${i === safePageIndex ? "is-active" : ""}`}
+                          onClick={() => goToDataPage(i)}
+                          aria-label={p.label}
+                        />
+                      ))}
+                    </div>
+                    <button className="fd-data-arrow" onClick={() => goToDataPage(safePageIndex + 1)} aria-label="Next reading">
+                      <ChevronRight size={14} />
+                    </button>
                   </div>
                 )}
               </div>
@@ -561,7 +618,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         </div>
       </div>
 
-      {/* ---- modules directory ---- */}
       <section className="fd-section">
         <h2 className="fd-h2">Modules</h2>
         <p className="fd-section-sub">Everything in the syllabus, flying or not.</p>
@@ -615,7 +671,6 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
         </div>
       </section>
 
-      {/* ---- telemetry feed ---- */}
       <section className="fd-section">
         <div className="fd-feed-head">
           <h2 className="fd-h2">Telemetry Feed</h2>
@@ -636,12 +691,7 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
 
         {composerOpen && (
           <div className="fd-composer fd-surface">
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Ask the crew a question…"
-              rows={3}
-            />
+            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ask the crew a question…" rows={3} />
             <div className="fd-composer-actions">
               <button className="fd-composer-cancel" onClick={() => setComposerOpen(false)}>
                 Cancel
@@ -655,13 +705,21 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
 
         <div className="fd-feed-list">
           {activityLoading ? (
-            <div className="fd-empty fd-surface">Reading telemetry…</div>
+            <div className="fd-empty fd-surface">
+              <div className="fd-scan" aria-hidden="true" />
+              <span className="fd-empty-body">Reading telemetry…</span>
+            </div>
           ) : scopedActivity.length === 0 ? (
             <div className="fd-empty fd-surface">
-              <MessageSquareOff size={20} className="fd-empty-icon" />
-              <span>{feedScope === "module" ? "No telemetry from this module yet." : "No telemetry received yet."}</span>
-              <button className="fd-empty-link" onClick={onGoToDiscuss}>
-                Open discussion
+              <div className="fd-empty-dial" aria-hidden="true">
+                <Radio size={18} />
+              </div>
+              <span className="fd-empty-title">Channel quiet</span>
+              <span className="fd-empty-body">
+                {feedScope === "module" ? "Nothing logged against this module yet." : "No transmissions received yet."}
+              </span>
+              <button className="fd-empty-link" onClick={() => (isSignedIn ? setComposerOpen(true) : onSignIn())}>
+                Ask the crew a question
               </button>
             </div>
           ) : (
@@ -698,223 +756,237 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
       </section>
 
       <style>{`
-        .fd { --fd-ease: cubic-bezier(0.22, 1, 0.36, 1);
-              --fd-surface: linear-gradient(180deg, color-mix(in srgb, var(--panel) 96%, white 4%) 0%, var(--panel) 100%);
-              /* Instrument surface, derived from the active theme. Every detail on
-                 the face (ticks, bezel, glass, vignette, readout plate) is a token
-                 so Day Ops re-tones the whole dial instead of only its fill.
-                 Accent-coloured parts stay on var(--accent) and follow the
-                 user's chosen livery. */
-              --fd-face-1: color-mix(in srgb, var(--panel) 80%, white 20%);
-              --fd-face-2: color-mix(in srgb, var(--bg) 88%, black 12%);
-              --fd-tick: rgba(255,255,255,0.55);
-              --fd-tick-major: rgba(255,255,255,0.8);
-              --fd-bezel-hi: rgba(255,255,255,0.42); --fd-bezel-mid: rgba(255,255,255,0.24); --fd-bezel-lo: rgba(255,255,255,0.03);
-              --fd-vignette: rgba(0,0,0,0.5);
-              --fd-glass-hi: rgba(255,255,255,0.22); --fd-glass-mid: rgba(255,255,255,0.05);
-              --fd-ring-track: rgba(255,255,255,0.09);
-              --fd-plate-bg: rgba(6,12,24,0.55); --fd-plate-border: rgba(255,255,255,0.08); --fd-plate-text: #fff;
-              --fd-hub-1: #ffffff; --fd-hub-2: #d6dce6; --fd-hub-3: #788294;
-              --fd-face-shadow: rgba(0,0,0,0.5); --fd-face-inset: rgba(0,0,0,0.4);
-              --fd-arcmark: rgba(255,255,255,0.06);
-              --fd-horizon-dim: saturate(0.72) brightness(0.7); }
-        /* Day Ops: the same instrument, lit rather than inverted. */
-        .app.theme-light .fd {
-              --fd-face-1: #ffffff;
-              --fd-face-2: color-mix(in srgb, var(--bg) 82%, black 4%);
-              --fd-tick: rgba(22,32,46,0.42);
-              --fd-tick-major: rgba(22,32,46,0.68);
-              --fd-bezel-hi: rgba(22,32,46,0.22); --fd-bezel-mid: rgba(22,32,46,0.12); --fd-bezel-lo: rgba(255,255,255,0.5);
-              --fd-vignette: rgba(22,32,46,0.16);
-              --fd-glass-hi: rgba(255,255,255,0.75); --fd-glass-mid: rgba(255,255,255,0.2);
-              --fd-ring-track: rgba(22,32,46,0.13);
-              --fd-plate-bg: rgba(255,255,255,0.82); --fd-plate-border: rgba(22,32,46,0.12); --fd-plate-text: var(--text);
-              --fd-hub-1: #ffffff; --fd-hub-2: #c3ccda; --fd-hub-3: #6b7789;
-              --fd-face-shadow: rgba(22,32,46,0.18); --fd-face-inset: rgba(22,32,46,0.10);
-              --fd-arcmark: rgba(22,32,46,0.08);
-              --fd-horizon-dim: saturate(0.85) brightness(0.95); }
-        .fd-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
-        .fd-title { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; margin: 0 0 6px; color: var(--text); }
+        /* Registered so the ambient highlight can be animated on touch devices,
+           where there is no cursor to follow. */
+        /* Must inherit: the pointer position is written on .g, but the layers
+           that consume it (.g-spec, .g-tickglow) are its children. */
+        @property --px { syntax: '<percentage>'; inherits: true; initial-value: 30%; }
+        @property --py { syntax: '<percentage>'; inherits: true; initial-value: 18%; }
+
+        .fd { --fd-ease: cubic-bezier(0.22, 1, 0.36, 1); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+        .fd-eyebrow, .fd-lesson-label, .fd-next-up-label, .g-label {
+          font-family: 'JetBrains Mono', monospace; font-weight: 400; text-transform: uppercase;
+          letter-spacing: 0.14em; color: var(--muted); opacity: 0.72; }
+        .fd-eyebrow { font-size: 10.5px; margin: 0 0 6px; }
+        .fd-title { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; margin: 0 0 6px; color: var(--text); letter-spacing: -0.01em; }
         .fd-sub { color: var(--muted); font-size: 14px; margin: 0; }
 
         /* ---- hero ---- */
         .fd-hero-wrap { position: relative; margin-top: 30px; }
         .fd-hero-glow { position: absolute; inset: -80px; z-index: 0; pointer-events: none;
-          background: radial-gradient(58% 58% at 50% 42%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 74%);
+          background: radial-gradient(58% 58% at 50% 42%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 74%);
           filter: blur(42px); animation: fdHeroPulse 6s ease-in-out infinite; }
-        @keyframes fdHeroPulse { 0%, 100% { opacity: 0.72; transform: scale(1); } 50% { opacity: 1; transform: scale(1.035); } }
-        .fd-hero { position: relative; z-index: 1; padding: 30px 32px 26px; border-radius: 16px;
-          background: var(--fd-surface); border: 1px solid var(--border);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 40px rgba(0,0,0,0.30); }
+        @keyframes fdHeroPulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.035); } }
+        .fd-hero { position: relative; z-index: 1; padding: 30px 32px 26px; border-radius: var(--r-lg);
+          background: linear-gradient(180deg, var(--elev-2) 0%, var(--elev-1) 100%);
+          border: 1px solid var(--border); box-shadow: var(--hairline), var(--shadow-2); }
         .fd-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
         .fd-hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 700; color: var(--text); margin-top: 4px; }
         .fd-hero-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .fd-quiet-chip { display: flex; align-items: center; gap: 6px; color: var(--muted); border-radius: 20px; padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; background: none; border: none; }
-        .fd-quiet-chip--btn { cursor: pointer; }
+        .fd-quiet-chip { display: flex; align-items: center; gap: 6px; color: var(--muted); border-radius: var(--r-pill); padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; background: none; border: none; font-variant-numeric: tabular-nums; }
+        .fd-quiet-chip--btn { cursor: pointer; min-height: 34px; }
         .fd-quiet-chip--btn:hover { color: var(--text); }
-        .fd-motion-btn { display: flex; align-items: center; gap: 6px; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 20px; padding: 5px 11px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
-        .fd-motion-btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+        .fd-motion-btn { display: flex; align-items: center; gap: 6px; color: var(--accent-muted); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius: var(--r-pill); padding: 7px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; min-height: 36px; }
+        .fd-motion-btn:hover { color: var(--accent); }
 
-        /* ---- dial cluster ---- */
+        /* ---- instrument system: one language for all three gauges ---- */
         .fd-cluster { margin: 26px 0 6px; display: flex; justify-content: center; }
-        .fd-dial-row { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; }
-        .fd-dial-col { display: flex; flex-direction: column; align-items: center; gap: 9px; }
-        .fd-dial-col--center { z-index: 2; }
-        .fd-shell { position: relative; flex-shrink: 0; }
-        .fd-bezel { position: absolute; inset: -7px; border-radius: 50%;
-          background: conic-gradient(from 220deg, var(--fd-bezel-hi), var(--fd-bezel-lo) 32%, var(--fd-bezel-mid) 62%, var(--fd-bezel-lo) 100%);
-          -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 7px), black calc(100% - 7px));
-          mask: radial-gradient(closest-side, transparent calc(100% - 7px), black calc(100% - 7px)); }
-        .fd-face { position: relative; border-radius: 50%; overflow: hidden;
-          box-shadow: 0 16px 32px var(--fd-face-shadow), inset 0 0 22px var(--fd-face-inset); }
-        .fd-face--instrument { background: radial-gradient(circle at 34% 26%, var(--fd-face-1) 0%, var(--fd-face-2) 70%); }
-        /* Oversized so rotation never exposes a corner; rotating about its own
-           centre keeps the horizon pivoting on the dial's centre. */
-        /* Held back so the supporting dial never out-shouts the centre one. */
-        .fd-horizon-layer { position: absolute; left: -50%; top: -50%; width: 200%; height: 200%; transition: transform 0.08s linear; filter: var(--fd-horizon-dim); }
-        .fd-horizon-inner { position: absolute; inset: 0; }
-        .fd-sky { position: absolute; left: 0; right: 0; top: 0; height: 50%; background: linear-gradient(180deg, #8fbdf3 0%, #4d84c9 65%, #3a689f 100%); }
-        .fd-ground { position: absolute; left: 0; right: 0; top: 50%; bottom: 0; background: linear-gradient(180deg, #b07f4b 0%, #8a5a30 55%, #5c3a1e 100%); }
-        .fd-horizon-line { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: rgb(240,244,248); box-shadow: 0 0 6px rgba(255,255,255,0.6); }
-        .fd-vignette { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 50% 50%, transparent 52%, var(--fd-vignette) 100%); }
-        .fd-glass { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: linear-gradient(128deg, var(--fd-glass-hi) 0%, var(--fd-glass-mid) 26%, transparent 42%); }
-        .fd-tickwrap { position: absolute; inset: 0; }
-        .fd-tick { position: absolute; left: 50%; top: 5%; width: 2px; height: 5%; border-radius: 1px; background: var(--fd-tick); transform: translateX(-50%); }
-        .fd-tick--major { height: 7%; background: var(--fd-tick-major); }
-        .fd-arcmark { position: absolute; inset: 9%; border-radius: 50%; border: 1px solid var(--fd-arcmark); }
-        .fd-ring { position: absolute; inset: 0; pointer-events: none; }
+        .fd-dial-row { display: flex; align-items: center; justify-content: center; gap: 30px; }
+        .fd-dial-col { display: flex; flex-direction: column; align-items: center; position: relative; }
 
-        /* liquid-glass needle: translucent, internally blurred, one bright edge */
-        .fd-needle-wrap { position: absolute; inset: 0; }
-        .fd-needle { position: absolute; left: 50%; bottom: 50%; width: 13px; height: 38%; transform-origin: 50% 100%;
-          background: linear-gradient(100deg,
-            color-mix(in srgb, var(--accent) 35%, white) 0%,
-            color-mix(in srgb, var(--accent) 90%, white 10%) 34%,
-            var(--accent) 66%,
-            color-mix(in srgb, var(--accent) 55%, black 45%) 100%);
-          clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-          opacity: 0.86;
-          -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
-          filter: drop-shadow(0 3px 5px rgba(0,0,0,0.55));
-          transition: transform 0.8s var(--fd-ease); }
-        .fd-needle::after { content: ""; position: absolute; left: 46%; top: 4%; width: 1.5px; height: 92%; border-radius: 1px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.10)); }
-        .fd-hub { position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%,-50%);
-          background: radial-gradient(circle at 34% 28%, var(--fd-hub-1) 0%, var(--fd-hub-2) 35%, var(--fd-hub-3) 100%);
-          box-shadow: 0 0 0 3px var(--fd-face-2), 0 2px 4px rgba(0,0,0,0.55); }
+        .g { position: relative; flex-shrink: 0; --px: 30%; --py: 18%; --tx: 0deg; --ty: 0deg;
+          transform: perspective(760px) rotateX(var(--tx)) rotateY(var(--ty));
+          transition: transform 0.35s var(--fd-ease); }
+        .g-bezel { position: absolute; inset: -9px; border-radius: 50%;
+          background:
+            conic-gradient(from 218deg, var(--bezel-hi), var(--bezel-lo) 30%, var(--bezel-mid) 58%, var(--bezel-lo) 100%),
+            linear-gradient(180deg, var(--elev-2), var(--well));
+          box-shadow: var(--shadow-1), inset 0 1px 0 var(--sheen); }
+        .g-face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+          background: radial-gradient(circle at 36% 26%, var(--elev-1) 0%, var(--well) 76%);
+          box-shadow: var(--shadow-inset), inset 0 0 0 1px rgba(255,255,255,0.04); }
+        .g-svg { position: absolute; inset: 0; }
+        .g-tick { stroke: color-mix(in srgb, var(--accent) 25%, var(--muted2)); opacity: 0.55; }
+        .g-tick--major { stroke: color-mix(in srgb, var(--accent) 45%, var(--text)); opacity: 0.88; }
+        .g-ticklabel { fill: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 8.5px; opacity: 0.6; }
+        .g-arc { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--g-mid) 50%, transparent)); }
+        .g-needle { filter: drop-shadow(0 3px 4px rgba(0,0,0,0.55)); }
+        .g-pivot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%,-50%);
+          background: radial-gradient(circle at 33% 27%, #fff 0%, color-mix(in srgb, var(--g-high) 62%, #fff) 26%, color-mix(in srgb, var(--g-low) 72%, #000) 100%);
+          box-shadow: 0 0 0 2px var(--well), 0 2px 5px rgba(0,0,0,0.6); }
+        .g-bloom { position: absolute; inset: 4%; border-radius: 50%; pointer-events: none;
+          opacity: calc(var(--pctn) / 100 * 0.30); filter: blur(15px); mix-blend-mode: screen; transition: opacity 0.5s var(--fd-ease); }
+        .g-glass { position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+          background: linear-gradient(128deg, color-mix(in srgb, var(--sheen) 85%, transparent) 0%, color-mix(in srgb, var(--sheen) 22%, transparent) 24%, transparent 44%); }
+        .g-spec { position: absolute; inset: -9px; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+          background: radial-gradient(circle at var(--px) var(--py), color-mix(in srgb, var(--sheen) 80%, transparent) 0%, transparent 46%); }
+        .g-tickglow { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+          background: radial-gradient(circle at var(--px) var(--py), color-mix(in srgb, var(--g-high) 38%, transparent) 0%, transparent 30%); }
+        .g-readout { position: absolute; left: 0; right: 0; bottom: 16%; display: flex; justify-content: center; pointer-events: none; }
+        .g-value { display: inline-flex; align-items: center; gap: 4px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums;
+          color: var(--text); background: color-mix(in srgb, var(--well) 70%, transparent); border: 1px solid rgba(255,255,255,0.07);
+          border-radius: var(--r-sm); padding: 3px 10px; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+        .g-value--lg { font-size: 22px; padding: 4px 13px; }
+        .g-value small { font-family: 'JetBrains Mono', monospace; font-size: 0.6em; opacity: 0.75; }
+        .g-value-icon { color: var(--accent); }
+        .g-label { position: absolute; left: 50%; transform: translateX(-50%); bottom: -27px; font-size: 10px; white-space: nowrap; }
+        .g.is-empty .g-arc { display: none; }
+        .g.is-empty .g-face::after { content: ""; position: absolute; inset: 11%; border-radius: 50%;
+          background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--g-mid) 30%, transparent) 42deg, transparent 84deg);
+          animation: gSweep 3.2s linear infinite; }
+        @keyframes gSweep { to { transform: rotate(360deg); } }
+        .g-face-slide { animation: gSlideIn 0.28s var(--fd-ease); }
+        .g-face-slide.from-left { animation-name: gSlideInLeft; }
+        @keyframes gSlideIn { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes gSlideInLeft { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
 
-        .fd-overlay { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        .fd-overlay--low { justify-content: flex-end; padding-bottom: 13%; }
-        .fd-readout { display: inline-flex; align-items: center; justify-content: center; background: var(--fd-plate-bg); border: 1px solid var(--fd-plate-border); border-radius: 8px; padding: 3px 11px; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
-        .fd-readout--sm { padding: 2px 8px; }
-        .fd-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--fd-plate-text); line-height: 1; text-shadow: 0 1px 0 rgba(255,255,255,0.15), 0 3px 10px rgba(0,0,0,0.6); }
-        .fd-value small { font-family: 'JetBrains Mono', monospace; opacity: 0.8; font-size: 0.62em; margin-left: 1px; }
-        .fd-data-content { display: flex; align-items: center; justify-content: center; animation: fdFade 0.42s var(--fd-ease); }
-        @keyframes fdFade { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
-        .fd-data-text { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-soft); text-align: center; max-width: 84px; line-height: 1.35; }
-        .fd-dial-label { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
-        .fd-data-wrap { display: flex; align-items: center; gap: 8px; }
-        .fd-data-arrow { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
-        .fd-data-arrow:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-        .fd-data-dots { display: flex; gap: 5px; }
-        .fd-data-dot { width: 5px; height: 5px; padding: 0; border-radius: 50%; border: none; background: var(--border); cursor: pointer; }
-        .fd-data-dot.is-active { background: var(--accent); box-shadow: 0 0 5px color-mix(in srgb, var(--accent) 70%, transparent); }
+        .fd-data-nav { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 26px; display: flex; align-items: center; gap: 2px; }
+        .fd-data-arrow { background: none; border: none; color: var(--muted); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; }
+        .fd-data-arrow:hover { color: var(--text); background: color-mix(in srgb, var(--elev-2) 70%, transparent); }
+        .fd-data-dots { display: flex; }
+        .fd-data-dot { position: relative; width: 26px; height: 44px; padding: 0; background: none; border: none; cursor: pointer; }
+        /* Coarse pointers get the full 44x44 target; the visible dot stays 5px. */
+        @media (pointer: coarse) { .fd-data-dot { width: 44px; } }
+        .fd-data-dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: var(--border-hover); transition: background 0.2s ease, box-shadow 0.2s ease; }
+        .fd-data-dot.is-active::after { background: var(--accent); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent); }
 
-        .fd-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 24px 0 20px; }
+        .fd-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 46px 0 20px; }
         .fd-lesson-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-        .fd-lesson-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .fd-lesson-label { font-size: 10px; }
         .fd-lesson-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-top: 3px; }
-        .fd-lesson-pct { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+        .fd-lesson-pct { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
         .fd-checklist { display: flex; flex-direction: column; }
-        .fd-check-row { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; border-bottom: 1px solid var(--border-soft); padding: 9px 2px; text-align: left; cursor: pointer; }
+        .fd-check-row { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; border-bottom: 1px solid var(--border-soft); padding: 11px 2px; text-align: left; cursor: pointer; min-height: 44px; }
         .fd-check-row:last-child { border-bottom: none; }
         .fd-check-row:hover .fd-check-text { color: var(--text); }
-        .fd-check-box { flex-shrink: 0; width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--border-hover); display: flex; align-items: center; justify-content: center; color: var(--on-accent); }
-        .fd-check-box.is-done { background: var(--accent); border-color: var(--accent); }
+        .fd-check-box { flex-shrink: 0; width: 17px; height: 17px; border-radius: 5px; border: 1px solid var(--border-hover); display: flex; align-items: center; justify-content: center; color: var(--on-accent); transition: background 0.18s ease, border-color 0.18s ease; }
+        .fd-check-box.is-done { background: var(--accent-muted); border-color: var(--accent-muted); }
         .fd-check-text { font-size: 13.5px; color: var(--text-soft); }
         .fd-check-text.is-done { color: var(--muted2); text-decoration: line-through; }
         .fd-hero-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
         .fd-next-up { display: flex; flex-direction: column; gap: 2px; }
-        .fd-next-up-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-        .fd-next-up-title { font-size: 13px; color: var(--accent-hover); }
-        .fd-resume { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 12px 18px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; cursor: pointer; box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 25%, transparent); transition: background 0.2s var(--fd-ease), transform 0.2s var(--fd-ease); }
+        .fd-next-up-label { font-size: 9.5px; }
+        .fd-next-up-title { font-size: 13px; color: var(--accent-muted); }
+        .fd-resume { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-md); padding: 13px 20px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; cursor: pointer; min-height: 44px;
+          box-shadow: var(--hairline), 0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent); transition: background 0.2s var(--fd-ease), transform 0.2s var(--fd-ease); }
         .fd-resume:hover { background: var(--accent-hover); }
         .fd-resume:active { transform: scale(0.97); transition-duration: 0.08s; }
 
         /* ---- calm surfaces below the hero ---- */
-        .fd-surface { background: color-mix(in srgb, var(--panel) 55%, transparent); border: 1px solid var(--border-soft); border-radius: 14px; transition: border-color 0.15s ease, background 0.15s ease; }
-        .fd-surface:hover { border-color: var(--border); background: color-mix(in srgb, var(--panel) 80%, transparent); }
-        .fd-section { margin-top: 42px; }
+        .fd-surface { background: var(--elev-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); box-shadow: var(--shadow-1); transition: border-color 0.15s ease, background 0.15s ease; }
+        .fd-surface:hover { border-color: var(--border); background: var(--elev-2); }
+        .fd-section { margin-top: 44px; }
         .fd-h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
         .fd-section-sub { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
-        .fd-active-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 16px; margin-bottom: 14px; flex-wrap: wrap; }
+        .fd-active-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 18px; margin-bottom: 14px; flex-wrap: wrap; }
         .fd-active-strip-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .fd-flying-badge { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); border-radius: 20px; padding: 3px 9px; white-space: nowrap; }
+        .fd-flying-badge { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); border-radius: var(--r-pill); padding: 4px 10px; white-space: nowrap; opacity: 0.9; }
         .fd-active-strip-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
-        .fd-active-strip-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
-        .fd-view-hero { font-size: 12.5px; color: var(--accent); background: none; border: none; cursor: pointer; white-space: nowrap; }
+        .fd-active-strip-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .fd-view-hero { font-size: 12.5px; color: var(--accent-muted); background: none; border: none; cursor: pointer; white-space: nowrap; min-height: 44px; padding: 0 4px; }
+        .fd-view-hero:hover { color: var(--accent); }
         .fd-module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-        @media (max-width: 720px) { .fd-module-grid { grid-template-columns: 1fr; } }
-        .fd-module-card { padding: 17px; display: flex; flex-direction: column; gap: 9px; }
-        .fd-module-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); }
+        .fd-module-card { padding: 18px; display: flex; flex-direction: column; gap: 9px; }
+        .fd-module-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); letter-spacing: 0.08em; }
         .fd-module-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15.5px; color: var(--text); }
-        .fd-module-btn { align-self: flex-start; margin-top: 4px; background: var(--accent-soft); color: var(--accent); border: none; border-radius: 8px; padding: 7px 12px; font-weight: 600; font-size: 12px; cursor: pointer; }
-        .fd-module-btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+        .fd-module-btn { align-self: flex-start; margin-top: 4px; background: var(--accent-soft); color: var(--accent-muted); border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); border-radius: var(--r-sm); padding: 9px 14px; font-weight: 600; font-size: 12px; cursor: pointer; min-height: 40px; }
+        .fd-module-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
         .fd-module-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .fd-module-unenroll { align-self: flex-start; background: none; border: none; color: var(--muted2); font-size: 10.5px; cursor: pointer; padding: 0; }
+        .fd-module-unenroll { align-self: flex-start; background: none; border: none; color: var(--muted2); font-size: 10.5px; cursor: pointer; padding: 6px 0; min-height: 32px; }
         .fd-module-unenroll:hover { color: var(--bad); }
         .fd-lock-row { display: flex; align-items: center; gap: 8px; color: var(--muted2); }
         .fd-lock-note { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
-        .fd-unlock-track { height: 4px; border-radius: 3px; background: var(--panel-alt); overflow: hidden; margin-top: 2px; }
-        .fd-unlock-fill { height: 100%; background: var(--muted2); border-radius: 3px; transition: width 0.7s var(--fd-ease); }
+        .fd-unlock-track { height: 5px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; margin-top: 2px; box-shadow: var(--shadow-inset); }
+        .fd-unlock-fill { height: 100%; background: linear-gradient(90deg, var(--g-low), var(--g-mid)); border-radius: var(--r-pill); transition: width 0.6s var(--fd-ease); }
 
         /* ---- feed ---- */
         .fd-feed-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
         .fd-feed-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .fd-scope-toggle { display: flex; gap: 4px; background: var(--panel-alt); border-radius: 9px; padding: 3px; }
-        .fd-scope-btn { background: none; border: none; padding: 6px 11px; border-radius: 7px; font-size: 12px; color: var(--muted); cursor: pointer; }
-        .fd-scope-btn.is-active { background: color-mix(in srgb, var(--panel) 80%, white 6%); color: var(--text); box-shadow: 0 0 0 1px var(--border), 0 0 10px color-mix(in srgb, var(--accent) 12%, transparent); }
-        .fd-ask-btn { background: var(--accent-soft); color: var(--accent); border: none; border-radius: 9px; padding: 8px 13px; font-weight: 600; font-size: 12.5px; cursor: pointer; }
-        .fd-ask-btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
-        .fd-composer { padding: 14px 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .fd-composer textarea { width: 100%; resize: vertical; min-height: 56px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px; }
+        .fd-scope-toggle { display: flex; gap: 4px; background: var(--well); border-radius: var(--r-sm); padding: 3px; box-shadow: var(--shadow-inset); }
+        .fd-scope-btn { background: none; border: none; padding: 9px 13px; border-radius: 6px; font-size: 12px; color: var(--muted); cursor: pointer; min-height: 38px; }
+        .fd-scope-btn.is-active { background: var(--elev-2); color: var(--text); box-shadow: var(--hairline), 0 1px 3px rgba(0,0,0,0.25); }
+        .fd-ask-btn { background: var(--accent-soft); color: var(--accent-muted); border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); border-radius: var(--r-sm); padding: 10px 14px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
+        .fd-ask-btn:hover { color: var(--accent); }
+        .fd-composer { padding: 16px 18px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .fd-composer textarea { width: 100%; resize: vertical; min-height: 60px; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 11px; box-shadow: var(--shadow-inset); }
         .fd-composer-actions { display: flex; justify-content: flex-end; gap: 8px; }
-        .fd-composer-cancel { background: none; border: none; color: var(--muted); font-size: 12.5px; padding: 8px 10px; cursor: pointer; }
-        .fd-composer-post { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 12.5px; cursor: pointer; }
+        .fd-composer-cancel { background: none; border: none; color: var(--muted); font-size: 12.5px; padding: 10px 12px; cursor: pointer; min-height: 40px; }
+        .fd-composer-post { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
         .fd-composer-post:disabled { opacity: 0.5; cursor: not-allowed; }
         .fd-feed-list { display: flex; flex-direction: column; gap: 10px; }
-        .fd-feed-item { padding: 14px 15px; display: flex; gap: 12px; }
-        /* Sized explicitly: as a stretched flex child the glow would smear down
-           the full height of the card instead of haloing the avatar. */
+        .fd-feed-item { padding: 16px 18px; display: flex; gap: 12px; }
         .fd-feed-avatar-wrap { position: relative; flex-shrink: 0; width: 32px; height: 32px; }
-        .fd-feed-avatar-glow { position: absolute; inset: -4px; border-radius: 50%; filter: blur(6px); opacity: 0.45; }
+        .fd-feed-avatar-glow { position: absolute; inset: -4px; border-radius: 50%; filter: blur(6px); opacity: 0.4; }
         .fd-feed-avatar { position: relative; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; color: #fff; }
         .fd-feed-body { flex: 1; min-width: 0; }
         .fd-feed-line { font-size: 13px; color: var(--text-soft); }
         .fd-feed-line b { color: var(--text); }
-        .fd-feed-tag { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent); }
+        .fd-feed-tag { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent-muted); }
         .fd-feed-text { font-size: 13px; color: var(--text-soft); margin-top: 4px; line-height: 1.5; word-break: break-word; }
         .fd-feed-meta { margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); }
         .fd-feed-actions { margin-top: 9px; display: flex; align-items: center; gap: 15px; }
-        .fd-feed-action { display: flex; align-items: center; gap: 5px; background: none; border: none; font-size: 11.5px; color: var(--muted); cursor: pointer; padding: 0; }
+        .fd-feed-action { display: flex; align-items: center; gap: 5px; background: none; border: none; font-size: 11.5px; color: var(--muted); cursor: pointer; padding: 6px 4px; min-height: 36px; font-variant-numeric: tabular-nums; }
         .fd-feed-action:hover:not(:disabled) { color: var(--text-soft); }
         .fd-feed-action:disabled { cursor: not-allowed; opacity: 0.6; }
         .fd-feed-action.is-liked { color: var(--accent); }
-        .fd-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 12.5px; padding: 26px; text-align: center; }
-        .fd-empty-icon { color: var(--muted2); opacity: 0.6; }
-        .fd-empty-link { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; }
 
-        /* Smooth Air / OS reduced motion: keep the depth, stop the movement. */
-        .app.reduce-motion .fd-hero-glow { animation: none; opacity: 0.85; }
-        .app.reduce-motion .fd-horizon-layer,
-        .app.reduce-motion .fd-needle,
+        /* ---- designed empty / loading states ---- */
+        .fd-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 34px 24px; text-align: center; }
+        .fd-empty-dial { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--muted); position: relative;
+          background: radial-gradient(circle at 36% 28%, var(--elev-2), var(--well)); box-shadow: var(--shadow-inset), inset 0 0 0 1px rgba(255,255,255,0.05); }
+        .fd-empty-dial::after { content: ""; position: absolute; inset: -1px; border-radius: 50%;
+          background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--g-mid) 34%, transparent) 44deg, transparent 88deg);
+          animation: gSweep 3.4s linear infinite; }
+        .fd-empty-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; color: var(--text-soft); margin-top: 2px; }
+        .fd-empty-body { color: var(--muted); font-size: 12.5px; }
+        .fd-empty-link { background: none; border: none; color: var(--accent-muted); font-size: 12.5px; cursor: pointer; min-height: 40px; padding: 0 6px; }
+        .fd-empty-link:hover { color: var(--accent); }
+        .fd-scan { width: 120px; height: 2px; border-radius: 2px; overflow: hidden; background: var(--well); position: relative; }
+        .fd-scan::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--g-mid), transparent); animation: fdScan 1.3s ease-in-out infinite; }
+        @keyframes fdScan { 0% { transform: translateX(-110%); } 100% { transform: translateX(360%); } }
+
+        /* ---- touch input: no cursor to track ---- */
+        @media (hover: none), (pointer: coarse) {
+          .g-spec { animation: gDrift 9s ease-in-out infinite alternate; }
+          .g-tickglow { opacity: 0.4; }
+        }
+        @keyframes gDrift { from { --px: 16%; --py: 14%; } to { --px: 84%; --py: 42%; } }
+
+        /* ---- narrow viewports: one legible gauge at a time, swipeable ---- */
+        @media (max-width: 760px) {
+          .fd-hero { padding: 24px 18px 22px; }
+          .fd-cluster { margin-left: -18px; margin-right: -18px; }
+          .fd-dial-row { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; gap: 0;
+            overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .fd-dial-row::-webkit-scrollbar { display: none; }
+          .fd-dial-col { scroll-snap-align: center; padding: 10px 0 12px; }
+          .fd-dial-col--chapter { order: -1; }
+          .g { transform: none; }
+          .g-value { font-size: 21px; padding: 5px 13px; }
+          .g-value--lg { font-size: 27px; padding: 6px 16px; }
+          .g-ticklabel { font-size: 11px; opacity: 0.78; }
+          .g-label { font-size: 11px; bottom: -29px; }
+          .fd-module-grid { grid-template-columns: 1fr; }
+          .fd-divider { margin-top: 30px; }
+        }
+
+        /* Smooth Air / OS reduced motion: a still fallback for every effect above. */
+        .app.reduce-motion .fd-hero-glow,
+        .app.reduce-motion .g.is-empty .g-face::after,
+        .app.reduce-motion .fd-empty-dial::after,
+        .app.reduce-motion .fd-scan::after,
+        .app.reduce-motion .g-face-slide,
+        .app.reduce-motion .g-spec { animation: none; }
+        .app.reduce-motion .fd-hero-glow { opacity: 0.85; }
+        .app.reduce-motion .g { transform: none; }
+        .app.reduce-motion .g,
+        .app.reduce-motion .g-bloom,
         .app.reduce-motion .fd-unlock-fill { transition: none; }
-        .app.reduce-motion .fd-data-content { animation: none; }
         .app.reduce-motion .fd-resume { transform: none !important; }
         @media (prefers-reduced-motion: reduce) {
-          .fd-hero-glow { animation: none; opacity: 0.85; }
-          .fd-horizon-layer, .fd-needle, .fd-unlock-fill { transition: none; }
-          .fd-data-content { animation: none; }
+          .fd-hero-glow, .g.is-empty .g-face::after, .fd-empty-dial::after, .fd-scan::after, .g-face-slide, .g-spec { animation: none; }
+          .g { transform: none; }
+          .g, .g-bloom, .fd-unlock-fill { transition: none; }
         }
       `}</style>
     </div>

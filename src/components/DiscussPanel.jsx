@@ -241,7 +241,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss { display: flex; flex-direction: column; height: calc(100vh - 250px); min-height: 360px; padding-bottom: 20px; }
         .discuss-head { display: flex; align-items: center; justify-content: space-between; margin: 0 auto 10px; max-width: 640px; width: 100%; flex-shrink: 0; }
         .discuss-count { font-size: 11.5px; color: var(--muted); }
-        .leaderboard { max-width: 640px; margin: 0 auto 12px; width: 100%; font-size: 11.5px; color: var(--muted); background: var(--panel-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; flex-shrink: 0; }
+        .leaderboard { max-width: 640px; margin: 0 auto 12px; width: 100%; font-size: 11.5px; color: var(--muted); background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-md); padding: 8px 12px; flex-shrink: 0; }
         .discuss-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 4px 12px; mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); }
         .discuss-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--muted); font-size: 12.5px; padding: 30px 0; }
         .discuss-empty-icon { color: var(--muted2); opacity: 0.6; }
@@ -264,13 +264,13 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-realname { color: var(--muted2); font-weight: 400; font-size: 11.5px; }
         .discuss-item p { margin: 0; font-size: 13.5px; color: var(--text-soft); line-height: 1.5; }
         .discuss-edit { display: flex; gap: 6px; align-items: center; }
-        .discuss-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: 8px; padding: 6px 10px; font-size: 13.5px; color: var(--text); }
-        .discuss-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .discuss-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: var(--r-sm); padding: 6px 10px; font-size: 13.5px; color: var(--text); }
+        .discuss-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 26px; height: 26px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .discuss-photo-frame { display: inline-block; margin-top: 10px; padding: 6px 6px 14px; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 14px rgba(0,0,0,0.2); transform: rotate(-1.2deg); transition: transform 0.2s ease; }
         .discuss-photo-frame:hover { transform: rotate(0deg); }
         .discuss-photo { display: block; max-width: 260px; width: 100%; border-radius: 2px; }
         .discuss-reactions { display: flex; gap: 6px; margin-top: 6px; }
-        .discuss-reactions button { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 11.5px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
+        .discuss-reactions button { display: flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 11.5px; padding: 3px 8px; border-radius: var(--r-pill); cursor: pointer; }
         .discuss-reactions button:hover { border-color: var(--accent); color: var(--accent); }
         .discuss-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .discuss-reactions button.is-bouncing { animation: reactionBounce 0.35s ease; }
@@ -284,9 +284,9 @@ function DiscussPanel({ onSignIn, calmLights }) {
         .discuss-composer { flex-shrink: 0; max-width: 640px; margin: 8px auto 0; width: 100%; }
         .discuss-upload-error { font-size: 11.5px; color: var(--bad); margin-bottom: 6px; text-align: center; }
         .discuss-pending-image { position: relative; display: inline-block; margin-bottom: 8px; }
-        .discuss-pending-image img { display: block; height: 64px; border-radius: 10px; border: 1px solid var(--border); }
+        .discuss-pending-image img { display: block; height: 64px; border-radius: var(--r-md); border: 1px solid var(--border); }
         .discuss-pending-image button { position: absolute; top: -6px; right: -6px; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .discuss-input { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 32px; padding: 8px; min-height: 58px; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .discuss-input { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: 32px; padding: 8px; min-height: 58px; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .discuss-input:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 8px 1px var(--accent-soft); }
                 .discuss-input input[type="text"], .discuss-input input:not([type]) { flex: 1; background: transparent; border: none; padding: 10px 14px; color: var(--text); font-size: 13.5px; }
         .discuss-input input::placeholder { color: var(--muted); }
@@ -310,7 +310,7 @@ function DiscussPanel({ onSignIn, calmLights }) {
           .discuss-send, .discuss-attach { animation: none; box-shadow: 0 0 8px rgba(52,199,123,0.35); }
           .discuss-reactions button.is-bouncing { animation: none; }
         }
-        .discuss-signin { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 14px; border-radius: 16px; cursor: pointer; }
+        .discuss-signin { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 640px; margin: 8px auto 0; width: 100%; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 14px; border-radius: var(--r-lg); cursor: pointer; }
         .discuss-signin:hover { border-color: var(--accent); }
       `}</style>
     </div>

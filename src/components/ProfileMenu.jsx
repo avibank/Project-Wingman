@@ -70,13 +70,13 @@ function ProfileMenu({ onNavigate }) {
         .profile-menu { position: relative; }
         .profile-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--avatar-bg); border: 1px solid var(--border); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
         .profile-avatar:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 10px var(--accent-soft); }
-        .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: 14px; padding: 10px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: profileIn 0.15s ease-out; }
+        .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 10px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: profileIn 0.15s ease-out; }
         @keyframes profileIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .profile-row { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; color: var(--text); font-size: 12.5px; padding: 9px 8px; border-radius: 8px; cursor: pointer; text-align: left; }
+        .profile-row { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; color: var(--text); font-size: 12.5px; padding: 9px 8px; border-radius: var(--r-sm); cursor: pointer; text-align: left; }
         .profile-row:hover { background: var(--panel-alt); }
         .profile-row-arrow { margin-left: auto; color: var(--muted2); }
         .profile-row-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .profile-admin-badge { display: flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 20px; padding: 2px 6px; }
+        .profile-admin-badge { display: flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--r-pill); padding: 2px 6px; }
         .profile-divider { height: 1px; background: var(--border-soft); margin: 6px 4px; }
       `}</style>
     </div>

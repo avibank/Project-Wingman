@@ -185,19 +185,19 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comment-realname { color: var(--muted2); font-weight: 400; font-size: 10px; }
         .chapter-comment p { margin: 0; font-size: 12.5px; color: var(--text-soft); line-height: 1.4; }
         .chapter-comment-edit { display: flex; gap: 4px; align-items: center; }
-        .chapter-comment-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; font-size: 12.5px; color: var(--text); }
-        .chapter-comment-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .chapter-comment-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: var(--r-sm); padding: 4px 8px; font-size: 12.5px; color: var(--text); }
+        .chapter-comment-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 22px; height: 22px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .chapter-comment-reactions { display: flex; gap: 6px; margin-top: 4px; }
-        .chapter-comment-reactions button { display: flex; align-items: center; gap: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 10px; padding: 2px 6px; border-radius: 20px; cursor: pointer; }
+        .chapter-comment-reactions button { display: flex; align-items: center; gap: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 10px; padding: 2px 6px; border-radius: var(--r-pill); cursor: pointer; }
         .chapter-comment-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .chapter-comment-delete { margin-left: auto; }
         .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
         .chapter-comments-input { display: flex; gap: 6px; }
-                .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--text); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+                .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; font-size: 12.5px; color: var(--text); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapter-comments-input input::placeholder { color: var(--muted); }
         .chapter-comments-input input:focus { outline: none; border-color: var(--accent-soft); box-shadow: 0 0 8px 1px var(--accent-soft); }
-        .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px; padding: 8px 12px; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
-        .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; }
+        .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 8px 12px; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
+        .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: 100%; }
         .chapter-comments-signin:hover { border-color: var(--accent); }
       `}</style>
     </div>

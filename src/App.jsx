@@ -413,7 +413,7 @@ function AppInner() {
         ::-moz-selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 10px; border: 2px solid var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: var(--r-md); border: 2px solid var(--bg); }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
         * { scrollbar-width: thin; scrollbar-color: var(--border-hover) var(--bg); }
         html, body, #root { height: 100%; margin: 0; background: #0B1526; }
@@ -422,6 +422,26 @@ function AppInner() {
           --border-soft: rgba(111,160,240,0.12); --text: #E8EDF2; --text-soft: #b9c4cf; --muted: #8291AC; --muted2: #66768F;
           --accent: #6FA0F0; --accent-hover: #8FB8F5; --accent-soft: rgba(111,160,240,0.10); --on-accent: #0E1830;
           --good: #4CAF7D; --bad: #E08585; --avatar-bg: #1E2C46;
+          /* Elevation: four distinct luminance steps rather than one flat navy.
+             well < page < card < raised. */
+          --elev-0: #0B1526; --elev-1: #101B2D; --elev-2: #16233A; --well: #070E1A;
+          --shadow-1: 0 1px 2px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.18);
+          --shadow-2: 0 2px 4px rgba(0,0,0,0.24), 0 16px 36px rgba(0,0,0,0.30);
+          --shadow-inset: inset 0 2px 7px rgba(0,0,0,0.50);
+          --hairline: inset 0 1px 0 rgba(255,255,255,0.05);
+          --sheen: rgba(255,255,255,0.10);
+          --bezel-hi: rgba(255,255,255,0.40); --bezel-mid: rgba(255,255,255,0.22); --bezel-lo: rgba(255,255,255,0.02);
+          /* Secondary interactive text: accent-derived but pulled back, so the
+             single primary CTA per screen keeps full saturation to itself. */
+          --accent-muted: color-mix(in srgb, var(--accent) 52%, var(--muted) 48%);
+          /* One hue ramp for every gauge fill, derived from the live accent:
+             deep/desaturated -> full accent -> hot redline flare. */
+          --g-low: color-mix(in srgb, var(--accent) 46%, #140309 54%);
+          --g-mid: var(--accent);
+          --g-high: color-mix(in srgb, var(--accent) 52%, #FFDCA8 48%);
+          --g-track: color-mix(in srgb, var(--accent) 14%, var(--well) 86%);
+          --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
+          font-variant-numeric: tabular-nums;
           font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; transition: background 0.2s ease, color 0.2s ease;
         }
         .app.theme-light {
@@ -429,6 +449,18 @@ function AppInner() {
           --border-soft: rgba(61,111,209,0.12); --text: #16202E; --text-soft: #48556B; --muted: #5B6B85; --muted2: #7A8AA3;
           --accent: #3D6FD1; --accent-hover: #5A8AE0; --accent-soft: rgba(61,111,209,0.08); --on-accent: #FFFFFF;
           --good: #2F9D64; --bad: #D14F4F; --avatar-bg: #DCE6F7;
+          --elev-0: #F4F6FB; --elev-1: #FFFFFF; --elev-2: #FFFFFF; --well: #E6EBF4;
+          --shadow-1: 0 1px 2px rgba(22,32,46,0.06), 0 4px 12px rgba(22,32,46,0.07);
+          --shadow-2: 0 2px 4px rgba(22,32,46,0.07), 0 16px 36px rgba(22,32,46,0.11);
+          --shadow-inset: inset 0 2px 7px rgba(22,32,46,0.13);
+          --hairline: inset 0 1px 0 rgba(255,255,255,0.9);
+          --sheen: rgba(255,255,255,0.75);
+          --bezel-hi: rgba(22,32,46,0.26); --bezel-mid: rgba(22,32,46,0.13); --bezel-lo: rgba(255,255,255,0.60);
+          --accent-muted: color-mix(in srgb, var(--accent) 52%, var(--muted) 48%);
+          --g-low: color-mix(in srgb, var(--accent) 42%, #C9B3B8 58%);
+          --g-mid: var(--accent);
+          --g-high: color-mix(in srgb, var(--accent) 58%, #E8A33D 42%);
+          --g-track: color-mix(in srgb, var(--accent) 16%, var(--well) 84%);
         }
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
         .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
@@ -436,7 +468,7 @@ function AppInner() {
         .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-select { display: flex; gap: 6px; }
-        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); padding: 6px 10px; border-radius: 10px; cursor: pointer; }
+        .module-chip { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); color: var(--muted); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; }
         .module-chip.is-active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
         .module-chip:disabled { opacity: 0.5; cursor: not-allowed; }
         .module-banner { position: relative; padding: 26px 22px 18px; }
@@ -464,10 +496,10 @@ function AppInner() {
         }
         .content-taxi { animation: taxiIn 0.35s ease; }
         @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
-        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+        .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-md); padding: 12px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background: var(--accent-hover); }
         .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; animation: boardingFade 2.4s ease forwards; }
-        .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: 18px; padding: 22px; }
+        .boarding-pass { width: min(320px, 84vw); background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 22px; }
         .boarding-pass-top { display: flex; align-items: center; justify-content: space-between; color: var(--accent); margin-bottom: 14px; }
         .boarding-pass-airline { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted2); }
         .boarding-pass-welcome { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 10px; }
@@ -477,13 +509,13 @@ function AppInner() {
         .boarding-pass-row span { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); font-weight: 600; }
         .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
         .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
-        .boarding-trivia-label { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: 6px; padding: 2px 6px; }
+        .boarding-trivia-label { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); border: 1px solid var(--border-hover); border-radius: var(--r-sm); padding: 2px 6px; }
         @keyframes boardingFade {
           0% { opacity: 1; }
           80% { opacity: 1; }
           100% { opacity: 0; visibility: hidden; }
         }
-        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: 10px; animation: paFade 1.6s ease forwards; }
+        .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; padding: 8px 16px; border-radius: var(--r-md); animation: paFade 1.6s ease forwards; }
         @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
         .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
         .runway-lights { position: relative; display: flex; gap: 4px; }

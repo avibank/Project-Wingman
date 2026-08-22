@@ -67,21 +67,21 @@ function BookmarksPage({ onBack, initialMode = "list" }) {
       </div>
       <style>{`
         .bookmarks-page { max-width: 560px; }
-        .bookmarks-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent); font-size: 12.5px; cursor: pointer; padding: 0; margin-bottom: 18px; }
+        .bookmarks-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 12.5px; cursor: pointer; padding: 0; margin-bottom: 18px; }
         .bookmarks-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .bookmarks-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: var(--text); margin: 0; }
-        .bookmarks-flashcard-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+        .bookmarks-flashcard-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-md); padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
         .bookmarks-flashcard-btn:hover { background: var(--accent-hover); }
-        .bookmarks-block { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .bookmarks-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         .bookmarks-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 24px 16px; }
         .bookmarks-empty-icon { color: var(--muted2); opacity: 0.6; }
                 .bookmarks-empty p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 260px; }
         .bookmarks-list { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
-        .bookmark-item { position: relative; padding: 12px 36px 12px 14px; border-radius: 10px; }
+        .bookmark-item { position: relative; padding: 12px 36px 12px 14px; border-radius: var(--r-md); }
         .bookmark-item:hover { background: var(--panel-alt); }
         .bookmark-item-chapter { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); margin-bottom: 4px; }
         .bookmark-item-stem { font-size: 12.5px; color: var(--text); line-height: 1.4; }
-        .bookmark-item-remove { position: absolute; top: 10px; right: 8px; background: transparent; border: none; color: var(--muted2); width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .bookmark-item-remove { position: absolute; top: 10px; right: 8px; background: transparent; border: none; color: var(--muted2); width: 24px; height: 24px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .bookmark-item-remove:hover { background: rgba(224,102,90,0.12); color: var(--bad); }
       `}</style>
     </div>

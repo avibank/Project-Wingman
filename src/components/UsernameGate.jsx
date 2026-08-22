@@ -49,13 +49,13 @@ function UsernameGate({ children }) {
       </div>
       <style>{`
         .username-gate { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .username-gate-card { width: min(360px, 100%); background: var(--panel); border: 1px solid var(--border-hover); border-radius: 18px; padding: 28px 24px; text-align: center; color: var(--accent); }
+        .username-gate-card { width: min(360px, 100%); background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 28px 24px; text-align: center; color: var(--accent); }
         .username-gate-card h1 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--text); margin: 12px 0 6px; }
         .username-gate-card p { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 18px; }
         .username-gate-card form { display: flex; flex-direction: column; gap: 10px; }
-        .username-gate-card input { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--text); font-size: 14px; text-align: center; }
+        .username-gate-card input { background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-md); padding: 11px 14px; color: var(--text); font-size: 14px; text-align: center; }
         .username-gate-card input:focus { outline: none; border-color: var(--accent); }
-        .username-gate-card button { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 10px; padding: 11px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+        .username-gate-card button { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-md); padding: 11px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
         .username-gate-card button:disabled { opacity: 0.5; cursor: not-allowed; }
         .username-gate-error { color: var(--bad); font-size: 12px; margin-top: 10px; }
       `}</style>
