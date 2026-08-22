@@ -26,7 +26,7 @@ Read only the sections that step needs. §17 lists which.
 | 8 | Completion tip + Call a wingman | §7.6, §7.7, §11 | **partial** — scheduler and notifications pending |
 | 9 | Comms as chat | §7.8, §2.12 | **partial** — images and typing indicators pending |
 | 10 | Livery picker + wash | §7.11, §2.11 | **done** |
-| 11 | Instruments, Formation, desktop | §5, §7.9, §12 | **partial** — instruments done; Formation and desktop pending |
+| 11 | Instruments, Formation, desktop | §5, §7.9, §12 | **partial** — instruments and Formation done; desktop pending |
 
 ## Step 1 — done
 
@@ -421,7 +421,37 @@ behind is an outlined ring — direction is not carried by colour alone (§13).
 
 ### Still owed
 
-- **Formation** (§7.9) — 2–6 people on one chapter, a slim rail of tails and positions,
-  no leaderboard, no timer, no score. Tables exist in 0005.
 - **The desktop three-column** (§12). The phone bottom tab bar it depends on is the same
   IA change noted above, so this is blocked on that decision rather than on code.
+
+## Step 11 — Formation done
+
+`Formation.jsx` is the slim rail: each participant's tail and where they are relative
+to you, and nothing else. No rank, no timer, no score. The headcount reads "2 flying",
+not a position.
+
+The wording lives in `formationRail.js`, free of any client import so it can be checked
+directly — including a test asserting the phrasing never contains "behind", "lost",
+"score", "rank", "last", or a time unit. Someone below you reads as "1 question back",
+which states distance without implying failure. §7.9: nobody loses a Formation.
+
+The cap is enforced in `joinFormation`, which refuses a seventh member rather than
+accepting the row and hiding it behind a `slice()` in the rail. Leaving checks whether
+anyone is left and ends the formation if not, so an abandoned one never lingers as a
+live session nobody is in.
+
+Leaving offers an optional note, which posts to Comms and pins itself to the chapter.
+
+### Placement
+
+The rail sits **around** the chapter body, never inside it — §7.9 keeps the
+social-free rule for the body itself. Verified in the browser: zero tails and zero
+rails inside the reading surface. The only things in there are the glow layer and its
+tap affordance, both sanctioned by §7.6; the quiz and completion screen are §7.7
+surfaces with their own rules.
+
+### Verified
+
+With two members present and my own attempt count at 1, the rail read "A. Nakamura —
+2 questions ahead" (3 attempts) and "M. Iqbal — 1 question back" (0 attempts), wearing
+the squadron's Carrier Deck livery, scoped to the container.

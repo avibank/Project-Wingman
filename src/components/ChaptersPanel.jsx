@@ -16,6 +16,7 @@ import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
 import StudyGlow from "./StudyGlow.jsx";
+import Formation from "./Formation.jsx";
 import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
@@ -292,6 +293,14 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                   <div className="chapter-progress-fill" style={{ width: `${progressPct}%` }} />
                 </div>
               )}
+              {/* §7.9 — Formation chrome sits around the body, never inside
+                  it: the body keeps the social-free rule. */}
+              {isOpen && (
+                <div className="chapter-formation">
+                  <Formation chapterId={ch.id} chapterCode={ch.code} moduleCode={activeModuleCode} />
+                </div>
+              )}
+
               {isOpen && (
                 <div className="chapter-body chapter-body-opening">
                   {/* §7.6 — the body's one social element, and it is lighting,
@@ -575,6 +584,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
         .chapter-progress-track { height: 3px; background: var(--border); margin: 0 16px 4px; border-radius: 2px; overflow: hidden; }
         .chapter-progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+        .chapter-formation { padding: 12px 16px 0; }
         .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); min-height: 60px; }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
         @media (min-width: 1024px) { .chapter-body { grid-template-columns: 1.7fr 1fr; gap: 28px; } }
