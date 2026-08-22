@@ -1,22 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { ChevronRight, ChevronLeft, Check, CheckCircle2, Lock, ThumbsUp, Radio, Compass, BookMarked, Flame } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, ChevronRight, CheckCircle2, Target, Flame, BookMarked, MessageSquareOff, Layers, RotateCcw, Compass } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.js";
-import { useDisplayName } from "../lib/identity.js";
-import { useIsAdmin } from "../lib/admin.js";
 import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enrollments.js";
-import { fetchRecentActivity, postComment, toggleReaction } from "../lib/comments.js";
+import { fetchRecentActivity } from "../lib/comments.js";
 
-// Dial geometry: 240 degrees of travel, swept symmetrically about vertical.
-const DIAL_START_DEG = -120;
-const DIAL_SWEEP_DEG = 240;
-// Cyclable dial: auto-advance cadence, and how long a manual interaction wins.
-const DATA_PAGE_MS = 4000;
-const DATA_PAUSE_MS = 9000;
-// Value animation, per the eased-sweep spec.
-const SWEEP_MS = 520;
-// Tilt limit, kept small so the glass reads curved rather than loose.
+// Max tilt in degrees applied to a module card as the cursor moves across it.
 const TILT_MAX_DEG = 5;
 // A completed chapter scoring below this is worth suggesting a retake of.
 const LOW_SCORE_PCT = 70;
@@ -35,7 +25,7 @@ function timeAgo(iso) {
 // Chapter codes are "<MODULE>.<NN>" (e.g. "JT.01"), so the module a chapter
 // belongs to is recoverable from its code.
 function moduleForChapter(chapter) {
-  const code = String(chapter?.code || "").split(".")[0];
+  const code = String(chapter.code || "").split(".")[0];
   return MODULES.find((m) => m.code === code) || MODULES[0];
 }
 
@@ -46,289 +36,114 @@ function chaptersForModule(moduleCode) {
 }
 
 // Same formula ChaptersPanel uses, so a chapter reads identically in both places.
-function chapterPct(chapter, chapterProgress, completed) {
-  if (!chapter) return 0;
-  if (completed.has(chapter.id)) return 100;
+function chapterPct(chapter, chapterProgress) {
   const seen = chapterProgress[chapter.id] || 0;
-  const total = chapter.questions?.length || 0;
-  if (!total) return 0;
-  return Math.min(100, Math.round((seen / total) * 100));
+  return Math.min(100, Math.round((seen / chapter.questions.length) * 100));
 }
 
-// Deterministic avatar tint, matching DiscussPanel so one person reads the
-// same colour everywhere in the app.
-function nameToGradient(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = Math.abs(hash) % 360;
-  return `linear-gradient(135deg, hsl(${hue}, 60%, 42%), hsl(${(hue + 45) % 360}, 60%, 32%))`;
-}
-
-// Samples the shared accent ramp at a value: deep and desaturated at the low
-// end, full accent through the middle, hot flare approaching redline. Built from
-// the tokens with color-mix so it tracks whichever livery is selected.
-function rampColor(pct) {
-  const v = Math.max(0, Math.min(100, pct));
-  if (v <= 50) return `color-mix(in srgb, var(--g-mid) ${Math.round((v / 50) * 100)}%, var(--g-low))`;
-  return `color-mix(in srgb, var(--g-high) ${Math.round(((v - 50) / 50) * 100)}%, var(--g-mid))`;
-}
-
-function degForPct(pct) {
-  return DIAL_START_DEG + (Math.max(0, Math.min(100, pct)) / 100) * DIAL_SWEEP_DEG;
-}
-
-// Eases a displayed number toward its real value so gauges sweep instead of
-// snapping. Returns the target immediately when motion is suppressed.
-function useAnimatedValue(target, animate) {
-  const [display, setDisplay] = useState(animate ? 0 : target);
-  const fromRef = useRef(animate ? 0 : target);
+// Counts up to the target on mount. Returns the target immediately when
+// animation is suppressed, so Smooth Air users never see a number climb.
+function useCountUp(target, animate) {
+  const [n, setN] = useState(animate ? 0 : target);
   useEffect(() => {
     if (!animate) {
-      fromRef.current = target;
-      setDisplay(target);
+      setN(target);
       return;
     }
-    const from = fromRef.current;
-    const delta = target - from;
-    if (delta === 0) return;
+    const duration = 700;
     const t0 = performance.now();
     let raf;
     const step = (now) => {
-      const p = Math.min(1, (now - t0) / SWEEP_MS);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(from + delta * eased);
+      const p = Math.min(1, (now - t0) / duration);
+      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
       if (p < 1) raf = requestAnimationFrame(step);
-      else fromRef.current = target;
     };
     raf = requestAnimationFrame(step);
-    return () => {
-      fromRef.current = target;
-      cancelAnimationFrame(raf);
-    };
+    return () => cancelAnimationFrame(raf);
   }, [target, animate]);
-  return display;
+  return n;
 }
 
-const MAJOR_TICKS = [0, 25, 50, 75, 100];
-const MINOR_TICKS = [12.5, 37.5, 62.5, 87.5];
-
-// One instrument face, shared by all three widgets: same bezel, same tick
-// hierarchy, same cover glass. Only `needle` and `arc` vary between them.
-function Gauge({ size, value = 0, arc = true, needle = false, empty = false, label, children }) {
-  const stroke = Math.round(size * 0.055);
-  const r = size / 2 - stroke / 2 - size * 0.085;
-  const circumference = 2 * Math.PI * r;
-  const arcLen = circumference * (DIAL_SWEEP_DEG / 360);
-  const filled = arcLen * (Math.max(0, Math.min(100, value)) / 100);
-  const cx = size / 2;
-  const tickOuter = size / 2 - size * 0.035;
-  const labelR = size / 2 - size * 0.165;
-  const gradId = `ndl-${size}`;
-
-  const tick = (pct, major) => {
-    const a = ((degForPct(pct) - 90) * Math.PI) / 180;
-    const len = major ? size * 0.072 : size * 0.04;
-    return (
-      <line
-        key={`${major ? "M" : "m"}${pct}`}
-        x1={cx + Math.cos(a) * tickOuter}
-        y1={cx + Math.sin(a) * tickOuter}
-        x2={cx + Math.cos(a) * (tickOuter - len)}
-        y2={cx + Math.sin(a) * (tickOuter - len)}
-        strokeWidth={major ? 2 : 1}
-        strokeLinecap="round"
-        className={major ? "g-tick g-tick--major" : "g-tick"}
-      />
-    );
-  };
-
-  return (
-    <div className={`g ${empty ? "is-empty" : ""}`} style={{ width: size, height: size, "--pctn": Math.round(value) }}>
-      <div className="g-bezel" />
-      <div className="g-face">
-        <div className="g-bloom" style={{ background: `radial-gradient(circle, ${rampColor(value)} 0%, transparent 68%)` }} />
-        <svg className="g-svg" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-          <defs>
-            <linearGradient id={gradId} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" style={{ stopColor: "color-mix(in srgb, var(--g-low) 55%, black)" }} />
-              <stop offset="52%" style={{ stopColor: "var(--g-mid)" }} />
-              <stop offset="100%" style={{ stopColor: "color-mix(in srgb, var(--g-high) 78%, white)" }} />
-            </linearGradient>
-          </defs>
-          <g>
-            {MINOR_TICKS.map((t) => tick(t, false))}
-            {MAJOR_TICKS.map((t) => tick(t, true))}
-          </g>
-          <g>
-            {MAJOR_TICKS.map((t) => {
-              const a = ((degForPct(t) - 90) * Math.PI) / 180;
-              return (
-                <text
-                  key={t}
-                  x={cx + Math.cos(a) * labelR}
-                  y={cx + Math.sin(a) * labelR}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="g-ticklabel"
-                >
-                  {t}
-                </text>
-              );
-            })}
-          </g>
-          {arc && (
-            <>
-              <circle
-                cx={cx}
-                cy={cx}
-                r={r}
-                fill="none"
-                strokeWidth={stroke}
-                strokeLinecap="round"
-                style={{ stroke: "var(--g-track)" }}
-                strokeDasharray={`${arcLen} ${circumference}`}
-                transform={`rotate(${90 + DIAL_START_DEG} ${cx} ${cx})`}
-              />
-              <circle
-                cx={cx}
-                cy={cx}
-                r={r}
-                fill="none"
-                strokeWidth={stroke}
-                strokeLinecap="round"
-                style={{ stroke: rampColor(value), transition: "stroke-dasharray 0.1s linear" }}
-                strokeDasharray={`${filled} ${circumference}`}
-                transform={`rotate(${90 + DIAL_START_DEG} ${cx} ${cx})`}
-                className="g-arc"
-              />
-            </>
-          )}
-          {needle && (
-            <g transform={`rotate(${degForPct(value)} ${cx} ${cx})`}>
-              <polygon
-                points={`${cx - size * 0.027},${cx + size * 0.03} ${cx + size * 0.027},${cx + size * 0.03} ${cx},${cx - r - stroke * 0.15}`}
-                fill={`url(#${gradId})`}
-                className="g-needle"
-              />
-            </g>
-          )}
-        </svg>
-        {needle && <div className="g-pivot" />}
-        <div className="g-tickglow" />
-      </div>
-      <div className="g-glass" />
-      <div className="g-spec" />
-      <div className="g-readout">{children}</div>
-      {label && <div className="g-label">{label}</div>}
-    </div>
-  );
-}
-
-
-// Small arc gauge drawn behind a stat tile's numeric readout. Deliberately
-// lighter than the hero Gauge: no bezel, no ticks, no needle.
-function StatArc({ pct, size = 56 }) {
+// 270-degree arc gauge drawn behind the accuracy readout.
+function AccuracyArc({ pct, size = 58 }) {
   const stroke = 4;
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const arcLen = circumference * 0.75;
   const filled = arcLen * (Math.max(0, Math.min(100, pct)) / 100);
   const common = {
-    cx: size / 2, cy: size / 2, r, fill: "none",
-    strokeWidth: stroke, strokeLinecap: "round",
+    cx: size / 2,
+    cy: size / 2,
+    r,
+    fill: "none",
+    strokeWidth: stroke,
+    strokeLinecap: "round",
     transform: `rotate(135 ${size / 2} ${size / 2})`,
   };
   return (
-    <svg className="fd-stat-arc" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle {...common} style={{ stroke: "var(--g-track)" }} strokeDasharray={`${arcLen} ${circumference}`} />
-      <circle {...common} style={{ stroke: rampColor(pct), transition: "stroke-dasharray 0.6s var(--fd-ease)" }} strokeDasharray={`${filled} ${circumference}`} />
+    <svg className="hub-gauge-svg" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle {...common} stroke="var(--border)" strokeDasharray={`${arcLen} ${circumference}`} />
+      <circle
+        {...common}
+        stroke="var(--accent)"
+        strokeDasharray={`${filled} ${circumference}`}
+        style={{ transition: "stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1)" }}
+      />
     </svg>
   );
 }
 
-// Quick-glance completion ring for module cards.
-function MiniRing({ pct, size = 30 }) {
-  const stroke = 3;
+// Quick-glance completion ring for enrolled module cards.
+function ProgressRing({ pct, size = 34 }) {
+  const stroke = 3.5;
   const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const filled = c * (Math.max(0, Math.min(100, pct)) / 100);
-  const common = { cx: size / 2, cy: size / 2, r, fill: "none", strokeWidth: stroke, strokeLinecap: "round", transform: `rotate(-90 ${size / 2} ${size / 2})` };
+  const circumference = 2 * Math.PI * r;
+  const filled = circumference * (Math.max(0, Math.min(100, pct)) / 100);
+  const common = {
+    cx: size / 2,
+    cy: size / 2,
+    r,
+    fill: "none",
+    strokeWidth: stroke,
+    strokeLinecap: "round",
+    transform: `rotate(-90 ${size / 2} ${size / 2})`,
+  };
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="fd-miniring">
-      <circle {...common} style={{ stroke: "var(--g-track)" }} />
-      <circle {...common} style={{ stroke: "var(--good)", transition: "stroke-dasharray 0.6s var(--fd-ease)" }} strokeDasharray={`${filled} ${c}`} />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle {...common} stroke="var(--border)" />
+      <circle
+        {...common}
+        stroke="var(--good)"
+        strokeDasharray={`${filled} ${circumference}`}
+        style={{ transition: "stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1)" }}
+      />
     </svg>
   );
 }
 
-function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmarks, onSignIn, streak = 0 }) {
+function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onReviewBookmarks, onSignIn, streak = 0 }) {
   const { isSignedIn, user } = useUser();
   const progress = useUserProgress();
-  const displayName = useDisplayName();
-  const isAdmin = useIsAdmin();
-
   const [enrolledCodes, setEnrolledCodes] = useState([]);
   const [enrolling, setEnrolling] = useState(null);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
-  const [feedScope, setFeedScope] = useState("module");
-  const [reacted, setReacted] = useState(new Set());
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [posting, setPosting] = useState(false);
-  const [dataPageIndex, setDataPageIndex] = useState(0);
-  const [needsMotionPermission, setNeedsMotionPermission] = useState(false);
-
-  const pausedUntil = useRef(0);
-  const clusterRef = useRef(null);
-  const sensorActive = useRef(false);
-  const rafRef = useRef(null);
 
   const completed = new Set(progress.get("pw-completed", []));
   const quizScores = progress.get("pw-quiz-scores", {});
   const bookmarkIds = progress.get("pw-bookmarks", []);
   const bookmarkCount = bookmarkIds.length;
+  const longestStreak = progress.get("pw-longest-streak", 0);
   const recentChapterIds = progress.get("pw-recent-chapters", []);
   const chapterProgress = progress.get("pw-chapter-progress", {});
   const viewedIds = new Set(progress.get("pw-viewed-chapters", []));
   const reduceMotion = progress.get("pw-reduce-motion", false);
-  const lastChapterId = progress.get("pw-last-chapter", null);
+  const lastFlown = progress.get("pw-last-flown", null);
 
   const scoreValues = Object.values(quizScores);
   const quizAccuracy = scoreValues.length ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length) : null;
 
-  const currentChapter =
-    CHAPTERS.find((ch) => ch.id === lastChapterId) ||
-    CHAPTERS.find((ch) => ch.id === recentChapterIds[0]) ||
-    CHAPTERS.find((ch) => !completed.has(ch.id)) ||
-    CHAPTERS[0];
-  const heroModule = moduleForChapter(currentChapter) || MODULES.find((m) => m.status === "active") || MODULES[0];
-  const heroChapters = chaptersForModule(heroModule.code);
-  const chapterPercent = chapterPct(currentChapter, chapterProgress, completed);
-  const modulePercent = heroChapters.length
-    ? Math.round(heroChapters.reduce((sum, ch) => sum + chapterPct(ch, chapterProgress, completed), 0) / heroChapters.length)
-    : 0;
-  const currentIndex = heroChapters.findIndex((ch) => ch.id === currentChapter?.id);
-  const nextChapter = heroChapters.slice(currentIndex + 1).find((ch) => !completed.has(ch.id)) || null;
-
-  const nothingStarted = modulePercent === 0 && chapterPercent === 0 && viewedIds.size === 0;
-
-  // A streak has no fixed ceiling, so it is never drawn as a filled arc — it
-  // reads as a digital stat inside the same instrument rather than implying a
-  // maximum that does not exist.
-  const dataPages = [];
-  if (quizAccuracy !== null) dataPages.push({ key: "acc", label: "Quiz Accuracy", value: quizAccuracy, arc: true, display: quizAccuracy, unit: "%" });
-  if (streak > 0) dataPages.push({ key: "streak", label: "Study Streak", value: 0, arc: false, display: streak, unit: "d", icon: Flame });
-  if (bookmarkCount > 0) dataPages.push({ key: "saved", label: "Bookmarked", value: 0, arc: false, display: bookmarkCount, unit: "" });
-  if (nextChapter) dataPages.push({ key: "next", label: "Next Checkpoint", value: 0, arc: false, display: nextChapter.code, unit: "" });
-  if (!dataPages.length) dataPages.push({ key: "none", label: "Standby", value: 0, arc: false, display: "—", unit: "" });
-  const safePageIndex = ((dataPageIndex % dataPages.length) + dataPages.length) % dataPages.length;
-  const dataPage = dataPages[safePageIndex];
-
-  const animate = !reduceMotion;
-  const modShown = useAnimatedValue(modulePercent, animate);
-  const chapShown = useAnimatedValue(chapterPercent, animate);
-  const dataShown = useAnimatedValue(dataPage.arc ? dataPage.value : 0, animate);
+  const streakDisplay = useCountUp(streak, !reduceMotion);
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -340,111 +155,12 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
   }, [progress.loaded, isSignedIn, user?.id]);
 
   useEffect(() => {
-    fetchRecentActivity(30).then((data) => {
+    fetchRecentActivity(8).then((data) => {
       setActivity(data);
       setActivityLoading(false);
     });
   }, []);
 
-  useEffect(() => {
-    if (reduceMotion || dataPages.length < 2) return;
-    const timer = setInterval(() => {
-      if (Date.now() < pausedUntil.current) return;
-      setDataPageIndex((i) => i + 1);
-    }, DATA_PAGE_MS);
-    return () => clearInterval(timer);
-  }, [reduceMotion, dataPages.length]);
-
-  const goToDataPage = (i) => {
-    pausedUntil.current = Date.now() + DATA_PAUSE_MS;
-    setDataPageIndex(((i % dataPages.length) + dataPages.length) % dataPages.length);
-  };
-
-  // ---- pointer / device reactivity -------------------------------------------
-  // One listener writes CSS custom properties per gauge; every gradient and
-  // transform that consumes them is painted by CSS, not by per-frame JS.
-  useEffect(() => {
-    const cluster = clusterRef.current;
-    if (!cluster || reduceMotion) return;
-
-    const writePointer = (clientX, clientY) => {
-      cluster.querySelectorAll(".g").forEach((g) => {
-        const b = g.getBoundingClientRect();
-        const px = ((clientX - b.left) / b.width) * 100;
-        const py = ((clientY - b.top) / b.height) * 100;
-        g.style.setProperty("--px", `${Math.max(-40, Math.min(140, px))}%`);
-        g.style.setProperty("--py", `${Math.max(-40, Math.min(140, py))}%`);
-        if (!sensorActive.current) {
-          const inside = px >= 0 && px <= 100 && py >= 0 && py <= 100;
-          g.style.setProperty("--tx", `${inside ? ((50 - py) / 50) * TILT_MAX_DEG : 0}deg`);
-          g.style.setProperty("--ty", `${inside ? ((px - 50) / 50) * TILT_MAX_DEG : 0}deg`);
-        }
-      });
-    };
-
-    const onPointerMove = (e) => {
-      if (e.pointerType === "touch") return;
-      if (rafRef.current) return;
-      const { clientX, clientY } = e;
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        writePointer(clientX, clientY);
-      });
-    };
-
-    const onLeave = () => {
-      if (sensorActive.current) return;
-      cluster.querySelectorAll(".g").forEach((g) => {
-        g.style.setProperty("--tx", "0deg");
-        g.style.setProperty("--ty", "0deg");
-      });
-    };
-
-    // Device tilt replaces pointer tilt where a real sensor exists. Presence of
-    // the API is not proof of a sensor — desktop Chrome defines it and never
-    // fires — so only a reading with real angles takes over.
-    const onOrientation = (e) => {
-      if (e.gamma == null && e.beta == null) return;
-      sensorActive.current = true;
-      const gamma = Math.max(-30, Math.min(30, e.gamma || 0));
-      const beta = Math.max(-30, Math.min(30, (e.beta || 0) - 45));
-      cluster.querySelectorAll(".g").forEach((g) => {
-        g.style.setProperty("--ty", `${(gamma / 30) * TILT_MAX_DEG}deg`);
-        g.style.setProperty("--tx", `${(-beta / 30) * TILT_MAX_DEG}deg`);
-      });
-    };
-
-    const hasOrientation = typeof window.DeviceOrientationEvent !== "undefined";
-    const needsPermission = hasOrientation && typeof window.DeviceOrientationEvent.requestPermission === "function";
-    setNeedsMotionPermission(needsPermission);
-    if (hasOrientation && !needsPermission) window.addEventListener("deviceorientation", onOrientation);
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    cluster.addEventListener("pointerleave", onLeave);
-    window.__wingmanOrientationHandler = onOrientation;
-    return () => {
-      window.removeEventListener("deviceorientation", onOrientation);
-      window.removeEventListener("pointermove", onPointerMove);
-      cluster.removeEventListener("pointerleave", onLeave);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-      delete window.__wingmanOrientationHandler;
-    };
-  }, [reduceMotion]);
-
-  const requestMotion = () => {
-    const DOE = window.DeviceOrientationEvent;
-    if (!DOE || typeof DOE.requestPermission !== "function") return;
-    DOE.requestPermission()
-      .then((state) => {
-        if (state === "granted" && window.__wingmanOrientationHandler) {
-          window.addEventListener("deviceorientation", window.__wingmanOrientationHandler);
-        }
-        setNeedsMotionPermission(false);
-      })
-      .catch(() => setNeedsMotionPermission(false));
-  };
-
-  // ---- enrollment -------------------------------------------------------------
   const handleEnroll = async (moduleCode) => {
     if (!isSignedIn) {
       onSignIn();
@@ -464,732 +180,530 @@ function HubPage({ activeModuleCode, onEnterModule, onGoToChapter, onGoToDiscuss
     setEnrolling(null);
   };
 
-  // ---- checklist --------------------------------------------------------------
-  const toggleViewed = (chapterId) => {
-    const next = new Set(viewedIds);
-    next.has(chapterId) ? next.delete(chapterId) : next.add(chapterId);
-    progress.set("pw-viewed-chapters", [...next]);
+  // Tilt + cursor-follow glow are written straight to the node's style so the
+  // pointer stays ahead of React — re-rendering per mousemove would visibly lag.
+  const handleCardMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    card.style.setProperty("--tilt-y", `${(px - 0.5) * TILT_MAX_DEG * 2}deg`);
+    card.style.setProperty("--tilt-x", `${(0.5 - py) * TILT_MAX_DEG * 2}deg`);
+    card.style.setProperty("--glow-x", `${px * 100}%`);
+    card.style.setProperty("--glow-y", `${py * 100}%`);
+    card.style.setProperty("--glow-o", "1");
   };
 
-  const toggleCompleted = (chapterId) => {
-    const next = new Set(completed);
-    next.has(chapterId) ? next.delete(chapterId) : next.add(chapterId);
-    progress.set("pw-completed", [...next]);
+  const handleCardLeave = (e) => {
+    const card = e.currentTarget;
+    card.style.setProperty("--tilt-x", "0deg");
+    card.style.setProperty("--tilt-y", "0deg");
+    card.style.setProperty("--glow-o", "0");
   };
 
-  const checklist = currentChapter
-    ? [
-        {
-          id: `${currentChapter.id}-watch`,
-          label: `Watch: ${currentChapter.title}`,
-          done: viewedIds.has(currentChapter.id),
-          toggle: () => toggleViewed(currentChapter.id),
-        },
-        {
-          id: `${currentChapter.id}-quiz`,
-          label: `Quiz: ${currentChapter.questions?.length || 0} questions`,
-          done: completed.has(currentChapter.id),
-          toggle: () => toggleCompleted(currentChapter.id),
-        },
-      ]
-    : [];
+  const tiltProps = { onMouseMove: handleCardMove, onMouseLeave: handleCardLeave };
 
-  // ---- feed -------------------------------------------------------------------
-  const heroChapterIds = new Set(heroChapters.map((ch) => ch.id));
-  const scopedActivity = activity.filter((c) => (feedScope === "module" ? c.chapter_id && heroChapterIds.has(c.chapter_id) : true));
+  const recentChapters = recentChapterIds.map((id) => CHAPTERS.find((ch) => ch.id === id)).filter(Boolean);
 
-  const handleLike = async (comment) => {
-    const key = `${comment.id}-thumbsUp`;
-    const already = reacted.has(key);
-    const safe = { ...comment, reactions: { ...(comment.reactions || {}), thumbsUp: comment.reactions?.thumbsUp || 0 } };
-    const nextReactions = await toggleReaction(safe, "thumbsUp", already);
-    setActivity((cs) => cs.map((c) => (c.id === comment.id ? { ...c, reactions: nextReactions } : c)));
-    setReacted((r) => {
-      const next = new Set(r);
-      already ? next.delete(key) : next.add(key);
-      return next;
-    });
+  // --- Pre-flight briefing -------------------------------------------------
+  // pw-last-chapter is cleared when a chapter is collapsed, so fall back to the
+  // top of the recent list before declaring the user has never flown.
+  const lastChapterId = progress.get("pw-last-chapter", null) || recentChapterIds[0] || null;
+  const lastChapter = lastChapterId ? CHAPTERS.find((ch) => ch.id === lastChapterId) : null;
+  const lastModule = lastChapter ? moduleForChapter(lastChapter) : null;
+  const lastChapterPct = lastChapter ? chapterPct(lastChapter, chapterProgress) : 0;
+
+  const firstName = user?.username || user?.firstName || (user?.fullName ? user.fullName.split(" ")[0] : null);
+  const greeting = new Date().getHours() < 12 ? "Cleared for departure" : "Evening ops";
+  const greetingLine = firstName ? `${greeting}, ${firstName}` : greeting;
+
+  const resumeFlight = () => {
+    if (!lastChapter || !lastModule) return;
+    onGoToChapter(lastModule.code, lastChapter.id);
   };
 
-  const submitPost = async () => {
-    const text = draft.trim();
-    if (!text || !isSignedIn) return;
-    setPosting(true);
-    const created = await postComment(null, displayName, text, user.id, null, user.fullName || null, isAdmin);
-    setPosting(false);
-    if (created) {
-      setActivity((cs) => [created, ...cs]);
-      setDraft("");
-      setComposerOpen(false);
-      setFeedScope("all");
-    }
+  const startFirstFlight = () => {
+    const jt = MODULES.find((m) => m.code === "JT") || MODULES[0];
+    if (CHAPTERS.length) onGoToChapter(jt.code, CHAPTERS[0].id);
+    else onEnterModule(jt);
   };
 
-  // ---- pre-flight briefing ----------------------------------------------------
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Cleared for departure" : "Evening ops";
-  const firstName = user?.firstName || user?.username || (displayName || "").split(" ")[0] || "";
-  const lastFlown = progress.get("pw-last-flown", null);
-  // pw-last-visit is a toDateString() that App rewrites to today on every load,
-  // so it can never express hours. pw-last-flown carries a real timestamp.
-  const lastFlownLabel = lastFlown ? timeAgo(lastFlown) : null;
-  const hasFlown = Boolean(lastChapterId || recentChapterIds.length || viewedIds.size);
-
-  // ---- smart next action ------------------------------------------------------
-  const unstarted = heroChapters.find((ch) => !completed.has(ch.id) && !viewedIds.has(ch.id));
-  const lowest = Object.entries(quizScores)
-    .filter(([id, sc]) => completed.has(id) && sc < LOW_SCORE_PCT)
-    .sort((a, b) => a[1] - b[1])[0];
+  // --- Smart next action ---------------------------------------------------
+  // First rule that matches wins; deliberately simple and data-driven.
   let suggestion = null;
+  const unstarted = CHAPTERS.find((ch) => !completed.has(ch.id) && !viewedIds.has(ch.id));
   if (unstarted) {
-    suggestion = { kind: "next", label: "Next up", title: unstarted.title, action: () => onGoToChapter(moduleForChapter(unstarted).code, unstarted.id) };
+    suggestion = {
+      icon: Compass,
+      label: "Next up",
+      title: unstarted.title,
+      action: "Open",
+      onAct: () => onGoToChapter(moduleForChapter(unstarted).code, unstarted.id),
+    };
   } else if (bookmarkCount > 0) {
-    suggestion = { kind: "review", label: "Review", title: `${bookmarkCount} bookmarked question${bookmarkCount === 1 ? "" : "s"}`, action: onReviewBookmarks };
-  } else if (lowest) {
-    const ch = CHAPTERS.find((c) => c.id === lowest[0]);
-    if (ch) suggestion = { kind: "retake", label: "Retake", title: `${ch.title} — scored ${lowest[1]}%`, action: () => onGoToChapter(moduleForChapter(ch).code, ch.id) };
+    suggestion = {
+      icon: Layers,
+      label: "Review flagged",
+      title: `${bookmarkCount} bookmarked question${bookmarkCount === 1 ? "" : "s"}`,
+      action: "Flashcards",
+      onAct: onReviewBookmarks,
+    };
+  } else {
+    const weakest = Object.entries(quizScores)
+      .filter(([id, score]) => completed.has(id) && score < LOW_SCORE_PCT)
+      .sort((a, b) => a[1] - b[1])[0];
+    const weakChapter = weakest ? CHAPTERS.find((ch) => ch.id === weakest[0]) : null;
+    if (weakChapter) {
+      suggestion = {
+        icon: RotateCcw,
+        label: `Retake · scored ${weakest[1]}%`,
+        title: weakChapter.title,
+        action: "Retake",
+        onAct: () => onGoToChapter(moduleForChapter(weakChapter).code, weakChapter.id),
+      };
+    }
   }
 
-  const streakShown = useAnimatedValue(streak, animate);
-  const accuracyShown = useAnimatedValue(quizAccuracy ?? 0, animate);
-
-  const directoryModules = MODULES.filter((m) => m.code !== heroModule.code);
-  const PageIcon = dataPage.icon;
-
   return (
-    <div className="fd">
-      <div className="pagehead">
-        <p className="fd-eyebrow">Aviation Fundamentals</p>
-        <h1 className="fd-title">Flight Deck</h1>
-        <p className="fd-sub">Your modules, your progress, all in one place.</p>
-      </div>
+    <div className="hub">
+      <p className="hub-eyebrow">Aviation Fundamentals</p>
+      <h1 className="hub-title">Flight Deck</h1>
+      <p className="hub-sub">Your modules, your progress, all in one place.</p>
 
-      {/* ---- pre-flight briefing ---- */}
-      <div className="fd-briefing">
-        <div className="fd-sweep" aria-hidden="true" />
-        <div className="fd-brief-main">
-          <p className="fd-eyebrow">Pre-Flight Briefing</p>
-          <div className="fd-brief-greeting">
-            {greeting}{firstName ? `, ${firstName}` : ""}
+      <div className="hub-briefing">
+        <div className="hub-briefing-sweep" aria-hidden="true" />
+        <div className="hub-briefing-head">
+          <div>
+            <div className="hub-briefing-label">Pre-flight briefing</div>
+            <div className="hub-briefing-greet">{greetingLine}</div>
           </div>
-          {hasFlown && currentChapter ? (
-            <>
-              <div className="fd-brief-chapter">
-                <span className="fd-brief-mod">{heroModule.name}</span>
-                <span className="fd-brief-sep">·</span>
-                <span className="fd-brief-code">{currentChapter.code}</span> {currentChapter.title}
-              </div>
-              <div className="fd-brief-bar">
-                <div className="fd-brief-fill" style={{ width: `${chapterPercent}%` }} />
-              </div>
-              <div className="fd-brief-meta">
-                <span>{chapterPercent}% through this chapter</span>
-                {lastFlownLabel && <span>· Last flown {lastFlownLabel}</span>}
-                {streak > 0 && <span>· {streak}d streak</span>}
-              </div>
-            </>
-          ) : (
-            <div className="fd-brief-first">
-              <div className="fd-brief-chapter">No flights logged yet — start with {CHAPTERS[0]?.code} {CHAPTERS[0]?.title}.</div>
-            </div>
-          )}
+          <div className="hub-briefing-meta">
+            <span>{lastFlown ? `Last flown ${timeAgo(lastFlown)}` : "No flights logged"}</span>
+            <span className="hub-briefing-dot" aria-hidden="true">·</span>
+            <span>{streak} day streak</span>
+          </div>
         </div>
-        <button
-          className="fd-brief-cta"
-          onClick={() => onGoToChapter(heroModule.code, (hasFlown && currentChapter ? currentChapter : CHAPTERS[0])?.id)}
-        >
-          {hasFlown ? "Resume Flight" : "First Flight"} <ChevronRight size={15} />
-        </button>
+
+        {lastChapter ? (
+          <div className="hub-briefing-body">
+            <div className="hub-briefing-chapter">
+              <div className="hub-briefing-module">{lastModule?.name}</div>
+              <div className="hub-briefing-title">
+                <span className="hub-briefing-code">{lastChapter.code}</span> {lastChapter.title}
+              </div>
+              <div className="hub-briefing-bar">
+                <div className="hub-briefing-fill" style={{ width: `${lastChapterPct}%` }} />
+              </div>
+              <div className="hub-briefing-pct">{lastChapterPct}% through this chapter</div>
+            </div>
+            <button className="hub-briefing-cta" onClick={resumeFlight}>
+              Resume Flight <ChevronRight size={14} />
+            </button>
+          </div>
+        ) : (
+          <div className="hub-briefing-body">
+            <div className="hub-briefing-chapter">
+              <div className="hub-briefing-title">Nothing logged yet</div>
+              <div className="hub-briefing-pct">Start with the first chapter of Jet Turbine Fundamentals.</div>
+            </div>
+            <button className="hub-briefing-cta" onClick={startFirstFlight}>
+              Start first flight <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ---- smart next action ---- */}
       {suggestion && (
-        <button className="fd-suggest" onClick={suggestion.action}>
-          <span className="fd-suggest-label">{suggestion.label}</span>
-          <span className="fd-suggest-title">{suggestion.title}</span>
-          <ChevronRight size={14} className="fd-suggest-arrow" />
+        <button className="hub-suggest" onClick={suggestion.onAct}>
+          <suggestion.icon size={15} className="hub-suggest-icon" />
+          <div className="hub-suggest-body">
+            <div className="hub-suggest-label">{suggestion.label}</div>
+            <div className="hub-suggest-title">{suggestion.title}</div>
+          </div>
+          <span className="hub-suggest-action">{suggestion.action} <ChevronRight size={12} /></span>
         </button>
       )}
 
-      {/* ---- stat tiles ---- */}
-      <div className="fd-stats">
-        <div className="fd-stat">
-          <CheckCircle2 size={14} className="fd-stat-icon" />
-          <div className="fd-stat-value">{completed.size}<small>/{CHAPTERS.length}</small></div>
-          <div className="fd-stat-label">Checklist items complete</div>
+      <div className="hub-stats">
+        <div className="hub-stat-tile">
+          <CheckCircle2 size={15} className="hub-stat-icon" />
+          <div className="hub-stat-value">{completed.size}<small>/{CHAPTERS.length}</small></div>
+          <div className="hub-stat-label">Checklist items complete</div>
         </div>
-        <div className="fd-stat fd-stat--gauge">
-          <div className="fd-stat-gauge">
-            <StatArc pct={quizAccuracy === null ? 0 : accuracyShown} />
-            <div className="fd-stat-value fd-stat-value--in">
-              {quizAccuracy === null ? "—" : Math.round(accuracyShown)}
+        <div className="hub-stat-tile hub-stat-tile--gauge">
+          <Target size={15} className="hub-stat-icon" />
+          <div className="hub-gauge">
+            <AccuracyArc pct={quizAccuracy ?? 0} />
+            <div className="hub-gauge-value">
+              {quizAccuracy === null ? "—" : quizAccuracy}
               {quizAccuracy !== null && <small>%</small>}
             </div>
           </div>
-          <div className="fd-stat-label">Quiz accuracy</div>
+          <div className="hub-stat-label">Quiz accuracy</div>
         </div>
-        <div className="fd-stat">
-          <Flame size={14} className="fd-stat-icon fd-stat-icon--accent" />
-          <div className="fd-stat-value">{Math.round(streakShown)}<small>d</small></div>
-          <div className="fd-stat-label">Consecutive Days Flown</div>
+        <div className="hub-stat-tile">
+          <Flame size={15} className="hub-stat-icon hub-stat-icon--flame" />
+          <div className="hub-stat-value">{streakDisplay}<small>d</small></div>
+          <div className="hub-stat-label">Consecutive Days Flown</div>
+          <div className="hub-stat-sub">Longest {longestStreak}d</div>
         </div>
-        <div className="fd-stat">
-          <BookMarked size={14} className="fd-stat-icon" />
-          <div className="fd-stat-value">{bookmarkCount}</div>
-          <div className="fd-stat-label">Bookmarked questions</div>
-        </div>
-      </div>
-
-      <div className="fd-hero-wrap">
-        <div className="fd-hero-glow" aria-hidden="true" />
-        <div className="fd-hero">
-          <div className="fd-hero-top">
-            <div>
-              <p className="fd-eyebrow">Currently Flying</p>
-              <div className="fd-hero-title">{heroModule.name}</div>
-            </div>
-            <div className="fd-hero-chips">
-              {streak > 0 && (
-                <span className="fd-quiet-chip">
-                  <Flame size={12} /> {streak}d streak
-                </span>
-              )}
-              {bookmarkCount > 0 && (
-                <button className="fd-quiet-chip fd-quiet-chip--btn" onClick={onReviewBookmarks}>
-                  <BookMarked size={12} /> {bookmarkCount} saved
-                </button>
-              )}
-              {needsMotionPermission && (
-                <button className="fd-motion-btn" onClick={requestMotion}>
-                  <Compass size={12} /> Enable Motion
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="fd-cluster" ref={clusterRef}>
-            <div className="fd-dial-row">
-              <div className="fd-dial-col fd-dial-col--module">
-                <Gauge size={128} value={modShown} empty={nothingStarted} label="Module">
-                  <span className="g-value">
-                    {Math.round(modShown)}
-                    <small>%</small>
-                  </span>
-                </Gauge>
-              </div>
-
-              <div className="fd-dial-col fd-dial-col--chapter">
-                <Gauge size={182} value={chapShown} needle empty={nothingStarted} label="Current Chapter">
-                  <span className="g-value g-value--lg">
-                    {Math.round(chapShown)}
-                    <small>%</small>
-                  </span>
-                </Gauge>
-              </div>
-
-              <div className="fd-dial-col fd-dial-col--data">
-                <Gauge size={128} value={dataShown} arc={dataPage.arc} label={dataPage.label}>
-                  <div key={dataPage.key} className="g-face-slide">
-                    <span className="g-value">
-                      {PageIcon && <PageIcon size={13} className="g-value-icon" />}
-                      {dataPage.display}
-                      {dataPage.unit ? <small>{dataPage.unit}</small> : null}
-                    </span>
-                  </div>
-                </Gauge>
-                {dataPages.length > 1 && (
-                  <div className="fd-data-nav">
-                    <button className="fd-data-arrow" onClick={() => goToDataPage(safePageIndex - 1)} aria-label="Previous reading">
-                      <ChevronLeft size={14} />
-                    </button>
-                    <div className="fd-data-dots">
-                      {dataPages.map((p, i) => (
-                        <button
-                          key={p.key}
-                          className={`fd-data-dot ${i === safePageIndex ? "is-active" : ""}`}
-                          onClick={() => goToDataPage(i)}
-                          aria-label={p.label}
-                        />
-                      ))}
-                    </div>
-                    <button className="fd-data-arrow" onClick={() => goToDataPage(safePageIndex + 1)} aria-label="Next reading">
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="fd-divider" />
-
-          {currentChapter && (
-            <>
-              <div className="fd-lesson-row">
-                <div>
-                  <div className="fd-lesson-label">Current Lesson</div>
-                  <div className="fd-lesson-title">
-                    {currentChapter.code} — {currentChapter.title}
-                  </div>
-                </div>
-                <div className="fd-lesson-pct">{chapterPercent}% through this chapter</div>
-              </div>
-
-              <div className="fd-checklist">
-                {checklist.map((row) => (
-                  <button key={row.id} className="fd-check-row" onClick={row.toggle}>
-                    <span className={`fd-check-box ${row.done ? "is-done" : ""}`}>{row.done && <Check size={10} />}</span>
-                    <span className={`fd-check-text ${row.done ? "is-done" : ""}`}>{row.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="fd-hero-actions">
-                <div className="fd-next-up">
-                  <div className="fd-next-up-label">Next Up</div>
-                  <div className="fd-next-up-title">{nextChapter ? `${nextChapter.code} — ${nextChapter.title}` : "Module complete"}</div>
-                </div>
-                <button className="fd-resume" onClick={() => onGoToChapter(heroModule.code, currentChapter.id)}>
-                  Resume Flight <ChevronRight size={15} />
-                </button>
-              </div>
-            </>
-          )}
+        <div className="hub-stat-tile">
+          <BookMarked size={15} className="hub-stat-icon" />
+          <div className="hub-stat-value">{bookmarkCount}</div>
+          <div className="hub-stat-label">Bookmarked questions</div>
         </div>
       </div>
 
-      <section className="fd-section">
-        <h2 className="fd-h2">Modules</h2>
-        <p className="fd-section-sub">Everything in the syllabus, flying or not.</p>
+      <div className="hub-section-head">
+        <div className="hub-section-title">Modules</div>
+      </div>
+      <div className="hub-modules">
+        {MODULES.map((m) => {
+          const hasContent = m.status === "active";
+          const isEnrolled = enrolledCodes.includes(m.code);
+          const moduleChapters = chaptersForModule(m.code);
+          const chapterCount = moduleChapters.length;
+          const doneCount = moduleChapters.filter((ch) => completed.has(ch.id)).length;
+          const pct = chapterCount ? Math.round((doneCount / chapterCount) * 100) : 0;
 
-        <div className="fd-active-strip fd-surface">
-          <div className="fd-active-strip-left">
-            <MiniRing pct={modulePercent} />
-            <span className={`fd-light ${modulePercent > 0 ? "is-green" : "is-amber"}`} aria-hidden="true" />
-            <span className="fd-flying-badge">Currently Flying</span>
-            <span className="fd-active-strip-name">{heroModule.name}</span>
-            <span className="fd-active-strip-meta">{modulePercent}%</span>
-          </div>
-          <button className="fd-view-hero" onClick={() => window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" })}>
-            View flight deck
-          </button>
-        </div>
-
-        <div className="fd-module-grid">
-          {directoryModules.map((m) => {
-            const isEnrolled = enrolledCodes.includes(m.code);
-            const locked = m.status !== "active";
+          if (!hasContent) {
             return (
-              <div key={m.code} className="fd-module-card fd-surface">
-                <div className="fd-module-head">
-                  <span className={`fd-light ${locked ? "is-grey" : isEnrolled ? "is-amber" : "is-grey"}`} aria-hidden="true" />
-                  <div className="fd-module-code">{m.code}</div>
-                  {isEnrolled && !locked && <MiniRing pct={0} size={26} />}
+              <div key={m.code} className="hub-module-card is-locked">
+                <div className="hub-module-topline">
+                  <div className="hub-module-chip-row">
+                    <span className="hub-status-light is-standby" title="Standby" />
+                    <div className="hub-module-chip hub-module-chip--locked"><Lock size={9} /> Standby</div>
+                  </div>
                 </div>
-                <div className="fd-module-name">{m.name}</div>
-                {locked ? (
-                  <>
-                    <div className="fd-lock-row">
-                      <Lock size={11} />
-                      <span className="fd-lock-note">Unlocks at 100% {heroModule.name}</span>
-                    </div>
-                    <div className="fd-unlock-track">
-                      <div className="fd-unlock-fill" style={{ width: `${modulePercent}%` }} />
-                    </div>
-                  </>
-                ) : isEnrolled ? (
-                  <>
-                    <button className="fd-module-btn" onClick={() => onEnterModule(m)}>
-                      Continue
-                    </button>
-                    <button className="fd-module-unenroll" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
-                      {enrolling === m.code ? "Unenrolling…" : "Unenroll"}
-                    </button>
-                  </>
-                ) : (
-                  <button className="fd-module-btn" onClick={() => handleEnroll(m.code)} disabled={enrolling === m.code}>
-                    {enrolling === m.code ? "Enrolling…" : "Enroll"}
-                  </button>
-                )}
+                <div className="hub-module-code">{m.code}</div>
+                <div className="hub-module-name">{m.name}</div>
               </div>
             );
-          })}
-        </div>
-      </section>
+          }
 
-      <section className="fd-section">
-        <div className="fd-feed-head">
-          <h2 className="fd-h2">Telemetry Feed</h2>
-          <div className="fd-feed-controls">
-            <div className="fd-scope-toggle">
-              <button className={`fd-scope-btn ${feedScope === "module" ? "is-active" : ""}`} onClick={() => setFeedScope("module")}>
-                This Module
-              </button>
-              <button className={`fd-scope-btn ${feedScope === "all" ? "is-active" : ""}`} onClick={() => setFeedScope("all")}>
-                All Activity
-              </button>
-            </div>
-            <button className="fd-ask-btn" onClick={() => (isSignedIn ? setComposerOpen((o) => !o) : onSignIn())}>
-              Ask the Crew
-            </button>
-          </div>
-        </div>
-
-        {composerOpen && (
-          <div className="fd-composer fd-surface">
-            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ask the crew a question…" rows={3} />
-            <div className="fd-composer-actions">
-              <button className="fd-composer-cancel" onClick={() => setComposerOpen(false)}>
-                Cancel
-              </button>
-              <button className="fd-composer-post" onClick={submitPost} disabled={posting || !draft.trim()}>
-                {posting ? "Posting…" : "Post"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="fd-feed-list">
-          {activityLoading ? (
-            <div className="fd-empty fd-surface">
-              <div className="fd-scan" aria-hidden="true" />
-              <span className="fd-empty-body">Reading telemetry…</span>
-            </div>
-          ) : scopedActivity.length === 0 ? (
-            <div className="fd-empty fd-surface">
-              <div className="fd-empty-dial" aria-hidden="true">
-                <Radio size={18} />
-              </div>
-              <span className="fd-empty-title">Channel quiet</span>
-              <span className="fd-empty-body">
-                {feedScope === "module" ? "Nothing logged against this module yet." : "No transmissions received yet."}
-              </span>
-              <button className="fd-empty-link" onClick={() => (isSignedIn ? setComposerOpen(true) : onSignIn())}>
-                Ask the crew a question
-              </button>
-            </div>
-          ) : (
-            scopedActivity.map((c) => {
-              const chapter = c.chapter_id ? CHAPTERS.find((ch) => ch.id === c.chapter_id) : null;
-              const context = chapter ? `${chapter.code} — ${chapter.title}` : "Discussion";
-              const author = c.author || "Unknown";
-              const liked = reacted.has(`${c.id}-thumbsUp`);
-              return (
-                <div key={c.id} className="fd-feed-item fd-surface">
-                  <div className="fd-feed-avatar-wrap">
-                    <div className="fd-feed-avatar-glow" style={{ background: nameToGradient(author) }} aria-hidden="true" />
-                    <div className="fd-feed-avatar" style={{ background: nameToGradient(author) }}>
-                      {author.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
-                  <div className="fd-feed-body">
-                    <div className="fd-feed-line">
-                      <b>{author}</b> in <span className="fd-feed-tag">{context}</span>
-                    </div>
-                    {c.text && <div className="fd-feed-text">{c.text}</div>}
-                    <div className="fd-feed-meta">{timeAgo(c.created_at)}</div>
-                    <div className="fd-feed-actions">
-                      <button className={`fd-feed-action ${liked ? "is-liked" : ""}`} onClick={() => handleLike(c)} disabled={!isSignedIn}>
-                        <ThumbsUp size={13} /> {c.reactions?.thumbsUp || 0}
-                      </button>
-                    </div>
+          if (!isEnrolled) {
+            return (
+              <div key={m.code} className="hub-module-card hub-module-card--live" {...tiltProps}>
+                <div className="hub-module-topline">
+                  <div className="hub-module-chip-row">
+                    <span className="hub-status-light is-standby" title="Not enrolled" />
+                    <div className="hub-module-chip hub-module-chip--open">Open enrollment</div>
                   </div>
                 </div>
-              );
-            })
-          )}
+                <div className="hub-module-code">{m.code}</div>
+                <div className="hub-module-name">{m.name}</div>
+                <button className="hub-module-enroll" onClick={() => handleEnroll(m.code)} disabled={enrolling === m.code}>
+                  {enrolling === m.code ? "Enrolling…" : "Enroll"}
+                </button>
+              </div>
+            );
+          }
+
+          const started = doneCount > 0;
+          return (
+            <div key={m.code} className="hub-module-card hub-module-card--live" {...tiltProps}>
+              <div className="hub-module-topline">
+                <div className="hub-module-chip-row">
+                  <span
+                    className={`hub-status-light ${started ? "is-live" : "is-ready"}`}
+                    title={started ? "In progress" : "Enrolled, not started"}
+                  />
+                  <div className="hub-module-chip hub-module-chip--active">{started ? "In progress" : "Ready"}</div>
+                </div>
+                <ProgressRing pct={pct} />
+              </div>
+              <div className="hub-module-code">{m.code}</div>
+              <div className="hub-module-name">{m.name}</div>
+              <div className="hub-module-pips">
+                {moduleChapters.map((ch) => (
+                  <div key={ch.id} className={`hub-pip ${completed.has(ch.id) ? "is-done" : ""}`} />
+                ))}
+              </div>
+              <div className="hub-module-foot">
+                <span className="hub-module-progress-text">{pct}% · {doneCount}/{chapterCount} chapters</span>
+                <button className="hub-module-continue" onClick={() => onEnterModule(m)}>
+                  Continue <ChevronRight size={13} />
+                </button>
+              </div>
+              <button className="hub-module-unenroll" onClick={() => handleUnenroll(m.code)} disabled={enrolling === m.code}>
+                {enrolling === m.code ? "Unenrolling…" : "Unenroll"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hub-columns">
+        <div>
+          <div className="hub-section-head">
+            <div className="hub-section-title">Active Checklist</div>
+          </div>
+          <div className="hub-recent-list">
+            {recentChapters.length === 0 ? (
+              <div className="hub-empty">Open a checklist item to log it here.</div>
+            ) : (
+              recentChapters.map((ch) => (
+                <button key={ch.id} className="hub-recent-item" onClick={() => onGoToChapter(moduleForChapter(ch).code, ch.id)}>
+                  <span className="hub-recent-code">{ch.code}</span>
+                  <span className="hub-recent-title">{ch.title}</span>
+                  <ChevronRight size={13} className="hub-recent-arrow" />
+                </button>
+              ))
+            )}
+          </div>
         </div>
-      </section>
+
+        <div>
+          <div className="hub-section-head">
+            <div className="hub-section-title">Telemetry Feed</div>
+            <button className="hub-section-link" onClick={onGoToDiscuss}>Open discussion →</button>
+          </div>
+          <div className="hub-activity-list">
+            {activityLoading ? (
+              <div className="hub-empty">Reading telemetry…</div>
+            ) : activity.length === 0 ? (
+              <div className="hub-empty">
+                <MessageSquareOff size={22} className="hub-empty-icon" />
+                <span>No telemetry received yet.</span>
+              </div>
+            ) : (
+              activity.map((c) => {
+                const chapter = c.chapter_id ? CHAPTERS.find((ch) => ch.id === c.chapter_id) : null;
+                const context = chapter ? chapter.title : "Discussion";
+                const author = c.author || "Unknown";
+                return (
+                  <div key={c.id} className="hub-activity-item">
+                    <div className="hub-activity-avatar">{author.charAt(0).toUpperCase()}</div>
+                    <div className="hub-activity-body">
+                      <div className="hub-activity-text">
+                        <strong>{author}</strong> in <span className="hub-activity-tag">{context}</span>
+                        {c.text && <> — "{c.text.length > 70 ? c.text.slice(0, 70) + "…" : c.text}"</>}
+                      </div>
+                      <div className="hub-activity-meta">{timeAgo(c.created_at)}</div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
 
       <style>{`
-        /* Registered so the ambient highlight can be animated on touch devices,
-           where there is no cursor to follow. */
-        /* Must inherit: the pointer position is written on .g, but the layers
-           that consume it (.g-spec, .g-tickglow) are its children. */
-        @property --px { syntax: '<percentage>'; inherits: true; initial-value: 30%; }
-        @property --py { syntax: '<percentage>'; inherits: true; initial-value: 18%; }
-
-        .fd { --fd-ease: cubic-bezier(0.22, 1, 0.36, 1); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
-        .fd-eyebrow, .fd-lesson-label, .fd-next-up-label, .g-label {
-          font-family: 'JetBrains Mono', monospace; font-weight: 400; text-transform: uppercase;
-          letter-spacing: 0.14em; color: var(--muted); opacity: 0.72; }
-        .fd-eyebrow { font-size: 10.5px; margin: 0 0 6px; }
-        .fd-title { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; margin: 0 0 6px; color: var(--text); letter-spacing: -0.01em; }
-        .fd-sub { color: var(--muted); font-size: 14px; margin: 0; }
-
-        /* ---- pre-flight briefing ---- */
-        .fd { --fd-amber: #D9A441; }
-        .app.theme-light .fd { --fd-amber: #B07C12; }
-        .fd-briefing { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
-          margin-top: 26px; padding: 20px 22px; border-radius: var(--r-lg);
-          background: var(--elev-1); border: 1px solid var(--border-soft); box-shadow: var(--shadow-1); }
-        .fd-brief-main { min-width: 0; flex: 1; }
-        .fd-brief-greeting { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; color: var(--text); margin-bottom: 6px; }
-        .fd-brief-chapter { font-size: 13px; color: var(--text-soft); }
-        .fd-brief-mod { color: var(--text); }
-        .fd-brief-sep { color: var(--muted2); margin: 0 6px; }
-        .fd-brief-code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--accent-muted); }
-        .fd-brief-bar { height: 5px; border-radius: var(--r-pill); background: var(--well); box-shadow: var(--shadow-inset); overflow: hidden; margin: 10px 0 7px; max-width: 420px; }
-        .fd-brief-fill { height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg, var(--g-low), var(--g-mid)); transition: width 0.6s var(--fd-ease); }
-        .fd-brief-meta { display: flex; flex-wrap: wrap; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-        .fd-brief-cta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; background: var(--accent); color: var(--on-accent); border: none;
-          border-radius: var(--r-md); padding: 12px 18px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; min-height: 44px;
-          box-shadow: var(--hairline), 0 6px 18px color-mix(in srgb, var(--accent) 24%, transparent); transition: background 0.2s var(--fd-ease), transform 0.2s var(--fd-ease); }
-        .fd-brief-cta:hover { background: var(--accent-hover); }
-        .fd-brief-cta:active { transform: scale(0.97); transition-duration: 0.08s; }
-        /* One-time needle sweep on load. */
-        .fd-sweep { position: absolute; top: 0; bottom: 0; width: 1px; pointer-events: none;
-          background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 55%, transparent), transparent);
-          animation: fdSweep 1.15s var(--fd-ease) 1 both; }
-        @keyframes fdSweep { from { left: 0; opacity: 0; } 12% { opacity: 1; } to { left: 100%; opacity: 0; } }
-
-        /* ---- smart next action ---- */
-        .fd-suggest { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer; margin-top: 10px;
-          padding: 12px 16px; border-radius: var(--r-md); background: var(--elev-1); border: 1px solid var(--border-soft); box-shadow: var(--shadow-1);
-          min-height: 44px; transition: border-color 0.15s ease, background 0.15s ease; }
-        .fd-suggest:hover { border-color: var(--border); background: var(--elev-2); }
-        .fd-suggest-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-muted); flex-shrink: 0; }
-        .fd-suggest-title { font-size: 13px; color: var(--text-soft); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .fd-suggest-arrow { color: var(--muted2); flex-shrink: 0; }
-
-        /* ---- stat tiles ---- */
-        .fd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 10px; }
-        @media (max-width: 760px) { .fd-stats { grid-template-columns: repeat(2, 1fr); } }
-        .fd-stat { padding: 14px 16px; border-radius: var(--r-md); background: var(--elev-1); border: 1px solid var(--border-soft); box-shadow: var(--shadow-1); }
-        .fd-stat--gauge { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .fd-stat-icon { color: var(--muted2); margin-bottom: 10px; }
-        .fd-stat-icon--accent { color: var(--accent-muted); }
-        .fd-stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
-        .fd-stat-value small { font-weight: 400; font-size: 11px; color: var(--muted2); }
-        .fd-stat-gauge { position: relative; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
-        .fd-stat-arc { position: absolute; inset: 0; }
-        .fd-stat-value--in { position: relative; font-size: 16px; }
-        .fd-stat-label { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
-
-        /* ---- annunciator lights ---- */
-        .fd-light { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--muted2); }
-        .fd-light.is-green { background: var(--good); box-shadow: 0 0 6px color-mix(in srgb, var(--good) 55%, transparent); }
-        .fd-light.is-amber { background: var(--fd-amber); box-shadow: 0 0 6px color-mix(in srgb, var(--fd-amber) 50%, transparent); }
-        .fd-light.is-grey { background: var(--muted2); opacity: 0.7; }
-        .fd-module-head { display: flex; align-items: center; gap: 8px; }
-        .fd-miniring { flex-shrink: 0; }
-
-        /* ---- hero ---- */
-        .fd-hero-wrap { position: relative; margin-top: 30px; }
-        .fd-hero-glow { position: absolute; inset: -80px; z-index: 0; pointer-events: none;
-          background: radial-gradient(58% 58% at 50% 42%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 74%);
-          filter: blur(42px); animation: fdHeroPulse 6s ease-in-out infinite; }
-        @keyframes fdHeroPulse { 0%, 100% { opacity: 0.72; transform: scale(1); } 50% { opacity: 1; transform: scale(1.035); } }
-        .fd-hero { position: relative; z-index: 1; padding: 30px 32px 26px; border-radius: var(--r-lg);
-          background: linear-gradient(180deg, var(--elev-2) 0%, var(--elev-1) 100%);
-          border: 1px solid var(--border); box-shadow: var(--hairline), var(--shadow-2); }
-        .fd-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-        .fd-hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 700; color: var(--text); margin-top: 4px; }
-        .fd-hero-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .fd-quiet-chip { display: flex; align-items: center; gap: 6px; color: var(--muted); border-radius: var(--r-pill); padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; background: none; border: none; font-variant-numeric: tabular-nums; }
-        .fd-quiet-chip--btn { cursor: pointer; min-height: 34px; }
-        .fd-quiet-chip--btn:hover { color: var(--text); }
-        .fd-motion-btn { display: flex; align-items: center; gap: 6px; color: var(--accent-muted); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius: var(--r-pill); padding: 7px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; min-height: 36px; }
-        .fd-motion-btn:hover { color: var(--accent); }
-
-        /* ---- instrument system: one language for all three gauges ---- */
-        .fd-cluster { margin: 26px 0 6px; display: flex; justify-content: center; }
-        .fd-dial-row { display: flex; align-items: center; justify-content: center; gap: 30px; }
-        .fd-dial-col { display: flex; flex-direction: column; align-items: center; position: relative; }
-
-        .g { position: relative; flex-shrink: 0; --px: 30%; --py: 18%; --tx: 0deg; --ty: 0deg;
-          transform: perspective(760px) rotateX(var(--tx)) rotateY(var(--ty));
-          transition: transform 0.35s var(--fd-ease); }
-        .g-bezel { position: absolute; inset: -9px; border-radius: 50%;
-          background:
-            conic-gradient(from 218deg, var(--bezel-hi), var(--bezel-lo) 30%, var(--bezel-mid) 58%, var(--bezel-lo) 100%),
-            linear-gradient(180deg, var(--elev-2), var(--well));
-          box-shadow: var(--shadow-1), inset 0 1px 0 var(--sheen); }
-        .g-face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-          background: radial-gradient(circle at 36% 26%, var(--elev-1) 0%, var(--well) 76%);
-          box-shadow: var(--shadow-inset), inset 0 0 0 1px rgba(255,255,255,0.04); }
-        .g-svg { position: absolute; inset: 0; }
-        .g-tick { stroke: color-mix(in srgb, var(--accent) 25%, var(--muted2)); opacity: 0.55; }
-        .g-tick--major { stroke: color-mix(in srgb, var(--accent) 45%, var(--text)); opacity: 0.88; }
-        .g-ticklabel { fill: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 8.5px; opacity: 0.6; }
-        .g-arc { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--g-mid) 50%, transparent)); }
-        .g-needle { filter: drop-shadow(0 3px 4px rgba(0,0,0,0.55)); }
-        .g-pivot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%,-50%);
-          background: radial-gradient(circle at 33% 27%, #fff 0%, color-mix(in srgb, var(--g-high) 62%, #fff) 26%, color-mix(in srgb, var(--g-low) 72%, #000) 100%);
-          box-shadow: 0 0 0 2px var(--well), 0 2px 5px rgba(0,0,0,0.6); }
-        .g-bloom { position: absolute; inset: 4%; border-radius: 50%; pointer-events: none;
-          opacity: calc(var(--pctn) / 100 * 0.30); filter: blur(15px); mix-blend-mode: screen; transition: opacity 0.5s var(--fd-ease); }
-        .g-glass { position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-          background: linear-gradient(128deg, color-mix(in srgb, var(--sheen) 85%, transparent) 0%, color-mix(in srgb, var(--sheen) 22%, transparent) 24%, transparent 44%); }
-        .g-spec { position: absolute; inset: -9px; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
-          background: radial-gradient(circle at var(--px) var(--py), color-mix(in srgb, var(--sheen) 80%, transparent) 0%, transparent 46%); }
-        .g-tickglow { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
-          background: radial-gradient(circle at var(--px) var(--py), color-mix(in srgb, var(--g-high) 38%, transparent) 0%, transparent 30%); }
-        .g-readout { position: absolute; left: 0; right: 0; bottom: 16%; display: flex; justify-content: center; pointer-events: none; }
-        .g-value { display: inline-flex; align-items: center; gap: 4px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums;
-          color: var(--text); background: color-mix(in srgb, var(--well) 70%, transparent); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: var(--r-sm); padding: 3px 10px; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-        .g-value--lg { font-size: 22px; padding: 4px 13px; }
-        .g-value small { font-family: 'JetBrains Mono', monospace; font-size: 0.6em; opacity: 0.75; }
-        .g-value-icon { color: var(--accent); }
-        .g-label { position: absolute; left: 50%; transform: translateX(-50%); bottom: -27px; font-size: 10px; white-space: nowrap; }
-        .g.is-empty .g-arc { display: none; }
-        .g.is-empty .g-face::after { content: ""; position: absolute; inset: 11%; border-radius: 50%;
-          background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--g-mid) 30%, transparent) 42deg, transparent 84deg);
-          animation: gSweep 3.2s linear infinite; }
-        @keyframes gSweep { to { transform: rotate(360deg); } }
-        .g-face-slide { animation: gRecalibrate 0.3s var(--fd-ease); }
-        @keyframes gRecalibrate { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
-
-        .fd-data-nav { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 26px; display: flex; align-items: center; gap: 2px; }
-        .fd-data-arrow { background: none; border: none; color: var(--muted); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; }
-        .fd-data-arrow:hover { color: var(--text); background: color-mix(in srgb, var(--elev-2) 70%, transparent); }
-        .fd-data-dots { display: flex; }
-        .fd-data-dot { position: relative; width: 26px; height: 44px; padding: 0; background: none; border: none; cursor: pointer; }
-        /* Coarse pointers get the full 44x44 target; the visible dot stays 5px. */
-        @media (pointer: coarse) { .fd-data-dot { width: 44px; } }
-        .fd-data-dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: var(--border-hover); transition: background 0.2s ease, box-shadow 0.2s ease; }
-        .fd-data-dot.is-active::after { background: var(--accent); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent); }
-
-        .fd-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 46px 0 20px; }
-        .fd-lesson-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-        .fd-lesson-label { font-size: 10px; }
-        .fd-lesson-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-top: 3px; }
-        .fd-lesson-pct { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-        .fd-checklist { display: flex; flex-direction: column; }
-        .fd-check-row { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; border-bottom: 1px solid var(--border-soft); padding: 11px 2px; text-align: left; cursor: pointer; min-height: 44px; }
-        .fd-check-row:last-child { border-bottom: none; }
-        .fd-check-row:hover .fd-check-text { color: var(--text); }
-        .fd-check-box { flex-shrink: 0; width: 17px; height: 17px; border-radius: 5px; border: 1px solid var(--border-hover); display: flex; align-items: center; justify-content: center; color: var(--on-accent); transition: background 0.18s ease, border-color 0.18s ease; }
-        .fd-check-box.is-done { background: var(--accent-muted); border-color: var(--accent-muted); }
-        .fd-check-text { font-size: 13.5px; color: var(--text-soft); }
-        .fd-check-text.is-done { color: var(--muted2); text-decoration: line-through; }
-        .fd-hero-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
-        .fd-next-up { display: flex; flex-direction: column; gap: 2px; }
-        .fd-next-up-label { font-size: 9.5px; }
-        .fd-next-up-title { font-size: 13px; color: var(--accent-muted); }
-        .fd-resume { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-md); padding: 13px 20px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; cursor: pointer; min-height: 44px;
-          box-shadow: var(--hairline), 0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent); transition: background 0.2s var(--fd-ease), transform 0.2s var(--fd-ease); }
-        .fd-resume:hover { background: var(--accent-hover); }
-        .fd-resume:active { transform: scale(0.97); transition-duration: 0.08s; }
-
-        /* ---- calm surfaces below the hero ---- */
-        .fd-surface { background: var(--elev-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); box-shadow: var(--shadow-1); transition: border-color 0.15s ease, background 0.15s ease; }
-        .fd-surface:hover { border-color: var(--border); background: var(--elev-2); }
-        .fd-section { margin-top: 44px; }
-        .fd-h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
-        .fd-section-sub { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
-        .fd-active-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 18px; margin-bottom: 14px; flex-wrap: wrap; }
-        .fd-active-strip-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .fd-flying-badge { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); border-radius: var(--r-pill); padding: 4px 10px; white-space: nowrap; opacity: 0.9; }
-        .fd-active-strip-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
-        .fd-active-strip-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-        .fd-view-hero { font-size: 12.5px; color: var(--accent-muted); background: none; border: none; cursor: pointer; white-space: nowrap; min-height: 44px; padding: 0 4px; }
-        .fd-view-hero:hover { color: var(--accent); }
-        .fd-module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-        .fd-module-card { padding: 18px; display: flex; flex-direction: column; gap: 9px; }
-        .fd-module-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); letter-spacing: 0.08em; }
-        .fd-module-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15.5px; color: var(--text); }
-        .fd-module-btn { align-self: flex-start; margin-top: 4px; background: var(--accent-soft); color: var(--accent-muted); border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); border-radius: var(--r-sm); padding: 9px 14px; font-weight: 600; font-size: 12px; cursor: pointer; min-height: 40px; }
-        .fd-module-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
-        .fd-module-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .fd-module-unenroll { align-self: flex-start; background: none; border: none; color: var(--muted2); font-size: 10.5px; cursor: pointer; padding: 6px 0; min-height: 32px; }
-        .fd-module-unenroll:hover { color: var(--bad); }
-        .fd-lock-row { display: flex; align-items: center; gap: 8px; color: var(--muted2); }
-        .fd-lock-note { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
-        .fd-unlock-track { height: 5px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; margin-top: 2px; box-shadow: var(--shadow-inset); }
-        .fd-unlock-fill { height: 100%; background: linear-gradient(90deg, var(--g-low), var(--g-mid)); border-radius: var(--r-pill); transition: width 0.6s var(--fd-ease); }
-
-        /* ---- feed ---- */
-        .fd-feed-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-        .fd-feed-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .fd-scope-toggle { display: flex; gap: 4px; background: var(--well); border-radius: var(--r-sm); padding: 3px; box-shadow: var(--shadow-inset); }
-        .fd-scope-btn { background: none; border: none; padding: 9px 13px; border-radius: 6px; font-size: 12px; color: var(--muted); cursor: pointer; min-height: 38px; }
-        .fd-scope-btn.is-active { background: var(--elev-2); color: var(--text); box-shadow: var(--hairline), 0 1px 3px rgba(0,0,0,0.25); }
-        .fd-ask-btn { background: var(--accent-soft); color: var(--accent-muted); border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); border-radius: var(--r-sm); padding: 10px 14px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
-        .fd-ask-btn:hover { color: var(--accent); }
-        .fd-composer { padding: 16px 18px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .fd-composer textarea { width: 100%; resize: vertical; min-height: 60px; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 11px; box-shadow: var(--shadow-inset); }
-        .fd-composer-actions { display: flex; justify-content: flex-end; gap: 8px; }
-        .fd-composer-cancel { background: none; border: none; color: var(--muted); font-size: 12.5px; padding: 10px 12px; cursor: pointer; min-height: 40px; }
-        .fd-composer-post { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 10px 16px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
-        .fd-composer-post:disabled { opacity: 0.5; cursor: not-allowed; }
-        .fd-feed-list { display: flex; flex-direction: column; gap: 10px; }
-        .fd-feed-item { padding: 16px 18px; display: flex; gap: 12px; }
-        .fd-feed-avatar-wrap { position: relative; flex-shrink: 0; width: 32px; height: 32px; }
-        .fd-feed-avatar-glow { position: absolute; inset: -4px; border-radius: 50%; filter: blur(6px); opacity: 0.4; }
-        .fd-feed-avatar { position: relative; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; color: #fff; }
-        .fd-feed-body { flex: 1; min-width: 0; }
-        .fd-feed-line { font-size: 13px; color: var(--text-soft); }
-        .fd-feed-line b { color: var(--text); }
-        .fd-feed-tag { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent-muted); }
-        .fd-feed-text { font-size: 13px; color: var(--text-soft); margin-top: 4px; line-height: 1.5; word-break: break-word; }
-        .fd-feed-meta { margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); }
-        .fd-feed-actions { margin-top: 9px; display: flex; align-items: center; gap: 15px; }
-        .fd-feed-action { display: flex; align-items: center; gap: 5px; background: none; border: none; font-size: 11.5px; color: var(--muted); cursor: pointer; padding: 6px 4px; min-height: 36px; font-variant-numeric: tabular-nums; }
-        .fd-feed-action:hover:not(:disabled) { color: var(--text-soft); }
-        .fd-feed-action:disabled { cursor: not-allowed; opacity: 0.6; }
-        .fd-feed-action.is-liked { color: var(--accent); }
-
-        /* ---- designed empty / loading states ---- */
-        .fd-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 34px 24px; text-align: center; }
-        .fd-empty-dial { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--muted); position: relative;
-          background: radial-gradient(circle at 36% 28%, var(--elev-2), var(--well)); box-shadow: var(--shadow-inset), inset 0 0 0 1px rgba(255,255,255,0.05); }
-        .fd-empty-dial::after { content: ""; position: absolute; inset: -1px; border-radius: 50%;
-          background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--g-mid) 34%, transparent) 44deg, transparent 88deg);
-          animation: gSweep 3.4s linear infinite; }
-        .fd-empty-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; color: var(--text-soft); margin-top: 2px; }
-        .fd-empty-body { color: var(--muted); font-size: 12.5px; }
-        .fd-empty-link { background: none; border: none; color: var(--accent-muted); font-size: 12.5px; cursor: pointer; min-height: 40px; padding: 0 6px; }
-        .fd-empty-link:hover { color: var(--accent); }
-        .fd-scan { width: 120px; height: 2px; border-radius: 2px; overflow: hidden; background: var(--well); position: relative; }
-        .fd-scan::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--g-mid), transparent); animation: fdScan 1.3s ease-in-out infinite; }
-        @keyframes fdScan { 0% { transform: translateX(-110%); } 100% { transform: translateX(360%); } }
-
-        /* ---- touch input: no cursor to track ---- */
-        @media (hover: none), (pointer: coarse) {
-          .g-spec { animation: gDrift 9s ease-in-out infinite alternate; }
-          .g-tickglow { opacity: 0.4; }
+        /* Shared surface treatment: a top-lit gradient fill plus a layered
+           shadow — inset hairline highlight above, ambient drop below. */
+        .hub {
+          --hub-ease: cubic-bezier(0.22, 1, 0.36, 1);
+          --hub-surface: linear-gradient(180deg, color-mix(in srgb, var(--panel) 96%, white 4%) 0%, var(--panel) 100%);
+          --hub-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 4px rgba(0,0,0,0.24), 0 10px 26px rgba(0,0,0,0.30);
+          --hub-shadow-hover: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 8px rgba(0,0,0,0.28), 0 18px 44px rgba(0,0,0,0.38);
+          --hub-amber: #D4A03C;
+          position: relative;
         }
-        @keyframes gDrift { from { --px: 16%; --py: 14%; } to { --px: 84%; --py: 42%; } }
-
-        /* ---- narrow viewports: one legible gauge at a time, swipeable ---- */
-        @media (max-width: 760px) {
-          .fd-hero { padding: 24px 18px 22px; }
-          .fd-cluster { margin-left: -18px; margin-right: -18px; }
-          .fd-dial-row { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; gap: 0;
-            overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-          .fd-dial-row::-webkit-scrollbar { display: none; }
-          .fd-dial-col { scroll-snap-align: center; padding: 10px 0 12px; }
-          .fd-dial-col--chapter { order: -1; }
-          .g { transform: none; }
-          .g-value { font-size: 21px; padding: 5px 13px; }
-          .g-value--lg { font-size: 27px; padding: 6px 16px; }
-          .g-ticklabel { font-size: 11px; opacity: 0.78; }
-          .g-label { font-size: 11px; bottom: -29px; }
-          .fd-module-grid { grid-template-columns: 1fr; }
-          .fd-divider { margin-top: 30px; }
+        .app.theme-light .hub {
+          --hub-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(22,32,46,0.06), 0 8px 20px rgba(22,32,46,0.08);
+          --hub-shadow-hover: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 5px rgba(22,32,46,0.08), 0 16px 36px rgba(22,32,46,0.14);
+          --hub-amber: #B07D1E;
         }
+        /* Ambient light from the top-left, scoped to the Flight Deck only. */
+        .hub::before {
+          content: "";
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 0;
+          background: radial-gradient(900px 620px at 10% -12%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 62%);
+        }
+        .hub > * { position: relative; z-index: 1; }
+        .hub-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin: 0 0 6px; }
+        .hub-title { font-family: 'Space Grotesk', sans-serif; font-size: 26px; margin: 0 0 6px; color: var(--text); }
+        .hub-sub { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
 
-        /* Smooth Air / OS reduced motion: a still fallback for every effect above. */
-        .app.reduce-motion .fd-sweep,
-        .app.reduce-motion .fd-hero-glow,
-        .app.reduce-motion .g.is-empty .g-face::after,
-        .app.reduce-motion .fd-empty-dial::after,
-        .app.reduce-motion .fd-scan::after,
-        .app.reduce-motion .g-face-slide,
-        .app.reduce-motion .g-spec { animation: none; }
-        .app.reduce-motion .fd-hero-glow { opacity: 0.85; }
-        .app.reduce-motion .g { transform: none; }
-        .app.reduce-motion .g,
-        .app.reduce-motion .g-bloom,
-        .app.reduce-motion .fd-unlock-fill,
-        .app.reduce-motion .fd-brief-fill { transition: none; }
-        .app.reduce-motion .fd-resume { transform: none !important; }
+        /* --- Pre-flight briefing --- */
+        .hub-briefing {
+          position: relative; overflow: hidden;
+          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 14px;
+          padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--hub-shadow);
+        }
+        /* One-time needle sweep on load — runs once, never loops. */
+        .hub-briefing-sweep {
+          position: absolute; top: 0; bottom: 0; width: 1px; left: 0; pointer-events: none;
+          background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--accent) 50%, transparent) 50%, transparent 100%);
+          animation: hub-sweep 1.15s var(--hub-ease) 1 both;
+        }
+        @keyframes hub-sweep {
+          from { left: 0%; opacity: 0; }
+          12% { opacity: 1; }
+          to { left: 100%; opacity: 0; }
+        }
+        .hub-briefing-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .hub-briefing-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); margin-bottom: 3px; }
+        .hub-briefing-greet { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+        .hub-briefing-meta { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
+        .hub-briefing-dot { color: var(--muted2); }
+        .hub-briefing-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .hub-briefing-chapter { flex: 1; min-width: 200px; }
+        .hub-briefing-module { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); margin-bottom: 3px; }
+        .hub-briefing-title { font-size: 13.5px; color: var(--text); margin-bottom: 8px; }
+        .hub-briefing-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-right: 4px; }
+        .hub-briefing-bar { height: 4px; border-radius: 2px; background: var(--panel-alt); overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
+        .hub-briefing-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.6s var(--hub-ease); }
+        .hub-briefing-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 5px; }
+        .hub-briefing-cta {
+          display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+          background: var(--accent); color: var(--on-accent); border: none; border-radius: 9px;
+          padding: 9px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+          box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 9%, transparent);
+          transition: background 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease), transform 0.2s var(--hub-ease);
+        }
+        .hub-briefing-cta:hover { background: var(--accent-hover); box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent); }
+        .hub-briefing-cta:active { transform: scale(0.97); transition-duration: 0.08s; }
+
+        /* --- Smart suggestion --- */
+        .hub-suggest {
+          display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px;
+          padding: 11px 14px; margin-bottom: 24px; cursor: pointer; box-shadow: var(--hub-shadow);
+          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
+        }
+        .hub-suggest:hover { transform: translateY(-2px) scale(1.008); border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
+        .hub-suggest:active { transform: translateY(0) scale(0.994); transition-duration: 0.08s; }
+        .hub-suggest-icon { color: var(--accent); flex-shrink: 0; }
+        .hub-suggest-body { flex: 1; min-width: 0; }
+        .hub-suggest-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted2); margin-bottom: 2px; }
+        .hub-suggest-title { font-size: 12.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hub-suggest-action { display: flex; align-items: center; gap: 3px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent); }
+
+        .hub-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+        @media (max-width: 720px) { .hub-stats { grid-template-columns: repeat(2, 1fr); } }
+        .hub-stat-tile {
+          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+          box-shadow: var(--hub-shadow);
+          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
+        }
+        .hub-stat-tile:hover { transform: translateY(-2px) scale(1.015); border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
+        .hub-stat-icon { color: var(--muted2); margin-bottom: 10px; }
+        .hub-stat-icon--flame { color: var(--accent); }
+        .hub-stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 20px; color: var(--text); }
+        .hub-stat-value small { font-weight: 400; font-size: 11px; color: var(--muted2); }
+        .hub-stat-label { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+        .hub-stat-sub { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted2); margin-top: 3px; }
+        /* Accuracy tile: arc gauge sits behind the numeric readout. */
+        .hub-stat-tile--gauge .hub-gauge { position: relative; display: flex; align-items: center; justify-content: center; height: 58px; }
+        .hub-gauge-svg { position: absolute; inset: 0; margin: auto; }
+        .hub-gauge-value { position: relative; z-index: 1; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px; color: var(--text); }
+        .hub-gauge-value small { font-weight: 400; font-size: 10px; color: var(--muted2); }
+
+        .hub-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+        .hub-section-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+        .hub-section-link { background: transparent; border: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); cursor: pointer; padding: 0; transition: color 0.2s var(--hub-ease); }
+        .hub-section-link:hover { color: var(--accent); }
+        .hub-modules { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 28px; }
+        .hub-module-card {
+          position: relative;
+          background: var(--hub-surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+          display: flex; flex-direction: column;
+          box-shadow: var(--hub-shadow);
+        }
+        .hub-module-card.is-locked { opacity: 0.6; }
+        .hub-module-topline { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .hub-module-chip-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+        /* Annunciator lights: the only status colour on the card. */
+        .hub-status-light { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .hub-status-light.is-live { background: var(--good); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--good) 35%, transparent); }
+        .hub-status-light.is-ready { background: var(--hub-amber); box-shadow: 0 0 7px 1px color-mix(in srgb, var(--hub-amber) 30%, transparent); }
+        .hub-status-light.is-standby { background: var(--muted2); opacity: 0.55; }
+        /* Interactive cards only: cursor-tracked tilt, lift, and follow glow. */
+        .hub-module-card--live {
+          --tilt-x: 0deg; --tilt-y: 0deg; --lift: 0px; --card-scale: 1;
+          --glow-x: 50%; --glow-y: 50%; --glow-o: 0;
+          transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift)) scale(var(--card-scale));
+          transform-style: preserve-3d;
+          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
+        }
+        .hub-module-card--live::before {
+          content: "";
+          position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+          background: radial-gradient(320px circle at var(--glow-x) var(--glow-y), color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 70%);
+          opacity: var(--glow-o);
+          transition: opacity 0.2s var(--hub-ease);
+        }
+        .hub-module-card--live:hover { --lift: -3px; --card-scale: 1.015; border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
+        .hub-module-card--live:active { --lift: -1px; --card-scale: 0.985; transition-duration: 0.08s; }
+        .hub-module-chip { align-self: flex-start; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+        .hub-module-chip--active { background: var(--accent-soft); color: var(--accent); }
+        .hub-module-chip--open { background: var(--panel-alt); color: var(--muted); border: 1px solid var(--border); }
+        .hub-module-chip--locked { background: var(--panel-alt); color: var(--muted2); }
+        .hub-module-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted2); margin-bottom: 3px; }
+        .hub-module-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+        .hub-module-pips { display: flex; gap: 4px; margin-bottom: 12px; }
+        .hub-pip { flex: 1; height: 4px; border-radius: 2px; background: var(--panel-alt); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
+        .hub-pip.is-done { background: var(--good); }
+        .hub-module-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
+        .hub-module-progress-text { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
+        /* Focal element: primary CTAs carry a low-opacity accent glow. */
+        .hub-module-continue {
+          display: flex; align-items: center; gap: 4px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px;
+          padding: 6px 11px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+          box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 9%, transparent);
+          transition: background 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease), transform 0.2s var(--hub-ease);
+        }
+        .hub-module-continue:hover { background: var(--accent-hover); box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent); }
+        .hub-module-continue:active { transform: scale(0.96); transition-duration: 0.08s; }
+        .hub-module-unenroll { align-self: flex-start; margin-top: 8px; background: transparent; border: none; color: var(--muted2); font-size: 10.5px; cursor: pointer; padding: 0; transition: color 0.2s var(--hub-ease); }
+        .hub-module-unenroll:hover { color: var(--bad); }
+        .hub-module-unenroll:disabled { opacity: 0.5; cursor: not-allowed; }
+        .hub-module-enroll {
+          margin-top: auto; background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px;
+          padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+          box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 9%, transparent);
+          transition: background 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease), transform 0.2s var(--hub-ease);
+        }
+        .hub-module-enroll:hover { background: var(--accent-hover); box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 14%, transparent); }
+        .hub-module-enroll:active { transform: scale(0.97); transition-duration: 0.08s; }
+        .hub-module-enroll:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        .hub-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 880px) { .hub-columns { grid-template-columns: 1fr; } }
+        .hub-recent-list { display: flex; flex-direction: column; gap: 6px; }
+        .hub-recent-item {
+          display: flex; align-items: center; gap: 10px; background: var(--hub-surface); border: 1px solid var(--border);
+          border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left;
+          box-shadow: var(--hub-shadow);
+          transition: transform 0.2s var(--hub-ease), border-color 0.2s var(--hub-ease), box-shadow 0.2s var(--hub-ease);
+        }
+        .hub-recent-item:hover { transform: translateY(-2px) scale(1.015); border-color: var(--border-hover); box-shadow: var(--hub-shadow-hover); }
+        .hub-recent-item:active { transform: translateY(0) scale(0.99); transition-duration: 0.08s; }
+        .hub-recent-code { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--accent); flex-shrink: 0; }
+        .hub-recent-title { font-size: 12.5px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hub-recent-arrow { color: var(--muted2); flex-shrink: 0; }
+        .hub-activity-list { background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--hub-shadow); }
+        .hub-activity-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border-soft); transition: background 0.2s var(--hub-ease); }
+        .hub-activity-item:last-child { border-bottom: none; }
+        .hub-activity-item:hover { background: color-mix(in srgb, var(--panel) 94%, white 6%); }
+        .hub-activity-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 600; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
+        .hub-activity-body { flex: 1; min-width: 0; }
+        .hub-activity-text { font-size: 12px; color: var(--text-soft); line-height: 1.5; }
+        .hub-activity-tag { color: var(--accent); }
+        .hub-activity-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); margin-top: 3px; }
+        .hub-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; padding: 20px; text-align: center; background: var(--hub-surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--hub-shadow); }
+        .hub-empty-icon { color: var(--muted2); opacity: 0.6; }
+
+        /* Smooth Air (and OS-level reduced motion): keep the depth, drop the movement. */
+        .app.reduce-motion .hub-module-card--live,
+        .app.reduce-motion .hub-stat-tile,
+        .app.reduce-motion .hub-recent-item,
+        .app.reduce-motion .hub-suggest,
+        .app.reduce-motion .hub-briefing-cta,
+        .app.reduce-motion .hub-module-continue,
+        .app.reduce-motion .hub-module-enroll { transform: none !important; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s; }
+        .app.reduce-motion .hub-module-card--live::before { opacity: 0 !important; }
+        .app.reduce-motion .hub-briefing-sweep { display: none; }
+        .app.reduce-motion .hub-briefing-fill { transition: none; }
         @media (prefers-reduced-motion: reduce) {
-          .fd-sweep, .fd-hero-glow, .g.is-empty .g-face::after, .fd-empty-dial::after, .fd-scan::after, .g-face-slide, .g-spec { animation: none; }
-          .g { transform: none; }
-          .g, .g-bloom, .fd-unlock-fill { transition: none; }
+          .hub-module-card--live, .hub-stat-tile, .hub-recent-item, .hub-suggest, .hub-briefing-cta, .hub-module-continue, .hub-module-enroll { transform: none !important; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s; }
+          .hub-module-card--live::before { opacity: 0 !important; }
+          .hub-briefing-sweep { display: none; }
+          .hub-briefing-fill { transition: none; }
         }
       `}</style>
     </div>
