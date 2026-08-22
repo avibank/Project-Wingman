@@ -326,3 +326,25 @@ used UTC midnight and passed for the wrong reason — dividers are local-day.
 - Pasteable images. Blocked on §9 — EXIF stripping, scanning, and tap-to-reveal have to
   exist before an upload path does.
 - Typing indicators. Needs the realtime channel that step 3 is waiting on.
+
+## Wiring
+
+Everything built above is now reachable, which it was not when each step landed:
+
+- **Comms** is a fourth module tab — Chapters · Library · Social · Comms.
+- **Squadron** roster sits at the top of Social, above the presence rail.
+- **First Flight** runs behind `FirstFlightGate`, alongside `UsernameGate`.
+
+`FirstFlightGate` fails open in every uncertain case. `fetchProfile` returns null both
+for "no row yet" and for "the query failed", and the second is the state until 0005
+runs — a gate that could not tell them apart would hold every user in onboarding
+waiting for a table that does not exist. `fetchProfileStatus` reports the difference,
+and a failed read lets the user straight through.
+
+### The IA is not what §6 asks for
+
+§6 wants four root tabs — Deck · Social · Modules · You — with module tabs reduced to
+Overview · Chapters · Comms. What exists is the current navigation with Comms added:
+no root tab bar, Social still a module tab, Library still present. CLAUDE.md records
+the absence of a global tab bar as a deliberate past decision, so reversing it is a
+call to make explicitly rather than as a side effect of shipping Comms.

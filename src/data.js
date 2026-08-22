@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileText, Users } from "lucide-react";
+import { ClipboardCheck, FileText, Users, MessageSquare } from "lucide-react";
 
 // ---- Mock content: Jet Turbine Fundamentals ----
 // This is where your real question bank, videos, and PDFs will eventually live.
@@ -795,6 +795,8 @@ const NAV = [
   { id: "chapters", label: "Chapters", icon: ClipboardCheck },
   { id: "pdf", label: "Library", icon: FileText },
   { id: "social", label: "Social", icon: Users },
+  // §7.8 — the channel is its own surface, not a section of Social.
+  { id: "comms", label: "Comms", icon: MessageSquare },
 ];
 
 

@@ -18,6 +18,7 @@ import ProgressPage from "./components/ProgressPage.jsx";
 import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
+import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA, ACCENT_COLORS } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
@@ -240,6 +241,7 @@ function AppInner() {
       }}
     >
     <UsernameGate>
+    <FirstFlightGate>
       {boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
@@ -375,6 +377,7 @@ function AppInner() {
           })}
         </div>
       </div>
+    </FirstFlightGate>
     </UsernameGate>
       <style>{`
         @font-face {

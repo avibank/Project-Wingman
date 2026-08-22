@@ -12,6 +12,7 @@ import { ModuleMotif, N1Dial, InstrumentStyles } from "./instruments.jsx";
 import ChaptersPanel from "./ChaptersPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
 import ModuleSocial from "./ModuleSocial.jsx";
+import Comms from "./Comms.jsx";
 
 function activityLine(row, chapters) {
   const ch = chapters.find((c) => c.id === row.chapter_id);
@@ -89,6 +90,10 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
         )}
 
         {tab === "pdf" && <PdfPanel moduleCode={module.code} moduleName={module.name} />}
+
+        {tab === "comms" && (
+          <Comms moduleCode={module.code} currentChapterId={initialChapterId || null} />
+        )}
 
         {tab === "social" && (
           <ModuleSocial moduleCode={module.code} moduleName={module.name} onGoToChapter={onGoToChapter} onSignIn={onSignIn} />

@@ -57,6 +57,18 @@ export async function fetchRoster(userId, squadronId) {
   return data || [];
 }
 
+// The onboarding gate needs to tell "this user has no profile yet" apart from
+// "the query failed". Conflating them would trap every user in onboarding for
+// as long as the table is missing -- which is exactly the state before 0005
+// runs. fetchProfile collapses both to null, so the gate uses this instead.
+export async function fetchProfileStatus(userId) {
+  if (!userId) return { profile: null, failed: true };
+  const { data, error } = await supabase
+    .from("pilot_profiles").select("*").eq("user_id", userId).maybeSingle();
+  if (error) { console.error(error); return { profile: null, failed: true }; }
+  return { profile: data || null, failed: false };
+}
+
 // Liveries for a set of user ids, so a presence rail can paint each face in
 // its owner's own tail. Missing rows simply have no profile yet.
 export async function fetchProfiles(ids = []) {

@@ -15,6 +15,7 @@ import {
 import { Comment, Composer, ThreadStyles, timeAgo } from "./Thread.jsx";
 import PresenceStrip from "./PresenceStrip.jsx";
 import OnYourWing from "./OnYourWing.jsx";
+import Squadron from "./Squadron.jsx";
 
 // One community surface, not three sub-tabs two of which are always blank.
 //
@@ -168,6 +169,8 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
 
   return (
     <div className="soc">
+      <Squadron moduleCode={moduleCode} />
+
       <PresenceStrip people={roster} moduleCode={moduleCode} onOpenPilot={(p) => p.chapter_id && onGoToChapter?.(moduleCode, p.chapter_id)} />
 
       {isSignedIn && <Composer placeholder={composerPrompt} onSubmit={startThread} />}
