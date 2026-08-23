@@ -213,3 +213,15 @@ Night Ops/Day Ops → **Dark mode** · Instrument Scale → **Text size** · Smo
 **Lights Out is deleted**, not renamed: it suppressed "the pulsing red/green buttons in
 Discussion", and after §4.5 there is no red or green left anywhere to suppress. Its state,
 its persistence and its three props went with it.
+
+## Found by the regression sweep: writes during render
+
+`ChaptersPanel` called `progress.set()` **inside six `setState` updater functions**.
+React runs updaters during render and runs them **twice** under StrictMode, so every one
+of those was a state update on `UserProgressProvider` during another component's render,
+executed twice. That is what the "Cannot update a component while rendering a different
+component" warning was pointing at, and it means bookmarks, completions, quiz scores,
+feedback, recents and chapter progress were each written twice per change.
+
+All six now compute the next value, set it, and persist outside the updater. Zero console
+errors on every route.

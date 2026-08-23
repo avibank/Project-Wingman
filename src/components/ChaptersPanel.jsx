@@ -88,18 +88,17 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
     setOpenId(initialChapterId);
     setReading(true);
     progress.set("pw-last-chapter", initialChapterId);
-    setViewedIds((prev) => {
-      if (prev.has(initialChapterId)) return prev;
-      const next = new Set(prev);
-      next.add(initialChapterId);
-      progress.set("pw-viewed-chapters", [...next]);
-      return next;
-    });
-    setRecentIds((prev) => {
-      const next = [initialChapterId, ...prev.filter((x) => x !== initialChapterId)].slice(0, MAX_RECENT);
-      progress.set("pw-recent-chapters", next);
-      return next;
-    });
+
+    const nextViewed = new Set(viewedIds);
+    if (!nextViewed.has(initialChapterId)) {
+      nextViewed.add(initialChapterId);
+      setViewedIds(nextViewed);
+      progress.set("pw-viewed-chapters", [...nextViewed]);
+    }
+    const nextRecent = [initialChapterId, ...recentIds.filter((x) => x !== initialChapterId)].slice(0, MAX_RECENT);
+    setRecentIds(nextRecent);
+    progress.set("pw-recent-chapters", nextRecent);
+
     onInitialChapterConsumed?.();
   }, [progress.loaded, initialChapterId]);
 
@@ -140,52 +139,40 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         }
       });
     }
-    setCompleted((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      progress.set("pw-completed", [...next]);
-      return next;
-    });
+    const nextCompleted = new Set(completed);
+    nextCompleted.add(id);
+    setCompleted(nextCompleted);
+    progress.set("pw-completed", [...nextCompleted]);
     if (typeof pct === "number") {
-      setQuizScores((prev) => {
-        const next = { ...prev, [id]: pct };
-        progress.set("pw-quiz-scores", next);
-        return next;
-      });
+      const nextScores = { ...quizScores, [id]: pct };
+      setQuizScores(nextScores);
+      progress.set("pw-quiz-scores", nextScores);
     }
   };
 
   const toggleBookmark = (qId) => {
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      next.has(qId) ? next.delete(qId) : next.add(qId);
-      progress.set("pw-bookmarks", [...next]);
-      return next;
-    });
+    const next = new Set(bookmarks);
+    next.has(qId) ? next.delete(qId) : next.add(qId);
+    setBookmarks(next);
+    progress.set("pw-bookmarks", [...next]);
   };
 
   const giveFeedback = (chapterId, value) => {
-    setFeedback((prev) => {
-      const next = { ...prev, [chapterId]: value };
-      progress.set("pw-feedback", next);
-      return next;
-    });
+    const next = { ...feedback, [chapterId]: value };
+    setFeedback(next);
+    progress.set("pw-feedback", next);
   };
 
   const pushRecent = (id) => {
-    setRecentIds((prev) => {
-      const next = [id, ...prev.filter((x) => x !== id)].slice(0, MAX_RECENT);
-      progress.set("pw-recent-chapters", next);
-      return next;
-    });
+    const next = [id, ...recentIds.filter((x) => x !== id)].slice(0, MAX_RECENT);
+    setRecentIds(next);
+    progress.set("pw-recent-chapters", next);
   };
 
   const updateChapterProgress = (chapterId, seenCount) => {
-    setChapterProgress((prev) => {
-      const next = { ...prev, [chapterId]: seenCount };
-      progress.set("pw-chapter-progress", next);
-      return next;
-    });
+    const next = { ...chapterProgress, [chapterId]: seenCount };
+    setChapterProgress(next);
+    progress.set("pw-chapter-progress", next);
   };
 
   // Chip counts and co-presence for whichever chapter is open.
