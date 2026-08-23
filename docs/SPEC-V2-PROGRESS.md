@@ -20,6 +20,7 @@ lists what v1 shipped that v2 reverses.
 | 3 | Mono ramp + liveries (§3.4) | **done** |
 | 3 | Presence light & motion (§4) | **partial** — motion budget enforced; breath and arrivals need a live channel |
 | 3 | Surfaces, panelling, glow (§6) | **done** |
+| 2 | Logbook (§9.5) | **done** |
 | 4 | Comments, squawk, Ready Room, teams, verified | not started — blocked on §10 cold start |
 
 ## Phase 1 · Routing — done
@@ -588,3 +589,25 @@ aliases, and 31 raw values snapped to the scale.
 
 Verified: every rendered radius on every route is one of the four, plus 2px on the
 segmented bar's fills, which are hairlines rather than corners.
+
+## §9.5 Logbook
+
+§9.5 wants the Logbook to hold what Home is not allowed to: accuracy over time, the
+weakest module, questions missed twice, and chapters due for another pass. A 14-cell
+strip with two filled cells is, as the spec says, a weak payoff for the most motivating
+page in a study app.
+
+`lib/logbook.js` holds all four as pure functions, tested:
+
+- **Missed twice** counts only incorrect attempts, needs two or more, and orders
+  most-missed first. A single miss does not qualify and a correct answer never counts.
+- **Weakest module** returns `null` when fewer than two modules have been attempted —
+  a module you have never opened is not your weakest, it is simply ahead of you.
+- **Due for another pass** flags stale *or* shaky, and names which: "17 days ago" versus
+  "scraped it at 55%".
+- **Accuracy over time** omits days with no attempts rather than recording them as zero.
+  A day you did not study is not a day you got everything wrong.
+
+The test caught one thing worth keeping: dropping an unknown chapter can leave a single
+module, and a single module has no weakest — so `null` is the right answer, and the
+assertion was wrong rather than the function.

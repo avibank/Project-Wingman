@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { fetchMyAttempts } from "../lib/quizStats.js";
+import { fetchMyCompletions } from "../lib/partners.js";
+import { missedTwice, weakestModule, dueForAnotherPass } from "../lib/logbook.js";
 import { ChevronLeft } from "lucide-react";
 import { MODULES, CHAPTERS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
@@ -28,6 +32,10 @@ function ProgressPage({ onBack }) {
   const [streak, setStreak] = useState(0);
   const [longest, setLongest] = useState(0);
   const [lastVisit, setLastVisit] = useState(null);
+  // §9.5 — the analysis Home is not allowed to carry.
+  const { user } = useUser();
+  const [attempts, setAttempts] = useState([]);
+  const [completions, setCompletions] = useState([]);
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -38,6 +46,15 @@ function ProgressPage({ onBack }) {
     setLongest(progress.get("pw-longest-streak", 0));
     setLastVisit(progress.get("pw-last-visit", null));
   }, [progress.loaded, progress.isSignedIn]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let live = true;
+    Promise.all([fetchMyAttempts(user.id, 200), fetchMyCompletions(user.id)])
+      .then(([a, c]) => { if (live) { setAttempts(a || []); setCompletions(c || []); } })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [user?.id]);
 
   const done = new Set(completed);
   const scoreValues = Object.values(scores);
@@ -72,6 +89,47 @@ function ProgressPage({ onBack }) {
         <Tile value={bookmarks.length} unit="saved"
           invite="Star a question during a quiz and it lands here" />
       </section>
+
+      {(() => {
+        const chapterOf = (id) => CHAPTERS.find((c) => c.id === id);
+        const moduleOf = (id) => chapterOf(id)?.code.split(".")[0] || null;
+        const weak = weakestModule(scores, moduleOf);
+        const twice = missedTwice(attempts);
+        const due = dueForAnotherPass(completions, scores);
+        if (!weak && !twice.length && !due.length) return null;
+        return (
+          <section className="prog-block">
+            <h2 className="prog-h2">Worth another look</h2>
+            <ul className="prog-look">
+              {weak && (
+                <li>
+                  <span className="prog-look-what">{weak.code}</span>
+                  <span className="prog-look-why">
+                    your lowest average — {weak.average}% across {weak.chapters}{" "}
+                    {weak.chapters === 1 ? "chapter" : "chapters"}
+                  </span>
+                </li>
+              )}
+              {twice.length > 0 && (
+                <li>
+                  <span className="prog-look-what">
+                    {twice.length} {twice.length === 1 ? "question" : "questions"}
+                  </span>
+                  <span className="prog-look-why">
+                    missed more than once — {[...new Set(twice.map((t) => chapterOf(t.chapter_id)?.code).filter(Boolean))].join(", ")}
+                  </span>
+                </li>
+              )}
+              {due.slice(0, 3).map((x) => (
+                <li key={x.chapter_id}>
+                  <span className="prog-look-what">{chapterOf(x.chapter_id)?.code || "A chapter"}</span>
+                  <span className="prog-look-why">{x.reason}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })()}
 
       <section className="prog-block">
         <h2 className="prog-h2">By module</h2>
@@ -132,6 +190,12 @@ function ProgressPage({ onBack }) {
         .prog-tile { display: flex; flex-direction: column; }
         .prog-tile.is-invite { justify-content: center; }
         .prog-tile.is-invite span { font-size: 14px; line-height: 1.45; }
+        .prog-look { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
+          background: var(--hairline); border-radius: var(--r-panel); overflow: hidden; }
+        .prog-look li { background: var(--bg-panel); padding: 12px 14px; display: flex;
+          flex-wrap: wrap; align-items: baseline; gap: 8px; }
+        .prog-look-what { font-size: 16px; color: var(--text-primary); }
+        .prog-look-why { font-size: 14px; color: var(--text-secondary); }
         .prog-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-soft);
           border: 1px solid var(--border-soft); border-radius: var(--r-md); overflow: hidden; margin-bottom: 26px; }
         .prog-summary div { background: var(--elev-1); padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
