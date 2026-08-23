@@ -75,7 +75,6 @@ function AppInner() {
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setAccentColor(progress.get("pw-accent-color", "sky"));
     setLivery(progress.get("pw-livery", "dawn-patrol"));
     setVariantPin(progress.get("pw-variant-pin", null));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
