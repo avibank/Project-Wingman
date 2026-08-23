@@ -103,7 +103,7 @@ function StreakMenu({ streak, overrideStreak }) {
         .streak-menu { position: relative; }
         .streak-word { font-family: var(--font-ui); font-size: 12px; color: var(--muted); }
         @media (max-width: 520px) { .streak-word { display: none; } }
-        .streak-trigger { display: flex; align-items: center; gap: 5px; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--elev-1); border: 1px solid var(--border); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+        .streak-trigger { min-height: 44px; display: flex; align-items: center; gap: 5px; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--elev-1); border: 1px solid var(--border); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
         .streak-trigger:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 10px var(--accent-soft); }
         .streak-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 280px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 14px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: streakIn 0.15s ease-out; }
         @keyframes streakIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }

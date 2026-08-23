@@ -8,8 +8,6 @@ import { resolveLivery } from "./lib/liveries.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import Home from "./components/Home.jsx";
-import { useSocialPrefs } from "./lib/social.js";
-import { fetchEnrollments } from "./lib/enrollments.js";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -22,7 +20,6 @@ import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
-import { loadJSON, saveJSON } from "./lib/storage.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -64,8 +61,6 @@ function AppInner() {
       : page === "bookmarks" ? routePath.saved()
       : routePath.settings(page));
   const goHome = () => go(routePath.home());
-  const { prefs: socialPrefs } = useSocialPrefs();
-  const [enrolledCodes, setEnrolledCodes] = useState([]);
   const [bookmarksMode, setBookmarksMode] = useState("list");
   // The persisted "active module" is a preference the hero on Home reads.
   // Inside a module the URL wins.
@@ -79,7 +74,6 @@ function AppInner() {
   const variant = variantPin || autoVariant;
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
-  const [shakeTab, setShakeTab] = useState(null);
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
   const [testStreakValue, setTestStreakValue] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -155,8 +149,6 @@ function AppInner() {
     }
   }, []);
   useEffect(() => {
-    if (isSignedIn && user?.id) fetchEnrollments(user.id).then(setEnrolledCodes);
-    else setEnrolledCodes([]);
   }, [isSignedIn, user?.id]);
 
   useEffect(() => {
@@ -201,7 +193,6 @@ function AppInner() {
     const onScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
-        const h = document.documentElement;
         setHeaderScrolled(window.scrollY > 4);
         raf = null;
       });
@@ -221,8 +212,6 @@ function AppInner() {
     if (turbulence) {
       triggerHaptic();
       if (!reduceMotion) {
-        setShakeTab(nextTab);
-        setTimeout(() => setShakeTab((t) => (t === nextTab ? null : t)), 220);
       }
     }
     scrollPositions.current[tab] = window.scrollY;
@@ -370,7 +359,6 @@ function AppInner() {
             onMakeActive={(code) => setPreferredModuleCode(code)}
             onOpenLogbook={() => go(routePath.logbook())}
             onOpenReady={() => go(routePath.ready())}
-            streak={streak}
           />
         </main>
       ) : (
@@ -409,6 +397,16 @@ function AppInner() {
            browser's default (Arial here, -apple-system elsewhere) at 13.33px.
            This is the whole of that bug, in one line. */
         button, input, textarea, select { font: inherit; letter-spacing: inherit; }
+        /* §12 — "Minimum hit target 44px everywhere." Enforced globally rather
+           than per component, because it had leaked in eleven places: the brand,
+           the streak pill, the avatar, module tabs, search fields, the bookmark
+           star, chips, and most of the profile form. Opt out with .is-inline for
+           the rare control that genuinely sits inside a line of text. */
+        .app button:not(.is-inline),
+        .app [role="tab"],
+        .app input:not([type="checkbox"]):not([type="radio"]),
+        .app select,
+        .app textarea { min-height: 44px; }
         .app, .app *, .app *::before, .app *::after { transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
         *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         ::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
@@ -519,7 +517,7 @@ function AppInner() {
            artefacts, not as paper. */
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 180ms ease, border-color 180ms ease; }
         .topbar.is-scrolled { border-bottom-color: var(--border-hover); }
-        .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
+        .brand { display: flex; align-items: center; gap: 8px; min-height: 44px; font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-banner { position: relative; padding: 26px 22px 18px; }

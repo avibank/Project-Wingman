@@ -1,23 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronRight, Radio } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
 import { MODULES, CHAPTERS, NAV, PDFS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
-import { useDisplayName } from "../lib/identity.js";
-import { useSocialPrefs, displayNameFor } from "../lib/social.js";
-import { fetchModulePresence } from "../lib/presence.js";
-import { fetchThreads } from "../lib/discussion.js";
-import { fetchWingmen } from "../lib/partners.js";
 import { ProgressArc, InstrumentStyles } from "./instruments.jsx";
 import ChaptersPanel from "./ChaptersPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
 import ModuleSocial from "./ModuleSocial.jsx";
 import Comms from "./Comms.jsx";
 
-function activityLine(row, chapters) {
-  const ch = chapters.find((c) => c.id === row.chapter_id);
-  return `${displayNameFor(row)} posted in ${ch ? ch.code : row.module_code}`;
-}
 
 // Everything a module owns lives here. Nothing module-specific sits in global nav.
 function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onInitialChapterConsumed, onGoToChapter, chapterTab, onChapterTab }) {
@@ -27,34 +17,10 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
   const module = MODULES.find((m) => m.code === moduleCode) || MODULES[0];
   const chapters = chaptersForModule(module.code);
   const progress = useUserProgress();
-  const { user } = useUser();
-  const displayName = useDisplayName();
-  const { prefs } = useSocialPrefs();
-
-  const [roster, setRoster] = useState([]);
-  const [threads, setThreads] = useState([]);
-  const [wingmen, setWingmen] = useState([]);
 
   const completed = new Set(progress.get("pw-completed", []));
   const done = chapters.filter((c) => completed.has(c.id)).length;
   const pct = chapters.length ? Math.round((done / chapters.length) * 100) : 0;
-  const nextChapter = chapters.find((c) => !completed.has(c.id)) || chapters[0];
-
-  useEffect(() => {
-    let live = true;
-    (async () => {
-      const [p, t, w] = await Promise.all([
-        fetchModulePresence(module.code, user?.id),
-        fetchThreads({ moduleCode: module.code, limit: 6 }),
-        user?.id ? fetchWingmen(user.id) : Promise.resolve([]),
-      ]);
-      if (!live) return;
-      setRoster(p); setThreads(t); setWingmen(w);
-    })();
-    return () => { live = false; };
-  }, [module.code, user?.id]);
-
-  const wingIds = new Set(wingmen.map((w) => w.wingman_user_id));
 
   return (
     <div className="hub2">
@@ -119,7 +85,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
         .hub2-tabs { display: flex; gap: 2px; overflow-x: auto; margin: 18px 0 16px; border-bottom: 1px solid var(--border-soft);
           scrollbar-width: none; }
         .hub2-tabs::-webkit-scrollbar { display: none; }
-        .hub2-tab { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; white-space: nowrap;
+        .hub2-tab { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; background: none; border: none; white-space: nowrap;
           padding: 10px 13px; color: var(--muted); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; min-height: 42px; }
         .hub2-tab:hover { color: var(--text); }
         .hub2-tab.is-active { color: var(--accent); border-bottom-color: var(--accent); }

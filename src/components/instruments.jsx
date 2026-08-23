@@ -4,9 +4,7 @@ import { useState, useEffect, useRef } from "react";
 // motifs kept low-opacity so they read as hardware rather than skeuomorphic
 // decoration. Every ambient motion here has a still fallback.
 
-// ---------------------------------------------------------------- module motif
-// Subject-specific texture that sits behind hub content, never in front of it.
-export function ValueTape({ value = 0, label, unit = "", hue }) {
+export function ValueTape({ value = 0, label, unit = "" }) {
   const rows = [value + 2, value + 1, value, value - 1, value - 2];
   return (
     <div className="tape">

@@ -9,7 +9,6 @@ import ThreadsPanel from "./ThreadsPanel.jsx";
 import { countAnnotations } from "../lib/notebook.js";
 import { countThreads } from "../lib/discussion.js";
 import { heartbeat } from "../lib/presence.js";
-import { loadJSON, saveJSON } from "../lib/storage.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useUser } from "@clerk/clerk-react";
 import { useDisplayName } from "../lib/identity.js";
@@ -398,7 +397,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                         <ChapterQuiz
                           key={ch.id}
                           questions={ch.questions}
-                          chapterTitle={ch.title}
                           onComplete={(pct) => markComplete(ch.id, pct)}
                           bookmarks={bookmarks}
                           onToggleBookmark={toggleBookmark}
@@ -576,7 +574,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         @media (min-width: 900px) { .manifest { grid-column: auto; border-top: none; border-left: 1px solid var(--border-soft);
           margin-top: 0; padding-top: 0; padding-left: 18px; } }
         .chapter-social { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-        .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--elev-1); border: 1px solid var(--border-soft);
+        .chip { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; background: var(--elev-1); border: 1px solid var(--border-soft);
           border-radius: var(--r-pill); padding: 7px 13px; color: var(--text-soft); font-size: 12px; cursor: pointer; min-height: 36px;
           transition: border-color 180ms ease, color 180ms ease; }
         .chip:hover { border-color: var(--border); color: var(--text); }
@@ -599,7 +597,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--well); border: 1px solid var(--border); box-shadow: var(--shadow-inset); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 180ms ease, box-shadow 180ms ease; }
         .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
-        .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; }
+        .chapters-search input { min-height: 44px; flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; }
         .chapters-search input::placeholder { color: var(--muted); }
         .chapters-search input:focus { outline: none; }
         .recent-row { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }

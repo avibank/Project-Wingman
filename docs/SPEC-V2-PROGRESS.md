@@ -510,3 +510,42 @@ Removed:
 Still owed from §4: the breath itself, and the 600ms-in / 2000ms-out asymmetry on
 arrival and departure. Both need a live presence channel to have anything to react to,
 which is Phase 3's remaining dependency.
+
+## Cleanup pass
+
+**Lint is clean: 0 errors, 0 warnings.** The 21 warnings were not cosmetic — several
+were half-finished deletions still doing work.
+
+- **`ModuleHub` fired three network requests on every module page load** — module
+  presence, threads, and wingmen — and rendered none of the results. `wingmen` existed
+  only to build a `wingIds` set that nothing read. Gone, with the four imports and the
+  `activityLine` helper that only fed it.
+- **`App` fetched enrollments** into state nothing read, and carried `shakeTab` and
+  `socialPrefs` that nothing used.
+- **`ModuleSocial` fetched threads** into state nothing read.
+- Six orphaned modules deleted: `CallWingman`, `Dial`, `FlightDeck`, `Formation`,
+  `instrumentIcons`, `lib/enrollments`. Phase 4 rewrites Formation and the squawk to
+  §9.4.2/§9.4.3's shapes anyway — the old ones contradict the spec, so keeping them as
+  a starting point would have been worse than starting clean.
+
+### §12's hit targets were leaking in eleven places
+
+"Minimum hit target 44px everywhere" was failing on the brand, the streak pill, the
+avatar, module tabs, search fields, the bookmark star, chips, the settings back button,
+and most of the profile form — between **17px and 42px**. Patching them individually kept
+missing more, so it is one global rule with an explicit `.is-inline` opt-out. Verified
+across seven routes at phone width: nothing under 44px.
+
+### The crash screen
+
+`ErrorBoundary` hardcodes its colours, which is right — it renders when something has
+already failed, possibly the token layer itself, so it must not depend on anything the
+app loads. But its heading was `#E08585`. §15 allows red only for a destructive
+confirmation, and a crash is not one; the point is to be legible and calm. It is
+neutral now, and the reasoning is written next to it so nobody "fixes" it into tokens.
+
+### Contrast, final
+
+All routes, both variants: **8 failures**, all in Comms in day, all `text-tertiary` at
+3.01 on a section header, a day divider, and message timestamps. §12 exempts tertiary for
+exactly this, and every essential use of it was moved to `text-secondary` earlier.

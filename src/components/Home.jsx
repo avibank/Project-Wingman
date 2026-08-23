@@ -18,7 +18,7 @@ import ScoreDial from "./ScoreDial.jsx";
 //
 // Three numbers, maximum. Everything else belongs in the Logbook (§9.5).
 
-function Home({ activeModuleCode, onGoToChapter, onEnterModule, onMakeActive, onOpenLogbook, onOpenReady, streak = 0 }) {
+function Home({ activeModuleCode, onGoToChapter, onEnterModule, onMakeActive, onOpenLogbook, onOpenReady }) {
   const { user } = useUser();
   const progress = useUserProgress();
   const { prefs } = useSocialPrefs();

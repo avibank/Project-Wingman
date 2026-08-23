@@ -10,7 +10,7 @@ import { fetchMessages, sendMessage } from "../lib/comms.js";
 // artefact, which makes it the highest-value social surface on the academic
 // side. Everything here is either the score, a way onward, or the note.
 
-function Debrief({ chapterCode, chapterTitle, chapterId, moduleCode, correct, total, missedIds = [], nextChapter, onReview, onNext, onRetake }) {
+function Debrief({ chapterCode, chapterId, moduleCode, correct, total, missedIds = [], nextChapter, onReview, onNext, onRetake }) {
   const { user, isSignedIn } = useUser();
   const [trips, setTrips] = useState(null);
   const [note, setNote] = useState("");

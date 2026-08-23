@@ -31,7 +31,6 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
   const isAdmin = useIsAdmin();
   const { prefs } = useSocialPrefs();
 
-  const [threads, setThreads] = useState([]);
   const [entries, setEntries] = useState([]);
   const [roster, setRoster] = useState([]);
   const [open, setOpen] = useState(null);
@@ -59,7 +58,6 @@ function ModuleSocial({ moduleCode, moduleName, onGoToChapter }) {
     ]);
     setFormations(fms);
     setFlyerProfiles(await fetchProfiles(fms.flatMap((f) => f.members.map((m) => m.user_id))));
-    setThreads(t);
     setRoster(p);
 
     // §8.2 ranks by position in the material, so it needs mine: the first

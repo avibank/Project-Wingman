@@ -4,7 +4,7 @@ import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
 import Debrief from "./Debrief.jsx";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 
-function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCode, nextChapter, onGoToChapter, onAskAbout, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
+function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapter, onGoToChapter, onAskAbout, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
   const { user } = useUser();
   const [missStat, setMissStat] = useState(null);
   const [i, setI] = useState(0);
@@ -98,7 +98,6 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
     return (
       <Debrief
         chapterCode={chapterCode}
-        chapterTitle={chapterTitle}
         chapterId={chapterId}
         moduleCode={moduleCode}
         correct={score.correct}
@@ -195,7 +194,7 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
         .exam-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .exam-head-right { display: flex; align-items: center; gap: 10px; }
         .exam-count { font-family: var(--font-ui); font-size: 12px; color: var(--muted); }
-        .exam-bookmark { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .exam-bookmark { background: transparent; min-height: 44px; min-width: 44px; border: 1px solid var(--border); color: var(--muted2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .exam-bookmark:hover { border-color: var(--accent); color: var(--accent); }
         .exam-bookmark.is-on { color: #F2C230; border-color: #F2C230; }
         .exam-stem { font-family: var(--font-display); font-size: 16px; color: var(--text); line-height: 1.4; margin: 0 0 16px; }
