@@ -114,7 +114,7 @@ function SquadronStyles() {
         .sq { padding: 4px 0 8px; }
         .sq-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
         .sq-title { font-family: var(--font-ui); font-size: 17px; font-weight: 500; color: var(--text-1); margin: 0; }
-        .sq-count { font-family: var(--font-mono); font-size: 13px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+        .sq-count { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
         .sq-forming { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0 0 16px; max-width: 52ch; }
         .sq-quiet { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0; max-width: 52ch; }
 
@@ -123,7 +123,7 @@ function SquadronStyles() {
         .seat { display: flex; }
         .seat-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;
           background: none; border: none; padding: 6px 2px; cursor: pointer; min-height: 44px; }
-        .seat-name { font-size: 12px; color: var(--text-3); max-width: 100%;
+        .seat-name { font-size: 12px; color: var(--text-2); max-width: 100%;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .seat-btn:hover .seat-name { color: var(--text-1); }
 

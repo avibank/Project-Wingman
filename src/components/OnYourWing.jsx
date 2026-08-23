@@ -72,7 +72,7 @@ function OnYourWing({ moduleCode, people = [], myChapterId, onOpenPilot }) {
         .oyw-row:hover { background: var(--surface-2); }
         .oyw-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .oyw-name { font-size: 15px; color: var(--text-1); }
-        .oyw-why { font-size: 13px; color: var(--text-3); }
+        .oyw-why { font-size: 13px; color: var(--text-2); }
       `}</style>
     </section>
   );

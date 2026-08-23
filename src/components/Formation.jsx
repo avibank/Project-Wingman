@@ -171,14 +171,14 @@ function Formation({ chapterId, chapterCode, moduleCode }) {
         .fm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
         .fm-title { font-family: var(--font-ui); font-size: 15px; font-weight: 500; color: var(--text-1); margin: 0; }
         /* a headcount, not a rank */
-        .fm-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-3);
+        .fm-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-2);
           font-variant-numeric: tabular-nums; }
 
         .fm-rail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
         .fm-seat { display: flex; align-items: center; gap: 10px; }
         .fm-seat-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
         .fm-seat-name { font-size: 14px; color: var(--text-1); }
-        .fm-seat-pos { font-size: 12px; color: var(--text-3); }
+        .fm-seat-pos { font-size: 12px; color: var(--text-2); }
         .fm-quiet { font-size: 13px; color: var(--text-3); }
 
         .fm-join { min-height: 44px; padding: 0 14px; border: none; border-radius: 12px; cursor: pointer;

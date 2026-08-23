@@ -54,7 +54,6 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
     return () => { live = false; };
   }, [module.code, user?.id]);
 
-  const hue = module.hue;
   const wingIds = new Set(wingmen.map((w) => w.wingman_user_id));
 
   return (

@@ -378,7 +378,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
                 <article
                   key={m.code}
                   className={`card mod is-${state} ${isPinned ? "is-pinned" : ""} ${isSuggested ? "is-suggested" : ""}`}
-                  style={{ "--id-hue": m.hue }}
                 >
                   <ModuleMotif motif={m.motif} />
                   <span className="mod-rail" aria-hidden="true" />
@@ -428,7 +427,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           text-align: left; cursor: pointer; color: var(--text-2); }
         .deck-shortcut:hover { background: var(--surface-2); }
         .deck-shortcut-label { font-family: var(--font-mono); font-size: 12px;
-          letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+          letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2); }
         .deck-shortcut-title { font-size: 15px; color: var(--text-1); flex: 1; min-width: 0;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .deck-shortcut-arrow { flex-shrink: 0; color: var(--text-3); }
@@ -452,8 +451,8 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .board-code { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; width: 46px; flex-shrink: 0; }
         .board-text { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-soft); }
         .mod { position: relative; }
-        .mod .instr-motif { color: var(--id-hue, var(--accent)); right: -60px; width: 170px; height: 170px; opacity: 0.07; }
-        .mod .mono-code { color: var(--id-hue, var(--accent-tint)); }
+        .mod .instr-motif { color: var(--accent); right: -60px; width: 170px; height: 170px; opacity: 0.07; }
+        .mod .mono-code { color: var(--text-secondary); }
         /* Amber is the "come here next" signal, never identity. */
         /* threshold light: a filled top edge, not a halo */
         .mod.is-suggested { border-color: var(--border); }
@@ -538,7 +537,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
           transition: border-color 0.15s ease, background 0.15s ease; }
         .mod:hover { border-color: var(--border); background: var(--elev-2); }
         /* the rail is the status signal — no word badge */
-        .mod-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--id-hue, var(--accent)); }
+        .mod-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
         .mod.is-live .mod-rail { opacity: 1; }
         .mod.is-ready .mod-rail { opacity: 0.45; }
         .mod.is-open .mod-rail { opacity: 0.22; }
@@ -548,7 +547,7 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .mod-lock { color: var(--muted2); }
         .mod-name { font-family: var(--font-display); font-size: 15.5px; font-weight: 700; color: var(--text); margin: 0; line-height: 1.3; }
         .mod-bar { height: 4px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; box-shadow: var(--shadow-inset); }
-        .mod-fill { height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg, color-mix(in srgb, var(--id-hue, var(--accent)) 45%, transparent), var(--id-hue, var(--accent))); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .mod-fill { height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, transparent), var(--accent)); transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
         .mod-fill.is-muted { background: var(--muted2); }
         .mod-meta { font-size: 12px; color: var(--muted); margin: 0; }
         .mod-actions { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 4px; }

@@ -105,7 +105,7 @@ function FlightDeck({
         .tape-row.is-current { font-size: 20px; color: var(--cold); opacity: 1; }
         .tape-bracket { position: absolute; left: 6px; right: 6px; top: 50%; height: 26px; transform: translateY(-50%);
           border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
-        .tape-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-3);
+        .tape-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-2);
           white-space: nowrap; font-variant-numeric: tabular-nums; }
 
         /* the one primary card — large tap target */

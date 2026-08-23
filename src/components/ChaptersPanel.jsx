@@ -559,10 +559,10 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           border: none; padding: 7px 2px; cursor: pointer; font-size: 12.5px; color: var(--muted); }
         .manifest-item button:hover { color: var(--text-soft); }
         .manifest-item.is-here button { color: var(--text); cursor: default; }
-        .manifest-item.is-here .manifest-code { color: var(--presence); }
-        .manifest-item.is-done .manifest-title { color: var(--muted2); }
+        .manifest-item.is-here .manifest-code { color: var(--text-primary); }
+        .manifest-item.is-done .manifest-title { color: var(--muted); }
         .manifest-code { font-family: var(--font-mono); font-size: 10.5px; color: var(--accent-tint); flex-shrink: 0; }
-        .manifest-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .manifest-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
         .manifest-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted2); margin: 8px 0 0; }
         @media (min-width: 900px) { .manifest { grid-column: auto; border-top: none; border-left: 1px solid var(--border-soft);
           margin-top: 0; padding-top: 0; padding-left: 18px; } }
@@ -658,7 +658,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
            a ratio -- the image underneath is arbitrary. It carries its own
            backing and full-strength text: it measured 2.33:1 before. */
         .video-facade-kicker { position: absolute; left: 12px; bottom: 11px; font-family: var(--font-mono); font-size: 10px;
-          letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-1);
+          letter-spacing: 0.12em; text-transform: uppercase; color: #FFF;
           background: rgb(0 0 0 / 0.62); padding: 3px 7px; border-radius: 6px; }
         .video-facade-play { position: relative; display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%;
           background: color-mix(in srgb, var(--accent) 92%, transparent); color: var(--on-accent);

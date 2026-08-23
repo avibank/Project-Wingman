@@ -1,0 +1,367 @@
+/* GENERATED — do not edit. Run: node scripts/build-tokens.mjs
+ *
+ * docs/SPEC-V2.md §3. Three layers: primitives, semantics, components.
+ * Components must reference semantics only — never a --mono-* step directly.
+ */
+
+
+:root {
+  --beacon-0: #FFF6F3;
+  --beacon-0: oklch(0.99 0.024 27);
+  --beacon-50: #FFEFEC;
+  --beacon-50: oklch(0.97 0.024 27);
+  --beacon-100: #FFDCD4;
+  --beacon-100: oklch(0.94 0.064 27);
+  --beacon-200: #FFCBC4;
+  --beacon-200: oklch(0.89 0.064 27);
+  --beacon-300: #FFA89D;
+  --beacon-300: oklch(0.82 0.112 27);
+  --beacon-400: #FF7E72;
+  --beacon-400: oklch(0.74 0.16 27);
+  --beacon-500: #E3655A;
+  --beacon-500: oklch(0.66 0.16 27);
+  --beacon-600: #C44840;
+  --beacon-600: oklch(0.57 0.16 27);
+  --beacon-700: #993A34;
+  --beacon-700: oklch(0.48 0.128 27);
+  --beacon-800: #6C2A25;
+  --beacon-800: oklch(0.38 0.096 27);
+  --beacon-900: #431B17;
+  --beacon-900: oklch(0.28 0.064 27);
+  --beacon-950: #250E0C;
+  --beacon-950: oklch(0.2 0.04 27);
+  --beacon-1000: #190403;
+  --beacon-1000: oklch(0.15 0.04 27);
+}
+
+:root[data-livery="contrail"], [data-livery="contrail"] {
+  --livery-name: "Contrail";
+  --presence-hue: 70;
+  --mono-0: #FBFCFC;
+  --mono-0: oklch(0.99 0.0003 240);
+  --mono-50: #F5F5F5;
+  --mono-50: oklch(0.97 0.0003 240);
+  --mono-100: #EBEBEC;
+  --mono-100: oklch(0.94 0.0008 240);
+  --mono-200: #DADBDB;
+  --mono-200: oklch(0.89 0.0008 240);
+  --mono-300: #C3C4C5;
+  --mono-300: oklch(0.82 0.0015 240);
+  --mono-400: #AAABAC;
+  --mono-400: oklch(0.74 0.0021 240);
+  --mono-500: #919293;
+  --mono-500: oklch(0.66 0.0021 240);
+  --mono-600: #767778;
+  --mono-600: oklch(0.57 0.0021 240);
+  --mono-700: #5D5E5E;
+  --mono-700: oklch(0.48 0.0017 240);
+  --mono-800: #424243;
+  --mono-800: oklch(0.38 0.0013 240);
+  --mono-900: #282929;
+  --mono-900: oklch(0.28 0.0008 240);
+  --mono-950: #161616;
+  --mono-950: oklch(0.2 0.0005 240);
+  --mono-1000: #0B0B0B;
+  --mono-1000: oklch(0.15 0.0005 240);
+}
+
+:root[data-livery="night-ops"], [data-livery="night-ops"] {
+  --livery-name: "Night Ops";
+  --presence-hue: 60;
+  --mono-0: #FAFCFD;
+  --mono-0: oklch(0.99 0.0021 225);
+  --mono-50: #F4F5F6;
+  --mono-50: oklch(0.97 0.0021 225);
+  --mono-100: #E7ECEE;
+  --mono-100: oklch(0.94 0.0056 225);
+  --mono-200: #D7DBDD;
+  --mono-200: oklch(0.89 0.0056 225);
+  --mono-300: #BEC6C9;
+  --mono-300: oklch(0.82 0.0098 225);
+  --mono-400: #A2ADB1;
+  --mono-400: oklch(0.74 0.014 225);
+  --mono-500: #8A9499;
+  --mono-500: oklch(0.66 0.014 225);
+  --mono-600: #6F797E;
+  --mono-600: oklch(0.57 0.014 225);
+  --mono-700: #575F62;
+  --mono-700: oklch(0.48 0.0112 225);
+  --mono-800: #3E4346;
+  --mono-800: oklch(0.38 0.0084 225);
+  --mono-900: #26292B;
+  --mono-900: oklch(0.28 0.0056 225);
+  --mono-950: #141617;
+  --mono-950: oklch(0.2 0.0035 225);
+  --mono-1000: #0A0B0C;
+  --mono-1000: oklch(0.15 0.0035 225);
+}
+
+:root[data-livery="carrier-deck"], [data-livery="carrier-deck"] {
+  --livery-name: "Carrier Deck";
+  --presence-hue: 40;
+  --mono-0: #FBFCFD;
+  --mono-0: oklch(0.99 0.0019 255);
+  --mono-50: #F4F5F6;
+  --mono-50: oklch(0.97 0.0019 255);
+  --mono-100: #E9EBEE;
+  --mono-100: oklch(0.94 0.005 255);
+  --mono-200: #D8DBDE;
+  --mono-200: oklch(0.89 0.005 255);
+  --mono-300: #C0C4CA;
+  --mono-300: oklch(0.82 0.0088 255);
+  --mono-400: #A6ABB3;
+  --mono-400: oklch(0.74 0.0126 255);
+  --mono-500: #8D939A;
+  --mono-500: oklch(0.66 0.0126 255);
+  --mono-600: #72787F;
+  --mono-600: oklch(0.57 0.0126 255);
+  --mono-700: #5A5E63;
+  --mono-700: oklch(0.48 0.0101 255);
+  --mono-800: #404346;
+  --mono-800: oklch(0.38 0.0076 255);
+  --mono-900: #27292B;
+  --mono-900: oklch(0.28 0.005 255);
+  --mono-950: #151617;
+  --mono-950: oklch(0.2 0.0032 255);
+  --mono-1000: #0A0B0C;
+  --mono-1000: oklch(0.15 0.0032 255);
+}
+
+:root[data-livery="altimeter"], [data-livery="altimeter"] {
+  --livery-name: "Altimeter";
+  --presence-hue: 65;
+  --mono-0: #FBFCFC;
+  --mono-0: oklch(0.99 0.0008 260);
+  --mono-50: #F5F5F6;
+  --mono-50: oklch(0.97 0.0008 260);
+  --mono-100: #EAEBED;
+  --mono-100: oklch(0.94 0.0022 260);
+  --mono-200: #DADBDC;
+  --mono-200: oklch(0.89 0.0022 260);
+  --mono-300: #C2C4C7;
+  --mono-300: oklch(0.82 0.0039 260);
+  --mono-400: #A9ABAE;
+  --mono-400: oklch(0.74 0.0056 260);
+  --mono-500: #909296;
+  --mono-500: oklch(0.66 0.0056 260);
+  --mono-600: #75777B;
+  --mono-600: oklch(0.57 0.0056 260);
+  --mono-700: #5C5E60;
+  --mono-700: oklch(0.48 0.0045 260);
+  --mono-800: #414244;
+  --mono-800: oklch(0.38 0.0034 260);
+  --mono-900: #28292A;
+  --mono-900: oklch(0.28 0.0022 260);
+  --mono-950: #161617;
+  --mono-950: oklch(0.2 0.0014 260);
+  --mono-1000: #0B0B0C;
+  --mono-1000: oklch(0.15 0.0014 260);
+}
+
+:root[data-livery="aurora"], [data-livery="aurora"] {
+  --livery-name: "Aurora";
+  --presence-hue: 20;
+  --mono-0: #FCFBFD;
+  --mono-0: oklch(0.99 0.0019 300);
+  --mono-50: #F5F5F6;
+  --mono-50: oklch(0.97 0.0019 300);
+  --mono-100: #EBEAEE;
+  --mono-100: oklch(0.94 0.005 300);
+  --mono-200: #DBDADE;
+  --mono-200: oklch(0.89 0.005 300);
+  --mono-300: #C5C3C9;
+  --mono-300: oklch(0.82 0.0088 300);
+  --mono-400: #ACA9B2;
+  --mono-400: oklch(0.74 0.0126 300);
+  --mono-500: #939199;
+  --mono-500: oklch(0.66 0.0126 300);
+  --mono-600: #78767E;
+  --mono-600: oklch(0.57 0.0126 300);
+  --mono-700: #5E5C63;
+  --mono-700: oklch(0.48 0.0101 300);
+  --mono-800: #434146;
+  --mono-800: oklch(0.38 0.0076 300);
+  --mono-900: #29282B;
+  --mono-900: oklch(0.28 0.005 300);
+  --mono-950: #161617;
+  --mono-950: oklch(0.2 0.0032 300);
+  --mono-1000: #0B0B0C;
+  --mono-1000: oklch(0.15 0.0032 300);
+}
+
+:root[data-livery="dawn-patrol"], [data-livery="dawn-patrol"] {
+  --livery-name: "Dawn Patrol";
+  --presence-hue: 45;
+  --mono-0: #FDFBFA;
+  --mono-0: oklch(0.99 0.0019 60);
+  --mono-50: #F6F5F4;
+  --mono-50: oklch(0.97 0.0019 60);
+  --mono-100: #EEEAE8;
+  --mono-100: oklch(0.94 0.005 60);
+  --mono-200: #DDDAD7;
+  --mono-200: oklch(0.89 0.005 60);
+  --mono-300: #C9C3BE;
+  --mono-300: oklch(0.82 0.0088 60);
+  --mono-400: #B1A9A3;
+  --mono-400: oklch(0.74 0.0126 60);
+  --mono-500: #98918B;
+  --mono-500: oklch(0.66 0.0126 60);
+  --mono-600: #7D7670;
+  --mono-600: oklch(0.57 0.0126 60);
+  --mono-700: #625C58;
+  --mono-700: oklch(0.48 0.0101 60);
+  --mono-800: #45413E;
+  --mono-800: oklch(0.38 0.0076 60);
+  --mono-900: #2B2826;
+  --mono-900: oklch(0.28 0.005 60);
+  --mono-950: #171615;
+  --mono-950: oklch(0.2 0.0032 60);
+  --mono-1000: #0C0B0A;
+  --mono-1000: oklch(0.15 0.0032 60);
+}
+
+:root[data-variant="night"], [data-variant="night"] {
+  --bg-ground: var(--mono-1000);
+  --bg-panel: var(--mono-900);
+  --bg-raised: var(--mono-800);
+  --text-primary: var(--mono-50);
+  --text-secondary: var(--mono-300);
+  --text-tertiary: var(--mono-500);
+  --accent-interactive: var(--mono-100);
+  --danger: var(--beacon-500);
+  --hairline: rgb(255 255 255 / 0.07);
+  --hairline-bevel: rgb(255 255 255 / 0.10);
+}
+
+:root[data-variant="day"], [data-variant="day"] {
+  --bg-ground: var(--mono-50);
+  --bg-panel: var(--mono-0);
+  --bg-raised: var(--mono-0);
+  --text-primary: var(--mono-900);
+  --text-secondary: var(--mono-700);
+  --text-tertiary: var(--mono-500);
+  --accent-interactive: var(--mono-800);
+  --danger: var(--beacon-600);
+  --hairline: var(--mono-200);
+  --hairline-bevel: var(--mono-100);
+}
+
+:root[data-livery="contrail"][data-variant="night"],
+[data-livery="contrail"][data-variant="night"] {
+  --presence-ground: #1A0F03;
+  --presence-ground: oklch(0.18 0.03 70);
+  --presence-panel: #3A2E20;
+  --presence-panel: oklch(0.31 0.03 70);
+  --presence-lit: #2B1C08;
+  --presence-lit: oklch(0.24 0.04 70);
+}
+
+:root[data-livery="contrail"][data-variant="day"],
+[data-livery="contrail"][data-variant="day"] {
+  --presence-ground: #F9E8D6;
+  --presence-ground: oklch(0.94 0.03 70);
+  --presence-panel: #FFEFDD;
+  --presence-panel: oklch(0.96 0.03 70);
+  --presence-lit: #E9D4BC;
+  --presence-lit: oklch(0.88 0.04 70);
+}
+
+:root[data-livery="night-ops"][data-variant="night"],
+[data-livery="night-ops"][data-variant="night"] {
+  --presence-ground: #1B0E04;
+  --presence-ground: oklch(0.18 0.03 60);
+  --presence-panel: #3C2D21;
+  --presence-panel: oklch(0.31 0.03 60);
+  --presence-lit: #2D1A0A;
+  --presence-lit: oklch(0.24 0.04 60);
+}
+
+:root[data-livery="night-ops"][data-variant="day"],
+[data-livery="night-ops"][data-variant="day"] {
+  --presence-ground: #FBE7D8;
+  --presence-ground: oklch(0.94 0.03 60);
+  --presence-panel: #FFEEDE;
+  --presence-panel: oklch(0.96 0.03 60);
+  --presence-lit: #ECD2BE;
+  --presence-lit: oklch(0.88 0.04 60);
+}
+
+:root[data-livery="carrier-deck"][data-variant="night"],
+[data-livery="carrier-deck"][data-variant="night"] {
+  --presence-ground: #1D0D07;
+  --presence-ground: oklch(0.18 0.03 40);
+  --presence-panel: #3E2B25;
+  --presence-panel: oklch(0.31 0.03 40);
+  --presence-lit: #2F1810;
+  --presence-lit: oklch(0.24 0.04 40);
+}
+
+:root[data-livery="carrier-deck"][data-variant="day"],
+[data-livery="carrier-deck"][data-variant="day"] {
+  --presence-ground: #FEE5DC;
+  --presence-ground: oklch(0.94 0.03 40);
+  --presence-panel: #FFECE3;
+  --presence-panel: oklch(0.96 0.03 40);
+  --presence-lit: #F0CFC4;
+  --presence-lit: oklch(0.88 0.04 40);
+}
+
+:root[data-livery="altimeter"][data-variant="night"],
+[data-livery="altimeter"][data-variant="night"] {
+  --presence-ground: #1B0F04;
+  --presence-ground: oklch(0.18 0.03 65);
+  --presence-panel: #3B2D20;
+  --presence-panel: oklch(0.31 0.03 65);
+  --presence-lit: #2C1B09;
+  --presence-lit: oklch(0.24 0.04 65);
+}
+
+:root[data-livery="altimeter"][data-variant="day"],
+[data-livery="altimeter"][data-variant="day"] {
+  --presence-ground: #FAE8D7;
+  --presence-ground: oklch(0.94 0.03 65);
+  --presence-panel: #FFEEDD;
+  --presence-panel: oklch(0.96 0.03 65);
+  --presence-lit: #EBD3BD;
+  --presence-lit: oklch(0.88 0.04 65);
+}
+
+:root[data-livery="aurora"][data-variant="night"],
+[data-livery="aurora"][data-variant="night"] {
+  --presence-ground: #1D0C0C;
+  --presence-ground: oklch(0.18 0.03 20);
+  --presence-panel: #3E2A2A;
+  --presence-panel: oklch(0.31 0.03 20);
+  --presence-lit: #301717;
+  --presence-lit: oklch(0.24 0.04 20);
+}
+
+:root[data-livery="aurora"][data-variant="day"],
+[data-livery="aurora"][data-variant="day"] {
+  --presence-ground: #FFE4E3;
+  --presence-ground: oklch(0.94 0.03 20);
+  --presence-panel: #FFEAE9;
+  --presence-panel: oklch(0.96 0.03 20);
+  --presence-lit: #F1CECD;
+  --presence-lit: oklch(0.88 0.04 20);
+}
+
+:root[data-livery="dawn-patrol"][data-variant="night"],
+[data-livery="dawn-patrol"][data-variant="night"] {
+  --presence-ground: #1C0D06;
+  --presence-ground: oklch(0.18 0.03 45);
+  --presence-panel: #3D2C24;
+  --presence-panel: oklch(0.31 0.03 45);
+  --presence-lit: #2F190F;
+  --presence-lit: oklch(0.24 0.04 45);
+}
+
+:root[data-livery="dawn-patrol"][data-variant="day"],
+[data-livery="dawn-patrol"][data-variant="day"] {
+  --presence-ground: #FEE5DB;
+  --presence-ground: oklch(0.94 0.03 45);
+  --presence-panel: #FFECE2;
+  --presence-panel: oklch(0.96 0.03 45);
+  --presence-lit: #EFD0C2;
+  --presence-lit: oklch(0.88 0.04 45);
+}

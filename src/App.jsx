@@ -1,5 +1,5 @@
 import "./styles/fonts.css";
-import "./styles/liveries.css";
+import "./styles/tokens.css";
 import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
@@ -438,21 +438,38 @@ function AppInner() {
         * { scrollbar-width: thin; scrollbar-color: var(--border-hover) var(--bg); }
         html, body, #root { height: 100%; margin: 0; background: var(--surface-0); }
         .app {
-          /* Aliases onto the generated livery tokens (src/styles/liveries.css).
-             Cold is the machine, warm is people — §2.2. Component-level names
-             are retained so existing screens repaint without a rewrite; they
-             resolve to livery tokens and nothing else. */
-          --bg: var(--surface-0);
-          --panel: var(--surface-1);
-          --panel-alt: var(--surface-1);
-          --elev-0: var(--surface-0);
-          --elev-1: var(--surface-1);
-          --elev-2: var(--surface-2);
-          --well: var(--surface-0);
+          /* The component layer. Every name below resolves to a §3.6 semantic
+             and to nothing else — no component may reference a --mono-* step
+             directly. Old names are kept as aliases so screens repaint without
+             a rewrite; they are retired screen by screen, not in one sweep.
+
+             v2 is monochrome: warm and cold are gone as colour. What was the
+             cold channel is now accent-interactive (value, not hue), and what
+             was the warm channel is presence — light temperature, not paint. */
+          --surface-0: var(--bg-ground);
+          --surface-1: var(--bg-panel);
+          --surface-2: var(--bg-raised);
+          --text-1: var(--text-primary);
+          --text-2: var(--text-secondary);
+          --text-3: var(--text-tertiary);
+          --cold: var(--accent-interactive);
+          /* --warm was mostly used as "the primary fill", not as presence. In
+             monochrome that is accent-interactive — the brightest thing on a
+             dark page. Real presence is --presence below, and it is light, not
+             paint; anything filling a button with it would be dark on dark. */
+          --warm: var(--accent-interactive);
+
+          --bg: var(--bg-ground);
+          --panel: var(--bg-panel);
+          --panel-alt: var(--bg-panel);
+          --elev-0: var(--bg-ground);
+          --elev-1: var(--bg-panel);
+          --elev-2: var(--bg-raised);
+          --well: var(--bg-ground);
           --border: var(--hairline);
           --border-soft: var(--hairline);
-          --border-hover: var(--hairline);
-          --text: var(--text-1);
+          --border-hover: var(--hairline-bevel);
+          --text: var(--text-primary);
           --text-soft: var(--text-2);
           --muted: var(--text-2);
           --muted2: var(--text-3);
@@ -464,12 +481,13 @@ function AppInner() {
           --accent-soft: color-mix(in srgb, var(--cold) 12%, transparent);
           --accent-glow: color-mix(in srgb, var(--cold) 18%, transparent);
           --on-accent: var(--surface-0);
-          --presence: var(--warm);
-          --presence-soft: color-mix(in srgb, var(--warm) 13%, transparent);
-          --presence-glow: color-mix(in srgb, var(--warm) 20%, transparent);
-          --on-presence: var(--surface-0);
+          --presence: var(--presence-lit);
+          --presence-soft: var(--presence-panel);
+          --presence-glow: var(--presence-lit);
+          --on-presence: var(--text-primary);
           --good: var(--cold);
           --bad: var(--text-2);
+          --destructive: var(--danger);
           --calm: var(--text-2);
           --avatar-bg: var(--surface-2);
           --shadow-1: 0 1px 2px rgb(0 0 0 / 0.20), 0 4px 12px rgb(0 0 0 / 0.18);

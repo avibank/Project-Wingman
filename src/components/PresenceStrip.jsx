@@ -78,7 +78,7 @@ function PresenceStrip({ people = [], moduleCode = null, onOpenPilot }) {
           background: none; border: none; cursor: pointer; padding: 4px 6px; min-width: 68px; min-height: 44px; }
         .pstrip-name { font-size: 12px; color: var(--text-2); max-width: 68px;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .pstrip-code { font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+        .pstrip-code { font-family: var(--font-mono); font-size: 11px; color: var(--text-2);
           font-variant-numeric: tabular-nums; }
         .pstrip-btn:hover .pstrip-name { color: var(--text-1); }
         @media (prefers-reduced-motion: reduce) { .pstrip-live { box-shadow: none; outline: 2px solid var(--warm); outline-offset: 1px; } }

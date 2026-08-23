@@ -162,8 +162,8 @@ function PilotSettings({ modulesCompleted = 0 }) {
           color: var(--text-1); margin: 0 0 12px; }
         .ps2-block { margin-bottom: 20px; }
         .ps2-row-label { display: block; font-size: 15px; color: var(--text-1); margin: 0 0 8px; }
-        .ps2-row-hint { display: block; font-size: 13px; line-height: 1.45; color: var(--text-3); max-width: 46ch; }
-        .ps2-note { font-size: 13px; color: var(--text-3); margin: 8px 0 0; }
+        .ps2-row-hint { display: block; font-size: 13px; line-height: 1.45; color: var(--text-2); max-width: 46ch; }
+        .ps2-note { font-size: 13px; color: var(--text-2); margin: 8px 0 0; }
 
         .ps2-callsign { display: flex; gap: 8px; }
         .ps2-input { flex: 1; min-height: 44px; padding: 0 12px; border: none; border-radius: 12px;
@@ -196,7 +196,7 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-row-text { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .ps2-switch { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
           min-height: 44px; padding: 0 10px 0 4px; border: none; border-radius: 999px;
-          background: var(--surface-2); cursor: pointer; color: var(--text-3); font-size: 13px; }
+          background: var(--surface-2); cursor: pointer; color: var(--text-2); font-size: 13px; }
         .ps2-switch.is-on { background: color-mix(in oklab, var(--warm) 22%, var(--surface-2));
           color: var(--text-1); }
         .ps2-knob { width: 18px; height: 18px; border-radius: 50%; background: var(--text-3);

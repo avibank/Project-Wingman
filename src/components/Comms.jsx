@@ -293,7 +293,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
         .cm-pin-edge { width: 2px; align-self: stretch; background: var(--edge); border-radius: 2px; flex-shrink: 0; }
         .cm-pin-body { flex: 1; font-size: 14px; color: var(--text-2); min-width: 0; }
         .cm-pin-undo { min-height: 36px; padding: 0 10px; border: none; background: none;
-          color: var(--text-3); font-size: 13px; cursor: pointer; }
+          color: var(--text-2); font-size: 13px; cursor: pointer; }
 
         .cm-log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px;
           background: var(--surface-1); }
