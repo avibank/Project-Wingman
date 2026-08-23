@@ -26,8 +26,13 @@ create index if not exists comms_answers_idx
 -- The code sits on the question itself. Putting it on a parallel `calls` row
 -- would mean two places to look and one of them usually empty.
 alter table comms_messages add column if not exists squawk text;
-alter table comms_messages add constraint comms_squawk_code
-  check (squawk is null or squawk in ('7600', '7700')) not valid;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'comms_squawk_code') then
+    alter table comms_messages add constraint comms_squawk_code
+      check (squawk is null or squawk in ('7600', '7700')) not valid;
+  end if;
+end $$;
 
 -- §9.4.3 — "either now or scheduled (tonight 20:00)". 0005 gave formations a
 -- started_at; a scheduled one needs a start in the future.
@@ -62,8 +67,13 @@ create index if not exists comms_team_idx on comms_messages (team_id, created_at
 -- explanation verified.
 alter table pilot_profiles add column if not exists status  text    not null default 'student';
 alter table pilot_profiles add column if not exists helped  integer not null default 0;
-alter table pilot_profiles add constraint pilot_status_ladder
-  check (status in ('student', 'private', 'instrument', 'commercial', 'cfi')) not valid;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'pilot_status_ladder') then
+    alter table pilot_profiles add constraint pilot_status_ladder
+      check (status in ('student', 'private', 'instrument', 'commercial', 'cfi')) not valid;
+  end if;
+end $$;
 
 -- §9.4.5 — replies to you, your teams, and answers to your questions. Nothing
 -- else, unless you opt in.
