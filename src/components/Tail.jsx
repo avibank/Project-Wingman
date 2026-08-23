@@ -1,16 +1,16 @@
-import { LIVERIES } from "./LiveryPicker.jsx";
+import { resolveLivery, tailHue } from "../lib/liveries.js";
 
 // §2.9 — a tail is hue + marking + initial, always, at every size. Colour is
 // never the sole channel for identity anywhere in this app. Below ~16px the
 // initial stops being legible and drops; the marking stays.
 
-const HUE = Object.fromEntries(LIVERIES.map((l) => [l.id, l.hw]));
-const IDS = new Set(LIVERIES.map((l) => l.id));
-export const hueOf = (livery) => HUE[livery] ?? HUE["dawn-patrol"];
+// §3.4 — under monochrome the only hue a person carries is their livery's
+// presence temperature. Marking collisions (§2.9) are computed against it.
+export const hueOf = (livery) => tailHue(livery);
 // The paint comes from the generated livery tokens, never from a hue
 // re-derived here: the liveries are authored in oklch, and the same number
 // read as an HSL hue lands in a different colour entirely.
-const liveryId = (id) => (IDS.has(id) ? id : "dawn-patrol");
+const liveryId = (id) => resolveLivery(id);
 
 const MARKING_LABEL = {
   solid: "solid ring",

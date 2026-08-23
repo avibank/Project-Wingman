@@ -17,7 +17,7 @@ lists what v1 shipped that v2 reverses.
 | 2 | Debrief (§9.3.3) | **done** |
 | 2 | Naming + placards (§8) | **done** |
 | 2 | Delete list (§6.6) | **done** |
-| 3 | Mono ramp + liveries (§3.4) | not started |
+| 3 | Mono ramp + liveries (§3.4) | **done** |
 | 3 | Presence light & motion (§4) | not started |
 | 3 | Surfaces, panelling, glow (§6) | not started |
 | 4 | Comments, squawk, Ready Room, teams, verified | not started — blocked on §10 cold start |
@@ -405,3 +405,37 @@ Begin / Enroll / Joining… CTAs — which means **§14 bug 5** (Begin on an enr
 showing "Joining…" for two seconds then reverting with no navigation) is resolved by the
 screen no longer existing. §9.1 has no enrollment concept: a module is active or parked,
 and §9.1.4 makes switching one tap with no confirmation.
+
+## Phase 3 · Liveries (§3.4) — done
+
+### A livery that painted nothing
+
+v2 replaces **Sunset Approach** with **Altimeter**, and the picker was never updated. The
+token block is selected by `[data-livery="…"]`, so anyone stored on `sunset-approach`
+would have resolved **no tokens at all** — not a fallback, not a wrong colour, nothing.
+
+`src/lib/liveries.js` is now the single source, and a test asserts it against
+`scripts/build-tokens.mjs` on **ids, base hue, chroma multiplier and presence hue** — not
+just the names. A retired or unknown id falls back to Dawn Patrol before it can reach the
+DOM, checked at hydration and at every selection point.
+
+### The picker is a ramp gallery
+
+§3.4: "A single dot cannot honestly show the difference between two monochromes." Each
+row is seven steps of that livery's own ramp, dark to light, ending in its presence
+swatch — the soul delta, visible.
+
+Verified: six rows, four locked at zero modules, Contrail's ramp tinted at hue 240 and
+Dawn Patrol's at 60, presence swatches at 70 and 45 respectively.
+
+It lives in Settings now (§3.4), and `PilotSettings` no longer carries its own inline
+copy of the list.
+
+### The harness broke the same way twice
+
+Deleting `HubPage` and changing `LiveryPicker`'s exports each took the harness bundle down
+— **`npm run build` passed both times**, because the app no longer imported those things
+and only the harness did. Both showed as an empty root with no console output; both were
+only legible in `preview_logs`.
+
+Worth stating as a rule: **after deleting or re-exporting anything, grep the harness too.**

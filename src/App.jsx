@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
+import { resolveLivery } from "./lib/liveries.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import Home from "./components/Home.jsx";
@@ -104,7 +105,7 @@ function AppInner() {
     if (!progress.loaded) return;
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setLivery(progress.get("pw-livery", "dawn-patrol"));
+    setLivery(resolveLivery(progress.get("pw-livery", "dawn-patrol")));
     setVariantPin(progress.get("pw-variant-pin", null));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));

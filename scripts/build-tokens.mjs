@@ -126,6 +126,20 @@ function beaconRamp() {
   return out.join("\n");
 }
 
+// §3.4 — a livery colours your tail ring, and under monochrome that ring is
+// the only hue a person carries. Emitted at root scope for every livery, per
+// variant, so one roster can show six people in six liveries at once.
+function tailPalette(variant) {
+  const dark = variant === "night";
+  const out = [`:root[data-variant="${variant}"], [data-variant="${variant}"] {`];
+  for (const l of LIVERIES) {
+    pair(out, `tail-${l.id}`, dark ? 0.78 : 0.52, 0.11, l.presence);
+    pair(out, `tail-${l.id}-bg`, dark ? 0.26 : 0.93, 0.03, l.presence);
+  }
+  out.push("}");
+  return out.join("\n");
+}
+
 function semantics(variant) {
   const map = SEMANTICS[variant];
   const out = [
@@ -175,6 +189,8 @@ const css = [
   ...LIVERIES.map(primitives),
   semantics("night"),
   semantics("day"),
+  tailPalette("night"),
+  tailPalette("day"),
   ...LIVERIES.flatMap((l) => [presence(l, "night"), presence(l, "day")]),
 ].join("\n\n") + "\n";
 

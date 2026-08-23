@@ -246,6 +246,60 @@
   --hairline-bevel: var(--mono-100);
 }
 
+:root[data-variant="night"], [data-variant="night"] {
+  --tail-contrail: #E5AB66;
+  --tail-contrail: oklch(0.78 0.11 70);
+  --tail-contrail-bg: #2D2114;
+  --tail-contrail-bg: oklch(0.26 0.03 70);
+  --tail-night-ops: #EBA66D;
+  --tail-night-ops: oklch(0.78 0.11 60);
+  --tail-night-ops-bg: #2F2115;
+  --tail-night-ops-bg: oklch(0.26 0.03 60);
+  --tail-carrier-deck: #F49F81;
+  --tail-carrier-deck: oklch(0.78 0.11 40);
+  --tail-carrier-deck-bg: #311F19;
+  --tail-carrier-deck-bg: oklch(0.26 0.03 40);
+  --tail-altimeter: #E8A869;
+  --tail-altimeter: oklch(0.78 0.11 65);
+  --tail-altimeter-bg: #2E2114;
+  --tail-altimeter-bg: oklch(0.26 0.03 65);
+  --tail-aurora: #F69A9A;
+  --tail-aurora: oklch(0.78 0.11 20);
+  --tail-aurora-bg: #311E1E;
+  --tail-aurora-bg: oklch(0.26 0.03 20);
+  --tail-dawn-patrol: #F2A07C;
+  --tail-dawn-patrol: oklch(0.78 0.11 45);
+  --tail-dawn-patrol-bg: #301F18;
+  --tail-dawn-patrol-bg: oklch(0.26 0.03 45);
+}
+
+:root[data-variant="day"], [data-variant="day"] {
+  --tail-contrail: #915C08;
+  --tail-contrail: oklch(0.52 0.11 70);
+  --tail-contrail-bg: #F5E5D3;
+  --tail-contrail-bg: oklch(0.93 0.03 70);
+  --tail-night-ops: #965719;
+  --tail-night-ops: oklch(0.52 0.11 60);
+  --tail-night-ops-bg: #F8E4D4;
+  --tail-night-ops-bg: oklch(0.93 0.03 60);
+  --tail-carrier-deck: #9D5035;
+  --tail-carrier-deck: oklch(0.52 0.11 40);
+  --tail-carrier-deck-bg: #FBE2D9;
+  --tail-carrier-deck-bg: oklch(0.93 0.03 40);
+  --tail-altimeter: #935A11;
+  --tail-altimeter: oklch(0.52 0.11 65);
+  --tail-altimeter-bg: #F7E4D4;
+  --tail-altimeter-bg: oklch(0.93 0.03 65);
+  --tail-aurora: #9E4C4E;
+  --tail-aurora: oklch(0.52 0.11 20);
+  --tail-aurora-bg: #FCE0E0;
+  --tail-aurora-bg: oklch(0.93 0.03 20);
+  --tail-dawn-patrol: #9C522E;
+  --tail-dawn-patrol: oklch(0.52 0.11 45);
+  --tail-dawn-patrol-bg: #FAE2D8;
+  --tail-dawn-patrol-bg: oklch(0.93 0.03 45);
+}
+
 :root[data-livery="contrail"][data-variant="night"],
 [data-livery="contrail"][data-variant="night"] {
   --presence-ground: #1A0F03;

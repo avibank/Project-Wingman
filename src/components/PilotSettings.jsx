@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
-import { LIVERIES, unlockedLiveries } from "./LiveryPicker.jsx";
+import LiveryPicker from "./LiveryPicker.jsx";
+import { resolveLivery } from "../lib/liveries.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 
 // §8.3 makes invisible mode mandatory and requires it in settings; §7.6
@@ -78,8 +79,6 @@ function PilotSettings({ modulesCompleted = 0 }) {
 
   if (state === "loading") return null;
   if (state === "unavailable") return null;
-
-  const unlocked = unlockedLiveries(modulesCompleted);
   const invisible = profile?.invisible === true;
   const glowOn = profile?.glow_enabled !== false;
 
@@ -104,25 +103,14 @@ function PilotSettings({ modulesCompleted = 0 }) {
 
       <div className="ps2-block">
         <p className="ps2-row-label">Livery</p>
-        <ul className="ps2-liveries">
-          {LIVERIES.map((l) => {
-            const locked = !unlocked.has(l.id);
-            const current = (profile?.livery || "dawn-patrol") === l.id;
-            return (
-              <li key={l.id}>
-                <button
-                  className={`ps2-livery ${current ? "is-current" : ""}`}
-                  disabled={locked || busy} aria-pressed={current}
-                  onClick={() => { patch({ livery: l.id }); document.documentElement.setAttribute("data-livery", l.id); }}
-                >
-                  <Tail name={l.name} livery={l.id} marking="solid" size={32} />
-                  <span className="ps2-livery-name">{l.name}</span>
-                  {locked && <span className="ps2-livery-lock">Complete a module</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <LiveryPicker
+          current={profile?.livery}
+          modulesCompleted={modulesCompleted}
+          onSelect={(id) => {
+            patch({ livery: id });
+            document.documentElement.setAttribute("data-livery", resolveLivery(id));
+          }}
+        />
       </div>
 
       <div className="ps2-block">
@@ -172,17 +160,6 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-save { min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer;
           background: var(--warm); color: var(--surface-0); font-size: 16px; font-weight: 500; }
         .ps2-save:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
-
-        .ps2-liveries { list-style: none; margin: 0; padding: 0;
-          display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-        .ps2-livery { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px;
-          padding: 8px 12px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--surface-1); color: var(--text-1); text-align: left; }
-        .ps2-livery:hover:not(:disabled) { background: var(--surface-2); }
-        .ps2-livery.is-current { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--warm); }
-        .ps2-livery:disabled { cursor: default; }
-        .ps2-livery-name { font-size: 14px; }
-        .ps2-livery-lock { font-size: 12px; color: var(--text-3); margin-left: auto; white-space: nowrap; }
 
         .ps2-chips { display: flex; gap: 6px; flex-wrap: wrap; }
         .ps2-chip { min-height: 44px; padding: 0 14px; border: none; border-radius: 999px; cursor: pointer;
