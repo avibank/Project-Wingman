@@ -330,7 +330,20 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                 <div className="settings-row-sub">Clears completed chapters, bookmarks, and streak on this device</div>
               </div>
             </div>
-            <p className="settings-note">Progress is saved locally on this device only — nothing is sent anywhere.</p>
+            <div className="settings-privacy">
+              {/* §9.6 — this said "saved locally on this device only, nothing is
+                  sent anywhere" on a page that also offers an account, an email
+                  change, a username shown to other people, and class-based
+                  matching. Both could not be true, and the spec is right that
+                  ambiguity here suppresses participation more than bad UI does. */}
+              <p><strong>Shared with other pilots:</strong> your username, your livery, and what
+                chapter you are on while you are studying. Nothing else.</p>
+              <p><strong>Private to you:</strong> your scores, your saved questions, your notes,
+                and your email.</p>
+              <p><strong>Stored on our servers,</strong> not only on this device — that is how
+                progress follows you between devices and how anyone can answer your questions.
+                Turn on <em>Fly invisible</em> in Settings and nobody sees where you are.</p>
+            </div>
           </div>
 
           <div className="settings-block settings-danger-zone">
@@ -435,6 +448,9 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-row--danger .settings-row-icon { color: var(--bad); }
         .settings-row-title { font-size: 14px; color: var(--text); font-weight: 600; }
         .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .settings-privacy { padding: 10px 14px 14px; display: grid; gap: 8px; }
+        .settings-privacy p { font-size: 14px; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 56ch; }
+        .settings-privacy strong { color: var(--text-primary); font-weight: 500; }
         .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
         .settings-error { font-size: 12px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
         .settings-switch { width: 34px; height: 20px; border-radius: var(--r-md); background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }

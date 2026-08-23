@@ -463,3 +463,27 @@ now exists only inside the reader. `/m/jt` is four chapter rows and one heading.
 
 Focus rings survive the monochrome change: they are `var(--accent)`, which resolves to
 `accent-interactive` — a value step, not a hue, as §12 requires.
+
+## §9.6 Settings
+
+**The privacy contradiction is resolved.** The page said *"Progress is saved locally on
+this device only — nothing is sent anywhere"* while also offering an account, an email
+change, a username shown to other people, and class-based matching. Both could not be
+true, and §9.6 is right that ambiguity there suppresses participation more than bad UI
+does. It now says three things plainly:
+
+- **Shared with other pilots:** username, livery, and what chapter you are on while
+  studying. Nothing else.
+- **Private to you:** scores, saved questions, notes, email.
+- **Stored on our servers,** not only on this device — that is how progress follows you
+  and how anyone can answer your questions. With a pointer to Fly invisible.
+
+**The Features panel does not ship.** §9.6 says delete it; it is a test surface, so it is
+behind the same admin check as everything else internal. `/settings` is titled Settings
+and opens on the livery gallery and the pilot controls.
+
+## Contrast, current
+
+All routes, both variants, six liveries: **8 failures**, all in Comms in day, all
+`text-tertiary` at 3.01 on genuine metadata — a section header, a day divider, message
+timestamps. §12 exempts tertiary for exactly this.

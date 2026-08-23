@@ -1,15 +1,19 @@
 import { ChevronLeft, FlaskConical, Minus, Plus } from "lucide-react";
 import BlockedList from "./BlockedList.jsx";
+import { useIsAdmin } from "../lib/admin.js";
 import PilotSettings from "./PilotSettings.jsx";
 
-function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
+function SettingsPage({ onBack, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
+  const isAdmin = useIsAdmin();
   return (
     <div className="settings-page">
       <button className="settings-back" onClick={onBack}>
         <ChevronLeft size={16} /> Back
       </button>
-      <h1 className="settings-title">Features</h1>
+      <h1 className="settings-title">Settings</h1>
 
+      {isAdmin && (
+        <>
       <div className="settings-block">
         <p className="settings-note settings-note-top">
           <FlaskConical size={13} /> Temporary testing area — lets you preview toggleable features in both states without needing real data. Not meant for the final version.
@@ -52,6 +56,9 @@ function SettingsPage({ page, onBack, testStreakOverrideOn, onToggleTestStreakOv
         .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
         .settings-stepper-value { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); min-width: 24px; text-align: center; }
       `}</style>
+        </>
+      )}
+
       <PilotSettings />
       <BlockedList />
 
