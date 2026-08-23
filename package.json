@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "check:content": "node scripts/check-content.mjs",
-    "check": "npm run lint && npm run check:content && npm run build"
+    "check": "npm run lint && npm run check:content && npm run build",
+    "build:sql": "node scripts/build-migration-bundle.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
