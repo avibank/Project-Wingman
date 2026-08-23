@@ -704,3 +704,36 @@ with a visibly abandoned one is not."
 member it had — a duplicate React key and a duplicated card. Teams, team members and
 presence all dedupe explicitly now rather than trusting a query filter, which is the third
 time that assumption has bitten in this codebase.
+
+## §2.3 / §9.2 — the IA, finally
+
+This was blocked from the start: §9.2 moves Social and Comms off the module page and
+§2.3 wants a Ready Room destination, and neither could happen until the Ready Room
+existed. It does now.
+
+- **Module tabs are Chapters · Library.** `ModuleSocial` is deleted — its presence rail,
+  traffic feed and on-your-wing are all superseded by the Ready Room's Now, Squawks and
+  Your crew bands.
+- **Four persistent destinations**: Study · Modules · Logbook · Ready Room, with a `<nav>`
+  landmark, verified present on every route with the right one marked current. §12 puts
+  it at the bottom on phone with Study and Ready Room as the thumb poles — the §2 split
+  made physical.
+- **`/ready/:module`** is the room filtered, with that module's channel inline. §9.4 band
+  four.
+- **A Modules page** at `/modules`, using the same segmented bar Home uses. Rows, not
+  cards — §9.1.3 removed the horizontal card rail deliberately.
+
+The Ready Room item warms when people are on frequency and is neutral when nobody is
+(§4.4), so the door never advertises an empty room.
+
+### Eight more orphans, and a gap one of them exposed
+
+`OnYourWing`, `PresenceStrip`, `Squadron`, `Thread`, `lib/calls`, `lib/comments`,
+`lib/formation`, `lib/formationRail` — all superseded. `Squadron` in particular was the
+twelve-seat grid §9.4.3 calls "the most demoralising surface in the product".
+
+Deleting `lib/calls` exposed a real gap: migration 0007 had the squawk code on the
+`calls` table, joined into the `open_squawks` view — and **nothing creates a call any
+more**, so every code would have been null. The code belongs on the question itself, and
+the composer offers 7600 and 7700 with plain language beside them, only while you are
+actually asking.

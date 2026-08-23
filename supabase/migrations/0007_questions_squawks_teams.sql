@@ -22,8 +22,12 @@ create index if not exists comms_answers_idx
 -- ------------------------------------------------------------ §9.4.2 squawk
 -- Real aviation semantics: 7600 is radio failure ("I've read this three times
 -- and I don't get it"), 7700 is emergency ("checkride Thursday and I'm lost").
-alter table calls add column if not exists squawk text;
-alter table calls add constraint calls_squawk_code check (squawk is null or squawk in ('7600', '7700')) not valid;
+--
+-- The code sits on the question itself. Putting it on a parallel `calls` row
+-- would mean two places to look and one of them usually empty.
+alter table comms_messages add column if not exists squawk text;
+alter table comms_messages add constraint comms_squawk_code
+  check (squawk is null or squawk in ('7600', '7700')) not valid;
 
 -- ------------------------------------------------------------- §9.4.3 teams
 -- Self-formed, 3-6 people, persistent, their own chat. The strongest retention
@@ -92,11 +96,9 @@ select
   q.chapter_id,
   q.module_code,
   q.created_at,
-  c.squawk,
+  q.squawk,
   now() - q.created_at as waiting
 from comms_messages q
-left join calls c
-  on c.chapter_id = q.chapter_id and c.user_id = q.user_id and c.status = 'open'
 where q.is_question
   and q.resolved_at is null
   and not exists (select 1 from comms_messages a where a.answers_id = q.id)

@@ -41,8 +41,11 @@ export async function markAnswer(answerId, questionId, userId) {
   return data === true;
 }
 
-export async function setQuestion(messageId, isQuestion) {
-  const { error } = await supabase.from("comms_messages").update({ is_question: isQuestion }).eq("id", messageId);
+export async function setQuestion(messageId, isQuestion, squawk = null) {
+  const patch = { is_question: isQuestion };
+  // §9.4.2 — a code only means anything on a question.
+  if (isQuestion) patch.squawk = squawk || null;
+  const { error } = await supabase.from("comms_messages").update(patch).eq("id", messageId);
   return !fail(error, true);
 }
 

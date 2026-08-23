@@ -5,10 +5,13 @@ import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { resolveLivery } from "./lib/liveries.js";
+import { fetchAllPresence } from "./lib/presence.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import Home from "./components/Home.jsx";
 import ReadyRoom from "./components/ReadyRoom.jsx";
+import ModulesPage from "./components/ModulesPage.jsx";
+import RootNav from "./components/RootNav.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -62,6 +65,16 @@ function AppInner() {
       : page === "bookmarks" ? routePath.saved()
       : routePath.settings(page));
   const goHome = () => go(routePath.home());
+
+  // §4.4 — the door warms when people are in there, and only then.
+  const [onFrequency, setOnFrequency] = useState(0);
+  useEffect(() => {
+    let live = true;
+    fetchAllPresence(user?.id)
+      .then((rows) => live && setOnFrequency((rows || []).length))
+      .catch(() => {});
+    return () => { live = false; };
+  }, [user?.id]);
   const [bookmarksMode, setBookmarksMode] = useState("list");
   // The persisted "active module" is a preference the hero on Home reads.
   // Inside a module the URL wins.
@@ -311,6 +324,22 @@ function AppInner() {
           />
         </div>
       </header>
+
+      <RootNav
+        current={
+          route.name === "ready" ? "ready"
+          : route.name === "logbook" ? "logbook"
+          : route.name === "modules" ? "modules"
+          : route.name === "home" ? "home" : null
+        }
+        readyWarm={onFrequency > 0}
+        onGo={(id) =>
+          go(id === "ready" ? routePath.ready()
+            : id === "logbook" ? routePath.logbook()
+            : id === "modules" ? routePath.modules()
+            : routePath.home())
+        }
+      />
       {settingsPage === "auth" ? (
         <main className="content content-taxi">
           <AuthPage onBack={() => go(-1)} />
@@ -351,12 +380,21 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
+      ) : route.name === "modules" ? (
+        <main className="content content-taxi">
+          <ModulesPage
+            activeModuleCode={activeModuleCode}
+            onOpenModule={(code) => { setPreferredModuleCode(code); go(routePath.module(code)); }}
+            onGoToChapter={goToChapter}
+            onMakeActive={(code) => setPreferredModuleCode(code)}
+          />
+        </main>
       ) : route.name === "ready" ? (
         <main className="content content-taxi">
           <ReadyRoom
             moduleCode={route.moduleCode}
             onGoToChapter={(m, c, tab) => go(routePath.chapter(m, c, tab))}
-            onOpenModule={(m) => go(routePath.module(m))}
+            onOpenChannel={(m) => go(routePath.ready(m))}
           />
         </main>
       ) : view === "hub" ? (

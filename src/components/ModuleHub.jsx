@@ -5,8 +5,6 @@ import { useUserProgress } from "../lib/userProgress.jsx";
 import { ProgressArc, InstrumentStyles } from "./instruments.jsx";
 import ChaptersPanel from "./ChaptersPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
-import ModuleSocial from "./ModuleSocial.jsx";
-import Comms from "./Comms.jsx";
 
 
 // Everything a module owns lives here. Nothing module-specific sits in global nav.
@@ -67,9 +65,6 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           <Comms moduleCode={module.code} currentChapterId={initialChapterId || null} />
         )}
 
-        {tab === "social" && (
-          <ModuleSocial moduleCode={module.code} moduleName={module.name} onGoToChapter={onGoToChapter} onSignIn={onSignIn} />
-        )}
       </div>
 
       <InstrumentStyles />

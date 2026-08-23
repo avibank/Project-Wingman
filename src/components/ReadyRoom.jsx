@@ -10,6 +10,7 @@ import {
 import { rankPartners, partnerReason, teamCapacity, TEAM_MIN } from "../lib/teams.js";
 import { SQUAWK_LABEL } from "../lib/questions.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import Comms from "./Comms.jsx";
 
 // §9.4 — a room, not a feed. Present tense only: feeds are graveyards at low
 // density. One scroll, four bands, in the order the door was opened for.
@@ -29,7 +30,7 @@ const ago = (iso) => {
   return h < 24 ? `${h}h ago` : `${Math.floor(h / 24)}d ago`;
 };
 
-function ReadyRoom({ moduleCode, onGoToChapter, onOpenModule }) {
+function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
   const { user, isSignedIn } = useUser();
   const [here, setHere] = useState([]);
   const [squawks, setSquawks] = useState([]);
@@ -234,16 +235,25 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenModule }) {
           how the test went, morale. */}
       <section className="rr-band">
         <h2 className="rr-h2">Channels</h2>
-        <ul className="rr-channels">
-          {channels.map((m) => (
-            <li key={m.code}>
-              <button className="rr-channel" onClick={() => onOpenModule?.(m.code)}>
-                <span className="rr-channel-code">{m.code}</span>
-                <span className="rr-channel-name">{moduleName(m.code)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {moduleCode ? (
+          <>
+            <button className="rr-channel-back" onClick={() => onOpenChannel?.(null)}>
+              ← All channels
+            </button>
+            <Comms moduleCode={moduleCode} />
+          </>
+        ) : (
+          <ul className="rr-channels">
+            {channels.map((m) => (
+              <li key={m.code}>
+                <button className="rr-channel" onClick={() => onOpenChannel?.(m.code)}>
+                  <span className="rr-channel-code">{m.code}</span>
+                  <span className="rr-channel-name">{moduleName(m.code)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <TailStyles />
@@ -312,6 +322,9 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenModule }) {
         .rr-partner-name { font-size: 16px; color: var(--text-primary); }
         .rr-partner-why { font-size: 14px; color: var(--text-secondary); }
 
+        .rr-channel-back { align-self: flex-start; min-height: 44px; padding: 0 10px; border: none;
+          border-radius: var(--r-control); background: none; color: var(--text-secondary);
+          font-size: 14px; cursor: pointer; }
         .rr-channels { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
           background: var(--hairline); border-radius: var(--r-panel); overflow: hidden; }
         .rr-channel { display: flex; align-items: baseline; gap: 12px; width: 100%; min-height: 56px;

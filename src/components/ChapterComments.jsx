@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchMessages, sendMessage } from "../lib/comms.js";
 import { groupMessages } from "../lib/commsGrouping.js";
-import { splitQuestions, answeredStrip, composerPlaceholder } from "../lib/questions.js";
+import { splitQuestions, answeredStrip, composerPlaceholder, SQUAWK, SQUAWK_LABEL } from "../lib/questions.js";
 import { markAnswer, setQuestion } from "../lib/readyRoom.js";
 import { fetchProfiles, assignMarkings } from "../lib/squadron.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
@@ -30,6 +30,7 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
   const [profiles, setProfiles] = useState({});
   const [draft, setDraft] = useState("");
   const [asQuestion, setAsQuestion] = useState(false);
+  const [squawk, setSquawk] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [openStrip, setOpenStrip] = useState(false);
   const [sending, setSending] = useState(false);
@@ -64,9 +65,10 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
     setDraft("");
     const saved = await sendMessage({ moduleCode, userId: user.id, body, chapterId });
     if (saved) {
-      if (asQuestion) await setQuestion(saved.id, true);
+      if (asQuestion) await setQuestion(saved.id, true, squawk);
       if (replyTo) await markAnswer(saved.id, replyTo.id, replyTo.user_id === user.id ? user.id : replyTo.user_id);
       setAsQuestion(false);
+      setSquawk(null);
       setReplyTo(null);
       await load();
     } else {
@@ -160,6 +162,22 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
               aria-pressed={asQuestion}
               onClick={() => setAsQuestion((v) => !v)}
             >{asQuestion ? "Asking a question" : "Mark as a question"}</button>
+            {/* §9.4.2 — a code is optional, and only means anything on a
+                question. Plain language beside it, because 7600 is jargon
+                until someone has used it once. */}
+            {asQuestion && (
+              <span className="cc-squawks">
+                {[SQUAWK.RADIO_FAILURE, SQUAWK.EMERGENCY].map((code) => (
+                  <button
+                    key={code}
+                    className={`cc-squawk ${squawk === code ? "is-on" : ""}`}
+                    aria-pressed={squawk === code}
+                    title={SQUAWK_LABEL[code]}
+                    onClick={() => setSquawk((v) => (v === code ? null : code))}
+                  >{code}</button>
+                ))}
+              </span>
+            )}
             <button className="cc-send" onClick={send} disabled={!draft.trim() || sending}>Send</button>
           </div>
         </div>
@@ -216,6 +234,11 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
         .cc-actions { display: flex; gap: 8px; justify-content: space-between; }
         .cc-mark { min-height: 44px; padding: 0 12px; border: none; border-radius: var(--r-control);
           background: var(--bg-raised); color: var(--text-secondary); font-size: 14px; cursor: pointer; }
+        .cc-squawks { display: inline-flex; gap: 4px; }
+        .cc-squawk { min-height: 44px; padding: 0 10px; border: none; border-radius: var(--r-control);
+          background: var(--bg-raised); color: var(--text-secondary);
+          font-family: var(--font-mono); font-size: 14px; cursor: pointer; }
+        .cc-squawk.is-on { background: var(--accent-interactive); color: var(--bg-ground); }
         .cc-mark.is-on { background: var(--accent-interactive); color: var(--bg-ground); }
         .cc-send { min-height: 44px; padding: 0 16px; border: none; border-radius: var(--r-control);
           background: var(--accent-interactive); color: var(--bg-ground); font-size: 16px;
