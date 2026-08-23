@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { User, FlaskConical, ChevronRight, LogIn, ShieldCheck, TrendingUp, BookMarked } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
+import { User, FlaskConical, ChevronRight, LogIn, ShieldCheck, SlidersHorizontal, LogOut } from "lucide-react";
+import { useUser, useClerk } from "@clerk/clerk-react";
 import { useIsAdmin } from "../lib/admin.js";
 
 function ProfileMenu({ onNavigate }) {
@@ -8,6 +8,7 @@ function ProfileMenu({ onNavigate }) {
   const ref = useRef(null);
   const { isSignedIn, user } = useUser();
   const isAdmin = useIsAdmin();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     if (!open) return;
@@ -44,16 +45,18 @@ function ProfileMenu({ onNavigate }) {
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           <div className="profile-divider" />
-          <button className="profile-row" onClick={() => go("progress")}>
-            <TrendingUp size={15} />
-            <span>Logbook</span>
+          {/* §2.3 — the avatar menu holds only these three. */}
+          <button className="profile-row" onClick={() => go("index")}>
+            <SlidersHorizontal size={15} />
+            <span>Settings</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
-          <button className="profile-row" onClick={() => go("bookmarks")}>
-            <BookMarked size={15} />
-            <span>Saved</span>
-            <ChevronRight size={14} className="profile-row-arrow" />
-          </button>
+          {isSignedIn && (
+            <button className="profile-row" onClick={() => signOut()}>
+              <LogOut size={15} />
+              <span>Sign out</span>
+            </button>
+          )}
           {isAdmin && (
             <>
               <div className="profile-divider" />

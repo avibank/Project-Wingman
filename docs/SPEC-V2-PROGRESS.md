@@ -25,7 +25,7 @@ lists what v1 shipped that v2 reverses.
 | 4 | Squawk bridge (§9.4.2) | **done** |
 | 4 | Ready Room (§9.4) | **done** |
 | 4 | Teams + complementary matching | **done** |
-| 4 | Verified tier + notifications (§11, §9.4.5) | **partial** — schema and rendering done, marking UI pending |
+| 4 | Verified tier + notifications (§11, §9.4.5) | **done** |
 
 ## Phase 1 · Routing — done
 
@@ -737,3 +737,33 @@ Deleting `lib/calls` exposed a real gap: migration 0007 had the squawk code on t
 more**, so every code would have been null. The code belongs on the question itself, and
 the composer offers 7600 and 7700 with plain language beside them, only while you are
 actually asking.
+
+## §11 verified tier · §9.4.5 notifications · §2.3 avatar menu
+
+**Verified.** §11 says a confident, upvoted, incorrect explanation of compressor stall
+recovery is worse than no explanation at all. The status ladder is the moderation model:
+`canVerify()` gates the control on CFI standing, and a verified answer renders as
+different in kind — inverted against the accent, not merely louder.
+
+This is the tier the 168 authored explanations should carry first. They are written to
+the standard of someone who knows the material; they are not instructor-signed, and the
+mechanism for saying so now exists.
+
+**Notifications.** §9.4.5's default is replies to you, your teams, and answers to your
+questions — nothing else, with an opt-in to a whole chapter and an off switch. §11 rules
+out streak warnings, countdowns and re-engagement nags, and the setting says so in plain
+words rather than leaving it implied.
+
+**The avatar menu** is down to exactly three rows — profile, Settings, Sign out — which
+§2.3 asks for. Logbook is a root destination now and Saved is reachable from Settings.
+
+## Phase 4 is complete
+
+Every step in §15 is built. What remains is not implementation:
+
+- **§4's presence breath** — needs the Redis + SSE transport §8.3 specifies. The motion
+  budget around it is enforced and the warm/cool tokens are generated.
+- **§10's operational half** — one cohort, one module, a weekly ritual. `module_social`
+  is the switch; which module to turn on is a decision.
+- **Migrations 0005, 0006, 0007** — 0007 is new and everything in Phase 4 is inert
+  without it.

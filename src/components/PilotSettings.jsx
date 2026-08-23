@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
+import { NOTIFY_MODES } from "../lib/readyRoom.js";
 import LiveryPicker from "./LiveryPicker.jsx";
 import { resolveLivery } from "../lib/liveries.js";
 import Tail, { TailStyles } from "./Tail.jsx";
@@ -127,6 +128,22 @@ function PilotSettings({ modulesCompleted = 0 }) {
         <p className="ps2-note">Used to put you with pilots who are awake when you are.</p>
       </div>
 
+      <div className="ps2-block">
+        <p className="ps2-row-label">Notifications</p>
+        <div className="ps2-chips">
+          {NOTIFY_MODES.map((m) => (
+            <button
+              key={m.id} disabled={busy}
+              aria-pressed={(profile?.notify || "default") === m.id}
+              className={`ps2-chip ${(profile?.notify || "default") === m.id ? "is-on" : ""}`}
+              onClick={() => patch({ notify: m.id })}
+            >{m.label}</button>
+          ))}
+        </div>
+        {/* §11 — never send a streak warning, a countdown, or a re-engagement nag. */}
+        <p className="ps2-note">Only for things a person actually did. Never a streak warning or a nudge to come back.</p>
+      </div>
+
       <div className="ps2-list">
         <Toggle
           id="ps2-invisible" on={invisible} busy={busy}
@@ -162,7 +179,7 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-save:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
 
         .ps2-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-        .ps2-chip { min-height: 44px; padding: 0 14px; border: none; border-radius: 999px; cursor: pointer;
+        .ps2-chip { min-height: 44px; padding: 8px 14px; text-align: left; max-width: 100%; border: none; border-radius: 999px; cursor: pointer;
           background: var(--surface-1); color: var(--text-2); font-size: 14px; }
         .ps2-chip.is-on { background: var(--warm); color: var(--surface-0); }
 

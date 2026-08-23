@@ -138,3 +138,24 @@ export async function fetchProgressByModule(userIds = [], moduleTotals = {}) {
   }
   return out;
 }
+
+// §11 — the status ladder is the moderation model, not a gamification nicety.
+export const STANDING = ["student", "private", "instrument", "commercial", "cfi"];
+export const canVerify = (status) => status === "cfi";
+
+// §9.4.5 — replies to you, your teams, and answers to your questions. Nothing
+// else, unless you opt in. A muted chat is a dead chat, but the default has to
+// be defensible.
+export const NOTIFY_MODES = [
+  { id: "default", label: "Replies, your teams, and answers to your questions" },
+  { id: "chapters", label: "That, plus every chapter you have opened" },
+  { id: "off", label: "Nothing" },
+];
+
+export async function setNotify(userId, mode) {
+  if (!userId) return false;
+  const { error } = await supabase.from("pilot_profiles").upsert(
+    { user_id: userId, notify: mode }, { onConflict: "user_id" }
+  );
+  return !fail(error, false);
+}

@@ -3,7 +3,7 @@ import { useUser } from "@clerk/clerk-react";
 import { fetchMessages, sendMessage } from "../lib/comms.js";
 import { groupMessages } from "../lib/commsGrouping.js";
 import { splitQuestions, answeredStrip, composerPlaceholder, SQUAWK, SQUAWK_LABEL } from "../lib/questions.js";
-import { markAnswer, setQuestion } from "../lib/readyRoom.js";
+import { markAnswer, setQuestion, markVerified, canVerify } from "../lib/readyRoom.js";
 import { fetchProfiles, assignMarkings } from "../lib/squadron.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 
@@ -34,6 +34,7 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
   const [replyTo, setReplyTo] = useState(null);
   const [openStrip, setOpenStrip] = useState(false);
   const [sending, setSending] = useState(false);
+  const myStanding = profiles[user?.id]?.status;
   const endRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -132,6 +133,14 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
                     <span className="cc-body">{m.body}</span>
                     {isSignedIn && m.is_question && !m.resolved_at && m.user_id !== user?.id && (
                       <button className="cc-answer" onClick={() => setReplyTo(m)}>Answer this</button>
+                    )}
+                    {/* §11 — a confident, upvoted, incorrect explanation of
+                        compressor stall recovery is worse than no explanation.
+                        Only CFI standing can mark one verified. */}
+                    {canVerify(myStanding) && !m.is_question && !m.is_verified && (
+                      <button className="cc-answer" onClick={async () => { await markVerified(m.id, user.id); load(); }}>
+                        Mark verified
+                      </button>
                     )}
                   </div>
                 ))}
