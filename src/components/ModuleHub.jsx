@@ -71,14 +71,15 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
         <ProgressArc pct={pct} label="Module" size={96} />
       </header>}
 
-      {!reading && <nav className="hub2-tabs" aria-label={`${module.name} sections`}>
+      {!reading && <div className="hub2-tabs" role="tablist" aria-label={`${module.name} sections`}>
         {NAV.map((t) => (
-          <button key={t.id} className={`hub2-tab ${tab === t.id ? "is-active" : ""}`} onClick={() => onTab(t.id)}>
+          <button key={t.id} role="tab" aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
+            className={`hub2-tab ${tab === t.id ? "is-active" : ""}`} onClick={() => onTab(t.id)}>
             <t.icon size={14} />
             <span>{t.label}</span>
           </button>
         ))}
-      </nav>}
+      </div>}
 
       <div className="hub2-body">
         {tab === "chapters" && (

@@ -63,9 +63,11 @@ function Home({ activeModuleCode, onGoToChapter, onEnterModule, onMakeActive, on
 
       {/* 2 · Hero — the active module. Only one is active at a time. */}
       <section className="home-hero">
-        <p className="home-module">
+        {/* §12 — the page needs a heading. Level is structure, not size: §5's
+            scale and §3.7's value ramp are what express visual rank. */}
+        <h1 className="home-module">
           <span className="home-module-code">{active.code}</span> {active.name}
-        </p>
+        </h1>
 
         <button className="home-next" onClick={() => next && onGoToChapter(active.code, next.id)}>
           Continue → {next ? `${next.code} · ${next.title}` : active.name}
@@ -118,7 +120,7 @@ function Home({ activeModuleCode, onGoToChapter, onEnterModule, onMakeActive, on
         .home-greeting { font-size: 14px; color: var(--text-secondary); margin: 0; }
 
         .home-hero { display: flex; flex-direction: column; gap: 14px; }
-        .home-module { font-size: 14px; color: var(--text-secondary); margin: 0;
+        .home-module { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin: 0;
           display: flex; align-items: baseline; gap: 8px; }
         .home-module-code { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
 

@@ -260,18 +260,22 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           <button className="reader-back" onClick={() => setReading(false)}>
             <ChevronLeft size={16} /> All chapters
           </button>
-          <span className="reader-code">{readingChapter.code}</span>
+          <h1 className="reader-code">{readingChapter.code} · {readingChapter.title}</h1>
           {/* §9.3 — learn → test → ask. A progression, walked in order. */}
-          <nav className="reader-tabs" aria-label="Chapter sections">
+          <div className="reader-tabs" role="tablist" aria-label="Chapter sections">
             {["brief", "quiz", "comments"].map((t) => (
               <button
                 key={t}
+                role="tab"
+                id={`reader-tab-${t}`}
+                aria-selected={chapterTab === t}
+                aria-controls="reader-panel"
+                tabIndex={chapterTab === t ? 0 : -1}
                 className={`reader-tab ${chapterTab === t ? "is-active" : ""}`}
-                aria-current={chapterTab === t ? "page" : undefined}
                 onClick={() => onChapterTab?.(readingChapter.id, t)}
               >{t[0].toUpperCase() + t.slice(1)}</button>
             ))}
-          </nav>
+          </div>
           {/* §7.6 — a 2px cold-channel progress hairline at the top edge. */}
           <span className="reader-hairline" aria-hidden="true">
             <span className="reader-hairline-fill" style={{ width: `${readingPct}%` }} />
@@ -305,8 +309,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                   <div className="chapter-progress-fill" style={{ width: `${progressPct}%` }} />
                 </div>
               )}
-              {isOpen && (
-                <div className="chapter-body chapter-body-opening">
+              {isOpen && readingChapter && (
+                <div className="chapter-body chapter-body-opening" id="reader-panel" role={readingChapter ? "tabpanel" : undefined} aria-labelledby={readingChapter ? `reader-tab-${chapterTab}` : undefined}>
                   {/* §7.6 — the body's one social element, and it is lighting,
                       not an element. At n = 0 it is 3% of the user's own hue. */}
                   <StudyGlow chapterId={ch.id} ownLivery={ownLivery} enabled={glowEnabled}
@@ -359,7 +363,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       <p className="material-kicker">Study material</p>
                       {ch.body.map((sec) => (
                         <section key={sec.heading} className="material-section">
-                          <h4 className="material-heading">{sec.heading}</h4>
+                          <h2 className="material-heading">{sec.heading}</h2>
                           <p className="material-text">{sec.text}</p>
                         </section>
                       ))}

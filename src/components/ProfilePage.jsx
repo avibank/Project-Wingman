@@ -354,7 +354,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       {tab === "preferences" && (
         <>
           <div className="settings-block">
-            <div className="settings-group-label">Appearance</div>
+            <h2 className="settings-group-label">Appearance</h2>
             <div className="settings-row" onClick={onToggleTheme}>
               <div className="settings-row-icon">{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</div>
               <div>
@@ -380,7 +380,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
           </div>
 
           <div className="settings-block">
-            <div className="settings-group-label">Accessibility &amp; Motion</div>
+            <h2 className="settings-group-label">Accessibility &amp; Motion</h2>
             <div className="settings-row" onClick={onToggleReduceMotion}>
               <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>

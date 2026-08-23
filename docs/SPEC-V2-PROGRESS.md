@@ -439,3 +439,27 @@ and only the harness did. Both showed as an empty root with no console output; b
 only legible in `preview_logs`.
 
 Worth stating as a rule: **after deleting or re-exporting anything, grep the harness too.**
+
+## §12 accessibility
+
+Audited the concrete items §12 names.
+
+- **Home had zero headings** — no `h1` through `h6` on the whole page, so a screen reader
+  had no structure at all. The module identity is the `h1` now. Level is structure, not
+  size: §5's scale and §3.7's value ramp are what express visual rank, which is exactly
+  why a 14px `h1` is fine.
+- **Nothing was a tablist.** The chapter tabs and the module tabs were bare buttons.
+  Both are `role="tablist"` with `role="tab"`, `aria-selected`, roving `tabIndex`, and the
+  chapter body is the `tabpanel` they control.
+- **Settings section headers were `div`s** — §12 says so explicitly. They are `h2` now.
+- **Heading levels skipped** from `h1` straight to `h4` in the chapter body. The reader
+  has an `h1` for the chapter and the prose sections are `h2`.
+
+### And §9.3's "collapse to one" was still incomplete
+
+`/m/jt` was rendering an accordion body for the restored `pw-last-chapter` — a second
+chapter rendering, on the module page, which is the exact bug §14 #9 describes. The body
+now exists only inside the reader. `/m/jt` is four chapter rows and one heading.
+
+Focus rings survive the monochrome change: they are `var(--accent)`, which resolves to
+`accent-interactive` — a value step, not a hue, as §12 requires.
