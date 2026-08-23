@@ -145,8 +145,8 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
             <button key={idx} className={`exam-opt exam-opt--${state} ${flashIdx === idx ? "is-flash" : ""}`} onClick={() => choose(idx)}>
               <span className="exam-opt-letter">{String.fromCharCode(65 + idx)}</span>
               <span>{opt}</span>
-              {state === "correct" && <CheckCircle2 size={16} color="var(--good)" />}
-              {state === "wrong" && <XCircle size={16} color="var(--calm)" />}
+              {state === "correct" && <CheckCircle2 size={16} color="var(--mono-0)" />}
+              {state === "wrong" && <XCircle size={16} color="var(--text-tertiary)" />}
             </button>
           );
         })}
@@ -184,15 +184,40 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
         .exam-bookmark.is-on { color: #F2C230; border-color: #F2C230; }
         .exam-stem { font-family: var(--font-display); font-size: 16px; color: var(--text); line-height: 1.4; margin: 0 0 16px; }
         .exam-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-        .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 13px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-size: 14px; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease; }
-        .exam-opt:hover { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        /* §4.5 — correct is lit, wrong is extinguished. Not red and green:
+           one focal point instead of two, nothing punitive, and no hue
+           dependency at all, which matters on a licence where colour vision is
+           tested. Value + fill + shape carry the whole message.
+
+           §14 bug 6 — hover and selected used the identical accent chip and
+           border, so you could not tell what you had picked. Hover is now a
+           faint value lift; the answer states are a full fill. */
+        .exam-opt { display: flex; align-items: center; gap: 12px; text-align: left;
+          padding: 12px 13px; border-radius: var(--r-lg); border: 1px solid var(--hairline);
+          background: var(--bg-panel); color: var(--text-primary); font-size: 14px; cursor: pointer;
+          transition: background 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out; }
+        .exam-opt:hover { background: var(--bg-raised); border-color: var(--hairline-bevel); }
         .exam-opt:active { transform: scale(0.98); }
-        .exam-opt-letter { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--text); border: 1.5px solid var(--border-hover); border-radius: var(--r-sm); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
-        .exam-opt:hover .exam-opt-letter { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-        .exam-opt--correct { border-color: var(--good); background: rgba(76,175,125,0.08); }
-        .exam-opt--correct .exam-opt-letter { background: var(--good); color: #fff; border-color: var(--good); }
-        .exam-opt--wrong { border-color: var(--calm); background: color-mix(in srgb, var(--calm) 10%, transparent); }
-        .exam-opt--wrong .exam-opt-letter { background: var(--calm); color: var(--bg); border-color: var(--calm); }
+        .exam-opt-letter { font-family: var(--font-mono); font-weight: 600; font-size: 12px;
+          color: var(--text-secondary); border: 1.5px solid var(--hairline-bevel);
+          border-radius: var(--r-sm); width: 22px; height: 22px; display: flex;
+          align-items: center; justify-content: center; flex-shrink: 0;
+          transition: background 240ms ease-out, color 240ms ease-out, border-color 240ms ease-out; }
+
+        /* Lit: up the ramp, a soft emission at the edge, marker filled solid.
+           Shown always, including when the user was wrong. */
+        .exam-opt--correct { background: var(--mono-700); border-color: var(--mono-500);
+          color: var(--mono-0); box-shadow: 0 0 0 1px var(--mono-500), 0 0 18px -4px var(--mono-400); }
+        .exam-opt--correct .exam-opt-letter { background: var(--mono-0); color: var(--mono-900);
+          border-color: var(--mono-0); }
+
+        /* Extinguished: down the ramp, receding toward the ground, marker
+           hollow and struck. It is not scolding — it is simply not lit. */
+        .exam-opt--wrong { background: var(--bg-ground); border-color: var(--hairline);
+          color: var(--text-tertiary); box-shadow: none; }
+        .exam-opt--wrong .exam-opt-letter { background: none; color: var(--text-tertiary);
+          border-color: var(--text-tertiary); border-style: dashed;
+          text-decoration: line-through; }
         .exam-opt--correct span:last-child, .exam-opt--wrong span:last-child { margin-left: auto; }
         .exam-opt.is-flash { animation: flashGlow 0.5s ease-out; }
         @keyframes flashGlow {

@@ -10,12 +10,12 @@ lists what v1 shipped that v2 reverses.
 | 1 | Routing (§2.2) | **done** |
 | 1 | Primitive + semantic token layers (§3) | **done** |
 | 1 | Type scale, weights, tracking (§5) | **done** |
-| 1 | Bugs 2, 3, 6, 8, 10 | 8 and 12 already fixed; rest open |
+| 1 | Bugs 2, 3, 6, 8, 10 | **done** |
 | 2 | Home rebuild (§9.1) | not started |
 | 2 | Chapter: one rendering, three tabs (§9.3) | partial — one rendering done in v1 |
-| 2 | Quiz (§9.3.2, §4.5) | not started |
+| 2 | Quiz (§9.3.2, §4.5) | **partial** — illumination done; explanations and Ask-about-this pending |
 | 2 | Debrief (§9.3.3) | not started |
-| 2 | Naming + placards (§8) | not started |
+| 2 | Naming + placards (§8) | **partial** — settings placards done |
 | 2 | Delete list (§6.6) | not started |
 | 3 | Mono ramp + liveries (§3.4) | not started |
 | 3 | Presence light & motion (§4) | not started |
@@ -157,3 +157,59 @@ except `.sr-only`, which is visually hidden anyway.
 enough: `new Date(null)` is the epoch, not `NaN`, so a null timestamp read as **"689mo
 ago"** — a plausible-looking lie rather than an obvious break. It needs both the falsy
 check and the finite check, and the test that caught it asserts both.
+
+## Phase 1 · Bugs — done
+
+**#2 theme desync — worse than a desync.** `theme` ("dark"/"light", stored at `pw-theme`)
+and `variant` ("day"/"night", from `variantPin || autoVariant`) were two states for one
+concept, and **only `variant` painted anything**. `toggleTheme` set `theme`, which the
+`data-variant` attribute never reads — so the Dark mode control changed a stored string
+and zero pixels. Separately, `pw-variant-pin` was *read* at hydration and never written,
+so pinning never survived a reload either.
+
+Collapsed to one: `variantPin` is the choice, `variant` is the result, `theme` is gone.
+Verified — clicking the row flips `data-variant` day → night and repaints the body from
+L .97 to L .15.
+
+**#3 greeting ignored the name preference.** `firstName` preferred `user.username`
+unconditionally, so someone with "show real name" on was greeted by their handle on
+their own home screen. It follows `identity_display` now, like every other name.
+
+**#6 hover was identical to selected.** Both used the same accent chip and border, so you
+could not see what you had picked. Hover is a value lift to `bg-raised`; the answer
+states are a full fill.
+
+**#8 and #12** were already fixed — the NEXT UP band went when the Flight Deck was
+rebuilt, and `pw-accent-color` went with the accent system.
+
+### #10 → §4.5 illumination
+
+Correct and wrong were both teal. They are now light and its absence, measured:
+
+| | background | vs idle | marker |
+|---|---|---|---|
+| Correct | mono-700, L .48 | **3 ramp steps up**, plus edge emission | filled solid |
+| Idle | mono-900, L .28 | — | hollow |
+| Hover | mono-800, L .38 | 1 step up | hollow |
+| Wrong | mono-1000, L .15 | **2 steps down**, at the ground | hollow, dashed, struck |
+
+Four distinct values, **one hue**. Nothing here depends on colour vision, which matters
+on a licence where it is tested at every medical. The check icons went from `--good` and
+`--calm` to ramp values for the same reason.
+
+### A note on the harness
+
+The computed background read as mid-transition on every state until transitions were
+disabled in the test. A hidden tab never advances them, so the computed value sits at the
+start — the declared values were correct all along. Worth remembering before chasing a
+CSS bug that is really a compositing artefact.
+
+## Phase 2 · Settings placards (§8.3) — done
+
+Night Ops/Day Ops → **Dark mode** · Instrument Scale → **Text size** · Smooth Air →
+**Reduce motion** · Plain Language → **Dyslexia-friendly font** · Turbulence →
+**Haptics** · Point of No Return → **Delete account**.
+
+**Lights Out is deleted**, not renamed: it suppressed "the pulsing red/green buttons in
+Discussion", and after §4.5 there is no red or green left anywhere to suppress. Its state,
+its persistence and its three props went with it.

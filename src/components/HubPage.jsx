@@ -7,7 +7,7 @@ import { fetchEnrollments, enrollInModule, unenrollFromModule } from "../lib/enr
 import { fetchAllPresence } from "../lib/presence.js";
 import { fetchWingmen } from "../lib/partners.js";
 import { fetchThreadsForModules } from "../lib/discussion.js";
-import { displayNameFor } from "../lib/social.js";
+import { displayNameFor, useSocialPrefs } from "../lib/social.js";
 import { SplitFlap, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
 import FlightDeck from "./FlightDeck.jsx";
 
@@ -93,6 +93,7 @@ function ProgressRing({ pct, size = 34 }) {
 
 function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, onReviewBookmarks, onSignIn, streak = 0 }) {
   const { isSignedIn, user } = useUser();
+  const { prefs: socialPrefs } = useSocialPrefs();
   const progress = useUserProgress();
   const [enrolledCodes, setEnrolledCodes] = useState([]);
   const [enrolling, setEnrolling] = useState(null);
@@ -176,7 +177,15 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
   const lastModule = lastChapter ? moduleForChapter(lastChapter) : null;
   const lastChapterPct = lastChapter ? chapterPct(lastChapter, chapterProgress) : 0;
 
-  const firstName = user?.username || user?.firstName || (user?.fullName ? user.fullName.split(" ")[0] : null);
+  // §14 bug 3 — this preferred the username unconditionally, so someone with
+  // "show real name" on was still greeted by their handle on their own home
+  // screen. The greeting is addressed to you, not to the squadron, so it
+  // follows the same preference every other name in the app does.
+  const realFirst = user?.firstName || (user?.fullName ? user.fullName.split(" ")[0] : null);
+  const firstName =
+    socialPrefs?.identity_display === "username"
+      ? user?.username || realFirst
+      : realFirst || user?.username;
   const greeting = new Date().getHours() < 12 ? "Cleared for departure" : "Evening ops";
   const greetingLine = firstName ? `${greeting}, ${firstName}` : greeting;
 

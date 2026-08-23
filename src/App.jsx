@@ -71,7 +71,6 @@ function AppInner() {
   // Inside a module the URL wins.
   const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const activeModuleCode = route.moduleCode || preferredModuleCode;
-  const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
   const [livery, setLivery] = useState("dawn-patrol");
@@ -81,7 +80,6 @@ function AppInner() {
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
   const [shakeTab, setShakeTab] = useState(null);
-  const [calmDiscussLights, setCalmDiscussLights] = useState(false);
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
   const [testStreakValue, setTestStreakValue] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -106,22 +104,20 @@ function AppInner() {
   }));
   useEffect(() => {
     if (!progress.loaded) return;
-    setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
     setLivery(progress.get("pw-livery", "dawn-patrol"));
     setVariantPin(progress.get("pw-variant-pin", null));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
-    setCalmDiscussLights(progress.get("pw-calm-discuss-lights", false));
     setTestStreakOverrideOn(progress.get("pw-test-streak-override-on", false));
     setTestStreakValue(progress.get("pw-test-streak-value", 0));
     setHydrated(true);
   }, [progress.loaded, progress.isSignedIn]);
   useEffect(() => {
     if (!hydrated) return;
-    progress.set("pw-theme", theme);
-  }, [theme, hydrated]);
+    progress.set("pw-variant-pin", variantPin);
+  }, [variantPin, hydrated]);
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-last-tab", tab);
@@ -142,10 +138,6 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-turbulence", turbulence);
   }, [turbulence, hydrated]);
-  useEffect(() => {
-    if (!hydrated) return;
-    progress.set("pw-calm-discuss-lights", calmDiscussLights);
-  }, [calmDiscussLights, hydrated]);
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-test-streak-override-on", testStreakOverrideOn);
@@ -222,7 +214,9 @@ function AppInner() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    // Pin to the opposite of what is showing. Auto (null) is only ever the
+    // starting state; once someone chooses, the choice persists.
+    setVariantPin(variant === "day" ? "night" : "day");
     setPaToast("CABIN CREW, DOORS TO MANUAL");
     setTimeout(() => setPaToast(null), 1600);
   };
@@ -338,12 +332,10 @@ function AppInner() {
         <main className="content content-taxi">
           <ProfilePage
             onBack={() => go(-1)}
-            theme={theme}
+            theme={variant === "day" ? "light" : "dark"}
             onToggleTheme={toggleTheme}
             reduceMotion={reduceMotion}
             onToggleReduceMotion={() => setReduceMotion((r) => !r)}
-            calmDiscussLights={calmDiscussLights}
-            onToggleCalmDiscussLights={() => setCalmDiscussLights((c) => !c)}
             onResetProgress={resetProgress}
             fontSize={fontSize}
             onChangeFontSize={setFontSize}

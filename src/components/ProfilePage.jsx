@@ -3,7 +3,7 @@ import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Tras
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
 import { useSocialPrefs } from "../lib/social.js";
 
-function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, calmDiscussLights, onToggleCalmDiscussLights, onResetProgress, fontSize, onChangeFontSize, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
+function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress, fontSize, onChangeFontSize, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
   const [tab, setTab] = useState("info");
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -334,7 +334,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
           </div>
 
           <div className="settings-block settings-danger-zone">
-            <div className="settings-row-title" style={{ padding: "10px 14px 4px", color: "var(--bad)" }}>Point of No Return</div>
+            <div className="settings-row-title" style={{ padding: "10px 14px 4px", color: "var(--danger)" }}>Delete account</div>
             <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>Permanently deletes your account and everything tied to it. This cannot be undone.</div>
             <div className="settings-nickname-input-row">
               <input
@@ -358,12 +358,12 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
             <div className="settings-row" onClick={onToggleTheme}>
               <div className="settings-row-icon">{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</div>
               <div>
-                <div className="settings-row-title">{theme === "light" ? "Day Ops" : "Night Ops"}</div>
-                <div className="settings-row-sub">Currently {theme === "light" ? "light" : "dark"} mode — tap to switch</div>
+                <div className="settings-row-title">Dark mode</div>
+                <div className="settings-row-sub">{theme === "light" ? "Off — tap for dark" : "On — tap for light"}</div>
               </div>
             </div>
             <div className="settings-row settings-row--static settings-row--centered">
-              <div className="settings-row-title">Instrument Scale</div>
+              <div className="settings-row-title">Text size</div>
               <div className="settings-row-sub">Adjusts text size across chapters, discussion, and library</div>
               <div className="font-size-options">
                 {["small", "medium", "large"].map((size) => (
@@ -384,29 +384,22 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
             <div className="settings-row" onClick={onToggleReduceMotion}>
               <span className={`settings-switch ${reduceMotion ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>
-                <div className="settings-row-title">Smooth Air</div>
+                <div className="settings-row-title">Reduce motion</div>
                 <div className="settings-row-sub">Reduces motion — turns off animated transitions across the app</div>
-              </div>
-            </div>
-            <div className="settings-row" onClick={onToggleCalmDiscussLights}>
-              <span className={`settings-switch ${calmDiscussLights ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
-              <div>
-                <div className="settings-row-title">Lights Out</div>
-                <div className="settings-row-sub">Replaces the pulsing red/green buttons in Discussion with a plain navy style</div>
               </div>
             </div>
             <div className="settings-row" onClick={onToggleDyslexiaFont}>
               <span className={`settings-switch ${dyslexiaFont ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>
-                <div className="settings-row-title">Plain Language</div>
+                <div className="settings-row-title">Dyslexia-friendly font</div>
                 <div className="settings-row-sub">A clearer font for easier reading — designed to help with dyslexia and reading fatigue</div>
               </div>
             </div>
             <div className="settings-row" onClick={onToggleTurbulence}>
               <span className={`settings-switch ${turbulence ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
               <div>
-                <div className="settings-row-title">Turbulence</div>
-                <div className="settings-row-sub">A subtle nudge when you switch tabs or modules</div>
+                <div className="settings-row-title">Haptics</div>
+                <div className="settings-row-sub">A subtle nudge on meaningful events</div>
               </div>
             </div>
           </div>
