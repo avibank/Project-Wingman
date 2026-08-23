@@ -16,7 +16,6 @@ import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
 import StudyGlow from "./StudyGlow.jsx";
-import Formation from "./Formation.jsx";
 import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
@@ -241,7 +240,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         <input placeholder="Search chapters…" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
 
-      {recentChapters.length > 0 && !query && (
+      {/* §9.3.1 — nothing sits above the first line of content. */}
+      {!readingChapter && recentChapters.length > 0 && !query && (
         <div className="recent-row">
           <div className="recent-row-label"><History size={12} /> Recently viewed</div>
           <div className="recent-row-scroll">
@@ -255,9 +255,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         </div>
       )}
 
-      {!seen.size && (
-        <div className="chapters-hint">Tap a chapter below to begin ↓</div>
-      )}
       {readingChapter && (
         <div className="reader-bar">
           <button className="reader-back" onClick={() => setReading(false)}>
@@ -297,14 +294,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                   <div className="chapter-progress-fill" style={{ width: `${progressPct}%` }} />
                 </div>
               )}
-              {/* §7.9 — Formation chrome sits around the body, never inside
-                  it: the body keeps the social-free rule. */}
-              {isOpen && (
-                <div className="chapter-formation">
-                  <Formation chapterId={ch.id} chapterCode={ch.code} moduleCode={activeModuleCode} />
-                </div>
-              )}
-
               {isOpen && (
                 <div className="chapter-body chapter-body-opening">
                   {/* §7.6 — the body's one social element, and it is lighting,
@@ -349,7 +338,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       <div className="player-tag"><Play size={11} /> Placeholder clip — swap for your recording</div>
                     )}
                   </div>
-                  {ch.clip && ch.clip.includes("youtube.com/embed") && (
+                  {ch.clip && ch.clip.includes("youtube.com/embed") && startedVideos.has(ch.id) && (
                     <a className="video-fallback" href={ch.clip.replace("/embed/", "/watch?v=")} target="_blank" rel="noreferrer">
                       Trouble loading? Open on YouTube directly
                     </a>
@@ -403,6 +392,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                           moduleCode={activeModuleCode}
                           nextChapter={moduleChapters[moduleChapters.findIndex((c) => c.id === ch.id) + 1] || null}
                           onGoToChapter={onGoToChapter}
+                          onAskAbout={(question) => setPanel({ kind: "threads", chapter: ch, quote: question })}
                           onProgressChange={(seenCount) => updateChapterProgress(ch.id, seenCount)}
                         />
                         {/* §7.7 — the thumbs belong after the last question,
@@ -576,7 +566,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           100% { transform: translateX(14px) rotate(45deg); opacity: 0; }
         }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
-        .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: var(--font-ui); font-size: 12px; color: var(--muted); padding: 4px 0; }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--well); border: 1px solid var(--border); box-shadow: var(--shadow-inset); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
         .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; }
@@ -633,7 +622,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
         .chapter-progress-track { height: 3px; background: var(--border); margin: 0 16px 4px; border-radius: 2px; overflow: hidden; }
         .chapter-progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
-        .chapter-formation { padding: 12px 16px 0; }
         .chapter-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; padding: 16px 16px 20px; border-top: 1px solid var(--border-soft); min-height: 60px; }
         @media (max-width: 720px) { .chapter-body { grid-template-columns: 1fr; } }
         @media (min-width: 1024px) { .chapter-body { grid-template-columns: 1.7fr 1fr; gap: 28px; } }

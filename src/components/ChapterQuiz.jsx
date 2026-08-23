@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
-import CallWingman from "./CallWingman.jsx";
 import Debrief from "./Debrief.jsx";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 
-function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCode, nextChapter, onGoToChapter, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
+function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCode, nextChapter, onGoToChapter, onAskAbout, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
   const { user } = useUser();
   const [missStat, setMissStat] = useState(null);
   const [i, setI] = useState(0);
@@ -51,6 +50,24 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
   };
 
   const next = () => advance(score);
+
+  // §9.3.2 — 1-4 or A-D to answer, Enter to continue.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (done) return;
+      if (e.key === "Enter" && picked !== null) { e.preventDefault(); next(); return; }
+      if (picked !== null) return;
+      const n = /^[1-9]$/.test(e.key) ? Number(e.key) - 1
+        : /^[a-dA-D]$/.test(e.key) ? e.key.toLowerCase().charCodeAt(0) - 97
+        : -1;
+      if (n >= 0 && n < (q?.options?.length ?? 0)) { e.preventDefault(); choose(n); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   // Keyboard support: 1-4 or A-D to pick an answer, Enter to continue after a wrong answer
   useEffect(() => {
@@ -132,21 +149,27 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
           );
         })}
       </div>
+
+      {picked !== null && Array.isArray(q.explain) && (
+        <ul className="exam-explain">
+          {q.options.map((opt, idx) => (
+            <li key={idx} className={idx === q.answer ? "is-answer" : ""}>
+              <span className="exam-explain-letter">{String.fromCharCode(65 + idx)}</span>
+              <span>{q.explain[idx]}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       {/* Aggregate, anonymous, and true regardless of who is online — the
           accompaniment the brief asks for, without a headcount. */}
       {missStat && missStat.missers > 1 && (
         <p className="exam-company">{missStat.missers} pilots have also missed this one.</p>
       )}
 
-      {/* §7.7 — offered once you have actually answered, so it reads as "I'm
-          stuck on this" rather than as a way past the question. */}
-      {picked !== null && (
-        <CallWingman
-          chapterId={chapterId}
-          chapterCode={chapterCode}
-          moduleCode={moduleCode}
-          questionId={q.id}
-        />
+      {picked !== null && picked !== q.answer && onAskAbout && (
+        <button className="exam-ask" onClick={() => onAskAbout(q)}>
+          Ask about this →
+        </button>
       )}
       {picked !== null && picked !== q.answer && (
         <button className="btn-primary exam-continue" onClick={next}>
@@ -154,9 +177,21 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
         </button>
       )}
       <style>{`
-        .exam-company { font-size: 12px; color: var(--presence); background: var(--presence-soft);
-          border: 1px solid color-mix(in srgb, var(--presence) 26%, transparent); border-radius: var(--r-md);
-          padding: 9px 13px; margin: 12px 0 0; }
+        /* §9.3.2 — the explanation tier. Every option, not just the right one. */
+        .exam-explain { list-style: none; margin: 14px 0 0; padding: 0;
+          display: grid; gap: 1px; background: var(--hairline);
+          border-radius: 8px; overflow: hidden; }
+        .exam-explain li { display: flex; gap: 10px; padding: 12px 14px; background: var(--bg-panel);
+          font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+        .exam-explain li.is-answer { color: var(--text-primary); background: var(--bg-raised); }
+        .exam-explain-letter { font-family: var(--font-mono); font-size: 12px;
+          color: var(--text-tertiary); flex-shrink: 0; width: 14px; }
+        .exam-explain li.is-answer .exam-explain-letter { color: var(--text-primary); }
+        .exam-ask { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px;
+          margin-top: 12px; border: none; border-radius: 8px; cursor: pointer;
+          background: var(--bg-raised); color: var(--text-primary); font-size: 14px; }
+        .exam-kbd { font-size: 12px; color: var(--text-tertiary); margin: 14px 0 0; }
+        .exam-company { font-size: 14px; color: var(--text-secondary); margin: 14px 0 0; }
         .exam-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .exam-head-right { display: flex; align-items: center; gap: 10px; }
         .exam-count { font-family: var(--font-ui); font-size: 12px; color: var(--muted); }

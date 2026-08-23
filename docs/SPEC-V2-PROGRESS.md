@@ -13,7 +13,7 @@ lists what v1 shipped that v2 reverses.
 | 1 | Bugs 2, 3, 6, 8, 10 | **done** |
 | 2 | Home rebuild (§9.1) | **done** |
 | 2 | Chapter: one rendering, three tabs (§9.3) | partial — one rendering done in v1 |
-| 2 | Quiz (§9.3.2, §4.5) | **partial** — illumination done; explanations and Ask-about-this pending |
+| 2 | Quiz (§9.3.2, §4.5) | **done** — JT explanations authored, 4 modules await review |
 | 2 | Debrief (§9.3.3) | **done** |
 | 2 | Naming + placards (§8) | **partial** — settings placards done |
 | 2 | Delete list (§6.6) | **done** |
@@ -322,3 +322,55 @@ puts it.
 
 Copy fix caught by testing: with two misses it read "The one you missed trips most
 people". It counts now.
+
+## Phase 2 · Quiz (§9.3.2) — done
+
+### Explanations on every option
+
+The product had **42 questions and zero explanations of any kind** — §9.3.2 calls this
+the single biggest study gap and it was literal.
+
+Authored per-option explanations for all **10 JT questions, 40 in total**, and every one
+says *why* an option is wrong, not that it is: A on the combustion-chamber question
+explains that liner cooling is real but is a consequence of burning fuel there rather
+than the purpose; D explains that the diffuser does slow the air, upstream, and that
+slowing it is not the point. Knowing why B is wrong is the study.
+
+They render only after you answer, and they render on options you did not pick.
+
+**The other four modules are deliberately not authored.** §10 says launch into one
+cohort and one module, and §11 says a confident, incorrect explanation of engine
+behaviour is worse than none — so PROP, AERO, NAV and WX wait for someone who can sign
+off on the content. The UI degrades to nothing when `explain` is absent.
+
+### Also done
+
+- **Keyboard**: 1–4 or A–D to answer, Enter to continue, surfaced in the quiz rather than
+  footnoted at the bottom of Preferences. Ignores modifier keys and typing in a field.
+- **Ask about this →** on a miss, carrying the question into the chapter's Comments.
+- **"140 pilots have also missed this one"** kept, but repainted: it was presence-coloured
+  text on a presence-coloured panel.
+
+## Phase 2 · The sterile cockpit (§9.3.5, §1.3)
+
+§9.3.5 sets a hard limit: on the academic side the entire social budget is the Comments
+tab and anonymous aggregates. Two v1 features broke it and are removed from the chapter:
+
+- **Call a wingman** on the quiz — §1.3's sterile cockpit rules out anything non-essential
+  during a question.
+- **The Formation rail** around the chapter body — §9.3.5 names formation cards
+  explicitly.
+
+Verified on `/m/jt/ch2`: zero formation cards, wingman prompts, squadron seats, presence
+rails or avatars. What remains is the glow, which §7.6 sanctions as lighting rather than
+an element.
+
+### §9.3.1 removals
+
+"Recently viewed" chips and "Tap a chapter below to begin ↓" both sat **above** the
+content, which §9.3.1 forbids outright. And "Trouble loading? Open on YouTube directly"
+was shown before any trouble could have occurred; it now appears once the video has
+actually been started.
+
+The reader's first three visible things are now the chapter code, the chapter title, and
+the video.

@@ -37,6 +37,12 @@ const CHAPTERS = [
           "Blades only on odd-numbered stages",
         ],
         answer: 1,
+        explain: [
+          "Pressure rises through the compressor, it does not fall. Blades also get smaller, not larger, for the reason in the correct answer.",
+          "As pressure rises the same mass of air takes up less volume, so the annulus narrows and blade height reduces stage by stage — that keeps axial velocity roughly constant through the whole compressor.",
+          "Identical stages throughout would mean no pressure rise at all, which is the compressor's entire job.",
+          "Every stage carries blades. A stage is one rotor row plus one stator row, and skipping any would break the flow path.",
+        ],
       },
       {
         id: "q2",
@@ -48,6 +54,12 @@ const CHAPTERS = [
           "Only during engine start-up",
         ],
         answer: 1,
+        explain: [
+          "That describes a centrifugal compressor, which flings air outward through an impeller. Many small engines and APUs use one; large turbofans are axial.",
+          "Axial means along the axis. Air passes through rotor and stator rows in series, each adding a small pressure rise, staying broadly parallel to the shaft.",
+          "Some small engines use a reverse-flow combustor to shorten the engine, but that is downstream of the compressor and is about packaging, not compression.",
+          "The compressor runs whenever the engine runs. During start it is driven by the starter rather than the turbine, but the airflow is the same.",
+        ],
       },
       {
         id: "q3",
@@ -59,6 +71,12 @@ const CHAPTERS = [
           "Fuel flow is reduced to zero",
         ],
         answer: 1,
+        explain: [
+          "Smooth steady airflow is the condition in which a compressor does not stall. This is the opposite of the answer.",
+          "Compressor blades are aerofoils, and like any aerofoil they stall past a critical angle of attack. Anything that changes the angle the air meets them at — a rapid throttle slam, distorted inlet flow, damage, ice — can trigger it.",
+          "Ground idle is a benign condition. Stalls are far more likely during rapid acceleration or at high angles of attack, where the airflow the blades see is furthest from design.",
+          "Cutting fuel gives a flameout, which is a different failure: the compressor is still turning and its airflow is not necessarily disturbed.",
+        ],
       },
     ],
   },
@@ -85,6 +103,12 @@ const CHAPTERS = [
           "Reduce the velocity of exhaust gases",
         ],
         answer: 1,
+        explain: [
+          "Some air is routed along the liner to cool it, but that protects the chamber from the flame. It is a consequence of burning fuel there, not the purpose.",
+          "The chamber adds energy. Air arrives compressed but relatively cool; fuel is burned to raise its temperature and therefore the energy available to the turbine and the nozzle.",
+          "Compression finished at the last compressor stage. The diffuser ahead of the chamber actually slows the air down so the flame can be held.",
+          "Velocity is reduced entering the chamber so combustion is stable, but the gas leaves with far more energy than it arrived with. Slowing it is not the point.",
+        ],
       },
       {
         id: "q5",
@@ -96,6 +120,12 @@ const CHAPTERS = [
           "Only when the engine is shut down",
         ],
         answer: 1,
+        explain: [
+          "Continuous ignition costs igniter life and is not needed: once alight, the flame is sustained by the incoming fuel and air.",
+          "Ignition is needed to establish the flame. After that it sustains itself, so the igniters are switched off — though they are usually selected on again for takeoff, heavy rain, icing, or turbulence, as insurance against a flameout.",
+          "Descent is one of the phases where continuous ignition may be selected as a precaution, but it is not when ignition is normally required.",
+          "Shutdown is fuel off. There is nothing to ignite.",
+        ],
       },
     ],
   },
@@ -122,6 +152,12 @@ const CHAPTERS = [
           "Cool the combustion chamber",
         ],
         answer: 1,
+        explain: [
+          "Temperature falls across the turbine. That drop is the visible sign that energy is being taken out of the gas.",
+          "The turbine's job is to drive the compressor and the accessory gearbox. On a turbojet or turbofan the remaining energy leaves as thrust; on a turboprop, most of it drives the propeller instead.",
+          "Slowing the aircraft is the job of thrust reversers and the airframe. The turbine works the same on descent as at any other time.",
+          "The chamber is cooled by air routed along its liner from the compressor, not by the turbine downstream of it.",
+        ],
       },
       {
         id: "q7",
@@ -133,6 +169,12 @@ const CHAPTERS = [
           "Low density above all other properties",
         ],
         answer: 1,
+        explain: [
+          "Turbine blades are among the most expensive components in the engine. Cost is a consequence of what they must survive, not a design driver.",
+          "Blades sit in gas hotter than their own melting point, under enormous centrifugal load, for thousands of hours. Creep — slow stretching under sustained load at temperature — is what limits their life, so nickel superalloys, directional solidification and single-crystal casting all exist to resist it.",
+          "Room-temperature behaviour is close to irrelevant. What matters is strength at 1,000°C and above.",
+          "Density does matter, because a heavier blade pulls harder on the disc. But it is traded against temperature capability, never prioritised above it.",
+        ],
       },
       {
         id: "q8",
@@ -144,6 +186,12 @@ const CHAPTERS = [
           "Generate electrical power",
         ],
         answer: 1,
+        explain: [
+          "Fuel is added in the combustion chamber, upstream. Nothing is added between the chamber and the turbine.",
+          "The vanes turn and accelerate the gas so it meets the moving blades at the right angle. They also form the throat that sets the flow through the engine, which is why they are a critical dimension.",
+          "The compressor is upstream and is not cooled by anything at the turbine.",
+          "Electrical power comes from a generator on the accessory gearbox, driven by the shaft.",
+        ],
       },
     ],
   },
@@ -170,6 +218,12 @@ const CHAPTERS = [
           "The compressor spinning at high RPM",
         ],
         answer: 0,
+        explain: [
+          "Thrust is the reaction to accelerating a mass of air rearward. Force on the air backward, equal and opposite force on the engine forward.",
+          "Weight acts downward and is a load the airframe carries. It produces no forward force.",
+          "Friction with the surrounding air is drag, which opposes motion. It subtracts from net thrust rather than creating it.",
+          "High RPM is how the engine moves air, not the thrust itself. An engine can spin fast and produce little thrust if it is moving little mass or adding little velocity.",
+        ],
       },
       {
         id: "q10",
@@ -181,6 +235,12 @@ const CHAPTERS = [
           "Increase only above the speed of sound",
         ],
         answer: 1,
+        explain: [
+          "Drag on the airframe does fall with altitude, which is why aircraft cruise high — but that is a separate effect from what the engine can produce.",
+          "Thrust depends on the mass of air the engine can accelerate. Thinner air means less mass per second through the same engine, so thrust falls with altitude even though the engine is working just as hard.",
+          "If thrust were constant with altitude there would be no service ceiling. There is.",
+          "Forward speed does add ram recovery, which helps at altitude. It does not overcome the loss of density.",
+        ],
       },
     ],
   },
