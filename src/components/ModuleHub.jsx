@@ -20,7 +20,7 @@ function activityLine(row, chapters) {
 }
 
 // Everything a module owns lives here. Nothing module-specific sits in global nav.
-function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onInitialChapterConsumed, onGoToChapter }) {
+function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onInitialChapterConsumed, onGoToChapter, chapterTab, onChapterTab }) {
   // §7.6 — the chapter body carries no tab bar and no module header. While
   // someone is reading, this page gets out of the way entirely.
   const [reading, setReading] = useState(false);
@@ -65,7 +65,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           </div>
           <h1 className="hub2-name">{module.name}</h1>
           <p className="hub2-status">
-            {done}/{chapters.length} chapters complete
+            {done} of {chapters.length} chapters
           </p>
         </div>
         <ProgressArc pct={pct} label="Module" size={96} />
@@ -85,6 +85,8 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           <ChaptersPanel
             onReadingChange={setReading}
             onGoToChapter={onGoToChapter}
+            chapterTab={chapterTab}
+            onChapterTab={onChapterTab}
             activeModuleCode={module.code}
             onSignIn={onSignIn}
             initialChapterId={initialChapterId}

@@ -12,10 +12,10 @@ lists what v1 shipped that v2 reverses.
 | 1 | Type scale, weights, tracking (§5) | **done** |
 | 1 | Bugs 2, 3, 6, 8, 10 | **done** |
 | 2 | Home rebuild (§9.1) | **done** |
-| 2 | Chapter: one rendering, three tabs (§9.3) | partial — one rendering done in v1 |
+| 2 | Chapter: one rendering, three tabs (§9.3) | **done** |
 | 2 | Quiz (§9.3.2, §4.5) | **done** — JT explanations authored, 4 modules await review |
 | 2 | Debrief (§9.3.3) | **done** |
-| 2 | Naming + placards (§8) | **partial** — settings placards done |
+| 2 | Naming + placards (§8) | **done** |
 | 2 | Delete list (§6.6) | **done** |
 | 3 | Mono ramp + liveries (§3.4) | not started |
 | 3 | Presence light & motion (§4) | not started |
@@ -374,3 +374,34 @@ actually been started.
 
 The reader's first three visible things are now the chapter code, the chapter title, and
 the video.
+
+## Phase 2 · Chapter tabs (§9.3) — done
+
+**Brief · Quiz · Comments**, exclusive, and the tab lives in the URL — which is the
+payoff for Phase 1's routing. `/m/jt/ch2/quiz` and `/m/jt/ch2/comments` are real,
+shareable links, which is exactly the growth loop §10 describes: "look at question 3 on
+this page".
+
+Verified all three: Brief shows video and material and hides the quiz; Quiz hides the
+reading surface; Comments hides both.
+
+## Phase 2 · Naming (§8.2) — done
+
+| Concept | Was | Now |
+|---|---|---|
+| Progress page | "Progress" in the menu, "Logbook" as the title | **Logbook** |
+| Bio field | also labelled "Logbook" | **Bio** |
+| Saved questions | Bookmarks · My Bookmarks · "flight bag" · "stow" · "squawked" | **Saved** |
+| Counting | `0/4 chapters` · `1 of 4 logged` · `25%` · `1/4 complete` | **1 of 4 chapters** |
+
+"Squawked" was the sharpest collision: §9.4.2 gives **squawk** real semantics as the
+help-request mechanic (7600 / 7700), so using the same word for a starred question is
+precisely what the glossary exists to prevent.
+
+### HubPage is deleted
+
+`Home` replaced it on `/`, leaving it rendered by nothing. It carried the last of the
+Begin / Enroll / Joining… CTAs — which means **§14 bug 5** (Begin on an enrolled module
+showing "Joining…" for two seconds then reverting with no navigation) is resolved by the
+screen no longer existing. §9.1 has no enrollment concept: a module is active or parked,
+and §9.1.4 makes switching one tap with no confirmation.

@@ -229,7 +229,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
           <div className="settings-block">
             <div className="settings-field-block">
-              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Logbook</div>
+              <div className="settings-row-title" style={{ padding: "10px 14px 0" }}>Bio</div>
               <div className="settings-row-sub" style={{ padding: "0 14px 10px" }}>A short line about yourself</div>
               <div style={{ padding: "0 14px 10px" }}>
                 <textarea

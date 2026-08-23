@@ -46,12 +46,12 @@ function ProfileMenu({ onNavigate }) {
           <div className="profile-divider" />
           <button className="profile-row" onClick={() => go("progress")}>
             <TrendingUp size={15} />
-            <span>Progress</span>
+            <span>Logbook</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           <button className="profile-row" onClick={() => go("bookmarks")}>
             <BookMarked size={15} />
-            <span>Bookmarks</span>
+            <span>Saved</span>
             <ChevronRight size={14} className="profile-row-arrow" />
           </button>
           {isAdmin && (

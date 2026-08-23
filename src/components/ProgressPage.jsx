@@ -69,8 +69,8 @@ function ProgressPage({ onBack }) {
         <Tile value={streak}
           unit={`day streak${longest > streak ? ` · best ${longest}` : ""}`}
           invite="Study today to start a streak" />
-        <Tile value={bookmarks.length} unit="squawked"
-          invite="Flag a question to squawk it" />
+        <Tile value={bookmarks.length} unit="saved"
+          invite="Star a question during a quiz and it lands here" />
       </section>
 
       <section className="prog-block">

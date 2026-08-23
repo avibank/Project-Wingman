@@ -38,7 +38,7 @@ function BookmarksPage({ onBack, initialMode = "list" }) {
         <ChevronLeft size={16} /> Back
       </button>
       <div className="bookmarks-title-row">
-        <h1 className="bookmarks-title">My Bookmarks</h1>
+        <h1 className="bookmarks-title">Saved</h1>
         {bookmarkedQuestions.length > 0 && (
           <button className="bookmarks-flashcard-btn" onClick={() => setMode("cards")}>
             <Layers size={14} /> Flashcards
@@ -49,7 +49,7 @@ function BookmarksPage({ onBack, initialMode = "list" }) {
         {bookmarkedQuestions.length === 0 ? (
           <div className="bookmarks-empty">
             <Briefcase size={28} className="bookmarks-empty-icon" />
-            <p>Your flight bag is empty — tap the star on any quiz question to stow it here.</p>
+            <p>Star a question during a quiz and it lands here.</p>
           </div>
         ) : (
           <div className="bookmarks-list">

@@ -20,7 +20,7 @@ import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
 
-function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed, onReadingChange, onGoToChapter }) {
+function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed, onReadingChange, onGoToChapter, chapterTab = "brief", onChapterTab }) {
   // Only this module's chapters — the global list now spans five modules.
   const moduleChapters = chaptersForModule(activeModuleCode);
   // Slide-over state for the notebook / discussion entry points.
@@ -261,6 +261,17 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
             <ChevronLeft size={16} /> All chapters
           </button>
           <span className="reader-code">{readingChapter.code}</span>
+          {/* §9.3 — learn → test → ask. A progression, walked in order. */}
+          <nav className="reader-tabs" aria-label="Chapter sections">
+            {["brief", "quiz", "comments"].map((t) => (
+              <button
+                key={t}
+                className={`reader-tab ${chapterTab === t ? "is-active" : ""}`}
+                aria-current={chapterTab === t ? "page" : undefined}
+                onClick={() => onChapterTab?.(readingChapter.id, t)}
+              >{t[0].toUpperCase() + t.slice(1)}</button>
+            ))}
+          </nav>
           {/* §7.6 — a 2px cold-channel progress hairline at the top edge. */}
           <span className="reader-hairline" aria-hidden="true">
             <span className="reader-hairline-fill" style={{ width: `${readingPct}%` }} />
@@ -268,7 +279,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         </div>
       )}
 
-      <div className={`chapters ${readingChapter ? "is-reading" : ""}`}>
+      <div className={`chapters ${readingChapter ? "is-reading" : ""}`} data-tab={readingChapter ? chapterTab : undefined}>
         {(readingChapter ? [readingChapter] : filtered).map((ch) => {
           const isOpen = openId === ch.id;
           const isDone = completed.has(ch.id);
@@ -366,7 +377,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                         </li>
                       ))}
                     </ol>
-                    <p className="manifest-meta">{completed.size} of {moduleChapters.length} logged</p>
+                    <p className="manifest-meta">{completed.size} of {moduleChapters.length} chapters</p>
                   </aside>
                   <div className="chapter-side">
                     <div className="chapter-side-tabs">
@@ -378,7 +389,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       </button>
                     </div>
 
-                    {(readingChapter || rightTab === "quiz") ? (
+                    {(readingChapter ? chapterTab !== "comments" : rightTab === "quiz") ? (
                       <>
                         <ChapterQuiz
                           key={ch.id}
@@ -484,6 +495,22 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .reader-hairline-fill { display: block; height: 100%; background: var(--cold);
           transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
 
+
+        .reader-tabs { display: flex; gap: 2px; margin-left: auto; }
+        .reader-tab { min-height: 44px; padding: 0 12px; background: none; border: none;
+          cursor: pointer; color: var(--text-secondary); font-size: 14px; border-radius: 8px; }
+        .reader-tab:hover { color: var(--text-primary); background: var(--bg-raised); }
+        .reader-tab.is-active { color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--accent-interactive); }
+
+        /* §9.3 — the tabs are exclusive: Brief is the reading surface, Quiz is
+           the sterile cockpit, Comments is the conversation. */
+        .chapters.is-reading[data-tab="quiz"] .chapter-video,
+        .chapters.is-reading[data-tab="quiz"] .chapter-material,
+        .chapters.is-reading[data-tab="quiz"] .video-fallback,
+        .chapters.is-reading[data-tab="comments"] .chapter-video,
+        .chapters.is-reading[data-tab="comments"] .chapter-material,
+        .chapters.is-reading[data-tab="comments"] .video-fallback { display: none; }
+        .chapters.is-reading[data-tab="brief"] .chapter-side { display: none; }
         .chapters.is-reading { display: block; }
         .chapters.is-reading .leg-rail,
         .chapters.is-reading .chapter-chevron,

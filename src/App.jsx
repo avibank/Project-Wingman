@@ -382,6 +382,8 @@ function AppInner() {
             onGoToChapter={goToChapter}
             initialChapterId={pendingChapterId}
             onInitialChapterConsumed={() => {}}
+            chapterTab={route.tab && route.name === "chapter" ? route.tab : "brief"}
+            onChapterTab={(chapterId, t) => navigate(routePath.chapter(activeModuleCode, chapterId, t))}
           />
         </main>
       )}
