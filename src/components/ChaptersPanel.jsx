@@ -532,7 +532,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           display: flex; align-items: center; gap: 9px; background: var(--elev-1);
           border: 1px solid color-mix(in srgb, var(--presence) 34%, transparent); border-radius: var(--r-pill);
           padding: 10px 18px; font-size: 14px; color: var(--text); white-space: nowrap;
-          box-shadow: 0 8px 26px rgba(0,0,0,0.4), 0 0 0 5px var(--presence-glow);
           animation: bumpIn 0.4s cubic-bezier(0.22,1,0.36,1); }
         .bump-icon { color: var(--presence); }
         @keyframes bumpIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
@@ -618,8 +617,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .app.reduce-motion .leg.is-current .leg-node { animation: none; }
         @media (prefers-reduced-motion: reduce) { .leg.is-current .leg-node { animation: none; } }
         @media (max-width: 560px) { .leg { grid-template-columns: 24px 1fr; } }
-        .chapter { border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; background: var(--panel); box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
-        .chapter:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.16); }
+        .chapter { border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; background: var(--panel); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .chapter:hover { transform: translateY(-2px); }
         .chapter.is-open { border-color: var(--border-hover); }
         .chapter.is-open:hover { transform: none; }
         .chapter-head { display: grid; grid-template-columns: auto auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }

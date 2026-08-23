@@ -6,70 +6,6 @@ import { useState, useEffect, useRef } from "react";
 
 // ---------------------------------------------------------------- module motif
 // Subject-specific texture that sits behind hub content, never in front of it.
-export function ModuleMotif({ motif }) {
-  const common = { stroke: "currentColor", fill: "none", strokeWidth: 1 };
-  return (
-    <svg className="instr-motif" viewBox="0 0 200 200" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-      {motif === "turbine" && (
-        <g {...common}>
-          {[18, 34, 50, 66, 82].map((r) => <circle key={r} cx="100" cy="100" r={r} />)}
-          {Array.from({ length: 24 }).map((_, i) => {
-            const a = (i / 24) * Math.PI * 2;
-            return <line key={i} x1={100 + Math.cos(a) * 20} y1={100 + Math.sin(a) * 20}
-              x2={100 + Math.cos(a) * 82} y2={100 + Math.sin(a) * 82} />;
-          })}
-        </g>
-      )}
-      {motif === "manifold" && (
-        <g {...common}>
-          <circle cx="100" cy="100" r="70" />
-          <circle cx="100" cy="100" r="58" />
-          {Array.from({ length: 13 }).map((_, i) => {
-            const a = Math.PI * 0.75 + (i / 12) * Math.PI * 1.5;
-            return <line key={i} x1={100 + Math.cos(a) * 58} y1={100 + Math.sin(a) * 58}
-              x2={100 + Math.cos(a) * 70} y2={100 + Math.sin(a) * 70} strokeWidth={i % 3 === 0 ? 2 : 1} />;
-          })}
-          <line x1="100" y1="100" x2="148" y2="66" strokeWidth="2" />
-        </g>
-      )}
-      {motif === "streamlines" && (
-        <g {...common}>
-          {[30, 55, 80, 105, 130, 155].map((y, i) => (
-            <path key={y} d={`M-10 ${y} C 60 ${y - (i % 2 ? 14 : 8)}, 140 ${y + (i % 2 ? 14 : 8)}, 210 ${y}`} />
-          ))}
-          <ellipse cx="100" cy="95" rx="46" ry="12" strokeWidth="1.5" />
-        </g>
-      )}
-      {motif === "compass" && (
-        <g {...common}>
-          <circle cx="100" cy="100" r="78" />
-          <circle cx="100" cy="100" r="62" />
-          {Array.from({ length: 36 }).map((_, i) => {
-            const a = (i / 36) * Math.PI * 2;
-            const len = i % 3 === 0 ? 14 : 7;
-            return <line key={i} x1={100 + Math.cos(a) * 78} y1={100 + Math.sin(a) * 78}
-              x2={100 + Math.cos(a) * (78 - len)} y2={100 + Math.sin(a) * (78 - len)} />;
-          })}
-          <line x1="100" y1="22" x2="100" y2="178" />
-          <line x1="22" y1="100" x2="178" y2="100" />
-        </g>
-      )}
-      {motif === "isobars" && (
-        <g {...common}>
-          {[24, 40, 56, 72].map((r, i) => (
-            <ellipse key={r} cx={92 + i * 4} cy="100" rx={r} ry={r * 0.72} />
-          ))}
-          <path d="M-10 40 C 50 20, 150 60, 210 34" strokeWidth="1.5" />
-          <path d="M-10 168 C 50 148, 150 186, 210 160" strokeWidth="1.5" />
-        </g>
-      )}
-    </svg>
-  );
-}
-
-// ------------------------------------------------------------------ value tape
-// Vertical scrolling tape, as on an altitude or airspeed indicator: neighbouring
-// values stay visible above and below the boxed current reading.
 export function ValueTape({ value = 0, label, unit = "", hue }) {
   const rows = [value + 2, value + 1, value, value - 1, value - 2];
   return (
@@ -230,9 +166,6 @@ export function InstrumentStyles() {
           radial-gradient(circle 2.5px at 0 100%, var(--border-hover) 60%, transparent 61%),
           radial-gradient(circle 2.5px at 100% 100%, var(--border-hover) 60%, transparent 61%);
         background-repeat: no-repeat; opacity: 0.7; }
-
-      .instr-motif { color: var(--accent); position: absolute; right: -34px; top: 50%; transform: translateY(-50%);
-        width: 230px; height: 230px; opacity: 0.055; pointer-events: none; }
 
       /* value tape */
       .tape { display: flex; flex-direction: column; align-items: center; }

@@ -10,7 +10,6 @@ import HubPage from "./components/HubPage.jsx";
 import { useSocialPrefs } from "./lib/social.js";
 import { fetchEnrollments } from "./lib/enrollments.js";
 import ModuleHub from "./components/ModuleHub.jsx";
-import DiscussPanel from "./components/DiscussPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
@@ -93,7 +92,6 @@ function AppInner() {
     return () => clearTimeout(t);
   }, [boarding]);
   const [paToast, setPaToast] = useState(null);
-  const [scrollPct, setScrollPct] = useState(0);
   const [storageWarning, setStorageWarning] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -203,8 +201,6 @@ function AppInner() {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         const h = document.documentElement;
-        const pct = h.scrollHeight > h.clientHeight ? h.scrollTop / (h.scrollHeight - h.clientHeight) : 0;
-        setScrollPct(Math.min(1, Math.max(0, pct)));
         setHeaderScrolled(window.scrollY > 4);
         raf = null;
       });
@@ -370,7 +366,6 @@ function AppInner() {
             activeModuleCode={activeModuleCode}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
-            onGoToDiscuss={() => goToModule(activeModuleCode, "discuss")}
             onGoToSocial={(moduleCode) => goToModule(moduleCode || activeModuleCode, "social")}
             onReviewBookmarks={() => {
               setBookmarksMode("cards");
@@ -393,16 +388,6 @@ function AppInner() {
           />
         </main>
       )}
-      <div className="flight-progress">
-        <div className="runway-lights" aria-hidden="true">
-          <div className="runway-trail" style={{ width: `${scrollPct * 100}%` }} />
-          {Array.from({ length: 12 }).map((_, i) => {
-            const lit = i < Math.floor(scrollPct * 12);
-            const zone = i >= 10 ? "late" : i >= 8 ? "mid" : "early";
-            return <span key={i} className={`runway-dot ${lit ? `is-lit is-${zone}` : ""}`} />;
-          })}
-        </div>
-      </div>
     </FirstFlightGate>
     </UsernameGate>
       <style>{`
@@ -487,7 +472,12 @@ function AppInner() {
           --destructive: var(--danger);
           --calm: var(--text-2);
           --avatar-bg: var(--surface-2);
-          --shadow-1: 0 1px 2px rgb(0 0 0 / 0.20), 0 4px 12px rgb(0 0 0 / 0.18);
+          /* §6.1 — elevation comes from lightness, not shadow. Dark UIs that
+             drop-shadow look muddy; ones that step lightness look machined. A
+             card gets a hairline and a step, and nothing else. --shadow-2 is
+             kept for true overlays only, which §6.1 allows above the two
+             surface levels. */
+          --shadow-1: none;
           --shadow-2: 0 2px 4px rgb(0 0 0 / 0.24), 0 16px 36px rgb(0 0 0 / 0.30);
           --shadow-inset: inset 0 2px 7px rgb(0 0 0 / 0.30);
           --hairline-inset: inset 0 1px 0 rgb(255 255 255 / 0.05);
@@ -525,10 +515,10 @@ function AppInner() {
         .app { font-variant-numeric: tabular-nums; }
         [class*="mono"], [class*="-code"], [class*="-value"], [class*="-count"], [class*="stat"] {
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }
-        .app::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.035;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); }
+        /* §6.6 — the grain texture is deleted: on OLED it reads as compression
+           artefacts, not as paper. */
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
-        .topbar.is-scrolled { box-shadow: 0 4px 14px rgba(0,0,0,0.18); border-bottom-color: var(--border-hover); }
+        .topbar.is-scrolled { border-bottom-color: var(--border-hover); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -578,15 +568,8 @@ function AppInner() {
         }
         .pa-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); font-family: var(--font-ui); font-size: 12px; padding: 8px 16px; border-radius: var(--r-md); animation: paFade 1.6s ease forwards; }
         @keyframes paFade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
-        .flight-progress { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border-soft); }
-        .runway-lights { position: relative; display: flex; gap: 4px; }
-        .runway-trail { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 3px; background: linear-gradient(90deg, transparent, var(--accent)); filter: blur(3px); opacity: 0.55; transition: width 0.15s ease; pointer-events: none; }
-        .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
         /* §15 — no red outside a destructive confirmation, and no colour that
            is not a livery channel. The zones run cold to warm instead. */
-        .runway-dot.is-lit.is-early { background: var(--cold); }
-        .runway-dot.is-lit.is-mid { background: color-mix(in oklab, var(--cold) 50%, var(--warm)); }
-        .runway-dot.is-lit.is-late { background: var(--warm); }
         .storage-warning { position: relative; z-index: 90; background: rgba(224,102,90,0.15); border-bottom: 1px solid var(--bad); color: var(--text); font-size: 12px; text-align: center; padding: 8px 16px; }
         @media (prefers-reduced-motion: reduce) {
           .boarding-overlay { animation-duration: 0.4s; }

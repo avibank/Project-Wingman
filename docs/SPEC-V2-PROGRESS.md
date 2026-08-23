@@ -16,7 +16,7 @@ lists what v1 shipped that v2 reverses.
 | 2 | Quiz (§9.3.2, §4.5) | **partial** — illumination done; explanations and Ask-about-this pending |
 | 2 | Debrief (§9.3.3) | not started |
 | 2 | Naming + placards (§8) | **partial** — settings placards done |
-| 2 | Delete list (§6.6) | not started |
+| 2 | Delete list (§6.6) | **done** |
 | 3 | Mono ramp + liveries (§3.4) | not started |
 | 3 | Presence light & motion (§4) | not started |
 | 3 | Surfaces, panelling, glow (§6) | not started |
@@ -225,3 +225,32 @@ feedback, recents and chapter progress were each written twice per change.
 
 All six now compute the next value, set it, and persist outside the updater. Zero console
 errors on every route.
+
+## Phase 2 · Delete list (§6.6) — done
+
+- **Grain texture** — a `feTurbulence` overlay at 3.5% across the whole app. On OLED it
+  reads as compression artefacts, not paper.
+- **The fixed flight-progress dot strip** on the bottom of every screen, and the
+  scroll-percentage tracking that was its only consumer.
+- **Radar sweeps as card wallpaper** — `ModuleMotif` was exactly what §6.6 names:
+  concentric circles with radial lines, `preserveAspectRatio="slice"` and positioned
+  `right: -60px` so it clipped out of the card edge by design. §6.5 reserves decoration
+  for the cheatline alone.
+- **Card drop shadows** — `--shadow-1` is `none`. §6.1 puts elevation in lightness: dark
+  UIs that drop-shadow look muddy, ones that step lightness look machined. `--shadow-2`
+  survives for true overlays, which §6.1 allows above the two surface levels. Verified:
+  zero non-inset drop shadows on any route.
+- **Surface levels 3 and 4** never existed as tokens; `--elev-0/1/2` map to the three
+  §3.6 surfaces.
+
+### And the red/green I claimed was already gone
+
+Deleting "Lights Out" was justified on the grounds that no red or green remained to
+suppress. **That was wrong.** `DiscussPanel` still held the pulsing send buttons it
+existed for — `rgba(229,72,77)` and `rgba(52,199,123)`, animating on a 1s cycle, which
+§4.6 also rules out as reading like an alert rather than like life.
+
+It was dead code: imported into App and never rendered, since the "discuss" tab is not in
+NAV and no route resolves to it. §8.2 collapses the concept to Comments and channel
+anyway, so the file is deleted and the claim is now true. `grep` for either colour
+returns nothing.

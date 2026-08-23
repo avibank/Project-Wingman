@@ -46,7 +46,7 @@ function PdfPanel({ moduleCode = "JT", moduleName = "this module" }) {
         .pdf-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
         .pdf-empty-icon { color: var(--muted2); opacity: 0.6; }
         .pdf-empty p { margin: 0; max-width: 300px; }
-        .pdf-row { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--panel); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .pdf-row { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--panel); }
         .pdf-icon { width: 36px; height: 36px; border-radius: var(--r-md); background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .pdf-title { font-size: 14px; color: var(--text); }
         .pdf-sub { font-size: 12px; color: var(--muted2); margin-top: 2px; }

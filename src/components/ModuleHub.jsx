@@ -8,7 +8,7 @@ import { useSocialPrefs, displayNameFor } from "../lib/social.js";
 import { fetchModulePresence } from "../lib/presence.js";
 import { fetchThreads } from "../lib/discussion.js";
 import { fetchWingmen } from "../lib/partners.js";
-import { ModuleMotif, ProgressArc, InstrumentStyles } from "./instruments.jsx";
+import { ProgressArc, InstrumentStyles } from "./instruments.jsx";
 import ChaptersPanel from "./ChaptersPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
 import ModuleSocial from "./ModuleSocial.jsx";
@@ -59,7 +59,6 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
   return (
     <div className="hub2">
       {!reading && <header className="hub2-head bezel">
-        <ModuleMotif motif={module.motif} />
         <div className="hub2-head-main">
           <div className="hub2-badge">
             <span className="hub2-code">{module.code}</span>

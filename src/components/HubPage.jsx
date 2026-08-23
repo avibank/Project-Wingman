@@ -8,7 +8,7 @@ import { fetchAllPresence } from "../lib/presence.js";
 import { fetchWingmen } from "../lib/partners.js";
 import { fetchThreadsForModules } from "../lib/discussion.js";
 import { displayNameFor, useSocialPrefs } from "../lib/social.js";
-import { SplitFlap, ModuleMotif, InstrumentStyles } from "./instruments.jsx";
+import { SplitFlap, InstrumentStyles } from "./instruments.jsx";
 import FlightDeck from "./FlightDeck.jsx";
 
 // Only surface a module filter once the roster is big enough to need one.
@@ -91,7 +91,7 @@ function ProgressRing({ pct, size = 34 }) {
   );
 }
 
-function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, onReviewBookmarks, onSignIn, streak = 0 }) {
+function HubPage({ onEnterModule, onGoToChapter, onGoToSocial, onReviewBookmarks, onSignIn, streak = 0 }) {
   const { isSignedIn, user } = useUser();
   const { prefs: socialPrefs } = useSocialPrefs();
   const progress = useUserProgress();
@@ -388,7 +388,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
                   key={m.code}
                   className={`card mod is-${state} ${isPinned ? "is-pinned" : ""} ${isSuggested ? "is-suggested" : ""}`}
                 >
-                  <ModuleMotif motif={m.motif} />
                   <span className="mod-rail" aria-hidden="true" />
                   <div className="mod-top">
                     <span className="mono-code">{m.code}</span>
@@ -458,7 +457,6 @@ function HubPage({ onEnterModule, onGoToChapter, onGoToDiscuss, onGoToSocial, on
         .board-code { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; width: 46px; flex-shrink: 0; }
         .board-text { font-family: var(--font-ui); font-size: 12px; color: var(--text-soft); }
         .mod { position: relative; }
-        .mod .instr-motif { color: var(--accent); right: -60px; width: 170px; height: 170px; opacity: 0.07; }
         .mod .mono-code { color: var(--text-secondary); }
         /* Amber is the "come here next" signal, never identity. */
         /* threshold light: a filled top edge, not a halo */
