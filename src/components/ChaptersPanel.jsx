@@ -21,7 +21,7 @@ import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
 
-function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed, onReadingChange }) {
+function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = null, onInitialChapterConsumed, onReadingChange, onGoToChapter }) {
   // Only this module's chapters — the global list now spans five modules.
   const moduleChapters = chaptersForModule(activeModuleCode);
   // Slide-over state for the notebook / discussion entry points.
@@ -401,6 +401,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                           chapterId={ch.id}
                           chapterCode={ch.code}
                           moduleCode={activeModuleCode}
+                          nextChapter={moduleChapters[moduleChapters.findIndex((c) => c.id === ch.id) + 1] || null}
+                          onGoToChapter={onGoToChapter}
                           onProgressChange={(seenCount) => updateChapterProgress(ch.id, seenCount)}
                         />
                         {/* §7.7 — the thumbs belong after the last question,

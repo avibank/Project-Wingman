@@ -14,7 +14,7 @@ lists what v1 shipped that v2 reverses.
 | 2 | Home rebuild (§9.1) | **done** |
 | 2 | Chapter: one rendering, three tabs (§9.3) | partial — one rendering done in v1 |
 | 2 | Quiz (§9.3.2, §4.5) | **partial** — illumination done; explanations and Ask-about-this pending |
-| 2 | Debrief (§9.3.3) | not started |
+| 2 | Debrief (§9.3.3) | **done** |
 | 2 | Naming + placards (§8) | **partial** — settings placards done |
 | 2 | Delete list (§6.6) | **done** |
 | 3 | Mono ramp + liveries (§3.4) | not started |
@@ -295,3 +295,30 @@ Deleting `DiscussPanel` broke the harness bundle, because its `main.jsx` still i
 it — root rendered empty with **no console output at all**, since a module-load failure
 never reaches the console. `npm run build` passed throughout: the app never imported that
 file, only the harness did. The answer was in `preview_logs`, not the console.
+
+## Phase 2 · Debrief (§9.3.3) — done
+
+The end of a quiz was `Light turbulence · Retake set` — a status word instead of a score,
+and no way onward at all.
+
+Now:
+
+```
+Debrief — JT.02
+0 of 2 correct. The first one you missed trips most people — 140 others have too.
+  [ Review the 2 you missed ]  [ Next: JT.03 → ]
+Leave a note for the next pilot: ____
+1 debrief note from other pilots ▾
+```
+
+The score is a number (§8.3). "Trips most people" is a real aggregate from
+`question_miss_stats` over the question you actually missed, and it is true whether or not
+anybody is online — §9.3.2's point about anonymous numbers. Review jumps back to that
+question rather than restarting the set. The note posts to the chapter and the strip below
+shows what other people left, which is the permanent artefact §9.3.3 is after.
+
+v1's `CompletionTip` is deleted — the debrief note is the same idea, in the place the spec
+puts it.
+
+Copy fix caught by testing: with two misses it read "The one you missed trips most
+people". It counts now.

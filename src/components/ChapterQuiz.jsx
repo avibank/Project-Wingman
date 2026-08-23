@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
 import CallWingman from "./CallWingman.jsx";
-import CompletionTip from "./CompletionTip.jsx";
+import Debrief from "./Debrief.jsx";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";
 
-function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCode, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
+function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCode, nextChapter, onGoToChapter, onComplete, bookmarks, onToggleBookmark, onProgressChange }) {
   const { user } = useUser();
   const [missStat, setMissStat] = useState(null);
   const [i, setI] = useState(0);
@@ -13,6 +13,8 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
   const [score, setScore] = useState({ correct: 0, seen: 0 });
   const [done, setDone] = useState(false);
   const [flashIdx, setFlashIdx] = useState(null);
+  // §9.3.3 — the debrief needs to point at what you actually missed.
+  const [missed, setMissed] = useState([]);
   const q = questions[i];
 
   const advance = (currentScore) => {
@@ -37,6 +39,7 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
       recordAttempt({ userId: user.id, questionId: q.id, chapterId, correct });
       if (!correct) fetchMissStats(q.id).then(setMissStat);
     }
+    if (!correct) setMissed((m) => (m.includes(q.id) ? m : [...m, q.id]));
     const updatedScore = { correct: score.correct + (correct ? 1 : 0), seen: score.seen + 1 };
     onProgressChange?.(updatedScore.seen);
     if (correct) {
@@ -69,55 +72,33 @@ function ChapterQuiz({ questions, chapterTitle, chapterId, chapterCode, moduleCo
     setI(0);
     setPicked(null);
     setScore({ correct: 0, seen: 0 });
+    setMissed([]);
     setDone(false);
     onProgressChange?.(0);
   };
 
   if (done) {
-    const pct = Math.round((score.correct / questions.length) * 100);
-    const isRough = pct < 50;
-    const statusLine =
-      pct >= 90 ? "Cruising" :
-      pct >= 70 ? "Steady altitude" :
-      pct >= 50 ? "Light turbulence" :
-      "Holding pattern";
-
     return (
-      <div className="exam-done">
-        <div className="landing-strip">
-          <Plane size={20} className={`landing-plane ${isRough ? "is-rough" : "is-smooth"}`} />
-          <div className="runway" />
-        </div>
-        <h3>{statusLine}</h3>
-        <p>{chapterTitle}</p>
-        <button className="btn-primary" onClick={restart}>Retake set</button>
-        <CompletionTip chapterId={chapterId} chapterCode={chapterCode} moduleCode={moduleCode} />
-        <style>{`
-          .exam-done { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; text-align: center; overflow: hidden; }
-          .exam-done h3 { font-family: var(--font-display); color: var(--text); margin: 6px 0 0; font-size: 16px; }
-          .exam-done p { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
-          .landing-strip { position: relative; height: 50px; width: 100%; max-width: 220px; margin: 4px 0; }
-          .runway { position: absolute; left: 0; right: 0; bottom: 8px; height: 2px; background: var(--border); }
-          .landing-plane { position: absolute; color: var(--accent); }
-          .landing-plane.is-smooth { animation: landSmooth 1.6s ease-out forwards; }
-          .landing-plane.is-rough { animation: landRough 1.8s ease-out forwards; }
-          @keyframes landSmooth {
-            0% { left: -10%; top: -6px; opacity: 0; transform: rotate(-14deg); }
-            20% { opacity: 1; }
-            75% { left: 62%; top: 22px; transform: rotate(-5deg); }
-            100% { left: 85%; top: 34px; transform: rotate(0deg); opacity: 1; }
-          }
-          @keyframes landRough {
-            0% { left: -10%; top: -6px; opacity: 0; transform: rotate(-16deg); }
-            20% { opacity: 1; }
-            60% { left: 55%; top: 24px; transform: rotate(-8deg); }
-            72% { top: 34px; }
-            80% { top: 14px; }
-            90% { top: 30px; }
-            100% { left: 85%; top: 34px; transform: rotate(-2deg); opacity: 1; }
-          }
-        `}</style>
-      </div>
+      <Debrief
+        chapterCode={chapterCode}
+        chapterTitle={chapterTitle}
+        chapterId={chapterId}
+        moduleCode={moduleCode}
+        correct={score.correct}
+        total={questions.length}
+        missedIds={missed}
+        nextChapter={nextChapter}
+        onRetake={restart}
+        onReview={(qid) => {
+          const idx = questions.findIndex((x) => x.id === qid);
+          if (idx < 0) return;
+          setDone(false);
+          setI(idx);
+          setPicked(null);
+          setMissStat(null);
+        }}
+        onNext={(c) => onGoToChapter?.(moduleCode, c.id)}
+      />
     );
   }
 

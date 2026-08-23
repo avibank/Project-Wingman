@@ -84,6 +84,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
         {tab === "chapters" && (
           <ChaptersPanel
             onReadingChange={setReading}
+            onGoToChapter={onGoToChapter}
             activeModuleCode={module.code}
             onSignIn={onSignIn}
             initialChapterId={initialChapterId}
