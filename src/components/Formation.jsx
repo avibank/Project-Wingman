@@ -165,11 +165,11 @@ function Formation({ chapterId, chapterCode, moduleCode }) {
         .fm-cta { display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
           background: none; border: none; padding: 4px 0; cursor: pointer;
           text-align: left; min-height: 44px; }
-        .fm-cta-label { font-size: 15px; color: var(--text-1); }
-        .fm-cta-hint { font-size: 13px; color: var(--text-3); }
+        .fm-cta-label { font-size: 16px; color: var(--text-1); }
+        .fm-cta-hint { font-size: 14px; color: var(--text-3); }
 
         .fm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-        .fm-title { font-family: var(--font-ui); font-size: 15px; font-weight: 500; color: var(--text-1); margin: 0; }
+        .fm-title { font-family: var(--font-ui); font-size: 16px; font-weight: 500; color: var(--text-1); margin: 0; }
         /* a headcount, not a rank */
         .fm-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-2);
           font-variant-numeric: tabular-nums; }
@@ -179,10 +179,10 @@ function Formation({ chapterId, chapterCode, moduleCode }) {
         .fm-seat-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
         .fm-seat-name { font-size: 14px; color: var(--text-1); }
         .fm-seat-pos { font-size: 12px; color: var(--text-2); }
-        .fm-quiet { font-size: 13px; color: var(--text-3); }
+        .fm-quiet { font-size: 14px; color: var(--text-3); }
 
         .fm-join { min-height: 44px; padding: 0 14px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--warm); color: var(--surface-0); font-size: 15px; font-weight: 500; }
+          background: var(--warm); color: var(--surface-0); font-size: 16px; font-weight: 500; }
         .fm-join:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
         .fm-cancel { min-height: 44px; padding: 0 12px; border: none; border-radius: 12px; cursor: pointer;
           background: none; color: var(--text-3); font-size: 14px; align-self: flex-start; }

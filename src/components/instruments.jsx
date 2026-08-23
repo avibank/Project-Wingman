@@ -210,7 +210,7 @@ export function RadarScope({ contacts = [], you = 0, size = 148, onPick }) {
 export function InstrumentStyles() {
   return (
     <style>{`
-      .instr-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+      .instr-label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
         color: var(--muted); opacity: 0.75; margin-top: 8px; text-align: center; }
 
       /* glass bezel panel: hardware edge, not a drop shadow */
@@ -240,7 +240,7 @@ export function InstrumentStyles() {
         background: var(--well); box-shadow: var(--shadow-inset); }
       .tape-strip { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
       .tape-row { height: 18.4px; display: flex; align-items: center; justify-content: center;
-        font-family: var(--font-mono); font-size: 11px; color: var(--muted2); font-variant-numeric: tabular-nums; }
+        font-family: var(--font-ui); font-size: 12px; color: var(--muted2); font-variant-numeric: tabular-nums; }
       .tape-row.is-current { font-size: 17px; font-weight: 500; color: var(--accent); }
       .tape-box { position: absolute; left: 3px; right: 3px; top: 50%; height: 24px; transform: translateY(-50%);
         border-top: 1px solid var(--border-hover); border-bottom: 1px solid var(--border-hover); }

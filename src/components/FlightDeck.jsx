@@ -87,8 +87,8 @@ function FlightDeck({
         .deck-flight { padding: 8px 0 28px; transition: opacity 240ms cubic-bezier(0.2,0.8,0.2,1), transform 240ms cubic-bezier(0.2,0.8,0.2,1); }
         .deck.is-condensed .deck-flight { opacity: 0; transform: translateY(-12px); pointer-events: none; }
 
-        .deck-greeting { font-family: var(--font-ui); font-size: 24px; font-weight: 500; color: var(--text-1); margin: 0 0 6px; }
-        .deck-status { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); margin: 0 0 24px; letter-spacing: 0.01em; }
+        .deck-greeting { font-family: var(--font-ui); font-size: 28px; font-weight: 500; color: var(--text-1); margin: 0 0 6px; }
+        .deck-status { font-family: var(--font-ui); font-size: 14px; color: var(--text-2); margin: 0 0 24px; }
 
         .deck-row { display: flex; align-items: stretch; gap: 16px; flex-wrap: wrap; }
 
@@ -100,7 +100,7 @@ function FlightDeck({
           mask-image: linear-gradient(to bottom, transparent, #000 26%, #000 74%, transparent);
           display: flex; flex-direction: column; justify-content: center; }
         .tape-row { height: 19px; display: flex; align-items: center; justify-content: center;
-          font-family: var(--font-mono); font-size: 13px; color: var(--text-3); opacity: 0.3;
+          font-family: var(--font-mono); font-size: 14px; color: var(--text-3); opacity: 0.3;
           font-variant-numeric: tabular-nums; transition: all 240ms cubic-bezier(0.2,0.8,0.2,1); }
         .tape-row.is-current { font-size: 20px; color: var(--cold); opacity: 1; }
         .tape-bracket { position: absolute; left: 6px; right: 6px; top: 50%; height: 26px; transform: translateY(-50%);
@@ -114,9 +114,9 @@ function FlightDeck({
           text-align: left; cursor: pointer; min-height: 96px; position: relative; overflow: hidden;
           transition: transform 240ms cubic-bezier(0.2,0.8,0.2,1); }
         .deck-card:hover { transform: translateY(-2px); }
-        .deck-card-code { font-family: var(--font-mono); font-size: 13px; color: var(--cold); }
+        .deck-card-code { font-family: var(--font-mono); font-size: 14px; color: var(--cold); }
         .deck-card-title { font-family: var(--font-ui); font-size: 17px; color: var(--text-1); }
-        .deck-card-go { font-size: 13px; color: var(--text-2); margin-top: auto; }
+        .deck-card-go { font-size: 14px; color: var(--text-2); margin-top: auto; }
 
         /* §4 — the one element in the app permitted backdrop blur */
         .deck-strip { position: fixed; top: 0; left: 0; right: 0; z-index: 20;
@@ -127,11 +127,11 @@ function FlightDeck({
           opacity: 0; transform: translateY(-8px); pointer-events: none;
           transition: opacity 240ms cubic-bezier(0.2,0.8,0.2,1), transform 240ms cubic-bezier(0.2,0.8,0.2,1); }
         .deck.is-condensed .deck-strip { opacity: 1; transform: none; pointer-events: auto; }
-        .deck-strip-code { font-family: var(--font-mono); font-size: 13px; color: var(--cold); flex-shrink: 0; }
-        .deck-strip-title { font-size: 15px; color: var(--text-1); flex: 1; min-width: 0;
+        .deck-strip-code { font-family: var(--font-mono); font-size: 14px; color: var(--cold); flex-shrink: 0; }
+        .deck-strip-title { font-size: 16px; color: var(--text-1); flex: 1; min-width: 0;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .deck-strip-streak { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
-        .deck-strip-go { background: none; border: none; color: var(--cold); font-size: 15px;
+        .deck-strip-streak { font-family: var(--font-mono); font-size: 14px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+        .deck-strip-go { background: none; border: none; color: var(--cold); font-size: 16px;
           cursor: pointer; min-height: 44px; padding: 0 4px; flex-shrink: 0; }
 
         /* §2.6 — on a screen that splits solo from social, the cheatline moves

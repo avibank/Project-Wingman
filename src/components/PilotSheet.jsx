@@ -123,14 +123,14 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
           display: grid; gap: 1px; background: var(--hairline); border-radius: 14px; overflow: hidden; }
         .ps-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
           min-height: 56px; padding: 10px 16px; background: var(--surface-2); border: none;
-          text-align: left; cursor: pointer; color: var(--text-1); font-size: 15px;
+          text-align: left; cursor: pointer; color: var(--text-1); font-size: 16px;
           border-radius: 14px; margin-bottom: 8px; justify-content: center; }
         .ps-list .ps-row { border-radius: 0; margin: 0; background: var(--surface-1); }
         .ps-list .ps-row:hover { background: var(--surface-2); }
         .ps-row.is-picked { box-shadow: inset 3px 0 0 var(--warm); background: var(--surface-2); }
         .ps-row:disabled { color: var(--text-3); cursor: default; }
-        .ps-row-label { font-size: 15px; }
-        .ps-row-hint { font-size: 13px; color: var(--text-3); }
+        .ps-row-label { font-size: 16px; }
+        .ps-row-hint { font-size: 14px; color: var(--text-3); }
         .ps-row--primary { background: var(--warm); color: var(--surface-0); align-items: center; }
         .ps-row--primary:disabled { background: var(--surface-2); color: var(--text-3); }
         /* §14 — red is for genuine danger. Blocking someone qualifies. */

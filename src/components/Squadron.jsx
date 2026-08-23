@@ -114,7 +114,7 @@ function SquadronStyles() {
         .sq { padding: 4px 0 8px; }
         .sq-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
         .sq-title { font-family: var(--font-ui); font-size: 17px; font-weight: 500; color: var(--text-1); margin: 0; }
-        .sq-count { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+        .sq-count { font-family: var(--font-mono); font-size: 14px; color: var(--text-2); font-variant-numeric: tabular-nums; }
         .sq-forming { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0 0 16px; max-width: 52ch; }
         .sq-quiet { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0; max-width: 52ch; }
 

@@ -497,9 +497,9 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           padding: 10px 0 12px; margin: 0 0 8px; background: var(--surface-0); }
         .reader-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px;
           padding: 0 8px 0 0; background: none; border: none; cursor: pointer;
-          color: var(--text-2); font-size: 15px; }
+          color: var(--text-2); font-size: 16px; }
         .reader-back:hover { color: var(--text-1); }
-        .reader-code { font-family: var(--font-mono); font-size: 13px; color: var(--cold); }
+        .reader-code { font-family: var(--font-mono); font-size: 14px; color: var(--cold); }
         .reader-hairline { position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
           background: var(--hairline); border-radius: 2px; overflow: hidden; }
         .reader-hairline-fill { display: block; height: 100%; background: var(--cold);
@@ -532,7 +532,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapters.is-reading .material-text { font-family: var(--font-serif);
           font-size: 17px; line-height: 1.7; color: var(--text-1); }
         .chapters.is-reading .material-heading { font-family: var(--font-serif);
-          font-size: 19px; font-weight: 600; color: var(--text-1); margin: 0 0 8px; }
+          font-size: 20px; font-weight: 600; color: var(--text-1); margin: 0 0 8px; }
         .chapters.is-reading .material-section { margin-bottom: 28px; }
         .chapters.is-reading .material-kicker { display: none; }
         .chapters.is-reading .chapter-video,
@@ -544,7 +544,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .bump { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 35;
           display: flex; align-items: center; gap: 9px; background: var(--elev-1);
           border: 1px solid color-mix(in srgb, var(--presence) 34%, transparent); border-radius: var(--r-pill);
-          padding: 10px 18px; font-size: 13px; color: var(--text); white-space: nowrap;
+          padding: 10px 18px; font-size: 14px; color: var(--text); white-space: nowrap;
           box-shadow: 0 8px 26px rgba(0,0,0,0.4), 0 0 0 5px var(--presence-glow);
           animation: bumpIn 0.4s cubic-bezier(0.22,1,0.36,1); }
         .bump-icon { color: var(--presence); }
@@ -552,18 +552,18 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .app.reduce-motion .bump { animation: none; }
         @media (prefers-reduced-motion: reduce) { .bump { animation: none; } }
         .manifest { grid-column: 1 / -1; border-top: 1px solid var(--border-soft); margin-top: 16px; padding-top: 14px; }
-        .manifest-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+        .manifest-label { font-family: var(--font-ui); font-size: 12px;
           color: var(--muted); margin: 0 0 9px; }
         .manifest-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
         .manifest-item button { display: flex; align-items: baseline; gap: 9px; width: 100%; text-align: left; background: none;
-          border: none; padding: 7px 2px; cursor: pointer; font-size: 12.5px; color: var(--muted); }
+          border: none; padding: 7px 2px; cursor: pointer; font-size: 12px; color: var(--muted); }
         .manifest-item button:hover { color: var(--text-soft); }
         .manifest-item.is-here button { color: var(--text); cursor: default; }
         .manifest-item.is-here .manifest-code { color: var(--text-primary); }
         .manifest-item.is-done .manifest-title { color: var(--muted); }
-        .manifest-code { font-family: var(--font-mono); font-size: 10.5px; color: var(--accent-tint); flex-shrink: 0; }
+        .manifest-code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-tint); flex-shrink: 0; }
         .manifest-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
-        .manifest-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted2); margin: 8px 0 0; }
+        .manifest-meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); margin: 8px 0 0; }
         @media (min-width: 900px) { .manifest { grid-column: auto; border-top: none; border-left: 1px solid var(--border-soft);
           margin-top: 0; padding-top: 0; padding-left: 18px; } }
         .chapter-social { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
@@ -579,7 +579,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .cloud-c { top: 62%; left: -20%; animation: driftA 75s linear infinite reverse; }
         @keyframes driftA { from { transform: translateX(0); } to { transform: translateX(140vw); } }
         @keyframes driftB { from { transform: translateX(0); } to { transform: translateX(160vw); } }
-        .boarding-toast { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.08em; padding: 8px 14px; border-radius: var(--r-md); text-align: center; animation: toastFade 2.2s ease forwards; overflow: hidden; }
+        .boarding-toast { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent); font-family: var(--font-ui); font-size: 12px; padding: 8px 14px; border-radius: var(--r-md); text-align: center; animation: toastFade 2.2s ease forwards; overflow: hidden; }
         .boarding-toast-plane { animation: toastPlaneSlide 2.2s ease-in-out; }
         @keyframes toastPlaneSlide {
           0% { transform: translateX(-14px) rotate(45deg); opacity: 0; }
@@ -588,21 +588,21 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
           100% { transform: translateX(14px) rotate(45deg); opacity: 0; }
         }
         @keyframes toastFade { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
-        .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); padding: 4px 0; }
+        .chapters-hint { position: relative; z-index: 1; text-align: center; font-family: var(--font-ui); font-size: 12px; color: var(--muted); padding: 4px 0; }
         .chapters-search { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: var(--well); border: 1px solid var(--border); box-shadow: var(--shadow-inset); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapters-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
-        .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 13.5px; }
+        .chapters-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; }
         .chapters-search input::placeholder { color: var(--muted); }
         .chapters-search input:focus { outline: none; }
         .recent-row { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }
-        .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted2); text-transform: uppercase; }
+        .recent-row-label { display: flex; align-items: center; gap: 5px; font-family: var(--font-ui); font-size: 12px; color: var(--muted2); }
         .recent-row-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
         .recent-chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--elev-1); border: 1px solid var(--border); border-radius: var(--r-md); padding: 8px 12px; cursor: pointer; max-width: 160px; text-align: left; }
         .recent-chip:hover { border-color: var(--accent); }
-        .recent-chip-code { font-family: var(--font-mono); font-size: 10px; color: var(--accent); }
-        .recent-chip-title { font-size: 11.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .recent-chip-code { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+        .recent-chip-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
         .chapters { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; }
-        .chapters-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; text-align: center; padding: 20px 0; }
+        .chapters-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
         .chapters-empty-icon { color: var(--muted2); opacity: 0.6; }
         .chapters-empty p { margin: 0; max-width: 300px; }
         /* Chapters as a flight plan: one connected route, waypoint per leg. */
@@ -637,10 +637,10 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapter.is-open:hover { transform: none; }
         .chapter-head { display: grid; grid-template-columns: auto auto 1fr auto auto auto; align-items: center; gap: 10px; width: 100%; padding: 16px 16px; background: transparent; border: none; cursor: pointer; text-align: left; }
         .chapter-unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent-soft); flex-shrink: 0; }
-        .chapter-code { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); }
-        .chapter-title { font-family: var(--font-display); font-size: 15px; color: var(--text); }
+        .chapter-code { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+        .chapter-title { font-family: var(--font-display); font-size: 16px; color: var(--text); }
         .chapter-done { width: 18px; height: 18px; border-radius: 50%; background: var(--good); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .chapter-meta { font-size: 11.5px; color: var(--muted); font-family: var(--font-mono); }
+        .chapter-meta { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
         .chapter-chevron { color: var(--muted2); transition: transform 0.2s ease; }
         .chapter.is-open .chapter-chevron { transform: rotate(90deg); }
         .chapter-progress-track { height: 3px; background: var(--border); margin: 0 16px 4px; border-radius: 2px; overflow: hidden; }
@@ -657,8 +657,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         /* Sits over a YouTube thumbnail, so the scrim alone cannot guarantee
            a ratio -- the image underneath is arbitrary. It carries its own
            backing and full-strength text: it measured 2.33:1 before. */
-        .video-facade-kicker { position: absolute; left: 12px; bottom: 11px; font-family: var(--font-mono); font-size: 10px;
-          letter-spacing: 0.12em; text-transform: uppercase; color: #FFF;
+        .video-facade-kicker { position: absolute; left: 12px; bottom: 11px; font-family: var(--font-ui); font-size: 12px; color: #FFF;
           background: rgb(0 0 0 / 0.62); padding: 3px 7px; border-radius: 6px; }
         .video-facade-play { position: relative; display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%;
           background: color-mix(in srgb, var(--accent) 92%, transparent); color: var(--on-accent);
@@ -668,27 +667,27 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .video-facade:active .video-facade-play { transform: scale(0.97); }
         .app.reduce-motion .video-facade-play { transition: none; }
         .video-none { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-          color: var(--muted); font-size: 12.5px; text-align: center; padding: 20px;
+          color: var(--muted); font-size: 12px; text-align: center; padding: 20px;
           background: radial-gradient(circle at 50% 40%, var(--elev-2), var(--well)); }
         .chapter-material { margin-top: 16px; max-width: 62ch; }
-        .material-kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+        .material-kicker { font-family: var(--font-ui); font-size: 12px;
           color: var(--accent); opacity: 0.85; margin: 0 0 12px; }
         .material-section { margin-bottom: 16px; }
         .material-section:last-child { margin-bottom: 0; }
-        .material-heading { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 5px; }
-        .material-text { font-size: 13.5px; line-height: 1.62; color: var(--text-soft); margin: 0; }
+        .material-heading { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 5px; }
+        .material-text { font-size: 14px; line-height: 1.62; color: var(--text-soft); margin: 0; }
         .video-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; border-radius: var(--r-md); }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .video-fallback { display: block; font-size: 11.5px; color: var(--muted); text-decoration: none; margin-top: 6px; }
+        .video-fallback { display: block; font-size: 12px; color: var(--muted); text-decoration: none; margin-top: 6px; }
         .video-fallback:hover { color: var(--accent); }
         .chapter-video { aspect-ratio: 16/9; border-radius: var(--r-md); background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
         .player-video { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--bg); border: none; }
-        .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: var(--r-sm); border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
+        .player-tag { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; font-family: var(--font-ui); font-size: 12px; color: #cfe0ff; background: rgba(11,21,38,0.72); backdrop-filter: blur(4px); padding: 5px 9px; border-radius: var(--r-sm); border: 1px solid rgba(111,160,240,0.3); pointer-events: none; }
         .chapter-side-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: var(--r-md); padding: 4px; margin-bottom: 14px; }
-        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 11.5px; padding: 7px; border-radius: var(--r-sm); cursor: pointer; }
+        .chapter-side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; background: transparent; border: none; color: var(--muted2); font-size: 12px; padding: 7px; border-radius: var(--r-sm); cursor: pointer; }
         .chapter-side-tab.is-active { background: var(--panel); color: var(--text); }
         .chapter-feedback.is-hidden { display: none; }
-        .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--muted); }
+        .chapter-feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-size: 12px; color: var(--muted); }
         .chapter-feedback button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .chapter-feedback button:hover { border-color: var(--accent); color: var(--accent); }
         .chapter-feedback-thanks { color: var(--good); }

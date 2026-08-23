@@ -126,26 +126,26 @@ function ProgressPage({ onBack }) {
       <style>{`
         .prog { max-width: 720px; }
         .prog-back { display: inline-flex; align-items: center; gap: 4px; background: none; border: none;
-          color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 6px 0; margin-bottom: 10px; }
-        .prog-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
-        .prog-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 24px; }
+          color: var(--accent-muted); font-size: 14px; cursor: pointer; padding: 6px 0; margin-bottom: 10px; }
+        .prog-title { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--text); margin: 0 0 4px; }
+        .prog-sub { font-size: 14px; color: var(--muted); margin: 0 0 24px; }
         .prog-tile { display: flex; flex-direction: column; }
         .prog-tile.is-invite { justify-content: center; }
-        .prog-tile.is-invite span { font-size: 13px; line-height: 1.45; }
+        .prog-tile.is-invite span { font-size: 14px; line-height: 1.45; }
         .prog-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-soft);
           border: 1px solid var(--border-soft); border-radius: var(--r-md); overflow: hidden; margin-bottom: 26px; }
         .prog-summary div { background: var(--elev-1); padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
-        .prog-summary b { font-family: var(--font-mono); font-size: 19px; color: var(--text); font-variant-numeric: tabular-nums; }
-        .prog-summary span { font-size: 11.5px; color: var(--muted); }
+        .prog-summary b { font-family: var(--font-mono); font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .prog-summary span { font-size: 12px; color: var(--muted); }
         @media (max-width: 620px) { .prog-summary { grid-template-columns: repeat(2, 1fr); } }
         .prog-block { margin-bottom: 26px; }
-        .prog-h2 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 12px; }
+        .prog-h2 { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--text); margin: 0 0 12px; }
         .prog-modules, .prog-scores { list-style: none; margin: 0; padding: 0; }
         .prog-modules li { margin-bottom: 13px; }
-        .prog-mod-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 6px; font-size: 13px; }
-        .prog-code { font-family: var(--font-mono); font-size: 10.5px; color: var(--accent-tint); flex-shrink: 0; }
+        .prog-mod-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 6px; font-size: 14px; }
+        .prog-code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-tint); flex-shrink: 0; }
         .prog-name { color: var(--text-soft); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .prog-pct { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .prog-pct { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
         .prog-track { height: 5px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; box-shadow: var(--shadow-inset); }
         .prog-fill { height: 100%; border-radius: var(--r-pill);
           background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, transparent), var(--accent));
@@ -153,11 +153,11 @@ function ProgressPage({ onBack }) {
         .prog-cal { display: flex; gap: 5px; margin-bottom: 9px; }
         .prog-day { width: 22px; height: 22px; border-radius: 5px; background: var(--well); border: 1px solid var(--border-soft); }
         .prog-day.is-on { background: color-mix(in srgb, var(--accent) 55%, transparent); border-color: transparent; }
-        .prog-note { font-size: 12.5px; color: var(--muted); margin: 0; }
+        .prog-note { font-size: 12px; color: var(--muted); margin: 0; }
         .prog-scores li { display: flex; align-items: center; gap: 10px; padding: 9px 0;
-          border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+          border-bottom: 1px solid var(--border-soft); font-size: 14px; }
         .prog-scores li:last-child { border-bottom: none; }
-        .prog-score { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .prog-score { font-family: var(--font-mono); font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; }
         .prog-score.is-low { color: var(--calm); }
         .app.reduce-motion .prog-fill { transition: none; }
       `}</style>

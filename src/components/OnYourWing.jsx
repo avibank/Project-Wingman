@@ -63,16 +63,15 @@ function OnYourWing({ moduleCode, people = [], myChapterId, onOpenPilot }) {
       <TailStyles />
       <style>{`
         .oyw { margin: 28px 0 8px; }
-        .oyw-head { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
-          text-transform: uppercase; color: var(--text-3); font-weight: 400; margin: 0 0 12px; }
+        .oyw-head { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); font-weight: 500; margin: 0 0 12px; }
         .oyw-list { list-style: none; margin: 0; padding: 0;
           display: grid; gap: 1px; background: var(--hairline); border-radius: 14px; overflow: hidden; }
         .oyw-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px;
           min-height: 56px; background: var(--surface-1); border: none; text-align: left; cursor: pointer; }
         .oyw-row:hover { background: var(--surface-2); }
         .oyw-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .oyw-name { font-size: 15px; color: var(--text-1); }
-        .oyw-why { font-size: 13px; color: var(--text-2); }
+        .oyw-name { font-size: 16px; color: var(--text-1); }
+        .oyw-why { font-size: 14px; color: var(--text-2); }
       `}</style>
     </section>
   );

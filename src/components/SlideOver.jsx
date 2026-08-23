@@ -36,7 +36,7 @@ function SlideOver({ open, title, subtitle, onClose, children }) {
         @keyframes slideoverIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
         .slideover-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
           padding: 18px 18px 14px; border-bottom: 1px solid var(--border-soft); }
-        .slideover-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text); margin: 0; }
+        .slideover-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--text); margin: 0; }
         .slideover-sub { font-size: 12px; color: var(--muted); margin: 3px 0 0; }
         .slideover-close { background: none; border: none; color: var(--muted); cursor: pointer; width: 36px; height: 36px;
           display: flex; align-items: center; justify-content: center; border-radius: var(--r-sm); }

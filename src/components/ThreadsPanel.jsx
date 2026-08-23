@@ -113,25 +113,25 @@ function ThreadStyles() {
       .th-back { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--muted);
         font-size: 12px; cursor: pointer; padding: 4px 0; margin-bottom: 8px; }
       .th-back:hover { color: var(--text); }
-      .th-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
-      .th-meta { font-size: 11.5px; color: var(--muted2); margin: 0 0 8px; }
+      .th-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--text); margin: 0 0 3px; }
+      .th-meta { font-size: 12px; color: var(--muted2); margin: 0 0 8px; }
       .th-author { color: var(--text-soft); font-weight: 600; }
-      .th-body { font-size: 13px; line-height: 1.55; color: var(--text-soft); margin: 0 0 12px; white-space: pre-wrap; }
+      .th-body { font-size: 14px; line-height: 1.55; color: var(--text-soft); margin: 0 0 12px; white-space: pre-wrap; }
       .th-posts { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
       .th-post { padding-top: 12px; border-top: 1px solid var(--border-soft); }
       .th-row { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; background: none; border: none;
         border-bottom: 1px solid var(--border-soft); padding: 12px 0; cursor: pointer; }
       .th-row:hover .th-row-title { color: var(--accent); }
-      .th-row-title { font-size: 13.5px; color: var(--text); font-weight: 600; }
-      .th-row-meta { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted2); }
+      .th-row-title { font-size: 14px; color: var(--text); font-weight: 600; }
+      .th-row-meta { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted2); }
       .th-composer { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
       .th-input, .th-composer textarea { width: 100%; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm);
-        color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px; box-shadow: var(--shadow-inset); }
+        color: var(--text); font-family: var(--font-body); font-size: 14px; padding: 10px; box-shadow: var(--shadow-inset); }
       .th-composer textarea { resize: vertical; }
       .th-post-btn { align-self: flex-end; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm);
-        padding: 10px 16px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
+        padding: 10px 16px; font-weight: 600; font-size: 12px; cursor: pointer; min-height: 40px; }
       .th-post-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-      .th-empty { font-size: 12.5px; color: var(--muted); margin: 0; padding: 8px 0; }
+      .th-empty { font-size: 12px; color: var(--muted); margin: 0; padding: 8px 0; }
     `}</style>
   );
 }

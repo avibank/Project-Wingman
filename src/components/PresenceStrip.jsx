@@ -65,8 +65,7 @@ function PresenceStrip({ people = [], moduleCode = null, onOpenPilot }) {
       <style>{`
         .pstrip { margin: 0 0 20px; }
         .pstrip-head { display: flex; align-items: center; gap: 7px; margin: 0 0 12px;
-          font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
-          text-transform: uppercase; color: var(--text-3); font-weight: 400; }
+          font-family: var(--font-ui); font-size: 12px; color: var(--text-3); font-weight: 500; }
         /* §2.2 — glow is reserved for presence. This is one of the two places it earns its keep. */
         .pstrip-live { width: 6px; height: 6px; border-radius: 50%; background: var(--warm);
           box-shadow: 0 0 0 3px color-mix(in srgb, var(--warm) 22%, transparent); }
@@ -78,7 +77,7 @@ function PresenceStrip({ people = [], moduleCode = null, onOpenPilot }) {
           background: none; border: none; cursor: pointer; padding: 4px 6px; min-width: 68px; min-height: 44px; }
         .pstrip-name { font-size: 12px; color: var(--text-2); max-width: 68px;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .pstrip-code { font-family: var(--font-mono); font-size: 11px; color: var(--text-2);
+        .pstrip-code { font-family: var(--font-mono); font-size: 12px; color: var(--text-2);
           font-variant-numeric: tabular-nums; }
         .pstrip-btn:hover .pstrip-name { color: var(--text-1); }
         @media (prefers-reduced-motion: reduce) { .pstrip-live { box-shadow: none; outline: 2px solid var(--warm); outline-offset: 1px; } }

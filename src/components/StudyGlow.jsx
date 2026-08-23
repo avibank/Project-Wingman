@@ -132,7 +132,7 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
         .glow-sheet-inner { width: 100%; background: var(--surface-1);
           border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
           margin: 0 auto; max-width: 640px; }
-        .glow-sheet-title { font-family: var(--font-ui); font-size: 18px; font-weight: 500;
+        .glow-sheet-title { font-family: var(--font-ui); font-size: 20px; font-weight: 500;
           color: var(--text-1); margin: 0 0 16px; }
         .glow-faces { list-style: none; display: flex; flex-wrap: wrap; gap: 16px 12px; padding: 0; margin: 0 0 24px; }
         .glow-faces li { display: flex; width: 64px; }
@@ -143,9 +143,9 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
         .glow-sheet-actions { display: flex; gap: 10px; }
         .glow-hi { flex: 1; min-height: 48px; border: none; border-radius: 14px; cursor: pointer;
           background: var(--warm); color: var(--surface-0); font-family: var(--font-ui);
-          font-size: 15px; font-weight: 500; }
+          font-size: 16px; font-weight: 500; }
         .glow-close { min-height: 48px; padding: 0 18px; border: none; border-radius: 14px;
-          cursor: pointer; background: var(--surface-2); color: var(--text-2); font-size: 15px; }
+          cursor: pointer; background: var(--surface-2); color: var(--text-2); font-size: 16px; }
         .glow-close.is-only { flex: 1; }
 
         @media (prefers-reduced-motion: reduce) { .glow { transition: none; } }

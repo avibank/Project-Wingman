@@ -101,19 +101,19 @@ function StreakMenu({ streak, overrideStreak }) {
       )}
       <style>{`
         .streak-menu { position: relative; }
-        .streak-word { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); letter-spacing: 0.04em; }
+        .streak-word { font-family: var(--font-ui); font-size: 12px; color: var(--muted); }
         @media (max-width: 520px) { .streak-word { display: none; } }
-        .streak-trigger { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 11.5px; color: var(--text); background: var(--elev-1); border: 1px solid var(--border); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+        .streak-trigger { display: flex; align-items: center; gap: 5px; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--elev-1); border: 1px solid var(--border); padding: 6px 10px; border-radius: var(--r-md); cursor: pointer; box-shadow: 0 0 0 1px var(--accent-soft); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
         .streak-trigger:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft), 0 0 10px var(--accent-soft); }
         .streak-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 280px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 14px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); z-index: 50; animation: streakIn 0.15s ease-out; }
         @keyframes streakIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .streak-milestone { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-soft);
+        .streak-milestone { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft);
           background: var(--presence-soft); border: 1px solid color-mix(in srgb, var(--presence) 26%, transparent);
           border-radius: var(--r-md); padding: 9px 12px; margin: 0 0 12px; }
         .streak-milestone-mark { color: var(--presence); }
         .streak-week { display: flex; justify-content: space-between; background: var(--panel-alt); border-radius: var(--r-md); padding: 14px 8px; }
         .streak-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .streak-day-letter { font-family: var(--font-mono); font-size: 10px; color: var(--muted2); }
+        .streak-day-letter { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
         .propeller-blades { transform-origin: 50% 50%; stroke: var(--panel); stroke-width: 1; }
         .propeller.is-idle .propeller-blades { fill: var(--muted2); opacity: 0.45; }
         .propeller.is-idle .propeller-hub { fill: var(--muted2); opacity: 0.45; }
@@ -125,9 +125,9 @@ function StreakMenu({ streak, overrideStreak }) {
         .app.reduce-motion .propeller.is-active .propeller-blades { animation: none; }
         .streak-stats { display: flex; justify-content: space-between; margin-top: 12px; gap: 6px; }
         .streak-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .streak-stat-value { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
-        .streak-stat-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em; color: var(--muted2); text-align: center; margin-top: 2px; }
-        .streak-last { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
+        .streak-stat-value { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); }
+        .streak-stat-label { font-family: var(--font-ui); font-size: 12px; color: var(--muted2); text-align: center; margin-top: 2px; }
+        .streak-last { text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
         .streak-last strong { color: var(--text); }
         .windsock.is-active { animation: sockWave 1.8s ease-in-out infinite; transform-origin: left center; }
         .windsock.is-idle { transform: rotate(6deg); }

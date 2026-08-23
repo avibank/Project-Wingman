@@ -161,16 +161,16 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-head { font-family: var(--font-ui); font-size: 17px; font-weight: 500;
           color: var(--text-1); margin: 0 0 12px; }
         .ps2-block { margin-bottom: 20px; }
-        .ps2-row-label { display: block; font-size: 15px; color: var(--text-1); margin: 0 0 8px; }
-        .ps2-row-hint { display: block; font-size: 13px; line-height: 1.45; color: var(--text-2); max-width: 46ch; }
-        .ps2-note { font-size: 13px; color: var(--text-2); margin: 8px 0 0; }
+        .ps2-row-label { display: block; font-size: 16px; color: var(--text-1); margin: 0 0 8px; }
+        .ps2-row-hint { display: block; font-size: 14px; line-height: 1.45; color: var(--text-2); max-width: 46ch; }
+        .ps2-note { font-size: 14px; color: var(--text-2); margin: 8px 0 0; }
 
         .ps2-callsign { display: flex; gap: 8px; }
         .ps2-input { flex: 1; min-height: 44px; padding: 0 12px; border: none; border-radius: 12px;
-          background: var(--surface-2); color: var(--text-1); font-family: var(--font-ui); font-size: 15px; }
+          background: var(--surface-2); color: var(--text-1); font-family: var(--font-ui); font-size: 16px; }
         .ps2-input:focus { outline: 2px solid var(--warm); outline-offset: -1px; }
         .ps2-save { min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--warm); color: var(--surface-0); font-size: 15px; font-weight: 500; }
+          background: var(--warm); color: var(--surface-0); font-size: 16px; font-weight: 500; }
         .ps2-save:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
 
         .ps2-liveries { list-style: none; margin: 0; padding: 0;
@@ -196,13 +196,13 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-row-text { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .ps2-switch { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
           min-height: 44px; padding: 0 10px 0 4px; border: none; border-radius: 999px;
-          background: var(--surface-2); cursor: pointer; color: var(--text-2); font-size: 13px; }
+          background: var(--surface-2); cursor: pointer; color: var(--text-2); font-size: 14px; }
         .ps2-switch.is-on { background: color-mix(in oklab, var(--warm) 22%, var(--surface-2));
           color: var(--text-1); }
         .ps2-knob { width: 18px; height: 18px; border-radius: 50%; background: var(--text-3);
           transition: transform 160ms cubic-bezier(0.2,0.8,0.2,1), background 160ms linear; }
         .ps2-switch.is-on .ps2-knob { background: var(--warm); transform: translateX(4px); }
-        .ps2-switch-state { font-family: var(--font-mono); font-size: 12px; min-width: 22px; }
+        .ps2-switch-state { font-family: var(--font-ui); font-size: 12px; min-width: 22px; }
         @media (prefers-reduced-motion: reduce) { .ps2-knob { transition: none; } }
       `}</style>
     </section>

@@ -133,27 +133,27 @@ function CallWingman({ chapterId, chapterCode, moduleCode, questionId = null }) 
           background: var(--surface-1); cursor: pointer; text-align: left;
           box-shadow: inset 3px 0 0 var(--warm); }
         .cw-open:hover { background: var(--surface-2); }
-        .cw-open-label { font-size: 15px; color: var(--text-1); }
-        .cw-open-hint { font-size: 13px; color: var(--text-3); }
+        .cw-open-label { font-size: 16px; color: var(--text-1); }
+        .cw-open-hint { font-size: 14px; color: var(--text-3); }
 
         .cw-compose { padding: 14px; border-radius: 14px; background: var(--surface-1); }
         .cw-label { display: block; font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
         .cw-note { width: 100%; resize: vertical; min-height: 72px; padding: 10px 12px;
           border: none; border-radius: 10px; background: var(--surface-2); color: var(--text-1);
-          font-family: var(--font-ui); font-size: 15px; line-height: 1.5; }
+          font-family: var(--font-ui); font-size: 16px; line-height: 1.5; }
         .cw-note:focus { outline: 2px solid var(--warm); outline-offset: -1px; }
         .cw-actions { display: flex; gap: 8px; margin-top: 12px; }
         .cw-send { min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--warm); color: var(--surface-0); font-size: 15px; font-weight: 500; }
+          background: var(--warm); color: var(--surface-0); font-size: 16px; font-weight: 500; }
         .cw-send:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
         .cw-cancel { min-height: 44px; padding: 0 14px; border: none; border-radius: 12px; cursor: pointer;
-          background: none; color: var(--text-3); font-size: 15px; }
+          background: none; color: var(--text-3); font-size: 16px; }
 
         .cw-state { font-size: 14px; line-height: 1.55; color: var(--text-2); margin: 0; max-width: 52ch; }
         .cw-answers, .cw-stale { padding: 14px; border-radius: 14px; background: var(--surface-1);
           display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
         .cw-answer { display: flex; gap: 10px; align-items: flex-start; }
-        .cw-answer-body { font-size: 15px; line-height: 1.5; color: var(--text-1); }
+        .cw-answer-body { font-size: 16px; line-height: 1.5; color: var(--text-1); }
 
         .cw-sweep { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px;
           border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%);

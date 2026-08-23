@@ -416,34 +416,34 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
 
       <style>{`
         .profile-page { max-width: 560px; }
-        .profile-page-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 18px; }
-        .profile-page-title { font-family: var(--font-display); font-size: 22px; color: var(--text); margin: 0 0 16px; }
+        .profile-page-back { display: flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--accent-muted); font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 18px; }
+        .profile-page-title { font-family: var(--font-display); font-size: 20px; color: var(--text); margin: 0 0 16px; }
         .profile-page-tabs { display: flex; gap: 4px; background: var(--panel-alt); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
-        .profile-page-tabs button { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 12.5px; padding: 8px 4px; border-radius: var(--r-sm); cursor: pointer; }
+        .profile-page-tabs button { flex: 1; background: transparent; border: none; color: var(--muted2); font-size: 12px; padding: 8px 4px; border-radius: var(--r-sm); cursor: pointer; }
         .profile-page-tabs button.is-active { background: var(--panel); color: var(--text); }
         .settings-block { background: var(--elev-1); border: 1px solid var(--border); box-shadow: var(--shadow-1); border-radius: var(--r-lg); padding: 8px; margin-bottom: 12px; }
-        .settings-group-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted2); padding: 10px 14px 4px; }
+        .settings-group-label { font-family: var(--font-ui); font-size: 12px; color: var(--muted2); padding: 10px 14px 4px; }
         .settings-field { padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
         .settings-inline { display: flex; gap: 8px; margin-top: 10px; }
         .settings-input { flex: 1; min-width: 0; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm);
-          color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 9px 11px; box-shadow: var(--shadow-inset); }
+          color: var(--text); font-family: var(--font-body); font-size: 14px; padding: 9px 11px; box-shadow: var(--shadow-inset); }
         .settings-save { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--on-accent);
-          border: none; border-radius: var(--r-sm); padding: 9px 15px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
+          border: none; border-radius: var(--r-sm); padding: 9px 15px; font-weight: 600; font-size: 12px; cursor: pointer; min-height: 40px; }
         .settings-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); cursor: pointer; }
         .settings-row:hover { background: var(--panel-alt); }
         .settings-row--static { cursor: default; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 18px 14px; }
         .settings-row--static:hover { background: transparent; }
         .settings-row--centered .settings-row-sub { margin-bottom: 10px; }
         .font-size-options { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
-        .font-size-btn { background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12.5px; padding: 8px 18px; border-radius: var(--r-sm); cursor: pointer; }
+        .font-size-btn { background: var(--panel-alt); border: 1px solid var(--border); color: var(--muted2); font-size: 12px; padding: 8px 18px; border-radius: var(--r-sm); cursor: pointer; }
         .font-size-btn.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .settings-row--danger:hover { background: rgba(224,102,90,0.08); }
         .settings-row-icon { width: 34px; height: 34px; border-radius: var(--r-md); background: var(--panel-alt); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
         .settings-row--danger .settings-row-icon { color: var(--bad); }
-        .settings-row-title { font-size: 13.5px; color: var(--text); font-weight: 600; }
-        .settings-row-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-        .settings-note { font-size: 11.5px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
-        .settings-error { font-size: 11.5px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
+        .settings-row-title { font-size: 14px; color: var(--text); font-weight: 600; }
+        .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
+        .settings-error { font-size: 12px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
         .settings-switch { width: 34px; height: 20px; border-radius: var(--r-md); background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
         .settings-switch.is-on { background: var(--accent); }
         .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
@@ -452,14 +452,14 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-two-col { display: flex; gap: 8px; padding: 0 14px 10px; }
         .settings-nickname-block { border-bottom: 1px solid var(--border-soft); margin-bottom: 6px; padding-bottom: 6px; }
         .settings-nickname-input-row { display: flex; gap: 8px; padding: 0 14px 10px; }
-        .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; color: var(--text); font-size: 13.5px; min-width: 0; }
+        .settings-nickname-input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; color: var(--text); font-size: 14px; min-width: 0; }
         .settings-nickname-input:focus { outline: none; border-color: var(--accent); }
-        .settings-bio-textarea { width: 100%; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; color: var(--text); font-size: 13.5px; font-family: inherit; resize: vertical; min-height: 60px; box-sizing: border-box; }
+        .settings-bio-textarea { width: 100%; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; color: var(--text); font-size: 14px; font-family: inherit; resize: vertical; min-height: 60px; box-sizing: border-box; }
         .settings-bio-textarea:focus { outline: none; border-color: var(--accent); }
-        .settings-bio-count { text-align: right; font-size: 11.5px; color: var(--muted2); margin-top: 4px; }
-        .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 0 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
+        .settings-bio-count { text-align: right; font-size: 12px; color: var(--muted2); margin-top: 4px; }
+        .settings-nickname-save { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 0 16px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 52px; }
         .settings-nickname-save:disabled { opacity: 0.6; cursor: not-allowed; }
-        .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 9px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
+        .settings-save-full { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 9px 16px; font-size: 12px; font-weight: 600; cursor: pointer; margin: 0 14px 4px; }
         .settings-cancel-btn { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 36px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .profile-identity-centered { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 14px 14px; }
         .profile-identity-photo-wrap { position: relative; margin-bottom: 12px; }
@@ -468,18 +468,18 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .profile-identity-photo { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; display: block; }
         .profile-identity-photo-camera { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; border: 3px solid var(--panel); cursor: pointer; }
         .profile-identity-photo-camera:disabled { opacity: 0.5; cursor: not-allowed; }
-        .profile-identity-label { font-size: 11.5px; color: var(--muted); }
-        .profile-identity-name { font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
+        .profile-identity-label { font-size: 12px; color: var(--muted); }
+        .profile-identity-name { font-size: 16px; color: var(--text); font-weight: 600; margin-top: 2px; }
         .photo-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .photo-modal-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .photo-modal-image { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; object-fit: cover; }
         .photo-modal-placeholder { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--accent); }
-        .photo-modal-caption { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; }
+        .photo-modal-caption { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: #fff; }
         .photo-modal-close { position: absolute; top: -36px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border-hover); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 12.5px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
+        .profile-signout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px solid var(--border); color: var(--bad); font-size: 12px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: calc(100% - 12px); margin: 0 6px 6px; }
         .profile-signout-btn:hover { background: rgba(224,102,90,0.08); }
         .settings-danger-zone { border-color: rgba(224,102,90,0.4); }
-        .settings-delete-btn { display: flex; align-items: center; gap: 6px; background: var(--bad); color: #fff; border: none; border-radius: var(--r-sm); padding: 0 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .settings-delete-btn { display: flex; align-items: center; gap: 6px; background: var(--bad); color: #fff; border: none; border-radius: var(--r-sm); padding: 0 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
         .settings-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       `}</style>
     </div>

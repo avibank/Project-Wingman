@@ -77,10 +77,10 @@ function LiveryPicker({ current, modulesCompleted = 0, onSelect, onClose }) {
 
       <style>{`
         .picker-head { margin-bottom: 24px; position: relative; }
-        .picker-title { font-family: var(--font-ui); font-size: 24px; font-weight: 600; color: var(--text-1); margin: 0 0 4px; }
-        .picker-sub { font-size: 15px; color: var(--text-2); margin: 0; }
+        .picker-title { font-family: var(--font-ui); font-size: 28px; font-weight: 600; color: var(--text-1); margin: 0 0 4px; }
+        .picker-sub { font-size: 16px; color: var(--text-2); margin: 0; }
         .picker-close { position: absolute; right: 0; top: 0; background: none; border: none;
-          color: var(--cold); font-size: 15px; cursor: pointer; min-height: 44px; padding: 0 8px; }
+          color: var(--cold); font-size: 16px; cursor: pointer; min-height: 44px; padding: 0 8px; }
         .fleet { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
         .fin { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;
           background: var(--surface-1); border: none; border-radius: 16px; padding: 20px 12px 16px;
@@ -97,7 +97,7 @@ function LiveryPicker({ current, modulesCompleted = 0, onSelect, onClose }) {
         .fin-body { fill: var(--cold); }
         .fin-cheat { fill: var(--warm); opacity: 0.22; }
         .fin-stripe { fill: var(--warm); }
-        .fin-name { font-size: 15px; color: var(--text-1); }
+        .fin-name { font-size: 16px; color: var(--text-1); }
         .fin-mood { font-size: 12px; color: var(--text-3); text-align: center; line-height: 1.35; }
         .wash { position: fixed; inset: 0; z-index: 999; pointer-events: none;
           background: var(--surface-0);

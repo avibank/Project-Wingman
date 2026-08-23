@@ -200,28 +200,27 @@ function NotebookPanel({ chapter, moduleCode, prefs, onCountChange }) {
         .nb-vote { background: none; border: none; color: var(--muted2); cursor: pointer; padding: 2px; line-height: 0; border-radius: 4px; }
         .nb-vote:hover { color: var(--text-soft); }
         .nb-vote.is-on { color: var(--accent); }
-        .nb-score { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .nb-score { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
         .nb-body { flex: 1; min-width: 0; }
         .nb-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-        .nb-author { font-size: 12.5px; color: var(--text); font-weight: 600; }
-        .nb-status { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 9.5px;
-          letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: var(--r-pill); }
+        .nb-author { font-size: 12px; color: var(--text); font-weight: 600; }
+        .nb-status { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-ui); font-size: 12px; padding: 2px 7px; border-radius: var(--r-pill); }
         .nb-status.is-review { color: #D9A441; background: rgba(217,164,65,0.12); }
         .nb-status.is-ok { color: var(--accent); background: var(--accent-soft); }
         .nb-status.is-corrected { color: var(--accent); background: var(--accent-soft); }
-        .nb-text { font-size: 13px; line-height: 1.55; color: var(--text-soft); margin: 0; white-space: pre-wrap; }
+        .nb-text { font-size: 14px; line-height: 1.55; color: var(--text-soft); margin: 0; white-space: pre-wrap; }
         .nb-correction { font-size: 12px; color: var(--accent-muted); margin: 6px 0 0; }
         .nb-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 7px; }
         .nb-link { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--muted2);
-          font-size: 11.5px; cursor: pointer; padding: 4px 0; }
+          font-size: 12px; cursor: pointer; padding: 4px 0; }
         .nb-link:hover { color: var(--text-soft); }
         .nb-edit, .nb-composer textarea { width: 100%; background: var(--well); border: 1px solid var(--border); border-radius: var(--r-sm);
-          color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px; box-shadow: var(--shadow-inset); resize: vertical; }
+          color: var(--text); font-family: var(--font-body); font-size: 14px; padding: 10px; box-shadow: var(--shadow-inset); resize: vertical; }
         .nb-composer { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
         .nb-post { align-self: flex-end; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm);
-          padding: 10px 16px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 40px; }
+          padding: 10px 16px; font-weight: 600; font-size: 12px; cursor: pointer; min-height: 40px; }
         .nb-post:disabled { opacity: 0.5; cursor: not-allowed; }
-        .nb-empty { font-size: 12.5px; color: var(--muted); padding: 8px 0 4px; margin: 0; }
+        .nb-empty { font-size: 12px; color: var(--muted); padding: 8px 0 4px; margin: 0; }
       `}</style>
     </div>
   );

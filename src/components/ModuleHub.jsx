@@ -108,36 +108,36 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
         .hub2-head { position: relative; display: flex; align-items: center; gap: 20px; padding: 22px 24px; flex-wrap: wrap; }
         .hub2-head-main { flex: 1; min-width: 200px; position: relative; z-index: 1; }
         .hub2-badge { display: flex; align-items: center; gap: 10px; }
-        .hub2-code { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; color: var(--accent);
+        .hub2-code { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent);
           border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: var(--r-sm); padding: 3px 9px; }
-        .hub2-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin: 10px 0 4px; }
-        .hub2-status { font-size: 12.5px; color: var(--muted); margin: 0; }
+        .hub2-name { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); margin: 10px 0 4px; }
+        .hub2-status { font-size: 12px; color: var(--muted); margin: 0; }
 
         .hub2-tabs { display: flex; gap: 2px; overflow-x: auto; margin: 18px 0 16px; border-bottom: 1px solid var(--border-soft);
           scrollbar-width: none; }
         .hub2-tabs::-webkit-scrollbar { display: none; }
         .hub2-tab { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; white-space: nowrap;
-          padding: 10px 13px; color: var(--muted); font-size: 12.5px; cursor: pointer; border-bottom: 2px solid transparent; min-height: 42px; }
+          padding: 10px 13px; color: var(--muted); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; min-height: 42px; }
         .hub2-tab:hover { color: var(--text); }
         .hub2-tab.is-active { color: var(--accent); border-bottom-color: var(--accent); }
 
         .ov { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; align-items: start; }
         .ov-resume { grid-column: 1 / -1; padding: 20px 22px; }
         .ov-panel { padding: 18px 20px; position: relative; }
-        .ov-kicker { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+        .ov-kicker { font-family: var(--font-ui); font-size: 12px;
           color: var(--accent-tint); opacity: 0.9; margin: 0 0 10px; }
-        .ov-chapter { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 16px; }
-        .ov-code { font-family: var(--font-mono); font-size: 0.8em; color: var(--accent-tint); }
-        .ov-empty { font-size: 12.5px; color: var(--muted); margin: 0; }
+        .ov-chapter { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text); margin: 0 0 16px; }
+        .ov-code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-tint); }
+        .ov-empty { font-size: 12px; color: var(--muted); margin: 0; }
         .ov-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-        .ov-feed-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--text-soft); }
+        .ov-feed-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text-soft); }
         .ov-feed-icon { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
-        .ov-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; color: var(--text-soft); }
+        .ov-roster { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 12px; color: var(--text-soft); }
         .ov-roster li { display: flex; align-items: center; gap: 8px; }
         .ov-live { width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
            }
         .ov-live.is-idle { background: var(--muted2); box-shadow: none; }
-        .ov-wing { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+        .ov-wing { font-family: var(--font-ui); font-size: 12px;
           color: var(--accent); }
 
         /* tactile primary control: a guarded toggle rather than a flat pill */
@@ -149,7 +149,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, white), var(--accent));
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.5);
           transition: transform 0.16s cubic-bezier(0.22,1,0.36,1); }
-        .switch-label { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--text);
+        .switch-label { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--text);
           letter-spacing: 0.02em; }
         .switch:hover { border-color: var(--accent); }
         .switch:hover .switch-lever { transform: translateY(-1px); }

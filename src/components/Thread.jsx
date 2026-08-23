@@ -5,7 +5,17 @@ import { displayNameFor } from "../lib/social.js";
 import { REACTION_KINDS } from "../lib/discussion.js";
 
 export function timeAgo(iso) {
-  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  // A missing or unparseable timestamp used to render "NaNmo ago" to the user.
+  // There is nothing honest to say about when something happened if we do not
+  // know, so say nothing rather than a number that is not one.
+  //
+  // The falsy check is not redundant with isFinite: new Date(null) is the epoch,
+  // not NaN, so a null timestamp read as "689mo ago" rather than failing loudly.
+  if (!iso) return "";
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "";
+  const mins = Math.floor((Date.now() - t) / 60000);
+  // A clock skewed forward should not read as a negative age either.
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const h = Math.floor(mins / 60);
@@ -150,19 +160,19 @@ export function ThreadStyles() {
     <style>{`
       /* composer */
       .composer-collapsed { width: 100%; text-align: left; background: var(--well); border: 1px solid var(--border-soft);
-        border-radius: var(--r-md); padding: 12px 14px; color: var(--muted); font-size: 13px; cursor: text; min-height: 44px; }
+        border-radius: var(--r-md); padding: 12px 14px; color: var(--muted); font-size: 14px; cursor: text; min-height: 44px; }
       .composer-collapsed:hover { border-color: var(--border); }
-      .composer-collapsed.is-compact { padding: 9px 12px; font-size: 12.5px; min-height: 38px; margin-top: 8px; }
+      .composer-collapsed.is-compact { padding: 9px 12px; font-size: 12px; min-height: 38px; margin-top: 8px; }
       .composer { display: flex; flex-direction: column; gap: 8px; }
       .composer.is-compact { margin-top: 8px; }
       .composer textarea { width: 100%; resize: vertical; background: var(--well); border: 1px solid var(--border);
-        border-radius: var(--r-md); color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 11px 13px; }
+        border-radius: var(--r-md); color: var(--text); font-family: var(--font-body); font-size: 14px; padding: 11px 13px; }
       .composer textarea:focus { outline: none; border-color: var(--accent-dim); }
       .composer-actions { display: flex; justify-content: flex-end; gap: 8px; }
-      .btn-ghost { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; padding: 8px 12px; min-height: 38px; }
+      .btn-ghost { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 8px 12px; min-height: 38px; }
       .btn-ghost:hover { color: var(--text); }
       .btn-solid { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm);
-        padding: 8px 15px; font-weight: 600; font-size: 12.5px; cursor: pointer; min-height: 38px; }
+        padding: 8px 15px; font-weight: 600; font-size: 12px; cursor: pointer; min-height: 38px; }
       .btn-solid:disabled { opacity: 0.45; cursor: not-allowed; }
 
       /* comment */
@@ -170,17 +180,17 @@ export function ThreadStyles() {
       .cmt-main { display: flex; gap: 10px; padding: 10px 0; }
       .cmt-avatar { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--elev-2);
         color: var(--accent); display: flex; align-items: center; justify-content: center;
-        font-family: var(--font-display); font-weight: 700; font-size: 12px; }
+        font-family: var(--font-display); font-weight: 600; font-size: 12px; }
       .cmt-body { flex: 1; min-width: 0; }
       /* one metadata row, not one row per field */
       .cmt-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
       .cmt-name { color: var(--text); font-weight: 600; }
-      .cmt-badge { font-size: 10px; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: var(--r-pill); padding: 1px 7px; }
+      .cmt-badge { font-size: 12px; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: var(--r-pill); padding: 1px 7px; }
       .cmt-time { color: var(--muted2); }
       .cmt-collapse { display: inline-flex; align-items: center; gap: 3px; background: none; border: none; color: var(--muted2);
-        font-size: 11.5px; cursor: pointer; padding: 2px 4px; }
+        font-size: 12px; cursor: pointer; padding: 2px 4px; }
       .cmt-collapse:hover { color: var(--text-soft); }
-      .cmt-text { font-size: 13.5px; line-height: 1.55; color: var(--text-soft); margin: 4px 0 0; white-space: pre-wrap; }
+      .cmt-text { font-size: 14px; line-height: 1.55; color: var(--text-soft); margin: 4px 0 0; white-space: pre-wrap; }
       .cmt-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
       /* vote is one control with its count inline */
       .cmt-vote { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; color: var(--muted);
@@ -197,7 +207,7 @@ export function ThreadStyles() {
       .cmt-del:hover { color: var(--bad); }
       .cmt-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
       .chip-r { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--border-soft);
-        border-radius: var(--r-pill); padding: 4px 11px; color: var(--muted); font-size: 11.5px; cursor: pointer;
+        border-radius: var(--r-pill); padding: 4px 11px; color: var(--muted); font-size: 12px; cursor: pointer;
         min-height: 30px; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease; }
       .chip-r:hover { border-color: var(--border-hover); color: var(--text-soft); }
       .chip-r.is-on { color: var(--presence); border-color: color-mix(in srgb, var(--presence) 40%, transparent);

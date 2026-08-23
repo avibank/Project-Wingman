@@ -274,32 +274,31 @@ function SocialStyles() {
         .soc-formation { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
           padding: 12px 14px; margin-bottom: 8px; border-radius: 14px;
           background: var(--surface-1); box-shadow: inset 3px 0 0 var(--warm); }
-        .soc-formation-kind { font-family: var(--font-mono); font-size: 11px;
-          letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); }
+        .soc-formation-kind { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); }
         .soc-formation-where { font-size: 14px; color: var(--text-1); flex: 1; min-width: 0; }
         .soc-formation-faces { display: flex; gap: 4px; }
         .soc-formation-join { min-height: 40px; padding: 0 14px; border: none; border-radius: 10px;
           cursor: pointer; background: var(--warm); color: var(--surface-0); font-size: 14px; font-weight: 500; }
         .soc-formation-join:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
 
-      .soc-here { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-soft); margin: 0 0 16px; }
+      .soc-here { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-soft); margin: 0 0 16px; }
       .soc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--presence); flex-shrink: 0; }
-      .soc-muted { font-size: 12.5px; color: var(--muted); margin: 14px 0 0; }
+      .soc-muted { font-size: 12px; color: var(--muted); margin: 14px 0 0; }
       .soc-log { list-style: none; margin: 18px 0 0; padding: 0; }
       .soc-entry { display: flex; align-items: baseline; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border-soft); }
       .soc-entry:last-child { border-bottom: none; }
-      .soc-kind { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+      .soc-kind { font-family: var(--font-ui); font-size: 12px;
         color: var(--muted2); width: 74px; flex-shrink: 0; }
       .soc-entry-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left;
         background: none; border: none; padding: 0; cursor: pointer; }
-      .soc-entry-text { font-size: 13px; color: var(--text-soft); }
+      .soc-entry-text { font-size: 14px; color: var(--text-soft); }
       .soc-entry-main:hover .soc-entry-text { color: var(--text); }
-      .soc-when { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted2); flex-shrink: 0; }
+      .soc-when { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex-shrink: 0; }
       .soc-back { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--muted);
-        font-size: 12.5px; cursor: pointer; padding: 4px 0; margin-bottom: 10px; }
+        font-size: 12px; cursor: pointer; padding: 4px 0; margin-bottom: 10px; }
       .soc-back:hover { color: var(--text); }
-      .soc-thread-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
-      .soc-thread-body { font-size: 13.5px; line-height: 1.55; color: var(--text-soft); margin: 10px 0 0; }
+      .soc-thread-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text); margin: 0 0 3px; }
+      .soc-thread-body { font-size: 14px; line-height: 1.55; color: var(--text-soft); margin: 10px 0 0; }
       .soc-comments { margin: 14px 0; }
       @media (max-width: 560px) { .soc-kind { width: 60px; } }
     `}</style>

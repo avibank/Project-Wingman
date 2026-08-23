@@ -9,7 +9,7 @@ lists what v1 shipped that v2 reverses.
 |---|---|---|
 | 1 | Routing (§2.2) | **done** |
 | 1 | Primitive + semantic token layers (§3) | **done** |
-| 1 | Type scale, weights, tracking (§5) | not started |
+| 1 | Type scale, weights, tracking (§5) | **done** |
 | 1 | Bugs 2, 3, 6, 8, 10 | 8 and 12 already fixed; rest open |
 | 2 | Home rebuild (§9.1) | not started |
 | 2 | Chapter: one rendering, three tabs (§9.3) | partial — one rendering done in v1 |
@@ -118,3 +118,42 @@ rail's entire job.
 **The number is worth keeping visible: 2.84:1.** At that contrast tertiary is genuinely
 unreadable for anything that matters, and v1 shipped seat names in the equivalent token.
 The generator prints it on every run.
+
+## Phase 1 · Type — done
+
+Audited before touching anything, and the numbers matched §5's diagnosis exactly:
+**22 distinct font sizes**, **4 weights** including 22 uses of 700, **10 tracking values**
+up to 0.16em, and **67 mono call sites** across 20 files.
+
+After:
+
+| | Before | After |
+|---|---|---|
+| Sizes | 22 (17 of them under 22px) | 6 + the 17px reading size |
+| Weights | 400 · 500 · 600 · 700 | 500 · 600 |
+| Tracking | 10 values, worst 0.16em | capped at 0.06em |
+| Mono call sites | 67 | 39, and only codes and numerals |
+
+Mono kept for chapter codes, identifiers and numerals — and for the boarding pass, where
+it is the literal referent. Everything else became sentence-case sans in `text-secondary`,
+with `text-transform: uppercase` and its tracking removed at the same time, since a
+retired label should stop shouting as well as stop being mono.
+
+### The Arial bug §5.1 names
+
+`<button>`, `<input>`, `<textarea>` and `<select>` **do not inherit `font-family`**. Every
+control that did not set one explicitly fell out of the type system into the browser
+default — Arial at 13.33px here, `-apple-system` elsewhere. Comms was rendering **43 of
+its 90 text nodes in Arial**.
+
+The whole fix is one line: `button, input, textarea, select { font: inherit; letter-spacing: inherit; }`
+
+After it: **zero Arial on every route**, and every computed size on the six-step scale
+except `.sr-only`, which is visually hidden anyway.
+
+### Found by the contrast sweep, unrelated to type
+
+`timeAgo()` rendered **"NaNmo ago"** for a missing timestamp. The obvious guard was not
+enough: `new Date(null)` is the epoch, not `NaN`, so a null timestamp read as **"689mo
+ago"** — a plausible-looking lie rather than an obvious break. It needs both the falsy
+check and the finite check, and the test that caught it asserts both.

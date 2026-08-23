@@ -72,7 +72,7 @@ export function TailStyles() {
       .tail-ring--outer { opacity: 0.55; }
       .tail-initial { position: relative; font-family: var(--font-mono); line-height: 1;
         color: var(--tail-ink); letter-spacing: 0; }
-      .tail-staff { position: absolute; right: -1px; bottom: -1px; font-size: 10px; line-height: 1;
+      .tail-staff { position: absolute; right: -1px; bottom: -1px; font-size: 12px; line-height: 1;
         color: var(--text-1); background: var(--surface-0); border-radius: 50%;
         width: 13px; height: 13px; display: grid; place-items: center; }
       .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

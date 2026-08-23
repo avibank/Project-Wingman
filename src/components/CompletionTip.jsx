@@ -72,16 +72,16 @@ function CompletionTip({ chapterId, chapterCode, moduleCode }) {
       <style>{`
         .ct { margin: 20px 0 0; padding: 14px; border-radius: 14px; background: var(--surface-1);
           box-shadow: inset 3px 0 0 var(--warm); }
-        .ct-ask { font-size: 15px; line-height: 1.55; color: var(--text-1); margin: 0 0 12px; max-width: 46ch; }
+        .ct-ask { font-size: 16px; line-height: 1.55; color: var(--text-1); margin: 0 0 12px; max-width: 46ch; }
         .ct-open, .ct-send { min-height: 44px; padding: 0 16px; border: none; border-radius: 12px;
           cursor: pointer; background: var(--warm); color: var(--surface-0);
-          font-size: 15px; font-weight: 500; }
+          font-size: 16px; font-weight: 500; }
         .ct-send:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
         .ct-cancel { min-height: 44px; padding: 0 14px; border: none; border-radius: 12px;
-          cursor: pointer; background: none; color: var(--text-3); font-size: 15px; }
+          cursor: pointer; background: none; color: var(--text-3); font-size: 16px; }
         .ct-note { width: 100%; resize: vertical; min-height: 72px; padding: 10px 12px;
           border: none; border-radius: 10px; background: var(--surface-2); color: var(--text-1);
-          font-family: var(--font-ui); font-size: 15px; line-height: 1.5; }
+          font-family: var(--font-ui); font-size: 16px; line-height: 1.5; }
         .ct-note:focus { outline: 2px solid var(--warm); outline-offset: -1px; }
         .ct-actions { display: flex; gap: 8px; margin-top: 12px; }
         .ct-done { font-size: 14px; color: var(--text-2); margin: 20px 0 0; }

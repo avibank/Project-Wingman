@@ -173,7 +173,7 @@ function FirstFlight({ onDone }) {
         .ff-screen--wide { max-width: 720px; }
         .ff-title { font-family: var(--font-ui); font-size: 28px; font-weight: 500;
           letter-spacing: -0.01em; color: var(--text-1); margin: 0 0 8px; }
-        .ff-sub { font-size: 15px; line-height: 1.55; color: var(--text-2); margin: 0 0 28px; max-width: 46ch; }
+        .ff-sub { font-size: 16px; line-height: 1.55; color: var(--text-2); margin: 0 0 28px; max-width: 46ch; }
 
         .ff-pilots { list-style: none; display: flex; flex-wrap: wrap; gap: 20px 14px; padding: 0; margin: 0 0 32px; }
         .ff-pilot { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 64px;
@@ -191,13 +191,13 @@ function FirstFlight({ onDone }) {
         /* §2.2 — selection reads structurally, as a filled leading edge. Not a glow. */
         .ff-module.is-picked, .ff-time.is-picked { background: var(--surface-2);
           box-shadow: inset 3px 0 0 var(--warm); }
-        .ff-module-code { font-family: var(--font-mono); font-size: 13px; color: var(--cold); width: 46px; flex-shrink: 0; }
-        .ff-module-name { font-size: 15px; flex: 1; }
+        .ff-module-code { font-family: var(--font-mono); font-size: 14px; color: var(--cold); width: 46px; flex-shrink: 0; }
+        .ff-module-name { font-size: 16px; flex: 1; }
         .ff-module-meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-3);
           font-variant-numeric: tabular-nums; }
         .ff-time { flex-direction: column; justify-content: center; align-items: flex-start; gap: 2px; }
         .ff-time-label { font-size: 16px; }
-        .ff-time-hint { font-size: 13px; color: var(--text-3); }
+        .ff-time-hint { font-size: 14px; color: var(--text-3); }
 
         .ff-go { width: 100%; min-height: 52px; border: none; border-radius: 14px; cursor: pointer;
           background: var(--warm); color: var(--surface-0); font-family: var(--font-ui);

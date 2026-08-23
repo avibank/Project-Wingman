@@ -273,33 +273,31 @@ function Comms({ moduleCode, currentChapterId = null }) {
         .cm-wingman-mark { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
           background: color-mix(in oklab, var(--cold) 18%, var(--surface-2));
           border: 1px solid color-mix(in oklab, var(--cold) 34%, transparent); }
-        .cm-badge { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
-          text-transform: uppercase; padding: 1px 5px; border-radius: 4px;
+        .cm-badge { font-family: var(--font-ui); font-size: 12px; padding: 1px 5px; border-radius: 4px;
           background: var(--surface-2); color: var(--cold); }
-        .cm-rate { font-size: 13px; color: var(--text-2); margin: 0; padding: 8px 14px; }
+        .cm-rate { font-size: 14px; color: var(--text-2); margin: 0; padding: 8px 14px; }
         .cm { display: flex; flex-direction: column; min-height: 0; }
         .cm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px;
           padding: 12px 16px; border-radius: 16px 16px 0 0;
           background: color-mix(in oklab, var(--warm) 14%, var(--surface-2)); }
         .cm-title { font-family: var(--font-ui); font-size: 16px; font-weight: 500; color: var(--text-1); margin: 0; }
         .cm-filter { min-height: 36px; padding: 0 12px; border-radius: 999px; border: none; cursor: pointer;
-          font-family: var(--font-mono); font-size: 12px; background: var(--surface-2); color: var(--text-2); }
+          font-family: var(--font-ui); font-size: 12px; background: var(--surface-2); color: var(--text-2); }
         .cm-filter.is-on { background: var(--warm); color: var(--surface-0); }
 
         .cm-pins { padding: 10px 16px; background: var(--surface-1); border-bottom: 1px solid var(--hairline); }
-        .cm-pins-head { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
-          text-transform: uppercase; color: var(--text-3); margin: 0 0 8px; }
+        .cm-pins-head { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); margin: 0 0 8px; }
         .cm-pin { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
         .cm-pin-edge { width: 2px; align-self: stretch; background: var(--edge); border-radius: 2px; flex-shrink: 0; }
         .cm-pin-body { flex: 1; font-size: 14px; color: var(--text-2); min-width: 0; }
         .cm-pin-undo { min-height: 36px; padding: 0 10px; border: none; background: none;
-          color: var(--text-2); font-size: 13px; cursor: pointer; }
+          color: var(--text-2); font-size: 14px; cursor: pointer; }
 
         .cm-log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px;
           background: var(--surface-1); }
         .cm-quiet { font-size: 14px; line-height: 1.55; color: var(--text-2); margin: 0; max-width: 46ch; }
         .cm-day { display: flex; align-items: center; gap: 12px; color: var(--text-3);
-          font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+          font-family: var(--font-ui); font-size: 12px; }
         .cm-day::before, .cm-day::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
 
         .cm-group { display: flex; gap: 10px; align-items: flex-start; }
@@ -308,23 +306,23 @@ function Comms({ moduleCode, currentChapterId = null }) {
         .cm-stack { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
         .cm-meta { display: flex; align-items: baseline; gap: 8px; margin: 0 0 2px; }
         .cm-sender { font-size: 14px; color: var(--text-1); }
-        .cm-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+        .cm-time { font-family: var(--font-mono); font-size: 12px; color: var(--text-3);
           font-variant-numeric: tabular-nums; }
 
         .cm-msg { display: flex; align-items: flex-start; gap: 8px; }
         .cm-edge { width: 2px; align-self: stretch; background: var(--edge); border-radius: 2px; flex-shrink: 0; }
-        .cm-bubble { flex: 1; min-width: 0; font-size: 15px; line-height: 1.5; color: var(--text-1);
+        .cm-bubble { flex: 1; min-width: 0; font-size: 16px; line-height: 1.5; color: var(--text-1);
           overflow-wrap: anywhere; }
-        .cm-chip { display: inline-block; font-family: var(--font-mono); font-size: 11px;
+        .cm-chip { display: inline-block; font-family: var(--font-mono); font-size: 12px;
           padding: 1px 6px; margin-right: 6px; border-radius: 5px;
           background: var(--surface-2); color: var(--cold); vertical-align: 1px; }
         .cm-chip--draft { align-self: center; border: none; cursor: pointer; min-height: 32px; }
 
         .cm-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
         .cm-react { min-height: 32px; padding: 0 7px; border-radius: 999px; border: none; cursor: pointer;
-          background: var(--surface-2); color: var(--text-2); font-size: 13px; }
+          background: var(--surface-2); color: var(--text-2); font-size: 14px; }
         .cm-react.is-mine { background: color-mix(in srgb, var(--warm) 22%, var(--surface-2)); color: var(--text-1); }
-        .cm-react-n { font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+        .cm-react-n { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
         .cm-more { position: relative; }
         .cm-more summary { list-style: none; cursor: pointer; width: 32px; height: 32px;
           display: grid; place-items: center; border-radius: 999px; color: var(--text-3); }
@@ -332,18 +330,18 @@ function Comms({ moduleCode, currentChapterId = null }) {
         .cm-more-panel { position: absolute; right: 0; top: 34px; z-index: 5; display: flex; gap: 4px;
           padding: 6px; border-radius: 12px; background: var(--surface-2); box-shadow: var(--shadow-2); }
         .cm-pinbtn { min-height: 32px; padding: 0 10px; border: none; border-radius: 8px; cursor: pointer;
-          background: var(--surface-1); color: var(--text-2); font-size: 13px; white-space: nowrap; }
+          background: var(--surface-1); color: var(--text-2); font-size: 14px; white-space: nowrap; }
 
         .cm-composer { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px;
           background: var(--surface-1); border-top: 1px solid var(--hairline); border-radius: 0 0 16px 16px; }
         .cm-input { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 12px;
           border-radius: 12px; border: none; background: var(--surface-2); color: var(--text-1);
-          font-family: var(--font-ui); font-size: 15px; line-height: 1.4; }
+          font-family: var(--font-ui); font-size: 16px; line-height: 1.4; }
         .cm-input:focus { outline: 2px solid var(--warm); outline-offset: -1px; }
         .cm-attach { min-height: 44px; padding: 0 10px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--surface-2); color: var(--cold); font-family: var(--font-mono); font-size: 12px; }
+          background: var(--surface-2); color: var(--cold); font-family: var(--font-ui); font-size: 12px; }
         .cm-send { min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--warm); color: var(--surface-0); font-size: 15px; font-weight: 500; }
+          background: var(--warm); color: var(--surface-0); font-size: 16px; font-weight: 500; }
         .cm-send:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
       `}</style>
     </div>

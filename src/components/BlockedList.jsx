@@ -82,13 +82,12 @@ function BlockedList() {
         .bl-head { font-family: var(--font-ui); font-size: 17px; font-weight: 500;
           color: var(--text-1); margin: 0 0 8px; }
         .bl-quiet { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0; max-width: 52ch; }
-        .bl-kind { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
-          text-transform: uppercase; color: var(--text-3); margin: 16px 0 8px; }
+        .bl-kind { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); margin: 16px 0 8px; }
         .bl-list { list-style: none; margin: 0; padding: 0;
           display: grid; gap: 1px; background: var(--hairline); border-radius: 14px; overflow: hidden; }
         .bl-row { display: flex; align-items: center; gap: 12px; padding: 8px 14px;
           min-height: 56px; background: var(--surface-1); }
-        .bl-name { flex: 1; font-size: 15px; color: var(--text-1); min-width: 0;
+        .bl-name { flex: 1; font-size: 16px; color: var(--text-1); min-width: 0;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .bl-undo { min-height: 44px; padding: 0 14px; border: none; border-radius: 10px;
           background: var(--surface-2); color: var(--text-1); font-size: 14px; cursor: pointer; }

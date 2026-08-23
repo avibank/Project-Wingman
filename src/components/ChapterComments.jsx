@@ -162,10 +162,10 @@ function ChapterComments({ chapterId, onSignIn }) {
       )}
       <style>{`
         .chapter-comments { display: flex; flex-direction: column; gap: 10px; }
-        .chapter-comments-loading { font-size: 12.5px; color: var(--muted); text-align: center; padding: 16px 0; }
+        .chapter-comments-loading { font-size: 12px; color: var(--muted); text-align: center; padding: 16px 0; }
         .chapter-comments-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 16px 0; }
         .chapter-comments-empty-icon { color: var(--muted2); opacity: 0.6; }
-        .chapter-comments-empty p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 260px; }
+        .chapter-comments-empty p { margin: 0; font-size: 12px; color: var(--muted); max-width: 260px; }
         .chapter-comments-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 4px; }
         .chapter-comments-skeleton-item { display: flex; gap: 8px; }
         .chapter-comments-skeleton-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
@@ -176,28 +176,28 @@ function ChapterComments({ chapterId, onSignIn }) {
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); }
         .chapter-comment { display: flex; gap: 8px; }
-        .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; font-family: var(--font-display); }
+        .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; font-family: var(--font-display); }
         .chapter-comment-avatar.is-own { box-shadow: 0 0 0 2px var(--accent); }
         .chapter-comment-avatar-wrap { position: relative; flex-shrink: 0; }
         .chapter-comment-admin-badge { position: absolute; bottom: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #E8A33D; color: #2A1B04; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--panel); }
         .chapter-comment-body { flex: 1; min-width: 0; }
-        .chapter-comment-meta { font-size: 11.5px; color: var(--text); margin-bottom: 2px; }
-        .chapter-comment-realname { color: var(--muted2); font-weight: 400; font-size: 10px; }
-        .chapter-comment p { margin: 0; font-size: 12.5px; color: var(--text-soft); line-height: 1.4; }
+        .chapter-comment-meta { font-size: 12px; color: var(--text); margin-bottom: 2px; }
+        .chapter-comment-realname { color: var(--muted2); font-weight: 500; font-size: 12px; }
+        .chapter-comment p { margin: 0; font-size: 12px; color: var(--text-soft); line-height: 1.4; }
         .chapter-comment-edit { display: flex; gap: 4px; align-items: center; }
-        .chapter-comment-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: var(--r-sm); padding: 4px 8px; font-size: 12.5px; color: var(--text); }
+        .chapter-comment-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: var(--r-sm); padding: 4px 8px; font-size: 12px; color: var(--text); }
         .chapter-comment-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 22px; height: 22px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .chapter-comment-reactions { display: flex; gap: 6px; margin-top: 4px; }
-        .chapter-comment-reactions button { display: flex; align-items: center; gap: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 10px; padding: 2px 6px; border-radius: var(--r-pill); cursor: pointer; }
+        .chapter-comment-reactions button { display: flex; align-items: center; gap: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 12px; padding: 2px 6px; border-radius: var(--r-pill); cursor: pointer; }
         .chapter-comment-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
         .chapter-comment-delete { margin-left: auto; }
         .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
         .chapter-comments-input { display: flex; gap: 6px; }
-                .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; font-size: 12.5px; color: var(--text); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+                .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; font-size: 12px; color: var(--text); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
         .chapter-comments-input input::placeholder { color: var(--muted); }
         .chapter-comments-input input:focus { outline: none; border-color: var(--accent-soft); box-shadow: 0 0 8px 1px var(--accent-soft); }
-        .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 8px 12px; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
-        .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12.5px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: 100%; }
+        .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: 100%; }
         .chapter-comments-signin:hover { border-color: var(--accent); }
       `}</style>
     </div>

@@ -30,15 +30,13 @@ function Placard({ children }) {
       {children}
       <style>{`
         .placard {
-          font-family: var(--font-mono);
-          font-size: 10px;
-          letter-spacing: 0.08em;
+          font-family: var(--font-ui);
+          font-size: 12px;
           padding: 2px 7px;
           border-radius: 3px;
           background: var(--accent-soft);
           color: var(--accent);
           border: 1px solid var(--border-hover);
-          text-transform: uppercase;
         }
       `}</style>
     </span>
