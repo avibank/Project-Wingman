@@ -197,7 +197,7 @@ function NotebookPanel({ chapter, moduleCode, prefs, onCountChange }) {
         .nb-showanyway { background: none; border: none; color: var(--muted2); font-size: 12px; cursor: pointer; text-align: left; padding: 4px 0; }
         .nb-showanyway:hover { color: var(--muted); }
         .nb-votes { display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
-        .nb-vote { background: none; border: none; color: var(--muted2); cursor: pointer; padding: 2px; line-height: 0; border-radius: 4px; }
+        .nb-vote { background: none; border: none; color: var(--muted2); cursor: pointer; padding: 2px; line-height: 0; border-radius: 6px; }
         .nb-vote:hover { color: var(--text-soft); }
         .nb-vote.is-on { color: var(--accent); }
         .nb-score { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }

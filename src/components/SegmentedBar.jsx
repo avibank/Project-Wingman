@@ -35,14 +35,14 @@ function SegmentedBar({ segments, currentId, onPick, labels = false }) {
         /* §9.1.3 — 8-10px visually, 44px of touch target. */
         .segbar-seg { position: relative; display: block; width: 100%; height: 44px;
           padding: 17px 0; background: none; border: none; cursor: pointer; }
-        .segbar-fill { display: block; height: 10px; border-radius: 3px;
+        .segbar-fill { display: block; height: 10px; border-radius: 6px;
           background: none; box-shadow: inset 0 0 0 1px var(--hairline-bevel);
           overflow: hidden; position: relative; }
         /* half = brief watched. The fill is literally half the segment. */
         .segbar-seg.is-half .segbar-fill::before,
         .segbar-seg.is-full .segbar-fill::before {
           content: ""; position: absolute; inset: 0 auto 0 0;
-          background: var(--text-secondary); border-radius: 3px; }
+          background: var(--text-secondary); border-radius: 6px; }
         .segbar-seg.is-half .segbar-fill::before { right: 50%; }
         .segbar-seg.is-full .segbar-fill::before { right: 0; }
         /* §9.1.1 — the current chapter carries the accent; everything else is neutral. */

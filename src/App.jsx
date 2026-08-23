@@ -481,7 +481,12 @@ function AppInner() {
           --hairline-inset: inset 0 1px 0 rgb(255 255 255 / 0.05);
           --sheen: rgb(255 255 255 / 0.08);
           --bezel-hi: rgb(255 255 255 / 0.30); --bezel-mid: rgb(255 255 255 / 0.16); --bezel-lo: rgb(255 255 255 / 0.02);
-          --r-sm: 12px; --r-md: 16px; --r-lg: 16px; --r-pill: 999px;
+          /* §6.3 — panel 12 · control 8 · chip 6 · avatar full. The old names
+             are kept as aliases; --r-sm was doing control duty at 12px, which is
+             why nested corners never looked calculated. */
+          --r-panel: 12px; --r-control: 8px; --r-chip: 6px;
+          --r-sm: var(--r-control); --r-md: var(--r-panel); --r-lg: var(--r-panel);
+          --r-pill: 999px;
           --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
           --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
           --font-serif: "Newsreader", ui-serif, Georgia, serif;
@@ -569,7 +574,7 @@ function AppInner() {
         .boarding-pass-row { display: flex; gap: 22px; margin-bottom: 16px; }
         .boarding-pass-row label { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--muted2); letter-spacing: 0.06em; margin-bottom: 3px; }
         .boarding-pass-row span { font-family: var(--font-display); font-size: 16px; color: var(--text); font-weight: 600; }
-        .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 4px; }
+        .boarding-pass-barcode { height: 30px; background: repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 5px); opacity: 0.35; border-radius: 6px; }
         .boarding-trivia { width: min(320px, 84vw); display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--muted); line-height: 1.4; }
         .boarding-trivia-label { flex-shrink: 0; font-family: var(--font-ui); font-size: 12px; color: var(--accent); border: 1px solid var(--border-hover); border-radius: var(--r-sm); padding: 2px 6px; }
         @keyframes boardingFade {

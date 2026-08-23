@@ -50,7 +50,7 @@ function LiveryPicker({ current, modulesCompleted = 0, onSelect }) {
         .lp-row:disabled { cursor: default; }
         .lp-row:disabled .lp-strip { opacity: 0.4; }
 
-        .lp-strip { display: flex; width: 96px; height: 24px; border-radius: 4px;
+        .lp-strip { display: flex; width: 96px; height: 24px; border-radius: 6px;
           overflow: hidden; flex-shrink: 0; box-shadow: inset 0 0 0 1px var(--hairline); }
         .lp-strip > span { flex: 1; }
         /* the delta the whole system turns on: the room, then the people in it */

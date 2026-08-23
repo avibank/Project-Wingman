@@ -19,7 +19,7 @@ lists what v1 shipped that v2 reverses.
 | 2 | Delete list (§6.6) | **done** |
 | 3 | Mono ramp + liveries (§3.4) | **done** |
 | 3 | Presence light & motion (§4) | **partial** — motion budget enforced; breath and arrivals need a live channel |
-| 3 | Surfaces, panelling, glow (§6) | **partial** — cheatline, glow rules and shadows done; §6.2 bevel and §6.3 nested radius pending |
+| 3 | Surfaces, panelling, glow (§6) | **done** |
 | 4 | Comments, squawk, Ready Room, teams, verified | not started — blocked on §10 cold start |
 
 ## Phase 1 · Routing — done
@@ -575,3 +575,16 @@ Also cleaned out while there: `h1–h4` still carried `font-variation-settings: 
 ### Two unlabelled inputs
 
 The profile photo file input and the bio textarea had no accessible name. Both labelled.
+
+## §6.3 — the radius scale
+
+Twelve distinct radii were in use. §6.3 allows four: **panel 12 · control 8 · chip 6 ·
+avatar full**, with nested corners calculated rather than guessed.
+
+`--r-sm` was doing control duty at **12px**, which is why nested corners never looked
+calculated — a 12px control inside a 12px panel reads as a mistake at every size. The
+tokens are `--r-panel` / `--r-control` / `--r-chip` now, with the old names kept as
+aliases, and 31 raw values snapped to the scale.
+
+Verified: every rendered radius on every route is one of the four, plus 2px on the
+segmented bar's fills, which are hairlines rather than corners.

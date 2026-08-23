@@ -113,18 +113,18 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
         .ps { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; }
         .ps-scrim { position: absolute; inset: 0; background: rgb(0 0 0 / 0.45); border: none; padding: 0; }
         .ps-sheet { position: relative; width: 100%; max-width: 640px; margin: 0 auto;
-          background: var(--surface-1); border-radius: 24px 24px 0 0;
+          background: var(--surface-1); border-radius: 12px 12px 0 0;
           padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
         .ps-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
         .ps-name { font-family: var(--font-ui); font-size: 17px; color: var(--text-1); }
         .ps-note { font-size: 14px; line-height: 1.55; color: var(--text-2); margin: 0 0 16px; }
 
         .ps-list { list-style: none; margin: 0 0 12px; padding: 0;
-          display: grid; gap: 1px; background: var(--hairline); border-radius: 14px; overflow: hidden; }
+          display: grid; gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; }
         .ps-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
           min-height: 56px; padding: 10px 16px; background: var(--surface-2); border: none;
           text-align: left; cursor: pointer; color: var(--text-1); font-size: 16px;
-          border-radius: 14px; margin-bottom: 8px; justify-content: center; }
+          border-radius: 12px; margin-bottom: 8px; justify-content: center; }
         .ps-list .ps-row { border-radius: 0; margin: 0; background: var(--surface-1); }
         .ps-list .ps-row:hover { background: var(--surface-2); }
         .ps-row.is-picked { box-shadow: inset 3px 0 0 var(--warm); background: var(--surface-2); }

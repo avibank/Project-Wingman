@@ -167,7 +167,7 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-chip.is-on { background: var(--warm); color: var(--surface-0); }
 
         .ps2-list { display: grid; gap: 1px; background: var(--hairline);
-          border-radius: 14px; overflow: hidden; }
+          border-radius: 12px; overflow: hidden; }
         .ps2-row { display: flex; align-items: center; justify-content: space-between; gap: 16px;
           padding: 12px 14px; background: var(--surface-1); min-height: 56px; }
         .ps2-row-text { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }

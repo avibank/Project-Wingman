@@ -184,7 +184,7 @@ function FirstFlight({ onDone }) {
         @keyframes ff-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
         .ff-modules, .ff-times { list-style: none; padding: 0; margin: 0 0 28px;
-          display: grid; gap: 1px; background: var(--hairline); border-radius: 14px; overflow: hidden; }
+          display: grid; gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; }
         .ff-module, .ff-time { display: flex; align-items: baseline; gap: 10px; width: 100%;
           padding: 0 16px; min-height: 56px; background: var(--surface-1); border: none;
           text-align: left; cursor: pointer; color: var(--text-1); }
@@ -200,7 +200,7 @@ function FirstFlight({ onDone }) {
         .ff-time-label { font-size: 16px; }
         .ff-time-hint { font-size: 14px; color: var(--text-3); }
 
-        .ff-go { width: 100%; min-height: 52px; border: none; border-radius: 14px; cursor: pointer;
+        .ff-go { width: 100%; min-height: 52px; border: none; border-radius: 12px; cursor: pointer;
           background: var(--warm); color: var(--surface-0); font-family: var(--font-ui);
           font-size: 16px; font-weight: 500; }
         .ff-go:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }

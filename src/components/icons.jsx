@@ -33,7 +33,7 @@ function Placard({ children }) {
           font-family: var(--font-ui);
           font-size: 12px;
           padding: 2px 7px;
-          border-radius: 3px;
+          border-radius: 6px;
           background: var(--accent-soft);
           color: var(--accent);
           border: 1px solid var(--border-hover);

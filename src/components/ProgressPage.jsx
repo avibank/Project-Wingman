@@ -151,7 +151,7 @@ function ProgressPage({ onBack }) {
           background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, transparent), var(--accent));
           transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
         .prog-cal { display: flex; gap: 5px; margin-bottom: 9px; }
-        .prog-day { width: 22px; height: 22px; border-radius: 5px; background: var(--well); border: 1px solid var(--border-soft); }
+        .prog-day { width: 22px; height: 22px; border-radius: 6px; background: var(--well); border: 1px solid var(--border-soft); }
         .prog-day.is-on { background: color-mix(in srgb, var(--accent) 55%, transparent); border-color: transparent; }
         .prog-note { font-size: 12px; color: var(--muted); margin: 0; }
         .prog-scores li { display: flex; align-items: center; gap: 10px; padding: 9px 0;

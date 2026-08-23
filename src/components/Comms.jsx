@@ -270,15 +270,15 @@ function Comms({ moduleCode, currentChapterId = null }) {
 
         /* §8.1 — Wingman is the app speaking, so it gets a cold mark and a
            badge, never a tail. A tail would make it look like a person. */
-        .cm-wingman-mark { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+        .cm-wingman-mark { width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
           background: color-mix(in oklab, var(--cold) 18%, var(--surface-2));
           border: 1px solid color-mix(in oklab, var(--cold) 34%, transparent); }
-        .cm-badge { font-family: var(--font-ui); font-size: 12px; padding: 1px 5px; border-radius: 4px;
+        .cm-badge { font-family: var(--font-ui); font-size: 12px; padding: 1px 5px; border-radius: 6px;
           background: var(--surface-2); color: var(--cold); }
         .cm-rate { font-size: 14px; color: var(--text-2); margin: 0; padding: 8px 14px; }
         .cm { display: flex; flex-direction: column; min-height: 0; }
         .cm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          padding: 12px 16px; border-radius: 16px 16px 0 0;
+          padding: 12px 16px; border-radius: 12px 12px 0 0;
           background: color-mix(in oklab, var(--warm) 14%, var(--surface-2)); }
         .cm-title { font-family: var(--font-ui); font-size: 16px; font-weight: 500; color: var(--text-1); margin: 0; }
         .cm-filter { min-height: 36px; padding: 0 12px; border-radius: 999px; border: none; cursor: pointer;
@@ -314,7 +314,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
         .cm-bubble { flex: 1; min-width: 0; font-size: 16px; line-height: 1.5; color: var(--text-1);
           overflow-wrap: anywhere; }
         .cm-chip { display: inline-block; font-family: var(--font-mono); font-size: 12px;
-          padding: 1px 6px; margin-right: 6px; border-radius: 5px;
+          padding: 1px 6px; margin-right: 6px; border-radius: 6px;
           background: var(--surface-2); color: var(--cold); vertical-align: 1px; }
         .cm-chip--draft { align-self: center; border: none; cursor: pointer; min-height: 32px; }
 
@@ -333,7 +333,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
           background: var(--surface-1); color: var(--text-2); font-size: 14px; white-space: nowrap; }
 
         .cm-composer { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px;
-          background: var(--surface-1); border-top: 1px solid var(--hairline); border-radius: 0 0 16px 16px; }
+          background: var(--surface-1); border-top: 1px solid var(--hairline); border-radius: 0 0 12px 12px; }
         .cm-input { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 12px;
           border-radius: 12px; border: none; background: var(--surface-2); color: var(--text-1);
           font-family: var(--font-ui); font-size: 16px; line-height: 1.4; }

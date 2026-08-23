@@ -270,12 +270,12 @@ function SocialStyles() {
     <style>{`
         /* §7.3 Formation item — faces before the count, always. */
         .soc-formation { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-          padding: 12px 14px; margin-bottom: 8px; border-radius: 14px;
+          padding: 12px 14px; margin-bottom: 8px; border-radius: 12px;
           background: var(--surface-1); box-shadow: inset 3px 0 0 var(--warm); }
         .soc-formation-kind { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); }
         .soc-formation-where { font-size: 14px; color: var(--text-1); flex: 1; min-width: 0; }
         .soc-formation-faces { display: flex; gap: 4px; }
-        .soc-formation-join { min-height: 40px; padding: 0 14px; border: none; border-radius: 10px;
+        .soc-formation-join { min-height: 40px; padding: 0 14px; border: none; border-radius: 8px;
           cursor: pointer; background: var(--warm); color: var(--surface-0); font-size: 14px; font-weight: 500; }
         .soc-formation-join:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
 

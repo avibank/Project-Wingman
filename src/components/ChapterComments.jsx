@@ -170,7 +170,7 @@ function ChapterComments({ chapterId, onSignIn }) {
         .chapter-comments-skeleton-item { display: flex; gap: 8px; }
         .chapter-comments-skeleton-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
         .chapter-comments-skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-top: 3px; }
-        .chapter-comments-skeleton-line { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
+        .chapter-comments-skeleton-line { height: 8px; border-radius: 6px; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
         .chapter-comments-skeleton-line--short { width: 35%; }
         .chapter-comments-skeleton-line--long { width: 75%; }
         @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }

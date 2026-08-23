@@ -65,7 +65,7 @@ function OnYourWing({ moduleCode, people = [], myChapterId, onOpenPilot }) {
         .oyw { margin: 28px 0 8px; }
         .oyw-head { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); font-weight: 500; margin: 0 0 12px; }
         .oyw-list { list-style: none; margin: 0; padding: 0;
-          display: grid; gap: 1px; background: var(--hairline); border-radius: 14px; overflow: hidden; }
+          display: grid; gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; }
         .oyw-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px;
           min-height: 56px; background: var(--surface-1); border: none; text-align: left; cursor: pointer; }
         .oyw-row:hover { background: var(--surface-2); }
