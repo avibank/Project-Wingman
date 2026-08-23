@@ -129,6 +129,19 @@ function beaconRamp() {
 // §3.4 — a livery colours your tail ring, and under monochrome that ring is
 // the only hue a person carries. Emitted at root scope for every livery, per
 // variant, so one roster can show six people in six liveries at once.
+// §6.5 — the cheatline is the fuselage stripe: the one line that says which
+// airline this is, and the only decorative element in the product. One thin
+// gradient rule in the livery's presence temperature.
+function cheatline(livery, variant) {
+  const dark = variant === "night";
+  return [
+    `:root[data-livery="${livery.id}"][data-variant="${variant}"],`,
+    `[data-livery="${livery.id}"][data-variant="${variant}"] {`,
+    `  --cheatline: linear-gradient(90deg, transparent 0%, ${ok(dark ? 0.78 : 0.55, 0.11, livery.presence)} 22%, ${ok(dark ? 0.78 : 0.55, 0.11, livery.presence)} 78%, transparent 100%);`,
+    "}",
+  ].join("\n");
+}
+
 function tailPalette(variant) {
   const dark = variant === "night";
   const out = [`:root[data-variant="${variant}"], [data-variant="${variant}"] {`];
@@ -192,6 +205,7 @@ const css = [
   tailPalette("night"),
   tailPalette("day"),
   ...LIVERIES.flatMap((l) => [presence(l, "night"), presence(l, "day")]),
+  ...LIVERIES.flatMap((l) => [cheatline(l, "night"), cheatline(l, "day")]),
 ].join("\n\n") + "\n";
 
 writeFileSync(new URL("../src/styles/tokens.css", import.meta.url), css);

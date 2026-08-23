@@ -19,7 +19,7 @@ lists what v1 shipped that v2 reverses.
 | 2 | Delete list (§6.6) | **done** |
 | 3 | Mono ramp + liveries (§3.4) | **done** |
 | 3 | Presence light & motion (§4) | **partial** — motion budget enforced; breath and arrivals need a live channel |
-| 3 | Surfaces, panelling, glow (§6) | not started |
+| 3 | Surfaces, panelling, glow (§6) | **partial** — cheatline, glow rules and shadows done; §6.2 bevel and §6.3 nested radius pending |
 | 4 | Comments, squawk, Ready Room, teams, verified | not started — blocked on §10 cold start |
 
 ## Phase 1 · Routing — done
@@ -549,3 +549,29 @@ neutral now, and the reasoning is written next to it so nobody "fixes" it into t
 All routes, both variants: **8 failures**, all in Comms in day, all `text-tertiary` at
 3.01 on a section header, a day divider, and message timestamps. §12 exempts tertiary for
 exactly this, and every essential use of it was moved to `text-secondary` earlier.
+
+## §6.4 / §6.5 — the cheatline never rendered
+
+Scanning for CSS variables that are referenced but never defined turned up `--cheatline`:
+the v1 generator emitted it and the v2 rewrite dropped it.
+
+But the token was the smaller half of the problem. **There were two `.app::before` rules**,
+and the second silently overrode the first — so even when the token existed, the cheatline
+never drew. What actually rendered was a 1100px radial glow **centred behind the content**,
+which §6.4 rules out twice over: "one ambient source per screen, off-canvas… never centred
+behind content", and panels and chrome do not glow at all.
+
+Now:
+
+- **The cheatline** is one 2px rule at the top of the app, in the livery's presence
+  temperature. Verified per livery and per variant: Dawn Patrol night hue 45, Contrail
+  night hue 70, Aurora day hue 20 at the lighter day lightness.
+- **One ambient source**, off-canvas at the top-left corner, tracking the livery and
+  inverting for day (L .31 night → .96 day).
+
+Also cleaned out while there: `h1–h4` still carried `font-variation-settings: "opsz" 40,
+"SOFT" 40` — Fraunces axes, and Fraunces was purged in v1.
+
+### Two unlabelled inputs
+
+The profile photo file input and the bio textarea had no accessible name. Both labelled.

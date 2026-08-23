@@ -495,21 +495,35 @@ function AppInner() {
           padding: 0 0 60px;
           position: relative;
         }
-        /* §2.6 — the cheatline: one warm gradient rising from the bottom edge. */
+        /* §6.5 — the cheatline. One thin gradient rule at the top of the app,
+           livery-coloured, and the only decorative element in the product.
+
+           There used to be two .app::before rules here. The second silently
+           overrode the first, so the cheatline never rendered at all — what you
+           saw was a 1100px glow blob centred behind the content, which §6.4
+           rules out twice over ("never centred behind content", and cards and
+           chrome do not glow). */
         .app::before {
           content: "";
           position: fixed;
-          left: 0; right: 0; bottom: 0;
-          height: 40vh;
+          left: 0; right: 0; top: 0;
+          height: 2px;
           pointer-events: none;
-          z-index: 0;
-          opacity: var(--cheatline-alpha, 0.06);
+          z-index: 30;
           background: var(--cheatline);
         }
-        .app::before { content: ""; position: fixed; left: 50%; top: -280px; width: 1100px; height: 620px;
-          transform: translateX(-50%); pointer-events: none; z-index: 0;
-          background: radial-gradient(closest-side, var(--accent-glow), transparent 72%); filter: blur(28px); }
-        h1, h2, h3, h4 { font-family: var(--font-display); font-variation-settings: "opsz" 40, "SOFT" 40; letter-spacing: -0.005em; }
+        /* §6.4 — one ambient source per screen, off-canvas and very low. */
+        .app::after {
+          content: "";
+          position: fixed;
+          left: -20vw; top: -30vh;
+          width: 70vw; height: 70vh;
+          pointer-events: none;
+          z-index: 0;
+          opacity: 0.5;
+          background: radial-gradient(closest-side, var(--presence-panel), transparent 70%);
+        }
+        h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.01em; }
         .app { font-variant-numeric: tabular-nums; }
         [class*="mono"], [class*="-code"], [class*="-value"], [class*="-count"], [class*="stat"] {
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }

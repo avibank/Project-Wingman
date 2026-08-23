@@ -185,7 +185,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                     <div className="profile-identity-icon"><Mail size={22} /></div>
                   )}
                 </button>
-                <input type="file" accept="image/*" ref={photoInputRef} style={{ display: "none" }} onChange={handlePhotoChange} />
+                <input type="file" accept="image/*" aria-label="Choose a profile photo" ref={photoInputRef} style={{ display: "none" }} onChange={handlePhotoChange} />
                 <button className="profile-identity-photo-camera" onClick={() => photoInputRef.current?.click()} disabled={photoUploading} aria-label="Change photo">
                   <Camera size={13} />
                 </button>
@@ -234,6 +234,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
               <div style={{ padding: "0 14px 10px" }}>
                 <textarea
                   className="settings-bio-textarea"
+                  aria-label="Bio"
                   placeholder=""
                   value={bio}
                   maxLength={BIO_MAX}

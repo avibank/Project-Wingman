@@ -419,3 +419,63 @@
   --presence-lit: #EFD0C2;
   --presence-lit: oklch(0.88 0.04 45);
 }
+
+:root[data-livery="contrail"][data-variant="night"],
+[data-livery="contrail"][data-variant="night"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.78 0.11 70) 22%, oklch(0.78 0.11 70) 78%, transparent 100%);
+}
+
+:root[data-livery="contrail"][data-variant="day"],
+[data-livery="contrail"][data-variant="day"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.55 0.11 70) 22%, oklch(0.55 0.11 70) 78%, transparent 100%);
+}
+
+:root[data-livery="night-ops"][data-variant="night"],
+[data-livery="night-ops"][data-variant="night"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.78 0.11 60) 22%, oklch(0.78 0.11 60) 78%, transparent 100%);
+}
+
+:root[data-livery="night-ops"][data-variant="day"],
+[data-livery="night-ops"][data-variant="day"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.55 0.11 60) 22%, oklch(0.55 0.11 60) 78%, transparent 100%);
+}
+
+:root[data-livery="carrier-deck"][data-variant="night"],
+[data-livery="carrier-deck"][data-variant="night"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.78 0.11 40) 22%, oklch(0.78 0.11 40) 78%, transparent 100%);
+}
+
+:root[data-livery="carrier-deck"][data-variant="day"],
+[data-livery="carrier-deck"][data-variant="day"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.55 0.11 40) 22%, oklch(0.55 0.11 40) 78%, transparent 100%);
+}
+
+:root[data-livery="altimeter"][data-variant="night"],
+[data-livery="altimeter"][data-variant="night"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.78 0.11 65) 22%, oklch(0.78 0.11 65) 78%, transparent 100%);
+}
+
+:root[data-livery="altimeter"][data-variant="day"],
+[data-livery="altimeter"][data-variant="day"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.55 0.11 65) 22%, oklch(0.55 0.11 65) 78%, transparent 100%);
+}
+
+:root[data-livery="aurora"][data-variant="night"],
+[data-livery="aurora"][data-variant="night"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.78 0.11 20) 22%, oklch(0.78 0.11 20) 78%, transparent 100%);
+}
+
+:root[data-livery="aurora"][data-variant="day"],
+[data-livery="aurora"][data-variant="day"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.55 0.11 20) 22%, oklch(0.55 0.11 20) 78%, transparent 100%);
+}
+
+:root[data-livery="dawn-patrol"][data-variant="night"],
+[data-livery="dawn-patrol"][data-variant="night"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.78 0.11 45) 22%, oklch(0.78 0.11 45) 78%, transparent 100%);
+}
+
+:root[data-livery="dawn-patrol"][data-variant="day"],
+[data-livery="dawn-patrol"][data-variant="day"] {
+  --cheatline: linear-gradient(90deg, transparent 0%, oklch(0.55 0.11 45) 22%, oklch(0.55 0.11 45) 78%, transparent 100%);
+}
