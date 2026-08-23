@@ -18,6 +18,20 @@ const CHAPTERS = [
     id: "ch1",
     code: "JT.01",
     title: "Intake & Compressor Basics",
+    takeaways: [
+      "Why a subsonic inlet is divergent, and what ram recovery gives you for free.",
+      "What a compressor stage actually is — one rotor row and one stator row doing opposite jobs.",
+      "Why the blades get smaller toward the back, and what stays roughly constant while they do.",
+      "What separates a compressor stall from a surge, and what triggers each.",
+      "Why axial and centrifugal compressors suit different aircraft.",
+    ],
+    terms: [
+      { term: "Ram recovery", def: "Pressure gained by slowing incoming air in the inlet, before the compressor does any work." },
+      { term: "Stage", def: "One rotor row plus the stator row behind it." },
+      { term: "Stator", def: "The stationary row that turns velocity back into static pressure and straightens the flow." },
+      { term: "Compressor stall", def: "Blades exceeding their critical angle of attack, disrupting airflow through the compressor." },
+      { term: "Surge", def: "A full breakdown of flow through the whole compressor, often with an audible bang and a reversal." },
+    ],
     body: [
       { heading: "Airflow through the inlet", text: "The inlet's job is to deliver air to the compressor at a stable pressure and a subsonic speed, whatever the aircraft is doing. In a subsonic inlet the duct is divergent: it slows the air down and, in doing so, raises its static pressure before the first compressor stage ever touches it. This recovery of pressure from ram effect is free thrust the engine does not have to work for." },
       { heading: "Axial compressor stages", text: "An axial compressor moves air parallel to the engine centreline, stage by stage. Each stage is a pair: a rotating rotor row that accelerates the air and adds energy, followed by a stationary stator row that diffuses that velocity back into static pressure and straightens the flow for the next rotor. Blades get progressively smaller toward the rear because the air is denser there and occupies less volume." },
@@ -84,6 +98,20 @@ const CHAPTERS = [
     id: "ch2",
     code: "JT.02",
     title: "Combustion Chamber Basics",
+    takeaways: [
+      "What holds a flame still while air moves past it at hundreds of feet per second.",
+      "How primary and secondary airflow split, and why only a fraction of the air is actually burned.",
+      "Why the liner needs cooling air of its own, and where it comes from.",
+      "When igniters are on, when they are off, and when you would deliberately switch them back on.",
+      "What the chamber has to do to the gas before the turbine will accept it.",
+    ],
+    terms: [
+      { term: "Diffuser", def: "Slows compressor delivery air before the chamber, so the flame has somewhere stable to sit." },
+      { term: "Primary air", def: "The roughly quarter of the airflow that actually mixes with fuel and burns." },
+      { term: "Secondary air", def: "The remainder — used to cool the liner and dilute the gas to a temperature the turbine can take." },
+      { term: "Flame stabilisation", def: "The recirculating vortex that keeps the flame anchored against the oncoming flow." },
+      { term: "Flameout", def: "Loss of combustion with the engine still rotating." },
+    ],
     body: [
       { heading: "Purpose of the combustor", text: "The combustion chamber adds fuel to the compressed air and burns it, raising the energy of the gas stream before it reaches the turbine. Pressure stays roughly constant through the burner; it is temperature and volume that rise sharply. This is the only place in the engine where energy is added." },
       { heading: "Primary and secondary airflow", text: "Only about a quarter of the air entering the combustor takes part in combustion. This primary air is slowed and swirled to hold a stable flame at roughly the correct fuel-to-air ratio. The remaining secondary air bypasses the flame, cools the liner, and is mixed back in downstream to bring the gas temperature down to something the turbine can survive." },
@@ -133,6 +161,20 @@ const CHAPTERS = [
     id: "ch3",
     code: "JT.03",
     title: "Turbine Section & Energy Extraction",
+    takeaways: [
+      "What the nozzle guide vanes do to the gas before a turbine blade ever sees it.",
+      "Why temperature falls across the turbine, and what that drop is paying for.",
+      "What creep is, and why it — not melting — is what sets a blade's life.",
+      "Why a turbine blade is cooled from the inside out.",
+      "How a turboprop's turbine differs in job from a turbojet's.",
+    ],
+    terms: [
+      { term: "Nozzle guide vane", def: "The stationary row that accelerates the gas and aims it at the correct angle onto the blades." },
+      { term: "Creep", def: "Slow permanent stretching under sustained load at temperature. The life-limiting mechanism for turbine blades." },
+      { term: "Single crystal", def: "A blade cast as one grain, with no grain boundaries for creep to exploit." },
+      { term: "Free turbine", def: "A turbine stage mechanically independent of the compressor, driving a propeller or rotor." },
+      { term: "TET", def: "Turbine entry temperature — the limit almost everything in the hot section is designed around." },
+    ],
     body: [
       { heading: "Extracting energy from the gas", text: "The turbine converts the energy of the hot, high-pressure gas leaving the combustor into shaft power. That power drives the compressor and the accessory gearbox, and in a turboprop or turboshaft, the propeller or rotor as well. In a pure turbojet the turbine extracts only what the compressor needs, leaving the rest of the energy for the exhaust." },
       { heading: "Nozzle guide vanes and blades", text: "Each turbine stage begins with stationary nozzle guide vanes that accelerate the gas and turn it onto the rotating blades at the correct angle. The rotor blades then extract work as the gas expands across them, dropping in both pressure and temperature. Turbine blades are the most thermally stressed parts of the engine." },
@@ -199,6 +241,20 @@ const CHAPTERS = [
     id: "ch4",
     code: "JT.04",
     title: "Exhaust & Thrust Production",
+    takeaways: [
+      "Why thrust is a reaction, and what exactly is being accelerated.",
+      "What the propelling nozzle does with the energy the turbine left behind.",
+      "Why bypass air produces more thrust while moving slower.",
+      "What happens to thrust as you climb, and why the engine cannot make it back.",
+      "How ram effect helps at speed without reversing the density loss.",
+    ],
+    terms: [
+      { term: "Gross thrust", def: "Thrust from the exhaust alone, ignoring the momentum the air already had." },
+      { term: "Net thrust", def: "Gross thrust minus the momentum drag of taking that air aboard at flight speed." },
+      { term: "Bypass ratio", def: "Mass of air around the core divided by mass through it." },
+      { term: "Propulsive efficiency", def: "Why moving a lot of air slowly beats moving a little air fast." },
+      { term: "Choked nozzle", def: "A nozzle at Mach 1 in its throat, where lowering downstream pressure pulls no extra mass through." },
+    ],
     body: [
       { heading: "Turning energy into thrust", text: "The exhaust section accelerates the remaining gas to produce thrust. Thrust is the product of mass flow and the change in velocity the engine imparts to it, so an engine can make thrust either by moving a lot of air a little, or a little air a lot." },
       { heading: "Convergent nozzles and choking", text: "A subsonic exhaust nozzle is convergent: the duct narrows, the gas accelerates, and static pressure falls. When the flow reaches the speed of sound at the narrowest point the nozzle is choked, and no further reduction in downstream pressure can increase mass flow. High-performance engines use convergent-divergent nozzles to accelerate the flow beyond Mach 1." },

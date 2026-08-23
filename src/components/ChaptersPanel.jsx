@@ -357,6 +357,32 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                       Trouble loading? Open on YouTube directly
                     </a>
                   )}
+                  {/* §9.3.1 — one scroll, in order: video, what you will know,
+                      key terms, then the notes. Skimmers stop at the bullets;
+                      deep readers carry on. Both halves are revision material. */}
+                  {Array.isArray(ch.takeaways) && ch.takeaways.length > 0 && (
+                    <section className="brief-takeaways">
+                      <h2 className="brief-heading">What you'll know after this</h2>
+                      <ul>
+                        {ch.takeaways.map((t) => <li key={t}>{t}</li>)}
+                      </ul>
+                    </section>
+                  )}
+
+                  {Array.isArray(ch.terms) && ch.terms.length > 0 && (
+                    <section className="brief-terms">
+                      <h2 className="brief-heading">Key terms</h2>
+                      <dl>
+                        {ch.terms.map((t) => (
+                          <div key={t.term}>
+                            <dt>{t.term}</dt>
+                            <dd>{t.def}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  )}
+
                   {Array.isArray(ch.body) && ch.body.length > 0 && (
                     <article className="chapter-material">
                       <p className="material-kicker">Study material</p>
@@ -506,6 +532,10 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
 
         /* §9.3 — the tabs are exclusive: Brief is the reading surface, Quiz is
            the sterile cockpit, Comments is the conversation. */
+        .chapters.is-reading[data-tab="quiz"] .brief-takeaways,
+        .chapters.is-reading[data-tab="quiz"] .brief-terms,
+        .chapters.is-reading[data-tab="comments"] .brief-takeaways,
+        .chapters.is-reading[data-tab="comments"] .brief-terms,
         .chapters.is-reading[data-tab="quiz"] .chapter-video,
         .chapters.is-reading[data-tab="quiz"] .chapter-material,
         .chapters.is-reading[data-tab="quiz"] .video-fallback,
@@ -513,6 +543,21 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chapters.is-reading[data-tab="comments"] .chapter-material,
         .chapters.is-reading[data-tab="comments"] .video-fallback { display: none; }
         .chapters.is-reading[data-tab="brief"] .chapter-side { display: none; }
+
+        /* §9.3.1 — the brief's two new tiers. Same measure as the prose so the
+           whole scroll shares one column edge. */
+        .brief-takeaways, .brief-terms { max-width: 66ch; margin: 24px auto 0; }
+        .brief-heading { font-family: var(--font-ui); font-size: 14px; font-weight: 500;
+          color: var(--text-secondary); margin: 0 0 10px; }
+        .brief-takeaways ul { margin: 0; padding: 0; list-style: none;
+          display: grid; gap: 1px; background: var(--hairline);
+          border-radius: var(--r-panel); overflow: hidden; }
+        .brief-takeaways li { background: var(--bg-panel); padding: 12px 14px;
+          font-size: 16px; line-height: 1.55; color: var(--text-primary); }
+        .brief-terms dl { margin: 0; display: grid; gap: 10px; }
+        .brief-terms dt { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .brief-terms dd { margin: 2px 0 0; font-size: 14px; line-height: 1.5;
+          color: var(--text-secondary); }
         .chapters.is-reading { display: block; }
         .chapters.is-reading .leg-rail,
         .chapters.is-reading .chapter-chevron,
