@@ -11,7 +11,7 @@ lists what v1 shipped that v2 reverses.
 | 1 | Primitive + semantic token layers (§3) | **done** |
 | 1 | Type scale, weights, tracking (§5) | **done** |
 | 1 | Bugs 2, 3, 6, 8, 10 | **done** |
-| 2 | Home rebuild (§9.1) | not started |
+| 2 | Home rebuild (§9.1) | **done** |
 | 2 | Chapter: one rendering, three tabs (§9.3) | partial — one rendering done in v1 |
 | 2 | Quiz (§9.3.2, §4.5) | **partial** — illumination done; explanations and Ask-about-this pending |
 | 2 | Debrief (§9.3.3) | not started |
@@ -254,3 +254,44 @@ It was dead code: imported into App and never rendered, since the "discuss" tab 
 NAV and no route resolves to it. §8.2 collapses the concept to Comments and channel
 anyway, so the file is deleted and the claim is now true. `grep` for either colour
 returns nothing.
+
+## Phase 2 · Home (§9.1) — done
+
+`Home.jsx` replaces `HubPage` on `/`. Four bands, and the hero's priority order is the
+point: **the next action is the largest text on the page at 28px**, with the greeting at
+14px above it. The old Deck had that ladder upside down — greeting largest, action a small
+pill — which is exactly what §1.2's test catches.
+
+`progressModel.js` holds the fill rules, pure and tested: completed → full, viewed or
+answered → half, otherwise the hairline outline; completed wins over viewed; a missing
+state object returns empty rather than throwing. `progressCaption` never renders a zero —
+with nothing started it reads "4 chapters ahead of you" (§8.4).
+
+**The segmented bar** (`SegmentedBar.jsx`) is the centrepiece. One segment per chapter, so
+the count is read without a label, and it doubles as the chapter selector. Two
+part-finished chapters at once is the normal state of studying and a single percentage
+cannot express it — which is why the 25% radial was wrong for the model, not just plain.
+
+**One dial** (`ScoreDial.jsx`), for score, with the pass mark as a literal redline —
+§9.1.2's distinction is that a round dial answers "how close to a limit" and a bar answers
+"where along a range". It is also the door to the Logbook, which is how the Logbook gets
+out of the avatar menu.
+
+### Verified
+
+Greeting 14px · next action 28px · caption 14px, all sharing one left edge at 36px. Four
+segments reading `full · half+current · empty · empty` against 1 of 4 complete. Caption
+"1 of 4 chapters · 1 in progress". Touch targets: segment 44, parked row 56, door 60,
+dial 48 — all at or above the §12 minimum. Contrast clean in night; day needed the
+segment labels moved off `text-tertiary`.
+
+The door renders `Ready Room · 3 on frequency` and warms to `--presence-panel` only when
+someone is there. With nobody on frequency it is `bg-panel` and carries no count — §9.1
+requires that it never advertise an empty room.
+
+### The harness caught what the build could not, again
+
+Deleting `DiscussPanel` broke the harness bundle, because its `main.jsx` still imported
+it — root rendered empty with **no console output at all**, since a module-load failure
+never reaches the console. `npm run build` passed throughout: the app never imported that
+file, only the harness did. The answer was in `preview_logs`, not the console.

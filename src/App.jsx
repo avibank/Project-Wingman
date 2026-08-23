@@ -6,7 +6,7 @@ import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
-import HubPage from "./components/HubPage.jsx";
+import Home from "./components/Home.jsx";
 import { useSocialPrefs } from "./lib/social.js";
 import { fetchEnrollments } from "./lib/enrollments.js";
 import ModuleHub from "./components/ModuleHub.jsx";
@@ -362,16 +362,13 @@ function AppInner() {
         </main>
       ) : view === "hub" ? (
         <main className="content content-taxi">
-          <HubPage
+          <Home
             activeModuleCode={activeModuleCode}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
-            onGoToSocial={(moduleCode) => goToModule(moduleCode || activeModuleCode, "social")}
-            onReviewBookmarks={() => {
-              setBookmarksMode("cards");
-              goSettings("bookmarks");
-            }}
-            onSignIn={() => goSettings("auth")}
+            onMakeActive={(code) => setPreferredModuleCode(code)}
+            onOpenLogbook={() => go(routePath.logbook())}
+            onOpenReady={() => go(routePath.ready())}
             streak={streak}
           />
         </main>
