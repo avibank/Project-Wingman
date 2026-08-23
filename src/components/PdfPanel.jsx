@@ -37,7 +37,7 @@ function PdfPanel({ moduleCode = "JT", moduleName = "this module" }) {
       </div>
       <style>{`
         .pdf-wrap { display: flex; flex-direction: column; gap: 16px; max-width: 900px; margin: 0 auto; }
-        .pdf-search { display: flex; align-items: center; gap: 8px; background: var(--well); border: 1px solid var(--border); box-shadow: var(--shadow-inset); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .pdf-search { display: flex; align-items: center; gap: 8px; background: var(--well); border: 1px solid var(--border); box-shadow: var(--shadow-inset); border-radius: var(--r-md); padding: 10px 14px; color: var(--muted2); transition: border-color 180ms ease, box-shadow 180ms ease; }
         .pdf-search:focus-within { border-color: var(--accent-soft); box-shadow: 0 0 12px 1px var(--accent-soft); }
         .pdf-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; }
         .pdf-search input::placeholder { color: var(--muted); }

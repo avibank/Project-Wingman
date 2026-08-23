@@ -18,7 +18,7 @@ lists what v1 shipped that v2 reverses.
 | 2 | Naming + placards (§8) | **done** |
 | 2 | Delete list (§6.6) | **done** |
 | 3 | Mono ramp + liveries (§3.4) | **done** |
-| 3 | Presence light & motion (§4) | not started |
+| 3 | Presence light & motion (§4) | **partial** — motion budget enforced; breath and arrivals need a live channel |
 | 3 | Surfaces, panelling, glow (§6) | not started |
 | 4 | Comments, squawk, Ready Room, teams, verified | not started — blocked on §10 cold start |
 
@@ -487,3 +487,26 @@ and opens on the livery gallery and the pilot controls.
 All routes, both variants, six liveries: **8 failures**, all in Comms in day, all
 `text-tertiary` at 3.01 on genuine metadata — a section header, a day divider, message
 timestamps. §12 exempts tertiary for exactly this.
+
+## Phase 3 · Motion budget (§4.6)
+
+Audited before changing anything: **12 distinct transition durations** and a dozen
+independent animations, including three infinite loops.
+
+§4.6 allows five durations and says "nothing else animates. Not tab switches, not page
+transitions." Now, measured across every route: **one transition duration, 180ms**, and
+one animation — the chapter opening, also 180ms.
+
+Removed:
+
+- **Page transitions** (`taxiIn` on every `<main>`), which §4.6 names directly.
+- **Cloud drift** at 60s / 75s / 90s, infinite — ambient decoration §6.6 also rules out.
+- **The propeller spin** and **windsock wave**, both infinite loops. The propeller was
+  also `fill: #FFFFFF` with an accent drop-shadow, neither of which survives §3.
+- **`legPulse` at 3.4s** on the current chapter marker. §4.2 reserves a breath for
+  presence and sets it at 4000ms precisely because that reads as alive rather than as an
+  alert — and a chapter marker is not a person.
+
+Still owed from §4: the breath itself, and the 600ms-in / 2000ms-out asymmetry on
+arrival and departure. Both need a live presence channel to have anything to react to,
+which is Phase 3's remaining dependency.

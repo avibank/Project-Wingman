@@ -36,7 +36,7 @@ function Dial({ value, size = 96 }) {
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: "stroke-dashoffset 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+        style={{ transition: "stroke-dashoffset 180ms cubic-bezier(0.34, 1.56, 0.64, 1)" }}
       />
       <text x="50%" y="50%" textAnchor="middle" dy="0.35em" fill="var(--text)" fontSize="20" fontFamily="var(--font-display)" fontWeight="600">
         {display}%

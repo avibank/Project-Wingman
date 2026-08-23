@@ -118,10 +118,9 @@ function StreakMenu({ streak, overrideStreak }) {
         .propeller.is-idle .propeller-blades { fill: var(--muted2); opacity: 0.45; }
         .propeller.is-idle .propeller-hub { fill: var(--muted2); opacity: 0.45; }
         .propeller.is-idle .propeller-hub-shine { opacity: 0; }
-        .propeller.is-active .propeller-blades { fill: #FFFFFF; opacity: 1; animation: propSpin 1s linear infinite; filter: drop-shadow(0 0 4px var(--accent)); }
+        .propeller.is-active .propeller-blades { fill: var(--text-primary); opacity: 1; }
         .propeller.is-active .propeller-hub { fill: var(--accent); opacity: 1; }
         .propeller.is-active .propeller-hub-shine { fill: rgba(255,255,255,0.7); }
-        @keyframes propSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .app.reduce-motion .propeller.is-active .propeller-blades { animation: none; }
         .streak-stats { display: flex; justify-content: space-between; margin-top: 12px; gap: 6px; }
         .streak-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
@@ -129,9 +128,8 @@ function StreakMenu({ streak, overrideStreak }) {
         .streak-stat-label { font-family: var(--font-ui); font-size: 12px; color: var(--muted2); text-align: center; margin-top: 2px; }
         .streak-last { text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
         .streak-last strong { color: var(--text); }
-        .windsock.is-active { animation: sockWave 1.8s ease-in-out infinite; transform-origin: left center; }
+        .windsock.is-active { transform-origin: left center; }
         .windsock.is-idle { transform: rotate(6deg); }
-        @keyframes sockWave { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
         .app.reduce-motion .windsock.is-active { animation: none; }
       `}</style>
     </div>

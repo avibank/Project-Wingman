@@ -409,7 +409,7 @@ function AppInner() {
            browser's default (Arial here, -apple-system elsewhere) at 13.33px.
            This is the whole of that bug, in one line. */
         button, input, textarea, select { font: inherit; letter-spacing: inherit; }
-        .app, .app *, .app *::before, .app *::after { transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
+        .app, .app *, .app *::before, .app *::after { transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
         *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         ::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
         ::-moz-selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
@@ -517,7 +517,7 @@ function AppInner() {
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }
         /* §6.6 — the grain texture is deleted: on OLED it reads as compression
            artefacts, not as paper. */
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 0.25s ease, border-color 0.25s ease; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 180ms ease, border-color 180ms ease; }
         .topbar.is-scrolled { border-bottom-color: var(--border-hover); }
         .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
         .brand:hover { color: var(--accent); }
@@ -531,7 +531,7 @@ function AppInner() {
         .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted); font-size: 14px; font-weight: 500; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
         .tab.is-active { color: var(--text); font-weight: 600; }
         .tab.is-active svg { color: var(--accent); }
-        .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 0.25s ease, right 0.25s ease; border-radius: 2px 2px 0 0; }
+        .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 180ms ease, right 180ms ease; border-radius: 2px 2px 0 0; }
         .tab.is-active::after { left: 0; right: 0; }
         .tab.is-shaking { animation: turbulencePulse 0.22s ease; }
         @keyframes turbulencePulse {
@@ -545,8 +545,7 @@ function AppInner() {
         @media (min-width: 1024px) {
           .content { max-width: 1100px; }
         }
-        .content-taxi { animation: taxiIn 0.35s ease; }
-        @keyframes taxiIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+        /* §4.6 — page transitions do not animate. */ }
         .btn-primary { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-md); padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background: var(--accent-hover); }
         .boarding-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; animation: boardingFade 2.4s ease forwards; }

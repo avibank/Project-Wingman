@@ -201,14 +201,14 @@ export function ThreadStyles() {
         font-size: 12px; cursor: pointer; padding: 5px 8px; border-radius: var(--r-sm); }
       .cmt-act:hover { background: var(--elev-2); color: var(--text-soft); }
       /* destructive affordance stays hidden until the author is on the comment */
-      .cmt-del { opacity: 0; transition: opacity 0.12s ease; }
+      .cmt-del { opacity: 0; transition: opacity 180ms ease; }
       .cmt:hover > .cmt-main .cmt-del,
       .cmt-del:focus-visible { opacity: 1; }
       .cmt-del:hover { color: var(--bad); }
       .cmt-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
       .chip-r { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--border-soft);
         border-radius: var(--r-pill); padding: 4px 11px; color: var(--muted); font-size: 12px; cursor: pointer;
-        min-height: 30px; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease; }
+        min-height: 30px; transition: border-color 180ms ease, color 180ms ease, background 180ms ease; }
       .chip-r:hover { border-color: var(--border-hover); color: var(--text-soft); }
       .chip-r.is-on { color: var(--presence); border-color: color-mix(in srgb, var(--presence) 40%, transparent);
         background: var(--presence-soft); }

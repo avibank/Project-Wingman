@@ -156,7 +156,7 @@ export function InstrumentStyles() {
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.24), 0 10px 26px rgba(0,0,0,0.20); }
       .bezel::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
         background: linear-gradient(115deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 26%, transparent 46%);
-        transform: translateX(var(--sweep, -18%)); transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
+        transform: translateX(var(--sweep, -18%)); transition: transform 180ms cubic-bezier(0.22,1,0.36,1); }
       .bezel:hover::before { --sweep: 18%; }
       /* screw heads at the panel corners */
       .bezel::after { content: ""; position: absolute; inset: 7px; pointer-events: none; border-radius: calc(var(--r-lg) - 5px);
@@ -171,7 +171,7 @@ export function InstrumentStyles() {
       .tape { display: flex; flex-direction: column; align-items: center; }
       .tape-window { position: relative; width: 66px; height: 92px; overflow: hidden; border-radius: var(--r-sm);
         background: var(--well); box-shadow: var(--shadow-inset); }
-      .tape-strip { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
+      .tape-strip { display: flex; flex-direction: column; transition: transform 180ms cubic-bezier(0.22,1,0.36,1); }
       .tape-row { height: 18.4px; display: flex; align-items: center; justify-content: center;
         font-family: var(--font-ui); font-size: 12px; color: var(--muted2); font-variant-numeric: tabular-nums; }
       .tape-row.is-current { font-size: 17px; font-weight: 500; color: var(--accent); }

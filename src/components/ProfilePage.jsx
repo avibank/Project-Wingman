@@ -453,9 +453,9 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .settings-privacy strong { color: var(--text-primary); font-weight: 500; }
         .settings-note { font-size: 12px; color: var(--muted2); line-height: 1.5; padding: 12px 14px 4px; }
         .settings-error { font-size: 12px; color: var(--bad); padding: 0 14px 10px; margin: 0; }
-        .settings-switch { width: 34px; height: 20px; border-radius: var(--r-md); background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
+        .settings-switch { width: 34px; height: 20px; border-radius: var(--r-md); background: var(--border); position: relative; flex-shrink: 0; transition: background 180ms ease; }
         .settings-switch.is-on { background: var(--accent); }
-        .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
+        .settings-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 180ms ease; }
         .settings-switch.is-on .settings-switch-knob { transform: translateX(14px); }
         .settings-field-block { padding-bottom: 10px; }
         .settings-two-col { display: flex; gap: 8px; padding: 0 14px 10px; }

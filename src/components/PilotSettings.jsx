@@ -177,7 +177,7 @@ function PilotSettings({ modulesCompleted = 0 }) {
         .ps2-switch.is-on { background: color-mix(in oklab, var(--warm) 22%, var(--surface-2));
           color: var(--text-1); }
         .ps2-knob { width: 18px; height: 18px; border-radius: 50%; background: var(--text-3);
-          transition: transform 160ms cubic-bezier(0.2,0.8,0.2,1), background 160ms linear; }
+          transition: transform 180ms cubic-bezier(0.2,0.8,0.2,1), background 180ms linear; }
         .ps2-switch.is-on .ps2-knob { background: var(--warm); transform: translateX(4px); }
         .ps2-switch-state { font-family: var(--font-ui); font-size: 12px; min-width: 22px; }
         @media (prefers-reduced-motion: reduce) { .ps2-knob { transition: none; } }
