@@ -13,7 +13,7 @@ lists what v1 shipped that v2 reverses.
 | 1 | Bugs 2, 3, 6, 8, 10 | **done** |
 | 2 | Home rebuild (§9.1) | **done** |
 | 2 | Chapter: one rendering, three tabs (§9.3) | **done** |
-| 2 | Quiz (§9.3.2, §4.5) | **done** — JT explanations authored, 4 modules await review |
+| 2 | Quiz (§9.3.2, §4.5) | **done** — all 42 questions have per-option explanations |
 | 2 | Debrief (§9.3.3) | **done** |
 | 2 | Naming + placards (§8) | **done** |
 | 2 | Delete list (§6.6) | **done** |
@@ -611,3 +611,39 @@ page in a study app.
 The test caught one thing worth keeping: dropping an unknown chapter can leave a single
 module, and a single module has no weakest — so `null` is the right answer, and the
 assertion was wrong rather than the function.
+
+## §9.3.2 — all 42 questions now carry explanations
+
+The remaining 32 questions across PROP, AERO, NAV and WX are authored: **128 more
+explanations, 168 in total**, one per option, every one saying *why* rather than *that*.
+
+Some are there specifically to catch the misconception the question is built around:
+
+- **AERO.03** — "only at low airspeed" gets told plainly that an accelerated stall in a
+  steep turn happens well above cruise speed.
+- **AERO.01** — "lift exceeding weight" in a climb is named as the common misconception,
+  because lift is in fact slightly *less* than weight on an inclined flight path.
+- **NAV.02** — "inbound to the station" is explained as the reciprocal of a radial, which
+  is the classic error.
+- **PROP.02** — "ignition before the spark" is separated from detonation as pre-ignition,
+  a different fault with a different cause.
+- **WX.03** — the mature stage is explained as the worst *because* updraft and downdraft
+  sit side by side, and noted as looking less dramatic from outside than the cumulus stage
+  that preceded it.
+
+### A check, so this cannot drift
+
+`npm run check:content` validates `src/data.js`: every question has an `explain` array,
+its length **matches the options array**, the answer index is in range, no explanation is
+thin, unpunctuated or duplicated within a question, no question id repeats, and takeaway
+counts stay inside §9.3.1's four-to-six.
+
+A length mismatch would silently attach the wrong reasoning to the wrong answer, which
+under §11 is a safety problem rather than a formatting one. `npm run check` now runs
+lint, content and build together.
+
+### Still wanted before launch
+
+These are written to the standard of someone who knows the material, not signed off by an
+instructor. §11 asks for a **visually distinct verified tier from day one**, and that tier
+does not exist yet — when it does, this content is what it should be applied to first.
