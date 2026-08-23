@@ -2,6 +2,8 @@ import "./styles/fonts.css";
 import "./styles/liveries.css";
 import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
+import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
+import { parseRoute, path as routePath } from "./lib/routes.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import HubPage from "./components/HubPage.jsx";
@@ -28,7 +30,9 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <UserProgressProvider>
-      <AppInner />
+      <BrowserRouter>
+        <AppInner />
+      </BrowserRouter>
       </UserProgressProvider>
     </ClerkProvider>
   );
@@ -36,14 +40,37 @@ export default function App() {
 function AppInner() {
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
-  const [tab, setTab] = useState("chapters");
-  const [settingsPage, setSettingsPage] = useState(null);
-  const [view, setView] = useState("hub"); // "hub" | "module"
-  const [pendingChapterId, setPendingChapterId] = useState(null);
+  // §2.2 — the URL is the navigation state. `view`, `settingsPage`, `tab` and
+  // the pending chapter are all derived from it now, so back, deep links and
+  // sharing work without any of them being stored twice.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const route = parseRoute(location.pathname);
+
+  const view = route.name === "module" || route.name === "chapter" ? "module" : "hub";
+  const settingsPage =
+    route.name === "signin" ? "auth"
+    : route.name === "logbook" ? "progress"
+    : route.name === "saved" ? "bookmarks"
+    : route.name === "settings" ? (route.page === "index" ? "about" : route.page)
+    : null;
+  const tab = route.tab === "pdf" ? "pdf" : "chapters";
+  const pendingChapterId = route.chapterId || null;
+
+  const go = (to) => { navigate(to); window.scrollTo(0, 0); };
+  const goSettings = (page) =>
+    go(page === "auth" ? routePath.signin()
+      : page === "progress" ? routePath.logbook()
+      : page === "bookmarks" ? routePath.saved()
+      : routePath.settings(page));
+  const goHome = () => go(routePath.home());
   const { prefs: socialPrefs } = useSocialPrefs();
   const [enrolledCodes, setEnrolledCodes] = useState([]);
   const [bookmarksMode, setBookmarksMode] = useState("list");
-  const [activeModuleCode, setActiveModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
+  // The persisted "active module" is a preference the hero on Home reads.
+  // Inside a module the URL wins.
+  const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
+  const activeModuleCode = route.moduleCode || preferredModuleCode;
   const [theme, setTheme] = useState("dark");
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
@@ -59,6 +86,14 @@ function AppInner() {
   const [testStreakValue, setTestStreakValue] = useState(0);
   const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
+  // onAnimationEnd was the only way out of a full-screen blocking overlay, and
+  // a backgrounded tab never runs animations — so opening the app in a tab that
+  // is not in front left the boarding pass covering everything, permanently.
+  useEffect(() => {
+    if (!boarding) return;
+    const t = setTimeout(() => setBoarding(false), 2600);
+    return () => clearTimeout(t);
+  }, [boarding]);
   const [paToast, setPaToast] = useState(null);
   const [scrollPct, setScrollPct] = useState(0);
   const [storageWarning, setStorageWarning] = useState(false);
@@ -71,7 +106,6 @@ function AppInner() {
   }));
   useEffect(() => {
     if (!progress.loaded) return;
-    setTab(progress.get("pw-last-tab", "chapters"));
     setTheme(progress.get("pw-theme", "dark"));
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
@@ -201,7 +235,7 @@ function AppInner() {
       }
     }
     scrollPositions.current[tab] = window.scrollY;
-    setTab(nextTab);
+    navigate(nextTab === "pdf" ? routePath.library(activeModuleCode) : routePath.module(activeModuleCode));
     requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
   };
   const resetProgress = async () => {
@@ -223,17 +257,17 @@ function AppInner() {
       if (!reduceMotion) {
       }
     }
-    setActiveModuleCode(m.code);
-    setView("module");
-    setTab(targetTab);
-    window.scrollTo(0, 0);
+    setPreferredModuleCode(m.code);
+    go(targetTab === "pdf" ? routePath.library(m.code) : routePath.module(m.code));
   };
   const enterModule = (m) => goToModule(m.code, "chapters");
   // Deep-link into one specific chapter: hand the id to ChaptersPanel directly
   // so it opens that chapter instead of the restored pw-last-chapter.
   const goToChapter = (moduleCode, chapterId) => {
-    setPendingChapterId(chapterId);
-    goToModule(moduleCode, "chapters");
+    const m = MODULES.find((x) => x.code === moduleCode);
+    if (!m) return;
+    setPreferredModuleCode(m.code);
+    go(routePath.chapter(m.code, chapterId));
   };
   return (
     <div
@@ -278,9 +312,7 @@ function AppInner() {
         <button
           className="brand"
           onClick={() => {
-            setSettingsPage(null);
-            setView("hub");
-            window.scrollTo(0, 0);
+            goHome();
           }}
           aria-label="Go to Flight Deck"
         >
@@ -293,19 +325,19 @@ function AppInner() {
           <ProfileMenu
             onNavigate={(page) => {
               setBookmarksMode("list");
-              setSettingsPage(page);
+              goSettings(page);
             }}
           />
         </div>
       </header>
       {settingsPage === "auth" ? (
         <main className="content content-taxi">
-          <AuthPage onBack={() => setSettingsPage(null)} />
+          <AuthPage onBack={() => go(-1)} />
         </main>
       ) : settingsPage === "profile" ? (
         <main className="content content-taxi">
           <ProfilePage
-            onBack={() => setSettingsPage(null)}
+            onBack={() => go(-1)}
             theme={theme}
             onToggleTheme={toggleTheme}
             reduceMotion={reduceMotion}
@@ -323,17 +355,17 @@ function AppInner() {
         </main>
       ) : settingsPage === "progress" ? (
         <main className="content content-taxi">
-          <ProgressPage onBack={() => setSettingsPage(null)} />
+          <ProgressPage onBack={() => go(-1)} />
         </main>
       ) : settingsPage === "bookmarks" ? (
         <main className="content content-taxi">
-          <BookmarksPage onBack={() => setSettingsPage(null)} initialMode={bookmarksMode} />
+          <BookmarksPage onBack={() => go(-1)} initialMode={bookmarksMode} />
         </main>
       ) : settingsPage ? (
         <main className="content content-taxi">
           <SettingsPage
             page={settingsPage}
-            onBack={() => setSettingsPage(null)}
+            onBack={() => go(-1)}
             testStreakOverrideOn={testStreakOverrideOn}
             onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
             testStreakValue={testStreakValue}
@@ -350,9 +382,9 @@ function AppInner() {
             onGoToSocial={(moduleCode) => goToModule(moduleCode || activeModuleCode, "social")}
             onReviewBookmarks={() => {
               setBookmarksMode("cards");
-              setSettingsPage("bookmarks");
+              goSettings("bookmarks");
             }}
-            onSignIn={() => setSettingsPage("auth")}
+            onSignIn={() => goSettings("auth")}
             streak={streak}
           />
         </main>
@@ -362,10 +394,10 @@ function AppInner() {
             moduleCode={activeModuleCode}
             tab={tab}
             onTab={switchTab}
-            onSignIn={() => setSettingsPage("auth")}
+            onSignIn={() => goSettings("auth")}
             onGoToChapter={goToChapter}
             initialChapterId={pendingChapterId}
-            onInitialChapterConsumed={() => setPendingChapterId(null)}
+            onInitialChapterConsumed={() => {}}
           />
         </main>
       )}
