@@ -159,3 +159,55 @@ export async function setNotify(userId, mode) {
   );
   return !fail(error, false);
 }
+
+// §9.4.3 — formations. Ephemeral, so they are read live and never cached into a
+// list that might outlive them.
+export async function fetchFormations(moduleCode = null) {
+  let q = supabase.from("formations").select("*").is("ended_at", null);
+  if (moduleCode) q = q.eq("module_code", moduleCode);
+  const { data, error } = await q;
+  if (error) return fail(error, []);
+  const rows = (data || []).filter((f) => !f.ended_at && (!moduleCode || f.module_code === moduleCode));
+  return Promise.all(rows.map(async (f) => ({ ...f, members: await fetchFormationMembers(f.id) })));
+}
+
+export async function fetchFormationMembers(formationId) {
+  const { data, error } = await supabase.from("formation_members").select("*").eq("formation_id", formationId);
+  if (error) return fail(error, []);
+  const seen = new Set();
+  return (data || []).filter((m) => {
+    if (m.formation_id !== formationId || seen.has(m.user_id)) return false;
+    seen.add(m.user_id);
+    return true;
+  });
+}
+
+export async function startFormation({ chapterId, moduleCode, userId, startsAt = null }) {
+  const { data, error } = await supabase
+    .from("formations")
+    .insert({ chapter_id: chapterId, module_code: moduleCode, starts_at: startsAt })
+    .select().single();
+  if (error) return fail(error, null);
+  await supabase.from("formation_members").insert({ formation_id: data.id, user_id: userId });
+  return data;
+}
+
+export async function joinFormation(formationId, userId) {
+  const members = await fetchFormationMembers(formationId);
+  // §9.4.3 caps a formation at four. A fifth is refused rather than accepted
+  // and then hidden by a slice().
+  if (members.filter((m) => !m.left_at).length >= 4) return { ok: false, reason: "full" };
+  if (members.some((m) => m.user_id === userId && !m.left_at)) return { ok: true, reason: "already-in" };
+  const { error } = await supabase.from("formation_members").insert({ formation_id: formationId, user_id: userId });
+  return error ? { ok: false, reason: "error" } : { ok: true };
+}
+
+export async function leaveFormation(formationId, userId) {
+  const at = new Date().toISOString();
+  await supabase.from("formation_members").update({ left_at: at })
+    .match({ formation_id: formationId, user_id: userId });
+  // §9.4.3 — the room dies when the last person leaves.
+  const left = (await fetchFormationMembers(formationId)).filter((m) => !m.left_at);
+  if (!left.length) await supabase.from("formations").update({ ended_at: at }).eq("id", formationId);
+  return true;
+}

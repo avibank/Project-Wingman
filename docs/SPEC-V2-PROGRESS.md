@@ -767,3 +767,27 @@ Every step in §15 is built. What remains is not implementation:
   is the switch; which module to turn on is a decision.
 - **Migrations 0005, 0006, 0007** — 0007 is new and everything in Phase 4 is inert
   without it.
+
+## §9.4.3 Formation, rebuilt
+
+v1's Formation was deleted with `ModuleSocial` because it contradicted the spec: it was
+persistent, it lived on the chapter body, and it rendered when nobody was in it. §9.4.3
+wants the opposite — ephemeral, 2–4 pilots, one chapter, one session, either now or
+scheduled, dying when it empties.
+
+`lib/formation.js` makes **"never render a formation nobody is in" a property of the
+data**, not a `.filter()` each surface has to remember. `visibleFormations()` drops the
+empty, the ended, the abandoned (everyone has a `left_at`), and the stale — one that
+started hours ago and never reached two.
+
+Verified: of eight fixtures only four survive, and a scheduled one with a single sign-up
+still shows because it has not started yet. The label never renders a zero — one person
+waiting reads "Waiting for one more".
+
+It sits under **Starting**, in §9.4's first band, which asks for "who's on frequency,
+which module, *what's starting*". Confirmed live: three formations in the fixture, one
+rendered, because the other two had no members.
+
+**Not built:** §9.4.3's simultaneous quiz run with answers revealed once everyone locks
+in. That needs the same live channel §8.3 is waiting on — there is no way to know when
+everyone has locked in without one.

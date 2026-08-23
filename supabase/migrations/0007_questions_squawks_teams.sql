@@ -29,6 +29,10 @@ alter table comms_messages add column if not exists squawk text;
 alter table comms_messages add constraint comms_squawk_code
   check (squawk is null or squawk in ('7600', '7700')) not valid;
 
+-- §9.4.3 — "either now or scheduled (tonight 20:00)". 0005 gave formations a
+-- started_at; a scheduled one needs a start in the future.
+alter table formations add column if not exists starts_at timestamptz;
+
 -- ------------------------------------------------------------- §9.4.3 teams
 -- Self-formed, 3-6 people, persistent, their own chat. The strongest retention
 -- mechanic in the plan: people come back for their group, not for the app.

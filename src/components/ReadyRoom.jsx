@@ -6,9 +6,11 @@ import { fetchProfiles, assignMarkings } from "../lib/squadron.js";
 import {
   fetchOpenSquawks, fetchMyTeams, fetchTeamMembers, createTeam, leaveTeam,
   fetchProgressByModule, socialEnabledModules,
+  fetchFormations, joinFormation,
 } from "../lib/readyRoom.js";
 import { rankPartners, partnerReason, teamCapacity, TEAM_MIN } from "../lib/teams.js";
 import { SQUAWK_LABEL } from "../lib/questions.js";
+import { visibleFormations, formationLabel, FORMATION_MAX } from "../lib/formation.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 import Comms from "./Comms.jsx";
 
@@ -41,14 +43,16 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
   const [enabled, setEnabled] = useState(null);
   const [newTeam, setNewTeam] = useState("");
   const [busy, setBusy] = useState(false);
+  const [formations, setFormations] = useState([]);
 
   const load = useCallback(async () => {
     const totals = Object.fromEntries(MODULES.map((m) => [m.code, chaptersForModule(m.code).length]));
-    const [presence, sq, myTeams, on] = await Promise.all([
+    const [presence, sq, myTeams, on, fms] = await Promise.all([
       fetchAllPresence(user?.id),
       fetchOpenSquawks(user?.id, moduleCode),
       isSignedIn ? fetchMyTeams(user.id) : Promise.resolve([]),
       socialEnabledModules(),
+      fetchFormations(moduleCode),
     ]);
     // A user can appear in presence more than once (two tabs, a stale row).
     // One face each.
@@ -63,6 +67,9 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
     setSquawks(sq || []);
     setTeams(myTeams || []);
     setEnabled(on);
+    // §9.4.3 — never render a formation nobody is in. The filter is a property
+    // of the data, not something each surface remembers to apply.
+    setFormations(visibleFormations(fms || []));
 
     const rosters = {};
     for (const t of myTeams || []) rosters[t.id] = await fetchTeamMembers(t.id);
@@ -70,6 +77,7 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
 
     const ids = [
       ...uniqueHere.map((p) => p.user_id),
+      ...(fms || []).flatMap((f) => (f.members || []).map((m) => m.user_id)),
       ...(sq || []).map((s) => s.user_id),
       ...Object.values(rosters).flat().map((m) => m.user_id),
     ];
@@ -130,6 +138,35 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
           <p className="rr-quiet">Quiet right now. Answer a squawk below and you'll be the reason someone comes back.</p>
         )}
       </section>
+
+      {/* §9.4 band 1 also asks what's starting. §9.4.3: 2-4 pilots, one
+          chapter, one session, and the room dies when it empties. */}
+      {formations.length > 0 && (
+        <section className="rr-band">
+          <h2 className="rr-h2">Starting</h2>
+          <ul className="rr-formations">
+            {formations.map((f) => (
+              <li key={f.id}>
+                <span className="rr-formation-where">{chapterCode(f.chapter_id) || f.module_code}</span>
+                <span className="rr-formation-when">{formationLabel(f)}</span>
+                <span className="rr-formation-faces">
+                  {f.members.map((m) => (
+                    <Tail key={m.user_id} name={who(m.user_id).callsign} livery={who(m.user_id).livery}
+                      marking={who(m.user_id).marking} size={24} />
+                  ))}
+                </span>
+                <button
+                  className="rr-formation-join" disabled={busy || f.full || f.members.some((m) => m.user_id === user?.id)}
+                  onClick={async () => { setBusy(true); await joinFormation(f.id, user.id); setBusy(false); load(); }}
+                >
+                  {f.members.some((m) => m.user_id === user?.id) ? "You're in"
+                    : f.full ? `Full at ${FORMATION_MAX}` : "Join"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* 2 · Open squawks — the room's purpose. A permanent supply of ways to be
           useful, and the reason it is never empty. */}
@@ -280,6 +317,17 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .rr-face-where { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
 
+        .rr-formations { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
+          background: var(--hairline); border-radius: var(--r-panel); overflow: hidden; }
+        .rr-formations li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+          padding: 10px 14px; background: var(--bg-panel); min-height: 56px; }
+        .rr-formation-where { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+        .rr-formation-when { font-size: 14px; color: var(--text-secondary); }
+        .rr-formation-faces { display: flex; gap: 4px; margin-left: auto; }
+        .rr-formation-join { min-height: 44px; padding: 0 12px; border: none; border-radius: var(--r-control);
+          background: var(--accent-interactive); color: var(--bg-ground); font-size: 14px;
+          font-weight: 500; cursor: pointer; }
+        .rr-formation-join:disabled { background: var(--bg-raised); color: var(--text-tertiary); cursor: default; }
         .rr-squawks { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
           background: var(--hairline); border-radius: var(--r-panel); overflow: hidden; }
         .rr-squawk { display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 12px 14px;
