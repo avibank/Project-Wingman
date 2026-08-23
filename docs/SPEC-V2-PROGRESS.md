@@ -21,7 +21,11 @@ lists what v1 shipped that v2 reverses.
 | 3 | Presence light & motion (§4) | **partial** — motion budget enforced; breath and arrivals need a live channel |
 | 3 | Surfaces, panelling, glow (§6) | **done** |
 | 2 | Logbook (§9.5) | **done** |
-| 4 | Comments, squawk, Ready Room, teams, verified | not started — blocked on §10 cold start |
+| 4 | Comments as question-as-atom (§9.3.4) | **done** |
+| 4 | Squawk bridge (§9.4.2) | **done** |
+| 4 | Ready Room (§9.4) | **done** |
+| 4 | Teams + complementary matching | **done** |
+| 4 | Verified tier + notifications (§11, §9.4.5) | **partial** — schema and rendering done, marking UI pending |
 
 ## Phase 1 · Routing — done
 
@@ -647,3 +651,56 @@ lint, content and build together.
 These are written to the standard of someone who knows the material, not signed off by an
 instructor. §11 asks for a **visually distinct verified tier from day one**, and that tier
 does not exist yet — when it does, this content is what it should be applied to first.
+
+## Phase 4
+
+§15 says do not start Phase 4 without §10. Of §10's five points, the two that are code
+were done first: **every question now carries a real explanation** (the seed), and
+**a chapter link is a real URL** (the invite). The remaining three — one cohort, one
+module, a weekly ritual — are operational, and the per-module switch that guards them is
+built.
+
+### §9.3.4 — the atom is a question
+
+`lib/questions.js`, pure and tested. A message can be marked a question; a reply can be
+marked as answering it; answered questions collapse into a strip at the top and chatter
+flows past below. Verified: a reply *or* a `resolved_at` both count as answered, an
+answer is never counted as chatter, and an empty feed stays empty.
+
+`ChapterComments` is rebuilt around it — chat-shaped and live, but in §9.3.4's calmer
+register: no haptics, no arrival animation, muted rather than warm. A conversation
+happening in a library.
+
+### §9.4.2 — squawk
+
+Real semantics: **7600** for "I've read this three times and I don't get it", **7700** for
+"checkride Thursday and I'm lost". A question left unanswered for three hours surfaces in
+the Ready Room, and 7700 outranks age in the ordering. Verified: under three hours it
+stays in the chapter, and an answered question never becomes a squawk.
+
+### §9.4 — the Ready Room
+
+Four bands in the order the door was opened for: **Now · Open squawks · Your crew ·
+Channels**. Present tense only.
+
+Open squawks is the band that matters — §9.4 calls it the room's purpose, "a permanent
+supply of ways to be useful, and the reason it is never empty". When there genuinely is
+nothing waiting, it says what puts something there rather than reporting a zero.
+
+Matching is **complementary, not similar** (§9.4). Two people stuck on the same thing have
+no reason to talk, so a pair with similar strengths is filtered out entirely rather than
+ranked low — verified in the test. A mutual trade outranks a one-way favour, and the
+reason shown never contains a number: "You're ahead on JT, they're ahead on NAV".
+
+### §10's guard is built
+
+`module_social` turns a channel on per module. With the table absent every channel shows;
+with it present only enabled ones do. "A module with no social surface is fine; a module
+with a visibly abandoned one is not."
+
+### Found while testing
+
+`fetchMyTeams` returned **one row per membership**, so a team appeared once for every
+member it had — a duplicate React key and a duplicated card. Teams, team members and
+presence all dedupe explicitly now rather than trusting a query filter, which is the third
+time that assumption has bitten in this codebase.

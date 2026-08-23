@@ -1,206 +1,230 @@
-import { useState, useEffect } from "react";
-import { ThumbsUp, Heart, Trash2, LogIn, Pencil, Check, X, MessageSquareOff, ShieldCheck } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { fetchComments, postComment, toggleReaction, deleteComment, updateCommentText, canEditComment } from "../lib/comments.js";
-import { useIsAdmin } from "../lib/admin.js";
-import { useDisplayName } from "../lib/identity.js";
+import { fetchMessages, sendMessage } from "../lib/comms.js";
+import { groupMessages } from "../lib/commsGrouping.js";
+import { splitQuestions, answeredStrip, composerPlaceholder } from "../lib/questions.js";
+import { markAnswer, setQuestion } from "../lib/readyRoom.js";
+import { fetchProfiles, assignMarkings } from "../lib/squadron.js";
+import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 
-function ChapterComments({ chapterId, onSignIn }) {
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [text, setText] = useState("");
-  const [reacted, setReacted] = useState(new Set());
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState("");
-  const isAdmin = useIsAdmin();
-  const { isSignedIn, user } = useUser();
-  const displayName = useDisplayName();
+// §9.3.4 — chat-shaped and live, but calmer. Ready Room mechanics, academic
+// manners: no haptics, no arrival animation, muted rather than warm. A
+// conversation happening in a library.
+//
+// The novel part is that the atom is a question. Settled knowledge collects at
+// the top; chatter flows past below and is allowed to disappear.
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    fetchComments(chapterId).then((data) => {
-      if (active) {
-        setComments(data);
-        setLoading(false);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [chapterId]);
+const clock = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+const dayLabel = (iso) => {
+  const d = new Date(iso), t = new Date();
+  const same = (a, b) => a.toDateString() === b.toDateString();
+  if (same(d, t)) return "Today";
+  const y = new Date(t); y.setDate(t.getDate() - 1);
+  if (same(d, y)) return "Yesterday";
+  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+};
 
-  const handlePost = async () => {
-    if (!text.trim() || !isSignedIn) return;
-    const newComment = await postComment(chapterId, displayName, text.trim(), user.id, null, user.fullName || null, isAdmin);
-    if (newComment) {
-      setComments((c) => [...c, newComment]);
-      setText("");
+function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
+  const { user, isSignedIn } = useUser();
+  const [messages, setMessages] = useState([]);
+  const [profiles, setProfiles] = useState({});
+  const [draft, setDraft] = useState("");
+  const [asQuestion, setAsQuestion] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
+  const [openStrip, setOpenStrip] = useState(false);
+  const [sending, setSending] = useState(false);
+  const endRef = useRef(null);
+
+  const load = useCallback(async () => {
+    if (!chapterId) return;
+    const rows = await fetchMessages({ moduleCode, chapterId, userId: user?.id, limit: 200 });
+    setMessages(rows);
+    setProfiles(await fetchProfiles(rows.map((r) => r.user_id)));
+  }, [chapterId, moduleCode, user?.id]);
+
+  useEffect(() => { load().catch(console.error); }, [load]);
+  useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
+
+  const marked = Object.fromEntries(
+    assignMarkings(
+      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() })),
+      hueOf
+    ).map((p) => [p.user_id, p])
+  );
+  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", livery: "dawn-patrol", marking: "solid" };
+
+  const { open } = splitQuestions(messages);
+  const strip = answeredStrip(messages);
+  const groups = groupMessages(messages.filter((m) => !m.is_system));
+
+  const send = async () => {
+    const body = draft.trim();
+    if (!body || sending) return;
+    setSending(true);
+    setDraft("");
+    const saved = await sendMessage({ moduleCode, userId: user.id, body, chapterId });
+    if (saved) {
+      if (asQuestion) await setQuestion(saved.id, true);
+      if (replyTo) await markAnswer(saved.id, replyTo.id, replyTo.user_id === user.id ? user.id : replyTo.user_id);
+      setAsQuestion(false);
+      setReplyTo(null);
+      await load();
+    } else {
+      setDraft(body);   // put it back rather than losing what they typed
     }
-  };
-
-  const handleReaction = async (comment, type) => {
-    const key = `${comment.id}-${type}`;
-    const already = reacted.has(key);
-    const nextReactions = await toggleReaction(comment, type, already);
-    setComments((cs) => cs.map((c) => (c.id === comment.id ? { ...c, reactions: nextReactions } : c)));
-    setReacted((r) => {
-      const next = new Set(r);
-      already ? next.delete(key) : next.add(key);
-      return next;
-    });
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this comment?")) return;
-    const ok = await deleteComment(id);
-    if (ok) setComments((cs) => cs.filter((c) => c.id !== id));
-  };
-
-  const startEdit = (c) => {
-    setEditingId(c.id);
-    setEditText(c.text);
-  };
-
-  const saveEdit = async (id) => {
-    if (!editText.trim()) return;
-    const updated = await updateCommentText(id, editText.trim());
-    if (updated) {
-      setComments((cs) => cs.map((c) => (c.id === id ? updated : c)));
-    }
-    setEditingId(null);
+    setSending(false);
   };
 
   return (
-    <div className="chapter-comments">
-      {loading ? (
-        <div className="chapter-comments-skeleton" aria-label="Loading comments">
-          {[0, 1].map((i) => (
-            <div key={i} className="chapter-comments-skeleton-item">
-              <div className="chapter-comments-skeleton-avatar" />
-              <div className="chapter-comments-skeleton-lines">
-                <div className="chapter-comments-skeleton-line chapter-comments-skeleton-line--short" />
-                <div className="chapter-comments-skeleton-line chapter-comments-skeleton-line--long" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : comments.length === 0 ? (
-        <div className="chapter-comments-empty">
-          <MessageSquareOff size={24} className="chapter-comments-empty-icon" />
-          <p>Ask the first question about this chapter.</p>
-        </div>
-      ) : (
-        <div className="chapter-comments-list">
-          {comments.map((c) => {
-            const isOwn = isSignedIn && c.user_id === user.id;
-            const editable = canEditComment(c, user?.id);
-            const isEditing = editingId === c.id;
-            return (
-              <div key={c.id} className="chapter-comment">
-                <div className="chapter-comment-avatar-wrap">
-                  <div className={`chapter-comment-avatar ${isOwn ? "is-own" : ""}`}>{c.author.charAt(0).toUpperCase()}</div>
-                  {c.is_admin && (
-                    <span className="chapter-comment-admin-badge" title="Admin">
-                      <ShieldCheck size={8} />
-                    </span>
-                  )}
-                </div>
-                <div className="chapter-comment-body">
-                  <div className="chapter-comment-meta">
-                    <strong>{c.author}</strong>
-                    {isAdmin && c.real_name && c.real_name !== c.author && (
-                      <span className="chapter-comment-realname"> ({c.real_name})</span>
-                    )}
-                  </div>
-                  {isEditing ? (
-                    <div className="chapter-comment-edit">
-                      <input value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveEdit(c.id)} autoFocus />
-                      <button onClick={() => saveEdit(c.id)} aria-label="Save"><Check size={12} /></button>
-                      <button onClick={() => setEditingId(null)} aria-label="Cancel"><X size={12} /></button>
-                    </div>
-                  ) : (
-                    <p>{c.text}</p>
-                  )}
-                  <div className="chapter-comment-reactions">
-                    <button className={reacted.has(`${c.id}-thumbsUp`) ? "is-on" : ""} onClick={() => handleReaction(c, "thumbsUp")} aria-label={reacted.has(`${c.id}-thumbsUp`) ? "Remove thumbs up" : "Give thumbs up"}>
-                      <ThumbsUp size={11} /> {c.reactions?.thumbsUp || 0}
-                    </button>
-                    <button className={reacted.has(`${c.id}-heart`) ? "is-on" : ""} onClick={() => handleReaction(c, "heart")} aria-label={reacted.has(`${c.id}-heart`) ? "Remove heart" : "Give heart"}>
-                      <Heart size={11} /> {c.reactions?.heart || 0}
-                    </button>
-                    {editable && !isEditing && (
-                      <button onClick={() => startEdit(c)} aria-label="Edit comment"><Pencil size={11} /></button>
-                    )}
-                    {(isAdmin || isOwn) && (
-                      <button className="chapter-comment-delete" onClick={() => handleDelete(c.id)} aria-label="Delete comment">
-                        <Trash2 size={11} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <section className="cc">
+      {/* §9.3.4 — settled knowledge at the top. Answered questions collapse to
+          a strip so a week-old answer is still findable. */}
+      {strip.length > 0 && (
+        <details className="cc-strip" open={openStrip} onToggle={(e) => setOpenStrip(e.target.open)}>
+          <summary>Answered here: {strip.map((q) => q.body.slice(0, 34)).join(" · ")}</summary>
+          <ul>
+            {strip.map((q) => (
+              <li key={q.id}>
+                <p className="cc-strip-q">{q.body}</p>
+                {q.answers.map((a) => (
+                  <p key={a.id} className={`cc-strip-a ${a.is_verified ? "is-verified" : ""}`}>
+                    {a.is_verified && <span className="cc-verified">Verified</span>}
+                    {a.body}
+                  </p>
+                ))}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
 
+      {open.length > 0 && (
+        <p className="cc-open">
+          {open.length} {open.length === 1 ? "question" : "questions"} here still waiting on an answer.
+        </p>
+      )}
+
+      <div className="cc-log">
+        {groups.length === 0 && (
+          // §8.4 — an invitation, and §9.4.4's norm-setting line.
+          <p className="cc-quiet">
+            Nobody here has it figured out yet. Ask the dumb question about {chapterCode}.
+          </p>
+        )}
+        {groups.map((g) =>
+          g.type === "day" ? (
+            <div key={g.id} className="cc-day"><span>{dayLabel(g.at)}</span></div>
+          ) : (
+            <article key={g.id} className={`cc-group ${g.user_id === user?.id ? "is-own" : ""}`}>
+              <Tail name={who(g.user_id).callsign} livery={who(g.user_id).livery}
+                marking={who(g.user_id).marking} size={32} staff={who(g.user_id).is_staff} />
+              <div className="cc-stack">
+                <p className="cc-meta">
+                  <span className="cc-sender">{who(g.user_id).callsign}</span>
+                  <span className="cc-time">{clock(g.at)}</span>
+                </p>
+                {g.messages.map((m) => (
+                  <div key={m.id} className={`cc-msg ${m.is_question ? "is-question" : ""}`}>
+                    {m.is_question && <span className="cc-tag">Question</span>}
+                    {m.is_verified && <span className="cc-verified">Verified</span>}
+                    <span className="cc-body">{m.body}</span>
+                    {isSignedIn && m.is_question && !m.resolved_at && m.user_id !== user?.id && (
+                      <button className="cc-answer" onClick={() => setReplyTo(m)}>Answer this</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </article>
+          )
+        )}
+        <div ref={endRef} />
+      </div>
+
       {isSignedIn ? (
-        <div className="chapter-comments-input">
-          <input
-            placeholder="Ask a question…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handlePost()}
+        <div className="cc-composer">
+          {replyTo && (
+            <button className="cc-replying" onClick={() => setReplyTo(null)}>
+              Answering “{replyTo.body.slice(0, 40)}” ×
+            </button>
+          )}
+          <textarea
+            className="cc-input" rows={1} value={draft}
+            placeholder={composerPlaceholder("chapter")}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
           />
-          <button onClick={handlePost}>Post</button>
+          <div className="cc-actions">
+            {/* §9.3.4 — any message can be marked a question. */}
+            <button
+              className={`cc-mark ${asQuestion ? "is-on" : ""}`}
+              aria-pressed={asQuestion}
+              onClick={() => setAsQuestion((v) => !v)}
+            >{asQuestion ? "Asking a question" : "Mark as a question"}</button>
+            <button className="cc-send" onClick={send} disabled={!draft.trim() || sending}>Send</button>
+          </div>
         </div>
       ) : (
-        <button className="chapter-comments-signin" onClick={onSignIn}>
-          <LogIn size={14} /> Sign in to comment
-        </button>
+        <button className="cc-signin" onClick={onSignIn}>Sign in to join the conversation</button>
       )}
+
+      <TailStyles />
       <style>{`
-        .chapter-comments { display: flex; flex-direction: column; gap: 10px; }
-        .chapter-comments-loading { font-size: 12px; color: var(--muted); text-align: center; padding: 16px 0; }
-        .chapter-comments-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 16px 0; }
-        .chapter-comments-empty-icon { color: var(--muted2); opacity: 0.6; }
-        .chapter-comments-empty p { margin: 0; font-size: 12px; color: var(--muted); max-width: 260px; }
-        .chapter-comments-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 4px; }
-        .chapter-comments-skeleton-item { display: flex; gap: 8px; }
-        .chapter-comments-skeleton-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
-        .chapter-comments-skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-top: 3px; }
-        .chapter-comments-skeleton-line { height: 8px; border-radius: 6px; background: linear-gradient(90deg, var(--panel-alt) 25%, var(--border) 50%, var(--panel-alt) 75%); background-size: 200% 100%; animation: skeletonShine 1.4s ease-in-out infinite; }
-        .chapter-comments-skeleton-line--short { width: 35%; }
-        .chapter-comments-skeleton-line--long { width: 75%; }
-        @keyframes skeletonShine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .chapter-comments-list { display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto; mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%); }
-        .chapter-comment { display: flex; gap: 8px; }
-        .chapter-comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--avatar-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; font-family: var(--font-display); }
-        .chapter-comment-avatar.is-own { box-shadow: 0 0 0 2px var(--accent); }
-        .chapter-comment-avatar-wrap { position: relative; flex-shrink: 0; }
-        .chapter-comment-admin-badge { position: absolute; bottom: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #E8A33D; color: #2A1B04; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--panel); }
-        .chapter-comment-body { flex: 1; min-width: 0; }
-        .chapter-comment-meta { font-size: 12px; color: var(--text); margin-bottom: 2px; }
-        .chapter-comment-realname { color: var(--muted2); font-weight: 500; font-size: 12px; }
-        .chapter-comment p { margin: 0; font-size: 12px; color: var(--text-soft); line-height: 1.4; }
-        .chapter-comment-edit { display: flex; gap: 4px; align-items: center; }
-        .chapter-comment-edit input { flex: 1; background: var(--panel-alt); border: 1px solid var(--accent); border-radius: var(--r-sm); padding: 4px 8px; font-size: 12px; color: var(--text); }
-        .chapter-comment-edit button { background: transparent; border: 1px solid var(--border); color: var(--muted2); width: 22px; height: 22px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .chapter-comment-reactions { display: flex; gap: 6px; margin-top: 4px; }
-        .chapter-comment-reactions button { display: flex; align-items: center; gap: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted2); font-size: 12px; padding: 2px 6px; border-radius: var(--r-pill); cursor: pointer; }
-        .chapter-comment-reactions button.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-        .chapter-comment-delete { margin-left: auto; }
-        .chapter-comment-delete:hover { border-color: var(--bad) !important; color: var(--bad) !important; }
-        .chapter-comments-input { display: flex; gap: 6px; }
-                .chapter-comments-input input { flex: 1; background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; font-size: 12px; color: var(--text); transition: border-color 180ms ease, box-shadow 180ms ease; }
-        .chapter-comments-input input::placeholder { color: var(--muted); }
-        .chapter-comments-input input:focus { outline: none; border-color: var(--accent-soft); box-shadow: 0 0 8px 1px var(--accent-soft); }
-        .chapter-comments-input button { background: var(--accent); color: var(--on-accent); border: none; border-radius: var(--r-sm); padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
-        .chapter-comments-signin { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-alt); border: 1px dashed var(--border); color: var(--accent); font-size: 12px; padding: 10px; border-radius: var(--r-md); cursor: pointer; width: 100%; }
-        .chapter-comments-signin:hover { border-color: var(--accent); }
+        .cc { display: flex; flex-direction: column; gap: 12px; max-width: 66ch; margin: 0 auto; }
+
+        .cc-strip { background: var(--bg-panel); border-radius: var(--r-panel); padding: 4px 14px; }
+        .cc-strip summary { cursor: pointer; min-height: 44px; display: flex; align-items: center;
+          font-size: 14px; color: var(--text-secondary); }
+        .cc-strip ul { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 12px; }
+        .cc-strip-q { font-size: 14px; color: var(--text-primary); margin: 0; }
+        .cc-strip-a { font-size: 14px; line-height: 1.55; color: var(--text-secondary); margin: 4px 0 0; }
+        .cc-open { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
+        .cc-log { display: flex; flex-direction: column; gap: 14px; }
+        .cc-quiet { font-size: 16px; line-height: 1.55; color: var(--text-secondary); margin: 0; }
+        .cc-day { display: flex; align-items: center; gap: 12px; color: var(--text-tertiary); font-size: 12px; }
+        .cc-day::before, .cc-day::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
+
+        .cc-group { display: flex; gap: 10px; align-items: flex-start; }
+        .cc-stack { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .cc-meta { display: flex; align-items: baseline; gap: 8px; margin: 0 0 2px; }
+        .cc-sender { font-size: 14px; color: var(--text-primary); }
+        .cc-time { font-size: 12px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+        /* §9.3.4 — own messages tinted, the convention people already have. */
+        .cc-group.is-own .cc-stack { background: var(--bg-panel); border-radius: var(--r-control); padding: 8px 12px; }
+
+        .cc-msg { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+          font-size: 16px; line-height: 1.55; color: var(--text-primary); overflow-wrap: anywhere; }
+        .cc-msg.is-question { box-shadow: inset 3px 0 0 var(--accent-interactive);
+          padding-left: 10px; border-radius: 2px; }
+        .cc-tag, .cc-verified { font-family: var(--font-mono); font-size: 12px;
+          padding: 1px 6px; border-radius: var(--r-chip); background: var(--bg-raised);
+          color: var(--text-secondary); }
+        /* §11 — verified reads as different in kind, not just louder. */
+        .cc-verified { color: var(--bg-ground); background: var(--accent-interactive); }
+        .cc-answer { min-height: 44px; padding: 0 10px; border: none; border-radius: var(--r-control);
+          background: none; color: var(--text-secondary); font-size: 14px; cursor: pointer; }
+        .cc-answer:hover { color: var(--text-primary); background: var(--bg-raised); }
+
+        .cc-composer { display: flex; flex-direction: column; gap: 8px; }
+        .cc-replying { align-self: flex-start; min-height: 44px; padding: 0 10px; border: none;
+          border-radius: var(--r-chip); background: var(--bg-raised); color: var(--text-secondary);
+          font-size: 14px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        .cc-input { width: 100%; resize: none; min-height: 44px; max-height: 140px; padding: 12px;
+          border: none; border-radius: var(--r-control); background: var(--bg-raised);
+          color: var(--text-primary); font-size: 16px; line-height: 1.4; }
+        .cc-input:focus { outline: 2px solid var(--accent-interactive); outline-offset: -1px; }
+        .cc-actions { display: flex; gap: 8px; justify-content: space-between; }
+        .cc-mark { min-height: 44px; padding: 0 12px; border: none; border-radius: var(--r-control);
+          background: var(--bg-raised); color: var(--text-secondary); font-size: 14px; cursor: pointer; }
+        .cc-mark.is-on { background: var(--accent-interactive); color: var(--bg-ground); }
+        .cc-send { min-height: 44px; padding: 0 16px; border: none; border-radius: var(--r-control);
+          background: var(--accent-interactive); color: var(--bg-ground); font-size: 16px;
+          font-weight: 500; cursor: pointer; }
+        .cc-send:disabled { background: var(--bg-raised); color: var(--text-tertiary); cursor: default; }
+        .cc-signin { min-height: 44px; padding: 0 14px; border: none; border-radius: var(--r-control);
+          background: var(--bg-raised); color: var(--text-primary); font-size: 16px; cursor: pointer; }
       `}</style>
-    </div>
+    </section>
   );
 }
 

@@ -8,6 +8,7 @@ import { resolveLivery } from "./lib/liveries.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import Home from "./components/Home.jsx";
+import ReadyRoom from "./components/ReadyRoom.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -348,6 +349,14 @@ function AppInner() {
             onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
             testStreakValue={testStreakValue}
             onChangeTestStreakValue={setTestStreakValue}
+          />
+        </main>
+      ) : route.name === "ready" ? (
+        <main className="content content-taxi">
+          <ReadyRoom
+            moduleCode={route.moduleCode}
+            onGoToChapter={(m, c, tab) => go(routePath.chapter(m, c, tab))}
+            onOpenModule={(m) => go(routePath.module(m))}
           />
         </main>
       ) : view === "hub" ? (
