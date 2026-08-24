@@ -31,8 +31,10 @@ function ProfileMenu({ onNavigate }) {
     const onKey = (e) => { if (e.key === "Escape") { setOpen(false); wrapRef.current?.querySelector(".avatar-btn")?.focus(); } };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
-    // Focus moves into the first item on open.
-    requestAnimationFrame(() => listRef.current?.querySelector("[data-item]")?.focus());
+    // Focus moves into the first item on open. Done synchronously: the DOM is
+    // already committed by the time this effect runs, and a rAF here silently
+    // does nothing anywhere frames are not being produced.
+    listRef.current?.querySelector("[data-item]")?.focus();
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
 
