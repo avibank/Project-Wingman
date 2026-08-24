@@ -43,6 +43,7 @@ export function parseRoute(pathname) {
   if (parts[0] === "modules") return { name: "modules" };
   // §6 — the profile's three tabs are real URLs, not a tab state.
   if (["licence", "preferences", "appearance"].includes(parts[0])) return { name: "profile", tab: parts[0] };
+  if (parts[0] === "features") return { name: "features" };
 
   return { name: "notfound", pathname: clean(pathname) };
 }
@@ -60,5 +61,6 @@ export const path = {
   saved: () => "/saved",
   settings: (page) => (page && page !== "index" ? `/settings/${page}` : "/settings"),
   signin: () => "/signin",
+  features: () => "/features",
   profile: (tab) => `/${["licence", "preferences", "appearance"].includes(tab) ? tab : "licence"}`,
 };

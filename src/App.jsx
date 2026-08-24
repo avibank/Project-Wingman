@@ -5,6 +5,7 @@ import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
+import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
@@ -19,6 +20,7 @@ import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import Profile from "./components/Profile.jsx";
+import Features from "./components/Features.jsx";
 import ProgressPage from "./components/ProgressPage.jsx";
 import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
@@ -42,6 +44,7 @@ export default function App() {
 function AppInner() {
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
+  const { flags } = useFlags();
   // §2.2 — the URL is the navigation state. `view`, `settingsPage`, `tab` and
   // the pending chapter are all derived from it now, so back, deep links and
   // sharing work without any of them being stored twice.
@@ -199,25 +202,30 @@ function AppInner() {
     link.type = "image/svg+xml";
     link.href = href;
   }, []);
-  // The generated tokens are scoped to [data-livery][data-variant]. The .app
-  // div carries them, but html and body sit outside it, so the page behind the
-  // app had to hardcode a colour. Mirroring the pair onto the root fixes that
-  // and makes Day actually repaint the whole page.
+  // Aurora is the one livery behind a flag; a stored choice must not outlive it.
+  // Declared before the effects that list it as a dependency — a dependency
+  // array is evaluated during render, so a `const` below them is in the
+  // temporal dead zone and throws. A bundler will not catch that.
+  const shownLivery = livery === "aurora" && !flags["livery.aurora"] ? DEFAULT_LIVERY : livery;
+
+  // The livery and variant are mirrored onto the root because html and body sit
+  // outside .app, so the page behind the app would otherwise have to hardcode a
+  // colour and Day would not repaint it.
   useEffect(() => {
     const h = document.documentElement;
-    h.setAttribute("data-livery", livery);
+    h.setAttribute("data-livery", shownLivery);
     h.setAttribute("data-variant", variant);
-  }, [livery, variant]);
+  }, [shownLivery, variant]);
 
   // §2B — the token layer, globally. The ramp is a computation rather than a
   // table, so the base tokens are written onto :root at runtime and every page
   // on the site inherits them, including the ones whose layouts are untouched.
   useEffect(() => {
-    const { vars } = deckVars(livery, variant);
+    const { vars } = deckVars(shownLivery, variant);
     const root = document.documentElement;
     Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
     root.style.setProperty("--grain", grain ? vars["--grain"] : "0");
-  }, [livery, variant, grain]);
+  }, [shownLivery, variant, grain]);
 
   useEffect(() => {
     let raf = null;
@@ -282,7 +290,7 @@ function AppInner() {
   };
   return (
     <div
-      data-livery={livery}
+      data-livery={shownLivery}
       data-variant={variant}
       /* §6.3 names these Smooth Air and Plain Language. Both class names are
          emitted so the global layer and the per-component rules that still use
@@ -343,6 +351,8 @@ function AppInner() {
               setBookmarksMode("list");
               if (page === "licence" || page === "preferences" || page === "appearance") {
                 go(routePath.profile(page));
+              } else if (page === "features") {
+                go(routePath.features());
               } else {
                 goSettings(page);
               }
@@ -406,6 +416,10 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
+      ) : route.name === "features" ? (
+        <main className="content content-taxi content--profile">
+          <Features onBack={() => go(-1)} />
+        </main>
       ) : route.name === "profile" ? (
         <main className="content content-taxi content--profile">
           <Profile
@@ -414,7 +428,7 @@ function AppInner() {
             variant={variant}
             variantPin={variantPin}
             onVariantPin={setVariantPin}
-            livery={livery}
+            livery={shownLivery}
             onLivery={(id) => { setLivery(id); progress.set("pw-livery", id); }}
             fontSize={fontSize}
             onFontSize={setFontSize}
@@ -452,7 +466,7 @@ function AppInner() {
         <main className="content content-taxi content--deck">
           <Home
             activeModuleCode={activeModuleCode}
-            livery={livery}
+            livery={shownLivery}
             variant={variant}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}

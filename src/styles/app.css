@@ -134,6 +134,20 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
 
+/* The switch. role="switch" + aria-checked lives on the button; this is only
+   its shape, and it is global because more than one screen uses it. */
+/* 42x24 to look at, 44px to hit: the app enforces a global 44px touch floor on
+   buttons, which would otherwise stretch this into a circle. `is-inline` opts
+   out of the floor and the pseudo-element puts the hit area back. */
+.sw { width: 42px; height: 24px; min-height: 24px; flex: none; border-radius: 999px; padding: 0;
+  background: var(--raised); border: 1px solid var(--line); position: relative; cursor: pointer; }
+.sw::before { content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: 44px; transform: translateY(-50%); }
+.sw-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--t3); transition: transform 160ms ease, background 160ms ease; }
+.sw.is-on { background: var(--active-fill); border-color: transparent; }
+.sw.is-on .sw-knob { transform: translateX(18px); background: var(--ground); }
+
 /* §9 / §6.3 — prefers-reduced-motion is honoured independently of Smooth Air,
    and Smooth Air stops every animation and transition. */
 .app.smooth-air *, .app.smooth-air *::before, .app.smooth-air *::after {

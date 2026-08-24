@@ -23,6 +23,7 @@ Nothing in §11 was started.
 | `src/lib/voices.js` | `wingman-voices.md`, transcribed. 65 Wingman + 54 Hermit, tagged. |
 | `src/lib/greeting.js` | §5.4 rotation. Pure. |
 | `src/lib/flags.js` | §8. |
+| `src/components/Features.jsx` | §8's panel — the only thing that writes flag overrides. |
 | `src/components/Home.jsx` | §5. |
 | `src/components/Profile.jsx` | §6. |
 | `src/components/ProfileMenu.jsx` | §6's menu, §7's avatar. |
@@ -94,6 +95,28 @@ All fourteen pass. The four that are new since the home page:
   `/appearance` are real routes, and deleting an account confirms in place
   rather than pointing at a flow that has no design.
 
+## Three defects found by building the rest
+
+**A temporal-dead-zone reference in `App.jsx`.** `shownLivery` was declared
+below two effects that listed it as a dependency. A dependency array is
+evaluated *during* render, so this throws — but `vite build` has no reason to
+care, exactly like `setAccentColor` did. `no-use-before-define` is now on for
+variables (`functions: false`, since the data layer relies on hoisting), which
+meant hoisting four stylesheet constants above their components. That rule
+catches this class for free from here on.
+
+**`.sw` lived in one component's local `<style>`.** The Features panel used it
+and got round blobs, because the switch styles only existed while the profile
+was mounted. It is a shape, so it belongs in §2B's global layer, and that is
+where it is now.
+
+**Instrument scale was scaling twice.** `.content` still carried the shell's
+`--font-scale` zoom, so with `--scale` also driving the instruments a Large
+attitude indicator came out at 148px instead of 129. The deck now sets
+`zoom: 1` and only `--scale` drives it. §6.3 says the setting drives a `--scale`
+multiplier; it now genuinely does — 91 / 112 / 129 across Small / Medium /
+Large, measured.
+
 ## Deviations, each deliberate
 
 1. **`--active-fill`.** §9 asks for a contrast check "especially Runway green".
@@ -110,6 +133,8 @@ All fourteen pass. The four that are new since the home page:
 3. **The 44px touch floor.** §7 says the windsock pill and the avatar are both
    40px. The app enforces a global 44px minimum on buttons; both now use its
    documented `.is-inline` opt-out.
-4. **Identity default.** §6.1 makes "Go by your username" on by default, so a
+4. **The 42x24 switch keeps a 44px hit area** via a pseudo-element, rather than
+   being stretched into a circle by the global touch floor.
+5. **Identity default.** §6.1 makes "Go by your username" on by default, so a
    preferences row that does not exist yet now starts at `username` rather than
    `real`. That is also the less identifying of the two.

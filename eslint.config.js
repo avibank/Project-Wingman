@@ -26,6 +26,12 @@ export default [
       }],
       "react-hooks/rules-of-hooks": "error",
       "no-const-assign": "error",
+      // A hook's dependency array is evaluated during render, so a `const`
+      // declared below the hook is in the temporal dead zone and throws at
+      // runtime. Bundlers do not care. This caught exactly that in App.jsx.
+      // `functions: false` because function declarations hoist and the data
+      // layer relies on it.
+      "no-use-before-define": ["error", { functions: false, classes: true, variables: true }],
       "no-dupe-keys": "error",
       "no-unreachable": "error",
     },
