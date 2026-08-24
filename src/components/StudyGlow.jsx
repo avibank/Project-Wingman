@@ -128,7 +128,7 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
         @media (prefers-reduced-motion: reduce) { .glow-tap-mark { box-shadow: none; outline: 2px solid currentColor; } }
 
         .glow-sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end;
-          background: rgb(0 0 0 / 0.4); }
+          background: color-mix(in oklab, var(--ground), transparent 30%); }
         .glow-sheet-inner { width: 100%; background: var(--surface-1);
           border-radius: 12px 12px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
           margin: 0 auto; max-width: 640px; }

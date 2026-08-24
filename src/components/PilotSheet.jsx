@@ -111,7 +111,7 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
       <TailStyles />
       <style>{`
         .ps { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; }
-        .ps-scrim { position: absolute; inset: 0; background: rgb(0 0 0 / 0.45); border: none; padding: 0; }
+        .ps-scrim { position: absolute; inset: 0; background: color-mix(in oklab, var(--ground), transparent 25%); border: none; padding: 0; }
         .ps-sheet { position: relative; width: 100%; max-width: 640px; margin: 0 auto;
           background: var(--surface-1); border-radius: 12px 12px 0 0;
           padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }

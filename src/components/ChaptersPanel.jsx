@@ -708,7 +708,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
            a ratio -- the image underneath is arbitrary. It carries its own
            backing and full-strength text: it measured 2.33:1 before. */
         .video-facade-kicker { position: absolute; left: 12px; bottom: 11px; font-family: var(--font-ui); font-size: 12px; color: #FFF;
-          background: rgb(0 0 0 / 0.62); padding: 3px 7px; border-radius: 6px; }
+          background: color-mix(in oklab, var(--ground), transparent 20%); padding: 3px 7px; border-radius: 6px; }
         .video-facade-play { position: relative; display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%;
           background: color-mix(in srgb, var(--accent) 92%, transparent); color: var(--on-accent);
           box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.28);

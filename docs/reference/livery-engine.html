@@ -1,0 +1,1589 @@
+<title>Livery Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+
+<style>
+/* ============================================================
+   BENCH — rig chrome. Fixed neutral, never livery-coloured,
+   so the specimen can be judged without contamination.
+   ============================================================ */
+:root{
+  --bench-0:#0e1013; --bench-1:#171a1f; --bench-2:#22262d; --bench-3:#2c313a;
+  --bench-line:#353b45; --bench-t1:#e6e9ee; --bench-t2:#98a1ac; --bench-t3:#666e79;
+  --bench-hi:#7fb3d5;
+  --sans:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bench-0);color:var(--bench-t1);font-family:var(--sans);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance}
+
+.rig{display:grid;grid-template-columns:340px minmax(0,1fr);min-height:100vh}
+@media (max-width:940px){ .rig{grid-template-columns:1fr} }
+
+.rail{background:var(--bench-1);border-right:1px solid var(--bench-line);
+  padding:26px 22px 40px;display:flex;flex-direction:column;gap:24px}
+@media (min-width:941px){ .rail{position:sticky;top:0;height:100vh;overflow-y:auto} }
+
+.brand h1{font-size:19px;font-weight:700;letter-spacing:-.2px}
+.brand p{margin:3px 0 0;font-size:12.5px;color:var(--bench-t2);line-height:1.45}
+
+.group{display:flex;flex-direction:column;gap:11px}
+.grouphead{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--bench-t3)}
+
+.liveries{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lv{display:flex;align-items:center;gap:9px;background:var(--bench-2);border:1px solid transparent;
+  border-radius:9px;padding:9px 10px;cursor:pointer;color:var(--bench-t2);
+  font-family:var(--sans);font-size:12px;font-weight:500;text-align:left;
+  transition:background .14s,border-color .14s,color .14s}
+.lv:hover{background:var(--bench-3);color:var(--bench-t1)}
+.lv[aria-pressed="true"]{border-color:var(--bench-hi);color:var(--bench-t1);background:var(--bench-3)}
+.lv .chip{width:15px;height:15px;border-radius:4px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.lv:focus-visible,.seg button:focus-visible,.reset:focus-visible{outline:2px solid var(--bench-hi);outline-offset:2px}
+
+.seg{display:flex;background:var(--bench-2);border-radius:9px;padding:3px;gap:3px}
+.seg button{flex:1;background:none;border:0;border-radius:6px;padding:7px 0;color:var(--bench-t2);
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;transition:background .14s,color .14s}
+.seg button[aria-pressed="true"]{background:var(--bench-3);color:var(--bench-t1)}
+.shapes button{font-size:10px;padding:7px 2px}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.fieldtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.fieldtop label{font-size:12.5px;color:var(--bench-t1);font-weight:500}
+.fieldtop output{font-family:var(--mono);font-size:11px;color:var(--bench-t2);font-variant-numeric:tabular-nums}
+.fieldnote{font-size:11px;color:var(--bench-t3);line-height:1.4;margin:-1px 0 0}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:none;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--bench-3);border-radius:2px}
+input[type=range]::-moz-range-track{height:3px;background:var(--bench-3);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--bench-t1);margin-top:-5.5px;border:0}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--bench-t1);border:0}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(127,179,213,.5)}
+
+/* the livery picker stays put — you shouldn't have to scroll back up to change worlds */
+.dock{position:sticky;bottom:-40px;margin:auto -22px -40px;padding:14px 22px 18px;
+  background:var(--bench-1);border-top:1px solid var(--bench-line);
+  display:flex;flex-direction:column;gap:10px;z-index:5}
+.dock .reset{margin-top:2px}
+@media (max-width:940px){ .dock{position:static;margin:0;padding:14px 0 0;background:none} }
+
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tg{display:flex;align-items:center;gap:8px;background:var(--bench-2);border:1px solid transparent;
+  border-radius:9px;padding:8px 9px;cursor:pointer;text-align:left;color:var(--bench-t2);
+  font-family:var(--sans);font-size:11.5px;transition:background .14s,border-color .14s,color .14s}
+.tg:hover{background:var(--bench-3)}
+.tg[aria-pressed="true"]{border-color:var(--bench-hi);color:var(--bench-t1);background:var(--bench-3)}
+.tg:focus-visible{outline:2px solid var(--bench-hi);outline-offset:2px}
+.tg .sw{width:24px;height:14px;border-radius:999px;background:var(--bench-3);position:relative;
+  flex:none;transition:background .15s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.tg .sw::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;
+  background:var(--bench-t3);transition:transform .15s,background .15s}
+.tg[aria-pressed="true"] .sw{background:var(--bench-hi)}
+.tg[aria-pressed="true"] .sw::after{transform:translateX(10px);background:#0e1013}
+.tg b{display:block;font-weight:600;font-size:11.5px;line-height:1.2}
+
+.reset{background:none;border:1px solid var(--bench-line);color:var(--bench-t2);border-radius:8px;
+  padding:8px;font-family:var(--sans);font-size:12px;cursor:pointer;transition:color .14s,border-color .14s}
+.reset:hover{color:var(--bench-t1);border-color:var(--bench-t3)}
+
+/* ---------- stage ---------- */
+.stage{padding:28px 30px 56px;display:flex;flex-direction:column;gap:26px;min-width:0}
+@media (max-width:600px){ .stage{padding:20px 16px 40px} }
+.stagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.stagehead h2{font-size:15px;font-weight:600}
+.anchors{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--bench-hi);margin-top:3px}
+.stagehead p{margin:5px 0 0;font-size:12.5px;color:var(--bench-t2);max-width:58ch}
+.readout{font-family:var(--mono);font-size:10.5px;color:var(--bench-t3);letter-spacing:.06em;
+  text-align:right;white-space:pre-line;line-height:1.7}
+
+.well{border-radius:16px;padding:12px;background:linear-gradient(#0a0c0f,#101318);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), inset 0 0 0 1px rgba(0,0,0,.6)}
+
+/* ============================================================
+   SPECIMEN — driven entirely by livery tokens.
+   One colour. Brightness is state. Light lives in the room.
+   ============================================================ */
+.deck{
+  --ground:#111;--panel:#181818;--raised:#202020;--line:#2a2a2a;
+  --idle:#242424;--t1:#eee;--t2:#aaa;--t3:#777;
+  --active:#8cf;--on:#9df;--lit:#cef;--emit:0px;
+  --card:var(--panel);--cell:var(--panel);--key-img:none;--key-int:.5;--fill-img:none;--fill-int:.25;--soft:60px;--spill:.16;--blend:screen;
+  --dx:0%;--dy:0%;--ds:1;--pulse-t:11s;--pulse-lo:.82;
+  position:relative;overflow:hidden;background:var(--ground);border-radius:9px;
+  padding:30px 30px 26px;color:var(--t1);isolation:isolate;
+}
+/* Light ADDS. A translucent overlay veils the darks and reads as fog;
+   screen blending leaves the shadows alone and genuinely brightens what it touches. */
+.deck::before,.deck::after{
+  content:"";position:absolute;inset:-55%;pointer-events:none;z-index:0;
+  mix-blend-mode:var(--blend);will-change:transform;
+  filter:blur(var(--soft)) saturate(1.28);
+}
+.deck::before{ --bl:var(--soft); background:var(--key-img);  opacity:var(--key-int);
+  animation:drift 26s ease-in-out infinite, breathe var(--pulse-t) ease-in-out infinite; }
+.deck::after{  --bl:calc(var(--soft) * 1.45); background:var(--fill-img); opacity:var(--fill-int);
+  filter:blur(calc(var(--soft) * 1.35)) saturate(1.20);
+  animation:drift 41s ease-in-out infinite reverse, breathe calc(var(--pulse-t) * 1.63) ease-in-out infinite; }
+
+@keyframes drift{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  34%    {transform:translate3d(var(--dx), calc(var(--dy) * -1), 0) scale(var(--ds))}
+  67%    {transform:translate3d(calc(var(--dx) * -.65), var(--dy), 0) scale(1)}
+}
+/* TEMPER — burnt titanium. Oxide colour is a function of temperature, so the room
+   heats and cools and the light walks the whole sequence: straw, gold, bronze, rose,
+   violet, deep blue, pale blue, teal. `alternate` runs it back down again rather than
+   wrapping through green, which titanium at these temperatures never does. */
+@keyframes temper{
+  0%  {filter:blur(var(--bl)) saturate(1.16) brightness(1.03) hue-rotate(-30deg)}
+  35% {filter:blur(var(--bl)) saturate(1.24) brightness(0.99) hue-rotate(-10deg)}
+  68% {filter:blur(var(--bl)) saturate(1.22) brightness(1.02) hue-rotate(14deg)}
+  100%{filter:blur(var(--bl)) saturate(1.14) brightness(1.05) hue-rotate(32deg)}
+}
+/* the rings have to stay legible as rings, so this layer sits closer to the frame
+   than a normal wash and takes less blur — tempered metal has bands, not fog */
+.deck.iri-on::before,.deck.iri-on::after,.deck.iri-on .spill{inset:-24%}
+.deck.iri-on::after{filter:blur(calc(var(--soft) * 1.15)) saturate(1.08)}
+.deck.iri-on::before{animation:drift 26s ease-in-out infinite,
+  temper 54s ease-in-out infinite alternate}
+.deck.iri-on::after{animation:drift 41s ease-in-out infinite reverse,
+  temper 77s ease-in-out infinite alternate-reverse}
+.deck.iri-on .spill{animation:drift 26s ease-in-out infinite,
+  temper 54s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){ .deck.iri-on::before,.deck.iri-on::after,.deck.iri-on .spill{animation:none} }
+
+@keyframes breathe{ 0%,100%{filter:brightness(var(--pulse-lo))} 50%{filter:brightness(1.12)} }
+@media (prefers-reduced-motion:reduce){ .deck::before,.deck::after,.spill{animation:none} }
+.deck > *{position:relative;z-index:1}
+
+/* SPILL — the same light again, over the top. Panels are glass, so light passes
+   through them; this is the part that lands on them. Transmission plus incidence. */
+.spill{
+  --bl:calc(var(--soft) * 1.25);
+  position:absolute;inset:-55%;z-index:2;pointer-events:none;
+  background:var(--key-img);
+  filter:blur(calc(var(--soft) * 1.20)) saturate(1.22);
+  mix-blend-mode:var(--blend);opacity:var(--spill);will-change:transform;
+  animation:drift 26s ease-in-out infinite, breathe var(--pulse-t) ease-in-out infinite;
+}
+/* SHEETS — the curtain drawn as actual folded sheets rather than a row of gradients.
+   Every fold, lean and hem height is a decision, which is the only way the bottom
+   edge stops being a straight line. */
+.sheets{position:absolute;left:-6%;right:-6%;top:-12%;width:112%;height:64%;
+  z-index:0;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  filter:blur(15px) saturate(1.22)}
+.deck.burn-sheets .sheets{opacity:var(--sheet-int,.95);
+  animation:sheetdrift 46s ease-in-out infinite alternate}
+@keyframes sheetdrift{
+  0%  {transform:translate3d(-1.5%,0,0) scaleX(1)}
+  100%{transform:translate3d(1.5%,0,0) scaleX(1.05)}
+}
+
+/* STARS — behind the panels but ABOVE the lights, so they show through the green. */
+.stars{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:var(--stars,0);
+  background-image:var(--stars-a,none),var(--stars-b,none);background-repeat:repeat;
+  background-size:430px 430px,310px 310px;mix-blend-mode:screen;
+  animation:twinkle 13s ease-in-out infinite alternate}
+.stars::after{content:"";position:absolute;inset:0;background-image:var(--stars-c,none);
+  background-repeat:repeat;background-size:520px 520px;mix-blend-mode:screen;
+  animation:twinkle2 8.5s ease-in-out infinite alternate-reverse}
+@keyframes twinkle2{ from{opacity:1} to{opacity:.45} }
+@keyframes twinkle{ from{opacity:var(--stars,0)} to{opacity:calc(var(--stars,0) * .5)} }
+@media (prefers-reduced-motion:reduce){ .stars,.stars::after,.sheets{animation:none} }
+
+/* CURTAIN — the gradient stack, bent by turbulence so nothing stays a straight bar. */
+@keyframes warp{
+  0%,100%{filter:url(#aurWarp) blur(var(--bl)) saturate(1.20) brightness(.96)}
+  50%    {filter:url(#aurWarp) blur(var(--bl)) saturate(1.32) brightness(1.10)}
+}
+.deck.burn-curtain::before{animation:drift 34s ease-in-out infinite,
+  warp 21s ease-in-out infinite}
+
+/* AURORA — the curtains hang from the top edge and the sky moves under them. */
+.deck.aurora-on::before{animation:drift 34s ease-in-out infinite,
+  breathe var(--pulse-t) ease-in-out infinite}
+
+/* BURN — Afterburner's extra layer. Some treatments draw the temper sequence as
+   geometry rather than as light: a weld bead, a deconstructed spectral rule. */
+.burn{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:var(--burn-int,0);
+  background-image:var(--burn-img,none);background-repeat:no-repeat;
+  background-size:var(--burn-size,cover);background-position:var(--burn-pos,0 0);
+  mix-blend-mode:screen;filter:blur(var(--burn-blur,0px)) saturate(1.18)}
+
+/* ACCENT — three marks, not a carnival. The lights are the focal point; these
+   are the only places colour is allowed to land on an instrument. */
+.deck.acc-on .lamps .lamp.on{background:var(--a1)}
+.deck.acc-on .blip{background:var(--a2);
+  box-shadow:0 0 var(--emit) color-mix(in oklab, var(--a2), transparent 42%)}
+.deck.acc-on .ladder b{color:var(--a2)}
+.deck.acc-on .hobbs i{color:var(--a3)}
+.deck.acc-on .current,.deck.acc-on .mcur{background:var(--a1);color:oklch(.20 .02 80)}
+.deck.acc-on .resume{background:var(--a1);color:oklch(.20 .02 80)}
+.deck.acc-on .radar .sweep{background:conic-gradient(from 0deg, transparent 0deg,
+  transparent 300deg, color-mix(in oklab, var(--a2), transparent 88%) 346deg,
+  color-mix(in oklab, var(--a2), transparent 40%) 360deg)}
+
+/* GRAIN — dark gradients band. Noise kills the banding and gives the light a tooth. */
+.grain{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
+  mix-blend-mode:overlay;background-size:150px 150px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E")}
+.deck.grain-on .grain{opacity:var(--grain)}
+
+/* CHROMATIC EDGES — a lit edge and an unlit edge instead of one flat border. */
+.deck.edges-on .card,.deck.edges-on .mod{
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo)}
+
+/* AERIAL PERSPECTIVE — distance desaturates and cools; nearness warms.
+   A card that lifts should come closer, not just get brighter. */
+.deck.aerial-on .mod{background:var(--far)}
+.deck.aerial-on .mod:hover,.deck.aerial-on .mod:focus-visible{background:var(--near)}
+.deck.aerial-on .mod[data-on="0"]{background:var(--farther)}
+
+/* HUED SHADOWS — black shadows on a coloured ground read as holes. */
+.deck.hshadow-on .mod:hover,.deck.hshadow-on .mod:focus-visible{box-shadow:0 12px 26px var(--shadow-c)}
+
+/* STATE BY HUE — peripheral vision reads hue faster than two rungs of brightness. */
+.deck.iriday .mod{background:var(--mtab)}
+.deck.statehue-on .mod .mname{color:var(--mtint)}
+.deck.statehue-on .mod .mcode{color:var(--mtint);opacity:.62}
+.deck.statehue-on .mod:hover .mname,.deck.statehue-on .mod:focus-visible .mname{color:var(--t1)}
+
+@media (max-width:600px){ .deck{padding:22px 18px} }
+
+.dhead{display:flex;flex-direction:column;gap:2px;margin-bottom:22px}
+.dhead .title{font-size:31px;font-weight:700;letter-spacing:-.6px;line-height:1.1}
+.dhead .greet{font-size:18px;font-weight:600;margin-top:7px}
+.dhead .since{font-size:13px;color:var(--t2)}
+
+.card{background:var(--panel);border-radius:12px;border:1px solid var(--line);
+  border-top-color:color-mix(in oklab, var(--line), white 12%);
+  overflow:hidden;display:flex;flex-direction:column}
+.cardbody{padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px}
+.cardtop{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.frame{width:132px;height:76px;border-radius:7px;flex:none;background:var(--raised);
+  border:1px solid var(--line);position:relative;overflow:hidden}
+.frame::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:56%;background:var(--active)}
+.frame .play{position:absolute;inset:0;margin:auto;width:26px;height:26px;border-radius:50%;background:var(--active)}
+.frame .play::after{content:"";position:absolute;inset:0;margin:auto;width:0;height:0;
+  border-left:8px solid var(--ground);border-top:5px solid transparent;border-bottom:5px solid transparent;
+  transform:translateX(1px)}
+.cardtext{flex:1;min-width:190px;display:flex;flex-direction:column;gap:3px}
+.chapter{font-size:19px;font-weight:600;letter-spacing:-.2px}
+.code{font-family:var(--mono);font-size:11.5px;color:var(--t3);letter-spacing:.04em}
+.position{font-size:13px;color:var(--t2);margin-top:5px}
+.resume{align-self:flex-start;background:var(--active);color:var(--ground);border:0;border-radius:999px;
+  padding:9px 17px;font-family:var(--sans);font-size:13.5px;font-weight:600;cursor:pointer}
+
+/* the instruments live INSIDE the card — one object, divided, not two stacked panels */
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);
+  border-top:1px solid var(--line)}
+@media (max-width:720px){ .strip{grid-template-columns:1fr 1fr} .strip .cell:first-child{grid-column:1/-1} }
+@media (max-width:430px){ .strip{grid-template-columns:1fr} }
+.cell{background:var(--cell);padding:18px 10px 14px;display:flex;flex-direction:column;
+  align-items:center;gap:9px;min-height:158px;justify-content:center}
+.cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t3);text-align:center}
+
+.ai{width:118px;height:118px;display:block;cursor:crosshair}
+.ai .horizon{transition:transform .5s cubic-bezier(.2,.9,.3,1.2)}
+@media (prefers-reduced-motion:reduce){ .ai .horizon{transition:none} }
+
+.ladder{font-family:var(--mono);font-size:11px;line-height:1.55;text-align:center;background:var(--idle);
+  border:1px solid var(--line);border-radius:6px;padding:5px 13px;color:var(--t3)}
+.ladder b{display:block;font-size:19px;font-weight:500;color:var(--on)}
+
+.lamps{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:88px}
+.lamp{height:17px;border-radius:3px;background:var(--idle);border:1px solid var(--line)}
+.lamp.on{background:var(--on);border-color:transparent;box-shadow:0 0 var(--emit) color-mix(in oklab, var(--on), transparent 45%)}
+
+.hobbs{font-family:var(--mono);font-size:19px;letter-spacing:.09em;background:var(--idle);
+  border:1px solid var(--line);border-radius:5px;padding:6px 10px;color:var(--t2);
+  font-variant-numeric:tabular-nums}
+.hobbs i{font-style:normal;color:var(--on)}
+
+
+/* modules row — a scrolling rail. Cards flex with no cap and everything inside
+   scales with them (option A), so three modules never leaves a hole. */
+.modrow{margin-top:26px;display:flex;flex-direction:column;gap:11px}
+.modhead{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.modtitle{font-size:17px;font-weight:600;letter-spacing:-.2px}
+.modnote{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--t3)}
+.railwrap{position:relative}
+.railwrap::after{content:"";position:absolute;right:-2px;top:0;bottom:0;width:48px;pointer-events:none;
+  z-index:3;opacity:0;transition:opacity .22s;background:linear-gradient(to left,var(--ground),transparent)}
+.railwrap.more::after{opacity:1}
+.modrail{display:flex;gap:13px;align-items:stretch;overflow-x:auto;overflow-y:visible;
+  scroll-snap-type:x proximity;scrollbar-width:none;padding:5px 2px 9px}
+.modrail::-webkit-scrollbar{display:none}
+
+.mod{container-type:inline-size;scroll-snap-align:start;flex:1 1 0;min-width:180px;max-width:none;
+  position:relative;text-align:left;font-family:var(--sans);color:inherit;cursor:pointer;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;
+  opacity:.84;transition:transform .22s cubic-bezier(.2,.8,.3,1),border-color .22s,background .22s,
+  box-shadow .22s,opacity .22s}
+.modin{padding:14px;display:flex;flex-direction:column;height:100%}
+.mcodeline{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:15px}
+.mcode{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--t3)}
+.mcur{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:var(--ground);
+  background:var(--active);border-radius:3px;padding:2px 5px;white-space:nowrap}
+.mname{font-size:14px;font-weight:600;line-height:1.28;color:var(--t2);margin-top:5px;
+  min-height:calc(1.28em*3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;transition:color .22s}
+.mmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--t2);min-height:13px;padding-top:9px;opacity:0;transition:opacity .26s ease;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prof{display:block;width:100%;height:44px;margin-top:auto;padding-top:8px}
+@container (min-width:250px){
+  .modin{padding:17px} .mname{font-size:16px} .prof{height:58px} .mmeta{font-size:10px}
+}
+@container (min-width:330px){
+  .modin{padding:20px}
+  .mname{font-size:18.5px;-webkit-line-clamp:2;min-height:calc(1.28em*2)}
+  .prof{height:76px} .mcode{font-size:11.5px} .mmeta{font-size:10.5px}
+}
+.mod:hover,.mod:focus-visible{opacity:1;transform:translateY(-3px);border-color:var(--t3);
+  background:var(--raised);box-shadow:0 12px 26px rgba(0,0,0,.34)}
+.mod:hover .mname,.mod:focus-visible .mname{color:var(--t1)}
+.mod:hover .mmeta,.mod:focus-visible .mmeta{opacity:1}
+.mod:focus-visible{outline:2px solid var(--active);outline-offset:2px}
+.prof .reveal{opacity:0;transition:opacity .26s ease}
+.prof .plane{opacity:0;transition:opacity .3s ease .05s}
+.mod:hover .prof .reveal,.mod:hover .prof .plane,
+.mod:focus-visible .prof .reveal,.mod:focus-visible .prof .plane{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .mod,.prof .reveal,.prof .plane{transition:none} .mod:hover{transform:none}
+}
+
+/* widescreen — judge the light at real desktop proportions */
+.modeBtn{background:none;border:1px solid var(--bench-line);color:var(--bench-t2);border-radius:8px;
+  padding:7px 13px;font-family:var(--sans);font-size:12px;cursor:pointer;white-space:nowrap}
+.modeBtn:hover{color:var(--bench-t1);border-color:var(--bench-t3)}
+.modeBtn:focus-visible,.fab:focus-visible{outline:2px solid var(--bench-hi);outline-offset:2px}
+.fab{display:none;position:fixed;left:18px;bottom:18px;z-index:40;background:var(--bench-2);
+  border:1px solid var(--bench-line);color:var(--bench-t1);border-radius:999px;padding:10px 18px;
+  font-family:var(--sans);font-size:12.5px;font-weight:500;cursor:pointer;
+  box-shadow:0 6px 22px rgba(0,0,0,.5)}
+body.wide .rail{display:none}
+body.wide .rig{grid-template-columns:minmax(0,1fr)}
+body.wide .stage{padding:16px 16px 34px}
+body.wide .panels,body.wide .foot{display:none}
+body.wide .well{padding:0;border-radius:0;background:none;box-shadow:none}
+body.wide .deck{border-radius:0;padding:34px 40px 40px}
+body.wide .deck > *:not(.spill){max-width:1240px;margin-left:auto;margin-right:auto;width:100%}
+body.wide .stagehead{padding:0 4px}
+body.wide .fab{display:block}
+
+.radar{width:82px;height:82px;border-radius:50%;position:relative;background:var(--idle);
+  border:1px solid var(--line);overflow:hidden}
+.radar .ring{position:absolute;inset:0;margin:auto;border-radius:50%;border:1px solid var(--line)}
+.radar .r1{width:54%;height:54%} .radar .r2{width:26%;height:26%}
+.radar .sweep{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg, transparent 0deg, transparent 300deg,
+    color-mix(in oklab, var(--active), transparent 84%) 348deg,
+    color-mix(in oklab, var(--active), transparent 34%) 360deg);
+  animation:sweep 4s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){ .radar .sweep{animation:none} }
+.blip{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--lit);
+  box-shadow:0 0 var(--emit) color-mix(in oklab, var(--lit), transparent 40%)}
+
+/* ---------- readout plates ---------- */
+.panels{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width:820px){ .panels{grid-template-columns:1.35fr 1fr} }
+.plate{background:var(--bench-1);border:1px solid var(--bench-line);border-radius:12px;
+  padding:16px 17px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.plate h3{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--bench-t3)}
+.plate p{margin:0;font-size:12px;color:var(--bench-t2);line-height:1.5}
+.plate p b{color:var(--bench-t1);font-weight:600}
+
+.ramp{display:flex;border-radius:7px;overflow:hidden;border:1px solid var(--bench-line)}
+.ramp span{flex:1;height:46px}
+.rampaxis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;
+  color:var(--bench-t3);letter-spacing:.05em}
+
+.states{display:flex;flex-direction:column;gap:6px}
+.state{display:flex;align-items:center;gap:10px}
+.state i{width:30px;height:22px;border-radius:4px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.state span{font-size:12px;color:var(--bench-t1)}
+.state em{font-style:normal;font-size:11px;color:var(--bench-t3);margin-left:auto;font-family:var(--mono)}
+
+.foot{font-size:12px;color:var(--bench-t3);line-height:1.55;max-width:76ch}
+.foot b{color:var(--bench-t2);font-weight:600}
+</style>
+
+<div class="rig">
+
+  <aside class="rail">
+    <div class="brand">
+      <h1>Livery Engine</h1>
+      <p>One colour per world. Brightness carries the meaning. The light lives in the room, not on the objects.</p>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Variant</div>
+      <div class="seg" id="variant">
+        <button type="button" data-v="night" aria-pressed="true">Night</button>
+        <button type="button" data-v="day" aria-pressed="false">Day</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Colour</div>
+      <div class="field">
+        <div class="fieldtop"><label for="hue">Core hue</label><output id="hue-o"></output></div>
+        <input type="range" id="hue" min="0" max="359" step="1">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="dDark">Shadow shift</label><output id="dDark-o"></output></div>
+        <input type="range" id="dDark" min="-180" max="180" step="1">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="dLight">Highlight shift</label><output id="dLight-o"></output></div>
+        <input type="range" id="dLight" min="-180" max="180" step="1">
+        <p class="fieldnote">Both are offsets from the core hue. Shadow and highlight can now pull in
+          <b>opposite</b> directions — that's the third colour.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="midAt">Core position</label><output id="midAt-o"></output></div>
+        <input type="range" id="midAt" min="0.15" max="0.85" step="0.01">
+        <p class="fieldnote">Where on the ramp the core hue sits. Low keeps it in the shadows.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="midC">Core saturation</label><output id="midC-o"></output></div>
+        <input type="range" id="midC" min="0.6" max="1.9" step="0.02">
+        <p class="fieldnote">Lifts chroma around the core only. This is what makes the middle read as
+          its own colour rather than a stop on the way through.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="chroma">Chroma peak</label><output id="chroma-o"></output></div>
+        <input type="range" id="chroma" min="0.01" max="0.16" step="0.005">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="cDark">Shadow chroma</label><output id="cDark-o"></output></div>
+        <input type="range" id="cDark" min="0.3" max="2" step="0.05">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="cLight">Highlight chroma</label><output id="cLight-o"></output></div>
+        <input type="range" id="cLight" min="0.3" max="2" step="0.05">
+        <p class="fieldnote">Different hues hold different amounts of chroma at the same lightness —
+          gold at the top of the ramp and violet in the middle can't share one number.</p>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Depth</div>
+      <div class="field">
+        <div class="fieldtop"><label for="ground">Ground depth</label><output id="ground-o"></output></div>
+        <input type="range" id="ground" min="0.09" max="0.28" step="0.005">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="light">Light end</label><output id="light-o"></output></div>
+        <input type="range" id="light" min="0.86" max="0.99" step="0.005">
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Key light</div>
+      <div class="seg shapes" id="shape">
+        <button type="button" data-s="wash" aria-pressed="true">Wash</button>
+        <button type="button" data-s="bar"  aria-pressed="false">Bar</button>
+        <button type="button" data-s="twin" aria-pressed="false">Twin</button>
+        <button type="button" data-s="rim"  aria-pressed="false">Rim</button>
+      </div>
+      <p class="fieldnote">Keep the source outside the frame — past 0 or 100 on either axis. You should be seeing the glow it throws, never the lamp itself.</p>
+      <div class="field">
+        <div class="fieldtop"><label for="ambHue">Warmth</label><output id="ambHue-o"></output></div>
+        <input type="range" id="ambHue" min="-180" max="180" step="1">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="ambC">Saturation</label><output id="ambC-o"></output></div>
+        <input type="range" id="ambC" min="0" max="0.37" step="0.005">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="soft">Bloom</label><output id="soft-o"></output></div>
+        <input type="range" id="soft" min="0" max="160" step="2">
+        <p class="fieldnote">The blur on the light itself. Under about 30 it reads as a shape; over 60 it reads as light.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="glass">Transmission</label><output id="glass-o"></output></div>
+        <input type="range" id="glass" min="0.5" max="1" step="0.01">
+        <p class="fieldnote">How much light passes <em>through</em> the panels. Low lets too much through and the panels go bright and milky. High keeps them dark glass with a lit edge.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="spill">Spill</label><output id="spill-o"></output></div>
+        <input type="range" id="spill" min="0" max="0.5" step="0.01">
+        <p class="fieldnote">The same light again, laid over the top — the part that lands <em>on</em> the panels rather than behind them.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="ambInt">Intensity</label><output id="ambInt-o"></output></div>
+        <input type="range" id="ambInt" min="0" max="1" step="0.01">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="ambSize">Size</label><output id="ambSize-o"></output></div>
+        <input type="range" id="ambSize" min="15" max="150" step="1">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="ambX">Across</label><output id="ambX-o"></output></div>
+        <input type="range" id="ambX" min="-70" max="170" step="1">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="ambY">Up / down</label><output id="ambY-o"></output></div>
+        <input type="range" id="ambY" min="-90" max="190" step="1">
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Fill light</div>
+      <div class="field">
+        <div class="fieldtop"><label for="fillHue">Warmth</label><output id="fillHue-o"></output></div>
+        <input type="range" id="fillHue" min="-180" max="180" step="1">
+        <p class="fieldnote">Independent of the key. Warm key against a cool fill is what makes a room look lit rather than tinted.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="fillInt">Intensity</label><output id="fillInt-o"></output></div>
+        <input type="range" id="fillInt" min="0" max="0.7" step="0.01">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="fillSize">Size</label><output id="fillSize-o"></output></div>
+        <input type="range" id="fillSize" min="24" max="140" step="1">
+        <p class="fieldnote">The fill is an accent, not a second key. Keep it small enough that it
+          lifts a corner and never crosses the middle of the frame.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="fillX">Position X</label><output id="fillX-o"></output></div>
+        <input type="range" id="fillX" min="-40" max="140" step="1">
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="fillY">Position Y</label><output id="fillY-o"></output></div>
+        <input type="range" id="fillY" min="-40" max="150" step="1">
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Motion</div>
+      <div class="field">
+        <div class="fieldtop"><label for="pulse">Movement</label><output id="pulse-o"></output></div>
+        <input type="range" id="pulse" min="0" max="100" step="1">
+        <p class="fieldnote">The lights drift and breathe on unrelated cycles — 26s and 41s — so they never line up and never read as a blink.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="emit">Emission</label><output id="emit-o"></output></div>
+        <input type="range" id="emit" min="0" max="26" step="1">
+        <p class="fieldnote">Only things that genuinely emit — lit lamps, radar contacts.</p>
+      </div>
+    </div>
+
+    <div class="group" id="burnGroup" hidden>
+      <div class="grouphead" id="burnHead">Treatment</div>
+      <div class="seg shapes" id="burn"></div>
+      <p class="fieldnote" id="burnNote"></p>
+    </div>
+
+    <div class="group">
+      <div class="grouphead">Depth &amp; nuance</div>
+      <div class="toggles" id="toggles"></div>
+      <div class="field">
+        <div class="fieldtop"><label for="spread">Lamp spread</label><output id="spread-o"></output></div>
+        <input type="range" id="spread" min="0.4" max="2.2" step="0.05">
+        <p class="fieldnote">How far past the ramp's own anchors the two lamps sit. Above 1.0 the light
+          is a colour the surfaces never reach, which is what makes it feel like it came from elsewhere.
+          Needs <b>Lamps on anchors</b>.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="tilt">Lamp contrast</label><output id="tilt-o"></output></div>
+        <input type="range" id="tilt" min="0" max="90" step="1">
+        <p class="fieldnote">Pushes the fill further from the key so the two lights aren't the
+          same temperature. Zero puts both on the ramp and the room goes monochrome;
+          around forty is where a surface starts having a warm side and a cool side.</p>
+      </div>
+      <div class="field">
+        <div class="fieldtop"><label for="grainAmt">Grain</label><output id="grainAmt-o"></output></div>
+        <input type="range" id="grainAmt" min="0" max="0.16" step="0.005">
+      </div>
+    </div>
+
+    <div class="dock">
+      <div class="grouphead">Livery</div>
+      <div class="liveries" id="liveries"></div>
+      <button class="reset" type="button" id="reset">Reset to preset</button>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="stagehead">
+      <div>
+        <h2 id="lvName">Sky blue</h2>
+        <div class="anchors" id="lvAnchors">navy → lapiz → sky blue</div>
+        <p id="lvDesc">High altitude. Mid ground, moderate chroma, a wide cool light from high on the left. The default, and the easiest to live in.</p>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:14px">
+        <div class="readout" id="readout"></div>
+        <button class="modeBtn" id="mode" type="button">Widescreen</button>
+      </div>
+    </div>
+
+    <div class="well">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+        <filter id="aurWarp" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.0055 0.017" numOctaves="2" seed="7" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="96" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs></svg>
+      <div class="deck" id="deck">
+        <div class="dhead">
+          <div class="title">Flight Deck</div>
+          <div class="greet" id="greet">Best hours are yours</div>
+          <div class="since">Last flown two days ago</div>
+        </div>
+
+        <div class="card">
+          <div class="cardbody">
+          <div class="cardtop">
+            <div class="frame"><span class="play"></span></div>
+            <div class="cardtext">
+              <div class="chapter">Intake &amp; Compressor Basics</div>
+              <div class="code">JT.01 · Jet Turbine Fundamentals</div>
+              <div class="position">Pick up 6:12 into the briefing.</div>
+            </div>
+          </div>
+          <button class="resume" type="button">Resume at 6:12 &nbsp;›</button>
+          </div>
+
+          <div class="strip">
+          <div class="cell">
+            <svg class="ai" id="ai" viewBox="0 0 120 120" aria-label="Attitude indicator showing 68 percent">
+              <defs><clipPath id="dial"><circle cx="60" cy="60" r="42"/></clipPath></defs>
+              <g clip-path="url(#dial)">
+                <g class="horizon" id="horizon">
+                  <rect x="-70" y="-80" width="260" height="140" id="sky"/>
+                  <rect x="-70" y="60" width="260" height="140" id="grd"/>
+                  <rect x="-70" y="59" width="260" height="1.6" id="hz"/>
+                  <g id="ladder" stroke-width="1.4">
+                    <line x1="52" y1="46" x2="68" y2="46"/><line x1="55" y1="52.5" x2="65" y2="52.5"/>
+                    <line x1="55" y1="66.5" x2="65" y2="66.5"/><line x1="52" y1="73" x2="68" y2="73"/>
+                  </g>
+                </g>
+              </g>
+              <circle cx="60" cy="60" r="42" fill="none" stroke-width="1" id="glass"/>
+              <circle cx="60" cy="60" r="49" fill="none" stroke-width="3" id="rimtrack"/>
+              <circle cx="60" cy="60" r="49" fill="none" stroke-width="3" id="rim"
+                      stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <g id="screws"><circle cx="21" cy="21" r="1.8"/><circle cx="99" cy="21" r="1.8"/>
+                 <circle cx="21" cy="99" r="1.8"/><circle cx="99" cy="99" r="1.8"/></g>
+              <!-- aircraft symbol: bright core over a dark halo so it reads on sky and ground alike -->
+              <g id="symHalo" stroke-width="5.2" stroke-linecap="round" fill="none" opacity=".85">
+                <line x1="38" y1="60" x2="52" y2="60"/><line x1="68" y1="60" x2="82" y2="60"/>
+              </g>
+              <g id="sym" stroke-width="2.6" stroke-linecap="round" fill="none">
+                <line x1="38" y1="60" x2="52" y2="60"/><line x1="68" y1="60" x2="82" y2="60"/>
+              </g>
+              <circle cx="60" cy="60" r="3.6" id="symDotHalo" opacity=".85"/>
+              <circle cx="60" cy="60" r="2.2" id="symDot"/>
+              <text x="60" y="88" id="score" text-anchor="middle"
+                    font-family="Geist Mono, monospace" font-size="13" font-weight="500">68%</text>
+            </svg>
+            <div class="cap" id="aiCap">Light chop · 68%</div>
+          </div>
+
+          <div class="cell">
+            <div class="ladder">4<br>3<b>2</b>1<br>0</div>
+            <div class="cap">Flight bag</div>
+          </div>
+
+          <div class="cell">
+            <div class="lamps">
+              <i class="lamp on"></i><i class="lamp on"></i><i class="lamp on"></i>
+              <i class="lamp"></i><i class="lamp"></i><i class="lamp"></i>
+            </div>
+            <div class="cap">Checklist · 3 of 6</div>
+          </div>
+
+          <div class="cell">
+            <div class="hobbs">003<i>.4</i></div>
+            <div class="cap">Hobbs</div>
+          </div>
+
+          <div class="cell">
+            <div class="radar">
+              <span class="ring r1"></span><span class="ring r2"></span><span class="sweep"></span>
+              <span class="blip" style="top:26%;left:62%"></span>
+              <span class="blip" style="top:64%;left:34%"></span>
+            </div>
+            <div class="cap">2 contacts</div>
+          </div>
+          </div>
+        </div>
+
+        <div class="modrow">
+          <div class="modhead">
+            <div class="modtitle">Modules</div>
+            <div class="modnote" id="modnote">5 active</div>
+          </div>
+          <div class="railwrap" id="railwrap"><div class="modrail" id="modrail"></div></div>
+        </div>
+
+        <div class="spill" aria-hidden="true"></div>
+        <svg class="sheets" id="sheets" viewBox="0 0 1000 420" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="stars" aria-hidden="true"></div>
+        <div class="burn" aria-hidden="true"></div>
+        <div class="grain" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="plate">
+        <h3>Ramp — thirteen steps</h3>
+        <div class="ramp" id="ramp"></div>
+        <div class="rampaxis"><span id="axDark">navy</span><span id="axMid">lapiz</span><span id="axLight">sky blue</span></div>
+        <p>Lightness steps evenly; hue bends through three anchors instead of two; chroma peaks around the core and tapers at both ends so neither end goes muddy or chalky.</p>
+      </div>
+
+      <div class="plate">
+        <h3>Brightness is state</h3>
+        <div class="states" id="states"></div>
+        <p>No second colour anywhere. Something is <b>on</b> when it rises up the ramp and <b>off</b> when it sinks toward the ground — how an annunciator panel actually works, and legible to anyone who can't separate red from green. Note that <b>large areas take a lower rung than small marks</b>: a lamp at the same brightness as the horizon line would burn a hole in the panel.</p>
+        <p>In <b>Day</b>, the ground is always cream — the livery only touches the light and the accents. A fully red or violet light mode is unreadable; a cream page lit by one is not.</p>
+      </div>
+    </div>
+
+    <p class="foot"><b>One rig, six colours.</b> Every livery now runs identical lighting — the same wide wash entering from just past the top-right, the same bloom and spread, the same fill sitting 140° from the key, the same glass and spill. The only thing that changes between them is the colour of the world itself. Pull any slider and it moves that livery off the shared rig; <b>Reset to preset</b> puts it back. <b>Move the mouse over the attitude indicator</b> to fly it.</p>
+  </main>
+</div>
+
+<button class="fab" id="fab" type="button">Show controls</button>
+
+<script>
+(function(){
+  "use strict";
+
+  /* One lighting rig, shared by all six. Only the colour of the world changes. */
+  const LIGHT = { shape:"wash", ambHue:-16, ambC:.305, soft:82, ambInt:.76, ambSize:96,
+                  ambX:76, ambY:-18, fillHue:-140, fillInt:.34,
+                  fillSize:66, fillX:12, fillY:120,
+                  glass:.78, spill:.24, pulse:40, emit:11 };
+
+  const LIVERIES = [
+    { id:"sky", fillAbs:84, fillC:.22, name:"Sky blue", dark:"navy", mid:"lapiz", lite:"sky blue",
+      desc:"Three blues, not two. Navy in the shadows, lapiz through the middle — the deep violet-leaning blue off a Golf R — opening into a pale, almost daylit sky at the top. The core is held low on the ramp so the lapiz sits where most of the surface area is.",
+      hue:266, dDark:-11, dLight:-31, midAt:.42, midC:1.35,
+      chroma:.100, ground:.140, light:.950, ...LIGHT },
+
+    { id:"amber", fillAbs:70, fillC:.15, name:"Gauge amber", dark:"bronze", mid:"amber", lite:"caution yellow",
+      desc:"Master caution. A true amber core — the resin colour, warmer and deeper than a yellow — with bronze in the shadows and a yellower check-engine highlight at the top. The one world here every pilot and engineer already recognises.",
+      hue:78, dDark:-14, dLight:14, midAt:.45, midC:1.18,
+      chroma:.126, ground:.158, light:.944, ...LIGHT },
+
+    { id:"tarmac", name:"Tarmac grey", dark:"gunmetal", mid:"graphite", lite:"grey",
+      desc:"Near-neutral concrete under two different lamps: a copper key above and a cold gunmetal fill below. The surfaces carry almost no colour of their own, so every bit of colour on screen has arrived from the light — the clearest demonstration of the whole system.",
+      hue:255, dDark:6, dLight:-12, midAt:.50, midC:1.00,
+      chroma:.022, ground:.145, light:.955, ...LIGHT,
+      ambHue:163, ambC:.105, lampLock:true },                       /* key → copper 58°, fill → gunmetal 256° */
+
+    { id:"beacon", fillAbs:16, fillC:.14, name:"Beacon red", dark:"maroon", mid:"university red", lite:"signal red",
+      desc:"Night-vision lighting. Maroon shadows through a university red core into a warmer signal red at the top, with a cold cyan fill behind the whole thing. The most dramatic of the six and the hardest to read for long stretches.",
+      hue:22, dDark:-14, dLight:6, midAt:.44, midC:1.14,
+      chroma:.128, ground:.144, light:.936, ...LIGHT, glass:.92 },
+
+    { id:"runway", fillAbs:118, fillC:.16, name:"Runway green", dark:"olive", mid:"grass", lite:"spring green",
+      desc:"Grass rather than phosphor. Olive shadows through a true healthy green core — pulled well clear of lime — into a lighter spring green. Sits lower overall than the rest so it reads as ground, not glow.",
+      hue:142, dDark:-14, dLight:9, midAt:.46, midC:1.16,
+      chroma:.095, ground:.120, light:.905, ...LIGHT },
+
+    { id:"skydrol", fillAbs:252, fillC:.16, name:"Skydrol violet", dark:"indigo", mid:"violet", lite:"lavender",
+      desc:"Hydraulic fluid is dyed purple — every engineer knows this colour. Indigo shadows, violet through the core, lavender at the top. This is the reference the other five are tuned to.",
+      hue:300, dDark:-18, dLight:10, midAt:.45, midC:1.18,
+      chroma:.105, ground:.152, light:.945, ...LIGHT },
+
+    { id:"aurora", fillAbs:64, fillC:.34, name:"Aurora", dark:"night", mid:"fjord", lite:"ice",
+      desc:"A blue night with the lights out. The ramp is the coldest of the set — deep night in the shadows through a fjord blue into pale ice — and the green sits nowhere in it: the curtains hang off the top edge as their own light, spring green through teal into cyan with a magenta fringe under them. A small warm pool at the bottom is the town on the far shore. Instruments take the curtain colours.",
+      hue:248, dDark:10, dLight:-22, midAt:.44, midC:1.10,
+      chroma:.078, ground:.190, light:.955, ...LIGHT,
+      aurora:true, lampLock:true, soft:34, ambInt:.94, fillInt:.34,
+      fillSize:46, fillX:58, fillY:116, glass:.76, spill:.18, pulse:34, emit:11 },
+
+    /* THE RULE-BREAKER. Everywhere else, one colour and brightness carries the meaning.
+       Here the metal stays grey and the heat is a single bloom off the frame — but the
+       bloom rings through the whole oxide sequence on its way out. */
+    { id:"burner", name:"Afterburner", dark:"gunmetal", mid:"titanium", lite:"polish",
+      desc:"Grey metal and one hot corner. The surface is titanium — light, near-neutral, no colour of its own — and everything you see arrives from a single bloom just past the top-right edge. That bloom rings out through the temper sequence as it cools: pale straw at the core, then gold, bronze, rose, magenta, violet and deep blue before it vanishes. The rings drift and shimmer over 54 seconds. It breaks the one-colour rule on purpose, and it's the only livery that does.",
+      hue:255, dDark:8, dLight:-14, midAt:.50, midC:1.00,
+      chroma:.016, cDark:1.10, cLight:.80, ground:.298, light:.968, ...LIGHT,
+      lampLock:true, iridescent:true, surfMap:{ground:0, panel:2, idle:4, line:5, card:1},
+      soft:32, ambSize:98, ambX:86, ambY:-10, ambInt:.88, fillInt:.17,
+      glass:.66, spill:.24, pulse:26, emit:9 }
+  ];
+
+
+
+
+  /* Light mode is always cream. Only the light and the accents carry the livery. */
+  const CREAM = {
+    ground:"oklch(.966 .010 85)", panel:"oklch(.992 .005 85)", idle:"oklch(.936 .013 85)",
+    line:"oklch(.876 .014 85)", t1:"oklch(.250 .012 85)", t2:"oklch(.462 .010 85)", t3:"oklch(.618 .009 85)"
+  };
+
+  const CREAM_WARM = {
+    ground:"oklch(.944 .026 82)", panel:"oklch(.978 .018 82)", idle:"oklch(.916 .030 82)",
+    line:"oklch(.856 .030 82)", t1:"oklch(.248 .020 62)", t2:"oklch(.452 .018 68)", t3:"oklch(.606 .017 72)"
+  };
+
+  const MODES = {
+    burner: [["bloom","Bloom"],["sweep","Sweep"],["weld","Weld"]],
+    aurora: [["curtain","Curtain"],["sheets","Sheets"],["weld","Weld"]]
+  };
+  const BURN_NOTE = {
+    bloom: "One temper bloom just past the top-right corner. Blue where the heat is, cooling out through violet, magenta and rose into gold as it crosses the deck.",
+    sweep: "One wide band of the sequence laid diagonally across the whole deck at low strength, like a light bar passing behind the page.",
+    weld:  "A weld bead. The bloom collapses into a narrow hot arc hugging the top edge — intense where the torch was, nothing anywhere else.",
+    curtain:"The gradient stack, bent by a turbulence displacement so no ray stays a straight column. Cheap, organic, and you take what the noise gives you.",
+    sheets: "The curtain drawn as folded sheets — nine irregular ribbons in four clusters, one dominant, each with its own lean and its own hem height. The bottom edge is ragged because the paths simply end at different depths.",
+    weld:   "The Afterburner weld, exactly: one tight arc hugging the top edge on the burn layer. Green at the core cooling out through teal and cyan into the violet fringe."
+  };
+
+  const FIELDS = ["hue","dDark","dLight","midAt","midC","chroma","cDark","cLight","ground","light",
+                  "ambHue","ambC","soft","glass","spill","ambInt","ambSize","ambX","ambY",
+                  "fillHue","fillInt","pulse","emit"];
+  const DEC = { hue:0,dDark:0,dLight:0,midAt:2,midC:2,chroma:3,cDark:2,cLight:2,ground:3,light:3,ambHue:0,ambC:3,soft:0,glass:2,spill:2,
+                ambInt:2,ambSize:0,ambX:0,ambY:0,fillHue:0,fillInt:2,
+                fillSize:0,fillX:0,fillY:0,pulse:0,emit:0 };
+  const SUF = { hue:"°",dDark:"°",dLight:"°",ambHue:"°",soft:"px",ambSize:"%",ambX:"%",ambY:"%",fillHue:"°",fillSize:"%",fillX:"%",fillY:"%",pulse:"%",emit:"px" };
+  const withA = (c, a) => c.replace(/\)\s*$/, " / " + a + ")");
+
+  /* Never fade to `transparent` — that interpolates through transparent BLACK and
+     leaves a dirty grey collar round every light. Fade to the same hue at alpha 0. */
+  const col = (l,c,h,a) => `oklch(${l} ${c.toFixed(3)} ${h.toFixed(1)} / ${a})`;
+
+  /* Bright in HUE, not in brightness. A core at .90 lightness is nearly white and
+     the colour washes out — that's the flat look. Saturated mid-tones read as neon. */
+  /* Bright in HUE, not in brightness. A core at .90 lightness is nearly white and
+     the colour washes out — that's the flat look. Saturated mid-tones read as neon.
+     H is {hi, mid, lo}: real glow is HOTTER at its core than at its falloff, so the
+     three stops walk the livery's own three anchors from the inside out. */
+  function keyImage(shape, H, c, x, y, size){
+    const A = a => col(.88, c*1.02, H.hi,  a);   // core — hottest hue
+    const B = a => col(.76, c*1.02, H.mid, a);   // body — the core hue
+    const Z =      col(.72, c*0.90, H.lo,  0);   // vanishing point — shadow hue, alpha 0
+    const M = a => col(.74, c*0.96, H.lo,  a);   // outer falloff
+    switch(shape){
+      case "bar":
+        return `linear-gradient(${(x*1.4 - 20).toFixed(0)}deg,
+          ${Z} 16%, ${M(.12)} 28%, ${B(.44)} 40%, ${A(.94)} 50%, ${B(.44)} 60%, ${M(.12)} 72%, ${Z} 84%)`;
+      case "twin":
+        return `radial-gradient(${size*0.44}% ${size*0.62}% at ${x}% ${y}%,
+                  ${A(.94)} 0%, ${B(.56)} 26%, ${M(.24)} 46%, ${Z} 68%),
+                radial-gradient(${size*0.38}% ${size*0.54}% at ${(100-x)}% ${(y+26)}%,
+                  ${A(.76)} 0%, ${B(.42)} 28%, ${M(.16)} 48%, ${Z} 68%)`;
+      case "rim":
+        return `radial-gradient(${size*1.5}% ${size*0.66}% at ${x}% ${y}%,
+          ${A(.96)} 0%, ${B(.62)} 22%, ${M(.32)} 42%, ${M(.10)} 60%, ${Z} 78%)`;
+      default: /* wash */
+        return `radial-gradient(${size}% ${size*0.86}% at ${x}% ${y}%,
+          ${A(.90)} 0%, ${B(.60)} 26%, ${M(.30)} 48%, ${M(.10)} 66%, ${Z} 84%)`;
+    }
+  }
+  /* IRIDESCENT — all the oxide bands present at once, stacked across the surface.
+     Blended multiply over light metal, so each band darkens the silver into its own
+     colour instead of washing it out the way an additive light would. */
+  /* Temper rings in temperature order, hottest at the source. The burn starts inside
+     the corner and cools outward: deep blue where the heat is, then violet, magenta,
+     rose, bronze, gold, straw, gone — exactly the order a tailpipe runs. */
+  const OXIDE = [
+    [.58,.250,256,.74,  0],[.55,.275,288,.66, 16],[.57,.290,318,.58, 31],
+    [.63,.280,346,.52, 44],[.70,.250, 18,.50, 56],[.79,.230, 54,.50, 69],
+    [.87,.190, 80,.40, 81],[.93,.120, 92,.18, 92],[.93,.120, 92,   0,100]
+  ];
+  /* the six bands as flat colours, for the treatments that use them as marks */
+  /* three accents per world — warm mark, violet mark, cool mark */
+  const OXC        = { a1: col(.81,.190, 74,1), a2: col(.60,.235,302,1), a3: col(.64,.190,252,1) };
+  const AURORA_OX  = { a1: col(.80,.205,152,1), a2: col(.75,.150,190,1), a3: col(.74,.120,232,1) };
+
+  /* AURORA — curtains hung off the top edge. Each is a tall narrow ellipse whose
+     origin sits just above the frame, so you get the throw and never the source. */
+  const CURTAINS = [
+    [16,-5, 10, 62,156,.58],[27,-4,  7, 48,174,.44],[38,-6, 13, 74,150,.64],
+    [50,-4,  8, 54,188,.40],[62,-5, 11, 66,158,.56],[74,-4,  7, 46,198,.38],
+    [86,-5,  9, 58,166,.46],
+    [30,22, 34, 26,318,.34],[63,19, 30, 23,332,.30],[84,24, 24, 18,300,.22]  /* violet fringe */
+  ];
+  function auroraImage(mode){
+    const K = 100/210, O = 55*K;
+    const X = v => (O + K*v).toFixed(1), S = v => (K*v).toFixed(1);
+
+    if(mode === "sheets" || mode === "weld"){
+      /* the sky only — a low continuous glow; the event is drawn elsewhere */
+      return `radial-gradient(${S(96)}% ${S(30)}% at ${X(50)}% ${X(-10)}%, ` +
+        `${col(.78,.150,166,.30)} 0%, ${col(.72,.165,186,.17)} 38%, ` +
+        `${col(.70,.160,206,.07)} 66%, ${col(.70,.160,206,0)} 86%)`;
+    }
+    /* curtain — a continuous band across the whole top with the rays as structure
+       inside it, rather than seven separate bars standing on nothing */
+    const band =
+      `radial-gradient(${S(86)}% ${S(34)}% at ${X(50)}% ${X(-6)}%, ` +
+      `${col(.84,.170,158,.40)} 0%, ${col(.74,.195,172,.26)} 34%, ` +
+      `${col(.70,.190,192,.13)} 60%, ${col(.70,.190,192,0)} 84%)`;
+    const rays = CURTAINS.map(([x,y,w,h,hu,a]) => {
+      const A = al => col(.88,.145,hu,al), B = al => col(.76,.195,hu,al);
+      return `radial-gradient(${S(w*1.7)}% ${S(h)}% at ${X(x)}% ${X(y)}%, ` +
+             `${A(a*.62)} 0%, ${B(a*.34)} 30%, ${B(a*.13)} 56%, ${col(.76,.195,hu,0)} 80%)`;
+    }).join(", ");
+    return rays + ", " + band;
+  }
+
+  /* SHEETS — nine ribbons in four clusters with real gaps between them. One dominant,
+     two secondary, the rest ghosts; every hem ends at a different depth, and three of
+     the nine have their bright core inside the frame so the top edge stops aligning. */
+  const SHEETS = [
+    /* xTop xBot  wT   wB   yTop  yBot  hue  alpha  bow */
+    [  92, 136,  44, 118,  -34,  300, 158, .62,  26],
+    [ 152, 208,  28,  66,  -16,  208, 151, .44,  18],
+    [ 198, 252,  20,  50,   26,  164, 168, .30, -14],
+    [ 344, 404,  60, 148,  -38,  356, 150, .92,  34],   /* dominant */
+    [ 402, 456,  24,  60,   34,  232, 172, .36, -20],
+    [ 566, 624,  38,  94,  -24,  266, 155, .54,  22],
+    [ 646, 694,  18,  46,   50,  186, 188, .26, -12],
+    [ 796, 862,  50, 122,  -30,  318, 153, .60,  28],
+    [ 886, 926,  22,  54,   14,  196, 178, .30, -16],
+    /* violet hem — the fringe that stops the green having a clean edge */
+    [ 150, 250, 210, 300,  150,  330, 318, .26,  10],
+    [ 620, 760, 190, 270,  120,  292, 330, .22, -10]
+  ];
+  function ribbon(xT,xB,wT,wB,yT,yB,bow){
+    const l0=xT-wT/2, r0=xT+wT/2, l1=xB-wB/2, r1=xB+wB/2;
+    const c1=yT+(yB-yT)*.34, c2=yT+(yB-yT)*.74;
+    return `M${l0},${yT} C${(l0+bow).toFixed(0)},${c1.toFixed(0)} ${(l1-bow*.6).toFixed(0)},${c2.toFixed(0)} ${l1},${yB}`
+         + ` L${r1},${yB} C${(r1-bow*.6).toFixed(0)},${c2.toFixed(0)} ${(r0+bow).toFixed(0)},${c1.toFixed(0)} ${r0},${yT} Z`;
+  }
+  function buildSheets(){
+    const defs = SHEETS.map(([,,,,,,hu,a],i) =>
+      `<linearGradient id="sh${i}" x1="0" y1="0" x2="0" y2="1">
+         <stop offset="0"   stop-color="${col(.90,.135,hu,1)}" stop-opacity="${a}"/>
+         <stop offset=".38" stop-color="${col(.76,.195,hu,1)}" stop-opacity="${(a*.52).toFixed(3)}"/>
+         <stop offset=".74" stop-color="${col(.70,.190,hu,1)}" stop-opacity="${(a*.16).toFixed(3)}"/>
+         <stop offset="1"   stop-color="${col(.70,.190,hu,1)}" stop-opacity="0"/>
+       </linearGradient>`).join("");
+    const paths = SHEETS.map((p,i) =>
+      `<path d="${ribbon(p[0],p[1],p[2],p[3],p[4],p[5],p[8])}" fill="url(#sh${i})"/>`).join("");
+    $("sheets").innerHTML = `<defs>${defs}</defs>${paths}`;
+  }
+
+  /* STARS — two fields of pinpoints plus a handful of real glitter with a cross flare */
+  const rng = seed => { let z = seed; return () => (z = (z*1103515245 + 12345) & 0x7fffffff)/0x7fffffff; };
+  function dotTile(n, seed, maxR, alpha){
+    const R = rng(seed), out = [];
+    for(let i=0;i<n;i++){
+      const x=(R()*100).toFixed(2), y=(R()*100).toFixed(2);
+      const r=(.5 + R()*maxR).toFixed(2), a=(alpha*(.3 + R()*.7)).toFixed(3);
+      out.push(`radial-gradient(${r}px ${r}px at ${x}% ${y}%, rgba(255,255,255,${a}) 0%, rgba(255,255,255,0) 100%)`);
+    }
+    return out.join(", ");
+  }
+  function glitterTile(n, seed, size){
+    const R = rng(seed), F = [];
+    for(let i=0;i<n;i++){
+      const x=(R()*size).toFixed(1), y=(R()*size).toFixed(1);
+      const sc=(.22 + R()*.26).toFixed(3), a=(.30 + R()*.40).toFixed(2);
+      F.push(`<path d='M0,-6 L1.05,-1.05 L6,0 L1.05,1.05 L0,6 L-1.05,1.05 L-6,0 L-1.05,-1.05Z' `
+           + `fill='%23fff' opacity='${a}' transform='translate(${x},${y}) scale(${sc})'/>`);
+    }
+    return `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'>${F.join("")}</svg>")`;
+  }
+
+  const bloomImage = (x, y, size, mul) =>
+    `radial-gradient(${size}% ${(size*0.84).toFixed(0)}% at ${x}% ${y}%, ` + OXIDE.map(
+      ([l,c,h,a,p]) => `${col(l, c*mul, h, +(a*mul).toFixed(3))} ${p}%`).join(", ") + ")";
+
+  /* The fill is an ACCENT. It lifts one corner and gives the room a second
+     temperature; it is not a second key. Small, low, and thrown from further out. */
+  function fillImage(H, c, x, y, size){
+    const B = a => col(.72, c*1.08, H.mid, a), M = a => col(.70, c*0.96, H.lo, a),
+          Z = col(.70, c*0.96, H.lo, 0);
+    return `radial-gradient(${size}% ${(size*0.86).toFixed(0)}% at ${x}% ${y}%,
+      ${B(.92)} 0%, ${B(.50)} 26%, ${M(.20)} 50%, ${Z} 76%)`;
+  }
+
+  /* Rig-wide options — not per-livery, so a preset reset leaves them alone. */
+  const OPT = { anchors:true, hotbloom:false, aerial:false, edges:true,
+                hshadow:true, statehue:false, grain:true, complement:true, stars:true,
+                spread:1.25, tilt:38, grainAmt:.055 };
+  const TOGGLES = [
+    ["anchors","Lamps on anchors",
+     "Key takes the highlight hue, fill takes the shadow hue. The room's light and its surfaces run on the same three colours."],
+    ["hotbloom","Hot bloom",
+     "Real glow is hotter at its core than at its edge. Highlight hue inside, core hue through the body, shadow hue as it vanishes."],
+    ["aerial","Aerial perspective",
+     "Distance desaturates and cools. Unstarted cards sit furthest back; a hovered card warms as it lifts, so it comes closer instead of just brightening."],
+    ["edges","Chromatic edges",
+     "A lit edge on top and an unlit edge underneath, instead of one flat border."],
+    ["hshadow","Hued shadows",
+     "A shadow is an absence of light, not a hole. Tinted with the shadow anchor rather than black."],
+    ["statehue","State by hue",
+     "Unstarted at the shadow hue, active at the core, current at the highlight. Readable from the corner of your eye."],
+    ["stars","Starfield",
+     "Two fields of pinpoints plus seven glitter points, above the lights so they show through the curtains. Aurora only."],
+    ["complement","Completing fill",
+     "The lower-left light takes a hand-picked complement of the livery instead of another rung off its own ramp — amber under sky, teal under amber, rose under green."],
+    ["grain","Grain",
+     "Kills the banding in the big soft gradients and gives the light a tooth."]
+  ];
+
+  let current = 0, variant = "night", burn = "bloom";
+  let cfg = Object.assign({}, LIVERIES[0]);
+  const $ = id => document.getElementById(id);
+  const deck = $("deck");
+  const wrap = h => (((h % 360) + 360) % 360);
+
+  const smooth = u => u*u*(3-2*u);
+
+  /* THREE ANCHORS. The hue bends through a core somewhere in the middle of the ramp
+     instead of running straight from shadow to highlight — so navy, lapiz and sky are
+     all present in one ladder rather than being two ends with a blend between them. */
+  function hueAt(c, t){
+    const m = c.midAt;
+    return t <= m
+      ? wrap(c.hue + c.dDark  * (1 - smooth(m > 0 ? t/m : 1)))
+      : wrap(c.hue + c.dLight * smooth((t - m) / (1 - m)));
+  }
+  /* Chroma peaks twice over: the global curve keeps both ends off the mud, and a
+     gaussian around the core lifts the middle so it reads as its own colour. */
+  function chromaAt(c, t, scale){
+    const curve = 0.15 + 0.85*Math.sin(Math.PI*Math.pow(t,1.4));
+    const bump  = Math.exp(-Math.pow((t - c.midAt)/0.34, 2));
+    const m = c.midAt;
+    const ends = t <= m
+      ? (c.cDark  ?? 1) + (1 - (c.cDark  ?? 1)) * smooth(m > 0 ? t/m : 1)
+      : 1 + ((c.cLight ?? 1) - 1) * smooth((t - m)/(1 - m));
+    return Math.max(0, c.chroma * scale * curve * ends * (1 + (c.midC - 1)*bump));
+  }
+
+  function buildRamp(c, chromaScale){
+    const N = 13, out = [];
+    for(let i=0;i<N;i++){
+      const t = i/(N-1);
+      const L = c.ground + (c.light - c.ground)*t;
+      out.push(`oklch(${L.toFixed(4)} ${chromaAt(c,t,chromaScale).toFixed(4)} ${hueAt(c,t).toFixed(2)})`);
+    }
+    return out;
+  }
+
+  function apply(){
+    const surf = buildRamp(cfg, 1);
+    const ink  = buildRamp(cfg, 0.34);
+    const night = variant === "night";
+
+    /* Brightness is state — but larger areas take a lower rung than small marks,
+       or a lit lamp burns a hole in the panel. active < on < lit. */
+    const H = hueAt(cfg, 0.55).toFixed(1), C = cfg.chroma * cfg.midC;
+    const lb = night && cfg.lightBase;
+    const map = lb
+      ? { ground:surf[8], panel:surf[10], idle:surf[9], line:surf[7],
+          t3:ink[5], t2:ink[3], t1:ink[1],
+          active:surf[2], on:surf[1], lit:surf[0] }
+      : night && cfg.surfMap
+      ? { ground:surf[cfg.surfMap.ground], panel:surf[cfg.surfMap.panel],
+          idle:surf[cfg.surfMap.idle], line:surf[cfg.surfMap.line],
+          card:surf[cfg.surfMap.card],
+          t3:ink[6], t2:ink[9], t1:ink[12],
+          active:surf[9], on:surf[10], lit:surf[12] }
+      : night
+      ? { ground:surf[0], panel:surf[1], idle:surf[2], line:surf[3],
+          t3:ink[6], t2:ink[9], t1:ink[12],
+          active:surf[8], on:surf[9], lit:surf[11] }
+      : { ...(cfg.iridescent ? CREAM_WARM : CREAM),
+          active:`oklch(.560 ${(C*1.55).toFixed(3)} ${H})`,
+          on:`oklch(.630 ${(C*1.45).toFixed(3)} ${H})`,
+          lit:`oklch(.470 ${(C*1.70).toFixed(3)} ${H})` };
+
+    /* Panels are glass. Light passes through them instead of stopping at them —
+       the ground stays solid because it's the room, not a surface in it. */
+    const g = cfg.glass;
+    map.panelSolid = map.panel;
+    map.cardSolid  = map.card || map.panel;
+    map.panel = withA(map.panel, g.toFixed(2));
+    map.idle  = withA(map.idle,  Math.min(1, g + .10).toFixed(2));
+    map.line  = withA(map.line,  Math.min(1, g + .18).toFixed(2));
+
+    const s = deck.style;
+    ["ground","panel","idle","line","t1","t2","t3","active","on","lit"]
+      .forEach(k => s.setProperty("--"+k, map[k]));
+    s.setProperty("--panel", map.panelImg || map.panel);
+    s.setProperty("--card",  map.cardImg  || (map.card ? withA(map.card, g.toFixed(2)) : map.panel));
+    s.setProperty("--cell",  map.cellImg  || map.panel);
+    s.setProperty("--panel-solid", map.panelSolid || map.panel);
+    s.setProperty("--card-solid",  map.cardSolid  || map.panelSolid || map.panel);
+    deck.classList.toggle("iriday", !night && !!cfg.iridescent);
+    s.setProperty("--raised", map.idle);
+    s.setProperty("--emit", cfg.emit + "px");
+    s.setProperty("--spill", (night ? cfg.spill : cfg.spill*0.35).toFixed(3));
+
+    const p = cfg.pulse/100;
+    s.setProperty("--pulse-lo", (1 - p*0.34).toFixed(3));
+    s.setProperty("--pulse-t", (16 - p*7).toFixed(1) + "s");
+    s.setProperty("--dx", (p*9).toFixed(1) + "%");
+    s.setProperty("--dy", (p*6).toFixed(1) + "%");
+    s.setProperty("--ds", (1 + p*0.14).toFixed(3));
+
+    /* Lamp hue. On anchors, the two lights sit on the ramp's own ends — pushed
+       past them by `spread`, so the light is a colour the surfaces never reach. */
+    const onAnchor = OPT.anchors && !cfg.lampLock;
+    const keyMid  = onAnchor ? wrap(cfg.hue + cfg.dLight*OPT.spread) : wrap(cfg.hue + cfg.ambHue);
+    const fillMid = cfg.fillAbs != null && OPT.complement
+        ? wrap(cfg.fillAbs)
+        : onAnchor ? wrap(cfg.hue + cfg.dDark*OPT.spread - OPT.tilt)
+                   : wrap(cfg.hue + cfg.fillHue);
+    const hHi = hueAt(cfg, 1), hLo = hueAt(cfg, 0);
+    const keyH  = OPT.hotbloom ? {hi:hHi, mid:keyMid,  lo:hLo} : {hi:keyMid, mid:keyMid, lo:keyMid};
+    const fillH = OPT.hotbloom ? {hi:hLo, mid:fillMid, lo:hLo} : {hi:fillMid,mid:fillMid,lo:fillMid};
+    if(cfg.aurora){
+      s.setProperty("--blend","screen");
+      s.setProperty("--burn-int","0");
+      s.setProperty("--burn-blur","0px");
+      s.setProperty("--burn-size","cover");
+      s.setProperty("--burn-pos","0 0");
+      s.setProperty("--key-img", auroraImage(burn));
+      if(burn === "weld"){
+        /* the Afterburner weld, same geometry and same layer — aurora colours */
+        s.setProperty("--burn-img",
+          `radial-gradient(80% 15% at 72% 0%, ${col(.96,.070,168,.98)} 0%, ` +
+          `${col(.74,.235,152,.90)} 13%, ${col(.72,.205,178,.72)} 28%, ` +
+          `${col(.68,.195,198,.56)} 42%, ${col(.64,.205,246,.44)} 56%, ` +
+          `${col(.62,.215,292,.34)} 70%, ${col(.64,.200,322,.16)} 84%, ${col(.64,.200,322,0)} 96%),` +
+          `radial-gradient(120% 34% at 70% -4%, ${col(.76,.180,160,.26)} 0%, ` +
+          `${col(.76,.180,160,.10)} 46%, ${col(.76,.180,160,0)} 78%)`);
+        s.setProperty("--burn-blur","19px");
+        s.setProperty("--burn-int","1");
+      }
+      const FK = 100/210, FO = 55*FK;
+      s.setProperty("--fill-img", fillImage({mid:wrap(cfg.fillAbs), lo:wrap(cfg.fillAbs)},
+        cfg.ambC*0.85*cfg.fillC, (FO+FK*cfg.fillX).toFixed(1),
+        (FO+FK*cfg.fillY).toFixed(1), (FK*cfg.fillSize).toFixed(1)));
+    } else if(cfg.iridescent){
+      /* the light layers are inset -24%, so a gradient placed at "84%" would land
+         a quarter of a frame outside the deck. Map deck coordinates onto the layer. */
+      const IN = 24, K = 100/(100 + 2*IN), O = IN*K;
+      const LX = v => (O + K*v).toFixed(1), LS = v => (K*v).toFixed(1);
+      const solo = (h,c,x,y,size,a) =>
+        `radial-gradient(${LS(size)}% ${LS(size*.84)}% at ${LX(x)}% ${LX(y)}%, ` +
+        `${col(.86,c,h,a)} 0%, ${col(.74,c*1.06,h,a*.44)} 30%, ` +
+        `${col(.74,c*1.06,h,a*.13)} 55%, ${col(.74,c*1.06,h,0)} 78%)`;
+      const grey = (x,y,size,a) => solo(250,.012,x,y,size,a);
+      const B = burn;
+      s.setProperty("--blend","screen");
+      s.setProperty("--burn-int","0");
+      s.setProperty("--burn-blur","0px");
+      s.setProperty("--burn-size","cover");
+      s.setProperty("--burn-pos","0 0");
+
+      if(B === "bloom"){
+        s.setProperty("--key-img",  bloomImage(LX(cfg.ambX), LX(cfg.ambY), LS(cfg.ambSize), 1.00));
+        s.setProperty("--fill-img", bloomImage(LX(cfg.fillX), LX(cfg.fillY), LS(56), 0.42));
+      } else if(B === "sweep"){
+        s.setProperty("--key-img",  grey(84,-12,104,.38));
+        s.setProperty("--fill-img", grey(12,118,66,.30));
+        s.setProperty("--burn-img",
+          `linear-gradient(108deg, ${col(.70,.20,256,0)} 8%, ${col(.62,.245,256,.34)} 20%,` +
+          ` ${col(.58,.265,302,.38)} 32%, ${col(.63,.255,342,.34)} 44%,` +
+          ` ${col(.72,.235, 20,.30)} 55%, ${col(.82,.205, 60,.26)} 66%,` +
+          ` ${col(.90,.140, 88,.14)} 76%, ${col(.90,.140,88,0)} 88%)`);
+        s.setProperty("--burn-blur","26px");
+        s.setProperty("--burn-int",".78");
+      } else if(B === "weld"){
+        s.setProperty("--key-img",  grey(84,-12,102,.50));
+        s.setProperty("--fill-img", grey(12,118,66,.36));
+        s.setProperty("--burn-img",
+          `radial-gradient(80% 15% at 72% 0%, ${col(.95,.075,230,.98)} 0%, ` +
+          `${col(.66,.245,254,.90)} 13%, ${col(.58,.275,300,.72)} 28%, ` +
+          `${col(.63,.270,340,.56)} 42%, ${col(.72,.245, 20,.44)} 56%, ` +
+          `${col(.82,.215, 62,.34)} 70%, ${col(.90,.150, 86,.16)} 84%, ${col(.90,.150,86,0)} 96%),` +
+          `radial-gradient(120% 34% at 70% -4%, ${col(.86,.180, 70,.26)} 0%, ` +
+          `${col(.86,.180,70,.10)} 46%, ${col(.86,.180,70,0)} 78%)`);
+        s.setProperty("--burn-blur","19px");
+        s.setProperty("--burn-int","1");
+      }
+    } else {
+      s.setProperty("--key-img",  keyImage(cfg.shape, keyH, cfg.ambC, cfg.ambX, cfg.ambY, cfg.ambSize));
+      const fc = cfg.ambC * 0.85 * ((cfg.fillAbs != null && OPT.complement && cfg.fillC != null) ? cfg.fillC : 1);
+      /* the light layers are inset -55%, so deck coordinates have to be mapped onto
+         the layer or a small light lands outside the frame entirely */
+      const FK = 100/210, FO = 55*FK;
+      s.setProperty("--fill-img", fillImage(fillH, fc,
+        (FO + FK*cfg.fillX).toFixed(1), (FO + FK*cfg.fillY).toFixed(1), (FK*cfg.fillSize).toFixed(1)));
+      s.setProperty("--blend", "screen");
+    }
+    s.setProperty("--key-int",  (night ? cfg.ambInt  : cfg.ambInt*0.34).toFixed(3));
+    s.setProperty("--fill-int", (night ? cfg.fillInt : cfg.fillInt*0.30).toFixed(3));
+    s.setProperty("--soft", cfg.soft + "px");
+    document.querySelectorAll("#shape button").forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.s === cfg.shape)));
+
+    /* attitude indicator — sky is a higher rung, ground a lower one.
+       In the banded treatments the two halves take different bands instead, and the
+       horizon, ladder, rim and screws each get one of their own. */
+    const acc = !!cfg.aurora || !!cfg.iridescent;
+    const AI = acc
+      ? (cfg.aurora
+        ? (night
+          ? { sky:col(.44,.130,250,1), grd:col(.32,.105,170,1), hz:col(.91,.105,163,1),
+              ladder:col(.82,.110,152,1), glass:col(.62,.10,300,.50),
+              rim:AURORA_OX.a2, screw:col(.60,.06,200,.7) }
+          : { sky:col(.80,.100,244,1), grd:col(.86,.085,160,1), hz:col(.60,.19,168,1),
+              ladder:col(.50,.110,190,1), glass:col(.66,.09,300,.5),
+              rim:AURORA_OX.a2, screw:col(.70,.05,200,.8) })
+        : night
+          ? { sky:col(.50,.145,252,1), grd:col(.38,.105, 62,1), hz:col(.90,.115,92,1),
+              ladder:col(.80,.090,300,1), glass:col(.62,.09,300,.55),
+              rim:OXC.a2, screw:col(.60,.06,256,.7) }
+          : { sky:col(.80,.105,250,1), grd:col(.88,.085, 72,1), hz:col(.62,.20,20,1),
+              ladder:col(.52,.105,300,1), glass:col(.66,.10,300,.5),
+              rim:OXC.a2, screw:col(.70,.05,256,.8) })
+      : null;
+    $("sky").setAttribute("fill", AI ? AI.sky : lb ? surf[4] : night ? surf[7] : surf[9]);
+    $("grd").setAttribute("fill", AI ? AI.grd : lb ? surf[10] : night ? surf[1] : surf[6]);
+    $("hz").setAttribute("fill",  AI ? AI.hz : map.lit);
+    $("ladder").setAttribute("stroke", AI ? AI.ladder : lb ? surf[11] : night ? surf[10] : surf[4]);
+    $("glass").setAttribute("stroke", AI ? AI.glass : map.line);
+    $("rimtrack").setAttribute("stroke", map.line);
+    $("screws").setAttribute("fill", AI ? AI.screw : map.line);
+    /* symbol: brightest rung over a darkest-rung halo, readable on both halves */
+    const symCore = AI ? (night ? col(.91,.10, cfg.aurora ? 163 : 92, 1)
+                                 : col(.30,.03, cfg.aurora ? 190 : 70, 1)) : lb ? surf[0] : night ? surf[11] : surf[1],
+          symHalo = lb ? surf[12] : night ? surf[0] : surf[12];
+    $("sym").setAttribute("stroke", symCore);
+    $("symDot").setAttribute("fill", symCore);
+    $("symHalo").setAttribute("stroke", symHalo);
+    $("symDotHalo").setAttribute("fill", symHalo);
+    const rim = $("rim"), circ = 2*Math.PI*49;
+    rim.setAttribute("stroke", AI ? AI.rim : map.active);
+    rim.setAttribute("stroke-dasharray", `${(circ*0.68).toFixed(1)} ${circ.toFixed(1)}`);
+    $("score").setAttribute("fill", map.t1);
+
+    /* readouts */
+    $("ramp").innerHTML = surf.map(c => `<span style="background:${c}"></span>`).join("");
+    $("states").innerHTML = [
+      ["Ground",          map.ground, night?"step 0":"cream"],
+      ["Panel",           map.panel,  night?"step 1":"cream"],
+      ["Idle / off",      map.idle,   night?"step 2":"cream"],
+      ["Body text",       map.t2,     night?"step 9":"ink"],
+      ["Interactive",     map.active, night?"step 8":"livery"],
+      ["Lit — large area",map.on,     night?"step 9":"livery"],
+      ["Lit — small mark",map.lit,    night?"step 11":"livery"]
+    ].map(([n,c,step]) =>
+      `<div class="state"><i style="background:${c}"></i><span>${n}</span><em>${step}</em></div>`).join("");
+
+    $("readout").textContent =
+      `${hueAt(cfg,0).toFixed(0)}° → ${Math.round(cfg.hue)}° → ${hueAt(cfg,1).toFixed(0)}°  ` +
+      `core @ ${cfg.midAt.toFixed(2)} ×${cfg.midC.toFixed(2)} · C ${cfg.chroma.toFixed(3)} · ` +
+      `L ${cfg.ground.toFixed(2)}→${cfg.light.toFixed(2)}\n` +
+      `${cfg.shape} key ${keyMid.toFixed(0)}° @ ${Math.round(cfg.ambInt*100)}% · ` +
+      `fill ${fillMid.toFixed(0)}° @ ${Math.round(cfg.fillInt*100)}%` +
+      (cfg.iridescent ? " · tempering 54s"
+        : onAnchor ? ` · on anchors ×${OPT.spread.toFixed(2)} · tilt ${OPT.tilt}°`
+        : cfg.lampLock ? " · locked" : "");
+
+    /* ---- depth & nuance tokens ---- */
+    const Lat = t => cfg.ground + (cfg.light - cfg.ground)*t;
+    const eLo = hueAt(cfg,.05), eHi = hueAt(cfg,.95), Cm = cfg.chroma*cfg.midC;
+    const lineL = Lat(lb ? 7/12 : 3/12);
+    const glassA = g.toFixed(2), nearA = Math.min(1, g+.10).toFixed(2);
+
+    if(lb){
+      s.setProperty("--edge-hi", `oklch(${(lineL+.10).toFixed(3)} ${(Cm*1.10).toFixed(3)} ${eHi.toFixed(1)} / ${Math.min(1,g+.18).toFixed(2)})`);
+      s.setProperty("--edge-lo", `oklch(${(lineL-.08).toFixed(3)} ${(Cm*0.70).toFixed(3)} ${eLo.toFixed(1)} / ${Math.min(1,g+.18).toFixed(2)})`);
+      s.setProperty("--far",     `oklch(${Lat(9.4/12).toFixed(3)} ${(Cm*0.40).toFixed(3)} ${eLo.toFixed(1)} / ${glassA})`);
+      s.setProperty("--farther", `oklch(${Lat(8.8/12).toFixed(3)} ${(Cm*0.22).toFixed(3)} ${eLo.toFixed(1)} / ${glassA})`);
+      s.setProperty("--near",    `oklch(${Lat(11/12).toFixed(3)} ${(Cm*1.20).toFixed(3)} ${eHi.toFixed(1)} / ${nearA})`);
+      s.setProperty("--shadow-c",`oklch(${Lat(2/12).toFixed(3)} ${(Cm*0.60).toFixed(3)} ${eLo.toFixed(1)} / .30)`);
+    } else if(night){
+      s.setProperty("--edge-hi", `oklch(${(lineL+.085).toFixed(3)} ${(Cm*1.15).toFixed(3)} ${eHi.toFixed(1)} / ${Math.min(1,g+.18).toFixed(2)})`);
+      s.setProperty("--edge-lo", `oklch(${(lineL-.045).toFixed(3)} ${(Cm*0.55).toFixed(3)} ${eLo.toFixed(1)} / ${Math.min(1,g+.18).toFixed(2)})`);
+      s.setProperty("--far",     `oklch(${Lat(1/12).toFixed(3)} ${(Cm*0.42).toFixed(3)} ${eLo.toFixed(1)} / ${glassA})`);
+      s.setProperty("--farther", `oklch(${(Lat(1/12)*.93).toFixed(3)} ${(Cm*0.22).toFixed(3)} ${eLo.toFixed(1)} / ${glassA})`);
+      s.setProperty("--near",    `oklch(${Lat(2.4/12).toFixed(3)} ${(Cm*1.30).toFixed(3)} ${eHi.toFixed(1)} / ${nearA})`);
+      s.setProperty("--shadow-c",`oklch(${(cfg.ground*0.42).toFixed(3)} ${(Cm*0.60).toFixed(3)} ${eLo.toFixed(1)} / .58)`);
+    } else {
+      s.setProperty("--edge-hi", "oklch(.995 .004 85)");
+      s.setProperty("--edge-lo", "oklch(.842 .016 85)");
+      s.setProperty("--far",     CREAM.panel);
+      s.setProperty("--farther", CREAM.idle);
+      s.setProperty("--near",    "oklch(1 .003 85)");
+      s.setProperty("--shadow-c",`oklch(.62 ${(Cm*0.5).toFixed(3)} ${eLo.toFixed(1)} / .22)`);
+    }
+    s.setProperty("--grain", OPT.grainAmt.toFixed(3));
+    ["anchors","hotbloom","aerial","edges","hshadow","grain","complement","stars"].forEach(k =>
+      deck.classList.toggle(k+"-on", OPT[k]));
+    /* hue already means temperature here, so it can't also mean state */
+    deck.classList.toggle("statehue-on", OPT.statehue && !cfg.iridescent);
+    deck.classList.toggle("iri-on", !!cfg.iridescent);
+    ["bloom","sweep","weld","curtain","sheets"].forEach(b =>
+      deck.classList.toggle("burn-"+b, burn === b));
+
+    if(cfg.iridescent && !night) s.setProperty("--burn-int","0");
+    deck.classList.toggle("aurora-on", !!cfg.aurora);
+    deck.classList.toggle("acc-on", !!acc);
+    s.setProperty("--stars", (OPT.stars && night && cfg.aurora) ? .95 : 0);
+    if(acc) Object.entries(cfg.aurora ? AURORA_OX : OXC)
+      .forEach(([k,v]) => s.setProperty("--"+k, v));
+
+    /* module tints — shadow hue for unstarted, core for active, highlight for current */
+    const tint = (t, l, c) => `oklch(${l} ${(Cm*c).toFixed(3)} ${hueAt(cfg,t).toFixed(1)})`;
+    const tints = lb
+      ? { cur:tint(.95, Lat(0.8/12).toFixed(3), .70),
+          on: tint(cfg.midAt, Lat(3/12).toFixed(3), .48),
+          off:tint(.05, Lat(5.6/12).toFixed(3), .30) }
+      : night
+      ? { cur:tint(.95, Lat(11.6/12).toFixed(3), .70),
+          on: tint(cfg.midAt, Lat(9/12).toFixed(3), .48),
+          off:tint(.05, Lat(6.4/12).toFixed(3), .30) }
+      : { cur:CREAM.t1, on:CREAM.t2, off:CREAM.t3 };
+
+    /* the rail stays grey in every treatment — it is the quiet part of the page */
+    const tabs = null;
+
+    requestAnimationFrame(() => paintModules({
+      line:map.line, t2:map.t2, t3:map.t3, tints, tabs,
+      active: acc ? map.t2 : map.active, on: acc ? map.t1 : map.on
+    }));
+
+    $("spread-o").textContent = "×" + OPT.spread.toFixed(2);
+    $("tilt-o").textContent = OPT.tilt + "°";
+    $("grainAmt-o").textContent = (OPT.grainAmt*100).toFixed(1) + "%";
+
+    FIELDS.forEach(f => {
+      const el = $(f); if(el) el.value = cfg[f];
+      const o = $(f+"-o");
+      if(o) o.textContent = Number(cfg[f]).toFixed(DEC[f]) + (SUF[f]||"");
+    });
+  }
+
+  $("liveries").innerHTML = LIVERIES.map((l,i)=>
+    `<button class="lv" type="button" data-i="${i}" aria-pressed="${i===0}">
+       <span class="chip" style="background:linear-gradient(150deg, oklch(0.34 ${(l.chroma*l.midC).toFixed(3)} ${hueAt(l,.12).toFixed(1)}) 0 33%, oklch(0.55 ${(l.chroma*1.5*l.midC).toFixed(3)} ${hueAt(l,l.midAt).toFixed(1)}) 33% 67%, oklch(0.80 ${(l.chroma*1.1).toFixed(3)} ${hueAt(l,.88).toFixed(1)}) 67% 100%)"></span>${l.name}
+     </button>`).join("");
+
+  function selectLivery(i){
+    current = i;
+    cfg = Object.assign({}, LIVERIES[i]);
+    $("lvName").textContent = LIVERIES[i].name;
+    $("lvDesc").textContent = LIVERIES[i].desc;
+    $("lvAnchors").textContent =
+      LIVERIES[i].dark + " → " + LIVERIES[i].mid + " → " + LIVERIES[i].lite;
+    $("axDark").textContent  = LIVERIES[i].dark;
+    $("axMid").textContent   = LIVERIES[i].mid;
+    $("axLight").textContent = LIVERIES[i].lite;
+    document.querySelectorAll(".lv").forEach(b =>
+      b.setAttribute("aria-pressed", String(Number(b.dataset.i) === i)));
+    const key = LIVERIES[i].aurora ? "aurora" : LIVERIES[i].iridescent ? "burner" : null;
+    $("burnGroup").hidden = !key;
+    if(key){ $("burnHead").textContent = LIVERIES[i].name + " treatment"; buildBurn(key); }
+    apply();
+  }
+
+  $("liveries").addEventListener("click", e => {
+    const b = e.target.closest(".lv"); if(b) selectLivery(Number(b.dataset.i));
+  });
+  $("shape").addEventListener("click", e => {
+    const b = e.target.closest("button"); if(!b) return;
+    cfg.shape = b.dataset.s; apply();
+  });
+  $("variant").addEventListener("click", e => {
+    const b = e.target.closest("button"); if(!b) return;
+    variant = b.dataset.v;
+    document.querySelectorAll("#variant button").forEach(x =>
+      x.setAttribute("aria-pressed", String(x === b)));
+    apply();
+  });
+  FIELDS.forEach(f => {
+    const el = $(f); if(!el) return;
+    el.addEventListener("input", () => { cfg[f] = Number(el.value); apply(); });
+  });
+  $("toggles").innerHTML = TOGGLES.map(([k,name,note]) =>
+    `<button class="tg" type="button" data-k="${k}" aria-pressed="${OPT[k]}" title="${note}">
+       <span class="sw"></span><b>${name}</b></button>`).join("");
+  $("toggles").addEventListener("click", e => {
+    const b = e.target.closest(".tg"); if(!b) return;
+    const k = b.dataset.k; OPT[k] = !OPT[k];
+    b.setAttribute("aria-pressed", String(OPT[k]));
+    apply();
+  });
+  ["spread","tilt","grainAmt"].forEach(k => {
+    const el = $(k); el.value = OPT[k];
+    el.addEventListener("input", () => { OPT[k] = Number(el.value); apply(); });
+  });
+
+  function setBurn(b){
+    burn = b;
+    document.querySelectorAll("#burn button").forEach(x =>
+      x.setAttribute("aria-pressed", String(x.dataset.b === b)));
+    $("burnNote").textContent = BURN_NOTE[b] || "";
+    apply();
+  }
+  function buildBurn(key){
+    const list = MODES[key] || [];
+    $("burn").innerHTML = list.map(([b,label],i) =>
+      `<button type="button" data-b="${b}" aria-pressed="${i===0}">${label}</button>`).join("");
+    if(list.length) setBurn(list[0][0]);
+  }
+  buildSheets();
+  deck.style.setProperty("--stars-a", dotTile(30, 20260824, 1.4, .80));
+  deck.style.setProperty("--stars-b", dotTile(20, 77003311, 1.0, .58));
+  deck.style.setProperty("--stars-c", glitterTile(7, 5150429, 460));
+
+  $("burn").addEventListener("click", e => {
+    const b = e.target.closest("button"); if(b) setBurn(b.dataset.b);
+  });
+
+  $("reset").addEventListener("click", () => selectLivery(current));
+
+  function setWide(on){
+    document.body.classList.toggle("wide", on);
+    $("mode").textContent = on ? "Exit widescreen" : "Widescreen";
+  }
+  $("mode").addEventListener("click", () => setWide(!document.body.classList.contains("wide")));
+  $("fab").addEventListener("click", () => setWide(false));
+
+  const ai = $("ai"), horizon = $("horizon");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!reduce){
+    ai.addEventListener("mousemove", e => {
+      const r = ai.getBoundingClientRect();
+      const x = (e.clientX - r.left)/r.width - .5, y = (e.clientY - r.top)/r.height - .5;
+      horizon.setAttribute("transform",
+        `rotate(${(-x*16).toFixed(2)} 60 60) translate(0 ${(-y*22).toFixed(2)})`);
+    });
+    ai.addEventListener("mouseleave", () =>
+      horizon.setAttribute("transform","rotate(-3 60 60) translate(0 -2)"));
+    horizon.setAttribute("transform","rotate(-3 60 60) translate(0 -2)");
+  }
+
+  const BANDS = [
+    [4,7,  ["Show-off","There you are","Early starts suit you","Sun's not up. You are"]],
+    [7,12, ["Ready before I am","You again. Good","Ready when you are","Let's make a dent"]],
+    [12,17,["You don't stop, do you?","Nice having you around","Got another in you?","Halfway. Second wind?"]],
+    [17,21,["You could've gone home","Glad it's you tonight","Best hours are yours","Everyone's clocking off. We're clocking on"]],
+    [21,25,["Still going?","You're good company","Everyone's gone. We're not","Late shifts suit you"]],
+    [1,4,  ["Don't know anyone else who'd be here","Small hours suit you","I'll stay up","Coffee? I'll hold your place"]]
+  ];
+  (function(){
+    const now = new Date(), h = now.getHours();
+    const day = Math.floor((now - new Date(now.getFullYear(),0,0)) / 86400000);
+    let band = BANDS[4];
+    for(const b of BANDS){
+      const [a,z] = b;
+      if(a < z ? (h>=a && h<z) : (h>=a || h<z)) { band = b; break; }
+    }
+    $("greet").textContent = band[2][day % band[2].length];
+  })();
+
+
+  /* ============================================================
+     MODULES — the rail, in the room, so the ramp gets judged where
+     most of the screen actually is. Option A: cards flex with no cap
+     and everything inside scales with them.
+     ============================================================ */
+  const MODULES = [
+    {code:"JT",  name:"Jet Turbine Fundamentals",            ch:8,  on:true,  pr:.46, cur:true},
+    {code:"PROP",name:"Propulsion Systems",                  ch:6,  on:true,  pr:.78},
+    {code:"NAV", name:"Navigation & Charts",                 ch:7,  on:true,  pr:.52},
+    {code:"AERO",name:"Aerodynamics & Principles of Flight", ch:10, on:true,  pr:.14},
+    {code:"WX",  name:"Aviation Weather",                    ch:5,  on:false, pr:0, first:"Air Masses"}
+  ];
+  const STAR="M0,-4 L1.15,-1.15 L4,0 L1.15,1.15 L0,4 L-1.15,1.15 L-4,0 L-1.15,-1.15 Z";
+  const PLANE="M0,-6 L1.5,-1.4 L7.5,.6 L7.5,2.2 L1.5,1.2 L1.1,4.6 L3,5.8 L3,7 L0,6.3 L-3,7 L-3,5.8 L-1.1,4.6 L-1.5,1.2 L-7.5,2.2 L-7.5,.6 L-1.5,-1.4 Z";
+  const PH=[[0,.001,"at the gate"],[.001,.08,"takeoff roll"],[.08,.30,"climbing"],
+            [.30,.70,"cruise"],[.70,.92,"on descent"],[.92,.999,"short final"],[.999,2,"chocks in"]];
+  const phaseName = t => { for(const [a,b,nm] of PH) if(t>=a && t<b) return nm; return "chocks in"; };
+
+  /* drawn at true pixel size, so nothing stretches when the card grows */
+  function profile(W,H,prog,chapters,started,K){
+    const pad=Math.max(6,W*.035), x0=pad, x1=W-pad, base=H-6, top=7;
+    const Y=t=>{ if(t<=.08) return base;
+      if(t<.30) return base-(base-top)*smooth((t-.08)/.22);
+      if(t<.70) return top;
+      if(t<.92) return top+(base-top)*smooth((t-.70)/.22);
+      return base; };
+    const X=t=>x0+(x1-x0)*t;
+    const seg=(a,b)=>{ let d=`M${X(a).toFixed(1)},${Y(a).toFixed(1)}`;
+      const st=Math.max(2,Math.round((b-a)*130));
+      for(let k=1;k<=st;k++){ const t=a+(b-a)*k/st; d+=` L${X(t).toFixed(1)},${Y(t).toFixed(1)}`; }
+      return d; };
+    const room=(x1-x0)/chapters>20, sw=W>320?2.6:2.2, ss=W>320?.78:.62;
+    let g=`<g class="reveal">
+      <line x1="${x0-2}" y1="${base}" x2="${X(.09)}" y2="${base}" stroke="${K.line}" stroke-width="2" stroke-linecap="round"/>
+      <line x1="${X(.91)}" y1="${base}" x2="${x1+2}" y2="${base}" stroke="${K.line}" stroke-width="2" stroke-linecap="round"/>
+      <path d="${seg(0,1)}" fill="none" stroke="${K.line}" stroke-width="1" stroke-dasharray="3 3"/></g>`;
+    if(started){
+      if(prog>.002){
+        g+=`<path class="reveal" d="${seg(0,prog)}" fill="none" stroke="${K.on}" stroke-width="${sw*2.8}"
+              stroke-linecap="round" style="filter:blur(2.5px)"/>`;
+        g+=`<path d="${seg(0,prog)}" fill="none" stroke="${K.t2}" stroke-width="${sw}"
+              stroke-linecap="round" stroke-linejoin="round"/>`;
+        g+=`<g class="reveal"><path d="${seg(0,prog)}" fill="none" stroke="${K.active}" stroke-width="${sw}"
+              stroke-linecap="round" stroke-linejoin="round"/></g>`;
+      }
+      if(room){
+        let rest="",lit="";
+        for(let i=0;i<chapters;i++){
+          const t=.08+.84*(chapters>1?i/(chapters-1):0), on=prog>=t-.001;
+          const tf=`translate(${X(t).toFixed(1)},${Y(t).toFixed(1)}) scale(${ss})`;
+          rest+=`<g transform="${tf}"><path d="${STAR}" fill="${on?K.t2:"none"}" stroke="${on?K.t2:K.line}" stroke-width="${on?0:1.1}"/></g>`;
+          lit +=`<g transform="${tf}"><path d="${STAR}" fill="${on?K.active:"none"}" stroke="${on?K.active:K.line}" stroke-width="${on?0:1.1}"/></g>`;
+        }
+        g+=rest+`<g class="reveal">${lit}</g>`;
+      }
+    }
+    const at=started?prog:0, e=.008;
+    const ang=Math.atan2(Y(Math.min(1,at+e))-Y(Math.max(0,at-e)),
+                         X(Math.min(1,at+e))-X(Math.max(0,at-e)))*180/Math.PI;
+    g+=`<g class="plane" transform="translate(${X(at).toFixed(1)},${(Y(at)-7).toFixed(1)})
+          rotate(${(90+ang).toFixed(1)}) scale(${W>320?.78:.62})"><path d="${PLANE}" fill="${K.on}"/></g>`;
+    return g;
+  }
+
+  const CHEV=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  $("modrail").innerHTML = MODULES.map(m => {
+    const meta = m.on
+      ? `${phaseName(m.pr)} · ${Math.min(m.ch, Math.floor(m.pr*m.ch)+1)} of ${m.ch}`
+      : `${m.ch} chapters · ${m.first}`;
+    return `<button class="mod" type="button" data-ch="${m.ch}" data-on="${m.on?1:0}" data-cur="${m.cur?1:0}" data-pr="${m.pr}">
+      <div class="modin">
+        <div class="mcodeline"><span class="mcode">${m.code}</span>
+          ${m.cur ? '<span class="mcur">CURRENT</span>' : CHEV}</div>
+        <div class="mname">${m.name}</div>
+        <div class="mmeta">${meta}</div>
+        <svg class="prof" aria-hidden="true"></svg>
+      </div></button>`;
+  }).join("");
+
+  let lastK = null;
+  function paintModules(K){
+    if(K) lastK = K; else K = lastK;
+    if(!K) return;
+    document.querySelectorAll(".mod").forEach((el, i) => {
+      if(K.tabs) el.style.setProperty("--mtab", K.tabs(i));
+      if(K.tints) el.style.setProperty("--mtint",
+        el.dataset.cur === "1" ? K.tints.cur : el.dataset.on === "1" ? K.tints.on : K.tints.off);
+      const svg = el.querySelector(".prof");
+      const W = Math.round(svg.clientWidth), H = Math.round(svg.clientHeight);
+      if(!W || !H) return;
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("preserveAspectRatio","none");
+      svg.innerHTML = profile(W,H,Number(el.dataset.pr),Number(el.dataset.ch),el.dataset.on==="1",K);
+    });
+    const r = $("modrail"), first = r.querySelector(".mod");
+    $("railwrap").classList.toggle("more", r.scrollWidth - r.clientWidth > 2);
+    if(first) $("modnote").textContent =
+      `${MODULES.filter(m=>m.on).length} active · ${Math.round(first.getBoundingClientRect().width)}px per card`;
+  }
+  $("modrail").addEventListener("scroll", () => paintModules(), {passive:true});
+  window.addEventListener("resize", () => paintModules());
+
+  selectLivery(0);
+  setWide(true);
+})();
+</script>

@@ -76,7 +76,9 @@ export function useSocialPrefs() {
     }
     fetchPrefs(user.id).then((row) => {
       if (!live) return;
-      setPrefs(row || { user_id: user.id, accent_color: "blue", identity_display: "real", course: null });
+      // §6.1 — "Go by your username" is on by default, so a row that does not
+      // exist yet starts there. It is also the less identifying of the two.
+      setPrefs(row || { user_id: user.id, accent_color: "blue", identity_display: "username", course: null });
       setLoaded(true);
     });
     return () => { live = false; };

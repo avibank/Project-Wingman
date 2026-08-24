@@ -31,7 +31,7 @@ function SlideOver({ open, title, subtitle, onClose, children }) {
         .slideover-root { position: fixed; inset: 0; z-index: 40; }
         .slideover-scrim { position: absolute; inset: 0; background: rgba(4,9,18,0.55); backdrop-filter: blur(2px); }
         .slideover { position: absolute; top: 0; right: 0; bottom: 0; width: min(460px, 100%); display: flex; flex-direction: column;
-          background: var(--elev-1); border-left: 1px solid var(--border); box-shadow: -18px 0 44px rgba(0,0,0,0.4);
+          background: var(--elev-1); border-left: 1px solid var(--border); box-shadow: -18px 0 44px var(--shadow-c);
           animation: slideoverIn 0.22s cubic-bezier(0.22,1,0.36,1); }
         @keyframes slideoverIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
         .slideover-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;

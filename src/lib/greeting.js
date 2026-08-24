@@ -1,15 +1,14 @@
-// §10 — the one line under "Flight Deck".
+// The one line under "Flight Deck". Rotation spec from
+// docs/reference/wingman-voices.md; the copy itself lives in voices.js.
 //
 // Shuffle-bag, never random: random clumps, and the same line twice in three
-// views reads as a bug. Deal from a shuffled bag, reshuffle only when it
-// empties, and on reshuffle swap the first card if it matches the previous
-// bag's last.
-//
-// Kept pure: `pickGreeting` takes the whole world as arguments and returns the
-// next state, so the dwell, the band punch-through and the adjacency rules are
-// all checkable without a clock or a browser.
+// views reads as a bug. Kept pure — `pickGreeting` takes the whole world as
+// arguments and returns the next state, so the dwell, the band punch-through
+// and the adjacency pass are all checkable without a clock or a browser.
 
-export const DWELL_MS = 2 * 60 * 1000;        // home → chapter → home is navigation, not an arrival
+import { VOICES, DEFAULT_CHARACTER, HAS_POOLS } from "./voices.js";
+
+export const DWELL_MS = 2 * 60 * 1000;
 export const ARRIVAL_AWAY_MS = 8 * 60 * 60 * 1000;
 export const CONTINUATION_AWAY_MS = 2 * 60 * 60 * 1000;
 
@@ -24,52 +23,6 @@ export function bandFor(hour) {
   return 0;
 }
 
-// TODO(step-4): these are the lines carried by the reference rig. When
-// wingman-voices.md lands this pool is replaced wholesale and the character
-// becomes a user setting; the machinery below does not change. `kind` is what
-// the adjacency rule reads ("tool" and "name" lines never repeat back to
-// back) and `when` is the arrival/continuation split.
-export const VOICES = {
-  wingman: [
-    [ // 04–07
-      { text: "Show-off", kind: "plain", when: "any" },
-      { text: "There you are", kind: "plain", when: "arrival" },
-      { text: "Early starts suit you", kind: "plain", when: "any" },
-      { text: "Sun's not up. You are", kind: "plain", when: "any" },
-    ],
-    [ // 07–12
-      { text: "Ready before I am", kind: "plain", when: "arrival" },
-      { text: "You again. Good", kind: "plain", when: "arrival" },
-      { text: "Ready when you are", kind: "plain", when: "any" },
-      { text: "Let's make a dent", kind: "plain", when: "any" },
-    ],
-    [ // 12–17
-      { text: "You don't stop, do you?", kind: "plain", when: "any" },
-      { text: "Nice having you around", kind: "plain", when: "any" },
-      { text: "Got another in you?", kind: "plain", when: "continuation" },
-      { text: "Halfway. Second wind?", kind: "plain", when: "continuation" },
-    ],
-    [ // 17–19
-      { text: "You could've gone home", kind: "plain", when: "continuation" },
-      { text: "Glad it's you tonight", kind: "plain", when: "any" },
-      { text: "Everyone's clocking off. We're clocking on", kind: "plain", when: "any" },
-    ],
-    [ // 19–24
-      { text: "Best hours are yours", kind: "plain", when: "any" },
-      { text: "Still going?", kind: "plain", when: "continuation" },
-      { text: "You're good company", kind: "plain", when: "any" },
-      { text: "Everyone's gone. We're not", kind: "plain", when: "any" },
-      { text: "Late shifts suit you", kind: "plain", when: "any" },
-    ],
-    [ // 00–04
-      { text: "Don't know anyone else who'd be here", kind: "plain", when: "any" },
-      { text: "Small hours suit you", kind: "plain", when: "any" },
-      { text: "I'll stay up", kind: "plain", when: "any" },
-      { text: "Coffee? I'll hold your place", kind: "plain", when: "arrival" },
-    ],
-  ],
-};
-
 // Away 8h+ is an arrival; under 2h is a continuation; in between, either.
 export function moodFor(awayMs) {
   if (awayMs == null) return "arrival";
@@ -78,13 +31,13 @@ export function moodFor(awayMs) {
   return "any";
 }
 
-// Lines carrying {name} are excluded when no name is set — never substitute a
-// fallback.
-export function eligible(pool, { name, mood }) {
+// A line carrying {name} is excluded when the user hasn't set one. Never
+// substitute a fallback word.
+export function eligible(pool, { name, mood, usePools }) {
   return pool
     .map((line, i) => ({ ...line, i }))
     .filter((l) => (name ? true : !l.text.includes("{name}")))
-    .filter((l) => l.when === "any" || mood === "any" || l.when === mood);
+    .filter((l) => !usePools || mood === "any" || l.pool === "any" || l.pool === mood);
 }
 
 function shuffle(ids, rand) {
@@ -96,7 +49,45 @@ function shuffle(ids, rand) {
   return a;
 }
 
-const EMPTY = { band: null, bag: [], prevLast: null, lastKind: null, shownAt: 0, shownText: null };
+// Never two tool lines back to back, never two {name} lines back to back.
+//
+// The spec calls this "one pass: swap any adjacent pair sharing a tag", and a
+// single forward pass is what it sounds like — but a clash sitting on the last
+// two cards has nothing ahead of it to swap with, so it survives and shows up
+// at the seam. This repairs by swapping with the best partner anywhere in the
+// bag, and only accepts a swap that strictly reduces the clash count, so it
+// always terminates.
+function clashes(bag, pool, seamTag, prevLast) {
+  let n = 0;
+  if (seamTag && bag.length && pool[bag[0]].tag === seamTag) n++;
+  // "On reshuffle, if the new first card is the old last card, swap it with
+  // the second." Folded into the same objective so the repair cannot undo it.
+  if (prevLast != null && bag.length && bag[0] === prevLast) n++;
+  for (let i = 0; i + 1 < bag.length; i++) {
+    const a = pool[bag[i]].tag;
+    if (a && a === pool[bag[i + 1]].tag) n++;
+  }
+  return n;
+}
+
+function deClump(bag, pool, seamTag = null, prevLast = null) {
+  let best = clashes(bag, pool, seamTag, prevLast);
+  for (let guard = 0; best > 0 && guard < bag.length; guard++) {
+    let improved = false;
+    outer: for (let i = 0; i < bag.length && !improved; i++) {
+      for (let j = i + 1; j < bag.length; j++) {
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+        const now = clashes(bag, pool, seamTag, prevLast);
+        if (now < best) { best = now; improved = true; break outer; }
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+    }
+    if (!improved) break;   // nothing left that a swap can fix
+  }
+  return bag;
+}
+
+const EMPTY = { band: null, character: null, bag: [], prevLast: null, lastTag: null, shownAt: 0, shownText: null };
 
 /**
  * @param state  the persisted bag state (or null on a cold start)
@@ -105,48 +96,44 @@ const EMPTY = { band: null, bag: [], prevLast: null, lastKind: null, shownAt: 0,
  */
 export function pickGreeting(state, ctx) {
   const s = { ...EMPTY, ...(state || {}) };
-  const { now = Date.now(), hour = 12, name = null, awayMs = null, character = "wingman" } = ctx || {};
+  const { now = Date.now(), hour = 12, name = null, awayMs = null } = ctx || {};
+  const character = VOICES[ctx?.character] ? ctx.character : DEFAULT_CHARACTER;
   const rand = ctx?.rand || Math.random;
 
   const band = bandFor(hour);
-  const pool = (VOICES[character] || VOICES.wingman)[band] || [];
+  const pool = VOICES[character][band] || [];
   if (!pool.length) return { text: "", state: s };
 
-  // Two-minute dwell — but a band change punches straight through it.
-  if (s.shownText && s.band === band && now - s.shownAt < DWELL_MS) {
+  // Two-minute dwell — but a band change punches straight through it, and so
+  // does swapping the character, which is a deliberate act with a live preview.
+  const sameContext = s.band === band && s.character === character;
+  if (s.shownText && sameContext && now - s.shownAt < DWELL_MS) {
     return { text: s.shownText, state: s };
   }
 
-  const ok = eligible(pool, { name, mood: moodFor(awayMs) });
-  const usable = ok.length ? ok : eligible(pool, { name, mood: "any" });
+  const usePools = HAS_POOLS[character] !== false;
+  const mood = moodFor(awayMs);
+  const ok = eligible(pool, { name, mood, usePools });
+  // "In between, or that pool's bag is empty → any pool."
+  const usable = ok.length ? ok : eligible(pool, { name, mood: "any", usePools });
   if (!usable.length) return { text: "", state: s };
   const usableIds = usable.map((l) => l.i);
 
-  let bag = s.band === band ? (s.bag || []).filter((i) => usableIds.includes(i)) : [];
-  let prevLast = s.band === band ? s.prevLast : null;
+  let bag = sameContext ? (s.bag || []).filter((i) => usableIds.includes(i)) : [];
+  const prevLast = sameContext ? s.prevLast : null;
 
   if (!bag.length) {
-    bag = shuffle(usableIds, rand);
-    // On reshuffle, swap the first card if it matches the previous bag's last.
-    if (bag.length > 1 && prevLast != null && bag[0] === prevLast) {
-      [bag[0], bag[1]] = [bag[1], bag[0]];
-    }
+    // The seam between bags counts too: the last card dealt must not be the
+    // first card of the new bag, and must not share its tag.
+    bag = deClump(shuffle(usableIds, rand), pool, s.lastTag, prevLast);
   }
 
-  // Adjacency: never two tool lines back to back, never two {name} lines back
-  // to back. Push the offender one place down rather than dropping it.
-  let pick = 0;
-  if (s.lastKind && s.lastKind !== "plain" && bag.length > 1) {
-    while (pick < bag.length - 1 && pool[bag[pick]].kind === s.lastKind) pick++;
-  }
-  const id = bag[pick];
-  bag.splice(pick, 1);
-
+  const id = bag.shift();
   const line = pool[id];
   const text = name ? line.text.replace(/\{name\}/g, name) : line.text;
 
   return {
     text,
-    state: { band, bag, prevLast: bag.length ? prevLast : id, lastKind: line.kind, shownAt: now, shownText: text },
+    state: { band, character, bag, prevLast: bag.length ? prevLast : id, lastTag: line.tag, shownAt: now, shownText: text },
   };
 }

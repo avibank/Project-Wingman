@@ -1,0 +1,158 @@
+/* The global layer — Build 01 §2B.
+ *
+ * The colour and lighting system ships to every page at once, including pages
+ * whose layouts are untouched. The whole site becomes Wingman-coloured on day
+ * one, and every later page revamp is a layout change inside a consistent
+ * world rather than a page from a different product.
+ *
+ * The base tokens (--ground --panel --raised --line --t1/2/3 --active --on
+ * --lit --active-fill, plus the lighting vars) are emitted onto :root at
+ * runtime by deckVars() in src/lib/liveryEngine.js, because the ramp is a
+ * computation, not a table. Everything below is the static half: the bridge
+ * from the old semantic names onto those, plus fonts, radii, shapes and the
+ * focus ring.
+ *
+ * Replaces the generated src/styles/tokens.css, which carried the v2
+ * monochrome ramp and its six retired liveries.
+ */
+
+/* ---------------------------------------------------------------- 1 · bridge
+   Every name the v2 screens already reference, repointed at the engine. They
+   repaint without a rewrite and get retired screen by screen, not in one sweep. */
+:root {
+  --bg-ground: var(--ground);
+  --bg-panel: var(--panel);
+  --bg-raised: var(--raised);
+  --hairline: var(--line);
+  --hairline-bevel: var(--edge-hi);
+  --text-primary: var(--t1);
+  --text-secondary: var(--t2);
+  --text-tertiary: var(--t3);
+  --accent-interactive: var(--active);
+
+  /* §3.2 — brightness is state. Nothing is green for good or red for bad, so
+     presence is a rung on the ramp and danger is not a colour. */
+  --presence-lit: var(--lit);
+  --presence-panel: var(--raised);
+  --presence-ground: var(--ground);
+  --danger: var(--active);
+
+  /* §4.1 gives one ambient rig per screen; the v2 cheatline was a second one. */
+  --cheatline: none;
+
+  /* A person carries no colour of their own under this system. */
+  --tail-ink: var(--active);
+  --tail-bg: var(--raised);
+  --tail-sky: var(--active);          --tail-sky-bg: var(--raised);
+  --tail-amber: var(--active);        --tail-amber-bg: var(--raised);
+  --tail-tarmac: var(--active);       --tail-tarmac-bg: var(--raised);
+  --tail-beacon: var(--active);       --tail-beacon-bg: var(--raised);
+  --tail-runway: var(--active);       --tail-runway-bg: var(--raised);
+  --tail-skydrol: var(--active);      --tail-skydrol-bg: var(--raised);
+  --tail-aurora: var(--active);       --tail-aurora-bg: var(--raised);
+  --tail-contrail: var(--active);     --tail-contrail-bg: var(--raised);
+  --tail-night-ops: var(--active);    --tail-night-ops-bg: var(--raised);
+  --tail-carrier-deck: var(--active); --tail-carrier-deck-bg: var(--raised);
+  --tail-altimeter: var(--active);    --tail-altimeter-bg: var(--raised);
+  --tail-dawn-patrol: var(--active);  --tail-dawn-patrol-bg: var(--raised);
+
+  /* ------------------------------------------------------------ 2 · type */
+  --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
+  --font-display: var(--font-ui);
+  --font-body: var(--font-ui);
+  /* §6.3 Instrument scale — Small / Medium / Large. */
+  --scale: 1;
+
+  /* ----------------------------------------------------------- 3 · shape */
+  --r-panel: 13px;      /* the hero card and the crew strip */
+  --r-card: 12px;       /* module cards */
+  --r-control: 8px;
+  --r-chip: 6px;
+  --r-pill: 999px;
+  --r-sm: var(--r-control);
+  --r-md: var(--r-panel);
+  --r-lg: var(--r-panel);
+
+  /* §4.5 — hued shadows, never rgba(0,0,0,…). --shadow-c is emitted per
+     livery; these are the two shapes that use it. */
+  --shadow-1: none;
+  --shadow-2: 0 12px 26px var(--shadow-c);
+  --shadow-inset: inset 0 1px 0 var(--edge-hi);
+  --hairline-inset: inset 0 1px 0 var(--edge-hi);
+  --sheen: var(--edge-hi);
+  --bezel-hi: var(--edge-hi); --bezel-mid: var(--line); --bezel-lo: var(--edge-lo);
+}
+
+/* ------------------------------------------------------------- 4 · the page */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; background: var(--ground); }
+body {
+  font-family: var(--font-ui);
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.01em; text-wrap: balance; }
+
+/* Form controls do not inherit font-family, so every button that did not set
+   one fell out of the type system into the browser's default. */
+button, input, textarea, select { font: inherit; letter-spacing: inherit; }
+
+[class*="mono"], [class*="-code"], [class*="-value"], [class*="-count"], [class*="stat"] {
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+/* §9 — a visible ring at 2px offset 2px on every interactive element. */
+:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+
+::selection { background: color-mix(in oklab, var(--active), transparent 65%); color: var(--t1); }
+::-moz-selection { background: color-mix(in oklab, var(--active), transparent 65%); color: var(--t1); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--ground); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-control); border: 2px solid var(--ground); }
+::-webkit-scrollbar-thumb:hover { background: var(--active); }
+* { scrollbar-width: thin; scrollbar-color: var(--line) var(--ground); }
+
+/* ----------------------------------------------------- 5 · buttons and pills
+   One shape vocabulary, global from the start. --active-fill rather than
+   --active on anything carrying a --ground-coloured label: in day the plain
+   accent puts that label under AA. */
+.pill, .btn-pill {
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  min-height: 40px; padding: 0 16px; border-radius: var(--r-pill);
+  border: 1px solid var(--line); background: var(--panel); color: var(--t1);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.pill:hover, .btn-pill:hover { background: var(--raised); border-color: var(--t3); }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+  min-height: 40px; padding: 0 18px; border-radius: var(--r-pill);
+  background: var(--active-fill); color: var(--ground); border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+/* §9 / §6.3 — prefers-reduced-motion is honoured independently of Smooth Air,
+   and Smooth Air stops every animation and transition. */
+.app.smooth-air *, .app.smooth-air *::before, .app.smooth-air *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* §6.3 Plain Language. Atkinson Hyperlegible is not self-hosted yet; the stack
+   falls through to the OpenDyslexic face the app already loads until it is. */
+.app.plain-language, .app.plain-language button, .app.plain-language input,
+.app.plain-language textarea, .app.plain-language select, .app.plain-language p,
+.app.plain-language span, .app.plain-language h1, .app.plain-language h2,
+.app.plain-language h3, .app.plain-language h4 {
+  font-family: "Atkinson Hyperlegible", "OpenDyslexic", var(--font-ui);
+}

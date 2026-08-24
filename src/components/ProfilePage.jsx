@@ -480,7 +480,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
         .profile-identity-photo-camera:disabled { opacity: 0.5; cursor: not-allowed; }
         .profile-identity-label { font-size: 12px; color: var(--muted); }
         .profile-identity-name { font-size: 16px; color: var(--text); font-weight: 600; margin-top: 2px; }
-        .photo-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .photo-modal-overlay { position: fixed; inset: 0; background: color-mix(in oklab, var(--ground), transparent 15%); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .photo-modal-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .photo-modal-image { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; object-fit: cover; }
         .photo-modal-placeholder { width: min(280px, 70vw); height: min(280px, 70vw); border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--accent); }

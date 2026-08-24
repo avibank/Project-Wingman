@@ -111,7 +111,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           box-shadow: var(--shadow-inset); transition: border-color 0.18s ease; }
         .switch-lever { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; margin-right: 12px;
           background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, white), var(--accent));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.5);
+          box-shadow: var(--hairline-inset), 0 2px 5px var(--shadow-c);
           transition: transform 180ms cubic-bezier(0.22,1,0.36,1); }
         .switch-label { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--text);
           letter-spacing: 0.02em; }

@@ -151,7 +151,7 @@ export function InstrumentStyles() {
       .bezel { position: relative; overflow: hidden; border-radius: var(--r-lg);
         background: linear-gradient(180deg, var(--elev-2), var(--elev-1));
         border: 1px solid var(--border);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.24), 0 10px 26px rgba(0,0,0,0.20); }
+        box-shadow: var(--hairline-inset), 0 10px 26px var(--shadow-c); }
       .bezel::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
         background: linear-gradient(115deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 26%, transparent 46%);
         transform: translateX(var(--sweep, -18%)); transition: transform 180ms cubic-bezier(0.22,1,0.36,1); }

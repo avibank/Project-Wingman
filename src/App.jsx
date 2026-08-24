@@ -1,10 +1,10 @@
 import "./styles/fonts.css";
-import "./styles/tokens.css";
+import "./styles/app.css";
 import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
-import { resolveLivery } from "./lib/liveries.js";
+import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
 import { fetchAllPresence } from "./lib/presence.js";
 import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
@@ -18,6 +18,7 @@ import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
+import Profile from "./components/Profile.jsx";
 import ProgressPage from "./components/ProgressPage.jsx";
 import BookmarksPage from "./components/BookmarksPage.jsx";
 import AuthPage from "./components/AuthPage.jsx";
@@ -82,8 +83,9 @@ function AppInner() {
   const activeModuleCode = route.moduleCode || preferredModuleCode;
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
-  const [livery, setLivery] = useState("dawn-patrol");
-  const [variantPin, setVariantPin] = useState(null); // "day" | "night" | null = auto
+  const [livery, setLivery] = useState(DEFAULT_LIVERY);
+  const [variantPin, setVariantPin] = useState(null); // §6.3 Night Ops: "day" | "night" | null = Auto
+  const [grain, setGrain] = useState(true);
   const autoVariant = new Date().getHours() >= 7 && new Date().getHours() < 19 ? "day" : "night";
   const variant = variantPin || autoVariant;
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
@@ -113,8 +115,9 @@ function AppInner() {
     if (!progress.loaded) return;
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setLivery(resolveLivery(progress.get("pw-livery", "dawn-patrol")));
+    setLivery(engineLivery(progress.get("pw-livery", DEFAULT_LIVERY)));
     setVariantPin(progress.get("pw-variant-pin", null));
+    setGrain(progress.get("pw-grain", true));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
     setTestStreakOverrideOn(progress.get("pw-test-streak-override-on", false));
@@ -125,6 +128,10 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-variant-pin", variantPin);
   }, [variantPin, hydrated]);
+  useEffect(() => {
+    if (!hydrated) return;
+    progress.set("pw-grain", grain);
+  }, [grain, hydrated]);
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-last-tab", tab);
@@ -202,6 +209,16 @@ function AppInner() {
     h.setAttribute("data-variant", variant);
   }, [livery, variant]);
 
+  // §2B — the token layer, globally. The ramp is a computation rather than a
+  // table, so the base tokens are written onto :root at runtime and every page
+  // on the site inherits them, including the ones whose layouts are untouched.
+  useEffect(() => {
+    const { vars } = deckVars(livery, variant);
+    const root = document.documentElement;
+    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+    root.style.setProperty("--grain", grain ? vars["--grain"] : "0");
+  }, [livery, variant, grain]);
+
   useEffect(() => {
     let raf = null;
     const onScroll = () => {
@@ -267,9 +284,14 @@ function AppInner() {
     <div
       data-livery={livery}
       data-variant={variant}
-      className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion" : ""} ${dyslexiaFont ? "dyslexia-font" : ""}`}
+      /* §6.3 names these Smooth Air and Plain Language. Both class names are
+         emitted so the global layer and the per-component rules that still use
+         the old ones stay in agreement until the profile rebuild renames the
+         state itself. */
+      className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "dyslexia-font plain-language" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
+        "--scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
       }}
     >
     <UsernameGate>
@@ -319,7 +341,11 @@ function AppInner() {
           <ProfileMenu
             onNavigate={(page) => {
               setBookmarksMode("list");
-              goSettings(page);
+              if (page === "licence" || page === "preferences" || page === "appearance") {
+                go(routePath.profile(page));
+              } else {
+                goSettings(page);
+              }
             }}
           />
         </div>
@@ -378,6 +404,28 @@ function AppInner() {
             onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
             testStreakValue={testStreakValue}
             onChangeTestStreakValue={setTestStreakValue}
+          />
+        </main>
+      ) : route.name === "profile" ? (
+        <main className="content content-taxi content--profile">
+          <Profile
+            page={route.tab}
+            onNavigate={(t) => go(routePath.profile(t))}
+            variant={variant}
+            variantPin={variantPin}
+            onVariantPin={setVariantPin}
+            livery={livery}
+            onLivery={(id) => { setLivery(id); progress.set("pw-livery", id); }}
+            fontSize={fontSize}
+            onFontSize={setFontSize}
+            reduceMotion={reduceMotion}
+            onReduceMotion={setReduceMotion}
+            dyslexiaFont={dyslexiaFont}
+            onDyslexiaFont={setDyslexiaFont}
+            turbulence={turbulence}
+            onTurbulence={setTurbulence}
+            grain={grain}
+            onGrain={setGrain}
           />
         </main>
       ) : route.name === "modules" ? (
@@ -526,23 +574,9 @@ function AppInner() {
              card gets a hairline and a step, and nothing else. --shadow-2 is
              kept for true overlays only, which §6.1 allows above the two
              surface levels. */
-          --shadow-1: none;
-          --shadow-2: 0 2px 4px rgb(0 0 0 / 0.24), 0 16px 36px rgb(0 0 0 / 0.30);
-          --shadow-inset: inset 0 2px 7px rgb(0 0 0 / 0.30);
-          --hairline-inset: inset 0 1px 0 rgb(255 255 255 / 0.05);
-          --sheen: rgb(255 255 255 / 0.08);
-          --bezel-hi: rgb(255 255 255 / 0.30); --bezel-mid: rgb(255 255 255 / 0.16); --bezel-lo: rgb(255 255 255 / 0.02);
           /* §6.3 — panel 12 · control 8 · chip 6 · avatar full. The old names
              are kept as aliases; --r-sm was doing control duty at 12px, which is
              why nested corners never looked calculated. */
-          --r-panel: 12px; --r-control: 8px; --r-chip: 6px;
-          --r-sm: var(--r-control); --r-md: var(--r-panel); --r-lg: var(--r-panel);
-          --r-pill: 999px;
-          --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-          --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
-          --font-serif: "Newsreader", ui-serif, Georgia, serif;
-          --font-display: var(--font-ui);
-          --font-body: var(--font-ui);
           font-variant-numeric: tabular-nums;
           font-family: var(--font-ui);
           background: var(--surface-0);
@@ -550,34 +584,6 @@ function AppInner() {
           min-height: 100vh;
           padding: 0 0 60px;
           position: relative;
-        }
-        /* §6.5 — the cheatline. One thin gradient rule at the top of the app,
-           livery-coloured, and the only decorative element in the product.
-
-           There used to be two .app::before rules here. The second silently
-           overrode the first, so the cheatline never rendered at all — what you
-           saw was a 1100px glow blob centred behind the content, which §6.4
-           rules out twice over ("never centred behind content", and cards and
-           chrome do not glow). */
-        .app::before {
-          content: "";
-          position: fixed;
-          left: 0; right: 0; top: 0;
-          height: 2px;
-          pointer-events: none;
-          z-index: 30;
-          background: var(--cheatline);
-        }
-        /* §6.4 — one ambient source per screen, off-canvas and very low. */
-        .app::after {
-          content: "";
-          position: fixed;
-          left: -20vw; top: -30vh;
-          width: 70vw; height: 70vh;
-          pointer-events: none;
-          z-index: 0;
-          opacity: 0.5;
-          background: radial-gradient(closest-side, var(--presence-panel), transparent 70%);
         }
         h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.01em; }
         .app { font-variant-numeric: tabular-nums; }

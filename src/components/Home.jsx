@@ -10,6 +10,8 @@ import { moduleSegments, chapterCount, nextChapter, SEGMENT, segmentState } from
 import { deckVars, engineLivery, dotTile, glitterTile, rng } from "../lib/liveryEngine.js";
 import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
+import { DEFAULT_CHARACTER } from "../lib/voices.js";
+import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 
 // The Flight Deck. Ported from the Step 1 reference rig — the colour and
@@ -84,6 +86,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const { user } = useUser();
   const progress = useUserProgress();
   const { prefs } = useSocialPrefs();
+  const { flags } = useFlags();
 
   const deckRef = useRef(null);
   const railRef = useRef(null);
@@ -158,23 +161,36 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
     .filter((c) => viewed.has(c.id) || completed.has(c.id))
     .reduce((a, c) => a + mins(c.duration), 0) / 60;
 
-  const realFirst = user?.firstName || (user?.fullName ? user.fullName.split(" ")[0] : null);
-  const name = prefs?.identity_display === "username" ? user?.username || realFirst : realFirst || user?.username;
 
-  const preset = PRESETS[progress.get(PRESET_KEY, "crew")] || PRESETS.crew;
+  // §5.3 — "If a feature behind a preset doesn't exist in the backend yet,
+  // don't offer that preset and don't render the Ready Room link." Never ship a
+  // door to an empty room.
+  const chosen = progress.get(PRESET_KEY, "crew");
+  const allowed = chosen === "open" && !flags["social.frequency"] ? "crew" : chosen;
+  const preset = PRESETS[!flags["social.crew"] ? "quiet" : allowed] || PRESETS.quiet;
+  const socialOn = flags["social.crew"];
 
   // ---------------------------------------------------------------- greeting
+  // TODO(step-D): `greetName` is §6.1's "What Wingman calls you". Until that
+  // field exists it is unset, and lines carrying {name} are excluded rather
+  // than given a fallback word — the spec is explicit about that.
+  const greetName = progress.get("pw-greet-name", null) || null;
+  const character = flags["voice.characters"]
+    ? progress.get("pw-voice", DEFAULT_CHARACTER)
+    : DEFAULT_CHARACTER;
+
   useEffect(() => {
     const away = lastFlown ? Date.now() - new Date(lastFlown).getTime() : null;
     const r = pickGreeting(loadJSON(GREET_KEY, null), {
       now: Date.now(),
       hour: new Date().getHours(),
-      name: name || null,
+      name: greetName,
+      character,
       awayMs: Number.isFinite(away) ? away : null,
     });
     saveJSON(GREET_KEY, r.state);
     setGreet(r.text);
-  }, [name, lastFlown]);
+  }, [greetName, character, lastFlown]);
 
   // -------------------------------------------------------------------- data
   useEffect(() => {
@@ -274,9 +290,12 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const heroStarted = nextState !== SEGMENT.EMPTY;
   const framePos = next ? (completed.has(next.id) ? 100 : heroStarted ? 56 : 0) : 0;
   const bag = bookmarks.length;
-  const contactCap = contacts.length
-    ? `${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"} · Ready Room`
-    : "Ready Room";
+  const contactCount = contacts.length
+    ? `${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`
+    : null;
+  const contactCap = socialOn
+    ? [contactCount, "Ready Room"].filter(Boolean).join(" · ")
+    : contactCount || "Radar";
 
   return (
     <div
@@ -385,14 +404,27 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
             </div>
 
             {/* Social's only foothold in the academic half. */}
-            <button className="cel radarcel" type="button" onClick={onOpenReady}
-                    aria-label={`Ready Room, ${contacts.length} on frequency`}>
-              <div className={`radar ${contacts.length ? "" : "quiet"}`}>
-                <span className="ring r1" /><span className="ring r2" /><span className="sweep" />
-                {blips.map((b, i) => <span key={i} className="blip" style={b} />)}
-              </div>
-              <div className="cap">{contactCap}</div>
-            </button>
+            {(() => {
+              const face = (
+                <>
+                  <div className={`radar ${contacts.length ? "" : "quiet"}`}>
+                    <span className="ring r1" /><span className="ring r2" /><span className="sweep" />
+                    {blips.map((b, i) => <span key={i} className="blip" style={b} />)}
+                  </div>
+                  <div className="cap">{contactCap}</div>
+                </>
+              );
+              return socialOn ? (
+                <button className="cel radarcel" type="button" onClick={onOpenReady}
+                        aria-label={`Ready Room, ${contacts.length} on frequency`}>
+                  {face}
+                </button>
+              ) : (
+                <div className="cel" role="img" aria-label={`Radar, ${contacts.length} on frequency`}>
+                  {face}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -533,11 +565,11 @@ const DECK_CSS = `
 
 .deck {
   position: relative; overflow: hidden; background: var(--ground);
-  padding: 34px 40px 46px; color: var(--t1); isolation: isolate;
+  padding: 0 40px 46px; color: var(--t1); isolation: isolate;
   min-height: calc(100vh - 150px);
   font-family: var(--font-ui);
 }
-@media (max-width: 640px) { .deck { padding: 24px 16px 96px; } }
+@media (max-width: 640px) { .deck { padding: 0 16px 36px; } }
 .deck .inner { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; }
 .deck > *:not(.spill):not(.stars):not(.grain) { position: relative; z-index: 1; }
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }

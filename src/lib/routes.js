@@ -11,6 +11,7 @@
 //   /ready                       ready room
 //   /ready/:module               ready room, filtered
 //   /logbook  /saved  /settings  /settings/:page  /signin
+//   /licence  /preferences  /appearance     the three profile tabs (§6)
 
 export const CHAPTER_TABS = ["brief", "quiz", "comments"];
 
@@ -40,6 +41,8 @@ export function parseRoute(pathname) {
   if (parts[0] === "signin") return { name: "signin" };
   if (parts[0] === "settings") return { name: "settings", page: parts[1] || "index" };
   if (parts[0] === "modules") return { name: "modules" };
+  // §6 — the profile's three tabs are real URLs, not a tab state.
+  if (["licence", "preferences", "appearance"].includes(parts[0])) return { name: "profile", tab: parts[0] };
 
   return { name: "notfound", pathname: clean(pathname) };
 }
@@ -57,4 +60,5 @@ export const path = {
   saved: () => "/saved",
   settings: (page) => (page && page !== "index" ? `/settings/${page}` : "/settings"),
   signin: () => "/signin",
+  profile: (tab) => `/${["licence", "preferences", "appearance"].includes(tab) ? tab : "licence"}`,
 };
