@@ -398,14 +398,18 @@ function AppInner() {
           />
         </main>
       ) : view === "hub" ? (
-        <main className="content content-taxi">
+        /* Step 1 — the Flight Deck owns its whole column: it paints its own
+           ground and carries its own light layers, so the shell's centred,
+           padded .content would crop them. */
+        <main className="content content-taxi content--deck">
           <Home
             activeModuleCode={activeModuleCode}
+            livery={livery}
+            variant={variant}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
-            onMakeActive={(code) => setPreferredModuleCode(code)}
-            onOpenLogbook={() => go(routePath.logbook())}
             onOpenReady={() => go(routePath.ready())}
+            onOpenChannel={(code) => go(routePath.ready(code))}
           />
         </main>
       ) : (
