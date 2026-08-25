@@ -167,10 +167,14 @@ function ProfileMenu({ onNavigate }) {
           transition: background .16s, border-color .16s, color .16s; }
         .avbtn:hover { border-color: var(--t3); color: var(--t1); background: var(--raised); }
         .avbtn[aria-expanded="true"] { border-color: var(--active); color: var(--t1); }
+        /* The POC gives .avbtn-face color:var(--ground) unconditionally. In
+           night that reads as a dark glyph on a lighter panel, but in day
+           ground is .966 and panel is .992 and the glyph disappears. The
+           ground colour belongs to the filled state only. */
         .avbtn-face { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
           background-size: cover; background-position: center; font-family: var(--font-mono);
-          font-size: 12px; color: var(--ground); }
-        .avbtn-face.has { background-color: var(--active); }
+          font-size: 12px; color: inherit; }
+        .avbtn-face.has { background-color: var(--active-fill); color: var(--ground); }
         .menu { position: absolute; right: 0; top: 48px; width: 262px; z-index: 40; padding: 7px;
           background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
           border-top-color: var(--edge-hi);

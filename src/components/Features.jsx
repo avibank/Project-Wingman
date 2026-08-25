@@ -75,11 +75,9 @@ function Features({ onBack }) {
                 <div className="feat-sub">{f.note}</div>
               </div>
               <button type="button" role="switch" aria-checked={on} aria-label={f.label}
-                      className={`sw is-inline ${on ? "is-on" : ""}`}
+                      className="sw is-inline"
                       disabled={f.everyone}
-                      onClick={() => set(f.id, !on)}>
-                <span className="sw-knob" />
-              </button>
+                      onClick={() => set(f.id, !on)} />
             </div>
           );
         })}

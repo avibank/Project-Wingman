@@ -134,19 +134,21 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
 
-/* The switch. role="switch" + aria-checked lives on the button; this is only
-   its shape, and it is global because more than one screen uses it. */
-/* 42x24 to look at, 44px to hit: the app enforces a global 44px touch floor on
-   buttons, which would otherwise stretch this into a circle. `is-inline` opts
-   out of the floor and the pseudo-element puts the hit area back. */
-.sw { width: 42px; height: 24px; min-height: 24px; flex: none; border-radius: 999px; padding: 0;
-  background: var(--raised); border: 1px solid var(--line); position: relative; cursor: pointer; }
+/* The switch, from wingman-poc.html. role="switch" + aria-checked drive it, so
+   the state selector is the attribute rather than a class. 44x25 to look at,
+   44px to hit: the app enforces a global 44px touch floor on buttons, which
+   would otherwise stretch this into a circle. `is-inline` opts out of the floor
+   and the pseudo-element puts the hit area back. */
+.sw { width: 44px; height: 25px; min-height: 25px; border-radius: 999px; background: var(--raised);
+  position: relative; flex: none; border: 1px solid var(--line); cursor: pointer; padding: 0;
+  transition: background .16s; }
+.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px;
+  border-radius: 50%; background: var(--t3); transition: transform .16s, background .16s; }
 .sw::before { content: ""; position: absolute; left: 0; right: 0; top: 50%;
   height: 44px; transform: translateY(-50%); }
-.sw-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
-  background: var(--t3); transition: transform 160ms ease, background 160ms ease; }
-.sw.is-on { background: var(--active-fill); border-color: transparent; }
-.sw.is-on .sw-knob { transform: translateX(18px); background: var(--ground); }
+.sw[aria-checked="true"] { background: var(--active-fill); border-color: transparent; }
+.sw[aria-checked="true"]::after { transform: translateX(19px); background: var(--ground); }
+.sw:disabled { opacity: .5; cursor: default; }
 
 /* §9 / §6.3 — prefers-reduced-motion is honoured independently of Smooth Air,
    and Smooth Air stops every animation and transition. */
