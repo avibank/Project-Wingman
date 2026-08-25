@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
+import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
@@ -56,6 +57,8 @@ function AppInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const route = parseRoute(location.pathname);
+
+  useDocumentTitle(titleForRoute(route));
 
   const view = route.name === "module" || route.name === "chapter" ? "module" : "hub";
   const settingsPage =
