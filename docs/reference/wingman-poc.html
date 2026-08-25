@@ -584,7 +584,8 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
           <div class="seg" id="voice" role="group" aria-label="Voice">
             <button type="button" data-v="wingman" aria-pressed="true">Wingman</button>
             <button type="button" data-v="hermit">The Hermit</button>
-            <button type="button" data-v="control">Control</button>
+            <!-- Control is not offered: its line set is not written. Do not add
+                 this button back without lines in LINES and wingman-voices.md. -->
           </div>
           <div class="anchors" id="voicesample">“Best hours are yours.”</div>
         </div>
@@ -928,9 +929,8 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
     wingman:{name:"Wingman", desc:"A coworker on the same shift. Notices you're here, never what you scored.",
              sample:"“Best hours are yours.”"},
     hermit: {name:"The Hermit", desc:"Small. Green. Far too interested in you. Speaks backwards and knows things he has no business knowing.",
-             sample:"“Watching, I have been. Curious, you are.”"},
-    control:{name:"Control", desc:"The tower. You're on the field, they're a hundred feet up, watching.",
-             sample:"“Your hangar's the only one still lit.”"}
+             sample:"“Watching, I have been. Curious, you are.”"}
+    /* control: copy exists, lines do not. Deferred — see wingman-voices.md. */
   };
 
   /* ============ render ============ */
