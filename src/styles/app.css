@@ -139,16 +139,47 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
 
+/* §2 — one feel across the three places anything moves. Every rule here is
+   gated twice and independently: prefers-reduced-motion is the device asking,
+   Smooth Air is the person asking, and either alone turns it off. Off, not
+   faster — no fade, no slide, no easing. */
+.route-fade { animation: pwRouteIn 160ms ease-out; }
+@keyframes pwRouteIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Every rule below is qualified with .app. The shell declares a blanket
+   transition on `.app *`, which ties any bare class on specificity and wins on
+   source order — it has now silently overridden the runway trail, this switch
+   and this panel height. Qualifying is the cheap fix; deleting that rule is the
+   real one, and it is a bigger change than this. */
+.app .panel-swap { display: grid; transition: height 180ms ease-out; }
+.app .panel-swap > * { grid-area: 1 / 1; }
+.panel-out { animation: pwPanelOut 120ms ease-out forwards; pointer-events: none; }
+.panel-in { animation: pwPanelIn 180ms ease-out; }
+@keyframes pwPanelOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes pwPanelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* The knob and the track run together, so it reads as one movement. */
+.app .sw { transition: background 160ms ease; }
+.app .sw::after { transition: transform 180ms cubic-bezier(.2,.8,.25,1), background 160ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app .route-fade, .app .panel-out, .app .panel-in, .route-fade { animation: none; }
+  .app .panel-swap { transition: none; }
+  .app .sw, .app .sw::after { transition: none; }
+}
+.app.smooth-air .route-fade, .app.smooth-air .panel-out, .app.smooth-air .panel-in { animation: none; }
+.app.smooth-air .panel-swap { transition: none; }
+.app.smooth-air .sw, .app.smooth-air .sw::after { transition: none; }
+
 /* The switch, from wingman-poc.html. role="switch" + aria-checked drive it, so
    the state selector is the attribute rather than a class. 44x25 to look at,
    44px to hit: the app enforces a global 44px touch floor on buttons, which
    would otherwise stretch this into a circle. `is-inline` opts out of the floor
    and the pseudo-element puts the hit area back. */
 .sw { width: 44px; height: 25px; min-height: 25px; border-radius: 999px; background: var(--raised);
-  position: relative; flex: none; border: 1px solid var(--line); cursor: pointer; padding: 0;
-  transition: background .16s; }
+  position: relative; flex: none; border: 1px solid var(--line); cursor: pointer; padding: 0; }
 .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px;
-  border-radius: 50%; background: var(--t3); transition: transform .16s, background .16s; }
+  border-radius: 50%; background: var(--t3); }
 .sw::before { content: ""; position: absolute; left: 0; right: 0; top: 50%;
   height: 44px; transform: translateY(-50%); }
 .sw[aria-checked="true"] { background: var(--active-fill); border-color: transparent; }

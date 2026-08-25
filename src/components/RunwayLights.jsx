@@ -20,7 +20,6 @@ const colourAt = (i) => (i < 8 ? "is-white" : i < 10 ? "is-amber" : "is-red");
 
 function RunwayLights() {
   const [progress, setProgress] = useState(0);
-  const [scrollable, setScrollable] = useState(false);
   const max = useRef(0);
   const remeasure = useRef(null);
 
@@ -28,15 +27,13 @@ function RunwayLights() {
     const el = document.documentElement;
     // scrollHeight forces layout, so it is measured on resize rather than on
     // every scroll event. scrollTop is free.
+    // A page with nothing to scroll has p = 0: the strip sits at the start
+    // rather than disappearing.
     const read = () => setProgress(
       max.current > 0 ? Math.min(1, Math.max(0, el.scrollTop / max.current)) : 0);
     // Against the real scrollable distance, not a fixed pixel span, so p
     // reaches 1 at the bottom of a short page and a long one alike.
-    const measure = () => {
-      max.current = el.scrollHeight - el.clientHeight;
-      setScrollable(max.current > 1);
-      read();
-    };
+    const measure = () => { max.current = el.scrollHeight - el.clientHeight; read(); };
 
     window.addEventListener("scroll", read, { passive: true });
     window.addEventListener("resize", measure);
@@ -55,16 +52,12 @@ function RunwayLights() {
     };
   }, []);
 
-  // The strip is content now, so rendering it makes the page taller — and the
+  // The strip is content, so rendering it makes the page taller — and the
   // distance it measures itself against is the distance it just changed. One
-  // re-measure after it appears, or it reads 100% at half way down.
-  useLayoutEffect(() => { remeasure.current?.(); }, [scrollable]);
+  // re-measure after mount, or it reads 100% at half way down.
+  useLayoutEffect(() => { remeasure.current?.(); }, []);
 
   const lit = Math.min(LIGHTS, Math.floor(progress * LIGHTS));
-
-  // A page that does not scroll has no distance to run, so there is no strip —
-  // rather than a strip showing a completed runway you never flew.
-  if (!scrollable) return null;
 
   return (
     <div className="flight-progress" aria-hidden="true">
