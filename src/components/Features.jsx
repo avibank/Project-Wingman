@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FLAGS, readOverrides, writeOverride, clearOverrides, resolveFlags, flagDefault } from "../lib/flags.js";
+import { FLAGS, readOverrides, writeOverride, clearOverrides, resolveFlags, flagDefault, isLocked } from "../lib/flags.js";
 import { useUser } from "@clerk/clerk-react";
 
 // §8 — one flag per surface, not one big switch. Default on for admin, off for
@@ -70,13 +70,14 @@ function Features({ onBack }) {
                   {f.label}
                   <code>{f.id}</code>
                   {f.everyone && <span className="feat-chip">everyone</span>}
+                  {f.off && <span className="feat-chip">no design</span>}
                   {overridden && <span className="feat-chip is-set">overridden</span>}
                 </div>
                 <div className="feat-sub">{f.note}</div>
               </div>
               <button type="button" role="switch" aria-checked={on} aria-label={f.label}
                       className="sw is-inline"
-                      disabled={f.everyone}
+                      disabled={isLocked(f.id)}
                       onClick={() => set(f.id, !on)} />
             </div>
           );
@@ -89,8 +90,9 @@ function Features({ onBack }) {
       </div>
 
       <p className="feat-note">
-        Everyone else currently sees:{" "}
+        Everyone sees:{" "}
         {FLAGS.filter((f) => flagDefault(f.id, false)).map((f) => f.label).join(", ") || "none of these"}.
+        Nothing is admin-only — the surfaces still off are the ones with no approved design.
       </p>
 
       <style>{FEATURES_CSS}</style>

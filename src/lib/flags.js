@@ -1,8 +1,17 @@
 // §8 — one flag per surface, not one big switch.
 //
-// Default on for admin, off for everyone else, so the redesign lives in
-// production from day one and the gap between review and shipping is never
-// more than a deploy.
+// §8's default is on for admin and off for everyone else, so a half-built
+// redesign never reaches a real user. There are no real users yet — only
+// testers who know what changed — so that gate is protecting nobody and hiding
+// the thing everyone is here to look at. Every surface that is designed and
+// built is on for everyone.
+//
+// What stays off is a different category: §11 items with no approved design,
+// and the entry points the kill pass removed. Those are not "not yet rolled
+// out", they are "not designed", and rolling them out is not the question.
+//
+// When there are real users this reverts to §8's default by deleting `everyone`
+// from the five that gained it.
 //
 // A flag is deleted within a few weeks of reaching everyone. Put the deletion
 // in the same ticket as the rollout, or you accumulate a second codebase by
@@ -12,13 +21,13 @@ import { useUser } from "@clerk/clerk-react";
 import { loadJSON, saveJSON } from "./storage.js";
 
 export const FLAGS = [
-  { id: "home.v2", label: "Flight Deck", note: "The rebuilt home page.", everyone: true },
-  { id: "profile.v2", label: "Profile", note: "Licence · Preferences · Appearance." },
-  { id: "tokens.global", label: "Wingman colour", note: "The livery and lighting system, site-wide.", everyone: true },
-  { id: "social.crew", label: "Formation and wingman", note: "The two crew-strip cells and the My flight preset." },
-  { id: "social.frequency", label: "Frequency", note: "The channel preview and the Open frequency preset." },
-  { id: "voice.characters", label: "Voices", note: "Choosing who greets you." },
-  { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield." },
+  { id: "home.v2", label: "Flight Deck", note: "The rebuilt home page.", everyone: true, locked: true },
+  { id: "profile.v2", label: "Profile", note: "Licence · Preferences · Appearance.", everyone: true },
+  { id: "tokens.global", label: "Wingman colour", note: "The livery and lighting system, site-wide.", everyone: true, locked: true },
+  { id: "social.crew", label: "Formation and wingman", note: "The two crew-strip cells and the My flight preset.", everyone: true },
+  { id: "social.frequency", label: "Frequency", note: "The channel preview and the Open frequency preset.", everyone: true },
+  { id: "voice.characters", label: "Voices", note: "Choosing who greets you.", everyone: true },
+  { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield.", everyone: true },
   // The kill pass. Each of these hides an entry point; the route and the code
   // stay put, so any of it is one switch away from coming back.
   { id: "nav.root", label: "Bottom nav", note: "Study · Modules · Logbook · Ready Room.", off: true },
@@ -41,11 +50,16 @@ const KEY = "pw-flags";
 // so the set is complete and so they get deleted with the others. The rest
 // have a real off state and are admin-only.
 export function flagDefault(id, isAdmin) {
-  // `off` is a hidden surface: off for everyone including admin, until it is
-  // designed. `everyone` is the opposite — on for all, no off state left.
+  // `off` is a surface with no approved design: off for everyone, admin
+  // included, until there is one. `everyone` is the opposite.
   if (BY_ID[id]?.off === true) return false;
   return BY_ID[id]?.everyone === true || !!isAdmin;
 }
+
+// `locked` is the pair whose off state no longer exists — the v2 token layer is
+// deleted and the v2 home page was replaced rather than kept alongside. Turning
+// either off would render nothing to fall back to.
+export const isLocked = (id) => BY_ID[id]?.locked === true;
 
 // Overrides are device-local and admin-only: the Features panel is the only
 // thing that writes them.
@@ -63,7 +77,8 @@ export function clearOverrides() {
 export function resolveFlags(isAdmin, overrides = {}) {
   const out = {};
   for (const f of FLAGS) {
-    out[f.id] = Object.prototype.hasOwnProperty.call(overrides, f.id) && isAdmin
+    const overridden = Object.prototype.hasOwnProperty.call(overrides, f.id);
+    out[f.id] = overridden && isAdmin && !f.locked
       ? !!overrides[f.id]
       : flagDefault(f.id, isAdmin);
   }
