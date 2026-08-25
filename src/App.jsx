@@ -5,6 +5,7 @@ import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
+import NotFound from "./components/NotFound.jsx";
 import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
@@ -473,6 +474,10 @@ function AppInner() {
             onGoToChapter={(m, c, tab) => go(routePath.chapter(m, c, tab))}
             onOpenChannel={(m) => go(routePath.ready(m))}
           />
+        </main>
+      ) : route.name === "notfound" ? (
+        <main className="content content-taxi">
+          <NotFound onGoHome={goHome} />
         </main>
       ) : view === "hub" || !flags["module.interior"] ? (
         /* Step 1 — the Flight Deck owns its whole column: it paints its own
