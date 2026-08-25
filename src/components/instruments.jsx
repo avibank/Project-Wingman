@@ -153,16 +153,16 @@ export function InstrumentStyles() {
         border: 1px solid var(--border);
         box-shadow: var(--hairline-inset), 0 10px 26px var(--shadow-c); }
       .bezel::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
-        background: linear-gradient(115deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 26%, transparent 46%);
+        background: linear-gradient(115deg, color-mix(in oklab, var(--edge-hi), transparent 60%) 0%, color-mix(in oklab, var(--edge-hi), transparent 92%) 26%, color-mix(in oklab, var(--edge-hi), transparent 100%) 46%);
         transform: translateX(var(--sweep, -18%)); transition: transform 180ms cubic-bezier(0.22,1,0.36,1); }
       .bezel:hover::before { --sweep: 18%; }
       /* screw heads at the panel corners */
       .bezel::after { content: ""; position: absolute; inset: 7px; pointer-events: none; border-radius: calc(var(--r-lg) - 5px);
         background:
-          radial-gradient(circle 2.5px at 0 0, var(--border-hover) 60%, transparent 61%),
-          radial-gradient(circle 2.5px at 100% 0, var(--border-hover) 60%, transparent 61%),
-          radial-gradient(circle 2.5px at 0 100%, var(--border-hover) 60%, transparent 61%),
-          radial-gradient(circle 2.5px at 100% 100%, var(--border-hover) 60%, transparent 61%);
+          radial-gradient(circle 2.5px at 0 0, var(--border-hover) 60%, color-mix(in oklab, var(--border-hover), transparent 100%) 61%),
+          radial-gradient(circle 2.5px at 100% 0, var(--border-hover) 60%, color-mix(in oklab, var(--border-hover), transparent 100%) 61%),
+          radial-gradient(circle 2.5px at 0 100%, var(--border-hover) 60%, color-mix(in oklab, var(--border-hover), transparent 100%) 61%),
+          radial-gradient(circle 2.5px at 100% 100%, var(--border-hover) 60%, color-mix(in oklab, var(--border-hover), transparent 100%) 61%);
         background-repeat: no-repeat; opacity: 0.7; }
 
       /* value tape */

@@ -212,7 +212,7 @@ function ProgressPage({ onBack }) {
         .prog-pct { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
         .prog-track { height: 5px; border-radius: var(--r-pill); background: var(--well); overflow: hidden; box-shadow: var(--shadow-inset); }
         .prog-fill { height: 100%; border-radius: var(--r-pill);
-          background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, transparent), var(--accent));
+          background: linear-gradient(90deg, color-mix(in oklab, var(--accent), transparent 55%), var(--accent));
           transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
         .prog-cal { display: flex; gap: 5px; margin-bottom: 9px; }
         .prog-day { width: 22px; height: 22px; border-radius: 6px; background: var(--well); border: 1px solid var(--border-soft); }

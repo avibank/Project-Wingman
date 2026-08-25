@@ -625,7 +625,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
         .chip:hover { border-color: var(--border); color: var(--text); }
         .chapters-wrap { position: relative; display: flex; flex-direction: column; gap: 16px; }
         .cloud-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-        .cloud { position: absolute; width: 220px; height: 60px; background: radial-gradient(ellipse at center, var(--text) 0%, transparent 70%); opacity: 0.035; border-radius: 50%; filter: blur(6px); }
+        .cloud { position: absolute; width: 220px; height: 60px; background: radial-gradient(ellipse at center, var(--text) 0%, color-mix(in oklab, var(--text), transparent 100%) 70%); opacity: 0.035; border-radius: 50%; filter: blur(6px); }
         .cloud-a { top: 4%; left: -15%; }
         .cloud-b { top: 32%; left: -25%; }
         .cloud-c { top: 62%; left: -20%; }
