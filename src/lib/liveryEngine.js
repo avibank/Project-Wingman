@@ -153,16 +153,6 @@ export function dotTile(n, seed, maxR, alpha) {
   return out.join(", ");
 }
 
-export function glitterTile(n, seed, size) {
-  const R = rng(seed), F = [];
-  for (let i = 0; i < n; i++) {
-    const x = (R() * size).toFixed(1), y = (R() * size).toFixed(1);
-    const sc = (0.22 + R() * 0.26).toFixed(3), a = (0.3 + R() * 0.4).toFixed(2);
-    F.push(`<path d='M0,-6 L1.05,-1.05 L6,0 L1.05,1.05 L0,6 L-1.05,1.05 L-6,0 L-1.05,-1.05Z' `
-      + `fill='%23fff' opacity='${a}' transform='translate(${x},${y}) scale(${sc})'/>`);
-  }
-  return `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'>${F.join("")}</svg>")`;
-}
 
 // ------------------------------------------------------------------- day mode
 // Day is always cream, whatever the livery. Only the light and the accents
@@ -242,15 +232,17 @@ export function deckVars(liveryId, variant = "night") {
   const Lat = (t) => L.ground + (L.light - L.ground) * t;
   const eLo = hueAt(L, 0.05), eHi = hueAt(L, 0.95);
   const edgeA = Math.min(1, gl + 0.18).toFixed(2);
+  // §4.5's formula has no day variant, and the POC applies it unchanged in both
+  // modes — a deep hued shadow under a card on cream, which is what a shadow on
+  // a light page looks like anyway.
+  vars["--shadow-c"] = `oklch(${(L.ground * 0.42).toFixed(3)} ${(Cm * 0.6).toFixed(3)} ${eLo.toFixed(1)} / .58)`;
   if (night) {
     const lineL = Lat(pT + 0.17);
     vars["--edge-hi"] = `oklch(${(lineL + 0.085).toFixed(3)} ${(Cm * 1.15).toFixed(3)} ${eHi.toFixed(1)} / ${edgeA})`;
     vars["--edge-lo"] = `oklch(${Math.max(0, lineL - 0.045).toFixed(3)} ${(Cm * 0.55).toFixed(3)} ${eLo.toFixed(1)} / ${edgeA})`;
-    vars["--shadow-c"] = `oklch(${(L.ground * 0.42).toFixed(3)} ${(Cm * 0.6).toFixed(3)} ${eLo.toFixed(1)} / .58)`;
   } else {
     vars["--edge-hi"] = "oklch(.995 .004 85)";
     vars["--edge-lo"] = "oklch(.842 .016 85)";
-    vars["--shadow-c"] = `oklch(.62 ${(Cm * 0.5).toFixed(3)} ${eLo.toFixed(1)} / .22)`;
   }
 
   return { vars, C, surf, ink, livery: L, night };

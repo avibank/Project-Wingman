@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { dotTile, glitterTile } from "../lib/liveryEngine.js";
+import { dotTile } from "../lib/liveryEngine.js";
 
 // The room. In wingman-poc.html the whole page is the deck — the top bar sits
 // inside it, so the key light lands on the bar as well as on the content, and
@@ -53,11 +53,7 @@ const ROOM_CSS = `
   background-image: var(--stars-a, none), var(--stars-b, none); background-repeat: repeat;
   background-size: 430px 430px, 310px 310px; mix-blend-mode: screen;
   animation: pwtwinkle 13s ease-in-out infinite alternate; }
-.deck .stars::after { content: ""; position: absolute; inset: 0; background-image: var(--stars-c, none);
-  background-repeat: repeat; background-size: 520px 520px; mix-blend-mode: screen;
-  animation: pwtwinkle2 8.5s ease-in-out infinite alternate-reverse; }
 @keyframes pwtwinkle { from { opacity: var(--stars, 0); } to { opacity: calc(var(--stars, 0) * .5); } }
-@keyframes pwtwinkle2 { from { opacity: 1; } to { opacity: .45; } }
 /* dark gradients band; noise kills it and gives the light a tooth */
 .deck .grain { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: var(--grain);
   mix-blend-mode: overlay; background-size: 150px 150px;
@@ -69,7 +65,6 @@ function Deck({ aurora, children }) {
   const stars = useMemo(() => ({
     "--stars-a": dotTile(30, 20260824, 1.4, 0.8),
     "--stars-b": dotTile(20, 77003311, 1.0, 0.58),
-    "--stars-c": glitterTile(7, 5150429, 460),
   }), []);
 
   return (
