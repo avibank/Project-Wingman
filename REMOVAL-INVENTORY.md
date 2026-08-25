@@ -3,8 +3,30 @@
 Every UI surface, nav item, button, setting and page currently in the app, marked
 **keep / reskin / hide / delete** against Build 01.
 
-**Nothing here has been acted on.** This document is the deliverable; the code changes come
-after sign-off.
+**Signed off and applied.** Your decisions replaced several of my marks; the table below is
+what was actually done, not what I originally proposed. Every *hide* is a flag in
+`src/lib/flags.js` — the route and the component stay on disk, so any of it comes back with
+one switch.
+
+Your instructions, and how each was read:
+
+| You said | What was done |
+|---|---|
+| remove rootnav | `nav.root` off. Modules stay reachable through the rail; nothing else needed it. |
+| pa toast | `chrome.patoast` off. The boarding overlay went with it — same class of chrome, not in Build 01. |
+| all module aspects, keep the outside library view | `module.interior` off: hub, chapters, chapter view, quiz, comments, library. The rail on home is the outside view and it stays — but its cards are now readouts, not buttons, and the hero card's Resume is gone with the thing it opened. |
+| delete all videos and quizzes, even names | `src/data.js` rewritten. Four modules, five chapters each, two lessons per chapter, named Module 1–4 / Chapter 1–5 / Lesson 1–2. No clips, no questions, no prose. |
+| remove ready room, keep the empty tabs at the new home screen | `social.readyroom` off. The crew band keeps its cells and its empty copy; every door out of it — the radar, `Ready Room ›`, `Fly together`, the compose line — is gone. |
+| hide logbook and bookmarks | `page.logbook`, `page.bookmarks` off. |
+| add bio | Back on the Licence tab. |
+| go by username is not the default | Default is now `real`. |
+| night ops for dark, day ops for light | The mode control reads Day Ops · Night Ops · Auto. |
+| hide grain switch | `appearance.grain` off. The grain itself stays on at 5%. |
+| add fly invisible | New "Being seen" block on Preferences. Enforced at the presence *write*, so there is nothing to leak. |
+| remove lights out | It was never in this repo. Nothing to remove. |
+
+Hidden routes fall back to the deck rather than 404ing, so a stale bookmark lands somewhere
+real. Verified: `/ready`, `/logbook`, `/saved`, `/modules`, `/m/m1`.
 
 ## How the marks were decided
 
@@ -17,7 +39,12 @@ after sign-off.
 Per §1's rails, nothing touching auth, the database, course content, the admin backend or
 billing is marked anything but keep or reskin.
 
-## The reading of §11 this inventory assumes — please confirm
+## Superseded: the §11 question
+
+I had asked whether §11 should be read literally. Your removal list answers it — the chapter
+view and the Ready Room are both hidden. The original note is kept below for the record.
+
+## The reading of §11 this inventory assumed
 
 §11 says a surface with no approved design should have its entry point hidden. Taken
 literally that hides the chapter view, which would leave the app unable to teach anything,
@@ -65,7 +92,7 @@ the hero card and the radar need a different destination, and §5 doesn't give o
 | Module rail | keep | §5.2. |
 | Crew strip — Formation · Wingman · Frequency | keep | §5.3, gated by preset. |
 | `Back on the ground` / `Ready Room ›` | keep | §5, subject to the §11 reading above. |
-| **Runway lights** | **missing** | §5.5 says this exists on the live site and to keep it. It is not in this repo — no component, no CSS, nothing under any spelling. See the questions list. |
+| **Runway lights** | **found** | They were in `wingman-poc.html`, not in this repo. Ported verbatim: thirteen lamps, `.bar` at each end, the current one at 2.2× with an emit glow, the last three ahead lit, hidden when the page doesn't scroll. |
 
 ## 3 · Modules and chapters
 

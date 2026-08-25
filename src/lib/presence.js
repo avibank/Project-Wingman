@@ -7,6 +7,14 @@ import { PRESENCE_WINDOW_MIN } from "./social.js";
 
 export async function heartbeat({ userId, displayName, moduleCode, chapterId }) {
   if (!userId) return;
+  // "Fly invisible" — nobody sees where you are. Enforced at the write, not at
+  // the read, so there is nothing to leak.
+  try {
+    if (JSON.parse(localStorage.getItem("pw-invisible") || "false") === true) {
+      await clearPresence(userId);
+      return;
+    }
+  } catch { /* storage blocked; carry on visible */ }
   const { error } = await supabase.from("presence").upsert(
     {
       user_id: userId,

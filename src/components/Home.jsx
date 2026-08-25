@@ -33,6 +33,12 @@ const PRESETS = {
   open: { band: ["form", "wing", "freq"] },
 };
 
+function Cell({ className, open, onOpen, children }) {
+  return open
+    ? <button className={className} type="button" onClick={onOpen}>{children}</button>
+    : <div className={className}>{children}</div>;
+}
+
 const CHEV = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
   <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
@@ -45,10 +51,6 @@ const initials = (name) =>
     .join("")
     .toUpperCase() || "··";
 
-const mins = (d) => {
-  const [m, s] = String(d || "0:00").split(":").map(Number);
-  return (m || 0) + (s || 0) / 60;
-};
 
 function lastFlownPhrase(iso) {
   if (!iso) return "First flight from here.";
@@ -380,10 +382,10 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
     ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
     : null;
 
-  // Hobbs — hours of briefing logged, summed from the chapters you have opened.
+  // Hobbs — chapters flown. It used to sum briefing durations; content carries
+  // no durations now, so the same instrument counts the thing that does exist.
   const hobbs = MODULES.flatMap((m) => chaptersForModule(m.code))
-    .filter((c) => viewed.has(c.id) || completed.has(c.id))
-    .reduce((a, c) => a + mins(c.duration), 0) / 60;
+    .filter((c) => viewed.has(c.id) || completed.has(c.id)).length;
 
 
   // §5.3 — "If a feature behind a preset doesn't exist in the backend yet,
@@ -392,7 +394,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const chosen = progress.get(PRESET_KEY, "crew");
   const allowed = chosen === "open" && !flags["social.frequency"] ? "crew" : chosen;
   const preset = PRESETS[!flags["social.crew"] ? "quiet" : allowed] || PRESETS.quiet;
-  const socialOn = flags["social.crew"];
+  const roomOn = flags["social.readyroom"];
 
   // ---------------------------------------------------------------- greeting
   // TODO(step-D): `greetName` is §6.1's "What Wingman calls you". Until that
@@ -517,7 +519,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const contactCount = contacts.length
     ? `${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`
     : null;
-  const contactCap = socialOn
+  const contactCap = roomOn
     ? [contactCount, "Ready Room"].filter(Boolean).join(" · ")
     : contactCount || "Radar";
 
@@ -544,20 +546,22 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
         {/* The hero card is never touched by social. */}
         <div className="card">
           <div className="cardbody">
-            <div className="frame" style={{ "--frame-pos": framePos + "%" }}>
-              <span className="play" />
-            </div>
+            <div className="frame" style={{ "--frame-pos": framePos + "%" }} />
             <div className="cardtext">
               <div className="chapter">{next ? next.title : active.name}</div>
               <div className="hcode">{next ? next.code : active.code} · {active.name}</div>
               {/* TODO(step-2): the exact resume timestamp arrives with the
                   chapter view's player. Until then this is the coarse state. */}
               <div className="position">
-                {heroStarted ? "Pick up where you left off in the briefing." : `${next?.duration || ""} of briefing ahead of you.`}
+                {heroStarted
+                  ? "Pick up where you left off."
+                  : `${next?.lessons?.length || 2} lessons in this chapter.`}
               </div>
-              <button className="resume" type="button" onClick={() => next && onGoToChapter(active.code, next.id)}>
-                {heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
-              </button>
+              {flags["module.interior"] && (
+                <button className="resume" type="button" onClick={() => next && onGoToChapter(active.code, next.id)}>
+                  {heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
+                </button>
+              )}
             </div>
           </div>
 
@@ -617,7 +621,11 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                   <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : ""}`} />
                 ))}
               </div>
-              <div className="cap">Checklist · {activeCount.full} of {activeCount.total}</div>
+              <div className="cap">
+                {activeCount.full
+                  ? `Checklist · ${activeCount.full} of ${activeCount.total}`
+                  : `Checklist · ${activeCount.total} to fly`}
+              </div>
             </div>
 
             <div className="cel">
@@ -638,7 +646,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                   <div className="cap">{contactCap}</div>
                 </>
               );
-              return socialOn ? (
+              return roomOn ? (
                 <button className="cel radarcel" type="button" onClick={onOpenReady}
                         aria-label={`Ready Room, ${contacts.length} on frequency`}>
                   {face}
@@ -661,13 +669,15 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
           <div className={`railwrap ${railOverflows ? "more" : ""}`} ref={wrapRef}>
             <div className="rail" ref={railRef}>
               {moduleRows.map((m) => (
-                <button className="mod" type="button" key={m.code} onClick={() => onEnterModule(m)}>
+                <Cell className="mod" key={m.code} open={flags["module.interior"]} onOpen={() => onEnterModule(m)}>
                   <div className="modin">
                     <div className="mcodeline">
                       <span className="mcode">{m.code}</span>
                       {m.code === active.code
                         ? <span className="mcur">CURRENT</span>
-                        : <span className="mchev" dangerouslySetInnerHTML={{ __html: CHEV }} />}
+                        : flags["module.interior"]
+                          ? <span className="mchev" dangerouslySetInnerHTML={{ __html: CHEV }} />
+                          : null}
                     </div>
                     <div className="mname">{m.name}</div>
                     <div className="mmeta">
@@ -677,7 +687,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                     </div>
                     <svg className="prof" data-code={m.code} aria-hidden="true" />
                   </div>
-                </button>
+                </Cell>
               ))}
             </div>
           </div>
@@ -688,7 +698,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
           <div className="sec">
             <div className="sechead">
               <h2>Back on the ground</h2>
-              <button className="more" type="button" onClick={onOpenReady}>Ready Room ›</button>
+              {roomOn && <button className="more" type="button" onClick={onOpenReady}>Ready Room ›</button>}
             </div>
             <div className={`crew n${preset.band.length}`}>
               {preset.band.includes("form") && (
@@ -724,7 +734,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                         </span>
                       </div>
                       <div className="copmeta">{chapterCodeOf(wingman.chapterId) || "On frequency now"}</div>
-                      <button className="fly" type="button" onClick={onOpenReady}>Fly together &nbsp;›</button>
+                      {roomOn && <button className="fly" type="button" onClick={onOpenReady}>Fly together &nbsp;›</button>}
                     </>
                   ) : (
                     <>
@@ -733,7 +743,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                           ? "Looking for someone on your route."
                           : "The Ready Room pairs you the moment there's someone on your route."}
                       </div>
-                      <button className="fly" type="button" onClick={onOpenReady}>Open the Ready Room &nbsp;›</button>
+                      {roomOn && <button className="fly" type="button" onClick={onOpenReady}>Open the Ready Room &nbsp;›</button>}
                     </>
                   )}
                 </div>
@@ -760,9 +770,11 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                       <div className="msg">Quiet frequency. Say the first thing and someone answers.</div>
                     )}
                   </div>
-                  <button className="compose" type="button" onClick={() => onOpenChannel(active.code)}>
-                    <span>Message {active.code}…</span><i className="send" />
-                  </button>
+                  {roomOn && (
+                    <button className="compose" type="button" onClick={() => onOpenChannel(active.code)}>
+                      <span>Message {active.code}…</span><i className="send" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>

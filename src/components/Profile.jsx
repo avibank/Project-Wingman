@@ -35,7 +35,7 @@ const NOTICES = [
 ];
 
 const SCALES = [{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }];
-const MODES = [{ id: "day", label: "Day" }, { id: "night", label: "Night" }, { id: null, label: "Auto" }];
+const MODES = [{ id: "day", label: "Day Ops" }, { id: "night", label: "Night Ops" }, { id: null, label: "Auto" }];
 
 function Switch({ id, on, onChange, label, note }) {
   return (
@@ -215,6 +215,7 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
   const fileRef = useRef(null);
 
   const [holderName, setHolderName] = useState("");
+  const [bio, setBio] = useState("");
   const [username, setUsername] = useState("");
   const [greetName, setGreetName] = useState("");
   const [saveNote, setSaveNote] = useState(null);
@@ -224,10 +225,11 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
     setHolderName(user?.fullName || "");
     setUsername(user?.username || "");
     setGreetName(progress.get("pw-greet-name", "") || "");
+    setBio(progress.get("pw-bio", "") || "");
   }, [user?.fullName, user?.username, progress.loaded]);
 
   // §6.1 — on by default. Off is the unusual choice, so the copy says so.
-  const byUsername = (prefs?.identity_display || "username") === "username";
+  const byUsername = (prefs?.identity_display || "real") === "username";
   const character = progress.get("pw-voice", DEFAULT_CHARACTER);
   const preset = progress.get("pw-social-preset", "crew");
   const notices = progress.get("pw-notices", { answers: true, wingman: true, nudge: true });
@@ -316,6 +318,9 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
             <Field label="Username" hint="How you show up to everyone else."
                    value={username} onChange={setUsername}
                    onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
+            <Field label="Bio" hint="A line about you. Other pilots see this."
+                   value={bio} onChange={setBio}
+                   onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
             <Field label="What Wingman calls you" hint="Used in greetings, and only by whoever's greeting you."
                    value={greetName} onChange={setGreetName}
                    onCommit={() => progress.set("pw-greet-name", greetName.trim() || null)} />
@@ -399,6 +404,14 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
           </section>
 
           <section className="pcard">
+            <div className="pcard-head">Being seen</div>
+            <Switch id="fly-invisible" label="Fly invisible"
+                    note="Nobody sees where you are. You still see everyone else."
+                    on={progress.get("pw-invisible", false)}
+                    onChange={(v) => progress.set("pw-invisible", v)} />
+          </section>
+
+          <section className="pcard">
             <div className="pcard-head">Notices</div>
             {NOTICES.map((n) => (
               <Switch key={n.id} id={`notice-${n.id}`} label={n.label} note={n.note}
@@ -461,8 +474,10 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
                     on={dyslexiaFont} onChange={onDyslexiaFont} />
             <Switch id="turbulence" label="Turbulence" note="The small nudge on view and tab change."
                     on={turbulence} onChange={onTurbulence} />
-            <Switch id="grain" label="Grain" note="The film grain over the light."
-                    on={grain} onChange={onGrain} />
+            {flags["appearance.grain"] && (
+              <Switch id="grain" label="Grain" note="The film grain over the light."
+                      on={grain} onChange={onGrain} />
+            )}
             <p className="pcard-foot">Your device's own reduced-motion setting is honoured on its own, whatever Smooth Air says.</p>
           </section>
         </div>

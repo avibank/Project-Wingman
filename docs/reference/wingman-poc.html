@@ -1,0 +1,1435 @@
+<title>Flight Deck & Licence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+
+<style>
+:root{
+  --sans:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",monospace;
+  --plain:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --ui:var(--sans);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:#0b0d10;color:#e6e9ee;font-family:var(--ui);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font-family:inherit}
+
+/* ================= the room ================= */
+.deck{
+  --ground:#111;--panel:#181818;--raised:#202020;--line:#2a2a2a;
+  --t1:#eee;--t2:#aaa;--t3:#777;--active:#8cf;--on:#9df;--lit:#cef;--emit:10px;
+  --key-img:none;--key-int:.7;--fill-img:none;--fill-int:.34;--soft:82px;--spill:.22;--grain:.05;
+  --scale:1;
+  position:relative;overflow:hidden;background:var(--ground);color:var(--t1);isolation:isolate;
+  min-height:100vh;padding:0 40px 46px}
+@media (max-width:640px){ .deck{padding:0 16px 36px} }
+.deck::before,.deck::after{content:"";position:absolute;inset:-55%;pointer-events:none;z-index:0;
+  mix-blend-mode:screen;filter:blur(var(--soft)) saturate(1.28)}
+.deck::before{background:var(--key-img);opacity:var(--key-int);animation:drift 26s ease-in-out infinite}
+.deck::after{background:var(--fill-img);opacity:var(--fill-int);
+  filter:blur(calc(var(--soft)*1.35)) saturate(1.2);animation:drift 41s ease-in-out infinite reverse}
+.deck.aur::before{filter:url(#aurWarp) blur(30px) saturate(1.24);animation:drift 34s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate3d(0,0,0) scale(1)}
+  34%{transform:translate3d(6%,-4%,0) scale(1.08)} 67%{transform:translate3d(-4%,4%,0) scale(1)}}
+.deck > *{position:relative;z-index:1}
+.spill{position:absolute;inset:-55%;z-index:2;pointer-events:none;background:var(--key-img);
+  filter:blur(calc(var(--soft)*1.2)) saturate(1.22);mix-blend-mode:screen;opacity:var(--spill);
+  animation:drift 26s ease-in-out infinite}
+.stars{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:var(--stars,0);
+  background-image:var(--stars-a,none),var(--stars-b,none);background-repeat:repeat;
+  background-size:430px 430px,310px 310px;mix-blend-mode:screen;
+  animation:twinkle 13s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:var(--stars,0)} to{opacity:calc(var(--stars,0)*.5)}}
+.grain{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:var(--grain);
+  mix-blend-mode:overlay;background-size:150px 150px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E")}
+.inner{position:relative;z-index:1;max-width:1240px;margin:0 auto}
+
+/* Smooth Air kills every decorative animation and transition */
+body.calm *,body.calm *::before,body.calm *::after{animation:none !important;transition:none !important}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+
+/* ================= top bar ================= */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+  padding:14px 0 12px;max-width:1240px;margin:0 auto}
+.brandmark{font-size:15px;font-weight:700;letter-spacing:-.3px;margin-right:auto}
+.streak{display:flex;align-items:center;gap:7px;height:40px;border:1px solid var(--line);
+  border-radius:999px;padding:0 15px 0 11px;
+  background:color-mix(in oklab,var(--panel),transparent 25%);
+  font-family:var(--mono);font-size:12.5px;color:var(--t2)}
+.streak svg{display:block;color:var(--active)}
+/* the sock flies from the mast — pivots at its throat, never at its centre */
+.sockbody{transform-origin:4px 9.5px;animation:sock 5.2s ease-in-out infinite}
+@keyframes sock{
+  0%,100%{transform:rotate(-5deg) scaleX(.94)}
+  38%    {transform:rotate(3.5deg) scaleX(1.03)}
+  67%    {transform:rotate(-1.5deg) scaleX(.98)}
+}
+.avbtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:color-mix(in oklab,var(--panel),transparent 25%);color:var(--t2);
+  display:grid;place-items:center;cursor:pointer;padding:0;
+  transition:background .16s,border-color .16s,color .16s}
+.avbtn:hover{border-color:var(--t3);color:var(--t1)}
+.avbtn[aria-expanded="true"]{border-color:var(--active);color:var(--t1)}
+.avbtn:hover{background:var(--raised)}
+.avbtn-face{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  background-size:cover;background-position:center;font-family:var(--mono);font-size:12px;
+  color:var(--ground)}
+.avbtn-face.has{background-color:var(--active)}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:48px;width:262px;z-index:40;padding:7px;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  border-top-color:color-mix(in oklab,var(--line),white 10%);
+  box-shadow:0 20px 44px var(--shadow-c,rgba(0,0,0,.45));
+  backdrop-filter:blur(14px)}
+.menu button{display:flex;width:100%;align-items:center;gap:11px;background:none;border:0;
+  border-radius:9px;padding:10px 11px;color:var(--t1);font-size:calc(13.5px*var(--scale));
+  cursor:pointer;text-align:left;transition:background .14s}
+.menu button:hover{background:var(--raised)}
+.menu .mi{width:19px;height:19px;flex:none;color:var(--t2)}
+.menu .mlabel{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu .chev{color:var(--t3);font-size:16px;line-height:1}
+.menu .sep{display:block;height:1px;background:var(--line);margin:6px 5px}
+.admin.small{padding:2px 7px;font-size:8.5px}
+
+/* ================= shared ================= */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  border-top-color:color-mix(in oklab,var(--line),white 10%);overflow:hidden}
+.pill{background:var(--active);color:var(--ground);border:0;border-radius:999px;
+  padding:9px 17px;font-size:calc(12.5px*var(--scale));font-weight:600;cursor:pointer}
+.ghost{background:none;color:var(--t1);border:1px solid var(--line);border-radius:999px;
+  padding:9px 16px;font-size:calc(12.5px*var(--scale));font-weight:600;cursor:pointer}
+.ghost:hover{border-color:var(--t3)}
+:where(button,a,input,[tabindex]):focus-visible{outline:2px solid var(--active);outline-offset:2px;border-radius:6px}
+.eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+
+/* ================= home ================= */
+.dhead{margin:14px 0 18px}
+.dhead .title{font-size:calc(32px*var(--scale));font-weight:700;letter-spacing:-.7px;line-height:1.05}
+.dhead .greet{font-size:calc(20px*var(--scale));font-weight:600;margin-top:7px;letter-spacing:-.2px}
+.dhead .since{font-size:calc(13px*var(--scale));color:var(--t2);margin-top:2px}
+
+.cardbody{padding:18px;display:flex;gap:17px;align-items:flex-start;flex-wrap:wrap}
+.frame{width:124px;height:72px;border-radius:8px;flex:none;background:var(--raised);
+  border:1px solid var(--line);position:relative;overflow:hidden}
+.frame::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:56%;background:var(--active)}
+.frame .play{position:absolute;inset:0;margin:auto;width:24px;height:24px;border-radius:50%;background:var(--active)}
+.frame .play::after{content:"";position:absolute;inset:0;margin:auto;width:0;height:0;
+  border-left:8px solid var(--ground);border-top:5px solid transparent;border-bottom:5px solid transparent;
+  transform:translateX(1px)}
+.cardtext{flex:1;min-width:220px}
+.chapter{font-size:calc(18px*var(--scale));font-weight:600;letter-spacing:-.2px}
+.hcode{font-family:var(--mono);font-size:calc(11px*var(--scale));color:var(--t3);letter-spacing:.05em}
+.position{font-size:calc(12.5px*var(--scale));color:var(--t2);margin-top:5px}
+.cardtext .pill{margin-top:12px}
+
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);
+  border-top:1px solid var(--line)}
+@media (max-width:760px){ .strip{grid-template-columns:1fr 1fr} .strip .cel:first-child{grid-column:1/-1} }
+.cel{background:var(--panel);padding:17px 10px 13px;display:flex;flex-direction:column;
+  align-items:center;gap:9px;min-height:152px;justify-content:center}
+.cap{font-family:var(--mono);font-size:calc(9.5px*var(--scale));letter-spacing:.13em;
+  text-transform:uppercase;color:var(--t3);text-align:center}
+.ai{width:112px;height:112px;display:block}
+.ladder{font-family:var(--mono);font-size:11px;line-height:1.55;text-align:center;background:var(--raised);
+  border:1px solid var(--line);border-radius:6px;padding:5px 13px;color:var(--t3)}
+.ladder b{display:block;font-size:19px;font-weight:500;color:var(--on)}
+.lamps{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:88px}
+.lamp{height:17px;border-radius:3px;background:var(--raised);border:1px solid var(--line)}
+.lamp.on{background:var(--on);border-color:transparent;
+  box-shadow:0 0 var(--emit) color-mix(in oklab,var(--on),transparent 45%)}
+.hobbs{font-family:var(--mono);font-size:19px;letter-spacing:.09em;background:var(--raised);
+  border:1px solid var(--line);border-radius:5px;padding:6px 10px;color:var(--t2);font-variant-numeric:tabular-nums}
+.hobbs i{font-style:normal;color:var(--on)}
+.radarcel{cursor:pointer;border:0;font-family:inherit;transition:background .18s}
+.radarcel:hover{background:var(--raised)}
+.radar{width:82px;height:82px;border-radius:50%;position:relative;background:var(--raised);
+  border:1px solid var(--line);overflow:hidden}
+.radar .ring{position:absolute;inset:0;margin:auto;border-radius:50%;border:1px solid var(--line)}
+.radar .r1{width:54%;height:54%} .radar .r2{width:26%;height:26%}
+.sweep{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0deg,transparent 300deg,
+    color-mix(in oklab,var(--active),transparent 84%) 348deg,
+    color-mix(in oklab,var(--active),transparent 34%) 360deg);
+  animation:spin 4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.blip{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--lit);
+  box-shadow:0 0 var(--emit) color-mix(in oklab,var(--lit),transparent 40%)}
+
+.sec{margin-top:30px}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:11px}
+.sechead h2{font-size:calc(17px*var(--scale));font-weight:600;letter-spacing:-.2px}
+.sechead .more{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--t3);background:none;border:0;cursor:pointer;padding:0}
+.sechead .more:hover{color:var(--t1)}
+
+.rail{display:flex;gap:13px;align-items:stretch;overflow-x:auto;overflow-y:visible;
+  scroll-snap-type:x proximity;scrollbar-width:none;padding:5px 2px 9px}
+.rail::-webkit-scrollbar{display:none}
+.mod{container-type:inline-size;flex:1 1 0;min-width:180px;scroll-snap-align:start;
+  text-align:left;color:inherit;cursor:pointer;background:var(--panel);
+  border:1px solid var(--line);border-top-color:color-mix(in oklab,var(--line),white 10%);
+  border-radius:12px;padding:0;overflow:hidden;opacity:.84;
+  transition:transform .22s cubic-bezier(.2,.8,.3,1),border-color .22s,background .22s,box-shadow .22s,opacity .22s}
+.modin{padding:14px;display:flex;flex-direction:column;height:100%}
+.mcodeline{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:15px}
+.mcode{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--t3)}
+.mcur{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:var(--ground);
+  background:var(--active);border-radius:3px;padding:2px 5px}
+.mname{font-size:calc(14px*var(--scale));font-weight:600;line-height:1.28;color:var(--t2);margin-top:5px;
+  min-height:calc(1.28em*3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.prof{display:block;width:100%;height:44px;margin-top:auto;padding-top:8px}
+@container (min-width:250px){ .modin{padding:17px} .prof{height:58px} }
+.mod:hover{opacity:1;transform:translateY(-3px);border-color:var(--t3);background:var(--raised);
+  box-shadow:0 12px 26px var(--shadow-c,rgba(0,0,0,.34))}
+.mod:hover .mname{color:var(--t1)}
+.prof .reveal,.prof .plane{opacity:0;transition:opacity .26s ease}
+.mod:hover .prof .reveal,.mod:hover .prof .plane{opacity:1}
+
+.crew{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:13px;
+  border-top-color:color-mix(in oklab,var(--line),white 10%);overflow:hidden}
+.crew.n3{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.25fr)}
+.crew.n2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+@media (max-width:940px){ .crew.n3,.crew.n2{grid-template-columns:minmax(0,1fr)} }
+.cell{background:var(--panel);padding:16px 17px;display:flex;flex-direction:column;gap:11px;min-height:176px}
+.cellhead{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--t3)}
+.formsvg{display:block;width:100%;height:92px;margin-top:2px}
+.formlist{display:flex;gap:14px;flex-wrap:wrap;margin-top:auto}
+.fm{display:flex;align-items:center;gap:7px;min-width:0}
+.fm .av{width:22px;height:22px;font-size:8.5px}
+.fmname{font-size:12px;font-weight:600;white-space:nowrap}
+.fmpos{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
+.av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--mono);font-size:10.5px;color:var(--ground);background:var(--active)}
+.av.dim{background:var(--raised);color:var(--t2);box-shadow:inset 0 0 0 1px var(--line)}
+.cop{display:flex;align-items:center;gap:12px}
+.cop .av{width:42px;height:42px;font-size:13px}
+.copname{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.copwhy{font-size:12.5px;color:var(--t2);line-height:1.4}
+.copmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.cell .pill{align-self:flex-start;margin-top:auto}
+.freqhead{display:flex;align-items:baseline;gap:8px}
+.freqname{font-size:13px;font-weight:600}
+.msgs{display:flex;flex-direction:column;gap:7px;flex:1}
+.msg{font-size:12.5px;line-height:1.45;color:var(--t2)}
+.msg b{color:var(--t1);font-weight:600}
+.tick{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.06em}
+.compose{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;
+  padding:8px 13px;color:var(--t3);font-size:12.5px;background:color-mix(in oklab,var(--raised),transparent 40%)}
+.compose span{flex:1}
+.send{width:19px;height:19px;border-radius:50%;background:var(--raised);flex:none}
+
+/* ================= profile ================= */
+.phead{margin:10px 0 16px}
+.back{background:none;border:0;color:var(--t2);font-size:13px;cursor:pointer;padding:4px 0;
+  display:inline-flex;align-items:center;gap:6px}
+.back:hover{color:var(--t1)}
+.ptitle{font-size:calc(30px*var(--scale));font-weight:700;letter-spacing:-.6px;margin-top:6px}
+
+.tabs{display:flex;gap:4px;background:color-mix(in oklab,var(--panel),transparent 20%);
+  border:1px solid var(--line);border-radius:11px;padding:4px;margin-bottom:20px;max-width:520px}
+.tabs button{flex:1;background:none;border:0;border-radius:8px;padding:10px 8px;color:var(--t2);
+  font-size:calc(13px*var(--scale));font-weight:600;cursor:pointer;transition:background .16s,color .16s}
+.tabs button[aria-selected="true"]{background:var(--raised);color:var(--t1);
+  box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--active),transparent 55%)}
+
+.panel{display:flex;flex-direction:column;gap:16px;max-width:760px}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  border-top-color:color-mix(in oklab,var(--line),white 10%);padding:18px 20px 20px}
+.block > .eyebrow{display:block;margin-bottom:14px}
+.row{display:flex;align-items:center;gap:16px;padding:13px 0;border-top:1px solid
+  color-mix(in oklab,var(--line),transparent 45%)}
+.row:first-of-type{border-top:0;padding-top:2px}
+.rowtext{flex:1;min-width:0}
+.rowtext b{display:block;font-size:calc(14px*var(--scale));font-weight:600}
+.rowtext span{display:block;font-size:calc(12.5px*var(--scale));color:var(--t2);margin-top:2px}
+
+.field{display:flex;flex-direction:column;gap:6px;padding:11px 0}
+.field label{font-size:calc(12.5px*var(--scale));color:var(--t2)}
+.field input,.field select{background:var(--raised);border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;color:var(--t1);font-family:inherit;font-size:calc(14px*var(--scale));width:100%}
+.field input:focus,.field select:focus{outline:2px solid var(--active);outline-offset:1px}
+.field .hint{font-size:calc(11.5px*var(--scale));color:var(--t3)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:620px){ .two{grid-template-columns:1fr} }
+
+.sw{width:44px;height:25px;border-radius:999px;background:var(--raised);position:relative;flex:none;
+  border:1px solid var(--line);cursor:pointer;padding:0;transition:background .16s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;
+  background:var(--t3);transition:transform .16s,background .16s}
+.sw[aria-checked="true"]{background:var(--active);border-color:transparent}
+.sw[aria-checked="true"]::after{transform:translateX(19px);background:var(--ground)}
+
+.seg{display:inline-flex;background:var(--raised);border:1px solid var(--line);
+  border-radius:10px;padding:3px;gap:3px}
+.seg button{background:none;border:0;border-radius:7px;padding:8px 15px;color:var(--t2);
+  font-size:calc(12.5px*var(--scale));font-weight:600;cursor:pointer;transition:background .16s,color .16s}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--t1);
+  box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--active),transparent 55%)}
+
+/* livery picker */
+.livname{font-size:calc(15px*var(--scale));font-weight:600;margin-bottom:2px}
+.livdesc{font-size:calc(12.5px*var(--scale));color:var(--t2);margin-bottom:14px}
+.livgrid{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.liv{background:none;border:0;padding:3px;border-radius:50%;cursor:pointer;line-height:0;
+  box-shadow:0 0 0 0 var(--active);transition:box-shadow .18s,transform .18s}
+.liv:hover{transform:translateY(-2px)}
+.liv[aria-pressed="true"]{box-shadow:0 0 0 2px var(--active)}
+.liv i{display:block;width:34px;height:34px;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.anchors{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--t3);margin-top:12px}
+
+/* specimen */
+.spec{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  background:var(--ground);position:relative}
+.specin{position:relative;z-index:1;padding:14px;display:grid;gap:11px;
+  grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+@media (max-width:620px){ .specin{grid-template-columns:1fr} }
+.specglow{position:absolute;inset:-40%;z-index:0;pointer-events:none;mix-blend-mode:screen;
+  background:var(--key-img);opacity:calc(var(--key-int)*.9);filter:blur(38px) saturate(1.28)}
+.specglow2{position:absolute;inset:-40%;z-index:0;pointer-events:none;mix-blend-mode:screen;
+  background:var(--fill-img);opacity:var(--fill-int);filter:blur(46px) saturate(1.2)}
+.speccard{background:var(--panel);border:1px solid var(--line);
+  border-top-color:color-mix(in oklab,var(--line),white 10%);border-radius:10px;padding:12px}
+.specchap{font-size:13.5px;font-weight:600}
+.speccode{font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:1px}
+.specbtn{margin-top:10px;display:inline-block;background:var(--active);color:var(--ground);
+  border-radius:999px;padding:5px 11px;font-size:11px;font-weight:600}
+.specmod{background:var(--panel);border:1px solid var(--line);
+  border-top-color:color-mix(in oklab,var(--line),white 10%);border-radius:10px;padding:12px;
+  display:flex;flex-direction:column}
+.specname{font-size:12.5px;font-weight:600;color:var(--t2);margin-top:4px}
+.specprof{display:block;width:100%;height:38px;margin-top:auto;padding-top:6px}
+
+.admin{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--active);
+  color:var(--active);border-radius:999px;padding:3px 9px;font-family:var(--mono);
+  font-size:9.5px;letter-spacing:.12em;text-transform:uppercase}
+.bigav{width:62px;height:62px;border-radius:50%;background:var(--active);color:var(--ground);
+  display:grid;place-items:center;font-family:var(--mono);font-size:19px;flex:none}
+.idrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.idname{font-size:calc(20px*var(--scale));font-weight:700;letter-spacing:-.3px}
+.idmail{font-size:calc(12.5px*var(--scale));color:var(--t2)}
+.idtext{flex:1;min-width:200px}
+.avactions{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.ghost.sm{padding:6px 12px;font-size:calc(11.5px*var(--scale))}
+.bigav{background-size:cover;background-position:center}
+.mono{font-family:var(--mono);font-size:.94em;font-weight:500;color:var(--t1);white-space:nowrap}
+.quietline{margin:2px 2px 0;font-size:calc(11.5px*var(--scale));color:var(--t3);line-height:1.6}
+.linkish{background:none;border:0;padding:0;color:var(--t2);font-size:inherit;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.linkish:hover{color:var(--t1)}
+
+/* ================= runway lights =================
+   Edge lighting read the way centreline lighting is read: not where you are,
+   but how much runway is left. One lamp is yours; the ones ahead come up as
+   the end approaches. No runway when there's no distance to run. */
+.runway{position:fixed;left:0;right:0;bottom:0;z-index:6;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;gap:11px;
+  padding:12px 20px 14px;opacity:0;transition:opacity .35s}
+.runway.on{opacity:1}
+.runway i{display:block;width:5px;height:5px;border-radius:2px;background:var(--line);
+  transition:background .2s,box-shadow .2s,transform .2s,width .2s}
+.runway i.bar{width:15px}                       /* threshold and end */
+.runway i.near{background:var(--t3)}            /* runway remaining */
+.runway i.here{background:var(--on);transform:scaleY(2.2);
+  box-shadow:0 0 var(--emit) color-mix(in oklab,var(--on),transparent 40%)}
+@media (max-width:640px){ .runway{gap:8px} .runway i.bar{width:12px} }
+
+.turb{animation:nudge .34s cubic-bezier(.2,.8,.3,1)}
+@keyframes nudge{from{transform:translateY(7px);opacity:.55} to{transform:none;opacity:1}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="aurWarp" x="-25%" y="-25%" width="150%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.0055 0.017" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="96" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</defs></svg>
+
+<div class="deck" id="deck">
+  <div class="inner">
+
+    <header class="topbar">
+      <span class="brandmark">Wingman</span>
+      <span class="streak" title="One day on the trot">
+        <svg class="sock" width="21" height="19" viewBox="0 0 24 22" fill="none" aria-hidden="true">
+          <path d="M3.2 1.5v19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".65"/>
+          <g class="sockbody">
+            <path d="M4 5.2 10.4 6.4 10.4 12.6 4 13.8Z" fill="currentColor" opacity=".9"/>
+            <path d="M10.4 6.4 15.2 7.3 15.2 11.7 10.4 12.6Z" fill="currentColor" opacity=".45"/>
+            <path d="M15.2 7.3 19.4 8.1 19.4 10.9 15.2 11.7Z" fill="currentColor" opacity=".85"/>
+            <path d="M19.4 8.1 22.6 8.7 22.6 10.3 19.4 10.9Z" fill="currentColor" opacity=".35"/>
+          </g>
+        </svg>
+        <span>1</span>
+      </span>
+      <span class="menuwrap">
+        <button class="avbtn" id="avbtn" type="button" aria-haspopup="menu" aria-expanded="false"
+                aria-controls="menu" aria-label="Account menu">
+          <span class="avbtn-face" id="avtop">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.7"/>
+              <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round"/></svg>
+          </span>
+        </button>
+        <div class="menu" id="menu" role="menu" aria-label="Account" hidden>
+          <button role="menuitem" type="button" data-go="you">
+            <svg class="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M8 4h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8M11 10H3m0 0 3-3m-3 3 3 3"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="mlabel">h.alrefaei</span>
+            <span class="admin small">Admin</span>
+            <span class="chev">›</span>
+          </button>
+          <span class="sep"></span>
+          <span class="sep"></span>
+          <button role="menuitem" type="button" data-go="prefs">
+            <svg class="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 6h12M4 10h12M4 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="8" cy="6" r="1.8" fill="currentColor"/><circle cx="13" cy="10" r="1.8" fill="currentColor"/>
+              <circle cx="7" cy="14" r="1.8" fill="currentColor"/></svg>
+            <span class="mlabel">Preferences</span><span class="chev">›</span>
+          </button>
+          <button role="menuitem" type="button" data-go="look">
+            <svg class="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="6.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 3.5v13" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 3.5a6.5 6.5 0 0 1 0 13Z" fill="currentColor" opacity=".55"/></svg>
+            <span class="mlabel">Appearance</span><span class="chev">›</span>
+          </button>
+          <span class="sep"></span>
+          <button role="menuitem" type="button" data-go="signout">
+            <svg class="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M12 4H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h6M9 10h8m0 0-3-3m3 3-3 3"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="mlabel">Sign out</span>
+          </button>
+        </div>
+      </span>
+    </header>
+
+    <!-- ============ HOME ============ -->
+    <main id="viewHome">
+      <div class="dhead">
+        <h1 class="title">Flight Deck</h1>
+        <div class="greet" id="greet">Best hours are yours</div>
+        <div class="since">Last flown two days ago</div>
+      </div>
+
+      <div class="card">
+        <div class="cardbody">
+          <div class="frame"><span class="play"></span></div>
+          <div class="cardtext">
+            <div class="chapter">Intake &amp; Compressor Basics</div>
+            <div class="hcode">JT.01 · Jet Turbine Fundamentals</div>
+            <div class="position">Pick up 6:12 into the briefing.</div>
+            <button class="pill" type="button">Resume at 6:12 &nbsp;›</button>
+          </div>
+        </div>
+
+        <div class="strip">
+          <div class="cel">
+            <svg class="ai" viewBox="0 0 120 120" role="img" aria-label="Average score 68 percent, light chop">
+              <defs><clipPath id="dial"><circle cx="60" cy="60" r="42"/></clipPath></defs>
+              <g clip-path="url(#dial)"><g transform="rotate(-3 60 60) translate(0 -2)">
+                <rect x="-70" y="-80" width="260" height="140" id="sky"/>
+                <rect x="-70" y="60" width="260" height="140" id="grd"/>
+                <rect x="-70" y="59" width="260" height="1.6" id="hz"/>
+                <g id="ladder" stroke-width="1.4">
+                  <line x1="52" y1="46" x2="68" y2="46"/><line x1="55" y1="52.5" x2="65" y2="52.5"/>
+                  <line x1="55" y1="66.5" x2="65" y2="66.5"/><line x1="52" y1="73" x2="68" y2="73"/>
+                </g></g></g>
+              <circle cx="60" cy="60" r="42" fill="none" stroke-width="1" id="glass"/>
+              <circle cx="60" cy="60" r="49" fill="none" stroke-width="3" id="rimtrack"/>
+              <circle cx="60" cy="60" r="49" fill="none" stroke-width="3" id="rim"
+                      stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <g id="screws"><circle cx="21" cy="21" r="1.8"/><circle cx="99" cy="21" r="1.8"/>
+                 <circle cx="21" cy="99" r="1.8"/><circle cx="99" cy="99" r="1.8"/></g>
+              <g id="symHalo" stroke-width="5.2" stroke-linecap="round" fill="none" opacity=".85">
+                <line x1="38" y1="60" x2="52" y2="60"/><line x1="68" y1="60" x2="82" y2="60"/></g>
+              <g id="sym" stroke-width="2.6" stroke-linecap="round" fill="none">
+                <line x1="38" y1="60" x2="52" y2="60"/><line x1="68" y1="60" x2="82" y2="60"/></g>
+              <circle cx="60" cy="60" r="3.6" id="symDotHalo" opacity=".85"/>
+              <circle cx="60" cy="60" r="2.2" id="symDot"/>
+              <text x="60" y="88" id="score" text-anchor="middle"
+                    font-family="Geist Mono, monospace" font-size="13" font-weight="500">68%</text>
+            </svg>
+            <div class="cap">Light chop · 68%</div>
+          </div>
+          <div class="cel">
+            <div class="ladder">4<br>3<b>2</b>1<br>0</div>
+            <div class="cap">Flight bag</div>
+          </div>
+          <div class="cel">
+            <div class="lamps"><i class="lamp on"></i><i class="lamp on"></i><i class="lamp on"></i>
+              <i class="lamp"></i><i class="lamp"></i><i class="lamp"></i></div>
+            <div class="cap">Checklist · 3 of 6</div>
+          </div>
+          <div class="cel">
+            <div class="hobbs">003<i>.4</i></div>
+            <div class="cap">Hobbs</div>
+          </div>
+          <button class="cel radarcel" type="button">
+            <div class="radar">
+              <span class="ring r1"></span><span class="ring r2"></span><span class="sweep"></span>
+              <span class="blip" style="top:26%;left:62%"></span>
+              <span class="blip" style="top:64%;left:34%"></span>
+              <span class="blip" style="top:44%;left:74%"></span>
+            </div>
+            <div class="cap">3 contacts · Ready Room</div>
+          </button>
+        </div>
+      </div>
+
+      <section class="sec">
+        <div class="sechead"><h2>Modules</h2><div class="more" id="modnote">4 active</div></div>
+        <div class="rail" id="rail"></div>
+      </section>
+
+      <section class="sec" id="slot"></section>
+    </main>
+
+    <!-- ============ PROFILE ============ -->
+    <main id="viewProfile" hidden>
+      <div class="phead">
+        <button class="back" id="back" type="button">‹ Flight Deck</button>
+        <h1 class="ptitle">Licence</h1>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Profile sections">
+        <button role="tab" id="tab-you"   aria-selected="true"  aria-controls="p-you">Licence</button>
+        <button role="tab" id="tab-prefs" aria-selected="false" aria-controls="p-prefs" tabindex="-1">Preferences</button>
+        <button role="tab" id="tab-look"  aria-selected="false" aria-controls="p-look" tabindex="-1">Appearance</button>
+      </div>
+
+      <!-- ---- LICENCE ---- -->
+      <div class="panel" id="p-you" role="tabpanel" aria-labelledby="tab-you">
+        <div class="block">
+          <span class="eyebrow">Holder</span>
+          <div class="idrow">
+            <span class="bigav" id="bigav">HA</span>
+            <span class="idtext">
+              <div class="idname">Hassan Alrefaei</div>
+              <div class="idmail">h.alrefaei@wingman.institute</div>
+              <div class="avactions">
+                <button class="ghost sm" id="avup" type="button">Choose a photo</button>
+                <button class="ghost sm" id="avreset" type="button" hidden>Use initials</button>
+                <input type="file" id="avfile" accept="image/*" hidden>
+              </div>
+            </span>
+            <span class="admin">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 1.5 13.5 4v4c0 3-2.4 5.5-5.5 6.5C4.9 13.5 2.5 11 2.5 8V4L8 1.5Z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              Admin
+            </span>
+          </div>
+          <div class="two" style="margin-top:18px">
+            <div class="field">
+              <label for="f-first">Name on the licence</label>
+              <input id="f-first" value="Hassan Alrefaei">
+              <span class="hint">Private. Nobody sees this but you.</span>
+            </div>
+            <div class="field">
+              <label for="f-user">Username</label>
+              <input id="f-user" value="hassan.a">
+              <span class="hint">How you show up to everyone else.</span>
+            </div>
+          </div>
+          <div class="row" style="margin-top:4px">
+            <span class="rowtext"><b>Go by your username</b>
+              <span id="pubdesc">Everyone else sees <b class="mono">@hassan.a</b></span></span>
+            <button class="sw" id="sw-user" role="switch" aria-checked="true" aria-label="Use username publicly"></button>
+          </div>
+          <div class="field" style="max-width:340px">
+            <label for="f-call">What Wingman calls you</label>
+            <input id="f-call" value="Hassan">
+            <span class="hint">Used in greetings, and only by whoever's greeting you. Leave it empty and you'll only get the lines that don't need a name.</span>
+          </div>
+        </div>
+
+        <div class="block">
+          <span class="eyebrow">Account</span>
+          <div class="row">
+            <span class="rowtext"><b>Email</b><span>h.alrefaei@wingman.institute</span></span>
+            <button class="ghost" type="button">Change</button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Password</b><span>Last changed four months ago</span></span>
+            <button class="ghost" type="button">Update</button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Sign out</b><span>On this device only</span></span>
+            <button class="ghost" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <p class="quietline">
+          <button class="linkish" type="button">Delete account</button>
+          — removes your logbook, your crew and everything you've flown. It can't be undone.
+        </p>
+      </div>
+
+      <!-- ---- PREFERENCES ---- -->
+      <div class="panel" id="p-prefs" role="tabpanel" aria-labelledby="tab-prefs" hidden>
+        <div class="block">
+          <span class="eyebrow">Who greets you</span>
+          <div class="livname" id="voicename">Wingman</div>
+          <div class="livdesc" id="voicedesc">A coworker on the same shift. Notices you're here, never what you scored.</div>
+          <div class="seg" id="voice" role="group" aria-label="Voice">
+            <button type="button" data-v="wingman" aria-pressed="true">Wingman</button>
+            <button type="button" data-v="hermit">The Hermit</button>
+            <button type="button" data-v="control">Control</button>
+          </div>
+          <div class="anchors" id="voicesample">“Best hours are yours.”</div>
+        </div>
+
+        <div class="block">
+          <span class="eyebrow">How social</span>
+          <div class="livdesc" id="socdesc">Your formation and your wingman appear below the modules.</div>
+          <div class="seg" id="social" role="group" aria-label="Social preset">
+            <button type="button" data-s="quiet">Quiet skies</button>
+            <button type="button" data-s="crew" aria-pressed="true">My flight</button>
+            <button type="button" data-s="open">Open frequency</button>
+          </div>
+        </div>
+
+        <div class="block">
+          <span class="eyebrow">Notices</span>
+          <div class="row">
+            <span class="rowtext"><b>Someone answers your question</b><span>On the frequency you asked in</span></span>
+            <button class="sw" role="switch" aria-checked="true" aria-label="Answers to your questions"></button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Your wingman starts a chapter</b><span>Only for the module you're both on</span></span>
+            <button class="sw" role="switch" aria-checked="true" aria-label="Wingman activity"></button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Nothing flown for a week</b><span>One nudge. Never more.</span></span>
+            <button class="sw" role="switch" aria-checked="false" aria-label="Inactivity nudge"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- APPEARANCE ---- -->
+      <div class="panel" id="p-look" role="tabpanel" aria-labelledby="tab-look" hidden>
+        <div class="block">
+          <span class="eyebrow">Light</span>
+          <div class="row">
+            <span class="rowtext"><b>Night Ops</b><span id="modedesc">Dark. The room is lit by the livery.</span></span>
+            <div class="seg" id="mode" role="group" aria-label="Light mode">
+              <button type="button" data-m="day">Day</button>
+              <button type="button" data-m="night" aria-pressed="true">Night</button>
+              <button type="button" data-m="auto">Auto</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <span class="eyebrow">Livery</span>
+          <div class="livname" id="livname">Sky blue</div>
+          <div class="livdesc" id="livdesc">Three blues, not two. Navy in the shadows, lapiz through the middle, opening into a pale, almost daylit sky.</div>
+          <div class="livgrid" id="livgrid" role="group" aria-label="Livery"></div>
+          <div class="anchors" id="livanchors">navy → lapiz → sky blue</div>
+
+          <div class="spec" aria-label="Preview">
+            <span class="specglow" aria-hidden="true"></span>
+            <span class="specglow2" aria-hidden="true"></span>
+            <div class="specin">
+              <div class="speccard">
+                <div class="specchap">Intake &amp; Compressor Basics</div>
+                <div class="speccode">JT.01 · JET TURBINE</div>
+                <span class="specbtn">Resume ›</span>
+              </div>
+              <div class="specmod">
+                <div class="speccode">PROP</div>
+                <div class="specname">Propulsion Systems</div>
+                <svg class="specprof" id="specprof" aria-hidden="true"></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <span class="eyebrow">Instrument scale</span>
+          <div class="row">
+            <span class="rowtext"><b>Text size</b><span>Across chapters, discussion and the library</span></span>
+            <div class="seg" id="scale" role="group" aria-label="Instrument scale">
+              <button type="button" data-sc=".92">Small</button>
+              <button type="button" data-sc="1" aria-pressed="true">Medium</button>
+              <button type="button" data-sc="1.13">Large</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <span class="eyebrow">Accessibility &amp; motion</span>
+          <div class="row">
+            <span class="rowtext"><b>Smooth Air</b><span>Stops the lights drifting and the cards lifting</span></span>
+            <button class="sw" id="sw-calm" role="switch" aria-checked="false" aria-label="Smooth Air"></button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Plain Language</b><span>A clearer typeface for reading fatigue and dyslexia</span></span>
+            <button class="sw" id="sw-plain" role="switch" aria-checked="false" aria-label="Plain Language"></button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Turbulence</b><span>A small nudge when you move between pages</span></span>
+            <button class="sw" id="sw-turb" role="switch" aria-checked="true" aria-label="Turbulence"></button>
+          </div>
+          <div class="row">
+            <span class="rowtext"><b>Grain</b><span>Fine noise over the light. Off is flatter but smoother.</span></span>
+            <button class="sw" id="sw-grain" role="switch" aria-checked="true" aria-label="Grain"></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <div class="runway" id="runway" aria-hidden="true"></div>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="spill" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const wrap = h => (((h % 360) + 360) % 360);
+  const smooth = u => u*u*(3-2*u);
+
+  /* ============ colour ============ */
+  const LIGHT = { ambC:.305, soft:82, ambInt:.76, ambSize:96, ambX:76, ambY:-18,
+                  fillInt:.34, fillSize:74, fillX:16, fillY:112, glass:.78, spill:.22 };
+  const LIVERIES = [
+    {id:"sky", name:"Sky blue", hue:266, dDark:-11, dLight:-31, midAt:.42, midC:1.35,
+     chroma:.100, ground:.140, light:.950, fillAbs:84, fillC:.22,
+     anchors:"navy → lapiz → sky blue",
+     desc:"Above the weather, where nothing is anyone's problem yet."},
+    {id:"amber", name:"Amber", hue:78, dDark:-14, dLight:14, midAt:.45, midC:1.18,
+     chroma:.126, ground:.158, light:.944, fillAbs:70, fillC:.15,
+     anchors:"bronze → amber → caution yellow",
+     desc:"Master caution. Nothing is actually wrong. Probably."},
+    {id:"tarmac", name:"Tarmac grey", hue:255, dDark:6, dLight:-12, midAt:.50, midC:1.00,
+     chroma:.022, ground:.145, light:.955, keyAbs:58, keyC:.105, fillAbs:256, fillC:.30,
+     anchors:"gunmetal → graphite → grey",
+     desc:"Concrete and a copper floodlight. Everything you can see is borrowed."},
+    {id:"beacon", name:"Beacon red", hue:22, dDark:-14, dLight:6, midAt:.44, midC:1.14,
+     chroma:.128, ground:.148, light:.936, fillAbs:16, fillC:.14, panelT:.048, glass:.93,
+     anchors:"maroon → university red → signal red",
+     desc:"Night vision. Deep, close, and slightly up to something."},
+    {id:"runway", name:"Runway green", hue:142, dDark:-14, dLight:9, midAt:.46, midC:1.16,
+     chroma:.095, ground:.120, light:.905, fillAbs:118, fillC:.16,
+     anchors:"olive → grass → spring green",
+     desc:"Grass past the threshold. Knows its place, stays in it."},
+    {id:"skydrol", name:"Skydrol violet", hue:300, dDark:-18, dLight:10, midAt:.45, midC:1.18,
+     chroma:.105, ground:.152, light:.945, fillAbs:252, fillC:.16,
+     anchors:"indigo → violet → lavender",
+     desc:"Hydraulic purple. If you've had it on your hands, you know."},
+    {id:"aurora", name:"Aurora", hue:248, dDark:10, dLight:-22, midAt:.44, midC:1.10,
+     chroma:.078, ground:.190, light:.955, fillAbs:64, fillC:.34, aurora:true,
+     anchors:"night → fjord → ice",
+     desc:"Polar route, no traffic, nothing to do but look up."}
+  ];
+  const hueAt = (c,t) => { const m = c.midAt;
+    return t <= m ? wrap(c.hue + c.dDark*(1 - smooth(t/m)))
+                  : wrap(c.hue + c.dLight*smooth((t-m)/(1-m))); };
+  const chromaAt = (c,t,s) => {
+    const curve = .15 + .85*Math.sin(Math.PI*Math.pow(t,1.4));
+    const bump  = Math.exp(-Math.pow((t - c.midAt)/.34, 2));
+    return Math.max(0, c.chroma*s*curve*(1 + (c.midC - 1)*bump)); };
+  const at = (c,t,s) => `oklch(${(c.ground + (c.light-c.ground)*t).toFixed(4)} ` +
+    `${chromaAt(c,t,s).toFixed(4)} ${hueAt(c,t).toFixed(2)})`;
+  const ramp = (c,s) => Array.from({length:13}, (_,i) => at(c, i/12, s));
+  const col = (l,c,h,a) => `oklch(${l} ${c.toFixed(3)} ${h.toFixed(1)} / ${a})`;
+  const withA = (c,a) => c.replace(/\)\s*$/, " / " + a + ")");
+  const K = 100/210, O = 55*K, LX = v => (O + K*v).toFixed(1), LS = v => (K*v).toFixed(1);
+  const keyImg = (h,c,x,y,s) => {
+    const A = a => col(.84,c*1.12,h,a), B = a => col(.74,c*1.10,h,a);
+    return `radial-gradient(${s}% ${(s*.86).toFixed(0)}% at ${x}% ${y}%, ${A(.90)} 0%, ${B(.60)} 26%,` +
+           ` ${B(.30)} 48%, ${B(.10)} 66%, ${col(.74,c*1.10,h,0)} 84%)`; };
+  const fillImg = (h,c,x,y,s) => {
+    const B = a => col(.72,c*1.08,h,a);
+    return `radial-gradient(${s}% ${(s*.86).toFixed(0)}% at ${x}% ${y}%, ${B(.92)} 0%, ${B(.50)} 26%,` +
+           ` ${col(.70,c*.96,h,.20)} 50%, ${col(.70,c*.96,h,0)} 76%)`; };
+  const CURTAINS = [
+    [16,-5,10,62,156,.58],[27,-4,7,48,174,.44],[38,-6,13,74,150,.64],[50,-4,8,54,188,.40],
+    [62,-5,11,66,158,.56],[74,-4,7,46,198,.38],[86,-5,9,58,166,.46],
+    [30,22,34,26,318,.34],[63,19,30,23,332,.30],[84,24,24,18,300,.22]];
+  const auroraImg = () => CURTAINS.map(([x,y,w,h,hu,a]) =>
+      `radial-gradient(${LS(w*1.7)}% ${LS(h)}% at ${LX(x)}% ${LX(y)}%,` +
+      ` ${col(.88,.145,hu,a*.62)} 0%, ${col(.76,.195,hu,a*.34)} 30%,` +
+      ` ${col(.76,.195,hu,a*.13)} 56%, ${col(.76,.195,hu,0)} 80%)`).join(", ")
+    + `, radial-gradient(${LS(86)}% ${LS(34)}% at ${LX(50)}% ${LX(-6)}%,` +
+      ` ${col(.84,.170,158,.40)} 0%, ${col(.74,.195,172,.26)} 34%,` +
+      ` ${col(.70,.190,192,.13)} 60%, ${col(.70,.190,192,0)} 84%)`;
+  const CREAM = { ground:"oklch(.966 .010 85)", panel:"oklch(.992 .005 85)",
+    raised:"oklch(.936 .013 85)", line:"oklch(.876 .014 85)",
+    t1:"oklch(.250 .012 85)", t2:"oklch(.462 .010 85)", t3:"oklch(.618 .009 85)" };
+  const rng = seed => { let z = seed; return () => (z = (z*1103515245 + 12345) & 0x7fffffff)/0x7fffffff; };
+  const dotTile = (n,seed,maxR,alpha) => { const R = rng(seed), o = [];
+    for(let i=0;i<n;i++){ const x=(R()*100).toFixed(2), y=(R()*100).toFixed(2),
+      r=(.5+R()*maxR).toFixed(2), a=(alpha*(.3+R()*.7)).toFixed(3);
+      o.push(`radial-gradient(${r}px ${r}px at ${x}% ${y}%, rgba(255,255,255,${a}) 0%, rgba(255,255,255,0) 100%)`); }
+    return o.join(", "); };
+
+  /* ============ state — persisted, so it behaves like a site ============ */
+  const KEY = "wingman.v1";
+  const DEFAULTS = { liv:0, mode:"night", social:"crew", voice:"wingman", scale:"1",
+    calm:false, plain:false, turb:true, grain:true, useUser:true,
+    real:"Hassan Alrefaei", user:"hassan.a", callname:"Hassan", photo:"",
+    bags:{}, last:null, line:"", dealt:0, band:null, seen:0 };
+  let S;
+  try { S = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || "{}")); }
+  catch(e){ S = Object.assign({}, DEFAULTS); }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+
+  let liv = S.liv, preview = null, mode = S.mode, social = S.social, voice = S.voice, C = {};
+  const isNight = () => mode === "night" ||
+    (mode === "auto" && !window.matchMedia("(prefers-color-scheme: light)").matches);
+
+  function tokens(){
+    const L = LIVERIES[preview != null ? preview : liv];
+    const surf = ramp(L,1), ink = ramp(L,.34), s = $("deck").style;
+    const night = isNight();
+    const pT = L.panelT != null ? L.panelT : 1/12;
+    const gl = L.glass != null ? L.glass : LIGHT.glass;
+    const H = hueAt(L,.55).toFixed(1), Cc = L.chroma*L.midC;
+
+    C = night
+      ? { ground:surf[0], panel:at(L,pT,1), raised:at(L,pT+.085,1), line:at(L,pT+.17,1),
+          t3:ink[6], t2:ink[9], t1:ink[12], active:surf[8], on:surf[9], lit:surf[11] }
+      : { ...CREAM,
+          active:`oklch(.560 ${(Cc*1.55).toFixed(3)} ${H})`,
+          on:`oklch(.630 ${(Cc*1.45).toFixed(3)} ${H})`,
+          lit:`oklch(.470 ${(Cc*1.70).toFixed(3)} ${H})` };
+
+    Object.entries(C).forEach(([k,v]) => s.setProperty("--"+k, v));
+    s.setProperty("--panel",  withA(C.panel,  gl.toFixed(2)));
+    s.setProperty("--raised", withA(C.raised, Math.min(1,gl+.09).toFixed(2)));
+    s.setProperty("--line",   withA(C.line,   Math.min(1,gl+.16).toFixed(2)));
+
+    const fh = L.fillAbs, fc = LIGHT.ambC*.85*(L.fillC != null ? L.fillC : 1);
+    if(L.aurora){ s.setProperty("--key-img", auroraImg()); s.setProperty("--key-int", night ? .94 : .32); }
+    else {
+      const kh = L.keyAbs != null ? L.keyAbs : hueAt(L,1);
+      const kc = L.keyC   != null ? L.keyC   : LIGHT.ambC;
+      s.setProperty("--key-img", keyImg(kh, kc, LIGHT.ambX, LIGHT.ambY, LIGHT.ambSize));
+      s.setProperty("--key-int", night ? LIGHT.ambInt : LIGHT.ambInt*.34);
+    }
+    $("deck").classList.toggle("aur", !!L.aurora);
+    s.setProperty("--stars", (L.aurora && night) ? .95 : 0);
+    s.setProperty("--fill-img", fillImg(fh, fc, LX(LIGHT.fillX), LX(LIGHT.fillY), LS(LIGHT.fillSize)));
+    s.setProperty("--fill-int", night ? LIGHT.fillInt : LIGHT.fillInt*.30);
+    s.setProperty("--soft", LIGHT.soft + "px");
+    s.setProperty("--spill", night ? LIGHT.spill : LIGHT.spill*.35);
+    s.setProperty("--shadow-c",
+      `oklch(${(L.ground*.42).toFixed(3)} ${(L.chroma*L.midC*.6).toFixed(3)} ${hueAt(L,.05).toFixed(1)} / .58)`);
+
+    /* attitude indicator */
+    $("sky").setAttribute("fill", night ? surf[7] : surf[9]);
+    $("grd").setAttribute("fill", night ? surf[1] : surf[6]);
+    $("hz").setAttribute("fill", C.lit);
+    $("ladder").setAttribute("stroke", night ? surf[10] : surf[4]);
+    $("glass").setAttribute("stroke", C.line);
+    $("rimtrack").setAttribute("stroke", C.line);
+    $("screws").setAttribute("fill", C.line);
+    const symCore = night ? surf[11] : surf[1], symHalo = night ? surf[0] : surf[12];
+    $("sym").setAttribute("stroke", symCore); $("symDot").setAttribute("fill", symCore);
+    $("symHalo").setAttribute("stroke", symHalo); $("symDotHalo").setAttribute("fill", symHalo);
+    const circ = 2*Math.PI*49;
+    $("rim").setAttribute("stroke", C.active);
+    $("rim").setAttribute("stroke-dasharray", `${(circ*.68).toFixed(1)} ${circ.toFixed(1)}`);
+    $("score").setAttribute("fill", C.t1);
+  }
+
+  /* ============ flight profile ============ */
+  const STAR = "M0,-4 L1.15,-1.15 L4,0 L1.15,1.15 L0,4 L-1.15,1.15 L-4,0 L-1.15,-1.15 Z";
+  const PLANE = "M0,-6 L1.5,-1.4 L7.5,.6 L7.5,2.2 L1.5,1.2 L1.1,4.6 L3,5.8 L3,7 L0,6.3 L-3,7 L-3,5.8 L-1.1,4.6 L-1.5,1.2 L-7.5,2.2 L-7.5,.6 L-1.5,-1.4 Z";
+  function profile(W,H,prog,chapters,crewOn,big){
+    const hasForm = crewOn && crewOn.length;
+    const pad = Math.max(4,W*.035), x0 = pad, x1 = W-pad, base = H-(big?10:6),
+          top = hasForm ? 22 : 7;
+    const Y = t => { if(t<=.08) return base;
+      if(t<.30) return base-(base-top)*smooth((t-.08)/.22);
+      if(t<.70) return top;
+      if(t<.92) return top+(base-top)*smooth((t-.70)/.22);
+      return base; };
+    const X = t => x0 + (x1-x0)*t;
+    const seg = (a,b) => { let d = `M${X(a).toFixed(1)},${Y(a).toFixed(1)}`;
+      const st = Math.max(2, Math.round((b-a)*120));
+      for(let k=1;k<=st;k++){ const t = a+(b-a)*k/st; d += ` L${X(t).toFixed(1)},${Y(t).toFixed(1)}`; }
+      return d; };
+    const sw = big ? 2.8 : 2.4, ss = big ? .78 : .62;
+    let g = `<g class="${big?"":"reveal"}"><path d="${seg(0,1)}" fill="none" stroke="${C.line}"
+      stroke-width="1" stroke-dasharray="3 3"/></g>`;
+    if(prog > .002){
+      g += `<path d="${seg(0,prog)}" fill="none" stroke="${C.t2}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      g += `<g class="${big?"":"reveal"}"><path d="${seg(0,prog)}" fill="none" stroke="${C.active}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+    }
+    if(chapters && (x1-x0)/chapters > 20){
+      let rest = "", lit = "";
+      for(let i=0;i<chapters;i++){
+        const t = .08 + .84*(i/(chapters-1)), on = prog >= t - .001;
+        const tf = `translate(${X(t).toFixed(1)},${Y(t).toFixed(1)}) scale(${ss})`;
+        rest += `<g transform="${tf}"><path d="${STAR}" fill="${on?C.t2:"none"}" stroke="${on?C.t2:C.line}" stroke-width="${on?0:1.1}"/></g>`;
+        lit  += `<g transform="${tf}"><path d="${STAR}" fill="${on?C.active:"none"}" stroke="${on?C.active:C.line}" stroke-width="${on?0:1.1}"/></g>`;
+      }
+      g += rest + `<g class="${big?"":"reveal"}">${lit}</g>`;
+    }
+    if(hasForm){
+      g += crewOn.map(c => {
+        const x = X(c.pr).toFixed(1), y = Y(c.pr).toFixed(1), t = (Y(c.pr)-13).toFixed(1);
+        return `<line x1="${x}" y1="${y}" x2="${x}" y2="${t}" stroke="${C.line}" stroke-width="1"/>
+          <circle cx="${x}" cy="${t}" r="2.4" fill="${C.t2}"/>
+          <text x="${x}" y="${(Y(c.pr)-19).toFixed(1)}" text-anchor="middle"
+            font-family="Geist Mono, monospace" font-size="9" fill="${C.t1}" opacity=".7">${c.ini}</text>`;
+      }).join("");
+    }
+    const e = .008;
+    const ang = Math.atan2(Y(Math.min(1,prog+e))-Y(Math.max(0,prog-e)),
+                           X(Math.min(1,prog+e))-X(Math.max(0,prog-e)))*180/Math.PI;
+    g += `<g class="${big?"":"plane"}" transform="translate(${X(prog).toFixed(1)},${(Y(prog)-8).toFixed(1)})
+            rotate(${(90+ang).toFixed(1)}) scale(${big?.9:.62})"><path d="${PLANE}" fill="${C.on}"/></g>`;
+    return g;
+  }
+
+  /* ============ data ============ */
+  const CHEV = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const MODULES = [
+    {code:"JT", name:"Jet Turbine Fundamentals", ch:8, pr:.46, cur:true},
+    {code:"PROP", name:"Propulsion Systems", ch:6, pr:.78},
+    {code:"NAV", name:"Navigation & Charts", ch:7, pr:.52},
+    {code:"AERO", name:"Aerodynamics & Principles of Flight", ch:10, pr:.14}
+  ];
+  const FORM = [{ini:"DK",pr:.72},{ini:"SR",pr:.30},{ini:"IM",pr:.58}];
+  const CREW = [{ini:"DK",name:"Dana K",pos:"JT.06"},{ini:"SR",name:"Sam R",pos:"JT.03"},
+                {ini:"IM",name:"Iyad M",pos:"JT.05"}];
+  const MSGS = [["Dana","the compressor stall bit at 6:12 finally clicked"],
+                ["Sam","wait — is that the same thing as surge?"],
+                ["Dana","no. surge is the whole thing reversing, stall is local"]];
+  const SOCIAL = {
+    quiet:{cells:[], desc:"You can see how busy it is. That's all — no band, no names, no chat."},
+    crew: {cells:["form","wing"], desc:"Your formation and your wingman appear below the modules."},
+    open: {cells:["form","wing","freq"], desc:"Everything, including the module chat."}
+  };
+  const VOICES = {
+    wingman:{name:"Wingman", desc:"A coworker on the same shift. Notices you're here, never what you scored.",
+             sample:"“Best hours are yours.”"},
+    hermit: {name:"The Hermit", desc:"Small. Green. Far too interested in you. Speaks backwards and knows things he has no business knowing.",
+             sample:"“Watching, I have been. Curious, you are.”"},
+    control:{name:"Control", desc:"The tower. You're on the field, they're a hundred feet up, watching.",
+             sample:"“Your hangar's the only one still lit.”"}
+  };
+
+  /* ============ render ============ */
+  const cellForm = () => `<div class="cell">
+      <div class="cellhead">Formation · Jet Turbine Fundamentals</div>
+      <svg class="formsvg" id="formsvg" aria-hidden="true"></svg>
+      <div class="formlist">
+        <span class="fm"><span class="av">YOU</span><span><span class="fmname">You</span>
+          <span class="fmpos">JT.04</span></span></span>
+        ${CREW.map(p => `<span class="fm"><span class="av dim">${p.ini}</span>
+          <span><span class="fmname">${p.name}</span> <span class="fmpos">${p.pos}</span></span></span>`).join("")}
+      </div></div>`;
+  const cellWing = () => `<div class="cell"><div class="cellhead">Your wingman</div>
+      <div class="cop"><span class="av">NH</span>
+        <span><span class="copname">Nadia H</span>
+        <div class="copwhy">Also on Jet Turbine — two chapters back.</div></span></div>
+      <div class="copmeta">Flown together 4 times</div>
+      <button class="pill" type="button">Fly together &nbsp;›</button></div>`;
+  const cellFreq = () => `<div class="cell"><div class="cellhead">Frequency</div>
+      <div class="freqhead"><span class="mcode">JT</span>
+        <span class="freqname">Jet Turbine Fundamentals</span></div>
+      <div class="msgs">${MSGS.map(([n,m]) => `<div class="msg"><b>${n}</b> ${m}</div>`).join("")}
+        <div class="tick">3 NEW · QUIET SINCE 21:40</div></div>
+      <div class="compose"><span>Message JT…</span><i class="send"></i></div></div>`;
+  const CELLS = {form:cellForm, wing:cellWing, freq:cellFreq};
+
+  function drawHome(){
+    $("rail").innerHTML = MODULES.map((m,i) =>
+      `<button class="mod" type="button" data-i="${i}">
+        <div class="modin">
+          <div class="mcodeline"><span class="mcode">${m.code}</span>
+            ${m.cur ? '<span class="mcur">CURRENT</span>' : CHEV}</div>
+          <div class="mname">${m.name}</div>
+          <svg class="prof" aria-hidden="true"></svg>
+        </div></button>`).join("");
+    const P = SOCIAL[social];
+    $("slot").innerHTML = P.cells.length
+      ? `<div class="sechead"><h2>Back on the ground</h2>
+           <button class="more" type="button">Ready Room ›</button></div>
+         <div class="crew n${P.cells.length}">${P.cells.map(k => CELLS[k]()).join("")}</div>`
+      : "";
+  }
+
+  function paint(){
+    document.querySelectorAll(".mod").forEach(el => {
+      const svg = el.querySelector(".prof");
+      const W = Math.round(svg.clientWidth), H = Math.round(svg.clientHeight);
+      if(!W || !H) return;
+      const m = MODULES[Number(el.dataset.i)];
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("preserveAspectRatio","none");
+      svg.innerHTML = profile(W,H,m.pr,m.ch,null,false);
+    });
+    const fs = $("formsvg");
+    if(fs){ const W = Math.round(fs.clientWidth), H = Math.round(fs.clientHeight);
+      if(W && H){ fs.setAttribute("viewBox",`0 0 ${W} ${H}`);
+        fs.setAttribute("preserveAspectRatio","none");
+        fs.innerHTML = profile(W,H,.46,8,FORM,true); } }
+    const sp = $("specprof");
+    if(sp && !sp.closest("[hidden]")){
+      const W = Math.round(sp.clientWidth)||200, H = Math.round(sp.clientHeight)||38;
+      sp.setAttribute("viewBox",`0 0 ${W} ${H}`);
+      sp.setAttribute("preserveAspectRatio","none");
+      sp.innerHTML = profile(W,H,.78,6,null,false)
+        .replace(/class="reveal"/g,'').replace(/class="plane"/g,'');
+    }
+    const first = document.querySelector(".mod");
+    if(first) $("modnote").textContent =
+      `4 active · ${Math.round(first.getBoundingClientRect().width)}px per card`;
+  }
+
+  function apply(){ tokens(); requestAnimationFrame(paint); }
+
+  /* ============ livery picker ============ */
+  const band = l => l.aurora
+    ? "linear-gradient(145deg, oklch(.24 .05 250) 0 34%, oklch(.72 .19 156) 34% 70%, oklch(.60 .16 316) 70% 100%)"
+    : `linear-gradient(145deg, ${at(l,.08,1)} 0 34%, ${at(l,l.midAt,1.6)} 34% 70%, ${at(l,.92,1)} 70% 100%)`;
+
+  $("livgrid").innerHTML = LIVERIES.map((l,i) =>
+    `<button class="liv" type="button" data-i="${i}" aria-pressed="${i===0}"
+             aria-label="${l.name}" title="${l.name}">
+       <i style="background:${band(l)}"></i></button>`).join("");
+
+  function livMeta(i){
+    const L = LIVERIES[i];
+    $("livname").textContent = L.name;
+    $("livdesc").textContent = L.desc;
+    $("livanchors").textContent = L.anchors;
+  }
+  $("livgrid").addEventListener("click", e => {
+    const b = e.target.closest(".liv"); if(!b) return;
+    liv = Number(b.dataset.i); preview = null; S.liv = liv; save();
+    document.querySelectorAll(".liv").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    livMeta(liv); apply();
+  });
+
+  /* ============ tabs ============ */
+  const TABS = [["tab-you","p-you"],["tab-prefs","p-prefs"],["tab-look","p-look"]];
+  function selectTab(id){
+    TABS.forEach(([t,p]) => {
+      const on = t === id;
+      $(t).setAttribute("aria-selected", String(on));
+      $(t).tabIndex = on ? 0 : -1;
+      $(p).hidden = !on;
+    });
+    if($("sw-turb").getAttribute("aria-checked") === "true"){
+      const p = $(TABS.find(([t]) => t === id)[1]);
+      p.classList.remove("turb"); void p.offsetWidth; p.classList.add("turb");
+    }
+    requestAnimationFrame(paint);
+  }
+  TABS.forEach(([t]) => $(t).addEventListener("click", () => selectTab(t)));
+  document.querySelector(".tabs").addEventListener("keydown", e => {
+    const i = TABS.findIndex(([t]) => t === document.activeElement.id);
+    if(i < 0) return;
+    let n = null;
+    if(e.key === "ArrowRight") n = (i+1) % TABS.length;
+    if(e.key === "ArrowLeft")  n = (i-1+TABS.length) % TABS.length;
+    if(e.key === "Home") n = 0;
+    if(e.key === "End")  n = TABS.length-1;
+    if(n == null) return;
+    e.preventDefault(); selectTab(TABS[n][0]); $(TABS[n][0]).focus();
+  });
+
+  /* ============ views ============ */
+  function show(view){
+    const home = view === "home";
+    $("viewHome").hidden = !home;
+    $("viewProfile").hidden = home;
+    if($("sw-turb").getAttribute("aria-checked") === "true"){
+      const el = home ? $("viewHome") : $("viewProfile");
+      el.classList.remove("turb"); void el.offsetWidth; el.classList.add("turb");
+    }
+    window.scrollTo({top:0, behavior:"instant"});
+    requestAnimationFrame(paint);
+  }
+  $("back").addEventListener("click", () => show("home"));
+
+  /* ---- account menu ---- */
+  const menu = $("menu"), avbtn = $("avbtn");
+  function openMenu(open){
+    menu.hidden = !open;
+    avbtn.setAttribute("aria-expanded", String(open));
+    if(open) menu.querySelector("button").focus();
+  }
+  avbtn.addEventListener("click", e => { e.stopPropagation(); openMenu(menu.hidden); });
+  document.addEventListener("click", e => {
+    if(!menu.hidden && !menu.contains(e.target) && e.target !== avbtn) openMenu(false);
+  });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape" && !menu.hidden){ openMenu(false); avbtn.focus(); }
+  });
+  menu.addEventListener("keydown", e => {
+    const items = [...menu.querySelectorAll("button")];
+    const i = items.indexOf(document.activeElement);
+    if(e.key === "ArrowDown"){ e.preventDefault(); items[(i+1) % items.length].focus(); }
+    if(e.key === "ArrowUp"){ e.preventDefault(); items[(i-1+items.length) % items.length].focus(); }
+  });
+  const GO = { you:"tab-you", prefs:"tab-prefs", look:"tab-look" };
+  menu.addEventListener("click", e => {
+    const b = e.target.closest("button"); if(!b) return;
+    const go = b.dataset.go;
+    openMenu(false);
+    if(GO[go]){ show("profile"); selectTab(GO[go]); }
+    else { show("profile"); selectTab("tab-you"); }
+  });
+
+  /* ---- what other people see ---- */
+  function pubName(){
+    const on = $("sw-user").getAttribute("aria-checked") === "true";
+    const u = ($("f-user").value || "").trim() || "hassan.a";
+    const real = ($("f-first").value || "").trim() || "Hassan Alrefaei";
+    $("pubdesc").innerHTML = on
+      ? `Everyone else sees <b class="mono">@${u}</b>`
+      : `Everyone else sees <b class="mono">${real}</b> — most people don't`;
+    document.querySelectorAll("[data-pub]").forEach(el => el.textContent = on ? "@" + u : real);
+  }
+  $("sw-user").addEventListener("click", () => setTimeout(pubName, 0));
+  $("f-user").addEventListener("input", () => { S.user = $("f-user").value; save(); pubName(); });
+  $("f-first").addEventListener("input", () => { S.real = $("f-first").value; save(); pubName(); });
+  $("f-call").addEventListener("input", () => { S.callname = $("f-call").value; save(); greet(true); });
+
+  /* ---- your own picture ---- */
+  const bigav = $("bigav"), avtop = $("avtop");
+  $("avup").addEventListener("click", () => $("avfile").click());
+  $("avfile").addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      S.photo = r.result; save();
+      bigav.style.backgroundImage = `url(${r.result})`; bigav.textContent = "";
+      avtop.style.backgroundImage = `url(${r.result})`; avtop.innerHTML = "";
+      avtop.classList.add("has");
+      $("avreset").hidden = false;
+    };
+    r.readAsDataURL(f);
+  });
+  $("avreset").addEventListener("click", () => {
+    S.photo = ""; save();
+    bigav.style.backgroundImage = ""; bigav.textContent = "HA";
+    avtop.style.backgroundImage = ""; avtop.classList.remove("has");
+    avtop.innerHTML = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.7"/>
+      <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" stroke-width="1.7"
+            stroke-linecap="round"/></svg>`;
+    $("avfile").value = ""; $("avreset").hidden = true;
+  });
+
+  /* ============ segmented controls ============ */
+  function segment(id, fn){
+    $(id).addEventListener("click", e => {
+      const b = e.target.closest("button"); if(!b) return;
+      document.querySelectorAll("#"+id+" button").forEach(x =>
+        x.setAttribute("aria-pressed", String(x === b)));
+      fn(b);
+    });
+  }
+  segment("mode", b => {
+    mode = b.dataset.m; S.mode = mode; save();
+    $("modedesc").textContent = mode === "day" ? "Cream, whatever the livery. Only the light and the accents carry it."
+      : mode === "night" ? "Dark. The room is lit by the livery."
+      : "Follows your device.";
+    apply();
+  });
+  segment("scale", b => { S.scale = b.dataset.sc; save();
+    $("deck").style.setProperty("--scale", b.dataset.sc); });
+  segment("social", b => { social = b.dataset.s; S.social = social; save(); $("socdesc").textContent = SOCIAL[social].desc;
+    drawHome(); requestAnimationFrame(paint); });
+  segment("voice", b => {
+    voice = b.dataset.v; S.voice = voice; const V = VOICES[voice];
+    $("voicename").textContent = V.name;
+    $("voicedesc").textContent = V.desc;
+    $("voicesample").textContent = V.sample;
+    save(); greet(true);
+  });
+
+  /* ============ switches ============ */
+  document.querySelectorAll('.sw').forEach(sw => {
+    sw.addEventListener("click", () => {
+      const on = sw.getAttribute("aria-checked") !== "true";
+      sw.setAttribute("aria-checked", String(on));
+      if(sw.id === "sw-calm"){  document.body.classList.toggle("calm", on); S.calm = on; }
+      if(sw.id === "sw-plain"){ document.documentElement.style.setProperty("--ui", on ? "var(--plain)" : "var(--sans)"); S.plain = on; }
+      if(sw.id === "sw-grain"){ $("deck").style.setProperty("--grain", on ? .05 : 0); S.grain = on; }
+      if(sw.id === "sw-turb")  S.turb = on;
+      if(sw.id === "sw-user")  S.useUser = on;
+      save();
+    });
+  });
+
+  /* ============ runway lights ============ */
+  const LAMPS = 13;
+  $("runway").innerHTML = Array.from({length:LAMPS}, (_,i) =>
+    `<i class="${i===0 || i===LAMPS-1 ? "bar" : ""}"></i>`).join("");
+  const lamps = [...$("runway").children];
+  function runway(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const live = max > 40;
+    $("runway").classList.toggle("on", live);
+    if(!live) return;
+    const p = Math.min(1, Math.max(0, window.scrollY / max));
+    const here = Math.round(p * (LAMPS - 1));
+    const left = LAMPS - 1 - here;
+    lamps.forEach((el,i) => {
+      el.classList.toggle("here", i === here);
+      el.classList.toggle("near", i > here && left <= 3);
+    });
+  }
+  window.addEventListener("scroll", runway, {passive:true});
+  window.addEventListener("resize", runway);
+  new ResizeObserver(runway).observe(document.body);
+
+  /* ============ boot ============ */
+  window.addEventListener("resize", paint);
+  $("deck").style.setProperty("--stars-a", dotTile(30, 20260824, 1.4, .80));
+  $("deck").style.setProperty("--stars-b", dotTile(20, 77003311, 1.0, .58));
+
+
+  /* ================= the voice =================
+     Line, pool, flags. pool: a = arrival, c = continuation, x = either.
+     flags: n = carries {name}, t = a tool line.                          */
+  const W = [
+    [4,[["First one in. Show-off.","a",""],
+        ["Early again. I like that about you.","a",""],
+        ["Of course it's you, {name}. It's always you at this hour.","a","n"],
+        ["Early starts suit you.","x",""],
+        ["Coffee hasn't even brewed, yet here you are.","a",""],
+        ["Nobody's opened the hangar doors yet.","x",""],
+        ["Kettle's on. I knew you'd be in.","a",""],
+        ["It's obscene, being this awake, {name}.","x","n"],
+        ["Quiet enough to hear yourself think. Make the most of it.","x",""],
+        ["Nobody to impress at this hour. You're still doing it.","c",""],
+        ["You've been at this a while and it's barely morning.","c",""]]],
+    [7,[["Nobody else read the briefing. Just us, as usual.","a",""],
+        ["Let's make a dent.","a",""],
+        ["Exams don't stand a chance at this rate.","x",""],
+        ["Torque wrench, when you get a second.","c","t"],
+        ["Right. Coffee's in, brain's in. Go.","a",""],
+        ["You've got that look, {name}. The one that means you've read ahead.","a","n"],
+        ["Best part of the day and you're spending it here. Respect.","x",""],
+        ["In you come. I'll pretend I wasn't waiting.","a",""],
+        ["Two coffees in and you're still ahead of me.","c",""],
+        ["Whatever's got into you this morning, keep it.","c",""]]],
+    [12,[["You skipped lunch again, didn't you.","c",""],
+        ["This is the hour that gets people. Never seems to get you.","x",""],
+        ["Long day, {name}. Suits you, somehow.","c","n"],
+        ["Nice having you around.","x",""],
+        ["Pass me that ratchet, would you.","c","t"],
+        ["Everyone's gone quiet. You haven't.","c",""],
+        ["Two o'clock. The hour where good people give up.","x",""],
+        ["You're still sharp, {name}. How.","c","n"],
+        ["Come on. One more before the light goes.","c",""],
+        ["I'd have folded by now. You clearly wouldn't.","c",""],
+        ["Afternoon. Good — I needed the company.","a",""],
+        ["Starting now? Bold. I like it.","a",""]]],
+    [17,[["Day shift's out the door. Better company now.","a",""],
+        ["Of everyone who could've stayed, I'm glad it's you.","c",""],
+        ["Best hours are yours.","x",""],
+        ["Hold this for me a moment.","c","t"],
+        ["Car park's emptying. Ours is nearly the last one out there.","x",""],
+        ["Long day for both of us, {name}.","c","n"],
+        ["This is when the good work happens. Just us who know it.","x",""],
+        ["Stayed, then. Thought you might.","c",""],
+        ["They've all gone for food. You didn't even look up.","c",""],
+        ["Light's going. Doesn't seem to bother you.","c",""],
+        ["Evening. You've picked the good half of the day.","a",""],
+        ["Just in? Everyone else is on their way out.","a",""]]],
+    [19,[["Late shifts suit you. Don't tell anyone I said that.","x",""],
+        ["Hangar's better at this hour. Fewer opinions.","x",""],
+        ["Radio's off, kettle's on. Usual arrangement.","a",""],
+        ["You and me and a very quiet hangar, {name}.","x","n"],
+        ["Nobody's expecting anything from you at this hour. Do it anyway.","a",""],
+        ["I like this part of the shift. Mostly the company.","x",""],
+        ["Long past knocking-off time. Neither of us noticed.","c",""],
+        ["Just us and the standby lighting, {name}.","x","n"],
+        ["There's no overtime for this, you know.","c",""],
+        ["Best conversations happen late night. Not that we're talking… or are we?","x",""]]],
+    [0,[["There's maybe three of us in the country doing this right now.","x",""],
+        ["Small hours suit you.","x",""],
+        ["Coffee? I'll hold your place.","c",""],
+        ["I'll stay up, {name}.","c","n"],
+        ["Shine that torch over here a second.","c","t"],
+        ["Torch is by your elbow if you need it.","x","t"],
+        ["Nothing good gets decided at this hour. Studying's fine, though.","x",""],
+        ["Still with me, {name}?","c","n"],
+        ["If anyone asks, we were never here.","x",""],
+        ["One more, then I'm cutting you off.","c",""]]]
+  ];
+  const HRM = [
+    [4,[["Awake, the field is not. Awake, you are.","x",""],
+        ["Early, you come. Reasons, you have.","x",""],
+        ["Dark it is. Dark it stays a while. Begin anyway.","x",""],
+        ["The kettle knows you by now, {name}.","x","n"],
+        ["Sleep, you traded. Wisely? We shall see.","x",""],
+        ["Company at this hour, rare it is. Welcome, therefore.","x",""],
+        ["First in, you are. Noticed, it is.","x",""],
+        ["Cold, the hangar. Warm, the work.","x",""],
+        ["Again, you are here. A pattern, this has become. Fond of it, I am.","x",""],
+        ["The torch, pass me. Old eyes, I have.","x","t"]]],
+    [7,[["Brighter, the morning is, with you in it. Coincidence, surely.","x",""],
+        ["Fresh, the mind is. Waste it, do not.","x",""],
+        ["The manual, you have read. The engine, you have not yet asked.","x",""],
+        ["Waiting, I was not. Watching the door, I was.","x",""],
+        ["Ready, you look, {name}. Ready, you may even be.","x","n"],
+        ["Difficult it is not. Unfamiliar it is. Different, those two.","x",""],
+        ["Coffee first. Wisdom second. In that order, always.","x",""],
+        ["Questions, you bring. Good. Answers are cheap.","x",""],
+        ["Begin. Perfect, the beginning never is.","x",""]]],
+    [12,[["Tired, you say. Finished, you are not.","x",""],
+        ["Halfway, you are. Halfway is where most stop.","x",""],
+        ["The hard part, you have reached. Reached it, most never do.","x",""],
+        ["Slower, you have become. Deeper, also.","x",""],
+        ["Rest, the mind must. Ten minutes, {name}. Then again.","x","n"],
+        ["Wrong, you were. Learned, you therefore have.","x",""],
+        ["Repeat it, you must. Not because dull. Because deep.","x",""],
+        ["Leave, you should. Stay, you will. Pleased, I am.","x",""]]],
+    [17,[["Gone, the others are. Stayed, you have.","x",""],
+        ["Chosen, this hour was. By you.","x",""],
+        ["The day ends. The learning does not care.","x",""],
+        ["Tired eyes see differently. Sometimes better.","x",""],
+        ["Evening work sticks. Why, nobody knows.","x",""],
+        ["Gone home, everyone has. Better company remains.","x",""],
+        ["Late, it is becoming. Right, it also is.","x",""],
+        ["One more, you said. Believed you, I did not.","x",""]]],
+    [19,[["Dark outside. Bright in here.","x",""],
+        ["Late, the hour. Sharp, the mind. Rare, this pairing.","x",""],
+        ["Alone, you study. Alone, you are not.","x",""],
+        ["Alone with you, the hangar is. Complaining, I am not.","x",""],
+        ["The night forgives mistakes, {name}.","x","n"],
+        ["Quiet, the hangar. Loud, your questions.","x",""],
+        ["Stop, you should. Stop, you will not.","x",""],
+        ["Late, it grows. Leave, I could. Left, I have not.","x",""],
+        ["Owed nothing, you are. Give it anyway, you do.","x",""],
+        ["Wisdom comes at night. So does poor judgement. Both, welcome.","x",""]]],
+    [0,[["Midnight passed. Noticed, you did not.","x",""],
+        ["Few are awake. Fewer are working. Glad, I am, that it is you.","x",""],
+        ["Sleep is a system too, {name}. Unserviceable, yours is.","x","n"],
+        ["Foolish, this hour is. Fond of it, I am.","x",""],
+        ["The answer wants you awake. Awake, barely, you are.","x",""],
+        ["Push on, you may. Forgive yourself tomorrow, you must.","x",""],
+        ["Three in the morning teaches things noon cannot.","x",""],
+        ["Stubborn, you are. A compliment, that was.","x",""],
+        ["The light, hold it steady. Closer, come.","x","t"]]]
+  ];
+  const LINES = { wingman:W, hermit:HRM };
+
+  /* bands are device-local and gapless: 4-7, 7-12, 12-17, 17-19, 19-24, 0-4 */
+  function bandKey(h){
+    if(h >= 4  && h < 7)  return 4;
+    if(h >= 7  && h < 12) return 7;
+    if(h >= 12 && h < 17) return 12;
+    if(h >= 17 && h < 19) return 17;
+    if(h >= 19) return 19;
+    return 0;
+  }
+  const bandLines = (v,b) => (LINES[v].find(x => x[0] === b) || LINES[v][0])[1];
+
+  /* shuffle-bag, never random: every line shows before any repeat */
+  function deal(v, b, pool){
+    const all = bandLines(v,b);
+    const name = (S.callname || "").trim();
+    const idx = all.map((_,i) => i).filter(i => {
+      if(!name && all[i][2].includes("n")) return false;      // no name, no name lines
+      return pool === "x" ? true : all[i][1] === pool || all[i][1] === "x";
+    });
+    if(!idx.length) return deal(v, b, "x");
+    const key = v + "|" + b + "|" + pool;
+    let bag = S.bags[key];
+    if(!bag || !bag.o.length || bag.i >= bag.o.length || bag.o.length !== idx.length){
+      bag = { o: shuffle(idx.slice(), all, S.last && S.last.key === key ? S.last.i : -1), i: 0 };
+    }
+    const pick = bag.o[bag.i++];
+    S.bags[key] = bag;
+    S.last = { key, i: pick };
+    return all[pick][0].replace("{name}", name);
+  }
+  function shuffle(a, all, avoidFirst){
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    /* no two tool lines and no two name lines adjacent */
+    for(let i = 1; i < a.length; i++){
+      const f1 = all[a[i-1]][2], f2 = all[a[i]][2];
+      if((f1.includes("t") && f2.includes("t")) || (f1.includes("n") && f2.includes("n"))){
+        const k = (i + 2) % a.length;
+        [a[i], a[k]] = [a[k], a[i]];
+      }
+    }
+    if(a[0] === avoidFirst && a.length > 1){ [a[0], a[1]] = [a[1], a[0]]; }
+    return a;
+  }
+
+  const DWELL = 2*60*1000;      /* home → chapter → home keeps the same line */
+  function greet(force){
+    const now = Date.now(), h = new Date().getHours(), b = bandKey(h);
+    const away = S.seen ? now - S.seen : Infinity;
+    const sameBand = S.band === b;
+    const fresh = force || !sameBand || !S.line || S.voice !== voice ||
+                  (now - (S.dealt || 0)) > DWELL;
+    if(fresh){
+      const pool = away > 8*3600e3 ? "a" : away < 2*3600e3 ? "c" : "x";
+      S.line = deal(voice, b, pool);
+      S.dealt = now; S.band = b; S.voice = voice;
+    }
+    S.seen = now;
+    save();
+    $("greet").textContent = S.line;
+  }
+
+  /* ---- restore ---- */
+  (function restore(){
+    document.querySelectorAll(".liv").forEach(x =>
+      x.setAttribute("aria-pressed", String(Number(x.dataset.i) === liv)));
+    livMeta(liv);
+    const press = (id, attr, val) => document.querySelectorAll("#"+id+" button").forEach(x =>
+      x.setAttribute("aria-pressed", String(x.dataset[attr] === val)));
+    press("mode","m",mode); press("social","s",social);
+    press("voice","v",voice); press("scale","sc",S.scale);
+    $("deck").style.setProperty("--scale", S.scale);
+    $("modedesc").textContent = mode === "day"
+      ? "Cream, whatever the livery. Only the light and the accents carry it."
+      : mode === "night" ? "Dark. The room is lit by the livery." : "Follows your device.";
+    $("socdesc").textContent = SOCIAL[social].desc;
+    const V = VOICES[voice];
+    $("voicename").textContent = V.name; $("voicedesc").textContent = V.desc;
+    $("voicesample").textContent = V.sample;
+    $("f-first").value = S.real; $("f-user").value = S.user; $("f-call").value = S.callname;
+    $("sw-user").setAttribute("aria-checked", String(S.useUser));
+    const sset = (id,v) => $(id).setAttribute("aria-checked", String(v));
+    sset("sw-calm",S.calm); sset("sw-plain",S.plain);
+    sset("sw-turb",S.turb); sset("sw-grain",S.grain);
+    document.body.classList.toggle("calm", S.calm);
+    document.documentElement.style.setProperty("--ui", S.plain ? "var(--plain)" : "var(--sans)");
+    $("deck").style.setProperty("--grain", S.grain ? .05 : 0);
+    if(S.photo){
+      $("bigav").style.backgroundImage = `url(${S.photo})`; $("bigav").textContent = "";
+      $("avtop").style.backgroundImage = `url(${S.photo})`; $("avtop").innerHTML = "";
+      $("avtop").classList.add("has"); $("avreset").hidden = false;
+    }
+  })();
+
+  livMeta(liv); drawHome(); apply(); pubName(); greet(); requestAnimationFrame(runway);
+})();
+</script>

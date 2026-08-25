@@ -13,6 +13,7 @@ import Home from "./components/Home.jsx";
 import ReadyRoom from "./components/ReadyRoom.jsx";
 import ModulesPage from "./components/ModulesPage.jsx";
 import RootNav from "./components/RootNav.jsx";
+import RunwayLights from "./components/RunwayLights.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -55,8 +56,8 @@ function AppInner() {
   const view = route.name === "module" || route.name === "chapter" ? "module" : "hub";
   const settingsPage =
     route.name === "signin" ? "auth"
-    : route.name === "logbook" ? "progress"
-    : route.name === "saved" ? "bookmarks"
+    : route.name === "logbook" && flags["page.logbook"] ? "progress"
+    : route.name === "saved" && flags["page.bookmarks"] ? "bookmarks"
     : route.name === "settings" ? (route.page === "index" ? "about" : route.page)
     : null;
   const tab = route.tab === "pdf" ? "pdf" : "chapters";
@@ -304,7 +305,7 @@ function AppInner() {
     >
     <UsernameGate>
     <FirstFlightGate>
-      {boarding && (
+      {flags["chrome.boarding"] && boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
             <div className="boarding-pass-top">
@@ -328,7 +329,7 @@ function AppInner() {
           </div>
         </div>
       )}
-      {paToast && <div className="pa-toast">{paToast}</div>}
+      {flags["chrome.patoast"] && paToast && <div className="pa-toast">{paToast}</div>}
       {storageWarning && (
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
@@ -361,21 +362,23 @@ function AppInner() {
         </div>
       </header>
 
-      <RootNav
-        current={
-          route.name === "ready" ? "ready"
-          : route.name === "logbook" ? "logbook"
-          : route.name === "modules" ? "modules"
-          : route.name === "home" ? "home" : null
-        }
-        readyWarm={onFrequency > 0}
-        onGo={(id) =>
-          go(id === "ready" ? routePath.ready()
-            : id === "logbook" ? routePath.logbook()
-            : id === "modules" ? routePath.modules()
-            : routePath.home())
-        }
-      />
+      {flags["nav.root"] && (
+        <RootNav
+          current={
+            route.name === "ready" ? "ready"
+            : route.name === "logbook" ? "logbook"
+            : route.name === "modules" ? "modules"
+            : route.name === "home" ? "home" : null
+          }
+          readyWarm={onFrequency > 0}
+          onGo={(id) =>
+            go(id === "ready" ? routePath.ready()
+              : id === "logbook" ? routePath.logbook()
+              : id === "modules" ? routePath.modules()
+              : routePath.home())
+          }
+        />
+      )}
       {settingsPage === "auth" ? (
         <main className="content content-taxi">
           <AuthPage onBack={() => go(-1)} />
@@ -442,7 +445,7 @@ function AppInner() {
             onGrain={setGrain}
           />
         </main>
-      ) : route.name === "modules" ? (
+      ) : route.name === "modules" && flags["module.interior"] ? (
         <main className="content content-taxi">
           <ModulesPage
             activeModuleCode={activeModuleCode}
@@ -451,7 +454,7 @@ function AppInner() {
             onMakeActive={(code) => setPreferredModuleCode(code)}
           />
         </main>
-      ) : route.name === "ready" ? (
+      ) : route.name === "ready" && flags["social.readyroom"] ? (
         <main className="content content-taxi">
           <ReadyRoom
             moduleCode={route.moduleCode}
@@ -459,7 +462,7 @@ function AppInner() {
             onOpenChannel={(m) => go(routePath.ready(m))}
           />
         </main>
-      ) : view === "hub" ? (
+      ) : view === "hub" || !flags["module.interior"] ? (
         /* Step 1 — the Flight Deck owns its whole column: it paints its own
            ground and carries its own light layers, so the shell's centred,
            padded .content would crop them. */
@@ -489,6 +492,7 @@ function AppInner() {
           />
         </main>
       )}
+      <RunwayLights />
     </FirstFlightGate>
     </UsernameGate>
       <style>{`

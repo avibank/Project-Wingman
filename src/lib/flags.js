@@ -19,6 +19,16 @@ export const FLAGS = [
   { id: "social.frequency", label: "Frequency", note: "The channel preview and the Open frequency preset." },
   { id: "voice.characters", label: "Voices", note: "Choosing who greets you." },
   { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield." },
+  // The kill pass. Each of these hides an entry point; the route and the code
+  // stay put, so any of it is one switch away from coming back.
+  { id: "nav.root", label: "Bottom nav", note: "Study · Modules · Logbook · Ready Room.", off: true },
+  { id: "chrome.boarding", label: "Boarding pass", note: "The full-screen overlay on load.", off: true },
+  { id: "chrome.patoast", label: "PA toast", note: "The cabin-crew announcement on theme change.", off: true },
+  { id: "module.interior", label: "Module interior", note: "The hub, chapters, chapter view, quiz and comments.", off: true },
+  { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", off: true },
+  { id: "page.logbook", label: "Logbook", note: "The logbook page.", off: true },
+  { id: "page.bookmarks", label: "Saved", note: "Bookmarks and flashcards.", off: true },
+  { id: "appearance.grain", label: "Grain switch", note: "The grain control in Appearance. The grain itself stays on.", off: true },
 ];
 
 const BY_ID = Object.fromEntries(FLAGS.map((f) => [f.id, f]));
@@ -31,6 +41,9 @@ const KEY = "pw-flags";
 // so the set is complete and so they get deleted with the others. The rest
 // have a real off state and are admin-only.
 export function flagDefault(id, isAdmin) {
+  // `off` is a hidden surface: off for everyone including admin, until it is
+  // designed. `everyone` is the opposite — on for all, no off state left.
+  if (BY_ID[id]?.off === true) return false;
   return BY_ID[id]?.everyone === true || !!isAdmin;
 }
 

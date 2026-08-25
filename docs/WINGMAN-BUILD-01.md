@@ -14,19 +14,22 @@ re-derive anything from the descriptions, do not round numbers, do not "improve"
 
 | File | What it is |
 |---|---|
-| `profile.html` | **Primary.** The app shell, the finished home page, and the three-tab profile. |
+| `wingman-poc.html` | **Primary.** The app shell, the finished home page, and the three-tab profile. A working proof of concept: when this build is done the site should render identically to it. |
 | `livery-engine.html` | The colour and lighting bench. The place to check a livery renders correctly. |
 | `wingman-voices.md` | The greeting copy and its rotation spec. |
 
-`profile.html` carries a **trimmed three-line-per-band greeting array** for demo purposes.
-Ignore it. The real copy is `wingman-voices.md`.
+`wingman-poc.html` carries the **full greeting sets and the real rotation engine** — port the
+engine verbatim. `wingman-voices.md` remains the source of truth for the **copy**: where a line
+in the POC array and a line in the `.md` disagree, the `.md` wins.
 
-Every other HTML file from this project — `social-dial.html`, `crew-strip.html`,
+Every other HTML file from this project — `profile.html`, `social-dial.html`, `crew-strip.html`,
 `rail-options.html`, `module-rail.html`, `module-cards.html`, `flight-deck.html`,
-`progress-marks.html` — is **superseded**. Do not use them.
+`progress-marks.html` — is **superseded** and is deliberately not shipped. `wingman-poc.html`
+replaces `profile.html` entirely. If this document refers to a file that was not sent, it is
+this document that is out of date — ask, do not substitute the prose.
 
-Both reference files include a bench: a sticky control bar, livery chips, preset switchers,
-explanatory note cards. **Delete all of it.** It exists so a human can flip between states. In
+Where a reference file includes a bench — a sticky control bar, livery chips, preset switchers,
+explanatory note cards — **delete all of it.** It exists so a human can flip between states. In
 the app, livery and preset come from user settings.
 
 ---
@@ -518,7 +521,7 @@ tall, same border, same glass fill, so they read as a set.
 The avatar shows the user's photo when set, initials otherwise, and its ring lights only when
 the menu is open.
 
-The windsock in `profile.html` is the **old** version — it deforms as well as rotating. The
+The windsock in `wingman-poc.html` is the **old** version — it deforms as well as rotating. The
 agreed design is a rigid three-band cartoon sock swaying four or five degrees about a visible
 collar, resting slightly below horizontal. **That change is not built. Port what's in the file
 and leave it; do not invent the new one.**
