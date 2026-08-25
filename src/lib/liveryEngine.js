@@ -175,39 +175,6 @@ export const CREAM = {
 };
 
 
-// ------------------------------------------------------------- contrast floor
-// oklch -> sRGB, only accurate enough to hold a contrast floor.
-function srgb(L, C, hDeg) {
-  const h = hDeg * Math.PI / 180, a = C * Math.cos(h), b = C * Math.sin(h);
-  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-  const s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
-  return [
-    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
-  ].map((v) => Math.min(1, Math.max(0, v)));
-}
-const relLum = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
-function contrast(a, b) {
-  const [x, y] = [relLum(a), relLum(b)].sort((p, q) => q - p);
-  return (x + 0.05) / (y + 0.05);
-}
-
-// §11 asks for a contrast check on every livery in both modes, "especially
-// Runway green". It fails: §2.4's day accent sits at L .560, and a cream label
-// on it measures 3.94:1 on Runway and under 4.5 on five of the seven. Rather
-// than retune §2.4 — that accent is also the hairline, the rim, the travelled
-// line and the radar sweep, where .560 is right — filled controls take their
-// own token, which is --active at night and the same hue walked down until a
-// cream label clears AA in day. The largest walk is .032 in lightness.
-function fillFloor(L0, C, H, label) {
-  for (let l = L0; l > 0.2; l -= 0.002) {
-    if (contrast(label, srgb(l, C, H)) >= 4.5) return l;
-  }
-  return L0;
-}
-
 /**
  * Every custom property the deck needs, for one livery in one variant.
  * Returns { vars, C, surf } — `C` is the solid (un-glassed) semantic map, which
@@ -238,14 +205,11 @@ export function deckVars(liveryId, variant = "night") {
   const vars = {};
   Object.entries(C).forEach(([k, v]) => { vars["--" + k] = v; });
 
-  // The one accent that carries a --ground-coloured label on top of it.
-  if (night) {
-    vars["--active-fill"] = C.active;
-  } else {
-    const fillC = Cm * 1.55;
-    const g = srgb(0.966, 0.010, 85);
-    vars["--active-fill"] = `oklch(${fillFloor(0.560, fillC, H, g).toFixed(3)} ${fillC.toFixed(3)} ${H.toFixed(1)})`;
-  }
+  // Filled controls carry --ground text. §3.4's day accent sits at .560, which
+  // fails AA on the higher-chroma liveries, so fills take a darker step.
+  vars["--active-fill"] = night
+    ? surf[8]
+    : `oklch(.455 ${(Cm * 1.62).toFixed(3)} ${H.toFixed(1)})`;
 
   // Panels are glass, so light passes through them. The ground stays solid
   // because it is the room, not a surface in it.

@@ -18,9 +18,8 @@ import { useFlags } from "../lib/flags.js";
 const ICON = {
   person: (
     <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="10" cy="7" r="2.9" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4.2 16.5c0-2.8 2.6-4.6 5.8-4.6s5.8 1.8 5.8 4.6"
-            stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="10" cy="7" r="3.1" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4 16.2a6 6 0 0 1 12 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
   prefs: (
@@ -167,13 +166,9 @@ function ProfileMenu({ onNavigate }) {
           transition: background .16s, border-color .16s, color .16s; }
         .avbtn:hover { border-color: var(--t3); color: var(--t1); background: var(--raised); }
         .avbtn[aria-expanded="true"] { border-color: var(--active); color: var(--t1); }
-        /* The POC gives .avbtn-face color:var(--ground) unconditionally. In
-           night that reads as a dark glyph on a lighter panel, but in day
-           ground is .966 and panel is .992 and the glyph disappears. The
-           ground colour belongs to the filled state only. */
         .avbtn-face { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
           background-size: cover; background-position: center; font-family: var(--font-mono);
-          font-size: 12px; color: inherit; }
+          font-size: 12px; color: var(--t2); }
         .avbtn-face.has { background-color: var(--active-fill); color: var(--ground); }
         .menu { position: absolute; right: 0; top: 48px; width: 262px; z-index: 40; padding: 7px;
           background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
