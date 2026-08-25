@@ -540,7 +540,6 @@ function AppInner() {
         .app input:not([type="checkbox"]):not([type="radio"]),
         .app select,
         .app textarea { min-height: 44px; }
-        .app, .app *, .app *::before, .app *::after { transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
         *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         ::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
         ::-moz-selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }

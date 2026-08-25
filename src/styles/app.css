@@ -109,6 +109,36 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1;
 }
 
+/* What replaced the blanket transition.
+ *
+ * The shell used to put `transition: background-color, border-color, color` on
+ * `.app *` — every element on every page, whether it could change or not. It
+ * tied any component's own timing on specificity and won on source order, so
+ * it silently overrode the runway trail, the switch knob and the panel height
+ * in three separate rounds, each time without an error.
+ *
+ * The selector is wrapped in :where(), which contributes NOTHING to
+ * specificity. That is the whole point: this is a default, so the barest
+ * component rule outranks it and keeps its own feel. Narrowing the selector
+ * was not enough — the first attempt at this replacement immediately stole the
+ * timings off .liv, .seg button and .menu button, because any .app-prefixed
+ * selector still outranks a bare class.
+ *
+ * The two off-switches below are deliberately NOT in :where(). Those have to
+ * win.
+ */
+:where(.app) :where(a, button, [role="tab"], [role="switch"], [role="menuitem"], summary,
+                    input, select, textarea) {
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app a, .app button, .app [role="tab"], .app [role="switch"], .app [role="menuitem"],
+  .app summary, .app input, .app select, .app textarea { transition: none; }
+}
+.app.smooth-air a, .app.smooth-air button, .app.smooth-air [role="tab"],
+.app.smooth-air [role="switch"], .app.smooth-air [role="menuitem"], .app.smooth-air summary,
+.app.smooth-air input, .app.smooth-air select, .app.smooth-air textarea { transition: none; }
+
 /* §9 — a visible ring at 2px offset 2px on every interactive element. */
 :focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 
