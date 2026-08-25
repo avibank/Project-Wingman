@@ -141,17 +141,17 @@ function ProfileMenu({ onNavigate }) {
 
         <span className="sep" />
         <button role="menuitem" type="button" onClick={() => go("preferences")}>
-          {ICON.prefs}<span className="mlabel">Preferences</span><span className="chev">›</span>
+          {ICON.prefs}<span className="mlabel">Preferences</span>
         </button>
         <button role="menuitem" type="button" onClick={() => go("appearance")}>
-          {ICON.look}<span className="mlabel">Appearance</span><span className="chev">›</span>
+          {ICON.look}<span className="mlabel">Appearance</span>
         </button>
 
         {isAdmin && (
           <>
             <span className="sep" />
             <button role="menuitem" type="button" onClick={() => go("features")}>
-              {ICON.features}<span className="mlabel">Features</span><span className="chev">›</span>
+              {ICON.features}<span className="mlabel">Features</span>
             </button>
           </>
         )}
@@ -178,20 +178,20 @@ function ProfileMenu({ onNavigate }) {
           background-size: cover; background-position: center; font-family: var(--font-mono);
           font-size: 12px; color: var(--t2); }
         .avbtn-face.has { background-color: var(--active-fill); color: var(--ground); }
-        .menu { position: absolute; right: 0; top: 48px; width: 262px; z-index: 40; padding: 7px;
+        .menu { position: absolute; right: 0; top: 48px; width: 232px; z-index: 40; padding: 7px;
           background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
           border-top-color: var(--edge-hi);
           box-shadow: 0 20px 44px var(--shadow-c); backdrop-filter: blur(14px); }
         .menu[hidden] { display: none; }
         .menu button { display: flex; width: 100%; align-items: center; gap: 11px; background: none;
-          border: 0; border-radius: 9px; padding: 10px 11px; color: var(--t1);
+          border: 0; border-radius: 9px; padding: 7px 10px; color: var(--t1);
           font-size: calc(13.5px * var(--scale, 1)); cursor: pointer; text-align: left;
           transition: background .14s; }
         .menu button:hover { background: var(--raised); }
-        .menu .mi { width: 19px; height: 19px; flex: none; color: var(--t2); }
+        .menu .mi { width: 17px; height: 17px; flex: none; color: var(--t2); }
         .menu .mlabel { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .menu .chev { color: var(--t3); font-size: 16px; line-height: 1; }
-        .menu .sep { display: block; height: 1px; background: var(--line); margin: 6px 5px; }
+        .menu .sep { display: block; height: 1px; background: var(--line); margin: 4px 5px; }
         .admin { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--active);
           color: var(--active); border-radius: 999px; padding: 3px 9px; font-family: var(--font-mono);
           font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; }
