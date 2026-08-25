@@ -17,7 +17,13 @@ const ROOM_CSS = `
 .app:has(.deck)::before, .app:has(.deck)::after { display: none; }
 
 .deck {
-  position: relative; overflow: hidden; background: var(--ground);
+  position: relative; background: var(--ground);
+  /* clip, not hidden. Both clip the light layers at inset:-55% identically, but
+     hidden makes this a scroll container, and a sticky child then resolves
+     against a box that never scrolls — so the header would not stick. The POC
+     has hidden here and its own sticky header is inert for exactly that
+     reason. */
+  overflow: clip;
   padding: 0 40px calc(46px + var(--runway-h)); color: var(--t1); isolation: isolate;
   /* dvh so mobile browsers that shrink their chrome on scroll do not leave a
      strip of nothing under the deck; vh first for anything that lacks it */
@@ -33,13 +39,16 @@ const ROOM_CSS = `
    and stay centred. */
 .deck > main { position: relative; z-index: 1; max-width: 1240px;
   margin-left: auto; margin-right: auto; width: 100%; }
-.deck > .topbar { position: relative; z-index: 1; width: 100%; max-width: none;
-  margin: 0 -40px; width: calc(100% + 80px); padding-left: 40px; padding-right: 40px; }
+.deck > .topbar { width: calc(100% + 80px); max-width: none; margin: 0 -40px;
+  padding-left: 40px; padding-right: 40px; }
 @media (max-width: 640px) {
   .deck > .topbar { margin: 0 -16px; width: calc(100% + 32px);
     padding-left: 16px; padding-right: 16px; }
 }
-.deck > *:not(.spill):not(.stars):not(.grain):not(.flight-progress) { position: relative; z-index: 1; }
+/* The header is excluded: it carries its own sticky/z-20, and this rule was
+   overriding it on specificity, which is what trapped the menu under the page. */
+.deck > *:not(.spill):not(.stars):not(.grain):not(.flight-progress):not(.topbar) {
+  position: relative; z-index: 1; }
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 
 /* Light ADDS, it does not veil: screen, never a translucent overlay. */

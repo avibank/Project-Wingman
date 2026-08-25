@@ -615,7 +615,13 @@ function AppInner() {
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }
         /* §6.6 — the grain texture is deleted: on OLED it reads as compression
            artefacts, not as paper. */
-        .topbar { display: flex; align-items: center; gap: 12px; padding: 14px 0 12px; }
+        /* wingman-poc.html:59. z-index 20 is the important half: at 1 the
+           header made a stacking context that trapped the menu's z-index 40
+           inside it, and .deck > main is also 1 and later in the DOM, so page
+           content painted straight over the open menu. It read as the menu
+           being transparent; it was paint order. */
+        .topbar { position: sticky; top: 0; z-index: 20;
+          display: flex; align-items: center; gap: 12px; padding: 14px 0 12px; }
         .brandmark { margin-right: auto; min-height: 0; background: none; border: 0; padding: 0;
           cursor: pointer; color: var(--t1); font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
         .brandmark:hover { color: var(--t1); }
