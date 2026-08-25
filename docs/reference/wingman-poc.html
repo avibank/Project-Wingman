@@ -21,6 +21,7 @@ button{font-family:inherit}
 .deck{
   --ground:#111;--panel:#181818;--raised:#202020;--line:#2a2a2a;
   --t1:#eee;--t2:#aaa;--t3:#777;--active:#8cf;--active-fill:#8cf;--on:#9df;--lit:#cef;--emit:10px;
+  --edge-hi:rgba(255,255,255,.14);--edge-lo:rgba(0,0,0,.34);
   --key-img:none;--key-int:.7;--fill-img:none;--fill-int:.34;--soft:82px;--spill:.22;--grain:.05;
   --scale:1;
   position:relative;overflow:hidden;background:var(--ground);color:var(--t1);isolation:isolate;
@@ -84,7 +85,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 .menuwrap{position:relative}
 .menu{position:absolute;right:0;top:48px;width:262px;z-index:40;padding:7px;
   background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  border-top-color:color-mix(in oklab,var(--line),white 10%);
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);
   box-shadow:0 20px 44px var(--shadow-c,rgba(0,0,0,.45));
   backdrop-filter:blur(14px)}
 .menu button{display:flex;width:100%;align-items:center;gap:11px;background:none;border:0;
@@ -99,7 +100,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 
 /* ================= shared ================= */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;
-  border-top-color:color-mix(in oklab,var(--line),white 10%);overflow:hidden}
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);overflow:hidden}
 .pill{background:var(--active-fill);color:var(--ground);border:0;border-radius:999px;
   padding:9px 17px;font-size:calc(12.5px*var(--scale));font-weight:600;cursor:pointer}
 .ghost{background:none;color:var(--t1);border:1px solid var(--line);border-radius:999px;
@@ -173,7 +174,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 .rail::-webkit-scrollbar{display:none}
 .mod{container-type:inline-size;flex:1 1 0;min-width:180px;scroll-snap-align:start;
   text-align:left;color:inherit;cursor:pointer;background:var(--panel);
-  border:1px solid var(--line);border-top-color:color-mix(in oklab,var(--line),white 10%);
+  border:1px solid var(--line);border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);
   border-radius:12px;padding:0;overflow:hidden;opacity:.84;
   transition:transform .22s cubic-bezier(.2,.8,.3,1),border-color .22s,background .22s,box-shadow .22s,opacity .22s}
 .modin{padding:14px;display:flex;flex-direction:column;height:100%}
@@ -192,7 +193,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 .mod:hover .prof .reveal,.mod:hover .prof .plane{opacity:1}
 
 .crew{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:13px;
-  border-top-color:color-mix(in oklab,var(--line),white 10%);overflow:hidden}
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);overflow:hidden}
 .crew.n3{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.25fr)}
 .crew.n2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
 @media (max-width:940px){ .crew.n3,.crew.n2{grid-template-columns:minmax(0,1fr)} }
@@ -240,7 +241,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 
 .panel{display:flex;flex-direction:column;gap:16px;max-width:760px}
 .block{background:var(--panel);border:1px solid var(--line);border-radius:13px;
-  border-top-color:color-mix(in oklab,var(--line),white 10%);padding:18px 20px 20px}
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);padding:18px 20px 20px}
 .block > .eyebrow{display:block;margin-bottom:14px}
 .row{display:flex;align-items:center;gap:16px;padding:13px 0;border-top:1px solid
   color-mix(in oklab,var(--line),transparent 45%)}
@@ -295,13 +296,13 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 .specglow2{position:absolute;inset:-40%;z-index:0;pointer-events:none;mix-blend-mode:screen;
   background:var(--fill-img);opacity:var(--fill-int);filter:blur(46px) saturate(1.2)}
 .speccard{background:var(--panel);border:1px solid var(--line);
-  border-top-color:color-mix(in oklab,var(--line),white 10%);border-radius:10px;padding:12px}
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);border-radius:10px;padding:12px}
 .specchap{font-size:13.5px;font-weight:600}
 .speccode{font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:1px}
 .specbtn{margin-top:10px;display:inline-block;background:var(--active-fill);color:var(--ground);
   border-radius:999px;padding:5px 11px;font-size:11px;font-weight:600}
 .specmod{background:var(--panel);border:1px solid var(--line);
-  border-top-color:color-mix(in oklab,var(--line),white 10%);border-radius:10px;padding:12px;
+  border-top-color:var(--edge-hi);border-bottom-color:var(--edge-lo);border-radius:10px;padding:12px;
   display:flex;flex-direction:column}
 .specname{font-size:12.5px;font-weight:600;color:var(--t2);margin-top:4px}
 .specprof{display:block;width:100%;height:38px;margin-top:auto;padding-top:6px}
@@ -834,6 +835,15 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
     s.setProperty("--fill-int", night ? LIGHT.fillInt : LIGHT.fillInt*.30);
     s.setProperty("--soft", LIGHT.soft + "px");
     s.setProperty("--spill", night ? LIGHT.spill : LIGHT.spill*.35);
+    /* §10: card borders are warmer on top than underneath. A single
+       lighter top border cannot satisfy that — it is lighter, not warmer,
+       and there is no bottom edge at all. Two chromatic edges, highlight
+       hue above and shadow hue below, per livery. */
+    s.setProperty("--edge-hi",
+      `oklch(${night ? ".72" : ".86"} ${(Cc*.50).toFixed(3)} ${hueAt(L,.95).toFixed(1)} / ${night ? ".34" : ".50"})`);
+    s.setProperty("--edge-lo",
+      `oklch(${night ? ".22" : ".62"} ${(Cc*.45).toFixed(3)} ${hueAt(L,.05).toFixed(1)} / ${night ? ".50" : ".34"})`);
+
     s.setProperty("--shadow-c",
       `oklch(${(L.ground*.42).toFixed(3)} ${(L.chroma*L.midC*.6).toFixed(3)} ${hueAt(L,.05).toFixed(1)} / .58)`);
 
