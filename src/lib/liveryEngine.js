@@ -231,19 +231,18 @@ export function deckVars(liveryId, variant = "night") {
   // punched through the room.
   const Lat = (t) => L.ground + (L.light - L.ground) * t;
   const eLo = hueAt(L, 0.05), eHi = hueAt(L, 0.95);
-  const edgeA = Math.min(1, gl + 0.18).toFixed(2);
   // §4.5's formula has no day variant, and the POC applies it unchanged in both
   // modes — a deep hued shadow under a card on cream, which is what a shadow on
   // a light page looks like anyway.
   vars["--shadow-c"] = `oklch(${(L.ground * 0.42).toFixed(3)} ${(Cm * 0.6).toFixed(3)} ${eLo.toFixed(1)} / .58)`;
-  if (night) {
-    const lineL = Lat(pT + 0.17);
-    vars["--edge-hi"] = `oklch(${(lineL + 0.085).toFixed(3)} ${(Cm * 1.15).toFixed(3)} ${eHi.toFixed(1)} / ${edgeA})`;
-    vars["--edge-lo"] = `oklch(${Math.max(0, lineL - 0.045).toFixed(3)} ${(Cm * 0.55).toFixed(3)} ${eLo.toFixed(1)} / ${edgeA})`;
-  } else {
-    vars["--edge-hi"] = "oklch(.995 .004 85)";
-    vars["--edge-lo"] = "oklch(.842 .016 85)";
-  }
+  // §10: card borders warmer on top than underneath. Highlight hue above,
+  // shadow hue below, per livery — chromatic in both modes, which is the part
+  // the build used to get wrong: it went neutral cream in day, one pair for all
+  // seven liveries, and the cards read flat.
+  vars["--edge-hi"] =
+    `oklch(${night ? ".72" : ".86"} ${(Cm * 0.50).toFixed(3)} ${eHi.toFixed(1)} / ${night ? ".34" : ".50"})`;
+  vars["--edge-lo"] =
+    `oklch(${night ? ".22" : ".62"} ${(Cm * 0.45).toFixed(3)} ${eLo.toFixed(1)} / ${night ? ".50" : ".34"})`;
 
   return { vars, C, surf, ink, livery: L, night };
 }

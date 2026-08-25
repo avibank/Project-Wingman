@@ -47,12 +47,9 @@ const run = (index, night) =>
 // .deck rather than through tokens(). Equivalent, and not drift.
 const CSS_DEFAULTS = new Set(["--grain", "--emit"]);
 
-// The one agreed divergence. §10 requires card borders warmer on top than
-// underneath; both sides now emit two chromatic edges, but with different
-// numbers, and the build's are the ones we keep. Reported every run so it
-// cannot quietly become three divergences, but it does not fail the check.
-// Anything else drifting is a real failure.
-const AGREED = new Set(["--edge-hi", "--edge-lo"]);
+// No agreed divergences. Every value the reference emits, the build emits
+// identically. If that stops being true, this exits non-zero.
+const AGREED = new Set();
 const near = (a, b) => {
   const x = Number(String(a).replace("px", "")), y = Number(String(b).replace("px", ""));
   return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) < 5e-4;
