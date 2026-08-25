@@ -14,6 +14,7 @@ import ReadyRoom from "./components/ReadyRoom.jsx";
 import ModulesPage from "./components/ModulesPage.jsx";
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
+import Deck from "./components/Deck.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -305,6 +306,7 @@ function AppInner() {
     >
     <UsernameGate>
     <FirstFlightGate>
+    <Deck aurora={shownLivery === "aurora"}>
       {flags["chrome.boarding"] && boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
@@ -487,6 +489,7 @@ function AppInner() {
         </main>
       )}
       <RunwayLights />
+    </Deck>
     </FirstFlightGate>
     </UsernameGate>
       <style>{`

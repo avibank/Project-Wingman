@@ -7,7 +7,7 @@ import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
 import { fetchPartnerSuggestions } from "../lib/partners.js";
 import { fetchMessages } from "../lib/comms.js";
 import { moduleSegments, chapterCount, nextChapter, SEGMENT, segmentState } from "../lib/progressModel.js";
-import { deckVars, engineLivery, dotTile, glitterTile, rng } from "../lib/liveryEngine.js";
+import { deckVars, engineLivery, rng } from "../lib/liveryEngine.js";
 import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { DEFAULT_CHARACTER } from "../lib/voices.js";
@@ -89,55 +89,6 @@ const DECK_CSS = `
    beat .content, which the shell declares later in source order. */
 /* zoom: 1 because .content still carries the shell's --font-scale zoom, and
    with --scale also driving the instruments the deck was scaling twice. */
-.app .content--deck { max-width: none; margin: 0; padding: 0; zoom: 1; }
-/* One ambient source per screen. The shell's cheatline and its fixed glow are
-   a second rig, and the glow paints over the deck's own light. */
-.app:has(.deck)::before, .app:has(.deck)::after { display: none; }
-
-.deck {
-  position: relative; overflow: hidden; background: var(--ground);
-  padding: 0 40px 46px; color: var(--t1); isolation: isolate;
-  min-height: calc(100vh - 150px);
-  font-family: var(--font-ui);
-}
-@media (max-width: 640px) { .deck { padding: 0 16px 36px; } }
-.deck .inner { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; }
-.deck > *:not(.spill):not(.stars):not(.grain) { position: relative; z-index: 1; }
-.deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
-
-/* Light ADDS, it does not veil: screen, never a translucent overlay. */
-.deck::before, .deck::after {
-  content: ""; position: absolute; inset: -55%; pointer-events: none; z-index: 0;
-  mix-blend-mode: screen; filter: blur(var(--soft)) saturate(1.28);
-}
-.deck::before { background: var(--key-img); opacity: var(--key-int); animation: pwdrift 26s ease-in-out infinite; }
-.deck::after { background: var(--fill-img); opacity: var(--fill-int);
-  filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); animation: pwdrift 41s ease-in-out infinite reverse; }
-.deck.aur::before { filter: url(#pw-aurWarp) blur(30px) saturate(1.24); animation: pwdrift 34s ease-in-out infinite; }
-@keyframes pwdrift {
-  0%, 100% { transform: translate3d(0,0,0) scale(1); }
-  34% { transform: translate3d(6%,-4%,0) scale(1.08); }
-  67% { transform: translate3d(-4%,4%,0) scale(1); }
-}
-/* the same light again, over the top — the part that lands ON the panels */
-.deck .spill { position: absolute; inset: -55%; z-index: 2; pointer-events: none;
-  background: var(--key-img); filter: blur(calc(var(--soft) * 1.2)) saturate(1.22);
-  mix-blend-mode: screen; opacity: var(--spill); animation: pwdrift 26s ease-in-out infinite; }
-/* behind the panels but ABOVE the lights, so they show through the curtains */
-.deck .stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--stars, 0);
-  background-image: var(--stars-a, none), var(--stars-b, none); background-repeat: repeat;
-  background-size: 430px 430px, 310px 310px; mix-blend-mode: screen;
-  animation: pwtwinkle 13s ease-in-out infinite alternate; }
-.deck .stars::after { content: ""; position: absolute; inset: 0; background-image: var(--stars-c, none);
-  background-repeat: repeat; background-size: 520px 520px; mix-blend-mode: screen;
-  animation: pwtwinkle2 8.5s ease-in-out infinite alternate-reverse; }
-@keyframes pwtwinkle { from { opacity: var(--stars, 0); } to { opacity: calc(var(--stars, 0) * .5); } }
-@keyframes pwtwinkle2 { from { opacity: 1; } to { opacity: .45; } }
-/* dark gradients band; noise kills it and gives the light a tooth */
-.deck .grain { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: var(--grain);
-  mix-blend-mode: overlay; background-size: 150px 150px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E"); }
-
 .deck .dhead { margin-bottom: 18px; }
 .deck .title { font-size: 32px; font-weight: 700; letter-spacing: -.7px; line-height: 1.05; margin: 0; color: var(--t1); }
 .deck .greet { font-size: 20px; font-weight: 600; margin-top: 7px; letter-spacing: -.2px; min-height: 24px; }
@@ -297,15 +248,13 @@ const DECK_CSS = `
 
 /* everything animated here is decorative */
 @media (prefers-reduced-motion: reduce) {
-  .deck::before, .deck::after, .deck .spill, .deck .stars, .deck .stars::after, .deck .sweep { animation: none; }
+  .deck .sweep { animation: none; }
   .deck .mod, .deck .prof .reveal, .deck .prof .plane { transition: none; }
   .deck .mod:hover { transform: none; }
 }
-.app.reduce-motion .deck::before, .app.reduce-motion .deck::after, .app.reduce-motion .deck .spill,
-.app.reduce-motion .deck .stars, .app.reduce-motion .deck .stars::after,
-.app.reduce-motion .deck .sweep { animation: none; }
-.app.reduce-motion .deck .mod { transition: none; }
-.app.reduce-motion .deck .mod:hover { transform: none; }
+.app.smooth-air .deck .sweep { animation: none; }
+.app.smooth-air .deck .mod { transition: none; }
+.app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
 function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel }) {
@@ -314,7 +263,6 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const { prefs } = useSocialPrefs();
   const { flags } = useFlags();
 
-  const deckRef = useRef(null);
   const railRef = useRef(null);
   const wrapRef = useRef(null);
   const formRef = useRef(null);
@@ -327,29 +275,12 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const [railOverflows, setRailOverflows] = useState(false);
   const [tick, setTick] = useState(0);
 
-  // ------------------------------------------------------------------ colour
-  // Livery and variant come from user settings. A query override exists so the
-  // §12 acceptance pass can step through all seven in both modes without a
-  // picker, which is a step-4 item.
-  const override = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const liveryId = engineLivery(override?.get("livery") || livery);
-  const mode = override?.get("variant") === "day" ? "day" : override?.get("variant") === "night" ? "night" : variant;
-  const { vars, C, surf, night } = useMemo(() => deckVars(liveryId, mode), [liveryId, mode]);
+  // The room itself lives in Deck.jsx and its tokens come off :root. What is
+  // still needed here is the solid semantic map, which is what the instruments
+  // and the flight profiles paint with.
+  const { C, surf, night } = useMemo(() => deckVars(engineLivery(livery), variant), [livery, variant]);
 
-  const stars = useMemo(() => ({
-    "--stars-a": dotTile(30, 20260824, 1.4, 0.8),
-    "--stars-b": dotTile(20, 77003311, 1.0, 0.58),
-    "--stars-c": glitterTile(7, 5150429, 460),
-  }), []);
 
-  // The page behind the deck is still the old shell. Painting the body with the
-  // deck's ground removes the seam under it without restyling the nav, which is
-  // out of scope for this step.
-  useEffect(() => {
-    const prev = document.body.style.background;
-    document.body.style.background = C.ground;
-    return () => { document.body.style.background = prev; };
-  }, [C.ground]);
 
   // ------------------------------------------------------------------- state
   const completed = new Set(progress.get("pw-completed", []));
@@ -524,18 +455,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
     : contactCount || "Radar";
 
   return (
-    <div
-      className={`deck ${liveryId === "aurora" ? "aur" : ""} ${night ? "" : "is-day"}`}
-      ref={deckRef}
-      style={{ ...vars, ...stars }}
-    >
-      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true"><defs>
-        <filter id="pw-aurWarp" x="-25%" y="-25%" width="150%" height="150%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.0055 0.017" numOctaves="2" seed="7" result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="96" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </defs></svg>
-
+    <>
       <div className="inner">
         <div className="dhead">
           <h1 className="title">Flight Deck</h1>
@@ -782,12 +702,8 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
         )}
       </div>
 
-      <div className="stars" aria-hidden="true" />
-      <div className="spill" aria-hidden="true" />
-      <div className="grain" aria-hidden="true" />
-
       <style>{DECK_CSS}</style>
-    </div>
+    </>
   );
 }
 
