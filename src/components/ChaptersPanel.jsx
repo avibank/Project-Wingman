@@ -100,17 +100,18 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
     onInitialChapterConsumed?.();
   }, [progress.loaded, initialChapterId]);
 
+  // The window no longer scrolls — .deck does — so this listened to something
+  // that never fires and the parallax silently sat at zero. It reads the
+  // scroller instead, and it is no longer rAF-guarded: if that frame is ever
+  // dropped the guard latches and the effect dies for good, which is the same
+  // trap the runway lights fell into twice.
   useEffect(() => {
-    let raf = null;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        setParallaxY(window.scrollY * 0.04);
-        raf = null;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const el = document.querySelector(".deck");
+    if (!el) return undefined;
+    const onScroll = () => setParallaxY(el.scrollTop * 0.04);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   // Completing a chapter is what "studied today" means for a joint streak; the

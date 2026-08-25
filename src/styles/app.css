@@ -92,7 +92,10 @@
 
 /* ------------------------------------------------------------- 4 · the page */
 * { box-sizing: border-box; }
-html, body, #root { min-height: 100%; margin: 0; background: var(--ground); }
+/* The window never scrolls. Only .deck does. */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html, body, #root { margin: 0; background: var(--ground); }
+#root { height: 100%; }
 body {
   font-family: var(--font-ui);
   color: var(--t1);

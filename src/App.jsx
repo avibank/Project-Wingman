@@ -45,6 +45,8 @@ export default function App() {
   );
 }
 function AppInner() {
+  // The one scroller on the page. Declared first because go() closes over it.
+  const deckRef = useRef(null);
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
   const { flags } = useFlags();
@@ -65,7 +67,8 @@ function AppInner() {
   const tab = route.tab === "pdf" ? "pdf" : "chapters";
   const pendingChapterId = route.chapterId || null;
 
-  const go = (to) => { navigate(to); window.scrollTo(0, 0); };
+  // window.scrollTo is a no-op now — the window does not scroll.
+  const go = (to) => { navigate(to); if (deckRef.current) deckRef.current.scrollTop = 0; };
   const goSettings = (page) =>
     go(page === "auth" ? routePath.signin()
       : page === "progress" ? routePath.logbook()
@@ -119,7 +122,6 @@ function AppInner() {
   }, [boarding]);
   const [paToast, setPaToast] = useState(null);
   const [storageWarning, setStorageWarning] = useState(false);
-  const [headerScrolled, setHeaderScrolled] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const scrollPositions = useRef({});
   const [ticket] = useState(() => ({
@@ -247,19 +249,6 @@ function AppInner() {
     return () => window.removeEventListener("pointerdown", once);
   }, []);
 
-  useEffect(() => {
-    let raf = null;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        setHeaderScrolled(window.scrollY > 4);
-        raf = null;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
   const toggleTheme = () => {
     // Pin to the opposite of what is showing. Auto (null) is only ever the
     // starting state; once someone chooses, the choice persists.
@@ -273,9 +262,9 @@ function AppInner() {
       if (!reduceMotion) {
       }
     }
-    scrollPositions.current[tab] = window.scrollY;
+    scrollPositions.current[tab] = deckRef.current?.scrollTop || 0;
     navigate(nextTab === "pdf" ? routePath.library(activeModuleCode) : routePath.module(activeModuleCode));
-    requestAnimationFrame(() => window.scrollTo(0, scrollPositions.current[nextTab] || 0));
+    requestAnimationFrame(() => { if (deckRef.current) deckRef.current.scrollTop = scrollPositions.current[nextTab] || 0; });
   };
   const resetProgress = async () => {
     if (!window.confirm("Reset all progress on this device? This can't be undone.")) return;
@@ -316,7 +305,6 @@ function AppInner() {
          emitted so the global layer and the per-component rules that still use
          the old ones stay in agreement until the profile rebuild renames the
          state itself. */
-      key={route.name}
       className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "plain-language" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
@@ -325,7 +313,7 @@ function AppInner() {
     >
     <UsernameGate>
     <FirstFlightGate>
-    <Deck aurora={shownLivery === "aurora"}>
+    <Deck aurora={shownLivery === "aurora"} />
       {flags["chrome.boarding"] && boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
@@ -354,7 +342,7 @@ function AppInner() {
       {storageWarning && (
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
-      <header className={`topbar ${headerScrolled ? "is-scrolled" : ""}`}>
+      <header className="topbar">
         <button className="brandmark" onClick={goHome} aria-label="Go to Flight Deck">
           Wingman
         </button>
@@ -375,6 +363,12 @@ function AppInner() {
           />
         </div>
       </header>
+
+      {/* THE SCROLLER. tabindex and role because Chrome will not make an
+          overflow container focusable on its own, so Page Down and the arrow
+          keys would do nothing and it would be an unlabelled tab stop. */}
+      <div className="deck" ref={deckRef} tabIndex={0} role="region" aria-label="Page content">
+        <div className="deck-inner route-fade" key={route.name}>
 
       {flags["nav.root"] && (
         <RootNav
@@ -508,7 +502,10 @@ function AppInner() {
           />
         </main>
       )}
-    </Deck>
+        </div>
+      </div>
+
+    <RunwayLights scroller={deckRef} />
     </FirstFlightGate>
     </UsernameGate>
       <style>{`
@@ -614,10 +611,20 @@ function AppInner() {
           font-family: var(--font-ui);
           background: var(--surface-0);
           color: var(--text-1);
-          min-height: 100vh;
+          /* THE SHELL. Three rows — header, scroller, runway lights — and the
+             light rig behind all of them. Short pages have no dead space by
+             construction, because the shell is always exactly one viewport. */
+          height: 100vh;
+          height: 100dvh;
+          display: grid;
+          grid-template-rows: auto 1fr auto;
           padding: 0;
           position: relative;
+          overflow: clip;
         }
+        /* A gate that blocks — first flight, the username prompt — renders as
+           the only child, and would otherwise be squashed into the header row. */
+        .app > *:only-child { grid-row: 1 / -1; }
         h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.01em; }
         .app { font-variant-numeric: tabular-nums; }
         [class*="mono"], [class*="-code"], [class*="-value"], [class*="-count"], [class*="stat"] {
@@ -629,8 +636,13 @@ function AppInner() {
            inside it, and .deck > main is also 1 and later in the DOM, so page
            content painted straight over the open menu. It read as the menu
            being transparent; it was paint order. */
-        .topbar { position: sticky; top: 0; z-index: 20;
-          display: flex; align-items: center; gap: 12px; padding: 14px 0 12px; }
+        /* z-index 20 stays: it is what keeps the account menu above page content.
+           sticky is now redundant — the header is a grid row and cannot scroll
+           away — but harmless, and removing it would be a second change. */
+        .topbar { position: relative; z-index: 20;
+          display: flex; align-items: center; gap: 12px; padding: 14px 40px 12px;
+          max-width: 1240px; margin: 0 auto; width: 100%; }
+        @media (max-width: 640px) { .topbar { padding: 14px 16px 12px; } }
         .brandmark { margin-right: auto; min-height: 0; background: none; border: 0; padding: 0;
           cursor: pointer; color: var(--t1); font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
         .brandmark:hover { color: var(--t1); }
