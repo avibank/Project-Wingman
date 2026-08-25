@@ -10,6 +10,7 @@ import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { useFlags } from "../lib/flags.js";
 import { initialsOf, USE_INITIALS_KEY } from "./ProfileMenu.jsx";
+import { ERROR_GENERIC } from "../lib/copy.js";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
 //
@@ -487,7 +488,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <p className="quietline">
               This removes your logbook, your crew and everything you've flown, and it can't be undone.{" "}
               <button className="linkish" type="button"
-                      onClick={() => user?.delete().catch(() => setSaveNote("That didn't go through. Try again, or write to us."))}>
+                      onClick={() => user?.delete().catch(() => setSaveNote(ERROR_GENERIC))}>
                 Delete it all
               </button>
               {" · "}

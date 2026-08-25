@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Mail, LogOut, Camera, Sun, Moon, Check, X, RotateCcw, Trash2 } from "lucide-react";
 import { useUser, useClerk, useReverification } from "@clerk/clerk-react";
 import { useSocialPrefs } from "../lib/social.js";
+import { ERROR_GENERIC } from "../lib/copy.js";
 
 function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduceMotion, onResetProgress, fontSize, onChangeFontSize, dyslexiaFont, onToggleDyslexiaFont, turbulence, onToggleTurbulence }) {
   const [tab, setTab] = useState("info");
@@ -70,7 +71,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       setTimeout(() => setUsernameSaved(false), 1800);
     } catch (err) {
       if (err?.code !== "reverification_cancelled") {
-        setUsernameError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+        setUsernameError(err?.errors?.[0]?.message || ERROR_GENERIC);
       }
     }
     setUsernameBusy(false);
@@ -121,7 +122,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       setPendingEmailObj(emailObj);
       setEmailStep("code");
     } catch (err) {
-      setEmailError(err?.errors?.[0]?.message || "Couldn't start email change.");
+      setEmailError(err?.errors?.[0]?.message || ERROR_GENERIC);
     }
     setEmailBusy(false);
   };
@@ -138,7 +139,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
       setVerificationCode("");
       setPendingEmailObj(null);
     } catch (err) {
-      setEmailError(err?.errors?.[0]?.message || "Invalid code, please try again.");
+      setEmailError(err?.errors?.[0]?.message || ERROR_GENERIC);
     }
     setEmailBusy(false);
   };

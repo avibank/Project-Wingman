@@ -29,7 +29,7 @@ class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div style={{ padding: 24, color: "#E8EDF2", background: "#0B1526", minHeight: "100vh", fontFamily: "monospace" }}>
-          <h2 style={{ color: "#E8EDF2" }}>Something crashed</h2>
+          <h2 style={{ color: "#E8EDF2" }}>Something's snagged. Try again.</h2>
           <p>Check the console for the full error (message, stack, and component stack are logged there).</p>
           <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, opacity: 0.8, marginTop: 16 }}>
             {this.state.error?.message}

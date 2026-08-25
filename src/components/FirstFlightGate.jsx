@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus } from "../lib/squadron.js";
 import FirstFlight from "./FirstFlight.jsx";
+import Spooling from "./Spooling.jsx";
 
 // §7.1 runs once, for a signed-in user with no profile yet.
 //
@@ -26,7 +27,7 @@ function FirstFlightGate({ children }) {
     return () => { live = false; };
   }, [isLoaded, isSignedIn, user?.id]);
 
-  if (state === "checking") return null;
+  if (state === "checking") return <Spooling />;
   if (state === "onboarding") return <FirstFlight onDone={() => setState("through")} />;
   return children;
 }

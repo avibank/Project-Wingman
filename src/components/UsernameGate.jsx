@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUser, useReverification } from "@clerk/clerk-react";
 import { Plane, Check } from "lucide-react";
+import { ERROR_GENERIC } from "../lib/copy.js";
 
 function UsernameGate({ children }) {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -22,7 +23,7 @@ function UsernameGate({ children }) {
       await updateUsername(trimmed);
     } catch (err) {
       if (err?.code !== "reverification_cancelled") {
-        setError(err?.errors?.[0]?.message || "Couldn't save that username — try another.");
+        setError(err?.errors?.[0]?.message || ERROR_GENERIC);
       }
     }
     setSaving(false);

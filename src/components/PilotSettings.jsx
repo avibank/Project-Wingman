@@ -5,6 +5,7 @@ import { NOTIFY_MODES } from "../lib/readyRoom.js";
 import LiveryPicker from "./LiveryPicker.jsx";
 import { resolveLivery } from "../lib/liveries.js";
 import Tail, { TailStyles } from "./Tail.jsx";
+import Spooling from "./Spooling.jsx";
 
 // §8.3 makes invisible mode mandatory and requires it in settings; §7.6
 // requires a toggle for the glow. Both flags were already honoured throughout
@@ -78,7 +79,7 @@ function PilotSettings({ modulesCompleted = 0 }) {
     if (!saved) setProfile(prev);
   };
 
-  if (state === "loading") return null;
+  if (state === "loading") return <Spooling />;
   if (state === "unavailable") return null;
   const invisible = profile?.invisible === true;
   const glowOn = profile?.glow_enabled !== false;

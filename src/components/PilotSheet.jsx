@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { blockUser, muteUser, reportContent } from "../lib/squadron.js";
 import Tail, { TailStyles } from "./Tail.jsx";
+import { ERROR_GENERIC } from "../lib/copy.js";
 
 // §9 — every user can block, mute and report, so those controls need one home
 // that every tail in the app opens. Blocking is symmetric and total; the copy
@@ -28,7 +29,7 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
   const run = async (fn, message) => {
     setBusy(true);
     try { await fn(); setDone(message); onChanged?.(); }
-    catch (e) { console.error(e); setDone("That didn't go through. Try again in a moment."); }
+    catch (e) { console.error(e); setDone(ERROR_GENERIC); }
     setBusy(false);
   };
 
