@@ -15,6 +15,7 @@ import ModulesPage from "./components/ModulesPage.jsx";
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
+import { askForOrientation } from "./lib/useAttitude.js";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -238,6 +239,14 @@ function AppInner() {
     root.style.setProperty("--grain", grain ? vars["--grain"] : "0");
   }, [shownLivery, variant, grain]);
 
+  // iOS will not report device orientation without a user gesture, so the ball
+  // asks once, on the first tap, and never again.
+  useEffect(() => {
+    const once = () => { askForOrientation(); window.removeEventListener("pointerdown", once); };
+    window.addEventListener("pointerdown", once, { once: true });
+    return () => window.removeEventListener("pointerdown", once);
+  }, []);
+
   useEffect(() => {
     let raf = null;
     const onScroll = () => {
@@ -307,6 +316,7 @@ function AppInner() {
          emitted so the global layer and the per-component rules that still use
          the old ones stay in agreement until the profile rebuild renames the
          state itself. */
+      key={route.name}
       className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "plain-language" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
@@ -476,6 +486,7 @@ function AppInner() {
             activeModuleCode={activeModuleCode}
             livery={shownLivery}
             variant={variant}
+            reduceMotion={reduceMotion}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
             onOpenReady={() => go(routePath.ready())}

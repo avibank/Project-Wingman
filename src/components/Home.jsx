@@ -10,7 +10,8 @@ import { moduleSegments, chapterCount, nextChapter, SEGMENT, segmentState } from
 import { deckVars, engineLivery, rng } from "../lib/liveryEngine.js";
 import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
-import { attitude, chop } from "../lib/attitude.js";
+import { moduleAverage, chop } from "../lib/attitude.js";
+import { useAttitude } from "../lib/useAttitude.js";
 import { DEFAULT_CHARACTER } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
@@ -124,9 +125,9 @@ const DECK_CSS = `
 .deck .cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--t3); text-align: center; }
 .deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block; }
-.deck .ai-horizon { transition: transform 600ms cubic-bezier(.16,.84,.34,1); }
-@media (prefers-reduced-motion: reduce) { .deck .ai-horizon { transition: none; } }
-.app.smooth-air .deck .ai-horizon { transition: none; }
+.deck .ai-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
+@media (prefers-reduced-motion: reduce) { .deck .ai-rim { transition: none; } }
+.app.smooth-air .deck .ai-rim { transition: none; }
 .deck .ladder { font-family: var(--font-mono); font-size: calc(11px * var(--scale, 1)); line-height: 1.55; text-align: center;
   background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 5px 13px; color: var(--t3); }
 .deck .ladder b { display: block; font-size: calc(19px * var(--scale, 1)); font-weight: 500; color: var(--on); }
@@ -260,7 +261,7 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel }) {
+function Home({ activeModuleCode, livery, variant, reduceMotion, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel }) {
   const { user } = useUser();
   const progress = useUserProgress();
   const { prefs } = useSocialPrefs();
@@ -311,10 +312,11 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const activeRow = moduleRows.find((m) => m.code === active.code) || moduleRows[0];
   const progressKey = moduleRows.map((m) => m.code + m.pr.toFixed(4)).join("|");
 
-  // The indicator reads the current module's record, in chapter order, so the
-  // last three are the three most recently flown rather than three arbitrary ones.
-  const moduleScores = activeChapters.map((c) => scores[c.id]).filter((v) => typeof v === "number");
-  const { average, pitch, bank, flown } = attitude(moduleScores);
+  // The two halves of the instrument, on separate clocks. The rim carries the
+  // score; the ball is live and never waits for it.
+  const { average, flown } = moduleAverage(activeChapters.map((c) => scores[c.id]));
+  const still = reduceMotion;
+  const ballRef = useAttitude(still);
 
   // Hobbs — chapters flown. It used to sum briefing durations; content carries
   // no durations now, so the same instrument counts the thing that does exist.
@@ -491,13 +493,13 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
           <div className="strip">
             <div className="cel">
               <svg className="ai" viewBox="0 0 120 120" role="img"
-                   aria-label={average == null ? "Attitude indicator, no score yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
+                   aria-label={average == null ? "Attitude indicator, no quiz flown yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
                 <defs><clipPath id="pw-dial"><circle cx="60" cy="60" r="42" /></clipPath></defs>
                 <g clipPath="url(#pw-dial)">
-                  {/* bank rotates the horizon, pitch slides it. 1 degree of
-                      pitch is ~1.1px of travel on a 42px dial. */}
-                  <g className="ai-horizon"
-                     transform={`rotate(${bank.toFixed(2)} 60 60) translate(0 ${(pitch * 1.1).toFixed(2)})`}>
+                  {/* The ball. Its transform is written straight onto the node
+                      every frame — see useAttitude — so it never re-renders the
+                      deck and wants no CSS transition of its own. */}
+                  <g ref={ballRef} transform="rotate(0 60 60) translate(0 0)">
                     <rect x="-70" y="-80" width="260" height="140" fill={surf[night ? 7 : 9]} />
                     <rect x="-70" y="60" width="260" height="140" fill={surf[night ? 1 : 6]} />
                     <rect x="-70" y="59" width="260" height="1.6" fill={C.lit} />
@@ -510,7 +512,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                 <circle cx="60" cy="60" r="42" fill="none" strokeWidth="1" stroke={C.line} />
                 <circle cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.line} />
                 {average != null && (
-                  <circle cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.active}
+                  <circle className="ai-rim" cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.active}
                           strokeLinecap="round" transform="rotate(-90 60 60)"
                           strokeDasharray={`${(2 * Math.PI * 49 * (average / 100)).toFixed(1)} ${(2 * Math.PI * 49).toFixed(1)}`} />
                 )}
@@ -531,7 +533,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                         fontFamily="Geist Mono, monospace" fontSize="13" fontWeight="500">{average}%</text>
                 )}
               </svg>
-              <div className="cap">{average == null ? "First quiz sets the needle" : `${chop(average)} · ${average}%`}</div>
+              <div className="cap">{average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`}</div>
             </div>
 
             <div className="cel">
