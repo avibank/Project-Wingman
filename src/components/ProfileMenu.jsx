@@ -70,20 +70,28 @@ function ProfileMenu({ onNavigate }) {
 
   useEffect(() => {
     if (!open) return undefined;
+    // contains(), never identity: a real click lands on the inner
+    // span.avbtn-face, not on the button, so `e.target !== avbtn` would open
+    // the menu and close it again in the same tick.
     const onDown = (e) => {
-      if (!menuRef.current?.contains(e.target) && !wrapRef.current?.querySelector(".avbtn")?.contains(e.target)) {
-        setOpen(false);
-      }
+      const btn = wrapRef.current?.querySelector(".avbtn");
+      if (menuRef.current?.contains(e.target) || btn?.contains(e.target)) return;
+      setOpen(false);
     };
     const onKey = (e) => {
       if (e.key !== "Escape") return;
       setOpen(false);
       wrapRef.current?.querySelector(".avbtn")?.focus();
     };
-    document.addEventListener("click", onDown);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     menuRef.current?.querySelector("button")?.focus();
-    return () => { document.removeEventListener("click", onDown); document.removeEventListener("keydown", onKey); };
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   const walk = (e) => {

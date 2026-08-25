@@ -27,9 +27,18 @@ const ROOM_CSS = `
 }
 @media (max-width: 640px) { .deck { padding: 0 16px calc(36px + var(--runway-h)); } }
 .deck .inner { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; }
-/* the shell's own children sit in the same column and above the light */
-.deck > .topbar, .deck > main { position: relative; z-index: 1; max-width: 1240px;
+/* the shell's own children sit above the light. main keeps the 1240 column;
+   the header does not — it runs edge to edge, brandmark hard left and the
+   streak and avatar hard right, both sides level. The cards below keep the cap
+   and stay centred. */
+.deck > main { position: relative; z-index: 1; max-width: 1240px;
   margin-left: auto; margin-right: auto; width: 100%; }
+.deck > .topbar { position: relative; z-index: 1; width: 100%; max-width: none;
+  margin: 0 -40px; width: calc(100% + 80px); padding-left: 40px; padding-right: 40px; }
+@media (max-width: 640px) {
+  .deck > .topbar { margin: 0 -16px; width: calc(100% + 32px);
+    padding-left: 16px; padding-right: 16px; }
+}
 .deck > *:not(.spill):not(.stars):not(.grain):not(.flight-progress) { position: relative; z-index: 1; }
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 

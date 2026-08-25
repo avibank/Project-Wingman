@@ -91,7 +91,16 @@ function AppInner() {
   const [livery, setLivery] = useState(DEFAULT_LIVERY);
   const [variantPin, setVariantPin] = useState(null); // §6.3 Night Ops: "day" | "night" | null = Auto
   const [grain, setGrain] = useState(true);
-  const autoVariant = new Date().getHours() >= 7 && new Date().getHours() < 19 ? "day" : "night";
+  const [autoVariant, setAutoVariant] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "night" : "day");
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!mq) return undefined;
+    const sync = () => setAutoVariant(mq.matches ? "night" : "day");
+    sync();
+    mq.addEventListener?.("change", sync);
+    return () => mq.removeEventListener?.("change", sync);
+  }, []);
   const variant = variantPin || autoVariant;
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
@@ -597,7 +606,7 @@ function AppInner() {
           background: var(--surface-0);
           color: var(--text-1);
           min-height: 100vh;
-          padding: 0 0 60px;
+          padding: 0;
           position: relative;
         }
         h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.01em; }
@@ -606,8 +615,7 @@ function AppInner() {
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }
         /* §6.6 — the grain texture is deleted: on OLED it reads as compression
            artefacts, not as paper. */
-        .topbar { display: flex; align-items: center; gap: 12px; max-width: 1240px; margin: 0 auto;
-          padding: 14px 0 12px; }
+        .topbar { display: flex; align-items: center; gap: 12px; padding: 14px 0 12px; }
         .brandmark { margin-right: auto; min-height: 0; background: none; border: 0; padding: 0;
           cursor: pointer; color: var(--t1); font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
         .brandmark:hover { color: var(--t1); }
