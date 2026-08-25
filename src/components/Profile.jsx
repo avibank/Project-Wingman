@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { ShieldCheck } from "lucide-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
 import { LIVERIES, at, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap } from "../lib/liveryEngine.js";
+import { profileSVG } from "../lib/flightProfile.js";
+import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { useFlags } from "../lib/flags.js";
+import { initialsOf, USE_INITIALS_KEY } from "./ProfileMenu.jsx";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
 //
@@ -23,43 +26,57 @@ const TABS = [
 ];
 
 const PRESETS = [
-  { id: "quiet", name: "Quiet skies", note: "You can see how busy it is. Nothing else." },
-  { id: "crew", name: "My flight", note: "Your formation and your wingman, below the modules." },
-  { id: "open", name: "Open frequency", note: "Everything, including the module channel." },
+  { id: "quiet", label: "Quiet skies", desc: "You can see how busy it is. That's all — no band, no names, no chat." },
+  { id: "crew", label: "My flight", desc: "Your formation and your wingman appear below the modules." },
+  { id: "open", label: "Open frequency", desc: "Everything, including the module chat." },
 ];
 
 const NOTICES = [
-  { id: "answers", label: "Answers to your questions", note: "Someone replies to something you asked." },
-  { id: "wingman", label: "Your wingman starting a chapter", note: "So you can fly it at the same time." },
-  { id: "nudge", label: "One inactivity nudge", note: "One nudge. Never more." },
+  { id: "answers", label: "Someone answers your question", note: "On the frequency you asked in", on: true },
+  { id: "wingman", label: "Your wingman starts a chapter", note: "Only for the module you're both on", on: true },
+  { id: "nudge", label: "Nothing flown for a week", note: "One nudge. Never more.", on: false },
 ];
 
 const SCALES = [{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }];
-const MODES = [{ id: "day", label: "Day Ops" }, { id: "night", label: "Night Ops" }, { id: null, label: "Auto" }];
+// You asked for Night Ops on dark and Day Ops on light. The POC's shape is a
+// bold label plus a description that changes with the mode, so the label is
+// where the mode name goes; the buttons stay Day / Night / Auto.
+const MODES = [{ id: "day", label: "Day" }, { id: "night", label: "Night" }, { id: null, label: "Auto" }];
+const MODE_COPY = {
+  day: { title: "Day Ops", desc: "Cream, whatever the livery. Only the light and the accents carry it." },
+  night: { title: "Night Ops", desc: "Dark. The room is lit by the livery." },
+  auto: { title: "Auto", desc: "Follows your device." },
+};
 
 function Switch({ id, on, onChange, label, note }) {
   return (
-    <div className="prow">
-      <div className="prow-text">
-        <div className="prow-title">{label}</div>
-        {note && <div className="prow-note">{note}</div>}
-      </div>
+    <div className="row">
+      <span className="rowtext"><b>{label}</b>{note && <span>{note}</span>}</span>
       <button type="button" role="switch" aria-checked={on} aria-label={label} id={id}
-              className={`sw is-inline ${on ? "is-on" : ""}`} onClick={() => onChange(!on)}>
-        <span className="sw-knob" />
-      </button>
+              className="sw is-inline" onClick={() => onChange(!on)} />
     </div>
   );
 }
 
-function Field({ label, hint, value, onChange, onCommit, type = "text", placeholder }) {
+function Field({ label, hint, value, onChange, onCommit, id }) {
   return (
-    <label className="pfield">
-      <span className="pfield-label">{label}</span>
-      <input className="pfield-input" type={type} value={value ?? ""} placeholder={placeholder}
-             onChange={(e) => onChange(e.target.value)} onBlur={onCommit} />
-      <span className="pfield-hint">{hint}</span>
-    </label>
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <input id={id} value={value ?? ""} onChange={(e) => onChange(e.target.value)} onBlur={onCommit} />
+      <span className="hint">{hint}</span>
+    </div>
+  );
+}
+
+function Seg({ label, options, value, onPick }) {
+  return (
+    <div className="seg" role="group" aria-label={label}>
+      {options.map((o) => (
+        <button key={String(o.id)} type="button" aria-pressed={value === o.id} onClick={() => onPick(o.id)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -68,139 +85,166 @@ function Field({ label, hint, value, onChange, onCommit, type = "text", placehol
 // which sits nowhere on its ramp.
 function liverySwatch(L) {
   if (L.aurora) {
-    return "linear-gradient(145deg, oklch(.30 .06 250) 0 34%, oklch(.72 .19 156) 34% 70%, oklch(.60 .16 316) 70% 100%)";
+    return "linear-gradient(145deg, oklch(.24 .05 250) 0 34%, oklch(.72 .19 156) 34% 70%, oklch(.60 .16 316) 70% 100%)";
   }
-  return `linear-gradient(145deg, ${at(L, 0.12, 1)} 0 33%, ${at(L, L.midAt, 1)} 33% 67%, ${at(L, 0.88, 1)} 67% 100%)`;
+  // The core is sampled at chroma scale 1.6 — that lift is what makes the
+  // middle band read as its own colour rather than a stop on the way through.
+  return `linear-gradient(145deg, ${at(L, 0.08, 1)} 0 34%, ${at(L, L.midAt, 1.6)} 34% 70%, ${at(L, 0.92, 1)} 70% 100%)`;
 }
 
 // §6.3 — a specimen under the picker: a miniature hero card and one module card
 // with both lamps behind them, so you see what the light does to a panel rather
 // than to a settings page.
 function Specimen({ liveryId, variant }) {
-  const { vars, livery } = useMemo(() => deckVars(liveryId, variant), [liveryId, variant]);
+  const { vars, C, livery } = useMemo(() => deckVars(liveryId, variant), [liveryId, variant]);
+  const ref = useRef(null);
   const key = livery.aurora
     ? auroraImg()
     : keyImg(livery.keyAbs != null ? livery.keyAbs : hueAt(livery, 1),
              livery.keyC != null ? livery.keyC : LIGHT.ambC, LIGHT.ambX, LIGHT.ambY, LIGHT.ambSize);
   const fill = fillImg(wrap(livery.fillAbs), LIGHT.ambC * 0.85 * (livery.fillC != null ? livery.fillC : 1),
                        LX(LIGHT.fillX), LX(LIGHT.fillY), LS(LIGHT.fillSize));
+
+  useLayoutEffect(() => {
+    const svg = ref.current;
+    if (!svg) return;
+    const W = Math.round(svg.clientWidth), H = Math.round(svg.clientHeight);
+    if (!W || !H) return;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.innerHTML = profileSVG(W, H, 0.62, 5, null, true, C);
+  }, [C]);
+
+  const hero = CHAPTERS[0];
+  const mod = MODULES[1];
+
   return (
-    <div className="spec" style={{ ...vars, "--key-img": key, "--fill-img": fill }} aria-hidden="true">
-      <div className="spec-card">
-        <div className="spec-thumb" />
-        <div className="spec-lines">
-          <i style={{ width: "62%" }} /><i style={{ width: "40%", opacity: 0.6 }} />
-          <span className="spec-pill" />
+    <div className="spec" style={{ ...vars, "--key-img": key, "--fill-img": fill }} aria-label="Preview">
+      <span className="specglow" aria-hidden="true" />
+      <span className="specglow2" aria-hidden="true" />
+      <div className="specin">
+        <div className="speccard">
+          <div className="specchap">{hero?.title || "Chapter 1"}</div>
+          <div className="speccode">{hero?.code} · {(MODULES[0]?.name || "").toUpperCase()}</div>
+          <span className="specbtn">Resume ›</span>
         </div>
-      </div>
-      <div className="spec-mod">
-        <i style={{ width: "22%", opacity: 0.55 }} /><i style={{ width: "70%" }} />
-        <svg viewBox="0 0 100 26" preserveAspectRatio="none">
-          <path d="M4,22 L14,22 C22,22 26,6 38,6 L64,6 C76,6 80,22 88,22 L96,22"
-                fill="none" stroke="var(--active)" strokeWidth="2" strokeLinecap="round" />
-        </svg>
+        <div className="specmod">
+          <div className="speccode">{mod?.code}</div>
+          <div className="specname">{mod?.name}</div>
+          <svg className="specprof" ref={ref} aria-hidden="true" />
+        </div>
       </div>
     </div>
   );
 }
 
 const PROFILE_CSS = `
-.profile { max-width: 720px; margin: 0 auto; padding: 28px 22px 80px; }
-.profile-h1 { font-size: 32px; font-weight: 700; letter-spacing: -.7px; margin: 0 0 16px; color: var(--t1); }
+.profile { max-width: 1240px; margin: 0 auto; padding: 0 40px 80px; }
+@media (max-width: 640px) { .profile { padding: 0 16px 96px; } }
 
-.ptabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
-.ptab { background: none; border: 0; padding: 10px 14px; margin-bottom: -1px; cursor: pointer;
-  color: var(--t3); font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent; }
-.ptab:hover { color: var(--t1); }
-.ptab.is-on { color: var(--t1); border-bottom-color: var(--active); }
+.phead { margin: 10px 0 16px; }
+.back { background: none; border: 0; color: var(--t2); font-size: 13px; cursor: pointer; padding: 4px 0;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 0; }
+.back:hover { color: var(--t1); }
+.ptitle { font-size: calc(30px * var(--scale, 1)); font-weight: 700; letter-spacing: -.6px;
+  margin: 6px 0 0; color: var(--t1); }
 
-.ppanel { display: flex; flex-direction: column; gap: 16px; }
-.psaved { font-size: 12.5px; color: var(--t2); margin: -8px 0 0; }
+.tabs { display: flex; gap: 4px; background: color-mix(in oklab, var(--panel), transparent 20%);
+  border: 1px solid var(--line); border-radius: 11px; padding: 4px; margin-bottom: 20px; max-width: 520px; }
+.tabs button { flex: 1; background: none; border: 0; border-radius: 8px; padding: 10px 8px;
+  color: var(--t2); font-size: calc(13px * var(--scale, 1)); font-weight: 600; cursor: pointer;
+  transition: background .16s, color .16s; }
+.tabs button[aria-selected="true"] { background: var(--raised); color: var(--t1);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--active), transparent 55%); }
 
-.pcard { background: var(--panel); border: 1px solid var(--line); border-top-color: var(--edge-hi);
-  border-bottom-color: var(--edge-lo); border-radius: var(--r-panel); padding: 16px 17px;
-  display: flex; flex-direction: column; gap: 12px; }
-.pcard-head { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em;
+.panel { display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
+.block { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
+  border-top-color: var(--edge-hi); padding: 18px 20px 20px; }
+.block > .eyebrow { display: block; margin-bottom: 14px; }
+.eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em;
   text-transform: uppercase; color: var(--t3); }
-.pcard-foot { font-size: 12.5px; color: var(--t2); margin: 0; line-height: 1.45; }
 
-.holder { flex-direction: row; align-items: flex-start; gap: 16px; }
-.holder-face { width: 64px; height: 64px; border-radius: 50%; flex: none; overflow: hidden;
-  background: var(--raised); border: 1px solid var(--line); display: grid; place-items: center;
-  font-family: var(--font-mono); font-size: 18px; color: var(--t2); }
-.holder-face img { width: 100%; height: 100%; object-fit: cover; }
-.holder-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.holder-name { font-size: 18px; font-weight: 600; letter-spacing: -.2px; display: flex; align-items: center; gap: 8px; }
-.holder-admin { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono);
-  font-size: 8.5px; letter-spacing: .12em; color: var(--ground); background: var(--active-fill);
-  border-radius: 3px; padding: 2px 5px; }
-.holder-mail { font-size: 12.5px; color: var(--t2); }
-.holder-acts { display: flex; align-items: center; gap: 12px; margin-top: 9px; flex-wrap: wrap; }
+.row { display: flex; align-items: center; gap: 16px; padding: 13px 0;
+  border-top: 1px solid color-mix(in oklab, var(--line), transparent 45%); }
+.row:first-of-type { border-top: 0; padding-top: 2px; }
+.rowtext { flex: 1; min-width: 0; }
+.rowtext b { display: block; font-size: calc(14px * var(--scale, 1)); font-weight: 600; }
+.rowtext span { display: block; font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); margin-top: 2px; }
 
-.pfield { display: flex; flex-direction: column; gap: 4px; }
-.pfield-label { font-size: 13px; font-weight: 600; color: var(--t1); }
-.pfield-input { min-height: 40px; padding: 0 13px; border-radius: var(--r-control);
-  background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 14px; }
-.pfield-input:focus { border-color: var(--active); }
-.pfield-hint { font-size: 12px; color: var(--t3); }
-.ppreview { font-size: 12.5px; color: var(--t2); margin: -4px 0 0; }
+.field { display: flex; flex-direction: column; gap: 6px; padding: 11px 0; }
+.field label { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); }
+.field input, .field textarea { background: var(--raised); border: 1px solid var(--line);
+  border-radius: 9px; padding: 10px 12px; color: var(--t1); font-family: inherit;
+  font-size: calc(14px * var(--scale, 1)); width: 100%; }
+.field input:focus, .field textarea:focus { outline: 2px solid var(--active); outline-offset: 1px; }
+.field .hint { font-size: calc(11.5px * var(--scale, 1)); color: var(--t3); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 620px) { .two { grid-template-columns: 1fr; } }
 
-.prow { display: flex; align-items: center; gap: 16px; min-height: 44px; }
-.prow-text { flex: 1; min-width: 0; }
-.prow-title { font-size: 14px; font-weight: 600; color: var(--t1); }
-.prow-note { font-size: 12.5px; color: var(--t2); line-height: 1.4; }
+.seg { display: inline-flex; background: var(--raised); border: 1px solid var(--line);
+  border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { background: none; border: 0; border-radius: 7px; padding: 8px 15px; color: var(--t2);
+  font-size: calc(12.5px * var(--scale, 1)); font-weight: 600; cursor: pointer;
+  transition: background .16s, color .16s; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--t1);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--active), transparent 55%); }
 
+.ghost { background: none; color: var(--t1); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 16px; font-size: calc(12.5px * var(--scale, 1)); font-weight: 600; cursor: pointer; }
+.ghost:hover { border-color: var(--t3); }
+.ghost.sm { padding: 6px 12px; font-size: calc(11.5px * var(--scale, 1)); }
 
-.pchoice { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left;
-  background: var(--raised); border: 1px solid var(--line); border-radius: var(--r-control);
-  padding: 12px 13px; cursor: pointer; color: var(--t2); }
-.pchoice:hover { border-color: var(--t3); }
-.pchoice.is-on { border-color: var(--active); }
-.pchoice-name { font-size: 14px; font-weight: 600; color: var(--t1); }
-.pchoice-note { font-size: 12.5px; line-height: 1.4; }
-.pchoice-sample { margin-top: 7px; font-size: 13px; font-style: italic; color: var(--t1); }
+.livname { font-size: calc(15px * var(--scale, 1)); font-weight: 600; margin-bottom: 2px; }
+.livdesc { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); margin-bottom: 14px; }
+.livgrid { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.liv { background: none; border: 0; padding: 3px; border-radius: 50%; cursor: pointer; line-height: 0;
+  min-height: 0; box-shadow: 0 0 0 0 var(--active); transition: box-shadow .18s, transform .18s; }
+.liv:hover { transform: translateY(-2px); }
+.liv[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--active); }
+.liv i { display: block; width: 34px; height: 34px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
+.anchors { font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; color: var(--t3);
+  margin-top: 12px; }
 
-.pseg { display: inline-flex; background: var(--raised); border: 1px solid var(--line);
-  border-radius: var(--r-pill); padding: 3px; gap: 3px; align-self: flex-start; }
-.pseg button { min-height: 34px; padding: 0 16px; border: 0; border-radius: var(--r-pill);
-  background: none; color: var(--t2); font-size: 13px; font-weight: 500; cursor: pointer; }
-.pseg button.is-on { background: var(--active-fill); color: var(--ground); }
+.spec { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  background: var(--ground); position: relative; }
+.specin { position: relative; z-index: 1; padding: 14px; display: grid; gap: 11px;
+  grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); }
+@media (max-width: 620px) { .specin { grid-template-columns: 1fr; } }
+.specglow { position: absolute; inset: -40%; z-index: 0; pointer-events: none; mix-blend-mode: screen;
+  background: var(--key-img); opacity: calc(var(--key-int) * .9); filter: blur(38px) saturate(1.28); }
+.specglow2 { position: absolute; inset: -40%; z-index: 0; pointer-events: none; mix-blend-mode: screen;
+  background: var(--fill-img); opacity: var(--fill-int); filter: blur(46px) saturate(1.2); }
+.speccard, .specmod { background: var(--panel); border: 1px solid var(--line);
+  border-top-color: var(--edge-hi); border-radius: 10px; padding: 12px; }
+.specchap { font-size: 13.5px; font-weight: 600; }
+.speccode { font-family: var(--font-mono); font-size: 10px; color: var(--t3); margin-top: 1px; }
+.specbtn { margin-top: 10px; display: inline-block; background: var(--active-fill); color: var(--ground);
+  border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 600; }
+.specmod { display: flex; flex-direction: column; }
+.specname { font-size: 12.5px; font-weight: 600; color: var(--t2); margin-top: 4px; }
+.specprof { display: block; width: 100%; height: 38px; margin-top: auto; padding-top: 6px; }
 
-.plivname { font-size: 16px; font-weight: 600; color: var(--t1); }
-.pcircles { display: flex; gap: 12px; flex-wrap: wrap; }
-.pcircle { width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; cursor: pointer;
-  background: var(--sw); border: 1px solid var(--line); }
-.pcircle.is-on { box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--active); }
-.planchors { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--t3); }
-
-/* the specimen — both lamps behind two real panels */
-.spec { position: relative; overflow: hidden; border-radius: var(--r-panel); background: var(--ground);
-  border: 1px solid var(--line); padding: 16px; display: flex; gap: 12px; isolation: isolate; min-height: 116px; }
-.spec::before, .spec::after { content: ""; position: absolute; inset: -55%; pointer-events: none;
-  z-index: 0; mix-blend-mode: screen; filter: blur(46px) saturate(1.28); }
-.spec::before { background: var(--key-img); opacity: var(--key-int); }
-.spec::after { background: var(--fill-img); opacity: var(--fill-int); filter: blur(62px) saturate(1.2); }
-.spec > * { position: relative; z-index: 1; }
-.spec-card { flex: 1.4; display: flex; gap: 10px; background: var(--panel); border: 1px solid var(--line);
-  border-top-color: var(--edge-hi); border-bottom-color: var(--edge-lo); border-radius: 10px; padding: 11px; }
-.spec-thumb { width: 52px; height: 32px; border-radius: 5px; background: var(--raised);
-  border: 1px solid var(--line); flex: none; }
-.spec-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.spec-lines i, .spec-mod i { display: block; height: 5px; border-radius: 3px; background: var(--t2); opacity: .8; }
-.spec-pill { display: block; width: 54px; height: 15px; border-radius: 999px; background: var(--active-fill); margin-top: 3px; }
-.spec-mod { flex: 1; display: flex; flex-direction: column; gap: 6px; background: var(--panel);
-  border: 1px solid var(--line); border-top-color: var(--edge-hi); border-bottom-color: var(--edge-lo);
-  border-radius: 10px; padding: 11px; }
-.spec-mod svg { width: 100%; height: 26px; margin-top: auto; }
-
-.pdelete { font-size: 12.5px; color: var(--t3); line-height: 1.5; margin: 10px 0 0; }
-.plink { background: none; border: 0; padding: 0; min-height: 0; cursor: pointer;
-  color: var(--t2); font-size: 12.5px; text-decoration: underline; text-underline-offset: 2px; }
-.plink:hover { color: var(--t1); }
-.plink.is-quiet { color: var(--t3); }
+.admin { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--active);
+  color: var(--active); border-radius: 999px; padding: 3px 9px; font-family: var(--font-mono);
+  font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; }
+.bigav { width: 62px; height: 62px; border-radius: 50%; background: var(--active); color: var(--ground);
+  display: grid; place-items: center; font-family: var(--font-mono); font-size: 19px; flex: none;
+  background-size: cover; background-position: center; }
+.idrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.idname { font-size: calc(20px * var(--scale, 1)); font-weight: 700; letter-spacing: -.3px; }
+.idmail { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); }
+.idtext { flex: 1; min-width: 200px; }
+.avactions { display: flex; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+.mono { font-family: var(--font-mono); font-size: .94em; font-weight: 500; color: var(--t1); white-space: nowrap; }
+.quietline { margin: 2px 2px 0; font-size: calc(11.5px * var(--scale, 1)); color: var(--t3); line-height: 1.6; }
+.linkish { background: none; border: 0; padding: 0; min-height: 0; color: var(--t2); font-size: inherit;
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.linkish:hover { color: var(--t1); }
+.psaved { font-size: 12.5px; color: var(--t2); margin: -8px 0 0; }
 `;
 
-function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, livery, onLivery,
+function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPin, livery, onLivery,
                    fontSize, onFontSize, reduceMotion, onReduceMotion, dyslexiaFont, onDyslexiaFont,
                    turbulence, onTurbulence, grain, onGrain, variant }) {
   const { user } = useUser();
@@ -256,8 +300,9 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
     catch { setSaveNote("That photo wouldn't upload. Try a smaller one."); }
   };
 
-  const initials = (user?.fullName || user?.username || "")
-    .split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  const initials = initialsOf(user);
+  const useInitials = progress.get(USE_INITIALS_KEY, false);
+  const photo = !useInitials && user?.imageUrl ? user.imageUrl : null;
 
   // §6.2 — a live sample line that changes the greeting on the home page
   // immediately. Dealt off the same engine, so it is a real line, not a mock.
@@ -268,13 +313,16 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
 
   return (
     <div className="profile">
-      <h1 className="profile-h1">Your licence</h1>
+      <div className="phead">
+        <button className="back" type="button" onClick={onBack}>‹ Flight Deck</button>
+        <h1 className="ptitle">{TABS.find((t) => t.id === tab)?.label}</h1>
+      </div>
 
-      <div className="ptabs" role="tablist" aria-label="Profile" ref={tabsRef} onKeyDown={walkTabs}>
+      <div className="tabs" role="tablist" aria-label="Profile sections" ref={tabsRef} onKeyDown={walkTabs}>
         {TABS.map((t) => (
           <button key={t.id} role="tab" id={`ptab-${t.id}`} aria-controls={`ppanel-${t.id}`}
                   aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
-                  className={`ptab ${tab === t.id ? "is-on" : ""}`} onClick={() => onNavigate(t.id)}>
+                  onClick={() => onNavigate(t.id)}>
             {t.label}
           </button>
         ))}
@@ -284,85 +332,101 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
 
       {/* ------------------------------------------------------------ LICENCE */}
       {tab === "licence" && (
-        <div className="ppanel" role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
-          <section className="pcard holder">
-            <div className="holder-face">
-              {user?.imageUrl ? <img src={user.imageUrl} alt="" /> : <span>{initials || "··"}</span>}
+        <div className="panel" role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
+          <div className="block">
+            <span className="eyebrow">Holder</span>
+            <div className="idrow">
+              <span className="bigav" style={photo ? { backgroundImage: `url(${photo})` } : undefined}>
+                {photo ? "" : initials || "··"}
+              </span>
+              <span className="idtext">
+                <div className="idname">{user?.fullName || user?.username || "Pilot"}</div>
+                <div className="idmail">{user?.primaryEmailAddress?.emailAddress}</div>
+                <div className="avactions">
+                  <button className="ghost sm" type="button" onClick={() => fileRef.current?.click()}>Choose a photo</button>
+                  {/* A display preference, not a delete — the Clerk image stays,
+                      so toggling back returns the photo. */}
+                  {user?.imageUrl && (
+                    <button className="ghost sm" type="button"
+                            onClick={() => progress.set(USE_INITIALS_KEY, !useInitials)}>
+                      {useInitials ? "Use my photo" : "Use initials"}
+                    </button>
+                  )}
+                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
+                </div>
+              </span>
+              {isAdmin && (
+                <span className="admin">
+                  <ShieldCheck size={10} /> Admin
+                </span>
+              )}
             </div>
-            <div className="holder-text">
-              <div className="holder-name">
-                {user?.fullName || user?.username || "Pilot"}
-                {isAdmin && <span className="holder-admin"><ShieldCheck size={10} /> ADMIN</span>}
-              </div>
-              <div className="holder-mail">{user?.primaryEmailAddress?.emailAddress}</div>
-              <div className="holder-acts">
-                <button className="pill" type="button" onClick={() => fileRef.current?.click()}>Choose a photo</button>
-                {user?.imageUrl && (
-                  <button className="plink" type="button"
-                          onClick={() => user.setProfileImage({ file: null }).then(() => setSaveNote("Back to initials."))}>
-                    Use initials
-                  </button>
-                )}
-                <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
-              </div>
-            </div>
-          </section>
 
-          <section className="pcard">
-            <Field label="Name on the licence" hint="Private. Nobody sees this but you."
-                   value={holderName} onChange={setHolderName}
-                   onCommit={() => {
-                     const [first, ...rest] = holderName.trim().split(/\s+/);
-                     user?.update({ firstName: first || "", lastName: rest.join(" ") });
-                   }} />
-            <Field label="Username" hint="How you show up to everyone else."
-                   value={username} onChange={setUsername}
-                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
-            <Field label="Bio" hint="A line about you. Other pilots see this."
+            <div className="two" style={{ marginTop: 18 }}>
+              <Field id="f-first" label="Name on the licence" hint="Private. Nobody sees this but you."
+                     value={holderName} onChange={setHolderName}
+                     onCommit={() => {
+                       const [first, ...rest] = holderName.trim().split(/\s+/);
+                       user?.update({ firstName: first || "", lastName: rest.join(" ") });
+                     }} />
+              <Field id="f-user" label="Username" hint="How you show up to everyone else."
+                     value={username} onChange={setUsername}
+                     onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
+            </div>
+
+            <Field id="f-bio" label="Bio" hint="A line about you. Other pilots see this."
                    value={bio} onChange={setBio}
                    onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
-            <Field label="What Wingman calls you" hint="Used in greetings, and only by whoever's greeting you."
-                   value={greetName} onChange={setGreetName}
-                   onCommit={() => progress.set("pw-greet-name", greetName.trim() || null)} />
 
-            <Switch id="by-username" on={byUsername} onChange={setIdentity} label="Go by your username" />
-            <p className="ppreview">
-              {byUsername
-                ? `Everyone else sees @${username || "your-username"}`
-                : `Everyone else sees ${holderName || "your name"} — most people don't.`}
-            </p>
-          </section>
-
-          <section className="pcard">
-            <div className="pcard-head">Account</div>
-            <div className="prow"><div className="prow-text">
-              <div className="prow-title">Email</div>
-              <div className="prow-note">{user?.primaryEmailAddress?.emailAddress}</div>
-            </div></div>
-            <div className="prow"><div className="prow-text">
-              <div className="prow-title">Password</div>
-              <div className="prow-note">Changed from your account provider.</div>
-            </div></div>
-            <div className="prow">
-              <div className="prow-text"><div className="prow-title">Sign out</div></div>
-              <button className="pill" type="button" onClick={() => signOut()}>Sign out</button>
+            <div className="row" style={{ marginTop: 4 }}>
+              <span className="rowtext"><b>Go by your username</b>
+                <span>{byUsername
+                  ? <>Everyone else sees <b className="mono">@{username || "your-username"}</b></>
+                  : <>Everyone else sees <b className="mono">{holderName || "your name"}</b> — most people don't.</>}
+                </span>
+              </span>
+              <button type="button" role="switch" aria-checked={byUsername} id="by-username"
+                      aria-label="Use username publicly" className="sw is-inline"
+                      onClick={() => setIdentity(!byUsername)} />
             </div>
-          </section>
 
-          {/* Findable if you're looking, invisible if you're not. */}
+            <div className="field" style={{ maxWidth: 340 }}>
+              <label htmlFor="f-call">What Wingman calls you</label>
+              <input id="f-call" value={greetName} onChange={(e) => setGreetName(e.target.value)}
+                     onBlur={() => progress.set("pw-greet-name", greetName.trim() || null)} />
+              <span className="hint">Used in greetings, and only by whoever's greeting you. Leave it empty and you'll only get the lines that don't need a name.</span>
+            </div>
+          </div>
+
+          <div className="block">
+            <span className="eyebrow">Account</span>
+            <div className="row">
+              <span className="rowtext"><b>Email</b><span>{user?.primaryEmailAddress?.emailAddress}</span></span>
+              <button className="ghost" type="button" onClick={() => onNavigate("account")}>Change</button>
+            </div>
+            <div className="row">
+              <span className="rowtext"><b>Password</b><span>Managed by your sign-in provider</span></span>
+              <button className="ghost" type="button" onClick={() => onNavigate("account")}>Update</button>
+            </div>
+            <div className="row">
+              <span className="rowtext"><b>Sign out</b><span>On this device only</span></span>
+              <button className="ghost" type="button" onClick={() => signOut()}>Sign out</button>
+            </div>
+          </div>
+
           {confirmDelete ? (
-            <p className="pdelete">
+            <p className="quietline">
               This removes your logbook, your crew and everything you've flown, and it can't be undone.{" "}
-              <button type="button" className="plink"
+              <button className="linkish" type="button"
                       onClick={() => user?.delete().catch(() => setSaveNote("That didn't go through. Try again, or write to us."))}>
                 Delete it all
               </button>
               {" · "}
-              <button type="button" className="plink" onClick={() => setConfirmDelete(false)}>Keep my account</button>
+              <button className="linkish" type="button" onClick={() => setConfirmDelete(false)}>Keep my account</button>
             </p>
           ) : (
-            <p className="pdelete">
-              <button type="button" className="plink is-quiet" onClick={() => setConfirmDelete(true)}>Delete your account</button>
+            <p className="quietline">
+              <button className="linkish" type="button" onClick={() => setConfirmDelete(true)}>Delete account</button>
               {" "}— removes your logbook, your crew and everything you've flown. It can't be undone.
             </p>
           )}
@@ -371,115 +435,99 @@ function Profile({ page = "licence", onNavigate, variantPin, onVariantPin, liver
 
       {/* -------------------------------------------------------- PREFERENCES */}
       {tab === "preferences" && (
-        <div className="ppanel" role="tabpanel" id="ppanel-preferences" aria-labelledby="ptab-preferences">
+        <div className="panel" role="tabpanel" id="ppanel-preferences" aria-labelledby="ptab-preferences">
           {flags["voice.characters"] && (
-            <section className="pcard">
-              <div className="pcard-head">Who greets you</div>
-              {CHARACTERS.map((c) => (
-                <button key={c.id} type="button"
-                        className={`pchoice ${character === c.id ? "is-on" : ""}`}
-                        aria-pressed={character === c.id}
-                        onClick={() => progress.set("pw-voice", c.id)}>
-                  <span className="pchoice-name">{c.name}</span>
-                  <span className="pchoice-note">{c.blurb}</span>
-                  {character === c.id && <span className="pchoice-sample">{sample}</span>}
-                </button>
-              ))}
-              <p className="pcard-foot">{VOICES[character]?.flat().length} lines, dealt so you see every one before any repeat.</p>
-            </section>
+            <div className="block">
+              <span className="eyebrow">Who greets you</span>
+              <div className="livname">{CHARACTERS.find((c) => c.id === character)?.name}</div>
+              <div className="livdesc">{CHARACTERS.find((c) => c.id === character)?.blurb}</div>
+              <Seg label="Voice" value={character}
+                   options={CHARACTERS.map((c) => ({ id: c.id, label: c.name }))}
+                   onPick={(v) => progress.set("pw-voice", v)} />
+              <div className="anchors">“{sample}”</div>
+            </div>
           )}
 
-          <section className="pcard">
-            <div className="pcard-head">How social</div>
-            {PRESETS.filter((p) => (p.id === "quiet") || (p.id === "crew" && flags["social.crew"])
-                                || (p.id === "open" && flags["social.crew"] && flags["social.frequency"])).map((p) => (
-              <button key={p.id} type="button"
-                      className={`pchoice ${preset === p.id ? "is-on" : ""}`}
-                      aria-pressed={preset === p.id}
-                      onClick={() => progress.set("pw-social-preset", p.id)}>
-                <span className="pchoice-name">{p.name}</span>
-                <span className="pchoice-note">{p.note}</span>
-              </button>
-            ))}
-          </section>
+          <div className="block">
+            <span className="eyebrow">How social</span>
+            <div className="livdesc">{PRESETS.find((x) => x.id === preset)?.desc}</div>
+            <Seg label="Social preset" value={preset}
+                 options={PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])
+                   || (x.id === "open" && flags["social.crew"] && flags["social.frequency"]))}
+                 onPick={(v) => progress.set("pw-social-preset", v)} />
+          </div>
 
-          <section className="pcard">
-            <div className="pcard-head">Being seen</div>
+          <div className="block">
+            <span className="eyebrow">Being seen</span>
             <Switch id="fly-invisible" label="Fly invisible"
                     note="Nobody sees where you are. You still see everyone else."
                     on={progress.get("pw-invisible", false)}
                     onChange={(v) => progress.set("pw-invisible", v)} />
-          </section>
+          </div>
 
-          <section className="pcard">
-            <div className="pcard-head">Notices</div>
+          <div className="block">
+            <span className="eyebrow">Notices</span>
             {NOTICES.map((n) => (
               <Switch key={n.id} id={`notice-${n.id}`} label={n.label} note={n.note}
-                      on={notices[n.id] !== false}
+                      on={notices[n.id] ?? n.on}
                       onChange={(v) => progress.set("pw-notices", { ...notices, [n.id]: v })} />
             ))}
-          </section>
+          </div>
         </div>
       )}
 
       {/* --------------------------------------------------------- APPEARANCE */}
       {tab === "appearance" && (
-        <div className="ppanel" role="tabpanel" id="ppanel-appearance" aria-labelledby="ptab-appearance">
-          <section className="pcard">
-            <div className="pcard-head">Night Ops</div>
-            <div className="pseg" role="group" aria-label="Night Ops">
-              {MODES.map((m) => (
-                <button key={String(m.id)} type="button" aria-pressed={variantPin === m.id}
-                        className={variantPin === m.id ? "is-on" : ""}
-                        onClick={() => onVariantPin(m.id)}>{m.label}</button>
-              ))}
+        <div className="panel" role="tabpanel" id="ppanel-appearance" aria-labelledby="ptab-appearance">
+          <div className="block">
+            <span className="eyebrow">Light</span>
+            <div className="row">
+              <span className="rowtext">
+                <b>{MODE_COPY[variantPin || "auto"].title}</b>
+                <span>{MODE_COPY[variantPin || "auto"].desc}</span>
+              </span>
+              <Seg label="Light mode" value={variantPin} options={MODES} onPick={onVariantPin} />
             </div>
-            <p className="pcard-foot">Auto follows this device.</p>
-          </section>
+          </div>
 
-          <section className="pcard">
-            <div className="pcard-head">Livery</div>
-            <div className="plivname">{current.name}</div>
-            <p className="pcard-foot">{current.description}</p>
-            {/* Click selects. Nothing happens on hover. */}
-            <div className="pcircles" role="radiogroup" aria-label="Livery">
+          <div className="block">
+            <span className="eyebrow">Livery</span>
+            <div className="livname">{current.name}</div>
+            <div className="livdesc">{current.description}</div>
+            {/* Click selects. Nothing happens on hover but the lift. */}
+            <div className="livgrid" role="group" aria-label="Livery">
               {liveries.map((L) => (
-                <button key={L.id} type="button" role="radio" aria-checked={L.id === current.id}
-                        aria-label={L.name} title={L.name}
-                        className={`pcircle ${L.id === current.id ? "is-on" : ""}`}
-                        style={{ "--sw": liverySwatch(L) }}
-                        onClick={() => onLivery(L.id)} />
+                <button key={L.id} className="liv" type="button" aria-pressed={L.id === current.id}
+                        aria-label={L.name} title={L.name} onClick={() => onLivery(L.id)}>
+                  <i style={{ background: liverySwatch(L) }} />
+                </button>
               ))}
             </div>
-            <div className="planchors">{current.anchors}</div>
+            <div className="anchors">{current.anchors}</div>
             <Specimen liveryId={current.id} variant={variant} />
-          </section>
+          </div>
 
-          <section className="pcard">
-            <div className="pcard-head">Instrument scale</div>
-            <div className="pseg" role="group" aria-label="Instrument scale">
-              {SCALES.map((s) => (
-                <button key={s.id} type="button" aria-pressed={fontSize === s.id}
-                        className={fontSize === s.id ? "is-on" : ""}
-                        onClick={() => onFontSize(s.id)}>{s.label}</button>
-              ))}
+          <div className="block">
+            <span className="eyebrow">Instrument scale</span>
+            <div className="row">
+              <span className="rowtext"><b>Text size</b><span>Across chapters, discussion and the library</span></span>
+              <Seg label="Instrument scale" value={fontSize} options={SCALES} onPick={onFontSize} />
             </div>
-          </section>
+          </div>
 
-          <section className="pcard">
-            <div className="pcard-head">Accessibility &amp; motion</div>
-            <Switch id="smooth-air" label="Smooth Air" note="Stops every animation and transition."
+          <div className="block">
+            <span className="eyebrow">Accessibility &amp; motion</span>
+            <Switch id="smooth-air" label="Smooth Air" note="Stops the lights drifting and the cards lifting"
                     on={reduceMotion} onChange={onReduceMotion} />
-            <Switch id="plain-language" label="Plain Language" note="Swaps to Atkinson Hyperlegible."
+            <Switch id="plain-language" label="Plain Language" note="A clearer typeface for reading fatigue and dyslexia"
                     on={dyslexiaFont} onChange={onDyslexiaFont} />
-            <Switch id="turbulence" label="Turbulence" note="The small nudge on view and tab change."
+            <Switch id="turbulence" label="Turbulence" note="A small nudge when you move between pages"
                     on={turbulence} onChange={onTurbulence} />
             {flags["appearance.grain"] && (
-              <Switch id="grain" label="Grain" note="The film grain over the light."
+              <Switch id="grain" label="Grain" note="Fine noise over the light. Off is flatter but smoother."
                       on={grain} onChange={onGrain} />
             )}
-            <p className="pcard-foot">Your device's own reduced-motion setting is honoured on its own, whatever Smooth Air says.</p>
-          </section>
+          </div>
         </div>
       )}
 

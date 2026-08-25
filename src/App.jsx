@@ -427,7 +427,8 @@ function AppInner() {
         <main className="content content-taxi content--profile">
           <Profile
             page={route.tab}
-            onNavigate={(t) => go(routePath.profile(t))}
+            onNavigate={(t) => go(t === "features" ? routePath.features() : routePath.profile(t))}
+            onBack={() => go(routePath.home())}
             variant={variant}
             variantPin={variantPin}
             onVariantPin={setVariantPin}
