@@ -497,7 +497,6 @@ function AppInner() {
           />
         </main>
       )}
-      <RunwayLights />
     </Deck>
     </FirstFlightGate>
     </UsernameGate>

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { dotTile } from "../lib/liveryEngine.js";
+import RunwayLights from "./RunwayLights.jsx";
 
 // The room. In wingman-poc.html the whole page is the deck — the top bar sits
 // inside it, so the key light lands on the bar as well as on the content, and
@@ -24,14 +25,14 @@ const ROOM_CSS = `
      has hidden here and its own sticky header is inert for exactly that
      reason. */
   overflow: clip;
-  padding: 0 40px calc(46px + var(--runway-h)); color: var(--t1); isolation: isolate;
+  padding: 0 40px 0; color: var(--t1); isolation: isolate;
   /* dvh so mobile browsers that shrink their chrome on scroll do not leave a
      strip of nothing under the deck; vh first for anything that lacks it */
   min-height: 100vh;
   min-height: 100dvh;
   font-family: var(--font-ui);
 }
-@media (max-width: 640px) { .deck { padding: 0 16px calc(36px + var(--runway-h)); } }
+@media (max-width: 640px) { .deck { padding: 0 16px 0; } }
 .deck .inner { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; }
 /* the shell's own children sit above the light. main keeps the 1240 column;
    the header does not — it runs edge to edge, brandmark hard left and the
@@ -47,8 +48,11 @@ const ROOM_CSS = `
 }
 /* The header is excluded: it carries its own sticky/z-20, and this rule was
    overriding it on specificity, which is what trapped the menu under the page. */
-.deck > *:not(.spill):not(.stars):not(.grain):not(.flight-progress):not(.topbar) {
+.deck > *:not(.spill):not(.stars):not(.grain):not(.topbar) {
   position: relative; z-index: 1; }
+/* the strip is content at the end of the page, not chrome pinned to the glass */
+.deck > .flight-progress { width: calc(100% + 80px); margin: 46px -40px 0; }
+@media (max-width: 640px) { .deck > .flight-progress { width: calc(100% + 32px); margin: 36px -16px 0; } }
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 
 /* Light ADDS, it does not veil: screen, never a translucent overlay. */
@@ -98,6 +102,7 @@ function Deck({ aurora, children }) {
       </defs></svg>
 
       {children}
+      <RunwayLights />
 
       <div className="stars" aria-hidden="true" />
       <div className="spill" aria-hidden="true" />

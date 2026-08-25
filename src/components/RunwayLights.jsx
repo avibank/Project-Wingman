@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Reading-progress bar, styled as a runway centreline light bar.
 //
@@ -20,7 +20,9 @@ const colourAt = (i) => (i < 8 ? "is-white" : i < 10 ? "is-amber" : "is-red");
 
 function RunwayLights() {
   const [progress, setProgress] = useState(0);
+  const [scrollable, setScrollable] = useState(false);
   const max = useRef(0);
+  const remeasure = useRef(null);
 
   useEffect(() => {
     const el = document.documentElement;
@@ -28,21 +30,41 @@ function RunwayLights() {
     // every scroll event. scrollTop is free.
     const read = () => setProgress(
       max.current > 0 ? Math.min(1, Math.max(0, el.scrollTop / max.current)) : 0);
-    const measure = () => { max.current = el.scrollHeight - el.clientHeight; read(); };
+    // Against the real scrollable distance, not a fixed pixel span, so p
+    // reaches 1 at the bottom of a short page and a long one alike.
+    const measure = () => {
+      max.current = el.scrollHeight - el.clientHeight;
+      setScrollable(max.current > 1);
+      read();
+    };
 
     window.addEventListener("scroll", read, { passive: true });
     window.addEventListener("resize", measure);
+    // documentElement rather than body: body's box does not track scrollHeight
+    // when the deck is the thing growing.
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    ro?.observe(document.documentElement);
     ro?.observe(document.body);
+    remeasure.current = measure;
     measure();
     return () => {
       window.removeEventListener("scroll", read);
       window.removeEventListener("resize", measure);
       ro?.disconnect();
+      remeasure.current = null;
     };
   }, []);
 
+  // The strip is content now, so rendering it makes the page taller — and the
+  // distance it measures itself against is the distance it just changed. One
+  // re-measure after it appears, or it reads 100% at half way down.
+  useLayoutEffect(() => { remeasure.current?.(); }, [scrollable]);
+
   const lit = Math.min(LIGHTS, Math.floor(progress * LIGHTS));
+
+  // A page that does not scroll has no distance to run, so there is no strip —
+  // rather than a strip showing a completed runway you never flew.
+  if (!scrollable) return null;
 
   return (
     <div className="flight-progress" aria-hidden="true">
@@ -55,7 +77,6 @@ function RunwayLights() {
 
       <style>{`
         .flight-progress {
-          position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
           display: flex; align-items: center; justify-content: space-between;
           gap: 12px; padding: 8px 16px;
           background: var(--panel);
