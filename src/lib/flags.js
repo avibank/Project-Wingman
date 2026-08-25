@@ -37,6 +37,7 @@ export const FLAGS = [
   { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", off: true },
   { id: "page.logbook", label: "Logbook", note: "The logbook page.", off: true },
   { id: "page.bookmarks", label: "Saved", note: "Bookmarks and flashcards.", off: true },
+  { id: "prefs.notices", label: "Notices", note: "The three notice switches in Preferences.", off: true },
   { id: "appearance.grain", label: "Grain switch", note: "The grain control in Appearance. The grain itself stays on.", off: true },
 ];
 

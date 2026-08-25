@@ -3,7 +3,7 @@ import { useUser, useClerk } from "@clerk/clerk-react";
 import { ShieldCheck } from "lucide-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
-import { LIVERIES, at, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap } from "../lib/liveryEngine.js";
+import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap, col, dotTile } from "../lib/liveryEngine.js";
 import { profileSVG } from "../lib/flightProfile.js";
 import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
@@ -80,16 +80,40 @@ function Seg({ label, options, value, onPick }) {
   );
 }
 
-// §6.3 — 34px circles, each carrying its own three shades at 145°, sampled
-// through the real at(). Aurora gets its own split: its colour is the curtain,
-// which sits nowhere on its ramp.
-function liverySwatch(L) {
+// §6.3 — each circle is a miniature of the deck it selects, not three flat
+// bands: its own ground, its own key and fill in the same place and the same
+// hue as the real rig, and its two chromatic edges on the rim. Aurora
+// additionally carries its curtain, quietened, and the starfield.
+//
+// The test is that you can tell them apart with the labels covered.
+function LiveryDot({ livery, selected, onPick }) {
+  const { vars, C, livery: L } = useMemo(() => deckVars(livery.id, "night"), [livery.id]);
+  const keyHue = L.keyAbs != null ? L.keyAbs : hueAt(L, 1);
+  const keyC = L.keyC != null ? L.keyC : LIGHT.ambC;
+  const fillC = LIGHT.ambC * 0.85 * (L.fillC != null ? L.fillC : 1);
+
+  // The key sits at 76% -18% on the real rig; the same place here, so the light
+  // lands where it lands on the deck this selects.
+  const layers = [];
   if (L.aurora) {
-    return "linear-gradient(145deg, oklch(.24 .05 250) 0 34%, oklch(.72 .19 156) 34% 70%, oklch(.60 .16 316) 70% 100%)";
+    layers.push(dotTile(14, 20260824, 1.1, 0.9));
+    layers.push(`radial-gradient(46% 30% at 30% 20%, ${col(0.62, 0.150, 318, 0.32)} 0%, ${col(0.62, 0.150, 318, 0)} 80%)`);
+    layers.push(`radial-gradient(124% 62% at 50% -8%, ${col(0.86, 0.170, 158, 0.58)} 0%,` +
+                ` ${col(0.74, 0.195, 176, 0.32)} 38%, ${col(0.70, 0.190, 196, 0)} 80%)`);
   }
-  // The core is sampled at chroma scale 1.6 — that lift is what makes the
-  // middle band read as its own colour rather than a stop on the way through.
-  return `linear-gradient(145deg, ${at(L, 0.08, 1)} 0 34%, ${at(L, L.midAt, 1.6)} 34% 70%, ${at(L, 0.92, 1)} 70% 100%)`;
+  layers.push(`radial-gradient(96% 83% at 76% -18%, ${col(0.84, keyC * 1.12, keyHue, 0.9)} 0%,` +
+              ` ${col(0.74, keyC * 1.10, keyHue, 0.6)} 26%, ${col(0.74, keyC * 1.10, keyHue, 0.3)} 48%,` +
+              ` ${col(0.74, keyC * 1.10, keyHue, 0.1)} 66%, ${col(0.74, keyC * 1.10, keyHue, 0)} 84%)`);
+  layers.push(`radial-gradient(74% 64% at 16% 112%, ${col(0.72, fillC * 1.08, wrap(L.fillAbs), 0.92)} 0%,` +
+              ` ${col(0.70, fillC * 0.96, wrap(L.fillAbs), 0)} 76%)`);
+
+  return (
+    <button className="liv" type="button" aria-pressed={selected}
+            aria-label={livery.name} title={livery.name} onClick={onPick}>
+      <i style={{ backgroundImage: layers.join(", "), backgroundColor: C.ground,
+                  "--rim-hi": vars["--edge-hi"], "--rim-lo": vars["--edge-lo"] }} />
+    </button>
+  );
 }
 
 // §6.3 — a specimen under the picker: a miniature hero card and one module card
@@ -201,8 +225,12 @@ const PROFILE_CSS = `
   min-height: 0; box-shadow: 0 0 0 0 var(--active); transition: box-shadow .18s, transform .18s; }
 .liv:hover { transform: translateY(-2px); }
 .liv[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--active); }
-.liv i { display: block; width: 34px; height: 34px; border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
+.liv i { display: block; width: 56px; height: 56px; border-radius: 50%; position: relative;
+  background-size: cover; background-position: center; }
+/* the rim: lit edge on the upper arc, unlit underneath — the same two tokens
+   the cards use */
+.liv i::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 1px solid transparent; border-top-color: var(--rim-hi); border-bottom-color: var(--rim-lo); }
 .anchors { font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; color: var(--t3);
   margin-top: 12px; }
 
@@ -228,9 +256,21 @@ const PROFILE_CSS = `
 .admin { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--active);
   color: var(--active); border-radius: 999px; padding: 3px 9px; font-family: var(--font-mono);
   font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; }
-.bigav { width: 62px; height: 62px; border-radius: 50%; background: var(--active); color: var(--ground);
-  display: grid; place-items: center; font-family: var(--font-mono); font-size: 19px; flex: none;
-  background-size: cover; background-position: center; }
+/* The avatar is the control; the badge is decoration on it. One button, one
+   focus ring, and the ring sits on the circle rather than the badge. */
+.bigav { position: relative; width: 62px; height: 62px; min-height: 62px; padding: 0; flex: none;
+  border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--active-fill); background-size: cover; background-position: center;
+  color: var(--ground); display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 19px; }
+.bigav-initials { pointer-events: none; }
+.bigav-badge { position: absolute; right: -2px; bottom: -2px; width: 28px; height: 28px;
+  border-radius: 50%; display: grid; place-items: center; pointer-events: none;
+  background: var(--active-fill); color: var(--ground);
+  /* its own ring, so it reads as attached to the circle rather than floating */
+  box-shadow: 0 0 0 2px var(--panel); }
+.bigav-badge svg { width: 16px; height: 16px; display: block; }
+.bigav:hover .bigav-badge { background: var(--active); }
 .idrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .idname { font-size: calc(20px * var(--scale, 1)); font-weight: 700; letter-spacing: -.3px; }
 .idmail { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); }
@@ -336,24 +376,24 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           <div className="block">
             <span className="eyebrow">Holder</span>
             <div className="idrow">
-              <span className="bigav" style={photo ? { backgroundImage: `url(${photo})` } : undefined}>
-                {photo ? "" : initials || "··"}
-              </span>
+              {/* The avatar is the control. The badge is decoration on it, not a
+                  second button — one target, one focus ring, on the circle. */}
+              <button className="bigav" type="button" aria-label="Change your photo"
+                      onClick={() => fileRef.current?.click()}
+                      style={photo ? { backgroundImage: `url(${photo})` } : undefined}>
+                {photo ? "" : <span className="bigav-initials">{initials || "··"}</span>}
+                <span className="bigav-badge" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path d="M3.5 6.5h3l1.2-1.8h4.6L13.5 6.5h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z"
+                          stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                    <circle cx="10" cy="11" r="2.9" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                </span>
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
               <span className="idtext">
                 <div className="idname">{user?.fullName || user?.username || "Pilot"}</div>
                 <div className="idmail">{user?.primaryEmailAddress?.emailAddress}</div>
-                <div className="avactions">
-                  <button className="ghost sm" type="button" onClick={() => fileRef.current?.click()}>Choose a photo</button>
-                  {/* A display preference, not a delete — the Clerk image stays,
-                      so toggling back returns the photo. */}
-                  {user?.imageUrl && (
-                    <button className="ghost sm" type="button"
-                            onClick={() => progress.set(USE_INITIALS_KEY, !useInitials)}>
-                      {useInitials ? "Use my photo" : "Use initials"}
-                    </button>
-                  )}
-                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
-                </div>
               </span>
               {isAdmin && (
                 <span className="admin">
@@ -363,39 +403,41 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             </div>
 
             <div className="two" style={{ marginTop: 18 }}>
-              <Field id="f-first" label="Name on the licence" hint="Private. Nobody sees this but you."
+              <Field id="f-first" label="Full name" hint="On your licence and nowhere else."
                      value={holderName} onChange={setHolderName}
                      onCommit={() => {
                        const [first, ...rest] = holderName.trim().split(/\s+/);
                        user?.update({ firstName: first || "", lastName: rest.join(" ") });
                      }} />
-              <Field id="f-user" label="Username" hint="How you show up to everyone else."
-                     value={username} onChange={setUsername}
-                     onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
+              <div className="field">
+                <label htmlFor="f-user">Username</label>
+                <input id="f-user" value={username} onChange={(e) => setUsername(e.target.value)}
+                       onBlur={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
+                <span className="hint">How everyone else sees you.</span>
+                <div className="row">
+                  <span className="rowtext"><b>Show my username instead of my full name</b></span>
+                  <button type="button" role="switch" aria-checked={byUsername} id="by-username"
+                          aria-label="Show my username instead of my full name" className="sw is-inline"
+                          onClick={() => setIdentity(!byUsername)} />
+                </div>
+              </div>
             </div>
 
-            <Field id="f-bio" label="Bio" hint="A line about you. Other pilots see this."
+            <Field id="f-bio" label="A line about you"
+                   hint="Shows on your licence when someone opens it. Keep it short."
                    value={bio} onChange={setBio}
                    onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
-
-            <div className="row" style={{ marginTop: 4 }}>
-              <span className="rowtext"><b>Go by your username</b>
-                <span>{byUsername
-                  ? <>Everyone else sees <b className="mono">@{username || "your-username"}</b></>
-                  : <>Everyone else sees <b className="mono">{holderName || "your name"}</b> — most people don't.</>}
-                </span>
-              </span>
-              <button type="button" role="switch" aria-checked={byUsername} id="by-username"
-                      aria-label="Use username publicly" className="sw is-inline"
-                      onClick={() => setIdentity(!byUsername)} />
-            </div>
 
             <div className="field" style={{ maxWidth: 340 }}>
               <label htmlFor="f-call">What Wingman calls you</label>
               <input id="f-call" value={greetName} onChange={(e) => setGreetName(e.target.value)}
                      onBlur={() => progress.set("pw-greet-name", greetName.trim() || null)} />
-              <span className="hint">Used in greetings, and only by whoever's greeting you. Leave it empty and you'll only get the lines that don't need a name.</span>
+              <span className="hint">Used in greetings. Leave it empty and you just won&rsquo;t be named.</span>
             </div>
+
+            <Switch id="use-initials" label="Use initials"
+                    note="Your photo stays saved. This just hides it."
+                    on={useInitials} onChange={(v) => progress.set(USE_INITIALS_KEY, v)} />
           </div>
 
           <div className="block">
@@ -465,14 +507,16 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                     onChange={(v) => progress.set("pw-invisible", v)} />
           </div>
 
-          <div className="block">
-            <span className="eyebrow">Notices</span>
-            {NOTICES.map((n) => (
-              <Switch key={n.id} id={`notice-${n.id}`} label={n.label} note={n.note}
-                      on={notices[n.id] ?? n.on}
-                      onChange={(v) => progress.set("pw-notices", { ...notices, [n.id]: v })} />
-            ))}
-          </div>
+          {flags["prefs.notices"] && (
+            <div className="block">
+              <span className="eyebrow">Notices</span>
+              {NOTICES.map((n) => (
+                <Switch key={n.id} id={`notice-${n.id}`} label={n.label} note={n.note}
+                        on={notices[n.id] ?? n.on}
+                        onChange={(v) => progress.set("pw-notices", { ...notices, [n.id]: v })} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -497,10 +541,8 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             {/* Click selects. Nothing happens on hover but the lift. */}
             <div className="livgrid" role="group" aria-label="Livery">
               {liveries.map((L) => (
-                <button key={L.id} className="liv" type="button" aria-pressed={L.id === current.id}
-                        aria-label={L.name} title={L.name} onClick={() => onLivery(L.id)}>
-                  <i style={{ background: liverySwatch(L) }} />
-                </button>
+                <LiveryDot key={L.id} livery={L} selected={L.id === current.id}
+                           onPick={() => onLivery(L.id)} />
               ))}
             </div>
             <div className="anchors">{current.anchors}</div>
