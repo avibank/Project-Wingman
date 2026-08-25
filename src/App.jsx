@@ -298,7 +298,7 @@ function AppInner() {
          emitted so the global layer and the per-component rules that still use
          the old ones stay in agreement until the profile rebuild renames the
          state itself. */
-      className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "dyslexia-font plain-language" : ""}`}
+      className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "plain-language" : ""}`}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
         "--scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
@@ -666,9 +666,6 @@ function AppInner() {
         }
         .app.reduce-motion .boarding-overlay { animation-duration: 0.4s; }
         .app.reduce-motion .content-taxi { animation: none; }
-        .app.dyslexia-font, .app.dyslexia-font .exam-stem, .app.dyslexia-font .chapter-title, .app.dyslexia-font p, .app.dyslexia-font span, .app.dyslexia-font input, .app.dyslexia-font textarea, .app.dyslexia-font button {
-          font-family: 'OpenDyslexic', var(--font-body);
-        }
       `}</style>
     </div>
   );

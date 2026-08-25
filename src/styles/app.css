@@ -58,6 +58,9 @@
 
   /* ------------------------------------------------------------ 2 · type */
   --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  /* §6.3 Plain Language. Atkinson Hyperlegible is not self-hosted yet, so the
+     stack falls through to the OpenDyslexic face the app already loads. */
+  --font-plain: "Atkinson Hyperlegible", "OpenDyslexic", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
   --font-serif: "Newsreader", ui-serif, Georgia, serif;
   --font-display: var(--font-ui);
@@ -164,11 +167,18 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   }
 }
 
-/* §6.3 Plain Language. Atkinson Hyperlegible is not self-hosted yet; the stack
-   falls through to the OpenDyslexic face the app already loads until it is. */
-.app.plain-language, .app.plain-language button, .app.plain-language input,
-.app.plain-language textarea, .app.plain-language select, .app.plain-language p,
-.app.plain-language span, .app.plain-language h1, .app.plain-language h2,
-.app.plain-language h3, .app.plain-language h4 {
-  font-family: "Atkinson Hyperlegible", "OpenDyslexic", var(--font-ui);
-}
+/* Plain Language swaps the token, not the rule.
+ *
+ * It used to be a class that set font-family on .app and a list of element
+ * types. That loses to any explicit font-family further down the tree, and it
+ * did: once the top bar moved inside the deck, .deck's own
+ * `font-family: var(--font-ui)` sat between .app and everything on the page,
+ * and the switch silently stopped reaching anything at all.
+ *
+ * Repointing the variable cannot break that way — every element that asks for
+ * var(--font-ui) gets the answer that is live where it stands, however deeply
+ * it is nested. This is how wingman-poc.html does it.
+ *
+ * --font-mono is deliberately untouched: mono labels stay mono.
+ */
+.app.plain-language { --font-ui: var(--font-plain); }
