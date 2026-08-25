@@ -473,8 +473,10 @@ sample line that changes the greeting on the home page immediately.
 > **The Hermit** — Small. Green. Far too interested in you. Speaks backwards and knows things he has no business knowing.
 > **Control** — The tower. You're on the field, they're a hundred feet up, watching.
 
-Control's copy exists but **its line set is not finished.** If it isn't in `wingman-voices.md`,
-don't offer it.
+Control's copy exists but **its line set does not.** The lines were written and then lost, so
+this is deferred indefinitely rather than pending — do not hold anything for it, and do not
+write lines to fill the gap. The POC no longer offers Control either. When a line set lands in
+`wingman-voices.md`, the picker entry and the `LINES` entry come back together or not at all.
 
 **How social** — the three presets from 5.3.
 
@@ -540,6 +542,15 @@ one and the gap between review and shipping is never more than a deploy.
 
 **A flag is deleted within a few weeks of reaching everyone.** Put the deletion in the same
 ticket as the rollout, or you accumulate a second codebase by stealth.
+
+### The one sanctioned divergence from the POC
+
+The account menu carries a fourth row, **Features**, admin-gated, above Sign out with its own
+separator. Order: account, settings, admin, leave.
+
+`wingman-poc.html` does not have this row and never will — it has no flag system to point at.
+This is the only place the build is deliberately ahead of the reference. A diff will surface it;
+it is not a defect and it is not to be "corrected" in either direction.
 
 ---
 
