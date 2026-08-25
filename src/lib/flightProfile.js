@@ -88,6 +88,11 @@ export function profileSVG(W, H, prog, chapters, crew, big, C) {
     }).join("");
   }
 
+  // Nothing flown yet: the route is drawn, but there is no aircraft on it.
+  // A machine parked at the threshold reads as a zero; an empty route reads as
+  // a route.
+  if (prog <= 0) return g;
+
   // The aircraft rotates to the local slope.
   const e = 0.008;
   const ang = Math.atan2(

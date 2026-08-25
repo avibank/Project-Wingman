@@ -63,9 +63,9 @@ function StreakMenu({ streak, overrideStreak }) {
 
   return (
     <div className="streak-menu" ref={ref}>
-      <button className="streak-trigger is-inline" onClick={() => setOpen((o) => !o)} aria-label={`${displayStreak} day${displayStreak === 1 ? "" : "s"} on the trot`} aria-expanded={open}>
+      <button className="streak-trigger is-inline" onClick={() => setOpen((o) => !o)} aria-label={displayStreak > 0 ? `${displayStreak} day${displayStreak === 1 ? "" : "s"} on the trot` : "Day one"} aria-expanded={open}>
         <WindsockIcon size={21} active={displayStreak > 0} />
-        <span>{displayStreak}</span>
+        <span>{displayStreak > 0 ? displayStreak : "Day one"}</span>
       </button>
       {open && (
         <div className="streak-dropdown">

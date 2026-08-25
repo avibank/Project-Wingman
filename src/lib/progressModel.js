@@ -29,7 +29,7 @@ export function chapterCount(segments) {
 // invitation, per §8.4.
 export function progressCaption(segments) {
   const { full, half, total } = chapterCount(segments);
-  if (!full && !half) return `${total} chapters ahead of you`;
+  if (!full && !half) return `${total} lessons waiting`;
   const parts = [`${full} of ${total} chapters`];
   if (half) parts.push(`${half} in progress`);
   return parts.join(" · ");

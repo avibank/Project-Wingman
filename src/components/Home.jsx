@@ -10,6 +10,7 @@ import { moduleSegments, chapterCount, nextChapter, SEGMENT, segmentState } from
 import { deckVars, engineLivery, rng } from "../lib/liveryEngine.js";
 import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
+import { attitude, chop } from "../lib/attitude.js";
 import { DEFAULT_CHARACTER } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
@@ -74,8 +75,6 @@ const chapterCodeOf = (id) => {
   return null;
 };
 
-const chop = (pct) =>
-  pct >= 90 ? "Smooth air" : pct >= 75 ? "Light chop" : pct >= 50 ? "Moderate chop" : "Rough air";
 
 function hhmm(iso) {
   const d = new Date(iso);
@@ -125,9 +124,13 @@ const DECK_CSS = `
 .deck .cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--t3); text-align: center; }
 .deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block; }
+.deck .ai-horizon { transition: transform 600ms cubic-bezier(.16,.84,.34,1); }
+@media (prefers-reduced-motion: reduce) { .deck .ai-horizon { transition: none; } }
+.app.smooth-air .deck .ai-horizon { transition: none; }
 .deck .ladder { font-family: var(--font-mono); font-size: calc(11px * var(--scale, 1)); line-height: 1.55; text-align: center;
   background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 5px 13px; color: var(--t3); }
 .deck .ladder b { display: block; font-size: calc(19px * var(--scale, 1)); font-weight: 500; color: var(--on); }
+.deck .bagglyph { width: calc(32px * var(--scale, 1)); height: calc(30px * var(--scale, 1)); color: var(--t3); }
 .deck .lamps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: calc(88px * var(--scale, 1)); }
 .deck .lamp { height: calc(17px * var(--scale, 1)); border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
 .deck .lamp.on { background: var(--on); border-color: transparent;
@@ -308,10 +311,10 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const activeRow = moduleRows.find((m) => m.code === active.code) || moduleRows[0];
   const progressKey = moduleRows.map((m) => m.code + m.pr.toFixed(4)).join("|");
 
-  const scoreValues = Object.values(scores).filter((v) => typeof v === "number");
-  const average = scoreValues.length
-    ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
-    : null;
+  // The indicator reads the current module's record, in chapter order, so the
+  // last three are the three most recently flown rather than three arbitrary ones.
+  const moduleScores = activeChapters.map((c) => scores[c.id]).filter((v) => typeof v === "number");
+  const { average, pitch, bank, flown } = attitude(moduleScores);
 
   // Hobbs — chapters flown. It used to sum briefing durations; content carries
   // no durations now, so the same instrument counts the thing that does exist.
@@ -450,9 +453,9 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
   const contactCount = contacts.length
     ? `${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`
     : null;
-  const contactCap = roomOn
-    ? [contactCount, "Ready Room"].filter(Boolean).join(" · ")
-    : contactCount || "Radar";
+  const contactCap = contactCount
+    ? (roomOn ? `${contactCount} · Ready Room` : contactCount)
+    : "Nobody on your route yet";
 
   return (
     <>
@@ -475,7 +478,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
               <div className="position">
                 {heroStarted
                   ? "Pick up where you left off."
-                  : `${next?.lessons?.length || 2} lessons in this chapter.`}
+                  : `${next?.lessons?.length || 2} lessons waiting.`}
               </div>
               {flags["module.interior"] && (
                 <button className="resume" type="button" onClick={() => next && onGoToChapter(active.code, next.id)}>
@@ -488,10 +491,13 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
           <div className="strip">
             <div className="cel">
               <svg className="ai" viewBox="0 0 120 120" role="img"
-                   aria-label={average == null ? "Attitude indicator, no score yet" : `Attitude indicator, ${average} percent`}>
+                   aria-label={average == null ? "Attitude indicator, no score yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
                 <defs><clipPath id="pw-dial"><circle cx="60" cy="60" r="42" /></clipPath></defs>
                 <g clipPath="url(#pw-dial)">
-                  <g transform={`rotate(-3 60 60) translate(0 ${(((average ?? 50) - 50) * 0.22).toFixed(1)})`}>
+                  {/* bank rotates the horizon, pitch slides it. 1 degree of
+                      pitch is ~1.1px of travel on a 42px dial. */}
+                  <g className="ai-horizon"
+                     transform={`rotate(${bank.toFixed(2)} 60 60) translate(0 ${(pitch * 1.1).toFixed(2)})`}>
                     <rect x="-70" y="-80" width="260" height="140" fill={surf[night ? 7 : 9]} />
                     <rect x="-70" y="60" width="260" height="140" fill={surf[night ? 1 : 6]} />
                     <rect x="-70" y="59" width="260" height="1.6" fill={C.lit} />
@@ -529,10 +535,19 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
             </div>
 
             <div className="cel">
-              <div className="ladder">
-                {bag + 2}<br />{bag + 1}<b>{bag}</b>{bag > 0 ? bag - 1 : ""}<br />{bag > 1 ? bag - 2 : ""}
-              </div>
-              <div className="cap">{bag ? "Flight bag" : "Flight bag · star a chapter"}</div>
+              {bag > 0 ? (
+                <div className="ladder">
+                  {bag + 2}<br />{bag + 1}<b>{bag}</b>{bag - 1}<br />{bag > 1 ? bag - 2 : ""}
+                </div>
+              ) : (
+                <svg className="bagglyph" viewBox="0 0 32 30" fill="none" aria-hidden="true">
+                  <path d="M4 10h24v15a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V10Z"
+                        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                  <path d="M11 10V6a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v4" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="M4 16h24" stroke="currentColor" strokeWidth="1.6" opacity=".5" />
+                </svg>
+              )}
+              <div className="cap">{bag > 0 ? "Flight bag" : "Nothing saved yet"}</div>
             </div>
 
             <div className="cel">
@@ -550,9 +565,11 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
 
             <div className="cel">
               <div className="hobbs">
-                {String(Math.floor(hobbs)).padStart(3, "0")}<i>.{Math.floor((hobbs % 1) * 10)}</i>
+                {hobbs > 0
+                  ? <>{String(Math.floor(hobbs)).padStart(3, "0")}<i>.{Math.floor((hobbs % 1) * 10)}</i></>
+                  : <>--<i>.-</i></>}
               </div>
-              <div className="cap">Hobbs</div>
+              <div className="cap">{hobbs > 0 ? "Hobbs" : "Your first hour"}</div>
             </div>
 
             {/* Social's only foothold in the academic half. */}
@@ -603,7 +620,7 @@ function Home({ activeModuleCode, livery, variant, onGoToChapter, onEnterModule,
                     <div className="mmeta">
                       {m.pr > 0
                         ? `${phaseName(m.pr)} · ${Math.min(m.chapters, m.full + 1)} of ${m.chapters}`
-                        : `${m.chapters} chapters · ${m.first || "open it"}`}
+                        : "Open it and find out"}
                     </div>
                     <svg className="prof" data-code={m.code} aria-hidden="true" />
                   </div>

@@ -29,7 +29,7 @@ function ModulesPage({ activeModuleCode, onOpenModule, onGoToChapter, onMakeActi
               <button className="mods-open" onClick={() => onOpenModule(m.code)}>
                 <span className="mods-code">{m.code}</span>
                 <span className="mods-name">{m.name}</span>
-                <span className="mods-count">{full} of {total}</span>
+                <span className="mods-count">{full > 0 ? `${full} of ${total}` : `${total} lessons waiting`}</span>
               </button>
               <SegmentedBar
                 segments={segments}
