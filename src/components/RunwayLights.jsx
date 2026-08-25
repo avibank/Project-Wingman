@@ -1,72 +1,93 @@
 import { useEffect, useRef, useState } from "react";
 
-// §5.5 — ported verbatim from wingman-poc.html.
+// Reading-progress bar, styled as a runway centreline light bar.
 //
-// Edge lighting read the way centreline lighting is read: not where you are,
-// but how much runway is left. One lamp is yours; the ones ahead come up as the
-// end approaches. No runway when there's no distance to run.
+// Twelve lights, coloured by position rather than by state — the
+// runway-remaining convention, where the last thousand feet are red and the
+// two before it amber. A light shows its colour only once reached; unlit it is
+// the neutral border grey. The lights never blink; only the trail moves.
 //
-// §11 says the retune is not designed. This is the POC's behaviour and geometry
-// unchanged — do not invent a new version.
+// This supersedes the thirteen-lamp version ported from wingman-poc.html.
+//
+// NOTE: --panel, --border, --border-soft and --accent are written exactly as
+// specified, so on this codebase they resolve to the live livery rather than to
+// the hex values the spec documents. That is deliberate: the bar then repaints
+// with the rest of the room instead of pinning one blue against seven liveries.
+// The three lit colours are hardcoded, as specified.
 
-const LAMPS = 13;
+const LIGHTS = 12;
+const colourAt = (i) => (i < 8 ? "is-white" : i < 10 ? "is-amber" : "is-red");
 
 function RunwayLights() {
-  const ref = useRef(null);
-  const [live, setLive] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const max = useRef(0);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-    const lamps = [...el.children];
-    const update = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const on = max > 40;
-      setLive(on);
-      if (!on) return;
-      const p = Math.min(1, Math.max(0, window.scrollY / max));
-      const here = Math.round(p * (LAMPS - 1));
-      const left = LAMPS - 1 - here;
-      lamps.forEach((lamp, i) => {
-        lamp.classList.toggle("here", i === here);
-        lamp.classList.toggle("near", i > here && left <= 3);
-      });
-    };
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+    const el = document.documentElement;
+    // scrollHeight forces layout, so it is measured on resize rather than on
+    // every scroll event. scrollTop is free.
+    const read = () => setProgress(
+      max.current > 0 ? Math.min(1, Math.max(0, el.scrollTop / max.current)) : 0);
+    const measure = () => { max.current = el.scrollHeight - el.clientHeight; read(); };
+
+    window.addEventListener("scroll", read, { passive: true });
+    window.addEventListener("resize", measure);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
     ro?.observe(document.body);
-    update();
+    measure();
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", read);
+      window.removeEventListener("resize", measure);
       ro?.disconnect();
     };
   }, []);
 
+  const lit = Math.min(LIGHTS, Math.floor(progress * LIGHTS));
+
   return (
-    <>
-      <div className={`runway ${live ? "on" : ""}`} ref={ref} aria-hidden="true">
-        {Array.from({ length: LAMPS }, (_, i) => (
-          <i key={i} className={i === 0 || i === LAMPS - 1 ? "bar" : ""} />
+    <div className="flight-progress" aria-hidden="true">
+      <div className="runway-lights">
+        <div className="runway-trail" style={{ width: `${progress * 100}%` }} />
+        {Array.from({ length: LIGHTS }, (_, i) => (
+          <span key={i} className={`runway-dot ${i < lit ? "is-lit" : ""} ${colourAt(i)}`} />
         ))}
       </div>
+
       <style>{`
-        .runway { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; pointer-events: none;
-          display: flex; align-items: center; justify-content: center; gap: 11px;
-          padding: 12px 20px 14px; opacity: 0; transition: opacity .35s; }
-        .runway.on { opacity: 1; }
-        .runway i { display: block; width: 5px; height: 5px; border-radius: 2px; background: var(--line);
-          transition: background .2s, box-shadow .2s, transform .2s, width .2s; }
-        .runway i.bar { width: 15px; }
-        .runway i.near { background: var(--t3); }
-        .runway i.here { background: var(--on); transform: scaleY(2.2);
-          box-shadow: 0 0 var(--emit) color-mix(in oklab, var(--on), transparent 40%); }
-        @media (max-width: 640px) { .runway { gap: 8px; } .runway i.bar { width: 12px; } }
-        @media (prefers-reduced-motion: reduce) { .runway, .runway i { transition: none; } }
-        .app.smooth-air .runway, .app.smooth-air .runway i { transition: none; }
+        .flight-progress {
+          position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 12px; padding: 8px 16px;
+          background: var(--panel);
+          border-top: 1px solid var(--border-soft);
+        }
+
+        .runway-lights { position: relative; display: flex; gap: 4px; }
+
+        /* .flight-progress qualifies every rule here: the shell declares a
+           blanket transition on .app star, which ties on specificity and wins
+           on source order, and it was overriding the trail's own. */
+        .flight-progress .runway-trail {
+          position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+          height: 3px;
+          background: linear-gradient(90deg, transparent, var(--accent));
+          filter: blur(3px);
+          opacity: 0.55;
+          transition: width 0.15s ease;
+          pointer-events: none;
+        }
+
+        .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+
+        .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
+        .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
+        .runway-dot.is-lit.is-red   { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
+
+        /* The trail is the only thing that moves, and it is decorative. */
+        @media (prefers-reduced-motion: reduce) { .flight-progress .runway-trail { transition: none; } }
+        .app.smooth-air .flight-progress .runway-trail { transition: none; }
       `}</style>
-    </>
+    </div>
   );
 }
 

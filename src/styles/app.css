@@ -67,6 +67,8 @@
   --font-body: var(--font-ui);
   /* §6.3 Instrument scale — Small / Medium / Large. */
   --scale: 1;
+  /* The fixed runway bar: 5px lights + 8px padding either side + 1px border. */
+  --runway-h: 22px;
 
   /* ----------------------------------------------------------- 3 · shape */
   --r-panel: 13px;      /* the hero card and the crew strip */
@@ -90,7 +92,7 @@
 
 /* ------------------------------------------------------------- 4 · the page */
 * { box-sizing: border-box; }
-html, body, #root { height: 100%; margin: 0; background: var(--ground); }
+html, body, #root { min-height: 100%; margin: 0; background: var(--ground); }
 body {
   font-family: var(--font-ui);
   color: var(--t1);

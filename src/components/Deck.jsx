@@ -18,16 +18,19 @@ const ROOM_CSS = `
 
 .deck {
   position: relative; overflow: hidden; background: var(--ground);
-  padding: 0 40px 46px; color: var(--t1); isolation: isolate;
+  padding: 0 40px calc(46px + var(--runway-h)); color: var(--t1); isolation: isolate;
+  /* dvh so mobile browsers that shrink their chrome on scroll do not leave a
+     strip of nothing under the deck; vh first for anything that lacks it */
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-ui);
 }
-@media (max-width: 640px) { .deck { padding: 0 16px 36px; } }
+@media (max-width: 640px) { .deck { padding: 0 16px calc(36px + var(--runway-h)); } }
 .deck .inner { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; }
 /* the shell's own children sit in the same column and above the light */
 .deck > .topbar, .deck > main { position: relative; z-index: 1; max-width: 1240px;
   margin-left: auto; margin-right: auto; width: 100%; }
-.deck > *:not(.spill):not(.stars):not(.grain) { position: relative; z-index: 1; }
+.deck > *:not(.spill):not(.stars):not(.grain):not(.flight-progress) { position: relative; z-index: 1; }
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 
 /* Light ADDS, it does not veil: screen, never a translucent overlay. */
