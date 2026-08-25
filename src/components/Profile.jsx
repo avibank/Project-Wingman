@@ -37,6 +37,14 @@ const NOTICES = [
   { id: "nudge", label: "Nothing flown for a week", note: "One nudge. Never more.", on: false },
 ];
 
+// §7 — the label and hint belong to whoever is doing the greeting.
+const CALL_COPY = {
+  wingman: { label: "What Wingman calls you",
+             hint: "Skip it. I'll keep talking until you look up, same as always." },
+  hermit:  { label: "What the Hermit calls you",
+             hint: "Empty, leave it. Know who you are, I already do." },
+};
+
 const SCALES = [{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }];
 // You asked for Night Ops on dark and Day Ops on light. The POC's shape is a
 // bold label plus a description that changes with the mode, so the label is
@@ -80,38 +88,28 @@ function Seg({ label, options, value, onPick }) {
   );
 }
 
-// §6.3 — each circle is a miniature of the deck it selects, not three flat
-// bands: its own ground, its own key and fill in the same place and the same
-// hue as the real rig, and its two chromatic edges on the rim. Aurora
-// additionally carries its curtain, quietened, and the starfield.
+// §6.3 — one solid colour per circle: the core of that livery's own ramp.
+// Not the ground, not the key light — the colour the livery is.
 //
-// The test is that you can tell them apart with the labels covered.
-function LiveryDot({ livery, selected, onPick }) {
-  const { vars, C, livery: L } = useMemo(() => deckVars(livery.id, "night"), [livery.id]);
-  const keyHue = L.keyAbs != null ? L.keyAbs : hueAt(L, 1);
-  const keyC = L.keyC != null ? L.keyC : LIGHT.ambC;
-  const fillC = LIGHT.ambC * 0.85 * (L.fillC != null ? L.fillC : 1);
+// Aurora is the only exception. Its ramp is a cold blue and its identity is the
+// curtain, so it gets a faint one over the solid base plus a scatter of stars:
+// quiet enough to sit in the set, obvious enough to be the special one.
+const AURORA_VEIL = 0.2;
 
-  // The key sits at 76% -18% on the real rig; the same place here, so the light
-  // lands where it lands on the deck this selects.
-  const layers = [];
+function LiveryDot({ livery: L, selected, onPick }) {
+  const core = `oklch(.60 ${(L.chroma * L.midC).toFixed(3)} ${hueAt(L, 0.55).toFixed(1)})`;
+  const style = { background: core };
   if (L.aurora) {
-    layers.push(dotTile(14, 20260824, 1.1, 0.9));
-    layers.push(`radial-gradient(46% 30% at 30% 20%, ${col(0.62, 0.150, 318, 0.32)} 0%, ${col(0.62, 0.150, 318, 0)} 80%)`);
-    layers.push(`radial-gradient(124% 62% at 50% -8%, ${col(0.86, 0.170, 158, 0.58)} 0%,` +
-                ` ${col(0.74, 0.195, 176, 0.32)} 38%, ${col(0.70, 0.190, 196, 0)} 80%)`);
+    style.backgroundImage = [
+      dotTile(10, 20260824, 1.0, 0.8),
+      `radial-gradient(120% 66% at 50% -6%, ${col(0.86, 0.170, 158, 0.62 * AURORA_VEIL * 5)} 0%,` +
+      ` ${col(0.74, 0.195, 176, 0.34 * AURORA_VEIL * 5)} 36%, ${col(0.70, 0.190, 196, 0)} 78%)`,
+    ].join(", ");
   }
-  layers.push(`radial-gradient(96% 83% at 76% -18%, ${col(0.84, keyC * 1.12, keyHue, 0.9)} 0%,` +
-              ` ${col(0.74, keyC * 1.10, keyHue, 0.6)} 26%, ${col(0.74, keyC * 1.10, keyHue, 0.3)} 48%,` +
-              ` ${col(0.74, keyC * 1.10, keyHue, 0.1)} 66%, ${col(0.74, keyC * 1.10, keyHue, 0)} 84%)`);
-  layers.push(`radial-gradient(74% 64% at 16% 112%, ${col(0.72, fillC * 1.08, wrap(L.fillAbs), 0.92)} 0%,` +
-              ` ${col(0.70, fillC * 0.96, wrap(L.fillAbs), 0)} 76%)`);
-
   return (
     <button className="liv" type="button" aria-pressed={selected}
-            aria-label={livery.name} title={livery.name} onClick={onPick}>
-      <i style={{ backgroundImage: layers.join(", "), backgroundColor: C.ground,
-                  "--rim-hi": vars["--edge-hi"], "--rim-lo": vars["--edge-lo"] }} />
+            aria-label={L.name} title={L.name} onClick={onPick}>
+      <i style={style} />
     </button>
   );
 }
@@ -225,12 +223,8 @@ const PROFILE_CSS = `
   min-height: 0; box-shadow: 0 0 0 0 var(--active); transition: box-shadow .18s, transform .18s; }
 .liv:hover { transform: translateY(-2px); }
 .liv[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--active); }
-.liv i { display: block; width: 56px; height: 56px; border-radius: 50%; position: relative;
+.liv i { display: block; width: 56px; height: 56px; border-radius: 50%;
   background-size: cover; background-position: center; }
-/* the rim: lit edge on the upper arc, unlit underneath — the same two tokens
-   the cards use */
-.liv i::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
-  border: 1px solid transparent; border-top-color: var(--rim-hi); border-bottom-color: var(--rim-lo); }
 .anchors { font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; color: var(--t3);
   margin-top: 12px; }
 
@@ -282,6 +276,9 @@ const PROFILE_CSS = `
   text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .linkish:hover { color: var(--t1); }
 .psaved { font-size: 12.5px; color: var(--t2); margin: -8px 0 0; }
+.block-sub { display: flex; flex-direction: column; gap: 8px; padding: 11px 0; }
+.block-sub .eyebrow { display: block; }
+.pcard-foot { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); margin: 0; line-height: 1.45; }
 `;
 
 function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPin, livery, onLivery,
@@ -295,11 +292,25 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const isAdmin = user?.publicMetadata?.role === "admin";
 
   const tab = TABS.some((t) => t.id === page) ? page : "licence";
+  // The panel that is leaving keeps its height until the new one has one, so
+  // the page does not jump while React swaps them.
+  const swapRef = useRef(null);
+  const [swapH, setSwapH] = useState(null);
+  useLayoutEffect(() => {
+    const el = swapRef.current;
+    if (!el) return;
+    const next = el.firstElementChild?.getBoundingClientRect().height;
+    if (next) setSwapH(next);
+  }, [tab]);
   const tabsRef = useRef(null);
   const fileRef = useRef(null);
 
   const [holderName, setHolderName] = useState("");
   const [bio, setBio] = useState("");
+  // The call name starts as the first name and follows edits to Full name —
+  // but only until the user types here themselves. A deliberate choice is never
+  // overwritten, and a stale derived one is never stranded.
+  const [callTouched, setCallTouched] = useState(false);
   const [username, setUsername] = useState("");
   const [greetName, setGreetName] = useState("");
   const [saveNote, setSaveNote] = useState(null);
@@ -308,13 +319,23 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   useEffect(() => {
     setHolderName(user?.fullName || "");
     setUsername(user?.username || "");
-    setGreetName(progress.get("pw-greet-name", "") || "");
+    const stored = progress.get("pw-greet-name", null);
+    setCallTouched(stored !== null);
+    setGreetName(stored !== null ? stored : (user?.firstName || ""));
     setBio(progress.get("pw-bio", "") || "");
-  }, [user?.fullName, user?.username, progress.loaded]);
+  }, [user?.fullName, user?.username, user?.firstName, progress.loaded]);
 
   // §6.1 — on by default. Off is the unusual choice, so the copy says so.
-  const byUsername = (prefs?.identity_display || "real") === "username";
+  const byUsername = (prefs?.identity_display || "username") === "username";
   const character = progress.get("pw-voice", DEFAULT_CHARACTER);
+  const callCopy = CALL_COPY[character] || CALL_COPY.wingman;
+
+  // Derived, not stored, until it is touched — so changing Full name carries
+  // through and nothing has to be kept in sync.
+  const derivedCall = holderName.trim().split(/\s+/)[0] || "";
+  useEffect(() => {
+    if (!callTouched) setGreetName(derivedCall);
+  }, [derivedCall, callTouched]);
   const preset = progress.get("pw-social-preset", "crew");
   const notices = progress.get("pw-notices", { answers: true, wingman: true, nudge: true });
 
@@ -370,9 +391,11 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {saveNote && <p className="psaved">{saveNote}</p>}
 
+      <div className="panel-swap" ref={swapRef} style={swapH ? { height: swapH } : undefined}>
+
       {/* ------------------------------------------------------------ LICENCE */}
       {tab === "licence" && (
-        <div className="panel" role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
+        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
           <div className="block">
             <span className="eyebrow">Holder</span>
             <div className="idrow">
@@ -402,42 +425,46 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               )}
             </div>
 
-            <div className="two" style={{ marginTop: 18 }}>
-              <Field id="f-first" label="Full name" hint="On your licence and nowhere else."
-                     value={holderName} onChange={setHolderName}
-                     onCommit={() => {
-                       const [first, ...rest] = holderName.trim().split(/\s+/);
-                       user?.update({ firstName: first || "", lastName: rest.join(" ") });
-                     }} />
-              <div className="field">
-                <label htmlFor="f-user">Username</label>
-                <input id="f-user" value={username} onChange={(e) => setUsername(e.target.value)}
-                       onBlur={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
-                <span className="hint">How everyone else sees you.</span>
-                <div className="row">
-                  <span className="rowtext"><b>Show my username instead of my full name</b></span>
-                  <button type="button" role="switch" aria-checked={byUsername} id="by-username"
-                          aria-label="Show my username instead of my full name" className="sw is-inline"
-                          onClick={() => setIdentity(!byUsername)} />
-                </div>
-              </div>
+            <Field id="f-first" label="Full name" hint="On your licence and nowhere else."
+                   value={holderName} onChange={setHolderName}
+                   onCommit={() => {
+                     const [first, ...rest] = holderName.trim().split(/\s+/);
+                     user?.update({ firstName: first || "", lastName: rest.join(" ") });
+                   }} />
+
+            {/* Initials are derived from the name, so the switch sits under it. */}
+            <Switch id="use-initials" label="Use initials"
+                    note="Your photo stays saved. This just hides it."
+                    on={useInitials} onChange={(v) => progress.set(USE_INITIALS_KEY, v)} />
+
+            <Field id="f-user" label="Username" hint="How everyone else sees you."
+                   value={username} onChange={setUsername}
+                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
+
+            {/* §6 — both real values, live from the fields above. */}
+            <div className="block-sub">
+              <span className="eyebrow">Everyone sees</span>
+              <Seg label="Everyone sees" value={byUsername ? "username" : "real"}
+                   options={[
+                     { id: "real", label: holderName.trim() || "your full name" },
+                     { id: "username", label: username.trim() || "your username" },
+                   ]}
+                   onPick={(v) => setIdentity(v === "username")} />
+              <p className="pcard-foot">One of these gets said out loud when someone finds you. Pick the one you&rsquo;d like hearing.</p>
+            </div>
+
+            <div className="field" style={{ maxWidth: 340 }}>
+              <label htmlFor="f-call">{callCopy.label}</label>
+              <input id="f-call" value={greetName}
+                     onChange={(e) => { setCallTouched(true); setGreetName(e.target.value); }}
+                     onBlur={() => progress.set("pw-greet-name", greetName.trim())} />
+              <span className="hint">{callCopy.hint}</span>
             </div>
 
             <Field id="f-bio" label="A line about you"
                    hint="Shows on your licence when someone opens it. Keep it short."
                    value={bio} onChange={setBio}
                    onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
-
-            <div className="field" style={{ maxWidth: 340 }}>
-              <label htmlFor="f-call">What Wingman calls you</label>
-              <input id="f-call" value={greetName} onChange={(e) => setGreetName(e.target.value)}
-                     onBlur={() => progress.set("pw-greet-name", greetName.trim() || null)} />
-              <span className="hint">Used in greetings. Leave it empty and you just won&rsquo;t be named.</span>
-            </div>
-
-            <Switch id="use-initials" label="Use initials"
-                    note="Your photo stays saved. This just hides it."
-                    on={useInitials} onChange={(v) => progress.set(USE_INITIALS_KEY, v)} />
           </div>
 
           <div className="block">
@@ -477,7 +504,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {/* -------------------------------------------------------- PREFERENCES */}
       {tab === "preferences" && (
-        <div className="panel" role="tabpanel" id="ppanel-preferences" aria-labelledby="ptab-preferences">
+        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-preferences" aria-labelledby="ptab-preferences">
           {flags["voice.characters"] && (
             <div className="block">
               <span className="eyebrow">Who greets you</span>
@@ -522,7 +549,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {/* --------------------------------------------------------- APPEARANCE */}
       {tab === "appearance" && (
-        <div className="panel" role="tabpanel" id="ppanel-appearance" aria-labelledby="ptab-appearance">
+        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-appearance" aria-labelledby="ptab-appearance">
           <div className="block">
             <span className="eyebrow">Light</span>
             <div className="row">
@@ -545,7 +572,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                            onPick={() => onLivery(L.id)} />
               ))}
             </div>
-            <div className="anchors">{current.anchors}</div>
             <Specimen liveryId={current.id} variant={variant} />
           </div>
 
@@ -572,6 +598,8 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           </div>
         </div>
       )}
+
+      </div>
 
       <style>{PROFILE_CSS}</style>
     </div>
