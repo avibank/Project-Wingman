@@ -51,7 +51,7 @@ function AppInner() {
   const deckRef = useRef(null);
   const progress = useUserProgress();
   const { isSignedIn, user } = useUser();
-  const { flags } = useFlags();
+  const { flags, isAdmin } = useFlags();
   // §2.2 — the URL is the navigation state. `view`, `settingsPage`, `tab` and
   // the pending chapter are all derived from it now, so back, deep links and
   // sharing work without any of them being stored twice.
@@ -61,6 +61,13 @@ function AppInner() {
 
   useDocumentTitle(titleForRoute(route));
 
+  // §2.2 — the renamed paths. vercel.json 308s these at the edge, so this only
+  // catches in-app navigation and the dev server; it replaces rather than
+  // pushes, or Back would bounce onto the old path and redirect again.
+  useEffect(() => {
+    if (route.name === "redirect") navigate(route.to, { replace: true });
+  }, [route.name, route.to, navigate]);
+
   const view = route.name === "module" || route.name === "chapter" ? "module" : "hub";
   const settingsPage =
     route.name === "signin" ? "auth"
@@ -68,6 +75,16 @@ function AppInner() {
     : route.name === "saved" && flags["page.bookmarks"] ? "bookmarks"
     : route.name === "settings" ? (route.page === "index" ? "about" : route.page)
     : null;
+  // A silent fall-through to the Flight Deck is worse than "nothing here".
+  // These routes stay registered, but they say so until they are built — and
+  // /admin says nothing at all to anyone who is not an admin.
+  const notFound =
+    route.name === "notfound"
+    || (route.name === "features" && !isAdmin)
+    || (route.name === "modules" && !flags["module.interior"])
+    || (route.name === "logbook" && !flags["page.logbook"])
+    || (route.name === "saved" && !flags["page.bookmarks"]);
+
   const tab = route.tab === "pdf" ? "pdf" : "chapters";
   const pendingChapterId = route.chapterId || null;
 
@@ -431,7 +448,7 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
-      ) : route.name === "features" ? (
+      ) : route.name === "features" && isAdmin ? (
         <main className="content content-taxi content--profile">
           <Features onBack={() => go(-1)} />
         </main>
@@ -475,7 +492,9 @@ function AppInner() {
             onOpenChannel={(m) => go(routePath.ready(m))}
           />
         </main>
-      ) : route.name === "notfound" ? (
+      ) : route.name === "redirect" ? (
+        null
+      ) : notFound ? (
         <main className="content content-taxi">
           <NotFound onGoHome={goHome} />
         </main>
