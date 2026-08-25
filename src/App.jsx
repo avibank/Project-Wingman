@@ -7,7 +7,7 @@ import { parseRoute, path as routePath } from "./lib/routes.js";
 import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
-import { Gauge, ChevronRight, Lock, Plane } from "lucide-react";
+import { ChevronRight, Lock, Plane } from "lucide-react";
 import ChaptersPanel from "./components/ChaptersPanel.jsx";
 import Home from "./components/Home.jsx";
 import ReadyRoom from "./components/ReadyRoom.jsx";
@@ -334,15 +334,8 @@ function AppInner() {
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
       <header className={`topbar ${headerScrolled ? "is-scrolled" : ""}`}>
-        <button
-          className="brand"
-          onClick={() => {
-            goHome();
-          }}
-          aria-label="Go to Flight Deck"
-        >
-          <Gauge size={20} color="var(--accent)" />
-          <span>Project Wingman</span>
+        <button className="brandmark" onClick={goHome} aria-label="Go to Flight Deck">
+          Wingman
         </button>
         <div className="topbar-right">
           
@@ -610,10 +603,11 @@ function AppInner() {
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 1; }
         /* §6.6 — the grain texture is deleted: on OLED it reads as compression
            artefacts, not as paper. */
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 10px; transition: box-shadow 180ms ease, border-color 180ms ease; }
-        .topbar.is-scrolled { border-bottom-color: var(--border-hover); }
-        .brand { display: flex; align-items: center; gap: 8px; min-height: 44px; font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: 0.06em; color: var(--text); background: transparent; border: none; padding: 0; cursor: pointer; }
-        .brand:hover { color: var(--accent); }
+        .topbar { display: flex; align-items: center; gap: 12px; max-width: 1240px; margin: 0 auto;
+          padding: 14px 0 12px; }
+        .brandmark { margin-right: auto; min-height: 0; background: none; border: 0; padding: 0;
+          cursor: pointer; color: var(--t1); font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
+        .brandmark:hover { color: var(--t1); }
         .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .module-banner { position: relative; padding: 26px 22px 18px; }
         .module-banner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 100% at 25% 0%, var(--accent-soft), transparent 70%); pointer-events: none; z-index: 0; }

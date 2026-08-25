@@ -101,7 +101,7 @@ function ProfileMenu({ onNavigate }) {
   return (
     <span className="menuwrap" ref={wrapRef}>
       <button
-        className="avbtn"
+        className="avbtn is-inline"
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}

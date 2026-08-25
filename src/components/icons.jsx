@@ -1,25 +1,14 @@
-function WindsockIcon({ size = 20, active }) {
-  const activePath = "M2 5 L22 3 L18 7 L24 7 L18 11 L22 15 L2 13 Z";
-  const idlePath = "M2 6 L18 6 L13 9 L18 11 L13 14 L18 16 L2 12 Z";
-  const path = active ? activePath : idlePath;
-  const clipId = active ? "sockClipActive" : "sockClipIdle";
-  const base = active ? "var(--text)" : "var(--border-hover)";
-  const stripe = active ? "var(--accent)" : "var(--border)";
+function WindsockIcon({ size = 21, active }) {
   return (
-    <svg width={size} height={size * 0.75} viewBox="0 0 26 18" className={`windsock ${active ? "is-active" : "is-idle"}`}>
-      <defs>
-        <clipPath id={clipId}>
-          <path d={path} />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${clipId})`}>
-        <rect x="0" y="0" width="26" height="18" fill={base} />
-        <rect x="0" y="0" width="4" height="18" fill={stripe} />
-        <rect x="8" y="0" width="4" height="18" fill={stripe} />
-        <rect x="16" y="0" width="4" height="18" fill={stripe} />
-        <rect x="24" y="0" width="4" height="18" fill={stripe} />
+    <svg className={`sock ${active ? "is-active" : ""}`} width={size} height={size * (19 / 21)}
+         viewBox="0 0 24 22" fill="none" aria-hidden="true">
+      <path d="M3.2 1.5v19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".65" />
+      <g className="sockbody">
+        <path d="M4 5.2 10.4 6.4 10.4 12.6 4 13.8Z" fill="currentColor" opacity=".9" />
+        <path d="M10.4 6.4 15.2 7.3 15.2 11.7 10.4 12.6Z" fill="currentColor" opacity=".45" />
+        <path d="M15.2 7.3 19.4 8.1 19.4 10.9 15.2 11.7Z" fill="currentColor" opacity=".85" />
+        <path d="M19.4 8.1 22.6 8.7 22.6 10.3 19.4 10.9Z" fill="currentColor" opacity=".35" />
       </g>
-      <line x1="1" y1="0" x2="1" y2="18" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
