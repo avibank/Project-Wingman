@@ -16,7 +16,8 @@
     "check:backend": "node scripts/check-backend.mjs",
     "check:schema": "node scripts/check-schema.mjs",
     "sql": "node scripts/run-sql.mjs",
-    "clerk": "node scripts/clerk.mjs"
+    "clerk": "node scripts/clerk.mjs",
+    "setenv": "node scripts/set-env.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
