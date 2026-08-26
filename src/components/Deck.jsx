@@ -34,11 +34,22 @@ const ROOM_CSS = `
 .deck-light::before { background: var(--key-img); opacity: var(--key-int); animation: pwdrift 26s ease-in-out infinite; }
 .deck-light::after { background: var(--fill-img); opacity: var(--fill-int);
   filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); animation: pwdrift 41s ease-in-out infinite reverse; }
-.deck-light.aur::before { filter: url(#pw-aurWarp) blur(30px) saturate(1.24); animation: pwdrift 34s ease-in-out infinite; }
+/* Aurora's curtain used to be shaped by an SVG displacement warp here:
+     filter: url(#pw-aurWarp) blur(30px) saturate(1.24)
+   feTurbulence plus feDisplacementMap, over a surface inset -55% on every side,
+   so roughly twice the viewport in each direction — and animated, so it was
+   recomputed rather than cached. Measured on a desktop: 0.1fps with it, 59.2
+   without. That is the flicker, and on a phone it is worse.
+   DO NOT REINSTATE the url() filter here. Aurora still reads as aurora: the
+   curtain is its gradient and the stars are their own layer. */
+.deck-light.aur::before { filter: blur(30px) saturate(1.24); animation: pwdrift 34s ease-in-out infinite; }
+/* Translate only. scale() changes the rasterised size of a surface that is
+   blurred by 82px and screen-blended, so every frame repainted it instead of
+   compositing a layer that already existed. The drift is unchanged. */
 @keyframes pwdrift {
-  0%, 100% { transform: translate3d(0,0,0) scale(1); }
-  34% { transform: translate3d(6%,-4%,0) scale(1.08); }
-  67% { transform: translate3d(-4%,4%,0) scale(1); }
+  0%, 100% { transform: translate3d(0,0,0); }
+  34% { transform: translate3d(6%,-4%,0); }
+  67% { transform: translate3d(-4%,4%,0); }
 }
 /* the same light again, over the top — the part that lands ON the panels */
 .deck-light .spill { position: absolute; inset: -55%; z-index: 2; pointer-events: none;
@@ -106,12 +117,6 @@ function Deck({ aurora }) {
 
   return (
     <div className={`deck-light ${aurora ? "aur" : ""}`} style={stars} aria-hidden="true">
-      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true"><defs>
-        <filter id="pw-aurWarp" x="-25%" y="-25%" width="150%" height="150%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.0055 0.017" numOctaves="2" seed="7" result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="96" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </defs></svg>
       <div className="stars" />
       <div className="spill" />
       <div className="grain" />

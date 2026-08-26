@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // The ball. Live, always, on every page it appears on — it is never driven by
 // the quiz record and never waits for data. The rim is the half that carries
@@ -34,10 +34,26 @@ export const pitchFromTilt = (beta) => clamp((beta ?? 45) - 45, PITCH_RANGE);
 export function useAttitude(still) {
   const node = useRef(null);
 
+  // Smooth Air is the person asking; this is the device asking. CSS gets the
+  // second one through a media query, but a rAF loop is not CSS: without this
+  // the ball kept easing sixty times a second for someone who had asked the
+  // whole system to stop moving.
+  const [systemStill, setSystemStill] = useState(
+    () => typeof window !== "undefined"
+      && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!mq) return undefined;
+    const onChange = () => setSystemStill(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   useEffect(() => {
     const el = node.current;
     if (!el) return undefined;
-    if (still) {
+    if (still || systemStill) {
       el.setAttribute("transform", "rotate(0 60 60) translate(0 0)");
       return undefined;
     }
@@ -75,7 +91,7 @@ export function useAttitude(still) {
       window.removeEventListener("deviceorientation", onTilt);
       cancelAnimationFrame(frame);
     };
-  }, [still]);
+  }, [still, systemStill]);
 
   return node;
 }
