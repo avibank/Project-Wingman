@@ -339,7 +339,7 @@ function AppInner() {
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">
             <div className="boarding-pass-top">
-              <span className="boarding-pass-airline">PROJECT WINGMAN AIRWAYS</span>
+              <span className="boarding-pass-airline">WINGMAN AIRWAYS</span>
               <Plane size={22} style={{ transform: "rotate(45deg)" }} />
             </div>
             {isSignedIn && (user?.username || user?.fullName) && (

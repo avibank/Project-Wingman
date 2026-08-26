@@ -1,7 +1,9 @@
-# AVBANK — Aviation Study App Prototype
+# Wingman
 
-A study app prototype for AU aviation students: video lessons, per-chapter
-practice exams, discussion threads, and a PDF library, organized by chapter.
+We made the mistakes. You get the answers. Lessons, quizzes and papers for
+aircraft maintenance students.
+
+Live at <https://www.wingman.institute>.
 
 ## Run locally (optional — not required to deploy)
 
