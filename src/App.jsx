@@ -7,7 +7,8 @@ import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
 import NotFound from "./components/NotFound.jsx";
-import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
+import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
+import { finishVars, ruledLayer } from "./lib/finishEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
 import { ChevronRight, Lock, Plane } from "lucide-react";
@@ -124,6 +125,9 @@ function AppInner() {
   const [livery, setLivery] = useState(DEFAULT_LIVERY);
   const [variantPin, setVariantPin] = useState(null); // §6.3 Night Ops: "day" | "night" | null = Auto
   const [grain, setGrain] = useState(true);
+  // A livery is a colour; a finish is a material. null | "aurora" | "manual".
+  const [finish, setFinish] = useState(null);
+  const [ruled, setRuled] = useState(false);
   const [autoVariant, setAutoVariant] = useState(() =>
     typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "night" : "day");
   useEffect(() => {
@@ -160,7 +164,13 @@ function AppInner() {
     if (!progress.loaded) return;
     setReduceMotion(progress.get("pw-reduce-motion", false));
     setFontSize(progress.get("pw-font-size", "medium"));
-    setLivery(engineLivery(progress.get("pw-livery", DEFAULT_LIVERY)));
+    const storedLivery = progress.get("pw-livery", DEFAULT_LIVERY);
+    setLivery(engineLivery(storedLivery));
+    // Aurora was a livery before it was a finish. Someone stored as aurora gets
+    // sky plus the aurora finish, so the thing they picked still looks like the
+    // thing they picked.
+    setFinish(progress.get("pw-finish", RETIRED_TO_FINISH[storedLivery] ?? null));
+    setRuled(progress.get("pw-ruled", false));
     setVariantPin(progress.get("pw-variant-pin", null));
     setGrain(progress.get("pw-grain", true));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
@@ -177,6 +187,14 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-grain", grain);
   }, [grain, hydrated]);
+  useEffect(() => {
+    if (!hydrated) return;
+    progress.set("pw-finish", finish);
+  }, [finish, hydrated]);
+  useEffect(() => {
+    if (!hydrated) return;
+    progress.set("pw-ruled", ruled);
+  }, [ruled, hydrated]);
   useEffect(() => {
     if (!hydrated) return;
     progress.set("pw-last-tab", tab);
@@ -263,11 +281,20 @@ function AppInner() {
   // table, so the base tokens are written onto :root at runtime and every page
   // on the site inherits them, including the ones whose layouts are untouched.
   useEffect(() => {
-    const { vars } = deckVars(shownLivery, variant);
+    const { vars, C } = deckVars(shownLivery, variant);
+    // The finish is layered over the stock, never mixed into it. With no
+    // finish this is the stock exactly, which is what keeps None unchanged.
+    const over = finishVars(shownLivery, variant, finish, C.active);
+    const all = { ...vars, ...over };
     const root = document.documentElement;
-    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
-    root.style.setProperty("--grain", grain ? vars["--grain"] : "0");
-  }, [shownLivery, variant, grain]);
+    Object.entries(all).forEach(([k, v]) => root.style.setProperty(k, v));
+    root.style.setProperty("--grain", grain ? all["--grain"] : "0");
+    // Layers that only exist under a finish, cleared otherwise so nothing of
+    // one finish survives into the next.
+    for (const k of ["--star-img", "--cloud-img", "--cloud-op"]) {
+      if (!(k in all)) root.style.removeProperty(k);
+    }
+  }, [shownLivery, variant, grain, finish]);
 
   // iOS will not report device orientation without a user gesture, so the ball
   // asks once, on the first tap, and never again.
@@ -316,6 +343,9 @@ function AppInner() {
          the old ones stay in agreement until the profile rebuild renames the
          state itself. */
       className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "plain-language" : ""}`}
+      data-aur={finish === "aurora" && variant !== "day" ? "1" : undefined}
+      data-paper={finish === "manual" ? "1" : undefined}
+      data-fiche={finish === "manual" && variant !== "day" ? "1" : undefined}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
         "--scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
@@ -323,7 +353,9 @@ function AppInner() {
     >
     <UsernameGate>
     <FirstFlightGate>
-    <Deck aurora={shownLivery === "aurora"} />
+    <Deck aurora={finish === "aurora" && variant !== "day"}
+            rules={finish === "manual" && ruled
+              ? ruledLayer(deckVars(shownLivery, variant).C.active, variant === "day") : null} />
       {flags["chrome.boarding"] && boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">

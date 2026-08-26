@@ -57,14 +57,67 @@ const ROOM_CSS = `
   mix-blend-mode: screen; opacity: var(--spill); animation: pwdrift 26s ease-in-out infinite; }
 /* behind the panels but ABOVE the lights, so they show through the curtains */
 .deck-light .stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--stars, 0);
-  background-image: var(--stars-a, none), var(--stars-b, none); background-repeat: repeat;
-  background-size: 430px 430px, 310px 310px; mix-blend-mode: screen;
+  background-image: var(--star-img, none); background-repeat: repeat;
+  background-size: cover; mix-blend-mode: screen;
   animation: pwtwinkle 13s ease-in-out infinite alternate; }
 @keyframes pwtwinkle { from { opacity: var(--stars, 0); } to { opacity: calc(var(--stars, 0) * .5); } }
 /* dark gradients band; noise kills it and gives the light a tooth */
 .deck-light .grain { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: var(--grain);
   mix-blend-mode: overlay; background-size: 150px 150px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+
+/* ============================================================
+   THE FINISH SYSTEM.
+   Ported from design/wingman-finish-source.css. Values verbatim.
+   Selectors are remapped: the reference targets .deck .lite, but here the
+   light rig is .deck-light and it is a SIBLING of the scroller rather than a
+   child of it, so the state lives on .app and the rig is reached from there.
+   ============================================================ */
+
+/* aurora gets more lift than the standard rig — this is the glow */
+.app[data-aur="1"] .deck-light::before { filter: blur(var(--soft)) saturate(1.70) brightness(1.30); }
+.app[data-aur="1"] .deck-light::after { filter: blur(calc(var(--soft)*1.15)) saturate(1.62) brightness(1.34); }
+
+/* overcast layer, used by Tarmac's aurora only */
+.a-cloud { position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: multiply;
+  background: var(--cloud-img); filter: blur(30px); opacity: var(--cloud-op, 0); }
+
+/* ruled-lines layer for the Manual finish */
+.rules { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; }
+
+/* MANUAL — printed by day, microfiche by night */
+.app[data-paper="1"] { --rule: oklch(.58 .012 85 / .55); --hair: oklch(.58 .012 85 / .30); }
+.app[data-paper="1"][data-fiche="1"] { --rule: oklch(.62 .010 85 / .48); --hair: oklch(.62 .010 85 / .26); }
+.app[data-paper="1"] .card, .app[data-paper="1"] .mod, .app[data-paper="1"] .crew {
+  border-radius: 3px; border-color: var(--rule); box-shadow: var(--paper-drop); }
+.app[data-paper="1"] .strip, .app[data-paper="1"] .crew { background: var(--hair); }
+.app[data-paper="1"] .frame { border-radius: 2px; border-color: var(--hair); background: transparent; }
+.app[data-paper="1"] .cap { letter-spacing: 1.7px; }
+.app[data-paper="1"] .cel .cap::before { content: ""; display: block; width: 16px; height: 1px;
+  background: var(--rule); margin: 0 auto 7px; }
+.app[data-paper="1"] .hobbs { background: transparent; border: 0; border-bottom: 1.5px solid var(--rule);
+  border-radius: 0; color: var(--t1); padding: 2px 6px 3px; }
+.app[data-paper="1"] .mcur { background: transparent; color: var(--active); border: 1.5px solid var(--active);
+  border-radius: 2px; padding: 2px 6px; transform: rotate(-3.5deg); display: inline-block; letter-spacing: 1.6px; }
+.app[data-paper="1"] .mname { color: var(--t1); }
+.app[data-paper="1"] .box { border-radius: 1px; background: transparent; border: 1.2px solid var(--rule); }
+.app[data-paper="1"] .box.on { background: transparent; border-color: var(--active); }
+.app[data-paper="1"] .resume { background: transparent; color: var(--active); border: 1.5px solid var(--active); border-radius: 2px; }
+.app[data-paper="1"] .play { background: transparent; border: 1.4px solid var(--active); }
+.app[data-paper="1"] .play svg { color: var(--active); }
+.app[data-paper="1"] .rev { position: absolute; left: -1px; top: 14px; bottom: 14px; width: 2px; background: var(--active); }
+.app[data-paper="1"] .pref { position: absolute; right: 12px; bottom: 11px; font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 8.5px; letter-spacing: .9px; color: var(--t3); opacity: .75; }
+/* The scanlines sit on the shell, not the scroller: an absolutely positioned
+   overlay inside a scroll container scrolls with the content. */
+.app[data-fiche="1"]::after { content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgba(255,255,255,.028) 0 1px, transparent 1px 3px);
+  box-shadow: inset 0 0 150px 45px oklch(.10 .008 85 / .60); }
+.ink { stroke: var(--active); fill: none; stroke-width: 1.15; vector-effect: non-scaling-stroke; }
+.inkh { stroke: var(--hair); fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.inkf { fill: var(--active); stroke: none; }
+.cn { font-family: "Geist Mono", ui-monospace, monospace; font-size: 7px; fill: var(--t3); }
 
 /* THE SCROLLER — the only thing on the page that scrolls. */
 .deck {
@@ -109,7 +162,7 @@ const ROOM_CSS = `
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 `;
 
-function Deck({ aurora }) {
+function Deck({ aurora, rules }) {
   const stars = useMemo(() => ({
     "--stars-a": dotTile(30, 20260824, 1.4, 0.8),
     "--stars-b": dotTile(20, 77003311, 1.0, 0.58),
@@ -118,6 +171,8 @@ function Deck({ aurora }) {
   return (
     <div className={`deck-light ${aurora ? "aur" : ""}`} style={stars} aria-hidden="true">
       <div className="stars" />
+      <div className="a-cloud" />
+      <div className="rules" style={rules || undefined} />
       <div className="spill" />
       <div className="grain" />
       <style>{ROOM_CSS}</style>

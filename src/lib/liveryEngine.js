@@ -42,10 +42,6 @@ export const LIVERIES = [
     description: "Hydraulic fluid. If you've had it on your hands, you know.",
     hue: 300, dDark: -18, dLight: 10, midAt: 0.45, midC: 1.18,
     chroma: 0.105, ground: 0.152, light: 0.945, fillAbs: 252, fillC: 0.16 },
-  { id: "aurora", name: "Aurora", anchors: "night → fjord → ice",
-    description: "Polar route, no traffic, nothing to do but look up.",
-    hue: 248, dDark: 10, dLight: -22, midAt: 0.44, midC: 1.10,
-    chroma: 0.078, ground: 0.190, light: 0.955, fillAbs: 64, fillC: 0.34, aurora: true },
 ];
 
 export const DEFAULT_LIVERY = "sky";
@@ -61,8 +57,13 @@ const FROM_STORED = {
   contrail: "tarmac",          // near-colourless
   "carrier-deck": "beacon",    // a night deck is red-lit
   altimeter: "skydrol",        // graphite and lamp-glow
-  aurora: "aurora",
+  // Aurora stopped being a livery and became a finish. Anyone stored as aurora
+  // lands on sky, whose aurora spec is "a blue night, green ribbons through
+  // it" — near enough to what they had that it reads as the same choice. App
+  // turns the finish on for them so nothing is lost, only moved.
+  aurora: "sky",
 };
+export const RETIRED_TO_FINISH = { aurora: "aurora" };
 export function engineLivery(storedId) {
   if (BY_ID[storedId]) return storedId;
   return FROM_STORED[storedId] || DEFAULT_LIVERY;
