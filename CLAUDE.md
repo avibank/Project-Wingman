@@ -76,9 +76,21 @@ ids to fill these.
 
 ## Migrations
 
-`supabase/migrations/` — 0001 social layer, 0002 threaded posts, 0003 reactions and
-attempts and completions, 0004 progress merge. All four have been run against the live
-project. 0004 is not optional: without it, progress does not save.
+`supabase/migrations/` — 0000 progress table, 0001 social layer, 0002 threaded posts,
+0003 reactions and attempts and completions, 0004 progress merge, 0005 squadrons and
+safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
+squawks and teams.
+
+**0001-0004 have been run against the live project. 0005-0007 have not.** Until they
+are, several surfaces fail open and silently no-op — `squadron.js`, `comms.js` and
+`FirstFlightGate` all carry comments saying so. `supabase/SETUP.sql` bundles 0005-0007
+as one guarded paste; it assumes 0001-0004 are applied.
+
+0004 is not optional: without it, progress does not save. 0000 declares the
+`user_progress` table it writes to, which predates the series and was created by hand —
+the live database already has it, so 0000 is a no-op there, but without it the series
+cannot rebuild an empty database. Both bundles take 0005 and up, so 0000 is
+deliberately outside them.
 
 ## Status
 
