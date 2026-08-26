@@ -294,6 +294,11 @@ function AppInner() {
     for (const k of ["--star-img", "--cloud-img", "--cloud-op"]) {
       if (!(k in all)) root.style.removeProperty(k);
     }
+    // Arm the morph one frame after the first write, so the load itself is not
+    // animated — otherwise every page load washes from the registered initial
+    // values to the real livery.
+    const id = requestAnimationFrame(() => root.setAttribute("data-morph", "1"));
+    return () => cancelAnimationFrame(id);
   }, [shownLivery, variant, grain, finish]);
 
   // iOS will not report device orientation without a user gesture, so the ball
