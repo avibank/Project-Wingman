@@ -39,7 +39,7 @@ insert into module_social (module_code, enabled, enabled_at) values ('JT', true,
 update pilot_profiles set status = 'cfi' where user_id = 'YOUR_CLERK_USER_ID';`;
 
 const out = `-- ============================================================================
--- Project Wingman — full setup. Run as one paste, top to bottom.
+-- Wingman — full setup. Run as one paste, top to bottom.
 --
 -- Safe to run on a fresh database or one that already has some of this: every
 -- statement is guarded, including the two check constraints that were not in

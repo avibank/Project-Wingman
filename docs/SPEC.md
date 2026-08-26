@@ -1,4 +1,4 @@
-# Project Wingman — Redesign Specification
+# Wingman — Redesign Specification
 
 Complete brief for rebuilding wingman.institute. This is the source of truth.
 
@@ -8,7 +8,7 @@ Complete brief for rebuilding wingman.institute. This is the source of truth.
 
 ## 0. How to use this document
 
-You are redesigning Project Wingman, an aviation study app for student pilots. This
+You are redesigning Wingman, an aircraft maintenance study app. This
 document is decisive on purpose: where it states a value, use that value; where it
 states a rule, the rule has no exceptions unless the document names one.
 
@@ -651,7 +651,7 @@ Target first response within 24 hours.
 Rate limits: composer posts, Calls, and Formation invites are all limited per user per
 hour.
 
-**Minors.** Student pilots may be under 18. Do not collect date of birth beyond what
+**Minors.** Students may be under 18. Do not collect date of birth beyond what
 compliance requires; do not build public profiles; default new accounts to squadron-only
 visibility with no cross-squadron discovery.
 

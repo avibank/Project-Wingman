@@ -1,4 +1,4 @@
--- Project Wingman — social layer schema
+-- Wingman — social layer schema
 --
 -- Run against the Supabase project (SQL editor, or `supabase db push`).
 --

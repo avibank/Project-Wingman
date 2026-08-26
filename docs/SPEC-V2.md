@@ -1,4 +1,4 @@
-# Project Wingman — Design & Architecture Spec (v2)
+# Wingman — Design & Architecture Spec (v2)
 
 **Status:** direction agreed, not yet implemented.
 **Supersedes** `docs/SPEC.md` (v1). Where the two disagree, this document wins.

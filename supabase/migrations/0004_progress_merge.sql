@@ -1,4 +1,4 @@
--- Project Wingman — non-destructive progress writes
+-- Wingman — non-destructive progress writes
 --
 -- Run after 0003. Safe to re-run.
 --

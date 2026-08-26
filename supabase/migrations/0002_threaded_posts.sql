@@ -1,4 +1,4 @@
--- Project Wingman — threaded replies and post voting
+-- Wingman — threaded replies and post voting
 --
 -- Run after 0001_social_layer.sql. Safe to re-run.
 --

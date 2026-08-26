@@ -1,4 +1,4 @@
--- Project Wingman — squadrons, safety, calls, comms
+-- Wingman — squadrons, safety, calls, comms
 -- Covers SPEC.md build steps 2, 4, 8 and 9. Run after 0004. Safe to re-run.
 
 -- ---------------------------------------------------------------- profiles

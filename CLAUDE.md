@@ -1,9 +1,9 @@
-# Project Wingman — Claude Code Project Brief
+# Wingman — Claude Code Project Brief
 
 ## What this is
 
 A subscription-based Part-66 Aircraft Maintenance Engineering (AME) study platform for
-aviation students, modeled on UULA. Live at wingman.institute, deployed via Vercel,
+aircraft maintenance students, modeled on UULA. Live at wingman.institute, deployed via Vercel,
 repo at avibank/Project-Wingman on GitHub.
 
 Aviation-themed naming is a deliberate, consistent design choice throughout — it's for
@@ -69,7 +69,7 @@ ids to fill these.
 
 - Never state absence or a zero count. Every empty state names its next action inside the
   sentence.
-- Use vocabulary student pilots already use: logbook, briefing, debrief, checkride,
+- Use vocabulary students already use: logbook, briefing, debrief, checkride,
   squawk. Invented lobby slang ("cabin", "channel open", "first voice") was retired.
 - No red on wrong quiz answers — `--calm` instead. Red is for genuine danger states.
 - No guilt language on a broken streak; it resets silently.

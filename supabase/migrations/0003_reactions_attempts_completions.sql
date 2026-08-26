@@ -1,4 +1,4 @@
--- Project Wingman — reaction chips, question attempts, completion timing
+-- Wingman — reaction chips, question attempts, completion timing
 --
 -- Run after 0002. Safe to re-run.
 --
