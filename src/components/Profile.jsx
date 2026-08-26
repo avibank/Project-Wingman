@@ -9,7 +9,9 @@ import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { useFlags } from "../lib/flags.js";
-import { initialsOf, USE_INITIALS_KEY } from "./ProfileMenu.jsx";
+import { initialsOf } from "./ProfileMenu.jsx";
+import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
+import { saveProfile } from "../lib/squadron.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
@@ -389,8 +391,16 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   };
 
   const initials = initialsOf(user);
-  const useInitials = progress.get(USE_INITIALS_KEY, false);
-  const photo = !useInitials && user?.imageUrl ? user.imageUrl : null;
+  const flySolo = progress.get(FLY_SOLO_KEY, false);
+  const photo = !flySolo && user?.imageUrl ? user.imageUrl : null;
+  // Both halves have to move together. The stored value drives this device,
+  // the mirror lets the plain lib functions read it synchronously, and
+  // pilot_profiles.invisible is the only half other people's queries can see.
+  const setFlySolo = (on) => {
+    progress.set(FLY_SOLO_KEY, on);
+    mirrorFlySolo(on);
+    if (user?.id) saveProfile(user.id, { invisible: on }).catch(() => setSaveNote(ERROR_GENERIC));
+  };
 
   // §6.2 — a live sample line that changes the greeting on the home page
   // immediately. Dealt off the same engine, so it is a real line, not a mock.
@@ -459,11 +469,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                      user?.update({ firstName: first || "", lastName: rest.join(" ") });
                    }} />
 
-            {/* Initials are derived from the name, so the switch sits under it. */}
-            <Switch id="use-initials" label="Use initials"
-                    note="Your photo stays saved. This just hides it."
-                    on={useInitials} onChange={(v) => progress.set(USE_INITIALS_KEY, v)} />
-
             <Field id="f-user" label="Username" hint="How everyone else sees you."
                    value={username} onChange={setUsername}
                    onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
@@ -479,6 +484,13 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                    onPick={(v) => setIdentity(v === "username")} />
               <p className="pcard-foot">One of these gets said out loud when someone finds you. Pick the one you&rsquo;d like hearing.</p>
             </div>
+
+            {/* An everyday option, not a privacy ceremony: no warning styling,
+                no confirmation, no red. It sits in the identity block because
+                it is part of who people see, not a setting filed elsewhere. */}
+            <Switch id="fly-solo" label="Fly solo"
+                    note="Nobody sees you and you see nobody. For the nights you'd rather just get on with it."
+                    on={flySolo} onChange={setFlySolo} />
 
             <Field id="f-bio" label="A line about you"
                    hint="Shows on your licence when someone opens it. Keep it short."
@@ -558,14 +570,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                  options={PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])
                    || (x.id === "open" && flags["social.crew"] && flags["social.frequency"]))}
                  onPick={(v) => progress.set("pw-social-preset", v)} />
-          </div>
-
-          <div className="block">
-            <span className="eyebrow">Being seen</span>
-            <Switch id="fly-invisible" label="Fly invisible"
-                    note="Nobody sees where you are. You still see everyone else."
-                    on={progress.get("pw-invisible", false)}
-                    onChange={(v) => progress.set("pw-invisible", v)} />
           </div>
 
           {flags["prefs.notices"] && (

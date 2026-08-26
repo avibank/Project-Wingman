@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 import { fetchBlocks, fetchMutes } from "./squadron.js";
 import { CHAPTER_OPENERS } from "../data/openers.js";
+import { isFlySolo } from "./flySolo.js";
 
 // §7.8 — a channel, not a forum. No threads, no upvotes, no accepted answers,
 // no karma. The only aviation-native additions are the chapter chip, pinning a
@@ -9,6 +10,9 @@ import { CHAPTER_OPENERS } from "../data/openers.js";
 const fail = (e, f) => { if (e) console.error(e); return f; };
 
 export async function fetchMessages({ moduleCode, chapterId = null, userId, limit = 100 }) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   let q = supabase
     .from("comms_messages")
     .select("*")
@@ -47,6 +51,9 @@ export async function sendMessage({ moduleCode, squadronId = null, userId, body,
 }
 
 export async function fetchPinned(moduleCode, chapterId) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   if (!chapterId) return [];
   const { data, error } = await supabase
     .from("comms_messages")

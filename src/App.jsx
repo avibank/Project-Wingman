@@ -5,6 +5,7 @@ import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
+import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
 import NotFound from "./components/NotFound.jsx";
 import { engineLivery, deckVars, DEFAULT_LIVERY } from "./lib/liveryEngine.js";
 import { useFlags } from "./lib/flags.js";
@@ -60,6 +61,13 @@ function AppInner() {
   const route = parseRoute(location.pathname);
 
   useDocumentTitle(titleForRoute(route));
+
+  // Fly solo is stored with the rest of progress, but the plain functions in
+  // lib/ cannot reach the provider and must read it synchronously. Mirror it to
+  // storage whenever it changes, including on first load after a sign-in, or
+  // those gates would run against a stale value on a new device.
+  const flySolo = progress.get(FLY_SOLO_KEY, false);
+  useEffect(() => { mirrorFlySolo(flySolo); }, [flySolo]);
 
   // §2.2 — the renamed paths. vercel.json 308s these at the edge, so this only
   // catches in-app navigation and the dev server; it replaces rather than

@@ -344,7 +344,7 @@ function ProfilePage({ onBack, theme, onToggleTheme, reduceMotion, onToggleReduc
                 and your email.</p>
               <p><strong>Stored on our servers,</strong> not only on this device — that is how
                 progress follows you between devices and how anyone can answer your questions.
-                Turn on <em>Fly invisible</em> in Settings and nobody sees where you are.</p>
+                Turn on <em>Fly solo</em> in Settings and nobody sees where you are.</p>
             </div>
           </div>
 

@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient.js";
+import { isFlySolo } from "./flySolo.js";
 
 // Squadrons, profiles and safety. §7.1, §8.3, §9.
 //
@@ -39,6 +40,9 @@ export async function assignSquadron(userId, moduleCode, studyTime) {
 }
 
 export async function fetchSquadron(userId, moduleCode) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return null;
   if (!userId) return null;
   const { data, error } = await supabase
     .from("squadron_members")
@@ -51,6 +55,9 @@ export async function fetchSquadron(userId, moduleCode) {
 }
 
 export async function fetchRoster(userId, squadronId) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   if (!squadronId) return [];
   const { data, error } = await supabase.rpc("squadron_roster", { uid: userId, sid: squadronId });
   if (error) return fail(error, []);
@@ -72,6 +79,9 @@ export async function fetchProfileStatus(userId) {
 // Liveries for a set of user ids, so a presence rail can paint each face in
 // its owner's own tail. Missing rows simply have no profile yet.
 export async function fetchProfiles(ids = []) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return {};
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return {};
   const { data, error } = await supabase
@@ -86,6 +96,9 @@ export async function fetchProfiles(ids = []) {
 // this module, so it needs a real percentage per member. Anyone with no
 // completions is genuinely at 0, not missing.
 export async function fetchModuleProgress(userIds = [], moduleCode, totalChapters = 0) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return {};
   const ids = [...new Set(userIds.filter(Boolean))];
   if (!ids.length || !moduleCode || !totalChapters) return {};
   const { data, error } = await supabase
@@ -108,6 +121,9 @@ export async function fetchModuleProgress(userIds = [], moduleCode, totalChapter
 // yet, it returns an empty list and the screen says what to do next -- it never
 // backfills. §1, non-negotiable 3.
 export async function fetchRecentPilots(userId, limit = 8) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   const { data, error } = await supabase
     .from("pilot_profiles")
     .select("user_id, callsign, livery, is_staff, study_time, created_at")

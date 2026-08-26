@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 import { fetchBlocks, fetchMutes } from "./squadron.js";
 import { TEAM_MAX } from "./teams.js";
+import { isFlySolo } from "./flySolo.js";
 
 // §9.4 — the Ready Room's data. A room, not a feed: everything here is present
 // tense, and the squawk list is what makes it never empty.
@@ -18,6 +19,9 @@ export async function socialEnabledModules() {
 
 // §9.4 band 2 — unanswered questions from every chapter, with context attached.
 export async function fetchOpenSquawks(userId, moduleCode = null, limit = 20) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   let q = supabase.from("open_squawks").select("*").limit(limit);
   if (moduleCode) q = q.eq("module_code", moduleCode);
   const { data, error } = await q;
@@ -60,6 +64,9 @@ export async function markVerified(messageId, byUserId) {
 
 // ------------------------------------------------------------- §9.4.3 teams
 export async function fetchMyTeams(userId) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   if (!userId) return [];
   const { data, error } = await supabase
     .from("team_members")
@@ -74,6 +81,9 @@ export async function fetchMyTeams(userId) {
 }
 
 export async function fetchTeamMembers(teamId) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   if (!teamId) return [];
   const { data, error } = await supabase.from("team_members").select("*").eq("team_id", teamId);
   if (error) return fail(error, []);

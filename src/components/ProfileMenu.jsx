@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useFlags } from "../lib/flags.js";
+import { FLY_SOLO_KEY } from "../lib/flySolo.js";
 
 // §6 / §7 — the avatar opens a menu, not the page. Ported from
 // docs/reference/wingman-poc.html with three corrections you asked for:
@@ -55,9 +56,10 @@ export const initialsOf = (user) =>
   (user?.fullName || user?.username || "")
     .split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
-// "Use initials" is a display preference, not a delete: the Clerk image stays
-// intact so toggling back returns the photo.
-export const USE_INITIALS_KEY = "pw-use-initials";
+// Fly solo hides the photo and shows initials instead. It is a display
+// preference, not a delete: the Clerk image stays intact, so turning Fly solo
+// off returns the photo. The separate "Use initials" switch this replaced has
+// been removed.
 
 function ProfileMenu({ onNavigate }) {
   const { isSignedIn, user } = useUser();
@@ -101,8 +103,8 @@ function ProfileMenu({ onNavigate }) {
   };
 
   const go = (page) => { setOpen(false); onNavigate(page); };
-  const useInitials = progress.get(USE_INITIALS_KEY, false);
-  const photo = !useInitials && user?.imageUrl ? user.imageUrl : null;
+  const flySolo = progress.get(FLY_SOLO_KEY, false);
+  const photo = !flySolo && user?.imageUrl ? user.imageUrl : null;
   const label = user?.username || user?.fullName || "Pilot";
 
   return (

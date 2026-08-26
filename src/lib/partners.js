@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 import { MIN_POPULATION } from "./social.js";
 import { fetchModulePresence, fetchAllPresence } from "./presence.js";
+import { isFlySolo } from "./flySolo.js";
 
 // Study partners, wingmen, and the co-pilot flight log.
 //
@@ -16,6 +17,9 @@ function pairKey(a, b) {
 
 // ------------------------------------------------------------------- wingmen
 export async function fetchWingmen(userId) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   if (!userId) return [];
   const { data, error } = await supabase.from("wingmen").select("*").eq("user_id", userId);
   if (error) {
@@ -134,6 +138,9 @@ export async function leaveCopilotSession(sessionId, userId) {
 }
 
 export async function fetchOpenSessions(moduleCode) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return [];
   let q = supabase.from("copilot_sessions").select("*, participants:copilot_participants(*)").is("ended_at", null);
   if (moduleCode) q = q.eq("module_code", moduleCode);
   const { data, error } = await q.order("started_at", { ascending: false }).limit(20);
@@ -175,6 +182,9 @@ export async function fetchFlightLog(userId) {
 // Course/class match outranks pace. Below the population floor we return a
 // neutral empty signal rather than a thin, sad-looking list.
 export async function fetchPartnerSuggestions({ userId, moduleCode, course }) {
+  // Fly solo is symmetric: you see nobody. Gated here rather than in each
+  // component, so no caller can forget and leak.
+  if (isFlySolo()) return { belowThreshold: true, active: 0, suggestions: [] };
   const present = moduleCode ? await fetchModulePresence(moduleCode, userId) : await fetchAllPresence(userId);
   if (present.length < MIN_POPULATION) {
     return { belowThreshold: true, active: present.length, suggestions: [] };
