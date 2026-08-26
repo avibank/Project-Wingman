@@ -469,21 +469,16 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                      user?.update({ firstName: first || "", lastName: rest.join(" ") });
                    }} />
 
-            <Field id="f-user" label="Username" hint="How everyone else sees you."
-                   value={username} onChange={setUsername}
-                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That username is taken."))} />
+            {/* Off shows your full name, on shows your callsign. A toggle rather
+                than the old two-option control: there were only ever two states,
+                and naming one of them is clearer than showing both side by side. */}
+            <Switch id="go-by-callsign" label="Go by callsign"
+                    note="Your name stays private. Everyone sees your callsign instead."
+                    on={byUsername} onChange={setIdentity} />
 
-            {/* §6 — both real values, live from the fields above. */}
-            <div className="block-sub">
-              <span className="eyebrow">Everyone sees</span>
-              <Seg label="Everyone sees" value={byUsername ? "username" : "real"}
-                   options={[
-                     { id: "real", label: holderName.trim() || "your full name" },
-                     { id: "username", label: username.trim() || "your username" },
-                   ]}
-                   onPick={(v) => setIdentity(v === "username")} />
-              <p className="pcard-foot">One of these gets said out loud when someone finds you. Pick the one you&rsquo;d like hearing.</p>
-            </div>
+            <Field id="f-user" label="Callsign" hint="How everyone else sees you."
+                   value={username} onChange={setUsername}
+                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That callsign is taken."))} />
 
             {/* An everyday option, not a privacy ceremony: no warning styling,
                 no confirmation, no red. It sits in the identity block because
