@@ -480,14 +480,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               <p className="pcard-foot">One of these gets said out loud when someone finds you. Pick the one you&rsquo;d like hearing.</p>
             </div>
 
-            <div className="field" style={{ maxWidth: 340 }}>
-              <label htmlFor="f-call">{callCopy.label}</label>
-              <input id="f-call" value={greetName}
-                     onChange={(e) => { setCallTouched(true); setGreetName(e.target.value); }}
-                     onBlur={() => progress.set("pw-greet-name", greetName.trim())} />
-              <span className="hint">{callCopy.hint}</span>
-            </div>
-
             <Field id="f-bio" label="A line about you"
                    hint="Shows on your licence when someone opens it. Keep it short."
                    value={bio} onChange={setBio}
@@ -540,6 +532,21 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               <Seg label="Voice" value={character}
                    options={CHARACTERS.map((c) => ({ id: c.id, label: c.name }))}
                    onPick={(v) => progress.set("pw-voice", v)} />
+
+              {/* The greeter's name for you belongs with the greeter, not on the
+                  licence: the licence is who you are, this is what you answer to.
+                  The label follows the selected character. */}
+              <div className="field" style={{ maxWidth: 340 }}>
+                <label htmlFor="f-call">{callCopy.label}</label>
+                <input id="f-call" value={greetName}
+                       onChange={(e) => { setCallTouched(true); setGreetName(e.target.value); }}
+                       onBlur={() => progress.set("pw-greet-name", greetName.trim())} />
+                {/* Only when the field is genuinely empty. It used to show
+                    whenever the value had not been explicitly set, which meant it
+                    sat under a filled-in name and read as though it had been
+                    ignored. */}
+                {!greetName.trim() && <span className="hint">{callCopy.hint}</span>}
+              </div>
               <div className="anchors">“{sample}”</div>
             </div>
           )}
