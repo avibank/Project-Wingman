@@ -124,7 +124,7 @@ const DECK_CSS = `
 .deck .cel { background: var(--panel); padding: 17px 10px 13px; display: flex; flex-direction: column;
   align-items: center; gap: 9px; min-height: calc(152px * var(--scale, 1)); justify-content: center; }
 .deck .cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
-  color: var(--t3); text-align: center; }
+  color: var(--t2); text-align: center; }
 .deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block; }
 .deck .ai-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
 @media (prefers-reduced-motion: reduce) { .deck .ai-rim { transition: none; } }
