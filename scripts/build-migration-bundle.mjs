@@ -32,7 +32,6 @@ const header = `-- =============================================================
 const body = bundled
   .map((f) => {
     const sql = readFileSync(new URL(f, dir), "utf8").trimEnd();
-    const rule = "-".repeat(76);
     return `-- ${"#".repeat(76)}\n-- ${f}\n-- ${"#".repeat(76)}\n\n${sql}\n`;
   })
   .join("\n\n");

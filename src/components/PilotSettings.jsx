@@ -9,9 +9,12 @@ import Spooling from "./Spooling.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 
-// §8.3 makes invisible mode mandatory and requires it in settings; §7.6
+// §8.3 makes hiding yourself mandatory and requires it in settings; §7.6
 // requires a toggle for the glow. Both flags were already honoured throughout
 // the app and neither could be set anywhere, so both were effectively stuck on.
+//
+// Fly solo is symmetric now — nobody sees you and you see nobody — so the old
+// "you still see everyone" framing no longer applies here.
 
 const STUDY_TIMES = [
   { id: "early", label: "Early" },
