@@ -42,8 +42,9 @@ if (!url || !key) {
   console.error("  VITE_SUPABASE_ANON_KEY=<anon key>");
   console.error("  VITE_CLERK_PUBLISHABLE_KEY=<publishable key>\n");
   console.error("Both Supabase values are in the Supabase dashboard under");
-  console.error("Project Settings -> API. The anon key is safe in a local file;");
-  console.error(".env.local is gitignored. Never use the service_role key here.");
+  console.error("Project Settings -> API. Use a Publishable key (sb_publishable_...),");
+  console.error("or the anon key on the Legacy tab. Never a Secret key");
+  console.error("(sb_secret_... / service_role): VITE_ vars ship to every visitor.");
   process.exit(2);
 }
 
@@ -83,9 +84,12 @@ for (const f of readdirSync(migDir).filter((n) => /^\d{4}_.*\.sql$/.test(n)).sor
 const base = url.replace(/\/+$/, "");
 let spec;
 try {
-  const res = await fetch(`${base}/rest/v1/`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: "application/openapi+json" },
-  });
+  // Two key styles are in the wild. The legacy anon key is a JWT and goes in
+  // both headers; the newer sb_publishable_ key is not a JWT, and sending it as
+  // a Bearer token gets rejected as a malformed JWT. apikey carries both.
+  const headers = { apikey: key, Accept: "application/openapi+json" };
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
+  const res = await fetch(`${base}/rest/v1/`, { headers });
   if (!res.ok) {
     console.error(`Supabase answered ${res.status} ${res.statusText} for ${base}/rest/v1/`);
     if (res.status === 401) console.error("That usually means the anon key does not match the project URL.");
