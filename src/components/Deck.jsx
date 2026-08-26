@@ -29,8 +29,15 @@ const ROOM_CSS = `
 /* Light ADDS, it does not veil: screen, never a translucent overlay. */
 .deck-light::before, .deck-light::after {
   content: ""; position: absolute; inset: -55%; pointer-events: none; z-index: 0;
-  mix-blend-mode: screen; filter: blur(var(--soft)) saturate(1.28);
+  filter: blur(var(--soft)) saturate(1.28);
 }
+/* Night screens both layers onto a dark ground. Day screens the key — a warm
+   bloom of unshaded ground in the sun corner — and MULTIPLIES the fill, which
+   settles livery-tinted shade into the opposite one. Screen is additive: on a
+   near-white ground it does nothing at all, which is why lightening the Night
+   gradients never worked. Everything else about the rig is unchanged. */
+.deck-light::before { mix-blend-mode: var(--blend, screen); }
+.deck-light::after  { mix-blend-mode: var(--blend2, var(--blend, screen)); }
 .deck-light::before { background: var(--key-img); opacity: var(--key-int); animation: pwdrift 26s ease-in-out infinite; }
 .deck-light::after { background: var(--fill-img); opacity: var(--fill-int);
   filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); animation: pwdrift 41s ease-in-out infinite reverse; }
@@ -118,6 +125,13 @@ const ROOM_CSS = `
 .inkh { stroke: var(--hair); fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .inkf { fill: var(--active); stroke: none; }
 .cn { font-family: "Geist Mono", ui-monospace, monospace; font-size: 7px; fill: var(--t3); }
+
+/* Tooth. The standard grain layer is overlay-blended isotropic noise, which on
+   a light ground reads as digital noise rather than as paper. This multiplies a
+   directional, desaturated turbulence through the same layer instead: same
+   layer, different material. */
+.app[data-tooth="1"] .grain { mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92 0.58' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='.62'/%3E%3C/svg%3E"); }
 
 /* THE SCROLLER — the only thing on the page that scrolls. */
 .deck {

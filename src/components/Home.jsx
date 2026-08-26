@@ -123,6 +123,21 @@ const DECK_CSS = `
 @media (max-width: 430px) { .deck .strip { grid-template-columns: 1fr; } }
 .deck .cel { background: var(--panel); padding: 17px 10px 13px; display: flex; flex-direction: column;
   align-items: center; gap: 9px; min-height: calc(152px * var(--scale, 1)); justify-content: center; }
+/* Sheen. A broad gloss falling from the top edge plus one narrow diagonal
+   specular streak, as if the surface has a slight gloss and the light is above.
+   It goes into each surface's own background-image rather than an overlay or a
+   pseudo-element, so it paints beneath the type, cannot wash out text and
+   cannot intercept a pointer.
+   These must stay AFTER the .card / .mod / .cel rules above: those use the
+   background shorthand, which resets background-image.
+   .crew is deliberately absent — it is a grid whose 1px gaps show its own
+   background through, so a background-image on it paints the gap lines. */
+.deck .card, .deck .mod, .deck .cel { background-image: var(--sheen-img, none); }
+
+/* The cast shadow. Nothing read --drop before this: these surfaces were flat
+   with a border. Night sets it to none, so this is inert there. */
+.deck .card, .deck .mod, .deck .crew { box-shadow: var(--drop, none); }
+
 .deck .cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--t2); text-align: center; }
 .deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block; }

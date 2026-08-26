@@ -179,6 +179,9 @@ export function finishVars(liveryId, variant, finish, accent) {
       // faking one is what made Day look wrong.
       "--key-int": "0", "--fill-int": "0", "--stars": "0",
       "--grain": String(m.grain),
+      // Manual replaces the stock entirely: no gloss, no cast shadow, no tooth.
+      // It has its own --paper-drop in the finish CSS.
+      "--sheen-img": "none", "--drop": "none",
       "--active": accent, "--active-fill": accent,
     };
   }

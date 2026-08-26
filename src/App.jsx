@@ -385,6 +385,7 @@ function AppInner() {
       data-aur={finish === "aurora" && variant !== "day" ? "1" : undefined}
       data-paper={finish === "manual" ? "1" : undefined}
       data-fiche={finish === "manual" && variant !== "day" ? "1" : undefined}
+      data-tooth={variant === "day" && finish !== "manual" ? "1" : undefined}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
         "--scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,

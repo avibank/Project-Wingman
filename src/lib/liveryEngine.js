@@ -171,6 +171,66 @@ export const CREAM = {
  * Returns { vars, C, surf } — `C` is the solid (un-glassed) semantic map, which
  * is what the SVG instruments and the flight profiles paint with.
  */
+
+// --------------------------------------------------------------- Day, as built
+// Ported verbatim from design/wingman-day-source.js. Day is no longer the Night
+// ramp lightened: it has its own text tokens, its own stock per livery, and a
+// rig that subtracts as well as adds.
+//
+// t3 was .618 .009 85, which measured 2.99:1 against the deep ground and failed
+// on 9.5px uppercase mono. .505 clears 4.5:1 everywhere it lands; t2 moves down
+// with it so the three levels keep their step.
+export const DAY = {
+  g: ".966 .010 85",            // overridden by the stock below
+  p: ".992 .005 85", rz: ".936 .013 85", l: ".876 .014 85",
+  t3: ".505 .009 85", t2: ".430 .010 85", t1: ".250 .012 85",
+};
+
+// [chroma, hue]. Each livery sits on its own paper. This reverses the earlier
+// rule that the Day ground be constant across liveries — it was constant, and
+// that is exactly why Day read as one theme wearing six accents. Beacon's is
+// the loud one on purpose: a blush pink under deep signal-red ink.
+export const STOCK = {
+  sky: [".014", 240], amber: [".024", 80], tarmac: [".008", 250],
+  beacon: [".038", 16], runway: [".015", 122], skydrol: [".015", 296],
+};
+
+// The ground drops from L .966 to L .930 and raised/line follow it down.
+// Night's ground-to-panel step is a 48% relative lightness jump; at .966 Day's
+// was 2.7%, which is the whole reason it looked flat.
+export function dayGround(id) {
+  const [chroma, hue] = STOCK[id] || STOCK.sky;
+  return { g: `.930 ${chroma} ${hue}`, rz: `.944 .013 ${hue}`, l: `.842 .016 ${hue}` };
+}
+
+export const dayKey = () =>
+  "radial-gradient(84% 72% at 78% -14%, oklch(0.995 0.055 82 / 0.95) 0%, "
+  + "oklch(0.985 0.048 78 / 0.62) 26%, "
+  + "oklch(0.975 0.040 76 / 0.28) 50%, "
+  + "oklch(0.970 0.035 76 / 0) 76%)";
+
+// Screen is additive: on a near-white ground it does nothing, which is why
+// lightening the Night gradients never worked. The fill has to subtract.
+export const dayFill = (h, c) =>
+  `radial-gradient(104% 84% at 14% 114%, oklch(0.610 ${(c * 1.30).toFixed(3)} ${h}.0 / 0.70) 0%, `
+  + `oklch(0.720 ${(c * 1.05).toFixed(3)} ${h}.0 / 0.40) 28%, `
+  + `oklch(0.860 ${(c * 0.70).toFixed(3)} ${h}.0 / 0.14) 56%, `
+  + `oklch(0.940 ${(c * 0.50).toFixed(3)} ${h}.0 / 0) 82%)`;
+
+// Five stops, not three. Tight and genuinely dark where the surface meets the
+// ground, then progressively wider and softer.
+export const DAY_DROP =
+  "0 .5px .5px oklch(.44 .050 66/.30), "
+  + "0 1.5px 2px oklch(.47 .050 66/.20), "
+  + "0 4px 5px oklch(.50 .045 66/.15), "
+  + "0 11px 17px oklch(.52 .040 66/.13), "
+  + "0 28px 56px oklch(.55 .045 66/.17)";
+
+export const DAY_SHEEN =
+  "linear-gradient(174deg, oklch(1 0 0/.66) 0%, oklch(1 0 0/.24) 13%, "
+  + "oklch(1 0 0/.05) 29%, transparent 50%), "
+  + "linear-gradient(116deg, transparent 30%, oklch(1 0 0/.26) 45%, transparent 60%)";
+
 export function deckVars(liveryId, variant = "night") {
   const L = liveryById(liveryId);
   const night = variant !== "day";
@@ -185,10 +245,17 @@ export function deckVars(liveryId, variant = "night") {
   // areas take a lower rung than small marks, or a lit lamp burns a hole in
   // the panel.
   const H = hueAt(L, 0.55), Cm = L.chroma * L.midC;
+  // Day's stock, text tiers and deep ground, per livery.
+  const dayC = (id) => {
+    const G = dayGround(id);
+    return { ground: `oklch(${G.g})`, panel: `oklch(${DAY.p})`,
+             raised: `oklch(${G.rz})`, line: `oklch(${G.l})`,
+             t3: `oklch(${DAY.t3})`, t2: `oklch(${DAY.t2})`, t1: `oklch(${DAY.t1})` };
+  };
   const C = night
     ? { ground: surf[0], panel: at(L, pT, 1), raised: at(L, pT + 0.085, 1), line: at(L, pT + 0.17, 1),
         t3: ink[6], t2: ink[9], t1: ink[12], active: surf[8], on: surf[9], lit: surf[11] }
-    : { ...CREAM,
+    : { ...CREAM, ...dayC(L.id),
         active: `oklch(.560 ${(Cm * 1.55).toFixed(3)} ${H.toFixed(1)})`,
         on: `oklch(.630 ${(Cm * 1.45).toFixed(3)} ${H.toFixed(1)})`,
         lit: `oklch(.470 ${(Cm * 1.70).toFixed(3)} ${H.toFixed(1)})` };
@@ -226,6 +293,27 @@ export function deckVars(liveryId, variant = "night") {
   vars["--emit"] = "10px";
   // Aurora is the only livery that shows the starfield, and only at night.
   vars["--stars"] = night && L.aurora ? "0.95" : "0";
+
+  // Day is not the Night rig lightened. The key still SCREENS a warm bloom into
+  // the sun corner; the fill MULTIPLIES livery-tinted shade into the opposite
+  // one. Same angles, same blur, same 26s/41s drift with the fill reversed —
+  // opposite direction. Night keeps both layers additive and is untouched.
+  vars["--blend"] = "screen";
+  vars["--blend2"] = night ? "screen" : "multiply";
+  if (night) {
+    vars["--drop"] = "none";
+    vars["--sheen-img"] = "none";
+  } else {
+    vars["--key-img"] = dayKey();
+    vars["--fill-img"] = dayFill(keyH, keyC * 0.42);
+    vars["--key-int"] = "0.92";
+    vars["--fill-int"] = "0.66";
+    vars["--soft"] = LIGHT.soft + "px";
+    vars["--stars"] = "0";
+    vars["--grain"] = "0.20";
+    vars["--drop"] = DAY_DROP;
+    vars["--sheen-img"] = DAY_SHEEN;
+  }
 
   // Chromatic edges: a lit edge on top and an unlit edge underneath, instead of
   // one flat border. Hued shadows: black on a coloured ground reads as a hole

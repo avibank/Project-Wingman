@@ -11,7 +11,7 @@
 
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { deckVars, LIVERIES } from "../src/lib/liveryEngine.js";
+import { deckVars, LIVERIES, DAY, STOCK, dayGround, dayKey, dayFill, DAY_DROP, DAY_SHEEN } from "../src/lib/liveryEngine.js";
 
 const src = readFileSync(new URL("../docs/reference/wingman-poc.html", import.meta.url), "utf8");
 
@@ -36,6 +36,12 @@ const prelude = `
   const $ = () => __el;
 `;
 
+const hueAtRef = (c) => {
+  const wrapH = (h) => (((h % 360) + 360) % 360);
+  const sm = (u) => u * u * (3 - 2 * u);
+  return wrapH(c.hue + c.dLight * sm(1));
+};
+
 const ctx = vm.createContext({ Math, Array, Object, String, Number, JSON });
 vm.runInContext(prelude + colour + "\n" + tokens, ctx);
 
@@ -59,7 +65,11 @@ let compared = 0;
 const drift = [], missing = [], extra = new Set();
 
 LIVERIES.forEach((L, i) => {
-  for (const night of [true, false]) {
+  // Night only. Day is no longer the POC's Day — design/wingman-day-source.js
+  // replaced it wholesale, deliberately, so comparing it against the reference
+  // would report the intended change as drift for ever. Day is asserted against
+  // its own spec below instead, which is the same guarantee from the other end.
+  for (const night of [true]) {
     const ref = JSON.parse(run(i, night));
     const got = deckVars(L.id, night ? "night" : "day").vars;
     const where = `${L.id}/${night ? "night" : "day"}`;
@@ -76,7 +86,7 @@ LIVERIES.forEach((L, i) => {
 const agreed = drift.filter((d) => AGREED.has(d.k));
 const real = drift.filter((d) => !AGREED.has(d.k));
 
-console.log(`livery: ${compared} values compared across ${LIVERIES.length} liveries x 2 modes`);
+console.log(`livery: ${compared} values compared across ${LIVERIES.length} liveries, night, against the POC`);
 if (agreed.length) {
   console.log(`  ${agreed.length} agreed divergences (${[...AGREED].join(", ")}) — see §10 and the build notes`);
 }
@@ -91,3 +101,33 @@ if (real.length || missing.length) {
   process.exit(1);
 }
 console.log("MATCH");
+
+// ---------------------------------------------------------------- Day, as built
+// Day answers to design/wingman-day-source.js rather than to the POC. Same idea
+// as above: every value asserted, so a quiet edit shows up as a failure.
+const dayFail = [];
+let dayChecked = 0;
+for (const L of LIVERIES) {
+  const v = deckVars(L.id, "day").vars;
+  const G = dayGround(L.id);
+  const keyH = L.keyAbs != null ? L.keyAbs : hueAtRef(L);
+  const keyC = L.keyC != null ? L.keyC : 0.305;
+  const want = {
+    "--ground": `oklch(${G.g})`,
+    "--t3": `oklch(${DAY.t3})`, "--t2": `oklch(${DAY.t2})`, "--t1": `oklch(${DAY.t1})`,
+    "--key-img": dayKey(), "--fill-img": dayFill(keyH, keyC * 0.42),
+    "--key-int": "0.92", "--fill-int": "0.66", "--grain": "0.20", "--stars": "0",
+    "--soft": "82px", "--blend": "screen", "--blend2": "multiply",
+    "--drop": DAY_DROP, "--sheen-img": DAY_SHEEN,
+  };
+  for (const [k, expect] of Object.entries(want)) {
+    dayChecked++;
+    if (String(v[k]) !== String(expect)) dayFail.push(`${L.id}/day ${k}\n    want ${expect}\n    got  ${v[k]}`);
+  }
+  // The stock has to differ per livery, or Day is one theme wearing six accents.
+  if (!String(v["--ground"]).includes(String(STOCK[L.id][1]))) dayFail.push(`${L.id}/day stock hue not applied`);
+}
+console.log(`day:    ${dayChecked} values asserted across ${LIVERIES.length} liveries against the Day source`);
+if (dayFail.length) { for (const f of dayFail) console.log("  " + f); }
+console.log(dayFail.length ? `DAY DRIFT: ${dayFail.length}` : "MATCH");
+if (dayFail.length) process.exitCode = 1;
