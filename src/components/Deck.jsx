@@ -62,6 +62,13 @@ const ROOM_CSS = `
      content instead of scrolling, which puts the whole page back on the
      window and undoes everything else here. */
   min-height: 0;
+  /* REQUIRED, and for the same reason as min-height above but horizontally.
+     A grid item's automatic minimum size is min-content, so the implicit
+     column was sized by the widest thing on the page rather than by the
+     scroller. On a phone that resolved to a 780px track inside a 390px deck
+     and overflow-x clipped the difference: the page rendered at desktop width
+     with the right-hand half simply cut off and no way to reach it. */
+  grid-template-columns: minmax(0, 1fr);
   overflow-y: auto; overflow-x: hidden;
   /* grid with safe centring, not margin-block:auto. An auto vertical margin
      computes to zero in a block container — it only centres in flex or grid.

@@ -22,11 +22,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 const LIGHTS = 12;
 const colourAt = (i) => (i < 8 ? "is-white" : i < 10 ? "is-amber" : "is-red");
 
-function RunwayLights({ scroller }) {
-  const [progress, setProgress] = useState(0);
-  // Whether there is anything to indicate has to re-render, so it is state and
-  // not just the ref below.
-  const [scrollable, setScrollable] = useState(false);
+function RunwayLights({ scroller, route }) {
+  // Only the lit count is state. It changes twelve times over a whole page;
+  // scroll position changes on every frame, and putting that in state
+  // re-rendered twelve lamps sixty times a second, which is what made the run
+  // flicker on a phone.
+  const [lit, setLit] = useState(0);
+  const litRef = useRef(0);
+  const rootRef = useRef(null);
   const max = useRef(0);
   const remeasure = useRef(null);
 
@@ -34,13 +37,19 @@ function RunwayLights({ scroller }) {
     const el = scroller?.current;
     if (!el) return undefined;
 
-    const read = () => setProgress(
-      max.current > 0 ? Math.min(1, Math.max(0, el.scrollTop / max.current)) : 0);
+    const read = () => {
+      const m = max.current;
+      const p = m > 0 ? Math.min(1, Math.max(0, el.scrollTop / m)) : 0;
+      // The trail is a style, not state. Written straight to the node so a
+      // scroll costs one property set instead of a React render.
+      rootRef.current?.style.setProperty("--progress", p);
+      const next = m > 0 ? Math.round(p * LIGHTS) : 0;
+      if (next !== litRef.current) { litRef.current = next; setLit(next); }
+    };
     // scrollHeight forces layout, so it is measured on resize rather than on
     // every scroll event. scrollTop is free.
     const measure = () => {
       max.current = el.scrollHeight - el.clientHeight;
-      setScrollable(max.current > 0);
       read();
     };
 
@@ -65,15 +74,13 @@ function RunwayLights({ scroller }) {
   }, [scroller]);
 
   // Route changes swap the content inside the scroller, which changes how far
-  // there is to run.
-  useLayoutEffect(() => { remeasure.current?.(); });
-
-  // Lights 1 to round(p x n) are lit. At p = 0 that is none, at p = 1 all of
-  // them; a page that does not scroll stays dark.
-  const lit = scrollable ? Math.round(progress * LIGHTS) : 0;
+  // there is to run. Keyed to the route rather than left to run after every
+  // render: measure reads scrollHeight, which forces layout, and with no
+  // dependencies that happened on every scroll event.
+  useLayoutEffect(() => { remeasure.current?.(); }, [route]);
 
   return (
-    <div className="flight-progress" aria-hidden="true" style={{ "--progress": progress }}>
+    <div className="flight-progress" aria-hidden="true" ref={rootRef} style={{ "--progress": 0 }}>
       <div className="runway-lights">
         <div className="runway-trail" />
         {Array.from({ length: LIGHTS }, (_, i) => (

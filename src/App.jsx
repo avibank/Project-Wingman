@@ -503,7 +503,7 @@ function AppInner() {
         </div>
       </div>
 
-    <RunwayLights scroller={deckRef} />
+    <RunwayLights scroller={deckRef} route={route.name} />
     </FirstFlightGate>
     </UsernameGate>
       <style>{`
