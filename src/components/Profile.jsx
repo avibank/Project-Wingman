@@ -99,12 +99,26 @@ const AURORA_VEIL = 0.2;
 
 function LiveryDot({ livery: L, selected, onPick }) {
   const core = `oklch(.60 ${(L.chroma * L.midC).toFixed(3)} ${hueAt(L, 0.55).toFixed(1)})`;
-  const style = { background: core };
+  // Every swatch previews its own ramp — shadow, core, highlight — which is
+  // what its anchors line already promises ("navy to lapiz to sky blue").
+  // Aurora used to be the only one showing a gradient while the other six were
+  // flat discs, so they read as different kinds of thing. Each stop is taken
+  // from that livery's own ramp; nothing here is a hand-picked colour.
+  //
+  // The highlight sits top-right because that is where the rig's key light is
+  // (LIGHT.ambX 76, ambY -18), so a swatch is lit the way a panel is.
+  const shadow = col(Math.max(0.18, L.ground + 0.06), L.chroma * 0.85, hueAt(L, 0.10), 1);
+  const highlight = col(0.88, L.chroma * 0.60, hueAt(L, 0.94), 1);
+  const ramp = `radial-gradient(115% 115% at 74% 8%, ${highlight} 0%, ${core} 46%, ${shadow} 100%)`;
+  const style = { background: core, backgroundImage: ramp };
   if (L.aurora) {
+    // Aurora keeps its starfield on top of its ramp: the stars are part of that
+    // livery, not decoration on the swatch.
     style.backgroundImage = [
       dotTile(10, 20260824, 1.0, 0.8),
       `radial-gradient(120% 66% at 50% -6%, ${col(0.86, 0.170, 158, 0.62 * AURORA_VEIL * 5)} 0%,` +
       ` ${col(0.74, 0.195, 176, 0.34 * AURORA_VEIL * 5)} 36%, ${col(0.70, 0.190, 196, 0)} 78%)`,
+      ramp,
     ].join(", ");
   }
   return (
@@ -226,6 +240,18 @@ const PROFILE_CSS = `
 .liv[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--active); }
 .liv i { display: block; width: 56px; height: 56px; border-radius: 50%;
   background-size: cover; background-position: center; }
+
+/* The one centred block on this page, deliberately: name over description over
+   swatches, narrowing to the specimen. Scoped rather than set on .livname and
+   .livdesc, which the Preferences tab also uses and which stay left. */
+.block-livery .livname,
+.block-livery .livdesc { text-align: center; }
+.block-livery .livgrid { justify-content: center; gap: 10px; }
+/* 38px disc inside 3px of padding is a 44x44 target — the floor for a finger,
+   so the swatches shrink to exactly that and no further. Below this width the
+   gap gives way first; the target never does. */
+.block-livery .liv i { width: 38px; height: 38px; }
+@media (max-width: 430px) { .block-livery .livgrid { gap: 6px; } }
 .anchors { font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; color: var(--t3);
   margin-top: 12px; }
 
@@ -562,7 +588,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             </div>
           </div>
 
-          <div className="block">
+          <div className="block block-livery">
             <span className="eyebrow">Livery</span>
             <div className="livname">{current.name}</div>
             <div className="livdesc">{current.description}</div>
