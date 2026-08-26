@@ -280,16 +280,6 @@ function AppInner() {
   // §2B — the token layer, globally. The ramp is a computation rather than a
   // table, so the base tokens are written onto :root at runtime and every page
   // on the site inherits them, including the ones whose layouts are untouched.
-  // The gradient stacks cannot interpolate — CSS will not tween one image into
-  // another, and Sky's single layer into Aurora's thirty-one is not a tween
-  // anyway. Double-buffering them would mean two 82px-blurred, screen-blended
-  // layers at twice the viewport running at once, which is the exact shape of
-  // the thing that took this page to 0.1fps. So the lamps dip to nothing
-  // instead, the stacks are swapped while they are invisible, and they come
-  // back up. Colours morph underneath the whole time.
-  const lastImages = useRef(null);
-  const swapTimer = useRef(null);
-
   useEffect(() => {
     const { vars, C } = deckVars(shownLivery, variant);
     // The finish is layered over the stock, never mixed into it. With no
@@ -297,42 +287,13 @@ function AppInner() {
     const over = finishVars(shownLivery, variant, finish, C.active);
     const all = { ...vars, ...over };
     const root = document.documentElement;
-    const IMG = ["--key-img", "--fill-img", "--star-img", "--cloud-img"];
-    const LAMP = { "--key-int": all["--key-int"], "--fill-int": all["--fill-int"], "--stars": all["--stars"] };
-    // Only when the material changes. A livery change shifts the gradient's hue
-    // under an 82px blur, which is imperceptible as a cut — dipping the lamps
-    // for it would be far more visible than the swap it was hiding. A finish
-    // change swaps one stack for a wholly different one, and that does show.
-    const mode = `${finish || "none"}|${variant}`;
-    const first = lastImages.current === null;
-    const swapping = !first && mode !== lastImages.current;
-    lastImages.current = mode;
-
-    const put = (k, v) => root.style.setProperty(k, v);
-    // Everything that can interpolate goes on now and morphs on its own.
-    Object.entries(all).forEach(([k, v]) => { if (!IMG.includes(k)) put(k, v); });
-    put("--grain", grain ? all["--grain"] : "0");
-
-    clearTimeout(swapTimer.current);
-    if (swapping) {
-      // Down first. The stacks change once the lamps are out.
-      Object.keys(LAMP).forEach((k) => put(k, "0"));
-      swapTimer.current = setTimeout(() => {
-        IMG.forEach((k) => (all[k] ? put(k, all[k]) : root.style.removeProperty(k)));
-        Object.entries(LAMP).forEach(([k, v]) => put(k, v));
-      }, 190);
-    } else {
-      IMG.forEach((k) => (all[k] ? put(k, all[k]) : root.style.removeProperty(k)));
-      Object.entries(LAMP).forEach(([k, v]) => put(k, v));
-    }
+    Object.entries(all).forEach(([k, v]) => root.style.setProperty(k, v));
+    root.style.setProperty("--grain", grain ? all["--grain"] : "0");
     // Layers that only exist under a finish, cleared otherwise so nothing of
     // one finish survives into the next.
-    if (!("--cloud-op" in all)) root.style.removeProperty("--cloud-op");
-    // Arm the morph one frame after the first write, so the load itself is not
-    // animated — otherwise every page load washes from the registered initial
-    // values to the real livery.
-    const id = requestAnimationFrame(() => root.setAttribute("data-morph", "1"));
-    return () => { cancelAnimationFrame(id); clearTimeout(swapTimer.current); };
+    for (const k of ["--star-img", "--cloud-img", "--cloud-op"]) {
+      if (!(k in all)) root.style.removeProperty(k);
+    }
   }, [shownLivery, variant, grain, finish]);
 
   // iOS will not report device orientation without a user gesture, so the ball

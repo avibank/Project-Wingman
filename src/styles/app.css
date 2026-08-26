@@ -91,64 +91,6 @@
 }
 
 
-/* ------------------------------------------------- 4b · changing the room
- * Switching livery or finish used to be a hard cut: every token swapped on one
- * frame and the whole room jumped. A custom property does not interpolate
- * unless it has been registered with a type, so these are registered and the
- * change is animated instead.
- *
- * The transition sits on html and ONLY on custom properties. It is deliberately
- * NOT a blanket transition on descendants — the shell used to carry
- * `transition: background-color` on `.app *` and it silently overrode three
- * components' own timings before it was deleted. Registered properties do not
- * need that: everything reading var(--ground) follows the value as it
- * interpolates, without inheriting a transition of its own.
- *
- * The three gradient stacks — --key-img, --fill-img, --star-img — are images
- * and cannot interpolate at all, so they are left unregistered and swap on the
- * frame. Their opacities (--key-int, --fill-int, --stars) do animate, which
- * carries the change.
- */
-@property --ground { syntax: "<color>"; inherits: true; initial-value: oklch(0.1400 0.0161 255.00); }
-@property --panel { syntax: "<color>"; inherits: true; initial-value: oklch(0.2075 0.0263 256.13 / 0.78); }
-@property --raised { syntax: "<color>"; inherits: true; initial-value: oklch(0.2763 0.0442 258.88 / 0.87); }
-@property --line { syntax: "<color>"; inherits: true; initial-value: oklch(0.3452 0.0672 262.18 / 0.94); }
-@property --t3 { syntax: "<color>"; inherits: true; initial-value: oklch(0.5450 0.0425 264.39); }
-@property --t2 { syntax: "<color>"; inherits: true; initial-value: oklch(0.7475 0.0341 247.31); }
-@property --t1 { syntax: "<color>"; inherits: true; initial-value: oklch(0.9500 0.0052 235.00); }
-@property --active { syntax: "<color>"; inherits: true; initial-value: oklch(0.6800 0.1184 253.95); }
-@property --on { syntax: "<color>"; inherits: true; initial-value: oklch(0.7475 0.1004 247.31); }
-@property --lit { syntax: "<color>"; inherits: true; initial-value: oklch(0.8825 0.0468 236.74); }
-@property --active-fill { syntax: "<color>"; inherits: true; initial-value: oklch(0.6800 0.1184 253.95); }
-@property --shadow-c { syntax: "<color>"; inherits: true; initial-value: oklch(0.059 0.081 255.4 / .58); }
-@property --edge-hi { syntax: "<color>"; inherits: true; initial-value: oklch(.72 0.068 235.7 / .34); }
-@property --edge-lo { syntax: "<color>"; inherits: true; initial-value: oklch(.22 0.061 255.4 / .50); }
-@property --key-int { syntax: "<number>"; inherits: true; initial-value: 0.76; }
-@property --fill-int { syntax: "<number>"; inherits: true; initial-value: 0.34; }
-@property --spill { syntax: "<number>"; inherits: true; initial-value: 0.22; }
-@property --grain { syntax: "<number>"; inherits: true; initial-value: 0.05; }
-@property --stars { syntax: "<number>"; inherits: true; initial-value: 0; }
-@property --soft { syntax: "<length>"; inherits: true; initial-value: 82px; }
-@property --emit { syntax: "<length>"; inherits: true; initial-value: 10px; }
-
-/* Only after the first paint. Without the gate the tokens would morph from the
-   registered initial values to the user's actual livery on every page load —
-   a 420ms wash of the wrong colour before the right one arrives. App sets the
-   attribute one frame after it has written the tokens. */
-html[data-morph="1"] {
-  transition-property: --ground, --panel, --raised, --line, --t3, --t2, --t1, --active, --on, --lit, --active-fill, --shadow-c, --edge-hi, --edge-lo, --key-int, --fill-int, --spill, --grain, --stars, --soft, --emit;
-  /* The lamps move faster than the room. They dip to nothing, the gradient
-     stacks are swapped while nobody can see them, and they come back up — two
-     190ms halves under one 420ms colour morph. */
-  transition-duration: 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 190ms, 190ms, 190ms, 190ms, 190ms, 420ms, 420ms;
-  transition-timing-function: cubic-bezier(.4, 0, .2, 1);
-}
-/* Both switches, independently: the device asking and the person asking. The
-   smooth-air blanket rule cannot reach html, because .app is inside it. */
-@media (prefers-reduced-motion: reduce) { html[data-morph="1"] { transition: none; } }
-html[data-morph="1"]:has(.app.smooth-air) { transition: none; }
-
-
 /* ------------------------------------------------------------- 4 · the page */
 * { box-sizing: border-box; }
 /* The window never scrolls. Only .deck does. */
