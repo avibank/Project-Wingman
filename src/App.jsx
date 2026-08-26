@@ -466,6 +466,10 @@ function AppInner() {
             onVariantPin={setVariantPin}
             livery={shownLivery}
             onLivery={(id) => { setLivery(id); progress.set("pw-livery", id); }}
+            finish={finish}
+            onFinish={setFinish}
+            ruled={ruled}
+            onRuled={setRuled}
             fontSize={fontSize}
             onFontSize={setFontSize}
             reduceMotion={reduceMotion}

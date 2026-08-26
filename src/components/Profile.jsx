@@ -13,6 +13,7 @@ import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
 import { saveProfile } from "../lib/squadron.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
+import { FINISHES } from "../lib/finishEngine.js";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
 //
@@ -298,6 +299,7 @@ const PROFILE_CSS = `
 `;
 
 function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPin, livery, onLivery,
+                   finish, onFinish, ruled, onRuled,
                    fontSize, onFontSize, reduceMotion, onReduceMotion, dyslexiaFont, onDyslexiaFont,
                    turbulence, onTurbulence, grain, onGrain, variant }) {
   const { user } = useUser();
@@ -353,6 +355,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     if (!callTouched) setGreetName(derivedCall);
   }, [derivedCall, callTouched]);
   const preset = progress.get("pw-social-preset", "crew");
+  const currentFinish = FINISHES.find((f) => f.id === (finish ?? null)) || FINISHES[0];
   const notices = progress.get("pw-notices", { answers: true, wingman: true, nudge: true });
 
   const liveries = LIVERIES.filter((l) => (l.aurora ? flags["livery.aurora"] : true));
@@ -582,7 +585,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           </div>
 
           <div className="block block-livery">
-            <span className="eyebrow">Livery</span>
+            {/* Under Manual the livery is the ink, so the label says so. Aurora
+                keeps the word Livery: the swatches are still choosing a colour,
+                and they stay live under both. */}
+            <span className="eyebrow">{finish === "manual" ? "Ink" : "Livery"}</span>
             <div className="livname">{current.name}</div>
             <div className="livdesc">{current.description}</div>
             {/* Click selects. Nothing happens on hover but the lift. */}
@@ -593,6 +599,27 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               ))}
             </div>
             <Specimen liveryId={current.id} variant={variant} />
+          </div>
+
+          <div className="block block-livery">
+            <span className="eyebrow">Finish</span>
+            <div className="livname">{currentFinish.name}</div>
+            <div className="livdesc">{currentFinish.line}</div>
+            <Seg label="Finish" value={finish ?? "none"}
+                 options={FINISHES.map((f) => ({ id: f.id ?? "none", label: f.name }))}
+                 onPick={(v) => onFinish(v === "none" ? null : v)} />
+
+            {/* Only meaningful under Manual, so it is absent rather than
+                disabled for the other two. */}
+            {finish === "manual" && (
+              <div className="block-sub">
+                <div className="livname">Ruled</div>
+                <div className="livdesc">Lines in your ink, like the pad you already use.</div>
+                <Seg label="Ruled" value={ruled ? "lined" : "plain"}
+                     options={[{ id: "plain", label: "Plain" }, { id: "lined", label: "Lined" }]}
+                     onPick={(v) => onRuled(v === "lined")} />
+              </div>
+            )}
           </div>
 
           <div className="block">
