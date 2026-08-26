@@ -167,6 +167,14 @@ export const FINISHES = [
  * Token overrides for a finish, layered over deckVars().
  * Returns an empty object for None, which is what keeps None byte-identical.
  */
+// How much of each spec's own blur to keep. The reference blurs at 50-60px,
+// which reads as bloom rather than as curtains: the ribbon structure the
+// gradient stack draws is thrown away by the blur that follows it. At .65 the
+// bands resolve while the layers still blend into each other, which is the
+// point of them. Relative softness is preserved — Tarmac stays the softest of
+// the six, as its spec intends.
+const AUR_SHARPEN = 0.65;
+
 export function finishVars(liveryId, variant, finish, accent) {
   const night = variant !== "day";
 
@@ -182,7 +190,7 @@ export function finishVars(liveryId, variant, finish, accent) {
       "--fill-img": horizon(sp.fill),
       "--star-img": starfield(sp.stars),
       "--key-int": "0.98", "--fill-int": "0.80", "--stars": "1",
-      "--soft": sp.soft,
+      "--soft": `${Math.round(parseFloat(sp.soft) * AUR_SHARPEN)}px`,
       "--grain": String(sp.grain),
     };
     if (sp.cloud) { v["--cloud-img"] = sp.cloud; v["--cloud-op"] = String(sp.cloudOp); }
