@@ -137,7 +137,10 @@
    attribute one frame after it has written the tokens. */
 html[data-morph="1"] {
   transition-property: --ground, --panel, --raised, --line, --t3, --t2, --t1, --active, --on, --lit, --active-fill, --shadow-c, --edge-hi, --edge-lo, --key-int, --fill-int, --spill, --grain, --stars, --soft, --emit;
-  transition-duration: 420ms;
+  /* The lamps move faster than the room. They dip to nothing, the gradient
+     stacks are swapped while nobody can see them, and they come back up — two
+     190ms halves under one 420ms colour morph. */
+  transition-duration: 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 420ms, 190ms, 190ms, 190ms, 190ms, 190ms, 420ms, 420ms;
   transition-timing-function: cubic-bezier(.4, 0, .2, 1);
 }
 /* Both switches, independently: the device asking and the person asking. The
