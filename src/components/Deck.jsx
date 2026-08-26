@@ -65,7 +65,7 @@ const ROOM_CSS = `
 /* behind the panels but ABOVE the lights, so they show through the curtains */
 .deck-light .stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--stars, 0);
   background-image: var(--star-img, none); background-repeat: repeat;
-  background-size: cover; mix-blend-mode: screen;
+  background-size: 420px 420px; mix-blend-mode: screen;
   animation: pwtwinkle 13s ease-in-out infinite alternate; }
 @keyframes pwtwinkle { from { opacity: var(--stars, 0); } to { opacity: calc(var(--stars, 0) * .5); } }
 /* dark gradients band; noise kills it and gives the light a tooth */

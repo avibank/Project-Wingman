@@ -138,7 +138,11 @@ function AppInner() {
     mq.addEventListener?.("change", sync);
     return () => mq.removeEventListener?.("change", sync);
   }, []);
-  const variant = variantPin || autoVariant;
+  // Aurora is a night sky. Rather than falling back to the plain livery in Day —
+  // which left a Day control that silently did nothing to the finish — Day is
+  // not offered while Aurora is selected, and not reachable if it was already
+  // pinned when the finish was chosen.
+  const variant = finish === "aurora" ? "night" : (variantPin || autoVariant);
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
   const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);

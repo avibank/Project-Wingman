@@ -591,10 +591,14 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <span className="eyebrow">Light</span>
             <div className="row">
               <span className="rowtext">
-                <b>{MODE_COPY[variantPin || "auto"].title}</b>
-                <span>{MODE_COPY[variantPin || "auto"].desc}</span>
+                <b>{MODE_COPY[finish === "aurora" ? "night" : (variantPin || "auto")].title}</b>
+                <span>{finish === "aurora"
+                  ? "Aurora is a night sky."
+                  : MODE_COPY[variantPin || "auto"].desc}</span>
               </span>
-              <Seg label="Light mode" value={variantPin} options={MODES} onPick={onVariantPin} />
+              <Seg label="Light mode" value={finish === "aurora" ? "night" : variantPin}
+                   options={finish === "aurora" ? MODES.filter((m) => m.id === "night") : MODES}
+                   onPick={onVariantPin} />
             </div>
           </div>
 

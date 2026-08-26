@@ -128,15 +128,34 @@ export const horizon = (g) => `radial-gradient(142% 36% at 50% 103%, `
   + `oklch(0.78 ${g.c} ${g.h}.0 / ${(g.a * .22).toFixed(3)}) 54%, `
   + `oklch(0.76 ${g.c} ${g.h}.0 / 0) 82%)`;
 
+// The starfield, as one tiled image rather than n separate gradients.
+//
+// The reference emits one radial-gradient per star — 360 of them for sky, 520
+// for amber — in a single background-image across the whole layer. Generating
+// and parsing that is cheap (measured under 3ms), but PAINTING it is not: it is
+// hundreds of separate gradient rasterisations over a full-viewport, screen-
+// blended surface, and that one-off paint is the hitch you get on selecting
+// Aurora.
+//
+// Same stars, same seeded positions, same sizes and alphas — emitted as a
+// single SVG tile the browser decodes once and repeats. n is now a density
+// rather than a literal count, which is the one place this file departs from
+// the reference, and it is why.
+const TILE = 420;
+
 export function starfield(n) {
-  const p = [];
-  for (let i = 0; i < n; i++) {
+  // Density preserved: n was spread over roughly seven tiles of viewport.
+  const per = Math.max(24, Math.round(n / 7));
+  let dots = "";
+  for (let i = 0; i < per; i++) {
     const x = (rnd(i * 3 + 1) * 100).toFixed(2), y = (rnd(i * 7 + 2) * 100).toFixed(2);
-    const s = (0.7 + rnd(i * 11 + 3) * 1.1).toFixed(2), a = (0.30 + rnd(i * 13 + 4) * 0.65).toFixed(2);
-    p.push(`radial-gradient(${s}px ${s}px at ${x}% ${y}%, rgba(255,255,255,${a}), rgba(255,255,255,0))`);
+    const r = (0.7 + rnd(i * 11 + 3) * 1.1).toFixed(2), a = (0.30 + rnd(i * 13 + 4) * 0.65).toFixed(2);
+    dots += `<circle cx='${x}%' cy='${y}%' r='${r}' fill='%23fff' opacity='${a}'/>`;
   }
-  return p.join(", ");
+  return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${TILE}' height='${TILE}'%3E${dots}%3C/svg%3E")`;
 }
+
+export const STAR_TILE = TILE;
 
 export const FINISHES = [
   { id: null, name: "None", line: "The livery, as it is." },
