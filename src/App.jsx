@@ -82,6 +82,7 @@ function AppInner() {
     route.name === "notfound"
     || (route.name === "features" && !isAdmin)
     || (route.name === "modules" && !flags["module.interior"])
+    || (route.name === "ready" && !flags["social.readyroom"])
     || (route.name === "logbook" && !flags["page.logbook"])
     || (route.name === "saved" && !flags["page.bookmarks"]);
 
