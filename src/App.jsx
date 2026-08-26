@@ -345,7 +345,7 @@ function AppInner() {
             {isSignedIn && (user?.username || user?.fullName) && (
               <div className="boarding-pass-welcome">WELCOME ABOARD, {(user.username || user.fullName).toUpperCase()}</div>
             )}
-            <div className="boarding-pass-route">AVBANK <ChevronRight size={14} /> JT.01</div>
+            <div className="boarding-pass-route">WINGMAN <ChevronRight size={14} /> JT.01</div>
             <div className="boarding-pass-row">
               <div><label>SEAT</label><span>{ticket.seat}</span></div>
               <div><label>GATE</label><span>{ticket.gate}</span></div>

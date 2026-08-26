@@ -18,7 +18,7 @@ npm run dev
 2. Go to vercel.com, sign in with GitHub, click "Add New Project."
 3. Select this repository and click **Deploy**. Vercel auto-detects the
    Vite/React setup — no configuration needed.
-4. You'll get a live URL like `avbank.vercel.app` within about a minute.
+4. You'll get a live URL like `wingman.vercel.app` within about a minute.
 
 ## Where things live
 
