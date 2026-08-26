@@ -242,6 +242,20 @@ const PROFILE_CSS = `
    gap gives way first; the target never does. */
 .block-livery .liv i { width: 38px; height: 38px; }
 @media (max-width: 430px) { .block-livery .livgrid { gap: 6px; } }
+
+/* The control centres under the name and line it belongs to. .seg is
+   inline-flex, so it needs a width of its own before a margin can centre it. */
+.block-livery .seg { display: flex; width: max-content; max-width: 100%; margin-inline: auto; }
+
+/* Ruled is a detail of Manual, not a second heading. Styled as .livname it
+   carried the same weight as the finish name directly above it and the card
+   read as two cards pushed together. A rule and a smaller label instead, so
+   the card is one thing with a detail under it. */
+.finish-sub { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.finish-sub .subname { font-size: calc(13.5px * var(--scale, 1)); font-weight: 600;
+  color: var(--t1); text-align: center; }
+.finish-sub .subdesc { font-size: calc(12px * var(--scale, 1)); color: var(--t2);
+  text-align: center; margin: 2px 0 13px; }
 .anchors { font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; color: var(--t3);
   margin-top: 12px; }
 
@@ -612,9 +626,9 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             {/* Only meaningful under Manual, so it is absent rather than
                 disabled for the other two. */}
             {finish === "manual" && (
-              <div className="block-sub">
-                <div className="livname">Ruled</div>
-                <div className="livdesc">Lines in your ink, like the pad you already use.</div>
+              <div className="finish-sub">
+                <div className="subname">Ruled</div>
+                <div className="subdesc">Lines in your ink, like the pad you already use.</div>
                 <Seg label="Ruled" value={ruled ? "lined" : "plain"}
                      options={[{ id: "plain", label: "Plain" }, { id: "lined", label: "Lined" }]}
                      onPick={(v) => onRuled(v === "lined")} />
