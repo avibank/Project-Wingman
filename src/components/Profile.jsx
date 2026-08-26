@@ -3,7 +3,7 @@ import { useUser, useClerk } from "@clerk/clerk-react";
 import { ShieldCheck } from "lucide-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
-import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap, col, dotTile } from "../lib/liveryEngine.js";
+import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap, col } from "../lib/liveryEngine.js";
 import { profileSVG } from "../lib/flightProfile.js";
 import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
@@ -93,42 +93,23 @@ function Seg({ label, options, value, onPick }) {
 
 // §6.3 — one solid colour per circle: the core of that livery's own ramp.
 // Not the ground, not the key light — the colour the livery is.
-//
-// Aurora is the only exception. Its ramp is a cold blue and its identity is the
-// curtain, so it gets a faint one over the solid base plus a scatter of stars:
-// quiet enough to sit in the set, obvious enough to be the special one.
-const AURORA_VEIL = 0.2;
 
 function LiveryDot({ livery: L, selected, onPick }) {
-  const core = `oklch(.60 ${(L.chroma * L.midC).toFixed(3)} ${hueAt(L, 0.55).toFixed(1)})`;
-  // Every swatch previews its own ramp — shadow, core, highlight — which is
-  // what its anchors line already promises ("navy to lapiz to sky blue").
-  // Aurora used to be the only one showing a gradient while the other six were
-  // flat discs, so they read as different kinds of thing. Each stop is taken
-  // from that livery's own ramp; nothing here is a hand-picked colour.
+  // A solid disc of the livery's own colour inside a ring of its own highlight.
+  // Flat — no shading, no gradient across the face: an earlier radial version
+  // read as a glass bead, which is a different kind of object from the flat
+  // controls around it.
   //
-  // Flat bands with hard edges, not a lit sphere: a radial highlight made these
-  // read as glass beads, which is a different object from the flat controls
-  // around them. Three diagonal stops, no blending, so it stays 2D — the core
-  // takes the widest band because that is the livery's actual colour, with its
-  // own shadow and highlight either side of it.
-  // Both stops stay well clear of the panel behind them. Taken near the ends of
-  // the ramp the dark band went almost to ground and the disc lost its edge —
-  // it read as a circle with a bite out of it rather than as a swatch.
-  const shadow = col(0.42, L.chroma * 1.05, hueAt(L, 0.25), 1);
+  // Both values come from that livery's ramp, so the swatch previews the thing
+  // it selects. Nothing here is a hand-picked colour.
+  //
+  // All seven are identical in treatment. Aurora used to carry its starfield
+  // here while the other six were plain, which made it read as a different kind
+  // of control; the stars belong on the specimen below, where there is room for
+  // them.
+  const core = `oklch(.60 ${(L.chroma * L.midC).toFixed(3)} ${hueAt(L, 0.55).toFixed(1)})`;
   const highlight = col(0.80, L.chroma * 0.75, hueAt(L, 0.85), 1);
-  const ramp = `linear-gradient(135deg, ${highlight} 0 28%, ${core} 28% 68%, ${shadow} 68% 100%)`;
-  const style = { background: core, backgroundImage: ramp };
-  if (L.aurora) {
-    // Aurora keeps its starfield on top of its ramp: the stars are part of that
-    // livery, not decoration on the swatch.
-    style.backgroundImage = [
-      dotTile(10, 20260824, 1.0, 0.8),
-      `radial-gradient(120% 66% at 50% -6%, ${col(0.86, 0.170, 158, 0.62 * AURORA_VEIL * 5)} 0%,` +
-      ` ${col(0.74, 0.195, 176, 0.34 * AURORA_VEIL * 5)} 36%, ${col(0.70, 0.190, 196, 0)} 78%)`,
-      ramp,
-    ].join(", ");
-  }
+  const style = { background: core, boxShadow: `inset 0 0 0 5px ${highlight}` };
   return (
     <button className="liv" type="button" aria-pressed={selected}
             aria-label={L.name} title={L.name} onClick={onPick}>
