@@ -127,7 +127,7 @@ function AppInner() {
   const [grain, setGrain] = useState(true);
   // A livery is a colour; a finish is a material. null | "aurora" | "manual".
   const [finish, setFinish] = useState(null);
-  const [ruled, setRuled] = useState(false);
+  const [ruled, setRuled] = useState(true);
   const [autoVariant, setAutoVariant] = useState(() =>
     typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "night" : "day");
   useEffect(() => {
@@ -170,7 +170,7 @@ function AppInner() {
     // sky plus the aurora finish, so the thing they picked still looks like the
     // thing they picked.
     setFinish(progress.get("pw-finish", RETIRED_TO_FINISH[storedLivery] ?? null));
-    setRuled(progress.get("pw-ruled", false));
+    setRuled(progress.get("pw-ruled", true));
     setVariantPin(progress.get("pw-variant-pin", null));
     setGrain(progress.get("pw-grain", true));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
@@ -511,6 +511,7 @@ function AppInner() {
            padded .content would crop them. */
         <main className="content content-taxi content--deck">
           <Home
+            finish={finish}
             activeModuleCode={activeModuleCode}
             livery={shownLivery}
             variant={variant}

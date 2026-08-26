@@ -15,6 +15,7 @@ import { useAttitude } from "../lib/useAttitude.js";
 import { DEFAULT_CHARACTER } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
+import PaperStrip from "./PaperStrip.jsx";
 
 // The Flight Deck. Ported from the Step 1 reference rig — the colour and
 // lighting system, the hero card with the instrument strip inside it, the
@@ -261,7 +262,7 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, reduceMotion, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel }) {
+function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel }) {
   const { user } = useUser();
   const progress = useUserProgress();
   const { prefs } = useSocialPrefs();
@@ -491,6 +492,28 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, onGoToChapter, 
           </div>
 
           <div className="strip">
+            {/* Manual draws the same five instruments instead of lighting them. */}
+            {finish === "manual" ? (
+              <PaperStrip
+                ring={average}
+                bag={bag > 0 ? bag : 0}
+                boxes={activeCount.full}
+                hobbs={hobbs > 0
+                  ? `${String(Math.floor(hobbs)).padStart(3, "0")}.${Math.floor((hobbs % 1) * 10)}`
+                  : "--.-"}
+                blips={contacts.length > 0}
+                caps={[
+                  average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`,
+                  bag > 0 ? "Flight bag" : "Nothing saved yet",
+                  activeCount.full
+                    ? `Checklist · ${activeCount.full} of ${activeCount.total}`
+                    : `Checklist · ${activeCount.total} to fly`,
+                  hobbs > 0 ? "Hobbs" : "Your first hour",
+                  contactCap,
+                ]}
+              />
+            ) : (
+            <>
             <div className="cel">
               <svg className="ai" viewBox="0 0 120 120" role="img"
                    aria-label={average == null ? "Attitude indicator, no quiz flown yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
@@ -596,6 +619,8 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, onGoToChapter, 
                 </div>
               );
             })()}
+            </>
+            )}
           </div>
         </div>
 
