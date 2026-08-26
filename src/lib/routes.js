@@ -63,6 +63,8 @@ export function parseRoute(pathname) {
   if (parts[0] === "logbook") return { name: "logbook" };
   if (parts[0] === "saved") return { name: "saved" };
   if (parts[0] === "signin") return { name: "signin" };
+  // The old profile screen is gone; the licence replaced it.
+  if (parts[0] === "settings" && parts[1] === "profile") return { name: "redirect", to: "/account/licence" };
   if (parts[0] === "settings") return { name: "settings", page: parts[1] || "index" };
   if (parts[0] === "modules") return { name: "modules" };
   // §6 — the profile's three tabs are real URLs, not a tab state. They sit

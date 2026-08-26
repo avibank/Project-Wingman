@@ -24,7 +24,6 @@ import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
-import ProfilePage from "./components/ProfilePage.jsx";
 import Profile from "./components/Profile.jsx";
 import Features from "./components/Features.jsx";
 import ProgressPage from "./components/ProgressPage.jsx";
@@ -150,7 +149,6 @@ function AppInner() {
     const t = setTimeout(() => setBoarding(false), 2600);
     return () => clearTimeout(t);
   }, [boarding]);
-  const [paToast, setPaToast] = useState(null);
   const [storageWarning, setStorageWarning] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const scrollPositions = useRef({});
@@ -279,13 +277,6 @@ function AppInner() {
     return () => window.removeEventListener("pointerdown", once);
   }, []);
 
-  const toggleTheme = () => {
-    // Pin to the opposite of what is showing. Auto (null) is only ever the
-    // starting state; once someone chooses, the choice persists.
-    setVariantPin(variant === "day" ? "night" : "day");
-    setPaToast("CABIN CREW, DOORS TO MANUAL");
-    setTimeout(() => setPaToast(null), 1600);
-  };
   const switchTab = (nextTab) => {
     if (turbulence) {
       triggerHaptic();
@@ -295,17 +286,6 @@ function AppInner() {
     scrollPositions.current[tab] = deckRef.current?.scrollTop || 0;
     navigate(nextTab === "pdf" ? routePath.library(activeModuleCode) : routePath.module(activeModuleCode));
     requestAnimationFrame(() => { if (deckRef.current) deckRef.current.scrollTop = scrollPositions.current[nextTab] || 0; });
-  };
-  const resetProgress = async () => {
-    if (!window.confirm("Reset all progress on this device? This can't be undone.")) return;
-    if (progress.isSignedIn) {
-      await progress.resetAll();
-    } else {
-      Object.keys(localStorage)
-        .filter((k) => k.startsWith("pw-"))
-        .forEach((k) => localStorage.removeItem(k));
-    }
-    window.location.reload();
   };
   const goToModule = (moduleCode, targetTab = "chapters") => {
     const m = MODULES.find((x) => x.code === moduleCode);
@@ -368,7 +348,6 @@ function AppInner() {
           </div>
         </div>
       )}
-      {flags["chrome.patoast"] && paToast && <div className="pa-toast">{paToast}</div>}
       {storageWarning && (
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
@@ -420,23 +399,6 @@ function AppInner() {
       {settingsPage === "auth" ? (
         <main className="content content-taxi">
           <AuthPage onBack={() => go(-1)} />
-        </main>
-      ) : settingsPage === "profile" ? (
-        <main className="content content-taxi">
-          <ProfilePage
-            onBack={() => go(-1)}
-            theme={variant === "day" ? "light" : "dark"}
-            onToggleTheme={toggleTheme}
-            reduceMotion={reduceMotion}
-            onToggleReduceMotion={() => setReduceMotion((r) => !r)}
-            onResetProgress={resetProgress}
-            fontSize={fontSize}
-            onChangeFontSize={setFontSize}
-            dyslexiaFont={dyslexiaFont}
-            onToggleDyslexiaFont={() => setDyslexiaFont((d) => !d)}
-            turbulence={turbulence}
-            onToggleTurbulence={() => setTurbulence((t) => !t)}
-          />
         </main>
       ) : settingsPage === "progress" ? (
         <main className="content content-taxi">

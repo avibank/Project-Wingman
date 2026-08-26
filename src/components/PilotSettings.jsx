@@ -6,8 +6,6 @@ import LiveryPicker from "./LiveryPicker.jsx";
 import { resolveLivery } from "../lib/liveries.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 import Spooling from "./Spooling.jsx";
-import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
-import { useUserProgress } from "../lib/userProgress.jsx";
 
 // §8.3 makes hiding yourself mandatory and requires it in settings; §7.6
 // requires a toggle for the glow. Both flags were already honoured throughout
@@ -45,7 +43,6 @@ function Toggle({ id, on, onChange, label, hint, busy }) {
 
 function PilotSettings({ modulesCompleted = 0 }) {
   const { user, isSignedIn } = useUser();
-  const progress = useUserProgress();
   const [profile, setProfile] = useState(null);
   const [state, setState] = useState("loading");   // loading | ready | unavailable
   const [busy, setBusy] = useState(false);
@@ -87,7 +84,6 @@ function PilotSettings({ modulesCompleted = 0 }) {
 
   if (state === "loading") return <Spooling />;
   if (state === "unavailable") return null;
-  const invisible = profile?.invisible === true;
   const glowOn = profile?.glow_enabled !== false;
 
   return (
@@ -152,15 +148,6 @@ function PilotSettings({ modulesCompleted = 0 }) {
       </div>
 
       <div className="ps2-list">
-        {/* The same setting as Fly solo on the licence. It writes through the
-            same path deliberately: two controls for one setting that each wrote
-            only half of it is how the old one came to hide nothing at all. */}
-        <Toggle
-          id="ps2-invisible" on={invisible} busy={busy}
-          onChange={(v) => { patch({ invisible: v }); progress.set(FLY_SOLO_KEY, v); mirrorFlySolo(v); }}
-          label="Fly solo"
-          hint="Nobody sees you and you see nobody. For the nights you'd rather just get on with it."
-        />
         <Toggle
           id="ps2-glow" on={glowOn} busy={busy}
           onChange={(v) => patch({ glow_enabled: v })}

@@ -1,13 +1,45 @@
 {
   "redirects": [
-    { "source": "/ready", "destination": "/ready-room", "permanent": true },
-    { "source": "/ready/:module", "destination": "/ready-room/:module", "permanent": true },
-    { "source": "/appearance", "destination": "/account/appearance", "permanent": true },
-    { "source": "/preferences", "destination": "/account/preferences", "permanent": true },
-    { "source": "/licence", "destination": "/account/licence", "permanent": true },
-    { "source": "/features", "destination": "/admin", "permanent": true }
+    {
+      "source": "/ready",
+      "destination": "/ready-room",
+      "permanent": true
+    },
+    {
+      "source": "/ready/:module",
+      "destination": "/ready-room/:module",
+      "permanent": true
+    },
+    {
+      "source": "/appearance",
+      "destination": "/account/appearance",
+      "permanent": true
+    },
+    {
+      "source": "/preferences",
+      "destination": "/account/preferences",
+      "permanent": true
+    },
+    {
+      "source": "/licence",
+      "destination": "/account/licence",
+      "permanent": true
+    },
+    {
+      "source": "/features",
+      "destination": "/admin",
+      "permanent": true
+    },
+    {
+      "source": "/settings/profile",
+      "destination": "/account/licence",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/((?!assets/|fonts/|favicon|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!assets/|fonts/|favicon|.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/index.html"
+    }
   ]
 }
