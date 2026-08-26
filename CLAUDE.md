@@ -58,8 +58,11 @@ ids to fill these.
   meaning (chapter codes). Using dim for the latter makes it unreadable.
 - No glow rings. "Active" reads structurally — a filled top edge, a gradient inside a
   progress bar. Glow is reserved for presence and the current leg only.
-- Fonts are tokens: `--font-display` (Fraunces), `--font-body` (Inter), `--font-mono`
-  (JetBrains Mono). Numerals are tabular everywhere.
+- The brand faces are Instrument Sans and Geist Mono, and they are reached through
+  tokens, never named directly: `--font-ui` (Instrument Sans), `--font-mono` (Geist
+  Mono). `--font-display` and `--font-body` are both aliases of `--font-ui` — there is
+  no separate display face. Fraunces and Inter are not loaded and must not be added.
+  Numerals are tabular everywhere.
 - Every ambient motion respects the "Smooth Air" preference and `prefers-reduced-motion`.
 
 ## Voice
