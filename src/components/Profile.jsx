@@ -107,11 +107,17 @@ function LiveryDot({ livery: L, selected, onPick }) {
   // flat discs, so they read as different kinds of thing. Each stop is taken
   // from that livery's own ramp; nothing here is a hand-picked colour.
   //
-  // The highlight sits top-right because that is where the rig's key light is
-  // (LIGHT.ambX 76, ambY -18), so a swatch is lit the way a panel is.
-  const shadow = col(Math.max(0.18, L.ground + 0.06), L.chroma * 0.85, hueAt(L, 0.10), 1);
-  const highlight = col(0.88, L.chroma * 0.60, hueAt(L, 0.94), 1);
-  const ramp = `radial-gradient(115% 115% at 74% 8%, ${highlight} 0%, ${core} 46%, ${shadow} 100%)`;
+  // Flat bands with hard edges, not a lit sphere: a radial highlight made these
+  // read as glass beads, which is a different object from the flat controls
+  // around them. Three diagonal stops, no blending, so it stays 2D — the core
+  // takes the widest band because that is the livery's actual colour, with its
+  // own shadow and highlight either side of it.
+  // Both stops stay well clear of the panel behind them. Taken near the ends of
+  // the ramp the dark band went almost to ground and the disc lost its edge —
+  // it read as a circle with a bite out of it rather than as a swatch.
+  const shadow = col(0.42, L.chroma * 1.05, hueAt(L, 0.25), 1);
+  const highlight = col(0.80, L.chroma * 0.75, hueAt(L, 0.85), 1);
+  const ramp = `linear-gradient(135deg, ${highlight} 0 28%, ${core} 28% 68%, ${shadow} 68% 100%)`;
   const style = { background: core, backgroundImage: ramp };
   if (L.aurora) {
     // Aurora keeps its starfield on top of its ramp: the stars are part of that
@@ -469,17 +475,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                      user?.update({ firstName: first || "", lastName: rest.join(" ") });
                    }} />
 
-            {/* Off shows your full name, on shows your callsign. A toggle rather
-                than the old two-option control: there were only ever two states,
-                and naming one of them is clearer than showing both side by side. */}
-            <Switch id="go-by-callsign" label="Go by callsign"
-                    note="Your name stays private. Everyone sees your callsign instead."
-                    on={byUsername} onChange={setIdentity} />
-
-            <Field id="f-user" label="Callsign" hint="How everyone else sees you."
-                   value={username} onChange={setUsername}
-                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That callsign is taken."))} />
-
             {/* An everyday option, not a privacy ceremony: no warning styling,
                 no confirmation, no red. It sits in the identity block because
                 it is part of who people see, not a setting filed elsewhere. */}
@@ -491,6 +486,17 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                    hint="Shows on your licence when someone opens it. Keep it short."
                    value={bio} onChange={setBio}
                    onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
+
+            <Field id="f-user" label="Callsign" hint="How everyone else sees you."
+                   value={username} onChange={setUsername}
+                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That callsign is taken."))} />
+
+            {/* Off shows your full name, on shows your callsign. Sits under the
+                callsign field rather than above it: you pick the name first,
+                then say whether to use it. */}
+            <Switch id="go-by-callsign" label="Go by callsign"
+                    note="One of these gets said out loud when someone finds you. Pick the one you'd like hearing."
+                    on={byUsername} onChange={setIdentity} />
           </div>
 
           <div className="block">
