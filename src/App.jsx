@@ -385,7 +385,11 @@ function AppInner() {
       data-aur={finish === "aurora" && variant !== "day" ? "1" : undefined}
       data-paper={finish === "manual" ? "1" : undefined}
       data-fiche={finish === "manual" && variant !== "day" ? "1" : undefined}
-      data-tooth={variant === "day" && finish !== "manual" ? "1" : undefined}
+      // Tooth in Day whatever the finish. The Day brief excluded Manual, but
+      // paper wants fibre more than anything else here does, and the
+      // alternative on a light ground is the isotropic speckle Tooth exists to
+      // replace. Night never carries it.
+      data-tooth={variant === "day" ? "1" : undefined}
       style={{
         "--font-scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
         "--scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,

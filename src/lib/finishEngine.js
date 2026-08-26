@@ -178,12 +178,13 @@ export function finishVars(liveryId, variant, finish, accent) {
       // The light rig is off entirely. A printed page has no atmosphere, and
       // faking one is what made Day look wrong.
       "--key-int": "0", "--fill-int": "0", "--stars": "0",
-      // Flat in Day. The grain layer is overlay-blended isotropic noise, which
-      // on a light ground reads as digital noise rather than as stock — the
-      // same reason Day needed Tooth. Printed paper is cream and flat, so it
-      // gets none. Night keeps it: the microfiche ground is dark, where overlay
-      // noise reads correctly and is part of the material.
-      "--grain": night ? String(m.grain) : "0",
+      // The ported value, in both modes. What changes is the material, not the
+      // amount: in Day the deck carries Tooth, so this same .17 is multiplied
+      // through a directional desaturated turbulence and reads as paper fibre.
+      // As overlay-blended isotropic noise it read as digital speckle on a
+      // light ground, which is what made the page look grey rather than cream.
+      // Night keeps overlay: the microfiche ground is dark, where it is right.
+      "--grain": String(m.grain),
       // Manual replaces the stock entirely: no gloss, no cast shadow, no tooth.
       // It has its own --paper-drop in the finish CSS.
       "--sheen-img": "none", "--drop": "none",
