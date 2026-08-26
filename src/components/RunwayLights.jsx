@@ -3,10 +3,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 // The scroll indicator, as a runway centreline light bar — and a structural row
 // of the shell, so it is visible at every scroll position on every route.
 //
-// One travelling lamp, not a fill: dots behind it are passed, dots ahead of it
-// are still to come. White through amber to red, which is real centreline
-// lighting read backwards — amber over the last stretch, red at the end — so
-// arriving at the bottom of a page reads as touchdown.
+// Cumulative fill, the way approach lighting works: the run fills as you scroll
+// down and empties as you come back up, rather than a single lamp travelling.
+// A light stays lit while you are below it. White through amber to red, which is
+// real centreline lighting read backwards — amber over the last stretch, red at
+// the end — so arriving at the bottom of a page reads as touchdown.
 //
 // Progress comes from the scroller it is given, not the window: the window no
 // longer scrolls.
@@ -14,14 +15,18 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 // Always visible. §9 of the brief says to hide it when there is nothing to
 // indicate and §12 says it is never hidden, not on short pages and not on
 // pages that do not scroll — §12 is the emphatic one and repeats the previous
-// round's decision, so that is the one followed. On a page with no scroll it
-// simply sits at the start.
+// round's decision, so that is the one followed. A page with no scroll shows
+// the run unlit: an empty run is honest, a full one would claim you had read
+// something you never scrolled through.
 
 const LIGHTS = 12;
 const colourAt = (i) => (i < 8 ? "is-white" : i < 10 ? "is-amber" : "is-red");
 
 function RunwayLights({ scroller }) {
   const [progress, setProgress] = useState(0);
+  // Whether there is anything to indicate has to re-render, so it is state and
+  // not just the ref below.
+  const [scrollable, setScrollable] = useState(false);
   const max = useRef(0);
   const remeasure = useRef(null);
 
@@ -35,6 +40,7 @@ function RunwayLights({ scroller }) {
     // every scroll event. scrollTop is free.
     const measure = () => {
       max.current = el.scrollHeight - el.clientHeight;
+      setScrollable(max.current > 0);
       read();
     };
 
@@ -62,7 +68,9 @@ function RunwayLights({ scroller }) {
   // there is to run.
   useLayoutEffect(() => { remeasure.current?.(); });
 
-  const here = Math.round(progress * (LIGHTS - 1));
+  // Lights 1 to round(p x n) are lit. At p = 0 that is none, at p = 1 all of
+  // them; a page that does not scroll stays dark.
+  const lit = scrollable ? Math.round(progress * LIGHTS) : 0;
 
   return (
     <div className="flight-progress" aria-hidden="true" style={{ "--progress": progress }}>
@@ -70,8 +78,7 @@ function RunwayLights({ scroller }) {
         <div className="runway-trail" />
         {Array.from({ length: LIGHTS }, (_, i) => (
           <span key={i}
-                className={`runway-dot ${colourAt(i)} ${
-                  i < here ? "is-passed" : i === here ? "is-lit" : "is-ahead"}`} />
+                className={`runway-dot ${colourAt(i)} ${i < lit ? "is-lit" : "is-unlit"}`} />
         ))}
       </div>
 
@@ -102,19 +109,25 @@ function RunwayLights({ scroller }) {
           pointer-events: none;
         }
 
-        .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
-        /* passed reads as behind you, not as off */
-        .runway-dot.is-passed { background: var(--t3); }
+        /* Quick and flat. No stagger, no bounce: twelve lamps easing
+           individually would read as decoration rather than as position. */
+        .runway-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border);
+          transition: background-color .12s linear, box-shadow .12s linear; }
+        .runway-dot.is-unlit { background: var(--border); box-shadow: none; }
 
         .runway-dot.is-lit.is-white { background: #F4F6FB; box-shadow: 0 0 5px rgba(244,246,251,0.8); }
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
         .runway-dot.is-lit.is-red   { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
 
-        /* The trail snaps rather than eases. Not faster — off. */
+        /* The trail and the fill snap rather than ease. Not faster — off.
+           Each switch is independent: the media query is the device asking and
+           Smooth Air is the person asking, and either alone turns it off. */
         @media (prefers-reduced-motion: reduce) {
-          .flight-progress .runway-trail { transition: none; }
+          .flight-progress .runway-trail,
+          .flight-progress .runway-dot { transition: none; }
         }
-        .app.smooth-air .flight-progress .runway-trail { transition: none; }
+        .app.smooth-air .flight-progress .runway-trail,
+        .app.smooth-air .flight-progress .runway-dot { transition: none; }
       `}</style>
     </div>
   );
