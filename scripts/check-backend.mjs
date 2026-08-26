@@ -33,6 +33,7 @@ function envFromFile() {
 }
 const fileEnv = envFromFile();
 const pick = (...keys) => keys.map((k) => process.env[k] || fileEnv[k]).find(Boolean);
+const env = (k) => pick(k);
 const url = pick("VITE_SUPABASE_URL", "SUPABASE_URL");
 const key = pick("VITE_SUPABASE_ANON_KEY", "SUPABASE_ANON_KEY");
 
@@ -81,30 +82,59 @@ for (const f of readdirSync(migDir).filter((n) => /^\d{4}_.*\.sql$/.test(n)).sor
 }
 
 // --------------------------------------------------------- what the project has
+// Supabase's newer key system restricts the OpenAPI document at /rest/v1/ to
+// secret keys ("Only secret API keys can be used for this endpoint"), so the
+// spec is only readable when one is configured. With a publishable key the
+// tables are still probed one by one — a plain read with limit=0 returns 200
+// when the table exists and 404 when it does not.
+//
+// Functions cannot be probed that way. Calling one to see whether it answers is
+// not an option: assign_squadron, post_opener_if_quiet, rate_limit_take and
+// mark_answer all write. And PostgREST returns byte-identical PGRST202 errors
+// for "no such function" and "wrong arguments", so an empty-argument call tells
+// you nothing. Without a secret key they are reported as unverified rather than
+// guessed at.
+
 const base = url.replace(/\/+$/, "");
-let spec;
-try {
-  // Two key styles are in the wild. The legacy anon key is a JWT and goes in
-  // both headers; the newer sb_publishable_ key is not a JWT, and sending it as
-  // a Bearer token gets rejected as a malformed JWT. apikey carries both.
-  const headers = { apikey: key, Accept: "application/openapi+json" };
-  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
-  const res = await fetch(`${base}/rest/v1/`, { headers });
-  if (!res.ok) {
-    console.error(`Supabase answered ${res.status} ${res.statusText} for ${base}/rest/v1/`);
-    if (res.status === 401) console.error("That usually means the anon key does not match the project URL.");
-    process.exit(1);
+const secret = env("SUPABASE_SECRET_KEY");
+const headers = (k) => {
+  const h = { apikey: k };
+  if (k.startsWith("eyJ")) h.Authorization = `Bearer ${k}`;
+  return h;
+};
+
+let haveTables = null;
+let haveRpcs = null;
+
+if (secret) {
+  const res = await fetch(`${base}/rest/v1/`, {
+    headers: { ...headers(secret), Accept: "application/openapi+json" },
+  });
+  if (res.ok) {
+    const spec = await res.json();
+    haveTables = new Set(Object.keys(spec.definitions ?? {}));
+    haveRpcs = new Set(
+      Object.keys(spec.paths ?? {}).filter((p) => p.startsWith("/rpc/")).map((p) => p.slice(5)),
+    );
+  } else {
+    console.error(`secret key rejected (${res.status}); falling back to probing`);
   }
-  spec = await res.json();
-} catch (e) {
-  console.error(`Could not reach ${base}: ${e.message}`);
-  process.exit(1);
 }
 
-const haveTables = new Set(Object.keys(spec.definitions ?? {}));
-const haveRpcs = new Set(
-  Object.keys(spec.paths ?? {}).filter((p) => p.startsWith("/rpc/")).map((p) => p.slice(5)),
-);
+if (!haveTables) {
+  haveTables = new Set();
+  const probe = async (t) => {
+    try {
+      const r = await fetch(`${base}/rest/v1/${t}?select=*&limit=0`, { headers: headers(key) });
+      if (r.status === 401) throw new Error("401 — the key does not match the project URL");
+      if (r.ok) haveTables.add(t);
+    } catch (e) {
+      console.error(`could not reach ${base}: ${e.message}`);
+      process.exit(1);
+    }
+  };
+  await Promise.all([...needTables.keys()].map(probe));
+}
 
 // ----------------------------------------------------------------------- report
 let missing = 0;
@@ -119,11 +149,17 @@ const report = (label, need, have) => {
   }
 };
 report("tables and views", needTables, haveTables);
-report("functions", needRpcs, haveRpcs);
+if (haveRpcs) {
+  report("functions", needRpcs, haveRpcs);
+} else {
+  console.log("\nfunctions");
+  console.log(`  not verified — needs SUPABASE_SECRET_KEY. ${needRpcs.size} called by the code:`);
+  console.log(`  ${[...needRpcs.keys()].sort().join(", ")}`);
+}
 
 console.log(
   `\n${missing ? `${missing} missing` : "everything the code calls is present"}` +
-  `  (project has ${haveTables.size} tables/views, ${haveRpcs.size} functions)`,
+  `  (project has ${haveTables.size} of the ${needTables.size} tables the code needs${haveRpcs ? `, ${haveRpcs.size} functions` : ""})`,
 );
 if (missing) {
   const mids = [...new Set([...needTables.keys(), ...needRpcs.keys()]

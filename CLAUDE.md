@@ -81,10 +81,16 @@ ids to fill these.
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
 squawks and teams.
 
-**0001-0004 have been run against the live project. 0005-0007 have not.** Until they
-are, several surfaces fail open and silently no-op — `squadron.js`, `comms.js` and
-`FirstFlightGate` all carry comments saying so. `supabase/SETUP.sql` bundles 0005-0007
-as one guarded paste; it assumes 0001-0004 are applied.
+**All of them have been run against the live project** (`rpfgxxcpfrgajlkpoyes`, the
+project the deployed bundle points at). Verified directly, not inferred: all 31 tables
+the code reads answer over REST, and all 12 functions are in `pg_proc` with signatures
+matching every call site.
+
+Do not trust the comments in `squadron.js`, `comms.js` and `FirstFlightGate` that say
+"until 0005 runs" — they describe the state when they were written and were never
+updated. `npm run check:backend` is the source of truth; run it rather than reading
+prose. `supabase/SETUP.sql` is still the guarded one-paste bundle of 0005-0007 if a
+second environment ever needs building.
 
 0004 is not optional: without it, progress does not save. 0000 declares the
 `user_progress` table it writes to, which predates the series and was created by hand —
