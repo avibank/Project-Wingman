@@ -92,7 +92,7 @@ const AUR_VEIL = 0.78;
 // The sky behind the ribbons. The reference grounds sit high enough that the
 // curtains had little to be bright against; dropped, the light has somewhere to
 // come from and the stars have somewhere to sit.
-const AUR_SKY = 0.72;
+const AUR_SKY = 0.56;
 
 // Not everything glows. The reference gives a white-hot core to every band at
 // full weight, which is most of them, so the whole display burned evenly and

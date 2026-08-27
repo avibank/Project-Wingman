@@ -345,7 +345,10 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // score; the ball is live and never waits for it.
   const { average, flown } = moduleAverage(activeChapters.map((c) => scores[c.id]));
   const still = reduceMotion;
-  const ballRef = useAttitude(still);
+  // The Manual finish draws the same instrument on a smaller, differently
+  // centred dial, so the attitude is written for whichever one is mounted.
+  const paperDial = finish === "manual";
+  const ballRef = useAttitude(still, paperDial ? { cx: 40, cy: 44, travel: 0.8 } : undefined);
   const tilt = useTiltPermission();
 
   // Hobbs — chapters flown. It used to sum briefing durations; content carries
@@ -541,6 +544,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             {/* Manual draws the same five instruments instead of lighting them. */}
             {finish === "manual" ? (
               <PaperStrip
+                ballRef={ballRef}
                 ring={average}
                 bag={bag > 0 ? bag : 0}
                 boxes={activeCount.full}

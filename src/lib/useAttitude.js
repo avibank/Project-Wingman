@@ -9,12 +9,12 @@ import { useEffect, useRef, useState } from "react";
 
 export const BANK_RANGE = 22;
 export const PITCH_RANGE = 18;
-// A real attitude indicator does not drift toward the horizon, it holds it. At
-// .14 the ball took about fifteen frames to close on the target, which reads as
-// floaty — a slow thing chasing you rather than an instrument. At .34 it is
-// there in about five: tight and precise, still smoothed enough not to twitch
-// on the pixel noise of a moving pointer or a hand that is not quite still.
-const EASE = 0.34;
+// A precision instrument reports an attitude; it does not ease toward one. At
+// .14 the ball took sixteen frames to close, at .34 six, and both still read as
+// something following you. At .55 it is there in three — about 50ms, which is
+// under the threshold where a delay is felt at all — with just enough smoothing
+// left to absorb pointer jitter and an unsteady hand.
+const EASE = 0.55;
 
 // Below this the ball is already where it is going. Without it the lerp
 // asymptotes forever and writes a new transform every frame for movement no
@@ -87,8 +87,11 @@ export function askForOrientation() {
  *
  * @returns a ref to put on the group inside the dial's clip path
  */
-export function useAttitude(still) {
+export function useAttitude(still, dial) {
   const node = useRef(null);
+  // The lit dial is a 120 viewBox centred on 60,60. The Manual finish draws the
+  // same instrument at 86, centred on 40,44 — same attitude, different paper.
+  const cx = dial?.cx ?? 60, cy = dial?.cy ?? 60, travel = dial?.travel ?? 1.1;
 
   // Smooth Air is the person asking; this is the device asking. CSS gets the
   // second one through a media query, but a rAF loop is not CSS: without this
@@ -115,7 +118,7 @@ export function useAttitude(still) {
     const el = node.current;
     if (!el) return undefined;
     if (still || systemStill) {
-      el.setAttribute("transform", "rotate(0 60 60) translate(0 0)");
+      el.setAttribute("transform", `rotate(0 ${cx} ${cy}) translate(0 0)`);
       return undefined;
     }
 
@@ -162,7 +165,7 @@ export function useAttitude(still) {
       current.bank = Math.abs(db) < SETTLED ? target.bank : current.bank + db * EASE;
       current.pitch = Math.abs(dp) < SETTLED ? target.pitch : current.pitch + dp * EASE;
       // 1 degree of pitch is about 1.1px of travel on a 42px dial.
-      const next = `rotate(${current.bank.toFixed(2)} 60 60) translate(0 ${(current.pitch * 1.1).toFixed(2)})`;
+      const next = `rotate(${current.bank.toFixed(2)} ${cx} ${cy}) translate(0 ${(current.pitch * travel).toFixed(2)})`;
       // Only touch the DOM when the value actually changed. At rest — which is
       // most of the time on a desktop — this costs nothing.
       if (next !== lastWrite) { el.setAttribute("transform", next); lastWrite = next; }
@@ -177,7 +180,7 @@ export function useAttitude(still) {
       window.screen?.orientation?.removeEventListener?.("change", onRotate);
       cancelAnimationFrame(frame);
     };
-  }, [still, systemStill, tiltAllowed]);
+  }, [still, systemStill, tiltAllowed, cx, cy, travel]);
 
   return node;
 }
