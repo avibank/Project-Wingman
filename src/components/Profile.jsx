@@ -7,7 +7,6 @@ import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hu
 import { profileSVG } from "../lib/flightProfile.js";
 import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
-import { pickGreeting } from "../lib/greeting.js";
 import { useFlags } from "../lib/flags.js";
 import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
@@ -223,6 +222,18 @@ const PROFILE_CSS = `
 .block { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
   border-top-color: var(--edge-hi); padding: 18px 20px 20px; }
 .block > .eyebrow { display: block; margin-bottom: 14px; }
+
+/* Preferences packs the most into each card — a name, a line, a control and,
+   in the greeter's case, a field as well — and it was the tightest of the
+   three tabs as a result. One rhythm from a flex gap instead of each child
+   carrying its own margin, so the parts sit apart evenly rather than wherever
+   their own margins happened to land. */
+#ppanel-preferences .block { display: flex; flex-direction: column; gap: 13px;
+  padding: 20px 22px 22px; }
+#ppanel-preferences .block > .eyebrow { margin-bottom: 2px; }
+#ppanel-preferences .livname { margin-bottom: 0; }
+#ppanel-preferences .livdesc { margin-bottom: 0; }
+#ppanel-preferences .field { padding: 0; }
 .eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em;
   text-transform: uppercase; color: var(--t3); }
 
@@ -386,10 +397,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
   const [holderName, setHolderName] = useState("");
   const [bio, setBio] = useState("");
-  // The call name starts as the first name and follows edits to Full name —
-  // but only until the user types here themselves. A deliberate choice is never
-  // overwritten, and a stale derived one is never stranded.
-  const [callTouched, setCallTouched] = useState(false);
   const [username, setUsername] = useState("");
   const [greetName, setGreetName] = useState("");
   const [saveNote, setSaveNote] = useState(null);
@@ -398,9 +405,8 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   useEffect(() => {
     setHolderName(user?.fullName || "");
     setUsername(user?.username || "");
-    const stored = progress.get("pw-greet-name", null);
-    setCallTouched(stored !== null);
-    setGreetName(stored !== null ? stored : (user?.firstName || ""));
+    // Empty unless they have set one. No longer seeded from the first name.
+    setGreetName(progress.get("pw-greet-name", "") || "");
     setBio(progress.get("pw-bio", "") || "");
   }, [user?.fullName, user?.username, user?.firstName, progress.loaded]);
 
@@ -409,12 +415,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const character = progress.get("pw-voice", DEFAULT_CHARACTER);
   const callCopy = CALL_COPY[character] || CALL_COPY.wingman;
 
-  // Derived, not stored, until it is touched — so changing Full name carries
-  // through and nothing has to be kept in sync.
-  const derivedCall = holderName.trim().split(/\s+/)[0] || "";
-  useEffect(() => {
-    if (!callTouched) setGreetName(derivedCall);
-  }, [derivedCall, callTouched]);
   const preset = progress.get("pw-social-preset", "crew");
   const currentFinish = FINISHES.find((f) => f.id === (finish ?? null)) || FINISHES[0];
   const override = lightOverride(finish);
@@ -453,13 +453,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     mirrorFlySolo(on);
     if (user?.id) saveProfile(user.id, { invisible: on }).catch(() => setSaveNote(ERROR_GENERIC));
   };
-
-  // §6.2 — a live sample line that changes the greeting on the home page
-  // immediately. Dealt off the same engine, so it is a real line, not a mock.
-  const sample = useMemo(() => pickGreeting(null, {
-    now: Date.now(), hour: new Date().getHours(),
-    name: greetName || null, character, awayMs: null,
-  }).text, [character, greetName]);
 
   return (
     <div className="profile">
@@ -595,18 +588,19 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               {/* The greeter's name for you belongs with the greeter, not on the
                   licence: the licence is who you are, this is what you answer to.
                   The label follows the selected character. */}
-              <div className="field" style={{ maxWidth: 340 }}>
+              {/* Empty by default, with the line inside the field rather than
+                  under it: an empty box that explains itself, and nothing to
+                  clear before you type. It no longer derives from the first
+                  name on the licence — an empty field is a question, a
+                  pre-filled one is an answer nobody gave. */}
+              {/* Not capped at 340 like the licence fields: the line lives in the
+                  bar now, and at 340 it was cut off mid-sentence. */}
+              <div className="field">
                 <label htmlFor="f-call">{callCopy.label}</label>
-                <input id="f-call" value={greetName}
-                       onChange={(e) => { setCallTouched(true); setGreetName(e.target.value); }}
+                <input id="f-call" value={greetName} placeholder={callCopy.hint}
+                       onChange={(e) => setGreetName(e.target.value)}
                        onBlur={() => progress.set("pw-greet-name", greetName.trim())} />
-                {/* Only when the field is genuinely empty. It used to show
-                    whenever the value had not been explicitly set, which meant it
-                    sat under a filled-in name and read as though it had been
-                    ignored. */}
-                {!greetName.trim() && <span className="hint">{callCopy.hint}</span>}
               </div>
-              <div className="anchors">“{sample}”</div>
             </div>
           )}
 
@@ -640,11 +634,15 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             {/* Only when something is overriding the choice. Without it an
                 Aurora user taps Light, nothing happens, and the app looks
                 broken. */}
-            {override && <div className="livdesc" id="lightwhy">{override}</div>}
-            <Seg radio wide label="Panel lighting" describedBy="lightwhy"
+            {/* The one thing on this card that is not self-evident: which ship.
+                Written here rather than supplied, since no string came with the
+                request — see the report. */}
+            <div className="livdesc" id={override ? "lightwhy" : undefined}>
+              {override || "Follow the ship takes its setting from your device."}
+            </div>
+            <Seg radio wide label="Panel lighting" describedBy={override ? "lightwhy" : undefined}
                  value={override ? "night" : variantPin}
-                 options={MODES}
-                 disabledIds={override ? ["day", null] : []}
+                 options={override ? MODES.filter((m) => m.id === "night") : MODES}
                  onPick={onVariantPin} />
           </div>
 
