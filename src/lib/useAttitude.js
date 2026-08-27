@@ -9,7 +9,17 @@ import { useEffect, useRef, useState } from "react";
 
 export const BANK_RANGE = 22;
 export const PITCH_RANGE = 18;
-const EASE = 0.14;
+// A real attitude indicator does not drift toward the horizon, it holds it. At
+// .14 the ball took about fifteen frames to close on the target, which reads as
+// floaty — a slow thing chasing you rather than an instrument. At .34 it is
+// there in about five: tight and precise, still smoothed enough not to twitch
+// on the pixel noise of a moving pointer or a hand that is not quite still.
+const EASE = 0.34;
+
+// Below this the ball is already where it is going. Without it the lerp
+// asymptotes forever and writes a new transform every frame for movement no
+// one can see — the instrument is never actually at rest.
+const SETTLED = 0.01;
 
 const clamp = (v, r) => Math.min(r, Math.max(-r, v));
 
@@ -75,13 +85,17 @@ export function useAttitude(still) {
     window.addEventListener("deviceorientation", onTilt);
 
     let frame = 0;
+    let lastWrite = "";
     const tick = () => {
-      // A little mass: ease toward the target rather than snapping to it.
-      current.bank += (target.bank - current.bank) * EASE;
-      current.pitch += (target.pitch - current.pitch) * EASE;
+      const db = target.bank - current.bank, dp = target.pitch - current.pitch;
+      // Snap the last hundredth rather than approach it forever.
+      current.bank = Math.abs(db) < SETTLED ? target.bank : current.bank + db * EASE;
+      current.pitch = Math.abs(dp) < SETTLED ? target.pitch : current.pitch + dp * EASE;
       // 1 degree of pitch is about 1.1px of travel on a 42px dial.
-      el.setAttribute("transform",
-        `rotate(${current.bank.toFixed(2)} 60 60) translate(0 ${(current.pitch * 1.1).toFixed(2)})`);
+      const next = `rotate(${current.bank.toFixed(2)} 60 60) translate(0 ${(current.pitch * 1.1).toFixed(2)})`;
+      // Only touch the DOM when the value actually changed. At rest — which is
+      // most of the time on a desktop — this costs nothing.
+      if (next !== lastWrite) { el.setAttribute("transform", next); lastWrite = next; }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);

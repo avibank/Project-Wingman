@@ -140,7 +140,11 @@ const DECK_CSS = `
 
 .deck .cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--t2); text-align: center; }
-.deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block; }
+/* The reticle, and only over the instrument itself. crosshair is the cursor a
+   real gunsight or a chart plotter puts under your hand; everywhere else on the
+   deck the pointer stays what it was. */
+.deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block;
+  cursor: crosshair; }
 .deck .ai-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
 @media (prefers-reduced-motion: reduce) { .deck .ai-rim { transition: none; } }
 .app.smooth-air .deck .ai-rim { transition: none; }
