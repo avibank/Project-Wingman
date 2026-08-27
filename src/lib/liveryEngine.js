@@ -21,7 +21,7 @@ export const LIVERIES = [
     description: "The forty minutes between the climb and the descent.",
     hue: 266, dDark: -11, dLight: -31, midAt: 0.42, midC: 1.35,
     chroma: 0.100, ground: 0.140, light: 0.950, fillAbs: 84, fillC: 0.22 },
-  { id: "amber", name: "Amber", anchors: "bronze → amber → caution yellow",
+  { id: "amber", name: "Caution amber", anchors: "bronze → amber → caution yellow",
     description: "Nothing is actually wrong. The lamp just likes your attention.",
     hue: 78, dDark: -14, dLight: 14, midAt: 0.45, midC: 1.18,
     chroma: 0.126, ground: 0.158, light: 0.944, fillAbs: 70, fillC: 0.15 },

@@ -171,8 +171,15 @@ export function starfield(n) {
 
 export const STAR_TILE = TILE;
 
+// Why the light choice is being overridden, or null when it is not. A nullable
+// string rather than a flag: the card renders whatever it is given and knows
+// nothing about which finish produced it. Aurora is the only source today.
+export function lightOverride(finish) {
+  return finish === "aurora" ? "Aurora is a night sky." : null;
+}
+
 export const FINISHES = [
-  { id: null, name: "None", line: "The livery, as it is." },
+  { id: null, name: "Standard", line: "The livery, as it is." },
   { id: "aurora", name: "Aurora", line: "Polar route, no traffic, nothing to do but look up." },
   { id: "manual", name: "Manual", line: "Everything you need is in here somewhere." },
 ];

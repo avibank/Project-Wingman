@@ -13,7 +13,7 @@ import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
 import { saveProfile } from "../lib/squadron.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
-import { FINISHES } from "../lib/finishEngine.js";
+import { FINISHES, lightOverride } from "../lib/finishEngine.js";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
 //
@@ -51,14 +51,18 @@ const CALL_COPY = {
 
 const SCALES = [{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }];
 // You asked for Night Ops on dark and Day Ops on light. The POC's shape is a
-// bold label plus a description that changes with the mode, so the label is
-// where the mode name goes; the buttons stay Day / Night / Auto.
-const MODES = [{ id: "day", label: "Day" }, { id: "night", label: "Night" }, { id: null, label: "Auto" }];
-const MODE_COPY = {
-  day: { title: "Day Ops", desc: "Cream, whatever the livery. Only the light and the accents carry it." },
-  night: { title: "Night Ops", desc: "Dark. The room is lit by the livery." },
-  auto: { title: "Auto", desc: "Follows your device." },
-};
+// The card is the control. Light, Dark and Follow the ship need no explaining,
+// so the name row and the three description lines are gone — see the override
+// line for the one case where something still has to be said.
+//
+// "Follow the ship" follows the device's own appearance setting, exactly as
+// Auto did. Not the clock, not sunrise, and not the greeting system's hour
+// bands, which are deliberately separate.
+const MODES = [
+  { id: "day", label: "Light" },
+  { id: "night", label: "Dark" },
+  { id: null, label: "Follow the ship" },
+];
 
 function Switch({ id, on, onChange, label, note }) {
   return (
@@ -80,14 +84,45 @@ function Field({ label, hint, value, onChange, onCommit, id }) {
   );
 }
 
-function Seg({ label, options, value, onPick }) {
+// The radio, wide, disabledIds and describedBy props are opt-in and used only
+// by the lighting card. The five other Segs on this page keep the group and
+// aria-pressed semantics they already had.
+function Seg({ label, options, value, onPick, radio, wide, disabledIds = [], describedBy }) {
+  const off = (id) => disabledIds.includes(id);
+
+  // A radiogroup is expected to move with the arrow keys; buttons do not do
+  // that on their own. Disabled options are stepped over rather than landed on.
+  const onKeyDown = (e) => {
+    if (!radio) return;
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1
+      : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const pickable = options.filter((o) => !off(o.id));
+    if (!pickable.length) return;
+    const at = pickable.findIndex((o) => o.id === value);
+    const next = pickable[(at + step + pickable.length) % pickable.length];
+    onPick(next.id);
+  };
+
   return (
-    <div className="seg" role="group" aria-label={label}>
-      {options.map((o) => (
-        <button key={String(o.id)} type="button" aria-pressed={value === o.id} onClick={() => onPick(o.id)}>
-          {o.label}
-        </button>
-      ))}
+    <div className={`seg${wide ? " seg-wide" : ""}`} role={radio ? "radiogroup" : "group"}
+         aria-label={label} onKeyDown={onKeyDown}>
+      {options.map((o) => {
+        const on = value === o.id;
+        return (
+          <button key={String(o.id)} type="button"
+                  role={radio ? "radio" : undefined}
+                  aria-checked={radio ? on : undefined}
+                  aria-pressed={radio ? undefined : on}
+                  aria-disabled={off(o.id) || undefined}
+                  aria-describedby={off(o.id) && describedBy ? describedBy : undefined}
+                  tabIndex={radio && !on ? -1 : 0}
+                  onClick={() => { if (!off(o.id)) onPick(o.id); }}>
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -215,6 +250,18 @@ const PROFILE_CSS = `
   transition: background .16s, color .16s; }
 .seg button[aria-pressed="true"] { background: var(--panel); color: var(--t1);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--active), transparent 55%); }
+
+/* The lighting card is nothing but this control, so the control has to carry
+   the state on its own. The selected segment is FILLED rather than ringed:
+   with the value name row gone, nothing else on the card says which one is on.
+   --active-fill is the app's existing filled-control pair, so no new colour. */
+.seg-wide { display: flex; width: 100%; }
+.seg-wide button { flex: 1 1 0; min-width: 0; padding: 7px 8px;
+  /* 44px is the touch floor, and it is also what lets the third label wrap to
+     two lines inside its own segment instead of truncating. */
+  min-height: 44px; white-space: normal; line-height: 1.15; text-align: center; }
+.seg-wide button[aria-checked="true"] { background: var(--active-fill); color: var(--ground); font-weight: 600; }
+.seg-wide button[aria-disabled="true"] { opacity: .5; cursor: default; }
 
 .ghost { background: none; color: var(--t1); border: 1px solid var(--line); border-radius: 999px;
   padding: 9px 16px; font-size: calc(12.5px * var(--scale, 1)); font-weight: 600; cursor: pointer; }
@@ -370,6 +417,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   }, [derivedCall, callTouched]);
   const preset = progress.get("pw-social-preset", "crew");
   const currentFinish = FINISHES.find((f) => f.id === (finish ?? null)) || FINISHES[0];
+  const override = lightOverride(finish);
   const notices = progress.get("pw-notices", { answers: true, wingman: true, nudge: true });
 
   const liveries = LIVERIES.filter((l) => (l.aurora ? flags["livery.aurora"] : true));
@@ -588,18 +636,16 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
       {tab === "appearance" && (
         <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-appearance" aria-labelledby="ptab-appearance">
           <div className="block">
-            <span className="eyebrow">Light</span>
-            <div className="row">
-              <span className="rowtext">
-                <b>{MODE_COPY[finish === "aurora" ? "night" : (variantPin || "auto")].title}</b>
-                <span>{finish === "aurora"
-                  ? "Aurora is a night sky."
-                  : MODE_COPY[variantPin || "auto"].desc}</span>
-              </span>
-              <Seg label="Light mode" value={finish === "aurora" ? "night" : variantPin}
-                   options={finish === "aurora" ? MODES.filter((m) => m.id === "night") : MODES}
-                   onPick={onVariantPin} />
-            </div>
+            <span className="eyebrow" id="lightlabel">Panel lighting</span>
+            {/* Only when something is overriding the choice. Without it an
+                Aurora user taps Light, nothing happens, and the app looks
+                broken. */}
+            {override && <div className="livdesc" id="lightwhy">{override}</div>}
+            <Seg radio wide label="Panel lighting" describedBy="lightwhy"
+                 value={override ? "night" : variantPin}
+                 options={MODES}
+                 disabledIds={override ? ["day", null] : []}
+                 onPick={onVariantPin} />
           </div>
 
           <div className="block block-livery">
