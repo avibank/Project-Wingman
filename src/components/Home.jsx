@@ -349,18 +349,15 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const roomOn = flags["social.readyroom"];
 
   // ---------------------------------------------------------------- greeting
-  // The greeter is off until you give it a name to call you. Silence is the
-  // default: a stranger talking to you before you have told it anything is
-  // worse than no line at all. Set a name in Preferences and it starts, and it
-  // keeps going until the field is cleared again.
+  // TODO(step-D): `greetName` is §6.1's "What Wingman calls you". Until that
+  // field exists it is unset, and lines carrying {name} are excluded rather
+  // than given a fallback word — the spec is explicit about that.
   const greetName = progress.get("pw-greet-name", null) || null;
-  const greeterOn = !!greetName;
   const character = flags["voice.characters"]
     ? progress.get("pw-voice", DEFAULT_CHARACTER)
     : DEFAULT_CHARACTER;
 
   useEffect(() => {
-    if (!greeterOn) { setGreet(""); return; }
     const away = lastFlown ? Date.now() - new Date(lastFlown).getTime() : null;
     const r = pickGreeting(loadJSON(GREET_KEY, null), {
       now: Date.now(),
@@ -371,7 +368,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
     });
     saveJSON(GREET_KEY, r.state);
     setGreet(r.text);
-  }, [greetName, character, lastFlown, greeterOn]);
+  }, [greetName, character, lastFlown]);
 
   // -------------------------------------------------------------------- data
   useEffect(() => {
@@ -500,7 +497,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
       <div className="inner">
         <div className="dhead">
           <h1 className="title">Flight Deck</h1>
-          {greeterOn && greet && <div className="greet">{greet}</div>}
+          <div className="greet">{greet}</div>
           <div className="since">{lastFlownPhrase(lastFlown)}</div>
         </div>
 
