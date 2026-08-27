@@ -118,6 +118,7 @@ function Seg({ label, options, value, onPick, radio, wide, disabledIds = [], des
                   aria-describedby={off(o.id) && describedBy ? describedBy : undefined}
                   tabIndex={radio && !on ? -1 : 0}
                   onClick={() => { if (!off(o.id)) onPick(o.id); }}>
+            {o.mark && <i className={`finmark ${o.mark}`} aria-hidden="true" />}
             {o.label}
           </button>
         );
@@ -266,6 +267,24 @@ const PROFILE_CSS = `
    the state on its own. The selected segment is FILLED rather than ringed:
    with the value name row gone, nothing else on the card says which one is on.
    --active-fill is the app's existing filled-control pair, so no new colour. */
+/* Each finish shown as what it is, in the livery's own accent, so the control
+   previews rather than only names. Standard is the accent flat; Aurora is the
+   accent in ribbons; Manual is ruled stock and nothing else — stripes only. */
+.finmark { width: 22px; height: 14px; border-radius: 2px; flex: none;
+  border: 1px solid var(--line); margin-right: 7px; display: inline-block;
+  vertical-align: -2px; }
+.finmark.is-standard { background: var(--active); }
+.finmark.is-aurora {
+  background:
+    linear-gradient(102deg, transparent 8%, var(--active) 22%, transparent 38%),
+    linear-gradient(96deg, transparent 44%, var(--active) 58%, transparent 74%),
+    color-mix(in oklab, var(--active), transparent 78%); }
+.finmark.is-manual {
+  background:
+    repeating-linear-gradient(180deg, transparent 0 3px, var(--active) 3px 4px),
+    transparent; }
+.seg button { display: inline-flex; align-items: center; justify-content: center; }
+
 .seg-wide { display: flex; width: 100%; }
 .seg-wide button { flex: 1 1 0; min-width: 0; padding: 7px 8px;
   /* 44px is the touch floor, and it is also what lets the third label wrap to
@@ -598,8 +617,16 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               <div className="field">
                 <label htmlFor="f-call">{callCopy.label}</label>
                 <input id="f-call" value={greetName} placeholder={callCopy.hint}
-                       onChange={(e) => setGreetName(e.target.value)}
-                       onBlur={() => progress.set("pw-greet-name", greetName.trim())} />
+                       onChange={(e) => {
+                         const v = e.target.value;
+                         setGreetName(v);
+                         // Saved as you type, not on blur. Emptying the field is
+                         // the whole off switch for the name, and on blur it did
+                         // not take effect until focus happened to move — so it
+                         // looked as though it had kept using it. The provider
+                         // coalesces writes, so this is one patch either way.
+                         progress.set("pw-greet-name", v.trim());
+                       }} />
               </div>
             </div>
           )}
@@ -634,12 +661,14 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             {/* Only when something is overriding the choice. Without it an
                 Aurora user taps Light, nothing happens, and the app looks
                 broken. */}
-            {/* The one thing on this card that is not self-evident: which ship.
-                Written here rather than supplied, since no string came with the
-                request — see the report. */}
-            <div className="livdesc" id={override ? "lightwhy" : undefined}>
-              {override || "Follow the ship takes its setting from your device."}
-            </div>
+            {/* Only when it is doing something: the override when one is in
+                force, otherwise the note about which ship — and that only while
+                Follow the ship is the option selected. */}
+            {(override || variantPin === null) && (
+              <div className="livdesc" id={override ? "lightwhy" : undefined}>
+                {override || "Follow the ship takes its setting from your device."}
+              </div>
+            )}
             <Seg radio wide label="Panel lighting" describedBy={override ? "lightwhy" : undefined}
                  value={override ? "night" : variantPin}
                  options={override ? MODES.filter((m) => m.id === "night") : MODES}
@@ -668,7 +697,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <div className="livname">{currentFinish.name}</div>
             <div className="livdesc">{currentFinish.line}</div>
             <Seg label="Finish" value={finish ?? "none"}
-                 options={FINISHES.map((f) => ({ id: f.id ?? "none", label: f.name }))}
+                 options={FINISHES.map((f) => ({
+                   id: f.id ?? "none", label: f.name,
+                   mark: `is-${f.id ?? "standard"}`,
+                 }))}
                  onPick={(v) => onFinish(v === "none" ? null : v)} />
 
             {/* Only meaningful under Manual, so it is absent rather than

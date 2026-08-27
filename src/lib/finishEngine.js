@@ -89,6 +89,16 @@ const AUR_NARROW = 0.82;
 // of an aurora and the only way the content in front stays legible.
 const AUR_VEIL = 0.78;
 
+// The sky behind the ribbons. The reference grounds sit high enough that the
+// curtains had little to be bright against; dropped, the light has somewhere to
+// come from and the stars have somewhere to sit.
+const AUR_SKY = 0.72;
+
+// Not everything glows. The reference gives a white-hot core to every band at
+// full weight, which is most of them, so the whole display burned evenly and
+// none of it read as brighter than the rest. One band in three keeps it.
+const AUR_HOT_EVERY = 3;
+
 /* ---------- generators ---------- */
 export function curtains(sp) {
   const out = [];
@@ -104,11 +114,11 @@ export function curtains(sp) {
     const y = (sp.y + rnd(i + 33) * 4.6).toFixed(1);
     const a = sp.a0 * k * (.78 + rnd(i + 41) * .44) * AUR_VEIL;
     const C = (sp.c * (.80 + k * .25) * cm).toFixed(3), CT = (sp.ct * (.80 + k * .25) * cm).toFixed(3);
-    const hot = k >= .88
+    const hot = k >= .88 && i % AUR_HOT_EVERY === 0
       ? `oklch(0.995 ${(C * .26).toFixed(3)} ${h}.0 / ${(a * 1.10).toFixed(3)}) 0%, `
       + `oklch(0.955 ${(C * .62).toFixed(3)} ${h}.0 / ${(a * 1.02).toFixed(3)}) 11%, ` : "";
     out.push(`radial-gradient(${w}% ${ht}% at ${x}% ${y}%, ` + hot
-      + `oklch(${(0.88 + k * .05).toFixed(3)} ${CT} ${h}.0 / ${a.toFixed(3)}) ${k >= .88 ? "24%" : "0%"}, `
+      + `oklch(${(0.88 + k * .05).toFixed(3)} ${CT} ${h}.0 / ${a.toFixed(3)}) ${hot ? "24%" : "0%"}, `
       + `oklch(0.80 ${C} ${h}.0 / ${(a * .58).toFixed(3)}) 40%, `
       + `oklch(0.76 ${C} ${h}.0 / ${(a * .22).toFixed(3)}) 62%, `
       + `oklch(0.74 ${C} ${h}.0 / 0) 84%)`);
@@ -157,13 +167,16 @@ export const horizon = (g) => `radial-gradient(142% 36% at 50% 103%, `
 // the reference, and it is why.
 const TILE = 420;
 
-export function starfield(n) {
-  // Density preserved: n was spread over roughly seven tiles of viewport.
-  const per = Math.max(24, Math.round(n / 7));
+export function starfield(n, seed = 0) {
+  // Density preserved: n was spread over roughly seven tiles of viewport. Half
+  // to each of the two layers, which fade out of step with each other — a
+  // single field can only pulse as one, and stars twinkle individually.
+  const per = Math.max(12, Math.round(n / 14));
   let dots = "";
   for (let i = 0; i < per; i++) {
-    const x = (rnd(i * 3 + 1) * 100).toFixed(2), y = (rnd(i * 7 + 2) * 100).toFixed(2);
-    const r = (0.7 + rnd(i * 11 + 3) * 1.1).toFixed(2), a = (0.30 + rnd(i * 13 + 4) * 0.65).toFixed(2);
+    const j = i + seed;
+    const x = (rnd(j * 3 + 1) * 100).toFixed(2), y = (rnd(j * 7 + 2) * 100).toFixed(2);
+    const r = (0.7 + rnd(j * 11 + 3) * 1.1).toFixed(2), a = (0.30 + rnd(j * 13 + 4) * 0.65).toFixed(2);
     dots += `<circle cx='${x}%' cy='${y}%' r='${r}' fill='%23fff' opacity='${a}'/>`;
   }
   return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${TILE}' height='${TILE}'%3E${dots}%3C/svg%3E")`;
@@ -205,13 +218,18 @@ export function finishVars(liveryId, variant, finish, accent) {
   if (finish === "aurora" && night) {
     const sp = AUR[liveryId];
     if (!sp) return {};
+    // L is the first component of the spec's own ground; only it is scaled, so
+    // the chroma and hue each aurora was given are untouched.
+    const g = sp.gnd.trim().split(/\s+/);
+    const darker = [(parseFloat(g[0]) * AUR_SKY).toFixed(4), g[1], g[2]].join(" ");
     const v = {
-      "--ground": ok(sp.gnd), "--panel": ok(sp.pan), "--raised": ok(sp.rai), "--line": ok(sp.lin),
+      "--ground": ok(darker), "--panel": ok(sp.pan), "--raised": ok(sp.rai), "--line": ok(sp.lin),
       "--t3": ok(AURN.t3), "--t2": ok(AURN.t2), "--t1": ok(AURN.t1),
       "--key-img": curtains(sp),
       "--fill-img": horizon(sp.fill),
-      "--star-img": starfield(sp.stars),
-      "--key-int": "0.98", "--fill-int": "0.80", "--stars": "1",
+      "--star-img": starfield(sp.stars, 0),
+      "--star-img-b": starfield(sp.stars, 977),
+      "--key-int": "0.86", "--fill-int": "0.70", "--stars": "1",
       "--soft": `${Math.round(parseFloat(sp.soft) * AUR_SHARPEN)}px`,
       "--grain": String(sp.grain),
     };

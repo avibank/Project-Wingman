@@ -74,7 +74,15 @@ const ROOM_CSS = `
   background-image: var(--star-img, none); background-repeat: repeat;
   background-size: 420px 420px; mix-blend-mode: screen;
   animation: pwtwinkle 13s ease-in-out infinite alternate; }
+/* The second field. One layer can only pulse as a whole — two, seeded
+   differently and fading out of step, read as individual stars twinkling. */
+.deck-light .stars-b { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  opacity: var(--stars, 0);
+  background-image: var(--star-img-b, none); background-repeat: repeat;
+  background-size: 420px 420px; mix-blend-mode: screen;
+  animation: pwtwinkle2 8.5s ease-in-out infinite alternate; animation-delay: -3.1s; }
 @keyframes pwtwinkle { from { opacity: var(--stars, 0); } to { opacity: calc(var(--stars, 0) * .5); } }
+@keyframes pwtwinkle2 { from { opacity: calc(var(--stars, 0) * .45); } to { opacity: var(--stars, 0); } }
 /* dark gradients band; noise kills it and gives the light a tooth */
 .deck-light .grain { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: var(--grain);
   mix-blend-mode: overlay; background-size: 150px 150px;
@@ -90,8 +98,11 @@ const ROOM_CSS = `
    ============================================================ */
 
 /* aurora gets more lift than the standard rig — this is the glow */
-.app[data-aur="1"] .deck-light::before { filter: blur(var(--soft)) saturate(1.70) brightness(1.30); }
-.app[data-aur="1"] .deck-light::after { filter: blur(calc(var(--soft)*1.15)) saturate(1.62) brightness(1.34); }
+/* Pulled back from the reference's 1.70/1.30 and 1.62/1.34. At those the whole
+   display burned evenly, so nothing in it read as brighter than anything else;
+   the glow belongs to the few bands that keep a hot core, not to the sky. */
+.app[data-aur="1"] .deck-light::before { filter: blur(var(--soft)) saturate(1.42) brightness(1.10); }
+.app[data-aur="1"] .deck-light::after { filter: blur(calc(var(--soft)*1.15)) saturate(1.36) brightness(1.12); }
 
 /* overcast layer, used by Tarmac's aurora only */
 .a-cloud { position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: multiply;
@@ -192,6 +203,7 @@ function Deck({ aurora, rules }) {
   return (
     <div className={`deck-light ${aurora ? "aur" : ""}`} style={stars} aria-hidden="true">
       <div className="stars" />
+      <div className="stars-b" />
       <div className="a-cloud" />
       <div className="rules" style={rules || undefined} />
       <div className="spill" />
