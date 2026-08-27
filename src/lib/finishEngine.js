@@ -75,6 +75,20 @@ export const MAN = {
   D: { g: ".966 .010 85", p: ".992 .005 85/.88", rz: ".950 .011 85/.92", l: ".876 .014 85/.94", t3: ".545 .010 85", t2: ".395 .011 85", t1: ".215 .012 85", grain: .17 },
 };
 
+// Curtains hang. The reference draws each band as a radial blob roughly as wide
+// as it is tall, which under a heavy blur read as bloom; sharpened, they read
+// as spots. Stretching them vertically and drawing them in turns them into
+// ribbons, which is the shape the thing is named after — and a taller, narrower
+// gradient covers less area, so there is less to rasterise as well.
+const AUR_TALL = 1.45;
+const AUR_NARROW = 0.82;
+
+// Ethereal, not wallpaper. At full strength the ribbons washed the whole deck
+// and the type on the ground had to fight them. Held back, they read as
+// something seen through rather than something painted on — which is the point
+// of an aurora and the only way the content in front stays legible.
+const AUR_VEIL = 0.78;
+
 /* ---------- generators ---------- */
 export function curtains(sp) {
   const out = [];
@@ -84,11 +98,11 @@ export function curtains(sp) {
   sp.h.forEach((hw, i) => {
     const h = hw[0], k = hw[1], cm = (hw[2] === undefined ? 1 : hw[2]);
     const sc = .88 + k * .26;
-    const w = ((sp.w[0] + rnd(i + 1) * (sp.w[1] - sp.w[0])) * sc).toFixed(1);
-    const ht = ((sp.ht[0] + rnd(i + 9) * (sp.ht[1] - sp.ht[0])) * sc).toFixed(1);
+    const w = ((sp.w[0] + rnd(i + 1) * (sp.w[1] - sp.w[0])) * sc * AUR_NARROW).toFixed(1);
+    const ht = ((sp.ht[0] + rnd(i + 9) * (sp.ht[1] - sp.ht[0])) * sc * AUR_TALL).toFixed(1);
     const x = (sp.x0 + i * sp.dx + rnd(i + 21) * 5).toFixed(1);
     const y = (sp.y + rnd(i + 33) * 4.6).toFixed(1);
-    const a = sp.a0 * k * (.78 + rnd(i + 41) * .44);
+    const a = sp.a0 * k * (.78 + rnd(i + 41) * .44) * AUR_VEIL;
     const C = (sp.c * (.80 + k * .25) * cm).toFixed(3), CT = (sp.ct * (.80 + k * .25) * cm).toFixed(3);
     const hot = k >= .88
       ? `oklch(0.995 ${(C * .26).toFixed(3)} ${h}.0 / ${(a * 1.10).toFixed(3)}) 0%, `
@@ -104,10 +118,10 @@ export function curtains(sp) {
   for (let j = 0; j < sp.rays; j++) {
     const hw = lead[j % lead.length], h = hw[0], cm = (hw[2] === undefined ? 1 : hw[2]);
     const w = (1.6 + rnd(j + 101) * 2.6).toFixed(2);
-    const ht = (sp.ht[0] * 0.7 + rnd(j + 113) * 26).toFixed(1);
+    const ht = ((sp.ht[0] * 0.7 + rnd(j + 113) * 26) * AUR_TALL).toFixed(1);
     const x = (2 + rnd(j + 127) * 96).toFixed(1);
     const y = (sp.y - 3 + rnd(j + 139) * 10).toFixed(1);
-    const a = (sp.a0 * (.34 + rnd(j + 151) * .40)).toFixed(3);
+    const a = (sp.a0 * (.34 + rnd(j + 151) * .40) * AUR_VEIL).toFixed(3);
     const C = (sp.c * 1.05 * cm).toFixed(3);
     out.push(`radial-gradient(${w}% ${ht}% at ${x}% ${y}%, `
       + `oklch(0.97 ${(C * .5).toFixed(3)} ${h}.0 / ${a}) 0%, `
@@ -174,6 +188,7 @@ export const FINISHES = [
 // point of them. Relative softness is preserved — Tarmac stays the softest of
 // the six, as its spec intends.
 const AUR_SHARPEN = 0.65;
+
 
 export function finishVars(liveryId, variant, finish, accent) {
   const night = variant !== "day";

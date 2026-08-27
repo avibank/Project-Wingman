@@ -24,7 +24,14 @@ const ROOM_CSS = `
  * sibling of the scroller rather than a child of the room.
  */
 .deck-light { position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  overflow: clip; isolation: isolate; }
+  overflow: clip; isolation: isolate;
+  /* The rig is three layers at inset -55%, so each is about 4.4x the viewport,
+     and each carries a blur. Resizing the window re-rasterises all three.
+     contain: paint tells the browser nothing inside can affect anything
+     outside, so that work stays here instead of pulling the rest of the page
+     into the same repaint. Purely a containment hint: it changes no value the
+     liveries depend on. */
+  contain: paint; }
 
 /* Light ADDS, it does not veil: screen, never a translucent overlay. */
 .deck-light::before, .deck-light::after {
