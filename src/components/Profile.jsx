@@ -118,7 +118,6 @@ function Seg({ label, options, value, onPick, radio, wide, disabledIds = [], des
                   aria-describedby={off(o.id) && describedBy ? describedBy : undefined}
                   tabIndex={radio && !on ? -1 : 0}
                   onClick={() => { if (!off(o.id)) onPick(o.id); }}>
-            {o.mark && <i className={`finmark ${o.mark}`} aria-hidden="true" />}
             {o.label}
           </button>
         );
@@ -267,24 +266,6 @@ const PROFILE_CSS = `
    the state on its own. The selected segment is FILLED rather than ringed:
    with the value name row gone, nothing else on the card says which one is on.
    --active-fill is the app's existing filled-control pair, so no new colour. */
-/* Each finish shown as what it is, in the livery's own accent, so the control
-   previews rather than only names. Standard is the accent flat; Aurora is the
-   accent in ribbons; Manual is ruled stock and nothing else — stripes only. */
-.finmark { width: 22px; height: 14px; border-radius: 2px; flex: none;
-  border: 1px solid var(--line); margin-right: 7px; display: inline-block;
-  vertical-align: -2px; }
-.finmark.is-standard { background: var(--active); }
-.finmark.is-aurora {
-  background:
-    linear-gradient(102deg, transparent 8%, var(--active) 22%, transparent 38%),
-    linear-gradient(96deg, transparent 44%, var(--active) 58%, transparent 74%),
-    color-mix(in oklab, var(--active), transparent 78%); }
-.finmark.is-manual {
-  background:
-    repeating-linear-gradient(180deg, transparent 0 3px, var(--active) 3px 4px),
-    transparent; }
-.seg button { display: inline-flex; align-items: center; justify-content: center; }
-
 .seg-wide { display: flex; width: 100%; }
 .seg-wide button { flex: 1 1 0; min-width: 0; padding: 7px 8px;
   /* 44px is the touch floor, and it is also what lets the third label wrap to
@@ -697,10 +678,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <div className="livname">{currentFinish.name}</div>
             <div className="livdesc">{currentFinish.line}</div>
             <Seg label="Finish" value={finish ?? "none"}
-                 options={FINISHES.map((f) => ({
-                   id: f.id ?? "none", label: f.name,
-                   mark: `is-${f.id ?? "standard"}`,
-                 }))}
+                 options={FINISHES.map((f) => ({ id: f.id ?? "none", label: f.name }))}
                  onPick={(v) => onFinish(v === "none" ? null : v)} />
 
             {/* Only meaningful under Manual, so it is absent rather than
@@ -708,7 +686,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             {finish === "manual" && (
               <div className="finish-sub">
                 <div className="subname">Ruled</div>
-                <div className="subdesc">Lines in your ink, like the pad you already use.</div>
+                <div className="subdesc">Plain stock, or ruled in your ink.</div>
                 <Seg label="Ruled" value={ruled ? "lined" : "plain"}
                      options={[{ id: "plain", label: "Plain" }, { id: "lined", label: "Lined" }]}
                      onPick={(v) => onRuled(v === "lined")} />

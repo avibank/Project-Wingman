@@ -674,9 +674,12 @@ function AppInner() {
         /* z-index 20 stays: it is what keeps the account menu above page content.
            sticky is now redundant — the header is a grid row and cannot scroll
            away — but harmless, and removing it would be a second change. */
+        /* Full bleed. The bar used to be capped at 1240 and centred, so on a
+           wide screen the wordmark and the avatar sat well inside the glass
+           with dead space outboard of them. They belong in the corners. */
         .topbar { position: relative; z-index: 20;
-          display: flex; align-items: center; gap: 12px; padding: 14px 40px 12px;
-          max-width: 1240px; margin: 0 auto; width: 100%; }
+          display: flex; align-items: center; gap: 12px; padding: 14px 24px 12px;
+          width: 100%; }
         @media (max-width: 640px) { .topbar { padding: 14px 16px 12px; } }
         .brandmark { margin-right: auto; min-height: 0; background: none; border: 0; padding: 0;
           cursor: pointer; color: var(--t1); font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
