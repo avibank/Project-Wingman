@@ -456,12 +456,29 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   }, [C, crew, tick, progressKey, preset.band]);
 
   useEffect(() => {
-    const bump = () => setTick((t) => t + 1);
+    // Coalesced to one bump per frame. tick is a dependency of the effect that
+    // redraws every flight profile, so an un-coalesced bump turned a window
+    // drag into a re-render and a full SVG remeasure per resize event — and the
+    // observer watches elements that resize as a result of that render, which
+    // is a feedback loop. Dragging a window from half to full width froze it.
+    //
+    // cancel-and-reschedule rather than a boolean guard: a guard that is set
+    // before a frame that never runs — a backgrounded tab, a dropped frame —
+    // latches, and this stops updating for good. That has bitten twice here.
+    let raf = 0;
+    const bump = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setTick((t) => t + 1));
+    };
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(bump) : null;
     if (ro && wrapRef.current) ro.observe(wrapRef.current);
     if (ro && formRef.current) ro.observe(formRef.current);
     window.addEventListener("resize", bump);
-    return () => { ro?.disconnect(); window.removeEventListener("resize", bump); };
+    return () => {
+      cancelAnimationFrame(raf);
+      ro?.disconnect();
+      window.removeEventListener("resize", bump);
+    };
   }, [preset.band]);
 
   // ------------------------------------------------------------------ render

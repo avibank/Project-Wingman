@@ -57,17 +57,27 @@ function RunwayLights({ scroller, route }) {
     // this latches: if the frame it schedules never runs — a backgrounded tab,
     // a dropped frame — the guard stays set and the indicator dies for good.
     // The expensive read is scrollHeight, and that is on resize only.
+    // measure() reads scrollHeight, which forces layout. Coalesced to one per
+    // frame so a window drag cannot force a layout per resize event. Direct
+    // calls — mount, and the route change below — stay synchronous.
+    let raf = 0;
+    const measureSoon = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+
     el.addEventListener("scroll", read, { passive: true });
-    window.addEventListener("resize", measure);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    window.addEventListener("resize", measureSoon);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measureSoon) : null;
     ro?.observe(el);
     if (el.firstElementChild) ro?.observe(el.firstElementChild);
     remeasure.current = measure;
     measure();
 
     return () => {
+      cancelAnimationFrame(raf);
       el.removeEventListener("scroll", read);
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", measureSoon);
       ro?.disconnect();
       remeasure.current = null;
     };
