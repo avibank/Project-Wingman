@@ -27,9 +27,55 @@ const clamp = (v, r) => Math.min(r, Math.max(-r, v));
 // -1..1 across the viewport and the range is applied straight to it.
 export const bankFromPointer = (x, vw) => clamp(-((x / vw) - 0.5) * 2 * BANK_RANGE, BANK_RANGE);
 export const pitchFromPointer = (y, vh) => clamp(((y / vh) - 0.5) * 2 * PITCH_RANGE, PITCH_RANGE);
-export const bankFromTilt = (gamma) => clamp(gamma ?? 0, BANK_RANGE);
-// A normal holding angle is about 45 degrees, so that reads as level.
-export const pitchFromTilt = (beta) => clamp((beta ?? 45) - 45, PITCH_RANGE);
+// Tilt is relative, not absolute. The old version assumed a 45-degree holding
+// angle and read beta against it, which is only true in portrait and only if
+// you happen to hold it that way — in landscape beta and gamma swap roles
+// entirely and the ball sat pinned at full deflection.
+//
+// Instead the first sample after the instrument starts, or after the device is
+// rotated, becomes level. Everything after is deviation from it. That is
+// correct in any orientation and at any holding angle, and needs nothing
+// hardcoded.
+export const bankFromTilt = (gamma, ref = 0) => clamp((gamma ?? 0) - ref, BANK_RANGE);
+export const pitchFromTilt = (beta, ref = 0) => clamp((beta ?? 0) - ref, PITCH_RANGE);
+
+// iOS gates orientation behind a user gesture. Called from the first tap
+// anywhere; harmless everywhere else.
+//
+// The grant has to be announced. A deviceorientation listener registered before
+// permission was granted does not start receiving events on iOS when it is —
+// the hook has to attach again afterwards. Nothing told it to, so on an iPhone
+// the ball only ever followed the pointer, which on a phone means it followed
+// scrolling.
+let granted = typeof window !== "undefined"
+  && typeof window.DeviceOrientationEvent !== "undefined"
+  && typeof window.DeviceOrientationEvent.requestPermission !== "function";
+const watchers = new Set();
+export const onOrientationGrant = (fn) => { watchers.add(fn); return () => watchers.delete(fn); };
+export const orientationGranted = () => granted;
+
+/**
+ * Whether iOS still needs to be asked, and the asking.
+ * `needed` is false everywhere that does not gate orientation behind a prompt.
+ */
+export function useTiltPermission() {
+  const [needed, setNeeded] = useState(
+    () => typeof window !== "undefined"
+      && typeof window.DeviceOrientationEvent?.requestPermission === "function"
+      && !granted,
+  );
+  useEffect(() => onOrientationGrant(() => setNeeded(false)), []);
+  return { needed, ask: askForOrientation };
+}
+
+export function askForOrientation() {
+  const D = typeof window !== "undefined" ? window.DeviceOrientationEvent : null;
+  if (!D || typeof D.requestPermission !== "function") return Promise.resolve(granted);
+  return D.requestPermission().then((r) => {
+    if (r === "granted") { granted = true; watchers.forEach((fn) => fn()); }
+    return granted;
+  }).catch(() => false);
+}
 
 /**
  * Writes the ball's transform straight onto the node, sixty times a second.
@@ -60,6 +106,11 @@ export function useAttitude(still) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  // Re-runs the effect below when iOS grants orientation, so the listener is
+  // attached after the grant rather than before it.
+  const [tiltAllowed, setTiltAllowed] = useState(orientationGranted);
+  useEffect(() => onOrientationGrant(() => setTiltAllowed(true)), []);
+
   useEffect(() => {
     const el = node.current;
     if (!el) return undefined;
@@ -71,18 +122,37 @@ export function useAttitude(still) {
     const target = { bank: 0, pitch: 0 };
     const current = { bank: 0, pitch: 0 };
 
+    // Level is wherever the device is when the first sample arrives, and again
+    // after a rotation. Nulled rather than zeroed so the next sample re-takes it.
+    let ref = null;
+    let tilting = false;
+
+    // A coarse pointer is a finger. Fingers scroll; they do not aim. The ball
+    // follows attitude on a touch device and nothing else, so it stays still
+    // under a scroll instead of chasing the thumb.
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches;
+
     const onPointer = (e) => {
+      // Once the device is reporting attitude the pointer stops being an input.
+      if (tilting || coarse) return;
       target.bank = bankFromPointer(e.clientX, window.innerWidth);
       target.pitch = pitchFromPointer(e.clientY, window.innerHeight);
     };
     const onTilt = (e) => {
       if (e.gamma == null && e.beta == null) return;
-      target.bank = bankFromTilt(e.gamma);
-      target.pitch = pitchFromTilt(e.beta);
+      tilting = true;
+      if (!ref) ref = { gamma: e.gamma ?? 0, beta: e.beta ?? 0 };
+      target.bank = bankFromTilt(e.gamma, ref.gamma);
+      target.pitch = pitchFromTilt(e.beta, ref.beta);
     };
+    // beta and gamma swap meaning between portrait and landscape, so the old
+    // level is meaningless after a rotation. Take it again.
+    const onRotate = () => { ref = null; };
 
     window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("deviceorientation", onTilt);
+    window.addEventListener("orientationchange", onRotate);
+    window.screen?.orientation?.addEventListener?.("change", onRotate);
 
     let frame = 0;
     let lastWrite = "";
@@ -103,17 +173,11 @@ export function useAttitude(still) {
     return () => {
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("deviceorientation", onTilt);
+      window.removeEventListener("orientationchange", onRotate);
+      window.screen?.orientation?.removeEventListener?.("change", onRotate);
       cancelAnimationFrame(frame);
     };
-  }, [still, systemStill]);
+  }, [still, systemStill, tiltAllowed]);
 
   return node;
-}
-
-// iOS gates orientation behind a user gesture. Called from the first tap
-// anywhere; harmless everywhere else.
-export function askForOrientation() {
-  const D = typeof window !== "undefined" ? window.DeviceOrientationEvent : null;
-  if (!D || typeof D.requestPermission !== "function") return Promise.resolve(false);
-  return D.requestPermission().then((r) => r === "granted").catch(() => false);
 }

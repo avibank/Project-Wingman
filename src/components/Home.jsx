@@ -11,7 +11,7 @@ import { deckVars, engineLivery, rng } from "../lib/liveryEngine.js";
 import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { moduleAverage, chop } from "../lib/attitude.js";
-import { useAttitude } from "../lib/useAttitude.js";
+import { useAttitude, useTiltPermission } from "../lib/useAttitude.js";
 import { DEFAULT_CHARACTER } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
@@ -143,6 +143,15 @@ const DECK_CSS = `
 /* The reticle, and only over the instrument itself. crosshair is the cursor a
    real gunsight or a chart plotter puts under your hand; everywhere else on the
    deck the pointer stays what it was. */
+.deck .aiwrap { position: relative; display: inline-block; line-height: 0; }
+/* Sits over the instrument, not beside it: the thing you tap is the thing that
+   starts moving. Gone the moment permission is given. */
+.deck .aiask { position: absolute; inset: 0; border: 0; border-radius: 50%;
+  background: color-mix(in oklab, var(--ground), transparent 22%);
+  color: var(--t1); font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 0 10px; line-height: 1.2; }
 .deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block;
   cursor: crosshair; }
 .deck .ai-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
@@ -337,6 +346,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const { average, flown } = moduleAverage(activeChapters.map((c) => scores[c.id]));
   const still = reduceMotion;
   const ballRef = useAttitude(still);
+  const tilt = useTiltPermission();
 
   // Hobbs — chapters flown. It used to sum briefing durations; content carries
   // no durations now, so the same instrument counts the thing that does exist.
@@ -551,47 +561,57 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             ) : (
             <>
             <div className="cel">
-              <svg className="ai" viewBox="0 0 120 120" role="img"
-                   aria-label={average == null ? "Attitude indicator, no quiz flown yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
-                <defs><clipPath id="pw-dial"><circle cx="60" cy="60" r="42" /></clipPath></defs>
-                <g clipPath="url(#pw-dial)">
-                  {/* The ball. Its transform is written straight onto the node
-                      every frame — see useAttitude — so it never re-renders the
-                      deck and wants no CSS transition of its own. */}
-                  <g ref={ballRef} transform="rotate(0 60 60) translate(0 0)">
-                    <rect x="-70" y="-80" width="260" height="140" fill={surf[night ? 7 : 9]} />
-                    <rect x="-70" y="60" width="260" height="140" fill={surf[night ? 1 : 6]} />
-                    <rect x="-70" y="59" width="260" height="1.6" fill={C.lit} />
-                    <g stroke={surf[night ? 10 : 4]} strokeWidth="1.4">
-                      <line x1="52" y1="46" x2="68" y2="46" /><line x1="55" y1="52.5" x2="65" y2="52.5" />
-                      <line x1="55" y1="66.5" x2="65" y2="66.5" /><line x1="52" y1="73" x2="68" y2="73" />
+              <div className="aiwrap">
+                <svg className="ai" viewBox="0 0 120 120" role="img"
+                     aria-label={average == null ? "Attitude indicator, no quiz flown yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
+                  <defs><clipPath id="pw-dial"><circle cx="60" cy="60" r="42" /></clipPath></defs>
+                  <g clipPath="url(#pw-dial)">
+                    {/* The ball. Its transform is written straight onto the node
+                        every frame — see useAttitude — so it never re-renders the
+                        deck and wants no CSS transition of its own. */}
+                    <g ref={ballRef} transform="rotate(0 60 60) translate(0 0)">
+                      <rect x="-70" y="-80" width="260" height="140" fill={surf[night ? 7 : 9]} />
+                      <rect x="-70" y="60" width="260" height="140" fill={surf[night ? 1 : 6]} />
+                      <rect x="-70" y="59" width="260" height="1.6" fill={C.lit} />
+                      <g stroke={surf[night ? 10 : 4]} strokeWidth="1.4">
+                        <line x1="52" y1="46" x2="68" y2="46" /><line x1="55" y1="52.5" x2="65" y2="52.5" />
+                        <line x1="55" y1="66.5" x2="65" y2="66.5" /><line x1="52" y1="73" x2="68" y2="73" />
+                      </g>
                     </g>
                   </g>
-                </g>
-                <circle cx="60" cy="60" r="42" fill="none" strokeWidth="1" stroke={C.line} />
-                <circle cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.line} />
-                {average != null && (
-                  <circle className="ai-rim" cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.active}
-                          strokeLinecap="round" transform="rotate(-90 60 60)"
-                          strokeDasharray={`${(2 * Math.PI * 49 * (average / 100)).toFixed(1)} ${(2 * Math.PI * 49).toFixed(1)}`} />
+                  <circle cx="60" cy="60" r="42" fill="none" strokeWidth="1" stroke={C.line} />
+                  <circle cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.line} />
+                  {average != null && (
+                    <circle className="ai-rim" cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.active}
+                            strokeLinecap="round" transform="rotate(-90 60 60)"
+                            strokeDasharray={`${(2 * Math.PI * 49 * (average / 100)).toFixed(1)} ${(2 * Math.PI * 49).toFixed(1)}`} />
+                  )}
+                  <g fill={C.line}>
+                    <circle cx="21" cy="21" r="1.8" /><circle cx="99" cy="21" r="1.8" />
+                    <circle cx="21" cy="99" r="1.8" /><circle cx="99" cy="99" r="1.8" />
+                  </g>
+                  <g strokeWidth="5.2" strokeLinecap="round" fill="none" opacity=".85" stroke={surf[night ? 0 : 12]}>
+                    <line x1="38" y1="60" x2="52" y2="60" /><line x1="68" y1="60" x2="82" y2="60" />
+                  </g>
+                  <g strokeWidth="2.6" strokeLinecap="round" fill="none" stroke={surf[night ? 11 : 1]}>
+                    <line x1="38" y1="60" x2="52" y2="60" /><line x1="68" y1="60" x2="82" y2="60" />
+                  </g>
+                  <circle cx="60" cy="60" r="3.6" fill={surf[night ? 0 : 12]} opacity=".85" />
+                  <circle cx="60" cy="60" r="2.2" fill={surf[night ? 11 : 1]} />
+                  {average != null && (
+                    <text x="60" y="88" textAnchor="middle" fill={C.t1}
+                          fontFamily="Geist Mono, monospace" fontSize="13" fontWeight="500">{average}%</text>
+                  )}
+                </svg>
+                {/* iOS will not report attitude until it has been asked, and it
+                    will only ask from a real tap. So the instrument is the
+                    prompt: tap the thing you want to start moving. */}
+                {tilt.needed && (
+                  <button type="button" className="aiask" onClick={tilt.ask}>
+                    Tap for tilt
+                  </button>
                 )}
-                <g fill={C.line}>
-                  <circle cx="21" cy="21" r="1.8" /><circle cx="99" cy="21" r="1.8" />
-                  <circle cx="21" cy="99" r="1.8" /><circle cx="99" cy="99" r="1.8" />
-                </g>
-                <g strokeWidth="5.2" strokeLinecap="round" fill="none" opacity=".85" stroke={surf[night ? 0 : 12]}>
-                  <line x1="38" y1="60" x2="52" y2="60" /><line x1="68" y1="60" x2="82" y2="60" />
-                </g>
-                <g strokeWidth="2.6" strokeLinecap="round" fill="none" stroke={surf[night ? 11 : 1]}>
-                  <line x1="38" y1="60" x2="52" y2="60" /><line x1="68" y1="60" x2="82" y2="60" />
-                </g>
-                <circle cx="60" cy="60" r="3.6" fill={surf[night ? 0 : 12]} opacity=".85" />
-                <circle cx="60" cy="60" r="2.2" fill={surf[night ? 11 : 1]} />
-                {average != null && (
-                  <text x="60" y="88" textAnchor="middle" fill={C.t1}
-                        fontFamily="Geist Mono, monospace" fontSize="13" fontWeight="500">{average}%</text>
-                )}
-              </svg>
+              </div>
               <div className="cap">{average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`}</div>
             </div>
 

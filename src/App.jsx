@@ -19,7 +19,6 @@ import ModulesPage from "./components/ModulesPage.jsx";
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
-import { askForOrientation } from "./lib/useAttitude.js";
 import ModuleHub from "./components/ModuleHub.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -299,14 +298,6 @@ function AppInner() {
       if (!(k in all)) root.style.removeProperty(k);
     }
   }, [shownLivery, variant, grain, finish]);
-
-  // iOS will not report device orientation without a user gesture, so the ball
-  // asks once, on the first tap, and never again.
-  useEffect(() => {
-    const once = () => { askForOrientation(); window.removeEventListener("pointerdown", once); };
-    window.addEventListener("pointerdown", once, { once: true });
-    return () => window.removeEventListener("pointerdown", once);
-  }, []);
 
   const switchTab = (nextTab) => {
     if (turbulence) {
