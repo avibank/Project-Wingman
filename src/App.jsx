@@ -21,6 +21,8 @@ import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
+import ModuleScreen, { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
+import { moduleByCode, chaptersFor } from "./components/module/moduleContent.js";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
@@ -120,6 +122,18 @@ function AppInner() {
   // Inside a module the URL wins.
   const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const activeModuleCode = route.moduleCode || preferredModuleCode;
+
+  // Everything the module screen counts from, per account rather than per
+  // device — the Flight Deck already promises "pick up at 6:12", and a
+  // position that lived on the device could not keep that promise on a phone
+  // after a laptop. Completion and playback are separate keys because they
+  // are written at different moments: one when a lesson is finished, one
+  // continuously while it plays.
+  const moduleState = {
+    done: progress.get("pw-lesson-done", {}),
+    pos: progress.get("pw-lesson-pos", {}),
+    quiz: progress.get("pw-quiz-scores", {}),
+  };
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
   const [livery, setLivery] = useState(DEFAULT_LIVERY);
@@ -521,6 +535,22 @@ function AppInner() {
             onGoToChapter={goToChapter}
             onOpenReady={() => go(routePath.ready())}
             onOpenChannel={(code) => go(routePath.ready(code))}
+          />
+        </main>
+      ) : flags["module.screen"] ? (
+        /* The rebuilt module screen. Behind its own flag so the hub keeps
+           working while the Library, People and lesson pages are still being
+           built out. */
+        <main className="content content-taxi content--full">
+          <ModuleScreen
+            module={moduleByCode(activeModuleCode)}
+            chapters={chaptersFor(activeModuleCode)}
+            state={moduleState}
+            tab={MODULE_TABS.some((t) => t.id === tab) ? tab : "route"}
+            onTab={switchTab}
+            onBack={() => go(routePath.home())}
+            onOpenLesson={(ch) => goToChapter(ch.id)}
+            onOpenQuiz={(ch) => navigate(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
           />
         </main>
       ) : (
