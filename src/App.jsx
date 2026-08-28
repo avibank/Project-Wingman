@@ -1,3 +1,4 @@
+import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
 import { useState, useRef, useEffect } from "react";

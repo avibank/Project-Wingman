@@ -25,7 +25,7 @@ export const AUR = {
   // fringe underneath: [x, y, w, h, hue, alpha], the second colour the
   // phenomenon makes, low and wide and never competing with the wall.
   sky: { sub: "blue and cyan, a light purple beside it, green low", soft: "30px",
-    gnd: ".0880 .0260 258", pan: ".1620 .0220 256/.82", rai: ".2180 .0270 254/.88", lin: ".2900 .0360 252/.94",
+    gnd: ".1700 .0850 264", pan: ".2240 .0608 264/.80", rai: ".2726 .0665 262/.88", lin: ".3338 .0779 260/.94",
     bl: .74, c: .215, gain: 1.55, bandA: .26,
     cH: [246, 238, 252, 190, 262, 292, 162],
     fr: [[30, 22, 34, 26, 158, .34], [63, 19, 30, 23, 196, .30], [84, 24, 24, 18, 296, .26]],
@@ -34,21 +34,21 @@ export const AUR = {
   // The colours kept from the accent rendition: crimson wall, ember through it,
   // the green oxygen line fringing at the base.
   beacon: { sub: "crimson and magenta, a little orange, green at the base", soft: "28px",
-    gnd: ".0800 .0230 18", pan: ".1540 .0220 16/.86", rai: ".2100 .0290 18/.92", lin: ".2820 .0390 20/.96",
+    gnd: ".0900 .0220 16", pan: ".1332 .0294 14/.86", rai: ".1780 .0364 16/.92", lin: ".2292 .0490 18/.96",
     bl: .70, c: .240, gain: 1.58, bandA: .26,
     cH: [14, 8, 20, 330, 2, 38, 350],
     fr: [[30, 22, 34, 26, 150, .30], [63, 19, 30, 23, 336, .30], [84, 24, 24, 18, 44, .24]],
     fC: 1.0, stars: 320, grain: .06 },
 
   amber: { sub: "amber and orange, reds worked through it", soft: "30px",
-    gnd: ".0790 .0130 46", pan: ".1530 .0140 48/.82", rai: ".2090 .0180 50/.88", lin: ".2810 .0240 54/.94",
+    gnd: ".0880 .0143 68", pan: ".1344 .0210 66/.82", rai: ".1824 .0294 68/.88", lin: ".2368 .0434 72/.94",
     bl: .80, c: .215, gain: 1.22, bandA: .26,
     cH: [56, 46, 62, 14, 50, 2, 38],
     fr: [[30, 22, 34, 26, 22, .32], [63, 19, 30, 23, 96, .24], [84, 24, 24, 18, 6, .26]],
     fC: 1.0, stars: 520, grain: .05 },
 
   skydrol: { sub: "a violet wall, blue and teal through it, rose at its foot", soft: "31px",
-    gnd: ".0860 .0280 296", pan: ".1600 .0240 294/.82", rai: ".2160 .0290 292/.88", lin: ".2880 .0390 294/.94",
+    gnd: ".0920 .0286 292", pan: ".1400 .0336 292/.82", rai: ".1864 .0378 290/.88", lin: ".2392 .0476 292/.94",
     bl: .72, c: .210, gain: 1.45, bandA: .26,
     cH: [308, 316, 300, 262, 312, 186, 324],
     fr: [[30, 22, 34, 26, 176, .32], [63, 19, 30, 23, 200, .28], [84, 24, 24, 18, 348, .24]],
@@ -57,7 +57,7 @@ export const AUR = {
   // Closest to the first rendition of all six: a green wall with a violet
   // fringe under it, which is the shape that started this.
   runway: { sub: "a green wall, blue through it, violet beside it", soft: "28px",
-    gnd: ".0820 .0230 190", pan: ".1560 .0200 186/.82", rai: ".2120 .0250 180/.88", lin: ".2840 .0340 176/.94",
+    gnd: ".0900 .0264 168", pan: ".1380 .0280 166/.82", rai: ".1828 .0322 168/.88", lin: ".2340 .0420 170/.94",
     bl: .78, gC: 2.5, c: .225, gain: 0.70, bandA: .26,
     cH: [152, 146, 158, 210, 166, 288, 176],
     fr: [[30, 22, 34, 26, 318, .44], [63, 19, 30, 23, 262, .40], [84, 24, 24, 18, 300, .32]],
@@ -66,7 +66,7 @@ export const AUR = {
   // The other set kept from the accent rendition: silver wall, copper fringe.
   // Held near-neutral by its own low chroma, with the fringe given more.
   tarmac: { sub: "cold grey, a little copper in it", soft: "32px",
-    gnd: ".0630 .0080 250", pan: ".1380 .0080 250/.82", rai: ".1940 .0100 250/.88", lin: ".2660 .0130 252/.94",
+    gnd: ".0860 .0066 250", pan: ".1340 .0084 250/.82", rai: ".1788 .0098 250/.88", lin: ".2316 .0126 252/.94",
     bl: .78,
     cH: [[250, .30], [240, .34], [258, .28], [52, 2.5], [246, .32], [44, 2.6], [226, .40]], c: .088, gain: 1.60, bandA: .26,
     fr: [[30, 22, 34, 26, 50, .30], [63, 19, 30, 23, 248, .24], [84, 24, 24, 18, 258, .22]],
@@ -75,7 +75,7 @@ export const AUR = {
 };
 
 // aurora text tiers (ground/panel/raised/line come from each spec above)
-export const AURN = { g: ".1900 .0119 258", p: ".2537 .0187 257.06/.78", rz: ".3188 .0302 254.73/.87", l: ".3838 .0441 251.87/.94", t3: ".5870 .0273 247.30", t2: ".7637 .0245 235.24", t1: ".9550 .0040 226" };
+export const AURN = { g: ".1900 .0119 258", p: ".2537 .0187 257.06/.78", rz: ".3188 .0302 254.73/.87", l: ".3838 .0441 251.87/.94", t3: ".6150 .0260 247.30", t2: ".7637 .0245 235.24", t1: ".9550 .0040 226" };
 
 /* ---------- manual finish ---------- */
 export const MAN = {
@@ -266,9 +266,10 @@ export function finishVars(liveryId, variant, finish, accent) {
       "--t3": ok(AURN.t3), "--t2": ok(AURN.t2), "--t1": ok(AURN.t1),
       "--key-img": layers.near,
       "--fill-img": layers.far,
-      "--star-img": starfield(sp.stars, 0),
-      "--star-img-b": starfield(sp.stars, 977),
-      "--key-int": "0.86", "--fill-int": "0.62", "--stars": "1",
+      // 55/45, not 50/50, and the second seeded 4000 clear of the first.
+      "--star-img": starfield(Math.round(sp.stars * 0.55), 0),
+      "--star-img-b": starfield(sp.stars - Math.round(sp.stars * 0.55), 4000),
+      "--key-int": "0.86", "--fill-int": "0.56", "--stars": "1",
       "--soft": sp.soft,
       "--grain": String(sp.grain),
     };
