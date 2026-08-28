@@ -105,8 +105,14 @@ function Seg({ label, options, value, onPick, radio, wide, disabledIds = [], des
   };
 
   return (
+    // The override line explains the whole control, so the GROUP carries the
+    // description as well as any individually disabled option. When a finish
+    // overrides the light choice this control collapses to the one option that
+    // is still true, which leaves no disabled segment to hang the explanation
+    // on — without this, a screen reader gets the collapsed control and never
+    // hears why.
     <div className={`seg${wide ? " seg-wide" : ""}`} role={radio ? "radiogroup" : "group"}
-         aria-label={label} onKeyDown={onKeyDown}>
+         aria-label={label} aria-describedby={describedBy} onKeyDown={onKeyDown}>
       {options.map((o) => {
         const on = value === o.id;
         return (
