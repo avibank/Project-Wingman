@@ -584,8 +584,21 @@ function AppInner() {
             module={moduleByCode(activeModuleCode)}
             chapters={chaptersFor(activeModuleCode)}
             state={moduleState}
-            tab={MODULE_TABS.some((t) => t.id === tab) ? tab : "route"}
-            onTab={switchTab}
+            tab={route.tab === "pdf" ? "library" : route.tab === "people" ? "people" : "route"}
+            librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
+            onLibrarySub={(sub) => go(routePath.library(activeModuleCode, sub))}
+            papers={[]}
+            people={{
+              wingman: null, groups: [], questions: [],
+              // Real or absent. The figures this row is meant to carry —
+              // how many have finished, the most replayed minute — have no
+              // source yet, so it says what it will fill with rather than
+              // inventing a number to look populated.
+              moduleRow: { line: "Everyone working through this module.", facts: [] },
+            }}
+            onTab={(t) => go(t === "library" ? routePath.library(activeModuleCode)
+              : t === "people" ? routePath.people(activeModuleCode)
+              : routePath.module(activeModuleCode))}
             onBack={() => go(routePath.home())}
             onOpenLesson={(ch, l) => go(routePath.lesson(activeModuleCode, ch.id, l.id))}
             onOpenQuiz={(ch) => navigate(routePath.chapter(activeModuleCode, ch.id, "quiz"))}

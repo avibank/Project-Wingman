@@ -50,7 +50,11 @@ export function parseRoute(pathname) {
     const moduleCode = (parts[1] || "").toUpperCase();
     if (!moduleCode) return { name: "modules" };
     if (!parts[2]) return { name: "module", moduleCode, tab: "chapters" };
-    if (parts[2] === "library") return { name: "module", moduleCode, tab: "pdf" };
+    // The Library's two halves are separate addresses: a student sharing the
+    // quizzes record should not land on the papers.
+    if (parts[2] === "library") {
+      return { name: "module", moduleCode, tab: "pdf", sub: parts[3] === "quizzes" ? "quizzes" : "papers" };
+    }
     if (parts[2] === "people") return { name: "module", moduleCode, tab: "people" };
     const chapterId = parts[2];
     // A lesson is its own page, and its address carries the question that was
@@ -88,7 +92,7 @@ export const path = {
   home: () => "/",
   modules: () => "/modules",
   module: (m) => `/m/${String(m).toLowerCase()}`,
-  library: (m) => `/m/${String(m).toLowerCase()}/library`,
+  library: (m, sub) => `/m/${String(m).toLowerCase()}/library` + (sub === "quizzes" ? "/quizzes" : ""),
   lesson: (m, c, l, q) =>
     `/m/${String(m).toLowerCase()}/${c}/lesson/${l}` + (q ? `/q/${q}` : ""),
   people: (m) => `/m/${String(m).toLowerCase()}/people`,

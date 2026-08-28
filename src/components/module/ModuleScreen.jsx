@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
+import LibraryTab from "./LibraryTab.jsx";
+import PeopleTab from "./PeopleTab.jsx";
 import { currentLesson } from "./lessonState.js";
 import "./module.css";
 
@@ -12,7 +14,12 @@ export const MODULE_TABS = [
   { id: "people", label: "People" },
 ];
 
-export default function ModuleScreen({ module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz }) {
+export default function ModuleScreen({
+  module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
+  papers = [], librarySub = "papers", onLibrarySub, onOpenPaper,
+  people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
+  onOpenQuestion,
+}) {
   const here = currentLesson(chapters, state);
 
   // The chapter you are in opens by itself on arrival; after that it is yours
@@ -64,8 +71,16 @@ export default function ModuleScreen({ module: mod, chapters, state, tab, onTab,
                     open={open} onToggle={toggle}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
-        {tab === "library" && <p className="endnote">The Library arrives with the papers.</p>}
-        {tab === "people" && <p className="endnote">People arrives with the questions.</p>}
+        {tab === "library" && (
+          <LibraryTab chapters={chapters} papers={papers} state={state}
+                      sub={librarySub} onSub={onLibrarySub}
+                      onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
+        )}
+        {tab === "people" && (
+          <PeopleTab module={mod} wingman={people.wingman} groups={people.groups}
+                     questions={people.questions} moduleRow={people.moduleRow}
+                     onOpenQuestion={onOpenQuestion} />
+        )}
       </div>
     </div>
   );
