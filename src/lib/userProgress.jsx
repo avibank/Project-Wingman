@@ -24,6 +24,10 @@ function useProgressState() {
   const [loaded, setLoaded] = useState(false);
   const pending = useRef({});
   const timer = useRef(null);
+  // What the server last confirmed, so a failed write has something to go back
+  // to that is not just "whatever was on screen before".
+  const lastServer = useRef({});
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -38,6 +42,7 @@ function useProgressState() {
           if (!active) return;
           if (error) console.error(error);
           setData(row?.data || {});
+          lastServer.current = row?.data || {};
           setLoaded(true);
         });
     } else {
@@ -55,15 +60,40 @@ function useProgressState() {
     const patch = pending.current;
     pending.current = {};
     if (!Object.keys(patch).length) return;
+    // Applying first means a failed save leaves the UI ahead of the server.
+    // Put the affected keys back to what the server last gave us and say so,
+    // rather than leaving someone looking at a setting that was never stored.
+    const before = lastServer.current;
     supabase.rpc("merge_progress", { uid: user.id, patch }).then(({ error }) => {
-      if (error) console.error(error);
+      if (error) {
+        console.error(error);
+        setData((prev) => {
+          const reverted = { ...prev };
+          for (const k of Object.keys(patch)) {
+            if (before[k] === undefined) delete reverted[k];
+            else reverted[k] = before[k];
+          }
+          return reverted;
+        });
+        setSaveError("That did not save. Your last change has been put back.");
+      } else {
+        lastServer.current = { ...lastServer.current, ...patch };
+        setSaveError(null);
+      }
     });
   }, [user?.id]);
 
+  // Every setting applies on the frame it is changed, before anything is
+  // saved. This is the whole fix for "changing a preference does nothing until
+  // you navigate", and the bug was here rather than in any one control: the
+  // signed-in branch was already optimistic, and the signed-out branch wrote
+  // to localStorage and touched no React state at all — so nothing re-rendered
+  // until something else happened to. Both branches now move state first and
+  // persist afterwards.
   const set = useCallback(
     (key, value) => {
+      setData((prev) => ({ ...prev, [key]: value }));
       if (isSignedIn) {
-        setData((prev) => ({ ...prev, [key]: value }));
         pending.current = { ...pending.current, [key]: value };
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(flush, 500);
@@ -74,9 +104,13 @@ function useProgressState() {
     [isSignedIn, flush]
   );
 
+  // Signed out, state is the live copy and localStorage is the durable one:
+  // read state first so a value just written is visible on this render, and
+  // fall back to storage for anything not yet touched this session.
   const get = useCallback(
     (key, fallback) => {
-      if (isSignedIn) return data[key] !== undefined ? data[key] : fallback;
+      if (data[key] !== undefined) return data[key];
+      if (isSignedIn) return fallback;
       return loadJSON(key, fallback);
     },
     [isSignedIn, data]
@@ -102,7 +136,7 @@ function useProgressState() {
     };
   }, [flush]);
 
-  return { get, set, loaded, isSignedIn, resetAll };
+  return { get, set, loaded, isSignedIn, resetAll, saveError };
 }
 
 export function UserProgressProvider({ children }) {

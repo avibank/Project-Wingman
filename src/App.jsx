@@ -38,6 +38,7 @@ import AuthPage from "./components/AuthPage.jsx";
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
+import { loadJSON, saveJSON } from "./lib/storage.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -195,7 +196,10 @@ function AppInner() {
   useEffect(() => {
     if (!progress.loaded) return;
     setReduceMotion(progress.get("pw-reduce-motion", false));
-    setFontSize(progress.get("pw-font-size", "medium"));
+    // Read from the device. An account value from before this moved is
+    // honoured once, so nobody's existing choice is thrown away — after that
+    // the device copy is the only one written.
+    setFontSize(loadJSON("pw-font-size", progress.get("pw-font-size", "medium")));
     const storedLivery = progress.get("pw-livery", DEFAULT_LIVERY);
     setLivery(engineLivery(storedLivery));
     // Aurora was a livery before it was a finish. Someone stored as aurora gets
@@ -235,9 +239,15 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-reduce-motion", reduceMotion);
   }, [reduceMotion, hydrated]);
+  // Text size is the one setting that stays on the device. A phone and a
+  // laptop want different sizes, and syncing that number across both is what
+  // people report as "it keeps changing on me". Everything else follows the
+  // account. It also drives data-scale on the root, which is where
+  // foundations.css picks --sc up from.
   useEffect(() => {
     if (!hydrated) return;
-    progress.set("pw-font-size", fontSize);
+    saveJSON("pw-font-size", fontSize);
+    document.documentElement.setAttribute("data-scale", fontSize);
   }, [fontSize, hydrated]);
   useEffect(() => {
     if (!hydrated) return;
