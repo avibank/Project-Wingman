@@ -649,6 +649,7 @@ function AppInner() {
             <main className="content content-taxi content--full">
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} state={moduleState}
+                onScore={(chapterId, correct, total) => recordQuiz(chapterId, correct, total)}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}

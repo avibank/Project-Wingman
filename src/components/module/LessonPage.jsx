@@ -44,7 +44,7 @@ export default function LessonPage({
         <div>
           <Player lesson={lesson} position={pos} marks={questions}
                   onSeek={scrubTo}
-                  onProgress={(p) => setPos(p)}
+                  onProgress={(p) => { setPos(p); onSeekSaved?.(lesson.id, p); }}
                   onComplete={() => onComplete?.(lesson.id)} />
 
           <div className="lbody">

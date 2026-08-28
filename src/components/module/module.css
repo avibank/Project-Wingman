@@ -277,3 +277,29 @@
   font-size:var(--fs-base,16px);font-weight:600;cursor:pointer;min-height:var(--tap,44px)}
 .mscreen .markdone:hover{color:var(--t1);border-color:var(--t3)}
 .mscreen .markdone[aria-pressed="true"]{background:var(--active);color:var(--ground);border-color:transparent}
+
+/* ── the quiz ── */
+.mscreen .quiz{padding:6px var(--pad) 40px;max-width:none}
+.mscreen .qhead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:14px}
+.mscreen .qquit{background:none;border:0;color:var(--t3);font-family:inherit;font-size:var(--fs-sm,14px);
+  cursor:pointer;padding:8px 0;min-height:var(--tap,44px)}
+.mscreen .qquit:hover{color:var(--t1)}
+.mscreen .qlights{padding-bottom:26px}
+.mscreen .qtext{font-size:var(--fs-xl,27px);font-weight:700;letter-spacing:-.5px;line-height:1.24;
+  margin:0 0 26px;max-width:34ch;text-wrap:balance}
+.mscreen .qopts{display:grid;gap:10px;max-width:44ch}
+.mscreen .qopt{display:grid;grid-template-columns:24px minmax(0,1fr);gap:14px;align-items:center;
+  text-align:left;font-family:inherit;font-size:var(--fs-md,17.5px);color:var(--t1);
+  background:none;border:1px solid var(--line);border-radius:11px;padding:16px 18px;cursor:pointer;
+  min-height:var(--tap,44px)}
+.mscreen .qopt:hover:not(:disabled){border-color:var(--t3)}
+.mscreen .qopt:disabled{cursor:default}
+/* Right is the accent. Wrong is --calm, never red: red is for danger, and a
+   practice question is not danger. */
+.mscreen .qopt.right{border-color:var(--active);color:var(--t1)}
+.mscreen .qopt.chosen{border-color:var(--calm,var(--t3));color:var(--t2)}
+.mscreen .qmark{display:grid;place-items:center;height:24px}
+.mscreen .qmark svg{width:16px;height:16px;color:var(--active)}
+.mscreen .qwhy{border-top:1px solid var(--hair);margin-top:28px;padding-top:22px;max-width:56ch}
+.mscreen .qverdict{font-size:var(--fs-lg,19px);font-weight:700;margin:0 0 8px}
+.mscreen .qexplain{font-size:var(--fs-md,17.5px);color:var(--t2);line-height:1.6;margin:0 0 22px}

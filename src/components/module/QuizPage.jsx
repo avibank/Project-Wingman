@@ -1,15 +1,31 @@
+import { useState } from "react";
 import { ChevronLeft, ArrowRight } from "lucide-react";
+import QuizRunner from "./QuizRunner.jsx";
 import { nextAfterQuiz, nextLabel, nextWhere } from "./nextUp.js";
 import "./module.css";
 
-// What a quiz is, and the score if it has been taken. The engine that runs the
-// questions is explicitly out of scope, so there is no Start button here: a
-// button that goes nowhere is worse than an honest absence, and the handoff
-// says exactly that. When the engine lands, the line below becomes the button.
-export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz }) {
+// What a quiz is, the score if it has been taken, and now the thing that runs
+// it. A retake replaces the score rather than adding a second record — the
+// Library and the chapter row read one object, and a quiz you have sat twice
+// is still one quiz.
+export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore }) {
+  const [running, setRunning] = useState(false);
   const score = state?.quiz?.[chapter.id];
   const count = chapter.quizCount || 8;
   const next = nextAfterQuiz(chapters, chapter.id);
+
+  if (running && chapter.questions?.length) {
+    return (
+      <div className="mscreen">
+        <QuizRunner
+          chapter={chapter}
+          questions={chapter.questions}
+          onQuit={() => setRunning(false)}
+          onFinish={(got, total) => { setRunning(false); onScore?.(chapter.id, got, total); }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mscreen">
@@ -28,8 +44,16 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
         <p>
           {score
             ? "One score, wherever you reach it from — this quiz and the one in the Library are the same record."
-            : "The questions are written. Sitting them needs the quiz engine, which is not built yet."}
+            : chapter.questions?.length
+              ? "Answer, see why, move on. Nothing is timed and you can leave at any point."
+              : "The questions arrive with the content."}
         </p>
+
+        {chapter.questions?.length > 0 && (
+          <button type="button" className="nextgo" onClick={() => setRunning(true)}>
+            {score ? "Take it again" : "Start"}
+          </button>
+        )}
 
         {next && (
           <button type="button" className="nextup"

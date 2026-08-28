@@ -25,20 +25,44 @@ export default function Player({
   const [ready, setReady] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const completed = useRef(false);
+  const lastSaved = useRef(0);
+  // Held in a ref so the unmount save does not need onProgress in its deps,
+  // which would make it run on every render instead of on the way out.
+  const onProgressRef = useRef(onProgress);
+  useEffect(() => { onProgressRef.current = onProgress; });
 
   const dur = lesson.duration || 0;
   const video = lesson.video ? resolveVideo(lesson.videoKind, lesson.video) : null;
 
-  // Resume where they were. The Flight Deck already promises "pick up at 6:12"
-  // and this is the half of that promise that lives in the player.
-  useEffect(() => {
+  // Resume where they were. The Flight Deck promises "pick up at 6:12" and this
+  // is the half of that promise that lives in the player.
+  //
+  // It has to happen on loadedmetadata, not on arrival. Setting currentTime
+  // before the browser knows the duration is silently ignored — which is
+  // exactly why resume did nothing: the value was written to an element that
+  // was not ready to accept it, and nothing reported a failure.
+  const resumeTo = useRef(position);
+  useEffect(() => { resumeTo.current = position; }, [lesson.id]);
+
+  const onMeta = () => {
+    setReady(true);
     const el = ref.current;
-    if (!el || !dur || !position) return;
-    const at = position * dur;
-    if (Math.abs(el.currentTime - at) > 1) el.currentTime = at;
-    // Only on arrival at a lesson, never on every render, or a seek would be
-    // undone by the value it just replaced.
-  }, [lesson.id]);
+    const want = resumeTo.current;
+    if (!el || !el.duration || !want) return;
+    // Right at the end is not a resume, it is a rewatch. Starting someone two
+    // seconds from the credits is worse than starting them at the beginning.
+    if (want >= 0.98) return;
+    el.currentTime = want * el.duration;
+  };
+
+  // Leaving a lesson is the moment that matters most for resume, and it is the
+  // one moment timeupdate throttling would miss.
+  useEffect(() => () => {
+    const el = ref.current;
+    if (el && el.duration && el.currentTime > 0) {
+      onProgressRef.current?.(el.currentTime / el.duration);
+    }
+  }, []);
 
   const seekTo = useCallback((p) => {
     const el = ref.current;
@@ -56,7 +80,15 @@ export default function Player({
     if (!el || !dur) return;
     const p = el.currentTime / dur;
     setPct(p);
-    onProgress?.(p);
+    // Persisted at most once every few seconds. timeupdate fires about four
+    // times a second, and writing the account's progress row at that rate
+    // would be the whole point of the debounce in the progress provider
+    // defeated by the caller.
+    const now = Date.now();
+    if (now - lastSaved.current > 4000) {
+      lastSaved.current = now;
+      onProgress?.(p);
+    }
     // Completion fires once. Firing it on every timeupdate past 90% would
     // write the same flag forty times a second.
     if (!completed.current && p >= 0.9) { completed.current = true; onComplete?.(); }
@@ -103,7 +135,7 @@ export default function Player({
         ) : (
           <>
             <video ref={ref} src={video.url} playsInline preload="metadata"
-                   onTimeUpdate={onTime} onLoadedMetadata={() => setReady(true)}
+                   onTimeUpdate={onTime} onLoadedMetadata={onMeta}
                    onError={() => setError("offline")}
                    onWaiting={() => setBuffering(true)}
                    onPlaying={() => setBuffering(false)}
