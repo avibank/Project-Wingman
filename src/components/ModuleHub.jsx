@@ -5,6 +5,7 @@ import { useUserProgress } from "../lib/userProgress.jsx";
 import { ProgressArc, InstrumentStyles } from "./instruments.jsx";
 import ChaptersPanel from "./ChaptersPanel.jsx";
 import PdfPanel from "./PdfPanel.jsx";
+import Comms from "./Comms.jsx";
 
 
 // Everything a module owns lives here. Nothing module-specific sits in global nav.

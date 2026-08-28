@@ -27,6 +27,8 @@ const LessonPage = lazy(() => import("./components/module/LessonPage.jsx"));
 const QuizPage = lazy(() => import("./components/module/QuizPage.jsx"));
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
 const DevPanel = lazy(() => import("./components/DevPanel.jsx"));
+import RouteError from "./components/RouteError.jsx";
+import ReportProblem from "./components/ReportProblem.jsx";
 const PdfPanel = lazy(() => import("./components/PdfPanel.jsx"));
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
@@ -478,6 +480,7 @@ function AppInner() {
           what stands in while a chunk arrives — and on a fast connection it
           is never seen at all. */}
       <Suspense fallback={<PageSkeleton />}>
+      <RouteError>
         <div className="deck-inner route-fade" key={route.name}>
 
       {flags["nav.root"] && (
@@ -677,6 +680,7 @@ function AppInner() {
         </main>
       )}
         </div>
+      </RouteError>
       </Suspense>
       </div>
 
@@ -695,6 +699,7 @@ function AppInner() {
         else if (what === "quiz" && lesson) go(routePath.chapter(code, lesson.chapter.id, "quiz"));
       }}
     />
+    <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
     <RunwayLights scroller={deckRef} route={route.name} />
     </FirstFlightGate>
     </UsernameGate>
