@@ -22,13 +22,19 @@ export function loadContent(doc, { strict = false } = {}) {
     if (typeof console !== "undefined") console.error(msg);
   }
 
-  const modules = (doc?.modules || []).map((m) => ({
+  const modules = (doc?.modules || []).map((m) => {
+    // Papers name their chapter by TITLE ("Chapter 2") while the Library
+    // filters by id. Resolved here rather than in the component, so the
+    // component never has to know the two ways a chapter can be referred to.
+    const idByTitle = Object.fromEntries((m.chapters || []).map((c) => [c.name, c.id]));
+    return {
     id: m.id,
     code: m.id,
     name: m.name,
     papers: (m.papers || []).map((p) => ({
       id: p.id,
       title: p.title,
+      chapterId: idByTitle[p.chapter] || null,   // null = the whole module
       chapterTitle: p.chapter,
       file: p.file,
       pages: p.pages,
@@ -51,7 +57,8 @@ export function loadContent(doc, { strict = false } = {}) {
         videoKind: l.video?.kind || null,
       })),
     })),
-  }));
+    };
+  });
 
   return { modules, problems };
 }

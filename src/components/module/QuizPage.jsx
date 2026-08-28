@@ -28,7 +28,7 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
         <p>
           {score
             ? "One score, wherever you reach it from — this quiz and the one in the Library are the same record."
-            : "Coming with the content."}
+            : "The questions are written. Sitting them needs the quiz engine, which is not built yet."}
         </p>
 
         {next && (

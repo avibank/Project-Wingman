@@ -171,6 +171,7 @@ function AppInner() {
   }, [flags]);
   const useTestContent = testContent;
   const moduleState = {
+    opened: progress.get("pw-paper-opened", {}),
     done: progress.get("pw-lesson-done", {}),
     pos: progress.get("pw-lesson-pos", {}),
     quiz: progress.get("pw-quiz-scores", {}),
@@ -656,6 +657,15 @@ function AppInner() {
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
             onLibrarySub={(sub) => go(routePath.library(activeModuleCode, sub))}
             papers={papersFor(activeModuleCode, useTestContent)}
+            onOpenPaper={(paper) => {
+              // Opened is remembered per account, so the Library can say which
+              // ones have been. Written before the tab opens: a popup blocker
+              // must not cost the record of having tried.
+              progress.set("pw-paper-opened", {
+                ...progress.get("pw-paper-opened", {}), [paper.id]: true,
+              });
+              window.open(`/${paper.file.replace(/^\//, "")}`, "_blank", "noopener");
+            }}
             people={{
               wingman: null, groups: [], questions: [],
               // Real or absent. The figures this row is meant to carry —

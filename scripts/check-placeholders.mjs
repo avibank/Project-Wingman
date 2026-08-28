@@ -56,9 +56,14 @@ if (shipped.length) {
 } else if (lazy.length) {
   // Not a failure today. It is the launch gate: --ship makes it one.
   const gate = process.argv.includes("--ship");
+  // content.test is ON for everyone, so this chunk is not merely present in
+  // the build — every visitor fetches it and the app is showing placeholder
+  // lessons, papers and questions to whoever opens a module. That is a
+  // deliberate state and it has to be loud, because the failure mode is
+  // forgetting it and launching on top of it.
   console.log(gate
-    ? "PLACEHOLDER CONTENT STILL PRESENT — replace the content file before launch"
-    : "CLEAN (main bundle) — placeholder content is lazy-loaded and must be removed before launch");
+    ? "PLACEHOLDER CONTENT IS BEING SERVED — replace the content file before launch"
+    : "SHIPPING placeholder content deliberately — not in the main bundle, but live to every visitor. `npm run check:ship` is the gate.");
   if (gate) process.exitCode = 1;
 } else {
   console.log("CLEAN");

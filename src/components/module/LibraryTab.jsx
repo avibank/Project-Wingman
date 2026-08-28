@@ -51,7 +51,7 @@ export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpen
                 </span>
                 <span>
                   <span className="rn">{p.title}</span>
-                  <span className="rm">{p.chapterTitle}{p.pages ? ` · ${p.pages} pages` : ""}</span>
+                  <span className="rm">{p.chapterTitle}{p.pages ? ` · ${p.pages} page${p.pages === 1 ? "" : "s"}` : ""}</span>
                 </span>
                 <span className="rstate">{state?.opened?.[p.id] ? "Opened" : ""}</span>
                 <span className="chv" aria-hidden="true">›</span>
