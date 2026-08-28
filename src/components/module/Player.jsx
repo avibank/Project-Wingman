@@ -60,7 +60,9 @@ export default function Player({
     const el = ref.current;
     const want = resumeTo.current;
     if (!el || !el.duration || !want) return;
-    if (want >= 0.98) return;          // that is a rewatch, not a resume
+    // The saved second is honoured whatever it is. This used to bail out above
+    // 98% on the theory that reopening a finished lesson means rewatching it,
+    // which quietly threw away the position the card had just promised.
     el.currentTime = want * el.duration;
   };
 

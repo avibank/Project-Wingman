@@ -38,7 +38,7 @@ export function placeTarget(place, path) {
 
 // The line under the chapter title. It names the spot, so the button's promise
 // is visible before it is pressed.
-export function placeLine(place, lesson) {
+export function placeLine(place, lesson, midRun) {
   if (!place) return null;
   if (place.kind === "lesson") {
     const name = lesson?.title || "the lesson";
@@ -48,9 +48,12 @@ export function placeLine(place, lesson) {
       : `${name}, from the top.`;
   }
   if (place.kind === "quiz")
-    return place.total
+    // Only a run still open has a question to go back to. Once it is sat, the
+    // place is still the quiz — it is where you were — but the line should not
+    // keep pointing at a question you already answered.
+    return midRun && place.total
       ? `Question ${Math.min(place.at + 1, place.total)} of ${place.total}.`
-      : "Mid-quiz.";
+      : "The chapter quiz.";
   if (place.kind === "paper") return `${place.title || "A paper"}, still open.`;
   return null;
 }

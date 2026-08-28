@@ -100,13 +100,21 @@ const DECK_CSS = `
 .deck .card { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
   border-top-color: var(--edge-hi); border-bottom-color: var(--edge-lo);
   overflow: hidden; display: flex; flex-direction: column; }
-.deck .cardbody { padding: 18px; display: flex; gap: 17px; align-items: flex-start; flex-wrap: wrap; }
-.deck .cardtext { flex: 1; min-width: 220px; }
-.deck .chapter { font-size: 18px; font-weight: 600; letter-spacing: -.2px; }
-.deck .hcode { font-family: var(--font-mono); font-size: 11px; color: var(--t3); letter-spacing: .05em; }
-.deck .position { font-size: 12.5px; color: var(--t2); margin-top: 5px; }
-.deck .resume { margin-top: 12px; background: var(--active-fill); color: var(--ground); border: 0;
-  border-radius: 999px; padding: 8px 18px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+/* The card lost its thumbnail, so it runs across rather than down: the words
+   on one side, the button on the other, both bigger now that there is room
+   for them. It wraps back to a stack when the column is too narrow to hold
+   the two side by side. */
+.deck .cardbody { padding: 22px; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+.deck .cardtext { flex: 1 1 240px; min-width: 0; }
+.deck .chapter { font-size: calc(25px * var(--scale, 1)); font-weight: 600; letter-spacing: -.4px; }
+.deck .hcode { font-family: var(--font-mono); font-size: calc(13px * var(--scale, 1)); color: var(--t3);
+  letter-spacing: .05em; margin-top: 3px; }
+.deck .position { font-size: calc(16px * var(--scale, 1)); color: var(--t2); margin-top: 8px; }
+.deck .resume { flex: none; background: var(--active-fill); color: var(--ground); border: 0;
+  border-radius: 999px; padding: 14px 30px; font-size: calc(16px * var(--scale, 1)); font-weight: 600;
+  cursor: pointer; white-space: nowrap; }
+@media (max-width: 430px) { .deck .cardbody { padding: 18px; gap: 16px; }
+  .deck .resume { width: 100%; text-align: center; } }
 
 .deck .strip { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); }
@@ -517,24 +525,19 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // The exact spot, when there is one for this module. The card is about that
   // spot rather than about the chapter that happens to contain it — otherwise
   // the title and the line under it describe two different things.
-  const storedPlace = progress.get(PLACE_KEY, null);
-  // A place you have finished is not a place to go back to. Read rather than
-  // cleared on completion: the record has one writer, and a second write to
-  // retire it would race the one that keeps it current.
-  const spent = (pl) =>
-    pl.kind === "quiz" ? !quizRuns[pl.chapterId]
-      : pl.kind === "lesson"
-        ? Boolean(lessonDoneMap[pl.lessonId]) || (lessonPosMap[pl.lessonId]?.pct ?? 0) >= 0.98
-        : false;
-  const place =
-    placeList(storedPlace).find((pl) => pl.moduleCode === active.code && !spent(pl)) || null;
+  // The last thing you were on. Not the next unfinished thing, not the first
+  // thing still owing — the last thing, whatever it was and whether or not it
+  // is finished. A lesson watched to the end and a quiz three chapters ahead
+  // of where you "should" be are both valid answers to "where was I", and
+  // filtering them out is how Resume stopped meaning what it says.
+  const place = placeList(progress.get(PLACE_KEY, null))[0] || null;
   const placeChapter = place?.chapterId
-    ? activeChapters.find((c) => c.id === place.chapterId) || null
+    ? CHAPTERS.find((c) => c.id === place.chapterId) || null
     : null;
   const placeLesson = place?.lessonId
     ? (placeChapter?.lessons || []).find((l) => l.id === place.lessonId) || null
     : null;
-  const resumeLine = placeLine(place, placeLesson);
+  const resumeLine = placeLine(place, placeLesson, Boolean(place?.kind === "quiz" && quizRuns[place.chapterId]));
   const heroChapter = placeChapter || next;
   const onResume = () => {
     if (place) return onResumePlace?.(place);
@@ -569,12 +572,14 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                     ? "Pick up where you left off."
                     : `${next?.lessons?.length || 2} lessons waiting.`)}
               </div>
-              {flags["module.interior"] && (
-                <button className="resume" type="button" onClick={onResume}>
-                  {resumeLine ? placeVerb(place) : heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
-                </button>
-              )}
             </div>
+            {/* A sibling of the text, not a child of it — that is what puts it
+                beside the words rather than under them. */}
+            {flags["module.interior"] && (
+              <button className="resume" type="button" onClick={onResume}>
+                {resumeLine ? placeVerb(place) : heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
+              </button>
+            )}
           </div>
 
           <div className="strip">
