@@ -42,23 +42,12 @@ const over = (fg, bg) => {
 
 const FLOOR = 4.5;   // body text
 
-// Known and unfixed, carried openly rather than by lowering the floor or
-// deleting the case. --t3 in Night measures 3.38 to 3.72 against the panel and
-// is used 31 times for small text that carries meaning. Day's equivalent was
-// found the same way and fixed by moving t3 from .618 to .505; Night's has not
-// been, and it is not a fix to make quietly — it moves every Night surface,
-// and "Night pixel-identical" is a stated requirement elsewhere in the same
-// handoff. It needs a decision, so it is printed on every run.
-//
-// Anything NOT in this list fails. Adding to it is a deliberate act.
-const KNOWN = new Map([
-  ["sky/night/standard --t3", "3.67"],
-  ["amber/night/standard --t3", "3.64"],
-  ["tarmac/night/standard --t3", "3.72"],
-  ["beacon/night/standard --t3", "3.66"],
-  ["runway/night/standard --t3", "3.38"],
-  ["skydrol/night/standard --t3", "3.61"],
-]);
+// Nothing is carried as a known failure. Night's t3 was the last one and it is
+// fixed — lifted .08 in lightness, recorded as an agreed departure from the
+// POC in check:livery. Anything under the floor now fails outright, which is
+// how it should stay: this list existing at all is an invitation to add to it.
+const KNOWN = new Map();
+
 const rows = [];
 const fails = [];
 const known = [];

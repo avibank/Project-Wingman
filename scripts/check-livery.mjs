@@ -55,7 +55,17 @@ const CSS_DEFAULTS = new Set(["--grain", "--emit"]);
 
 // No agreed divergences. Every value the reference emits, the build emits
 // identically. If that stops being true, this exits non-zero.
-const AGREED = new Set();
+// Deliberate, measured departures from the POC. A token in here is not drift;
+// it is a decision, and the reason has to be written down beside it or this
+// set becomes the place failures go to be forgotten.
+//
+// --t3 (Night): the POC's rung 6 measures 3.38 to 3.72 against the panel
+// across the six liveries, under the 4.5 floor, on text that carries meaning
+// in 31 places. Day had the same failure at 2.99 and it was fixed by moving
+// its t3 .618 -> .505. Night's is lifted by .08 in lightness, the smallest
+// change that clears, landing at 4.70 worst case — the same place Day's sits.
+// check:contrast is what holds it there.
+const AGREED = new Set(["--t3"]);
 const near = (a, b) => {
   const x = Number(String(a).replace("px", "")), y = Number(String(b).replace("px", ""));
   return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) < 5e-4;

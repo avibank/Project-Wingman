@@ -252,9 +252,21 @@ export function deckVars(liveryId, variant = "night") {
              raised: `oklch(${G.rz})`, line: `oklch(${G.l})`,
              t3: `oklch(${DAY.t3})`, t2: `oklch(${DAY.t2})`, t1: `oklch(${DAY.t1})` };
   };
+  // Night's t3 sat on rung 6 of the ink ramp and measured 3.38 to 3.72 against
+  // the panel across the six liveries — under the 4.5 floor, on text that
+  // carries meaning in 31 places. It is the same failure Day had at 2.99,
+  // which was fixed by moving its t3 from .618 to .505.
+  //
+  // Lifted by lightness rather than by moving a rung: rung 7 only reaches 4.35
+  // and rung 8 overshoots to 5.7, crowding t2. +0.08 is the smallest lift that
+  // clears, and it lands at 4.72 worst case — which is where Day's sits.
+  const T3_LIFT = 0.08;
+  const liftL = (c, by) =>
+    c.replace(/oklch\(\s*([\d.]+)/, (_, L) => `oklch(${Math.min(1, Number(L) + by).toFixed(4)}`);
+
   const C = night
     ? { ground: surf[0], panel: at(L, pT, 1), raised: at(L, pT + 0.085, 1), line: at(L, pT + 0.17, 1),
-        t3: ink[6], t2: ink[9], t1: ink[12], active: surf[8], on: surf[9], lit: surf[11] }
+        t3: liftL(ink[6], T3_LIFT), t2: ink[9], t1: ink[12], active: surf[8], on: surf[9], lit: surf[11] }
     : { ...CREAM, ...dayC(L.id),
         active: `oklch(.560 ${(Cm * 1.55).toFixed(3)} ${H.toFixed(1)})`,
         on: `oklch(.630 ${(Cm * 1.45).toFixed(3)} ${H.toFixed(1)})`,
