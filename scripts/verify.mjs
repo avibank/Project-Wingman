@@ -4,8 +4,7 @@
 // says that instead of staying silent. A verification pass that quietly skips
 // what it cannot do is worse than none, because it reads as a clean bill.
 import { execSync } from "node:child_process";
-import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, existsSync } from "node:fs";
 
 const rows = [];
 const ok = (what, detail) => rows.push(["ok", what, detail]);
