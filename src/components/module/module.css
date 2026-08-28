@@ -209,3 +209,62 @@
 .mscreen .pctl button:hover{color:var(--t1)}
 .mscreen .pctl button[aria-pressed="true"]{color:var(--active)}
 .mscreen .pctl svg{width:16px;height:16px}
+
+/* ── Phone. The source was drawn at desktop width and has no rules below it,
+   so at 674px the chapter grid gave its name column whatever the lights, the
+   state and the chevron did not want — which was nothing, and "Chapter 1"
+   wrapped one letter per line.
+
+   The three breakpoints are foundations.css's: phone < 768, tablet 768–1119,
+   desktop >= 1120. Nothing here invents a fourth. ── */
+@media (max-width: 767px) {
+  /* Name and its line take the full width; the lights, the state and the
+     chevron drop to a second row under them. Nothing is hidden — the state in
+     words is the only thing telling you where you are. */
+  .mscreen .chead {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "name chv" "meta meta";
+    gap: 10px 14px;
+    padding: 22px 0 20px;
+  }
+  .mscreen .chead > span:first-child { grid-area: name; }
+  .mscreen .chead > .chv { grid-area: chv; align-self: start; }
+  .mscreen .lights { grid-area: meta; }
+  .mscreen .cstate { grid-area: meta; justify-self: end; }
+  .mscreen .cname { font-size: var(--fs-xl, 27px); letter-spacing: -.4px; }
+  .mscreen .csub { font-size: var(--fs-sm, 14px); }
+
+  /* Same on a lesson row. The mark and the name share the top line; the
+     duration and the state go underneath, because side by side the name gets
+     whatever is left over — which at 337px was three letters. */
+  .mscreen .row {
+    grid-template-columns: 24px minmax(0, 1fr) 12px;
+    grid-template-areas: "mark name chv" ". meta meta";
+    gap: 6px 12px;
+    padding: 15px 0;
+  }
+  .mscreen .row > .mark { grid-area: mark; }
+  .mscreen .row > span:nth-child(2) { grid-area: name; }
+  .mscreen .row > .rstate { grid-area: meta; justify-self: start; }
+  .mscreen .row > .chv { grid-area: chv; }
+  .mscreen .rn { font-size: var(--fs-md, 17.5px); }
+  .mscreen .rm, .mscreen .rstate { font-size: var(--fs-sm, 14px); }
+
+  /* A lesson stacks: player, then what it covers, then the questions. Trying
+     to fit two panes on a phone is where this design would actually break. */
+  .mscreen .lesson { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+
+  /* People is a drill-down on a phone, not a squeezed two-pane. The list is
+     the page; opening a row is a page of its own. */
+  .mscreen .hub { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .mscreen .hublist { border-right: 0; }
+
+  /* The tab strip scrolls rather than clipping "People" off the edge. */
+  .mscreen .tabs { overflow-x: auto; gap: 20px; scrollbar-width: none; }
+  .mscreen .tabs::-webkit-scrollbar { display: none; }
+
+  .mscreen .titlerow { padding-bottom: 18px; }
+  /* The page title is the one place --fs-display is too big for a phone: at
+     337px "Module 1" broke across two lines. One step down on phones only. */
+  .mscreen .title { font-size: var(--fs-xl, 27px); letter-spacing: -.6px; }
+}

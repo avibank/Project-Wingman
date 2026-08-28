@@ -33,8 +33,13 @@ export const FLAGS = [
   { id: "nav.root", label: "Bottom nav", note: "Study · Modules · Logbook · Ready Room.", off: true },
   { id: "chrome.boarding", label: "Boarding pass", note: "The full-screen overlay on load.", off: true },
   { id: "chrome.patoast", label: "PA toast", note: "The cabin-crew announcement on theme change.", off: true },
-  { id: "module.interior", label: "Module interior", note: "The hub, chapters, chapter view, quiz and comments.", off: true },
-  { id: "module.screen", label: "Module screen (new)", note: "The rebuilt module screen: Lessons, Library, People. Replaces the hub while on.", off: true },
+  // `off` means "no approved design yet". There is one now: the module screen
+  // was built to the brief and verified, so the gate comes off and a module
+  // opens. There is no real content behind it, and that is fine — the brief is
+  // explicit that the empty state IS the shipping state, and the screen says
+  // what is coming rather than pretending.
+  { id: "module.interior", label: "Module interior", note: "Opening a module at all. Off means clicking one does nothing.", everyone: true },
+  { id: "module.screen", label: "Module screen", note: "Lessons, Library and People. Off falls back to the old hub.", everyone: true },
   // The one switch that takes the dev panel out. Off for everyone including
   // admins until it is turned on deliberately, and the panel additionally
   // refuses to render for anyone who is not an admin — two locks, because this
