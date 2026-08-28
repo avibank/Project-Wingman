@@ -51,7 +51,16 @@ export function parseRoute(pathname) {
     if (!moduleCode) return { name: "modules" };
     if (!parts[2]) return { name: "module", moduleCode, tab: "chapters" };
     if (parts[2] === "library") return { name: "module", moduleCode, tab: "pdf" };
+    if (parts[2] === "people") return { name: "module", moduleCode, tab: "people" };
     const chapterId = parts[2];
+    // A lesson is its own page, and its address carries the question that was
+    // opened to reach it — "Watch at 6:12" from People has to land on the
+    // right lesson with the right question already open, and a URL that
+    // cannot say which question cannot do that.
+    if (parts[3] === "lesson" && parts[4]) {
+      return { name: "lesson", moduleCode, chapterId, lessonId: parts[4],
+               question: parts[5] === "q" && parts[6] ? parts[6] : null };
+    }
     const tab = CHAPTER_TABS.includes(parts[3]) ? parts[3] : "brief";
     // §2.2 — a single question is permanent and shareable.
     const question = parts[3] === "q" && parts[4] ? Number(parts[4]) : null;
@@ -80,6 +89,9 @@ export const path = {
   modules: () => "/modules",
   module: (m) => `/m/${String(m).toLowerCase()}`,
   library: (m) => `/m/${String(m).toLowerCase()}/library`,
+  lesson: (m, c, l, q) =>
+    `/m/${String(m).toLowerCase()}/${c}/lesson/${l}` + (q ? `/q/${q}` : ""),
+  people: (m) => `/m/${String(m).toLowerCase()}/people`,
   chapter: (m, c, tab) =>
     `/m/${String(m).toLowerCase()}/${c}` + (tab && tab !== "brief" ? `/${tab}` : ""),
   question: (m, c, n) => `/m/${String(m).toLowerCase()}/${c}/q/${n}`,

@@ -22,6 +22,8 @@ import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
 import ModuleHub from "./components/ModuleHub.jsx";
 import ModuleScreen, { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
+import LessonPage from "./components/module/LessonPage.jsx";
+import QuizPage from "./components/module/QuizPage.jsx";
 import { moduleByCode, chaptersFor } from "./components/module/moduleContent.js";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
@@ -78,7 +80,7 @@ function AppInner() {
     if (route.name === "redirect") navigate(route.to, { replace: true });
   }, [route.name, route.to, navigate]);
 
-  const view = route.name === "module" || route.name === "chapter" ? "module" : "hub";
+  const view = route.name === "module" || route.name === "chapter" || route.name === "lesson" ? "module" : "hub";
   const settingsPage =
     route.name === "signin" ? "auth"
     : route.name === "logbook" && flags["page.logbook"] ? "progress"
@@ -537,6 +539,42 @@ function AppInner() {
             onOpenChannel={(code) => go(routePath.ready(code))}
           />
         </main>
+      ) : flags["module.screen"] && route.name === "lesson" ? (
+        (() => {
+          const chs = chaptersFor(activeModuleCode);
+          const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
+          const ls = ch?.lessons.find((l) => l.id === route.lessonId) || ch?.lessons[0];
+          if (!ch || !ls) return <main className="content content-taxi content--full" />;
+          return (
+            <main className="content content-taxi content--full">
+              <LessonPage
+                module={moduleByCode(activeModuleCode)} chapters={chs} chapter={ch} lesson={ls}
+                state={moduleState} openQuestionId={route.question}
+                onBack={() => go(routePath.module(activeModuleCode))}
+                onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
+                onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
+                onSeekSaved={(lessonId, pct) =>
+                  progress.set("pw-lesson-pos", { ...moduleState.pos, [lessonId]: { pct } })}
+              />
+            </main>
+          );
+        })()
+      ) : flags["module.screen"] && route.name === "chapter" && route.tab === "quiz" ? (
+        (() => {
+          const chs = chaptersFor(activeModuleCode);
+          const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
+          if (!ch) return <main className="content content-taxi content--full" />;
+          return (
+            <main className="content content-taxi content--full">
+              <QuizPage
+                module={moduleByCode(activeModuleCode)} chapters={chs} chapter={ch} state={moduleState}
+                onBack={() => go(routePath.module(activeModuleCode))}
+                onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
+                onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
+              />
+            </main>
+          );
+        })()
       ) : flags["module.screen"] ? (
         /* The rebuilt module screen. Behind its own flag so the hub keeps
            working while the Library, People and lesson pages are still being
@@ -549,7 +587,7 @@ function AppInner() {
             tab={MODULE_TABS.some((t) => t.id === tab) ? tab : "route"}
             onTab={switchTab}
             onBack={() => go(routePath.home())}
-            onOpenLesson={(ch) => goToChapter(ch.id)}
+            onOpenLesson={(ch, l) => go(routePath.lesson(activeModuleCode, ch.id, l.id))}
             onOpenQuiz={(ch) => navigate(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
           />
         </main>
