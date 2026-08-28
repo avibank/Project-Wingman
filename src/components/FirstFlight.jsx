@@ -4,7 +4,6 @@ import { MODULES, chaptersForModule } from "../data.js";
 import { fetchRecentPilots, saveProfile, assignSquadron, assignMarkings } from "../lib/squadron.js";
 import Tail, { TailStyles, hueOf } from "./Tail.jsx";
 import LiveryPicker from "./LiveryPicker.jsx";
-import { resolveLivery } from "../lib/liveries.js";
 
 // §7.1 — three screens, and a course picker is not the first one. You meet
 // people, then choose material, then say when you fly. Assignment happens once
@@ -150,7 +149,6 @@ function FirstFlight({ onDone }) {
             modulesCompleted={0}
             onSelect={(id) => {
               setLivery(id);
-              document.documentElement.setAttribute("data-livery", resolveLivery(id));
               saveProfile(user.id, { livery: id }).catch(console.error);
             }}
           />

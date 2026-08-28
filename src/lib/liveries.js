@@ -22,8 +22,14 @@ export const DEFAULT_LIVERY = "dawn-patrol";
 
 const BY_ID = Object.fromEntries(LIVERIES.map((l) => [l.id, l]));
 
-// A stored id that no longer exists must never reach the DOM: the token block
-// is selected by [data-livery="…"], so an unknown value paints nothing at all.
+// A stored id that no longer exists must resolve to one that does, because
+// liveryById feeds the tail ring and an unknown id would draw nothing.
+//
+// This used to guard the DOM as well: the token block was once selected by
+// [data-livery="…"], so an unknown value painted nothing at all. That is no
+// longer how the app is coloured — deckVars() writes the tokens onto :root at
+// runtime — and data-livery now means the APP's livery, which App.jsx owns.
+// These are two different sets of ids that ended up sharing a word.
 export function resolveLivery(id) {
   return BY_ID[id] ? id : DEFAULT_LIVERY;
 }

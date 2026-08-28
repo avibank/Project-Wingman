@@ -3,7 +3,6 @@ import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
 import { NOTIFY_MODES } from "../lib/readyRoom.js";
 import LiveryPicker from "./LiveryPicker.jsx";
-import { resolveLivery } from "../lib/liveries.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 import Spooling from "./Spooling.jsx";
 
@@ -112,7 +111,6 @@ function PilotSettings({ modulesCompleted = 0 }) {
           modulesCompleted={modulesCompleted}
           onSelect={(id) => {
             patch({ livery: id });
-            document.documentElement.setAttribute("data-livery", resolveLivery(id));
           }}
         />
       </div>

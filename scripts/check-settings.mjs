@@ -85,3 +85,28 @@ if (fails.length) process.exitCode = 1;
   if (DONE_AT !== 0.9) console.log(`  FAIL  the rule is ${DONE_AT}, not 0.9`);
   console.log(`settings: completion checked either side of ${DONE_AT}, and by hand`);
 }
+
+// ---- who owns which piece of state
+{
+  const { readdirSync, statSync, readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const walk = (d) => readdirSync(d).flatMap((f) => {
+    const p = join(d, f);
+    return statSync(p).isDirectory() ? walk(p) : [p];
+  });
+
+  // data-livery drives the app's colour and App.jsx owns it. Two components
+  // had drifted into writing it with ids from the TAIL livery set — a
+  // different six, with different names — so between a click and App's next
+  // render the attribute named a livery the theme system has never heard of.
+  // Nothing styles off it today, which is exactly why it went unnoticed.
+  const writers = walk("src")
+    .filter((f) => /\.jsx?$/.test(f))
+    .filter((f) => /setAttribute\(\s*["']data-livery["']/.test(readFileSync(f, "utf8")));
+  const stray = writers.filter((f) => !/App\.jsx$/.test(f));
+  if (stray.length) {
+    for (const f of stray) console.log(`  FAIL  ${f} writes data-livery; App.jsx owns it`);
+  }
+  console.log(`settings: data-livery written by ${writers.length} file${writers.length === 1 ? "" : "s"}${stray.length ? "" : " (App.jsx only)"}`);
+  if (stray.length) process.exitCode = 1;
+}
