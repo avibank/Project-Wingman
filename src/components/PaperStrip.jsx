@@ -17,7 +17,7 @@ const PAPER_CSS = `
 .app.smooth-air .papersweep { animation: none; }
 `;
 
-function PaperStrip({ ring, bag, boxes, hobbs, blips, caps, ballRef }) {
+function PaperStrip({ ring, bag, boxes, boxesHalf = 0, hobbs, blips, caps, ballRef }) {
   return (
     <>
       <div className="cel">
@@ -65,7 +65,14 @@ function PaperStrip({ ring, bag, boxes, hobbs, blips, caps, ballRef }) {
             return (
               <g key={i}>
                 <rect x={x} y={y} width="20" height="15" rx="1" className="inkh" />
-                {i < boxes ? <path d={`M${x + 4} ${y + 8} l4 4 l8 -9`} className="ink" /> : null}
+                {/* Ticked when the chapter is finished, struck through once
+                    when it is merely under way — the same distinction the lit
+                    instruments draw, in the vocabulary of a paper checklist. */}
+                {i < boxes
+                  ? <path d={`M${x + 4} ${y + 8} l4 4 l8 -9`} className="ink" />
+                  : i < boxes + boxesHalf
+                    ? <path d={`M${x + 5} ${y + 11} l8 -7`} className="ink" />
+                    : null}
               </g>
             );
           })}

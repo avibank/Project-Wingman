@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
+import { deckStateFrom } from "../lib/deckState.js";
+import { HOBBS_KEY, hobbsHours } from "../lib/hobbs.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
@@ -163,6 +165,9 @@ const DECK_CSS = `
 .deck .lamp { height: calc(17px * var(--scale, 1)); border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
 .deck .lamp.on { background: var(--on); border-color: transparent;
   box-shadow: 0 0 var(--emit) color-mix(in oklab, var(--on), transparent 45%); }
+/* Started but not finished. Filled from the bottom rather than lit: the fill
+   is structural, and glow stays reserved for presence and the current leg. */
+.deck .lamp.half { background: linear-gradient(to top, var(--on) 0 50%, var(--raised) 50%); }
 .deck .hobbs { font-family: var(--font-mono); font-size: calc(19px * var(--scale, 1)); letter-spacing: .09em; background: var(--raised);
   border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; color: var(--t2);
   font-variant-numeric: tabular-nums; }
@@ -323,28 +328,18 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
 
   // ------------------------------------------------------------------- state
-  // Chapter completion is DERIVED from lesson completion, not stored beside
-  // it. The module screen writes pw-lesson-done per lesson; the Flight Deck
-  // used to read pw-completed, a separate list of chapter ids nothing writes
-  // any more — so finishing a lesson moved nothing here. Two stores of the
-  // same fact is how the ring, the checklist and the module screen end up
-  // disagreeing, which is the whole reason there is one completion rule.
-  //
-  // pw-completed is still read so anyone who has chapters marked from before
-  // this keeps them.
-  const lessonDone = progress.get("pw-lesson-done", {});
-  const lessonPos = progress.get("pw-lesson-pos", {});
-  const completed = new Set([
-    ...progress.get("pw-completed", []),
-    ...CHAPTERS.filter((c) => {
-      const ls = c.lessons || [];
-      if (!ls.length) return false;
-      return ls.every((l) => lessonDone[l.id] || (lessonPos[l.id]?.pct ?? 0) >= 0.9);
-    }).map((c) => c.id),
-  ]);
-  const viewed = new Set(progress.get("pw-viewed-chapters", []));
-  const answered = progress.get("pw-chapter-progress", {});
-  const scores = progress.get("pw-quiz-scores", {});
+  // Everything the instruments read comes through one translation. The module
+  // screen and the deck grew separate vocabularies — {correct,total} against a
+  // percentage, lesson ids against chapter ids — and every instrument was
+  // quietly discarding data it could not recognise, which is why they all sat
+  // at their defaults no matter what you did.
+  const { completed, viewed, answered, scores } = deckStateFrom({
+    chapters: CHAPTERS,
+    lessonDone: progress.get("pw-lesson-done", {}),
+    lessonPos: progress.get("pw-lesson-pos", {}),
+    quiz: progress.get("pw-quiz-scores", {}),
+    legacyCompleted: progress.get("pw-completed", []),
+  });
   const bookmarks = progress.get("pw-bookmarks", []);
   const lastFlown = progress.get("pw-last-flown", null);
   const state = { completed, viewed, answered };
@@ -376,10 +371,11 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const ballRef = useAttitude(still, paperDial ? { cx: 40, cy: 44, travel: 0.8 } : undefined);
   const tilt = useTiltPermission();
 
-  // Hobbs — chapters flown. It used to sum briefing durations; content carries
-  // no durations now, so the same instrument counts the thing that does exist.
-  const hobbs = MODULES.flatMap((m) => chaptersForModule(m.code))
-    .filter((c) => viewed.has(c.id) || completed.has(c.id)).length;
+  // Hobbs — hours on this module's airframe. Wall-clock time spent inside the
+  // module, counted by the meter in lib/hobbs.js while a module is open, not
+  // inferred from how much video has played. Reading it off video position
+  // showed nothing for an hour spent on the papers, which is most of the work.
+  const hobbs = hobbsHours(progress.get(HOBBS_KEY, {}), active.code);
 
 
   // §5.3 — "If a feature behind a preset doesn't exist in the backend yet,
@@ -573,7 +569,8 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 ring={average}
                 bag={bag > 0 ? bag : 0}
                 boxes={activeCount.full}
-                hobbs={hobbs > 0
+                boxesHalf={activeCount.half}
+                hobbs={hobbs >= 0.1
                   ? `${String(Math.floor(hobbs)).padStart(3, "0")}.${Math.floor((hobbs % 1) * 10)}`
                   : "--.-"}
                 blips={contacts.length > 0}
@@ -583,7 +580,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                   activeCount.full
                     ? `Checklist · ${activeCount.full} of ${activeCount.total}`
                     : `Checklist · ${activeCount.total} to fly`,
-                  hobbs > 0 ? "Hobbs" : "Your first hour",
+                  hobbs >= 0.1 ? "Hobbs" : "Your first hour",
                   contactCap,
                 ]}
               />
@@ -663,7 +660,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             <div className="cel">
               <div className="lamps">
                 {activeSegments.map((s) => (
-                  <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : ""}`} />
+                  <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : s.fill === SEGMENT.HALF ? "half" : ""}`} />
                 ))}
               </div>
               <div className="cap">
@@ -675,11 +672,11 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
             <div className="cel">
               <div className="hobbs">
-                {hobbs > 0
+                {hobbs >= 0.1
                   ? <>{String(Math.floor(hobbs)).padStart(3, "0")}<i>.{Math.floor((hobbs % 1) * 10)}</i></>
                   : <>--<i>.-</i></>}
               </div>
-              <div className="cap">{hobbs > 0 ? "Hobbs" : "Your first hour"}</div>
+              <div className="cap">{hobbs >= 0.1 ? "Hobbs" : "Your first hour"}</div>
             </div>
 
             {/* Social's only foothold in the academic half. */}

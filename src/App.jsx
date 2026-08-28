@@ -43,6 +43,7 @@ import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 import { LOGBOOK_KEY, lessonDone, quizTaken } from "./lib/logbookRecord.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
+import { useHobbsMeter } from "./lib/hobbs.js";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
@@ -152,6 +153,10 @@ function AppInner() {
   // Inside a module the URL wins.
   const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const activeModuleCode = route.moduleCode || preferredModuleCode;
+
+  // The meter runs while a module is open, whatever is on screen inside it,
+  // and only then — the Flight Deck itself is not time in the module.
+  useHobbsMeter(view === "module" ? activeModuleCode : null, progress);
 
   // Everything the module screen counts from, per account rather than per
   // device — the Flight Deck already promises "pick up at 6:12", and a
