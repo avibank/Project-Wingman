@@ -294,7 +294,7 @@ function AppInner() {
     root.style.setProperty("--grain", grain ? all["--grain"] : "0");
     // Layers that only exist under a finish, cleared otherwise so nothing of
     // one finish survives into the next.
-    for (const k of ["--star-img", "--cloud-img", "--cloud-op"]) {
+    for (const k of ["--star-img", "--star-img-b", "--cloud-img", "--cloud-op"]) {
       if (!(k in all)) root.style.removeProperty(k);
     }
   }, [shownLivery, variant, grain, finish]);

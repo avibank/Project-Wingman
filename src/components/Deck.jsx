@@ -47,7 +47,71 @@ const ROOM_CSS = `
 .deck-light::after  { mix-blend-mode: var(--blend2, var(--blend, screen)); }
 .deck-light::before { background: var(--key-img); opacity: var(--key-int); animation: pwdrift 26s ease-in-out infinite; }
 .deck-light::after { background: var(--fill-img); opacity: var(--fill-int);
-  filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); animation: pwdrift 41s ease-in-out infinite reverse; }
+  filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); animation: pwdrift-far 41s ease-in-out infinite reverse; }
+/* Parallax, and the whole of the depth cue. Under a real curtain wall the near
+   curtains sweep past while the far ones barely move. These two layers already
+   drifted at different rates in opposite directions, but at identical
+   amplitude, which reads as one surface sliding rather than two at different
+   distances. The far layer now travels about a third as far. Transform only —
+   the same composited property that was already animating, so it costs nothing
+   beyond what the rig was already paying. */
+/* True perspective, aurora only. The curtains are drawn hanging from above, so
+   tipping their plane about its top edge makes them recede toward the top of
+   the frame — the convergence you actually see standing under a display, rather
+   than the drawn imitation of it in curtain(). The rotation lives inside the
+   drift keyframes because transform is one property: setting it separately
+   would overwrite the drift instead of composing with it.
+
+   scale() compensates for the foreshortening, which would otherwise pull the
+   layer's lower edge up into the frame and expose the ground beneath it.
+
+   Cost: this is still only the transform property, the same composited one
+   already animating. It does NOT reintroduce a filter — see the warning above
+   about the SVG warp that measured 0.1fps here. Measured before it was kept.
+   Toggle it off with data-flat="1" on .app to A/B. */
+.app[data-aur="1"] .deck-light::before,
+.app[data-aur="1"] .deck-light::after { transform-origin: 50% 0%; }
+
+/* Respect the hero card. The curtains are drawn tall because that is what makes
+   them curtains, but their tails were reaching most of the way down the deck
+   and washing the content. Rather than shorten them — which costs the shape and
+   the colour spread — the light layers are masked so they simply stop.
+
+   The stops are in LAYER space, not screen space: these surfaces sit at
+   inset -55%, so they are 210% of the deck and screen f maps to (55 + 100f)/2.1.
+   Full strength to about a fifth of the way down, gone by about half, which
+   puts the fade across the hero card rather than below it.
+
+   Masking is composited, so this costs nothing per frame, and it leaves the
+   starfield alone — the sky stays full of stars where the light has stopped. */
+.app[data-aur="1"] .deck-light::before,
+.app[data-aur="1"] .deck-light::after,
+.app[data-aur="1"] .deck-light .spill {
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0 33.8%, rgba(0,0,0,.70) 40%, rgba(0,0,0,.24) 44.5%, transparent 48.1%);
+  mask-image: linear-gradient(to bottom,
+    #000 0 33.8%, rgba(0,0,0,.70) 40%, rgba(0,0,0,.24) 44.5%, transparent 48.1%);
+}
+.app[data-aur="1"]:not([data-flat="1"]) .deck-light::before {
+  animation-name: pwdrift-tilt; }
+.app[data-aur="1"]:not([data-flat="1"]) .deck-light::after {
+  animation-name: pwdrift-tilt-far; }
+@keyframes pwdrift-tilt {
+  0%, 100% { transform: perspective(1100px) rotateX(31deg) scale(1.08) translate3d(0,0,0); }
+  34% { transform: perspective(1100px) rotateX(31deg) scale(1.08) translate3d(6%,-4%,0); }
+  67% { transform: perspective(1100px) rotateX(31deg) scale(1.08) translate3d(-4%,4%,0); }
+}
+/* The far plane tips harder and travels less: more distance, more convergence. */
+@keyframes pwdrift-tilt-far {
+  0%, 100% { transform: perspective(1100px) rotateX(38deg) scale(1.12) translate3d(0,0,0); }
+  34% { transform: perspective(1100px) rotateX(38deg) scale(1.12) translate3d(2%,-1.4%,0); }
+  67% { transform: perspective(1100px) rotateX(38deg) scale(1.12) translate3d(-1.4%,1.4%,0); }
+}
+@keyframes pwdrift-far {
+  0%, 100% { transform: translate3d(0,0,0); }
+  34% { transform: translate3d(2%,-1.4%,0); }
+  67% { transform: translate3d(-1.4%,1.4%,0); }
+}
 /* Aurora's curtain used to be shaped by an SVG displacement warp here:
      filter: url(#pw-aurWarp) blur(30px) saturate(1.24)
    feTurbulence plus feDisplacementMap, over a surface inset -55% on every side,
