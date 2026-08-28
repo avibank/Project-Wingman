@@ -35,7 +35,6 @@ export const FLAGS = [
   { id: "chrome.patoast", label: "PA toast", note: "The cabin-crew announcement on theme change.", off: true },
   { id: "module.interior", label: "Module interior", note: "The hub, chapters, chapter view, quiz and comments.", off: true },
   { id: "module.screen", label: "Module screen (new)", note: "The rebuilt module screen: Lessons, Library, People. Replaces the hub while on.", off: true },
-  { id: "module.screen", label: "Module screen (new)", note: "The rebuilt module screen: Lessons, Library, People. Replaces the hub while on.", off: true },
   { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", off: true },
   { id: "page.logbook", label: "Logbook", note: "The logbook page.", off: true },
   { id: "page.bookmarks", label: "Saved", note: "Bookmarks and flashcards.", off: true },
