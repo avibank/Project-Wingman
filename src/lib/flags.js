@@ -57,6 +57,16 @@ export const FLAGS = [
 ];
 
 const BY_ID = Object.fromEntries(FLAGS.map((f) => [f.id, f]));
+// The Features page is gone. Nothing in the app can toggle a flag any more, so
+// every `off` below is now a permanent decision rather than a switch someone
+// might flip — which is the point: those surfaces are hidden and staying
+// hidden. The route and the code behind each one are untouched, so bringing
+// one back is a one-word edit here rather than a rebuild.
+//
+// readOverrides still reads localStorage["pw-flags"], which is the only way
+// left in and is deliberately not advertised. It is for turning the dev panel
+// or the seeded content on while working, not a feature.
+
 const KEY = "pw-flags";
 
 // tokens.global and home.v2 are `everyone` because the surfaces they were

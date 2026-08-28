@@ -34,7 +34,6 @@ import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
 const SettingsPage = lazy(() => import("./components/SettingsPage.jsx"));
 const Profile = lazy(() => import("./components/Profile.jsx"));
-const Features = lazy(() => import("./components/Features.jsx"));
 const ProgressPage = lazy(() => import("./components/ProgressPage.jsx"));
 const BookmarksPage = lazy(() => import("./components/BookmarksPage.jsx"));
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
@@ -122,7 +121,6 @@ function AppInner() {
   // /admin says nothing at all to anyone who is not an admin.
   const notFound =
     route.name === "notfound"
-    || (route.name === "features" && !isAdmin)
     || (route.name === "modules" && !flags["module.interior"])
     || (route.name === "ready" && !flags["social.readyroom"])
     || (route.name === "logbook" && !flags["page.logbook"])
@@ -478,8 +476,6 @@ function AppInner() {
               setBookmarksMode("list");
               if (page === "licence" || page === "preferences" || page === "appearance") {
                 go(routePath.profile(page));
-              } else if (page === "features") {
-                go(routePath.features());
               } else {
                 goSettings(page);
               }
@@ -540,15 +536,11 @@ function AppInner() {
             onChangeTestStreakValue={setTestStreakValue}
           />
         </main>
-      ) : route.name === "features" && isAdmin ? (
-        <main className="content content-taxi content--profile">
-          <Features onBack={() => go(-1)} />
-        </main>
       ) : route.name === "profile" ? (
         <main className="content content-taxi content--profile">
           <Profile
             page={route.tab}
-            onNavigate={(t) => go(t === "features" ? routePath.features() : routePath.profile(t))}
+            onNavigate={(t) => go(routePath.profile(t))}
             onBack={() => go(routePath.home())}
             variant={variant}
             variantPin={variantPin}

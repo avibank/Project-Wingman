@@ -29,7 +29,6 @@ const LEGACY = {
   "/appearance": "/account/appearance",
   "/preferences": "/account/preferences",
   "/licence": "/account/licence",
-  "/features": "/admin",
 };
 
 const clean = (p) => (p || "/").split("?")[0].split("#")[0].replace(/\/+$/, "") || "/";
@@ -83,7 +82,6 @@ export function parseRoute(pathname) {
   // §6 — the profile's three tabs are real URLs, not a tab state. They sit
   // under /account now; settings should not sit at the root.
   if (parts[0] === "account" && PROFILE_TABS.includes(parts[1])) return { name: "profile", tab: parts[1] };
-  if (parts[0] === "admin") return { name: "features" };
 
   return { name: "notfound", pathname: clean(pathname) };
 }
@@ -104,6 +102,5 @@ export const path = {
   saved: () => "/saved",
   settings: (page) => (page && page !== "index" ? `/settings/${page}` : "/settings"),
   signin: () => "/signin",
-  features: () => "/admin",
   profile: (tab) => `/account/${PROFILE_TABS.includes(tab) ? tab : "licence"}`,
 };

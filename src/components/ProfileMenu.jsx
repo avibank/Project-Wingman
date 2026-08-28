@@ -37,13 +37,6 @@ const ICON = {
       <path d="M10 3.5a6.5 6.5 0 0 1 0 13Z" fill="currentColor" opacity=".55" />
     </svg>
   ),
-  features: (
-    <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M8 2.5v5.2L4.3 15a1.6 1.6 0 0 0 1.4 2.5h8.6a1.6 1.6 0 0 0 1.4-2.5L12 7.7V2.5"
-            stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M7 2.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  ),
   signout: (
     <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path d="M12 4H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h6M9 10h8m0 0-3-3m3 3-3 3"
@@ -147,15 +140,6 @@ function ProfileMenu({ onNavigate }) {
         <button role="menuitem" type="button" onClick={() => go("appearance")}>
           {ICON.look}<span className="mlabel">Appearance</span>
         </button>
-
-        {isAdmin && (
-          <>
-            <span className="sep" />
-            <button role="menuitem" type="button" onClick={() => go("features")}>
-              {ICON.features}<span className="mlabel">Features</span>
-            </button>
-          </>
-        )}
 
         {/* No Sign out here. The Licence tab carries it, with "On this
             device only" under it, which is the better place for the one
