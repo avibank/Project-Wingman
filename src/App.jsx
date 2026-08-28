@@ -24,7 +24,8 @@ import ModuleHub from "./components/ModuleHub.jsx";
 import ModuleScreen, { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
 import LessonPage from "./components/module/LessonPage.jsx";
 import QuizPage from "./components/module/QuizPage.jsx";
-import { moduleByCode, chaptersFor } from "./components/module/moduleContent.js";
+import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
+import DevPanel from "./components/DevPanel.jsx";
 import PdfPanel from "./components/PdfPanel.jsx";
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
@@ -131,6 +132,17 @@ function AppInner() {
   // after a laptop. Completion and playback are separate keys because they
   // are written at different moments: one when a lesson is finished, one
   // continuously while it plays.
+  // Fetched only when the flag is on, so the seeded content is a chunk nobody
+  // else downloads. Until it arrives the screens fall back to data.js rather
+  // than flashing empty.
+  const [testContent, setTestContent] = useState(null);
+  useEffect(() => {
+    if (!flags["content.test"]) { setTestContent(null); return; }
+    let live = true;
+    loadTestContent().then((c) => { if (live) setTestContent(c); });
+    return () => { live = false; };
+  }, [flags]);
+  const useTestContent = testContent;
   const moduleState = {
     done: progress.get("pw-lesson-done", {}),
     pos: progress.get("pw-lesson-pos", {}),
@@ -541,14 +553,14 @@ function AppInner() {
         </main>
       ) : flags["module.screen"] && route.name === "lesson" ? (
         (() => {
-          const chs = chaptersFor(activeModuleCode);
+          const chs = chaptersFor(activeModuleCode, useTestContent);
           const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
           const ls = ch?.lessons.find((l) => l.id === route.lessonId) || ch?.lessons[0];
           if (!ch || !ls) return <main className="content content-taxi content--full" />;
           return (
             <main className="content content-taxi content--full">
               <LessonPage
-                module={moduleByCode(activeModuleCode)} chapters={chs} chapter={ch} lesson={ls}
+                module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
                 state={moduleState} openQuestionId={route.question}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
@@ -561,13 +573,13 @@ function AppInner() {
         })()
       ) : flags["module.screen"] && route.name === "chapter" && route.tab === "quiz" ? (
         (() => {
-          const chs = chaptersFor(activeModuleCode);
+          const chs = chaptersFor(activeModuleCode, useTestContent);
           const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
           if (!ch) return <main className="content content-taxi content--full" />;
           return (
             <main className="content content-taxi content--full">
               <QuizPage
-                module={moduleByCode(activeModuleCode)} chapters={chs} chapter={ch} state={moduleState}
+                module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} state={moduleState}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
@@ -581,13 +593,13 @@ function AppInner() {
            built out. */
         <main className="content content-taxi content--full">
           <ModuleScreen
-            module={moduleByCode(activeModuleCode)}
-            chapters={chaptersFor(activeModuleCode)}
+            module={moduleByCode(activeModuleCode, useTestContent)}
+            chapters={chaptersFor(activeModuleCode, useTestContent)}
             state={moduleState}
             tab={route.tab === "pdf" ? "library" : route.tab === "people" ? "people" : "route"}
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
             onLibrarySub={(sub) => go(routePath.library(activeModuleCode, sub))}
-            papers={[]}
+            papers={papersFor(activeModuleCode, useTestContent)}
             people={{
               wingman: null, groups: [], questions: [],
               // Real or absent. The figures this row is meant to carry —
@@ -622,6 +634,21 @@ function AppInner() {
         </div>
       </div>
 
+    <DevPanel
+      isAdmin={isAdmin}
+      enabled={flags["dev.panel"]}
+      progress={progress}
+      modules={allModules(useTestContent)}
+      chapters={chaptersFor(activeModuleCode, useTestContent)}
+      moduleCode={activeModuleCode}
+      onGo={(what, code, lesson) => {
+        if (what === "module") go(routePath.module(code));
+        else if (what === "library") go(routePath.library(code));
+        else if (what === "people") go(routePath.people(code));
+        else if (what === "lesson" && lesson) go(routePath.lesson(code, lesson.chapter.id, lesson.id));
+        else if (what === "quiz" && lesson) go(routePath.chapter(code, lesson.chapter.id, "quiz"));
+      }}
+    />
     <RunwayLights scroller={deckRef} route={route.name} />
     </FirstFlightGate>
     </UsernameGate>

@@ -35,6 +35,15 @@ export const FLAGS = [
   { id: "chrome.patoast", label: "PA toast", note: "The cabin-crew announcement on theme change.", off: true },
   { id: "module.interior", label: "Module interior", note: "The hub, chapters, chapter view, quiz and comments.", off: true },
   { id: "module.screen", label: "Module screen (new)", note: "The rebuilt module screen: Lessons, Library, People. Replaces the hub while on.", off: true },
+  // The one switch that takes the dev panel out. Off for everyone including
+  // admins until it is turned on deliberately, and the panel additionally
+  // refuses to render for anyone who is not an admin — two locks, because this
+  // one writes progress and resets accounts.
+  { id: "dev.panel", label: "Dev panel", note: "Set completion, position and scores; reset a module or the whole account. Developer only.", off: true },
+  // Placeholder content, so the screens can be exercised before there is any
+  // real content. Off means the app reads whatever data.js holds. Turning it
+  // off is one of the two steps that takes the test material out.
+  { id: "content.test", label: "Test content", note: "Four modules of placeholder lessons, quizzes and papers. Not real content.", off: true },
   { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", off: true },
   { id: "page.logbook", label: "Logbook", note: "The logbook page.", off: true },
   { id: "page.bookmarks", label: "Saved", note: "Bookmarks and flashcards.", off: true },

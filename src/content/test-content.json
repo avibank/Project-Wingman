@@ -1,0 +1,1674 @@
+{
+  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question and paper here exists only so the module screen, the player, the quizzes and the papers can be exercised end to end. Replace all of it before launch.",
+  "videoSource": {
+    "what": "Google's public sample bucket. The standard set for player testing.",
+    "licence": "Blender Foundation open movies, CC-BY. Free to use.",
+    "warning": "Testing only. Swap for your own uploads before launch."
+  },
+  "modules": [
+    {
+      "id": "M1",
+      "name": "Module 1",
+      "chapters": [
+        {
+          "id": "M1.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M1.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                "seconds": 596,
+                "file": "BigBuckBunny.mp4"
+              },
+              "duration": "9:56"
+            },
+            {
+              "id": "M1.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+                "seconds": 60,
+                "file": "ForBiggerFun.mp4"
+              },
+              "duration": "1:00"
+            }
+          ],
+          "quiz": {
+            "id": "M1.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "How many minutes are there in a day?",
+                "options": [
+                  "720",
+                  "1,440",
+                  "2,160",
+                  "960"
+                ],
+                "correct": 1,
+                "explain": "24 hours x 60 minutes."
+              },
+              {
+                "question": "Water freezes at which temperature, at sea level?",
+                "options": [
+                  "0 C",
+                  "10 C",
+                  "-10 C",
+                  "32 C"
+                ],
+                "correct": 0,
+                "explain": "0 degrees Celsius, which is 32 Fahrenheit."
+              },
+              {
+                "question": "Which gas do people breathe out most of?",
+                "options": [
+                  "Oxygen",
+                  "Nitrogen",
+                  "Carbon dioxide",
+                  "Hydrogen"
+                ],
+                "correct": 2,
+                "explain": "Carbon dioxide is the main waste gas."
+              },
+              {
+                "question": "How many sides does a hexagon have?",
+                "options": [
+                  "five",
+                  "six",
+                  "seven",
+                  "eight"
+                ],
+                "correct": 1,
+                "explain": "Hex means six."
+              },
+              {
+                "question": "What is the largest planet in the solar system?",
+                "options": [
+                  "Saturn",
+                  "Neptune",
+                  "Jupiter",
+                  "Earth"
+                ],
+                "correct": 2,
+                "explain": "Jupiter, by a wide margin."
+              },
+              {
+                "question": "Sound travels fastest through which of these?",
+                "options": [
+                  "air",
+                  "water",
+                  "steel",
+                  "a vacuum"
+                ],
+                "correct": 2,
+                "explain": "Solids carry sound fastest; a vacuum carries none."
+              },
+              {
+                "question": "How many bones are in the adult human body?",
+                "options": [
+                  "186",
+                  "206",
+                  "226",
+                  "246"
+                ],
+                "correct": 1,
+                "explain": "206 in a typical adult."
+              },
+              {
+                "question": "What does a thermometer measure?",
+                "options": [
+                  "pressure",
+                  "humidity",
+                  "temperature",
+                  "weight"
+                ],
+                "correct": 2,
+                "explain": "Temperature."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M1.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M1.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                "seconds": 888,
+                "file": "Sintel.mp4"
+              },
+              "duration": "14:48"
+            },
+            {
+              "id": "M1.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
+                "seconds": 57,
+                "file": "WhatCarCanYouGetForAGrand.mp4"
+              },
+              "duration": "0:57"
+            }
+          ],
+          "quiz": {
+            "id": "M1.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "Which of these is a renewable source of energy?",
+                "options": [
+                  "coal",
+                  "wind",
+                  "diesel",
+                  "natural gas"
+                ],
+                "correct": 1,
+                "explain": "Wind replenishes; the others do not."
+              },
+              {
+                "question": "How many degrees are in a right angle?",
+                "options": [
+                  "45",
+                  "60",
+                  "90",
+                  "180"
+                ],
+                "correct": 2,
+                "explain": "90 degrees."
+              },
+              {
+                "question": "What is the chemical symbol for gold?",
+                "options": [
+                  "Go",
+                  "Gd",
+                  "Au",
+                  "Ag"
+                ],
+                "correct": 2,
+                "explain": "Au, from the Latin aurum."
+              },
+              {
+                "question": "Roughly what percentage of the Earth's surface is water?",
+                "options": [
+                  "50%",
+                  "61%",
+                  "71%",
+                  "81%"
+                ],
+                "correct": 2,
+                "explain": "About 71 percent."
+              },
+              {
+                "question": "Which of these is not a state of matter?",
+                "options": [
+                  "solid",
+                  "liquid",
+                  "gas",
+                  "mineral"
+                ],
+                "correct": 3,
+                "explain": "Mineral is a type of substance, not a state."
+              },
+              {
+                "question": "What force pulls objects toward the ground?",
+                "options": [
+                  "friction",
+                  "gravity",
+                  "magnetism",
+                  "tension"
+                ],
+                "correct": 1,
+                "explain": "Gravity."
+              },
+              {
+                "question": "How many hours are in a week?",
+                "options": [
+                  "148",
+                  "158",
+                  "168",
+                  "178"
+                ],
+                "correct": 2,
+                "explain": "7 x 24 = 168."
+              },
+              {
+                "question": "Light travels faster than sound. True or false?",
+                "options": [
+                  "true",
+                  "false",
+                  "only in water",
+                  "only at night"
+                ],
+                "correct": 0,
+                "explain": "Which is why you see lightning before you hear thunder."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M1.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M1.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                "seconds": 653,
+                "file": "ElephantsDream.mp4"
+              },
+              "duration": "10:53"
+            },
+            {
+              "id": "M1.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+                "seconds": 47,
+                "file": "WeAreGoingOnBullrun.mp4"
+              },
+              "duration": "0:47"
+            }
+          ],
+          "quiz": {
+            "id": "M1.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "What is the boiling point of water at sea level?",
+                "options": [
+                  "90 C",
+                  "100 C",
+                  "110 C",
+                  "120 C"
+                ],
+                "correct": 1,
+                "explain": "100 degrees Celsius."
+              },
+              {
+                "question": "Which organ pumps blood around the body?",
+                "options": [
+                  "liver",
+                  "lungs",
+                  "heart",
+                  "kidneys"
+                ],
+                "correct": 2,
+                "explain": "The heart."
+              },
+              {
+                "question": "How many millimetres are in a metre?",
+                "options": [
+                  "100",
+                  "1,000",
+                  "10,000",
+                  "10"
+                ],
+                "correct": 1,
+                "explain": "1,000 millimetres."
+              },
+              {
+                "question": "What is the most abundant gas in the air we breathe?",
+                "options": [
+                  "oxygen",
+                  "nitrogen",
+                  "argon",
+                  "carbon dioxide"
+                ],
+                "correct": 1,
+                "explain": "Nitrogen, at about 78 percent."
+              },
+              {
+                "question": "A circle has how many degrees?",
+                "options": [
+                  "180",
+                  "270",
+                  "360",
+                  "400"
+                ],
+                "correct": 2,
+                "explain": "360 degrees."
+              },
+              {
+                "question": "Which of these is a metal?",
+                "options": [
+                  "copper",
+                  "granite",
+                  "rubber",
+                  "glass"
+                ],
+                "correct": 0,
+                "explain": "Copper."
+              },
+              {
+                "question": "What does an anemometer measure?",
+                "options": [
+                  "rainfall",
+                  "wind speed",
+                  "pressure",
+                  "sunlight"
+                ],
+                "correct": 1,
+                "explain": "Wind speed."
+              },
+              {
+                "question": "How many seconds are in an hour?",
+                "options": [
+                  "1,800",
+                  "2,400",
+                  "3,600",
+                  "4,800"
+                ],
+                "correct": 2,
+                "explain": "60 x 60 = 3,600."
+              }
+            ]
+          }
+        }
+      ],
+      "papers": [
+        {
+          "id": "M1.P1",
+          "title": "Notes",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-1-page.pdf",
+          "pages": 1
+        },
+        {
+          "id": "M1.P2",
+          "title": "Worked examples",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-2-pages.pdf",
+          "pages": 2
+        },
+        {
+          "id": "M1.P3",
+          "title": "Reference sheet",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
+        },
+        {
+          "id": "M1.P4",
+          "title": "Handout",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-6-pages.pdf",
+          "pages": 6
+        },
+        {
+          "id": "M1.P5",
+          "title": "Summary",
+          "chapter": "Chapter 3",
+          "file": "papers/placeholder-9-pages.pdf",
+          "pages": 9
+        },
+        {
+          "id": "M1.P6",
+          "title": "Everything on one sheet",
+          "chapter": "Whole module",
+          "file": "papers/placeholder-14-pages.pdf",
+          "pages": 14
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "Module 2",
+      "chapters": [
+        {
+          "id": "M2.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M2.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                "seconds": 888,
+                "file": "Sintel.mp4"
+              },
+              "duration": "14:48"
+            },
+            {
+              "id": "M2.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+                "seconds": 35,
+                "file": "SubaruOutbackOnStreetAndDirt.mp4"
+              },
+              "duration": "0:35"
+            }
+          ],
+          "quiz": {
+            "id": "M2.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "What is the capital city of Japan?",
+                "options": [
+                  "Osaka",
+                  "Kyoto",
+                  "Tokyo",
+                  "Nagoya"
+                ],
+                "correct": 2,
+                "explain": "Tokyo."
+              },
+              {
+                "question": "Which is the longest river in the world?",
+                "options": [
+                  "Amazon",
+                  "Nile",
+                  "Yangtze",
+                  "Mississippi"
+                ],
+                "correct": 1,
+                "explain": "The Nile, on the most common measurement."
+              },
+              {
+                "question": "How many continents are there?",
+                "options": [
+                  "five",
+                  "six",
+                  "seven",
+                  "eight"
+                ],
+                "correct": 2,
+                "explain": "Seven, by the usual reckoning."
+              },
+              {
+                "question": "Which ocean is the largest?",
+                "options": [
+                  "Atlantic",
+                  "Indian",
+                  "Arctic",
+                  "Pacific"
+                ],
+                "correct": 3,
+                "explain": "The Pacific."
+              },
+              {
+                "question": "Mount Everest sits on the border between which two countries?",
+                "options": [
+                  "India and Nepal",
+                  "Nepal and China",
+                  "China and Bhutan",
+                  "India and Bhutan"
+                ],
+                "correct": 1,
+                "explain": "Nepal and China."
+              },
+              {
+                "question": "What is the smallest country in the world by area?",
+                "options": [
+                  "Monaco",
+                  "Malta",
+                  "Vatican City",
+                  "San Marino"
+                ],
+                "correct": 2,
+                "explain": "Vatican City."
+              },
+              {
+                "question": "Which desert is the largest hot desert?",
+                "options": [
+                  "Gobi",
+                  "Kalahari",
+                  "Sahara",
+                  "Arabian"
+                ],
+                "correct": 2,
+                "explain": "The Sahara."
+              },
+              {
+                "question": "Kuwait borders which two countries?",
+                "options": [
+                  "Iraq and Iran",
+                  "Iraq and Saudi Arabia",
+                  "Saudi Arabia and Qatar",
+                  "Iran and Bahrain"
+                ],
+                "correct": 1,
+                "explain": "Iraq to the north, Saudi Arabia to the south."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M2.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M2.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                "seconds": 653,
+                "file": "ElephantsDream.mp4"
+              },
+              "duration": "10:53"
+            },
+            {
+              "id": "M2.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+                "seconds": 31,
+                "file": "VolkswagenGTIReview.mp4"
+              },
+              "duration": "0:31"
+            }
+          ],
+          "quiz": {
+            "id": "M2.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "Which country has the most people?",
+                "options": [
+                  "China",
+                  "India",
+                  "United States",
+                  "Indonesia"
+                ],
+                "correct": 1,
+                "explain": "India, since 2023."
+              },
+              {
+                "question": "The Equator passes through which of these?",
+                "options": [
+                  "Egypt",
+                  "Kenya",
+                  "Morocco",
+                  "Turkey"
+                ],
+                "correct": 1,
+                "explain": "Kenya."
+              },
+              {
+                "question": "What is the capital of Australia?",
+                "options": [
+                  "Sydney",
+                  "Melbourne",
+                  "Canberra",
+                  "Perth"
+                ],
+                "correct": 2,
+                "explain": "Canberra, not Sydney."
+              },
+              {
+                "question": "Which sea is the saltiest?",
+                "options": [
+                  "Red Sea",
+                  "Dead Sea",
+                  "Black Sea",
+                  "Caspian Sea"
+                ],
+                "correct": 1,
+                "explain": "The Dead Sea."
+              },
+              {
+                "question": "How many time zones does Russia span?",
+                "options": [
+                  "seven",
+                  "nine",
+                  "eleven",
+                  "thirteen"
+                ],
+                "correct": 2,
+                "explain": "Eleven."
+              },
+              {
+                "question": "Which mountain range separates Europe from Asia?",
+                "options": [
+                  "Alps",
+                  "Urals",
+                  "Caucasus",
+                  "Carpathians"
+                ],
+                "correct": 1,
+                "explain": "The Urals."
+              },
+              {
+                "question": "What is the largest island in the world?",
+                "options": [
+                  "Borneo",
+                  "Madagascar",
+                  "Greenland",
+                  "New Guinea"
+                ],
+                "correct": 2,
+                "explain": "Greenland."
+              },
+              {
+                "question": "Which city is furthest north?",
+                "options": [
+                  "Oslo",
+                  "Helsinki",
+                  "Reykjavik",
+                  "Stockholm"
+                ],
+                "correct": 2,
+                "explain": "Reykjavik."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M2.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M2.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                "seconds": 734,
+                "file": "TearsOfSteel.mp4"
+              },
+              "duration": "12:14"
+            },
+            {
+              "id": "M2.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                "seconds": 15,
+                "file": "ForBiggerBlazes.mp4"
+              },
+              "duration": "0:15"
+            }
+          ],
+          "quiz": {
+            "id": "M2.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "The Suez Canal connects the Mediterranean to which sea?",
+                "options": [
+                  "Black Sea",
+                  "Red Sea",
+                  "Arabian Sea",
+                  "Caspian Sea"
+                ],
+                "correct": 1,
+                "explain": "The Red Sea."
+              },
+              {
+                "question": "Which country is both in Europe and Asia?",
+                "options": [
+                  "Greece",
+                  "Turkey",
+                  "Cyprus",
+                  "Bulgaria"
+                ],
+                "correct": 1,
+                "explain": "Turkey."
+              },
+              {
+                "question": "What is the deepest point in the ocean?",
+                "options": [
+                  "Puerto Rico Trench",
+                  "Java Trench",
+                  "Mariana Trench",
+                  "Tonga Trench"
+                ],
+                "correct": 2,
+                "explain": "The Mariana Trench."
+              },
+              {
+                "question": "Which African country has the largest population?",
+                "options": [
+                  "Egypt",
+                  "Ethiopia",
+                  "Nigeria",
+                  "South Africa"
+                ],
+                "correct": 2,
+                "explain": "Nigeria."
+              },
+              {
+                "question": "The Strait of Hormuz lies between Oman and which country?",
+                "options": [
+                  "Iran",
+                  "Iraq",
+                  "Qatar",
+                  "Yemen"
+                ],
+                "correct": 0,
+                "explain": "Iran."
+              },
+              {
+                "question": "Which is the highest waterfall in the world?",
+                "options": [
+                  "Niagara",
+                  "Victoria",
+                  "Angel Falls",
+                  "Iguazu"
+                ],
+                "correct": 2,
+                "explain": "Angel Falls in Venezuela."
+              },
+              {
+                "question": "What is the largest lake by surface area?",
+                "options": [
+                  "Lake Superior",
+                  "Caspian Sea",
+                  "Lake Victoria",
+                  "Lake Baikal"
+                ],
+                "correct": 1,
+                "explain": "The Caspian Sea, counted as a lake."
+              },
+              {
+                "question": "Which continent has no permanent residents?",
+                "options": [
+                  "Australia",
+                  "Antarctica",
+                  "South America",
+                  "Africa"
+                ],
+                "correct": 1,
+                "explain": "Antarctica."
+              }
+            ]
+          }
+        }
+      ],
+      "papers": [
+        {
+          "id": "M2.P1",
+          "title": "Notes",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-1-page.pdf",
+          "pages": 1
+        },
+        {
+          "id": "M2.P2",
+          "title": "Worked examples",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-2-pages.pdf",
+          "pages": 2
+        },
+        {
+          "id": "M2.P3",
+          "title": "Reference sheet",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
+        },
+        {
+          "id": "M2.P4",
+          "title": "Handout",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-6-pages.pdf",
+          "pages": 6
+        },
+        {
+          "id": "M2.P5",
+          "title": "Summary",
+          "chapter": "Chapter 3",
+          "file": "papers/placeholder-9-pages.pdf",
+          "pages": 9
+        },
+        {
+          "id": "M2.P6",
+          "title": "Everything on one sheet",
+          "chapter": "Whole module",
+          "file": "papers/placeholder-14-pages.pdf",
+          "pages": 14
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "Module 3",
+      "chapters": [
+        {
+          "id": "M3.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M3.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                "seconds": 653,
+                "file": "ElephantsDream.mp4"
+              },
+              "duration": "10:53"
+            },
+            {
+              "id": "M3.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+                "seconds": 15,
+                "file": "ForBiggerEscapes.mp4"
+              },
+              "duration": "0:15"
+            }
+          ],
+          "quiz": {
+            "id": "M3.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "What is 15 percent of 200?",
+                "options": [
+                  "20",
+                  "25",
+                  "30",
+                  "35"
+                ],
+                "correct": 2,
+                "explain": "30."
+              },
+              {
+                "question": "How many centimetres are in 2.5 metres?",
+                "options": [
+                  "25",
+                  "250",
+                  "2,500",
+                  "0.25"
+                ],
+                "correct": 1,
+                "explain": "250 centimetres."
+              },
+              {
+                "question": "What is 7 x 8?",
+                "options": [
+                  "48",
+                  "54",
+                  "56",
+                  "64"
+                ],
+                "correct": 2,
+                "explain": "56."
+              },
+              {
+                "question": "Half of three quarters is:",
+                "options": [
+                  "one quarter",
+                  "three eighths",
+                  "one half",
+                  "two thirds"
+                ],
+                "correct": 1,
+                "explain": "Three eighths."
+              },
+              {
+                "question": "A kilogram is how many grams?",
+                "options": [
+                  "100",
+                  "500",
+                  "1,000",
+                  "10,000"
+                ],
+                "correct": 2,
+                "explain": "1,000 grams."
+              },
+              {
+                "question": "What is the square root of 144?",
+                "options": [
+                  "11",
+                  "12",
+                  "13",
+                  "14"
+                ],
+                "correct": 1,
+                "explain": "12."
+              },
+              {
+                "question": "If something costs 80 and is reduced by 25 percent, what do you pay?",
+                "options": [
+                  "55",
+                  "60",
+                  "65",
+                  "70"
+                ],
+                "correct": 1,
+                "explain": "60."
+              },
+              {
+                "question": "How many minutes is 2.5 hours?",
+                "options": [
+                  "120",
+                  "135",
+                  "150",
+                  "165"
+                ],
+                "correct": 2,
+                "explain": "150 minutes."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M3.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M3.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                "seconds": 734,
+                "file": "TearsOfSteel.mp4"
+              },
+              "duration": "12:14"
+            },
+            {
+              "id": "M3.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+                "seconds": 15,
+                "file": "ForBiggerMeltdowns.mp4"
+              },
+              "duration": "0:15"
+            }
+          ],
+          "quiz": {
+            "id": "M3.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "What is 100 divided by 4?",
+                "options": [
+                  "20",
+                  "25",
+                  "30",
+                  "40"
+                ],
+                "correct": 1,
+                "explain": "25."
+              },
+              {
+                "question": "Which is heavier: a kilogram of steel or a kilogram of feathers?",
+                "options": [
+                  "steel",
+                  "feathers",
+                  "the same",
+                  "depends"
+                ],
+                "correct": 2,
+                "explain": "They weigh the same."
+              },
+              {
+                "question": "How many millilitres are in a litre?",
+                "options": [
+                  "10",
+                  "100",
+                  "1,000",
+                  "10,000"
+                ],
+                "correct": 2,
+                "explain": "1,000."
+              },
+              {
+                "question": "What is 3 squared plus 4 squared?",
+                "options": [
+                  "12",
+                  "25",
+                  "49",
+                  "31"
+                ],
+                "correct": 1,
+                "explain": "9 + 16 = 25."
+              },
+              {
+                "question": "Twenty percent of a number is 14. What is the number?",
+                "options": [
+                  "56",
+                  "64",
+                  "70",
+                  "84"
+                ],
+                "correct": 2,
+                "explain": "70."
+              },
+              {
+                "question": "How many days are in a leap year?",
+                "options": [
+                  "364",
+                  "365",
+                  "366",
+                  "367"
+                ],
+                "correct": 2,
+                "explain": "366."
+              },
+              {
+                "question": "What is one third of 90?",
+                "options": [
+                  "20",
+                  "30",
+                  "33",
+                  "45"
+                ],
+                "correct": 1,
+                "explain": "30."
+              },
+              {
+                "question": "A right-angled triangle has one angle of 90 and one of 35. The third is:",
+                "options": [
+                  "45",
+                  "50",
+                  "55",
+                  "65"
+                ],
+                "correct": 2,
+                "explain": "180 - 90 - 35 = 55."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M3.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M3.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                "seconds": 596,
+                "file": "BigBuckBunny.mp4"
+              },
+              "duration": "9:56"
+            },
+            {
+              "id": "M3.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+                "seconds": 60,
+                "file": "ForBiggerFun.mp4"
+              },
+              "duration": "1:00"
+            }
+          ],
+          "quiz": {
+            "id": "M3.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "What is 12 x 12?",
+                "options": [
+                  "124",
+                  "132",
+                  "144",
+                  "156"
+                ],
+                "correct": 2,
+                "explain": "144."
+              },
+              {
+                "question": "How many inches are in a foot?",
+                "options": [
+                  "10",
+                  "12",
+                  "14",
+                  "16"
+                ],
+                "correct": 1,
+                "explain": "12."
+              },
+              {
+                "question": "What is 0.25 as a fraction?",
+                "options": [
+                  "one half",
+                  "one third",
+                  "one quarter",
+                  "one fifth"
+                ],
+                "correct": 2,
+                "explain": "One quarter."
+              },
+              {
+                "question": "If a car travels 60 km in 45 minutes, its speed is:",
+                "options": [
+                  "70 km/h",
+                  "75 km/h",
+                  "80 km/h",
+                  "85 km/h"
+                ],
+                "correct": 2,
+                "explain": "80 km/h."
+              },
+              {
+                "question": "What is 5 percent of 1,000?",
+                "options": [
+                  "5",
+                  "50",
+                  "100",
+                  "500"
+                ],
+                "correct": 1,
+                "explain": "50."
+              },
+              {
+                "question": "How many degrees in the angles of a triangle, added up?",
+                "options": [
+                  "90",
+                  "180",
+                  "270",
+                  "360"
+                ],
+                "correct": 1,
+                "explain": "180 degrees."
+              },
+              {
+                "question": "What comes next: 2, 4, 8, 16, ...",
+                "options": [
+                  "20",
+                  "24",
+                  "32",
+                  "64"
+                ],
+                "correct": 2,
+                "explain": "Doubling each time, so 32."
+              },
+              {
+                "question": "What is 1,000 divided by 8?",
+                "options": [
+                  "115",
+                  "120",
+                  "125",
+                  "130"
+                ],
+                "correct": 2,
+                "explain": "125."
+              }
+            ]
+          }
+        }
+      ],
+      "papers": [
+        {
+          "id": "M3.P1",
+          "title": "Notes",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-1-page.pdf",
+          "pages": 1
+        },
+        {
+          "id": "M3.P2",
+          "title": "Worked examples",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-2-pages.pdf",
+          "pages": 2
+        },
+        {
+          "id": "M3.P3",
+          "title": "Reference sheet",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
+        },
+        {
+          "id": "M3.P4",
+          "title": "Handout",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-6-pages.pdf",
+          "pages": 6
+        },
+        {
+          "id": "M3.P5",
+          "title": "Summary",
+          "chapter": "Chapter 3",
+          "file": "papers/placeholder-9-pages.pdf",
+          "pages": 9
+        },
+        {
+          "id": "M3.P6",
+          "title": "Everything on one sheet",
+          "chapter": "Whole module",
+          "file": "papers/placeholder-14-pages.pdf",
+          "pages": 14
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "name": "Module 4",
+      "chapters": [
+        {
+          "id": "M4.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M4.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                "seconds": 734,
+                "file": "TearsOfSteel.mp4"
+              },
+              "duration": "12:14"
+            },
+            {
+              "id": "M4.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
+                "seconds": 57,
+                "file": "WhatCarCanYouGetForAGrand.mp4"
+              },
+              "duration": "0:57"
+            }
+          ],
+          "quiz": {
+            "id": "M4.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "How many strings does a standard guitar have?",
+                "options": [
+                  "four",
+                  "five",
+                  "six",
+                  "seven"
+                ],
+                "correct": 2,
+                "explain": "Six."
+              },
+              {
+                "question": "Which planet is known as the red planet?",
+                "options": [
+                  "Venus",
+                  "Mars",
+                  "Mercury",
+                  "Saturn"
+                ],
+                "correct": 1,
+                "explain": "Mars."
+              },
+              {
+                "question": "How many players are on a football team on the pitch?",
+                "options": [
+                  "nine",
+                  "ten",
+                  "eleven",
+                  "twelve"
+                ],
+                "correct": 2,
+                "explain": "Eleven."
+              },
+              {
+                "question": "What colour do you get mixing blue and yellow?",
+                "options": [
+                  "orange",
+                  "green",
+                  "purple",
+                  "brown"
+                ],
+                "correct": 1,
+                "explain": "Green."
+              },
+              {
+                "question": "How many letters are in the English alphabet?",
+                "options": [
+                  "24",
+                  "25",
+                  "26",
+                  "27"
+                ],
+                "correct": 2,
+                "explain": "26."
+              },
+              {
+                "question": "Which animal is the fastest on land?",
+                "options": [
+                  "lion",
+                  "cheetah",
+                  "horse",
+                  "greyhound"
+                ],
+                "correct": 1,
+                "explain": "The cheetah."
+              },
+              {
+                "question": "How many days are in February in a normal year?",
+                "options": [
+                  "27",
+                  "28",
+                  "29",
+                  "30"
+                ],
+                "correct": 1,
+                "explain": "28."
+              },
+              {
+                "question": "What is the largest mammal?",
+                "options": [
+                  "elephant",
+                  "blue whale",
+                  "giraffe",
+                  "hippopotamus"
+                ],
+                "correct": 1,
+                "explain": "The blue whale."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M4.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M4.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                "seconds": 596,
+                "file": "BigBuckBunny.mp4"
+              },
+              "duration": "9:56"
+            },
+            {
+              "id": "M4.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+                "seconds": 47,
+                "file": "WeAreGoingOnBullrun.mp4"
+              },
+              "duration": "0:47"
+            }
+          ],
+          "quiz": {
+            "id": "M4.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "How many wheels does a standard bicycle have?",
+                "options": [
+                  "one",
+                  "two",
+                  "three",
+                  "four"
+                ],
+                "correct": 1,
+                "explain": "Two."
+              },
+              {
+                "question": "What is the freezing point of water in Fahrenheit?",
+                "options": [
+                  "0",
+                  "32",
+                  "64",
+                  "100"
+                ],
+                "correct": 1,
+                "explain": "32 Fahrenheit."
+              },
+              {
+                "question": "Which of these is a primary colour in paint?",
+                "options": [
+                  "green",
+                  "orange",
+                  "red",
+                  "purple"
+                ],
+                "correct": 2,
+                "explain": "Red."
+              },
+              {
+                "question": "How many hours are in two days?",
+                "options": [
+                  "36",
+                  "42",
+                  "48",
+                  "54"
+                ],
+                "correct": 2,
+                "explain": "48."
+              },
+              {
+                "question": "What do bees make?",
+                "options": [
+                  "silk",
+                  "honey",
+                  "wax only",
+                  "milk"
+                ],
+                "correct": 1,
+                "explain": "Honey, and wax."
+              },
+              {
+                "question": "How many continents start with the letter A?",
+                "options": [
+                  "two",
+                  "three",
+                  "four",
+                  "five"
+                ],
+                "correct": 1,
+                "explain": "Africa, Asia, Antarctica."
+              },
+              {
+                "question": "What is the tallest animal?",
+                "options": [
+                  "elephant",
+                  "giraffe",
+                  "camel",
+                  "ostrich"
+                ],
+                "correct": 1,
+                "explain": "The giraffe."
+              },
+              {
+                "question": "How many sides does a triangle have?",
+                "options": [
+                  "two",
+                  "three",
+                  "four",
+                  "five"
+                ],
+                "correct": 1,
+                "explain": "Three."
+              }
+            ]
+          }
+        },
+        {
+          "id": "M4.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M4.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                "seconds": 888,
+                "file": "Sintel.mp4"
+              },
+              "duration": "14:48"
+            },
+            {
+              "id": "M4.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+                "seconds": 35,
+                "file": "SubaruOutbackOnStreetAndDirt.mp4"
+              },
+              "duration": "0:35"
+            }
+          ],
+          "quiz": {
+            "id": "M4.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "Which shape has all sides equal and all angles 90 degrees?",
+                "options": [
+                  "rectangle",
+                  "rhombus",
+                  "square",
+                  "trapezium"
+                ],
+                "correct": 2,
+                "explain": "A square."
+              },
+              {
+                "question": "How many months have 31 days?",
+                "options": [
+                  "five",
+                  "six",
+                  "seven",
+                  "eight"
+                ],
+                "correct": 2,
+                "explain": "Seven."
+              },
+              {
+                "question": "What is the main ingredient in bread?",
+                "options": [
+                  "rice",
+                  "flour",
+                  "corn",
+                  "oats"
+                ],
+                "correct": 1,
+                "explain": "Flour."
+              },
+              {
+                "question": "How many minutes in three quarters of an hour?",
+                "options": [
+                  "30",
+                  "40",
+                  "45",
+                  "50"
+                ],
+                "correct": 2,
+                "explain": "45."
+              },
+              {
+                "question": "Which of these floats in water?",
+                "options": [
+                  "iron",
+                  "wood",
+                  "lead",
+                  "granite"
+                ],
+                "correct": 1,
+                "explain": "Wood, usually."
+              },
+              {
+                "question": "How many zeros are in one million?",
+                "options": [
+                  "four",
+                  "five",
+                  "six",
+                  "seven"
+                ],
+                "correct": 2,
+                "explain": "Six."
+              },
+              {
+                "question": "What do you call a baby cat?",
+                "options": [
+                  "cub",
+                  "kitten",
+                  "calf",
+                  "foal"
+                ],
+                "correct": 1,
+                "explain": "A kitten."
+              },
+              {
+                "question": "How many colours are in a rainbow, traditionally?",
+                "options": [
+                  "five",
+                  "six",
+                  "seven",
+                  "eight"
+                ],
+                "correct": 2,
+                "explain": "Seven."
+              }
+            ]
+          }
+        }
+      ],
+      "papers": [
+        {
+          "id": "M4.P1",
+          "title": "Notes",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-1-page.pdf",
+          "pages": 1
+        },
+        {
+          "id": "M4.P2",
+          "title": "Worked examples",
+          "chapter": "Chapter 1",
+          "file": "papers/placeholder-2-pages.pdf",
+          "pages": 2
+        },
+        {
+          "id": "M4.P3",
+          "title": "Reference sheet",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
+        },
+        {
+          "id": "M4.P4",
+          "title": "Handout",
+          "chapter": "Chapter 2",
+          "file": "papers/placeholder-6-pages.pdf",
+          "pages": 6
+        },
+        {
+          "id": "M4.P5",
+          "title": "Summary",
+          "chapter": "Chapter 3",
+          "file": "papers/placeholder-9-pages.pdf",
+          "pages": 9
+        },
+        {
+          "id": "M4.P6",
+          "title": "Everything on one sheet",
+          "chapter": "Whole module",
+          "file": "papers/placeholder-14-pages.pdf",
+          "pages": 14
+        }
+      ]
+    }
+  ]
+}
