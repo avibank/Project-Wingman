@@ -1,40 +1,41 @@
 import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
-import NotFound from "./components/NotFound.jsx";
+const NotFound = lazy(() => import("./components/NotFound.jsx"));
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
 import { finishVars, ruledLayer } from "./lib/finishEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
 import { ChevronRight, Lock, Plane } from "lucide-react";
-import ChaptersPanel from "./components/ChaptersPanel.jsx";
+const ChaptersPanel = lazy(() => import("./components/ChaptersPanel.jsx"));
 import Home from "./components/Home.jsx";
-import ReadyRoom from "./components/ReadyRoom.jsx";
-import ModulesPage from "./components/ModulesPage.jsx";
+const ReadyRoom = lazy(() => import("./components/ReadyRoom.jsx"));
+const ModulesPage = lazy(() => import("./components/ModulesPage.jsx"));
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
-import ModuleHub from "./components/ModuleHub.jsx";
-import ModuleScreen, { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
-import LessonPage from "./components/module/LessonPage.jsx";
-import QuizPage from "./components/module/QuizPage.jsx";
+const ModuleHub = lazy(() => import("./components/ModuleHub.jsx"));
+import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
+const ModuleScreen = lazy(() => import("./components/module/ModuleScreen.jsx"));
+const LessonPage = lazy(() => import("./components/module/LessonPage.jsx"));
+const QuizPage = lazy(() => import("./components/module/QuizPage.jsx"));
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
-import DevPanel from "./components/DevPanel.jsx";
-import PdfPanel from "./components/PdfPanel.jsx";
+const DevPanel = lazy(() => import("./components/DevPanel.jsx"));
+const PdfPanel = lazy(() => import("./components/PdfPanel.jsx"));
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import StreakMenu from "./components/StreakMenu.jsx";
-import SettingsPage from "./components/SettingsPage.jsx";
-import Profile from "./components/Profile.jsx";
-import Features from "./components/Features.jsx";
-import ProgressPage from "./components/ProgressPage.jsx";
-import BookmarksPage from "./components/BookmarksPage.jsx";
-import AuthPage from "./components/AuthPage.jsx";
+const SettingsPage = lazy(() => import("./components/SettingsPage.jsx"));
+const Profile = lazy(() => import("./components/Profile.jsx"));
+const Features = lazy(() => import("./components/Features.jsx"));
+const ProgressPage = lazy(() => import("./components/ProgressPage.jsx"));
+const BookmarksPage = lazy(() => import("./components/BookmarksPage.jsx"));
+const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
@@ -53,6 +54,30 @@ export default function App() {
     </ClerkProvider>
   );
 }
+// Loading, as one shape rather than a spinner. It carries the page's own
+// gutters and rhythm so the layout does not jump when the real thing arrives.
+function PageSkeleton() {
+  return (
+    <main className="content content-taxi" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading</span>
+      <div className="skel skel-title" />
+      <div className="skel skel-line" />
+      <div className="skel skel-line short" />
+      <div className="skel skel-block" />
+      <style>{`
+        .skel { background: var(--raised); border-radius: 7px; opacity: .55;
+          animation: skelpulse 1.4s ease-in-out infinite; }
+        .skel-title { height: 38px; width: min(58%, 320px); margin: 26px 0 18px; }
+        .skel-line { height: 14px; width: min(76%, 520px); margin-bottom: 11px; }
+        .skel-line.short { width: min(48%, 340px); }
+        .skel-block { height: 210px; margin-top: 26px; }
+        @keyframes skelpulse { 0%,100% { opacity: .55 } 50% { opacity: .3 } }
+        @media (prefers-reduced-motion: reduce) { .skel { animation: none } }
+      `}</style>
+    </main>
+  );
+}
+
 function AppInner() {
   // The one scroller on the page. Declared first because go() closes over it.
   const deckRef = useRef(null);
@@ -448,6 +473,11 @@ function AppInner() {
           overflow container focusable on its own, so Page Down and the arrow
           keys would do nothing and it would be an unlabelled tab stop. */}
       <div className="deck" ref={deckRef} tabIndex={0} role="region" aria-label="Page content">
+      {/* A skeleton in the shape of the page, never a spinner on a blank
+          screen. Routes other than the first one are code-split, so this is
+          what stands in while a chunk arrives — and on a fast connection it
+          is never seen at all. */}
+      <Suspense fallback={<PageSkeleton />}>
         <div className="deck-inner route-fade" key={route.name}>
 
       {flags["nav.root"] && (
@@ -642,6 +672,7 @@ function AppInner() {
         </main>
       )}
         </div>
+      </Suspense>
       </div>
 
     <DevPanel
