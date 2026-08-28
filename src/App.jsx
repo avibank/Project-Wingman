@@ -392,24 +392,28 @@ function AppInner() {
     requestAnimationFrame(() => { if (deckRef.current) deckRef.current.scrollTop = scrollPositions.current[nextTab] || 0; });
   };
   const goToModule = (moduleCode, targetTab = "chapters") => {
+    // Validated against the code it was handed, not against data.js.
+    //
+    // This used to look the module up in data.js and return silently if it
+    // was missing or not "active" — while the Flight Deck lists whichever
+    // content the app is running on. Two lists, and any disagreement between
+    // them turned a tap into nothing at all, with no error and nothing on
+    // screen to explain it. A dead tap is the worst failure a nav path has,
+    // because it looks like the app is simply broken.
+    if (!moduleCode) return;
     const m = MODULES.find((x) => x.code === moduleCode);
-    if (!m || m.status !== "active") return;
-    if (turbulence) {
-      triggerHaptic();
-      if (!reduceMotion) {
-      }
-    }
-    setPreferredModuleCode(m.code);
-    go(targetTab === "pdf" ? routePath.library(m.code) : routePath.module(m.code));
+    if (m && m.status && m.status !== "active") return;   // deliberately locked
+    if (turbulence) triggerHaptic();
+    setPreferredModuleCode(moduleCode);
+    go(targetTab === "pdf" ? routePath.library(moduleCode) : routePath.module(moduleCode));
   };
   const enterModule = (m) => goToModule(m.code, "chapters");
   // Deep-link into one specific chapter: hand the id to ChaptersPanel directly
   // so it opens that chapter instead of the restored pw-last-chapter.
   const goToChapter = (moduleCode, chapterId) => {
-    const m = MODULES.find((x) => x.code === moduleCode);
-    if (!m) return;
-    setPreferredModuleCode(m.code);
-    go(routePath.chapter(m.code, chapterId));
+    if (!moduleCode || !chapterId) return;
+    setPreferredModuleCode(moduleCode);
+    go(routePath.chapter(moduleCode, chapterId));
   };
   return (
     <div

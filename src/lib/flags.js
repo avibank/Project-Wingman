@@ -109,9 +109,21 @@ export function resolveFlags(isAdmin, overrides = {}) {
   const out = {};
   for (const f of FLAGS) {
     const overridden = Object.prototype.hasOwnProperty.call(overrides, f.id);
-    out[f.id] = overridden && isAdmin && !f.locked
-      ? !!overrides[f.id]
-      : flagDefault(f.id, isAdmin);
+
+    // An override can no longer turn OFF something that ships to everyone.
+    //
+    // This is what "I still cannot tap modules" was: the Features page used to
+    // write these into localStorage, the page is gone, and a stored `false`
+    // from back then outlived it with nothing left in the app to clear it. One
+    // admin browser could sit on a stale switch and see a feature that shipped
+    // to everyone else as missing — and there was no way to find out why from
+    // inside the app.
+    //
+    // Overrides still work in the other direction, which is the only direction
+    // that is useful now: turning a hidden surface ON while working.
+    const canOverride = overridden && isAdmin && !f.locked && !(f.everyone && !overrides[f.id]);
+
+    out[f.id] = canOverride ? !!overrides[f.id] : flagDefault(f.id, isAdmin);
   }
   return out;
 }
