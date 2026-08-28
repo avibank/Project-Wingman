@@ -42,6 +42,8 @@ export default function LessonPage({
 
       <div className="lesson">
         <div>
+          {/* The player owns its own controls now — the separate scrub that
+              used to sit under the frame has gone with them. */}
           <Player lesson={lesson} position={pos} marks={questions}
                   onSeek={scrubTo}
                   onProgress={(p) => { setPos(p); onSeekSaved?.(lesson.id, p); }}

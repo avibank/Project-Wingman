@@ -303,3 +303,76 @@
 .mscreen .qwhy{border-top:1px solid var(--hair);margin-top:28px;padding-top:22px;max-width:56ch}
 .mscreen .qverdict{font-size:var(--fs-lg,19px);font-weight:700;margin:0 0 8px}
 .mscreen .qexplain{font-size:var(--fs-md,17.5px);color:var(--t2);line-height:1.6;margin:0 0 22px}
+
+/* ── the player, in the shape everybody knows ──────────────────────────
+   Controls sit ON the picture and fade while it plays; the bar thickens
+   under the pointer; buffered sits behind played; time reads now / total.
+   The one departure from the familiar is the colour: played is the livery
+   accent, not red, because red here means a danger state. ── */
+.mscreen .player.yt{position:relative;background:#000;cursor:default;display:block}
+/* The source centred .pbig with place-items on a grid .player; this one is not
+   a grid, so the button centres itself. */
+.mscreen .player.yt .pbig{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin:0}
+.mscreen .player.yt .pspin{position:absolute;top:50%;left:50%;margin:-22px 0 0 -22px}
+.mscreen .player.yt video{width:100%;height:100%;object-fit:contain;cursor:pointer;display:block}
+.mscreen .player.yt:focus-visible{outline:2px solid var(--active);outline-offset:3px}
+.mscreen .player.yt.full{border-radius:0}
+
+/* Everything overlaid fades together, and the cursor goes with it. */
+.mscreen .player.yt .ytbar{position:absolute;left:0;right:0;bottom:0;padding:0 12px 8px;
+  background:linear-gradient(transparent,rgba(0,0,0,.72));
+  opacity:1;transition:opacity .2s ease;pointer-events:auto}
+.mscreen .player.yt.hushed .ytbar{opacity:0;pointer-events:none}
+.mscreen .player.yt.hushed video{cursor:none}
+
+.mscreen .yttrack{position:relative;height:14px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.mscreen .yttrack::before{content:"";position:absolute;left:0;right:0;height:3px;border-radius:3px;
+  background:rgba(255,255,255,.28);transition:height .12s ease}
+.mscreen .yttrack:hover::before{height:5px}
+.mscreen .yttrack i{position:absolute;left:0;height:3px;border-radius:3px;transition:height .12s ease}
+.mscreen .yttrack:hover i{height:5px}
+.mscreen .ytbuf{background:rgba(255,255,255,.42)}
+.mscreen .ytplayed{background:var(--active)}
+.mscreen .ytdot{position:absolute;width:13px;height:13px;border-radius:999px;background:var(--active);
+  transform:translateX(-50%) scale(0);transition:transform .12s ease}
+.mscreen .yttrack:hover .ytdot{transform:translateX(-50%) scale(1)}
+/* A question's moment. Distinct from the bar so it reads as a landmark. */
+.mscreen .yttrack s{position:absolute;width:3px;height:11px;background:var(--t1);opacity:.75;
+  border-radius:1px;transform:translateX(-50%);text-decoration:none}
+.mscreen .yttip{position:absolute;bottom:20px;transform:translateX(-50%);background:rgba(0,0,0,.85);
+  color:#fff;font-family:var(--font-mono);font-size:12px;padding:3px 7px;border-radius:4px;
+  pointer-events:none;white-space:nowrap}
+
+.mscreen .ytrow{display:flex;align-items:center;gap:2px;padding-top:2px}
+.mscreen .ytrow button{background:none;border:0;color:#fff;cursor:pointer;padding:9px;border-radius:6px;
+  display:grid;place-items:center;min-width:40px;min-height:40px;opacity:.92}
+.mscreen .ytrow button:hover{opacity:1;background:rgba(255,255,255,.12)}
+.mscreen .ytrow button.on{color:var(--active)}
+.mscreen .ytrow svg{width:19px;height:19px}
+.mscreen .ytspacer{flex:1}
+.mscreen .yttime{color:#fff;font-family:var(--font-mono);font-size:13px;padding:0 10px;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.mscreen .yttime i{opacity:.6;font-style:normal;padding:0 2px}
+
+/* Volume opens on hover, the way it does everywhere else. */
+.mscreen .ytvol{display:flex;align-items:center}
+.mscreen .ytvol input{width:0;opacity:0;transition:width .18s ease,opacity .18s ease;
+  accent-color:var(--active);cursor:pointer;margin:0}
+.mscreen .ytvol:hover input,.mscreen .ytvol input:focus-visible{width:74px;opacity:1;margin:0 6px 0 2px}
+
+.mscreen .ytmenu{position:relative}
+.mscreen .ytpop{position:absolute;right:0;bottom:46px;background:rgba(18,18,18,.96);border-radius:10px;
+  padding:6px;min-width:132px;display:grid;gap:1px}
+.mscreen .ytpoph{color:rgba(255,255,255,.55);font-family:var(--font-mono);font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;margin:4px 10px 5px}
+.mscreen .ytpop button{justify-content:flex-start;width:100%;color:#fff;font-family:inherit;
+  font-size:14px;padding:8px 10px;min-height:38px;display:flex}
+.mscreen .ytpop button.on{color:var(--active)}
+
+.mscreen .pspin{position:absolute;width:44px;height:44px;border-radius:999px;
+  border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:ytspin .8s linear infinite}
+@keyframes ytspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.mscreen .pspin{animation-duration:2.4s}}
+
+/* The old scrub under the frame is gone; the bar lives on the picture now. */
+.mscreen .player.yt ~ .scrub{display:none}
