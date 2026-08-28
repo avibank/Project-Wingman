@@ -14,7 +14,12 @@ import { join } from "node:path";
 
 const DIST = "dist";
 const NEEDLES = [
+  // Every host the seeded content has ever pointed at. The first one is dead
+  // now (403 on every file) but it stays: a check that forgets an old marker
+  // stops catching content that was never updated.
   "commondatastorage.googleapis.com",
+  "archive.org/download",
+  "cc0-videos",
   "placeholder-1-page",
   "PLACEHOLDER",
   "TEST CONTENT",

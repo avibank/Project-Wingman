@@ -1,10 +1,6 @@
 {
   "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question and paper here exists only so the module screen, the player, the quizzes and the papers can be exercised end to end. Replace all of it before launch.",
-  "videoSource": {
-    "what": "Google's public sample bucket. The standard set for player testing.",
-    "licence": "Blender Foundation open movies, CC-BY. Free to use.",
-    "warning": "Testing only. Swap for your own uploads before launch."
-  },
+  "videoSource": "Blender open movies (CC-BY) via archive.org, plus one CC0 clip from MDN. The previous gtv-videos-bucket URLs now answer 403 and played nowhere.",
   "modules": [
     {
       "id": "M1",
@@ -19,9 +15,9 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
                 "seconds": 596,
-                "file": "BigBuckBunny.mp4"
+                "file": "big_buck_bunny_720p_surround.mp4"
               },
               "duration": "9:56"
             },
@@ -30,11 +26,11 @@
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-                "seconds": 60,
-                "file": "ForBiggerFun.mp4"
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 7,
+                "file": "flower.mp4"
               },
-              "duration": "1:00"
+              "duration": "0:07"
             }
           ],
           "quiz": {
@@ -141,9 +137,9 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
                 "seconds": 888,
-                "file": "Sintel.mp4"
+                "file": "sintel-2048-surround.mp4"
               },
               "duration": "14:48"
             },
@@ -152,11 +148,11 @@
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
-                "seconds": 57,
-                "file": "WhatCarCanYouGetForAGrand.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
               },
-              "duration": "0:57"
+              "duration": "10:54"
             }
           ],
           "quiz": {
@@ -263,22 +259,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                "seconds": 653,
-                "file": "ElephantsDream.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
               },
-              "duration": "10:53"
+              "duration": "10:54"
             },
             {
               "id": "M1.03.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-                "seconds": 47,
-                "file": "WeAreGoingOnBullrun.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "0:47"
+              "duration": "14:48"
             }
           ],
           "quiz": {
@@ -435,22 +431,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-                "seconds": 888,
-                "file": "Sintel.mp4"
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "14:48"
+              "duration": "9:56"
             },
             {
               "id": "M2.01.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-                "seconds": 35,
-                "file": "SubaruOutbackOnStreetAndDirt.mp4"
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 7,
+                "file": "flower.mp4"
               },
-              "duration": "0:35"
+              "duration": "0:07"
             }
           ],
           "quiz": {
@@ -557,22 +553,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                "seconds": 653,
-                "file": "ElephantsDream.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
               },
-              "duration": "10:53"
+              "duration": "14:48"
             },
             {
               "id": "M2.02.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
-                "seconds": 31,
-                "file": "VolkswagenGTIReview.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
               },
-              "duration": "0:31"
+              "duration": "10:54"
             }
           ],
           "quiz": {
@@ -679,22 +675,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-                "seconds": 734,
-                "file": "TearsOfSteel.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
               },
-              "duration": "12:14"
+              "duration": "10:54"
             },
             {
               "id": "M2.03.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-                "seconds": 15,
-                "file": "ForBiggerBlazes.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "0:15"
+              "duration": "14:48"
             }
           ],
           "quiz": {
@@ -851,22 +847,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                "seconds": 653,
-                "file": "ElephantsDream.mp4"
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "10:53"
+              "duration": "9:56"
             },
             {
               "id": "M3.01.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-                "seconds": 15,
-                "file": "ForBiggerEscapes.mp4"
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 7,
+                "file": "flower.mp4"
               },
-              "duration": "0:15"
+              "duration": "0:07"
             }
           ],
           "quiz": {
@@ -973,22 +969,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-                "seconds": 734,
-                "file": "TearsOfSteel.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
               },
-              "duration": "12:14"
+              "duration": "14:48"
             },
             {
               "id": "M3.02.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-                "seconds": 15,
-                "file": "ForBiggerMeltdowns.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
               },
-              "duration": "0:15"
+              "duration": "10:54"
             }
           ],
           "quiz": {
@@ -1095,22 +1091,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                "seconds": 596,
-                "file": "BigBuckBunny.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
               },
-              "duration": "9:56"
+              "duration": "10:54"
             },
             {
               "id": "M3.03.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-                "seconds": 60,
-                "file": "ForBiggerFun.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "1:00"
+              "duration": "14:48"
             }
           ],
           "quiz": {
@@ -1267,22 +1263,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-                "seconds": 734,
-                "file": "TearsOfSteel.mp4"
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "12:14"
+              "duration": "9:56"
             },
             {
               "id": "M4.01.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
-                "seconds": 57,
-                "file": "WhatCarCanYouGetForAGrand.mp4"
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 7,
+                "file": "flower.mp4"
               },
-              "duration": "0:57"
+              "duration": "0:07"
             }
           ],
           "quiz": {
@@ -1389,22 +1385,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                "seconds": 596,
-                "file": "BigBuckBunny.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
               },
-              "duration": "9:56"
+              "duration": "14:48"
             },
             {
               "id": "M4.02.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-                "seconds": 47,
-                "file": "WeAreGoingOnBullrun.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
               },
-              "duration": "0:47"
+              "duration": "10:54"
             }
           ],
           "quiz": {
@@ -1511,22 +1507,22 @@
               "name": "Lesson 1",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-                "seconds": 888,
-                "file": "Sintel.mp4"
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
               },
-              "duration": "14:48"
+              "duration": "10:54"
             },
             {
               "id": "M4.03.2",
               "name": "Lesson 2",
               "video": {
                 "kind": "mp4",
-                "src": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-                "seconds": 35,
-                "file": "SubaruOutbackOnStreetAndDirt.mp4"
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "0:35"
+              "duration": "14:48"
             }
           ],
           "quiz": {
