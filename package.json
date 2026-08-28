@@ -28,7 +28,8 @@
     "check:analytics": "node scripts/check-analytics.mjs",
     "check:jsx": "node scripts/check-jsx-refs.mjs",
     "check:states": "node scripts/check-states.mjs",
-    "check:logbook": "node scripts/check-logbook.mjs"
+    "check:logbook": "node scripts/check-logbook.mjs",
+    "verify": "npm run build && node scripts/verify.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
