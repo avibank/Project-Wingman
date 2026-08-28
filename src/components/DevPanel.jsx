@@ -48,7 +48,7 @@ const DEVP_CSS = `
 .devp-confirm p{font-size:12.5px;color:var(--t2);margin:0;line-height:1.45}
 `;
 
-export default function DevPanel({ isAdmin, enabled, progress, modules, chapters, moduleCode, onGo }) {
+export default function DevPanel({ isAdmin, enabled, progress, modules, chapters, moduleCode, onGo, onRecordLesson, onRecordQuiz }) {
   const [open, setOpen] = useState(false);
   const [lessonId, setLessonId] = useState("");
   const [confirming, setConfirming] = useState(null);
@@ -61,10 +61,17 @@ export default function DevPanel({ isAdmin, enabled, progress, modules, chapters
   const lessons = chapters.flatMap((c) => c.lessons.map((l) => ({ ...l, chapter: c })));
   const lesson = lessons.find((l) => l.id === lessonId) || lessons[0];
 
-  const setDone = (id, on) => progress.set(KEYS.done, { ...done, [id]: on });
+  // Marking done here writes the logbook entry too. A dev control that skips
+  // it would produce flags with no history, which is exactly the divergence
+  // the single completion rule exists to prevent.
+  const setDone = (id, on, chapterId) => {
+    if (on && onRecordLesson) return onRecordLesson(id, chapterId);
+    progress.set(KEYS.done, { ...done, [id]: on });
+  };
   const setPos = (id, pct) => progress.set(KEYS.pos, { ...pos, [id]: { pct } });
   const setQuiz = (chId, correct, total) =>
-    progress.set(KEYS.quiz, { ...quiz, [chId]: { correct, total } });
+    onRecordQuiz ? onRecordQuiz(chId, correct, total)
+                 : progress.set(KEYS.quiz, { ...quiz, [chId]: { correct, total } });
 
   // Scoped to the module in view. Everything else on the account survives.
   const resetModule = () => {
@@ -97,7 +104,7 @@ export default function DevPanel({ isAdmin, enabled, progress, modules, chapters
           {lesson && (
             <>
               <div className="devp-row">
-                <button type="button" onClick={() => setDone(lesson.id, !done[lesson.id])}>
+                <button type="button" onClick={() => setDone(lesson.id, !done[lesson.id], lesson.chapter.id)}>
                   {done[lesson.id] ? "Mark not done" : "Mark done"}
                 </button>
               </div>

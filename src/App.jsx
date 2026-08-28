@@ -42,6 +42,7 @@ import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
+import { LOGBOOK_KEY, lessonDone, quizTaken } from "./lib/logbookRecord.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -175,6 +176,22 @@ function AppInner() {
     done: progress.get("pw-lesson-done", {}),
     pos: progress.get("pw-lesson-pos", {}),
     quiz: progress.get("pw-quiz-scores", {}),
+  };
+
+  // Completion and quiz results write TWO things: the flag the screens count
+  // from, and an append-only entry in the logbook. Nothing reads the logbook
+  // yet — that is the point. A record of what someone did and when is nearly
+  // free while it is happening and impossible to reconstruct afterwards, so
+  // it is captured now rather than when there is a page for it.
+  const recordLessonDone = (lessonId, chapterId) => {
+    progress.set("pw-lesson-done", { ...moduleState.done, [lessonId]: true });
+    progress.set(LOGBOOK_KEY,
+      lessonDone(progress.get(LOGBOOK_KEY, []), lessonId, chapterId, activeModuleCode));
+  };
+  const recordQuiz = (chapterId, correct, total) => {
+    progress.set("pw-quiz-scores", { ...moduleState.quiz, [chapterId]: { correct, total } });
+    progress.set(LOGBOOK_KEY,
+      quizTaken(progress.get(LOGBOOK_KEY, []), chapterId, activeModuleCode, correct, total));
   };
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fontSize, setFontSize] = useState("medium");
@@ -613,8 +630,7 @@ function AppInner() {
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
                 onSeekSaved={(lessonId, pct) =>
                   progress.set("pw-lesson-pos", { ...moduleState.pos, [lessonId]: { pct } })}
-                onComplete={(lessonId) =>
-                  progress.set("pw-lesson-done", { ...moduleState.done, [lessonId]: true })}
+                onComplete={(lessonId) => recordLessonDone(lessonId, ch.id)}
               />
             </main>
           );
@@ -691,6 +707,8 @@ function AppInner() {
       modules={allModules(useTestContent)}
       chapters={chaptersFor(activeModuleCode, useTestContent)}
       moduleCode={activeModuleCode}
+      onRecordLesson={recordLessonDone}
+      onRecordQuiz={recordQuiz}
       onGo={(what, code, lesson) => {
         if (what === "module") go(routePath.module(code));
         else if (what === "library") go(routePath.library(code));
