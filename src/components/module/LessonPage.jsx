@@ -1,66 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Play, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ArrowRight } from "lucide-react";
+import Player from "./Player.jsx";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
 import "./module.css";
 
-// The player is the only rounded object on the screen. It is genuinely a piece
-// of media, which is why it is allowed a corner while nothing else is.
-function Player({ lesson, pos, onScrub, marks, onPlay }) {
-  const dur = lesson.duration || 0;
-  const trackRef = useRef(null);
-
-  const seek = (e) => {
-    const el = trackRef.current;
-    if (!el || !dur) return;
-    const r = el.getBoundingClientRect();
-    onScrub(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
-  };
-
-  return (
-    <>
-      <div className="player">
-        {/* No source yet is a state, not a failure. It says so rather than
-            showing a broken frame or a spinner that never resolves. */}
-        {lesson.video ? (
-          <button type="button" className="pbig" onClick={onPlay} aria-label={`Play ${lesson.title}`}>
-            <Play aria-hidden="true" />
-          </button>
-        ) : (
-          <p className="ptag">Not recorded yet.</p>
-        )}
-        {lesson.video && <p className="ptag">{lesson.code}</p>}
-      </div>
-
-      <div className="scrub">
-        <span className="tc">{mmss(dur * pos)}</span>
-        <div className="track" ref={trackRef} onClick={seek}
-             role="slider" tabIndex={0} aria-label="Position"
-             aria-valuemin={0} aria-valuemax={Math.round(dur)}
-             aria-valuenow={Math.round(dur * pos)}
-             onKeyDown={(e) => {
-               if (!dur) return;
-               const step = e.key === "ArrowRight" ? 5 : e.key === "ArrowLeft" ? -5 : 0;
-               if (!step) return;
-               e.preventDefault();
-               onScrub(Math.min(1, Math.max(0, pos + step / dur)));
-             }}>
-          <i style={{ width: `${pos * 100}%` }} />
-          {/* A mark at every question's moment, so you can see where people
-              got stuck before you get stuck. */}
-          {dur > 0 && marks.map((m) => (
-            <b key={m.id} style={{ left: `${(m.at / dur) * 100}%` }} title={`Question at ${mmss(m.at)}`} />
-          ))}
-        </div>
-        <span className="tc">{mmss(dur)}</span>
-      </div>
-    </>
-  );
-}
-
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, questions = [],
-  openQuestionId, onBack, onOpenLesson, onOpenQuiz, onSeekSaved,
+  openQuestionId, onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete,
 }) {
   const [pos, setPos] = useState(state?.pos?.[lesson.id]?.pct || 0);
   const [openQ, setOpenQ] = useState(openQuestionId || null);
@@ -95,8 +42,10 @@ export default function LessonPage({
 
       <div className="lesson">
         <div>
-          <Player lesson={lesson} pos={pos} onScrub={scrubTo}
-                  marks={questions} onPlay={() => {}} />
+          <Player lesson={lesson} position={pos} marks={questions}
+                  onSeek={scrubTo}
+                  onProgress={(p) => setPos(p)}
+                  onComplete={() => onComplete?.(lesson.id)} />
 
           <div className="lbody">
             <p className="cap">What this covers</p>

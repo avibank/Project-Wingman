@@ -599,6 +599,9 @@ function AppInner() {
           if (!ch || !ls) return <main className="content content-taxi content--full" />;
           return (
             <main className="content content-taxi content--full">
+              {/* onComplete is the 90% half of the completion rule; the manual
+                  half writes the same flag. One rule, because the lights, the
+                  chapter state, the counts and the Flight Deck all read it. */}
               <LessonPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
                 state={moduleState} openQuestionId={route.question}
@@ -607,6 +610,8 @@ function AppInner() {
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
                 onSeekSaved={(lessonId, pct) =>
                   progress.set("pw-lesson-pos", { ...moduleState.pos, [lessonId]: { pct } })}
+                onComplete={(lessonId) =>
+                  progress.set("pw-lesson-done", { ...moduleState.done, [lessonId]: true })}
               />
             </main>
           );

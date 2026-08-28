@@ -65,3 +65,23 @@ console.log(`settings: ${fails.length ? "" : "every path applies before it persi
 for (const f of fails) console.log("  " + f);
 console.log(fails.length ? `SETTINGS DRIFT: ${fails.length}` : "MATCH");
 if (fails.length) process.exitCode = 1;
+
+// ---- the completion rule, since every number on every screen hangs off it
+{
+  const { isDone, DONE_AT } = await import("../src/components/module/lessonState.js");
+  const cases = [
+    [0.0, false, "nothing watched"],
+    [0.5, false, "halfway"],
+    [0.89, false, "just under the rule"],
+    [0.9, true, "exactly on it"],
+    [0.95, true, "past it"],
+  ];
+  for (const [pct, want, what] of cases) {
+    const got = isDone({ pos: { L: { pct } }, done: {} }, "L");
+    if (got !== want) console.log(`  FAIL  completion at ${pct} (${what}) returned ${got}`);
+  }
+  // The manual half must write the same answer as the automatic one.
+  if (!isDone({ done: { L: true }, pos: {} }, "L")) console.log("  FAIL  marking done by hand did not count as done");
+  if (DONE_AT !== 0.9) console.log(`  FAIL  the rule is ${DONE_AT}, not 0.9`);
+  console.log(`settings: completion checked either side of ${DONE_AT}, and by hand`);
+}
