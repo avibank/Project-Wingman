@@ -572,9 +572,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 caps={[
                   average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`,
                   bag > 0 ? "Flight bag" : "Nothing saved yet",
-                  activeCount.full
-                    ? `Checklist · ${activeCount.full} of ${activeCount.total}`
-                    : `Checklist · ${activeCount.total} to fly`,
+                  "Checklist",
                   hobbs ? "Hobbs" : "Your first hour",
                   contactCap,
                 ]}
@@ -658,11 +656,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                   <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : ""}`} />
                 ))}
               </div>
-              <div className="cap">
-                {activeCount.full
-                  ? `Checklist · ${activeCount.full} of ${activeCount.total}`
-                  : `Checklist · ${activeCount.total} to fly`}
-              </div>
+              <div className="cap">Checklist</div>
             </div>
 
             <div className="cel">
