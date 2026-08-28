@@ -1,0 +1,53 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Wingman — Day, as built.  CSS deltas only.
+   Everything here is additive except where marked REPLACE.
+   Copy values verbatim.
+   ══════════════════════════════════════════════════════════════════════ */
+
+
+/* ── 1 · The light rig needs two blend modes, not one ──────────────────
+   Night screens both layers onto a dark ground. Day screens the key
+   (a warm bloom) and MULTIPLIES the fill (livery shade). Everything
+   else about the rig — inset, blur, saturate, the 26s/41s drift with
+   the fill reversed — is unchanged from Night.
+   REPLACE the two existing mix-blend-mode declarations.            */
+
+.deck { --blend: screen; }                 /* Night sets both to screen  */
+
+.lite::before { mix-blend-mode: var(--blend); }
+.lite::after  { mix-blend-mode: var(--blend2, var(--blend)); }
+
+/* JS sets --blend2 to `multiply` in Day, `screen` at Night. */
+
+
+/* ── 2 · Tooth — grain reading as paper fibre ──────────────────────────
+   The standard .grain layer is overlay-blended isotropic noise. On a
+   light ground that reads as digital noise. Tooth multiplies a
+   directional, desaturated turbulence instead: same layer, different
+   material.  --grain rises to .20 in Day (from .09).               */
+
+.deck[data-tooth="1"] .grain{mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92 0.58' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23t)' opacity='.62'/%3E%3C/svg%3E")}
+
+
+/* ── 3 · Sheen ─────────────────────────────────────────────────────────
+   A specular band, as if the surface has a slight gloss and the light
+   is above it. It goes into each surface's own background-image, NOT
+   an overlay and NOT a pseudo-element — that way it paints under the
+   type and can never wash out text or intercept a pointer.
+
+   These rules must come AFTER the existing .card / .mod / .cel rules,
+   because those set `background:` shorthand, which resets
+   background-image.                                                 */
+
+.card, .mod, .cel { background-image: var(--sheen-img, none); }
+
+/* Do NOT add .crew here. .crew is a grid whose 1px gaps show its own
+   background through; a background-image on it paints the gap lines. */
+
+
+/* ── 4 · Cast shadow ───────────────────────────────────────────────────
+   No CSS change. --drop is already consumed by .card, .mod, .crew,
+   .adi, .menu and .pop. Only its value changes (see the JS file).
+   Confirm every raised surface reads box-shadow:var(--drop) and none
+   of them hard-code a shadow.                                       */

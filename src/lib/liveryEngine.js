@@ -182,7 +182,7 @@ export const CREAM = {
 // with it so the three levels keep their step.
 export const DAY = {
   g: ".966 .010 85",            // overridden by the stock below
-  p: ".992 .005 85", rz: ".936 .013 85", l: ".876 .014 85",
+  p: ".992 .005 85/.78", rz: ".936 .013 85/.87", l: ".876 .014 85/.94",
   t3: ".505 .009 85", t2: ".430 .010 85", t1: ".250 .012 85",
 };
 
@@ -200,7 +200,7 @@ export const STOCK = {
 // was 2.7%, which is the whole reason it looked flat.
 export function dayGround(id) {
   const [chroma, hue] = STOCK[id] || STOCK.sky;
-  return { g: `.930 ${chroma} ${hue}`, rz: `.944 .013 ${hue}`, l: `.842 .016 ${hue}` };
+  return { g: `.930 ${chroma} ${hue}`, rz: `.944 .013 ${hue}/.92`, l: `.842 .016 ${hue}/.94` };
 }
 
 export const dayKey = () =>

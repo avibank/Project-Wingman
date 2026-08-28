@@ -10,14 +10,15 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "check:content": "node scripts/check-content.mjs",
-    "check": "npm run lint && npm run check:content && npm run check:schema && npm run check:livery && npm run build",
+    "check": "npm run lint && npm run check:content && npm run check:schema && npm run check:livery && npm run check:day && npm run build",
     "build:sql": "node scripts/build-migration-bundle.mjs && node scripts/build-setup-sql.mjs",
     "check:livery": "node scripts/check-livery.mjs",
     "check:backend": "node scripts/check-backend.mjs",
     "check:schema": "node scripts/check-schema.mjs",
     "sql": "node scripts/run-sql.mjs",
     "clerk": "node scripts/clerk.mjs",
-    "setenv": "node scripts/set-env.mjs"
+    "setenv": "node scripts/set-env.mjs",
+    "check:day": "node scripts/check-day.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

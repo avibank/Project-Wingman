@@ -6,6 +6,10 @@ import reactHooks from "eslint-plugin-react-hooks";
 // left behind, and `vite build` has no reason to care. no-undef catches that
 // class of bug for free, before it ships.
 export default [
+  // design/ holds the handoff's source-of-truth files, kept verbatim so the
+  // check scripts can diff against them. They are reference, not source: some
+  // carry CSS inside a .js file, and none of them are built or imported.
+  { ignores: ["design/**"] },
   {
     files: ["src/**/*.{js,jsx}", "scripts/**/*.mjs"],
     languageOptions: {

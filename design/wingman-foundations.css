@@ -1,0 +1,123 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Wingman — foundations.
+
+   Everything in this file exists so a decision is made ONCE and never
+   revisited. No component sets a font size, a breakpoint, a touch target
+   or a motion duration directly — they all read from here.
+
+   If you find yourself typing a px value in a component, it belongs in
+   this file instead.
+   ══════════════════════════════════════════════════════════════════════ */
+
+
+/* ── 1 · Type scale ────────────────────────────────────────────────────
+   One ratio, one multiplier. `--sc` is the only thing that changes when
+   the reader picks a size or when the viewport changes — every size below
+   follows it, so nothing can drift out of proportion.
+
+   --sc is set by:  device default (see §2)  →  overridden by the reader's
+   Instrument scale setting, which is stored PER DEVICE, not per account.
+   A phone and a laptop want different sizes; forcing one number across
+   both is the bug people report as "it keeps changing".            */
+
+:root{
+  --sc: 1;                                  /* the only knob */
+
+  --fs-display : calc(2.625rem * var(--sc)); /* 42 — page title            */
+  --fs-xl      : calc(1.6875rem * var(--sc));/* 27 — chapter               */
+  --fs-lg      : calc(1.1875rem * var(--sc));/* 19 — section heading       */
+  --fs-md      : calc(1.09375rem * var(--sc));/*17.5 — row title, body      */
+  --fs-base    : calc(1rem * var(--sc));     /* 16 — controls              */
+  --fs-sm      : calc(0.875rem * var(--sc)); /* 14 — meta, secondary       */
+  --fs-xs      : calc(0.8125rem * var(--sc));/* 13 — smallest allowed      */
+
+  /* 13px is the floor. Nothing a reader needs to read goes below it —
+     the mono captions used to be 9.5px and that is not readable for an
+     instructor on a laptop. Decorative-only text may go smaller; if it
+     is smaller, it must not carry information.                      */
+
+  --lh-tight: 1.28;
+  --lh-body : 1.62;
+  --measure : 58ch;        /* running text never exceeds this */
+}
+
+/* ── 2 · Density by device, chosen once ────────────────────────────────
+   Small screens default to the compact end of the scale. This is a
+   DEFAULT, not a lock — the reader's own choice always wins and is
+   remembered for that device.                                      */
+
+@media (max-width: 767px){ :root{ --sc: 0.9375; } }   /* phone   — 15/16  */
+@media (min-width: 768px) and (max-width: 1119px){ :root{ --sc: 1; } }
+@media (min-width: 1120px){ :root{ --sc: 1; } }
+
+:root[data-scale="small"] { --sc: 0.9375 !important; }
+:root[data-scale="medium"]{ --sc: 1 !important; }
+:root[data-scale="large"] { --sc: 1.125 !important; }
+
+
+/* ── 3 · Breakpoints, named ────────────────────────────────────────────
+   Three, and only three. Every responsive rule in the app uses one of
+   these numbers. A fourth breakpoint invented inside a component is how
+   layouts start disagreeing with each other.
+
+     phone    < 768      one column, stacked, drill-down navigation
+     tablet   768–1119   one column, wider gutters
+     desktop  >= 1120    side-by-side panes allowed
+
+   CSS cannot use variables in media queries, so these live as a comment
+   and as constants in JS (see `bp` in the brief). Do not add others. */
+
+
+/* ── 4 · Space and target sizes ────────────────────────────────────────  */
+
+:root{
+  --gut   : 20px;                 /* phone gutter  */
+  --wrap  : 1010px;               /* content measure inside a full-bleed surface */
+  --pad   : max(var(--gut), calc((100% - var(--wrap))/2));
+  --tap   : 44px;                 /* minimum touch target, never smaller */
+  --hair  : color-mix(in oklab, var(--line) 62%, transparent);
+}
+@media (min-width: 768px){ :root{ --gut: 30px; } }
+
+/* Every interactive element must clear --tap in both directions. If a
+   control looks smaller than that, pad it out with a transparent hit
+   area rather than shrinking the target.                            */
+.hit{ position:relative; }
+.hit::after{ content:""; position:absolute; inset:50% 50%;
+  width:var(--tap); height:var(--tap); transform:translate(-50%,-50%); }
+
+
+/* ── 5 · Motion, in one place ──────────────────────────────────────────
+   Three durations. A component that wants a fourth is usually wrong. */
+
+:root{
+  --t-fast  : 120ms;   /* state change on a control        */
+  --t-base  : 240ms;   /* a fold, a pane, a transition     */
+  --t-slow  : 420ms;   /* something arriving on the page   */
+  --ease    : cubic-bezier(.3,.7,.3,1);
+}
+@media (prefers-reduced-motion: reduce){
+  :root{ --t-fast:0ms; --t-base:0ms; --t-slow:0ms; }
+  *,*::before,*::after{ animation-duration:.001ms !important;
+    animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+/* Setting the tokens to 0 means every component respects reduced motion
+   for free. The blanket rule underneath catches anything that hard-codes
+   a duration anyway. Ambient drift (the light rig, the aurora) is
+   handled separately — it stops, it does not snap. */
+
+
+/* ── 6 · Focus, once ───────────────────────────────────────────────────  */
+:focus-visible{ outline:2px solid var(--active); outline-offset:2px; border-radius:6px; }
+:focus:not(:focus-visible){ outline:none; }
+
+
+/* ── 7 · Two rules that prevent a whole class of bug ───────────────────  */
+
+/* Nothing scrolls the page sideways. Ever. Wide things scroll inside
+   their own container.                                              */
+html,body{ overflow-x:hidden; }
+.scroll-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+/* Long words and codes break instead of pushing the layout open.     */
+.rn,.cname,.hn,.libn,.title{ overflow-wrap:anywhere; }
