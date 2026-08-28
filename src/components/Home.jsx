@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
-import { HOBBS_KEY, hobbsHours } from "../lib/hobbs.js";
+import { HOBBS_KEY, hobbsSeconds, hobbsClock } from "../lib/hobbs.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
@@ -161,13 +161,10 @@ const DECK_CSS = `
   background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 5px 13px; color: var(--t3); }
 .deck .ladder b { display: block; font-size: calc(19px * var(--scale, 1)); font-weight: 500; color: var(--on); }
 .deck .bagglyph { width: calc(32px * var(--scale, 1)); height: calc(30px * var(--scale, 1)); color: var(--t3); }
-.deck .lamps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: calc(88px * var(--scale, 1)); }
+.deck .lamps { display: grid; grid-template-columns: repeat(var(--legs, 3), 1fr); gap: 5px; width: calc(88px * var(--scale, 1)); }
 .deck .lamp { height: calc(17px * var(--scale, 1)); border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
 .deck .lamp.on { background: var(--on); border-color: transparent;
   box-shadow: 0 0 var(--emit) color-mix(in oklab, var(--on), transparent 45%); }
-/* Started but not finished. Filled from the bottom rather than lit: the fill
-   is structural, and glow stays reserved for presence and the current leg. */
-.deck .lamp.half { background: linear-gradient(to top, var(--on) 0 50%, var(--raised) 50%); }
 .deck .hobbs { font-family: var(--font-mono); font-size: calc(19px * var(--scale, 1)); letter-spacing: .09em; background: var(--raised);
   border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; color: var(--t2);
   font-variant-numeric: tabular-nums; }
@@ -375,7 +372,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // module, counted by the meter in lib/hobbs.js while a module is open, not
   // inferred from how much video has played. Reading it off video position
   // showed nothing for an hour spent on the papers, which is most of the work.
-  const hobbs = hobbsHours(progress.get(HOBBS_KEY, {}), active.code);
+  const hobbs = hobbsClock(hobbsSeconds(progress.get(HOBBS_KEY, {}), active.code));
 
 
   // §5.3 — "If a feature behind a preset doesn't exist in the backend yet,
@@ -569,10 +566,8 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 ring={average}
                 bag={bag > 0 ? bag : 0}
                 boxes={activeCount.full}
-                boxesHalf={activeCount.half}
-                hobbs={hobbs >= 0.1
-                  ? `${String(Math.floor(hobbs)).padStart(3, "0")}.${Math.floor((hobbs % 1) * 10)}`
-                  : "--.-"}
+                boxCount={activeSegments.length}
+                hobbs={hobbs ? `${hobbs.h}:${hobbs.m}` : "--:--"}
                 blips={contacts.length > 0}
                 caps={[
                   average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`,
@@ -580,7 +575,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                   activeCount.full
                     ? `Checklist · ${activeCount.full} of ${activeCount.total}`
                     : `Checklist · ${activeCount.total} to fly`,
-                  hobbs >= 0.1 ? "Hobbs" : "Your first hour",
+                  hobbs ? "Hobbs" : "Your first hour",
                   contactCap,
                 ]}
               />
@@ -658,9 +653,9 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             </div>
 
             <div className="cel">
-              <div className="lamps">
+              <div className="lamps" style={{ "--legs": activeSegments.length }}>
                 {activeSegments.map((s) => (
-                  <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : s.fill === SEGMENT.HALF ? "half" : ""}`} />
+                  <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : ""}`} />
                 ))}
               </div>
               <div className="cap">
@@ -672,11 +667,11 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
             <div className="cel">
               <div className="hobbs">
-                {hobbs >= 0.1
-                  ? <>{String(Math.floor(hobbs)).padStart(3, "0")}<i>.{Math.floor((hobbs % 1) * 10)}</i></>
-                  : <>--<i>.-</i></>}
+                {hobbs
+                  ? <>{hobbs.h}<i>:{hobbs.m}</i></>
+                  : <>--<i>:--</i></>}
               </div>
-              <div className="cap">{hobbs >= 0.1 ? "Hobbs" : "Your first hour"}</div>
+              <div className="cap">{hobbs ? "Hobbs" : "Your first hour"}</div>
             </div>
 
             {/* Social's only foothold in the academic half. */}

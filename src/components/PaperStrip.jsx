@@ -17,7 +17,7 @@ const PAPER_CSS = `
 .app.smooth-air .papersweep { animation: none; }
 `;
 
-function PaperStrip({ ring, bag, boxes, boxesHalf = 0, hobbs, blips, caps, ballRef }) {
+function PaperStrip({ ring, bag, boxes, boxCount = 5, hobbs, blips, caps, ballRef }) {
   return (
     <>
       <div className="cel">
@@ -60,22 +60,25 @@ function PaperStrip({ ring, bag, boxes, boxesHalf = 0, hobbs, blips, caps, ballR
 
       <div className="cel">
         <svg width="96" height="86" viewBox="0 0 96 86" aria-hidden="true">
-          {Array.from({ length: 5 }, (_, i) => {
-            const x = 8 + (i % 3) * 28, y = 32 + Math.floor(i / 3) * 22;
-            return (
-              <g key={i}>
-                <rect x={x} y={y} width="20" height="15" rx="1" className="inkh" />
-                {/* Ticked when the chapter is finished, struck through once
-                    when it is merely under way — the same distinction the lit
-                    instruments draw, in the vocabulary of a paper checklist. */}
-                {i < boxes
-                  ? <path d={`M${x + 4} ${y + 8} l4 4 l8 -9`} className="ink" />
-                  : i < boxes + boxesHalf
-                    ? <path d={`M${x + 5} ${y + 11} l8 -7`} className="ink" />
+          {/* One box per chapter in the module, however many it has — this was
+              five boxes regardless, so a four-chapter module drew a line that
+              could never be finished. A box is ticked when its chapter is
+              flown, and not before. */}
+          {(() => {
+            const per = Math.min(boxCount, 4);
+            const w = Math.floor((84 - 6 * (per - 1)) / per);
+            return Array.from({ length: boxCount }, (_, i) => {
+              const x = 6 + (i % per) * (w + 6), y = 32 + Math.floor(i / per) * 22;
+              return (
+                <g key={i}>
+                  <rect x={x} y={y} width={w} height="15" rx="1" className="inkh" />
+                  {i < boxes
+                    ? <path d={`M${x + w * 0.22} ${y + 8} l${w * 0.18} 4 l${w * 0.42} -9`} className="ink" />
                     : null}
-              </g>
-            );
-          })}
+                </g>
+              );
+            });
+          })()}
         </svg>
         <div className="cap">{caps[2]}</div>
       </div>

@@ -69,6 +69,15 @@ export function useHobbsMeter(moduleCode, progress) {
   }, [moduleCode]);
 }
 
-// What the meter reads for one module, in the unit it is named for.
-export const hobbsHours = (store, moduleCode) =>
-  ((store || {})[moduleCode] || 0) / 3600;
+// What the meter has counted for one module.
+export const hobbsSeconds = (store, moduleCode) => (store || {})[moduleCode] || 0;
+
+// Hours and minutes, not tenths of an hour. The dial used to read in the
+// aviation convention, so twenty minutes of work showed as 000.0 and the
+// instrument looked broken to the person who had just done the work. It only
+// stays blank below a minute, where there is genuinely nothing to show yet.
+export const hobbsClock = (seconds) => {
+  if (!seconds || seconds < 60) return null;
+  const mins = Math.floor(seconds / 60);
+  return { h: String(Math.floor(mins / 60)), m: String(mins % 60).padStart(2, "0") };
+};
