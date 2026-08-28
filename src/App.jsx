@@ -44,6 +44,7 @@ import { loadJSON, saveJSON } from "./lib/storage.js";
 import { LOGBOOK_KEY, lessonDone, quizTaken } from "./lib/logbookRecord.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
+import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
@@ -180,6 +181,24 @@ function AppInner() {
     done: progress.get("pw-lesson-done", {}),
     pos: progress.get("pw-lesson-pos", {}),
     quiz: progress.get("pw-quiz-scores", {}),
+    run: progress.get("pw-quiz-run", {}),
+  };
+
+  // The one record of where you actually were, overwritten by whichever
+  // surface you are on. The deck's Resume reads it instead of guessing at the
+  // chapter that contains the work.
+  const recordPlace = (place) =>
+    progress.set(PLACE_KEY,
+      pushPlace(progress.get(PLACE_KEY, null), { ...place, moduleCode: activeModuleCode }));
+
+  // Resume goes to the address the place names. A paper has no in-app address
+  // — it is the browser's own PDF viewer in another tab — so that one reopens
+  // the file rather than routing.
+  const resumePlace = (place) => {
+    const target = placeTarget(place, routePath);
+    if (!target) return;
+    if (target.file) window.open(`/${target.file.replace(/^\//, "")}`, "_blank", "noopener");
+    else go(target.href);
   };
 
   // Completion and quiz results write TWO things: the flag the screens count
@@ -610,6 +629,7 @@ function AppInner() {
             content={useTestContent}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
+            onResumePlace={resumePlace}
             onOpenReady={() => go(routePath.ready())}
             onOpenChannel={(code) => go(routePath.ready(code))}
           />
@@ -631,8 +651,10 @@ function AppInner() {
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
-                onSeekSaved={(lessonId, pct) =>
-                  progress.set("pw-lesson-pos", { ...moduleState.pos, [lessonId]: { pct } })}
+                onSeekSaved={(lessonId, pct) => {
+                  progress.set("pw-lesson-pos", { ...moduleState.pos, [lessonId]: { pct } });
+                  recordPlace({ kind: "lesson", chapterId: ch.id, lessonId, pct });
+                }}
                 onComplete={(lessonId) => recordLessonDone(lessonId, ch.id)}
                 done={Boolean(moduleState.done[ls.id]) || (moduleState.pos[ls.id]?.pct ?? 0) >= 0.9}
                 onMarkDone={(lessonId, on) => {
@@ -654,7 +676,23 @@ function AppInner() {
             <main className="content content-taxi content--full">
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} state={moduleState}
-                onScore={(chapterId, correct, total) => recordQuiz(chapterId, correct, total)}
+                autoStart={route.resume}
+                onScore={(chapterId, correct, total) => {
+                  // Finishing clears the run: a finished quiz is a score, not
+                  // a place to go back to.
+                  const { [chapterId]: _done, ...rest } = moduleState.run;
+                  progress.set("pw-quiz-run", rest);
+                  recordQuiz(chapterId, correct, total);
+                }}
+                onRun={(chapterId, r) => {
+                  if (r) {
+                    progress.set("pw-quiz-run", { ...moduleState.run, [chapterId]: r });
+                    recordPlace({ kind: "quiz", chapterId, at: r.at, total: r.total });
+                  } else {
+                    const { [chapterId]: _cleared, ...rest } = moduleState.run;
+                    progress.set("pw-quiz-run", rest);
+                  }
+                }}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
@@ -682,6 +720,7 @@ function AppInner() {
               progress.set("pw-paper-opened", {
                 ...progress.get("pw-paper-opened", {}), [paper.id]: true,
               });
+              recordPlace({ kind: "paper", paperId: paper.id, title: paper.title, file: paper.file });
               window.open(`/${paper.file.replace(/^\//, "")}`, "_blank", "noopener");
             }}
             people={{

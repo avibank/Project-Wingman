@@ -3,6 +3,7 @@ import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
 import { HOBBS_KEY, hobbsSeconds, hobbsClock } from "../lib/hobbs.js";
+import { PLACE_KEY, placeLine, placeVerb, placeList } from "../lib/lastPlace.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
@@ -100,15 +101,6 @@ const DECK_CSS = `
   border-top-color: var(--edge-hi); border-bottom-color: var(--edge-lo);
   overflow: hidden; display: flex; flex-direction: column; }
 .deck .cardbody { padding: 18px; display: flex; gap: 17px; align-items: flex-start; flex-wrap: wrap; }
-.deck .frame { width: 124px; height: 72px; border-radius: 8px; flex: none; background: var(--raised);
-  border: 1px solid var(--line); position: relative; overflow: hidden; }
-.deck .frame::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px;
-  width: var(--frame-pos, 0%); background: var(--active); }
-.deck .frame .play { position: absolute; inset: 0; margin: auto; width: 24px; height: 24px;
-  border-radius: 50%; background: var(--active-fill); }
-.deck .frame .play::after { content: ""; position: absolute; inset: 0; margin: auto; width: 0; height: 0;
-  border-left: 8px solid var(--ground); border-top: 5px solid transparent; border-bottom: 5px solid transparent;
-  transform: translateX(1px); }
 .deck .cardtext { flex: 1; min-width: 220px; }
 .deck .chapter { font-size: 18px; font-weight: 600; letter-spacing: -.2px; }
 .deck .hcode { font-family: var(--font-mono); font-size: 11px; color: var(--t3); letter-spacing: .05em; }
@@ -290,7 +282,7 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel, content }) {
+function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, onOpenChannel, content }) {
   // One content source for the whole app. When the seeded content is on, the
   // module screen reads ITS ids and this read data.js's — so a lesson finished
   // over there matched nothing over here and the ring, the checklist and the
@@ -330,10 +322,13 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // percentage, lesson ids against chapter ids — and every instrument was
   // quietly discarding data it could not recognise, which is why they all sat
   // at their defaults no matter what you did.
+  const lessonDoneMap = progress.get("pw-lesson-done", {});
+  const lessonPosMap = progress.get("pw-lesson-pos", {});
+  const quizRuns = progress.get("pw-quiz-run", {});
   const { completed, viewed, answered, scores } = deckStateFrom({
     chapters: CHAPTERS,
-    lessonDone: progress.get("pw-lesson-done", {}),
-    lessonPos: progress.get("pw-lesson-pos", {}),
+    lessonDone: lessonDoneMap,
+    lessonPos: lessonPosMap,
     quiz: progress.get("pw-quiz-scores", {}),
     legacyCompleted: progress.get("pw-completed", []),
   });
@@ -518,7 +513,33 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
   // ------------------------------------------------------------------ render
   const heroStarted = nextState !== SEGMENT.EMPTY;
-  const framePos = next ? (completed.has(next.id) ? 100 : heroStarted ? 56 : 0) : 0;
+
+  // The exact spot, when there is one for this module. The card is about that
+  // spot rather than about the chapter that happens to contain it — otherwise
+  // the title and the line under it describe two different things.
+  const storedPlace = progress.get(PLACE_KEY, null);
+  // A place you have finished is not a place to go back to. Read rather than
+  // cleared on completion: the record has one writer, and a second write to
+  // retire it would race the one that keeps it current.
+  const spent = (pl) =>
+    pl.kind === "quiz" ? !quizRuns[pl.chapterId]
+      : pl.kind === "lesson"
+        ? Boolean(lessonDoneMap[pl.lessonId]) || (lessonPosMap[pl.lessonId]?.pct ?? 0) >= 0.98
+        : false;
+  const place =
+    placeList(storedPlace).find((pl) => pl.moduleCode === active.code && !spent(pl)) || null;
+  const placeChapter = place?.chapterId
+    ? activeChapters.find((c) => c.id === place.chapterId) || null
+    : null;
+  const placeLesson = place?.lessonId
+    ? (placeChapter?.lessons || []).find((l) => l.id === place.lessonId) || null
+    : null;
+  const resumeLine = placeLine(place, placeLesson);
+  const heroChapter = placeChapter || next;
+  const onResume = () => {
+    if (place) return onResumePlace?.(place);
+    if (next) onGoToChapter(active.code, next.id);
+  };
   const bag = bookmarks.length;
   const contactCount = contacts.length
     ? `${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`
@@ -539,20 +560,18 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
         {/* The hero card is never touched by social. */}
         <div className="card">
           <div className="cardbody">
-            <div className="frame" style={{ "--frame-pos": framePos + "%" }} />
             <div className="cardtext">
-              <div className="chapter">{next ? next.title : active.name}</div>
-              <div className="hcode">{next ? next.code : active.code} · {active.name}</div>
-              {/* TODO(step-2): the exact resume timestamp arrives with the
-                  chapter view's player. Until then this is the coarse state. */}
+              <div className="chapter">{heroChapter ? heroChapter.title : active.name}</div>
+              <div className="hcode">{heroChapter ? heroChapter.code : active.code} · {active.name}</div>
               <div className="position">
-                {heroStarted
-                  ? "Pick up where you left off."
-                  : `${next?.lessons?.length || 2} lessons waiting.`}
+                {resumeLine
+                  || (heroStarted
+                    ? "Pick up where you left off."
+                    : `${next?.lessons?.length || 2} lessons waiting.`)}
               </div>
               {flags["module.interior"] && (
-                <button className="resume" type="button" onClick={() => next && onGoToChapter(active.code, next.id)}>
-                  {heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
+                <button className="resume" type="button" onClick={onResume}>
+                  {resumeLine ? placeVerb(place) : heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
                 </button>
               )}
             </div>

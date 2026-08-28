@@ -68,6 +68,9 @@ export function parseRoute(pathname) {
     // §2.2 — a single question is permanent and shareable.
     const question = parts[3] === "q" && parts[4] ? Number(parts[4]) : null;
     if (question) return { name: "chapter", moduleCode, chapterId, tab: "quiz", question };
+    // "…/quiz/resume" means put me back inside the run, not on its cover.
+    if (parts[3] === "quiz" && parts[4] === "resume")
+      return { name: "chapter", moduleCode, chapterId, tab: "quiz", resume: true };
     return { name: "chapter", moduleCode, chapterId, tab };
   }
 
@@ -97,6 +100,7 @@ export const path = {
   chapter: (m, c, tab) =>
     `/m/${String(m).toLowerCase()}/${c}` + (tab && tab !== "brief" ? `/${tab}` : ""),
   question: (m, c, n) => `/m/${String(m).toLowerCase()}/${c}/q/${n}`,
+  quizResume: (m, c) => `/m/${String(m).toLowerCase()}/${c}/quiz/resume`,
   ready: (m) => (m ? `/ready-room/${String(m).toLowerCase()}` : "/ready-room"),
   logbook: () => "/logbook",
   saved: () => "/saved",

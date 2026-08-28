@@ -8,10 +8,13 @@ import { Check } from "lucide-react";
 // a practice quiz is neither. It is marked with --calm and the right answer is
 // shown beside it, because the point of a practice question is the sentence
 // that comes after it, not the mark.
-export default function QuizRunner({ chapter, questions, onFinish, onQuit }) {
-  const [at, setAt] = useState(0);
+export default function QuizRunner({ chapter, questions, onFinish, onQuit, run, onRun }) {
+  // A quiz you walked away from resumes where you stopped, with what you had
+  // already answered. Keeping the answers is the point: restoring only the
+  // question number would score the run as though the earlier ones were wrong.
+  const [at, setAt] = useState(run?.at || 0);
   const [picked, setPicked] = useState(null);
-  const [answers, setAnswers] = useState([]);
+  const [answers, setAnswers] = useState(run?.answers || []);
 
   const q = questions[at];
   const last = at === questions.length - 1;
@@ -23,8 +26,13 @@ export default function QuizRunner({ chapter, questions, onFinish, onQuit }) {
     const kept = [...answers, { q: at, picked, right: picked === q.correct }];
     setAnswers(kept);
     setPicked(null);
-    if (last) onFinish(kept.filter((a) => a.right).length, questions.length);
-    else setAt(at + 1);
+    if (last) {
+      onRun?.(null);
+      onFinish(kept.filter((a) => a.right).length, questions.length);
+    } else {
+      setAt(at + 1);
+      onRun?.({ at: at + 1, answers: kept, total: questions.length });
+    }
   };
 
   return (

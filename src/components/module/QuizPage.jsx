@@ -8,8 +8,11 @@ import "./module.css";
 // it. A retake replaces the score rather than adding a second record — the
 // Library and the chapter row read one object, and a quiz you have sat twice
 // is still one quiz.
-export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore }) {
-  const [running, setRunning] = useState(false);
+export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, onRun, autoStart }) {
+  const run = state?.run?.[chapter.id] || null;
+  // Arriving here from the deck's Resume means "put me back in the quiz", not
+  // "show me the cover of the quiz I was already sitting".
+  const [running, setRunning] = useState(Boolean(autoStart && run && chapter.questions?.length));
   const score = state?.quiz?.[chapter.id];
   const count = chapter.quizCount || 8;
   const next = nextAfterQuiz(chapters, chapter.id);
@@ -20,6 +23,8 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
         <QuizRunner
           chapter={chapter}
           questions={chapter.questions}
+          run={run}
+          onRun={(r) => onRun?.(chapter.id, r)}
           onQuit={() => setRunning(false)}
           onFinish={(got, total) => { setRunning(false); onScore?.(chapter.id, got, total); }}
         />
@@ -51,7 +56,7 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
 
         {chapter.questions?.length > 0 && (
           <button type="button" className="nextgo" onClick={() => setRunning(true)}>
-            {score ? "Take it again" : "Start"}
+            {run ? `Back to question ${run.at + 1}` : score ? "Take it again" : "Start"}
           </button>
         )}
 
