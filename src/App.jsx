@@ -598,6 +598,7 @@ function AppInner() {
             livery={shownLivery}
             variant={variant}
             reduceMotion={reduceMotion}
+            content={useTestContent}
             onEnterModule={enterModule}
             onGoToChapter={goToChapter}
             onOpenReady={() => go(routePath.ready())}
@@ -624,6 +625,13 @@ function AppInner() {
                 onSeekSaved={(lessonId, pct) =>
                   progress.set("pw-lesson-pos", { ...moduleState.pos, [lessonId]: { pct } })}
                 onComplete={(lessonId) => recordLessonDone(lessonId, ch.id)}
+                done={Boolean(moduleState.done[ls.id]) || (moduleState.pos[ls.id]?.pct ?? 0) >= 0.9}
+                onMarkDone={(lessonId, on) => {
+                  if (on) return recordLessonDone(lessonId, ch.id);
+                  // Un-marking clears the flag but leaves the logbook alone:
+                  // the entry says it was finished at a moment, and it was.
+                  progress.set("pw-lesson-done", { ...moduleState.done, [lessonId]: false });
+                }}
               />
             </main>
           );

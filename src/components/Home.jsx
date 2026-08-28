@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { MODULES, chaptersForModule } from "../data.js";
+import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
@@ -68,13 +68,11 @@ function lastFlownPhrase(iso) {
 }
 
 // Presence carries a chapter id; everything the deck shows is a chapter code.
-const chapterCodeOf = (id) => {
+// Takes the chapter list rather than reaching for a module import, so it
+// resolves against whichever content the app is running on.
+const chapterCodeOf = (id, chapters) => {
   if (!id) return null;
-  for (const m of MODULES) {
-    const hit = chaptersForModule(m.code).find((c) => c.id === id);
-    if (hit) return hit.code;
-  }
-  return null;
+  return chapters.find((c) => c.id === id)?.code || null;
 };
 
 
@@ -290,7 +288,16 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel }) {
+function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onEnterModule, onOpenReady, onOpenChannel, content }) {
+  // One content source for the whole app. When the seeded content is on, the
+  // module screen reads ITS ids and this read data.js's — so a lesson finished
+  // over there matched nothing over here and the ring, the checklist and the
+  // lamps all stayed at zero. Two content sets is the same bug as two stores
+  // of completion, one level up.
+  const MODULES = content ? content.modules : FALLBACK_MODULES;
+  const chaptersForModule = (code) =>
+    content ? (content.modules.find((m) => m.code === code)?.chapters || []) : fallbackChapters(code);
+  const CHAPTERS = MODULES.flatMap((m) => chaptersForModule(m.code));
   const { user } = useUser();
   const progress = useUserProgress();
   const { prefs } = useSocialPrefs();
@@ -316,7 +323,25 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
 
   // ------------------------------------------------------------------- state
-  const completed = new Set(progress.get("pw-completed", []));
+  // Chapter completion is DERIVED from lesson completion, not stored beside
+  // it. The module screen writes pw-lesson-done per lesson; the Flight Deck
+  // used to read pw-completed, a separate list of chapter ids nothing writes
+  // any more — so finishing a lesson moved nothing here. Two stores of the
+  // same fact is how the ring, the checklist and the module screen end up
+  // disagreeing, which is the whole reason there is one completion rule.
+  //
+  // pw-completed is still read so anyone who has chapters marked from before
+  // this keeps them.
+  const lessonDone = progress.get("pw-lesson-done", {});
+  const lessonPos = progress.get("pw-lesson-pos", {});
+  const completed = new Set([
+    ...progress.get("pw-completed", []),
+    ...CHAPTERS.filter((c) => {
+      const ls = c.lessons || [];
+      if (!ls.length) return false;
+      return ls.every((l) => lessonDone[l.id] || (lessonPos[l.id]?.pct ?? 0) >= 0.9);
+    }).map((c) => c.id),
+  ]);
   const viewed = new Set(progress.get("pw-viewed-chapters", []));
   const answered = progress.get("pw-chapter-progress", {});
   const scores = progress.get("pw-quiz-scores", {});
@@ -757,7 +782,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                           <div className="copwhy">{wingman.reason}</div>
                         </span>
                       </div>
-                      <div className="copmeta">{chapterCodeOf(wingman.chapterId) || "On frequency now"}</div>
+                      <div className="copmeta">{chapterCodeOf(wingman.chapterId, CHAPTERS) || "On frequency now"}</div>
                       {roomOn && <button className="fly" type="button" onClick={onOpenReady}>Fly together &nbsp;›</button>}
                     </>
                   ) : (

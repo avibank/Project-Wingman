@@ -7,7 +7,7 @@ import "./module.css";
 
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, questions = [],
-  openQuestionId, onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete,
+  openQuestionId, onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const [pos, setPos] = useState(state?.pos?.[lesson.id]?.pct || 0);
   const [openQ, setOpenQ] = useState(openQuestionId || null);
@@ -53,6 +53,16 @@ export default function LessonPage({
               ? <p>{lesson.covers}</p>
               : <p>The transcript arrives with the recording.</p>}
           </div>
+
+          {/* The manual half of the completion rule, which had no control
+              anywhere until now — the rule has always been "90% watched OR
+              marked by hand", and only the dev panel could do the second. A
+              student who reads the transcript instead of watching, or whose
+              connection will not carry video, could never finish a lesson. */}
+          <button type="button" className="markdone" aria-pressed={done}
+                  onClick={() => onMarkDone?.(lesson.id, !done)}>
+            {done ? "Done — mark it not done" : "Mark as done"}
+          </button>
 
           {next && (
             <button type="button" className="nextup"

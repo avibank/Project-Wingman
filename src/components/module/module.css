@@ -268,3 +268,12 @@
      337px "Module 1" broke across two lines. One step down on phones only. */
   .mscreen .title { font-size: var(--fs-xl, 27px); letter-spacing: -.6px; }
 }
+
+/* The manual half of the completion rule. Quiet by default — watching is the
+   normal way through — and it fills once the lesson is done, because then it
+   is stating a fact rather than offering an action. */
+.mscreen .markdone{margin-top:26px;background:none;border:1px solid var(--line);
+  color:var(--t2);border-radius:999px;padding:12px 22px;font-family:inherit;
+  font-size:var(--fs-base,16px);font-weight:600;cursor:pointer;min-height:var(--tap,44px)}
+.mscreen .markdone:hover{color:var(--t1);border-color:var(--t3)}
+.mscreen .markdone[aria-pressed="true"]{background:var(--active);color:var(--ground);border-color:transparent}
