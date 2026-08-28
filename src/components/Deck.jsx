@@ -137,26 +137,16 @@ const ROOM_CSS = `
 .deck-light .stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--stars, 0);
   background-image: var(--star-img, none); background-repeat: repeat;
   background-size: 420px 420px; mix-blend-mode: screen;
-  animation: pwtwinkle 7.4s ease-in-out infinite; }
+  animation: pwtwinkle 13s ease-in-out infinite alternate; }
 /* The second field. One layer can only pulse as a whole — two, seeded
    differently and fading out of step, read as individual stars twinkling. */
 .deck-light .stars-b { position: absolute; inset: 0; z-index: 0; pointer-events: none;
   opacity: var(--stars, 0);
   background-image: var(--star-img-b, none); background-repeat: repeat;
   background-size: 420px 420px; mix-blend-mode: screen;
-  animation: pwtwinkle2 11.1s ease-in-out infinite; animation-delay: -3.2s; }
-@keyframes pwtwinkle {
-  0%, 100% { opacity: var(--stars, 0); }
-  28% { opacity: calc(var(--stars, 0) * .55); }
-  52% { opacity: var(--stars, 0); }
-  74% { opacity: calc(var(--stars, 0) * .72); }
-}
-@keyframes pwtwinkle2 {
-  0%, 100% { opacity: calc(var(--stars, 0) * .82); }
-  28% { opacity: calc(var(--stars, 0) * .45); }
-  52% { opacity: var(--stars, 0); }
-  74% { opacity: calc(var(--stars, 0) * .60); }
-}
+  animation: pwtwinkle2 8.5s ease-in-out infinite alternate; animation-delay: -3.1s; }
+@keyframes pwtwinkle { from { opacity: var(--stars, 0); } to { opacity: calc(var(--stars, 0) * .5); } }
+@keyframes pwtwinkle2 { from { opacity: calc(var(--stars, 0) * .45); } to { opacity: var(--stars, 0); } }
 /* dark gradients band; noise kills it and gives the light a tooth */
 .deck-light .grain { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: var(--grain);
   mix-blend-mode: overlay; background-size: 150px 150px;
