@@ -27,6 +27,12 @@ export function loadContent(doc, { strict = false } = {}) {
     // filters by id. Resolved here rather than in the component, so the
     // component never has to know the two ways a chapter can be referred to.
     const idByTitle = Object.fromEntries((m.chapters || []).map((c) => [c.name, c.id]));
+    const nameById = Object.fromEntries((m.chapters || []).map((c) => [c.id, c.name]));
+    // Part 12 gives every object a scope — {module, chapter, lesson}, absent
+    // levels null — and papers name their chapter by id there rather than by
+    // title. Both spellings resolve here so no component learns two of them.
+    const chapterOf = (p) =>
+      (p.scope && p.scope.chapter) || idByTitle[p.chapter] || null;
     return {
     id: m.id,
     code: m.id,
@@ -34,8 +40,9 @@ export function loadContent(doc, { strict = false } = {}) {
     papers: (m.papers || []).map((p) => ({
       id: p.id,
       title: p.title,
-      chapterId: idByTitle[p.chapter] || null,   // null = the whole module
-      chapterTitle: p.chapter,
+      chapterId: chapterOf(p),                   // null = the whole module
+      chapterTitle: nameById[chapterOf(p)] || p.chapter || null,
+      scope: p.scope || null,
       file: p.file,
       pages: p.pages,
     })),
@@ -45,7 +52,10 @@ export function loadContent(doc, { strict = false } = {}) {
       title: c.name,
       quizId: c.quiz?.id,
       quizCount: c.quiz?.questions?.length,
-      questions: c.quiz?.questions || [],
+      // lessonId on a question is new in Part 12: it is what lets a quiz
+      // question point back at the moment it was taught.
+      questions: (c.quiz?.questions || []).map((q, i) => ({ ...q, id: q.id || `${c.id}.Q${i + 1}` })),
+      scope: c.scope || null,
       lessons: (c.lessons || []).map((l) => ({
         id: l.id,
         code: l.id,
@@ -60,7 +70,18 @@ export function loadContent(doc, { strict = false } = {}) {
     };
   });
 
-  return { modules, problems };
+  // The lesson surface's three objects travel with the content, unchanged.
+  // One table for threads: lessonId + t set is a comment and appears under
+  // that video AND in People; lessonId null is a module post and appears in
+  // People only. Nothing copies, so nothing can drift.
+  return {
+    modules,
+    notes: doc?.notes || [],
+    threads: doc?.threads || [],
+    replies: doc?.replies || [],
+    people: doc?.people || [],
+    problems,
+  };
 }
 
 export const findModule = (content, code) =>

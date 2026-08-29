@@ -77,5 +77,46 @@ export function validateContent(doc) {
       });
     }
   });
+  // ---- the lesson surface's three objects -------------------------------
+  // The rule worth validating is the one that cannot be seen by reading a
+  // row: a thread with a lesson must carry a moment, and one without must
+  // carry neither. That asymmetry is what keeps a module post out of every
+  // lesson query, and a half-filled row would break it silently.
+  const lessonIds = new Set();
+  (doc.modules || []).forEach((m) => (m.chapters || []).forEach((c) =>
+    (c.lessons || []).forEach((l) => lessonIds.add(l.id))));
+
+  (doc.notes || []).forEach((n, i) => {
+    const w = `notes[${i}]`;
+    check(isStr(n.id), w, "id must be a non-empty string", errs);
+    check(lessonIds.size === 0 || lessonIds.has(n.lessonId), w, `lessonId ${n.lessonId} matches no lesson`, errs);
+    check(isNum(n.t) && n.t >= 0, w, "t must be a number of seconds", errs);
+    // body may be "" on purpose — a bare pin is a valid note.
+    check(typeof n.body === "string", w, "body must be a string, empty allowed", errs);
+  });
+
+  const threadIds = new Set();
+  (doc.threads || []).forEach((t, i) => {
+    const w = `threads[${i}]`;
+    check(isStr(t.id), w, "id must be a non-empty string", errs);
+    threadIds.add(t.id);
+    check(isStr(t.body), w, "body must be a non-empty string", errs);
+    const anchored = t.lessonId !== null && t.lessonId !== undefined;
+    if (anchored) {
+      check(lessonIds.size === 0 || lessonIds.has(t.lessonId), w, `lessonId ${t.lessonId} matches no lesson`, errs);
+      check(isNum(t.t), w, "a thread with a lesson must carry the moment it is anchored to", errs);
+    } else {
+      check(t.t === null || t.t === undefined, w, "a module post has no lesson, so it must have no moment", errs);
+    }
+  });
+
+  (doc.replies || []).forEach((r, i) => {
+    const w = `replies[${i}]`;
+    check(isStr(r.id), w, "id must be a non-empty string", errs);
+    check(threadIds.size === 0 || threadIds.has(r.threadId), w, `threadId ${r.threadId} matches no thread`, errs);
+    // A reply never carries a moment: it belongs to the thread, not the bar.
+    check(r.t === undefined || r.t === null, w, "a reply must not carry a moment", errs);
+  });
+
   return errs;
 }

@@ -1,5 +1,5 @@
 {
-  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question and paper here exists only so the module screen, the player, the quizzes and the papers can be exercised end to end. Replace all of it before launch.",
+  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question, paper, note and thread here exists only so the module screen, the player, the quizzes, the papers, the notes and the comments can be exercised end to end. Replace all of it before launch. | Video sources kept from the previous import: the gtv-videos-bucket URLs in the handoff answer 403 on every file.",
   "videoSource": "Blender open movies (CC-BY) via archive.org, plus one CC0 clip from MDN. The previous gtv-videos-bucket URLs now answer 403 and played nowhere.",
   "modules": [
     {
@@ -19,7 +19,12 @@
                 "seconds": 596,
                 "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "9:56"
+              "duration": "9:56",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.01",
+                "lesson": "M1.01.1"
+              }
             },
             {
               "id": "M1.01.2",
@@ -30,7 +35,12 @@
                 "seconds": 5,
                 "file": "flower.mp4"
               },
-              "duration": "0:05"
+              "duration": "1:00",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.01",
+                "lesson": "M1.01.2"
+              }
             }
           ],
           "quiz": {
@@ -46,7 +56,8 @@
                   "960"
                 ],
                 "correct": 1,
-                "explain": "24 hours x 60 minutes."
+                "explain": "24 hours x 60 minutes.",
+                "lessonId": "M1.01.1"
               },
               {
                 "question": "Water freezes at which temperature, at sea level?",
@@ -57,7 +68,8 @@
                   "32 C"
                 ],
                 "correct": 0,
-                "explain": "0 degrees Celsius, which is 32 Fahrenheit."
+                "explain": "0 degrees Celsius, which is 32 Fahrenheit.",
+                "lessonId": "M1.01.2"
               },
               {
                 "question": "Which gas do people breathe out most of?",
@@ -68,7 +80,8 @@
                   "Hydrogen"
                 ],
                 "correct": 2,
-                "explain": "Carbon dioxide is the main waste gas."
+                "explain": "Carbon dioxide is the main waste gas.",
+                "lessonId": "M1.01.1"
               },
               {
                 "question": "How many sides does a hexagon have?",
@@ -79,7 +92,8 @@
                   "eight"
                 ],
                 "correct": 1,
-                "explain": "Hex means six."
+                "explain": "Hex means six.",
+                "lessonId": "M1.01.2"
               },
               {
                 "question": "What is the largest planet in the solar system?",
@@ -90,7 +104,8 @@
                   "Earth"
                 ],
                 "correct": 2,
-                "explain": "Jupiter, by a wide margin."
+                "explain": "Jupiter, by a wide margin.",
+                "lessonId": "M1.01.1"
               },
               {
                 "question": "Sound travels fastest through which of these?",
@@ -101,7 +116,8 @@
                   "a vacuum"
                 ],
                 "correct": 2,
-                "explain": "Solids carry sound fastest; a vacuum carries none."
+                "explain": "Solids carry sound fastest; a vacuum carries none.",
+                "lessonId": "M1.01.2"
               },
               {
                 "question": "How many bones are in the adult human body?",
@@ -112,7 +128,8 @@
                   "246"
                 ],
                 "correct": 1,
-                "explain": "206 in a typical adult."
+                "explain": "206 in a typical adult.",
+                "lessonId": "M1.01.1"
               },
               {
                 "question": "What does a thermometer measure?",
@@ -123,9 +140,20 @@
                   "weight"
                 ],
                 "correct": 2,
-                "explain": "Temperature."
+                "explain": "Temperature.",
+                "lessonId": "M1.01.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M1",
+              "chapter": "M1.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.01",
+            "lesson": null
           }
         },
         {
@@ -141,7 +169,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-surround.mp4"
               },
-              "duration": "14:48"
+              "duration": "14:48",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.02",
+                "lesson": "M1.02.1"
+              }
             },
             {
               "id": "M1.02.2",
@@ -152,7 +185,12 @@
                 "seconds": 654,
                 "file": "ed_1024_512kb.mp4"
               },
-              "duration": "10:54"
+              "duration": "0:57",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.02",
+                "lesson": "M1.02.2"
+              }
             }
           ],
           "quiz": {
@@ -168,7 +206,8 @@
                   "natural gas"
                 ],
                 "correct": 1,
-                "explain": "Wind replenishes; the others do not."
+                "explain": "Wind replenishes; the others do not.",
+                "lessonId": "M1.02.1"
               },
               {
                 "question": "How many degrees are in a right angle?",
@@ -179,7 +218,8 @@
                   "180"
                 ],
                 "correct": 2,
-                "explain": "90 degrees."
+                "explain": "90 degrees.",
+                "lessonId": "M1.02.2"
               },
               {
                 "question": "What is the chemical symbol for gold?",
@@ -190,7 +230,8 @@
                   "Ag"
                 ],
                 "correct": 2,
-                "explain": "Au, from the Latin aurum."
+                "explain": "Au, from the Latin aurum.",
+                "lessonId": "M1.02.1"
               },
               {
                 "question": "Roughly what percentage of the Earth's surface is water?",
@@ -201,7 +242,8 @@
                   "81%"
                 ],
                 "correct": 2,
-                "explain": "About 71 percent."
+                "explain": "About 71 percent.",
+                "lessonId": "M1.02.2"
               },
               {
                 "question": "Which of these is not a state of matter?",
@@ -212,7 +254,8 @@
                   "mineral"
                 ],
                 "correct": 3,
-                "explain": "Mineral is a type of substance, not a state."
+                "explain": "Mineral is a type of substance, not a state.",
+                "lessonId": "M1.02.1"
               },
               {
                 "question": "What force pulls objects toward the ground?",
@@ -223,7 +266,8 @@
                   "tension"
                 ],
                 "correct": 1,
-                "explain": "Gravity."
+                "explain": "Gravity.",
+                "lessonId": "M1.02.2"
               },
               {
                 "question": "How many hours are in a week?",
@@ -234,7 +278,8 @@
                   "178"
                 ],
                 "correct": 2,
-                "explain": "7 x 24 = 168."
+                "explain": "7 x 24 = 168.",
+                "lessonId": "M1.02.1"
               },
               {
                 "question": "Light travels faster than sound. True or false?",
@@ -245,9 +290,20 @@
                   "only at night"
                 ],
                 "correct": 0,
-                "explain": "Which is why you see lightning before you hear thunder."
+                "explain": "Which is why you see lightning before you hear thunder.",
+                "lessonId": "M1.02.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M1",
+              "chapter": "M1.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.02",
+            "lesson": null
           }
         },
         {
@@ -263,7 +319,12 @@
                 "seconds": 654,
                 "file": "ed_hd.mp4"
               },
-              "duration": "10:54"
+              "duration": "10:53",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.03",
+                "lesson": "M1.03.1"
+              }
             },
             {
               "id": "M1.03.2",
@@ -274,7 +335,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "14:48"
+              "duration": "0:47",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.03",
+                "lesson": "M1.03.2"
+              }
             }
           ],
           "quiz": {
@@ -290,7 +356,8 @@
                   "120 C"
                 ],
                 "correct": 1,
-                "explain": "100 degrees Celsius."
+                "explain": "100 degrees Celsius.",
+                "lessonId": "M1.03.1"
               },
               {
                 "question": "Which organ pumps blood around the body?",
@@ -301,7 +368,8 @@
                   "kidneys"
                 ],
                 "correct": 2,
-                "explain": "The heart."
+                "explain": "The heart.",
+                "lessonId": "M1.03.2"
               },
               {
                 "question": "How many millimetres are in a metre?",
@@ -312,7 +380,8 @@
                   "10"
                 ],
                 "correct": 1,
-                "explain": "1,000 millimetres."
+                "explain": "1,000 millimetres.",
+                "lessonId": "M1.03.1"
               },
               {
                 "question": "What is the most abundant gas in the air we breathe?",
@@ -323,7 +392,8 @@
                   "carbon dioxide"
                 ],
                 "correct": 1,
-                "explain": "Nitrogen, at about 78 percent."
+                "explain": "Nitrogen, at about 78 percent.",
+                "lessonId": "M1.03.2"
               },
               {
                 "question": "A circle has how many degrees?",
@@ -334,7 +404,8 @@
                   "400"
                 ],
                 "correct": 2,
-                "explain": "360 degrees."
+                "explain": "360 degrees.",
+                "lessonId": "M1.03.1"
               },
               {
                 "question": "Which of these is a metal?",
@@ -345,7 +416,8 @@
                   "glass"
                 ],
                 "correct": 0,
-                "explain": "Copper."
+                "explain": "Copper.",
+                "lessonId": "M1.03.2"
               },
               {
                 "question": "What does an anemometer measure?",
@@ -356,7 +428,8 @@
                   "sunlight"
                 ],
                 "correct": 1,
-                "explain": "Wind speed."
+                "explain": "Wind speed.",
+                "lessonId": "M1.03.1"
               },
               {
                 "question": "How many seconds are in an hour?",
@@ -367,9 +440,20 @@
                   "4,800"
                 ],
                 "correct": 2,
-                "explain": "60 x 60 = 3,600."
+                "explain": "60 x 60 = 3,600.",
+                "lessonId": "M1.03.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M1",
+              "chapter": "M1.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.03",
+            "lesson": null
           }
         }
       ],
@@ -377,46 +461,86 @@
         {
           "id": "M1.P1",
           "title": "Notes",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.01",
+            "lesson": null
+          },
           "file": "papers/placeholder-1-page.pdf",
           "pages": 1
         },
         {
           "id": "M1.P2",
           "title": "Worked examples",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.01",
+            "lesson": "M1.01.1"
+          },
           "file": "papers/placeholder-2-pages.pdf",
           "pages": 2
         },
         {
           "id": "M1.P3",
           "title": "Reference sheet",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.02",
+            "lesson": null
+          },
           "file": "papers/placeholder-4-pages.pdf",
           "pages": 4
         },
         {
           "id": "M1.P4",
           "title": "Handout",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.02",
+            "lesson": "M1.02.2"
+          },
           "file": "papers/placeholder-6-pages.pdf",
           "pages": 6
         },
         {
           "id": "M1.P5",
           "title": "Summary",
-          "chapter": "Chapter 3",
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.03",
+            "lesson": null
+          },
           "file": "papers/placeholder-9-pages.pdf",
           "pages": 9
         },
         {
           "id": "M1.P6",
           "title": "Everything on one sheet",
-          "chapter": "Whole module",
+          "scope": {
+            "module": "M1",
+            "chapter": null,
+            "lesson": null
+          },
           "file": "papers/placeholder-14-pages.pdf",
           "pages": 14
+        },
+        {
+          "id": "M1.P7",
+          "title": "Practice set",
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.01",
+            "lesson": null
+          },
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
         }
-      ]
+      ],
+      "scope": {
+        "module": "M1",
+        "chapter": null,
+        "lesson": null
+      }
     },
     {
       "id": "M2",
@@ -435,7 +559,12 @@
                 "seconds": 596,
                 "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "9:56"
+              "duration": "14:48",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.01",
+                "lesson": "M2.01.1"
+              }
             },
             {
               "id": "M2.01.2",
@@ -446,7 +575,12 @@
                 "seconds": 5,
                 "file": "flower.mp4"
               },
-              "duration": "0:05"
+              "duration": "0:35",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.01",
+                "lesson": "M2.01.2"
+              }
             }
           ],
           "quiz": {
@@ -462,7 +596,8 @@
                   "Nagoya"
                 ],
                 "correct": 2,
-                "explain": "Tokyo."
+                "explain": "Tokyo.",
+                "lessonId": "M2.01.1"
               },
               {
                 "question": "Which is the longest river in the world?",
@@ -473,7 +608,8 @@
                   "Mississippi"
                 ],
                 "correct": 1,
-                "explain": "The Nile, on the most common measurement."
+                "explain": "The Nile, on the most common measurement.",
+                "lessonId": "M2.01.2"
               },
               {
                 "question": "How many continents are there?",
@@ -484,7 +620,8 @@
                   "eight"
                 ],
                 "correct": 2,
-                "explain": "Seven, by the usual reckoning."
+                "explain": "Seven, by the usual reckoning.",
+                "lessonId": "M2.01.1"
               },
               {
                 "question": "Which ocean is the largest?",
@@ -495,7 +632,8 @@
                   "Pacific"
                 ],
                 "correct": 3,
-                "explain": "The Pacific."
+                "explain": "The Pacific.",
+                "lessonId": "M2.01.2"
               },
               {
                 "question": "Mount Everest sits on the border between which two countries?",
@@ -506,7 +644,8 @@
                   "India and Bhutan"
                 ],
                 "correct": 1,
-                "explain": "Nepal and China."
+                "explain": "Nepal and China.",
+                "lessonId": "M2.01.1"
               },
               {
                 "question": "What is the smallest country in the world by area?",
@@ -517,7 +656,8 @@
                   "San Marino"
                 ],
                 "correct": 2,
-                "explain": "Vatican City."
+                "explain": "Vatican City.",
+                "lessonId": "M2.01.2"
               },
               {
                 "question": "Which desert is the largest hot desert?",
@@ -528,7 +668,8 @@
                   "Arabian"
                 ],
                 "correct": 2,
-                "explain": "The Sahara."
+                "explain": "The Sahara.",
+                "lessonId": "M2.01.1"
               },
               {
                 "question": "Kuwait borders which two countries?",
@@ -539,9 +680,20 @@
                   "Iran and Bahrain"
                 ],
                 "correct": 1,
-                "explain": "Iraq to the north, Saudi Arabia to the south."
+                "explain": "Iraq to the north, Saudi Arabia to the south.",
+                "lessonId": "M2.01.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M2",
+              "chapter": "M2.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.01",
+            "lesson": null
           }
         },
         {
@@ -557,7 +709,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-surround.mp4"
               },
-              "duration": "14:48"
+              "duration": "10:53",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.02",
+                "lesson": "M2.02.1"
+              }
             },
             {
               "id": "M2.02.2",
@@ -568,7 +725,12 @@
                 "seconds": 654,
                 "file": "ed_1024_512kb.mp4"
               },
-              "duration": "10:54"
+              "duration": "0:31",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.02",
+                "lesson": "M2.02.2"
+              }
             }
           ],
           "quiz": {
@@ -584,7 +746,8 @@
                   "Indonesia"
                 ],
                 "correct": 1,
-                "explain": "India, since 2023."
+                "explain": "India, since 2023.",
+                "lessonId": "M2.02.1"
               },
               {
                 "question": "The Equator passes through which of these?",
@@ -595,7 +758,8 @@
                   "Turkey"
                 ],
                 "correct": 1,
-                "explain": "Kenya."
+                "explain": "Kenya.",
+                "lessonId": "M2.02.2"
               },
               {
                 "question": "What is the capital of Australia?",
@@ -606,7 +770,8 @@
                   "Perth"
                 ],
                 "correct": 2,
-                "explain": "Canberra, not Sydney."
+                "explain": "Canberra, not Sydney.",
+                "lessonId": "M2.02.1"
               },
               {
                 "question": "Which sea is the saltiest?",
@@ -617,7 +782,8 @@
                   "Caspian Sea"
                 ],
                 "correct": 1,
-                "explain": "The Dead Sea."
+                "explain": "The Dead Sea.",
+                "lessonId": "M2.02.2"
               },
               {
                 "question": "How many time zones does Russia span?",
@@ -628,7 +794,8 @@
                   "thirteen"
                 ],
                 "correct": 2,
-                "explain": "Eleven."
+                "explain": "Eleven.",
+                "lessonId": "M2.02.1"
               },
               {
                 "question": "Which mountain range separates Europe from Asia?",
@@ -639,7 +806,8 @@
                   "Carpathians"
                 ],
                 "correct": 1,
-                "explain": "The Urals."
+                "explain": "The Urals.",
+                "lessonId": "M2.02.2"
               },
               {
                 "question": "What is the largest island in the world?",
@@ -650,7 +818,8 @@
                   "New Guinea"
                 ],
                 "correct": 2,
-                "explain": "Greenland."
+                "explain": "Greenland.",
+                "lessonId": "M2.02.1"
               },
               {
                 "question": "Which city is furthest north?",
@@ -661,9 +830,20 @@
                   "Stockholm"
                 ],
                 "correct": 2,
-                "explain": "Reykjavik."
+                "explain": "Reykjavik.",
+                "lessonId": "M2.02.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M2",
+              "chapter": "M2.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.02",
+            "lesson": null
           }
         },
         {
@@ -679,7 +859,12 @@
                 "seconds": 654,
                 "file": "ed_hd.mp4"
               },
-              "duration": "10:54"
+              "duration": "12:14",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.03",
+                "lesson": "M2.03.1"
+              }
             },
             {
               "id": "M2.03.2",
@@ -690,7 +875,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "14:48"
+              "duration": "0:15",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.03",
+                "lesson": "M2.03.2"
+              }
             }
           ],
           "quiz": {
@@ -706,7 +896,8 @@
                   "Caspian Sea"
                 ],
                 "correct": 1,
-                "explain": "The Red Sea."
+                "explain": "The Red Sea.",
+                "lessonId": "M2.03.1"
               },
               {
                 "question": "Which country is both in Europe and Asia?",
@@ -717,7 +908,8 @@
                   "Bulgaria"
                 ],
                 "correct": 1,
-                "explain": "Turkey."
+                "explain": "Turkey.",
+                "lessonId": "M2.03.2"
               },
               {
                 "question": "What is the deepest point in the ocean?",
@@ -728,7 +920,8 @@
                   "Tonga Trench"
                 ],
                 "correct": 2,
-                "explain": "The Mariana Trench."
+                "explain": "The Mariana Trench.",
+                "lessonId": "M2.03.1"
               },
               {
                 "question": "Which African country has the largest population?",
@@ -739,7 +932,8 @@
                   "South Africa"
                 ],
                 "correct": 2,
-                "explain": "Nigeria."
+                "explain": "Nigeria.",
+                "lessonId": "M2.03.2"
               },
               {
                 "question": "The Strait of Hormuz lies between Oman and which country?",
@@ -750,7 +944,8 @@
                   "Yemen"
                 ],
                 "correct": 0,
-                "explain": "Iran."
+                "explain": "Iran.",
+                "lessonId": "M2.03.1"
               },
               {
                 "question": "Which is the highest waterfall in the world?",
@@ -761,7 +956,8 @@
                   "Iguazu"
                 ],
                 "correct": 2,
-                "explain": "Angel Falls in Venezuela."
+                "explain": "Angel Falls in Venezuela.",
+                "lessonId": "M2.03.2"
               },
               {
                 "question": "What is the largest lake by surface area?",
@@ -772,7 +968,8 @@
                   "Lake Baikal"
                 ],
                 "correct": 1,
-                "explain": "The Caspian Sea, counted as a lake."
+                "explain": "The Caspian Sea, counted as a lake.",
+                "lessonId": "M2.03.1"
               },
               {
                 "question": "Which continent has no permanent residents?",
@@ -783,9 +980,20 @@
                   "Africa"
                 ],
                 "correct": 1,
-                "explain": "Antarctica."
+                "explain": "Antarctica.",
+                "lessonId": "M2.03.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M2",
+              "chapter": "M2.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.03",
+            "lesson": null
           }
         }
       ],
@@ -793,46 +1001,86 @@
         {
           "id": "M2.P1",
           "title": "Notes",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.01",
+            "lesson": null
+          },
           "file": "papers/placeholder-1-page.pdf",
           "pages": 1
         },
         {
           "id": "M2.P2",
           "title": "Worked examples",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.01",
+            "lesson": "M2.01.1"
+          },
           "file": "papers/placeholder-2-pages.pdf",
           "pages": 2
         },
         {
           "id": "M2.P3",
           "title": "Reference sheet",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.02",
+            "lesson": null
+          },
           "file": "papers/placeholder-4-pages.pdf",
           "pages": 4
         },
         {
           "id": "M2.P4",
           "title": "Handout",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.02",
+            "lesson": "M2.02.2"
+          },
           "file": "papers/placeholder-6-pages.pdf",
           "pages": 6
         },
         {
           "id": "M2.P5",
           "title": "Summary",
-          "chapter": "Chapter 3",
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.03",
+            "lesson": null
+          },
           "file": "papers/placeholder-9-pages.pdf",
           "pages": 9
         },
         {
           "id": "M2.P6",
           "title": "Everything on one sheet",
-          "chapter": "Whole module",
+          "scope": {
+            "module": "M2",
+            "chapter": null,
+            "lesson": null
+          },
           "file": "papers/placeholder-14-pages.pdf",
           "pages": 14
+        },
+        {
+          "id": "M2.P7",
+          "title": "Practice set",
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.01",
+            "lesson": null
+          },
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
         }
-      ]
+      ],
+      "scope": {
+        "module": "M2",
+        "chapter": null,
+        "lesson": null
+      }
     },
     {
       "id": "M3",
@@ -851,7 +1099,12 @@
                 "seconds": 596,
                 "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "9:56"
+              "duration": "10:53",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.01",
+                "lesson": "M3.01.1"
+              }
             },
             {
               "id": "M3.01.2",
@@ -862,7 +1115,12 @@
                 "seconds": 5,
                 "file": "flower.mp4"
               },
-              "duration": "0:05"
+              "duration": "0:15",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.01",
+                "lesson": "M3.01.2"
+              }
             }
           ],
           "quiz": {
@@ -878,7 +1136,8 @@
                   "35"
                 ],
                 "correct": 2,
-                "explain": "30."
+                "explain": "30.",
+                "lessonId": "M3.01.1"
               },
               {
                 "question": "How many centimetres are in 2.5 metres?",
@@ -889,7 +1148,8 @@
                   "0.25"
                 ],
                 "correct": 1,
-                "explain": "250 centimetres."
+                "explain": "250 centimetres.",
+                "lessonId": "M3.01.2"
               },
               {
                 "question": "What is 7 x 8?",
@@ -900,7 +1160,8 @@
                   "64"
                 ],
                 "correct": 2,
-                "explain": "56."
+                "explain": "56.",
+                "lessonId": "M3.01.1"
               },
               {
                 "question": "Half of three quarters is:",
@@ -911,7 +1172,8 @@
                   "two thirds"
                 ],
                 "correct": 1,
-                "explain": "Three eighths."
+                "explain": "Three eighths.",
+                "lessonId": "M3.01.2"
               },
               {
                 "question": "A kilogram is how many grams?",
@@ -922,7 +1184,8 @@
                   "10,000"
                 ],
                 "correct": 2,
-                "explain": "1,000 grams."
+                "explain": "1,000 grams.",
+                "lessonId": "M3.01.1"
               },
               {
                 "question": "What is the square root of 144?",
@@ -933,7 +1196,8 @@
                   "14"
                 ],
                 "correct": 1,
-                "explain": "12."
+                "explain": "12.",
+                "lessonId": "M3.01.2"
               },
               {
                 "question": "If something costs 80 and is reduced by 25 percent, what do you pay?",
@@ -944,7 +1208,8 @@
                   "70"
                 ],
                 "correct": 1,
-                "explain": "60."
+                "explain": "60.",
+                "lessonId": "M3.01.1"
               },
               {
                 "question": "How many minutes is 2.5 hours?",
@@ -955,9 +1220,20 @@
                   "165"
                 ],
                 "correct": 2,
-                "explain": "150 minutes."
+                "explain": "150 minutes.",
+                "lessonId": "M3.01.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M3",
+              "chapter": "M3.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.01",
+            "lesson": null
           }
         },
         {
@@ -973,7 +1249,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-surround.mp4"
               },
-              "duration": "14:48"
+              "duration": "12:14",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.02",
+                "lesson": "M3.02.1"
+              }
             },
             {
               "id": "M3.02.2",
@@ -984,7 +1265,12 @@
                 "seconds": 654,
                 "file": "ed_1024_512kb.mp4"
               },
-              "duration": "10:54"
+              "duration": "0:15",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.02",
+                "lesson": "M3.02.2"
+              }
             }
           ],
           "quiz": {
@@ -1000,7 +1286,8 @@
                   "40"
                 ],
                 "correct": 1,
-                "explain": "25."
+                "explain": "25.",
+                "lessonId": "M3.02.1"
               },
               {
                 "question": "Which is heavier: a kilogram of steel or a kilogram of feathers?",
@@ -1011,7 +1298,8 @@
                   "depends"
                 ],
                 "correct": 2,
-                "explain": "They weigh the same."
+                "explain": "They weigh the same.",
+                "lessonId": "M3.02.2"
               },
               {
                 "question": "How many millilitres are in a litre?",
@@ -1022,7 +1310,8 @@
                   "10,000"
                 ],
                 "correct": 2,
-                "explain": "1,000."
+                "explain": "1,000.",
+                "lessonId": "M3.02.1"
               },
               {
                 "question": "What is 3 squared plus 4 squared?",
@@ -1033,7 +1322,8 @@
                   "31"
                 ],
                 "correct": 1,
-                "explain": "9 + 16 = 25."
+                "explain": "9 + 16 = 25.",
+                "lessonId": "M3.02.2"
               },
               {
                 "question": "Twenty percent of a number is 14. What is the number?",
@@ -1044,7 +1334,8 @@
                   "84"
                 ],
                 "correct": 2,
-                "explain": "70."
+                "explain": "70.",
+                "lessonId": "M3.02.1"
               },
               {
                 "question": "How many days are in a leap year?",
@@ -1055,7 +1346,8 @@
                   "367"
                 ],
                 "correct": 2,
-                "explain": "366."
+                "explain": "366.",
+                "lessonId": "M3.02.2"
               },
               {
                 "question": "What is one third of 90?",
@@ -1066,7 +1358,8 @@
                   "45"
                 ],
                 "correct": 1,
-                "explain": "30."
+                "explain": "30.",
+                "lessonId": "M3.02.1"
               },
               {
                 "question": "A right-angled triangle has one angle of 90 and one of 35. The third is:",
@@ -1077,9 +1370,20 @@
                   "65"
                 ],
                 "correct": 2,
-                "explain": "180 - 90 - 35 = 55."
+                "explain": "180 - 90 - 35 = 55.",
+                "lessonId": "M3.02.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M3",
+              "chapter": "M3.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.02",
+            "lesson": null
           }
         },
         {
@@ -1095,7 +1399,12 @@
                 "seconds": 654,
                 "file": "ed_hd.mp4"
               },
-              "duration": "10:54"
+              "duration": "9:56",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.03",
+                "lesson": "M3.03.1"
+              }
             },
             {
               "id": "M3.03.2",
@@ -1106,7 +1415,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "14:48"
+              "duration": "1:00",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.03",
+                "lesson": "M3.03.2"
+              }
             }
           ],
           "quiz": {
@@ -1122,7 +1436,8 @@
                   "156"
                 ],
                 "correct": 2,
-                "explain": "144."
+                "explain": "144.",
+                "lessonId": "M3.03.1"
               },
               {
                 "question": "How many inches are in a foot?",
@@ -1133,7 +1448,8 @@
                   "16"
                 ],
                 "correct": 1,
-                "explain": "12."
+                "explain": "12.",
+                "lessonId": "M3.03.2"
               },
               {
                 "question": "What is 0.25 as a fraction?",
@@ -1144,7 +1460,8 @@
                   "one fifth"
                 ],
                 "correct": 2,
-                "explain": "One quarter."
+                "explain": "One quarter.",
+                "lessonId": "M3.03.1"
               },
               {
                 "question": "If a car travels 60 km in 45 minutes, its speed is:",
@@ -1155,7 +1472,8 @@
                   "85 km/h"
                 ],
                 "correct": 2,
-                "explain": "80 km/h."
+                "explain": "80 km/h.",
+                "lessonId": "M3.03.2"
               },
               {
                 "question": "What is 5 percent of 1,000?",
@@ -1166,7 +1484,8 @@
                   "500"
                 ],
                 "correct": 1,
-                "explain": "50."
+                "explain": "50.",
+                "lessonId": "M3.03.1"
               },
               {
                 "question": "How many degrees in the angles of a triangle, added up?",
@@ -1177,7 +1496,8 @@
                   "360"
                 ],
                 "correct": 1,
-                "explain": "180 degrees."
+                "explain": "180 degrees.",
+                "lessonId": "M3.03.2"
               },
               {
                 "question": "What comes next: 2, 4, 8, 16, ...",
@@ -1188,7 +1508,8 @@
                   "64"
                 ],
                 "correct": 2,
-                "explain": "Doubling each time, so 32."
+                "explain": "Doubling each time, so 32.",
+                "lessonId": "M3.03.1"
               },
               {
                 "question": "What is 1,000 divided by 8?",
@@ -1199,9 +1520,20 @@
                   "130"
                 ],
                 "correct": 2,
-                "explain": "125."
+                "explain": "125.",
+                "lessonId": "M3.03.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M3",
+              "chapter": "M3.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.03",
+            "lesson": null
           }
         }
       ],
@@ -1209,46 +1541,86 @@
         {
           "id": "M3.P1",
           "title": "Notes",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.01",
+            "lesson": null
+          },
           "file": "papers/placeholder-1-page.pdf",
           "pages": 1
         },
         {
           "id": "M3.P2",
           "title": "Worked examples",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.01",
+            "lesson": "M3.01.1"
+          },
           "file": "papers/placeholder-2-pages.pdf",
           "pages": 2
         },
         {
           "id": "M3.P3",
           "title": "Reference sheet",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.02",
+            "lesson": null
+          },
           "file": "papers/placeholder-4-pages.pdf",
           "pages": 4
         },
         {
           "id": "M3.P4",
           "title": "Handout",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.02",
+            "lesson": "M3.02.2"
+          },
           "file": "papers/placeholder-6-pages.pdf",
           "pages": 6
         },
         {
           "id": "M3.P5",
           "title": "Summary",
-          "chapter": "Chapter 3",
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.03",
+            "lesson": null
+          },
           "file": "papers/placeholder-9-pages.pdf",
           "pages": 9
         },
         {
           "id": "M3.P6",
           "title": "Everything on one sheet",
-          "chapter": "Whole module",
+          "scope": {
+            "module": "M3",
+            "chapter": null,
+            "lesson": null
+          },
           "file": "papers/placeholder-14-pages.pdf",
           "pages": 14
+        },
+        {
+          "id": "M3.P7",
+          "title": "Practice set",
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.01",
+            "lesson": null
+          },
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
         }
-      ]
+      ],
+      "scope": {
+        "module": "M3",
+        "chapter": null,
+        "lesson": null
+      }
     },
     {
       "id": "M4",
@@ -1267,7 +1639,12 @@
                 "seconds": 596,
                 "file": "big_buck_bunny_720p_surround.mp4"
               },
-              "duration": "9:56"
+              "duration": "12:14",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.01",
+                "lesson": "M4.01.1"
+              }
             },
             {
               "id": "M4.01.2",
@@ -1278,7 +1655,12 @@
                 "seconds": 5,
                 "file": "flower.mp4"
               },
-              "duration": "0:05"
+              "duration": "0:57",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.01",
+                "lesson": "M4.01.2"
+              }
             }
           ],
           "quiz": {
@@ -1294,7 +1676,8 @@
                   "seven"
                 ],
                 "correct": 2,
-                "explain": "Six."
+                "explain": "Six.",
+                "lessonId": "M4.01.1"
               },
               {
                 "question": "Which planet is known as the red planet?",
@@ -1305,7 +1688,8 @@
                   "Saturn"
                 ],
                 "correct": 1,
-                "explain": "Mars."
+                "explain": "Mars.",
+                "lessonId": "M4.01.2"
               },
               {
                 "question": "How many players are on a football team on the pitch?",
@@ -1316,7 +1700,8 @@
                   "twelve"
                 ],
                 "correct": 2,
-                "explain": "Eleven."
+                "explain": "Eleven.",
+                "lessonId": "M4.01.1"
               },
               {
                 "question": "What colour do you get mixing blue and yellow?",
@@ -1327,7 +1712,8 @@
                   "brown"
                 ],
                 "correct": 1,
-                "explain": "Green."
+                "explain": "Green.",
+                "lessonId": "M4.01.2"
               },
               {
                 "question": "How many letters are in the English alphabet?",
@@ -1338,7 +1724,8 @@
                   "27"
                 ],
                 "correct": 2,
-                "explain": "26."
+                "explain": "26.",
+                "lessonId": "M4.01.1"
               },
               {
                 "question": "Which animal is the fastest on land?",
@@ -1349,7 +1736,8 @@
                   "greyhound"
                 ],
                 "correct": 1,
-                "explain": "The cheetah."
+                "explain": "The cheetah.",
+                "lessonId": "M4.01.2"
               },
               {
                 "question": "How many days are in February in a normal year?",
@@ -1360,7 +1748,8 @@
                   "30"
                 ],
                 "correct": 1,
-                "explain": "28."
+                "explain": "28.",
+                "lessonId": "M4.01.1"
               },
               {
                 "question": "What is the largest mammal?",
@@ -1371,9 +1760,20 @@
                   "hippopotamus"
                 ],
                 "correct": 1,
-                "explain": "The blue whale."
+                "explain": "The blue whale.",
+                "lessonId": "M4.01.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M4",
+              "chapter": "M4.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.01",
+            "lesson": null
           }
         },
         {
@@ -1389,7 +1789,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-surround.mp4"
               },
-              "duration": "14:48"
+              "duration": "9:56",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.02",
+                "lesson": "M4.02.1"
+              }
             },
             {
               "id": "M4.02.2",
@@ -1400,7 +1805,12 @@
                 "seconds": 654,
                 "file": "ed_1024_512kb.mp4"
               },
-              "duration": "10:54"
+              "duration": "0:47",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.02",
+                "lesson": "M4.02.2"
+              }
             }
           ],
           "quiz": {
@@ -1416,7 +1826,8 @@
                   "four"
                 ],
                 "correct": 1,
-                "explain": "Two."
+                "explain": "Two.",
+                "lessonId": "M4.02.1"
               },
               {
                 "question": "What is the freezing point of water in Fahrenheit?",
@@ -1427,7 +1838,8 @@
                   "100"
                 ],
                 "correct": 1,
-                "explain": "32 Fahrenheit."
+                "explain": "32 Fahrenheit.",
+                "lessonId": "M4.02.2"
               },
               {
                 "question": "Which of these is a primary colour in paint?",
@@ -1438,7 +1850,8 @@
                   "purple"
                 ],
                 "correct": 2,
-                "explain": "Red."
+                "explain": "Red.",
+                "lessonId": "M4.02.1"
               },
               {
                 "question": "How many hours are in two days?",
@@ -1449,7 +1862,8 @@
                   "54"
                 ],
                 "correct": 2,
-                "explain": "48."
+                "explain": "48.",
+                "lessonId": "M4.02.2"
               },
               {
                 "question": "What do bees make?",
@@ -1460,7 +1874,8 @@
                   "milk"
                 ],
                 "correct": 1,
-                "explain": "Honey, and wax."
+                "explain": "Honey, and wax.",
+                "lessonId": "M4.02.1"
               },
               {
                 "question": "How many continents start with the letter A?",
@@ -1471,7 +1886,8 @@
                   "five"
                 ],
                 "correct": 1,
-                "explain": "Africa, Asia, Antarctica."
+                "explain": "Africa, Asia, Antarctica.",
+                "lessonId": "M4.02.2"
               },
               {
                 "question": "What is the tallest animal?",
@@ -1482,7 +1898,8 @@
                   "ostrich"
                 ],
                 "correct": 1,
-                "explain": "The giraffe."
+                "explain": "The giraffe.",
+                "lessonId": "M4.02.1"
               },
               {
                 "question": "How many sides does a triangle have?",
@@ -1493,9 +1910,20 @@
                   "five"
                 ],
                 "correct": 1,
-                "explain": "Three."
+                "explain": "Three.",
+                "lessonId": "M4.02.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M4",
+              "chapter": "M4.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.02",
+            "lesson": null
           }
         },
         {
@@ -1511,7 +1939,12 @@
                 "seconds": 654,
                 "file": "ed_hd.mp4"
               },
-              "duration": "10:54"
+              "duration": "14:48",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.03",
+                "lesson": "M4.03.1"
+              }
             },
             {
               "id": "M4.03.2",
@@ -1522,7 +1955,12 @@
                 "seconds": 888,
                 "file": "sintel-2048-stereo.mp4"
               },
-              "duration": "14:48"
+              "duration": "0:35",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.03",
+                "lesson": "M4.03.2"
+              }
             }
           ],
           "quiz": {
@@ -1538,7 +1976,8 @@
                   "trapezium"
                 ],
                 "correct": 2,
-                "explain": "A square."
+                "explain": "A square.",
+                "lessonId": "M4.03.1"
               },
               {
                 "question": "How many months have 31 days?",
@@ -1549,7 +1988,8 @@
                   "eight"
                 ],
                 "correct": 2,
-                "explain": "Seven."
+                "explain": "Seven.",
+                "lessonId": "M4.03.2"
               },
               {
                 "question": "What is the main ingredient in bread?",
@@ -1560,7 +2000,8 @@
                   "oats"
                 ],
                 "correct": 1,
-                "explain": "Flour."
+                "explain": "Flour.",
+                "lessonId": "M4.03.1"
               },
               {
                 "question": "How many minutes in three quarters of an hour?",
@@ -1571,7 +2012,8 @@
                   "50"
                 ],
                 "correct": 2,
-                "explain": "45."
+                "explain": "45.",
+                "lessonId": "M4.03.2"
               },
               {
                 "question": "Which of these floats in water?",
@@ -1582,7 +2024,8 @@
                   "granite"
                 ],
                 "correct": 1,
-                "explain": "Wood, usually."
+                "explain": "Wood, usually.",
+                "lessonId": "M4.03.1"
               },
               {
                 "question": "How many zeros are in one million?",
@@ -1593,7 +2036,8 @@
                   "seven"
                 ],
                 "correct": 2,
-                "explain": "Six."
+                "explain": "Six.",
+                "lessonId": "M4.03.2"
               },
               {
                 "question": "What do you call a baby cat?",
@@ -1604,7 +2048,8 @@
                   "foal"
                 ],
                 "correct": 1,
-                "explain": "A kitten."
+                "explain": "A kitten.",
+                "lessonId": "M4.03.1"
               },
               {
                 "question": "How many colours are in a rainbow, traditionally?",
@@ -1615,9 +2060,20 @@
                   "eight"
                 ],
                 "correct": 2,
-                "explain": "Seven."
+                "explain": "Seven.",
+                "lessonId": "M4.03.2"
               }
-            ]
+            ],
+            "scope": {
+              "module": "M4",
+              "chapter": "M4.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.03",
+            "lesson": null
           }
         }
       ],
@@ -1625,46 +2081,342 @@
         {
           "id": "M4.P1",
           "title": "Notes",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.01",
+            "lesson": null
+          },
           "file": "papers/placeholder-1-page.pdf",
           "pages": 1
         },
         {
           "id": "M4.P2",
           "title": "Worked examples",
-          "chapter": "Chapter 1",
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.01",
+            "lesson": "M4.01.1"
+          },
           "file": "papers/placeholder-2-pages.pdf",
           "pages": 2
         },
         {
           "id": "M4.P3",
           "title": "Reference sheet",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.02",
+            "lesson": null
+          },
           "file": "papers/placeholder-4-pages.pdf",
           "pages": 4
         },
         {
           "id": "M4.P4",
           "title": "Handout",
-          "chapter": "Chapter 2",
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.02",
+            "lesson": "M4.02.2"
+          },
           "file": "papers/placeholder-6-pages.pdf",
           "pages": 6
         },
         {
           "id": "M4.P5",
           "title": "Summary",
-          "chapter": "Chapter 3",
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.03",
+            "lesson": null
+          },
           "file": "papers/placeholder-9-pages.pdf",
           "pages": 9
         },
         {
           "id": "M4.P6",
           "title": "Everything on one sheet",
-          "chapter": "Whole module",
+          "scope": {
+            "module": "M4",
+            "chapter": null,
+            "lesson": null
+          },
           "file": "papers/placeholder-14-pages.pdf",
           "pages": 14
+        },
+        {
+          "id": "M4.P7",
+          "title": "Practice set",
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.01",
+            "lesson": null
+          },
+          "file": "papers/placeholder-4-pages.pdf",
+          "pages": 4
         }
-      ]
+      ],
+      "scope": {
+        "module": "M4",
+        "chapter": null,
+        "lesson": null
+      }
+    }
+  ],
+  "contentModel": {
+    "scope": "Every content object carries {module, chapter, lesson}. Absent levels are null. The Library groups papers by it. It is no longer used for an edge rail — that feature is cancelled.",
+    "notes": "Private. Yours only. {lessonId, t, body} — body may be empty, a bare pin is allowed and is the point. Never has replies. Never visible to anyone else.",
+    "threads": "One table. lessonId + t set = a comment: appears under that video AND in People. lessonId null = a module post: People only, never under a video. This asymmetry is the whole rule and it enforces itself.",
+    "replies": "Belong to a thread, never to a moment. One mark per thread, at the moment it was asked. Replies get no marks and no timestamps of their own.",
+    "quizQuestions": "Every quiz question carries lessonId — the join key for post-quiz review. Never match notes to questions semantically."
+  },
+  "notes": [
+    {
+      "id": "N001",
+      "lessonId": "M1.01.1",
+      "t": 42,
+      "body": "First definition starts here. Comes up again in the quiz.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-11T09:07:00Z"
+    },
+    {
+      "id": "N002",
+      "lessonId": "M1.01.1",
+      "t": 305,
+      "body": "Come back to this bit.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-12T09:14:00Z"
+    },
+    {
+      "id": "N003",
+      "lessonId": "M1.01.1",
+      "t": 511,
+      "body": "Worked example on the handout matches this exactly.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-13T09:21:00Z"
+    },
+    {
+      "id": "N004",
+      "lessonId": "M1.01.2",
+      "t": 44,
+      "body": "Short lesson — the whole point is the last thirty seconds.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-14T09:28:00Z"
+    },
+    {
+      "id": "N005",
+      "lessonId": "M1.02.1",
+      "t": 96,
+      "body": "",
+      "authorId": "u_you",
+      "createdAt": "2026-08-15T09:35:00Z"
+    },
+    {
+      "id": "N006",
+      "lessonId": "M1.02.1",
+      "t": 260,
+      "body": "Diagram at this point is the one I keep forgetting.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-16T09:42:00Z"
+    },
+    {
+      "id": "N007",
+      "lessonId": "M1.02.2",
+      "t": 71,
+      "body": "",
+      "authorId": "u_you",
+      "createdAt": "2026-08-17T09:49:00Z"
+    },
+    {
+      "id": "N008",
+      "lessonId": "M1.03.1",
+      "t": 130,
+      "body": "Two terms used for the same thing here.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-18T09:56:00Z"
+    },
+    {
+      "id": "N009",
+      "lessonId": "M1.03.2",
+      "t": 55,
+      "body": "Good summary line — use it for revision.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-19T09:03:00Z"
+    },
+    {
+      "id": "N010",
+      "lessonId": "M2.01.1",
+      "t": 88,
+      "body": "Same pattern as Module 1 but the names change.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-20T09:10:00Z"
+    },
+    {
+      "id": "N011",
+      "lessonId": "M2.02.1",
+      "t": 150,
+      "body": "Worth rewatching before the chapter quiz.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-21T09:17:00Z"
+    },
+    {
+      "id": "N012",
+      "lessonId": "M3.01.1",
+      "t": 64,
+      "body": "Start of the part I did not follow.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-22T09:24:00Z"
+    }
+  ],
+  "threads": [
+    {
+      "id": "T001",
+      "moduleId": "M1",
+      "lessonId": "M1.01.1",
+      "t": 137,
+      "body": "Why is this step before the other one?",
+      "authorId": "u_two",
+      "createdAt": "2026-08-13T11:01:00Z"
+    },
+    {
+      "id": "T002",
+      "moduleId": "M1",
+      "lessonId": "M1.01.2",
+      "t": 18,
+      "body": "Is the number here the same one from Lesson 1?",
+      "authorId": "u_you",
+      "createdAt": "2026-08-14T12:02:00Z"
+    },
+    {
+      "id": "T003",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 260,
+      "body": "What happens if the value is zero?",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-15T13:03:00Z"
+    },
+    {
+      "id": "T004",
+      "moduleId": "M1",
+      "lessonId": "M1.02.2",
+      "t": 71,
+      "body": "This contradicts the reference sheet, or I read it wrong.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-16T14:04:00Z"
+    },
+    {
+      "id": "T005",
+      "moduleId": "M1",
+      "lessonId": "M1.03.1",
+      "t": 212,
+      "body": "Anyone else lose the thread around here?",
+      "authorId": "u_four",
+      "createdAt": "2026-08-17T15:05:00Z"
+    },
+    {
+      "id": "T006",
+      "moduleId": "M1",
+      "lessonId": null,
+      "t": null,
+      "body": "Anyone got a good way to remember the order in Chapter 2?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-18T16:00:00Z"
+    },
+    {
+      "id": "T007",
+      "moduleId": "M1",
+      "lessonId": null,
+      "t": null,
+      "body": "What is everyone using to take notes outside this?",
+      "authorId": "u_you",
+      "createdAt": "2026-08-19T17:01:00Z"
+    },
+    {
+      "id": "T008",
+      "moduleId": "M2",
+      "lessonId": "M2.01.1",
+      "t": 220,
+      "body": "Where does this number come from?",
+      "authorId": "u_four",
+      "createdAt": "2026-08-20T18:02:00Z"
+    },
+    {
+      "id": "T009",
+      "moduleId": "M2",
+      "lessonId": null,
+      "t": null,
+      "body": "Study group for the Module 2 quiz on Thursday?",
+      "authorId": "u_two",
+      "createdAt": "2026-08-21T19:03:00Z"
+    },
+    {
+      "id": "T010",
+      "moduleId": "M3",
+      "lessonId": "M3.01.1",
+      "t": 150,
+      "body": "Is this the same idea as Module 1 Chapter 3?",
+      "authorId": "u_you",
+      "createdAt": "2026-08-22T10:04:00Z"
+    }
+  ],
+  "replies": [
+    {
+      "id": "T001.R1",
+      "threadId": "T001",
+      "body": "Order matters here — the second depends on the result of the first.",
+      "authorId": "u_five",
+      "createdAt": "2026-08-15T11:21:00Z"
+    },
+    {
+      "id": "T001.R2",
+      "threadId": "T001",
+      "body": "That makes sense, thanks.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-15T12:22:00Z"
+    },
+    {
+      "id": "T003.R1",
+      "threadId": "T003",
+      "body": "It falls back to the default — said at 4:52.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-17T11:21:00Z"
+    },
+    {
+      "id": "T005.R1",
+      "threadId": "T005",
+      "body": "Same. Watch it at 0.75 speed, it helped.",
+      "authorId": "u_two",
+      "createdAt": "2026-08-19T11:21:00Z"
+    },
+    {
+      "id": "T006.R1",
+      "threadId": "T006",
+      "body": "I wrote it on a card and stuck it to the wall. Low tech, works.",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-20T11:21:00Z"
+    }
+  ],
+  "people": [
+    {
+      "id": "u_you",
+      "callsign": "You"
+    },
+    {
+      "id": "u_two",
+      "callsign": "Callsign Two"
+    },
+    {
+      "id": "u_four",
+      "callsign": "Callsign Four"
+    },
+    {
+      "id": "u_five",
+      "callsign": "Callsign Five"
+    },
+    {
+      "id": "u_nine",
+      "callsign": "Callsign Nine"
     }
   ]
 }
