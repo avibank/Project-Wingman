@@ -65,6 +65,11 @@ export function loadContent(doc, { strict = false } = {}) {
         duration: l.video?.seconds ?? mmssToSeconds(l.duration),
         video: l.video?.src || null,
         videoKind: l.video?.kind || null,
+        // Part 13: the seeded watch state, and the thumbnail slot that stays
+        // null until there is real video to take a frame from.
+        durationS: l.durationS ?? l.video?.seconds ?? null,
+        watchedS: l.watchedS ?? 0,
+        thumb: l.thumb ?? null,
       })),
     })),
     };

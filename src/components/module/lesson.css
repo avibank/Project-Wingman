@@ -446,6 +446,11 @@
 .compose-act{
   min-height: var(--tap); background: none; border: 0; padding: 0;
   font: inherit; font-size: var(--fs-sm); color: var(--t3); cursor: pointer;
+  /* §2.3 — "Save note" wrapped onto two lines in a narrow column, and §14.37
+     wants 44px in both directions. A two-word button label is not a paragraph
+     and must never break. */
+  min-width: var(--tap);
+  white-space: nowrap;
 }
 .compose-act[data-primary]{ color: var(--active); }
 

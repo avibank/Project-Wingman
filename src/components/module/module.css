@@ -1,3 +1,7 @@
+/* 13px is the floor, and ten declarations in this file were under it —
+   9.5px on the current-chapter badge, 10.5, 11.5 and 12.5 elsewhere. Raised
+   rather than excused: the floor exists because this is read on a phone, in a
+   workshop, by someone who has been awake since six. */
 /* ══════════════════════════════════════════════════════════════════════
    The module screen. Copied verbatim from design/wingman-module-source.css.
 
@@ -36,11 +40,11 @@
   text-align:left;font-family:inherit;color:inherit;transition:transform .15s ease;background-image:var(--sheen-img,none)}
 .mscreen .mod:hover{transform:translateY(-2px)}
 .mscreen .mcl{display:flex;align-items:center;justify-content:space-between}
-.mscreen .mcode{font-family:"Geist Mono",ui-monospace,monospace;font-size:11.5px;letter-spacing:1.1px;color:var(--t3)}
-.mscreen .mcur{font-family:"Geist Mono",ui-monospace,monospace;font-size:9.5px;letter-spacing:1px;background:var(--active);color:var(--ground);border-radius:3px;padding:2px 6px}
+.mscreen .mcode{font-family:"Geist Mono",ui-monospace,monospace;font-size:13px;letter-spacing:1.1px;color:var(--t3)}
+.mscreen .mcur{font-family:"Geist Mono",ui-monospace,monospace;font-size:13px;letter-spacing:1px;background:var(--active);color:var(--ground);border-radius:3px;padding:2px 6px}
 .mscreen .mname{font-size:17px;font-weight:600;color:var(--t2);margin-top:9px}
 .mscreen .trace{margin-top:auto;height:26px;width:100%}
-.mscreen .mmeta{font-size:12.5px;color:var(--t3);margin-top:8px}
+.mscreen .mmeta{font-size:13px;color:var(--t3);margin-top:8px}
 .mscreen .deckhead{padding:22px var(--pad) 0}
 
 /* — the list. No panels, no fills; space and type do the separating. — */
@@ -147,15 +151,15 @@
 .mscreen .hrow[aria-current="true"]{background:var(--raised)}
 .mscreen .hrow.pinned{border-top:0}
 .mscreen .hav{width:38px;height:38px;border-radius:999px;background:var(--raised);border:0;display:grid;place-items:center;
-  font-family:"Geist Mono",ui-monospace,monospace;font-size:12.5px;color:var(--t2)}
+  font-family:"Geist Mono",ui-monospace,monospace;font-size:13px;color:var(--t2)}
 .mscreen .hav.grp{border-radius:11px}
 .mscreen .hrow>span:nth-child(2){min-width:0;overflow:hidden}
 .mscreen .hn{display:block;font-size:15px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mscreen .hl{display:block;font-size:13px;color:var(--t3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mscreen .hr{display:flex;flex-direction:column;align-items:flex-end;gap:6px;white-space:nowrap}
-.mscreen .hpos{font-size:12px;color:var(--t3)}
+.mscreen .hpos{font-size:13px;color:var(--t3)}
 .mscreen .unread{min-width:19px;height:19px;border-radius:999px;background:var(--active);color:var(--ground);
-  font-size:11.5px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+  font-size:13px;font-weight:700;display:grid;place-items:center;padding:0 6px}
 .mscreen .hsug{border-top:1px solid var(--hair);padding:16px 18px;font-size:13.5px;color:var(--t3);line-height:1.55}
 .mscreen .hsug b{color:var(--t2);font-weight:600}
 .mscreen .hubd{display:flex;flex-direction:column}
@@ -164,7 +168,7 @@
 .mscreen .hubh .cap{margin-top:7px}
 .mscreen .route{display:flex;align-items:center;gap:18px;padding:20px 26px;border-bottom:1px solid var(--line)}
 .mscreen .rt{flex:1}
-.mscreen .rtl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--t3);margin-bottom:9px}
+.mscreen .rtl{display:flex;justify-content:space-between;font-size:13px;color:var(--t3);margin-bottom:9px}
 .mscreen .rline{position:relative;height:4px;border-radius:999px;background:var(--raised);border:1px solid var(--line)}
 .mscreen .rline i{position:absolute;top:-5px;width:11px;height:11px;border-radius:999px;border:2px solid var(--ground)}
 .mscreen .mine{background:var(--active)}
@@ -172,7 +176,7 @@
 .mscreen .msgs{flex:1;padding:22px 26px;display:flex;flex-direction:column;gap:13px;overflow:auto;max-height:320px}
 .mscreen .msg{max-width:70%;padding:12px 15px;border-radius:14px;font-size:15px;line-height:1.45;background:var(--raised);border:1px solid var(--line)}
 .mscreen .msg.me{align-self:flex-end;background:var(--active);color:var(--ground);border-color:var(--active)}
-.mscreen .msg em{display:block;font-size:12px;font-style:normal;opacity:.72;margin-bottom:5px}
+.mscreen .msg em{display:block;font-size:13px;font-style:normal;opacity:.72;margin-bottom:5px}
 .mscreen .compose{display:flex;gap:10px;padding:16px 26px;border-top:1px solid var(--line)}
 .mscreen .compose input{flex:1;background:var(--raised);border:1px solid var(--line);border-radius:999px;padding:12px 18px;color:var(--t1);font-family:inherit;font-size:15px}
 .mscreen .compose input::placeholder{color:var(--t3)}
@@ -180,9 +184,9 @@
 .mscreen .answer{padding:20px 26px;border-top:1px solid var(--line)}
 .mscreen .awho{display:flex;align-items:center;gap:10px}
 .mscreen .fav{width:28px;height:28px;border-radius:999px;background:var(--raised);border:1px solid var(--line);display:grid;place-items:center;
-  font-family:"Geist Mono",ui-monospace,monospace;font-size:10.5px;color:var(--t2)}
+  font-family:"Geist Mono",ui-monospace,monospace;font-size:13px;color:var(--t2)}
 .mscreen .aname{font-size:15px;font-weight:600}
-.mscreen .abadge{font-size:11.5px;font-weight:700;border:1px solid var(--active);color:var(--active);border-radius:4px;padding:1px 7px}
+.mscreen .abadge{font-size:13px;font-weight:700;border:1px solid var(--active);color:var(--active);border-radius:4px;padding:1px 7px}
 .mscreen .atxt{font-size:15px;line-height:1.62;color:var(--t2);margin-top:9px;max-width:60ch}
 .mscreen .pulse{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
 .mscreen .pcell{background:var(--panel);padding:20px 22px}
@@ -385,4 +389,30 @@
   width: min(100%, calc(var(--player-max-w) + var(--pad) * 2),
              calc(var(--player-max-h) * 16 / 9 + var(--pad) * 2));
   margin-inline: auto;
+}
+
+
+/* The buffering spinner and the error card. lesson.css does not style either,
+   and stripping the old player rules took their only definitions with them. */
+.player-layer .pspin {
+  position: absolute; inset: 0; margin: auto;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid oklch(1 0 0 / .22); border-top-color: oklch(1 0 0 / .85);
+  animation: pspin .8s linear infinite;
+}
+@keyframes pspin { to { transform: rotate(360deg); } }
+.app.reduce-motion .player-layer .pspin,
+.app.smooth-air .player-layer .pspin { animation: none; }
+
+.player-layer .perr {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; gap: 12px;
+  padding: 24px; text-align: center;
+  background: oklch(.14 0 0 / .92); color: oklch(.97 0 0);
+}
+.player-layer .perr p { margin: 0; font-size: var(--fs-sm); max-width: 34ch; }
+.player-layer .perr button {
+  min-height: var(--tap); padding: 0 18px;
+  background: var(--active-fill); color: var(--ground);
+  border: 0; border-radius: 999px; font: inherit; font-size: var(--fs-sm); cursor: pointer;
 }

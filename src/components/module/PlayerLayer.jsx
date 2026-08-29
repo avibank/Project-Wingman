@@ -11,6 +11,7 @@ import {
   openBar, closeBar, discardBar, editNote, expandBanner, dismissBanner,
   notesFor, keyAction, hudLabel, barPosition, barFraction, nudgeBar, isPin,
 } from "../../lib/lessonSurface.js";
+import { forwardWheel } from "../../lib/familiar.js";
 import "./lesson.css";
 
 // The one player. Mounted once, above the router, site-wide — it keeps playing
@@ -93,6 +94,24 @@ export default function PlayerLayer() {
       ro?.disconnect();
     };
   }, [dock, place, stage]);
+
+  // §2.1 — a wheel over the video scrolled nothing at all.
+  //
+  // The page scrolls inside .deck and this layer is position:fixed above the
+  // router, so the video is not inside the scroller and a wheel over it finds
+  // nothing to scroll. The video is the middle 45% of the screen and exactly
+  // where the cursor sits after you press play, so scrolling down to your own
+  // notes appeared to do nothing.
+  //
+  // NOT fixed with touch-action: none on the layer — that belongs on the note
+  // bar's drag handle and nowhere else. On the layer it would stop a finger
+  // dragging the page on a phone, which is the same bug and worse.
+  useEffect(() => {
+    const layer = layerRef.current;
+    if (!layer || dock !== "inline") return undefined;
+    return forwardWheel(layer, () => stage?.slotEl?.closest("[data-scroller]")
+      || document.querySelector(".deck"));
+  }, [dock, stage]);
 
   // Going site-wide means every scrollable page has to reserve this, or the
   // last row of every list on the site sits behind the bar.
@@ -427,11 +446,11 @@ export default function PlayerLayer() {
           <button type="button" onClick={() => { setError(null); ref.current?.load(); }}>Try again</button>
         </div>
       )}
-      {!playing && !buffering && pct === 0 && dock === "inline" && (
-        <button type="button" className="pbig" onClick={toggle} aria-label={`Play ${lesson.title}`}>
-          <Play aria-hidden="true" />
-        </button>
-      )}
+      {/* §2.2 — one triangle. The big centre button lost its centring when the
+          old player rules came out, and landed on top of the control bar's own
+          Play, so two play triangles were visible at once. The bar already has
+          one and clicking the picture already toggles, so the duplicate goes
+          rather than being repositioned. */}
       {buffering && <span className="pspin" aria-label="Buffering" />}
 
       {/* Volume and speed share one slab. Two different-looking indicators for

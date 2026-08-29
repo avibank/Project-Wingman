@@ -1,5 +1,5 @@
 {
-  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question, paper, note and thread here exists only so the module screen, the player, the quizzes, the papers, the notes and the comments can be exercised end to end. Replace all of it before launch. | Video sources kept from the previous import: the gtv-videos-bucket URLs in the handoff answer 403 on every file.",
+  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question, paper, note and thread here exists only so the module screen, the player, the quizzes, the papers, the notes and the comments can be exercised end to end. Replace all of it before launch. | Video sources kept from the working import: the gtv-videos-bucket URLs in the handoff answer 403 on every file.",
   "videoSource": "Blender open movies (CC-BY) via archive.org, plus one CC0 clip from MDN. The previous gtv-videos-bucket URLs now answer 403 and played nowhere.",
   "modules": [
     {
@@ -24,7 +24,10 @@
                 "module": "M1",
                 "chapter": "M1.01",
                 "lesson": "M1.01.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 596,
+              "watchedS": 596
             },
             {
               "id": "M1.01.2",
@@ -40,7 +43,10 @@
                 "module": "M1",
                 "chapter": "M1.01",
                 "lesson": "M1.01.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 60,
+              "watchedS": 60
             }
           ],
           "quiz": {
@@ -174,7 +180,10 @@
                 "module": "M1",
                 "chapter": "M1.02",
                 "lesson": "M1.02.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 888,
+              "watchedS": 888
             },
             {
               "id": "M1.02.2",
@@ -190,7 +199,10 @@
                 "module": "M1",
                 "chapter": "M1.02",
                 "lesson": "M1.02.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 57,
+              "watchedS": 23
             }
           ],
           "quiz": {
@@ -324,7 +336,10 @@
                 "module": "M1",
                 "chapter": "M1.03",
                 "lesson": "M1.03.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 653,
+              "watchedS": 0
             },
             {
               "id": "M1.03.2",
@@ -340,7 +355,10 @@
                 "module": "M1",
                 "chapter": "M1.03",
                 "lesson": "M1.03.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 47,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -564,7 +582,10 @@
                 "module": "M2",
                 "chapter": "M2.01",
                 "lesson": "M2.01.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 888,
+              "watchedS": 559
             },
             {
               "id": "M2.01.2",
@@ -580,7 +601,10 @@
                 "module": "M2",
                 "chapter": "M2.01",
                 "lesson": "M2.01.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 35,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -714,7 +738,10 @@
                 "module": "M2",
                 "chapter": "M2.02",
                 "lesson": "M2.02.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 653,
+              "watchedS": 0
             },
             {
               "id": "M2.02.2",
@@ -730,7 +757,10 @@
                 "module": "M2",
                 "chapter": "M2.02",
                 "lesson": "M2.02.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 31,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -864,7 +894,10 @@
                 "module": "M2",
                 "chapter": "M2.03",
                 "lesson": "M2.03.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 734,
+              "watchedS": 0
             },
             {
               "id": "M2.03.2",
@@ -880,7 +913,10 @@
                 "module": "M2",
                 "chapter": "M2.03",
                 "lesson": "M2.03.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 15,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -1104,7 +1140,10 @@
                 "module": "M3",
                 "chapter": "M3.01",
                 "lesson": "M3.01.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 653,
+              "watchedS": 117
             },
             {
               "id": "M3.01.2",
@@ -1120,7 +1159,10 @@
                 "module": "M3",
                 "chapter": "M3.01",
                 "lesson": "M3.01.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 15,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -1254,7 +1296,10 @@
                 "module": "M3",
                 "chapter": "M3.02",
                 "lesson": "M3.02.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 734,
+              "watchedS": 0
             },
             {
               "id": "M3.02.2",
@@ -1270,7 +1315,10 @@
                 "module": "M3",
                 "chapter": "M3.02",
                 "lesson": "M3.02.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 15,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -1404,7 +1452,10 @@
                 "module": "M3",
                 "chapter": "M3.03",
                 "lesson": "M3.03.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 596,
+              "watchedS": 0
             },
             {
               "id": "M3.03.2",
@@ -1420,7 +1471,10 @@
                 "module": "M3",
                 "chapter": "M3.03",
                 "lesson": "M3.03.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 60,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -1644,7 +1698,10 @@
                 "module": "M4",
                 "chapter": "M4.01",
                 "lesson": "M4.01.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 734,
+              "watchedS": 0
             },
             {
               "id": "M4.01.2",
@@ -1660,7 +1717,10 @@
                 "module": "M4",
                 "chapter": "M4.01",
                 "lesson": "M4.01.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 57,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -1794,7 +1854,10 @@
                 "module": "M4",
                 "chapter": "M4.02",
                 "lesson": "M4.02.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 596,
+              "watchedS": 0
             },
             {
               "id": "M4.02.2",
@@ -1810,7 +1873,10 @@
                 "module": "M4",
                 "chapter": "M4.02",
                 "lesson": "M4.02.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 47,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -1944,7 +2010,10 @@
                 "module": "M4",
                 "chapter": "M4.03",
                 "lesson": "M4.03.1"
-              }
+              },
+              "thumb": null,
+              "durationS": 888,
+              "watchedS": 0
             },
             {
               "id": "M4.03.2",
@@ -1960,7 +2029,10 @@
                 "module": "M4",
                 "chapter": "M4.03",
                 "lesson": "M4.03.2"
-              }
+              },
+              "thumb": null,
+              "durationS": 35,
+              "watchedS": 0
             }
           ],
           "quiz": {
@@ -2168,7 +2240,10 @@
     "notes": "Private. Yours only. {lessonId, t, body} — body may be empty, a bare pin is allowed and is the point. Never has replies. Never visible to anyone else.",
     "threads": "One table. lessonId + t set = a comment: appears under that video AND in People. lessonId null = a module post: People only, never under a video. This asymmetry is the whole rule and it enforces itself.",
     "replies": "Belong to a thread, never to a moment. One mark per thread, at the moment it was asked. Replies get no marks and no timestamps of their own.",
-    "quizQuestions": "Every quiz question carries lessonId — the join key for post-quiz review. Never match notes to questions semantically."
+    "quizQuestions": "Every quiz question carries lessonId — the join key for post-quiz review. Never match notes to questions semantically.",
+    "lessons": "Each lesson carries durationS, watchedS and thumb. thumb is null until there is real video — the tile is generated deterministically from the lesson id, so nothing looks broken and swapping in a real URL later changes nothing else. Progress is watchedS/durationS and it is the ONLY place watched state is shown. Titles never dim.",
+    "people": "initials are generated from the callsign and the avatar hue from the id, at render time. Neither is stored — one source of truth. Avatars are drawn, never uploaded: no file storage, no moderation, no cropper, and nobody has an empty avatar on day one.",
+    "presence": "Who has been on a lesson and when. Needs nobody online and is full on day one. This is what makes a room of eleven feel inhabited."
   },
   "notes": [
     {
@@ -2400,23 +2475,75 @@
   "people": [
     {
       "id": "u_you",
-      "callsign": "You"
+      "callsign": "You",
+      "initials": "Y"
     },
     {
       "id": "u_two",
-      "callsign": "Callsign Two"
+      "callsign": "Callsign Two",
+      "initials": "CT"
     },
     {
       "id": "u_four",
-      "callsign": "Callsign Four"
+      "callsign": "Callsign Four",
+      "initials": "CF"
     },
     {
       "id": "u_five",
-      "callsign": "Callsign Five"
+      "callsign": "Callsign Five",
+      "initials": "CF"
     },
     {
       "id": "u_nine",
-      "callsign": "Callsign Nine"
+      "callsign": "Callsign Nine",
+      "initials": "CN"
+    }
+  ],
+  "presence": [
+    {
+      "lessonId": "M1.01.1",
+      "userId": "u_two",
+      "at": "2026-08-27T19:12:00Z"
+    },
+    {
+      "lessonId": "M1.01.1",
+      "userId": "u_five",
+      "at": "2026-08-28T08:40:00Z"
+    },
+    {
+      "lessonId": "M1.01.2",
+      "userId": "u_nine",
+      "at": "2026-08-28T21:05:00Z"
+    },
+    {
+      "lessonId": "M1.02.1",
+      "userId": "u_two",
+      "at": "2026-08-28T22:30:00Z"
+    },
+    {
+      "lessonId": "M1.02.2",
+      "userId": "u_five",
+      "at": "2026-08-29T07:15:00Z"
+    },
+    {
+      "lessonId": "M1.02.2",
+      "userId": "u_four",
+      "at": "2026-08-29T09:02:00Z"
+    },
+    {
+      "lessonId": "M1.02.2",
+      "userId": "u_nine",
+      "at": "2026-08-29T09:44:00Z"
+    },
+    {
+      "lessonId": "M1.03.1",
+      "userId": "u_two",
+      "at": "2026-08-26T16:20:00Z"
+    },
+    {
+      "lessonId": "M2.01.1",
+      "userId": "u_four",
+      "at": "2026-08-28T12:00:00Z"
     }
   ]
 }

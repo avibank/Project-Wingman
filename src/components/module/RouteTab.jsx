@@ -1,5 +1,41 @@
 import { Check } from "lucide-react";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
+import { thumbTile, clock } from "../../lib/familiar.js";
+import "./familiar.css";
+
+// Netflix's episode list, and the reason it is worth more than the picture.
+//
+// Measured on the live module screen: chapter titles were all 27px weight 700
+// at three different lightnesses — contrast 5.0, 15.4 and 8.0 — because the
+// lightness encoded state. But every reader alive reads dimmer as LESS
+// IMPORTANT, so the screen told a first-year that Chapter 2 mattered and the
+// others did not.
+//
+// One brightness for every title, and a bar under the picture for how far you
+// got. One channel, one job. THE TITLE NEVER DIMS.
+function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
+  const secs = lesson.duration || 0;
+  return (
+    <button type="button" className="rrow" aria-current={here ? "true" : undefined}
+            onClick={() => onOpen(chapter, lesson)}>
+      <span className="rthumb" data-tile="" data-code={lesson.code || lesson.id}
+            data-done={done ? "1" : "0"} style={thumbTile(lesson.id)}>
+        {secs > 0 && <span className="rdur">{clock(secs)}</span>}
+        {/* The ONLY place watched state appears. */}
+        {(pct > 0 || done) && (
+          <span className="rprog"><i className="rprog-fill" style={{ width: `${Math.min(100, pct * 100)}%` }} /></span>
+        )}
+      </span>
+      <span className="rbody">
+        <span className="rtitle">{lesson.title}</span>
+        <span className="rmeta">
+          {done && <span className="rcheck"><Check aria-hidden="true" /></span>}
+          {done ? "Done" : here ? timeLeft(lesson.duration, pct) : durationWords(lesson.duration) || ""}
+        </span>
+      </span>
+    </button>
+  );
+}
 
 // The route through a module: chapters as headings, not cards. Nothing here
 // has a panel fill, a radius or a shadow — space and one hairline do all the
@@ -58,25 +94,13 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                   animate between. */}
               <div className="kidswrap" id={`kids-${ch.id}`}>
                 <div className="kids">
-                  {ch.lessons.map((l) => {
-                    const d = isDone(state, l.id);
-                    const isHere = l.id === here?.lesson?.id;
-                    const pct = state?.pos?.[l.id]?.pct || 0;
-                    return (
-                      <button key={l.id} type="button" className={`row${d ? " done" : ""}`}
-                              onClick={() => onOpenLesson(ch, l)}>
-                        <Mark done={d} here={isHere} />
-                        <span>
-                          <span className="rn">{l.title}</span>
-                          {durationWords(l.duration) && <span className="rm">{durationWords(l.duration)}</span>}
-                        </span>
-                        <span className={`rstate${isHere ? " on" : ""}`}>
-                          {d ? "Done" : isHere ? timeLeft(l.duration, pct) : durationWords(l.duration) || ""}
-                        </span>
-                        <span className="chv" aria-hidden="true">›</span>
-                      </button>
-                    );
-                  })}
+                  {ch.lessons.map((l) => (
+                    <RouteRow key={l.id} lesson={l} chapter={ch}
+                              done={isDone(state, l.id)}
+                              here={l.id === here?.lesson?.id}
+                              pct={state?.pos?.[l.id]?.pct || 0}
+                              onOpen={onOpenLesson} />
+                  ))}
 
                   {/* The quiz is the last row of its chapter, not a section of
                       its own — it belongs to the chapter that earned it. */}

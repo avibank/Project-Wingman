@@ -1,0 +1,495 @@
+/* ============================================================================
+   Wingman — familiar patterns
+   The watch layout, thumbnail rows, comment threads, the People list,
+   overflow menus, skeletons.
+
+   Copy verbatim. Depends on wingman-foundations.css, the livery tokens,
+   wingman-lesson-source.css (the player) and wingman-housing-source.css.
+
+   Borrow WHERE THINGS SIT. Never borrow the visual language — type, colour,
+   hairlines and the single accent stay Wingman's throughout.
+   ========================================================================= */
+
+
+/* ============================================================================
+   1 · THE WATCH LAYOUT
+   Player in the main column, the chapter route beside it, permanently.
+   ----------------------------------------------------------------------------
+   This is uula, Udemy, Coursera, Skillshare and every YouTube playlist. It is
+   the most-seen layout in online learning, and it is the one thing about the
+   lesson page that nobody currently recognises.
+
+   It reverses "one column at every width" from the previous brief, and that is
+   deliberate. What was cancelled was a sidebar of NOTES AND DOCUMENTS — novel
+   content in a novel place on a screen that already had four other novel
+   things. A lesson list beside a video is the least novel sidebar in
+   education. The test was never "no second column", it was "how many things
+   here has this person never seen before".
+   ========================================================================= */
+
+.watch{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  padding-inline: var(--pad);
+}
+@media (min-width: 1120px){
+  .watch{ grid-template-columns: minmax(0, 1fr) 352px; gap: 32px; align-items: start; }
+}
+.watch-main{ min-width: 0; }
+
+/* inside the watch layout the column sets the width; the height cap still
+   applies so the video never pushes what comes next off the screen */
+.watch .player-slot{ width: 100%; max-height: var(--player-max-h); }
+
+/* Below 1120 the route is not here — it is the module screen you came from,
+   and "what comes next" is the row under the player. One less thing on a
+   phone, which is where the beta will mostly live. */
+.route{ display: none; }
+@media (min-width: 1120px){
+  .route{
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    min-width: 0;
+  }
+}
+.route-head{
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--hair);
+}
+.route-title{ font-size: var(--fs-md); color: var(--t1); }
+.route-meta{ font-size: var(--fs-xs); color: var(--t3); }
+.route-list{
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;      /* the page does not scroll when this ends */
+  padding-block: 6px;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;   /* no layout shift as rows come and go */
+}
+.route-chapter{
+  padding: 14px 10px 6px;
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+/* the explicit next-lesson link at the foot of the list, as uula has */
+.route-next{
+  display: flex; align-items: center; gap: 8px;
+  min-height: var(--tap); padding: 0 10px;
+  border-top: 1px solid var(--hair);
+  font-size: var(--fs-sm); color: var(--active);
+  text-decoration: none;
+}
+
+
+/* ============================================================================
+   2 · THE ROUTE ROW — Netflix's episode list
+   ----------------------------------------------------------------------------
+   Rule: picture, title, duration. Watched state lives in the progress bar and
+   NOWHERE else. Titles never dim.
+   ========================================================================= */
+
+/* WHY, MEASURED. On the live module screen Chapters 1, 2 and 3 are all 27px
+   weight 700 at three different lightnesses — contrast 5.0, 15.4 and 8.0. The
+   lightness encodes state; every reader alive reads dimmer as less important.
+   So the screen tells a first-year that Chapter 2 matters and the others do
+   not. Netflix has been teaching the other grammar for fifteen years: one
+   brightness for every title, a bar underneath for how far you got. */
+
+.rrow{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border-inline-start: 3px solid transparent;
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--t-fast) var(--ease);
+}
+.rrow:hover{ background: var(--raised); }
+.rrow:active{ background: var(--raised); }     /* tap feedback in CSS, never JS */
+.rrow[aria-current="true"]{
+  background: var(--raised);
+  border-inline-start-color: var(--active);
+}
+
+/* -- the picture ---------------------------------------------------------- */
+.rthumb{
+  position: relative;
+  width: 128px; height: 72px;         /* explicit, always — no layout shift */
+  flex: none;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--raised);
+}
+.rthumb img{
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+/* The generated tile, until there is real video. Deterministic from the lesson
+   id, so it never changes between renders — the same rule as the starfield.
+   A generated tile reads as NOT YET; a grey box with a broken-image icon reads
+   as BROKEN, and there is no content yet, so this is what launches. */
+.rthumb[data-tile]{
+  background:
+    linear-gradient(var(--tile-tilt, 140deg),
+      oklch(.42 .07 var(--tile-a, 240)),
+      oklch(.24 .04 var(--tile-b, 260)));
+}
+.rthumb[data-tile]::after{
+  content: attr(data-code);
+  position: absolute; inset: auto 8px 10px 8px;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: 11px;                     /* decoration, not reading matter */
+  letter-spacing: .08em;
+  color: oklch(1 0 0 / .48);
+}
+
+/* duration badge, bottom-right, the way every video site writes it */
+.rdur{
+  position: absolute; inset-block-end: 7px; inset-inline-end: 6px;
+  padding: 1px 5px;
+  background: oklch(0 0 0 / .74);
+  border-radius: 4px;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: oklch(.98 0 0);
+  line-height: 1.4;
+}
+
+/* THE progress bar. The only place watched state appears. */
+.rprog{ position: absolute; inset: auto 0 0 0; height: 3px; background: oklch(0 0 0 / .5); }
+.rprog-fill{ height: 100%; background: var(--active); }
+.rthumb[data-done="1"] .rprog-fill{ width: 100% !important; }
+
+/* -- the words ------------------------------------------------------------ */
+.rbody{ min-width: 0; padding-top: 2px; }
+.rtitle{
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-tight);
+  color: var(--t1);                    /* ALWAYS. Done or not. Do not dim it. */
+}
+.rmeta{
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+}
+.rcheck{ color: var(--active); display: inline-flex; }
+.rcheck svg{ width: 13px; height: 13px; }
+.rrow[aria-current="true"] .rmeta{ color: var(--active); }
+
+/* the quiz row has no picture — a tile with a mark instead of a frame */
+.rthumb[data-kind="quiz"]{
+  display: grid; place-items: center;
+  background: var(--raised);
+  border: 1px solid var(--hair);
+}
+
+
+/* ============================================================================
+   3 · AVATARS — drawn, never uploaded
+   ----------------------------------------------------------------------------
+   No uploads means no storage, no moderation, no cropping tool, and no
+   empty-avatar state on day one.
+   ========================================================================= */
+
+.av{
+  flex: none;
+  display: grid; place-items: center;
+  width: var(--av-size, 36px); height: var(--av-size, 36px);
+  border-radius: 50%;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: .02em;
+  background: oklch(.38 .09 var(--av-h, 240));
+  color: oklch(.95 .03 var(--av-h, 240));
+  user-select: none;
+}
+:root[data-mode="light"] .av,
+:root:not([data-mode="dark"]) .av{
+  background: oklch(.88 .06 var(--av-h, 240));
+  color: oklch(.36 .10 var(--av-h, 240));
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-mode="light"]) .av{
+    background: oklch(.38 .09 var(--av-h, 240));
+    color: oklch(.95 .03 var(--av-h, 240));
+  }
+}
+.av[data-size="lg"]{ --av-size: 44px; font-size: var(--fs-sm); }
+.av[data-size="sm"]{ --av-size: 28px; }
+
+/* INITIALS COLLIDE — "Callsign Four" and "Callsign Five" are both CF. The hue
+   separates them and the callsign is always beside the avatar. The avatar is
+   decoration, never identification: never build a row where it is the only way
+   to tell two people apart. */
+
+
+/* ============================================================================
+   4 · COMMENTS — YouTube's shape
+   avatar · name · relative time / body / Reply, replies behind one expander
+   ========================================================================= */
+
+.cmt{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  padding: 14px 0;
+}
+.cmt-main{ min-width: 0; }
+.cmt-head{
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.cmt-name{ font-size: var(--fs-xs); font-weight: 600; color: var(--t1); }
+.cmt-when{ font-size: var(--fs-xs); color: var(--t3); }
+
+/* The timestamp in a comment is a link that seeks, in the accent. YouTube
+   taught everyone this — a time inside a comment is pressable. The behaviour
+   already exists; looking like the thing people know is free. */
+.cmt-seek{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--active);
+  background: none; border: 0; padding: 0;
+  cursor: pointer;
+}
+.cmt-seek:hover{ text-decoration: underline; }
+
+.cmt-body{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); }
+.cmt-acts{ display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+.cmt-act{
+  min-height: var(--tap);
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--t3); cursor: pointer;
+}
+.cmt-act:hover{ color: var(--t1); }
+
+/* Replies start collapsed — what everyone has seen ten thousand times, and an
+   expanded thread otherwise pushes the next question off the screen. */
+.cmt-expand{
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap);
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--active); cursor: pointer;
+}
+.cmt-expand svg{ width: 12px; height: 12px; transition: transform var(--t-fast) var(--ease); }
+.cmt-expand[aria-expanded="true"] svg{ transform: rotate(180deg); }
+.cmt-replies{ list-style: none; margin: 8px 0 0; padding: 0 0 0 calc(36px + 12px); }
+.cmt-replies[hidden]{ display: none; }
+.cmt-reply{ display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0; }
+
+/* optimistic states — the row is there before the server answers */
+.cmt[data-pending="1"]{ opacity: .62; }
+.cmt[data-failed="1"] .cmt-body{ color: var(--t3); }
+.cmt-retry{
+  min-height: var(--tap); background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-xs); color: var(--active); cursor: pointer;
+}
+/* Never delete something a person typed. A failed post stays, with a way back. */
+
+
+/* ============================================================================
+   5 · THE PEOPLE LIST — WhatsApp's shape
+   ========================================================================= */
+
+/* THE MEASURED BUG THIS FIXES: on the live People tab, 7 of 7 thread titles are
+   truncated — 424px of text into 253px. Every question cut mid-sentence, and
+   the question is the content. A chat app gives the title the room and cuts the
+   PREVIEW instead. */
+
+.plist{ list-style: none; margin: 0; padding: 0; }
+.psection{
+  padding: 18px var(--pad) 8px;
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+/* A sentence, not a chip. "Waiting for an answer" is readable on sight; a pill
+   labelled "Waiting" is something you have to learn. */
+
+.prow{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  min-height: 72px;
+  padding: 14px var(--pad);
+  border-bottom: 1px solid var(--hair);
+  background: none; border-inline: 0; border-top: 0;
+  text-align: start; color: inherit; font: inherit; cursor: pointer;
+  transition: background var(--t-fast) var(--ease);
+}
+.prow:hover, .prow:active{ background: var(--raised); }
+
+.prow-main{ min-width: 0; }
+/* TWO lines, not one. A chat name is short; a question is a sentence — this is
+   the one place we deviate from the model, and it is in service of the content
+   rather than the pattern. */
+.prow-title{
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--fs-md);
+  line-height: var(--lh-tight);
+  color: var(--t1);
+}
+/* the preview is what gets cut, never the title */
+.prow-preview{
+  margin-top: 5px;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.prow-side{
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  flex: none; padding-top: 2px;
+}
+.prow-when{ font-size: var(--fs-xs); color: var(--t3); white-space: nowrap; }
+.prow-dot{ width: 9px; height: 9px; border-radius: 50%; background: var(--active); }
+.prow-dot[hidden]{ display: none; }
+.prow-watch{
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 6px;
+  font-size: var(--fs-xs);      /* 13px floor. It was 12px on the live site. */
+  color: var(--active);
+}
+/* Watch at 2:17 is the only door from People back to the moment. It was the
+   smallest text on the screen. It is not any more. */
+
+
+/* ============================================================================
+   6 · PRESENCE — the cheapest way to make eleven people feel like a room
+   ========================================================================= */
+
+.pres{
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hair);
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+.pres-faces{ display: flex; }
+.pres-faces .av{ --av-size: 26px; margin-inline-start: -8px; box-shadow: 0 0 0 2px var(--ground); }
+.pres-faces .av:first-child{ margin-inline-start: 0; }
+
+/* The face card on the lesson page — uula puts a teacher there; this is the
+   Wingman-native version. Not "ask your teacher": the platform does not teach.
+   A person, a line, one action. */
+.face{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px; align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid var(--hair);
+}
+.face-name{ font-size: var(--fs-sm); color: var(--t1); }
+.face-line{ font-size: var(--fs-xs); color: var(--t3); margin-top: 3px; }
+.face-act{
+  min-height: var(--tap);
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-sm); color: var(--active); cursor: pointer;
+}
+
+
+/* ============================================================================
+   7 · ROW ACTIONS — the three-dot menu
+   ----------------------------------------------------------------------------
+   A gap from the previous brief: edit and delete were hover-only, and hover
+   does not exist on a phone, which is where the beta lives.
+   ========================================================================= */
+
+.ovf{ position: relative; flex: none; }
+.ovf-btn{
+  width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 0; padding: 0;
+  color: var(--t3); cursor: pointer;
+  border-radius: 50%;
+}
+.ovf-btn:hover{ color: var(--t1); background: var(--raised); }
+.ovf-menu{
+  position: absolute; inset-inline-end: 0; top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px oklch(0 0 0 / .28);
+}
+.ovf-menu[hidden]{ display: none; }
+.ovf-item{
+  display: block; width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  background: none; border: 0; border-radius: 7px;
+  text-align: start; font: inherit; font-size: var(--fs-sm);
+  color: var(--t2); cursor: pointer;
+}
+.ovf-item:hover{ background: var(--raised); color: var(--t1); }
+:root{ --danger: oklch(.62 .17 22); }
+:root[data-mode="light"]{ --danger: oklch(.50 .19 22); }
+.ovf-item[data-danger]{ color: var(--danger); }
+
+
+/* ============================================================================
+   8 · SNAPPY — the CSS half
+   ========================================================================= */
+
+/* Skeletons, sized to the row they replace. A list that reflows when it loads
+   reads as slow even when it is fast — the shift IS the slowness. */
+.sk{
+  background: linear-gradient(90deg, var(--raised) 0%, var(--line) 50%, var(--raised) 100%);
+  background-size: 200% 100%;
+  animation: skm 1.15s linear infinite;
+  border-radius: 6px;
+}
+@keyframes skm{ to{ background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce){ .sk{ animation: none; } }
+
+.sk-rrow{ display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 8px 10px; }
+.sk-thumb{ width: 128px; height: 72px; border-radius: 8px; }
+.sk-line{ height: 12px; margin-bottom: 8px; }
+.sk-line[data-w="short"]{ width: 42%; }
+
+.sk-prow{ display: grid; grid-template-columns: auto 1fr; gap: 12px; min-height: 72px; padding: 14px var(--pad); align-items: center; }
+.sk-av{ width: 44px; height: 44px; border-radius: 50%; }
+
+/* Both tabs stay mounted and toggle with [hidden], so switching is a style
+   change rather than a fetch. With six lessons and forty comments there is
+   nothing to virtualise — do not. */
+.tabpane[hidden]{ display: none !important; }
+
+/* Off-screen sections cost nothing to have, as long as they reserve height. */
+.llist, .plist{ content-visibility: auto; contain-intrinsic-size: 0 480px; }
+
+/* Nothing an interaction triggers may run longer than --t-base. Press feedback
+   is :active, in CSS — never a JS class, which is always at least a frame late. */
+
+
+/* ============================================================================
+   9 · WHAT WAS NOT BORROWED, AND WHY
+   · No likes or upvotes. With eleven people it ranks your friends, and a
+     question at zero reads as a bad question.
+   · No streaks. They work by fear of loss, and the people who break one are
+     usually having a bad week.
+   · No feeds, stories, follower counts or online dots.
+   · No progress blob. uula's largest right-hand element reads 0% on a first
+     visit. Words, not percentages.
+   · No promo above the content.
+   ========================================================================= */

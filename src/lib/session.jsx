@@ -99,6 +99,23 @@ export function SessionProvider({ children }) {
       threads: content.threads || [],
       replies: content.replies || [],
     }));
+
+    // The seeded watch state, so every route-row state is visible on a first
+    // run — three lessons done, three part-watched, the rest untouched. Merged
+    // rather than assigned: a lesson the account already has a position for
+    // keeps it, so seeding can never overwrite real progress.
+    const pos = { ...progress.get("pw-lesson-pos", {}) };
+    let touched = false;
+    for (const m of content.modules || []) {
+      for (const c of m.chapters || []) {
+        for (const l of c.lessons || []) {
+          if (!l.watchedS || !l.durationS || pos[l.id]) continue;
+          pos[l.id] = { pct: Math.min(1, l.watchedS / l.durationS) };
+          touched = true;
+        }
+      }
+    }
+    if (touched) progress.set("pw-lesson-pos", pos);
   }, [loaded, progress]);
 
   // One writer per collection. `mutate` takes any of the pure functions from

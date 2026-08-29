@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "check:content": "node scripts/check-content.mjs",
-    "check": "npm run lint && npm run check:jsx && npm run check:states && npm run check:lesson && npm run check:content && npm run check:schema && npm run check:livery && npm run check:day && npm run check:contrast && npm run check:lesson-contrast && npm run check:settings && npm run check:responsive && npm run check:analytics && npm run check:logbook && npm run build && npm run check:placeholders && npm run check:bundle",
+    "check": "npm run lint && npm run check:jsx && npm run check:states && npm run check:lesson && npm run check:familiar && npm run check:content && npm run check:schema && npm run check:livery && npm run check:day && npm run check:contrast && npm run check:lesson-contrast && npm run check:settings && npm run check:responsive && npm run check:analytics && npm run check:logbook && npm run build && npm run check:placeholders && npm run check:bundle",
     "build:sql": "node scripts/build-migration-bundle.mjs && node scripts/build-setup-sql.mjs",
     "check:livery": "node scripts/check-livery.mjs",
     "check:backend": "node scripts/check-backend.mjs",
@@ -32,7 +32,8 @@
     "verify": "npm run build && node scripts/verify.mjs",
     "check:lesson-contrast": "node scripts/check-lesson-contrast.mjs",
     "check:postgrest": "node scripts/check-postgrest.mjs",
-    "check:lesson": "node scripts/check-lesson.mjs"
+    "check:lesson": "node scripts/check-lesson.mjs",
+    "check:familiar": "node scripts/check-familiar.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
