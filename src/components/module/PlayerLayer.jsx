@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, Subtitles, Settings, StickyNote, X } from "lucide-react";
 import { resolveVideo } from "../../lib/videoHost.js";
 import { mmss } from "./lessonState.js";
@@ -153,7 +153,13 @@ export default function PlayerLayer() {
     const crossed = notesCrossed(prevT.current, t, myNotes);
     prevT.current = t;
     if (crossed.length && !banner && !composer) {
-      setSession((s) => ({ ...s, banner: bannerFrom(crossed, s.notes) }));
+      // Clustered against THIS lesson's notes, not the whole collection.
+      // bannerFrom() takes whatever it is given and gathers everything within
+      // CLUSTER_S of the first — handed every note in the account it happily
+      // reaches into other lessons, so passing a note at 0:42 announced "2
+      // notes here" because a different lesson had one at 0:44, and expanding
+      // it showed a note from a video you were not watching.
+      setSession((s) => ({ ...s, banner: bannerFrom(crossed, myNotes) }));
     }
 
     const now = Date.now();
@@ -266,11 +272,22 @@ export default function PlayerLayer() {
     return lessonMarks(session.notes, session.threads, lesson.id);
   }, [session.notes, session.threads, lesson]);
 
+  // The bar's width decides which marks merge, so it has to be known on the
+  // first paint. A ResizeObserver alone left it at zero until the first
+  // delivery — and with no width there are no clusters, so the bar rendered
+  // empty. Measured synchronously after layout, with the observer kept for
+  // later changes.
   const [barW, setBarW] = useState(0);
-  useEffect(() => {
-    if (!trackRef.current) return undefined;
-    const ro = new ResizeObserver(([e]) => setBarW(e.contentRect.width));
-    ro.observe(trackRef.current);
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const w = el.getBoundingClientRect().width;
+      setBarW((prev) => (Math.abs(prev - w) > 0.5 ? w : prev));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
     return () => ro.disconnect();
   }, [dock, video]);
 

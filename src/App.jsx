@@ -189,7 +189,7 @@ function AppInner() {
   // The seeded notes and threads are written into the account once and then
   // owned like anything else — otherwise deleting a seeded note would bring it
   // back on the next reload.
-  const { seedFrom } = useSession();
+  const { seedFrom, requestWatch } = useSession();
   useEffect(() => { if (testContent) seedFrom(testContent); }, [testContent, seedFrom]);
   const moduleState = {
     opened: progress.get("pw-paper-opened", {}),
@@ -739,6 +739,10 @@ function AppInner() {
               window.open(`/${paper.file.replace(/^\//, "")}`, "_blank", "noopener");
             }}
             people={{
+              // The callsigns behind the author ids. Threads themselves come
+              // from the session, not from here — they are the same rows the
+              // lesson screen shows.
+              people: useTestContent?.people || [],
               wingman: null, groups: [], questions: [],
               // Real or absent. The figures this row is meant to carry —
               // how many have finished, the most replayed minute — have no
@@ -752,6 +756,18 @@ function AppInner() {
             onBack={() => go(routePath.home())}
             onOpenLesson={(ch, l) => go(routePath.lesson(activeModuleCode, ch.id, l.id))}
             onOpenQuiz={(ch) => navigate(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
+            onOpenQuestion={(target) => {
+              // The one bridge from People back to the moment. A module post
+              // has no moment, so watchAt() hands back null and there is
+              // nothing to open — the row is not a door and must not act like
+              // one.
+              if (!target) return;
+              const chs = chaptersFor(activeModuleCode, useTestContent);
+              const ch = chs.find((c) => (c.lessons || []).some((l) => l.id === target.lessonId));
+              if (!ch) return;
+              requestWatch(target);
+              go(routePath.lesson(activeModuleCode, ch.id, target.lessonId));
+            }}
           />
         </main>
       ) : (

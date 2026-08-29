@@ -26,8 +26,9 @@ export default function LessonPage({
   module: mod, chapters, chapter, lesson, state,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
-  const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab } = useSession();
+  const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab, clearWatch } = useSession();
   const slotRef = useRef(null);
+  const watch = session.watchAt?.lessonId === lesson.id ? session.watchAt : null;
 
   // The slot is what is watched, not the player — the player leaves it.
   useEffect(() => {
@@ -40,12 +41,18 @@ export default function LessonPage({
     setStage({
       lesson,
       slotEl: slotRef.current,
-      resume: state?.pos?.[lesson.id]?.pct || 0,
+      // Arriving from "Watch at 2:17" opens at that second instead of where
+      // you left off — it is the only bridge from People back to the moment,
+      // so it has to win over the saved position.
+      resume: watch && lesson.duration
+        ? watch.seconds / lesson.duration
+        : state?.pos?.[lesson.id]?.pct || 0,
       onProgress: (p) => onSeekSaved?.(lesson.id, p),
       onSeek: (p) => onSeekSaved?.(lesson.id, p),
       onComplete: () => onComplete?.(lesson.id),
     });
     dispatchPlayer({ type: "load", lessonId: lesson.id, seconds: 0 });
+    if (watch) clearWatch();
     return () => setStage(null);
   }, [lesson.id]);
 

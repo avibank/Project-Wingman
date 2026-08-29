@@ -98,14 +98,22 @@ export function SessionProvider({ children }) {
     (seconds) => setSession((s) => ({ ...s, seekTo: { seconds, at: Date.now() } })), []);
   const clearSeek = useCallback(() => setSession((s) => ({ ...s, seekTo: null })), []);
 
+  // "Watch at 2:17" from People. It travels as a pending target rather than a
+  // seek, because the lesson has not mounted yet and its video has no duration
+  // to seek within — the lesson page turns it into the same resume the player
+  // already applies on loadedmetadata.
+  const requestWatch = useCallback(
+    (target) => setSession((s) => ({ ...s, watchAt: target })), []);
+  const clearWatch = useCallback(() => setSession((s) => ({ ...s, watchAt: null })), []);
+
   const value = useMemo(() => ({
     session, setSession, mutate, dispatchPlayer,
     stage, setStage, stageRef,
-    seedFrom, markSeen, requestSeek, clearSeek,
+    seedFrom, markSeen, requestSeek, clearSeek, requestWatch, clearWatch,
     lastSeen: progress.get(SEEN_KEY, {}),
     setTab: (tab) => setSession((s) => ({ ...s, tab })),
   }), [session, stage, mutate, dispatchPlayer, setStage, seedFrom, markSeen,
-       requestSeek, clearSeek, progress]);
+       requestSeek, clearSeek, requestWatch, clearWatch, progress]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

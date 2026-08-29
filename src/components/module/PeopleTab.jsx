@@ -1,95 +1,148 @@
 import { useState } from "react";
+import { useSession } from "../../lib/session.jsx";
+import {
+  orderThreads, repliesFor, badges, isAnchored, isWaiting, watchAt,
+  postModulePost, postReply,
+} from "../../lib/lessonSurface.js";
+import { mmss } from "./lessonState.js";
 
-// Three layers, one list, in this order: the wingman pinned, then groups, then
-// the individual questions you are in, then the module row. It replaces a
-// module chat room, which does not work at any user count — quiet with eleven
-// people and unreadable with five thousand.
+// Threads live here, and every comment written under a video is one of them —
+// the same row, not a copy. The lesson asks what is on this lesson; this asks
+// what is in this module. Nothing syncs, so nothing can drift.
 //
-// Unread discipline is the load-bearing rule here. The wingman and groups
-// badge normally. A question badges only if you are in it. "Someone asked
-// something on a lesson you finished" is a soft dismissible row at the foot of
-// the list and never a badge: if every new question lit a dot, the tab would
-// be permanently red and people would stop opening it.
+// Two kinds of row and they must look different. A thread from a video has a
+// moment and takes you there; a module post has neither and goes nowhere. One
+// is a door and one is not, and a door that does not open is the worst row on
+// the screen.
+//
+// Unread discipline is load-bearing rather than a nicety. Every comment on
+// every lesson becomes a thread here, so if each one badged, People would be
+// permanently red within a week and people would stop opening it — which is
+// the failure the module chat room was rejected for. A thread badges only if
+// you are in it AND somebody else has done something since you last looked.
 function initials(name = "") {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "··";
 }
 
-function Row({ row, current, onPick }) {
-  return (
-    <button type="button" className={`hrow${row.pinned ? " pinned" : ""}`}
-            aria-current={current === row.id} onClick={() => onPick(row)}>
-      <span className={`hav${row.kind === "group" ? " grp" : ""}`} aria-hidden="true">
-        {row.kind === "module" ? "M" : initials(row.name)}
-      </span>
-      <span>
-        <span className="hn">{row.name}</span>
-        <span className="hl">{row.line}</span>
-      </span>
-      <span className="hr">
-        {row.where && <span className="hpos">{row.where}</span>}
-        {row.unread > 0 && <span className="unread">{row.unread}</span>}
-      </span>
-    </button>
-  );
-}
+const who = (id, people) =>
+  id === "u_you" ? "You" : (people.find((p) => p.id === id)?.callsign || id);
 
-export default function PeopleTab({ module: mod, wingman, groups, questions, moduleRow, onOpenQuestion }) {
-  const rows = [
-    ...(wingman ? [{ ...wingman, kind: "wingman", pinned: true }] : []),
-    ...groups.map((g) => ({ ...g, kind: "group" })),
-    // A question badges only if you are in it, which is what `mine` means.
-    ...questions.map((q) => ({ ...q, kind: "question", unread: q.mine ? q.unread : 0 })),
-    { id: "module", kind: "module", name: `Everyone on ${mod.name}`, line: moduleRow.line, unread: 0 },
-  ];
+export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
+  const { session, mutate, lastSeen, markSeen } = useSession();
+  const moduleId = mod.code || mod.id;
+  const { threads, replies } = session;
 
-  const [current, setCurrent] = useState(rows[0]?.id || null);
-  const [dismissed, setDismissed] = useState(false);
-  const open = rows.find((r) => r.id === current) || rows[0];
+  const [open, setOpen] = useState(null);
+  const [post, setPost] = useState("");
+  const [replyBody, setReplyBody] = useState("");
 
-  // Never a badge. A quiet line at the foot, and it can be sent away.
-  const nudge = questions.find((q) => !q.mine && q.unread > 0);
+  const ordered = orderThreads(threads, replies, moduleId);
+  const badged = new Set(badges(threads, replies, moduleId, "u_you", lastSeen));
+  const current = ordered.find((t) => t.id === open) || null;
+
+  const band = (t) => {
+    const rs = repliesFor(replies, t.id);
+    if (t.authorId === "u_you" || rs.some((r) => r.authorId === "u_you")) return "In it";
+    if (isWaiting(t, replies)) return "Waiting for an answer";
+    return null;
+  };
 
   return (
     <div className="hub">
       <div className="hublist">
         <div className="hubrows">
-          {rows.map((r) => (
-            <Row key={r.id} row={r} current={current} onPick={(row) => {
-              setCurrent(row.id);
-              if (row.kind === "question") onOpenQuestion?.(row);
-            }} />
-          ))}
+          {ordered.length === 0 ? (
+            <p className="lempty" style={{ padding: "18px var(--pad)" }}>
+              The first question asked on a lesson lands here, where the rest of
+              the module can answer it.
+            </p>
+          ) : ordered.map((t) => {
+            const rs = repliesFor(replies, t.id);
+            const door = isAnchored(t);
+            return (
+              <button key={t.id} type="button"
+                      className={`hrow${door ? " is-door" : ""}`}
+                      aria-current={open === t.id}
+                      onClick={() => { setOpen(t.id); markSeen(t.id); }}>
+                <span className="hav" aria-hidden="true">{initials(who(t.authorId, people))}</span>
+                <span>
+                  <span className="hn">{t.body}</span>
+                  <span className="hl">
+                    {who(t.authorId, people)}
+                    {rs.length ? ` · ${rs.length} ${rs.length === 1 ? "reply" : "replies"}` : ""}
+                    {band(t) ? ` · ${band(t)}` : ""}
+                  </span>
+                </span>
+                <span className="hr">
+                  {/* A moment is what makes this row a door. Without one there
+                      is nowhere to go, and the row must not pretend there is. */}
+                  {door && <span className="hpos">Watch at {mmss(t.t)}</span>}
+                  {badged.has(t.id) && <span className="unread">1</span>}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        {nudge && !dismissed && (
-          <button type="button" className="hsug" onClick={() => setDismissed(true)}>
-            Someone asked something on a lesson you have finished. Tap to put this away.
-          </button>
-        )}
+
+        {/* Posting from here has no lesson and no moment, which is the whole of
+            the one-way rule: there is nothing to attach it to, so no lesson
+            query can ever return it. Nobody has to remember the rule. */}
+        <div className="compose" data-vis="public" style={{ marginInline: "var(--pad)" }}>
+          <span className="compose-t" />
+          <textarea className="compose-field" rows={1} value={post}
+                    placeholder={`Ask everyone on ${mod.name}`}
+                    onChange={(e) => setPost(e.target.value)} />
+          <span className="compose-who">Everyone on {mod.name} sees this. It has no moment, so it stays here.</span>
+          <div className="compose-acts">
+            <button type="button" className="compose-act" data-primary=""
+                    onClick={() => {
+                      if (!post.trim()) return;
+                      mutate((s) => postModulePost(s, { moduleId, body: post }));
+                      setPost("");
+                    }}>Post</button>
+          </div>
+        </div>
       </div>
 
       <div className="side" style={{ padding: "18px 22px" }}>
-        {open?.kind === "module" ? (
+        {current ? (
           <>
-            <h4>{open.name}</h4>
-            {/* Never empty and needs nobody online — but the figures are real
-                or absent. Nothing here is invented to fill the space. */}
-            {moduleRow.facts.length
-              ? moduleRow.facts.map((f) => <p key={f} className="sh">{f}</p>)
-              : <p className="sh">This fills in as people work through the module. It does not need anyone to be online.</p>}
-          </>
-        ) : open ? (
-          <>
-            <h4>{open.name}</h4>
-            <p className="sh">{open.line}</p>
-            {open.kind === "wingman" && (
-              <p className="sh">
-                {open.where
-                  ? `They are on ${open.where}.`
-                  : "Where you each are shows here, before anybody types."}
-              </p>
+            <h4>{current.body}</h4>
+            <p className="sh">{who(current.authorId, people)}</p>
+            {isAnchored(current) && (
+              <button type="button" className="nextgo"
+                      onClick={() => onOpenAt?.(watchAt(current))}>
+                Watch at {mmss(current.t)}
+              </button>
             )}
+            <ul className="lreplies" style={{ paddingInlineStart: 0 }}>
+              {repliesFor(replies, current.id).map((r) => (
+                <li key={r.id} className="lreply">
+                  <span className="lreply-who">{who(r.authorId, people)}</span>
+                  <p className="lreply-body">{r.body}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="compose" data-vis="public">
+              <span className="compose-t" />
+              <textarea className="compose-field" rows={1} value={replyBody}
+                        placeholder="Answer this" onChange={(e) => setReplyBody(e.target.value)} />
+              <div className="compose-acts">
+                <button type="button" className="compose-act" data-primary=""
+                        onClick={() => {
+                          if (!replyBody.trim()) return;
+                          mutate((s) => postReply(s, { threadId: current.id, body: replyBody }));
+                          setReplyBody("");
+                        }}>Reply</button>
+              </div>
+            </div>
           </>
-        ) : null}
+        ) : (
+          <p className="sh">
+            Open a thread to read it. The ones waiting for an answer are grouped
+            together, so the module can see what still needs one.
+          </p>
+        )}
       </div>
     </div>
   );
