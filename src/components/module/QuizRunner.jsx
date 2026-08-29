@@ -119,7 +119,7 @@ export default function QuizRunner({ chapter, questions, onFinish, onQuit, onOpe
       </div>
 
       <div className="quiz-foot">
-        <button type="button" className="q-move" onClick={() => dispatch({ type: "prev" })}
+        <button type="button" className="q-arrow" onClick={() => dispatch({ type: "prev" })}
                 disabled={attempt.at === 0} aria-label="Previous question">
           <ChevronLeft aria-hidden="true" />
         </button>
@@ -140,7 +140,7 @@ export default function QuizRunner({ chapter, questions, onFinish, onQuit, onOpe
             {warned ? `${warned} Submit anyway` : "Submit"}
           </button>
         ) : (
-          <button type="button" className="q-move" onClick={() => dispatch({ type: "next" })}
+          <button type="button" className="q-arrow" onClick={() => dispatch({ type: "next" })}
                   aria-label="Next question">
             <ChevronRight aria-hidden="true" />
           </button>

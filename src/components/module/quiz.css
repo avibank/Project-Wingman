@@ -148,7 +148,12 @@
   --bad: oklch(.62 .180 25);
   --on-mark: oklch(.14 0 0);
 }
-:root[data-mode="light"]{
+/* WINGMAN NOTE — the selector, not the values. The source keys this off
+   :root[data-mode="light"]; this app stamps data-variant on .app instead, so
+   the light values never applied and Day used the dark ones against a light
+   ground: measured 3.13:1 for right and 3.63:1 for wrong, both under the
+   floor. The values below are the source's, unchanged. */
+.app[data-variant="day"]{
   --ok:  oklch(.50 .150 148);
   --bad: oklch(.50 .190 25);
   --on-mark: oklch(.99 0 0);
@@ -180,6 +185,16 @@
 .q-flag[aria-pressed="true"]{ color: var(--active); }
 .q-flag svg{ width: 15px; height: 15px; }
 .q-move{ margin-inline-start: auto; display: flex; gap: 8px; }
+/* The arrows are icon buttons, and 44 in BOTH directions — they measured
+   40x44, and height alone was never the whole of the rule. */
+.q-arrow{
+  min-width: var(--tap); min-height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 1px solid var(--edge); border-radius: 999px;
+  color: var(--t2); cursor: pointer;
+}
+.q-arrow:disabled{ opacity: .4; cursor: default; }
+.q-arrow svg{ width: 18px; height: 18px; }
 .q-btn{
   min-height: var(--tap); padding: 0 20px;
   border-radius: 999px;

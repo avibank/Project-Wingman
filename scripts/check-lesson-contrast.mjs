@@ -59,6 +59,13 @@ const SELECTORS = [
   { sel: ".prow-preview", token: "--t3", note: "the last reply" },
   { sel: ".prow-when", token: "--t3", note: "when it last moved" },
   { sel: ".pres", token: "--t3", note: "who else has been here" },
+  // Part 14: the module screen and the quiz.
+  { sel: ".cname", token: "--t1", note: "chapter title — one brightness" },
+  { sel: ".csub", token: "--t3", note: "lessons and a quiz" },
+  { sel: ".q-text", token: "--t1", note: "the question" },
+  { sel: ".opt-t", token: "--t2", note: "an option" },
+  { sel: ".q-rev-explain", token: "--t2", note: "why that was the answer" },
+  { sel: ".quiz-count", token: "--t3", note: "of 8" },
 ];
 const FLOOR = 4.5;
 
@@ -123,12 +130,47 @@ for (const h of AV_HUES) {
   }
 }
 
+// Right and wrong are the only two colours in the app that are not the livery,
+// so they are measured once rather than per livery.
+// Night and Day carry different values for these — the light ground needs a
+// darker green and red, which is why the source ships two sets.
+for (const [name, night, day] of [
+  [".opt[data-mark=right]", "oklch(.66 .155 148)", "oklch(.50 .150 148)"],
+  [".opt[data-mark=wrong]", "oklch(.62 .180 25)", "oklch(.50 .190 25)"]]) {
+  for (const [mode, groundS, col] of [["night", "oklch(.18 .02 250)", night],
+                                      ["day", "oklch(.97 .01 85)", day]]) {
+    const fg = parse(col), bg = parse(groundS);
+    const r = ratio(Y(lin(fg.L, fg.C, fg.H)), Y(lin(bg.L, bg.C, bg.H)));
+    rows.push({ where: `${mode} (fixed)`, sel: name, token: "ok/bad", worst: r });
+    if (r < FLOOR) fails.push(`${name} ${mode}: ${r.toFixed(2)}:1, under ${FLOOR}`);
+  }
+}
+
+// A TRANSLUCENT BORDER CANNOT BE MEASURED AS A PLAIN RATIO — the sampled colour
+// is not what gets painted, so the number is meaningless. --edge is composited
+// over the panel first, and it is a hairline rather than text, so it answers to
+// 3:1 as a non-text boundary and not to 4.5.
+for (const L of LIVERIES) {
+  for (const variant of ["night", "day"]) {
+    const base = deckVars(L.id, variant).vars;
+    const edge = parse(base["--edge"]), panel = parse(base["--panel"]), ground = parse(base["--ground"]);
+    if (!edge || !panel || !ground) continue;
+    const panelOver = over(panel, ground);
+    const edgeOver = over(edge, { ...panel, a: 1 });
+    const r = ratio(Y(edgeOver), Y(panelOver));
+    rows.push({ where: `${L.id}/${variant}`, sel: "--edge over panel", token: "composited", worst: r });
+    // Recorded, not failed: a resting hairline is deliberately quiet and the
+    // brief says an edge you can barely see is the intent, not a defect.
+  }
+}
+
 rows.sort((a, b) => a.worst - b.worst);
-const worst = rows[0];
+const textRows = rows.filter((r) => r.token !== "composited");
+const worst = textRows[0];
 console.log(`lesson contrast: ${rows.length} measurements — ${SELECTORS.length} selectors x ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora/Manual, plus the banner, the duration badge and 20 avatar fills`);
 console.log(`          worst  ${worst.worst.toFixed(2)}:1  ${worst.sel} (${worst.token})  in ${worst.where}`);
 console.log("          five lowest:");
-for (const r of rows.slice(0, 5)) {
+for (const r of textRows.slice(0, 5)) {
   console.log(`            ${r.worst.toFixed(2)}:1  ${r.sel.padEnd(18)} ${r.token.padEnd(9)} ${r.where}`);
 }
 for (const f of fails) console.log("  FAIL  " + f);

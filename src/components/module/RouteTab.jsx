@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
 import { thumbTile, clock } from "../../lib/familiar.js";
+import { posterFor } from "../../lib/shell.js";
 import "./familiar.css";
 
 // Netflix's episode list, and the reason it is worth more than the picture.
@@ -15,11 +17,25 @@ import "./familiar.css";
 // got. One channel, one job. THE TITLE NEVER DIMS.
 function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
   const secs = lesson.duration || 0;
+
+  // A real frame from the lesson's own video, when one can be had. The row
+  // paints with the generated tile immediately and the frame replaces it when
+  // it arrives — both are exactly 128x72, so nothing shifts. Capture returns
+  // null on CORS, a tainted canvas or a dead source, and the tile simply stays.
+  const [poster, setPoster] = useState(lesson.thumb || null);
+  useEffect(() => {
+    if (poster) return undefined;
+    let live = true;
+    posterFor({ id: lesson.id, thumb: lesson.thumb, video: { src: lesson.video } })
+      .then((p) => { if (live && p) setPoster(p); });
+    return () => { live = false; };
+  }, [lesson.id]);
   return (
     <button type="button" className="rrow" aria-current={here ? "true" : undefined}
             onClick={() => onOpen(chapter, lesson)}>
       <span className="rthumb" data-tile="" data-code={lesson.code || lesson.id}
             data-done={done ? "1" : "0"} style={thumbTile(lesson.id)}>
+        {poster && <img src={poster} alt="" width={128} height={72} loading="lazy" />}
         {secs > 0 && <span className="rdur">{clock(secs)}</span>}
         {/* The ONLY place watched state appears. */}
         {(pct > 0 || done) && (
