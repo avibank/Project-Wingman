@@ -11,7 +11,7 @@ import {
   openBar, closeBar, discardBar, editNote, expandBanner, dismissBanner,
   notesFor, keyAction, hudLabel, barPosition, barFraction, nudgeBar, isPin,
 } from "../../lib/lessonSurface.js";
-import { forwardWheel } from "../../lib/familiar.js";
+import { forwardWheel, shouldPrefetchNext, THUMB_W } from "../../lib/familiar.js";
 import "./lesson.css";
 
 // The one player. Mounted once, above the router, site-wide — it keeps playing
@@ -112,6 +112,21 @@ export default function PlayerLayer() {
     return forwardWheel(layer, () => stage?.slotEl?.closest("[data-scroller]")
       || document.querySelector(".deck"));
   }, [dock, stage]);
+
+  // One step ahead, at halfway — never the whole module. Prefetching
+  // everything is how you make the first paint slow to make the second fast.
+  const prefetched = useRef(null);
+  useEffect(() => {
+    const next = stage?.next;
+    if (!next?.video || prefetched.current === next.id) return;
+    if (!shouldPrefetchNext(player, { durationS: lesson?.duration })) return;
+    prefetched.current = next.id;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.as = "video";
+    link.href = next.video;
+    document.head.appendChild(link);
+  }, [player.seconds, player.playing, stage, lesson]);
 
   // Going site-wide means every scrollable page has to reserve this, or the
   // last row of every list on the site sits behind the bar.

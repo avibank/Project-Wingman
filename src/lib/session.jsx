@@ -41,6 +41,8 @@ const Ctx = createContext(null);
 
 export function SessionProvider({ children }) {
   const progress = useUserProgress();
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
   const [session, setSession] = useState(() => ({ ...initialSession, barPos: readBarPos() }));
 
   // What the lesson page is currently showing: its lesson, the empty slot the
@@ -80,8 +82,16 @@ export function SessionProvider({ children }) {
   // The seeded content's notes and threads are demo data, so they are written
   // once and then owned by the account like anything else — otherwise deleting
   // a seeded note would bring it back on the next reload.
+  // Guarded by a ref as well as the stored flag, and the ref is the one that
+  // matters. A failed write makes the provider revert every key in the patch —
+  // right for a setting, wrong here: it deleted pw-lesson-seeded, so seedFrom
+  // ran a second time and overwrote threads with the seed, taking a comment
+  // somebody had just typed with it. Measured: post with the network down and
+  // the row appeared, then vanished.
+  const seeded = useRef(false);
   const seedFrom = useCallback((content) => {
-    if (!content || !loaded || progress.get(SEEDED_KEY, false)) return;
+    if (!content || !loaded || seeded.current || progress.get(SEEDED_KEY, false)) return;
+    seeded.current = true;
     // Claim hydration before writing. Child effects run before the parent's,
     // so App's seed call lands FIRST and the hydrate effect below would then
     // read the store back — except progress.get reads React state, which lags
@@ -132,6 +142,33 @@ export function SessionProvider({ children }) {
     });
   }, [progress]);
 
+  // Optimistic posting, which is most of what "snappy" means in practice.
+  //
+  // The row is on screen the instant Post is pressed, marked pending, and the
+  // store settles underneath. If the write fails the row STAYS and is marked
+  // failed — never delete something a person typed — and Retry re-runs the
+  // same write. The progress provider reverts its own state on a failed save,
+  // which is right for a setting and wrong for a sentence someone wrote, so
+  // the pending set is tracked here rather than inferred from the store.
+  const [pending, setPending] = useState(() => ({}));
+  const postOptimistic = useCallback((id, fn) => {
+    setPending((m) => ({ ...m, [id]: "pending" }));
+    mutate(fn);
+    // The store batches and flushes on its own clock; one turn later it has
+    // either taken the write or set saveError.
+    setTimeout(() => {
+      setPending((m) => {
+        const next = { ...m };
+        if (progressRef.current?.saveError) next[id] = "failed";
+        else delete next[id];
+        return next;
+      });
+    }, 900);
+  }, [mutate]);
+  const clearPending = useCallback((id) => {
+    setPending((m) => { const n = { ...m }; delete n[id]; return n; });
+  }, []);
+
   const markSeen = useCallback((threadId) => {
     const seen = progress.get(SEEN_KEY, {});
     progress.set(SEEN_KEY, { ...seen, [threadId]: new Date().toISOString() });
@@ -173,12 +210,12 @@ export function SessionProvider({ children }) {
     session, setSession, mutate, dispatchPlayer,
     stage, setStage, stageRef,
     seedFrom, markSeen, requestSeek, clearSeek, requestWatch, clearWatch,
-    setBarPos, setRate, setVolume,
+    setBarPos, setRate, setVolume, pending, postOptimistic, clearPending,
     lastSeen: progress.get(SEEN_KEY, {}),
     setTab: (tab) => setSession((s) => ({ ...s, tab })),
   }), [session, stage, mutate, dispatchPlayer, setStage, seedFrom, markSeen,
        requestSeek, clearSeek, requestWatch, clearWatch,
-       setBarPos, setRate, setVolume, progress]);
+       setBarPos, setRate, setVolume, pending, postOptimistic, clearPending, progress]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

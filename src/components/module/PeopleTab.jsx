@@ -20,7 +20,24 @@ import "./familiar.css";
 //
 // Section headings are sentences, not chips. "Waiting for an answer" is
 // readable on sight; a pill labelled "Waiting" is something you have to learn.
-export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
+// Exactly the height of the row it replaces — 72px, avatar and two lines.
+function PeopleSkeleton({ rows = 4 }) {
+  return (
+    <div aria-hidden="true">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="sk-prow">
+          <div className="sk sk-av" />
+          <div>
+            <div className="sk sk-line" />
+            <div className="sk sk-line" data-w="short" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function PeopleTab({ module: mod, people = [], onOpenAt, loading }) {
   const { session, mutate, lastSeen, markSeen } = useSession();
   const moduleId = mod.code || mod.id;
   const { threads, replies } = session;
@@ -30,6 +47,7 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
   const [replyBody, setReplyBody] = useState("");
 
   const rows = peopleRows(threads, replies, people, moduleId, "u_you", lastSeen);
+  const showSkeleton = loading && rows.length === 0;
   const groups = groupRows(rows);
   const current = open ? threads.find((t) => t.id === open) : null;
   const who = (id) => (id === "u_you" ? "You"
@@ -102,7 +120,7 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
   return (
     <div className="plist-wrap">
       <div>
-        {rows.length === 0 ? (
+        {showSkeleton ? <PeopleSkeleton /> : rows.length === 0 ? (
           <p className="lempty" style={{ padding: "18px var(--pad)" }}>
             The first question asked on a lesson lands here, where the rest of
             the module can answer it.

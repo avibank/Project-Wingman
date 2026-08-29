@@ -82,7 +82,8 @@ export default function ModuleScreen({
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "people" && (
-          <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion} />
+          <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion}
+                     loading={!people.people?.length} />
         )}
       </div>
     </div>

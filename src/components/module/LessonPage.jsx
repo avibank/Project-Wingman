@@ -9,7 +9,7 @@ import {
 } from "../../lib/familiar.js";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
-  deleteNote, publishNote, postComment, postReply, editNote, isPin, upFrom,
+  deleteNote, publishNote, postReply, editNote, isPin, upFrom,
 } from "../../lib/lessonSurface.js";
 import "./module.css";
 import "./lesson.css";
@@ -31,7 +31,8 @@ export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [], presence = [],
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
-  const { session, setSession, mutate, dispatchPlayer, setStage, requestSeek, setTab, clearWatch } = useSession();
+  const { session, setSession, mutate, dispatchPlayer, setStage, requestSeek, setTab,
+          clearWatch, pending, postOptimistic } = useSession();
   const slotRef = useRef(null);
   const watch = session.watchAt?.lessonId === lesson.id ? session.watchAt : null;
 
@@ -49,6 +50,8 @@ export default function LessonPage({
       // The mini player needs these to route back to this lesson from any page.
       chapterId: chapter.id,
       moduleCode: mod.code || mod.id,
+      // One step ahead: the player prefetches this at halfway.
+      next: nextAfterLesson(chapters, chapter.id, lesson.id, state)?.lesson || null,
       // Arriving from "Watch at 2:17" opens at that second instead of where
       // you left off — it is the only bridge from People back to the moment,
       // so it has to win over the saved position.
@@ -163,7 +166,8 @@ export default function LessonPage({
                       onSeek={requestSeek} mutate={mutate} setSession={setSession} />
           : <CommentsTab comments={comments} replies={session.replies} at={at}
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
-                         people={people} onSeek={requestSeek} mutate={mutate} />}
+                         people={people} onSeek={requestSeek} mutate={mutate}
+                         pending={pending} postOptimistic={postOptimistic} />}
       </div>
 
       <Route chapters={chapters} here={lesson} state={state}
@@ -312,7 +316,7 @@ function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate, setSession }) {
 // replies collapsed behind one expander, because that is what everyone has
 // seen ten thousand times and because an expanded thread pushes the next
 // question off the screen.
-function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate }) {
+function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate, pending, postOptimistic }) {
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
@@ -338,7 +342,13 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
           <button type="button" className="compose-act" data-primary=""
                   onClick={() => {
                     if (!body.trim()) return;
-                    mutate((s) => postComment(s, { moduleId, lessonId: lesson.id, seconds: at, body }));
+                    // On screen this frame, settled underneath. No spinner.
+                    const id = `T${Date.now().toString(36)}`;
+                    postOptimistic(id, (s) => ({ ...s, threads: [...s.threads, {
+                      id, moduleId, lessonId: lesson.id, t: Math.floor(at),
+                      body: body.trim(), authorId: "u_you",
+                      createdAt: new Date().toISOString(),
+                    }]}));
                     setBody("");
                   }}>Post</button>
         </div>
@@ -355,7 +365,9 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
             const rs = repliesFor(replies, c.id);
             const isOpen = openReplies.has(c.id);
             return (
-              <li key={c.id} className="cmt">
+              <li key={c.id} className="cmt"
+                  data-pending={pending?.[c.id] === "pending" ? "1" : undefined}
+                  data-failed={pending?.[c.id] === "failed" ? "1" : undefined}>
                 <span className="av" aria-hidden="true" style={{ "--av-h": hueFor(c.authorId) }}>
                   {initials(who(c.authorId))}
                 </span>
@@ -371,7 +383,16 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                   </div>
                   <p className="cmt-body">{c.body}</p>
                   <div className="cmt-acts">
-                    <button type="button" className="cmt-act" onClick={() => setReplyTo(c.id)}>Reply</button>
+                    {pending?.[c.id] === "failed" ? (
+                      /* It stays, with a way back. Never delete what someone
+                         typed because a network dropped. */
+                      <button type="button" className="cmt-retry"
+                              onClick={() => postOptimistic(c.id, (s) => ({ ...s, threads: [...s.threads] }))}>
+                        Not sent — tap to retry
+                      </button>
+                    ) : (
+                      <button type="button" className="cmt-act" onClick={() => setReplyTo(c.id)}>Reply</button>
+                    )}
                     {rs.length > 0 && (
                       <button type="button" className="cmt-expand" aria-expanded={isOpen}
                               onClick={() => setOpenReplies((o) => toggleReplies(o, c.id))}>

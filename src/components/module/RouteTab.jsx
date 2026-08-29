@@ -62,7 +62,27 @@ function Mark({ done, here }) {
   );
 }
 
+// Sized to the row it replaces, so nothing moves when the real one arrives.
+// A list that reflows when it loads reads as slow even when it is fast — the
+// shift IS the slowness.
+function RouteSkeleton({ rows = 4 }) {
+  return (
+    <div aria-hidden="true">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="sk-rrow">
+          <div className="sk sk-thumb" />
+          <div>
+            <div className="sk sk-line" />
+            <div className="sk sk-line" data-w="short" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function RouteTab({ module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz }) {
+  if (!chapters?.length) return <RouteSkeleton />;
   const lessonCount = chapters.reduce((n, c) => n + c.lessons.length, 0);
 
   return (
