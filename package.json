@@ -30,7 +30,8 @@
     "check:states": "node scripts/check-states.mjs",
     "check:logbook": "node scripts/check-logbook.mjs",
     "verify": "npm run build && node scripts/verify.mjs",
-    "check:lesson-contrast": "node scripts/check-lesson-contrast.mjs"
+    "check:lesson-contrast": "node scripts/check-lesson-contrast.mjs",
+    "check:postgrest": "node scripts/check-postgrest.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
