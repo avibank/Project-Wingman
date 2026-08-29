@@ -404,8 +404,10 @@
   padding: 14px 0;
   border-top: 1px solid var(--hair);
 }
-.face-name{ font-size: var(--fs-sm); color: var(--t1); }
-.face-line{ font-size: var(--fs-xs); color: var(--t3); margin-top: 3px; }
+/* Block, so the name and the line stack — as inline spans they ran together:
+   "…have been hereAsk the module and it stays pinned…". */
+.face-name{ display: block; font-size: var(--fs-sm); color: var(--t1); }
+.face-line{ display: block; font-size: var(--fs-xs); color: var(--t3); margin-top: 3px; }
 .face-act{
   min-height: var(--tap);
   background: none; border: 0; padding: 0;
@@ -507,3 +509,17 @@
 .plist-wrap{ padding-block: 6px 24px; }
 .plist-wrap > .up{ margin: 6px var(--pad) 10px; }
 .plist-wrap .cmt{ padding-inline: var(--pad); }
+
+
+/* Smooth Air parity. The source answers only the OS media query, but reduced
+   motion here is a preference the student sets — so a shimmer kept running and
+   the expander arrow kept rotating for someone who had asked for neither.
+   Every ambient motion respects both, or it respects neither. */
+.app.reduce-motion .sk,
+.app.smooth-air .sk { animation: none; }
+.app.reduce-motion .cmt-expand svg,
+.app.smooth-air .cmt-expand svg { transition: none; }
+.app.reduce-motion .rrow,
+.app.smooth-air .rrow { transition: none; }
+.app.reduce-motion .prow,
+.app.smooth-air .prow { transition: none; }

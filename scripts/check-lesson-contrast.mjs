@@ -50,6 +50,15 @@ const SELECTORS = [
   // Added by the 29 August revision: the back arrow, on every screen but
   // the Flight Deck, and the note bar's own field.
   { sel: ".up", token: "--t2", note: "the labelled back arrow" },
+  // Part 13's surfaces.
+  { sel: ".rtitle", token: "--t1", note: "route row title — never dims" },
+  { sel: ".rmeta", token: "--t3", note: "done / time left under the title" },
+  { sel: ".cmt-name", token: "--t1", note: "who wrote the comment" },
+  { sel: ".cmt-when", token: "--t3", note: "relative time" },
+  { sel: ".prow-title", token: "--t1", note: "the question itself" },
+  { sel: ".prow-preview", token: "--t3", note: "the last reply" },
+  { sel: ".prow-when", token: "--t3", note: "when it last moved" },
+  { sel: ".pres", token: "--t3", note: "who else has been here" },
 ];
 const FLOOR = 4.5;
 
@@ -91,9 +100,32 @@ const bannerRatio = ratio(Y(lin(bannerFg.L, bannerFg.C, bannerFg.H)), bannerOver
 rows.push({ where: "any (over video)", sel: ".pbanner-body", token: "fixed", worst: bannerRatio });
 if (bannerRatio < FLOOR) fails.push(`.pbanner-body: ${bannerRatio.toFixed(2)}:1, under ${FLOOR}`);
 
+// Two pairs that are not livery-driven and have to be measured on their own.
+// .rdur is white on a fixed scrim over a thumbnail; .av is initials on a
+// generated fill, and the fill's hue comes from the ten-colour palette, so the
+// worst case is whichever hue holds the least contrast.
+const fixedPair = (fgS, bgS, over) => {
+  const fg = parse(fgS), bg = parse(bgS);
+  const bgY = over ? Y(over(bg)) : Y(lin(bg.L, bg.C, bg.H));
+  return ratio(Y(lin(fg.L, fg.C, fg.H)), bgY);
+};
+const durRatio = fixedPair("oklch(.98 0 0)", "oklch(0 0 0 / .74)",
+  (bg) => over(bg, { L: 0.42, C: 0.07, H: 240, a: 1 }));   // over the darkest tile
+rows.push({ where: "any (over a thumbnail)", sel: ".rdur", token: "fixed", worst: durRatio });
+if (durRatio < FLOOR) fails.push(`.rdur: ${durRatio.toFixed(2)}:1, under ${FLOOR}`);
+
+const AV_HUES = [252, 22, 145, 300, 62, 196, 338, 108, 268, 38];
+for (const h of AV_HUES) {
+  for (const [mode, fgL, fgC, bgL, bgC] of [["dark", .95, .03, .38, .09], ["light", .36, .10, .88, .06]]) {
+    const r = ratio(Y(lin(fgL, fgC, h)), Y(lin(bgL, bgC, h)));
+    rows.push({ where: `avatar hue ${h} / ${mode}`, sel: ".av initials", token: "palette", worst: r });
+    if (r < FLOOR) fails.push(`.av initials, hue ${h} ${mode}: ${r.toFixed(2)}:1, under ${FLOOR}`);
+  }
+}
+
 rows.sort((a, b) => a.worst - b.worst);
 const worst = rows[0];
-console.log(`lesson contrast: ${rows.length} measurements — ${SELECTORS.length} selectors x ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora/Manual, plus the banner`);
+console.log(`lesson contrast: ${rows.length} measurements — ${SELECTORS.length} selectors x ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora/Manual, plus the banner, the duration badge and 20 avatar fills`);
 console.log(`          worst  ${worst.worst.toFixed(2)}:1  ${worst.sel} (${worst.token})  in ${worst.where}`);
 console.log("          five lowest:");
 for (const r of rows.slice(0, 5)) {

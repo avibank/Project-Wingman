@@ -85,6 +85,7 @@ export function loadContent(doc, { strict = false } = {}) {
     threads: doc?.threads || [],
     replies: doc?.replies || [],
     people: doc?.people || [],
+    presence: doc?.presence || [],
     problems,
   };
 }

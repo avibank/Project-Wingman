@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronDown, MoreVertical } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
-import { thumbTile, clock } from "../../lib/familiar.js";
+import {
+  thumbTile, clock, initials, hueFor, ago, replyCountLabel, toggleReplies, presenceFor,
+  rowActions,
+} from "../../lib/familiar.js";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
   deleteNote, publishNote, postComment, postReply, editNote, isPin, upFrom,
@@ -25,7 +28,7 @@ import "./familiar.css";
 // The player is NOT rendered here. This page renders an empty sized slot and
 // the one player, which lives above the router, positions itself over it.
 export default function LessonPage({
-  module: mod, chapters, chapter, lesson, state, people = [],
+  module: mod, chapters, chapter, lesson, state, people = [], presence = [],
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, setSession, mutate, dispatchPlayer, setStage, requestSeek, setTab, clearWatch } = useSession();
@@ -66,6 +69,7 @@ export default function LessonPage({
   const myNotes = notesFor(session.notes, lesson.id);
   const comments = commentsFor(session.threads, lesson.id);
   const at = session.player.seconds || 0;
+  const here = presenceFor(presence, lesson.id, people);
 
   return (
     <div className="mscreen lesson">
@@ -120,6 +124,28 @@ export default function LessonPage({
             {done ? "Done" : "Mark as done"}
           </button>
         </div>
+
+        {/* Presence, and the face. WhatsApp's "last seen" and Netflix's
+            "continue watching" — the most familiar signal that other humans
+            exist in a piece of software, and the only one that works with zero
+            classmates online, because it is past tense. No online dots. */}
+        {here && (
+          <div className="face">
+            <span className="av" data-size="lg" aria-hidden="true"
+                  style={{ "--av-h": hueFor(here.people[0].id) }}>
+              {initials(here.people[0].callsign)}
+            </span>
+            <span>
+              <span className="face-name">{here.label}</span>
+              {/* Not "ask your teacher" — you are a student and the platform
+                  does not teach. A person, a line, one action. */}
+              <span className="face-line">Ask the module and it stays pinned to this moment.</span>
+            </span>
+            <button type="button" className="face-act" onClick={() => setTab("comments")}>
+              Ask everyone
+            </button>
+          </div>
+        )}
 
         <div className="ltabs" role="tablist" aria-label="Notes and comments">
           <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
@@ -196,6 +222,31 @@ function Route({ chapters, here, state, onOpenLesson, next }) {
   );
 }
 
+// One overflow button per row, always visible and a full 44px target. A menu
+// rather than a row of links, so a third action does not widen the row.
+function Overflow({ kind, disabled = [], onPick }) {
+  const [open, setOpen] = useState(false);
+  const items = rowActions(kind).filter((a) => !disabled.includes(a.id));
+  return (
+    <span className="ovf">
+      <button type="button" className="ovf-btn" aria-haspopup="menu" aria-expanded={open}
+              aria-label="More" onClick={() => setOpen((v) => !v)}>
+        <MoreVertical aria-hidden="true" />
+      </button>
+      <div className="ovf-menu" role="menu" hidden={!open}
+           onMouseLeave={() => setOpen(false)}>
+        {items.map((a) => (
+          <button key={a.id} type="button" role="menuitem" className="ovf-item"
+                  data-danger={a.danger ? "" : undefined}
+                  onClick={() => { setOpen(false); onPick(a.id); }}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+    </span>
+  );
+}
+
 // The private half. A note is yours, nobody else ever sees it, and it can be
 // deleted freely because nobody has replied to it.
 function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate, setSession }) {
@@ -238,23 +289,15 @@ function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate, setSession }) {
                   {n.body || "You marked this moment"}
                 </span>
               </button>
-              <div className="lrow-acts">
-                {/* Filling a pin in later is the other half of the feature, and
-                    it seeks the video back to the moment so you are looking at
-                    the frame you marked while you write about it. */}
-                <button type="button" className="lrow-act"
-                        onClick={() => setSession((s) => editNote(s, n.id))}>
-                  {isPin(n) ? "Add a note" : "Edit"}
-                </button>
-                {n.body && (
-                  <button type="button" className="lrow-act"
-                          onClick={() => mutate((s) => publishNote(s, n.id, { moduleId }))}>
-                    Publish
-                  </button>
-                )}
-                <button type="button" className="lrow-act"
-                        onClick={() => mutate((s) => deleteNote(s, n.id))}>Delete</button>
-              </div>
+              {/* Behind one three-dot button, always visible. These were
+                  hover-only, and hover does not exist on a phone — which is
+                  where the beta will mostly live. */}
+              <Overflow kind="note" disabled={isPin(n) ? ["publish"] : []}
+                        onPick={(id) => {
+                          if (id === "edit") setSession((s) => editNote(s, n.id));
+                          if (id === "publish") mutate((s) => publishNote(s, n.id, { moduleId }));
+                          if (id === "delete") mutate((s) => deleteNote(s, n.id));
+                        }} />
             </li>
           ))}
         </ul>
@@ -265,6 +308,10 @@ function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate, setSession }) {
 
 // The public half. Same rows People shows — one table, two queries — in moment
 // order, because scrolling this list is scrubbing the video above it.
+// YouTube's comment thread: avatar, name, relative time, body, Reply — with
+// replies collapsed behind one expander, because that is what everyone has
+// seen ten thousand times and because an expanded thread pushes the next
+// question off the screen.
 function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate }) {
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
@@ -273,6 +320,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyBody, setReplyBody] = useState("");
+  const [openReplies, setOpenReplies] = useState(() => new Set());
 
   return (
     <>
@@ -305,52 +353,70 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
         <ul className="llist">
           {comments.map((c) => {
             const rs = repliesFor(replies, c.id);
+            const isOpen = openReplies.has(c.id);
             return (
-              <li key={c.id} className="litem" data-kind="thread">
-                <button type="button" className="lseek" onClick={() => onSeek(c.t)}>
-                  <span className="lt">{mmss(c.t)}</span>
-                  <span className="lbody">
-                    {c.body}
-                    <span className="lwho" data-state={rs.length ? "answered" : "waiting"}>
-                      {who(c.authorId)}
-                      {rs.length ? ` · ${rs.length} ${rs.length === 1 ? "reply" : "replies"}` : " · waiting for an answer"}
-                    </span>
-                  </span>
-                </button>
+              <li key={c.id} className="cmt">
+                <span className="av" aria-hidden="true" style={{ "--av-h": hueFor(c.authorId) }}>
+                  {initials(who(c.authorId))}
+                </span>
+                <div className="cmt-main">
+                  <div className="cmt-head">
+                    <span className="cmt-name">{who(c.authorId)}</span>
+                    <span className="cmt-when">{ago(c.createdAt)}</span>
+                    {/* A time inside a comment is pressable — YouTube taught
+                        everyone that, and the behaviour already existed here. */}
+                    <button type="button" className="cmt-seek" onClick={() => onSeek(c.t)}>
+                      {mmss(c.t)}
+                    </button>
+                  </div>
+                  <p className="cmt-body">{c.body}</p>
+                  <div className="cmt-acts">
+                    <button type="button" className="cmt-act" onClick={() => setReplyTo(c.id)}>Reply</button>
+                    {rs.length > 0 && (
+                      <button type="button" className="cmt-expand" aria-expanded={isOpen}
+                              onClick={() => setOpenReplies((o) => toggleReplies(o, c.id))}>
+                        {replyCountLabel(rs.length)}
+                        <ChevronDown aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
 
-                {/* Flat, not nested. A tree earns its keep at ten thousand
-                    comments, not at forty. */}
-                {rs.length > 0 && (
-                  <ul className="lreplies">
+                  <ul className="cmt-replies" hidden={!isOpen}>
                     {rs.map((r) => (
-                      <li key={r.id} className="lreply">
-                        <span className="lreply-who">{who(r.authorId)}</span>
-                        <p className="lreply-body">{r.body}</p>
+                      <li key={r.id} className="cmt-reply">
+                        <span className="av" data-size="sm" aria-hidden="true"
+                              style={{ "--av-h": hueFor(r.authorId) }}>
+                          {initials(who(r.authorId))}
+                        </span>
+                        <span>
+                          <span className="cmt-head">
+                            <span className="cmt-name">{who(r.authorId)}</span>
+                            <span className="cmt-when">{ago(r.createdAt)}</span>
+                          </span>
+                          <p className="cmt-body">{r.body}</p>
+                        </span>
                       </li>
                     ))}
                   </ul>
-                )}
 
-                {replyTo === c.id ? (
-                  <div className="compose" data-vis="public">
-                    <span className="compose-t" />
-                    <textarea className="compose-field" rows={1} value={replyBody} autoFocus
-                              placeholder="Answer this" onChange={(e) => setReplyBody(e.target.value)} />
-                    <div className="compose-acts">
-                      <button type="button" className="compose-act" data-primary=""
-                              onClick={() => {
-                                if (!replyBody.trim()) return;
-                                mutate((s) => postReply(s, { threadId: c.id, body: replyBody }));
-                                setReplyBody(""); setReplyTo(null);
-                              }}>Reply</button>
-                      <button type="button" className="compose-act" onClick={() => setReplyTo(null)}>Cancel</button>
+                  {replyTo === c.id && (
+                    <div className="compose" data-vis="public">
+                      <span className="compose-t" />
+                      <textarea className="compose-field" rows={1} value={replyBody} autoFocus
+                                placeholder="Answer this" onChange={(e) => setReplyBody(e.target.value)} />
+                      <div className="compose-acts">
+                        <button type="button" className="compose-act" data-primary=""
+                                onClick={() => {
+                                  if (!replyBody.trim()) return;
+                                  mutate((s2) => postReply(s2, { threadId: c.id, body: replyBody }));
+                                  setReplyBody(""); setReplyTo(null);
+                                  setOpenReplies((o) => new Set(o).add(c.id));
+                                }}>Reply</button>
+                        <button type="button" className="compose-act" onClick={() => setReplyTo(null)}>Cancel</button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="compose-acts">
-                    <button type="button" className="lreply-open" onClick={() => setReplyTo(c.id)}>Reply</button>
-                  </div>
-                )}
+                  )}
+                </div>
               </li>
             );
           })}
