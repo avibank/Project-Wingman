@@ -79,12 +79,16 @@ ids to fill these.
 `supabase/migrations/` — 0000 progress table, 0001 social layer, 0002 threaded posts,
 0003 reactions and attempts and completions, 0004 progress merge, 0005 squadrons and
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
-squawks and teams.
+squawks and teams, 0008 the lesson surface.
 
-**All of them have been run against the live project** (`rpfgxxcpfrgajlkpoyes`, the
-project the deployed bundle points at). Verified directly, not inferred: all 31 tables
-the code reads answer over REST, and all 12 functions are in `pg_proc` with signatures
-matching every call site.
+**0000-0007 have been run against the live project. 0008 has NOT** — the lesson
+surface ships reading and writing through `user_progress`, which works and needs no
+migration but is per account, so threads are visible only to their author. Running
+0008 is what makes them multi-user, and it is a decision rather than a step.
+
+0000-0007 ran against `rpfgxxcpfrgajlkpoyes`, the project the deployed bundle points
+at. Verified directly, not inferred: all 31 tables the code reads answer over REST, and
+all 12 functions are in `pg_proc` with signatures matching every call site.
 
 Do not trust the comments in `squadron.js`, `comms.js` and `FirstFlightGate` that say
 "until 0005 runs" — they describe the state when they were written and were never

@@ -430,6 +430,97 @@ begin
 end $$;
 
 
+-- 0008_lesson_surface.sql
+
+create table if not exists lesson_notes (
+  id         text        primary key,
+  user_id    text        not null,
+  lesson_id  text        not null,
+  t          integer     not null check (t >= 0),
+  body       text        not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists lesson_notes_user_idx on lesson_notes (user_id, lesson_id, t);
+
+alter table lesson_notes enable row level security;
+create policy lesson_notes_open on lesson_notes for all using (true) with check (true);
+
+create table if not exists lesson_threads (
+  id         text        primary key,
+  module_id  text        not null,
+  lesson_id  text,                      -- null = a module post, People only
+  t          integer,                   -- null iff lesson_id is null
+  body       text        not null check (length(btrim(body)) > 0),
+  author_id  text        not null,
+  created_at timestamptz not null default now(),
+  constraint lesson_threads_anchor_whole
+    check ((lesson_id is null and t is null) or (lesson_id is not null and t is not null and t >= 0))
+);
+create index if not exists lesson_threads_module_idx on lesson_threads (module_id, created_at desc);
+create index if not exists lesson_threads_lesson_idx on lesson_threads (module_id, lesson_id, t);
+
+alter table lesson_threads enable row level security;
+create policy lesson_threads_open on lesson_threads for all using (true) with check (true);
+
+create table if not exists lesson_replies (
+  id         text        primary key,
+  thread_id  text        not null references lesson_threads (id) on delete cascade,
+  body       text        not null check (length(btrim(body)) > 0),
+  author_id  text        not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists lesson_replies_thread_idx on lesson_replies (thread_id, created_at);
+
+alter table lesson_replies enable row level security;
+create policy lesson_replies_open on lesson_replies for all using (true) with check (true);
+
+create or replace function lesson_comments(p_module text, p_lesson text)
+returns table (
+  id text, module_id text, lesson_id text, t integer,
+  body text, author_id text, created_at timestamptz, reply_count bigint
+)
+language sql
+stable
+as $$
+  select th.id, th.module_id, th.lesson_id, th.t, th.body, th.author_id, th.created_at,
+         count(r.id) as reply_count
+  from lesson_threads th
+  left join lesson_replies r on r.thread_id = th.id
+  where th.module_id = p_module
+    and th.lesson_id = p_lesson
+  group by th.id
+  order by th.t asc;
+$$;
+
+create or replace function module_threads(p_module text, p_me text)
+returns table (
+  id text, lesson_id text, t integer, body text, author_id text,
+  created_at timestamptz, reply_count bigint,
+  in_it boolean, waiting boolean, last_activity_by timestamptz
+)
+language sql
+stable
+as $$
+  select th.id, th.lesson_id, th.t, th.body, th.author_id, th.created_at,
+         count(r.id)                                                     as reply_count,
+         coalesce(bool_or(th.author_id = p_me or r.author_id = p_me), false) as in_it,
+         count(r.id) = 0                                                  as waiting,
+         greatest(
+           case when th.author_id <> p_me then th.created_at end,
+           max(r.created_at) filter (where r.author_id <> p_me)
+         )                                                                as last_activity_by
+  from lesson_threads th
+  left join lesson_replies r on r.thread_id = th.id
+  where th.module_id = p_module
+  group by th.id
+  order by
+    case when coalesce(bool_or(th.author_id = p_me or r.author_id = p_me), false) then 0
+         when count(r.id) = 0 then 1
+         else 2 end,
+    greatest(th.created_at, coalesce(max(r.created_at), th.created_at)) desc;
+$$;
+
+
 -- ============================================================================
 -- Setup. Neither of these is schema, and neither default is what you want.
 
