@@ -376,3 +376,29 @@
 
 /* The old scrub under the frame is gone; the bar lives on the picture now. */
 .mscreen .player.yt ~ .scrub{display:none}
+
+
+/* Part 12 additions that are Wingman's rather than the brief's: the manual
+   completion mark, which the brief keeps as one flag with two writers but
+   gives no control for, and the player slot's not-recorded state. */
+.next-done {
+  flex: none;
+  min-height: var(--tap);
+  padding: 0 14px;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+  cursor: pointer;
+}
+.next-done:hover { color: var(--t1); border-color: var(--t3); }
+.next-done[aria-pressed="true"] { color: var(--active); border-color: var(--active); }
+
+.player-slot[data-empty="1"] {
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}

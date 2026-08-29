@@ -43,6 +43,8 @@ import { MODULES, NAV, TRIVIA } from "./data.js";
 import { loadJSON, saveJSON } from "./lib/storage.js";
 import { LOGBOOK_KEY, lessonDone, quizTaken } from "./lib/logbookRecord.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
+import { SessionProvider, useSession } from "./lib/session.jsx";
+import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { triggerHaptic } from "./lib/haptics.js";
@@ -51,9 +53,16 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <UserProgressProvider>
+      {/* Session sits above the router on purpose. The one <video> is mounted
+          by PlayerLayer inside it, as a sibling of the routed content, so
+          navigating never unmounts or re-parents it — re-parenting a video
+          restarts playback in every browser, and not restarting it is the
+          whole point of the mini player. */}
+      <SessionProvider>
       <BrowserRouter>
         <AppInner />
       </BrowserRouter>
+      </SessionProvider>
       </UserProgressProvider>
     </ClerkProvider>
   );
@@ -176,6 +185,12 @@ function AppInner() {
     return () => { live = false; };
   }, [flags]);
   const useTestContent = testContent;
+
+  // The seeded notes and threads are written into the account once and then
+  // owned like anything else — otherwise deleting a seeded note would bring it
+  // back on the next reload.
+  const { seedFrom } = useSession();
+  useEffect(() => { if (testContent) seedFrom(testContent); }, [testContent, seedFrom]);
   const moduleState = {
     opened: progress.get("pw-paper-opened", {}),
     done: progress.get("pw-lesson-done", {}),
@@ -647,7 +662,7 @@ function AppInner() {
                   chapter state, the counts and the Flight Deck all read it. */}
               <LessonPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
-                state={moduleState} openQuestionId={route.question}
+                state={moduleState}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
@@ -776,6 +791,8 @@ function AppInner() {
         else if (what === "quiz" && lesson) go(routePath.chapter(code, lesson.chapter.id, "quiz"));
       }}
     />
+    {/* The one <video>. A sibling of the routed content, never inside it. */}
+    <PlayerLayer />
     <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
     <RunwayLights scroller={deckRef} route={route.name} />
     </FirstFlightGate>

@@ -1,0 +1,604 @@
+/* ============================================================================
+   Wingman — the lesson surface
+   Notes · Comments · the lesson appearance · the mini player
+
+   Copy verbatim. Depends on wingman-foundations.css for --pad, --tap, --hair,
+   --fs-*, --t-* and the breakpoints, and on the livery tokens for colour.
+
+   Nothing here sets a font size, a breakpoint, a touch target or a motion
+   duration of its own. If you need a new one it goes in foundations.
+
+   House rules this file obeys:
+     · nothing floats, except media — the player and the mini player
+     · separation is space and hairlines, never a card edge
+     · one gutter down the whole page, --pad, everywhere
+     · words, not badges
+     · 13px floor, 44px targets, 4.5:1 body
+   ========================================================================= */
+
+
+/* ============================================================================
+   1 · THE LESSON PAGE
+   Order down the page, and it is not negotiable:
+     lesson name  →  player  →  what comes next  →  Notes | Comments
+
+   Four things. A first year opens this and sees a video and a next button;
+   everything else lives inside the player or under one familiar tab strip.
+   There is no sidebar, no margin column, no edge rail and no transcript.
+   ========================================================================= */
+
+.lesson{ padding-block: 26px 64px; }
+
+.lesson-head{ padding-inline: var(--pad); margin-bottom: 22px; }
+.lesson-code{                        /* M1.02.1 — the only place a code shows */
+  display: block;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  color: var(--t3);
+  margin-bottom: 8px;
+}
+.lesson-name{
+  display: block;
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  color: var(--t1);
+  margin: 0;
+}
+.lesson-where{
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  margin-top: 10px;
+}
+
+/* One column at every width. The two-column version was cancelled — it was the
+   thing that made the page read as complex, and it never worked on a phone. */
+.lesson-body{
+  padding-inline: var(--pad);
+  max-width: 860px;                  /* the video and its words share a measure */
+}
+
+/* -- what comes next, directly under the player --------------------------- */
+/* Not optional. It is what makes a module a course rather than a list of
+   pages. Above the tabs on purpose: under a comment list it is a footer
+   nobody reaches. */
+.next-up{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: var(--tap);
+  margin-top: 18px;
+  padding-block: 12px;
+  border-top: 1px solid var(--hair);
+}
+.next-label{
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--t3);
+  flex: none;
+}
+.next-title{
+  font-size: var(--fs-md);
+  color: var(--t1);
+  text-decoration: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.next-title:hover{ color: var(--active); }
+.next-meta{ font-size: var(--fs-sm); color: var(--t3); flex: none; }
+
+
+/* ============================================================================
+   2 · THE PLAYER
+   ========================================================================= */
+
+/* The slot is an empty sized box. The <video> lives above the router and is
+   positioned over it by transform. Never move the node into it. */
+.player-slot{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--raised);
+  border-radius: 14px;               /* the ONE rounded object on the screen */
+  overflow: hidden;
+}
+
+.player-layer{
+  position: fixed;
+  z-index: 40;
+  overflow: hidden;
+  background: #000;
+  transition: transform var(--t-base) var(--ease),
+              width var(--t-base) var(--ease),
+              border-radius var(--t-base) var(--ease);
+  will-change: transform;
+  touch-action: none;
+  user-select: none;
+}
+/* Transform and width only. NEVER animate filter, opacity, backdrop-filter or
+   box-shadow here — an element composited over live video that cannot
+   composite alone re-rasterises every frame. Measured, on the aurora. */
+
+/* aspect-ratio, never height:auto. A <video> whose metadata has not arrived
+   collapses to zero height, and every position measured against it — the
+   corner, the slot rect, the scrub — lands wrong for the first second. */
+.player-layer video{
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  object-fit: cover;
+  background: #000;
+}
+
+.player-layer[data-dock="none"]{ display: none; }
+.player-layer[data-dock="inline"]{ border-radius: 14px; }
+
+/* -- the control bar ------------------------------------------------------ */
+.pctl{
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  background: linear-gradient(180deg, transparent, oklch(0 0 0 / .58));
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.player-layer:hover .pctl,
+.player-layer:focus-within .pctl,
+.player-layer[data-idle="0"] .pctl{ opacity: 1; }
+.player-layer[data-dock="mini"] .pctl{ display: none; }
+
+.pbtn{
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: oklch(.98 0 0);
+  cursor: pointer;
+  flex: none;
+}
+.pbtn:hover{ color: #fff; }
+.ptime{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: oklch(.92 0 0);
+  padding-inline: 6px;
+}
+.pspacer{ flex: 1 1 auto; }
+
+/* THE NOTE BUTTON. It lives in the player's own control bar, so taking a note
+   never costs you your place and works identically in the page and in
+   fullscreen. Two taps — open, close — leaves a pin with no text. */
+.pbtn[data-note]{ color: oklch(.98 0 0); }
+.pbtn[data-note]:hover{ color: var(--active); }
+
+/* -- the scrub ------------------------------------------------------------ */
+.scrub{
+  position: relative;
+  height: 4px;
+  background: oklch(1 0 0 / .26);
+  cursor: pointer;
+  margin-inline: 10px;
+}
+.scrub-fill{ position: absolute; inset: 0 auto 0 0; background: var(--active); }
+
+/* One mark per note and per thread. Never per reply — a good discussion would
+   otherwise put twelve marks on one spot and the bar would stop meaning
+   anything. */
+.scrub-mark{
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 10px;
+  transform: translateX(-1px);
+  pointer-events: none;
+}
+.scrub-mark[data-kind="thread"]{ background: var(--active); }
+.scrub-mark[data-kind="note"]  { background: oklch(1 0 0 / .82); }
+.scrub-mark[data-many="1"]     { width: 4px; }
+
+/* Clustering IS the hit-target fix: two marks 3px apart cannot both carry a
+   44px target without overlapping, so they merge first and the cluster gets
+   one target. Solve it once. */
+.scrub-hit{
+  position: absolute;
+  top: 50%;
+  width: var(--tap);
+  height: var(--tap);
+  transform: translate(-50%, -50%);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* -- the banner ----------------------------------------------------------- */
+/* Like the card a video maker uses to mention another video. It arrives, it
+   says there is a note here, it goes. IT DOES NOT PAUSE — you wrote the
+   sentence, and a lesson with eight notes must not become eight interruptions
+   on every rewatch. Tapping is what pauses. */
+.pbanner{
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  max-width: min(340px, calc(100% - 24px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 8px 12px;
+  background: oklch(.16 0 0 / .86);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  color: oklch(.97 0 0);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-tight);
+  text-align: start;
+  border: 0;
+  cursor: pointer;
+  animation: bin var(--t-base) var(--ease);
+}
+@keyframes bin{ from{ opacity: 0; transform: translateX(10px) } }
+.pbanner-t{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: oklch(1 0 0 / .66);
+  flex: none;
+}
+.pbanner-body{
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce){ .pbanner{ animation: none } }
+
+/* -- the note panel: composer, and the expanded banner --------------------- */
+/* One surface, two uses. It covers the player, which is fine because the
+   video is stopped in both cases — you cannot watch and read at once anyway. */
+.npanel{
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background: oklch(.14 0 0 / .94);
+  backdrop-filter: blur(14px);
+  color: oklch(.97 0 0);
+  padding: 16px;
+}
+.npanel-head{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid oklch(1 0 0 / .16);
+}
+.npanel-t{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--active);
+}
+.npanel-where{ font-size: var(--fs-xs); color: oklch(1 0 0 / .62); flex: 1 1 auto; }
+.npanel-field{
+  flex: 1 1 auto;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: 0;
+  resize: none;
+  font: inherit;
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
+  color: oklch(.98 0 0);
+}
+.npanel-field:focus{ outline: none; }
+.npanel-field::placeholder{ color: oklch(1 0 0 / .46); }
+.npanel-read{
+  flex: 1 1 auto;
+  margin-top: 12px;
+  overflow-y: auto;
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
+  max-width: var(--measure);
+}
+.npanel-acts{
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 12px;
+}
+.npanel-act{
+  min-height: var(--tap);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: oklch(1 0 0 / .70);
+  cursor: pointer;
+}
+.npanel-act[data-primary]{ color: var(--active); }
+.npanel-hint{                      /* "Close to save. Empty is fine." */
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+  color: oklch(1 0 0 / .52);
+}
+
+
+/* ============================================================================
+   3 · THE TAB STRIP — Notes · Comments
+   Two words, one hairline. This is the only navigation on the page.
+   ========================================================================= */
+
+.ltabs{
+  display: flex;
+  gap: 26px;
+  margin-top: 26px;
+  border-bottom: 1px solid var(--hair);
+}
+.ltab{
+  min-height: var(--tap);
+  padding: 0 0 10px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: var(--fs-md);
+  color: var(--t3);
+  cursor: pointer;
+}
+.ltab:hover{ color: var(--t2); }
+.ltab[aria-selected="true"]{ color: var(--t1); border-bottom-color: var(--active); }
+.ltab-n{                            /* "4" — a figure, not a badge */
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  margin-inline-start: 6px;
+}
+
+
+/* ============================================================================
+   4 · COMPOSING — and the one place a mistake is embarrassing
+   ----------------------------------------------------------------------------
+   A note is private. A comment is public and lands in People where the whole
+   module sees it. The gap in consequence is much bigger than the gap in the
+   interface, so the two compose fields must not look alike.
+   ========================================================================= */
+
+.compose{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hair);
+  border-inline-start: 2px solid transparent;
+  padding-inline-start: 12px;
+  margin-inline-start: -14px;
+}
+.compose[data-vis="private"]{ border-inline-start-color: var(--line); }
+.compose[data-vis="public"] { border-inline-start-color: var(--active); }
+
+.compose-t{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--t3);
+  padding-top: 9px;
+  min-width: 4ch;
+}
+.compose-field{
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  resize: none;
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--t1);
+}
+.compose-field::placeholder{ color: var(--t3); }
+.compose-field:focus{ outline: none; border-bottom-color: var(--active); }
+
+/* The line that says who sees this. Always present on the public one, never
+   on the private one. */
+.compose-who{
+  grid-column: 2;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  margin-top: 6px;
+}
+.compose[data-vis="public"] .compose-who{ color: var(--active); }
+
+.compose-acts{ grid-column: 2; display: flex; gap: 18px; margin-top: 6px; }
+.compose-act{
+  min-height: var(--tap);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  cursor: pointer;
+}
+.compose-act[data-primary]{ color: var(--active); }
+
+
+/* ============================================================================
+   5 · THE LISTS
+   Both in moment order. Scrolling either one is scrubbing the video.
+   ========================================================================= */
+
+.llist{ list-style: none; margin: 0; padding: 0; }
+.litem{ border-bottom: 1px solid var(--hair); }
+
+/* the whole row seeks — the timestamp is not decoration */
+.lseek{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 14px 0;
+  background: none;
+  border: 0;
+  text-align: start;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.lt{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--t3);
+  padding-top: 3px;
+}
+.lseek:hover .lt, .lseek:focus-visible .lt{ color: var(--active); }
+.lbody{
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--t2);
+  min-width: 0;
+}
+.litem[data-kind="thread"] .lbody{ color: var(--t1); }
+
+/* A pin with no words. It still says something useful — that is the point of
+   pins — so it reads as a phrase in --t3, not as an empty row. */
+.lbody[data-pin="1"]{ color: var(--t3); font-style: italic; }
+
+.lwho{ display: block; font-size: var(--fs-xs); color: var(--t3); margin-top: 6px; }
+.lwho[data-state="answered"]{ color: var(--active); }
+
+/* your own note gets a delete; a comment does not — it exists in People and
+   someone may have answered it */
+.ldel{
+  min-height: var(--tap);
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--t3);
+  cursor: pointer;
+  opacity: 0;
+}
+.litem:hover .ldel, .ldel:focus-visible{ opacity: 1; }
+
+/* -- replies -------------------------------------------------------------- */
+/* Flat. Not nested. Reddit's tree earns its keep at ten thousand comments,
+   not at forty — and the data shape allows nesting whenever it is actually
+   needed. */
+.lreplies{ list-style: none; margin: 0 0 14px; padding: 0 0 0 calc(4ch + 12px); }
+.lreply{ padding: 10px 0; border-top: 1px solid var(--hair); }
+.lreply-who{ font-size: var(--fs-xs); color: var(--t3); }
+.lreply-body{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); }
+
+/* -- empty is the shipping state ------------------------------------------ */
+/* There is no content and no cohort yet, so these are what launches. They must
+   read NOT YET, never NOTHING. One line, --t3, no illustration, no button. */
+.lempty{
+  padding: 20px 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--t3);
+  max-width: var(--measure);
+}
+
+
+/* ============================================================================
+   6 · THE MINI PLAYER
+   The second and last exception to "nothing floats" — and it is the same
+   exception as the first. It is media. On phone it is a docked bar, which is
+   not floating at all.
+   ========================================================================= */
+
+.player-layer[data-dock="mini"]{
+  border-radius: 12px;
+  box-shadow: 0 8px 30px oklch(0 0 0 / .28);   /* mini only, never inline */
+}
+.mini-wrap{ display: block; }
+.mini-bar{
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--raised);
+}
+.player-layer[data-dock="mini"] .mini-bar{ display: flex; }
+.mini-title{
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-xs);
+  color: var(--t2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mini-btn{
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  color: var(--t2);
+  cursor: pointer;
+}
+.mini-btn:hover{ color: var(--t1); }
+
+/* Phone: a full-width bar above the tab bar. Docked to an edge, no corner, no
+   shadow, nothing to drag. Like every music app anyone has used. */
+@media (max-width: 767px){
+  .player-layer[data-dock="mini"]{
+    inset-inline: 0;
+    bottom: var(--tabbar-h, 56px);
+    top: auto !important;
+    width: auto !important;
+    transform: none !important;
+    border-radius: 0;
+    box-shadow: none;
+    border-top: 1px solid var(--hair);
+    background: var(--panel);
+  }
+  .player-layer[data-dock="mini"] .mini-wrap{ display: flex; align-items: center; gap: 10px; }
+  .player-layer[data-dock="mini"] video{ width: 96px; height: 54px; aspect-ratio: auto; flex: none; }
+  .player-layer[data-dock="mini"] .mini-bar{ flex: 1 1 auto; background: none; }
+}
+
+@media (prefers-reduced-motion: reduce){ .player-layer{ transition: none; } }
+
+
+/* ============================================================================
+   7 · WHAT MUST NOT APPEAR
+   Kept as a comment so it does not get reinvented in six weeks.
+
+   · No windows. No draggable panels, resize handles, minimise or restore
+     chrome, no tab bar of open documents, no panel over a panel.
+   · No sidebar, no margin column, no right-edge document rail, no split pane.
+     Cancelled after a legibility review: five novel surfaces on one screen is
+     what intimidates a newcomer, not any single one of them.
+   · No transcript.
+   · No banner for other people's comments — only for your own notes.
+   · No nested reply trees.
+   · No percentage, no progress ring, no badge count on this screen.
+   ========================================================================= */
