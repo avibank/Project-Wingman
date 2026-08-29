@@ -23,7 +23,7 @@ import "./lesson.css";
 // The player is NOT rendered here. This page renders an empty sized slot and
 // the one player, which lives above the router, positions itself over it.
 export default function LessonPage({
-  module: mod, chapters, chapter, lesson, state,
+  module: mod, chapters, chapter, lesson, state, people = [],
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab, clearWatch } = useSession();
@@ -120,7 +120,7 @@ export default function LessonPage({
                       onSeek={requestSeek} mutate={mutate} />
           : <CommentsTab comments={comments} replies={session.replies} at={at}
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
-                         onSeek={requestSeek} mutate={mutate} />}
+                         people={people} onSeek={requestSeek} mutate={mutate} />}
       </div>
     </div>
   );
@@ -188,7 +188,11 @@ function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate }) {
 
 // The public half. Same rows People shows — one table, two queries — in moment
 // order, because scrolling this list is scrubbing the video above it.
-function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, onSeek, mutate }) {
+function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate }) {
+  // Author ids are the storage key; a callsign is what a person reads. One
+  // resolver so a row never shows "u_five" to a student.
+  const who = (id) =>
+    id === "u_you" ? "You" : (people.find((p) => p.id === id)?.callsign || id);
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyBody, setReplyBody] = useState("");
@@ -231,7 +235,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, onSe
                   <span className="lbody">
                     {c.body}
                     <span className="lwho" data-state={rs.length ? "answered" : "waiting"}>
-                      {c.authorId === "u_you" ? "You" : c.authorId}
+                      {who(c.authorId)}
                       {rs.length ? ` · ${rs.length} ${rs.length === 1 ? "reply" : "replies"}` : " · waiting for an answer"}
                     </span>
                   </span>
@@ -243,7 +247,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, onSe
                   <ul className="lreplies">
                     {rs.map((r) => (
                       <li key={r.id} className="lreply">
-                        <span className="lreply-who">{r.authorId === "u_you" ? "You" : r.authorId}</span>
+                        <span className="lreply-who">{who(r.authorId)}</span>
                         <p className="lreply-body">{r.body}</p>
                       </li>
                     ))}

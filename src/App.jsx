@@ -662,7 +662,7 @@ function AppInner() {
                   chapter state, the counts and the Flight Deck all read it. */}
               <LessonPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
-                state={moduleState}
+                state={moduleState} people={useTestContent?.people || []}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}

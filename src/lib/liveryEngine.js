@@ -281,6 +281,16 @@ export function deckVars(liveryId, variant = "night") {
     ? surf[8]
     : `oklch(.455 ${(Cm * 1.62).toFixed(3)} ${H.toFixed(1)})`;
 
+  // The accent READ AS WORDS, which is a different job from the accent as a
+  // fill. Part 12's lesson surface says "answered" and "everyone sees this" in
+  // the accent at 13px, and measured across the matrix the day accent came in
+  // at 3.55:1 — it is tuned to sit under --ground text on a filled control,
+  // not to be read on the page itself. Night's already clears 5.7, so only
+  // Day takes a step down.
+  vars["--active-text"] = night
+    ? C.active
+    : `oklch(.430 ${(Cm * 1.40).toFixed(3)} ${H.toFixed(1)})`;
+
   // Panels are glass, so light passes through them. The ground stays solid
   // because it is the room, not a surface in it.
   vars["--panel"] = withA(C.panel, gl.toFixed(2));

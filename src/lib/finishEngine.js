@@ -78,9 +78,20 @@ export const AUR = {
 export const AURN = { g: ".1900 .0119 258", p: ".2537 .0187 257.06/.78", rz: ".3188 .0302 254.73/.87", l: ".3838 .0441 251.87/.94", t3: ".5870 .0273 247.30", t2: ".7637 .0245 235.24", t1: ".9550 .0040 226" };
 
 /* ---------- manual finish ---------- */
+// One step down in lightness, keeping hue and chroma. Used where the accent
+// has to be read rather than filled.
+const darkenL = (c, by) =>
+  String(c).replace(/oklch\(\s*([\d.]+)/, (_, L) => `oklch(${Math.max(0, Number(L) - by).toFixed(4)}`);
+
 export const MAN = {
-  N: { g: ".1600 .0060 85", p: ".2050 .0070 85/.80", rz: ".2450 .0080 85/.88", l: ".3600 .0100 85/.90", t3: ".5600 .0080 85", t2: ".7400 .0070 85", t1: ".9200 .0060 85", grain: .15 },
-  D: { g: ".966 .010 85", p: ".992 .005 85/.88", rz: ".950 .011 85/.92", l: ".876 .014 85/.94", t3: ".545 .010 85", t2: ".395 .011 85", t1: ".215 .012 85", grain: .17 },
+  // t3 carries the smallest text that means anything — timestamps, the word
+  // Next, an unselected tab. Manual was outside the contrast matrix until Part
+  // 12 put it in one, and it was failing in both modes on ink that had never
+  // been measured against this paper: .5600 read 3.91:1 on the microfiche
+  // ground and .545 read 4.49:1 on the cream. Lifted and darkened to clear 4.5
+  // with headroom. Nothing else in the palette moves.
+  N: { g: ".1600 .0060 85", p: ".2050 .0070 85/.80", rz: ".2450 .0080 85/.88", l: ".3600 .0100 85/.90", t3: ".6100 .0080 85", t2: ".7400 .0070 85", t1: ".9200 .0060 85", grain: .15 },
+  D: { g: ".966 .010 85", p: ".992 .005 85/.88", rz: ".950 .011 85/.92", l: ".876 .014 85/.94", t3: ".505 .010 85", t2: ".395 .011 85", t1: ".215 .012 85", grain: .17 },
 };
 
 
@@ -295,6 +306,10 @@ export function finishVars(liveryId, variant, finish, accent) {
       // It has its own --paper-drop in the finish CSS.
       "--sheen-img": "none", "--drop": "none",
       "--active": accent, "--active-fill": accent,
+      // Paper is not the deck: the same accent that reads on a lit ground is
+      // too pale on cream. Darkened for Day only, on the same reasoning as
+      // --active-text in the livery engine.
+      "--active-text": night ? accent : darkenL(accent, 0.13),
     };
   }
 
