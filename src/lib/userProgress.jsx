@@ -16,6 +16,16 @@ import { loadJSON, saveJSON } from "./storage.js";
 //   2. One provider holds the state for the whole tree, so reads cannot drift
 //      apart in the first place.
 
+// Keys that hold something a person wrote, rather than something they chose.
+// A failed save must never revert one of these — see flush() below.
+const AUTHORED = new Set([
+  "pw-notes",
+  "pw-threads",
+  "pw-replies",
+  "pw-logbook",
+  "pw-quiz-run",
+]);
+
 const ProgressContext = createContext(null);
 
 function useProgressState() {
@@ -60,22 +70,46 @@ function useProgressState() {
     const patch = pending.current;
     pending.current = {};
     if (!Object.keys(patch).length) return;
-    // Applying first means a failed save leaves the UI ahead of the server.
-    // Put the affected keys back to what the server last gave us and say so,
-    // rather than leaving someone looking at a setting that was never stored.
+    // Applying first means a failed save leaves the UI ahead of the server, so
+    // a failure has to put something back. WHAT it puts back depends on what
+    // the key holds, and that distinction is the whole of this branch:
+    //
+    //   a preference — reverting is right. Someone toggled a switch, it did not
+    //   save, and leaving it on would be a lie about the stored state.
+    //
+    //   something a person WROTE — reverting is destruction. A note, a comment,
+    //   a reply: putting the key back to what the server last had deletes the
+    //   sentence they just typed because a network dropped. It is kept, the
+    //   patch is queued to try again, and the surface shows it as unsent.
+    //
+    // This was reachable and it did happen: posting a comment with the write
+    // path failing made the row appear and then vanish, because the revert took
+    // pw-lesson-seeded with it and the seed was written back over the threads.
     const before = lastServer.current;
     supabase.rpc("merge_progress", { uid: user.id, patch }).then(({ error }) => {
       if (error) {
         console.error(error);
+        const authored = Object.keys(patch).filter((k) => AUTHORED.has(k));
+        const settings = Object.keys(patch).filter((k) => !AUTHORED.has(k));
         setData((prev) => {
           const reverted = { ...prev };
-          for (const k of Object.keys(patch)) {
+          for (const k of settings) {
             if (before[k] === undefined) delete reverted[k];
             else reverted[k] = before[k];
           }
           return reverted;
         });
-        setSaveError("That did not save. Your last change has been put back.");
+        // Authored keys go back on the queue rather than being thrown away, so
+        // the next write — or a Retry — carries them again. Anything already
+        // queued since wins, because it is newer.
+        if (authored.length) {
+          const requeue = {};
+          for (const k of authored) requeue[k] = patch[k];
+          pending.current = { ...requeue, ...pending.current };
+        }
+        setSaveError(settings.length
+          ? "That did not save. Your last change has been put back."
+          : "That did not save yet. Nothing you wrote has been lost.");
       } else {
         lastServer.current = { ...lastServer.current, ...patch };
         setSaveError(null);
