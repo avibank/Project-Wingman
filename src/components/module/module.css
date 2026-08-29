@@ -35,7 +35,10 @@
 .mscreen .sech{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
 .mscreen .sech h2{font-size:18px;font-weight:600;letter-spacing:-.2px}
 .mscreen .mods{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.mscreen .mod{background:var(--panel);border-radius:15px;border:1px solid var(--hair);
+/* The same object as a Flight Deck card: the housing tokens, not a private
+   copy of them. It had its own 15px radius against housing's 14 and its own
+   --hair border against the deck's translucent --edge. */
+.mscreen .mod{background:var(--house-fill);border-radius:var(--house-radius);border:var(--house-line);
   padding:16px 16px 18px;min-height:176px;display:flex;flex-direction:column;box-shadow:var(--drop);cursor:pointer;
   text-align:left;font-family:inherit;color:inherit;transition:transform .15s ease;background-image:var(--sheen-img,none)}
 .mscreen .mod:hover{transform:translateY(-2px)}
@@ -50,12 +53,20 @@
 /* — the list. No panels, no fills; space and type do the separating. — */
 .mscreen .chaps{display:flex;flex-direction:column}
 .mscreen .chap{padding:0 var(--pad)}
-.mscreen .chap+.chap{border-top:1px solid var(--hair)}
+.mscreen .chap+.chap{border-top:1px solid var(--edge-soft, var(--hair))}
 .mscreen .chead{display:grid;grid-template-columns:minmax(0,1fr) auto auto 12px;gap:22px;align-items:center;width:100%;
   background:none;border:0;font-family:inherit;text-align:left;color:inherit;cursor:pointer;padding:30px 0 26px}
-.mscreen .cname{display:block;font-size:27px;font-weight:700;letter-spacing:-.7px;color:var(--t2)}
-.mscreen .chap.here .cname{color:var(--t1)}
-.mscreen .chap.done .cname{color:var(--t3)}
+/* --t1 for every chapter, current or not. The base was --t2 and only the
+   current/done ones were lifted to --t1, which is the same lightness-as-state
+   bug from the other end: three chapters measured contrast 5.0, 15.4 and 8.0. */
+.mscreen .cname{display:block;font-size:27px;font-weight:700;letter-spacing:-.7px;color:var(--t1)}
+/* ONE BRIGHTNESS FOR EVERY TITLE. These were --t1 for the current chapter and
+   --t3 for a finished one, which encodes state in lightness — and every reader
+   alive reads dimmer as less important, so the screen told a first-year that
+   the chapter they were on mattered and the ones they had finished did not.
+   State lives in the progress bar and the word beside it. */
+.mscreen .chap.here .cname,
+.mscreen .chap.done .cname{color:var(--t1)}
 .mscreen .csub{display:block;font-size:15px;color:var(--t3);margin-top:6px}
 .mscreen .cstate{font-size:15px;color:var(--t3);white-space:nowrap}
 .mscreen .cstate.here{color:var(--active);font-weight:600}

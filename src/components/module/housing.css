@@ -27,7 +27,9 @@
 
 :root{
   --house-fill   : var(--panel);
-  --house-line   : 1px solid var(--hair);
+  /* The deck's translucent hairline, so a module card and a Flight Deck card
+     are the same object. Full accent belongs to the current thing alone. */
+  --house-line   : 1px solid var(--edge, var(--hair));
   --house-radius : 14px;
   --house-pad    : 20px;
   --house-gap    : 14px;

@@ -9,7 +9,7 @@ import "./module.css";
 // it. A retake replaces the score rather than adding a second record — the
 // Library and the chapter row read one object, and a quiz you have sat twice
 // is still one quiz.
-export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, onRun, autoStart }) {
+export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById }) {
   const run = state?.run?.[chapter.id] || null;
   // Arriving here from the deck's Resume means "put me back in the quiz", not
   // "show me the cover of the quiz I was already sitting".
@@ -24,10 +24,9 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
         <QuizRunner
           chapter={chapter}
           questions={chapter.questions}
-          run={run}
-          onRun={(r) => onRun?.(chapter.id, r)}
           onQuit={() => setRunning(false)}
-          onFinish={(got, total) => { setRunning(false); onScore?.(chapter.id, got, total); }}
+          onOpenLesson={onOpenLessonById}
+          onFinish={(got, total) => onScore?.(chapter.id, got, total)}
         />
       </div>
     );

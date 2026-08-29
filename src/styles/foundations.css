@@ -29,7 +29,7 @@
   --fs-md      : calc(1.09375rem * var(--sc));/*17.5 — row title, body      */
   --fs-base    : calc(1rem * var(--sc));     /* 16 — controls              */
   --fs-sm      : calc(0.875rem * var(--sc)); /* 14 — meta, secondary       */
-  --fs-xs      : calc(0.8125rem * var(--sc));/* 13 — smallest allowed      */
+  --fs-xs      : max(13px, calc(0.8125rem * var(--sc)));/* 13 — smallest allowed      */
 
   /* 13px is the floor. Nothing a reader needs to read goes below it —
      the mono captions used to be 9.5px and that is not readable for an

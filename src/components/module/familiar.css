@@ -108,6 +108,11 @@
      they painted the user agent's default rgb(239,239,239). A near-white
      opaque bar over a dark ground, which is what the screenshots showed. */
   background: none;
+  /* text-align: start, because a <button> inherits the centring from whatever
+     it sits in — the title read as floating in the middle of a 781px column
+     with "Done" stranded on the left. The source sets this on .prow and not
+     here, the same omission as width:100%. */
+  text-align: start;
   display: grid;
   /* width:100% because these rows are <button>s, which size to their content
      by default — without it the 1fr column collapsed to the title's own width

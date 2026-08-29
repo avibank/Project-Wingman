@@ -25,7 +25,11 @@ export function chapterState(ch, state, hereChapterId) {
   const quizTaken = state?.quiz?.[ch.id] != null;
   if (done === ch.lessons.length && quizTaken) return "done";
   if (ch.id === hereChapterId) return "here";
-  return done > 0 ? "here" : "new";
+  // "Started" is not "here". Returning "here" for anything part-done put YOU
+  // ARE HERE on every chapter with a single watched lesson — two at once on
+  // the seed data, which makes the phrase mean nothing. There is exactly one
+  // here, and it is the chapter you are in.
+  return done > 0 ? "started" : "new";
 }
 
 // "5 minutes left", the only place a duration is turned into words. Rounds up,

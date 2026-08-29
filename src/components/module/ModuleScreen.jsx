@@ -25,13 +25,20 @@ export default function ModuleScreen({
 
   // The chapter you are in opens by itself on arrival; after that it is yours
   // to open and close, any number at once.
-  const [open, setOpen] = useState(() => new Set(here ? [here.chapter.id] : []));
+  // EXACTLY ONE CHAPTER OPEN — the one you are in. What made the old screen
+  // feel busy was not the fold: it was that every chapter was collapsed and
+  // they all looked the same weight, a wall of equal things with no focal
+  // point. One open at full scale and the rest as quiet rows keeps the page
+  // short at any number of chapters, which is what lets a module grow.
+  const [open, setOpen] = useState(() => new Set(here ? [here.chapter.id] : chapters[0] ? [chapters[0].id] : []));
   useEffect(() => {
-    if (here?.chapter?.id) setOpen((s) => (s.has(here.chapter.id) ? s : new Set([...s, here.chapter.id])));
+    if (here?.chapter?.id) setOpen(new Set([here.chapter.id]));
   }, [here?.chapter?.id]);
 
+  // Opening one closes the other. Tapping the open one folds it, so the screen
+  // can still be all rows if that is what somebody wants.
   const toggle = (id) =>
-    setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+    setOpen((s) => (s.has(id) ? new Set() : new Set([id])));
 
   // The only figure on the screen. Deliberately absent until there is one —
   // nothing pretends on a first visit.

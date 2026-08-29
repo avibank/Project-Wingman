@@ -287,6 +287,22 @@ export function deckVars(liveryId, variant = "night") {
   // at 3.55:1 — it is tuned to sit under --ground text on a filled control,
   // not to be read on the page itself. Night's already clears 5.7, so only
   // Day takes a step down.
+  // THE RESTING BORDER, and it is the deck's — the same object on a module
+  // card and a Flight Deck card, which is the whole point of the token.
+  //
+  // An opaque accent-derived edge was built first and rejected: it read as
+  // harsh, made every card shout, and cost the accent its meaning, because if
+  // everything is outlined in the accent then nothing is the current thing.
+  // This is a light, barely tinted, translucent hairline — the alpha is what
+  // makes it sit down. Values are Part 14's, with this engine's own accent
+  // chroma and hue rather than the demo's data-liv table.
+  vars["--edge"] = night
+    ? `oklch(.720 ${(Cm * 0.34).toFixed(3)} ${H.toFixed(1)} / .26)`
+    : `oklch(.440 ${(Cm * 0.26).toFixed(3)} ${H.toFixed(1)} / .22)`;
+  vars["--edge-soft"] = night
+    ? `oklch(.720 ${(Cm * 0.28).toFixed(3)} ${H.toFixed(1)} / .16)`
+    : `oklch(.440 ${(Cm * 0.20).toFixed(3)} ${H.toFixed(1)} / .13)`;
+
   vars["--active-text"] = night
     ? C.active
     : `oklch(.430 ${(Cm * 1.40).toFixed(3)} ${H.toFixed(1)})`;

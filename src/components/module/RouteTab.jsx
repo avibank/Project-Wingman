@@ -105,7 +105,10 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                 <Lights lessons={ch.lessons} state={state} hereLessonId={here?.lesson?.id} />
                 {/* State in words, never a badge. */}
                 <span className={`cstate${st === "here" ? " here" : ""}`}>
-                  {st === "done" ? "Done" : st === "here" ? "You are here" : "Not started"}
+                  {st === "done" ? "Done"
+                    : st === "here" ? "You are here"
+                    : st === "started" ? "Part way"
+                    : "Not started"}
                 </span>
                 <span className="chv" aria-hidden="true">›</span>
               </button>

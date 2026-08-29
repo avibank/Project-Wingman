@@ -101,7 +101,7 @@ function StreakMenu({ streak, overrideStreak }) {
       <style>{`
         .streak-menu { position: relative; }
         .streak-trigger { height: 40px; min-height: 40px; display: flex; align-items: center; gap: 7px;
-          font-family: var(--font-mono); font-size: 12.5px; color: var(--t2); border: 1px solid var(--line);
+          font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--t2); border: 1px solid var(--line);
           background: color-mix(in oklab, var(--panel), transparent 25%); padding: 0 15px 0 11px;
           border-radius: 999px; cursor: pointer; }
         .streak-trigger svg { display: block; color: var(--active); }
@@ -117,13 +117,13 @@ function StreakMenu({ streak, overrideStreak }) {
         .streak-trigger:hover { border-color: var(--t3); color: var(--t1); }
         .streak-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 280px; background: var(--panel); border: 1px solid var(--border-hover); border-radius: var(--r-lg); padding: 14px; box-shadow: 0 12px 28px var(--shadow-c); z-index: 50; animation: streakIn 0.15s ease-out; }
         @keyframes streakIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .streak-milestone { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft);
+        .streak-milestone { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--text-soft);
           background: var(--presence-soft); border: 1px solid color-mix(in srgb, var(--presence) 26%, transparent);
           border-radius: var(--r-md); padding: 9px 12px; margin: 0 0 12px; }
         .streak-milestone-mark { color: var(--presence); }
         .streak-week { display: flex; justify-content: space-between; background: var(--panel-alt); border-radius: var(--r-md); padding: 14px 8px; }
         .streak-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .streak-day-letter { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
+        .streak-day-letter { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted2); }
         .propeller-blades { transform-origin: 50% 50%; stroke: var(--panel); stroke-width: 1; }
         .propeller.is-idle .propeller-blades { fill: var(--muted2); opacity: 0.45; }
         .propeller.is-idle .propeller-hub { fill: var(--muted2); opacity: 0.45; }
@@ -135,8 +135,8 @@ function StreakMenu({ streak, overrideStreak }) {
         .streak-stats { display: flex; justify-content: space-between; margin-top: 12px; gap: 6px; }
         .streak-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
         .streak-stat-value { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); }
-        .streak-stat-label { font-family: var(--font-ui); font-size: 12px; color: var(--muted2); text-align: center; margin-top: 2px; }
-        .streak-last { text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
+        .streak-stat-label { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--muted2); text-align: center; margin-top: 2px; }
+        .streak-last { text-align: center; font-size: var(--fs-xs); color: var(--muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
         .streak-last strong { color: var(--text); }
       `}</style>
     </div>

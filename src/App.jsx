@@ -715,6 +715,12 @@ function AppInner() {
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
+                onOpenLessonById={(lessonId) => {
+                  // The review links back by lessonId — a join, never a
+                  // semantic match on the question text.
+                  const owner = chs.find((c) => (c.lessons || []).some((l) => l.id === lessonId));
+                  if (owner) go(routePath.lesson(activeModuleCode, owner.id, lessonId));
+                }}
               />
             </main>
           );
