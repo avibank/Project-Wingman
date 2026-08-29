@@ -5,7 +5,7 @@ import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
-  deleteNote, publishNote, postComment, postReply,
+  deleteNote, publishNote, postComment, postReply, editNote, isPin, upFrom,
 } from "../../lib/lessonSurface.js";
 import "./module.css";
 import "./lesson.css";
@@ -26,7 +26,7 @@ export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [],
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
-  const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab, clearWatch } = useSession();
+  const { session, setSession, mutate, dispatchPlayer, setStage, requestSeek, setTab, clearWatch } = useSession();
   const slotRef = useRef(null);
   const watch = session.watchAt?.lessonId === lesson.id ? session.watchAt : null;
 
@@ -41,6 +41,9 @@ export default function LessonPage({
     setStage({
       lesson,
       slotEl: slotRef.current,
+      // The mini player needs these to route back to this lesson from any page.
+      chapterId: chapter.id,
+      moduleCode: mod.code || mod.id,
       // Arriving from "Watch at 2:17" opens at that second instead of where
       // you left off — it is the only bridge from People back to the moment,
       // so it has to win over the saved position.
@@ -51,7 +54,7 @@ export default function LessonPage({
       onSeek: (p) => onSeekSaved?.(lesson.id, p),
       onComplete: () => onComplete?.(lesson.id),
     });
-    dispatchPlayer({ type: "load", lessonId: lesson.id, seconds: 0 });
+    dispatchPlayer({ type: "load", lessonId: lesson.id, moduleId: mod.code || mod.id, seconds: 0 });
     if (watch) clearWatch();
     return () => setStage(null);
   }, [lesson.id]);
@@ -64,11 +67,14 @@ export default function LessonPage({
 
   return (
     <div className="mscreen lesson">
-      <div className="hdr">
-        <button type="button" className="back" onClick={onBack}>
-          <ChevronLeft aria-hidden="true" /> {mod.name}
-        </button>
-      </div>
+      {/* Up, not history. Tap a question in People and land here: history-back
+          returns you to People, up takes you to the module. Up is predictable,
+          cannot loop, and doubles as the breadcrumb this page was missing —
+          and it is labelled with the destination, never a bare arrow. */}
+      <button type="button" className="up" onClick={onBack}>
+        <ChevronLeft aria-hidden="true" />
+        {upFrom({ kind: "lesson", moduleId: mod.code || mod.id, moduleName: mod.name })?.label || mod.name}
+      </button>
 
       <div className="lesson-head">
         <span className="lesson-code">{lesson.code || lesson.id}</span>
@@ -117,7 +123,7 @@ export default function LessonPage({
 
         {tab === "notes"
           ? <NotesTab notes={myNotes} at={at} lesson={lesson} moduleId={mod.code || mod.id}
-                      onSeek={requestSeek} mutate={mutate} />
+                      onSeek={requestSeek} mutate={mutate} setSession={setSession} />
           : <CommentsTab comments={comments} replies={session.replies} at={at}
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
                          people={people} onSeek={requestSeek} mutate={mutate} />}
@@ -128,7 +134,7 @@ export default function LessonPage({
 
 // The private half. A note is yours, nobody else ever sees it, and it can be
 // deleted freely because nobody has replied to it.
-function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate }) {
+function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate, setSession }) {
   const [body, setBody] = useState("");
   const save = () => {
     if (!body.trim()) return;
@@ -168,14 +174,21 @@ function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate }) {
                   {n.body || "You marked this moment"}
                 </span>
               </button>
-              <div className="compose-acts">
+              <div className="lrow-acts">
+                {/* Filling a pin in later is the other half of the feature, and
+                    it seeks the video back to the moment so you are looking at
+                    the frame you marked while you write about it. */}
+                <button type="button" className="lrow-act"
+                        onClick={() => setSession((s) => editNote(s, n.id))}>
+                  {isPin(n) ? "Add a note" : "Edit"}
+                </button>
                 {n.body && (
-                  <button type="button" className="compose-act"
+                  <button type="button" className="lrow-act"
                           onClick={() => mutate((s) => publishNote(s, n.id, { moduleId }))}>
-                    Publish as a comment
+                    Publish
                   </button>
                 )}
-                <button type="button" className="ldel"
+                <button type="button" className="lrow-act"
                         onClick={() => mutate((s) => deleteNote(s, n.id))}>Delete</button>
               </div>
             </li>
@@ -271,7 +284,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                   </div>
                 ) : (
                   <div className="compose-acts">
-                    <button type="button" className="compose-act" onClick={() => setReplyTo(c.id)}>Reply</button>
+                    <button type="button" className="lreply-open" onClick={() => setReplyTo(c.id)}>Reply</button>
                   </div>
                 )}
               </li>

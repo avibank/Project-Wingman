@@ -44,6 +44,9 @@ import { loadJSON, saveJSON } from "./lib/storage.js";
 import { LOGBOOK_KEY, lessonDone, quizTaken } from "./lib/logbookRecord.js";
 import { useUserProgress, UserProgressProvider } from "./lib/userProgress.jsx";
 import { SessionProvider, useSession } from "./lib/session.jsx";
+// Housing is a token block, so it loads once for the whole app rather than
+// being pulled in by whichever screen happens to mount first.
+import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";

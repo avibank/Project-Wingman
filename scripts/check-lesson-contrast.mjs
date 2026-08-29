@@ -47,6 +47,9 @@ const SELECTORS = [
   { sel: ".next-label", token: "--t3", note: "the word Next" },
   { sel: ".ltab", token: "--t3", note: "the unselected tab" },
   { sel: ".compose-who", token: "--active-text", note: "who sees this — public compose" },
+  // Added by the 29 August revision: the back arrow, on every screen but
+  // the Flight Deck, and the note bar's own field.
+  { sel: ".up", token: "--t2", note: "the labelled back arrow" },
 ];
 const FLOOR = 4.5;
 

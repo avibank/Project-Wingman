@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { initialSession, playerReducer } from "./lessonSurface.js";
+import { initialSession, playerReducer, DEFAULT_BAR_POS } from "./lessonSurface.js";
 import { useUserProgress } from "./userProgress.jsx";
 
 // Session state for the lesson surface, and it lives ABOVE the router.
@@ -21,12 +21,27 @@ const THREADS_KEY = "pw-threads";
 const REPLIES_KEY = "pw-replies";
 const SEEN_KEY = "pw-thread-seen";
 const SEEDED_KEY = "pw-lesson-seeded";
+// Per account: someone who watches at 1.5 watches everything at 1.5, and
+// re-choosing it every lesson is a small insult.
+const RATE_KEY = "pw-rate";
+const VOLUME_KEY = "pw-volume";
+// Per DEVICE, not per account. Where you like the note bar depends on the
+// screen in front of you, so it lives in localStorage like text size.
+const BAR_POS_KEY = "pw-bar-pos";
+
+const readBarPos = () => {
+  try {
+    const raw = localStorage.getItem(BAR_POS_KEY);
+    const v = raw ? JSON.parse(raw) : null;
+    return v && typeof v.fx === "number" && typeof v.fy === "number" ? v : DEFAULT_BAR_POS;
+  } catch { return DEFAULT_BAR_POS; }
+};
 
 const Ctx = createContext(null);
 
 export function SessionProvider({ children }) {
   const progress = useUserProgress();
-  const [session, setSession] = useState(initialSession);
+  const [session, setSession] = useState(() => ({ ...initialSession, barPos: readBarPos() }));
 
   // What the lesson page is currently showing: its lesson, the empty slot the
   // player is positioned over, and the callbacks the player reports through.
@@ -52,6 +67,13 @@ export function SessionProvider({ children }) {
       notes: progress.get(NOTES_KEY, []),
       threads: progress.get(THREADS_KEY, []),
       replies: progress.get(REPLIES_KEY, []),
+      // Speed and volume follow the account across devices; the bar's position
+      // does not, and was read from localStorage at mount.
+      player: {
+        ...s.player,
+        rate: progress.get(RATE_KEY, 1),
+        volume: progress.get(VOLUME_KEY, 1),
+      },
     }));
   }, [loaded, progress]);
 
@@ -101,6 +123,23 @@ export function SessionProvider({ children }) {
   // Rows in both lists seek the video, and the video is owned by the layer.
   // The request travels as state so the two never hold references to each
   // other: the list asks for a second, the layer applies it and clears it.
+  // The bar's position is written on drop rather than on every pointermove:
+  // a drag is sixty writes a second otherwise.
+  const setBarPos = useCallback((frac, persist) => {
+    setSession((s) => ({ ...s, barPos: frac }));
+    if (persist) { try { localStorage.setItem(BAR_POS_KEY, JSON.stringify(frac)); } catch { /* private mode */ } }
+  }, []);
+
+  const setRate = useCallback((rate) => {
+    progress.set(RATE_KEY, rate);
+    setSession((s) => ({ ...s, player: { ...s.player, rate } }));
+  }, [progress]);
+
+  const setVolume = useCallback((volume, muted) => {
+    progress.set(VOLUME_KEY, volume);
+    setSession((s) => ({ ...s, player: { ...s.player, volume, muted: muted ?? volume === 0 } }));
+  }, [progress]);
+
   const requestSeek = useCallback(
     (seconds) => setSession((s) => ({ ...s, seekTo: { seconds, at: Date.now() } })), []);
   const clearSeek = useCallback(() => setSession((s) => ({ ...s, seekTo: null })), []);
@@ -117,10 +156,12 @@ export function SessionProvider({ children }) {
     session, setSession, mutate, dispatchPlayer,
     stage, setStage, stageRef,
     seedFrom, markSeen, requestSeek, clearSeek, requestWatch, clearWatch,
+    setBarPos, setRate, setVolume,
     lastSeen: progress.get(SEEN_KEY, {}),
     setTab: (tab) => setSession((s) => ({ ...s, tab })),
   }), [session, stage, mutate, dispatchPlayer, setStage, seedFrom, markSeen,
-       requestSeek, clearSeek, requestWatch, clearWatch, progress]);
+       requestSeek, clearSeek, requestWatch, clearWatch,
+       setBarPos, setRate, setVolume, progress]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

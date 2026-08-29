@@ -249,3 +249,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
  * --font-mono is deliberately untouched: mono labels stay mono.
  */
 .app.plain-language { --font-ui: var(--font-plain); }
+
+
+/* The mini player is site-wide, so every scrollable page has to reserve its
+   height while it is up — otherwise the last row of every list on the site
+   sits permanently behind the bar. Invisible in a mockup, annoying on every
+   screen. .deck is this app's scroll container on every route, so it is set
+   once here rather than remembered per page. */
+.deck { padding-bottom: var(--mini-h, 0px); }

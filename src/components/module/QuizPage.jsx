@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ArrowRight } from "lucide-react";
 import QuizRunner from "./QuizRunner.jsx";
 import { nextAfterQuiz, nextLabel, nextWhere } from "./nextUp.js";
+import { upFrom } from "../../lib/lessonSurface.js";
 import "./module.css";
 
 // What a quiz is, the score if it has been taken, and now the thing that runs
@@ -35,8 +36,9 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
   return (
     <div className="mscreen">
       <div className="hdr">
-        <button type="button" className="back" onClick={onBack}>
-          <ChevronLeft aria-hidden="true" /> {mod.name}
+        {/* Up, to the module — not history. */}
+        <button type="button" className="up" onClick={onBack}>
+          <ChevronLeft aria-hidden="true" /> {upFrom({ kind: "quiz", moduleId: mod.code || mod.id, moduleName: mod.name })?.label}
         </button>
         <div className="titlerow">
           <h1 className="title">{chapter.title} quiz</h1>

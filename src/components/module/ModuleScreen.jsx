@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
+import { upFrom } from "../../lib/lessonSurface.js";
 import { currentLesson } from "./lessonState.js";
 import "./module.css";
 
@@ -43,8 +44,9 @@ export default function ModuleScreen({
   return (
     <div className="mscreen">
       <div className="hdr">
-        <button type="button" className="back" onClick={onBack}>
-          <ChevronLeft aria-hidden="true" /> Flight Deck
+        {/* Up, to the parent, labelled with the destination. */}
+        <button type="button" className="up" onClick={onBack}>
+          <ChevronLeft aria-hidden="true" /> {upFrom({ kind: "module" })?.label}
         </button>
         <div className="titlerow">
           <h1 className="title">{mod.name}</h1>
@@ -64,8 +66,11 @@ export default function ModuleScreen({
         ))}
       </div>
 
-      {/* A 560px floor, so switching tabs never makes the page jump. */}
-      <div className="pane" role="tabpanel">
+      {/* A 560px floor, so switching tabs never makes the page jump.
+          Housing goes on the section, never on the rows inside it: hairlines
+          separate rows, housing separates sections, and if every row is a card
+          then nothing is. */}
+      <div className="pane house" role="tabpanel">
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle}

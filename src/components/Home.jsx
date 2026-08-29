@@ -39,10 +39,12 @@ const PRESETS = {
   open: { band: ["form", "wing", "freq"] },
 };
 
-function Cell({ className, open, onOpen, children }) {
+function Cell({ className, open, onOpen, children, ...rest }) {
+  // ...rest so housing's data-press reaches the element. Without it the card
+  // gets the class and none of the pressable behaviour.
   return open
-    ? <button className={className} type="button" onClick={onOpen}>{children}</button>
-    : <div className={className}>{children}</div>;
+    ? <button className={className} type="button" onClick={onOpen} {...rest}>{children}</button>
+    : <div className={className} {...rest}>{children}</div>;
 }
 
 const CHEV = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -202,11 +204,11 @@ const DECK_CSS = `
 .deck .rail { display: flex; gap: 13px; align-items: stretch; overflow-x: auto; overflow-y: visible;
   scroll-snap-type: x proximity; scrollbar-width: none; padding: 5px 2px 9px; }
 .deck .rail::-webkit-scrollbar { display: none; }
+/* Fill, border, radius and shadow all come from the housing tokens now. If a
+   value is needed here, the token is missing — it goes in housing.css. */
 .deck .mod { container-type: inline-size; flex: 1 1 0; min-width: 180px; scroll-snap-align: start;
-  text-align: left; color: inherit; cursor: pointer; background: var(--panel);
-  border: 1px solid var(--line); border-top-color: var(--edge-hi); border-bottom-color: var(--edge-lo);
-  border-radius: 12px; padding: 0; overflow: hidden; opacity: .84;
-  transition: transform .22s cubic-bezier(.2,.8,.3,1), border-color .22s, background .22s, box-shadow .22s, opacity .22s; }
+  text-align: left; color: inherit; cursor: pointer; padding: 0; overflow: hidden; opacity: .84;
+  transition: border-color .22s, background .22s, opacity .22s; }
 .deck .modin { padding: 14px; display: flex; flex-direction: column; height: 100%; }
 .deck .mcodeline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 15px; }
 .deck .mcode { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .11em; color: var(--t3); }
@@ -229,7 +231,9 @@ const DECK_CSS = `
   .deck .mname { font-size: 18.5px; -webkit-line-clamp: 2; min-height: calc(1.28em * 2); }
   .deck .prof { height: 76px; } .deck .mcode { font-size: 11.5px; } .deck .mmeta { font-size: 10.5px; }
 }
-.deck .mod:hover, .deck .mod:focus-visible { opacity: 1; transform: translateY(-3px); border-color: var(--t3);
+/* No lift. A card that rises on hover is a card that floats, which is the
+   thing this build is trying not to do twice. */
+.deck .mod:hover, .deck .mod:focus-visible { opacity: 1; border-color: var(--t3);
   background: var(--raised); box-shadow: 0 12px 26px var(--shadow-c); }
 .deck .mod:hover .mname, .deck .mod:focus-visible .mname { color: var(--t1); }
 .deck .mod:hover .mmeta, .deck .mod:focus-visible .mmeta { opacity: 1; }
@@ -728,7 +732,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
           <div className={`railwrap ${railOverflows ? "more" : ""}`} ref={wrapRef}>
             <div className="rail" ref={railRef}>
               {moduleRows.map((m) => (
-                <Cell className="mod" key={m.code} open={flags["module.interior"]} onOpen={() => onEnterModule(m)}>
+                <Cell className="mod house" data-press="" key={m.code} open={flags["module.interior"]} onOpen={() => onEnterModule(m)}>
                   <div className="modin">
                     <div className="mcodeline">
                       <span className="mcode">{m.code}</span>

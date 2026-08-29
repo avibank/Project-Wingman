@@ -1,0 +1,164 @@
+/* ============================================================================
+   Wingman — housing
+   Cards on modules and their sub-aspects.
+
+   READ THIS FIRST. This file reverses a house rule.
+
+   "Nothing floats. Full-bleed surfaces; no cards, no shadows, no radius" was
+   arrived at over many rounds, and an earlier round of the module screen was
+   rejected for the opposite reason — everything read as *windows*. The
+   complaint now is the other one: without housing, the parts read as loose on
+   the page.
+
+   Both complaints are true, which is why this is built as ONE TOKEN BLOCK and
+   one class rather than as card styling sprinkled through the components.
+   Switching between cards and full-bleed surfaces is redefining five tokens,
+   not rewriting screens. If cards turn out to be wrong, §3 is the switch.
+
+   Everything that carries housing gets `.house`. Nothing sets its own fill,
+   radius, border or shadow. If you find yourself writing `border-radius` in a
+   component, the token is missing — add it here instead.
+   ========================================================================= */
+
+
+/* ============================================================================
+   1 · THE TOKENS — the only place any of these five values exist
+   ========================================================================= */
+
+:root{
+  --house-fill   : var(--panel);
+  --house-line   : 1px solid var(--hair);
+  --house-radius : 14px;
+  --house-pad    : 20px;
+  --house-gap    : 14px;
+  --house-shadow : 0 1px 2px oklch(0 0 0 / .05),
+                   0 10px 28px oklch(0 0 0 / .06);
+}
+
+@media (min-width: 768px){
+  :root{ --house-pad: 24px; --house-gap: 16px; }
+}
+
+/* -- the matrix, which is where cards get expensive ------------------------ */
+
+/* WINGMAN NOTE — selectors, not values.
+   The source keys the matrix off :root[data-mode] and prefers-color-scheme.
+   This app does not work that way: light and dark are a user setting rather
+   than an OS one, and the app stamps data-variant / data-aur / data-paper on
+   .app rather than on the root. The token names and every value below are the
+   source's, unchanged; only what they hang off has moved, or none of it would
+   have applied at all. */
+
+/* Dark grounds: a drop shadow on a near-black ground is invisible, and turning
+   it up to compensate produces a grey halo. The edge does the work instead. */
+.app[data-variant="night"]{
+  --house-shadow: 0 1px 0 var(--edge-hi, transparent),
+                  0 12px 30px oklch(0 0 0 / .28);
+}
+
+/* AURORA: the display is the only real light in the room, and a shadow under a
+   card competes with it. Cards keep their fill — they have to, or the text
+   sits on the sky and washes out, which is the problem that started all of
+   this — but the shadow goes and the edge carries it. */
+.app[data-aur="1"]{
+  --house-shadow: 0 1px 0 var(--edge-hi, transparent);
+  --house-fill  : var(--panel);
+}
+
+/* MANUAL: a printed page has no atmosphere. This is an existing rule and it
+   applies here without exception — no shadow at all, the rule alone. */
+.app[data-paper="1"]{
+  --house-shadow: none;
+  --house-radius: 0px;
+}
+
+
+/* ============================================================================
+   2 · THE CLASS
+   ========================================================================= */
+
+.house{
+  background: var(--house-fill);
+  border: var(--house-line);
+  border-radius: var(--house-radius);
+  box-shadow: var(--house-shadow);
+  padding: var(--house-pad);
+}
+
+/* Sub-aspects — a chapter inside a module, a paper row inside the Library.
+   One step quieter, so a card inside a card does not read as two frames
+   fighting. No shadow at all on the inner one: nested shadows are the single
+   fastest way to make a calm screen look cheap. */
+.house-in{
+  background: var(--raised);
+  border: var(--house-line);
+  border-radius: calc(var(--house-radius) - 4px);
+  box-shadow: none;
+  padding: calc(var(--house-pad) - 6px);
+}
+.app[data-paper="1"] .house-in{ border-radius: 0; }
+
+/* Stacks of housing. Space between, never a shared border — two cards sharing
+   an edge reads as one card with a line through it. */
+.house-stack{ display: grid; gap: var(--house-gap); }
+
+/* Interactive housing: a module card you can press. The hover is the border
+   and the fill, never a lift — a card that rises on hover is a card that
+   floats, and that is the thing we are trying not to do twice. */
+.house[data-press]{
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease);
+}
+.house[data-press]:hover{ background: var(--raised); border-color: var(--line); }
+.house[data-press]:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
+
+/* The gutter still holds. Housing sits inside --pad like everything else; it
+   does not bleed and it does not invent its own margin. */
+.house-wrap{ padding-inline: var(--pad); }
+
+
+/* ============================================================================
+   3 · THE SWITCH — if cards turn out to be wrong
+   ----------------------------------------------------------------------------
+   Uncommenting this block turns every piece of housing in the app into a
+   full-bleed surface: a band with a fill and a hairline top and bottom, no
+   radius, no shadow, no floating edge. It gives the same "this section is a
+   thing" reading without anything looking like a window on a background.
+
+   That is the middle option between the two complaints, and it is one edit.
+
+     :root{
+       --house-radius: 0px;
+       --house-shadow: none;
+     }
+     .house{
+       border-inline: 0;
+       margin-inline: calc(var(--pad) * -1);
+       padding-inline: var(--pad);
+     }
+     .house-in{ border-radius: 0; border-inline: 0; }
+
+   Do not implement both and add a setting. One of them is right; a toggle just
+   means nobody ever decided.
+   ========================================================================= */
+
+
+/* ============================================================================
+   4 · WHERE HOUSING GOES — and where it does not
+   ----------------------------------------------------------------------------
+   YES   module cards on the Flight Deck
+         a chapter block on the module screen
+         each of Lessons / Library / People as a section
+         a paper row group, a quiz record block
+
+   NO    the video player. It has its own 14px radius and it is media, not
+         housing. Wrapping the player in a card gives it two edges 20px apart.
+   NO    the note bar, the banner, the mini player. All three sit over video
+         and carry their own treatment.
+   NO    the lesson page's Notes and Comments lists. They are running text
+         under a video, and boxing a comment thread is what made the earlier
+         version feel like windows.
+   NO    individual list rows. Hairlines separate rows; housing separates
+         sections. If every row is a card, nothing is.
+   ========================================================================= */

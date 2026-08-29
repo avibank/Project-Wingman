@@ -1,36 +1,85 @@
 /* ============================================================================
    Wingman — the lesson surface
-   Notes · Comments · the lesson appearance · the mini player
+   Notes · Comments · the player · the mini player · going back
 
    Copy verbatim. Depends on wingman-foundations.css for --pad, --tap, --hair,
-   --fs-*, --t-* and the breakpoints, and on the livery tokens for colour.
+   --fs-*, --t-* and the breakpoints, on the livery tokens for colour, and on
+   wingman-housing-source.css for the module housing.
 
    Nothing here sets a font size, a breakpoint, a touch target or a motion
    duration of its own. If you need a new one it goes in foundations.
-
-   House rules this file obeys:
-     · nothing floats, except media — the player and the mini player
-     · separation is space and hairlines, never a card edge
-     · one gutter down the whole page, --pad, everywhere
-     · words, not badges
-     · 13px floor, 44px targets, 4.5:1 body
    ========================================================================= */
 
 
 /* ============================================================================
-   1 · THE LESSON PAGE
-   Order down the page, and it is not negotiable:
-     lesson name  →  player  →  what comes next  →  Notes | Comments
-
-   Four things. A first year opens this and sees a video and a next button;
-   everything else lives inside the player or under one familiar tab strip.
-   There is no sidebar, no margin column, no edge rail and no transcript.
+   1 · THE PLAYER SIZE
+   Fullscreen fills. Windowed is big enough to watch and control, small enough
+   not to crowd — and that is a different number on a phone and on a monitor.
    ========================================================================= */
 
-.lesson{ padding-block: 26px 64px; }
+/* HEIGHT-DRIVEN, NOT WIDTH-DRIVEN. That is the whole trick.
 
-.lesson-head{ padding-inline: var(--pad); margin-bottom: 22px; }
-.lesson-code{                        /* M1.02.1 — the only place a code shows */
+   "Not crowding you" really means "I can see the video and the row under it
+   without scrolling", which is a statement about viewport HEIGHT. Size by
+   width alone and you get a letterbox on a laptop and a wall on a monitor. */
+:root{
+  --player-max-h: 100vh;     /* phone: no cap, portrait is width-limited anyway */
+  --player-max-w: 100%;
+}
+@media (min-width: 768px){
+  :root{ --player-max-h: 52vh; --player-max-w: 100%; }
+}
+@media (min-width: 1120px){
+  :root{ --player-max-h: 64vh; --player-max-w: 1180px; }
+}
+
+.player-slot{
+  position: relative;
+  width: min(100%, var(--player-max-w), calc(var(--player-max-h) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background: var(--raised);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* The page measure follows the player rather than a fixed number, so the video
+   and its words always share a left and right edge. */
+.lesson-body{
+  padding-inline: var(--pad);
+  width: min(100%, var(--player-max-w), calc(var(--player-max-h) * 16 / 9 + var(--pad) * 2));
+}
+
+
+/* ============================================================================
+   2 · THE LESSON PAGE
+     back arrow  →  lesson name  →  player  →  what comes next  →  Notes | Comments
+   ========================================================================= */
+
+.lesson{ padding-block: 18px calc(64px + var(--mini-h, 0px)); }
+
+/* -- going back ----------------------------------------------------------- */
+/* The label is the destination, never the word "Back". A bare arrow makes you
+   find out where it goes by pressing it. */
+.up{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding-inline: var(--pad);
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+  text-decoration: none;
+  cursor: pointer;
+}
+.up:hover{ color: var(--t1); }
+.up svg{ width: 16px; height: 16px; flex: none; }
+[dir="rtl"] .up svg{ transform: scaleX(-1); }
+
+.lesson-head{ padding-inline: var(--pad); margin: 10px 0 22px; }
+.lesson-code{
   display: block;
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
   font-size: var(--fs-xs);
@@ -46,79 +95,37 @@
   color: var(--t1);
   margin: 0;
 }
-.lesson-where{
-  display: block;
-  font-size: var(--fs-sm);
-  color: var(--t3);
-  margin-top: 10px;
-}
+.lesson-where{ display: block; font-size: var(--fs-sm); color: var(--t3); margin-top: 10px; }
 
-/* One column at every width. The two-column version was cancelled — it was the
-   thing that made the page read as complex, and it never worked on a phone. */
-.lesson-body{
-  padding-inline: var(--pad);
-  max-width: 860px;                  /* the video and its words share a measure */
-}
-
-/* -- what comes next, directly under the player --------------------------- */
-/* Not optional. It is what makes a module a course rather than a list of
-   pages. Above the tabs on purpose: under a comment list it is a footer
-   nobody reaches. */
+/* -- what comes next ------------------------------------------------------ */
 .next-up{
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  display: flex; align-items: center; gap: 14px;
   min-height: var(--tap);
-  margin-top: 18px;
-  padding-block: 12px;
+  margin-top: 18px; padding-block: 12px;
   border-top: 1px solid var(--hair);
 }
 .next-label{
-  font-size: var(--fs-xs);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--t3);
-  flex: none;
+  font-size: var(--fs-xs); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--t3); flex: none;
 }
 .next-title{
-  font-size: var(--fs-md);
-  color: var(--t1);
-  text-decoration: none;
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--fs-md); color: var(--t1); text-decoration: none;
+  flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .next-title:hover{ color: var(--active); }
 .next-meta{ font-size: var(--fs-sm); color: var(--t3); flex: none; }
 
 
 /* ============================================================================
-   2 · THE PLAYER
+   3 · THE PLAYER LAYER
    ========================================================================= */
 
-/* The slot is an empty sized box. The <video> lives above the router and is
-   positioned over it by transform. Never move the node into it. */
-.player-slot{
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: var(--raised);
-  border-radius: 14px;               /* the ONE rounded object on the screen */
-  overflow: hidden;
-}
-
 .player-layer{
-  position: fixed;
-  z-index: 40;
-  overflow: hidden;
-  background: #000;
+  position: fixed; z-index: 40; overflow: hidden; background: #000;
   transition: transform var(--t-base) var(--ease),
               width var(--t-base) var(--ease),
               border-radius var(--t-base) var(--ease);
   will-change: transform;
-  touch-action: none;
   user-select: none;
 }
 /* Transform and width only. NEVER animate filter, opacity, backdrop-filter or
@@ -126,29 +133,28 @@
    composite alone re-rasterises every frame. Measured, on the aurora. */
 
 /* aspect-ratio, never height:auto. A <video> whose metadata has not arrived
-   collapses to zero height, and every position measured against it — the
-   corner, the slot rect, the scrub — lands wrong for the first second. */
+   collapses to zero height and every position measured against it lands wrong
+   for the first second of the page. */
 .player-layer video{
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
-  object-fit: cover;
-  background: #000;
+  display: block; width: 100%; aspect-ratio: 16 / 9; height: auto;
+  object-fit: cover; background: #000;
 }
-
 .player-layer[data-dock="none"]{ display: none; }
 .player-layer[data-dock="inline"]{ border-radius: 14px; }
+.player-layer[data-fs="1"]{
+  inset: 0 !important; width: 100% !important; height: 100% !important;
+  transform: none !important; border-radius: 0;
+}
+.player-layer[data-fs="1"] video{ aspect-ratio: auto; height: 100%; object-fit: contain; }
 
 /* -- the control bar ------------------------------------------------------ */
+/* No captions control. Subtitles are deferred, not decided against — leave
+   <track> support on the element and render no button while there are no
+   tracks, so re-adding it later is a button rather than a rebuild. */
 .pctl{
-  position: absolute;
-  inset: auto 0 0 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 10px 10px;
-  background: linear-gradient(180deg, transparent, oklch(0 0 0 / .58));
+  position: absolute; inset: auto 0 0 0;
+  padding: 0 10px 8px;
+  background: linear-gradient(180deg, transparent, oklch(0 0 0 / .62));
   opacity: 0;
   transition: opacity var(--t-fast) var(--ease);
 }
@@ -157,54 +163,63 @@
 .player-layer[data-idle="0"] .pctl{ opacity: 1; }
 .player-layer[data-dock="mini"] .pctl{ display: none; }
 
+.pctl-row{ display: flex; align-items: center; gap: 2px; }
 .pbtn{
-  width: var(--tap);
-  height: var(--tap);
-  display: grid;
-  place-items: center;
-  background: none;
-  border: 0;
-  padding: 0;
-  color: oklch(.98 0 0);
-  cursor: pointer;
-  flex: none;
+  width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 0; padding: 0;
+  color: oklch(.98 0 0); cursor: pointer; flex: none;
 }
 .pbtn:hover{ color: #fff; }
+.pbtn svg{ width: 20px; height: 20px; }
+
+/* THE NOTE BUTTON — a pen over a page. One metaphor, not two objects: at 20px
+   a pen AND a notebook turn to mush. It must also not be the same glyph as the
+   edit pencil used elsewhere in the app, or people will expect it to rename
+   something. */
+.pbtn[data-note]:hover{ color: var(--active); }
+.pbtn[data-note][aria-pressed="true"]{ color: var(--active); }
+
 .ptime{
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: oklch(.92 0 0);
-  padding-inline: 6px;
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
+  color: oklch(.92 0 0); padding-inline: 8px; flex: none;
 }
 .pspacer{ flex: 1 1 auto; }
 
-/* THE NOTE BUTTON. It lives in the player's own control bar, so taking a note
-   never costs you your place and works identically in the page and in
-   fullscreen. Two taps — open, close — leaves a pin with no text. */
-.pbtn[data-note]{ color: oklch(.98 0 0); }
-.pbtn[data-note]:hover{ color: var(--active); }
+/* speed: 0.75 · 1 · 1.25 · 1.5 · 1.75 · 2 — a word, not an icon */
+.prate{
+  min-width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 0; padding: 0 8px;
+  font: inherit; font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: oklch(.98 0 0); cursor: pointer; flex: none;
+}
+.prate:hover{ color: var(--active); }
+
+/* volume: the slider only appears on hover or focus, so the bar stays quiet */
+.pvol{ display: flex; align-items: center; flex: none; }
+.pvol-track{
+  width: 0; overflow: hidden;
+  transition: width var(--t-fast) var(--ease);
+}
+.pvol:hover .pvol-track, .pvol:focus-within .pvol-track{ width: 76px; }
+.pvol-range{ width: 76px; accent-color: var(--active); }
+@media (max-width: 767px){ .pvol{ display: none; } }   /* phones use their own keys */
 
 /* -- the scrub ------------------------------------------------------------ */
 .scrub{
-  position: relative;
-  height: 4px;
+  position: relative; height: 4px;
   background: oklch(1 0 0 / .26);
-  cursor: pointer;
-  margin-inline: 10px;
+  cursor: pointer; margin: 0 10px 2px;
 }
 .scrub-fill{ position: absolute; inset: 0 auto 0 0; background: var(--active); }
 
-/* One mark per note and per thread. Never per reply — a good discussion would
-   otherwise put twelve marks on one spot and the bar would stop meaning
-   anything. */
+/* One mark per note and per thread. Never per reply. */
 .scrub-mark{
-  position: absolute;
-  top: -3px;
-  width: 2px;
-  height: 10px;
-  transform: translateX(-1px);
-  pointer-events: none;
+  position: absolute; top: -3px; width: 2px; height: 10px;
+  transform: translateX(-1px); pointer-events: none;
 }
 .scrub-mark[data-kind="thread"]{ background: var(--active); }
 .scrub-mark[data-kind="note"]  { background: oklch(1 0 0 / .82); }
@@ -212,400 +227,348 @@
 
 /* Clustering IS the hit-target fix: two marks 3px apart cannot both carry a
    44px target without overlapping, so they merge first and the cluster gets
-   one target. Solve it once. */
+   one target. */
 .scrub-hit{
-  position: absolute;
-  top: 50%;
-  width: var(--tap);
-  height: var(--tap);
+  position: absolute; top: 50%;
+  width: var(--tap); height: var(--tap);
   transform: translate(-50%, -50%);
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
+  background: none; border: 0; padding: 0; cursor: pointer;
 }
 
-/* -- the banner ----------------------------------------------------------- */
-/* Like the card a video maker uses to mention another video. It arrives, it
-   says there is a note here, it goes. IT DOES NOT PAUSE — you wrote the
-   sentence, and a lesson with eight notes must not become eight interruptions
-   on every rewatch. Tapping is what pauses. */
-.pbanner{
-  position: absolute;
-  top: 12px;
-  inset-inline-end: 12px;
-  max-width: min(340px, calc(100% - 24px));
-  display: flex;
-  align-items: center;
+/* -- the HUD -------------------------------------------------------------- */
+/* Volume and speed share one slab in the middle of the frame for about a
+   second, the way a video site does it. Two different-looking HUDs for the
+   same class of feedback is noise. */
+.phud{
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  pointer-events: none;
+}
+.phud-slab{
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 22px;
+  background: oklch(0 0 0 / .62);
+  border-radius: 12px;
+  color: oklch(.99 0 0);
+  font-size: var(--fs-lg);
+  font-variant-numeric: tabular-nums;
+  animation: hudout var(--t-slow) var(--ease) forwards;
+  animation-delay: 700ms;
+}
+@keyframes hudout{ to{ opacity: 0 } }
+@media (prefers-reduced-motion: reduce){ .phud-slab{ animation: none } }
+
+
+/* ============================================================================
+   4 · THE NOTE BAR
+   One line that grows. Draggable anywhere inside the player, so it never
+   covers the thing you are writing about.
+   ========================================================================= */
+
+.nbar{
+  position: absolute; top: 0; left: 0;      /* moved by transform, see below */
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
   gap: 10px;
+  width: min(calc(100% - 24px), 520px);
+  min-width: 260px;
+  padding: 8px 10px;
+  background: oklch(.14 0 0 / .90);
+  backdrop-filter: blur(14px);
+  border-radius: 12px;
+  color: oklch(.98 0 0);
+  box-shadow: 0 6px 24px oklch(0 0 0 / .34);
+}
+/* Position comes from JS as a transform, computed from a FRACTION of the free
+   space — never from stored pixels. That is what makes it survive resize,
+   rotation and the trip in and out of fullscreen. */
+
+/* THE HANDLE IS THE TIMESTAMP, NOT THE WHOLE BAR. Dragging from the text field
+   would select text instead of moving it, on every platform. */
+.nbar-handle{
+  display: flex; align-items: center; justify-content: center;
+  min-width: 5ch; min-height: 32px;
+  padding: 0 6px;
+  background: oklch(1 0 0 / .10);
+  border: 0; border-radius: 7px;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--active);
+  cursor: grab;
+  touch-action: none;            /* required, or the browser scrolls instead */
+}
+.nbar-handle:active{ cursor: grabbing; }
+.nbar-handle:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
+/* Arrow keys move it while the handle has focus. A control that can only be
+   dragged cannot be used without a pointer — and this one holds the student's
+   own writing. */
+
+/* one line, grows to five, then scrolls inside itself so it never eats the
+   video it is sitting on */
+.nbar-field{
+  width: 100%;
+  min-height: 32px;
+  max-height: calc(1.62em * 5);
+  padding: 5px 0;
+  overflow-y: auto;
+  background: none; border: 0; resize: none;
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: oklch(.99 0 0);
+}
+.nbar-field:focus{ outline: none; }
+.nbar-field::placeholder{ color: oklch(1 0 0 / .48); }
+
+.nbar-acts{ display: flex; align-items: center; gap: 2px; }
+.nbar-act{
+  min-width: 32px; height: 32px;
+  display: grid; place-items: center;
+  background: none; border: 0; padding: 0 6px;
+  font: inherit; font-size: var(--fs-xs);
+  color: oklch(1 0 0 / .70); cursor: pointer;
+}
+.nbar-act[data-primary]{ color: var(--active); }
+.nbar-act:hover{ color: #fff; }
+
+/* No animation on the drag itself. A dragged thing that keeps moving after you
+   let go feels broken. */
+.nbar{ transition: none; }
+
+
+/* ============================================================================
+   5 · THE BANNER
+   Brief, non-blocking, and it does not pause. Tapping expands it, and
+   expanding is what pauses.
+   ========================================================================= */
+
+.pbanner{
+  position: absolute; top: 12px; inset-inline-end: 12px; z-index: 2;
+  max-width: min(340px, calc(100% - 24px));
+  display: flex; align-items: center; gap: 10px;
   min-height: var(--tap);
   padding: 8px 12px;
   background: oklch(.16 0 0 / .86);
   backdrop-filter: blur(10px);
-  border-radius: 10px;
+  border: 0; border-radius: 10px;
   color: oklch(.97 0 0);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-tight);
-  text-align: start;
-  border: 0;
-  cursor: pointer;
+  font-size: var(--fs-sm); line-height: var(--lh-tight);
+  text-align: start; cursor: pointer;
   animation: bin var(--t-base) var(--ease);
 }
 @keyframes bin{ from{ opacity: 0; transform: translateX(10px) } }
+@media (prefers-reduced-motion: reduce){ .pbanner{ animation: none } }
 .pbanner-t{
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: oklch(1 0 0 / .66);
-  flex: none;
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
+  color: oklch(1 0 0 / .66); flex: none;
 }
-.pbanner-body{
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (prefers-reduced-motion: reduce){ .pbanner{ animation: none } }
+.pbanner-body{ flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* -- the note panel: composer, and the expanded banner --------------------- */
-/* One surface, two uses. It covers the player, which is fine because the
-   video is stopped in both cases — you cannot watch and read at once anyway. */
-.npanel{
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
+/* expanded: the note, readable, with the way to fill in a pin */
+.pnote{
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column;
+  padding: 18px;
   background: oklch(.14 0 0 / .94);
   backdrop-filter: blur(14px);
   color: oklch(.97 0 0);
-  padding: 16px;
 }
-.npanel-head{
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid oklch(1 0 0 / .16);
+.pnote-head{
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid oklch(1 0 0 / .16);
 }
-.npanel-t{
+.pnote-t{
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  color: var(--active);
+  font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--active);
 }
-.npanel-where{ font-size: var(--fs-xs); color: oklch(1 0 0 / .62); flex: 1 1 auto; }
-.npanel-field{
-  flex: 1 1 auto;
-  width: 100%;
-  margin-top: 12px;
-  background: none;
-  border: 0;
-  resize: none;
-  font: inherit;
-  font-size: var(--fs-md);
-  line-height: var(--lh-body);
-  color: oklch(.98 0 0);
-}
-.npanel-field:focus{ outline: none; }
-.npanel-field::placeholder{ color: oklch(1 0 0 / .46); }
-.npanel-read{
-  flex: 1 1 auto;
-  margin-top: 12px;
-  overflow-y: auto;
-  font-size: var(--fs-md);
-  line-height: var(--lh-body);
+.pnote-body{
+  flex: 1 1 auto; margin-top: 14px; overflow-y: auto;
+  font-size: var(--fs-md); line-height: var(--lh-body);
   max-width: var(--measure);
 }
-.npanel-acts{
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding-top: 12px;
-}
-.npanel-act{
-  min-height: var(--tap);
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  font-size: var(--fs-sm);
-  color: oklch(1 0 0 / .70);
-  cursor: pointer;
-}
-.npanel-act[data-primary]{ color: var(--active); }
-.npanel-hint{                      /* "Close to save. Empty is fine." */
-  margin-inline-start: auto;
-  font-size: var(--fs-xs);
-  color: oklch(1 0 0 / .52);
-}
+.pnote-body[data-pin="1"]{ color: oklch(1 0 0 / .58); font-style: italic; }
+.pnote-acts{ display: flex; align-items: center; gap: 20px; padding-top: 12px; }
 
 
 /* ============================================================================
-   3 · THE TAB STRIP — Notes · Comments
-   Two words, one hairline. This is the only navigation on the page.
+   6 · THE TAB STRIP — Notes · Comments
    ========================================================================= */
 
-.ltabs{
-  display: flex;
-  gap: 26px;
-  margin-top: 26px;
-  border-bottom: 1px solid var(--hair);
-}
+.ltabs{ display: flex; gap: 26px; margin-top: 26px; border-bottom: 1px solid var(--hair); }
 .ltab{
-  min-height: var(--tap);
-  padding: 0 0 10px;
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
+  min-height: var(--tap); padding: 0 0 10px;
+  background: none; border: 0; border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  font: inherit;
-  font-size: var(--fs-md);
-  color: var(--t3);
-  cursor: pointer;
+  font: inherit; font-size: var(--fs-md); color: var(--t3); cursor: pointer;
 }
 .ltab:hover{ color: var(--t2); }
 .ltab[aria-selected="true"]{ color: var(--t1); border-bottom-color: var(--active); }
-.ltab-n{                            /* "4" — a figure, not a badge */
-  font-size: var(--fs-sm);
-  color: var(--t3);
-  margin-inline-start: 6px;
-}
+.ltab-n{ font-size: var(--fs-sm); color: var(--t3); margin-inline-start: 6px; }
 
 
 /* ============================================================================
-   4 · COMPOSING — and the one place a mistake is embarrassing
-   ----------------------------------------------------------------------------
-   A note is private. A comment is public and lands in People where the whole
-   module sees it. The gap in consequence is much bigger than the gap in the
-   interface, so the two compose fields must not look alike.
+   7 · COMPOSING — the one place a mistake is embarrassing
+   A note is private. A comment lands in front of the whole module. The gap in
+   consequence is far bigger than the gap in the interface.
    ========================================================================= */
 
 .compose{
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  padding: 16px 0;
+  display: grid; grid-template-columns: auto 1fr; gap: 12px;
+  padding: 16px 0 16px 12px;
+  margin-inline-start: -14px;
   border-bottom: 1px solid var(--hair);
   border-inline-start: 2px solid transparent;
-  padding-inline-start: 12px;
-  margin-inline-start: -14px;
 }
 .compose[data-vis="private"]{ border-inline-start-color: var(--line); }
 .compose[data-vis="public"] { border-inline-start-color: var(--active); }
-
 .compose-t{
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--t3);
-  padding-top: 9px;
-  min-width: 4ch;
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
+  color: var(--t3); padding-top: 9px; min-width: 4ch;
 }
 .compose-field{
-  width: 100%;
-  min-height: var(--tap);
-  padding: 8px 0;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  resize: none;
-  font: inherit;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-body);
-  color: var(--t1);
+  width: 100%; min-height: var(--tap); padding: 8px 0;
+  background: none; border: 0; border-bottom: 1px solid transparent;
+  resize: none; font: inherit; font-size: var(--fs-sm);
+  line-height: var(--lh-body); color: var(--t1);
 }
 .compose-field::placeholder{ color: var(--t3); }
 .compose-field:focus{ outline: none; border-bottom-color: var(--active); }
-
-/* The line that says who sees this. Always present on the public one, never
-   on the private one. */
-.compose-who{
-  grid-column: 2;
-  font-size: var(--fs-xs);
-  color: var(--t3);
-  margin-top: 6px;
-}
+/* always present on the public one, never on the private one */
+.compose-who{ grid-column: 2; font-size: var(--fs-xs); color: var(--t3); margin-top: 6px; }
+/* --active-text, not --active: measured 3.55:1 as 13px words in Day. */
 .compose[data-vis="public"] .compose-who{ color: var(--active-text, var(--active)); }
-
 .compose-acts{ grid-column: 2; display: flex; gap: 18px; margin-top: 6px; }
-/* min-width as well as min-height: "Post" is four characters and measured
-   29px across, which is a 29x44 target. The height alone was never the whole
-   of the 44px rule. */
 .compose-act{
-  min-height: var(--tap);
-  min-width: var(--tap);
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  font-size: var(--fs-sm);
-  color: var(--t3);
-  cursor: pointer;
+  min-height: var(--tap); background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-sm); color: var(--t3); cursor: pointer;
 }
 .compose-act[data-primary]{ color: var(--active); }
 
 
 /* ============================================================================
-   5 · THE LISTS
+   8 · THE LISTS
    Both in moment order. Scrolling either one is scrubbing the video.
    ========================================================================= */
 
 .llist{ list-style: none; margin: 0; padding: 0; }
 .litem{ border-bottom: 1px solid var(--hair); }
-
-/* the whole row seeks — the timestamp is not decoration */
 .lseek{
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  width: 100%;
-  min-height: var(--tap);
-  padding: 14px 0;
-  background: none;
-  border: 0;
-  text-align: start;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px;
+  width: 100%; min-height: var(--tap); padding: 14px 0;
+  background: none; border: 0; text-align: start; cursor: pointer;
+  color: inherit; font: inherit;
 }
 .lt{
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
-  font-size: var(--fs-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--t3);
-  padding-top: 3px;
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
+  color: var(--t3); padding-top: 3px;
 }
 .lseek:hover .lt, .lseek:focus-visible .lt{ color: var(--active); }
-.lbody{
-  font-size: var(--fs-sm);
-  line-height: var(--lh-body);
-  color: var(--t2);
-  min-width: 0;
-}
+.lbody{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); min-width: 0; }
 .litem[data-kind="thread"] .lbody{ color: var(--t1); }
 
-/* A pin with no words. It still says something useful — that is the point of
-   pins — so it reads as a phrase in --t3, not as an empty row. */
+/* A pin with no words. It still says something useful, so it reads as a phrase
+   rather than an empty row — and the row is where you fill it in. */
 .lbody[data-pin="1"]{ color: var(--t3); font-style: italic; }
 
 .lwho{ display: block; font-size: var(--fs-xs); color: var(--t3); margin-top: 6px; }
-/* Measured, not chosen: --active is tuned to sit under --ground on a filled
-   control and came in at 3.55:1 read as 13px words in Day. --active-text is
-   the same accent stepped down until it clears 4.5 across the whole matrix. */
 .lwho[data-state="answered"]{ color: var(--active-text, var(--active)); }
 
-/* your own note gets a delete; a comment does not — it exists in People and
-   someone may have answered it */
-.ldel{
-  min-height: var(--tap);
-  background: none;
-  border: 0;
-  font: inherit;
-  font-size: var(--fs-xs);
-  color: var(--t3);
-  cursor: pointer;
-  opacity: 0;
+/* Your own note gets edit and delete; a comment gets neither here — it exists
+   in People and someone may have answered it. */
+.lrow-acts{ display: flex; gap: 2px; opacity: 0; }
+.litem:hover .lrow-acts, .litem:focus-within .lrow-acts{ opacity: 1; }
+.lrow-act{
+  min-width: var(--tap); min-height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-xs); color: var(--t3); cursor: pointer;
 }
-.litem:hover .ldel, .ldel:focus-visible{ opacity: 1; }
+.lrow-act:hover{ color: var(--t1); }
+@media (hover: none){ .lrow-acts{ opacity: 1; } }   /* touch has no hover */
 
-/* -- replies -------------------------------------------------------------- */
-/* Flat. Not nested. Reddit's tree earns its keep at ten thousand comments,
-   not at forty — and the data shape allows nesting whenever it is actually
-   needed. */
+/* -- replies: flat, never nested ------------------------------------------ */
 .lreplies{ list-style: none; margin: 0 0 14px; padding: 0 0 0 calc(4ch + 12px); }
 .lreply{ padding: 10px 0; border-top: 1px solid var(--hair); }
 .lreply-who{ font-size: var(--fs-xs); color: var(--t3); }
 .lreply-body{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); }
+.lreply-open{
+  min-height: var(--tap); background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-sm); color: var(--t3); cursor: pointer;
+}
+.lreply-open:hover{ color: var(--active); }
 
 /* -- empty is the shipping state ------------------------------------------ */
-/* There is no content and no cohort yet, so these are what launches. They must
-   read NOT YET, never NOTHING. One line, --t3, no illustration, no button. */
 .lempty{
-  padding: 20px 0;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-body);
-  color: var(--t3);
-  max-width: var(--measure);
+  padding: 20px 0; font-size: var(--fs-sm); line-height: var(--lh-body);
+  color: var(--t3); max-width: var(--measure);
 }
 
 
 /* ============================================================================
-   6 · THE MINI PLAYER
-   The second and last exception to "nothing floats" — and it is the same
-   exception as the first. It is media. On phone it is a docked bar, which is
-   not floating at all.
+   9 · THE MINI PLAYER — site-wide
+   Two controls. Tap the body to go back to the lesson. Tap the X to stop.
    ========================================================================= */
 
 .player-layer[data-dock="mini"]{
   border-radius: 12px;
-  box-shadow: 0 8px 30px oklch(0 0 0 / .28);   /* mini only, never inline */
+  box-shadow: 0 8px 30px oklch(0 0 0 / .28);
+  cursor: pointer;                    /* the body is the way back */
 }
 .mini-wrap{ display: block; }
 .mini-bar{
-  display: none;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  background: var(--raised);
+  display: none; align-items: center; gap: 12px;
+  padding: 8px 10px; background: var(--raised);
 }
 .player-layer[data-dock="mini"] .mini-bar{ display: flex; }
 .mini-title{
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--fs-xs);
-  color: var(--t2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 1 1 auto; min-width: 0; font-size: var(--fs-xs); color: var(--t2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .mini-btn{
-  flex: none;
-  width: var(--tap);
-  height: var(--tap);
-  display: grid;
-  place-items: center;
-  background: none;
-  border: 0;
-  color: var(--t2);
-  cursor: pointer;
+  flex: none; width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 0; color: var(--t2); cursor: pointer;
 }
 .mini-btn:hover{ color: var(--t1); }
 
-/* Phone: a full-width bar above the tab bar. Docked to an edge, no corner, no
-   shadow, nothing to drag. Like every music app anyone has used. */
+/* Phone: a full-width bar above the tab bar, on every page. */
 @media (max-width: 767px){
   .player-layer[data-dock="mini"]{
-    inset-inline: 0;
-    bottom: var(--tabbar-h, 56px);
-    top: auto !important;
-    width: auto !important;
-    transform: none !important;
-    border-radius: 0;
-    box-shadow: none;
-    border-top: 1px solid var(--hair);
-    background: var(--panel);
+    inset-inline: 0; bottom: var(--tabbar-h, 56px); top: auto !important;
+    width: auto !important; transform: none !important;
+    border-radius: 0; box-shadow: none;
+    border-top: 1px solid var(--hair); background: var(--panel);
   }
   .player-layer[data-dock="mini"] .mini-wrap{ display: flex; align-items: center; gap: 10px; }
   .player-layer[data-dock="mini"] video{ width: 96px; height: 54px; aspect-ratio: auto; flex: none; }
   .player-layer[data-dock="mini"] .mini-bar{ flex: 1 1 auto; background: none; }
 }
 
+/* SITE-WIDE MEANS EVERY PAGE RESERVES THE SPACE.
+   Set --mini-h on the shell when the bar is up; every scrollable page adds it
+   to its bottom padding. Miss this and the last row of every list on the site
+   sits permanently behind the bar — invisible in a mockup, annoying on every
+   screen. */
+:root{ --mini-h: 0px; }
+
 @media (prefers-reduced-motion: reduce){ .player-layer{ transition: none; } }
 
 
 /* ============================================================================
-   7 · WHAT MUST NOT APPEAR
-   Kept as a comment so it does not get reinvented in six weeks.
-
-   · No windows. No draggable panels, resize handles, minimise or restore
-     chrome, no tab bar of open documents, no panel over a panel.
-   · No sidebar, no margin column, no right-edge document rail, no split pane.
-     Cancelled after a legibility review: five novel surfaces on one screen is
-     what intimidates a newcomer, not any single one of them.
+   10 · WHAT MUST NOT APPEAR
+   · No windows: no draggable PANELS, resize handles, minimise chrome, no tab
+     bar of open documents. (The note bar is draggable — it is one line of the
+     student's own writing over their own video, not a window over the app.)
+   · No sidebar, margin column, edge document rail or split pane.
    · No transcript.
-   · No banner for other people's comments — only for your own notes.
+   · No banner for other people's comments.
    · No nested reply trees.
-   · No percentage, no progress ring, no badge count on this screen.
+   · No captions button while there are no caption tracks.
+   · No percentage, progress ring or badge count on this screen.
    ========================================================================= */
