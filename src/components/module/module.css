@@ -409,3 +409,16 @@
   font-size: var(--fs-sm);
   color: var(--t3);
 }
+
+
+/* Smooth Air is the app's own name for reduced motion, and it is a preference
+   rather than an OS setting — the brief's CSS only answers the media query, so
+   a student who turned Smooth Air on still got the dock transition and the
+   banner sliding in. Every ambient motion respects both, or it respects
+   neither. */
+.app.reduce-motion .player-layer,
+.app.smooth-air .player-layer { transition: none; }
+.app.reduce-motion .pbanner,
+.app.smooth-air .pbanner { animation: none; }
+.app.reduce-motion .yttrack .ytdot,
+.app.smooth-air .yttrack .ytdot { transition: none; }

@@ -34,6 +34,7 @@ export default function PlayerLayer() {
   const prevT = useRef(0);
   const lastSaved = useRef(0);
   const completed = useRef(false);
+  const lastDispatched = useRef(-1);
 
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -165,7 +166,14 @@ export default function PlayerLayer() {
     const now = Date.now();
     if (now - lastSaved.current > 4000) { lastSaved.current = now; stage?.onProgress?.(p); }
     if (!completed.current && p >= 0.9) { completed.current = true; stage?.onComplete?.(); }
-    dispatchPlayer({ type: "time", seconds: t });
+    // Once a second, not four times. player.seconds lives in session, and
+    // every useSession consumer re-renders when it changes — so an unthrottled
+    // timeupdate re-rendered the whole lesson page, both lists included, four
+    // times a second for a number that is only ever displayed as m:ss.
+    if (Math.floor(t) !== Math.floor(lastDispatched.current)) {
+      lastDispatched.current = t;
+      dispatchPlayer({ type: "time", seconds: t });
+    }
   };
 
   // Leaving is the moment the throttle above would miss.
