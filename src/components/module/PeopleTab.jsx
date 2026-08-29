@@ -1,32 +1,25 @@
 import { useState } from "react";
 import { useSession } from "../../lib/session.jsx";
 import {
-  orderThreads, repliesFor, badges, isAnchored, isWaiting, watchAt,
-  postModulePost, postReply,
+  repliesFor, isAnchored, watchAt, postModulePost, postReply,
 } from "../../lib/lessonSurface.js";
+import {
+  peopleRows, groupRows, initials, hueFor, ago,
+} from "../../lib/familiar.js";
 import { mmss } from "./lessonState.js";
+import "./familiar.css";
 
-// Threads live here, and every comment written under a video is one of them —
-// the same row, not a copy. The lesson asks what is on this lesson; this asks
-// what is in this module. Nothing syncs, so nothing can drift.
+// WhatsApp's chat list, and the measured bug it fixes.
 //
-// Two kinds of row and they must look different. A thread from a video has a
-// moment and takes you there; a module post has neither and goes nowhere. One
-// is a door and one is not, and a door that does not open is the worst row on
-// the screen.
+// On the previous People tab 7 of 7 thread titles were truncated — 424px of
+// text into 253px. Every question cut mid-sentence, and the question IS the
+// content. Two changes fix it: the row is full width (the split pane created
+// the 253px), and the title gets two lines while the PREVIEW is what gets cut.
+// That last part deviates from the model on purpose — a chat name is short, a
+// question is a sentence.
 //
-// Unread discipline is load-bearing rather than a nicety. Every comment on
-// every lesson becomes a thread here, so if each one badged, People would be
-// permanently red within a week and people would stop opening it — which is
-// the failure the module chat room was rejected for. A thread badges only if
-// you are in it AND somebody else has done something since you last looked.
-function initials(name = "") {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "··";
-}
-
-const who = (id, people) =>
-  id === "u_you" ? "You" : (people.find((p) => p.id === id)?.callsign || id);
-
+// Section headings are sentences, not chips. "Waiting for an answer" is
+// readable on sight; a pill labelled "Waiting" is something you have to learn.
 export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
   const { session, mutate, lastSeen, markSeen } = useSession();
   const moduleId = mod.code || mod.id;
@@ -36,57 +29,119 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
   const [post, setPost] = useState("");
   const [replyBody, setReplyBody] = useState("");
 
-  const ordered = orderThreads(threads, replies, moduleId);
-  const badged = new Set(badges(threads, replies, moduleId, "u_you", lastSeen));
-  const current = ordered.find((t) => t.id === open) || null;
+  const rows = peopleRows(threads, replies, people, moduleId, "u_you", lastSeen);
+  const groups = groupRows(rows);
+  const current = open ? threads.find((t) => t.id === open) : null;
+  const who = (id) => (id === "u_you" ? "You"
+    : people.find((p) => p.id === id)?.callsign || id);
 
-  const band = (t) => {
-    const rs = repliesFor(replies, t.id);
-    if (t.authorId === "u_you" || rs.some((r) => r.authorId === "u_you")) return "In it";
-    if (isWaiting(t, replies)) return "Waiting for an answer";
-    return null;
-  };
+  // No split pane. The split is what cut 7 of 7 titles — it gave the list
+  // 253px of a wide screen — so the rows are full width and opening a thread
+  // replaces the list rather than squeezing it into a column beside one.
+  if (current) {
+    return (
+      <div className="plist-wrap">
+        <button type="button" className="up" onClick={() => setOpen(null)}>
+          <span aria-hidden="true">‹</span> {mod.name} · everyone
+        </button>
+        <div className="cmt">
+          <span className="av" data-size="lg" aria-hidden="true"
+                style={{ "--av-h": hueFor(current.authorId) }}>
+            {initials(who(current.authorId))}
+          </span>
+          <div className="cmt-main">
+            <div className="cmt-head">
+              <span className="cmt-name">{who(current.authorId)}</span>
+              <span className="cmt-when">{ago(current.createdAt)}</span>
+              {isAnchored(current) && (
+                <button type="button" className="cmt-seek"
+                        onClick={() => onOpenAt?.(watchAt(current))}>
+                  Watch at {mmss(current.t)}
+                </button>
+              )}
+            </div>
+            <p className="cmt-body">{current.body}</p>
+
+            <ul className="cmt-replies">
+              {repliesFor(replies, current.id).map((r) => (
+                <li key={r.id} className="cmt-reply">
+                  <span className="av" data-size="sm" aria-hidden="true"
+                        style={{ "--av-h": hueFor(r.authorId) }}>
+                    {initials(who(r.authorId))}
+                  </span>
+                  <span>
+                    <span className="cmt-head">
+                      <span className="cmt-name">{who(r.authorId)}</span>
+                      <span className="cmt-when">{ago(r.createdAt)}</span>
+                    </span>
+                    <p className="cmt-body">{r.body}</p>
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="compose" data-vis="public">
+              <span className="compose-t" />
+              <textarea className="compose-field" rows={1} value={replyBody}
+                        placeholder="Answer this" onChange={(e) => setReplyBody(e.target.value)} />
+              <div className="compose-acts">
+                <button type="button" className="compose-act" data-primary=""
+                        onClick={() => {
+                          if (!replyBody.trim()) return;
+                          mutate((s) => postReply(s, { threadId: current.id, body: replyBody }));
+                          setReplyBody("");
+                        }}>Reply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="hub">
-      <div className="hublist">
-        <div className="hubrows">
-          {ordered.length === 0 ? (
-            <p className="lempty" style={{ padding: "18px var(--pad)" }}>
-              The first question asked on a lesson lands here, where the rest of
-              the module can answer it.
-            </p>
-          ) : ordered.map((t) => {
-            const rs = repliesFor(replies, t.id);
-            const door = isAnchored(t);
-            return (
-              <button key={t.id} type="button"
-                      className={`hrow${door ? " is-door" : ""}`}
-                      aria-current={open === t.id}
-                      onClick={() => { setOpen(t.id); markSeen(t.id); }}>
-                <span className="hav" aria-hidden="true">{initials(who(t.authorId, people))}</span>
-                <span>
-                  <span className="hn">{t.body}</span>
-                  <span className="hl">
-                    {who(t.authorId, people)}
-                    {rs.length ? ` · ${rs.length} ${rs.length === 1 ? "reply" : "replies"}` : ""}
-                    {band(t) ? ` · ${band(t)}` : ""}
-                  </span>
-                </span>
-                <span className="hr">
-                  {/* A moment is what makes this row a door. Without one there
-                      is nowhere to go, and the row must not pretend there is. */}
-                  {door && <span className="hpos">Watch at {mmss(t.t)}</span>}
-                  {badged.has(t.id) && <span className="unread">1</span>}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+    <div className="plist-wrap">
+      <div>
+        {rows.length === 0 ? (
+          <p className="lempty" style={{ padding: "18px var(--pad)" }}>
+            The first question asked on a lesson lands here, where the rest of
+            the module can answer it.
+          </p>
+        ) : groups.map((g) => (
+          <div key={g.band}>
+            <p className="psection">{g.title}</p>
+            <ul className="plist">
+              {g.rows.map((r) => (
+                <li key={r.id}>
+                  <button type="button" className="prow"
+                          aria-current={open === r.id}
+                          onClick={() => { setOpen(r.id); markSeen(r.id); }}>
+                    {/* Decoration, never identification — the callsign is
+                        always beside it, because two people can share a hue. */}
+                    <span className="av" aria-hidden="true"
+                          style={{ "--av-h": hueFor(r.author?.id || "?") }}>
+                      {initials(r.author?.callsign)}
+                    </span>
+                    <span className="prow-main">
+                      <span className="prow-title">{r.title}</span>
+                      {r.preview && <span className="prow-preview">{r.preview}</span>}
+                      {r.anchored && (
+                        <span className="prow-watch">Watch at {mmss(r.watchAt.seconds)}</span>
+                      )}
+                    </span>
+                    <span className="prow-side">
+                      <span className="prow-when">{r.when}</span>
+                      <span className="prow-dot" hidden={!r.unread} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
 
-        {/* Posting from here has no lesson and no moment, which is the whole of
-            the one-way rule: there is nothing to attach it to, so no lesson
-            query can ever return it. Nobody has to remember the rule. */}
+        {/* No lesson, no moment: there is nothing to attach it to, so no lesson
+            query can ever return it. That is the whole one-way rule. */}
         <div className="compose" data-vis="public" style={{ marginInline: "var(--pad)" }}>
           <span className="compose-t" />
           <textarea className="compose-field" rows={1} value={post}
@@ -104,46 +159,6 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt }) {
         </div>
       </div>
 
-      <div className="side" style={{ padding: "18px 22px" }}>
-        {current ? (
-          <>
-            <h4>{current.body}</h4>
-            <p className="sh">{who(current.authorId, people)}</p>
-            {isAnchored(current) && (
-              <button type="button" className="nextgo"
-                      onClick={() => onOpenAt?.(watchAt(current))}>
-                Watch at {mmss(current.t)}
-              </button>
-            )}
-            <ul className="lreplies" style={{ paddingInlineStart: 0 }}>
-              {repliesFor(replies, current.id).map((r) => (
-                <li key={r.id} className="lreply">
-                  <span className="lreply-who">{who(r.authorId, people)}</span>
-                  <p className="lreply-body">{r.body}</p>
-                </li>
-              ))}
-            </ul>
-            <div className="compose" data-vis="public">
-              <span className="compose-t" />
-              <textarea className="compose-field" rows={1} value={replyBody}
-                        placeholder="Answer this" onChange={(e) => setReplyBody(e.target.value)} />
-              <div className="compose-acts">
-                <button type="button" className="compose-act" data-primary=""
-                        onClick={() => {
-                          if (!replyBody.trim()) return;
-                          mutate((s) => postReply(s, { threadId: current.id, body: replyBody }));
-                          setReplyBody("");
-                        }}>Reply</button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <p className="sh">
-            Open a thread to read it. The ones waiting for an answer are grouped
-            together, so the module can see what still needs one.
-          </p>
-        )}
-      </div>
     </div>
   );
 }

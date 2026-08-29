@@ -103,6 +103,11 @@
 
 .rrow{
   display: grid;
+  /* width:100% because these rows are <button>s, which size to their content
+     by default — without it the 1fr column collapsed to the title's own width
+     (58px of a 352px sidebar) and the row read as a tile with a caption. The
+     source sets this on .prow and not here. */
+  width: 100%;
   grid-template-columns: auto 1fr;
   gap: 12px;
   align-items: start;
@@ -337,7 +342,9 @@
 }
 .prow:hover, .prow:active{ background: var(--raised); }
 
-.prow-main{ min-width: 0; }
+/* A column, so the title, the preview and "Watch at" stack. As inline spans
+   the preview and the watch link ran together — "said at 4:52.Watch at 4:20". */
+.prow-main{ min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
 /* TWO lines, not one. A chat name is short; a question is a sentence — this is
    the one place we deviate from the model, and it is in service of the content
    rather than the pattern. */
@@ -493,3 +500,10 @@
      visit. Words, not percentages.
    · No promo above the content.
    ========================================================================= */
+
+
+/* The People list is full width now, so it needs the page gutter that the
+   removed split pane used to provide. */
+.plist-wrap{ padding-block: 6px 24px; }
+.plist-wrap > .up{ margin: 6px var(--pad) 10px; }
+.plist-wrap .cmt{ padding-inline: var(--pad); }

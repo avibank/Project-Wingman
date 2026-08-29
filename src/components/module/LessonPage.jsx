@@ -3,12 +3,14 @@ import { ChevronLeft } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
+import { thumbTile, clock } from "../../lib/familiar.js";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
   deleteNote, publishNote, postComment, postReply, editNote, isPin, upFrom,
 } from "../../lib/lessonSurface.js";
 import "./module.css";
 import "./lesson.css";
+import "./familiar.css";
 
 // The lesson page. Four things, in this order, at every width:
 //
@@ -82,7 +84,16 @@ export default function LessonPage({
         <span className="lesson-where">{chapter.title} · {mod.name}</span>
       </div>
 
-      <div className="lesson-body">
+      {/* The watch layout: player in the main column, the chapter route beside
+          it. This reverses "one column at every width", deliberately. What was
+          cancelled was a sidebar of NOTES AND DOCUMENTS — novel content in a
+          novel place on a screen that already had four other novel things. A
+          lesson list beside a video is the least novel sidebar in education;
+          the test was never "no second column", it was how many things here
+          has this person never seen before. Below 1120 there is no sidebar —
+          the route is the module screen you came from. */}
+      <div className="watch">
+      <div className="watch-main lesson-body">
         {/* An empty sized box. Never move the video node into it. */}
         <div className="player-slot" ref={slotRef} />
 
@@ -128,7 +139,60 @@ export default function LessonPage({
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
                          people={people} onSeek={requestSeek} mutate={mutate} />}
       </div>
+
+      <Route chapters={chapters} here={lesson} state={state}
+             onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} next={next} />
+      </div>
     </div>
+  );
+}
+
+// The route beside the player, sticky, with its own scroller. Same row as the
+// module screen — one brightness for every title, the bar carries the state.
+function Route({ chapters, here, state, onOpenLesson, next }) {
+  const total = chapters.reduce((n, c) => n + (c.lessons?.length || 0), 0);
+  const done = chapters.reduce((n, c) => n + (c.lessons || []).filter(
+    (l) => Boolean(state?.done?.[l.id]) || (state?.pos?.[l.id]?.pct ?? 0) >= 0.9).length, 0);
+  return (
+    <aside className="route" aria-label="This module">
+      <div className="route-head">
+        <span className="route-title">This module</span>
+        <span className="route-meta">{done} of {total} flown</span>
+      </div>
+      <div className="route-list">
+        {chapters.map((ch) => (
+          <div key={ch.id}>
+            <p className="route-chapter">{ch.title}</p>
+            {(ch.lessons || []).map((l) => {
+              const isDoneL = Boolean(state?.done?.[l.id]) || (state?.pos?.[l.id]?.pct ?? 0) >= 0.9;
+              const pct = state?.pos?.[l.id]?.pct || 0;
+              return (
+                <button key={l.id} type="button" className="rrow"
+                        aria-current={l.id === here.id ? "true" : undefined}
+                        onClick={() => onOpenLesson(ch, l)}>
+                  <span className="rthumb" data-tile="" data-code={l.code || l.id}
+                        data-done={isDoneL ? "1" : "0"} style={thumbTile(l.id)}>
+                    {l.duration > 0 && <span className="rdur">{clock(l.duration)}</span>}
+                    {(pct > 0 || isDoneL) && (
+                      <span className="rprog">
+                        <i className="rprog-fill" style={{ width: `${Math.min(100, pct * 100)}%` }} />
+                      </span>
+                    )}
+                  </span>
+                  <span className="rbody"><span className="rtitle">{l.title}</span></span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      {next && (
+        <a className="route-next" href="#next"
+           onClick={(e) => { e.preventDefault(); if (next.kind !== "quiz") onOpenLesson(next.chapter, next.lesson); }}>
+          Next · {next.lesson?.title || next.chapter?.title}
+        </a>
+      )}
+    </aside>
   );
 }
 

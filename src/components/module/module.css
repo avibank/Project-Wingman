@@ -416,3 +416,27 @@
   background: var(--active-fill); color: var(--ground);
   border: 0; border-radius: 999px; font: inherit; font-size: var(--fs-sm); cursor: pointer;
 }
+
+
+/* CLASS COLLISION, found by measuring: `.route` means two different things.
+   This file's is the module screen's header ROW — display:flex, align-items:
+   center, padding 20/26. Part 13's is the lesson SIDEBAR. The lesson page
+   carries .mscreen, so both matched and the older one won: the sidebar laid
+   its head, list and next-link out in a row and squeezed the list from 300px
+   to 223. Scoped here at (0,3,0), in the file that owns the older name, so
+   neither component has to be renamed. */
+.mscreen.lesson .route { display: none; }
+@media (min-width: 1120px) {
+  .mscreen.lesson .route {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    border-bottom: 0;
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    min-width: 0;
+  }
+}
