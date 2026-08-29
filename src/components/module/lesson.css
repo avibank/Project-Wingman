@@ -430,8 +430,12 @@
 .compose[data-vis="public"] .compose-who{ color: var(--active-text, var(--active)); }
 
 .compose-acts{ grid-column: 2; display: flex; gap: 18px; margin-top: 6px; }
+/* min-width as well as min-height: "Post" is four characters and measured
+   29px across, which is a 29x44 target. The height alone was never the whole
+   of the 44px rule. */
 .compose-act{
   min-height: var(--tap);
+  min-width: var(--tap);
   background: none;
   border: 0;
   padding: 0;

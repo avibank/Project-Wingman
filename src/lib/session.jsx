@@ -60,6 +60,13 @@ export function SessionProvider({ children }) {
   // a seeded note would bring it back on the next reload.
   const seedFrom = useCallback((content) => {
     if (!content || !loaded || progress.get(SEEDED_KEY, false)) return;
+    // Claim hydration before writing. Child effects run before the parent's,
+    // so App's seed call lands FIRST and the hydrate effect below would then
+    // read the store back — except progress.get reads React state, which lags
+    // its own set by a render, so it read the empty value and wiped the seed.
+    // The notes and threads vanished on the next load and the tabs lost their
+    // counts. One of the two has to own the first write, and it is this one.
+    hydrated.current = true;
     progress.set(SEEDED_KEY, true);
     progress.set(NOTES_KEY, content.notes || []);
     progress.set(THREADS_KEY, content.threads || []);

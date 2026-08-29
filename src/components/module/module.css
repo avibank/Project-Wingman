@@ -82,10 +82,10 @@
 
 /* — lesson — */
 .mscreen .lesson{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:44px;padding:6px var(--pad) 0}
-.mscreen .player{position:relative;aspect-ratio:16/9;background:var(--raised);border-radius:14px;overflow:hidden;display:grid;place-items:center}
-.mscreen .pbig{width:76px;height:76px;border-radius:999px;background:oklch(1 0 0/.16);backdrop-filter:blur(6px);display:grid;place-items:center;cursor:pointer;border:0}
-.mscreen .pbig svg{width:26px;height:26px;color:#fff;margin-left:5px}
-.mscreen .ptag{position:absolute;left:18px;top:16px;font-size:13px;color:var(--t3)}
+.player-layer .player{position:relative;aspect-ratio:16/9;background:var(--raised);border-radius:14px;overflow:hidden;display:grid;place-items:center}
+.player-layer .pbig{width:76px;height:76px;border-radius:999px;background:oklch(1 0 0/.16);backdrop-filter:blur(6px);display:grid;place-items:center;cursor:pointer;border:0}
+.player-layer .pbig svg{width:26px;height:26px;color:#fff;margin-left:5px}
+.player-layer .ptag{position:absolute;left:18px;top:16px;font-size:13px;color:var(--t3)}
 .mscreen .scrub{display:flex;align-items:center;gap:16px;padding:16px 2px 0}
 .mscreen .track{position:relative;flex:1;height:4px;border-radius:999px;background:var(--line)}
 .mscreen .track i{position:absolute;left:0;top:0;bottom:0;background:var(--active);border-radius:999px}
@@ -197,11 +197,11 @@
 /* Player controls and the states a real player has. The player itself keeps
    its 14px corner from the source; these are the parts the source did not
    have because it was drawn, not played. */
-.mscreen .player video{width:100%;height:100%;object-fit:contain;background:#000}
-.mscreen .player:focus-visible{outline:2px solid var(--active);outline-offset:3px}
-.mscreen .perr{display:grid;gap:12px;place-items:center;text-align:center;padding:24px}
-.mscreen .perr p{font-size:15px;color:var(--t2);max-width:34ch;margin:0}
-.mscreen .perr button{background:var(--active);color:var(--ground);border:0;border-radius:999px;
+.player-layer video{width:100%;height:100%;object-fit:contain;background:#000}
+.player-layer:focus-visible{outline:2px solid var(--active);outline-offset:3px}
+.player-layer .perr{display:grid;gap:12px;place-items:center;text-align:center;padding:24px}
+.player-layer .perr p{font-size:15px;color:var(--t2);max-width:34ch;margin:0}
+.player-layer .perr button{background:var(--active);color:var(--ground);border:0;border-radius:999px;
   padding:11px 22px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
 .mscreen .pctl{display:flex;align-items:center;gap:4px;margin-left:6px}
 .mscreen .pctl button{background:none;border:0;color:var(--t3);cursor:pointer;padding:8px;
@@ -309,73 +309,80 @@
    under the pointer; buffered sits behind played; time reads now / total.
    The one departure from the familiar is the colour: played is the livery
    accent, not red, because red here means a danger state. ── */
-.mscreen .player.yt{position:relative;background:#000;cursor:default;display:block}
+/* No position here. The layer is position:fixed and is placed by transform
+   against the slot's measured rect; re-declaring it relative made the
+   transform offset from the element's own static position instead of the
+   viewport, and the player landed a page below the box it belongs in. */
+.player-layer.yt{background:#000;cursor:default;display:block}
 /* The source centred .pbig with place-items on a grid .player; this one is not
    a grid, so the button centres itself. */
-.mscreen .player.yt .pbig{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin:0}
-.mscreen .player.yt .pspin{position:absolute;top:50%;left:50%;margin:-22px 0 0 -22px}
-.mscreen .player.yt video{width:100%;height:100%;object-fit:contain;cursor:pointer;display:block}
-.mscreen .player.yt:focus-visible{outline:2px solid var(--active);outline-offset:3px}
-.mscreen .player.yt.full{border-radius:0}
+.player-layer .pbig{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin:0}
+.player-layer .pspin{position:absolute;top:50%;left:50%;margin:-22px 0 0 -22px}
+.player-layer video{width:100%;height:100%;object-fit:contain;cursor:pointer;display:block}
+.player-layer:focus-visible{outline:2px solid var(--active);outline-offset:3px}
+.player-layer.full{border-radius:0}
 
 /* Everything overlaid fades together, and the cursor goes with it. */
-.mscreen .player.yt .ytbar{position:absolute;left:0;right:0;bottom:0;padding:0 12px 8px;
+.player-layer .ytbar{position:absolute;left:0;right:0;bottom:0;padding:0 12px 8px;
   background:linear-gradient(transparent,rgba(0,0,0,.72));
   opacity:1;transition:opacity .2s ease;pointer-events:auto}
-.mscreen .player.yt.hushed .ytbar{opacity:0;pointer-events:none}
-.mscreen .player.yt.hushed video{cursor:none}
+.player-layer.hushed .ytbar{opacity:0;pointer-events:none}
+.player-layer.hushed video{cursor:none}
 
-.mscreen .yttrack{position:relative;height:14px;display:flex;align-items:center;cursor:pointer;touch-action:none}
-.mscreen .yttrack::before{content:"";position:absolute;left:0;right:0;height:3px;border-radius:3px;
+.player-layer .yttrack{position:relative;height:14px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.player-layer .yttrack::before{content:"";position:absolute;left:0;right:0;height:3px;border-radius:3px;
   background:rgba(255,255,255,.28);transition:height .12s ease}
-.mscreen .yttrack:hover::before{height:5px}
-.mscreen .yttrack i{position:absolute;left:0;height:3px;border-radius:3px;transition:height .12s ease}
-.mscreen .yttrack:hover i{height:5px}
-.mscreen .ytbuf{background:rgba(255,255,255,.42)}
-.mscreen .ytplayed{background:var(--active)}
-.mscreen .ytdot{position:absolute;width:13px;height:13px;border-radius:999px;background:var(--active);
+.player-layer .yttrack:hover::before{height:5px}
+.player-layer .yttrack i{position:absolute;left:0;height:3px;border-radius:3px;transition:height .12s ease}
+.player-layer .yttrack:hover i{height:5px}
+.player-layer .ytbuf{background:rgba(255,255,255,.42)}
+.player-layer .ytplayed{background:var(--active)}
+.player-layer .ytdot{position:absolute;width:13px;height:13px;border-radius:999px;background:var(--active);
   transform:translateX(-50%) scale(0);transition:transform .12s ease}
-.mscreen .yttrack:hover .ytdot{transform:translateX(-50%) scale(1)}
+.player-layer .yttrack:hover .ytdot{transform:translateX(-50%) scale(1)}
 /* A question's moment. Distinct from the bar so it reads as a landmark. */
-.mscreen .yttrack s{position:absolute;width:3px;height:11px;background:var(--t1);opacity:.75;
+.player-layer .yttrack s{position:absolute;width:3px;height:11px;background:var(--t1);opacity:.75;
   border-radius:1px;transform:translateX(-50%);text-decoration:none}
-.mscreen .yttip{position:absolute;bottom:20px;transform:translateX(-50%);background:rgba(0,0,0,.85);
+.player-layer .yttip{position:absolute;bottom:20px;transform:translateX(-50%);background:rgba(0,0,0,.85);
   color:#fff;font-family:var(--font-mono);font-size:12px;padding:3px 7px;border-radius:4px;
   pointer-events:none;white-space:nowrap}
 
-.mscreen .ytrow{display:flex;align-items:center;gap:2px;padding-top:2px}
-.mscreen .ytrow button{background:none;border:0;color:#fff;cursor:pointer;padding:9px;border-radius:6px;
-  display:grid;place-items:center;min-width:40px;min-height:40px;opacity:.92}
-.mscreen .ytrow button:hover{opacity:1;background:rgba(255,255,255,.12)}
-.mscreen .ytrow button.on{color:var(--active)}
-.mscreen .ytrow svg{width:19px;height:19px}
-.mscreen .ytspacer{flex:1}
-.mscreen .yttime{color:#fff;font-family:var(--font-mono);font-size:13px;padding:0 10px;white-space:nowrap;
+.player-layer .ytrow{display:flex;align-items:center;gap:2px;padding-top:2px}
+/* 44, not 40. The whole control bar sat under the touch floor — measured, not
+   noticed — and Part 12 puts the note button in this same row, where check 26
+   asks for 44 explicitly. Fixing the row fixes all of them at once. */
+.player-layer .ytrow button{background:none;border:0;color:#fff;cursor:pointer;padding:9px;border-radius:6px;
+  display:grid;place-items:center;min-width:var(--tap);min-height:var(--tap);opacity:.92}
+.player-layer .ytrow button:hover{opacity:1;background:rgba(255,255,255,.12)}
+.player-layer .ytrow button.on{color:var(--active)}
+.player-layer .ytrow svg{width:19px;height:19px}
+.player-layer .ytspacer{flex:1}
+.player-layer .yttime{color:#fff;font-family:var(--font-mono);font-size:13px;padding:0 10px;white-space:nowrap;
   font-variant-numeric:tabular-nums}
-.mscreen .yttime i{opacity:.6;font-style:normal;padding:0 2px}
+.player-layer .yttime i{opacity:.6;font-style:normal;padding:0 2px}
 
 /* Volume opens on hover, the way it does everywhere else. */
-.mscreen .ytvol{display:flex;align-items:center}
-.mscreen .ytvol input{width:0;opacity:0;transition:width .18s ease,opacity .18s ease;
+.player-layer .ytvol{display:flex;align-items:center}
+.player-layer .ytvol input{width:0;opacity:0;transition:width .18s ease,opacity .18s ease;
   accent-color:var(--active);cursor:pointer;margin:0}
-.mscreen .ytvol:hover input,.mscreen .ytvol input:focus-visible{width:74px;opacity:1;margin:0 6px 0 2px}
+.player-layer .ytvol:hover input,.player-layer .ytvol input:focus-visible{width:74px;opacity:1;margin:0 6px 0 2px}
 
-.mscreen .ytmenu{position:relative}
-.mscreen .ytpop{position:absolute;right:0;bottom:46px;background:rgba(18,18,18,.96);border-radius:10px;
+.player-layer .ytmenu{position:relative}
+.player-layer .ytpop{position:absolute;right:0;bottom:46px;background:rgba(18,18,18,.96);border-radius:10px;
   padding:6px;min-width:132px;display:grid;gap:1px}
-.mscreen .ytpoph{color:rgba(255,255,255,.55);font-family:var(--font-mono);font-size:10.5px;
+.player-layer .ytpoph{color:rgba(255,255,255,.55);font-family:var(--font-mono);font-size:10.5px;
   letter-spacing:.12em;text-transform:uppercase;margin:4px 10px 5px}
-.mscreen .ytpop button{justify-content:flex-start;width:100%;color:#fff;font-family:inherit;
+.player-layer .ytpop button{justify-content:flex-start;width:100%;color:#fff;font-family:inherit;
   font-size:14px;padding:8px 10px;min-height:38px;display:flex}
-.mscreen .ytpop button.on{color:var(--active)}
+.player-layer .ytpop button.on{color:var(--active)}
 
-.mscreen .pspin{position:absolute;width:44px;height:44px;border-radius:999px;
+.player-layer .pspin{position:absolute;width:44px;height:44px;border-radius:999px;
   border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:ytspin .8s linear infinite}
 @keyframes ytspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.mscreen .pspin{animation-duration:2.4s}}
 
 /* The old scrub under the frame is gone; the bar lives on the picture now. */
-.mscreen .player.yt ~ .scrub{display:none}
+.player-layer ~ .scrub{display:none}
 
 
 /* Part 12 additions that are Wingman's rather than the brief's: the manual
