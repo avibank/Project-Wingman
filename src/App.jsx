@@ -814,9 +814,13 @@ function AppInner() {
     {/* The one <video>. A sibling of the routed content, never inside it. */}
     <PlayerLayer />
     <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
-    <RunwayLights scroller={deckRef} route={route.name} />
     </FirstFlightGate>
     </UsernameGate>
+    {/* Outside .app on purpose. The aurora rig inside it has filter: blur()
+        and will-change: transform, and any of those on an ancestor makes a
+        position:fixed descendant resolve against THAT element instead of the
+        viewport. The chin is fixed, so it has to live out here. */}
+    <RunwayLights route={route.name} />
       <style>{`
         @font-face {
           font-family: 'OpenDyslexic';
@@ -854,7 +858,10 @@ function AppInner() {
         ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: var(--r-md); border: 2px solid var(--bg); }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
         * { scrollbar-width: thin; scrollbar-color: var(--border-hover) var(--bg); }
-        html, body, #root { height: 100%; margin: 0; background: var(--surface-0); }
+        /* No height:100%. It pinned html to the viewport, so the document
+           could not scroll even once the inner container was gone — body knew
+           it was 1430px tall and html insisted it was 880. */
+        html, body, #root { margin: 0; background: var(--surface-0); }
         .app {
           /* The component layer. Every name below resolves to a §3.6 semantic
              and to nothing else — no component may reference a --mono-* step
@@ -923,13 +930,16 @@ function AppInner() {
           /* THE SHELL. Three rows — header, scroller, runway lights — and the
              light rig behind all of them. Short pages have no dead space by
              construction, because the shell is always exactly one viewport. */
-          height: 100vh;
-          height: 100dvh;
+          /* No fixed height and NO overflow:clip. Both were part of the shell,
+             and overflow:clip on an ancestor is also one of the properties that
+             makes position:fixed resolve against THAT element instead of the
+             viewport — the trap that made the chin and the player layer stop
+             behaving like fixed elements inside the deck. */
+          min-height: 100dvh;
           display: grid;
           grid-template-rows: auto 1fr auto;
           padding: 0;
           position: relative;
-          overflow: clip;
         }
         /* A gate that blocks — first flight, the username prompt — renders as
            the only child, and would otherwise be squashed into the header row. */

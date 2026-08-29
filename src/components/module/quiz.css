@@ -1,0 +1,307 @@
+/* ============================================================================
+   Wingman — the quiz screen
+   A certification test interface, in Wingman's visual language.
+
+   Copy verbatim. Depends on wingman-foundations.css, the livery tokens, and
+   the housing tokens.
+
+   Borrow the STRUCTURE of the exam interface — lettered options stacked
+   vertically, a navigator, a flag, submit-then-review. Never borrow its look.
+   ========================================================================= */
+
+
+/* ============================================================================
+   1 · THE SCREEN
+   Its own route. No module tabs, no back arrow into the middle of a paper —
+   leaving is a deliberate act.
+   ========================================================================= */
+
+.quiz{
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding-bottom: calc(var(--chin-h, 0px) + env(safe-area-inset-bottom, 0px));
+}
+
+.quiz-head{
+  padding: 18px var(--pad) 14px;
+  border-bottom: 1px solid var(--edge);
+  display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+}
+.quiz-where{ font-size: var(--fs-sm); color: var(--t3); }
+.quiz-name{ font-size: var(--fs-lg); color: var(--t1); }
+/* "3 of 8" — a count, never a percentage and never a filling bar. A bar tells
+   you how much of your life is gone; a count tells you what is left. */
+.quiz-count{
+  margin-inline-start: auto;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--t2);
+}
+.quiz-leave{
+  min-height: var(--tap); background: none; border: 0; padding: 0 0 0 16px;
+  font: inherit; font-size: var(--fs-sm); color: var(--t3); cursor: pointer;
+}
+.quiz-leave:hover{ color: var(--t1); }
+
+.quiz-body{
+  width: min(100%, 720px);
+  margin-inline: auto;
+  padding: 40px var(--pad);
+  align-self: start;
+}
+@media (min-width: 768px){ .quiz-body{ padding-block: 56px; } }
+
+
+/* ============================================================================
+   2 · THE QUESTION
+   ========================================================================= */
+
+.q-n{
+  display: block;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  letter-spacing: .08em;
+  color: var(--t3);
+  margin-bottom: 12px;
+}
+.q-text{
+  font-size: var(--fs-xl);
+  line-height: 1.42;
+  color: var(--t1);
+  margin: 0 0 30px;
+  max-width: 36ch;                /* a question is read, not scanned */
+}
+@media (max-width: 640px){ .q-text{ font-size: var(--fs-lg); } }
+
+
+/* ============================================================================
+   3 · THE OPTIONS — A, B, C, stacked
+   ----------------------------------------------------------------------------
+   Vertical, not a 2x2 grid. Real maintenance options are full sentences and a
+   grid of sentences is a mess; a list handles any length.
+   ========================================================================= */
+
+.opts{ display: grid; gap: 10px; }
+
+.opt{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;               /* well past the 44px floor — unhurried */
+  padding: 14px 18px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease);
+}
+.opt:hover{ background: var(--raised); }
+.opt:active{ background: var(--raised); }
+
+/* THE LETTER. It is how the real paper labels them, it means the option text
+   never has to carry the identity, and it gives students a way to talk to each
+   other: "what did you get for 4? I put C." */
+.opt-l{
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--edge);
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--t2);
+  flex: none;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.opt-t{ font-size: var(--fs-md); line-height: var(--lh-body); color: var(--t1); }
+
+/* Selection is an accent border plus a filled letter. No colour wash across
+   the row — that is what keeps this working across six liveries and both
+   modes with no extra CSS. */
+.opt[aria-pressed="true"]{ border-color: var(--active); }
+.opt[aria-pressed="true"] .opt-l{
+  background: var(--active);
+  border-color: var(--active);
+  color: var(--on-active, oklch(.14 .01 var(--ah, 250)));
+}
+
+/* NOTHING TURNS GREEN OR RED UNTIL THE PAPER IS SUBMITTED. */
+.opt[data-mark]{ cursor: default; }
+.opt[data-mark="right"]{ border-color: var(--ok); }
+.opt[data-mark="right"] .opt-l{ background: var(--ok); border-color: var(--ok); color: var(--on-mark); }
+.opt[data-mark="wrong"]{ border-color: var(--bad); }
+.opt[data-mark="wrong"] .opt-l{ background: var(--bad); border-color: var(--bad); color: var(--on-mark); }
+
+/* The only two colours in the app that are not the livery. They have to mean
+   right and wrong to everyone, so they cannot be a livery hue — Beacon red as
+   the accent would make every selected answer look wrong. */
+:root{
+  --ok:  oklch(.66 .155 148);
+  --bad: oklch(.62 .180 25);
+  --on-mark: oklch(.14 0 0);
+}
+:root[data-mode="light"]{
+  --ok:  oklch(.50 .150 148);
+  --bad: oklch(.50 .190 25);
+  --on-mark: oklch(.99 0 0);
+}
+/* Never colour alone: a marked option also carries the word Correct or Your
+   answer, because about one in twelve men cannot separate these two hues. */
+.opt-mark{
+  grid-column: 2; font-size: var(--fs-xs); color: var(--t3); margin-top: 4px;
+}
+
+
+/* ============================================================================
+   4 · THE FOOTER — flag, move, submit
+   ========================================================================= */
+
+.quiz-foot{
+  position: sticky; bottom: 0;
+  background: var(--ground);
+  border-top: 1px solid var(--edge);
+  padding: 12px var(--pad);
+  display: flex; align-items: center; gap: 12px;
+}
+.q-flag{
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: var(--tap); padding: 0 4px;
+  background: none; border: 0;
+  font: inherit; font-size: var(--fs-sm); color: var(--t3); cursor: pointer;
+}
+.q-flag[aria-pressed="true"]{ color: var(--active); }
+.q-flag svg{ width: 15px; height: 15px; }
+.q-move{ margin-inline-start: auto; display: flex; gap: 8px; }
+.q-btn{
+  min-height: var(--tap); padding: 0 20px;
+  border-radius: 999px;
+  background: none; border: 1px solid var(--edge);
+  font: inherit; font-size: var(--fs-md); color: var(--t2); cursor: pointer;
+}
+.q-btn:hover{ background: var(--raised); color: var(--t1); }
+.q-btn[disabled]{ opacity: .4; cursor: default; }
+/* one filled button on the screen, and it is the one that moves you forward */
+.q-btn[data-primary]{
+  background: var(--active); border-color: var(--active);
+  color: var(--on-active, oklch(.14 .01 var(--ah, 250)));
+  font-weight: 600;
+}
+
+
+/* ============================================================================
+   5 · THE NAVIGATOR
+   ----------------------------------------------------------------------------
+   The single most reassuring control in a test interface: you always know what
+   is left and whether you skipped one.
+   ========================================================================= */
+
+.nav{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 14px var(--pad);
+  border-top: 1px solid var(--edge);
+}
+.nav-sq{
+  position: relative;
+  width: var(--tap); height: var(--tap);
+  display: grid; place-items: center;
+  background: none;
+  border: 1px solid var(--edge);
+  border-radius: 9px;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--t3);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.nav-sq:hover{ background: var(--raised); }
+.nav-sq[data-state="answered"]{ background: var(--raised); color: var(--t1); }
+.nav-sq[data-state="current"]{ border-color: var(--active); color: var(--t1); }
+/* flagged is a MARK, not a fourth state — a question can be answered and
+   flagged at once, and that combination is the whole point of flagging */
+.nav-sq[data-flag="1"]::after{
+  content: ''; position: absolute; top: 5px; inset-inline-end: 5px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--active);
+}
+
+
+/* ============================================================================
+   6 · START AND RESULT
+   ========================================================================= */
+
+.q-card{
+  width: min(100%, 620px); margin: 40px auto;
+  padding: 28px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+}
+.q-card h2{ font-size: var(--fs-xl); color: var(--t1); margin: 0 0 10px; font-weight: 500; }
+.q-card p{ font-size: var(--fs-md); color: var(--t2); margin: 0 0 6px; }
+.q-card .meta{ font-size: var(--fs-sm); color: var(--t3); }
+.q-card .resume{ font-size: var(--fs-sm); color: var(--active); margin-top: 12px; }
+
+/* the score. a count against what you needed — never a percentage. */
+.q-score{
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 6px;
+}
+.q-score-line{ font-size: var(--fs-md); color: var(--t2); }
+.q-score-line[data-passed="1"]{ color: var(--ok); }
+
+.q-review{ display: grid; gap: 14px; margin-top: 26px; }
+.q-rev{
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+}
+.q-rev-q{ font-size: var(--fs-md); color: var(--t1); margin-bottom: 12px; }
+.q-rev-line{ font-size: var(--fs-sm); margin-bottom: 5px; }
+.q-rev-line[data-kind="chose"]{ color: var(--bad); }
+.q-rev-line[data-kind="right"]{ color: var(--ok); }
+.q-rev-explain{
+  font-size: var(--fs-sm); color: var(--t2); line-height: var(--lh-body);
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--edge);
+  max-width: var(--measure);
+}
+.q-rev-lesson{
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap);
+  font-size: var(--fs-sm); color: var(--active); text-decoration: none;
+}
+
+
+/* ============================================================================
+   7 · FOCUS — this screen is used with a keyboard
+   ========================================================================= */
+
+.opt:focus-visible, .nav-sq:focus-visible, .q-btn:focus-visible, .q-flag:focus-visible{
+  outline: 2px solid var(--active); outline-offset: 2px;
+}
+/* The quiz is a route, not an overlay, so there is no focus trap to build —
+   which is one reason it is a route. On mount, focus the question heading so a
+   screen reader lands on the question rather than on the leave button. */
+
+
+/* ============================================================================
+   8 · WHAT MUST NOT APPEAR
+   · No countdown timer.
+   · No points, leaderboard, streak, meme or sound.
+   · No four coloured tiles. No 2x2 grid.
+   · No percentage anywhere — a count against the pass mark.
+   · No colour without a word beside it.
+   · No certificate, no "pass", no credential language. This is a study tool
+     shaped like an exam, and it must never claim to be one.
+   ========================================================================= */

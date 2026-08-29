@@ -102,6 +102,12 @@
    brightness for every title, a bar underneath for how far you got. */
 
 .rrow{
+  /* THE WHITE BARS. Not --panel leaking its Day value and not housing on rows
+     — measured, --panel was oklch(.2075 …), the Night token, and .house was on
+     exactly one element. These rows are <button>s with no background set, so
+     they painted the user agent's default rgb(239,239,239). A near-white
+     opaque bar over a dark ground, which is what the screenshots showed. */
+  background: none;
   display: grid;
   /* width:100% because these rows are <button>s, which size to their content
      by default — without it the 1fr column collapsed to the title's own width

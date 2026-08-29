@@ -121,7 +121,10 @@
    ========================================================================= */
 
 .player-layer{
-  position: fixed; z-index: 40; overflow: hidden; background: #000;
+  /* Absolute, at the slot's document offset, so it scrolls with the page and
+     nothing recomputes on scroll. Only the docked state is fixed. */
+  position: absolute;
+  top: 0; left: 0; z-index: 40; overflow: hidden; background: #000;
   transition: transform var(--t-base) var(--ease),
               width var(--t-base) var(--ease),
               border-radius var(--t-base) var(--ease);
@@ -521,6 +524,7 @@
    ========================================================================= */
 
 .player-layer[data-dock="mini"]{
+  position: fixed;
   border-radius: 12px;
   box-shadow: 0 8px 30px oklch(0 0 0 / .28);
   cursor: pointer;                    /* the body is the way back */

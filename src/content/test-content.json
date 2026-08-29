@@ -1,5 +1,5 @@
 {
-  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question, paper, note and thread here exists only so the module screen, the player, the quizzes, the papers, the notes and the comments can be exercised end to end. Replace all of it before launch. | Video sources kept from the working import: the gtv-videos-bucket URLs in the handoff answer 403 on every file.",
+  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question, paper, note and thread here exists only so the module screen, the player, the quizzes, the papers, the notes and the comments can be exercised end to end. Replace all of it before launch. | Video sources kept from the working import: the gtv-videos-bucket URLs answer 403.",
   "videoSource": "Blender open movies (CC-BY) via archive.org, plus one CC0 clip from MDN. The previous gtv-videos-bucket URLs now answer 403 and played nowhere.",
   "modules": [
     {
@@ -56,46 +56,42 @@
               {
                 "question": "How many minutes are there in a day?",
                 "options": [
-                  "720",
-                  "1,440",
                   "2,160",
-                  "960"
+                  "720",
+                  "1,440"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "24 hours x 60 minutes.",
                 "lessonId": "M1.01.1"
               },
               {
                 "question": "Water freezes at which temperature, at sea level?",
                 "options": [
-                  "0 C",
-                  "10 C",
                   "-10 C",
-                  "32 C"
+                  "0 C",
+                  "10 C"
                 ],
-                "correct": 0,
+                "correct": 1,
                 "explain": "0 degrees Celsius, which is 32 Fahrenheit.",
                 "lessonId": "M1.01.2"
               },
               {
                 "question": "Which gas do people breathe out most of?",
                 "options": [
-                  "Oxygen",
-                  "Nitrogen",
                   "Carbon dioxide",
-                  "Hydrogen"
+                  "Nitrogen",
+                  "Oxygen"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Carbon dioxide is the main waste gas.",
                 "lessonId": "M1.01.1"
               },
               {
                 "question": "How many sides does a hexagon have?",
                 "options": [
-                  "five",
-                  "six",
                   "seven",
-                  "eight"
+                  "six",
+                  "five"
                 ],
                 "correct": 1,
                 "explain": "Hex means six.",
@@ -104,22 +100,20 @@
               {
                 "question": "What is the largest planet in the solar system?",
                 "options": [
-                  "Saturn",
-                  "Neptune",
                   "Jupiter",
-                  "Earth"
+                  "Saturn",
+                  "Neptune"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Jupiter, by a wide margin.",
                 "lessonId": "M1.01.1"
               },
               {
                 "question": "Sound travels fastest through which of these?",
                 "options": [
-                  "air",
                   "water",
-                  "steel",
-                  "a vacuum"
+                  "air",
+                  "steel"
                 ],
                 "correct": 2,
                 "explain": "Solids carry sound fastest; a vacuum carries none.",
@@ -130,8 +124,7 @@
                 "options": [
                   "186",
                   "206",
-                  "226",
-                  "246"
+                  "226"
                 ],
                 "correct": 1,
                 "explain": "206 in a typical adult.",
@@ -141,11 +134,10 @@
                 "question": "What does a thermometer measure?",
                 "options": [
                   "pressure",
-                  "humidity",
                   "temperature",
-                  "weight"
+                  "humidity"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "Temperature.",
                 "lessonId": "M1.01.2"
               }
@@ -212,12 +204,11 @@
               {
                 "question": "Which of these is a renewable source of energy?",
                 "options": [
-                  "coal",
                   "wind",
-                  "diesel",
-                  "natural gas"
+                  "coal",
+                  "diesel"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Wind replenishes; the others do not.",
                 "lessonId": "M1.02.1"
               },
@@ -225,23 +216,21 @@
                 "question": "How many degrees are in a right angle?",
                 "options": [
                   "45",
-                  "60",
                   "90",
-                  "180"
+                  "60"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "90 degrees.",
                 "lessonId": "M1.02.2"
               },
               {
                 "question": "What is the chemical symbol for gold?",
                 "options": [
-                  "Go",
-                  "Gd",
                   "Au",
-                  "Ag"
+                  "Gd",
+                  "Go"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Au, from the Latin aurum.",
                 "lessonId": "M1.02.1"
               },
@@ -249,11 +238,10 @@
                 "question": "Roughly what percentage of the Earth's surface is water?",
                 "options": [
                   "50%",
-                  "61%",
                   "71%",
-                  "81%"
+                  "61%"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "About 71 percent.",
                 "lessonId": "M1.02.2"
               },
@@ -261,21 +249,19 @@
                 "question": "Which of these is not a state of matter?",
                 "options": [
                   "solid",
-                  "liquid",
-                  "gas",
-                  "mineral"
+                  "mineral",
+                  "liquid"
                 ],
-                "correct": 3,
+                "correct": 1,
                 "explain": "Mineral is a type of substance, not a state.",
                 "lessonId": "M1.02.1"
               },
               {
                 "question": "What force pulls objects toward the ground?",
                 "options": [
-                  "friction",
-                  "gravity",
                   "magnetism",
-                  "tension"
+                  "gravity",
+                  "friction"
                 ],
                 "correct": 1,
                 "explain": "Gravity.",
@@ -284,24 +270,22 @@
               {
                 "question": "How many hours are in a week?",
                 "options": [
-                  "148",
                   "158",
                   "168",
-                  "178"
+                  "148"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "7 x 24 = 168.",
                 "lessonId": "M1.02.1"
               },
               {
                 "question": "Light travels faster than sound. True or false?",
                 "options": [
-                  "true",
                   "false",
                   "only in water",
-                  "only at night"
+                  "true"
                 ],
-                "correct": 0,
+                "correct": 2,
                 "explain": "Which is why you see lightning before you hear thunder.",
                 "lessonId": "M1.02.2"
               }
@@ -368,12 +352,11 @@
               {
                 "question": "What is the boiling point of water at sea level?",
                 "options": [
-                  "90 C",
                   "100 C",
-                  "110 C",
-                  "120 C"
+                  "90 C",
+                  "110 C"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "100 degrees Celsius.",
                 "lessonId": "M1.03.1"
               },
@@ -381,83 +364,76 @@
                 "question": "Which organ pumps blood around the body?",
                 "options": [
                   "liver",
-                  "lungs",
                   "heart",
-                  "kidneys"
+                  "lungs"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "The heart.",
                 "lessonId": "M1.03.2"
               },
               {
                 "question": "How many millimetres are in a metre?",
                 "options": [
-                  "100",
                   "1,000",
-                  "10,000",
-                  "10"
+                  "100",
+                  "10,000"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "1,000 millimetres.",
                 "lessonId": "M1.03.1"
               },
               {
                 "question": "What is the most abundant gas in the air we breathe?",
                 "options": [
-                  "oxygen",
                   "nitrogen",
-                  "argon",
-                  "carbon dioxide"
+                  "oxygen",
+                  "argon"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Nitrogen, at about 78 percent.",
                 "lessonId": "M1.03.2"
               },
               {
                 "question": "A circle has how many degrees?",
                 "options": [
-                  "180",
                   "270",
                   "360",
-                  "400"
+                  "180"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "360 degrees.",
                 "lessonId": "M1.03.1"
               },
               {
                 "question": "Which of these is a metal?",
                 "options": [
-                  "copper",
-                  "granite",
                   "rubber",
-                  "glass"
+                  "copper",
+                  "granite"
                 ],
-                "correct": 0,
+                "correct": 1,
                 "explain": "Copper.",
                 "lessonId": "M1.03.2"
               },
               {
                 "question": "What does an anemometer measure?",
                 "options": [
-                  "rainfall",
-                  "wind speed",
                   "pressure",
-                  "sunlight"
+                  "rainfall",
+                  "wind speed"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "Wind speed.",
                 "lessonId": "M1.03.1"
               },
               {
                 "question": "How many seconds are in an hour?",
                 "options": [
-                  "1,800",
-                  "2,400",
                   "3,600",
-                  "4,800"
+                  "1,800",
+                  "2,400"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "60 x 60 = 3,600.",
                 "lessonId": "M1.03.2"
               }
@@ -614,22 +590,20 @@
               {
                 "question": "What is the capital city of Japan?",
                 "options": [
-                  "Osaka",
                   "Kyoto",
                   "Tokyo",
-                  "Nagoya"
+                  "Osaka"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "Tokyo.",
                 "lessonId": "M2.01.1"
               },
               {
                 "question": "Which is the longest river in the world?",
                 "options": [
-                  "Amazon",
-                  "Nile",
                   "Yangtze",
-                  "Mississippi"
+                  "Nile",
+                  "Amazon"
                 ],
                 "correct": 1,
                 "explain": "The Nile, on the most common measurement.",
@@ -638,12 +612,11 @@
               {
                 "question": "How many continents are there?",
                 "options": [
-                  "five",
-                  "six",
                   "seven",
-                  "eight"
+                  "six",
+                  "five"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Seven, by the usual reckoning.",
                 "lessonId": "M2.01.1"
               },
@@ -652,44 +625,40 @@
                 "options": [
                   "Atlantic",
                   "Indian",
-                  "Arctic",
                   "Pacific"
                 ],
-                "correct": 3,
+                "correct": 2,
                 "explain": "The Pacific.",
                 "lessonId": "M2.01.2"
               },
               {
                 "question": "Mount Everest sits on the border between which two countries?",
                 "options": [
-                  "India and Nepal",
                   "Nepal and China",
                   "China and Bhutan",
-                  "India and Bhutan"
+                  "India and Nepal"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Nepal and China.",
                 "lessonId": "M2.01.1"
               },
               {
                 "question": "What is the smallest country in the world by area?",
                 "options": [
-                  "Monaco",
-                  "Malta",
                   "Vatican City",
-                  "San Marino"
+                  "Monaco",
+                  "Malta"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Vatican City.",
                 "lessonId": "M2.01.2"
               },
               {
                 "question": "Which desert is the largest hot desert?",
                 "options": [
-                  "Gobi",
                   "Kalahari",
-                  "Sahara",
-                  "Arabian"
+                  "Gobi",
+                  "Sahara"
                 ],
                 "correct": 2,
                 "explain": "The Sahara.",
@@ -700,8 +669,7 @@
                 "options": [
                   "Iraq and Iran",
                   "Iraq and Saudi Arabia",
-                  "Saudi Arabia and Qatar",
-                  "Iran and Bahrain"
+                  "Saudi Arabia and Qatar"
                 ],
                 "correct": 1,
                 "explain": "Iraq to the north, Saudi Arabia to the south.",
@@ -770,36 +738,33 @@
               {
                 "question": "Which country has the most people?",
                 "options": [
-                  "China",
                   "India",
-                  "United States",
-                  "Indonesia"
+                  "China",
+                  "United States"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "India, since 2023.",
                 "lessonId": "M2.02.1"
               },
               {
                 "question": "The Equator passes through which of these?",
                 "options": [
-                  "Egypt",
                   "Kenya",
                   "Morocco",
-                  "Turkey"
+                  "Egypt"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Kenya.",
                 "lessonId": "M2.02.2"
               },
               {
                 "question": "What is the capital of Australia?",
                 "options": [
-                  "Sydney",
-                  "Melbourne",
                   "Canberra",
-                  "Perth"
+                  "Melbourne",
+                  "Sydney"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Canberra, not Sydney.",
                 "lessonId": "M2.02.1"
               },
@@ -808,8 +773,7 @@
                 "options": [
                   "Red Sea",
                   "Dead Sea",
-                  "Black Sea",
-                  "Caspian Sea"
+                  "Black Sea"
                 ],
                 "correct": 1,
                 "explain": "The Dead Sea.",
@@ -820,8 +784,7 @@
                 "options": [
                   "seven",
                   "nine",
-                  "eleven",
-                  "thirteen"
+                  "eleven"
                 ],
                 "correct": 2,
                 "explain": "Eleven.",
@@ -830,22 +793,20 @@
               {
                 "question": "Which mountain range separates Europe from Asia?",
                 "options": [
-                  "Alps",
                   "Urals",
                   "Caucasus",
-                  "Carpathians"
+                  "Alps"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "The Urals.",
                 "lessonId": "M2.02.2"
               },
               {
                 "question": "What is the largest island in the world?",
                 "options": [
-                  "Borneo",
                   "Madagascar",
-                  "Greenland",
-                  "New Guinea"
+                  "Borneo",
+                  "Greenland"
                 ],
                 "correct": 2,
                 "explain": "Greenland.",
@@ -854,12 +815,11 @@
               {
                 "question": "Which city is furthest north?",
                 "options": [
-                  "Oslo",
-                  "Helsinki",
                   "Reykjavik",
-                  "Stockholm"
+                  "Helsinki",
+                  "Oslo"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Reykjavik.",
                 "lessonId": "M2.02.2"
               }
@@ -926,22 +886,20 @@
               {
                 "question": "The Suez Canal connects the Mediterranean to which sea?",
                 "options": [
-                  "Black Sea",
                   "Red Sea",
-                  "Arabian Sea",
-                  "Caspian Sea"
+                  "Black Sea",
+                  "Arabian Sea"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "The Red Sea.",
                 "lessonId": "M2.03.1"
               },
               {
                 "question": "Which country is both in Europe and Asia?",
                 "options": [
-                  "Greece",
-                  "Turkey",
                   "Cyprus",
-                  "Bulgaria"
+                  "Turkey",
+                  "Greece"
                 ],
                 "correct": 1,
                 "explain": "Turkey.",
@@ -951,57 +909,52 @@
                 "question": "What is the deepest point in the ocean?",
                 "options": [
                   "Puerto Rico Trench",
-                  "Java Trench",
                   "Mariana Trench",
-                  "Tonga Trench"
+                  "Java Trench"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "The Mariana Trench.",
                 "lessonId": "M2.03.1"
               },
               {
                 "question": "Which African country has the largest population?",
                 "options": [
-                  "Egypt",
-                  "Ethiopia",
                   "Nigeria",
-                  "South Africa"
+                  "Egypt",
+                  "Ethiopia"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Nigeria.",
                 "lessonId": "M2.03.2"
               },
               {
                 "question": "The Strait of Hormuz lies between Oman and which country?",
                 "options": [
-                  "Iran",
-                  "Iraq",
                   "Qatar",
-                  "Yemen"
+                  "Iran",
+                  "Iraq"
                 ],
-                "correct": 0,
+                "correct": 1,
                 "explain": "Iran.",
                 "lessonId": "M2.03.1"
               },
               {
                 "question": "Which is the highest waterfall in the world?",
                 "options": [
-                  "Niagara",
                   "Victoria",
                   "Angel Falls",
-                  "Iguazu"
+                  "Niagara"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "Angel Falls in Venezuela.",
                 "lessonId": "M2.03.2"
               },
               {
                 "question": "What is the largest lake by surface area?",
                 "options": [
-                  "Lake Superior",
-                  "Caspian Sea",
                   "Lake Victoria",
-                  "Lake Baikal"
+                  "Caspian Sea",
+                  "Lake Superior"
                 ],
                 "correct": 1,
                 "explain": "The Caspian Sea, counted as a lake.",
@@ -1010,12 +963,11 @@
               {
                 "question": "Which continent has no permanent residents?",
                 "options": [
-                  "Australia",
-                  "Antarctica",
                   "South America",
-                  "Africa"
+                  "Australia",
+                  "Antarctica"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "Antarctica.",
                 "lessonId": "M2.03.2"
               }
@@ -1174,8 +1126,7 @@
                 "options": [
                   "20",
                   "25",
-                  "30",
-                  "35"
+                  "30"
                 ],
                 "correct": 2,
                 "explain": "30.",
@@ -1185,11 +1136,10 @@
                 "question": "How many centimetres are in 2.5 metres?",
                 "options": [
                   "25",
-                  "250",
                   "2,500",
-                  "0.25"
+                  "250"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "250 centimetres.",
                 "lessonId": "M3.01.2"
               },
@@ -1197,23 +1147,21 @@
                 "question": "What is 7 x 8?",
                 "options": [
                   "48",
-                  "54",
                   "56",
-                  "64"
+                  "54"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "56.",
                 "lessonId": "M3.01.1"
               },
               {
                 "question": "Half of three quarters is:",
                 "options": [
-                  "one quarter",
                   "three eighths",
-                  "one half",
-                  "two thirds"
+                  "one quarter",
+                  "one half"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Three eighths.",
                 "lessonId": "M3.01.2"
               },
@@ -1222,8 +1170,7 @@
                 "options": [
                   "100",
                   "500",
-                  "1,000",
-                  "10,000"
+                  "1,000"
                 ],
                 "correct": 2,
                 "explain": "1,000 grams.",
@@ -1232,12 +1179,11 @@
               {
                 "question": "What is the square root of 144?",
                 "options": [
-                  "11",
                   "12",
                   "13",
-                  "14"
+                  "11"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "12.",
                 "lessonId": "M3.01.2"
               },
@@ -1246,8 +1192,7 @@
                 "options": [
                   "55",
                   "60",
-                  "65",
-                  "70"
+                  "65"
                 ],
                 "correct": 1,
                 "explain": "60.",
@@ -1258,8 +1203,7 @@
                 "options": [
                   "120",
                   "135",
-                  "150",
-                  "165"
+                  "150"
                 ],
                 "correct": 2,
                 "explain": "150 minutes.",
@@ -1328,10 +1272,9 @@
               {
                 "question": "What is 100 divided by 4?",
                 "options": [
-                  "20",
-                  "25",
                   "30",
-                  "40"
+                  "25",
+                  "20"
                 ],
                 "correct": 1,
                 "explain": "25.",
@@ -1340,10 +1283,9 @@
               {
                 "question": "Which is heavier: a kilogram of steel or a kilogram of feathers?",
                 "options": [
-                  "steel",
                   "feathers",
-                  "the same",
-                  "depends"
+                  "steel",
+                  "the same"
                 ],
                 "correct": 2,
                 "explain": "They weigh the same.",
@@ -1352,12 +1294,11 @@
               {
                 "question": "How many millilitres are in a litre?",
                 "options": [
-                  "10",
                   "100",
                   "1,000",
-                  "10,000"
+                  "10"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "1,000.",
                 "lessonId": "M3.02.1"
               },
@@ -1366,8 +1307,7 @@
                 "options": [
                   "12",
                   "25",
-                  "49",
-                  "31"
+                  "49"
                 ],
                 "correct": 1,
                 "explain": "9 + 16 = 25.",
@@ -1376,12 +1316,11 @@
               {
                 "question": "Twenty percent of a number is 14. What is the number?",
                 "options": [
-                  "56",
-                  "64",
                   "70",
-                  "84"
+                  "64",
+                  "56"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "70.",
                 "lessonId": "M3.02.1"
               },
@@ -1389,33 +1328,30 @@
                 "question": "How many days are in a leap year?",
                 "options": [
                   "364",
-                  "365",
                   "366",
-                  "367"
+                  "365"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "366.",
                 "lessonId": "M3.02.2"
               },
               {
                 "question": "What is one third of 90?",
                 "options": [
-                  "20",
                   "30",
                   "33",
-                  "45"
+                  "20"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "30.",
                 "lessonId": "M3.02.1"
               },
               {
                 "question": "A right-angled triangle has one angle of 90 and one of 35. The third is:",
                 "options": [
-                  "45",
                   "50",
-                  "55",
-                  "65"
+                  "45",
+                  "55"
                 ],
                 "correct": 2,
                 "explain": "180 - 90 - 35 = 55.",
@@ -1484,10 +1420,9 @@
               {
                 "question": "What is 12 x 12?",
                 "options": [
-                  "124",
                   "132",
-                  "144",
-                  "156"
+                  "124",
+                  "144"
                 ],
                 "correct": 2,
                 "explain": "144.",
@@ -1497,11 +1432,10 @@
                 "question": "How many inches are in a foot?",
                 "options": [
                   "10",
-                  "12",
                   "14",
-                  "16"
+                  "12"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "12.",
                 "lessonId": "M3.03.2"
               },
@@ -1509,11 +1443,10 @@
                 "question": "What is 0.25 as a fraction?",
                 "options": [
                   "one half",
-                  "one third",
                   "one quarter",
-                  "one fifth"
+                  "one third"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "One quarter.",
                 "lessonId": "M3.03.1"
               },
@@ -1521,11 +1454,10 @@
                 "question": "If a car travels 60 km in 45 minutes, its speed is:",
                 "options": [
                   "70 km/h",
-                  "75 km/h",
                   "80 km/h",
-                  "85 km/h"
+                  "75 km/h"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "80 km/h.",
                 "lessonId": "M3.03.2"
               },
@@ -1533,23 +1465,21 @@
                 "question": "What is 5 percent of 1,000?",
                 "options": [
                   "5",
-                  "50",
                   "100",
-                  "500"
+                  "50"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "50.",
                 "lessonId": "M3.03.1"
               },
               {
                 "question": "How many degrees in the angles of a triangle, added up?",
                 "options": [
-                  "90",
-                  "180",
                   "270",
-                  "360"
+                  "90",
+                  "180"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "180 degrees.",
                 "lessonId": "M3.03.2"
               },
@@ -1558,8 +1488,7 @@
                 "options": [
                   "20",
                   "24",
-                  "32",
-                  "64"
+                  "32"
                 ],
                 "correct": 2,
                 "explain": "Doubling each time, so 32.",
@@ -1568,12 +1497,11 @@
               {
                 "question": "What is 1,000 divided by 8?",
                 "options": [
-                  "115",
-                  "120",
                   "125",
-                  "130"
+                  "115",
+                  "120"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "125.",
                 "lessonId": "M3.03.2"
               }
@@ -1730,22 +1658,20 @@
               {
                 "question": "How many strings does a standard guitar have?",
                 "options": [
-                  "four",
-                  "five",
                   "six",
-                  "seven"
+                  "four",
+                  "five"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Six.",
                 "lessonId": "M4.01.1"
               },
               {
                 "question": "Which planet is known as the red planet?",
                 "options": [
-                  "Venus",
-                  "Mars",
                   "Mercury",
-                  "Saturn"
+                  "Mars",
+                  "Venus"
                 ],
                 "correct": 1,
                 "explain": "Mars.",
@@ -1755,45 +1681,41 @@
                 "question": "How many players are on a football team on the pitch?",
                 "options": [
                   "nine",
-                  "ten",
                   "eleven",
-                  "twelve"
+                  "ten"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "Eleven.",
                 "lessonId": "M4.01.1"
               },
               {
                 "question": "What colour do you get mixing blue and yellow?",
                 "options": [
-                  "orange",
                   "green",
                   "purple",
-                  "brown"
+                  "orange"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Green.",
                 "lessonId": "M4.01.2"
               },
               {
                 "question": "How many letters are in the English alphabet?",
                 "options": [
-                  "24",
-                  "25",
                   "26",
-                  "27"
+                  "25",
+                  "24"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "26.",
                 "lessonId": "M4.01.1"
               },
               {
                 "question": "Which animal is the fastest on land?",
                 "options": [
-                  "lion",
-                  "cheetah",
                   "horse",
-                  "greyhound"
+                  "cheetah",
+                  "lion"
                 ],
                 "correct": 1,
                 "explain": "The cheetah.",
@@ -1804,8 +1726,7 @@
                 "options": [
                   "27",
                   "28",
-                  "29",
-                  "30"
+                  "29"
                 ],
                 "correct": 1,
                 "explain": "28.",
@@ -1814,12 +1735,11 @@
               {
                 "question": "What is the largest mammal?",
                 "options": [
-                  "elephant",
                   "blue whale",
                   "giraffe",
-                  "hippopotamus"
+                  "elephant"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "The blue whale.",
                 "lessonId": "M4.01.2"
               }
@@ -1886,12 +1806,11 @@
               {
                 "question": "How many wheels does a standard bicycle have?",
                 "options": [
-                  "one",
                   "two",
-                  "three",
-                  "four"
+                  "one",
+                  "three"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Two.",
                 "lessonId": "M4.02.1"
               },
@@ -1900,8 +1819,7 @@
                 "options": [
                   "0",
                   "32",
-                  "64",
-                  "100"
+                  "64"
                 ],
                 "correct": 1,
                 "explain": "32 Fahrenheit.",
@@ -1912,8 +1830,7 @@
                 "options": [
                   "green",
                   "orange",
-                  "red",
-                  "purple"
+                  "red"
                 ],
                 "correct": 2,
                 "explain": "Red.",
@@ -1922,10 +1839,9 @@
               {
                 "question": "How many hours are in two days?",
                 "options": [
-                  "36",
                   "42",
-                  "48",
-                  "54"
+                  "36",
+                  "48"
                 ],
                 "correct": 2,
                 "explain": "48.",
@@ -1934,22 +1850,20 @@
               {
                 "question": "What do bees make?",
                 "options": [
-                  "silk",
                   "honey",
-                  "wax only",
-                  "milk"
+                  "silk",
+                  "wax only"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Honey, and wax.",
                 "lessonId": "M4.02.1"
               },
               {
                 "question": "How many continents start with the letter A?",
                 "options": [
-                  "two",
-                  "three",
                   "four",
-                  "five"
+                  "three",
+                  "two"
                 ],
                 "correct": 1,
                 "explain": "Africa, Asia, Antarctica.",
@@ -1958,12 +1872,11 @@
               {
                 "question": "What is the tallest animal?",
                 "options": [
-                  "elephant",
                   "giraffe",
-                  "camel",
-                  "ostrich"
+                  "elephant",
+                  "camel"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "The giraffe.",
                 "lessonId": "M4.02.1"
               },
@@ -1971,11 +1884,10 @@
                 "question": "How many sides does a triangle have?",
                 "options": [
                   "two",
-                  "three",
                   "four",
-                  "five"
+                  "three"
                 ],
-                "correct": 1,
+                "correct": 2,
                 "explain": "Three.",
                 "lessonId": "M4.02.2"
               }
@@ -2042,24 +1954,22 @@
               {
                 "question": "Which shape has all sides equal and all angles 90 degrees?",
                 "options": [
-                  "rectangle",
                   "rhombus",
                   "square",
-                  "trapezium"
+                  "rectangle"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "A square.",
                 "lessonId": "M4.03.1"
               },
               {
                 "question": "How many months have 31 days?",
                 "options": [
-                  "five",
-                  "six",
                   "seven",
-                  "eight"
+                  "six",
+                  "five"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Seven.",
                 "lessonId": "M4.03.2"
               },
@@ -2068,8 +1978,7 @@
                 "options": [
                   "rice",
                   "flour",
-                  "corn",
-                  "oats"
+                  "corn"
                 ],
                 "correct": 1,
                 "explain": "Flour.",
@@ -2080,8 +1989,7 @@
                 "options": [
                   "30",
                   "40",
-                  "45",
-                  "50"
+                  "45"
                 ],
                 "correct": 2,
                 "explain": "45.",
@@ -2090,12 +1998,11 @@
               {
                 "question": "Which of these floats in water?",
                 "options": [
-                  "iron",
                   "wood",
-                  "lead",
-                  "granite"
+                  "iron",
+                  "lead"
                 ],
-                "correct": 1,
+                "correct": 0,
                 "explain": "Wood, usually.",
                 "lessonId": "M4.03.1"
               },
@@ -2103,21 +2010,19 @@
                 "question": "How many zeros are in one million?",
                 "options": [
                   "four",
-                  "five",
                   "six",
-                  "seven"
+                  "five"
                 ],
-                "correct": 2,
+                "correct": 1,
                 "explain": "Six.",
                 "lessonId": "M4.03.2"
               },
               {
                 "question": "What do you call a baby cat?",
                 "options": [
-                  "cub",
-                  "kitten",
                   "calf",
-                  "foal"
+                  "kitten",
+                  "cub"
                 ],
                 "correct": 1,
                 "explain": "A kitten.",
@@ -2126,12 +2031,11 @@
               {
                 "question": "How many colours are in a rainbow, traditionally?",
                 "options": [
-                  "five",
-                  "six",
                   "seven",
-                  "eight"
+                  "six",
+                  "five"
                 ],
-                "correct": 2,
+                "correct": 0,
                 "explain": "Seven.",
                 "lessonId": "M4.03.2"
               }
@@ -2240,7 +2144,7 @@
     "notes": "Private. Yours only. {lessonId, t, body} — body may be empty, a bare pin is allowed and is the point. Never has replies. Never visible to anyone else.",
     "threads": "One table. lessonId + t set = a comment: appears under that video AND in People. lessonId null = a module post: People only, never under a video. This asymmetry is the whole rule and it enforces itself.",
     "replies": "Belong to a thread, never to a moment. One mark per thread, at the moment it was asked. Replies get no marks and no timestamps of their own.",
-    "quizQuestions": "Every quiz question carries lessonId — the join key for post-quiz review. Never match notes to questions semantically.",
+    "quizQuestions": "Three options, labelled A/B/C. Every question carries lessonId — the join key for the post-quiz review. Never match notes to questions semantically.",
     "lessons": "Each lesson carries durationS, watchedS and thumb. thumb is null until there is real video — the tile is generated deterministically from the lesson id, so nothing looks broken and swapping in a real URL later changes nothing else. Progress is watchedS/durationS and it is the ONLY place watched state is shown. Titles never dim.",
     "people": "initials are generated from the callsign and the avatar hue from the id, at render time. Neither is stored — one source of truth. Avatars are drawn, never uploaded: no file storage, no moderation, no cropper, and nobody has an empty avatar on day one.",
     "presence": "Who has been on a lesson and when. Needs nobody online and is full on day one. This is what makes a room of eleven feel inhabited."
@@ -2545,5 +2449,16 @@
       "userId": "u_four",
       "at": "2026-08-28T12:00:00Z"
     }
-  ]
+  ],
+  "quizRules": {
+    "options": 3,
+    "labels": [
+      "A",
+      "B",
+      "C"
+    ],
+    "passMark": 0.75,
+    "secondsPerQuestion": 75,
+    "note": "Shaped after the EASA Part-66 basic examination: three alternatives labelled (A) (B) (C), one correct and two plausible-but-incomplete distractors, 75% pass mark, a nominal 75 seconds per question. 8 questions therefore reads as 'about 10 minutes' and the pass mark as '6 of 8'. NOT a real examination and the copy must never imply it is."
+  }
 }

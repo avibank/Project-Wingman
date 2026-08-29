@@ -6,12 +6,12 @@ import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
 import { path as routePath } from "../../lib/routes.js";
 import {
-  MINI_W, MINI_MARGIN, BANNER_MS, SPEEDS, VOLUME_STEP, HUD_MS,
+  BANNER_MS, SPEEDS, VOLUME_STEP, HUD_MS,
   lessonMarks, markClusters, notesCrossed, bannerFrom, bannerLabel,
   openBar, closeBar, discardBar, editNote, expandBanner, dismissBanner,
   notesFor, keyAction, hudLabel, barPosition, barFraction, nudgeBar, isPin,
 } from "../../lib/lessonSurface.js";
-import { forwardWheel, shouldPrefetchNext, THUMB_W } from "../../lib/familiar.js";
+import { shouldPrefetchNext } from "../../lib/familiar.js";
 import "./lesson.css";
 
 // The one player. Mounted once, above the router, site-wide — it keeps playing
@@ -55,6 +55,11 @@ export default function PlayerLayer() {
   const { playing, dock, rate, volume, muted, fullscreen } = player;
 
   // ---------------------------------------------------------------- position
+  // NO SCROLL TRACKING. A fixed element repositioned from a scroll handler is
+  // always a frame behind the content, so the video visibly slid against the
+  // page — structural, not imagination. With the document scrolling, an
+  // absolutely positioned element placed at the slot's DOCUMENT offset moves
+  // with the page for free, and this runs on layout changes only.
   const place = useCallback(() => {
     const layer = layerRef.current;
     if (!layer) return;
@@ -63,55 +68,33 @@ export default function PlayerLayer() {
       if (!slot) return;
       const r = slot.getBoundingClientRect();
       layer.style.width = `${r.width}px`;
-      layer.style.transform = `translate(${r.left}px, ${r.top}px)`;
-    } else if (dock === "mini") {
-      if (window.innerWidth < 768) return;   // the stylesheet docks it to an edge
-      const h = (MINI_W * 9) / 16 + 44;
-      layer.style.width = `${MINI_W}px`;
+      layer.style.height = `${r.height}px`;
       layer.style.transform =
-        `translate(${window.innerWidth - MINI_W - MINI_MARGIN}px, ${window.innerHeight - h - MINI_MARGIN}px)`;
+        `translate(${r.left + window.scrollX}px, ${r.top + window.scrollY}px)`;
+    } else {
+      layer.style.width = "";
+      layer.style.height = "";
+      layer.style.transform = "";
     }
   }, [dock, stage]);
 
   useEffect(() => {
     if (dock === "none") return undefined;
     place();
-    let queued = false;
-    const onMove = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => { queued = false; place(); });
-    };
-    // Capture, on the document: this app scrolls an inner element and scroll
-    // does not bubble, so a window listener never fires.
-    document.addEventListener("scroll", onMove, { capture: true, passive: true });
-    window.addEventListener("resize", onMove);
-    const ro = stage?.slotEl ? new ResizeObserver(onMove) : null;
+    // Resize and layout only. No scroll listener at all — that is the point.
+    window.addEventListener("resize", place);
+    const ro = stage?.slotEl ? new ResizeObserver(place) : null;
     if (ro && stage.slotEl) ro.observe(stage.slotEl);
     return () => {
-      document.removeEventListener("scroll", onMove, { capture: true });
-      window.removeEventListener("resize", onMove);
+      window.removeEventListener("resize", place);
       ro?.disconnect();
     };
   }, [dock, place, stage]);
 
-  // §2.1 — a wheel over the video scrolled nothing at all.
-  //
-  // The page scrolls inside .deck and this layer is position:fixed above the
-  // router, so the video is not inside the scroller and a wheel over it finds
-  // nothing to scroll. The video is the middle 45% of the screen and exactly
-  // where the cursor sits after you press play, so scrolling down to your own
-  // notes appeared to do nothing.
-  //
-  // NOT fixed with touch-action: none on the layer — that belongs on the note
-  // bar's drag handle and nowhere else. On the layer it would stop a finger
-  // dragging the page on a phone, which is the same bug and worse.
-  useEffect(() => {
-    const layer = layerRef.current;
-    if (!layer || dock !== "inline") return undefined;
-    return forwardWheel(layer, () => stage?.slotEl?.closest("[data-scroller]")
-      || document.querySelector(".deck"));
-  }, [dock, stage]);
+  // The wheel forwarding that used to live here is gone. It existed because
+  // the page scrolled inside .deck and the fixed player was not inside it;
+  // with the document scrolling, a wheel anywhere scrolls it natively and
+  // forwarding would be a second, laggier copy of the browser's own job.
 
   // One step ahead, at halfway — never the whole module. Prefetching
   // everything is how you make the first paint slow to make the second fast.

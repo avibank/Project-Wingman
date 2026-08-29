@@ -229,14 +229,14 @@ const ROOM_CSS = `
      and overflow-x clipped the difference: the page rendered at desktop width
      with the right-hand half simply cut off and no way to reach it. */
   grid-template-columns: minmax(0, 1fr);
-  overflow-y: auto; overflow-x: hidden;
+  /* No overflow. The document scrolls; this is a layout box now. */
+  overflow-x: clip;
   /* grid with safe centring, not margin-block:auto. An auto vertical margin
      computes to zero in a block container — it only centres in flex or grid.
      The safe keyword is the important half: when the content is taller than
      the scroller it falls back to start, so nothing gets clipped off the top
      and made unreachable, which is the classic way this goes wrong. */
   display: grid; align-content: safe center;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scroll-padding-block: 16px;
   padding: 0 40px; color: var(--t1);

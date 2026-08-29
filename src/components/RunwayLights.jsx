@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { scrollProgress, litCount } from "../lib/shell.js";
 
 // The scroll indicator, as a runway centreline light bar — and a structural row
 // of the shell, so it is visible at every scroll position on every route.
@@ -22,72 +23,44 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 const LIGHTS = 12;
 const colourAt = (i) => (i < 8 ? "is-white" : i < 10 ? "is-amber" : "is-red");
 
-function RunwayLights({ scroller, route }) {
-  // Only the lit count is state. It changes twelve times over a whole page;
-  // scroll position changes on every frame, and putting that in state
-  // re-rendered twelve lamps sixty times a second, which is what made the run
-  // flicker on a phone.
-  const [lit, setLit] = useState(0);
-  const litRef = useRef(0);
+function RunwayLights({ route }) {
   const rootRef = useRef(null);
-  const max = useRef(0);
-  const remeasure = useRef(null);
+  const [lit, setLit] = useState(0);
 
+  // Window scroll, not a container's. This is the only line that changes when
+  // the shell comes out — mountRunway coalesces into one rAF and writes only
+  // when the lit count actually changes, which is about twelve times over a
+  // whole page. Updating on every scroll event is the same mistake that made
+  // the video swim: a handler runs after paint, so the indicator is a frame
+  // behind whatever it is indicating.
   useEffect(() => {
-    const el = scroller?.current;
+    const el = rootRef.current;
     if (!el) return undefined;
-
-    const read = () => {
-      const m = max.current;
-      const p = m > 0 ? Math.min(1, Math.max(0, el.scrollTop / m)) : 0;
-      // The trail is a style, not state. Written straight to the node so a
-      // scroll costs one property set instead of a React render.
-      rootRef.current?.style.setProperty("--progress", p);
-      const next = m > 0 ? Math.round(p * LIGHTS) : 0;
-      if (next !== litRef.current) { litRef.current = next; setLit(next); }
+    let last = -1;
+    let ticking = false;
+    const paint = () => {
+      const p = scrollProgress();
+      if (p === null) { el.dataset.idle = "1"; if (last !== 0) { last = 0; setLit(0); } return; }
+      el.dataset.idle = "0";
+      el.style.setProperty("--progress", String(p));
+      const n = litCount(p, LIGHTS);
+      if (n === last) return;
+      last = n;
+      setLit(n);
     };
-    // scrollHeight forces layout, so it is measured on resize rather than on
-    // every scroll event. scrollTop is free.
-    const measure = () => {
-      max.current = el.scrollHeight - el.clientHeight;
-      read();
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; paint(); });
     };
-
-    // No rAF throttle. scrollTop is a free read, and the guarded version of
-    // this latches: if the frame it schedules never runs — a backgrounded tab,
-    // a dropped frame — the guard stays set and the indicator dies for good.
-    // The expensive read is scrollHeight, and that is on resize only.
-    // measure() reads scrollHeight, which forces layout. Coalesced to one per
-    // frame so a window drag cannot force a layout per resize event. Direct
-    // calls — mount, and the route change below — stay synchronous.
-    let raf = 0;
-    const measureSoon = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measure);
-    };
-
-    el.addEventListener("scroll", read, { passive: true });
-    window.addEventListener("resize", measureSoon);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measureSoon) : null;
-    ro?.observe(el);
-    if (el.firstElementChild) ro?.observe(el.firstElementChild);
-    remeasure.current = measure;
-    measure();
-
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", paint);
+    paint();
     return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener("scroll", read);
-      window.removeEventListener("resize", measureSoon);
-      ro?.disconnect();
-      remeasure.current = null;
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", paint);
     };
-  }, [scroller]);
-
-  // Route changes swap the content inside the scroller, which changes how far
-  // there is to run. Keyed to the route rather than left to run after every
-  // render: measure reads scrollHeight, which forces layout, and with no
-  // dependencies that happened on every scroll event.
-  useLayoutEffect(() => { remeasure.current?.(); }, [route]);
+  }, [route]);
 
   return (
     <div className="flight-progress" aria-hidden="true" ref={rootRef} style={{ "--progress": 0 }}>
@@ -104,7 +77,16 @@ function RunwayLights({ scroller, route }) {
            keeps its height whether or not there is anything to indicate, so
            nothing shifts when a page turns out not to scroll. */
         .flight-progress {
-          position: static; z-index: 5;
+          /* Fixed to the foot of the viewport, and a SIBLING OF THE ROUTER so
+             no ancestor with a transform, filter or contain can capture it —
+             the aurora rig has both, and anything fixed inside it silently
+             stops being fixed. That is what made a shell look necessary.
+
+             pointer-events: none, because a full-width strip across the foot
+             of the viewport is exactly the kind of thing that quietly eats
+             taps on the last row of every list. */
+          position: fixed; inset: auto 0 0 0; z-index: 5;
+          pointer-events: none;
           display: flex; align-items: center; justify-content: space-between;
           gap: 12px;
           padding-inline: 16px;
@@ -112,6 +94,8 @@ function RunwayLights({ scroller, route }) {
           background: var(--panel);
           border-top: 1px solid var(--border-soft);
         }
+        /* Nothing to scroll is not a full runway — it is no runway. */
+        .flight-progress[data-idle="1"] { display: none; }
 
         .runway-lights { position: relative; display: flex; gap: 4px; }
 

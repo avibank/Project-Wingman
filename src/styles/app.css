@@ -93,10 +93,15 @@
 
 /* ------------------------------------------------------------- 4 · the page */
 * { box-sizing: border-box; }
-/* The window never scrolls. Only .deck does. */
-html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-html, body, #root { margin: 0; background: var(--ground); }
-#root { height: 100%; }
+/* THE DOCUMENT SCROLLS. There is no inner scroll container.
+   The shell existed so the runway lights could sit at the bottom of a
+   fixed-height box, and it cost four things: the wheel did nothing over the
+   video, the mini player docked inconsistently because the observer root and
+   the real scroller disagreed, iOS never collapsed its URL bar, and
+   position:sticky measured against the wrong box. The lights are a fixed chin
+   now, which is placement rather than architecture. */
+html, body { margin: 0; background: var(--ground); }
+#root { margin: 0; background: var(--ground); }
 body {
   font-family: var(--font-ui);
   color: var(--t1);

@@ -116,7 +116,11 @@
 
 /* Nothing scrolls the page sideways. Ever. Wide things scroll inside
    their own container.                                              */
-html,body{ overflow-x:hidden; }
+/* overflow-x:hidden on html/body forces overflow-y to a scrolling value on
+   the same element, which is enough to keep the document from being the
+   scroller. Clipping horizontal overflow is still wanted, so it moves to the
+   one box that can carry it without that side effect. */
+body{ overflow-x:clip; }
 .scroll-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
 /* Long words and codes break instead of pushing the layout open.     */
