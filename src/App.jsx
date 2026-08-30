@@ -596,8 +596,11 @@ function AppInner() {
         </main>
       ) : settingsPage ? (
         <main className="content content-taxi">
+          {/* No page prop: /settings/:page is parsed by the router and mapped
+              here, but this screen has no sub-pages — the profile tabs moved to
+              /account/*. It was passed and ignored, which is the same shape as
+              the bug that hid the quiz's place-keeping. */}
           <SettingsPage
-            page={settingsPage}
             onBack={() => go(-1)}
             testStreakOverrideOn={testStreakOverrideOn}
             onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
