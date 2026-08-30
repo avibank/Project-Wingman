@@ -368,12 +368,20 @@ export default function PlayerLayer() {
       latest = barFraction({ x: ev.clientX - p.left - off.x, y }, p, b);
       setBarPos(latest, false);
     };
+    // pointerup is not the only way a drag ends. A captured pointer that gets
+    // cancelled — a system gesture, an incoming call, the browser taking the
+    // touch back — fires pointercancel and NEVER pointerup, so listening only
+    // for the happy ending left pointermove attached and the bar stuck to the
+    // finger for the rest of the session.
     const up = () => {
       handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", up);
+      handle.removeEventListener("pointercancel", up);
       setBarPos(latest, true);   // persisted on drop, not on every pointermove
     };
     handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", up, { once: true });
+    handle.addEventListener("pointerup", up);
+    handle.addEventListener("pointercancel", up);
   };
 
   const onHandleKey = (e) => {
@@ -429,7 +437,15 @@ export default function PlayerLayer() {
     const up = () => setScrubbing(false);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
-    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    // Same reason as the note bar's drag: a cancelled pointer never sends
+    // pointerup, so scrubbing stayed true and the video went on seeking to
+    // every mouse move afterwards, with no button held down.
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
   }, [scrubbing, seekTo]);
 
   if (!lesson || !video) return null;
