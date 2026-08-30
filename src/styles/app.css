@@ -93,13 +93,21 @@
 
 /* ------------------------------------------------------------- 4 · the page */
 * { box-sizing: border-box; }
-/* THE DOCUMENT SCROLLS. There is no inner scroll container.
-   The shell existed so the runway lights could sit at the bottom of a
-   fixed-height box, and it cost four things: the wheel did nothing over the
-   video, the mini player docked inconsistently because the observer root and
-   the real scroller disagreed, iOS never collapsed its URL bar, and
-   position:sticky measured against the wrong box. The lights are a fixed chin
-   now, which is placement rather than architecture. */
+/* THE SHELL SCROLLS, NOT THE DOCUMENT. .app is exactly one viewport tall and
+   .deck scrolls inside it. html and body carry no height and no overflow, so
+   nothing here fights the shell — three separate rules pinning the document
+   were what made the last attempt at this ambiguous.
+
+   This reverses the earlier removal, which listed four costs. Three are
+   answered rather than accepted:
+     · the wheel over the video — the player layer is a child of .deck now, so
+       wheel events over it scroll the container natively;
+     · the mini player docking — observeSlot takes the scroller as its
+       IntersectionObserver root, so the root and the real scroller agree;
+     · position:sticky — it measures against .deck, which is the box a sticky
+       header inside the content actually wants.
+   The fourth is real and remains: a fixed-height shell means iOS will not
+   collapse its URL bar on scroll. That is the price of this layout. */
 html, body { margin: 0; background: var(--ground); }
 #root { margin: 0; background: var(--ground); }
 body {

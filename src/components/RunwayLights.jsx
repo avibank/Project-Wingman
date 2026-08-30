@@ -27,19 +27,27 @@ function RunwayLights({ route }) {
   const rootRef = useRef(null);
   const [lit, setLit] = useState(0);
 
-  // Window scroll, not a container's. This is the only line that changes when
-  // the shell comes out — mountRunway coalesces into one rAF and writes only
-  // when the lit count actually changes, which is about twelve times over a
-  // whole page. Updating on every scroll event is the same mistake that made
-  // the video swim: a handler runs after paint, so the indicator is a frame
-  // behind whatever it is indicating.
+  // THE SCROLLER'S scroll, not the window's. Inside a fixed shell the window
+  // never scrolls, so a runway listening to it stays dark on every page — and
+  // dark reads as "you have not moved" rather than as "this is measuring the
+  // wrong thing", which is the kind of wrong that does not get reported.
+  //
+  // Coalesced into one rAF, writing only when the lit count actually changes:
+  // about twelve times over a whole page. Updating on every scroll event is the
+  // same mistake that made the video swim — a handler runs after paint, so the
+  // indicator ends up a frame behind whatever it is indicating.
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return undefined;
+    // LOOKED UP INSIDE paint(), NOT ONCE AT MOUNT. A gate can be blocking when
+    // this first runs, so .deck does not exist yet; capture it once and the
+    // runway is bound to null for the life of the route and stays dark forever.
+    // The lookup is one querySelector per rAF, which is nothing.
+    const findScroller = () => document.querySelector(".deck");
     let last = -1;
     let ticking = false;
     const paint = () => {
-      const p = scrollProgress();
+      const p = scrollProgress(findScroller());
       if (p === null) { el.dataset.idle = "1"; if (last !== 0) { last = 0; setLit(0); } return; }
       el.dataset.idle = "0";
       el.style.setProperty("--progress", String(p));
@@ -53,12 +61,44 @@ function RunwayLights({ route }) {
       ticking = true;
       requestAnimationFrame(() => { ticking = false; paint(); });
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
+    // SCROLL DOES NOT BUBBLE, BUT IT DOES CAPTURE. Listening on the document
+    // in the capture phase catches the scroller's own scroll without this
+    // component having to hold a reference to it — which is what lets the
+    // lookup stay lazy. Binding straight to .deck would mean binding to
+    // whatever .deck happened to be at mount, and that is the bug above.
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
     window.addEventListener("resize", paint);
+
+    // AND WHEN THE CONTENT GROWS. Scroll and resize alone are not enough: this
+    // paints once at mount, when the route is still a skeleton and there is
+    // nothing to scroll, so the run hides itself — and then nothing scrolls,
+    // because there is nothing to scroll, so it never repaints and the runway
+    // stays hidden on a page that does scroll. Watching the content is what
+    // closes that loop.
+    const ro = new ResizeObserver(paint);
+    const watch = () => {
+      const sc = findScroller();
+      if (!sc) return false;
+      ro.observe(sc);
+      if (sc.firstElementChild) ro.observe(sc.firstElementChild);
+      return true;
+    };
+    // If the shell is not up yet, watch the body until it is.
+    if (!watch()) ro.observe(document.body);
+
     paint();
+    // And once more after the commit settles. The first paint can land while a
+    // gate is still up or before the route has rendered its content, when there
+    // is genuinely nothing to scroll; without a second look the run would wait
+    // for the observer to notice, and a reader who lands and does not scroll
+    // would see no runway at all on a page that has one.
+    const settle = setTimeout(paint, 0);
+
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      clearTimeout(settle);
+      document.removeEventListener("scroll", onScroll, { capture: true });
       window.removeEventListener("resize", paint);
+      ro.disconnect();
     };
   }, [route]);
 

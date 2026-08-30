@@ -85,9 +85,17 @@ export const RUNWAY_N = 12;
 
 /* Read from the window, not from a container. This is the only line that
    changes when the shell comes out. */
-export const scrollProgress = () => {
-  const max = document.documentElement.scrollHeight - window.innerHeight;
-  return max <= 4 ? null : Math.min(1, Math.max(0, window.scrollY / max));
+/* Progress through whatever is actually scrolling. With the shell back, that is
+   .deck and not the window — window.scrollY is permanently 0 inside a fixed
+   shell, so a runway read from the window shows an empty run on every page. The
+   scroller is passed in rather than looked up, so this stays pure and testable
+   and there is one place that decides what "the scroller" means. */
+export const scrollProgress = (el) => {
+  const box = el || document.documentElement;
+  const view = el ? el.clientHeight : window.innerHeight;
+  const pos = el ? el.scrollTop : window.scrollY;
+  const max = box.scrollHeight - view;
+  return max <= 4 ? null : Math.min(1, Math.max(0, pos / max));
 };
 
 export const litCount = (p, n = RUNWAY_N) => Math.round(p * n);
@@ -98,10 +106,11 @@ export const litCount = (p, n = RUNWAY_N) => Math.round(p * n);
    made the video swim — a handler runs after paint, so the indicator is always
    a frame behind. Coalesce into rAF, and only touch the DOM when the number of
    lit dots actually changes, which is about twelve times over a whole page. */
-export function mountRunway(chinEl, dots) {
+export function mountRunway(chinEl, dots, scroller) {
   let ticking = false, last = -1;
+  const target = scroller || window;
   const paint = () => {
-    const p = scrollProgress();
+    const p = scrollProgress(scroller);
     if (p === null) { chinEl.hidden = true; return; }   // nothing to scroll
     chinEl.hidden = false;
     const lit = litCount(p, dots.length);
@@ -114,10 +123,10 @@ export function mountRunway(chinEl, dots) {
     ticking = true;
     requestAnimationFrame(() => { paint(); ticking = false; });
   };
-  addEventListener('scroll', onScroll, { passive: true });
+  target.addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', paint);
   paint();
-  return () => { removeEventListener('scroll', onScroll); removeEventListener('resize', paint); };
+  return () => { target.removeEventListener('scroll', onScroll); removeEventListener('resize', paint); };
 }
 
 /* `pointer-events: none` on the chin. A full-width strip across the foot of the

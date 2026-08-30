@@ -64,7 +64,7 @@ export default function LessonPage({
   // The slot is what is watched, not the player — the player leaves it.
   useEffect(() => {
     if (!slotRef.current) return undefined;
-    return observeSlot(slotRef.current, dispatchPlayer);
+    return observeSlot(slotRef.current, dispatchPlayer, slotRef.current.closest(".deck"));
   }, [dispatchPlayer]);
 
   // Hand the player this lesson, the slot to sit over, and where to report.

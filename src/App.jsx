@@ -881,6 +881,16 @@ function AppInner() {
         </div>
       </RouteError>
       </Suspense>
+
+      {/* The one <video>, INSIDE THE SCROLLER and outside the routed content.
+          Inside, because it is absolutely positioned at the slot's offset and
+          an absolutely-positioned child of a scroll container scrolls with that
+          container for free — no scroll listener, so it cannot lag a frame
+          behind the page the way a tracked element does.
+          Outside .deck-inner, because that subtree is keyed by route name and
+          remounts on every navigation, and re-parenting a <video> restarts
+          playback in every browser. */}
+      <PlayerLayer />
       </div>
 
     <DevPanel
@@ -906,15 +916,18 @@ function AppInner() {
         scores={moduleState.quiz}
         onClose={() => setAccuracyOpen(false)} />
     )}
-    {/* The one <video>. A sibling of the routed content, never inside it. */}
-    <PlayerLayer />
     <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
     </FirstFlightGate>
     </UsernameGate>
-    {/* Outside .app on purpose. The aurora rig inside it has filter: blur()
-        and will-change: transform, and any of those on an ancestor makes a
-        position:fixed descendant resolve against THAT element instead of the
-        viewport. The chin is fixed, so it has to live out here. */}
+    {/* A child of .app, and fixed to the viewport from there — measured, not
+        assumed: the chin's bottom edge sits exactly at window.innerHeight.
+        What would break that is an ancestor with transform, filter,
+        perspective, contain or will-change, which makes a position:fixed
+        descendant resolve against THAT element instead of the viewport. The
+        aurora rig has filter: blur() and will-change, but it is a SIBLING
+        (.deck-light is absolute, inset 0) rather than an ancestor, so it
+        cannot capture this. The shell's own overflow: hidden does not capture
+        fixed either — only the properties listed above do. */}
     <RunwayLights route={route.name} />
       <style>{`
         @font-face {
@@ -1025,16 +1038,37 @@ function AppInner() {
           /* THE SHELL. Three rows — header, scroller, runway lights — and the
              light rig behind all of them. Short pages have no dead space by
              construction, because the shell is always exactly one viewport. */
-          /* No fixed height and NO overflow:clip. Both were part of the shell,
-             and overflow:clip on an ancestor is also one of the properties that
-             makes position:fixed resolve against THAT element instead of the
-             viewport — the trap that made the chin and the player layer stop
-             behaving like fixed elements inside the deck. */
-          min-height: 100dvh;
+          /* THE SHELL, restored. The app is exactly one viewport tall and does
+             not scroll; .deck scrolls inside it. Short pages have no dead space
+             by construction, and the chin sits at the foot of the screen rather
+             than at the foot of a document that may be shorter than the screen.
+
+             overflow: hidden, NOT clip. Both stop the app itself scrolling, but
+             clip is one of the properties that makes a position:fixed
+             descendant resolve against THAT element instead of the viewport —
+             the trap that broke the chin and the player last time. hidden on
+             a non-transformed element does not capture fixed, and the runway
+             lights are measured against the viewport after this change to prove
+             it. */
+          height: 100dvh;
+          overflow: hidden;
           display: grid;
           grid-template-rows: auto 1fr auto;
           padding: 0;
           position: relative;
+        }
+        /* THE SCROLLER. min-height: 0 is not optional — a grid item's automatic
+           minimum size is its content, so without it the row grows to fit the
+           page and the shell scrolls the document after all, which is exactly
+           the bug this looks like when it is missing.
+           position: relative so the player layer inside it can be placed in the
+           scroller's own coordinates. */
+        .app .deck {
+          min-height: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+          position: relative;
+          overscroll-behavior: contain;
         }
         /* A gate that blocks — first flight, the username prompt — renders as
            the only child, and would otherwise be squashed into the header row. */

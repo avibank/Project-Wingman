@@ -107,10 +107,16 @@ export function playerReducer(p, ev) {
   }
 }
 
-export function observeSlot(slotEl, dispatch) {
+export function observeSlot(slotEl, dispatch, root) {
+  // ROOT IS THE SCROLLER, not the viewport. With the shell back they are two
+  // different boxes — the shell reserves a header row, so the scroller is
+  // shorter than the screen — and an observer measuring against the viewport
+  // calls the slot visible while it is already scrolled up behind the header.
+  // That disagreement between the observer root and the real scroller is
+  // exactly what made the mini player dock inconsistently before.
   const io = new IntersectionObserver(
     ([e]) => dispatch({ type: 'slot', visible: e.intersectionRatio >= DOCK_THRESHOLD }),
-    { threshold: [0, DOCK_THRESHOLD, 1] }
+    { threshold: [0, DOCK_THRESHOLD, 1], root: root || null }
   );
   io.observe(slotEl);
   return () => io.disconnect();

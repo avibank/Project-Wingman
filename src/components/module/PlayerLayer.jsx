@@ -65,22 +65,33 @@ export default function PlayerLayer() {
   const { playing, dock, rate, volume, muted, fullscreen } = player;
 
   // ---------------------------------------------------------------- position
-  // NO SCROLL TRACKING. A fixed element repositioned from a scroll handler is
-  // always a frame behind the content, so the video visibly slid against the
-  // page — structural, not imagination. With the document scrolling, an
-  // absolutely positioned element placed at the slot's DOCUMENT offset moves
-  // with the page for free, and this runs on layout changes only.
+  // NO SCROLL TRACKING, and that survives the shell coming back. A fixed
+  // element repositioned from a scroll handler is always a frame behind the
+  // content, which is why the video visibly slid against the page — structural,
+  // not imagination.
+  //
+  // The layer is a child of .deck, the scroller, so an absolutely positioned
+  // element placed at the slot's offset IN THE SCROLLER'S OWN COORDINATES moves
+  // with the content for free. Those coordinates are the only thing that
+  // changed when the document stopped being the scroller: it is the scroller's
+  // scrollTop and its box that matter now, not window.scrollY and the page.
   const place = useCallback(() => {
     const layer = layerRef.current;
     if (!layer) return;
     if (dock === "inline") {
       const slot = stage?.slotEl;
       if (!slot) return;
+      const scroller = layer.closest(".deck");
       const r = slot.getBoundingClientRect();
       layer.style.width = `${r.width}px`;
       layer.style.height = `${r.height}px`;
-      layer.style.transform =
-        `translate(${r.left + window.scrollX}px, ${r.top + window.scrollY}px)`;
+      if (scroller) {
+        const s = scroller.getBoundingClientRect();
+        layer.style.transform = `translate(${r.left - s.left + scroller.scrollLeft}px, ${r.top - s.top + scroller.scrollTop}px)`;
+      } else {
+        // No shell (a gate is rendering on its own): fall back to the document.
+        layer.style.transform = `translate(${r.left + window.scrollX}px, ${r.top + window.scrollY}px)`;
+      }
     } else {
       layer.style.width = "";
       layer.style.height = "";
