@@ -166,6 +166,15 @@
 /* — library — */
 .mscreen .subtabs{display:inline-flex;gap:2px;margin:6px var(--pad) 0;background:var(--raised);border-radius:999px;padding:3px}
 .mscreen .filt{display:flex;gap:10px;align-items:center;padding:22px var(--pad) 18px;flex-wrap:wrap}
+/* The chapter filter past CHIP_MAX. Same job as the chips, constant height. */
+.mscreen .fsel{display:inline-flex;align-items:center;gap:8px}
+.mscreen .fsel-l{font-size:var(--fs-sm);color:var(--t2)}
+.mscreen .fsel-f{
+  min-height:var(--tap);padding:0 12px;border-radius:9px;
+  background:var(--raised);border:1px solid var(--edge,var(--hair));
+  color:var(--t1);font-family:inherit;font-size:var(--fs-sm);cursor:pointer;
+}
+.mscreen .fsel-f:focus-visible{outline:none;border-color:var(--active)}
 .mscreen .search{flex:1;min-width:200px;background:var(--raised);border:0;border-radius:10px;padding:12px 15px;color:var(--t1);font-family:inherit;font-size:15px}
 .mscreen .search::placeholder{color:var(--t3)}
 .mscreen .fchip{background:none;border:0;border-radius:999px;padding:8px 20px;font-family:inherit;

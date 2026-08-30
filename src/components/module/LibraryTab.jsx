@@ -6,6 +6,10 @@ import { hits, terms } from "../../lib/moduleSearch.js";
 // have done, not what is available. The same quiz reached from its chapter and
 // from here is one object with one score, which is why both read the same
 // state.quiz map rather than keeping their own.
+// Where a row of chips stops being a row. Twelve wraps to at most two lines at
+// the narrowest card, which still reads as a set of choices.
+const CHIP_MAX = 12;
+
 export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpenQuiz, onOpenPaper, query = "" }) {
   const [chapterFilter, setChapterFilter] = useState(null);
   // The search moved out to sit beside the tabs (§2.3). The chapter chips
@@ -37,14 +41,33 @@ export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpen
 
       {sub === "papers" ? (
         <>
+          {/* One chip per chapter is right for four and wrong for forty: at 42
+              the chips wrapped to 354px and buried the papers under the filter
+              for them. Past the cap the same choice becomes one select — the
+              function is kept, not dropped, and the height stops growing. */}
           <div className="filt">
-            <button type="button" className="fchip" aria-pressed={!chapterFilter}
-                    onClick={() => setChapterFilter(null)}>All</button>
-            {chapters.map((c) => (
-              <button key={c.id} type="button" className="fchip"
-                      aria-pressed={chapterFilter === c.id}
-                      onClick={() => setChapterFilter(c.id)}>{c.title}</button>
-            ))}
+            {chapters.length > CHIP_MAX ? (
+              <label className="fsel">
+                <span className="fsel-l">Chapter</span>
+                <select className="fsel-f" value={chapterFilter || ""}
+                        onChange={(e) => setChapterFilter(e.target.value || null)}>
+                  <option value="">All chapters</option>
+                  {chapters.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <>
+                <button type="button" className="fchip" aria-pressed={!chapterFilter}
+                        onClick={() => setChapterFilter(null)}>All</button>
+                {chapters.map((c) => (
+                  <button key={c.id} type="button" className="fchip"
+                          aria-pressed={chapterFilter === c.id}
+                          onClick={() => setChapterFilter(c.id)}>{c.title}</button>
+                ))}
+              </>
+            )}
           </div>
 
           <div className="libwrap">

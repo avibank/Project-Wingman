@@ -1,5 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { mmss } from "./lessonState.js";
+import {
+  H, PAD, pathFor, pointAt, showDots, labelX as clampLabel,
+} from "../../lib/routeGeometry.js";
 
 // The three instruments on the hero strip. Each names itself on its own face,
 // so no cell carries a caption, a value line or a "press for…" hint — the
@@ -129,26 +132,20 @@ export function Route({ chapters = [], atIndex = 0, started = false }) {
     return () => ro.disconnect();
   }, []);
 
-  const H = 92;
-  const GROUND = 70, CRUISE = 26;
-  const climbTo = 0.16, descendFrom = 0.82;
-  const PAD = 8;
-  const d = `M ${PAD} ${GROUND} C ${W * 0.06} ${GROUND} ${W * 0.10} ${CRUISE} ${W * climbTo} ${CRUISE}`
-    + ` L ${W * descendFrom} ${CRUISE}`
-    + ` C ${W * 0.90} ${CRUISE} ${W * 0.95} ${GROUND} ${W - PAD} ${GROUND}`;
-
+  // The geometry moved to lib/routeGeometry.js so it can be measured at forty
+  // chapters and a narrow card without rendering anything.
+  const d = pathFor(W);
   const n = Math.max(1, chapters.length);
-  const at = (i) => {
-    const f = n === 1 ? 0.5 : i / (n - 1);
-    const x = PAD + f * (W - PAD * 2);
-    const y = f < climbTo ? GROUND - (GROUND - CRUISE) * (f / climbTo)
-      : f > descendFrom ? CRUISE + (GROUND - CRUISE) * ((f - descendFrom) / (1 - descendFrom))
-        : CRUISE;
-    return { x, y };
-  };
+  const at = (i) => pointAt(i, n, W);
   const here = at(Math.max(0, Math.min(n - 1, atIndex)));
-  // Clamped, so the label can never overflow either end at any width.
-  const labelX = Math.max(96, Math.min(W - 96, here.x));
+  // Clamped against the width of THIS label, not a fixed guess: the string
+  // grows with the chapter number and the bound has to grow with it.
+  const labelText = `CHAPTER ${atIndex + 1} · YOU ARE HERE`;
+  const labelX = clampLabel(here.x, W, labelText);
+  // Past the point where waypoints are further apart than they are wide, the
+  // dots stop being waypoints and become a dotted rule. The line carries the
+  // route on its own and only the current position stays marked.
+  const dots = showDots(n, W);
 
   return (
     <div className="route-wrap" ref={wrapRef}>
@@ -170,7 +167,7 @@ export function Route({ chapters = [], atIndex = 0, started = false }) {
           </>
         )}
 
-        {chapters.map((c, i) => {
+        {dots && chapters.map((c, i) => {
           const p = at(i);
           return <circle key={c.id || i} className="route-dot"
                          data-passed={started && i <= atIndex ? "1" : "0"}
@@ -180,7 +177,7 @@ export function Route({ chapters = [], atIndex = 0, started = false }) {
         <circle className="route-here-ring" cx={here.x} cy={here.y} r="9" />
         <circle className="route-here" cx={here.x} cy={here.y} r="4.5" />
         <text className="route-label" x={labelX} y={here.y - 20} textAnchor="middle">
-          CHAPTER {atIndex + 1} · YOU ARE HERE
+          {labelText}
         </text>
       </svg>
     </div>
