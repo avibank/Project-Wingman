@@ -98,7 +98,7 @@ export default function ModuleScreen({
           {/* §2.2 — the indicator row sits directly under the module title,
               inside the banner's left block, so title and instruments read as
               one identity rather than as a heading and a toolbar. */}
-          <div className="row">
+          <div className="instrow">
             <Accuracy mean={avgPct} passMark={passMark}
                       onPress={() => onInstrument?.("accuracy")} />
             <Calibration count={due} hasData={taken.length > 0}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
-import { thumbTile, clock } from "../../lib/familiar.js";
+import { thumbTile } from "../../lib/familiar.js";
+import { passAt } from "../../lib/quiz.js";
 import { posterFor } from "../../lib/shell.js";
 import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
 import "./familiar.css";
@@ -16,8 +17,19 @@ import "./familiar.css";
 //
 // One brightness for every title, and a bar under the picture for how far you
 // got. One channel, one job. THE TITLE NEVER DIMS.
+// §2.7 — the document mark a quiz carries in the same slot a lesson's
+// thumbnail occupies, at the same size, so the text column never shifts.
+const QuizMark = () => (
+  <span className="lead mark">
+    <svg width="17" height="17" viewBox="0 0 16 16" fill="none"
+         stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <rect x="2.6" y="1.8" width="10.8" height="12.4" rx="1.6" />
+      <path d="M5.4 5.6 H10.6 M5.4 8.2 H10.6 M5.4 10.8 H8.6" strokeLinecap="round" />
+    </svg>
+  </span>
+);
+
 function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
-  const secs = lesson.duration || 0;
 
   // A real frame from the lesson's own video, when one can be had. The row
   // paints with the generated tile immediately and the frame replaces it when
@@ -31,24 +43,30 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
       .then((p) => { if (live && p) setPoster(p); });
     return () => { live = false; };
   }, [lesson.id]);
+  const state = done ? "done" : here ? "current" : "todo";
+  // §2.7 — the meta line carries the time, so the rail never repeats it. A row
+  // that says "11 minutes left" and then "11 min" again on the right is one
+  // fact taking two slots.
+  const meta = done ? "Watched in full"
+    : here ? timeLeft(lesson.duration, pct)
+      : durationWords(lesson.duration) || "";
+
   return (
-    <button type="button" className="rrow" aria-current={here ? "true" : undefined}
+    <button type="button" className="item" data-state={state}
+            aria-current={here ? "true" : undefined}
             onClick={() => onOpen(chapter, lesson)}>
-      <span className="rthumb" data-tile="" data-code={lesson.code || lesson.id}
-            data-done={done ? "1" : "0"} style={thumbTile(lesson.id)}>
-        {poster && <img src={poster} alt="" width={128} height={72} loading="lazy" />}
-        {secs > 0 && <span className="rdur">{clock(secs)}</span>}
-        {/* The ONLY place watched state appears. */}
-        {(pct > 0 || done) && (
-          <span className="rprog"><i className="rprog-fill" style={{ width: `${Math.min(100, pct * 100)}%` }} /></span>
-        )}
+      <span className="lead" style={thumbTile(lesson.id)}>
+        {poster && <img src={poster} alt="" width={58} height={34} loading="lazy" />}
       </span>
-      <span className="rbody">
-        <span className="rtitle">{lesson.title}</span>
-        <span className="rmeta">
-          {done && <span className="rcheck"><Check aria-hidden="true" /></span>}
-          {done ? "Done" : here ? timeLeft(lesson.duration, pct) : durationWords(lesson.duration) || ""}
-        </span>
+      <span className="imain">
+        <span className="iname">{lesson.title}</span>
+        <span className="imeta">{meta}</span>
+      </span>
+      {/* The current row is the only lesson row with a button. */}
+      <span className="istat">
+        {done ? <span className="tick"><Check aria-hidden="true" /> Done</span>
+          : here ? <span className="go">Resume</span>
+            : null}
       </span>
     </button>
   );
@@ -144,19 +162,38 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                       its own — it belongs to the chapter that earned it. It is
                       hidden only when a search matched the chapter's lessons
                       but not the quiz itself. */}
-                  {(!searching || ch.quizHit) && (
-                  <button type="button" className="row" onClick={() => onOpenQuiz(ch)}>
-                    <Mark done={score != null} here={false} />
-                    <span>
-                      <span className="rn">{ch.title} quiz</span>
-                      <span className="rm">{ch.quizCount || 8} questions</span>
-                    </span>
-                    <span className="rstate">
-                      {score != null ? `You got ${score.correct} of ${score.total}` : "Not taken"}
-                    </span>
-                    <span className="chv" aria-hidden="true">›</span>
-                  </button>
-                  )}
+                  {(!searching || ch.quizHit) && (() => {
+                    // §2.7 — the same row skeleton, and a FAILED quiz has to
+                    // offer the way back in. It was the highest-value action on
+                    // the page and a dead end: the row said "you got 4 of 8"
+                    // and gave you nowhere to go with that.
+                    const total = score?.total ?? (ch.quizCount || 8);
+                    const need = passAt(total);
+                    const failed = score != null && score.correct < need;
+                    const state = score != null && !failed ? "done" : "todo";
+                    return (
+                      <button type="button" className="item" data-state={state}
+                              onClick={() => onOpenQuiz(ch)}>
+                        <QuizMark />
+                        <span className="imain">
+                          <span className="iname">{ch.title} quiz</span>
+                          <span className="imeta">
+                            {total} questions{failed ? " · below the pass mark" : ""}
+                          </span>
+                        </span>
+                        <span className="istat">
+                          {score == null ? <span>Not taken</span> : (
+                            <>
+                              <span className="score">
+                                {!failed && <Check aria-hidden="true" />} {score.correct} of {total}
+                              </span>
+                              {failed && <span className="go ghost">Re-check</span>}
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             </section>

@@ -114,7 +114,11 @@
    Faces are the app's own — --font-mono is Geist Mono, not the reference's
    JetBrains. The sizes, weights and tracking are the reference's.
    ========================================================================= */
-.row{ display: flex; align-items: stretch; gap: 7px; }
+/* NOT .row — that class already belongs to the list rows, and ".mscreen .row"
+   beats a bare ".row" on specificity, so the indicator row was silently being
+   laid out as a four-column list grid. It happened to look right, which is the
+   worst way for a collision to behave. */
+.instrow{ display: flex; align-items: stretch; gap: 7px; }
 
 /* The tap target is at least 44px tall via padding, WITHOUT growing the
    visible element — the row would stop reading as instruments if it did. */
@@ -210,7 +214,7 @@
 
 /* ---- phone: 32px row, profile scales continuously (§4) ------------------ */
 @media (max-width: 560px){
-  .row{ gap: 5px; }
+  .instrow{ gap: 5px; }
   .ind > *{ height: 32px; }
   .gauge{ width: 32px; }
   .gauge svg{ width: 32px; height: 32px; }
