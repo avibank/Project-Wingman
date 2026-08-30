@@ -1,7 +1,7 @@
 import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
-import { useState, useRef, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useEffect, lazy, Suspense, useMemo } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
@@ -31,7 +31,7 @@ import RouteError from "./components/RouteError.jsx";
 import ReportProblem from "./components/ReportProblem.jsx";
 const PdfPanel = lazy(() => import("./components/PdfPanel.jsx"));
 import ProfileMenu from "./components/ProfileMenu.jsx";
-import StreakMenu from "./components/StreakMenu.jsx";
+import ReadyRoomPill from "./components/ReadyRoomPill.jsx";
 const SettingsPage = lazy(() => import("./components/SettingsPage.jsx"));
 const Profile = lazy(() => import("./components/Profile.jsx"));
 const ProgressPage = lazy(() => import("./components/ProgressPage.jsx"));
@@ -280,9 +280,6 @@ function AppInner() {
   const variant = finish === "aurora" ? "night" : (variantPin || autoVariant);
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [turbulence, setTurbulence] = useState(true);
-  const [testStreakOverrideOn, setTestStreakOverrideOn] = useState(false);
-  const [testStreakValue, setTestStreakValue] = useState(0);
-  const [streak, setStreak] = useState(0);
   const [boarding, setBoarding] = useState(true);
   // onAnimationEnd was the only way out of a full-screen blocking overlay, and
   // a backgrounded tab never runs animations — so opening the app in a tab that
@@ -317,8 +314,6 @@ function AppInner() {
     setGrain(progress.get("pw-grain", true));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setTurbulence(progress.get("pw-turbulence", true));
-    setTestStreakOverrideOn(progress.get("pw-test-streak-override-on", false));
-    setTestStreakValue(progress.get("pw-test-streak-value", 0));
     setHydrated(true);
   }, [progress.loaded, progress.isSignedIn]);
   useEffect(() => {
@@ -364,14 +359,6 @@ function AppInner() {
     progress.set("pw-turbulence", turbulence);
   }, [turbulence, hydrated]);
   useEffect(() => {
-    if (!hydrated) return;
-    progress.set("pw-test-streak-override-on", testStreakOverrideOn);
-  }, [testStreakOverrideOn, hydrated]);
-  useEffect(() => {
-    if (!hydrated) return;
-    progress.set("pw-test-streak-value", testStreakValue);
-  }, [testStreakValue, hydrated]);
-  useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
     try {
       localStorage.setItem("pw-storage-check", "1");
@@ -383,20 +370,32 @@ function AppInner() {
   useEffect(() => {
   }, [isSignedIn, user?.id]);
 
+  // §8 — the badge counts THINGS ADDRESSED TO YOU and nothing else: unread
+  // squadron messages, and replies in threads you are part of. Not every new
+  // thread in a module you are enrolled in — that lights permanently within a
+  // week and teaches everyone to ignore the one attention mechanism there is.
+  // Threads you are merely near get the quiet row dot in the sidebar instead.
+  const roomBadge = useMemo(() => {
+    const seen = progress.get("pw-room-seen", {});
+    const mine = progress.get("pw-my-threads", []);
+    const replies = progress.get("pw-thread-replies", {});
+    let n = 0;
+    for (const id of mine) {
+      const last = replies[id] || 0;
+      if (last > (seen[id] || 0)) n += 1;
+    }
+    const chats = progress.get("pw-squadron-unread", {});
+    for (const k of Object.keys(chats)) n += chats[k] || 0;
+    return n;
+  }, [progress]);
+
+  // pw-last-visit is still stamped — the logbook reads it and it is not a
+  // streak. What is gone is the counting: pw-streak, pw-longest-streak and the
+  // pill that displayed them.
   useEffect(() => {
     if (!progress.loaded) return;
     const today = new Date().toDateString();
-    const lastVisit = progress.get("pw-last-visit", null);
-    let current = progress.get("pw-streak", 0);
-    if (lastVisit !== today) {
-      const yesterday = new Date(Date.now() - 86400000).toDateString();
-      current = lastVisit === yesterday ? current + 1 : 1;
-      progress.set("pw-last-visit", today);
-      progress.set("pw-streak", current);
-    }
-    const longest = Math.max(progress.get("pw-longest-streak", 0), current);
-    progress.set("pw-longest-streak", longest);
-    setStreak(current);
+    if (progress.get("pw-last-visit", null) !== today) progress.set("pw-last-visit", today);
   }, [progress.loaded]);
   useEffect(() => {
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236FA0F0' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.8 19.2 16 11l3.5-3.5c.6-.6.9-1.4.9-2.2 0-.5-.4-.9-.9-.9-.8 0-1.6.3-2.2.9L14 8.8 5.8 7 4.5 8.3l6.7 3.7-3 3-2.5-.3-1 1L7 17l1.3 2.3 1-1-.3-2.5 3-3 3.7 6.7 1.3-1.3Z'/></svg>`;
@@ -538,7 +537,9 @@ function AppInner() {
         </button>
         <div className="topbar-right">
           
-          <StreakMenu streak={streak} overrideStreak={testStreakOverrideOn ? testStreakValue : null} />
+          {/* §8 — the Ready Room takes the spot the streak pill held. One
+              number in the app bar, and it counts things addressed to you. */}
+          <ReadyRoomPill count={roomBadge} onGo={() => go(routePath.ready())} />
           <ProfileMenu
             onNavigate={(page) => {
               setBookmarksMode("list");
@@ -599,13 +600,7 @@ function AppInner() {
               here, but this screen has no sub-pages — the profile tabs moved to
               /account/*. It was passed and ignored, which is the same shape as
               the bug that hid the quiz's place-keeping. */}
-          <SettingsPage
-            onBack={() => go(-1)}
-            testStreakOverrideOn={testStreakOverrideOn}
-            onToggleTestStreakOverride={() => setTestStreakOverrideOn((t) => !t)}
-            testStreakValue={testStreakValue}
-            onChangeTestStreakValue={setTestStreakValue}
-          />
+          <SettingsPage onBack={() => go(-1)} />
         </main>
       ) : route.name === "profile" ? (
         <main className="content content-taxi content--profile">

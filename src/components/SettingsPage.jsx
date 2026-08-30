@@ -1,9 +1,9 @@
-import { ChevronLeft, FlaskConical, Minus, Plus } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import BlockedList from "./BlockedList.jsx";
 import { useIsAdmin } from "../lib/admin.js";
 import PilotSettings from "./PilotSettings.jsx";
 
-function SettingsPage({ onBack, testStreakOverrideOn, onToggleTestStreakOverride, testStreakValue, onChangeTestStreakValue }) {
+function SettingsPage({ onBack }) {
   const isAdmin = useIsAdmin();
   return (
     <div className="settings-page">
@@ -12,31 +12,6 @@ function SettingsPage({ onBack, testStreakOverrideOn, onToggleTestStreakOverride
       </button>
       <h1 className="settings-title">Settings</h1>
 
-      {isAdmin && (
-        <>
-      <div className="settings-block">
-        <p className="settings-note settings-note-top">
-          <FlaskConical size={13} /> Temporary testing area — lets you preview toggleable features in both states without needing real data. Not meant for the final version.
-        </p>
-        <div className="settings-row" onClick={onToggleTestStreakOverride}>
-          <span className={`settings-switch ${testStreakOverrideOn ? "is-on" : ""}`}><span className="settings-switch-knob" /></span>
-          <div>
-            <div className="settings-row-title">Override streak value</div>
-            <div className="settings-row-sub">Preview the windsock and weekly propellers at any streak count</div>
-          </div>
-        </div>
-        {testStreakOverrideOn && (
-          <div className="settings-stepper">
-            <button className="settings-stepper-btn" onClick={() => onChangeTestStreakValue(Math.max(0, testStreakValue - 1))} aria-label="Decrease">
-              <Minus size={14} />
-            </button>
-            <span className="settings-stepper-value">{testStreakValue}</span>
-            <button className="settings-stepper-btn" onClick={() => onChangeTestStreakValue(testStreakValue + 1)} aria-label="Increase">
-              <Plus size={14} />
-            </button>
-          </div>
-        )}
-      </div>
 
       <style>{`
         .settings-page { max-width: 560px; }
@@ -56,8 +31,6 @@ function SettingsPage({ onBack, testStreakOverrideOn, onToggleTestStreakOverride
         .settings-stepper-btn:hover { border-color: var(--accent); color: var(--accent); }
         .settings-stepper-value { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); min-width: 24px; text-align: center; }
       `}</style>
-        </>
-      )}
 
       <PilotSettings />
       <BlockedList />

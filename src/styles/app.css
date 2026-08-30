@@ -272,3 +272,33 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 /* The chin and mini-player reservation moved into .deck's own padding shorthand
    in Deck.jsx. A padding-bottom here is the same specificity as that shorthand
    and loses on source order, so it silently did nothing. */
+
+/* §8 — the Ready Room in the app bar, where the streak pill was. One number,
+   and it counts things addressed to you. */
+.rrpill{
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: var(--tap, 44px); padding: 0 14px;
+  background: var(--raised); border: 1px solid var(--edge, var(--hair));
+  border-radius: var(--r-pill, 999px);
+  font-family: var(--font-ui); font-size: 14px; color: var(--t1);
+  cursor: pointer;
+}
+.rrpill:hover{ border-color: var(--t2); }
+.rrpill:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
+.rrpill svg{ color: var(--t2); }
+.rrpill:hover svg{ color: var(--active); }
+/* The badge: a number, never a bare dot — §1.4 means colour alone may not
+   carry it, and the accessible name says what the number is. */
+.rrpill-n{
+  min-width: 20px; padding: 0 6px; height: 20px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--active); color: var(--on-mark);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px){
+  /* §8 — on a phone the top bar keeps the logo and the avatar only; the room
+     lives in the bottom tab bar instead. */
+  .rrpill-word{ display: none; }
+}
