@@ -54,7 +54,9 @@ export const FLAGS = [
   // cannot be walked, and this can. check:ship is the gate that stops it
   // reaching a launch.
   { id: "content.test", label: "Test content", note: "Four modules of placeholder lessons, quizzes and papers. Not real content.", everyone: true },
-  { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", off: true },
+  // Had `off` — no approved design. There is one now, so it ships like the
+  // module screen did: `everyone`, not admin-only.
+  { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", everyone: true },
   { id: "page.logbook", label: "Logbook", note: "The logbook page.", off: true },
   { id: "page.bookmarks", label: "Saved", note: "Bookmarks and flashcards.", off: true },
   { id: "prefs.notices", label: "Notices", note: "The three notice switches in Preferences.", off: true },

@@ -32,6 +32,7 @@ import ReportProblem from "./components/ReportProblem.jsx";
 const PdfPanel = lazy(() => import("./components/PdfPanel.jsx"));
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import ReadyRoomPill from "./components/ReadyRoomPill.jsx";
+const ReadyRoomShell = lazy(() => import("./components/room/ReadyRoom.jsx"));
 const SettingsPage = lazy(() => import("./components/SettingsPage.jsx"));
 const Profile = lazy(() => import("./components/Profile.jsx"));
 const ProgressPage = lazy(() => import("./components/ProgressPage.jsx"));
@@ -50,6 +51,7 @@ import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
+import { postReply } from "./lib/lessonSurface.js";
 import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
@@ -200,7 +202,7 @@ function AppInner() {
   // The seeded notes and threads are written into the account once and then
   // owned like anything else — otherwise deleting a seeded note would bring it
   // back on the next reload.
-  const { seedFrom, requestWatch } = useSession();
+  const { seedFrom, requestWatch, session, mutate, requestSeek } = useSession();
   // The ammeter's panel: each chapter's FIRST-attempt score against the pass
   // mark. A retake is labelled as one and does not move the needle, so the
   // panel has to show which figure the needle is actually reading.
@@ -582,7 +584,43 @@ function AppInner() {
           }
         />
       )}
-      {settingsPage === "auth" ? (
+      {route.name === "ready" && flags["social.readyroom"] ? (
+        <main className="content content-taxi content--full">
+          <ReadyRoomShell
+            me="u_you"
+            modules={allModules(useTestContent)}
+            activeModuleCode={activeModuleCode}
+            chapters={chaptersFor(activeModuleCode, useTestContent)}
+            threads={session.threads}
+            replies={session.replies}
+            people={useTestContent?.people || []}
+            presence={useTestContent?.presence || []}
+            squadrons={[]}
+            messages={[]}
+            seen={progress.get("pw-room-seen", {})}
+            onSeen={(id) => progress.set("pw-room-seen",
+              { ...progress.get("pw-room-seen", {}), [id]: Date.now() })}
+            onOpenLessonAt={(t) => {
+              // §5 — the round trip. The lesson opens at the moment, and it has
+              // to leave a way back to the thread that sent you there.
+              const owner = chaptersFor(activeModuleCode, useTestContent)
+                .find((c) => (c.lessons || []).some((l) => l.id === t.lessonId));
+              if (!owner) return;
+              progress.set("pw-room-return", { threadId: t.id, at: Date.now() });
+              go(routePath.lesson(t.moduleId, owner.id, t.lessonId));
+              requestSeek?.(t.t);
+            }}
+            onPost={(ev) => {
+              if (ev.kind === "reply") {
+                mutate((sx) => postReply(sx, { threadId: ev.threadId, body: ev.body }));
+              }
+              // Squadron chat and right seat need the shared tables; see the
+              // note in the commit. Threads work today because they already do.
+            }}
+            onReport={(what) => console.info("report", what)}
+          />
+        </main>
+      ) : settingsPage === "auth" ? (
         <main className="content content-taxi">
           <AuthPage onBack={() => go(-1)} />
         </main>
