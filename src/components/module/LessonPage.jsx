@@ -259,6 +259,14 @@ export default function LessonPage({
             {mmss(chip ?? Math.floor(at))}
           </button>
           <textarea ref={composerRef} className="composer-field" rows={1} value={draft}
+                    // A placeholder is not a label. It is only a fallback for
+                    // the accessible name, and it disappears the moment there
+                    // is any text — so a screen reader reaching a half-typed
+                    // note announced an unlabelled edit field. Says the same
+                    // thing the placeholder does, and says it whatever is typed.
+                    aria-label={tab === "notes"
+                      ? "Write a note — only you see this"
+                      : "Ask the module a question about this moment"}
                     placeholder={tab === "notes"
                       ? "Write a note — only you see this"
                       : `Ask the module…`}
