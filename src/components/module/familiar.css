@@ -410,7 +410,9 @@
    A person, a line, one action. */
 .face{
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* min-width:0 on the middle track, or a long presence line runs under the
+     action instead of wrapping — measured, the two overlapped. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px; align-items: center;
   padding: 14px 0;
   border-top: 1px solid var(--hair);

@@ -397,7 +397,9 @@
      The brief's own .lesson-body caps at --player-max-w while the slot inside
      it needs that width PLUS the gutters, so copying it verbatim gave 1120 at
      1920x1080 where §4 states 1180. Measured, not read. */
-  width: min(100%, calc(var(--player-max-w) + var(--pad) * 2),
+  /* ~860px and centred. The whole page is the player, and a full-bleed video
+     at 1400px pushes the comments below the fold until they stop existing. */
+  width: min(100%, calc(860px + var(--pad) * 2),
              calc(var(--player-max-h) * 16 / 9 + var(--pad) * 2));
   margin-inline: auto;
 }

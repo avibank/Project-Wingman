@@ -673,6 +673,13 @@ function AppInner() {
               <LessonPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
                 state={moduleState} people={useTestContent?.people || []}
+                bookmarks={progress.get("pw-bookmarks", [])}
+                onToggleSave={(lessonId, on) => {
+                  const cur = progress.get("pw-bookmarks", []);
+                  progress.set("pw-bookmarks", on
+                    ? [...new Set([...cur, lessonId])]
+                    : cur.filter((x) => x !== lessonId));
+                }}
                 presence={useTestContent?.presence || []}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}

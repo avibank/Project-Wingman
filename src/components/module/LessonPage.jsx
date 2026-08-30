@@ -1,19 +1,43 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronDown, MoreVertical } from "lucide-react";
+import { ChevronLeft, ChevronDown, Bookmark, BookmarkCheck,
+         MessageSquare, PenLine } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
 import {
-  thumbTile, clock, initials, hueFor, ago, replyCountLabel, toggleReplies, presenceFor,
-  rowActions,
+  initials, hueFor, ago, replyCountLabel, toggleReplies, presenceFor,
 } from "../../lib/familiar.js";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
-  deleteNote, publishNote, postReply, editNote, isPin, upFrom,
+  deleteNote, postReply,
 } from "../../lib/lessonSurface.js";
 import "./module.css";
 import "./lesson.css";
 import "./familiar.css";
+import NoteDeck from "./NoteDeck.jsx";
+import "./deck.css";
+
+// A time inside a comment is pressable — [2:17] or a bare 2:17. YouTube taught
+// everyone that, and the seek already exists, so looking like the known thing
+// costs one regex. The text is SPLIT rather than replaced, so nothing is ever
+// rendered as raw HTML.
+const T_RE = /\[?(\d{1,2}):([0-5]\d)\]?/g;
+function seekable(text, onSeek) {
+  const out = [];
+  let last = 0, m;
+  T_RE.lastIndex = 0;
+  while ((m = T_RE.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const secs = Number(m[1]) * 60 + Number(m[2]);
+    out.push(
+      <button key={`${m.index}-${secs}`} type="button" className="tseek"
+              onClick={() => onSeek(secs)}>{`${m[1]}:${m[2]}`}</button>
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out.length ? out : text;
+}
 
 // The lesson page. Four things, in this order, at every width:
 //
@@ -29,9 +53,10 @@ import "./familiar.css";
 // the one player, which lives above the router, positions itself over it.
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [], presence = [],
+  bookmarks = [], onToggleSave,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
-  const { session, setSession, mutate, dispatchPlayer, setStage, requestSeek, setTab,
+  const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab,
           clearWatch, pending, postOptimistic } = useSession();
   const slotRef = useRef(null);
   const watch = session.watchAt?.lessonId === lesson.id ? session.watchAt : null;
@@ -74,6 +99,50 @@ export default function LessonPage({
   const at = session.player.seconds || 0;
   const here = presenceFor(presence, lesson.id, people);
 
+  // The meta line, in the shape of a view count. Watchers comes from presence,
+  // which is the only real signal there is — it is not invented.
+  const watchers = presence.filter((p) => p.lessonId === lesson.id && p.userId !== "u_you").length;
+  const added = lesson.addedAt
+    ? new Date(lesson.addedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })
+    : null;
+  const saved = bookmarks.includes(lesson.id);
+
+  // ONE composer, in one position, serving both tabs. It does not move when the
+  // tab changes — only its placeholder does — and it carries a timestamp chip
+  // pre-filled with the playhead, so nobody has to type a timestamp.
+  const composerRef = useRef(null);
+  const [draft, setDraft] = useState("");
+  const [chip, setChip] = useState(null);
+  const [detached, setDetached] = useState(false);
+  const [justSaved, setJustSaved] = useState(null);
+  const focusComposer = () => setTimeout(() => composerRef.current?.focus(), 0);
+
+  // One field, two destinations. The chip decides whether the moment travels
+  // with it; detached, a note has no second and a comment is not prefixed.
+  const submitDraft = () => {
+    const text = draft.trim();
+    if (!text) return;
+    const t = detached ? null : Math.floor(chip ?? at);
+    if (tab === "notes") {
+      const id = `N${Date.now().toString(36)}`;
+      mutate((st) => ({ ...st, notes: [...st.notes, {
+        id, lessonId: lesson.id, t: t ?? 0, body: text,
+        authorId: "u_you", createdAt: new Date().toISOString(),
+      }]}));
+      setJustSaved(id);
+    } else {
+      const id = `T${Date.now().toString(36)}`;
+      // Posting with the chip attached prefixes the comment, so the moment
+      // becomes a link like any other timestamp written by hand.
+      const body = t === null ? text : `[${mmss(t)}] ${text}`;
+      postOptimistic(id, (st) => ({ ...st, threads: [...st.threads, {
+        id, moduleId: mod.code || mod.id, lessonId: lesson.id,
+        t: t ?? 0, body, authorId: "u_you", createdAt: new Date().toISOString(),
+      }]}));
+    }
+    setDraft(""); setChip(null); setDetached(false);
+  };
+
   return (
     <div className="mscreen lesson">
       {/* Up, not history. Tap a question in People and land here: history-back
@@ -82,23 +151,42 @@ export default function LessonPage({
           and it is labelled with the destination, never a bare arrow. */}
       <button type="button" className="up" onClick={onBack}>
         <ChevronLeft aria-hidden="true" />
-        {upFrom({ kind: "lesson", moduleId: mod.code || mod.id, moduleName: mod.name })?.label || mod.name}
+        {chapter.title} · {mod.name}
       </button>
 
       <div className="lesson-head">
-        <span className="lesson-code">{lesson.code || lesson.id}</span>
         <h1 className="lesson-name">{lesson.title}</h1>
-        <span className="lesson-where">{chapter.title} · {mod.name}</span>
+        {/* Where a view count sits, and reading like one. This replaces the
+            "Callsign X and 2 others have been here" row. */}
+        <span className="lesson-where">
+          {chapter.title}
+          {watchers > 0 && ` · ${watchers} from your module ${watchers === 1 ? "has" : "have"} watched this`}
+          {added && ` · added ${added}`}
+        </span>
+
+        <div className="lact">
+          <button type="button" className="pill" aria-pressed={saved}
+                  onClick={() => onToggleSave?.(lesson.id, !saved)}>
+            {saved ? <BookmarkCheck aria-hidden="true" /> : <Bookmark aria-hidden="true" />}
+            {saved ? "Saved" : "Save"}
+          </button>
+          <button type="button" className="pill"
+                  onClick={() => { setTab("comments"); focusComposer(); }}>
+            <MessageSquare aria-hidden="true" /> Ask a question
+          </button>
+          <button type="button" className="pill"
+                  onClick={() => { setTab("notes"); setChip(Math.floor(at)); focusComposer(); }}>
+            <PenLine aria-hidden="true" /> Mark this moment
+          </button>
+        </div>
       </div>
 
-      {/* The watch layout: player in the main column, the chapter route beside
-          it. This reverses "one column at every width", deliberately. What was
-          cancelled was a sidebar of NOTES AND DOCUMENTS — novel content in a
-          novel place on a screen that already had four other novel things. A
-          lesson list beside a video is the least novel sidebar in education;
-          the test was never "no second column", it was how many things here
-          has this person never seen before. Below 1120 there is no sidebar —
-          the route is the module screen you came from. */}
+      {/* ONE CENTRED COLUMN, ~860px. This replaces Part 13's route sidebar:
+          that brief argued a lesson list beside a video is the least novel
+          sidebar in education, and it is — but this one says the whole page is
+          the player and nothing else lives here, and a full-bleed video at
+          1400px pushes the comments below the fold until they stop existing.
+          The newer instruction wins; the sidebar is gone. */}
       <div className="watch">
       <div className="watch-main lesson-body">
         {/* An empty sized box. Never move the video node into it. */}
@@ -161,154 +249,52 @@ export default function LessonPage({
           </button>
         </div>
 
+        {/* ONE composer, one position. Only the placeholder changes. */}
+        <div className="composer" data-vis={tab === "notes" ? "private" : "public"}>
+          <button type="button" className="chip" data-off={detached ? "1" : undefined}
+                  onClick={() => setDetached((v) => !v)}
+                  aria-pressed={!detached}
+                  aria-label={detached ? "Attach the current timestamp" : "Detach the timestamp"}>
+            {mmss(chip ?? Math.floor(at))}
+          </button>
+          <textarea ref={composerRef} className="composer-field" rows={1} value={draft}
+                    placeholder={tab === "notes"
+                      ? "Write a note — only you see this"
+                      : `Ask the module…`}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitDraft(); }
+                    }} />
+          {/* Only once there is something to confirm. */}
+          {draft.trim() && (
+            <div className="composer-acts">
+              <button type="button" className="composer-act"
+                      onClick={() => { setDraft(""); setDetached(false); setChip(null); }}>Cancel</button>
+              <button type="button" className="composer-act" data-primary="" onClick={submitDraft}>
+                {tab === "notes" ? "Save note" : "Post"}
+              </button>
+            </div>
+          )}
+          {tab === "comments" && (
+            <span className="composer-who">Everyone on {mod.name} sees this.</span>
+          )}
+        </div>
+
         {tab === "notes"
-          ? <NotesTab notes={myNotes} at={at} lesson={lesson} moduleId={mod.code || mod.id}
-                      onSeek={requestSeek} mutate={mutate} setSession={setSession} />
+          ? <NoteDeck notes={myNotes} jumpTo={justSaved}
+                      onSeek={requestSeek}
+                      onDelete={(id) => mutate((st) => deleteNote(st, id))} />
           : <CommentsTab comments={comments} replies={session.replies} at={at}
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
                          people={people} onSeek={requestSeek} mutate={mutate}
                          pending={pending} postOptimistic={postOptimistic} />}
       </div>
 
-      <Route chapters={chapters} here={lesson} state={state}
-             onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} next={next} />
       </div>
     </div>
   );
 }
 
-// The route beside the player, sticky, with its own scroller. Same row as the
-// module screen — one brightness for every title, the bar carries the state.
-function Route({ chapters, here, state, onOpenLesson, next }) {
-  const total = chapters.reduce((n, c) => n + (c.lessons?.length || 0), 0);
-  const done = chapters.reduce((n, c) => n + (c.lessons || []).filter(
-    (l) => Boolean(state?.done?.[l.id]) || (state?.pos?.[l.id]?.pct ?? 0) >= 0.9).length, 0);
-  return (
-    <aside className="route" aria-label="This module">
-      <div className="route-head">
-        <span className="route-title">This module</span>
-        <span className="route-meta">{done} of {total} flown</span>
-      </div>
-      <div className="route-list">
-        {chapters.map((ch) => (
-          <div key={ch.id}>
-            <p className="route-chapter">{ch.title}</p>
-            {(ch.lessons || []).map((l) => {
-              const isDoneL = Boolean(state?.done?.[l.id]) || (state?.pos?.[l.id]?.pct ?? 0) >= 0.9;
-              const pct = state?.pos?.[l.id]?.pct || 0;
-              return (
-                <button key={l.id} type="button" className="rrow"
-                        aria-current={l.id === here.id ? "true" : undefined}
-                        onClick={() => onOpenLesson(ch, l)}>
-                  <span className="rthumb" data-tile="" data-code={l.code || l.id}
-                        data-done={isDoneL ? "1" : "0"} style={thumbTile(l.id)}>
-                    {l.duration > 0 && <span className="rdur">{clock(l.duration)}</span>}
-                    {(pct > 0 || isDoneL) && (
-                      <span className="rprog">
-                        <i className="rprog-fill" style={{ width: `${Math.min(100, pct * 100)}%` }} />
-                      </span>
-                    )}
-                  </span>
-                  <span className="rbody"><span className="rtitle">{l.title}</span></span>
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-      {next && (
-        <a className="route-next" href="#next"
-           onClick={(e) => { e.preventDefault(); if (next.kind !== "quiz") onOpenLesson(next.chapter, next.lesson); }}>
-          Next · {next.lesson?.title || next.chapter?.title}
-        </a>
-      )}
-    </aside>
-  );
-}
-
-// One overflow button per row, always visible and a full 44px target. A menu
-// rather than a row of links, so a third action does not widen the row.
-function Overflow({ kind, disabled = [], onPick }) {
-  const [open, setOpen] = useState(false);
-  const items = rowActions(kind).filter((a) => !disabled.includes(a.id));
-  return (
-    <span className="ovf">
-      <button type="button" className="ovf-btn" aria-haspopup="menu" aria-expanded={open}
-              aria-label="More" onClick={() => setOpen((v) => !v)}>
-        <MoreVertical aria-hidden="true" />
-      </button>
-      <div className="ovf-menu" role="menu" hidden={!open}
-           onMouseLeave={() => setOpen(false)}>
-        {items.map((a) => (
-          <button key={a.id} type="button" role="menuitem" className="ovf-item"
-                  data-danger={a.danger ? "" : undefined}
-                  onClick={() => { setOpen(false); onPick(a.id); }}>
-            {a.label}
-          </button>
-        ))}
-      </div>
-    </span>
-  );
-}
-
-// The private half. A note is yours, nobody else ever sees it, and it can be
-// deleted freely because nobody has replied to it.
-function NotesTab({ notes, at, lesson, moduleId, onSeek, mutate, setSession }) {
-  const [body, setBody] = useState("");
-  const save = () => {
-    if (!body.trim()) return;
-    mutate((s) => ({ ...s, notes: [...s.notes, {
-      id: `N${Date.now().toString(36)}`, lessonId: lesson.id, t: Math.floor(at),
-      body: body.trim(), authorId: "u_you", createdAt: new Date().toISOString(),
-    }]}));
-    setBody("");
-  };
-
-  return (
-    <>
-      {/* Private: a neutral rule, its own placeholder, its own button, and no
-          line about who sees it — because nobody does. */}
-      <div className="compose" data-vis="private">
-        <span className="compose-t">{mmss(at)}</span>
-        <textarea className="compose-field" rows={1} value={body}
-                  placeholder="Write a note — only you see this"
-                  onChange={(e) => setBody(e.target.value)} />
-        <div className="compose-acts">
-          <button type="button" className="compose-act" data-primary="" onClick={save}>Save note</button>
-        </div>
-      </div>
-
-      {notes.length === 0 ? (
-        <p className="lempty">
-          The note button in the player pins this moment — two taps, and you can
-          fill in the words on the second watch.
-        </p>
-      ) : (
-        <ul className="llist">
-          {notes.map((n) => (
-            <li key={n.id} className="litem" data-kind="note">
-              <button type="button" className="lseek" onClick={() => onSeek(n.t)}>
-                <span className="lt">{mmss(n.t)}</span>
-                <span className="lbody" data-pin={n.body ? "0" : "1"}>
-                  {n.body || "You marked this moment"}
-                </span>
-              </button>
-              {/* Behind one three-dot button, always visible. These were
-                  hover-only, and hover does not exist on a phone — which is
-                  where the beta will mostly live. */}
-              <Overflow kind="note" disabled={isPin(n) ? ["publish"] : []}
-                        onPick={(id) => {
-                          if (id === "edit") setSession((s) => editNote(s, n.id));
-                          if (id === "publish") mutate((s) => publishNote(s, n.id, { moduleId }));
-                          if (id === "delete") mutate((s) => deleteNote(s, n.id));
-                        }} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
-}
 
 // The public half. Same rows People shows — one table, two queries — in moment
 // order, because scrolling this list is scrubbing the video above it.
@@ -381,7 +367,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                       {mmss(c.t)}
                     </button>
                   </div>
-                  <p className="cmt-body">{c.body}</p>
+                  <p className="cmt-body">{seekable(c.body, onSeek)}</p>
                   <div className="cmt-acts">
                     {pending?.[c.id] === "failed" ? (
                       /* It stays, with a way back. Never delete what someone
@@ -414,7 +400,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                             <span className="cmt-name">{who(r.authorId)}</span>
                             <span className="cmt-when">{ago(r.createdAt)}</span>
                           </span>
-                          <p className="cmt-body">{r.body}</p>
+                          <p className="cmt-body">{seekable(r.body, onSeek)}</p>
                         </span>
                       </li>
                     ))}

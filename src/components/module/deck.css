@@ -1,0 +1,159 @@
+/* The note deck. Every colour a token; nothing invented here. */
+.deck{ margin-top: 14px; }
+
+/* FIXED HEIGHT. The text scrolls inside the card rather than the card growing,
+   because a deck that changes height as you flip reads as broken. */
+.card{
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  height: 150px;
+  padding: 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: var(--house-radius, 14px);
+}
+.card-t{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--active);
+  background: none;
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: 7px;
+  min-height: var(--tap); min-width: 5ch;
+  padding: 0 8px;
+  cursor: pointer;
+}
+.card-t:hover{ border-color: var(--active); }
+.card-body{
+  height: 100%;
+  overflow-y: auto;
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
+  color: var(--t1);
+}
+.card-del{
+  min-width: var(--tap); min-height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 0; padding: 0;
+  color: var(--t3); cursor: pointer; border-radius: 50%;
+}
+.card-del:hover{ color: var(--bad); background: var(--raised); }
+.card-del svg{ width: 16px; height: 16px; }
+
+.card-empty{ grid-template-columns: minmax(0,1fr); align-items: center; }
+.card-empty p{
+  margin: 0; font-size: var(--fs-sm); line-height: var(--lh-body);
+  color: var(--t3); max-width: var(--measure);
+}
+
+.deck-nav{
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 10px;
+}
+.deck-arrow{
+  min-width: var(--tap); min-height: var(--tap);
+  display: grid; place-items: center;
+  background: none; border: 1px solid var(--edge, var(--hair));
+  border-radius: 999px; color: var(--t2); cursor: pointer;
+}
+.deck-arrow:disabled{ opacity: .4; cursor: default; }
+.deck-arrow svg{ width: 17px; height: 17px; }
+.deck-dots{ display: flex; align-items: center; gap: 6px; flex: 1 1 auto; flex-wrap: wrap; }
+/* The dot is small but its target is not — a 44px hit area around a 7px mark. */
+.deck-dot{
+  width: var(--tap); height: var(--tap);
+  padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.deck-dot::after{
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--t3); opacity: .55;
+}
+.deck-dot[data-on="1"]::after{ background: var(--active); opacity: 1; }
+.deck-count{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--t3);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------ the one composer, one place */
+/* It serves both tabs and does not move when the tab changes — only the
+   placeholder does, and the left rule says which consequence you are in. */
+.composer{
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px 0 14px 12px;
+  margin-inline-start: -14px;
+  border-inline-start: 2px solid transparent;
+  border-bottom: 1px solid var(--edge-soft, var(--hair));
+}
+.composer[data-vis="private"]{ border-inline-start-color: var(--edge, var(--hair)); }
+.composer[data-vis="public"]{ border-inline-start-color: var(--active); }
+
+/* The timestamp is pre-filled and tappable to detach — nobody types one. */
+.chip{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--active);
+  background: none;
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: 7px;
+  min-height: var(--tap); min-width: 5ch;
+  padding: 0 8px;
+  cursor: pointer;
+}
+.chip[data-off="1"]{ color: var(--t3); text-decoration: line-through; }
+.composer-field{
+  width: 100%;
+  min-height: var(--tap);
+  padding: 9px 0;
+  background: none; border: 0;
+  resize: none;
+  font: inherit; font-size: var(--fs-sm); line-height: var(--lh-body);
+  color: var(--t1);
+}
+.composer-field:focus{ outline: none; }
+.composer-field::placeholder{ color: var(--t3); }
+.composer-acts{ grid-column: 2; display: flex; gap: 18px; margin-top: 4px; }
+.composer-act{
+  min-height: var(--tap); min-width: var(--tap);
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-sm); color: var(--t3);
+  cursor: pointer; white-space: nowrap;
+}
+.composer-act[data-primary]{ color: var(--active); }
+.composer-who{
+  grid-column: 2; font-size: var(--fs-xs); color: var(--active); margin-top: 4px;
+}
+
+/* ---------------------------------------------------- the action row pills */
+.lact{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.pill{
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: var(--tap); padding: 0 16px;
+  background: none;
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: 999px;
+  font: inherit; font-size: var(--fs-sm); color: var(--t2);
+  cursor: pointer; white-space: nowrap;
+}
+.pill:hover{ color: var(--t1); background: var(--raised); }
+.pill[aria-pressed="true"]{ color: var(--active); border-color: var(--active); }
+.pill svg{ width: 16px; height: 16px; }
+
+/* A timestamp written inside a comment is a link that seeks. */
+.tseek{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--active);
+  background: none; border: 0; padding: 0;
+  font-size: inherit; cursor: pointer;
+}
+.tseek:hover{ text-decoration: underline; }
