@@ -53,6 +53,7 @@ export default function PlayerLayer() {
   const [idle, setIdle] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
   const [barBox, setBarBox] = useState({ width: 0, height: 0 });
   // §3.1 — the end card. Its own state rather than pct >= 1: a lesson can sit
   // at the last frame after a scrub without having been watched to the end, and
@@ -240,7 +241,13 @@ export default function PlayerLayer() {
     if (el && dock === "none" && !el.paused) el.pause();
   }, [dock]);
 
-  useEffect(() => { if (ref.current) ref.current.playbackRate = rate; }, [rate]);
+  // §3.2 — the speed persists across lessons, so it has to be applied when the
+  // SOURCE changes too, not only when the rate does. Loading a new lesson gives
+  // a fresh element at playbackRate 1 while the control still reads 1.5x, and
+  // the player then quietly disagrees with its own button.
+  useEffect(() => {
+    if (ref.current) ref.current.playbackRate = rate;
+  }, [rate, video?.url]);
   useEffect(() => {
     const el = ref.current;
     if (el) { el.volume = muted ? 0 : volume; el.muted = muted; }
@@ -322,6 +329,7 @@ export default function PlayerLayer() {
         setVolume(value, next);
         setSession((s) => ({ ...s, hud: { kind: "volume", value, shownAt: Date.now() } }));
       } else if (a.type === "seek") seekTo((el.currentTime + a.delta) / (el.duration || 1));
+      if (e.key === "Escape") setRateOpen(false);
       else if (a.type === "fullscreen") goFullscreen();
       else if (a.type === "note") openNote();
       wake();
@@ -644,12 +652,29 @@ export default function PlayerLayer() {
             </span>
           </div>
 
-          {/* A word, not an icon. */}
-          <button type="button" className="prate"
-                  onClick={() => pickRate(SPEEDS[(SPEEDS.indexOf(rate) + 1) % SPEEDS.length])}
-                  aria-label={`Speed ${rate} times`}>
-            {rate}×
-          </button>
+          {/* §3.2 — a real control, not a cycle. Cycling through six speeds
+              means up to five presses to reach the one you want, and you
+              cannot see what the options are before committing. A word, not an
+              icon; the choice persists across lessons through pw-rate. */}
+          <div className="prate-wrap">
+            <button type="button" className="prate" aria-haspopup="menu"
+                    aria-expanded={rateOpen ? "true" : "false"}
+                    onClick={() => setRateOpen((v) => !v)}
+                    aria-label={`Playback speed, currently ${rate} times`}>
+              {rate}×
+            </button>
+            {rateOpen && (
+              <div className="prate-menu" role="menu" aria-label="Playback speed">
+                {SPEEDS.map((r) => (
+                  <button key={r} type="button" role="menuitemradio"
+                          aria-checked={r === rate} className="prate-opt"
+                          onClick={() => { pickRate(r); setRateOpen(false); }}>
+                    {r}×
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button type="button" className="pbtn" onClick={goFullscreen}
                   aria-label={fullscreen ? "Exit full screen" : "Full screen"}>
