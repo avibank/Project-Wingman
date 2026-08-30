@@ -1,0 +1,264 @@
+/* ============================================================================
+   Wingman — the module hero and its instrument strip
+
+   NOT ONE HEX VALUE IN THIS FILE, and none in Instruments.jsx either. An SVG is
+   the easiest place to break that rule, so every stroke and fill below reaches
+   a token: --active, --caution, --ok, --edge, --t1/2/3, --panel, --raised.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- the card */
+/* Horizontal in emphasis: short vertically, generous horizontally. Wide bands,
+   not stacked blocks — the vertical padding is deliberately tight and the
+   gutters are not. */
+.mhero{
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
+  padding: 20px var(--pad) 0;
+}
+/* Tablet: the two blocks stack when the width no longer allows them side by
+   side. Nothing else changes. */
+@media (max-width: 900px){
+  .mhero{ grid-template-columns: minmax(0, 1fr); gap: 18px; }
+}
+
+.mhero-title{
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: -.02em;
+  color: var(--t1);
+  margin: 0;
+}
+.mhero-code{
+  display: block;
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs);
+  letter-spacing: .08em;
+  color: var(--t3);
+  margin-top: 6px;
+}
+.mhero-line{
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--t2);
+  margin-top: 8px;
+}
+
+/* ---------------------------------------------------------------- the route */
+.route-wrap{ width: 100%; min-width: 0; }
+.route-line{ display: block; max-width: 100%; }
+.route-ahead{
+  stroke: var(--t3);
+  stroke-width: 2;
+  stroke-dasharray: 6 7;
+  opacity: .55;
+  vector-effect: non-scaling-stroke;
+}
+.route-behind{
+  stroke: var(--active);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.route-dot{
+  fill: var(--ground);
+  stroke: var(--t3);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.route-dot[data-passed="1"]{ fill: var(--active); stroke: var(--active); }
+.route-here-ring{
+  fill: none;
+  stroke: var(--active);
+  stroke-width: 2;
+  opacity: .45;
+  vector-effect: non-scaling-stroke;
+}
+.route-here{ fill: var(--active); }
+.route-label{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: 15px;
+  letter-spacing: .08em;
+  fill: var(--t3);
+}
+
+/* ------------------------------------------------------------- the strip */
+/* Three equal cells, divided by hairlines. Each holds one instrument and
+   nothing else — no caption, no value line, no "press for…". */
+.mstrip{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--edge, var(--hair));
+  border-top: 1px solid var(--edge, var(--hair));
+  margin-top: 18px;
+}
+@media (max-width: 640px){ .mstrip{ grid-template-columns: minmax(0,1fr); } }
+
+/* The pressability is the object, not a label: a raised edge, a hover, and a
+   real translate on :active. */
+.inst{
+  display: grid;
+  place-items: center;
+  min-height: 116px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 0;
+  border-top: 1px solid var(--edge-hi, transparent);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.inst:hover{ background: var(--raised); }
+.inst:active{ transform: translateY(1px); }
+.inst:focus-visible{ outline: 2px solid var(--active); outline-offset: -3px; }
+.app.reduce-motion .inst, .app.smooth-air .inst{ transition: none; }
+
+/* ---- 1 · the ammeter ---------------------------------------------------- */
+.inst-face{ width: 100%; max-width: 168px; height: auto; }
+.inst-plate{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: 10px; letter-spacing: .16em; fill: var(--t3);
+}
+.inst-arc{ stroke: var(--edge, var(--hair)); stroke-width: 6; stroke-linecap: round; }
+.inst-arc-ok{ stroke: var(--ok, var(--active)); stroke-width: 6; stroke-linecap: round; opacity: .8; }
+.inst-tick{ stroke: var(--t3); stroke-width: 1.5; }
+.inst-end{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: 10px; letter-spacing: .10em; fill: var(--t3);
+}
+.inst-needle{ stroke: var(--t1); stroke-width: 2; stroke-linecap: round; }
+.inst-pivot{ fill: var(--t1); }
+.inst-read{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: 15px; font-variant-numeric: tabular-nums; fill: var(--t1);
+}
+
+/* ---- 2 · the calibration tag -------------------------------------------- */
+.tag{
+  position: relative;
+  width: 100%; max-width: 210px;
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--raised);
+  text-align: center;
+}
+.tag-hole{
+  position: absolute; inset-inline-start: 8px; top: 9px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ground);
+  box-shadow: 0 0 0 1px var(--edge, var(--hair));
+}
+.tag-band{
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 4px 8px 4px 22px;
+  background: var(--caution, var(--active));
+  color: var(--ground);
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); letter-spacing: .12em;
+}
+.tag[data-empty] .tag-band{ background: var(--edge, var(--hair)); color: var(--t3); }
+.tag-date{ opacity: .82; }
+.tag-body{ display: block; padding: 8px 8px 10px; }
+.tag-n{
+  display: block;
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: 26px; font-variant-numeric: tabular-nums; color: var(--t1); line-height: 1;
+}
+.tag-w{
+  display: block;
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); letter-spacing: .14em; color: var(--t3); margin-top: 4px;
+}
+.tag-first{ font-size: var(--fs-sm); letter-spacing: .08em; color: var(--t2); }
+.tag-due{
+  display: block; margin-top: 5px;
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); letter-spacing: .10em; color: var(--caution, var(--active));
+}
+.tag-ok{
+  display: block; margin-top: 5px;
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); letter-spacing: .10em; color: var(--ok, var(--t3));
+}
+
+/* ---- 3 · the master caution annunciator --------------------------------- */
+.ann{
+  display: grid;
+  place-content: center;
+  gap: 1px;
+  width: 100%; max-width: 160px;
+  aspect-ratio: 1 / .74;
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: 6px;
+  background: var(--ground);
+  text-align: center;
+}
+.ann-w{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); letter-spacing: .14em; color: var(--t3); line-height: 1.3;
+}
+.ann-n{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: 20px; font-variant-numeric: tabular-nums; color: var(--t3); margin-top: 3px;
+}
+/* Lit reads as lit: the face takes the caution colour and the words invert
+   onto it, which is what an annunciator does. */
+.ann[data-lit="1"]{ background: var(--caution, var(--active)); border-color: var(--caution, var(--active)); }
+.ann[data-lit="1"] .ann-w,
+.ann[data-lit="1"] .ann-n{ color: var(--ground); }
+/* Unlit is deliberately dark, not broken: ALL CLEAR in place of a count. */
+.ann[data-lit="0"] .ann-n{ font-size: var(--fs-xs); letter-spacing: .12em; }
+
+/* --------------------------------------------------- the instrument panels */
+/* What a pressed instrument opens. Escape closes it; the backdrop is a
+   surface, not a colour invented here. */
+.ipanel{
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  padding: var(--pad);
+  background: oklch(0 0 0 / .48);
+}
+.ipanel-card{
+  width: min(100%, 520px);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--edge, var(--hair));
+  border-radius: var(--house-radius, 14px);
+  padding: 18px 20px 20px;
+}
+.ipanel-head{
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--edge-soft, var(--hair));
+}
+.ipanel-title{ font-size: var(--fs-md); color: var(--t1); }
+.ipanel-close{
+  min-height: var(--tap); min-width: var(--tap);
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: var(--fs-sm); color: var(--t3); cursor: pointer;
+}
+.ipanel-close:hover{ color: var(--t1); }
+.ipanel-list{ list-style: none; margin: 0; padding: 0; }
+.ipanel-row{
+  display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px;
+  align-items: baseline; padding: 11px 0;
+  border-bottom: 1px solid var(--edge-soft, var(--hair));
+}
+.ipanel-name{ font-size: var(--fs-sm); color: var(--t1); }
+.ipanel-fig{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ok);
+}
+.ipanel-fig[data-under="1"]{ color: var(--caution); }
+.ipanel-mark{
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); color: var(--t3);
+}
+.ipanel-foot, .ipanel-empty{
+  font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t3);
+  margin: 14px 0 0; max-width: var(--measure);
+}

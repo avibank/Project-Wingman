@@ -287,6 +287,33 @@ export function deckVars(liveryId, variant = "night") {
   // at 3.55:1 — it is tuned to sit under --ground text on a filled control,
   // not to be read on the page itself. Night's already clears 5.7, so only
   // Day takes a step down.
+  // CAUTION — the one semantic colour this work needed, and the only new token.
+  //
+  // It is hue-locked amber, because that is what a caution annunciator is in
+  // every cockpit, and it must stay amber rather than becoming the livery's
+  // accent: --danger already resolves to var(--active), which is exactly why it
+  // cannot carry this.
+  //
+  // The collision is real and measured rather than assumed. Accent hues sit at
+  // sky 254, amber 83, tarmac 252, beacon 24, runway 145, skydrol 303 — so
+  // against caution's 78, ONLY Amber collides, at 5 degrees. Beacon is 54 away
+  // and needs nothing. In the colliding case the hue is kept and the VALUE
+  // separates: lighter than the accent at night, darker than it in day.
+  // Right and wrong live here too, so there is ONE source for the semantic
+  // colours. They were defined in quiz.css, which only loads with the quiz —
+  // so on the module screen --ok did not exist and the ammeter's good arc fell
+  // back to the accent. Values unchanged from Part 14.
+  vars["--ok"] = night ? "oklch(.660 .155 148)" : "oklch(.500 .150 148)";
+  vars["--bad"] = night ? "oklch(.620 .180 25)" : "oklch(.500 .190 25)";
+  vars["--on-mark"] = night ? "oklch(.14 0 0)" : "oklch(.99 0 0)";
+
+  const CAUTION_H = 78;
+  const hueGap = Math.min(Math.abs(H - CAUTION_H), 360 - Math.abs(H - CAUTION_H));
+  const cautionClash = hueGap < 35;
+  vars["--caution"] = night
+    ? (cautionClash ? `oklch(.860 .175 ${CAUTION_H})` : `oklch(.740 .155 ${CAUTION_H})`)
+    : (cautionClash ? `oklch(.400 .165 ${CAUTION_H})` : `oklch(.495 .150 ${CAUTION_H})`);
+
   // THE RESTING BORDER, and it is the deck's — the same object on a module
   // card and a Flight Deck card, which is the whole point of the token.
   //

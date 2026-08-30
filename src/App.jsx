@@ -50,6 +50,9 @@ import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
+import { RETENTION_KEY, emptyRetention } from "./lib/retention.js";
+import { stamp as stampDate } from "./components/module/Instruments.jsx";
+import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
@@ -193,6 +196,10 @@ function AppInner() {
   // owned like anything else — otherwise deleting a seeded note would bring it
   // back on the next reload.
   const { seedFrom, requestWatch } = useSession();
+  // The ammeter's panel: each chapter's FIRST-attempt score against the pass
+  // mark. A retake is labelled as one and does not move the needle, so the
+  // panel has to show which figure the needle is actually reading.
+  const [accuracyOpen, setAccuracyOpen] = useState(false);
   useEffect(() => { if (testContent) seedFrom(testContent); }, [testContent, seedFrom]);
   const moduleState = {
     opened: progress.get("pw-paper-opened", {}),
@@ -738,6 +745,13 @@ function AppInner() {
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
             onLibrarySub={(sub) => go(routePath.library(activeModuleCode, sub))}
             papers={papersFor(activeModuleCode, useTestContent)}
+            retention={progress.get(RETENTION_KEY, emptyRetention())}
+            lastChecked={stampDate(progress.get("pw-last-recheck", null))}
+            onInstrument={(what) => {
+              if (what === "recheck") go(routePath.chapter(activeModuleCode, "recheck", "quiz"));
+              else if (what === "caution") go(routePath.chapter(activeModuleCode, "caution", "quiz"));
+              else setAccuracyOpen(true);
+            }}
             onOpenPaper={(paper) => {
               // Opened is remembered per account, so the Library can say which
               // ones have been. Written before the tab opens: a popup blocker
@@ -817,6 +831,12 @@ function AppInner() {
         else if (what === "quiz" && lesson) go(routePath.chapter(code, lesson.chapter.id, "quiz"));
       }}
     />
+    {accuracyOpen && (
+      <AccuracyPanel
+        chapters={chaptersFor(activeModuleCode, useTestContent)}
+        scores={moduleState.quiz}
+        onClose={() => setAccuracyOpen(false)} />
+    )}
     {/* The one <video>. A sibling of the routed content, never inside it. */}
     <PlayerLayer />
     <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />

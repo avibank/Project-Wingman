@@ -143,21 +143,15 @@
 /* The only two colours in the app that are not the livery. They have to mean
    right and wrong to everyone, so they cannot be a livery hue — Beacon red as
    the accent would make every selected answer look wrong. */
-:root{
-  --ok:  oklch(.66 .155 148);
-  --bad: oklch(.62 .180 25);
-  --on-mark: oklch(.14 0 0);
-}
+/* Defined by the livery engine, not here. They were in this file, which only
+   loads with the quiz — so --ok did not exist on the module screen and the
+   ammeter's good arc silently fell back to the accent. One source. */
 /* WINGMAN NOTE — the selector, not the values. The source keys this off
    :root[data-mode="light"]; this app stamps data-variant on .app instead, so
    the light values never applied and Day used the dark ones against a light
    ground: measured 3.13:1 for right and 3.63:1 for wrong, both under the
    floor. The values below are the source's, unchanged. */
-.app[data-variant="day"]{
-  --ok:  oklch(.50 .150 148);
-  --bad: oklch(.50 .190 25);
-  --on-mark: oklch(.99 0 0);
-}
+
 /* Never colour alone: a marked option also carries the word Correct or Your
    answer, because about one in twelve men cannot separate these two hues. */
 .opt-mark{

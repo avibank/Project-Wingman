@@ -4,6 +4,10 @@ import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
+import { Accuracy, Retention, MasterCaution, Route } from "./Instruments.jsx";
+import { cautionCount, holdingCount, dueCount } from "../../lib/retention.js";
+import { passAt } from "../../lib/quiz.js";
+import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
 import "./module.css";
 
@@ -18,6 +22,7 @@ export const MODULE_TABS = [
 export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
   papers = [], librarySub = "papers", onLibrarySub, onOpenPaper,
+  retention, lastChecked, onInstrument,
   people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
   onOpenQuestion,
 }) {
@@ -43,10 +48,23 @@ export default function ModuleScreen({
   // The only figure on the screen. Deliberately absent until there is one —
   // nothing pretends on a first visit.
   const taken = chapters.map((c) => state?.quiz?.[c.id]).filter(Boolean);
-  const avg = taken.length
-    ? Math.round(taken.reduce((n, q) => n + q.correct, 0) / taken.length)
-    : null;
   const outOf = taken.length ? taken[0].total : null;
+
+  // The ammeter reads MEAN FIRST-ATTEMPT score as a percentage, against the
+  // pass mark — and it reads from the same data as the rows, because a hero
+  // that is hardcoded is a hero that eventually contradicts the list under it.
+  const avgPct = taken.length
+    ? Math.round(taken.reduce((n, q) => n + (q.correct / q.total) * 100, 0) / taken.length)
+    : null;
+  const passMark = Math.round((passAt(outOf || 8) / (outOf || 8)) * 100);
+
+  const lessonTotal = chapters.reduce((n, c) => n + (c.lessons?.length || 0), 0);
+  const hereIndex = Math.max(0, chapters.findIndex((c) => c.id === here?.chapter?.id));
+  const started = Boolean(here?.chapter?.id) || taken.length > 0;
+
+  const holding = holdingCount(retention);
+  const caution = cautionCount(retention);
+  const due = dueCount(retention);
 
   return (
     <div className="mscreen">
@@ -55,12 +73,27 @@ export default function ModuleScreen({
         <button type="button" className="up" onClick={onBack}>
           <ChevronLeft aria-hidden="true" /> {upFrom({ kind: "module" })?.label}
         </button>
-        <div className="titlerow">
-          <h1 className="title">{mod.name}</h1>
-          {avg != null && (
-            <p className="avg">Quiz average<b>{avg} of {outOf}</b></p>
-          )}
+      </div>
+
+      {/* Horizontal in emphasis. The left block names the module; the right is
+          the route, vertically centred against it. */}
+      <div className="mhero">
+        <div>
+          <h1 className="mhero-title">{mod.name}</h1>
+          <span className="mhero-code">{(mod.code || mod.id)}{mod.subtitle ? ` · ${mod.subtitle.toUpperCase()}` : ""}</span>
+          <span className="mhero-line">
+            {lessonTotal} lesson{lessonTotal === 1 ? "" : "s"} and {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}
+          </span>
         </div>
+        <Route chapters={chapters} atIndex={hereIndex} started={started} />
+      </div>
+
+      {/* Three cells, and each instrument names itself. No captions. */}
+      <div className="mstrip">
+        <Accuracy mean={avgPct} passMark={passMark} onPress={() => onInstrument?.("accuracy")} />
+        <Retention holding={holding} due={due} lastChecked={lastChecked}
+                   onPress={() => onInstrument?.("recheck")} />
+        <MasterCaution count={caution} onPress={() => onInstrument?.("caution")} />
       </div>
 
       <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>
