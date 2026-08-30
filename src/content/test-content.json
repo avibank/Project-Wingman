@@ -2337,6 +2337,132 @@
       "body": "Is this the same idea as Module 1 Chapter 3?",
       "authorId": "u_you",
       "createdAt": "2026-08-22T10:04:00Z"
+    },
+    {
+      "id": "T1000",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 332,
+      "body": "Lost me here — what is being cancelled out?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-16T09:00:00Z"
+    },
+    {
+      "id": "T1001",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 338,
+      "body": "Same, had to replay this part twice.",
+      "authorId": "u_four",
+      "createdAt": "2026-08-17T09:01:00Z"
+    },
+    {
+      "id": "T1002",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 341,
+      "body": "Is the unit still the same after this step?",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-18T09:02:00Z"
+    },
+    {
+      "id": "T1003",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 347,
+      "body": "Why does the sign change here?",
+      "authorId": "u_two",
+      "createdAt": "2026-08-19T09:03:00Z"
+    },
+    {
+      "id": "T1004",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 352,
+      "body": "This is the bit the quiz asks about I think.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-20T09:04:00Z"
+    },
+    {
+      "id": "T1005",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 356,
+      "body": "Does this hold if the value is negative?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-21T09:05:00Z"
+    },
+    {
+      "id": "T1006",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 361,
+      "body": "Took me a while: it is the same rule as the first lesson.",
+      "authorId": "u_four",
+      "createdAt": "2026-08-22T09:06:00Z"
+    },
+    {
+      "id": "T1007",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 366,
+      "body": "Can someone say this in plain words?",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-23T09:07:00Z"
+    },
+    {
+      "id": "T1008",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 372,
+      "body": "The worked example in the papers covers this one.",
+      "authorId": "u_two",
+      "createdAt": "2026-08-24T09:08:00Z"
+    },
+    {
+      "id": "T1009",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 381,
+      "body": "Clearer at 0.75 speed.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-25T09:09:00Z"
+    },
+    {
+      "id": "T1010",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 120,
+      "body": "What is the assumption being made here?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-16T09:10:00Z"
+    },
+    {
+      "id": "T1011",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 126,
+      "body": "Follow-up: does the order matter?",
+      "authorId": "u_four",
+      "createdAt": "2026-08-17T09:11:00Z"
+    },
+    {
+      "id": "T1012",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 690,
+      "body": "Good explanation of the setup.",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-18T09:12:00Z"
+    },
+    {
+      "id": "T1013",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 742,
+      "body": "Worth a note — comes up again later.",
+      "authorId": "u_two",
+      "createdAt": "2026-08-19T09:13:00Z"
     }
   ],
   "replies": [

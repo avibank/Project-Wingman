@@ -129,6 +129,24 @@ const bannerRatio = ratio(Y(lin(bannerFg.L, bannerFg.C, bannerFg.H)), bannerOver
 rows.push({ where: "any (over video)", sel: ".pbanner-body", token: "fixed", worst: bannerRatio });
 if (bannerRatio < FLOOR) fails.push(`.pbanner-body: ${bannerRatio.toFixed(2)}:1, under ${FLOOR}`);
 
+// §3.1's end card. Fixed values for the same reason the banner is: it paints
+// over a video frame, not over a page surface. Worst case is the scrim over a
+// WHITE frame, since the scrim is translucent and a bright frame is what shows
+// through it — measuring over black would flatter it.
+{
+  const fg = parse("oklch(1 0 0)");                  // --over-video, solid
+  const scrim = parse("oklch(0 0 0 / .88)");
+  const overWhite = over(scrim, { L: 1, C: 0, H: 0, a: 1 });
+  const r = ratio(Y(over(fg, { L: 0, C: 0, H: 0, a: 1 })), Y(overWhite));
+  // The text itself is --over-video composited onto that same scrim.
+  const textOnScrim = Y(fg.a < 1
+    ? over(fg, { L: overWhite[0], C: 0, H: 0, a: 1 })
+    : lin(fg.L, fg.C, fg.H));
+  const worst = Math.min(r, ratio(textOnScrim, Y(overWhite)));
+  rows.push({ where: "any (over a bright frame)", sel: ".pend-t / .pend-go", token: "fixed", worst });
+  if (worst < FLOOR) fails.push(`.pend-t over the end-card scrim: ${worst.toFixed(2)}:1, under ${FLOOR}`);
+}
+
 // Two pairs that are not livery-driven and have to be measured on their own.
 // .rdur is white on a fixed scrim over a thumbnail; .av is initials on a
 // generated fill, and the fill's hue comes from the ten-colour palette, so the

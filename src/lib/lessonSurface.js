@@ -713,3 +713,79 @@ export function upFrom(route) {
                                depends on the screen in front of you
      bar, banner, hud, tab     memory only
    ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   §3.1 — the comment-density silhouette above the progress bar.
+
+   What it is for: the places a lesson is HARD are the places people stop and
+   ask, and that signal already exists in the comments — it just has no shape.
+   A silhouette turns "47 comments somewhere in this lesson" into "the trouble
+   is at 6:10", which is a thing you can scrub to.
+
+   Deliberately a silhouette and not a chart: no axis, no numbers, no tooltip.
+   It answers one question — where does this lesson get hard — and a reader who
+   wants the exact count can open the comments, which is one tap away.
+
+   Returns null below a floor, because a curve drawn from four comments is not a
+   signal, it is four comments. A shape that looks like data but is noise is
+   worse than nothing: it gets believed.
+*/
+export const DENSITY_MIN = 8;        // comments needed before a shape is drawn
+export const DENSITY_BUCKETS = 48;
+
+export function densityBuckets(times, durationS, buckets = DENSITY_BUCKETS) {
+  if (!durationS || durationS <= 0) return null;
+  const ts = (times || []).filter((t) => Number.isFinite(t) && t >= 0 && t <= durationS);
+  if (ts.length < DENSITY_MIN) return null;
+
+  const raw = new Array(buckets).fill(0);
+  for (const t of ts) {
+    const i = Math.min(buckets - 1, Math.floor((t / durationS) * buckets));
+    raw[i] += 1;
+  }
+  // A three-tap smooth. Without it the curve is a comb — one comment makes a
+  // spike as tall as a genuine cluster, and the eye reads height as importance.
+  const smooth = raw.map((_, i) => {
+    const a = raw[i - 1] ?? 0, b = raw[i], c = raw[i + 1] ?? 0;
+    return (a + b * 2 + c) / 4;
+  });
+  const peak = Math.max(...smooth);
+  if (peak <= 0) return null;
+  // Normalised to its own peak: this compares moments WITHIN one lesson and
+  // never across lessons, so a quiet lesson is not drawn as a flat line.
+  return smooth.map((v) => v / peak);
+}
+
+/* A closed path in a 0..w by 0..h box, flat-bottomed so it reads as a
+   silhouette rather than a line chart. Pure geometry — the caller owns the
+   colour, and there is no colour in this file. */
+export function densityPath(norm, w, h) {
+  if (!norm?.length || w <= 0 || h <= 0) return null;
+  const n = norm.length;
+  const x = (i) => (i / (n - 1)) * w;
+  const y = (v) => h - v * h;
+  let d = `M 0 ${h} L ${x(0)} ${y(norm[0])}`;
+  // Catmull-Rom to cubic: a smooth ridge with no control points to author.
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = norm[Math.max(0, i - 1)], p1 = norm[i], p2 = norm[i + 1], p3 = norm[Math.min(n - 1, i + 2)];
+    const x1 = x(i) + (x(i + 1) - x(Math.max(0, i - 1))) / 6;
+    const y1 = y(p1) + (y(p2) - y(p0)) / 6;
+    const x2 = x(i + 1) - (x(Math.min(n - 1, i + 2)) - x(i)) / 6;
+    const y2 = y(p2) - (y(p3) - y(p1)) / 6;
+    d += ` C ${x1.toFixed(2)} ${y1.toFixed(2)} ${x2.toFixed(2)} ${y2.toFixed(2)} ${x(i + 1).toFixed(2)} ${y(p2).toFixed(2)}`;
+  }
+  return `${d} L ${w} ${h} Z`;
+}
+
+/* Where the lesson gets hard, in words, for the label a screen reader gets —
+   the curve is aria-hidden, so this is the whole of it for anyone not looking. */
+export function densityLabel(norm, durationS) {
+  if (!norm?.length || !durationS) return null;
+  let best = 0;
+  for (let i = 1; i < norm.length; i++) if (norm[i] > norm[best]) best = i;
+  const at = Math.round(((best + 0.5) / norm.length) * durationS);
+  // Formatted here rather than importing mmss: that lives in the components
+  // layer, and a lib reaching up into components is the wrong direction.
+  const clock = `${Math.floor(at / 60)}:${String(at % 60).padStart(2, "0")}`;
+  return `Most questions are asked around ${clock}`;
+}

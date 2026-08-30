@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, PenLine, X } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, PenLine, X, RotateCcw } from "lucide-react";
 import { resolveVideo } from "../../lib/videoHost.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
@@ -8,6 +8,7 @@ import { path as routePath } from "../../lib/routes.js";
 import {
   BANNER_MS, SPEEDS, VOLUME_STEP, HUD_MS,
   lessonMarks, markClusters, notesCrossed, bannerFrom, bannerLabel,
+  densityBuckets, densityPath, densityLabel, commentsFor,
   openBar, closeBar, discardBar, editNote, expandBanner, dismissBanner,
   notesFor, keyAction, hudLabel, barPosition, barFraction, nudgeBar, isPin,
 } from "../../lib/lessonSurface.js";
@@ -20,6 +21,11 @@ import "./lesson.css";
 //
 // It is positioned over the lesson page's empty slot by transform. The slot
 // owns the size; this only ever copies its measured rect.
+// The silhouette's height in px. Small on purpose: it is a hint about where
+// the lesson gets hard, not a chart, and anything taller starts to look like
+// one thing the player does rather than one thing it mentions.
+const DENSITY_H = 18;
+
 export default function PlayerLayer() {
   const {
     session, setSession, mutate, dispatchPlayer, stage, clearSeek,
@@ -48,6 +54,10 @@ export default function PlayerLayer() {
   const [hovering, setHovering] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
   const [barBox, setBarBox] = useState({ width: 0, height: 0 });
+  // §3.1 — the end card. Its own state rather than pct >= 1: a lesson can sit
+  // at the last frame after a scrub without having been watched to the end, and
+  // offering "Watch again" to somebody who just dragged there is nonsense.
+  const [ended, setEnded] = useState(false);
 
   const lesson = stage?.lesson || null;
   const dur = lesson?.duration || 0;
@@ -119,7 +129,7 @@ export default function PlayerLayer() {
 
   // ------------------------------------------------------------------- media
   const resumeTo = useRef(0);
-  useEffect(() => { resumeTo.current = stage?.resume || 0; completed.current = false; }, [lesson?.id]);
+  useEffect(() => { resumeTo.current = stage?.resume || 0; completed.current = false; setEnded(false); }, [lesson?.id]);
 
   const onMeta = () => {
     setReady(true);
@@ -131,7 +141,13 @@ export default function PlayerLayer() {
     if (el.duration && want) el.currentTime = want * el.duration;
   };
 
+  // Any deliberate move back into the video dismisses the card — it is an
+  // offer, not a wall.
+  useEffect(() => { if (playing) setEnded(false); }, [playing]);
+
   const seekTo = useCallback((p) => {
+    // Scrubbing back into the video is a way out of the end card too.
+    setEnded(false);
     const el = ref.current;
     const next = Math.min(1, Math.max(0, p));
     setPct(next);
@@ -380,6 +396,17 @@ export default function PlayerLayer() {
 
   const clusters = useMemo(() => markClusters(marks, dur, trackW), [marks, dur, trackW]);
 
+  // §3.1 — the comment-density silhouette. Comments only: notes are one
+  // person's and would draw a shape about them rather than about the lesson.
+  const density = useMemo(() => {
+    if (!lesson || !dur) return null;
+    const ts = commentsFor(session.threads, lesson.id).map((c) => c.t);
+    return densityBuckets(ts, dur);
+  }, [session.threads, lesson, dur]);
+  const densityD = useMemo(
+    () => (density && trackW ? densityPath(density, trackW, DENSITY_H) : null),
+    [density, trackW]);
+
   const posFromEvent = (e) => {
     const r = trackRef.current.getBoundingClientRect();
     const x = (e.touches?.[0]?.clientX ?? e.clientX) - r.left;
@@ -419,7 +446,35 @@ export default function PlayerLayer() {
                onCanPlay={() => setBuffering(false)}
                onPlaying={() => { setBuffering(false); dispatchPlayer({ type: "play" }); }}
                onPlay={() => dispatchPlayer({ type: "play" })}
+               onEnded={() => setEnded(true)}
                onPause={() => dispatchPlayer({ type: "pause" })} />
+
+      {/* §3.1 — what a finished lesson offers. Two things and no autoplay: the
+          next lesson is already one row down the page, and a countdown that
+          moves somebody somewhere they did not ask to go is the single most
+          complained-about behaviour in every player that has one. */}
+      {ended && dock === "inline" && (
+        <div className="pend">
+          <p className="pend-t">{lesson?.title}</p>
+          <div className="pend-acts">
+            <button type="button" className="pend-go" onClick={() => {
+              setEnded(false);
+              const el = ref.current;
+              if (el) { el.currentTime = 0; el.play?.().catch(() => {}); }
+            }}>
+              <RotateCcw aria-hidden="true" /> Watch again
+            </button>
+            {stage?.chapterId && stage?.moduleCode && (
+              <button type="button" className="pend-go" data-primary="" onClick={() => {
+                setEnded(false);
+                navigate(routePath.chapter(stage.moduleCode, stage.chapterId, "quiz"));
+              }}>
+                {stage.chapterTitle ? `${stage.chapterTitle} quiz` : "Take the chapter quiz"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
         {/* Two controls, and only two. Tap the body to come back to the lesson,
             tap the X to stop. It is a way back, not a second player. */}
@@ -504,6 +559,16 @@ export default function PlayerLayer() {
       )}
 
       <div className="pctl">
+        {/* Above the bar, aligned to it 1:1 — it is drawn against the track's
+            measured width, so a peak sits over the second it describes. */}
+        {densityD && (
+          <svg className="pdens" width={trackW} height={DENSITY_H}
+               viewBox={`0 0 ${trackW} ${DENSITY_H}`} role="img"
+               aria-label={densityLabel(density, dur)}>
+            <path className="pdens-f" d={densityD} />
+          </svg>
+        )}
+
         <div className="scrub" ref={trackRef}
              role="slider" tabIndex={0} aria-label="Seek"
              aria-valuemin={0} aria-valuemax={Math.round(dur)} aria-valuenow={Math.round(dur * pct)}

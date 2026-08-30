@@ -74,6 +74,7 @@ export default function LessonPage({
       slotEl: slotRef.current,
       // The mini player needs these to route back to this lesson from any page.
       chapterId: chapter.id,
+      chapterTitle: chapter.title,
       moduleCode: mod.code || mod.id,
       // One step ahead: the player prefetches this at halfway.
       next: nextAfterLesson(chapters, chapter.id, lesson.id, state)?.lesson || null,

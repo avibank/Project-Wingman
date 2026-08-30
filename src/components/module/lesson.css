@@ -25,6 +25,20 @@
 :root{
   --player-max-h: 100vh;     /* phone: no cap, portrait is width-limited anyway */
   --player-max-w: 100%;
+
+  /* The one value in this file that is deliberately NOT livery-driven, and the
+     three places that already used it inline now share it. Everything painted
+     over a video frame has to hold against an arbitrary image rather than
+     against a known page surface, so it is fixed. Not a new colour: this is the
+     value .scrub-mark carried inline, now solid.
+
+     SOLID, not the .82 it used to be, and that came out of measuring rather
+     than taste: the end card's text is this token over a scrim, and against a
+     BRIGHT video frame the translucent version reached only 2.79:1. Anything
+     painted over video has to hold against an arbitrary frame, so the worst
+     case is the one that counts. Full white also makes the tick marks slightly
+     brighter, which for a 2px mark over video is an improvement. */
+  --over-video: oklch(1 0 0);
 }
 @media (min-width: 768px){
   :root{ --player-max-h: 52vh; --player-max-w: 100%; }
@@ -155,7 +169,7 @@
    <track> support on the element and render no button while there are no
    tracks, so re-adding it later is a button rather than a rebuild. */
 .pctl{
-  position: absolute; inset: auto 0 0 0;
+  position: absolute; inset: auto 0 0 0; z-index: 4;
   padding: 0 10px 8px;
   background: linear-gradient(180deg, transparent, oklch(0 0 0 / .62));
   opacity: 0;
@@ -225,8 +239,63 @@
   transform: translateX(-1px); pointer-events: none;
 }
 .scrub-mark[data-kind="thread"]{ background: var(--active); }
-.scrub-mark[data-kind="note"]  { background: oklch(1 0 0 / .82); }
+/* Yours, and NOT the accent. The accent already means "public thread" two
+   lines up, and one colour cannot mean both without the bar saying nothing.
+   Named rather than inlined: this is the third fixed over-video value in the
+   file, and the value is unchanged. It stays fixed rather than livery-driven
+   for the same reason .pbanner-body and .rdur do — it sits over a video frame,
+   not over the page, so no livery token can be trusted to be visible on it. */
+.scrub-mark[data-kind="note"]  { background: var(--over-video); }
 .scrub-mark[data-many="1"]     { width: 4px; }
+
+/* §3.1 — the comment-density silhouette. It sits directly on the track, drawn
+   1:1 against its measured width, so a peak is over the second it describes.
+   Quiet on purpose: it is a hint, and a hint that competes with the progress
+   fill for attention has stopped being one. No stroke — a filled silhouette
+   with no outline cannot be mistaken for a chart's plotted line. */
+/* THE SAME HORIZONTAL BOX AS .scrub, and it has to be said in the margin
+   rather than assumed: .pctl adds 10px of padding and .scrub adds 10px of
+   margin on top of it, so a curve with no margin drew 10px to the left of the
+   track and every peak pointed at the wrong second. It is measured against the
+   track's width, so it must start where the track starts. */
+.pdens{ display: block; pointer-events: none; margin: 0 10px 2px; }
+.pdens-f{ fill: var(--over-video); opacity: .32; }
+
+/* §3.1 — what a finished lesson offers. Over the video, so it takes the same
+   fixed values the banner does rather than a livery token. */
+.pend{
+  /* z-index 3, and the control bar is lifted to 4 rather than this being
+     lowered: the card must cover the video but NOT the scrubber. Covering the
+     controls means the only way back into a finished lesson is to restart it
+     from zero, and "I wanted to see the last bit again" is the commonest
+     reason to still be looking at a video that has ended. */
+  position: absolute; inset: 0; z-index: 3;
+  display: grid; place-content: center; gap: 14px; justify-items: center;
+  padding: 24px; text-align: center;
+  /* .88, measured. At .72 the card's own text managed 2.64:1 over a white
+     frame — a scrim that only works when the last frame happens to be dark is
+     a scrim that fails on the lessons that end on a diagram. */
+  background: oklch(0 0 0 / .88);
+}
+.pend-t{
+  font-size: var(--fs-md); color: var(--over-video);
+  max-width: 30ch; margin: 0;
+}
+.pend-acts{ display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.pend-go{
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: var(--tap); padding: 0 18px;
+  background: none; border: 1px solid var(--over-video); border-radius: 999px;
+  font: inherit; font-size: var(--fs-sm); color: var(--over-video); cursor: pointer;
+}
+.pend-go svg{ width: 16px; height: 16px; }
+.pend-go:hover{ background: oklch(1 0 0 / .12); }
+/* ONE primary action per screen, and while this card is up it is this one. */
+/* --ground on an --active fill, which is what .nextgo and .hero-go already do.
+   NOT --active-text: that token is the accent used AS text on the page, so on
+   an accent fill it would be accent on accent. */
+.pend-go[data-primary]{ background: var(--active); border-color: var(--active); color: var(--ground); }
+.pend-go[data-primary]:hover{ filter: brightness(1.06); }
 
 /* Clustering IS the hit-target fix: two marks 3px apart cannot both carry a
    44px target without overlapping, so they merge first and the cluster gets
