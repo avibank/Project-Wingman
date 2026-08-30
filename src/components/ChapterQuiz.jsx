@@ -14,7 +14,10 @@ function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapte
   const [flashIdx, setFlashIdx] = useState(null);
   // §9.3.3 — the debrief needs to point at what you actually missed.
   const [missed, setMissed] = useState([]);
+  // Which question is on screen right now, for late replies to check against.
+  const askedRef = useRef(null);
   const q = questions[i];
+  askedRef.current = q?.id ?? null;
 
   // A correct answer schedules an automatic advance 900ms later. Pressing
   // Enter — or clicking Next — inside that window used to advance as well, so
@@ -49,7 +52,16 @@ function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapte
     // question, without ever naming or counting who is online.
     if (user?.id) {
       recordAttempt({ userId: user.id, questionId: q.id, chapterId, correct });
-      if (!correct) fetchMissStats(q.id).then(setMissStat);
+      // Answer wrong, advance before the stat lands, and it used to arrive and
+      // paint the PREVIOUS question's miss rate under the current one —
+      // advance() clears it to null and the late reply overwrote that. It is
+      // only allowed to write while its own question is still on screen.
+      if (!correct) {
+        const asked = q.id;
+        fetchMissStats(asked)
+          .then((stat) => { if (askedRef.current === asked) setMissStat(stat); })
+          .catch(() => {});
+      }
     }
     if (!correct) setMissed((m) => (m.includes(q.id) ? m : [...m, q.id]));
     const updatedScore = { correct: score.correct + (correct ? 1 : 0), seen: score.seen + 1 };

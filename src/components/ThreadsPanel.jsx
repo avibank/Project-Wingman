@@ -34,8 +34,17 @@ function ThreadsPanel({ chapter, moduleCode, prefs, onCountChange }) {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (!openThread) return;
-    fetchPosts(openThread.id).then(setPosts);
+    if (!openThread) return undefined;
+    // Open thread A, then B before A answers, and A's posts used to land under
+    // B's title — the reply always wins if nothing tells it it is stale. The
+    // flag is cleared by the effect's own cleanup, so only the newest request
+    // can write. A failure leaves the posts alone rather than rejecting into
+    // nothing.
+    let live = true;
+    fetchPosts(openThread.id)
+      .then((rows) => { if (live) setPosts(rows); })
+      .catch(() => {});
+    return () => { live = false; };
   }, [openThread]);
 
   const startThread = async () => {
