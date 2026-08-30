@@ -40,14 +40,31 @@ function readPattern(src, braceAt) {
   }
   const block = src.slice(braceAt + 1, end);
   const names = new Set();
-  // Split on commas that are not inside a nested pattern.
-  for (const raw of block.split(/,(?![^{[]*[}\]])/)) {
-    const part = raw.trim().split(/[=:]/)[0].trim();
+  const required = new Set();
+  // Split on top-level commas only. A regex cannot do this: a nested default
+  // like `people = { a: 1, b: 2 }` contains commas that belong to the object,
+  // and splitting on them invents props called a and b.
+  const parts = [];
+  let d2 = 0, buf = "";
+  for (const ch of block) {
+    if (ch === "{" || ch === "[" || ch === "(") d2++;
+    else if (ch === "}" || ch === "]" || ch === ")") d2--;
+    if (ch === "," && d2 === 0) { parts.push(buf); buf = ""; continue; }
+    buf += ch;
+  }
+  parts.push(buf);
+  for (const raw of parts) {
+    const part = raw.trim();
+    if (!part) continue;
     // A rest element accepts anything, so the component cannot drop a prop.
     if (part.startsWith("...")) { names.add("*"); continue; }
-    if (/^\w+$/.test(part)) names.add(part);
+    const name = part.split(/[=:]/)[0].trim();
+    if (!/^\w+$/.test(name)) continue;
+    names.add(name);
+    // No default means the component expects to be given it.
+    if (!/=/.test(part)) required.add(name);
   }
-  return names;
+  return { names, required };
 }
 
 const comps = new Map();
@@ -60,8 +77,56 @@ for (const f of files) {
     // A component declared twice would make this ambiguous; skip rather than
     // guess which one a call site meant.
     if (comps.has(name)) { comps.get(name).ambiguous = true; continue; }
-    comps.set(name, { props: readPattern(src, braceAt), file: f, ambiguous: false });
+    const { names, required } = readPattern(src, braceAt);
+    comps.set(name, { props: names, required, file: f, ambiguous: false });
   }
+}
+
+/* The attribute NAMES in a tag body. A regex is wrong here for the same reason
+   it was wrong for finding the tag's end: prose inside a string value —
+   label="a question during a quiz" — reads as a run of bare attributes. Walk it
+   instead, and only take identifiers sitting at the top level of the tag.
+   Bare attributes count: `open` is `open={true}`, and calling it absent reports
+   a prop that is very much being passed. */
+function attrsOf(seg) {
+  const out = new Set();
+  let i = 0;
+  while (i < seg.length) {
+    const c = seg[i];
+    if (c === '"' || c === "'" || c === "`") {          // skip a string value
+      const q = c; i++;
+      while (i < seg.length && !(seg[i] === q && seg[i - 1] !== "\\")) i++;
+      i++; continue;
+    }
+    if (c === "/" && seg[i + 1] === "/") {               // skip a line comment
+      while (i < seg.length && seg[i] !== "\n") i++;
+      continue;
+    }
+    if (c === "/" && seg[i + 1] === "*") {               // skip a block comment
+      i += 2;
+      while (i < seg.length && !(seg[i] === "*" && seg[i + 1] === "/")) i++;
+      i += 2; continue;
+    }
+    if (c === "{") {                                     // skip an expression
+      let d = 1; i++;
+      while (i < seg.length && d > 0) {
+        if (seg[i] === "{") d++;
+        else if (seg[i] === "}") d--;
+        i++;
+      }
+      continue;
+    }
+    if (/[A-Za-z_$]/.test(c)) {
+      let j = i;
+      while (j < seg.length && /[\w$-]/.test(seg[j])) j++;
+      const word = seg.slice(i, j);
+      // An identifier here is an attribute name whether or not it has a value.
+      if (!word.includes("-")) out.add(word);
+      i = j; continue;
+    }
+    i++;
+  }
+  return out;
 }
 
 /* Every index where `<Name` begins as a real tag. */
@@ -86,6 +151,20 @@ function tagBody(src, start) {
       if (c === quote && src[i - 1] !== "\\") quote = null;
       continue;
     }
+    // COMMENTS BEFORE QUOTES, and this is not a nicety. A JSX comment inside a
+    // tag can contain an apostrophe — "the Flight Deck's Resume" — and reading
+    // that as a string open means the tag never closes, so the whole call site
+    // is skipped in silence. That is how this check quietly stopped watching
+    // the one call site it was written to protect.
+    if (c === "/" && src[i + 1] === "/") {
+      while (i < src.length && src[i] !== "\n") i++;
+      continue;
+    }
+    if (c === "/" && src[i + 1] === "*") {
+      i += 2;
+      while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i++;
+      i++; continue;
+    }
     if (c === '"' || c === "'" || c === "`") { quote = c; continue; }
     if (c === "{") depth++;
     else if (c === "}") depth--;
@@ -95,6 +174,10 @@ function tagBody(src, start) {
 }
 
 const fails = [];
+// Every prop name any call site hands each component, unioned.
+const seen = new Map();
+// A component with a spread anywhere may be given anything; do not judge it.
+const spread = new Set();
 let sites = 0;
 for (const f of files) {
   const src = readFileSync(f, "utf8");
@@ -110,14 +193,14 @@ for (const f of files) {
     for (const start of tagStarts(src, name)) {
       const seg = tagBody(src, start);
       if (seg === null) continue;
-      if (seg.includes("{...")) continue;       // a spread may carry anything
+      if (seg.includes("{...")) { spread.add(name); continue; }
       const m = { index: start };
       sites++;
       if (props.has("*")) continue;             // a rest element takes them all
       // The leading boundary matters: without it data-press="" matched as a
       // prop called "press", because \w does not include a hyphen.
-      const passed = new Set(
-        [...seg.matchAll(/(?:^|[\s{])([A-Za-z_$][\w$]*)=[{"]/g)].map((x) => x[1]));
+      const passed = attrsOf(seg);
+      seen.set(name, new Set([...(seen.get(name) || []), ...passed]));
       for (const p of passed) {
         if (p === "key" || p === "ref") continue;
         if (props.has(p)) continue;
@@ -128,7 +211,29 @@ for (const f of files) {
   }
 }
 
+/* THE OTHER DIRECTION, and the one that found a live data bug: a prop the
+   component expects and NO call site ever hands it. It is always undefined, so
+   whatever depends on it quietly does nothing — ChapterComments took moduleCode
+   that way, which meant its query filtered on undefined and anything posted was
+   written with a null module and could never be read back.
+
+   Only props with no default are judged: a default is the author saying the
+   prop is optional. children is never an attribute. */
+let reverse = 0;
+for (const [name, { required, file, ambiguous }] of comps) {
+  if (ambiguous || spread.has(name)) continue;
+  const got = seen.get(name);
+  if (!got) continue;                       // never rendered; nothing to check
+  for (const p of required) {
+    if (p === "children" || p === "key" || p === "ref") continue;
+    if (got.has(p)) continue;
+    reverse++;
+    fails.push(`${file} <${name}> expects ${p}, which no call site passes`);
+  }
+}
+
 console.log(`props: ${sites} JSX call sites across ${comps.size} components with destructured props`);
+console.log(`       both directions — passed-but-not-received, and expected-but-never-passed (${reverse} of the latter)`);
 for (const f of fails) console.log("  FAIL  " + f);
 console.log(fails.length ? `PROPS: ${fails.length} passed but never received` : "MATCH");
 if (fails.length) process.exitCode = 1;

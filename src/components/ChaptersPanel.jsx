@@ -462,7 +462,17 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
                         </div>
                       </>
                     ) : (
-                      <ChapterComments key={ch.id} chapterId={ch.id} onSignIn={onSignIn} />
+                      /* moduleCode is not optional here: fetchMessages filters
+                         .eq("module_code", …) and sendMessage writes it, so
+                         without it the chapter's comments could never load and
+                         anything posted went in with a null module and could
+                         never be read back. chapterCode is the chapter's own
+                         label in the empty state. Both were in scope all along
+                         and simply not passed. */
+                      <ChapterComments key={ch.id} chapterId={ch.id}
+                                       moduleCode={activeModuleCode}
+                                       chapterCode={ch.code}
+                                       onSignIn={onSignIn} />
                     )}
                   </div>
                 </div>

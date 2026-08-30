@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 // a student never has to describe where they were — the report already knows,
 // and "it's broken" with a route attached is worth more than a paragraph
 // without one.
-export default function ReportProblem({ route, extra }) {
+// extra is optional enrichment — a default says so, rather than looking like a
+// prop every call site forgot to pass.
+export default function ReportProblem({ route, extra = null }) {
   const [sent, setSent] = useState(false);
   // One timer, restarted per report. Two reports four seconds apart used to
   // leave two running, and the FIRST one's expiry cleared the second's
