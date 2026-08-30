@@ -48,8 +48,25 @@ function RunwayLights({ route }) {
     let ticking = false;
     const paint = () => {
       const p = scrollProgress(findScroller());
-      if (p === null) { el.dataset.idle = "1"; if (last !== 0) { last = 0; setLit(0); } return; }
+      // PUBLISH THE CHIN'S OWN HEIGHT. --chin-h was read in quiz.css and
+      // documented in shell.js as the thing every page adds to its bottom
+      // padding, but nothing ever set it — so it resolved to its 0px fallback
+      // everywhere and the last row of every list sat behind the chin. The
+      // chin measures itself rather than exporting a constant, so the
+      // reservation follows the real element through safe-area insets and any
+      // future change to its padding.
+      const reserve = (on) =>
+        document.documentElement.style.setProperty(
+          "--chin-h", on ? `${Math.round(el.getBoundingClientRect().height)}px` : "0px");
+
+      if (p === null) {
+        el.dataset.idle = "1";
+        reserve(false);                  // hidden reserves nothing
+        if (last !== 0) { last = 0; setLit(0); }
+        return;
+      }
       el.dataset.idle = "0";
+      reserve(true);
       el.style.setProperty("--progress", String(p));
       const n = litCount(p, LIGHTS);
       if (n === last) return;
@@ -99,6 +116,7 @@ function RunwayLights({ route }) {
       document.removeEventListener("scroll", onScroll, { capture: true });
       window.removeEventListener("resize", paint);
       ro.disconnect();
+      document.documentElement.style.removeProperty("--chin-h");
     };
   }, [route]);
 

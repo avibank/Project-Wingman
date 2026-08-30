@@ -1069,6 +1069,11 @@ function AppInner() {
           overflow-x: hidden;
           position: relative;
           overscroll-behavior: contain;
+          /* Reserve the fixed chin and the mini player, or the last row of
+             every list on the site is unreachable behind them. The chin
+             measures itself into --chin-h; both fall back to 0px, so a page
+             with neither is padded by nothing. */
+          padding-bottom: calc(var(--mini-h, 0px) + var(--chin-h, 0px));
         }
         /* A gate that blocks — first flight, the username prompt — renders as
            the only child, and would otherwise be squashed into the header row. */
