@@ -98,6 +98,28 @@ for (const L of LIVERIES) {
   }
 }
 
+// §2.3's search field puts text on --raised, which NOTHING ELSE IN THE MATRIX
+// measures against: every selector above is judged over --ground and --panel.
+// A placeholder is the whole label on an empty field, so it answers to 4.5 like
+// any other prose, and --raised is a third surface that has to be checked on its
+// own rather than assumed to behave like the two either side of it.
+for (const L of LIVERIES) {
+  for (const variant of ["night", "day"]) {
+    const base = deckVars(L.id, variant).vars;
+    const ground = parse(base["--ground"]);
+    const raised = parse(base["--raised"]);
+    if (!ground || !raised) { fails.push(`${L.id}/${variant}: could not read raised`); continue; }
+    const Yr = Y(over(raised, ground));
+    for (const [sel, token] of [[".tabsearch-f::placeholder", "--t2"], [".tabsearch-f", "--t1"], [".tabsearch-i", "--t2"]]) {
+      const t = parse(base[token]);
+      if (!t) { fails.push(`${L.id}/${variant} ${sel}: could not read ${token}`); continue; }
+      const r = ratio(Y(over(t, { ...raised, a: 1 })), Yr);
+      rows.push({ where: `${L.id}/${variant}`, sel, token, worst: r });
+      if (r < FLOOR) fails.push(`${L.id}/${variant} ${sel} (${token}) over --raised: ${r.toFixed(2)}:1, under ${FLOOR}`);
+    }
+  }
+}
+
 // The banner is the one pair that is not livery-driven: fixed white on a fixed
 // scrim, because it sits over video rather than over the page.
 const bannerFg = parse("oklch(.97 0 0)");

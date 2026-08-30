@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
+import { hits, terms } from "../../lib/moduleSearch.js";
 
 // One tab, two segments. Papers is a folder; Quizzes is a record — how you
 // have done, not what is available. The same quiz reached from its chapter and
 // from here is one object with one score, which is why both read the same
 // state.quiz map rather than keeping their own.
-export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpenQuiz, onOpenPaper }) {
-  const [q, setQ] = useState("");
+export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpenQuiz, onOpenPaper, query = "" }) {
   const [chapterFilter, setChapterFilter] = useState(null);
+  // The search moved out to sit beside the tabs (§2.3). The chapter chips
+  // stayed: they are a different question — chips ask "which chapter", the
+  // field asks "which words", and the two compose.
+  const searching = terms(query).length > 0;
 
   const shown = papers.filter((p) =>
     (!chapterFilter || p.chapterId === chapterFilter)
-    && (!q.trim() || p.title.toLowerCase().includes(q.trim().toLowerCase())));
+    && hits(`${p.title} ${p.chapterTitle || ""}`, query));
 
+  // The placeholder says "Search quizzes", so it has to actually reach them.
+  const shownQuizzes = chapters.filter((c) => hits(`${c.title} quiz ${c.id}`, query));
   const taken = chapters.filter((c) => state?.quiz?.[c.id]);
   const avg = taken.length
     ? Math.round(taken.reduce((n, c) => n + state.quiz[c.id].correct, 0) / taken.length)
@@ -32,8 +38,6 @@ export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpen
       {sub === "papers" ? (
         <>
           <div className="filt">
-            <input className="search" value={q} onChange={(e) => setQ(e.target.value)}
-                   placeholder="Search papers" aria-label="Search papers" />
             <button type="button" className="fchip" aria-pressed={!chapterFilter}
                     onClick={() => setChapterFilter(null)}>All</button>
             {chapters.map((c) => (
@@ -63,7 +67,7 @@ export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpen
           {!shown.length && (
             <p className="endnote">
               {papers.length
-                ? "Nothing matches that. Clear the search or pick another chapter."
+                ? "Try a paper title, a chapter name, or the All chip."
                 : "The papers for this module arrive with the content."}
             </p>
           )}
@@ -85,8 +89,12 @@ export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpen
             )}
           </div>
 
+          {searching && !shownQuizzes.length && (
+            <p className="endnote">Try a chapter name, or the word quiz.</p>
+          )}
+
           <div className="libwrap">
-            {chapters.map((c) => {
+            {shownQuizzes.map((c) => {
               const s = state?.quiz?.[c.id];
               return (
                 <button key={c.id} type="button" className="row" onClick={() => onOpenQuiz(c)}>

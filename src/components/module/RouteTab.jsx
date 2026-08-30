@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
 import { thumbTile, clock } from "../../lib/familiar.js";
 import { posterFor } from "../../lib/shell.js";
+import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
 import "./familiar.css";
 
 // Netflix's episode list, and the reason it is worth more than the picture.
@@ -97,16 +98,20 @@ function RouteSkeleton({ rows = 4 }) {
   );
 }
 
-export default function RouteTab({ module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz }) {
+export default function RouteTab({ module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz, query = "" }) {
   if (!chapters?.length) return <RouteSkeleton />;
-  const lessonCount = chapters.reduce((n, c) => n + c.lessons.length, 0);
+  const lessonCount = countLessons(chapters);
+  const searching = terms(query).length > 0;
+  // Searching overrides the fold. A result you cannot see is not a result, and
+  // "one chapter open at a time" is a rule about browsing, not about finding.
+  const { chapters: shown } = filterChapters(chapters, query);
 
   return (
     <>
       <div className="chaps">
-        {chapters.map((ch) => {
+        {shown.map((ch) => {
           const st = chapterState(ch, state, here?.chapter?.id);
-          const isOpen = open.has(ch.id);
+          const isOpen = searching || open.has(ch.id);
           const score = state?.quiz?.[ch.id];
           return (
             <section key={ch.id} className={`chap${isOpen ? " open" : ""} ${st === "done" ? "done" : st === "here" ? "here" : ""}`}>
@@ -142,7 +147,10 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                   ))}
 
                   {/* The quiz is the last row of its chapter, not a section of
-                      its own — it belongs to the chapter that earned it. */}
+                      its own — it belongs to the chapter that earned it. It is
+                      hidden only when a search matched the chapter's lessons
+                      but not the quiz itself. */}
+                  {(!searching || ch.quizHit) && (
                   <button type="button" className="row" onClick={() => onOpenQuiz(ch)}>
                     <Mark done={score != null} here={false} />
                     <span>
@@ -154,6 +162,7 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                     </span>
                     <span className="chv" aria-hidden="true">›</span>
                   </button>
+                  )}
                 </div>
               </div>
             </section>
@@ -161,11 +170,20 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
         })}
       </div>
 
-      {/* One quiet line so a short tab stops rather than trailing off. */}
-      <p className="endnote">
-        That is all of {mod.name} — {lessonCount} lesson{lessonCount === 1 ? "" : "s"} and{" "}
-        {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}.
-      </p>
+      {/* Searching replaces the closing line with what the search reached.
+          Never a count of nothing: the sentence names the way out. */}
+      {searching ? (
+        <p className="endnote">
+          {shown.length
+            ? `Showing ${countLessons(shown)} lesson${countLessons(shown) === 1 ? "" : "s"} across ${shown.length} chapter${shown.length === 1 ? "" : "s"}. Clear the search for the whole route.`
+            : "Try a chapter name, a lesson title, or a code like M1.03."}
+        </p>
+      ) : (
+        <p className="endnote">
+          That is all of {mod.name} — {lessonCount} lesson{lessonCount === 1 ? "" : "s"} and{" "}
+          {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}.
+        </p>
+      )}
     </>
   );
 }

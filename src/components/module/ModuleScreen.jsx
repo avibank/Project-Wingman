@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, Search, X } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
@@ -7,6 +7,7 @@ import { upFrom } from "../../lib/lessonSurface.js";
 import { Accuracy, Retention, MasterCaution, Route } from "./Instruments.jsx";
 import { cautionCount, holdingCount, dueCount } from "../../lib/retention.js";
 import { passAt } from "../../lib/quiz.js";
+import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
 import "./module.css";
@@ -62,6 +63,19 @@ export default function ModuleScreen({
   const hereIndex = Math.max(0, chapters.findIndex((c) => c.id === here?.chapter?.id));
   const started = Boolean(here?.chapter?.id) || taken.length > 0;
 
+  // §2.3 — one field, beside the tabs. It belongs to the screen rather than to
+  // either tab: the Library used to carry its own, which meant the same words
+  // had to be typed twice to search two halves of one module.
+  //
+  // Cleared when the tab changes. Carrying a query across tabs shows somebody a
+  // filtered list they did not ask to filter, and the commonest way to meet an
+  // empty tab is to arrive at one still holding a search.
+  const [query, setQuery] = useState("");
+  useEffect(() => { setQuery(""); }, [tab]);
+  const searchable = tab === "route" || tab === "library";
+  const searching = terms(query).length > 0;
+  const fieldRef = useRef(null);
+
   const holding = holdingCount(retention);
   const caution = cautionCount(retention);
   const due = dueCount(retention);
@@ -96,14 +110,35 @@ export default function ModuleScreen({
         <MasterCaution count={caution} onPress={() => onInstrument?.("caution")} />
       </div>
 
-      <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>
-        {MODULE_TABS.map((t) => (
-          <button key={t.id} type="button" role="tab" className="tab"
-                  aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
-                  onClick={() => onTab(t.id)}>
-            {t.label}
-          </button>
-        ))}
+      <div className="tabrow">
+        <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>
+          {MODULE_TABS.map((t) => (
+            <button key={t.id} type="button" role="tab" className="tab"
+                    aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
+                    onClick={() => onTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* People has no search: it is a handful of rows about other people,
+            and a field that filters nothing is worse than no field. */}
+        {searchable && (
+          <div className="tabsearch">
+            <Search className="tabsearch-i" aria-hidden="true" />
+            <input ref={fieldRef} type="search" className="tabsearch-f" value={query}
+                   placeholder={placeholderFor(tab, librarySub)}
+                   aria-label={placeholderFor(tab, librarySub)}
+                   onChange={(e) => setQuery(e.target.value)}
+                   onKeyDown={(e) => { if (e.key === "Escape" && query) { e.preventDefault(); setQuery(""); } }} />
+            {searching && (
+              <button type="button" className="tabsearch-x" aria-label="Clear the search"
+                      onClick={() => { setQuery(""); fieldRef.current?.focus(); }}>
+                <X aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* A 560px floor, so switching tabs never makes the page jump.
@@ -113,12 +148,12 @@ export default function ModuleScreen({
       <div className="pane house" role="tabpanel">
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
-                    open={open} onToggle={toggle}
+                    open={open} onToggle={toggle} query={query}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (
           <LibraryTab chapters={chapters} papers={papers} state={state}
-                      sub={librarySub} onSub={onLibrarySub}
+                      sub={librarySub} onSub={onLibrarySub} query={query}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "people" && (

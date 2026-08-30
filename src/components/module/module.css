@@ -24,7 +24,37 @@
 .mscreen .titlerow{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:26px}
 .mscreen .avg{font-size:15px;color:var(--t3);white-space:nowrap}
 .mscreen .avg b{color:var(--t1);font-weight:700;font-size:17px;margin-left:6px}
-.mscreen .tabs{display:flex;gap:26px;padding:0 var(--pad)}
+/* §2.3 — the tab strip and the search field share one row. The field is aligned
+   to the tab LABELS rather than to the selected tab's underline, and sits 6px
+   clear of it: the underline is the marker for which tab is current, and a
+   control resting on it reads as part of that marker.
+   The horizontal padding moved up here from .tabs, which now sits inside it. */
+.mscreen .tabrow{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:0 var(--pad)}
+.mscreen .tabs{display:flex;gap:26px;padding:0}
+
+.mscreen .tabsearch{position:relative;display:flex;align-items:center;flex:0 1 300px;min-width:0;margin-bottom:6px}
+.mscreen .tabsearch-i{position:absolute;inset-inline-start:11px;width:15px;height:15px;color:var(--t2);pointer-events:none}
+.mscreen .tabsearch-f{
+  width:100%;min-width:0;background:var(--raised);border:1px solid transparent;border-radius:9px;
+  padding:8px 12px 8px 33px;color:var(--t1);font-family:inherit;font-size:var(--fs-sm);
+}
+/* --t2, NOT --t3, and measured rather than chosen. --t3 is the token for quiet
+   text everywhere else and it passes 4.5 over --ground and --panel — but this
+   field is --raised, a third surface, and over that it lands between 4.05 and
+   4.37 in all six Night liveries. An empty field's placeholder is its only
+   label, so it is prose and answers to 4.5. check:lesson-contrast measures it. */
+.mscreen .tabsearch-f::placeholder{color:var(--t2)}
+.mscreen .tabsearch-f:focus-visible{outline:none;border-color:var(--active);background:var(--panel)}
+/* The browser's own clear affordance is removed in favour of one that matches
+   the app and carries a real label. */
+.mscreen .tabsearch-f::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.mscreen .tabsearch-x{
+  position:absolute;inset-inline-end:5px;display:grid;place-items:center;
+  width:24px;height:24px;padding:0;background:none;border:0;border-radius:6px;
+  color:var(--t3);cursor:pointer;
+}
+.mscreen .tabsearch-x:hover{color:var(--t1);background:var(--panel)}
+.mscreen .tabsearch-x svg{width:14px;height:14px}
 .mscreen .tab{background:none;border:0;font-family:inherit;font-size:17px;font-weight:600;color:var(--t3);padding:0 0 12px;cursor:pointer;
   border-bottom:2px solid transparent}
 .mscreen .tab[aria-selected="true"]{color:var(--t1);border-bottom-color:var(--active)}
@@ -267,6 +297,12 @@
   /* The tab strip scrolls rather than clipping "People" off the edge. */
   .mscreen .tabs { overflow-x: auto; gap: 20px; scrollbar-width: none; }
   .mscreen .tabs::-webkit-scrollbar { display: none; }
+
+  /* Side by side there is not room for both, and squeezing the field until it
+     fits gives a search box that shows four characters. It goes under the tabs
+     and takes the full width. */
+  .mscreen .tabrow { flex-direction: column; align-items: stretch; gap: 10px; }
+  .mscreen .tabsearch { flex: 1 1 auto; margin-bottom: 0; }
 
   .mscreen .titlerow { padding-bottom: 18px; }
   /* The page title is the one place --fs-display is too big for a phone: at
