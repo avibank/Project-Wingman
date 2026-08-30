@@ -650,3 +650,64 @@
    · No captions button while there are no caption tracks.
    · No percentage, progress ring or badge count on this screen.
    ========================================================================= */
+
+/* ======================== §3.1 — CONCEPT B ===============================
+   Video left, the notes and comments panel in a sticky column beside it,
+   up-next below the video. The areas are named so the arrangement can be
+   swapped without touching a component.
+   ========================================================================= */
+.watch{ display: grid; gap: 26px 24px; }
+.watch[data-layout="b"]{
+  grid-template-columns: minmax(0, 1fr) 372px;
+  grid-template-areas: "player panel" "meta panel" "side panel";
+}
+.watch .pl{ grid-area: player; }
+.watch .mt{ grid-area: meta; }
+.watch .sd{ grid-area: side; }
+.watch .pn{ grid-area: panel; }
+/* Sticky, so the tabs stay put while the list under them scrolls. */
+.watch[data-layout="b"] .pn{ position: sticky; top: 16px; align-self: start; }
+
+/* §4 — one column on tablet and phone, in reading order: player, title,
+   up-next, then the panel. */
+@media (max-width: 1000px){
+  .watch[data-layout="b"]{
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "player" "meta" "side" "panel";
+    gap: 20px;
+  }
+  .watch[data-layout="b"] .pn{ position: static; }
+}
+
+/* §3.2 — CAP THE PLAYER AT ~58% OF THE VIEWPORT, and shrink it in BOTH
+   dimensions rather than letterboxing. Capping the width at cap x 16/9 with a
+   16:9 aspect-ratio does exactly that: the box keeps its shape and gets
+   smaller. Without this the panel starts around 800px down the page on a
+   laptop and the notes live below the fold, which is the whole reason Concept
+   B was chosen. */
+.watch{ --vcap: 58vh; }
+.watch .player-slot{
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-width: calc(var(--vcap) * 16 / 9);
+  margin-inline: auto;
+  height: auto;
+}
+
+/* §3.3 — the title sits directly under the player, at 24px: it names something
+   you are already looking at, so it is not a headline. Two lines, then clamp. */
+.watch .mt .lesson-name{
+  margin: 0; font-size: 24px; line-height: 1.12;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; text-wrap: balance;
+}
+.watch .mt{ padding-top: 14px; }
+
+/* .lesson-body caps width to the player's, which is right for the player's own
+   column and wrong for the other two — it is why the note deck rendered at
+   230px inside a 372px panel and wrapped one word per line. The grid owns the
+   widths here; these columns just need their gutters. */
+.watch .mt, .watch .sd, .watch .pn{ min-width: 0; }
+@media (max-width: 1000px){
+  .watch .mt, .watch .sd, .watch .pn{ padding-inline: var(--pad); }
+}

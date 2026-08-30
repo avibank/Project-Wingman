@@ -155,7 +155,23 @@ export default function LessonPage({
         {chapter.title} · {mod.name}
       </button>
 
-      <div className="lesson-head">
+      {/* §3.1 — CONCEPT B. Video left, the notes and comments panel in a
+          sticky column beside it, up-next below the video. It is the only
+          arrangement where notes and comments are visible without scrolling,
+          which is the point of a study app.
+
+          This reverses the single centred column. That brief argued the whole
+          page is the player; this one observes that the panel then starts
+          around 800px down and the thing students came to write in lives below
+          the fold. The areas are named, so the arrangement can be swapped
+          again without touching the components. */}
+      <div className="watch" data-layout="b">
+      <div className="pl">
+        {/* An empty sized box. Never move the video node into it. */}
+        <div className="player-slot" ref={slotRef} />
+      </div>
+
+      <div className="mt lesson-head">
         <h1 className="lesson-name">{lesson.title}</h1>
         {/* Where a view count sits, and reading like one. This replaces the
             "Callsign X and 2 others have been here" row. */}
@@ -182,16 +198,7 @@ export default function LessonPage({
         </div>
       </div>
 
-      {/* ONE CENTRED COLUMN, ~860px. This replaces Part 13's route sidebar:
-          that brief argued a lesson list beside a video is the least novel
-          sidebar in education, and it is — but this one says the whole page is
-          the player and nothing else lives here, and a full-bleed video at
-          1400px pushes the comments below the fold until they stop existing.
-          The newer instruction wins; the sidebar is gone. */}
-      <div className="watch">
-      <div className="watch-main lesson-body">
-        {/* An empty sized box. Never move the video node into it. */}
-        <div className="player-slot" ref={slotRef} />
+      <div className="sd">
 
         {/* Directly under the player and above the tabs on purpose: under a
             comment list this is a footer nobody reaches. */}
@@ -239,6 +246,11 @@ export default function LessonPage({
           </div>
         )}
 
+      </div>
+
+      {/* §3.1 — the panel: one column beside the video, sticky, so the tabs
+          stay put while the list under them scrolls. */}
+      <div className="pn">
         <div className="ltabs" role="tablist" aria-label="Notes and comments">
           <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
                   onClick={() => setTab("notes")}>
