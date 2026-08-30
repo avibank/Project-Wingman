@@ -9,7 +9,7 @@ import "./module.css";
 // it. A retake replaces the score rather than adding a second record — the
 // Library and the chapter row read one object, and a quiz you have sat twice
 // is still one quiz.
-export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswer }) {
+export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswer, onRun }) {
   const run = state?.run?.[chapter.id] || null;
   // Arriving here from the deck's Resume means "put me back in the quiz", not
   // "show me the cover of the quiz I was already sitting".
@@ -28,6 +28,14 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
           title={`${chapter.title} quiz`}
           questions={chapter.questions}
           isRetake={Boolean(score)}
+          // Where you were, so leaving halfway and coming back returns you to
+          // the question rather than to the cover.
+          resumeAt={run?.at || 0}
+          // REPORTS THE PLACE ON EVERY QUESTION. Without this nothing writes
+          // pw-quiz-run, so "Back to question N" never appears and the Flight
+          // Deck's Resume cannot point at a quiz — it is what tells the rest of
+          // the app where you got to.
+          onProgress={(at) => onRun?.(chapter.id, { at, total: chapter.questions.length })}
           onLeave={() => setRunning(false)}
           onOpenLesson={onOpenLessonById}
           onAnswer={onAnswer}
@@ -35,6 +43,10 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
             // FIRST ATTEMPT ONLY counts. A retake is labelled on screen and
             // must not move the needle, so it is not recorded as a score.
             if (!score) onScore?.(chapter.id, t.right, chapter.questions.length);
+            // A finished quiz is a score, not a place to go back to. onScore
+            // clears the run, but only on a first attempt — a retake has to
+            // clear it too or it leaves a stale place behind.
+            else onRun?.(chapter.id, null);
           }}
         />
       </div>
