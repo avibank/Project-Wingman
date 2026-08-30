@@ -81,10 +81,18 @@ ids to fill these.
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
 squawks and teams, 0008 the lesson surface.
 
-**0000-0007 have been run against the live project. 0008 has NOT** — the lesson
-surface ships reading and writing through `user_progress`, which works and needs no
-migration but is per account, so threads are visible only to their author. Running
-0008 is what makes them multi-user, and it is a decision rather than a step.
+**0000-0008 have all been run against the live project.** Verified by connecting
+on 2026-08-31, not inferred: all three of 0008's tables exist, both its functions
+are in `pg_proc` with matching signatures, and the `lesson_threads_anchor_whole`
+CHECK constraint is present. All three tables are empty.
+
+This file previously said 0008 had NOT been run. That was wrong, and it is the
+exact failure the paragraph below warns about — `npm run check:backend` is the
+source of truth, so connect and look rather than believing this file.
+
+The lesson surface still READS AND WRITES through `user_progress`, so the tables
+existing does not by itself make threads multi-user: the client has to be
+pointed at them. That is a code change, not a migration.
 
 0000-0007 ran against `rpfgxxcpfrgajlkpoyes`, the project the deployed bundle points
 at. Verified directly, not inferred: all 31 tables the code reads answer over REST, and
