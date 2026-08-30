@@ -1,129 +1,121 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { mmss } from "./lessonState.js";
 import {
-  H, PAD, pathFor, pointAt, showDots, labelX as clampLabel,
-} from "../../lib/routeGeometry.js";
+  VB, PATH, THRESHOLDS, TOTAL, pointAt, profileState, px,
+} from "../../lib/moduleProfile.js";
 
-// The three instruments on the hero strip. Each names itself on its own face,
-// so no cell carries a caption, a value line or a "press for…" hint — the
-// pressability is in the object: a raised edge, a hover, and a real translate
-// on :active.
+// §2.3 and §2.4 — the indicator row and the flight profile.
 //
 // Every colour here is a token. There is not a hex value in this file, and an
-// SVG is exactly the place that rule is easiest to break.
+// SVG is the easiest place to break that rule.
+//
+// The three indicators read as one panel because they share a height, a radius,
+// a border weight and a typeface, and they differ only in DEPTH: the gauge and
+// the lamp are recessed into the surface, the sticker sits proud of it. That
+// contrast is the whole reason the row does not look like three unrelated
+// widgets.
 
-// ---------------------------------------------------------------- 1 · ACCURACY
-// A centre-zero ammeter. Centre of the arc is the pass mark; left is below it,
-// right is above. The needle shows deviation, and the number on the face is the
-// deviation too — not the raw percentage, because the figure a student can act
-// on is how far off the pass mark they are.
+/* ------------------------------------------------------------ 1 · ACCURACY */
+// §2.3 — an ABSOLUTE scale. 0 puts the needle hard left, 100 hard right,
+// sweeping the full arc, and a target tick marks the pass mark wherever it
+// falls. This reverses the earlier centre-zero dial, which showed deviation
+// from the pass mark and so could not answer "what did I actually average".
+// Off-centre is correct and expected: a pass mark of 75 sits three quarters of
+// the way round, not at twelve o'clock.
+const CX = 19, CY = 27, R = 13.5;
+
+// value 0..100 -> degrees, -90 hard left through +90 hard right.
+const sweep = (v) => (Math.max(0, Math.min(100, v)) / 100) * 180 - 90;
+// No data parks the needle BELOW the left end of the arc. Hard left is a real
+// reading of zero, so resting there would be a lie.
+const PARKED = -104;
+
 export function Accuracy({ mean, passMark = 75, onPress }) {
   const has = mean != null;
-  const dev = has ? Math.round(mean - passMark) : null;
-  // ±25 points fills the arc. Beyond that it pins, which is what a real
-  // instrument does rather than running off its own scale.
-  const t = has ? Math.max(-1, Math.min(1, dev / 25)) : 0;
-  const angle = t * 60;                       // degrees from vertical
-  const rad = ((angle - 90) * Math.PI) / 180;
-  const cx = 60, cy = 58, r = 34;
-  const nx = cx + Math.cos(rad) * r, ny = cy + Math.sin(rad) * r;
-
+  const angle = has ? sweep(mean) : PARKED;
   const label = has
-    ? `Accuracy ${dev >= 0 ? "+" : ""}${dev} against a pass mark of ${passMark}`
-    : "Accuracy — no quizzes taken yet";
+    ? `Accuracy. Averaging ${Math.round(mean)} out of 100, against a pass mark of ${passMark}.`
+    : "Accuracy. No reading yet — take a quiz and the needle comes alive.";
 
   return (
-    <button type="button" className="inst" onClick={onPress} aria-label={label}>
-      <svg className="inst-face" viewBox="0 0 120 72" role="img" aria-hidden="true">
-        <text className="inst-plate" x="60" y="13" textAnchor="middle">ACCURACY</text>
-        {/* the scale, and the half above the pass mark marked as good */}
-        <path className="inst-arc" d="M 25 58 A 35 35 0 0 1 95 58" fill="none" />
-        <path className="inst-arc-ok" d="M 60 23 A 35 35 0 0 1 95 58" fill="none" />
-        <line className="inst-tick" x1="60" y1="21" x2="60" y2="27" />
-        <text className="inst-end" x="22" y="68" textAnchor="start">UNDER</text>
-        <text className="inst-end" x="98" y="68" textAnchor="end">OVER</text>
-        {has && <line className="inst-needle" x1={cx} y1={cy} x2={nx} y2={ny} />}
-        <circle className="inst-pivot" cx={cx} cy={cy} r="3.5" />
-        <text className="inst-read" x="60" y="50" textAnchor="middle">
-          {has ? `${dev >= 0 ? "+" : ""}${dev}` : "--"}
-        </text>
-      </svg>
-    </button>
-  );
-}
-
-// ------------------------------------------------------------- 2 · RETENTION
-// A workshop calibration tag: punched hole, a banded header, the date it was
-// last checked, and the holding count on the body.
-export function Retention({ holding, due, lastChecked, onPress }) {
-  const has = holding > 0 || due > 0;
-  const label = has
-    ? `Retention — ${holding} questions holding, ${due ? `${due} due for re-check` : "all in date"}`
-    : "Retention — nothing to re-check yet";
-
-  return (
-    <button type="button" className="inst" onClick={onPress} aria-label={label}>
-      <div className="tag" data-empty={has ? undefined : ""}>
-        <span className="tag-hole" aria-hidden="true" />
-        <span className="tag-band">
-          <span>CALIBRATION</span>
-          <span className="tag-date">{lastChecked || "—"}</span>
-        </span>
-        {has ? (
-          <span className="tag-body">
-            <span className="tag-n">{holding}</span>
-            <span className="tag-w">HOLDING</span>
-            <span className={due ? "tag-due" : "tag-ok"}>
-              {due ? `${due} DUE` : "ALL IN DATE"}
-            </span>
-          </span>
-        ) : (
-          <span className="tag-body">
-            <span className="tag-w tag-first">FIRST FLIGHT</span>
-            <span className="tag-ok">NOTHING TO RE-CHECK YET</span>
-          </span>
-        )}
-      </div>
-    </button>
-  );
-}
-
-// --------------------------------------------------------- 3 · MASTER CAUTION
-// A square annunciator. Lit in the caution token above zero, and deliberately
-// dark below it — ALL CLEAR rather than a blank face, so an unlit lamp reads as
-// nothing wrong instead of something broken.
-export function MasterCaution({ count, onPress }) {
-  const lit = count > 0;
-  return (
-    <button type="button" className="inst" onClick={onPress}
-            aria-label={lit
-              ? `Master caution — ${count} questions to put right`
-              : "Master caution — all clear"}>
-      <span className="ann" data-lit={lit ? "1" : "0"}>
-        <span className="ann-w">MASTER</span>
-        <span className="ann-w">CAUTION</span>
-        <span className="ann-n">{lit ? count : "ALL CLEAR"}</span>
+    <button type="button" className="ind" onClick={onPress} aria-label={label}>
+      <span className="gauge" data-nodata={has ? undefined : ""}>
+        <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+          <path className="g-arc" d={`M${CX - R},${CY} A${R},${R} 0 0 1 ${CX + R},${CY}`} fill="none" />
+          {/* the pass mark, wherever it falls */}
+          <path className="g-tick" d={`M${CX},12 L${CX},16.4`}
+                transform={`rotate(${sweep(passMark)} ${CX} ${CY})`} />
+          <g className="g-needle" style={{ transform: `rotate(${angle}deg)`, transformOrigin: `${CX}px ${CY}px` }}>
+            <line x1={CX} y1={CY} x2={CX} y2="15.2" />
+          </g>
+          <circle className="g-hub" cx={CX} cy={CY} r="2.3" />
+        </svg>
       </span>
     </button>
   );
 }
 
-// ------------------------------------------------------------------ THE ROUTE
-// A shallow climb, a long cruise, a descent that lands ON the ground at the
-// right edge. Height carries no data — it is a route, not a chart, and nothing
-// is encoded in the vertical axis.
-export function Route({ chapters = [], atIndex = 0, started = false }) {
-  // Measured rather than stretched. preserveAspectRatio="none" would squash a
-  // 1000-unit box into whatever width the card has, turning the waypoint dots
-  // into ellipses and the label into condensed type. Drawing 1:1 against the
-  // real width costs one observer and distorts nothing.
+/* --------------------------------------------------------- 2 · CALIBRATION */
+// §2.3 — a calibration sticker. A banded header, a value, and it sits proud of
+// the panel. The band takes the accent when there is data and drains to a
+// neutral when there is none, so an idle sticker never looks live.
+//
+// NO CAP on the number. The reference build caps at "9+"; the brief says the
+// actual number, and a student with fourteen to re-check is owed fourteen.
+export function Calibration({ count, hasData = true, onPress }) {
+  const state = !hasData ? "nodata" : count === 0 ? "clear" : "due";
+  const value = state === "nodata" ? "—" : state === "clear" ? "✓" : String(count);
+  const label = state === "nodata" ? "Calibration. Nothing recorded yet."
+    : state === "clear" ? "Calibration. Clear — nothing to re-check."
+      : `Calibration. ${count} question${count === 1 ? "" : "s"} to re-check.`;
+
+  return (
+    <button type="button" className="ind" onClick={onPress} aria-label={label}>
+      <span className="sticker" data-state={state}>
+        <span className="band">CALIBRATION</span>
+        <span className="val">{value}</span>
+      </span>
+    </button>
+  );
+}
+
+/* ------------------------------------------------------ 3 · MASTER CAUTION */
+// §2.3 — a legend lamp, and the only thing in the app entitled to the caution
+// colour. Unlit is a neutral face with the legend still readable: a lamp you
+// cannot read when it is dark is a lamp you cannot learn.
+export function MasterCaution({ count, onPress }) {
+  const lit = count > 0;
+  return (
+    <button type="button" className="ind" onClick={onPress}
+            aria-label={lit
+              ? `Master caution. ${count} question${count === 1 ? "" : "s"} to put right.`
+              : "Master caution. All clear."}>
+      <span className="lamp" data-lit={lit ? "true" : "false"}>
+        <span>MASTER</span>
+        <span>CAUTION</span>
+      </span>
+    </button>
+  );
+}
+
+/* ---------------------------------------------------- 4 · THE FLIGHT PROFILE */
+// The aircraft sits ON the route, placed by arc length and rotated to the
+// path's tangent, lifted off the line along the normal while in flight so the
+// waypoint underneath stays countable.
+const PLANE = "M11.5,0.3 C5.5,-2.7 -3,-3.3 -10.5,-2.3 L-10.5,2.5 C-3,3.4 5.5,2.9 11.5,0.3 Z"
+  + " M-6.2,-2.5 L-8.6,-8.4 L-10.6,-8.4 L-9.7,-2.3 Z"
+  + " M-0.6,1.7 L-4.2,6.6 L-1.5,6.6 L2.9,2 Z";
+
+export function FlightProfile({ chapters = [], atIndex = 0, started = false }) {
+  // Measured, because every stroke width and radius is divided by the scale.
+  // Without it the whole route renders at about one pixel on a phone.
   const wrapRef = useRef(null);
-  const [W, setW] = useState(720);
+  const [W, setW] = useState(VB.w);
   useLayoutEffect(() => {
     const el = wrapRef.current;
     if (!el) return undefined;
     const measure = () => {
-      const w = Math.max(240, Math.round(el.getBoundingClientRect().width));
+      const w = Math.max(160, Math.round(el.getBoundingClientRect().width));
       setW((prev) => (Math.abs(prev - w) > 1 ? w : prev));
     };
     measure();
@@ -132,53 +124,44 @@ export function Route({ chapters = [], atIndex = 0, started = false }) {
     return () => ro.disconnect();
   }, []);
 
-  // The geometry moved to lib/routeGeometry.js so it can be measured at forty
-  // chapters and a narrow card without rendering anything.
-  const d = pathFor(W);
   const n = Math.max(1, chapters.length);
-  const at = (i) => pointAt(i, n, W);
-  const here = at(Math.max(0, Math.min(n - 1, atIndex)));
-  // Clamped against the width of THIS label, not a fixed guess: the string
-  // grows with the chapter number and the bound has to grow with it.
-  const labelText = `CHAPTER ${atIndex + 1} · YOU ARE HERE`;
-  const labelX = clampLabel(here.x, W, labelText);
-  // Past the point where waypoints are further apart than they are wide, the
-  // dots stop being waypoints and become a dotted rule. The line carries the
-  // route on its own and only the current position stays marked.
-  const dots = showDots(n, W);
+  // Not started is step 0 whatever the chapter index says.
+  const step = started ? Math.max(1, Math.min(n + 1, atIndex + 1)) : 0;
+  const s = profileState(n, step, W);
+  const P = (v) => px(v, s.scale);
 
   return (
-    <div className="route-wrap" ref={wrapRef}>
-      <svg className="route-line" width={W} height={H} viewBox={`0 0 ${W} ${H}`}
-           role="img"
-           aria-label={started
-             ? `Route through ${n} chapters, currently on chapter ${atIndex + 1}`
-             : `Route through ${n} chapters, not started`}>
-        {/* ahead — dashed and muted. Before any progress this is the whole line. */}
-        <path className="route-ahead" d={d} fill="none" />
-        {started && (
-          <>
-            <defs>
-              <clipPath id="route-behind">
-                <rect x="0" y="0" width={here.x} height={H} />
-              </clipPath>
-            </defs>
-            <path className="route-behind" d={d} fill="none" clipPath="url(#route-behind)" />
-          </>
+    <div className="profile-wrap" ref={wrapRef}>
+      <svg className="profile" viewBox={`0 0 ${VB.w} ${VB.h}`} role="img" aria-label={s.label}
+           preserveAspectRatio="xMidYMid meet">
+        {/* Runway thresholds — quiet, and visibly not chapter marks, so nobody
+            counts them as chapters. */}
+        <g className="pf-thresh" strokeWidth={P(4)}>
+          {THRESHOLDS.map((t, i) => <path key={i} d={`M${t.x1},${t.y} L${t.x2},${t.y}`} />)}
+        </g>
+
+        {/* the whole route, dashed and neutral — this is all of it before you start */}
+        <path className="pf-ahead" d={PATH} fill="none"
+              strokeWidth={P(2.4)} strokeDasharray={`${P(5)} ${P(7)}`} />
+
+        {/* what you have flown, drawn over it — one dash as long as the
+            distance covered, so no clip path is needed */}
+        {s.started && (
+          <path className="pf-behind" d={PATH} fill="none"
+                strokeWidth={P(2.9)} strokeDasharray={`${s.behind.toFixed(2)} ${TOTAL + 10}`} />
         )}
 
-        {dots && chapters.map((c, i) => {
-          const p = at(i);
-          return <circle key={c.id || i} className="route-dot"
-                         data-passed={started && i <= atIndex ? "1" : "0"}
-                         cx={p.x} cy={p.y} r="5" />;
+        {s.showWps && s.wps.map((wl, i) => {
+          const q = pointAt(wl);
+          const done = i + 1 <= s.idx;
+          return <circle key={i} className="pf-wp" data-done={done ? "1" : "0"}
+                         cx={q.x.toFixed(2)} cy={q.y.toFixed(2)} r={P(4.4)} strokeWidth={P(2)} />;
         })}
 
-        <circle className="route-here-ring" cx={here.x} cy={here.y} r="9" />
-        <circle className="route-here" cx={here.x} cy={here.y} r="4.5" />
-        <text className="route-label" x={labelX} y={here.y - 20} textAnchor="middle">
-          {labelText}
-        </text>
+        <g className="pf-plane"
+           transform={`translate(${s.x.toFixed(2)},${s.y.toFixed(2)}) rotate(${s.angle.toFixed(2)}) scale(${P(1.15)})`}>
+          <path d={PLANE} />
+        </g>
       </svg>
     </div>
   );

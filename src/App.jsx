@@ -818,7 +818,6 @@ function AppInner() {
             onLibrarySub={(sub) => go(routePath.library(activeModuleCode, sub))}
             papers={papersFor(activeModuleCode, useTestContent)}
             retention={progress.get(RETENTION_KEY, emptyRetention())}
-            lastChecked={stampDate(progress.get("pw-last-recheck", null))}
             onInstrument={(what) => {
               if (what === "recheck") go(routePath.review(activeModuleCode, "recheck"));
               else if (what === "caution") go(routePath.review(activeModuleCode, "caution"));

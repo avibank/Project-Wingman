@@ -4,8 +4,8 @@ import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
-import { Accuracy, Retention, MasterCaution, Route } from "./Instruments.jsx";
-import { cautionCount, holdingCount, dueCount } from "../../lib/retention.js";
+import { Accuracy, Calibration, MasterCaution, FlightProfile } from "./Instruments.jsx";
+import { cautionCount, dueCount } from "../../lib/retention.js";
 import { passAt } from "../../lib/quiz.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
@@ -14,16 +14,19 @@ import "./module.css";
 
 // The three tabs live in the URL, so a student sharing a link to People lands
 // on People. The tab is not component state.
+// §2.6 — Lessons and Library. People is hidden rather than deleted: it is
+// coming back in a different position, and the strip is built so a third entry
+// needs no relayout. Its component and data wiring are untouched.
 export const MODULE_TABS = [
   { id: "route", label: "Lessons" },
   { id: "library", label: "Library" },
-  { id: "people", label: "People" },
 ];
+export const HIDDEN_TABS = [{ id: "people", label: "People" }];
 
 export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
   papers = [], librarySub = "papers", onLibrarySub, onOpenPaper,
-  retention, lastChecked, onInstrument,
+  retention, onInstrument,
   people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
   onOpenQuestion,
 }) {
@@ -59,7 +62,6 @@ export default function ModuleScreen({
     : null;
   const passMark = Math.round((passAt(outOf || 8) / (outOf || 8)) * 100);
 
-  const lessonTotal = chapters.reduce((n, c) => n + (c.lessons?.length || 0), 0);
   const hereIndex = Math.max(0, chapters.findIndex((c) => c.id === here?.chapter?.id));
   const started = Boolean(here?.chapter?.id) || taken.length > 0;
 
@@ -76,7 +78,6 @@ export default function ModuleScreen({
   const searching = terms(query).length > 0;
   const fieldRef = useRef(null);
 
-  const holding = holdingCount(retention);
   const caution = cautionCount(retention);
   const due = dueCount(retention);
 
@@ -94,21 +95,21 @@ export default function ModuleScreen({
       <div className="mhero">
         <div>
           <h1 className="mhero-title">{mod.name}</h1>
-          <span className="mhero-code">{(mod.code || mod.id)}{mod.subtitle ? ` · ${mod.subtitle.toUpperCase()}` : ""}</span>
-          <span className="mhero-line">
-            {lessonTotal} lesson{lessonTotal === 1 ? "" : "s"} and {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}
-          </span>
+          {/* §2.2 — the indicator row sits directly under the module title,
+              inside the banner's left block, so title and instruments read as
+              one identity rather than as a heading and a toolbar. */}
+          <div className="row">
+            <Accuracy mean={avgPct} passMark={passMark}
+                      onPress={() => onInstrument?.("accuracy")} />
+            <Calibration count={due} hasData={taken.length > 0}
+                         onPress={() => onInstrument?.("recheck")} />
+            <MasterCaution count={caution} onPress={() => onInstrument?.("caution")} />
+          </div>
         </div>
-        <Route chapters={chapters} atIndex={hereIndex} started={started} />
+        <FlightProfile chapters={chapters} atIndex={hereIndex} started={started} />
       </div>
 
-      {/* Three cells, and each instrument names itself. No captions. */}
-      <div className="mstrip">
-        <Accuracy mean={avgPct} passMark={passMark} onPress={() => onInstrument?.("accuracy")} />
-        <Retention holding={holding} due={due} lastChecked={lastChecked}
-                   onPress={() => onInstrument?.("recheck")} />
-        <MasterCaution count={caution} onPress={() => onInstrument?.("caution")} />
-      </div>
+
 
       <div className="tabrow">
         <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>

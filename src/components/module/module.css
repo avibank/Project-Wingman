@@ -58,6 +58,13 @@
 .mscreen .tab{background:none;border:0;font-family:inherit;font-size:17px;font-weight:600;color:var(--t3);padding:0 0 12px;cursor:pointer;
   border-bottom:2px solid transparent}
 .mscreen .tab[aria-selected="true"]{color:var(--t1);border-bottom-color:var(--active)}
+/* §1.6/§2.6 — one content width, and ONE left edge. The card's inner padding
+   is declared here and the banner reads it, so the title, the tabs, the search
+   and every row line up down the whole page and only the card's border sits
+   outside that column. */
+:root{ --card-pad: 22px; }
+@media (max-width: 900px){ :root{ --card-pad: 20px; } }
+@media (max-width: 560px){ :root{ --card-pad: 15px; } }
 .mscreen .pane{min-height:560px;padding-top:12px}
 
 /* — flight deck — */
