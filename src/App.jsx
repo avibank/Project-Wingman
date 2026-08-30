@@ -50,7 +50,10 @@ import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
-import { RETENTION_KEY, emptyRetention } from "./lib/retention.js";
+import {
+  RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
+} from "./lib/retention.js";
+import Review from "./components/module/Review.jsx";
 import { stamp as stampDate } from "./components/module/Instruments.jsx";
 import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
@@ -126,7 +129,10 @@ function AppInner() {
     if (route.name === "redirect") navigate(route.to, { replace: true });
   }, [route.name, route.to, navigate]);
 
-  const view = route.name === "module" || route.name === "chapter" || route.name === "lesson" ? "module" : "hub";
+  // A review flow is a module screen, not the hub. It was left out of this list
+  // once and the Flight Deck rendered underneath a perfectly correct URL.
+  const MODULE_ROUTES = new Set(["module", "chapter", "lesson", "review"]);
+  const view = MODULE_ROUTES.has(route.name) ? "module" : "hub";
   const settingsPage =
     route.name === "signin" ? "auth"
     : route.name === "logbook" && flags["page.logbook"] ? "progress"
@@ -212,6 +218,15 @@ function AppInner() {
   // The one record of where you actually were, overwritten by whichever
   // surface you are on. The deck's Resume reads it instead of guessing at the
   // chapter that contains the work.
+  // The one writer for the question lifecycle. Both counts on the strip derive
+  // from this single record, so the tag and the lamp cannot disagree.
+  const recordAnswer = (questionId, right, { fromCaution = false } = {}) => {
+    const cur = progress.get(RETENTION_KEY, emptyRetention());
+    progress.set(RETENTION_KEY, right
+      ? toHolding(cur, questionId, { fromCaution })
+      : toCaution(cur, questionId));
+  };
+
   const recordPlace = (place) =>
     progress.set(PLACE_KEY,
       pushPlace(progress.get(PLACE_KEY, null), { ...place, moduleCode: activeModuleCode }));
@@ -700,6 +715,52 @@ function AppInner() {
             </main>
           );
         })()
+      ) : flags["module.screen"] && route.name === "review" ? (
+        (() => {
+          const chs = chaptersFor(activeModuleCode, useTestContent);
+          const all = chs.flatMap((c) =>
+            (c.questions || []).map((q) => ({ ...q, chapterId: c.id })));
+          const ret = progress.get(RETENTION_KEY, emptyRetention());
+          const set = route.flow === "recheck"
+            ? recheckSet(ret, all)
+            : all.filter((q) => q.id in (ret.caution || {}));
+          const back = () => go(routePath.module(activeModuleCode));
+          return (
+            <main className="content content-taxi content--full">
+              {set.length === 0 ? (
+                <div className="quiz">
+                  <div className="quiz-head">
+                    <span className="quiz-name">
+                      {route.flow === "recheck" ? "Re-check" : "Put right"}
+                    </span>
+                    <button type="button" className="quiz-leave" onClick={back}>Close</button>
+                  </div>
+                  <div className="quiz-body">
+                    <p className="q-rev-line">
+                      {route.flow === "recheck"
+                        ? "Nothing is due yet. Questions come back here once they have had time to fade."
+                        : "Nothing to put right. Anything you miss lands here until you do."}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Review
+                  // Remount per flow: the set is latched at mount, so moving
+                  // between the two flows must be a new sitting, not a reused one.
+                  key={route.flow}
+                  title={route.flow === "recheck" ? "Re-check" : "Put right"}
+                  questions={set}
+                  onLeave={back}
+                  onOpenLesson={(lessonId) => {
+                    const owner = chs.find((c) => (c.lessons || []).some((l) => l.id === lessonId));
+                    if (owner) go(routePath.lesson(activeModuleCode, owner.id, lessonId));
+                  }}
+                  onAnswer={(q, right) => recordAnswer(q.id, right, { fromCaution: route.flow === "caution" })}
+                  onDone={() => progress.set("pw-last-recheck", new Date().toISOString())} />
+              )}
+            </main>
+          );
+        })()
       ) : flags["module.screen"] && route.name === "chapter" && route.tab === "quiz" ? (
         (() => {
           const chs = chaptersFor(activeModuleCode, useTestContent);
@@ -710,6 +771,7 @@ function AppInner() {
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} state={moduleState}
                 autoStart={route.resume}
+                onAnswer={(q, right) => recordAnswer(q.id, right)}
                 onScore={(chapterId, correct, total) => {
                   // Finishing clears the run: a finished quiz is a score, not
                   // a place to go back to.
@@ -755,8 +817,8 @@ function AppInner() {
             retention={progress.get(RETENTION_KEY, emptyRetention())}
             lastChecked={stampDate(progress.get("pw-last-recheck", null))}
             onInstrument={(what) => {
-              if (what === "recheck") go(routePath.chapter(activeModuleCode, "recheck", "quiz"));
-              else if (what === "caution") go(routePath.chapter(activeModuleCode, "caution", "quiz"));
+              if (what === "recheck") go(routePath.review(activeModuleCode, "recheck"));
+              else if (what === "caution") go(routePath.review(activeModuleCode, "caution"));
               else setAccuracyOpen(true);
             }}
             onOpenPaper={(paper) => {

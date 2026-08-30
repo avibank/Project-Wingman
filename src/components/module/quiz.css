@@ -314,3 +314,21 @@
    · No certificate, no "pass", no credential language. This is a study tool
      shaped like an exam, and it must never claim to be one.
    ========================================================================= */
+
+/* --------------------------------------------- the shared review component */
+/* A retake must be visible, or the needle looks broken when it refuses to move. */
+.q-retake{
+  margin: 0 0 10px;
+  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-size: var(--fs-xs); letter-spacing: .08em;
+  color: var(--caution);
+}
+/* Progress as segments — you can always see what is left. */
+.q-seg{ display: flex; gap: 3px; margin: 10px 0 4px; }
+.q-seg-i{
+  height: 3px; flex: 1 1 0; border-radius: 2px;
+  background: var(--edge, var(--hair));
+}
+.q-seg-i[data-state="done"]{ background: var(--active); }
+.q-seg-i[data-state="now"]{ background: var(--active); opacity: .55; }
+.opt:disabled{ cursor: default; }

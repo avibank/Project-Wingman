@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ArrowRight } from "lucide-react";
-import QuizRunner from "./QuizRunner.jsx";
+import Review from "./Review.jsx";
 import { nextAfterQuiz, nextLabel, nextWhere } from "./nextUp.js";
 import { upFrom } from "../../lib/lessonSurface.js";
 import "./module.css";
@@ -9,7 +9,7 @@ import "./module.css";
 // it. A retake replaces the score rather than adding a second record — the
 // Library and the chapter row read one object, and a quiz you have sat twice
 // is still one quiz.
-export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById }) {
+export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswer }) {
   const run = state?.run?.[chapter.id] || null;
   // Arriving here from the deck's Resume means "put me back in the quiz", not
   // "show me the cover of the quiz I was already sitting".
@@ -21,12 +21,21 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
   if (running && chapter.questions?.length) {
     return (
       <div className="mscreen">
-        <QuizRunner
-          chapter={chapter}
+        {/* The same component the re-check and put-right flows use. One
+            interaction, learned once. */}
+        <Review
+          key={chapter.id}
+          title={`${chapter.title} quiz`}
           questions={chapter.questions}
-          onQuit={() => setRunning(false)}
+          isRetake={Boolean(score)}
+          onLeave={() => setRunning(false)}
           onOpenLesson={onOpenLessonById}
-          onFinish={(got, total) => onScore?.(chapter.id, got, total)}
+          onAnswer={onAnswer}
+          onDone={(t) => {
+            // FIRST ATTEMPT ONLY counts. A retake is labelled on screen and
+            // must not move the needle, so it is not recorded as a score.
+            if (!score) onScore?.(chapter.id, t.right, chapter.questions.length);
+          }}
         />
       </div>
     );

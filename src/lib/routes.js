@@ -55,6 +55,8 @@ export function parseRoute(pathname) {
       return { name: "module", moduleCode, tab: "pdf", sub: parts[3] === "quizzes" ? "quizzes" : "papers" };
     }
     if (parts[2] === "people") return { name: "module", moduleCode, tab: "people" };
+    if (parts[2] === "recheck") return { name: "review", moduleCode, flow: "recheck" };
+    if (parts[2] === "caution") return { name: "review", moduleCode, flow: "caution" };
     const chapterId = parts[2];
     // A lesson is its own page, and its address carries the question that was
     // opened to reach it — "Watch at 6:12" from People has to land on the
@@ -101,6 +103,7 @@ export const path = {
     `/m/${String(m).toLowerCase()}/${c}` + (tab && tab !== "brief" ? `/${tab}` : ""),
   question: (m, c, n) => `/m/${String(m).toLowerCase()}/${c}/q/${n}`,
   quizResume: (m, c) => `/m/${String(m).toLowerCase()}/${c}/quiz/resume`,
+  review: (m, flow) => `/m/${String(m).toLowerCase()}/${flow}`,
   ready: (m) => (m ? `/ready-room/${String(m).toLowerCase()}` : "/ready-room"),
   logbook: () => "/logbook",
   saved: () => "/saved",
