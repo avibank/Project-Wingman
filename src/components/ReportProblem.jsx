@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // One tap, and it carries the route and the state with it. The point is that
 // a student never has to describe where they were — the report already knows,
@@ -6,6 +6,12 @@ import { useState } from "react";
 // without one.
 export default function ReportProblem({ route, extra }) {
   const [sent, setSent] = useState(false);
+  // One timer, restarted per report. Two reports four seconds apart used to
+  // leave two running, and the FIRST one's expiry cleared the second's
+  // confirmation early — so the second report looked like it had not been
+  // taken. Cleared on unmount too, since it outlives the route otherwise.
+  const clearAt = useRef(null);
+  useEffect(() => () => clearTimeout(clearAt.current), []);
 
   const send = () => {
     const report = {
@@ -20,7 +26,8 @@ export default function ReportProblem({ route, extra }) {
     // what matters now, and the shape is what will be posted.
     console.info("Problem report", report);
     setSent(true);
-    setTimeout(() => setSent(false), 4000);
+    clearTimeout(clearAt.current);
+    clearAt.current = setTimeout(() => setSent(false), 4000);
   };
 
   return (

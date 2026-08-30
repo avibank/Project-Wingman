@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
 import Debrief from "./Debrief.jsx";
@@ -16,7 +16,20 @@ function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapte
   const [missed, setMissed] = useState([]);
   const q = questions[i];
 
+  // A correct answer schedules an automatic advance 900ms later. Pressing
+  // Enter — or clicking Next — inside that window used to advance as well, so
+  // the auto-advance landed a moment later and SKIPPED A QUESTION. Every path
+  // into advance() cancels whatever is pending first, so the answer only ever
+  // moves on once, whoever asked for it.
+  const timers = useRef([]);
+  const clearPending = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+  useEffect(() => clearPending, []);
+
   const advance = (currentScore) => {
+    clearPending();
     if (i + 1 < questions.length) {
       setI(i + 1);
       setPicked(null);
@@ -43,8 +56,8 @@ function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapte
     onProgressChange?.(updatedScore.seen);
     if (correct) {
       setFlashIdx(idx);
-      setTimeout(() => setFlashIdx(null), 500);
-      setTimeout(() => advance(updatedScore), 900);
+      timers.current.push(setTimeout(() => setFlashIdx(null), 500));
+      timers.current.push(setTimeout(() => advance(updatedScore), 900));
     }
     setScore(updatedScore);
   };
