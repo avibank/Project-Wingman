@@ -158,6 +158,9 @@ export default function ModuleScreen({
         {tab === "library" && (
           <LibraryTab chapters={chapters} papers={papers} state={state}
                       sub={librarySub} onSub={onLibrarySub} query={query}
+                      // §2.8 — the same number the Calibration sticker shows.
+                      // One source, passed down, so the two can never disagree.
+                      outstanding={due}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "people" && (

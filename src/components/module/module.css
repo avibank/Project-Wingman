@@ -120,6 +120,13 @@
 .mscreen .deckhead{padding:22px var(--pad) 0}
 
 /* — the list. No panels, no fills; space and type do the separating. — */
+/* §2.8 — a Library section header. Carries the outstanding count, which is the
+   Calibration sticker's number and comes from the same value. */
+.mscreen .sechead{
+  margin: 0; padding: 14px var(--card-pad) 6px;
+  font-family: var(--font-mono); font-size: var(--fs-xs);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--t2);
+}
 .mscreen .chaps{display:flex;flex-direction:column}
 /* The chapter section spans the card; its header carries the inner padding. */
 .mscreen .chap{padding:0}

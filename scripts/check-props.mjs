@@ -38,7 +38,14 @@ function readPattern(src, braceAt) {
     if (src[j] === "{") depth++;
     else if (src[j] === "}") { depth--; if (depth === 0) { end = j; break; } }
   }
-  const block = src.slice(braceAt + 1, end);
+  // COMMENTS OUT FIRST. A comment inside the parameter list contains commas of
+  // its own — "the count, handed down from…" — and the splitter below cuts on
+  // them, gluing prose to the next real prop name. That is the third time a
+  // comment has fooled this file: once ending a tag early on an apostrophe,
+  // once arriving as bare attributes, and now this.
+  const block = src.slice(braceAt + 1, end)
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/[^\n]*/g, "");
   const names = new Set();
   const required = new Set();
   // Split on top-level commas only. A regex cannot do this: a nested default

@@ -10,7 +10,13 @@ import { hits, terms } from "../../lib/moduleSearch.js";
 // the narrowest card, which still reads as a set of choices.
 const CHIP_MAX = 12;
 
-export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpenQuiz, onOpenPaper, query = "" }) {
+export default function LibraryTab({
+  chapters, papers, state, sub, onSub, onOpenQuiz, onOpenPaper, query = "",
+  // §2.8 — the outstanding re-check count, handed down from the same value the
+  // Calibration sticker reads. Two components counting the same thing
+  // separately is two numbers that eventually disagree.
+  outstanding = 0,
+}) {
   const [chapterFilter, setChapterFilter] = useState(null);
   // The search moved out to sit beside the tabs (§2.3). The chapter chips
   // stayed: they are a different question — chips ask "which chapter", the
@@ -97,6 +103,13 @@ export default function LibraryTab({ chapters, papers, state, sub, onSub, onOpen
         </>
       ) : (
         <>
+          {/* §2.8 — the section header carries the outstanding count, and it is
+              the sticker's number. */}
+          <p className="sechead">
+            {outstanding > 0
+              ? `${outstanding} to re-check`
+              : "Every chapter quiz, in one place."}
+          </p>
           <div className="tally">
             <div>
               <p className="tbig">{taken.length} of {chapters.length} taken</p>

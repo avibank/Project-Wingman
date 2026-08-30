@@ -54,7 +54,6 @@ import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
 import Review from "./components/module/Review.jsx";
-import { stamp as stampDate } from "./components/module/Instruments.jsx";
 import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
