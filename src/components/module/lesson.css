@@ -238,14 +238,25 @@
   position: absolute; top: -3px; width: 2px; height: 10px;
   transform: translateX(-1px); pointer-events: none;
 }
-.scrub-mark[data-kind="thread"]{ background: var(--active); }
+/* §3.2 — note pinpoints take the ACCENT. Explicitly never amber or yellow:
+   amber belongs to Master Caution, and yellow on a scrubber reads as "ad
+   break" to anyone who has used YouTube.
+
+   §1.4 — but threads are already the accent, so colour cannot be what tells
+   them apart. FORM carries it: a note is a tick ABOVE the bar, a thread is a
+   dot BELOW it. Same hue, different object. */
+.scrub-mark[data-kind="thread"]{
+  background: var(--active);
+  width: 5px; height: 5px; border-radius: 50%;
+  top: auto; bottom: -3px;
+}
 /* Yours, and NOT the accent. The accent already means "public thread" two
    lines up, and one colour cannot mean both without the bar saying nothing.
    Named rather than inlined: this is the third fixed over-video value in the
    file, and the value is unchanged. It stays fixed rather than livery-driven
    for the same reason .pbanner-body and .rdur do — it sits over a video frame,
    not over the page, so no livery token can be trusted to be visible on it. */
-.scrub-mark[data-kind="note"]  { background: var(--over-video); }
+.scrub-mark[data-kind="note"]  { background: var(--active); }
 .scrub-mark[data-many="1"]     { width: 4px; }
 
 /* §3.1 — the comment-density silhouette. It sits directly on the track, drawn
