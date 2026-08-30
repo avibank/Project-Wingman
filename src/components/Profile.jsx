@@ -50,17 +50,16 @@ const CALL_COPY = {
 
 const SCALES = [{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }];
 // You asked for Night Ops on dark and Day Ops on light. The POC's shape is a
-// The card is the control. Light, Dark and Follow the ship need no explaining,
-// so the name row and the three description lines are gone — see the override
-// line for the one case where something still has to be said.
+// The card is the control. Light, Dark and Auto need no explaining, so there is
+// no name row and no description line — see the override line for the one case
+// where something still has to be said.
 //
-// "Follow the ship" follows the device's own appearance setting, exactly as
-// Auto did. Not the clock, not sunrise, and not the greeting system's hour
-// bands, which are deliberately separate.
+// Auto follows the device's own appearance setting. Not the clock, not sunrise,
+// and not the greeting system's hour bands, which are deliberately separate.
 const MODES = [
   { id: "day", label: "Light" },
   { id: "night", label: "Dark" },
-  { id: null, label: "Follow the ship" },
+  { id: null, label: "Auto" },
 ];
 
 function Switch({ id, on, onChange, label, note }) {
@@ -648,13 +647,12 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             {/* Only when something is overriding the choice. Without it an
                 Aurora user taps Light, nothing happens, and the app looks
                 broken. */}
-            {/* Only when it is doing something: the override when one is in
-                force, otherwise the note about which ship — and that only while
-                Follow the ship is the option selected. */}
-            {(override || variantPin === null) && (
-              <div className="livdesc" id={override ? "lightwhy" : undefined}>
-                {override || "Follow the ship takes its setting from your device."}
-              </div>
+            {/* ONLY the override. Auto needs no explaining, so the line that
+                described it is gone; what is left is the one case where
+                something genuinely has to be said — a finish forcing the panel
+                dark, where tapping Light otherwise appears to do nothing. */}
+            {override && (
+              <div className="livdesc" id="lightwhy">{override}</div>
             )}
             <Seg radio wide label="Panel lighting" describedBy={override ? "lightwhy" : undefined}
                  value={override ? "night" : variantPin}
