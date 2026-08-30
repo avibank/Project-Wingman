@@ -67,22 +67,6 @@ const CSS_DEFAULTS = new Set(["--grain", "--emit"]);
 // check:contrast is what holds it there.
 const AGREED = new Set(["--t3"]);
 
-/* LIVERIES THE POC NO LONGER OWNS. Same discipline as AGREED, one level up: a
-   livery in here has been redefined deliberately and the reason is written
-   beside it. Everything not listed is still asserted against the POC token for
-   token, so this cannot become the drawer that drift gets swept into.
-
-   amber and beacon — §1.3 of the module-screen brief: no livery may impersonate
-   a signal. The POC's amber was hue 78 / chroma .126, which rendered a Day
-   accent of chroma .230 at hue 79 — hotter than the Master Caution lamp and
-   three degrees off it, so a route line and a warning were the same colour.
-   Beacon was signal red at hue 22. They are gold (hue 81) and brick (hue 34)
-   now, both held under the caution chroma. The POC predates the caution lamp
-   existing, so it cannot be the authority on staying clear of it. */
-const REDEFINED = new Map([
-  ["amber", "§1.3 — pulled to gold, off the caution hue"],
-  ["beacon", "§1.3 — pulled to brick, off signal red"],
-]);
 const near = (a, b) => {
   const x = Number(String(a).replace("px", "")), y = Number(String(b).replace("px", ""));
   return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) < 5e-4;
@@ -92,7 +76,6 @@ let compared = 0;
 const drift = [], missing = [], extra = new Set();
 
 LIVERIES.forEach((L, i) => {
-  if (REDEFINED.has(L.id)) return;
   // Night only. Day is no longer the POC's Day — design/wingman-day-source.js
   // replaced it wholesale, deliberately, so comparing it against the reference
   // would report the intended change as drift for ever. Day is asserted against
@@ -111,7 +94,6 @@ LIVERIES.forEach((L, i) => {
   }
 });
 
-for (const [id, why] of REDEFINED) console.log(`  redefined  ${id}: ${why}`);
 const agreed = drift.filter((d) => AGREED.has(d.k));
 const real = drift.filter((d) => !AGREED.has(d.k));
 

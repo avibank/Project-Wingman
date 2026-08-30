@@ -21,24 +21,28 @@ export const LIVERIES = [
     description: "The forty minutes between the climb and the descent.",
     hue: 266, dDark: -11, dLight: -31, midAt: 0.42, midC: 1.35,
     chroma: 0.100, ground: 0.140, light: 0.950, fillAbs: 84, fillC: 0.22 },
-  // §1.3 — pulled to GOLD/OCHRE, off the caution hue and well under its chroma.
-  // At hue 78 / chroma .126 this rendered a Day accent of C .230 at hue 79 —
-  // hotter than the caution lamp and three degrees from it, so a route line and
-  // a warning were the same colour. No livery may impersonate a signal.
-  { id: "amber", name: "Gold", anchors: "bronze → ochre → gold",
-    description: "Nothing is actually wrong. It just likes your attention.",
-    hue: 81, dDark: -14, dLight: 14, midAt: 0.45, midC: 1.18,
-    chroma: 0.070, ground: 0.158, light: 0.944, fillAbs: 70, fillC: 0.12 },
+  // The original hue and chroma, restored on instruction. Renamed from "Caution
+  // amber" to GAUGE amber: the colour is the livery's, the word "caution"
+  // belongs to the lamp (§1.2) and a livery may not borrow it even in its name.
+  //
+  // Known and accepted: at this hue and chroma the Day accent computes to
+  // chroma .230 at hue 79, which is hotter than the Master Caution lamp and
+  // about six degrees from it. §1.3 says no livery may impersonate a signal;
+  // this one can. The lamp still reads by FORM — a filled rectangular legend
+  // with near-black words on it — but not by colour alone against this livery.
+  { id: "amber", name: "Gauge amber", anchors: "bronze → amber → caution yellow",
+    description: "Nothing is actually wrong. The lamp just likes your attention.",
+    hue: 78, dDark: -14, dLight: 14, midAt: 0.45, midC: 1.18,
+    chroma: 0.126, ground: 0.158, light: 0.944, fillAbs: 70, fillC: 0.15 },
   { id: "tarmac", name: "Tarmac grey", anchors: "gunmetal → graphite → grey",
     description: "Cold concrete, borrowed light, working hours.",
     hue: 255, dDark: 6, dLight: -12, midAt: 0.50, midC: 1.00,
     chroma: 0.022, ground: 0.145, light: 0.955, keyAbs: 58, keyC: 0.105, fillAbs: 256, fillC: 0.30 },
-  // §1.3 — pulled to BRICK/OXBLOOD. Signal red on a route line reads as an
-  // error before it reads as a preference.
-  { id: "beacon", name: "Brick", anchors: "oxblood → brick → terracotta",
-    description: "Weathered, not warning.",
-    hue: 34, dDark: -14, dLight: 6, midAt: 0.44, midC: 1.14,
-    chroma: 0.070, ground: 0.148, light: 0.936, fillAbs: 16, fillC: 0.11,
+  // Restored on instruction: the original signal red, name and description.
+  { id: "beacon", name: "Beacon red", anchors: "maroon → university red → signal red",
+    description: "Red, rotating, and not asking twice.",
+    hue: 22, dDark: -14, dLight: 6, midAt: 0.44, midC: 1.14,
+    chroma: 0.128, ground: 0.148, light: 0.936, fillAbs: 16, fillC: 0.14,
     panelT: 0.048, glass: 0.93 },
   { id: "runway", name: "Runway green", anchors: "olive → grass → spring green",
     description: "Follow the green. It hasn't been wrong yet.",
