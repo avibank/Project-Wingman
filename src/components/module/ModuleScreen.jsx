@@ -111,7 +111,10 @@ export default function ModuleScreen({
 
 
 
-      <div className="tabrow">
+      {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
+          the surface below, and the list lives inside the same border. */}
+      <div className="card">
+      <div className="tabsbar">
         <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>
           {MODULE_TABS.map((t) => (
             <button key={t.id} type="button" role="tab" className="tab"
@@ -146,7 +149,7 @@ export default function ModuleScreen({
           Housing goes on the section, never on the rows inside it: hairlines
           separate rows, housing separates sections, and if every row is a card
           then nothing is. */}
-      <div className="pane house" role="tabpanel">
+      <div className="pane" role="tabpanel">
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query}
@@ -161,6 +164,7 @@ export default function ModuleScreen({
           <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion}
                      loading={!people.people?.length} />
         )}
+      </div>
       </div>
     </div>
   );

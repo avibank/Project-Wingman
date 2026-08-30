@@ -18,7 +18,10 @@
   display: flex;
   align-items: center;
   gap: 26px;
-  padding: 0 calc(var(--pad) + var(--card-pad, 22px)) 0;
+  /* The card's own 1px border sits outside the text column — §1.6 allows
+     exactly that and nothing more, so the banner adds it to land on the card's
+     INNER edge rather than its outer one. */
+  padding-inline: calc(var(--card-pad) + 1px);
 }
 /* Fixed height within a breakpoint — it must not grow with content. */
 .mhero{ min-height: 118px; }

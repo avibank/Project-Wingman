@@ -57,16 +57,11 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
 // The route through a module: chapters as headings, not cards. Nothing here
 // has a panel fill, a radius or a shadow — space and one hairline do all the
 // separating, which is why the markup is this plain.
-function Lights({ lessons, state, hereLessonId }) {
-  return (
-    <span className="lights" aria-hidden="true">
-      {lessons.map((l) => (
-        <i key={l.id}
-           className={`lg${isDone(state, l.id) ? " lit" : l.id === hereLessonId ? " now" : ""}`} />
-      ))}
-    </span>
-  );
-}
+//
+// §2.7/§6 — NO PROGRESS METERS on a chapter. The flight profile owns module
+// progress and the status word owns chapter state; a pair of dashes beside the
+// word was a third opinion on the same question, and the brief forbids putting
+// it back.
 
 // A tick when it is done, a dot for where you are, and nothing at all
 // otherwise. Deliberately not a bordered box: an earlier version used those
@@ -123,7 +118,6 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                     {ch.lessons.length} lesson{ch.lessons.length === 1 ? "" : "s"} and a quiz
                   </span>
                 </span>
-                <Lights lessons={ch.lessons} state={state} hereLessonId={here?.lesson?.id} />
                 {/* State in words, never a badge. */}
                 <span className={`cstate${st === "here" ? " here" : ""}`}>
                   {st === "done" ? "Done"
