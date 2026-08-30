@@ -38,7 +38,7 @@ export function Accuracy({ mean, passMark = 75, onPress }) {
     : "Accuracy. No reading yet — take a quiz and the needle comes alive.";
 
   return (
-    <button type="button" className="ind" onClick={onPress} aria-label={label}>
+    <button type="button" className="ind" onClick={(e) => onPress?.(e)} aria-label={label}>
       <span className="gauge" data-nodata={has ? undefined : ""}>
         <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
           <path className="g-arc" d={`M${CX - R},${CY} A${R},${R} 0 0 1 ${CX + R},${CY}`} fill="none" />
@@ -70,7 +70,7 @@ export function Calibration({ count, hasData = true, onPress }) {
       : `Calibration. ${count} question${count === 1 ? "" : "s"} to re-check.`;
 
   return (
-    <button type="button" className="ind" onClick={onPress} aria-label={label}>
+    <button type="button" className="ind" onClick={(e) => onPress?.(e)} aria-label={label}>
       <span className="sticker" data-state={state}>
         <span className="band">CALIBRATION</span>
         <span className="val">{value}</span>
@@ -86,7 +86,7 @@ export function Calibration({ count, hasData = true, onPress }) {
 export function MasterCaution({ count, onPress }) {
   const lit = count > 0;
   return (
-    <button type="button" className="ind" onClick={onPress}
+    <button type="button" className="ind" onClick={(e) => onPress?.(e)}
             aria-label={lit
               ? `Master caution. ${count} question${count === 1 ? "" : "s"} to put right.`
               : "Master caution. All clear."}>

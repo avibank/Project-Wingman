@@ -78,16 +78,29 @@ export default function LibraryTab({
 
           <div className="libwrap">
             {shown.map((p) => (
-              <button key={p.id} type="button" className="row" onClick={() => onOpenPaper(p)}>
-                <span className="mark">
-                  {state?.opened?.[p.id] ? <Check aria-hidden="true" /> : null}
+              /* §2.8/§6 — the same row skeleton, a document mark in the
+                 leading slot, and the rail carries an ACTION, never progress.
+                 A PDF is never 60% done, so nothing here may imply it is. */
+              <button key={p.id} type="button" className="item" onClick={() => onOpenPaper(p)}>
+                <span className="lead mark">
+                  <svg width="17" height="17" viewBox="0 0 16 16" fill="none"
+                       stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                    <path d="M4 1.8 h5.2 L12.4 5 v9.2 a1 1 0 0 1-1 1 H4 a1 1 0 0 1-1-1 V2.8 a1 1 0 0 1 1-1 Z" />
+                    <path d="M9.2 1.9 V5 h3.1" />
+                  </svg>
                 </span>
-                <span>
-                  <span className="rn">{p.title}</span>
-                  <span className="rm">{p.chapterTitle}{p.pages ? ` · ${p.pages} page${p.pages === 1 ? "" : "s"}` : ""}</span>
+                <span className="imain">
+                  <span className="iname">{p.title}</span>
+                  <span className="imeta">
+                    {[p.chapterTitle, p.kind || "PDF",
+                      p.pages ? `${p.pages} page${p.pages === 1 ? "" : "s"}` : null]
+                      .filter(Boolean).join(" · ")}
+                  </span>
                 </span>
-                <span className="rstate">{state?.opened?.[p.id] ? "Opened" : ""}</span>
-                <span className="chv" aria-hidden="true">›</span>
+                <span className="istat">
+                  {state?.opened?.[p.id] && <Check aria-hidden="true" />}
+                  <span className="go ghost">Open</span>
+                </span>
               </button>
             ))}
           </div>

@@ -5,6 +5,7 @@ import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
 import { Accuracy, Calibration, MasterCaution, FlightProfile } from "./Instruments.jsx";
+import InstrumentPop from "./InstrumentPop.jsx";
 import { cautionCount, dueCount } from "../../lib/retention.js";
 import { passAt } from "../../lib/quiz.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
@@ -72,6 +73,9 @@ export default function ModuleScreen({
   // Cleared when the tab changes. Carrying a query across tabs shows somebody a
   // filtered list they did not ask to filter, and the commonest way to meet an
   // empty tab is to arrive at one still holding a search.
+  // §2.3 — which indicator is open, and the element it is anchored to. Idle
+  // indicators open too: a dark lamp is the one a new student needs explained.
+  const [pop, setPop] = useState(null);
   const [query, setQuery] = useState("");
   useEffect(() => { setQuery(""); }, [tab]);
   const searchable = tab === "route" || tab === "library";
@@ -100,11 +104,21 @@ export default function ModuleScreen({
               one identity rather than as a heading and a toolbar. */}
           <div className="instrow">
             <Accuracy mean={avgPct} passMark={passMark}
-                      onPress={() => onInstrument?.("accuracy")} />
+                      onPress={(e) => setPop({ kind: "accuracy", el: e.currentTarget })} />
             <Calibration count={due} hasData={taken.length > 0}
-                         onPress={() => onInstrument?.("recheck")} />
-            <MasterCaution count={caution} onPress={() => onInstrument?.("caution")} />
+                         onPress={(e) => setPop({ kind: "calibration", el: e.currentTarget })} />
+            <MasterCaution count={caution}
+                           onPress={(e) => setPop({ kind: "caution", el: e.currentTarget })} />
           </div>
+          {pop && (
+            <InstrumentPop
+              kind={pop.kind} anchor={pop.el}
+              data={pop.kind === "accuracy" ? { mean: avgPct, passMark }
+                : pop.kind === "calibration" ? { count: due, hasData: taken.length > 0 }
+                  : { count: caution }}
+              onClose={() => { const el = pop.el; setPop(null); el?.focus(); }}
+              onGo={(to) => onInstrument?.(to === "library" ? "accuracy" : to)} />
+          )}
         </div>
         <FlightProfile chapters={chapters} atIndex={hereIndex} started={started} />
       </div>

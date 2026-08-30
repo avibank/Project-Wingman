@@ -99,6 +99,20 @@ export default function LessonPage({
   const myNotes = notesFor(session.notes, lesson.id);
   const comments = commentsFor(session.threads, lesson.id);
   const at = session.player.seconds || 0;
+
+  // §3.5 — Export. Plain text in timestamp order, which is the order the list
+  // is already in, so what lands in the file is what was on screen.
+  const exportNotes = () => {
+    const rows = [...myNotes].sort((a, b) => a.t - b.t)
+      .map((n) => `[${mmss(n.t)}] ${n.body}`);
+    const blob = new Blob([`${lesson.title}\n\n${rows.join("\n")}\n`], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${lesson.title.replace(/[^\w -]/g, "")} — notes.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   // §3.3 — watching to the end ARMS the stamp; the person applies it. Same
   // threshold the completion rule already uses, read from the saved position
   // so it survives a reload rather than only arming inside one sitting.
@@ -275,6 +289,14 @@ export default function LessonPage({
                   onClick={() => setTab("comments")}>
             Comments {comments.length > 0 && <span className="ltab-n">{comments.length}</span>}
           </button>
+
+          {/* §3.3/§3.5 — Export lives in the notes header. There is no overflow
+              menu: three items behind a menu is three items nobody finds. */}
+          {tab === "notes" && myNotes.length > 0 && (
+            <button type="button" className="ltab-act" onClick={() => exportNotes()}>
+              Export
+            </button>
+          )}
         </div>
 
         {/* ONE composer, one position. Only the placeholder changes. */}
@@ -321,6 +343,12 @@ export default function LessonPage({
                       onSeek={requestSeek}
                       onDelete={(id) => mutate((st) => deleteNote(st, id))} />
           : <CommentsTab comments={comments} replies={session.replies} at={at}
+                         onReport={(l) => {
+                           // The existing reporter already carries the route
+                           // and the state; this only has to point at it.
+                           const b = document.querySelector(".rpt");
+                           if (b) b.click(); else console.info("Problem report", { lesson: l.id });
+                         }}
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
                          people={people} onSeek={requestSeek} mutate={mutate}
                          pending={pending} postOptimistic={postOptimistic} />}
@@ -338,7 +366,7 @@ export default function LessonPage({
 // replies collapsed behind one expander, because that is what everyone has
 // seen ten thousand times and because an expanded thread pushes the next
 // question off the screen.
-function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate, pending, postOptimistic }) {
+function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate, pending, postOptimistic, onReport }) {
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
@@ -465,6 +493,16 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
           })}
         </ul>
       )}
+
+      {/* §3.3/§3.5 — report a problem sits at the FOOT of the comments, quietly.
+          It is not an overflow menu and it is not a button competing with the
+          composer: somebody reaching for it has already scrolled past
+          everything else looking for it. */}
+      <p className="lreport">
+        Something wrong with this lesson?{" "}
+        <button type="button" className="lreport-go"
+                onClick={() => onReport?.(lesson)}>Report a problem</button>
+      </p>
     </>
   );
 }

@@ -277,3 +277,35 @@
   font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t3);
   margin: 14px 0 0; max-width: var(--measure);
 }
+
+/* §2.3 — the popover. Not a modal: no page dim, no focus trap. */
+.pop{
+  position: absolute; z-index: 40; width: 286px;
+  background: var(--panel); border: 1px solid var(--edge);
+  border-radius: 11px; padding: 15px 15px 13px;
+  box-shadow: 0 14px 34px oklch(0 0 0 / .24);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.pop:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
+.pop::before{
+  content: ""; position: absolute; top: -6px; left: var(--arrow, 24px);
+  width: 10px; height: 10px; background: var(--panel);
+  border-left: 1px solid var(--edge); border-top: 1px solid var(--edge);
+  transform: rotate(45deg);
+}
+.pop h3{
+  margin: 0; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: .17em; text-transform: uppercase; color: var(--t2); font-weight: 500;
+}
+.pop-big{ display: grid; place-items: center; height: 104px; }
+/* The instrument itself, enlarged — not a drawing of it. */
+.pop-scaler{ transform: scale(2.4); transform-origin: center; }
+.pop-scaler .ind{ pointer-events: none; padding: 0; min-height: 0; }
+.pop-reading{ margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--t1); }
+.pop-act{
+  appearance: none; border: 1px solid var(--edge); background: var(--sunk);
+  color: var(--t1); font-family: var(--font-ui); font-weight: 500; font-size: 13px;
+  padding: 9px 12px; border-radius: 7px; cursor: pointer; text-align: left;
+}
+.pop-act:hover:not(:disabled){ border-color: var(--active); color: var(--active); }
+.pop-act:disabled{ opacity: .42; cursor: default; }
