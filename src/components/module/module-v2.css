@@ -91,7 +91,7 @@ body{
   font-family:'Instrument Sans',system-ui,sans-serif;
   font-size:var(--fs-base); line-height:var(--lh-body);
   -webkit-font-smoothing:antialiased;
-  /* the page scrolls normally. no overflow:hidden, no inner scroller. */
+  /* the shell scrolls: .deck is the scroller, and this is a layout box in it. */
   padding-bottom:calc(var(--runway-h) + env(safe-area-inset-bottom, 0px) + 40px);
 }
 :focus-visible{ outline:2px solid var(--active); outline-offset:2px; border-radius:3px }

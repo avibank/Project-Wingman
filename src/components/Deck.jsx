@@ -229,8 +229,19 @@ const ROOM_CSS = `
      and overflow-x clipped the difference: the page rendered at desktop width
      with the right-hand half simply cut off and no way to reach it. */
   grid-template-columns: minmax(0, 1fr);
-  /* No overflow. The document scrolls; this is a layout box now. */
-  overflow-x: clip;
+  /* THE SCROLL ITSELF, and it belongs here with the rest of the scroller
+     rather than in App.jsx. It lived in both for a while, and the App.jsx copy
+     won on specificity (.app .deck), so editing this rule did nothing — the
+     worst kind of duplicate, because the file that looks authoritative is the
+     one being ignored.
+     overflow-x is hidden rather than clip: pairing clip with a scrolling
+     overflow-y makes it compute to hidden anyway, so saying hidden is just
+     saying what happens. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* A scroll that reaches the end of this box stops there instead of chaining
+     to the page behind it. */
+  overscroll-behavior: contain;
   /* grid with safe centring, not margin-block:auto. An auto vertical margin
      computes to zero in a block container — it only centres in flex or grid.
      The safe keyword is the important half: when the content is taller than
@@ -239,10 +250,22 @@ const ROOM_CSS = `
   display: grid; align-content: safe center;
   scrollbar-gutter: stable;
   scroll-padding-block: 16px;
-  padding: 0 40px; color: var(--t1);
+  /* The bottom reserves the fixed chin and the mini player, or the last row of
+     every list is unreachable behind them. It has to live in THIS shorthand:
+     a "padding: 0 40px" elsewhere resets padding-bottom to zero, and a separate
+     padding-bottom rule of equal specificity loses to it on source order —
+     which is exactly how the reservation went missing once already.
+     Both custom properties fall back to 0px, so a page with neither is padded
+     by nothing. */
+  padding: 0 40px calc(var(--mini-h, 0px) + var(--chin-h, 0px));
+  color: var(--t1);
   font-family: var(--font-ui);
 }
-@media (max-width: 640px) { .deck { padding: 0 16px; } }
+@media (max-width: 640px) {
+  /* Longhand, so the narrow-screen padding cannot silently drop the chin
+     reservation the way the shorthand above would. */
+  .deck { padding-inline: 16px; }
+}
 .deck:focus-visible { outline: 2px solid var(--active); outline-offset: -2px; }
 
 /* Short content sits optically centred between the header and the lights

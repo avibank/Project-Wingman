@@ -269,6 +269,6 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    sits permanently behind the bar. Invisible in a mockup, annoying on every
    screen. .deck is this app's scroll container on every route, so it is set
    once here rather than remembered per page. */
-/* The mini player AND the fixed chin. --chin-h is published by the chin itself;
-   it read as 0px everywhere before, because nothing set it. */
-.deck { padding-bottom: calc(var(--mini-h, 0px) + var(--chin-h, 0px)); }
+/* The chin and mini-player reservation moved into .deck's own padding shorthand
+   in Deck.jsx. A padding-bottom here is the same specificity as that shorthand
+   and loses on source order, so it silently did nothing. */

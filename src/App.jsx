@@ -1057,24 +1057,11 @@ function AppInner() {
           padding: 0;
           position: relative;
         }
-        /* THE SCROLLER. min-height: 0 is not optional — a grid item's automatic
-           minimum size is its content, so without it the row grows to fit the
-           page and the shell scrolls the document after all, which is exactly
-           the bug this looks like when it is missing.
-           position: relative so the player layer inside it can be placed in the
-           scroller's own coordinates. */
-        .app .deck {
-          min-height: 0;
-          overflow-y: auto;
-          overflow-x: hidden;
-          position: relative;
-          overscroll-behavior: contain;
-          /* Reserve the fixed chin and the mini player, or the last row of
-             every list on the site is unreachable behind them. The chin
-             measures itself into --chin-h; both fall back to 0px, so a page
-             with neither is padded by nothing. */
-          padding-bottom: calc(var(--mini-h, 0px) + var(--chin-h, 0px));
-        }
+        /* The scroller's own rules live in Deck.jsx, next to the rest of it —
+           min-height: 0, the overflow, the safe centring. They were duplicated
+           here and this copy won on specificity, which made Deck.jsx look
+           authoritative while being ignored. The chin reservation lives in
+           app.css with the other .deck padding. */
         /* A gate that blocks — first flight, the username prompt — renders as
            the only child, and would otherwise be squashed into the header row. */
         .app > *:only-child { grid-row: 1 / -1; }

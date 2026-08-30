@@ -14,8 +14,10 @@
 /* ============================================================================
    1 · THE SCROLL ARCHITECTURE
    ----------------------------------------------------------------------------
-   Rule: the DOCUMENT scrolls. Nothing sets overflow:hidden on html or body,
-   and there is no inner scroll container.
+   Rule: THE SHELL scrolls, not the document. .app is one viewport tall and
+   .deck scrolls inside it; html and body carry no height and no overflow, so
+   nothing fights it. Anything that needs to know where the reader is asks the
+   scroller — window.scrollY is permanently 0 in here.
    ========================================================================= */
 
 /* WHAT THE SHELL WAS COSTING
@@ -84,7 +86,7 @@ export function assertNoFixedTrap(el) {
 export const RUNWAY_N = 12;
 
 /* Read from the window, not from a container. This is the only line that
-   changes when the shell comes out. */
+   changes when the shell comes back. */
 /* Progress through whatever is actually scrolling. With the shell back, that is
    .deck and not the window — window.scrollY is permanently 0 inside a fixed
    shell, so a runway read from the window shows an empty run on every page. The
@@ -196,17 +198,11 @@ export function dockReducer(p, ev) {
   }
 }
 
-/* The observer's root must be the actual scroller. With the shell gone that is
-   the viewport, so root stays null — but state it, because it was the cause of
-   the inconsistent docking and someone will reintroduce a container. */
-export function observeSlot(slotEl, dispatch) {
-  const io = new IntersectionObserver(
-    ([e]) => dispatch({ type: 'slot', visible: e.intersectionRatio >= DOCK_THRESHOLD }),
-    { root: null, threshold: [0, DOCK_THRESHOLD, 1] }   // null = the viewport
-  );
-  io.observe(slotEl);
-  return () => io.disconnect();
-}
+/* observeSlot lives in lessonSurface.js, which is the copy the lesson page
+   imports. A second one here took no root and hard-coded the viewport, on the
+   reasoning that the shell was gone — the shell is back, the root is the
+   scroller, and a duplicate that is exported but never imported is a trap for
+   whoever imports the wrong one next. Deleted rather than corrected. */
 
 
 /* ============================================================================
