@@ -370,7 +370,28 @@
   .mscreen .tabsearch{ min-width: 0; flex: 0 0 auto; margin-left: 8px; padding: 7px; gap: 0; }
   .mscreen .tabsearch-f{ width: 0; padding: 0; font-size: 0; }
   .mscreen .tabsearch-x{ display: none; }
-  .mscreen .card{ border-radius: 0; border-left: 0; border-right: 0; }
+  /* §4 — edge to edge, so the card's own padding is not spending 50px of a
+     390px screen on nothing. It has to pull out past the page gutter, not just
+     lose its corners. */
+  .mscreen .card{
+    border-radius: 0; border-left: 0; border-right: 0;
+    /* Full bleed, and self-correcting: the inset comes from two different
+       ancestors (.content and .deck, 22px and 16px here), so a fixed negative
+       margin would drift the moment either changes. This lands on the viewport
+       edge whatever they are, and .deck spans the viewport at this width so
+       nothing is clipped by its overflow. */
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+  /* The chapter header does not fit three columns at this width — the status
+     wrapped onto its own line and broke the rail. Name and subline take the
+     row; the status sits with the chevron. */
+  .mscreen .chead{
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 10px; padding: 15px var(--card-pad);
+  }
+  .mscreen .chead .cstate{ grid-column: 1; grid-row: 2; justify-self: start; }
+  .mscreen .chead .chv{ grid-column: 2; grid-row: 1 / -1; }
 
   .mscreen .titlerow { padding-bottom: 18px; }
   /* The page title is the one place --fs-display is too big for a phone: at
