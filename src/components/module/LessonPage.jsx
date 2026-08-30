@@ -15,6 +15,7 @@ import "./module.css";
 import "./lesson.css";
 import "./familiar.css";
 import NoteDeck from "./NoteDeck.jsx";
+import SignOff from "./SignOff.jsx";
 import "./deck.css";
 
 // A time inside a comment is pressable — [2:17] or a bare 2:17. YouTube taught
@@ -98,6 +99,10 @@ export default function LessonPage({
   const myNotes = notesFor(session.notes, lesson.id);
   const comments = commentsFor(session.threads, lesson.id);
   const at = session.player.seconds || 0;
+  // §3.3 — watching to the end ARMS the stamp; the person applies it. Same
+  // threshold the completion rule already uses, read from the saved position
+  // so it survives a reload rather than only arming inside one sitting.
+  const watchedToEnd = done || (state?.pos?.[lesson.id]?.pct || 0) >= 0.9;
   const here = presenceFor(presence, lesson.id, people);
 
   // The meta line, in the shape of a view count. Watchers comes from presence,
@@ -172,7 +177,24 @@ export default function LessonPage({
       </div>
 
       <div className="mt lesson-head">
-        <h1 className="lesson-name">{lesson.title}</h1>
+        {/* §3.3 — the title and the sign-off share a line, the stamp
+            right-aligned with no words beside it. It writes the same one
+            boolean the 90%-watched rule writes: one flag, two writers. */}
+        <div className="titlerow">
+          <h1 className="lesson-name">{lesson.title}</h1>
+          <SignOff
+            armed={watchedToEnd}
+            stamped={done}
+            when={added || null}
+            onApply={() => onMarkDone?.(lesson.id, true)}
+            onVoid={() => {
+              // Asks before voiding — a signed-off lesson is a record.
+              if (window.confirm("Void the sign-off on this lesson?")) {
+                onMarkDone?.(lesson.id, false);
+              }
+            }}
+          />
+        </div>
         {/* Where a view count sits, and reading like one. This replaces the
             "Callsign X and 2 others have been here" row. */}
         <span className="lesson-where">
@@ -215,13 +237,6 @@ export default function LessonPage({
               <span className="next-meta">{nextWhere(next)}</span>
             </>
           ) : <span className="next-label">Last in this module</span>}
-          {/* The manual half of the completion rule. It writes the same flag
-              90% watched writes — one boolean, two writers — and it lives in
-              this row rather than becoming a fifth thing on the page. */}
-          <button type="button" className="next-done" aria-pressed={done}
-                  onClick={() => onMarkDone?.(lesson.id, !done)}>
-            {done ? "Done" : "Mark as done"}
-          </button>
         </div>
 
         {/* Presence, and the face. WhatsApp's "last seen" and Netflix's

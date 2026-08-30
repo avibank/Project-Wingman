@@ -722,3 +722,37 @@
 @media (max-width: 1000px){
   .watch .mt, .watch .sd, .watch .pn{ padding-inline: var(--pad); }
 }
+
+/* §3.3 — the sign-off stamp. Right-aligned on the title's line, no words
+   beside it: the state lives in the tooltip and the accessible name. */
+.mt .titlerow{ display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.stamp{
+  flex: 0 0 auto; appearance: none; background: none; border: 0;
+  padding: 2px; cursor: pointer; color: var(--t2);
+  min-width: var(--tap); min-height: var(--tap);
+  display: grid; place-items: center;
+}
+.stamp .sc{ display: block; transition: transform .34s cubic-bezier(.2,1.5,.4,1); }
+/* Not armed: nothing to sign off yet, and it says so by not being pressable. */
+.stamp[data-s="idle"]{ cursor: not-allowed; opacity: .55; }
+.stamp[data-s="armed"]{ color: var(--active); }
+.stamp[data-s="armed"]:hover .sc{ transform: scale(1.09); }
+.stamp[data-s="stamped"]{ color: var(--active); }
+/* A few degrees off square — a hand applied it, not a layout engine. */
+.stamp[data-s="stamped"] .sc{ transform: rotate(-8deg); opacity: .94; }
+.stamp:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; border-radius: 8px; }
+
+/* It presses when applied: down past 1 and settling, under half a second. The
+   tilt alone reads as a bug; the tilt plus the press reads as a hand. */
+.stamp .sc.press{ animation: pw-press .42s cubic-bezier(.3,1.4,.4,1); }
+@keyframes pw-press{
+  0%{ transform: scale(1.42) rotate(-15deg); opacity: .25; }
+  55%{ transform: scale(.93) rotate(-6deg); opacity: 1; }
+  100%{ transform: scale(1) rotate(-8deg); opacity: .94; }
+}
+/* §5 — instant under reduced motion, and under Smooth Air. */
+@media (prefers-reduced-motion: reduce){
+  .stamp .sc, .stamp .sc.press{ transition: none; animation: none; }
+}
+.app.smooth-air .stamp .sc,
+.app.smooth-air .stamp .sc.press{ transition: none; animation: none; }
