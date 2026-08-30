@@ -324,19 +324,11 @@
    The three breakpoints are foundations.css's: phone < 768, tablet 768–1119,
    desktop >= 1120. Nothing here invents a fourth. ── */
 @media (max-width: 767px) {
-  /* Name and its line take the full width; the lights, the state and the
-     chevron drop to a second row under them. Nothing is hidden — the state in
-     words is the only thing telling you where you are. */
-  .mscreen .chead {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "name chv" "meta meta";
-    gap: 10px 14px;
-    padding: 22px 0 20px;
-  }
-  .mscreen .chead > span:first-child { grid-area: name; }
-  .mscreen .chead > .chv { grid-area: chv; align-self: start; }
-  .mscreen .lights { grid-area: meta; }
-  .mscreen .cstate { grid-area: meta; justify-self: end; }
+  /* The chapter header keeps its three columns at tablet width — 639px of card
+     holds a name, a status and a chevron comfortably, and dropping the status
+     to its own right-aligned row broke the §2.7 rail at every size between 560
+     and 767. The phone block below restacks it where it genuinely will not fit.
+     .lights went with the meters §2.7 forbids. */
   .mscreen .cname { font-size: var(--fs-xl, 27px); letter-spacing: -.4px; }
   .mscreen .csub { font-size: var(--fs-sm, 14px); }
 
@@ -369,34 +361,7 @@
   .mscreen .tabs { overflow-x: auto; gap: 20px; scrollbar-width: none; }
   .mscreen .tabs::-webkit-scrollbar { display: none; }
 
-  /* §2.6/§4 — below its minimum the field collapses to a magnifier rather than
-     wrapping or clipping. The card runs edge to edge on a phone so its padding
-     does not eat 50px of a 390px screen. */
-  .mscreen .tabsearch{ min-width: 0; flex: 0 0 auto; margin-left: 8px; padding: 7px; gap: 0; }
-  .mscreen .tabsearch-f{ width: 0; padding: 0; font-size: 0; }
-  .mscreen .tabsearch-x{ display: none; }
-  /* §4 — edge to edge, so the card's own padding is not spending 50px of a
-     390px screen on nothing. It has to pull out past the page gutter, not just
-     lose its corners. */
-  .mscreen .mcard{
-    border-radius: 0; border-left: 0; border-right: 0;
-    /* Full bleed, and self-correcting: the inset comes from two different
-       ancestors (.content and .deck, 22px and 16px here), so a fixed negative
-       margin would drift the moment either changes. This lands on the viewport
-       edge whatever they are, and .deck spans the viewport at this width so
-       nothing is clipped by its overflow. */
-    width: 100vw;
-    margin-inline: calc(50% - 50vw);
-  }
-  /* The chapter header does not fit three columns at this width — the status
-     wrapped onto its own line and broke the rail. Name and subline take the
-     row; the status sits with the chevron. */
-  .mscreen .chead{
-    grid-template-columns: minmax(0,1fr) auto;
-    gap: 10px; padding: 15px var(--card-pad);
-  }
-  .mscreen .chead .cstate{ grid-column: 1; grid-row: 2; justify-self: start; }
-  .mscreen .chead .chv{ grid-column: 2; grid-row: 1 / -1; }
+
 
   .mscreen .titlerow { padding-bottom: 18px; }
   /* The page title is the one place --fs-display is too big for a phone: at
@@ -666,4 +631,42 @@
 @media (max-width: 560px){
   .mscreen .kids{ padding: 0 var(--card-pad) 10px calc(var(--card-pad) + 11px); }
   .mscreen .istat{ margin-right: 0; }
+}
+
+
+/* ============================== §4 — PHONE ONLY ==========================
+   These were appended into the existing 767px block by mistake, which handed
+   tablets the phone treatment: at 763px the card full-bled and its content was
+   clipped off the left edge of the screen — "Lessons" read "essons" and
+   "Chapter 1" read "hapter 1" on the live site.
+
+   767 is a TABLET. A tablet has room for the search field, the 38px indicator
+   row and a card with edges. Only a phone does not.
+   ========================================================================= */
+@media (max-width: 560px) {
+  /* Below its minimum the field collapses to a magnifier rather than wrapping
+     or clipping. */
+  .mscreen .tabsearch{ min-width: 0; flex: 0 0 auto; margin-left: 8px; padding: 7px; gap: 0; }
+  .mscreen .tabsearch-f{ width: 0; padding: 0; font-size: 0; }
+  .mscreen .tabsearch-x{ display: none; }
+
+  /* Edge to edge, so the card's own padding is not spending 50px of a 390px
+     screen on nothing. Full bleed off its own position, because the inset comes
+     from two different ancestors and a fixed negative margin would drift. */
+  .mscreen .mcard{
+    border-radius: 0; border-left: 0; border-right: 0;
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  /* Three columns do not fit: the status wrapped onto its own line and broke
+     the rail. Name and subline take the row, the status sits beneath, and the
+     chevron spans both. */
+  .mscreen .chead{
+    grid-template-columns: minmax(0,1fr) auto;
+    grid-template-areas: none;
+    gap: 10px; padding: 15px var(--card-pad);
+  }
+  .mscreen .chead .cstate{ grid-area: auto; grid-column: 1; grid-row: 2; justify-self: start; }
+  .mscreen .chead .chv{ grid-area: auto; grid-column: 2; grid-row: 1 / -1; }
 }
