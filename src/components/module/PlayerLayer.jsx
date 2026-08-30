@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, PenLine, X, RotateCcw } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, PenLine, X, RotateCcw, Check } from "lucide-react";
 import { resolveVideo } from "../../lib/videoHost.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
@@ -54,6 +54,29 @@ export default function PlayerLayer() {
   const [hovering, setHovering] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
+  const [restamped, setRestamped] = useState(false);
+  const fieldRef = useRef(null);
+  const flash = useRef(null);
+  useEffect(() => () => clearTimeout(flash.current), []);
+
+  // §3.4 — the note keeps the timestamp it opened at while the video plays on.
+  // Tapping the chip re-stamps it to now. Pressing Note again while a bar is
+  // open does the same rather than opening a second one.
+  const reStamp = () => {
+    const el = ref.current;
+    const t = Math.floor(el?.currentTime ?? 0);
+    setSession((s) => (s.bar ? { ...s, bar: { ...s.bar, t } } : s));
+    setRestamped(true);
+    clearTimeout(flash.current);
+    flash.current = setTimeout(() => setRestamped(false), 420);
+  };
+
+  // Height only. Reset first, or it can only ever grow.
+  const growField = (e) => {
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
+  };
   const [barBox, setBarBox] = useState({ width: 0, height: 0 });
   // §3.1 — the end card. Its own state rather than pct >= 1: a lesson can sit
   // at the last frame after a scrub without having been watched to the end, and
@@ -302,8 +325,12 @@ export default function PlayerLayer() {
   const openNote = useCallback(() => {
     const el = ref.current;
     if (!lesson) return;
+    // §3.4 — pressing Note while a bar is already open RE-STAMPS it rather
+    // than opening a second one. Two capture bars over one video is a state
+    // nobody can reason about, and the press plainly means "note this moment".
+    if (bar) { reStamp(); return; }
     setSession((s) => openBar(s, { lessonId: lesson.id, seconds: el?.currentTime ?? 0 }));
-  }, [lesson, setSession]);
+  }, [lesson, setSession, bar, reStamp]);
 
   // ------------------------------------------------------------------ keymap
   // On the document, not the player, so it works whether or not the player has
@@ -575,20 +602,37 @@ export default function PlayerLayer() {
       {/* One line that grows, never a panel: the thing you are writing about is
           on screen and covering it is backwards. */}
       {bar && (
-        <div className="nbar" ref={barRef} style={barStyle}>
+        <div className="nbar" ref={barRef} style={barStyle} data-restamp={restamped ? "1" : undefined}>
+          {/* §3.4 — the whole bar drags, from a press anywhere on it. The chip
+              is also the re-stamp: tapping it moves the note to the current
+              second, with a brief flash so the change is seen rather than
+              guessed at. */}
           <button type="button" className="nbar-handle" ref={handleRef}
                   onPointerDown={onHandleDown} onKeyDown={onHandleKey}
-                  aria-label={`Move the note bar — at ${mmss(bar.t)}`}>
+                  onClick={reStamp}
+                  aria-label={`Noted at ${mmss(bar.t)}. Press to re-stamp to the current time.`}>
             {mmss(bar.t)}
           </button>
-          <textarea className="nbar-field" autoFocus rows={1}
-                    placeholder="Write a note — or close it and keep the pin"
+          {/* Grows in HEIGHT as you type, never in width — widening reflows the
+              text under the cursor. Past the maximum it scrolls inside. */}
+          <textarea className="nbar-field" autoFocus rows={1} ref={fieldRef}
                     value={bar.body}
+                    onInput={growField}
                     onChange={(e) => setSession((s) => ({ ...s, bar: { ...s.bar, body: e.target.value } }))} />
+          {/* The only two ways to finish. */}
           <div className="nbar-acts">
-            <button type="button" className="nbar-act" data-primary=""
-                    onClick={() => mutate((s) => closeBar(s))}>Close</button>
-            <button type="button" className="nbar-act" onClick={() => setSession(discardBar)}>Discard</button>
+            <button type="button" className="nbar-round" data-primary=""
+                    onClick={() => mutate((s) => closeBar(s))} aria-label="Save this note">
+              <Check aria-hidden="true" />
+            </button>
+            <button type="button" className="nbar-round" aria-label="Discard this note"
+                    onClick={() => {
+                      // Confirms only if there is something to lose.
+                      if (bar.body.trim() && !window.confirm("Discard this note?")) return;
+                      setSession(discardBar);
+                    }}>
+              <X aria-hidden="true" />
+            </button>
           </div>
         </div>
       )}

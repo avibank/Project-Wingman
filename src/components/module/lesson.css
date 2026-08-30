@@ -790,3 +790,36 @@
   appearance: none; background: none; border: 0; padding: 0;
   font: inherit; color: var(--active-text); cursor: pointer; text-decoration: underline;
 }
+
+/* §3.4 — the two circles that finish a note. They are the only two ways out. */
+.nbar-round{
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; flex: 0 0 auto;
+  appearance: none; cursor: pointer;
+  background: oklch(1 0 0 / .1); border: 1px solid oklch(1 0 0 / .2);
+  color: var(--over-video); padding: 0;
+}
+.nbar-round svg{ width: 15px; height: 15px; }
+.nbar-round:hover{ background: oklch(1 0 0 / .18); }
+.nbar-round[data-primary]{ background: var(--active); border-color: var(--active); color: var(--on-mark); }
+.nbar-round[data-primary]:hover{ filter: brightness(1.08); }
+/* Height only — widening reflows the text under the cursor. */
+.nbar-field{ resize: none; max-height: 132px; overflow-y: auto; }
+/* The re-stamp flash: brief, so the change is seen rather than guessed at. */
+.nbar[data-restamp] .nbar-handle{ animation: pw-restamp .42s ease-out; }
+@keyframes pw-restamp{
+  0%{ background: var(--active); color: var(--on-mark); }
+  100%{ background: transparent; }
+}
+@media (prefers-reduced-motion: reduce){ .nbar[data-restamp] .nbar-handle{ animation: none; } }
+.app.smooth-air .nbar[data-restamp] .nbar-handle{ animation: none; }
+
+/* §3.4/§4 — on a phone the bar docks near the bottom and does not drag:
+   dragging an overlay on a touch screen fights with scrolling. */
+@media (max-width: 560px){
+  .nbar{
+    transform: none !important;
+    left: 8px; right: 8px; bottom: 76px; top: auto; width: auto;
+  }
+  .nbar-handle{ cursor: default; }
+}
