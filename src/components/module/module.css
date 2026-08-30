@@ -39,7 +39,12 @@
    the surface below it, which is why it is drawn with its bottom border
    removed and pushed down a pixel to close the seam.
    ========================================================================= */
-.mscreen .card{
+/* NOT .card — deck.css already owns that class for a note card, and a bare
+   ".card" still supplies display:grid, a three-column template and height:150px
+   to anything that does not override them. The module card inherited all three
+   and laid its tab strip out beside its list. The .row collision earlier was
+   the same mistake; this one showed up only in a screenshot. */
+.mscreen .mcard{
   margin-top: var(--gapY, 48px);
   background: var(--panel);
   border: 1px solid var(--edge-soft);
@@ -373,7 +378,7 @@
   /* §4 — edge to edge, so the card's own padding is not spending 50px of a
      390px screen on nothing. It has to pull out past the page gutter, not just
      lose its corners. */
-  .mscreen .card{
+  .mscreen .mcard{
     border-radius: 0; border-left: 0; border-right: 0;
     /* Full bleed, and self-correcting: the inset comes from two different
        ancestors (.content and .deck, 22px and 16px here), so a fixed negative

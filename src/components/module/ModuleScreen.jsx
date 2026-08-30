@@ -127,7 +127,7 @@ export default function ModuleScreen({
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
           the surface below, and the list lives inside the same border. */}
-      <div className="card">
+      <div className="mcard">
       <div className="tabsbar">
         <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>
           {MODULE_TABS.map((t) => (
