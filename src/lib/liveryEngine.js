@@ -21,18 +21,24 @@ export const LIVERIES = [
     description: "The forty minutes between the climb and the descent.",
     hue: 266, dDark: -11, dLight: -31, midAt: 0.42, midC: 1.35,
     chroma: 0.100, ground: 0.140, light: 0.950, fillAbs: 84, fillC: 0.22 },
-  { id: "amber", name: "Caution amber", anchors: "bronze → amber → caution yellow",
-    description: "Nothing is actually wrong. The lamp just likes your attention.",
-    hue: 78, dDark: -14, dLight: 14, midAt: 0.45, midC: 1.18,
-    chroma: 0.126, ground: 0.158, light: 0.944, fillAbs: 70, fillC: 0.15 },
+  // §1.3 — pulled to GOLD/OCHRE, off the caution hue and well under its chroma.
+  // At hue 78 / chroma .126 this rendered a Day accent of C .230 at hue 79 —
+  // hotter than the caution lamp and three degrees from it, so a route line and
+  // a warning were the same colour. No livery may impersonate a signal.
+  { id: "amber", name: "Gold", anchors: "bronze → ochre → gold",
+    description: "Nothing is actually wrong. It just likes your attention.",
+    hue: 81, dDark: -14, dLight: 14, midAt: 0.45, midC: 1.18,
+    chroma: 0.070, ground: 0.158, light: 0.944, fillAbs: 70, fillC: 0.12 },
   { id: "tarmac", name: "Tarmac grey", anchors: "gunmetal → graphite → grey",
     description: "Cold concrete, borrowed light, working hours.",
     hue: 255, dDark: 6, dLight: -12, midAt: 0.50, midC: 1.00,
     chroma: 0.022, ground: 0.145, light: 0.955, keyAbs: 58, keyC: 0.105, fillAbs: 256, fillC: 0.30 },
-  { id: "beacon", name: "Beacon red", anchors: "maroon → university red → signal red",
-    description: "Red, rotating, and not asking twice.",
-    hue: 22, dDark: -14, dLight: 6, midAt: 0.44, midC: 1.14,
-    chroma: 0.128, ground: 0.148, light: 0.936, fillAbs: 16, fillC: 0.14,
+  // §1.3 — pulled to BRICK/OXBLOOD. Signal red on a route line reads as an
+  // error before it reads as a preference.
+  { id: "beacon", name: "Brick", anchors: "oxblood → brick → terracotta",
+    description: "Weathered, not warning.",
+    hue: 34, dDark: -14, dLight: 6, midAt: 0.44, midC: 1.14,
+    chroma: 0.070, ground: 0.148, light: 0.936, fillAbs: 16, fillC: 0.11,
     panelT: 0.048, glass: 0.93 },
   { id: "runway", name: "Runway green", anchors: "olive → grass → spring green",
     description: "Follow the green. It hasn't been wrong yet.",
@@ -307,12 +313,30 @@ export function deckVars(liveryId, variant = "night") {
   vars["--bad"] = night ? "oklch(.620 .180 25)" : "oklch(.500 .190 25)";
   vars["--on-mark"] = night ? "oklch(.14 0 0)" : "oklch(.99 0 0)";
 
-  const CAUTION_H = 78;
-  const hueGap = Math.min(Math.abs(H - CAUTION_H), 360 - Math.abs(H - CAUTION_H));
-  const cautionClash = hueGap < 35;
-  vars["--caution"] = night
-    ? (cautionClash ? `oklch(.860 .175 ${CAUTION_H})` : `oklch(.740 .155 ${CAUTION_H})`)
-    : (cautionClash ? `oklch(.400 .165 ${CAUTION_H})` : `oklch(.495 .150 ${CAUTION_H})`);
+  /* §1.1/§1.2 — THE ONE FIXED COLOUR. It used to shift hue and lightness to
+     dodge whichever livery was on, which is exactly what a signal may not do:
+     a warning that changes with a preference is a preference. One value per
+     variant now, identical across all six liveries, and the liveries are pulled
+     off its hue rather than the other way round.
+     The light/dark pair is legibility, not identity — the same amber cannot
+     carry a near-black legend on both grounds. */
+  vars["--caution"] = night ? "oklch(0.778 0.163 72.6)" : "oklch(0.711 0.156 68.1)";
+  vars["--on-caution"] = "oklch(0.185 0.039 77.5)";
+  vars["--caution-glow"] = night
+    ? "0 0 0 3px oklch(0.778 0.163 72.6 / .22)"
+    : "0 0 0 3px oklch(0.711 0.156 68.1 / .18)";
+
+  /* The instrument surfaces. A recessed gauge needs a ground BELOW the panel,
+     which the ramp did not have — every existing rung goes upward from it. */
+  vars["--sunk"] = night ? "oklch(0.178 0.021 249.1)" : "oklch(0.930 0.006 183.0)";
+  vars["--lamp-face"] = night ? "oklch(0.258 0.023 243.5)" : "oklch(0.867 0.009 205.9)";
+  vars["--lamp-legend"] = night ? "oklch(0.541 0.032 238.7)" : "oklch(0.628 0.017 222.8)";
+  vars["--recess"] = night
+    ? "inset 0 1px 2px oklch(0 0 0 / .5)"
+    : "inset 0 1px 2px oklch(0.18 0.03 250 / .16)";
+  vars["--proud"] = night
+    ? "0 1px 0 oklch(1 0 0 / .09) inset, 0 2px 4px oklch(0 0 0 / .45)"
+    : "0 1px 0 oklch(1 0 0 / .7) inset, 0 1.5px 2.5px oklch(0.18 0.03 250 / .18)";
 
   // THE RESTING BORDER, and it is the deck's — the same object on a module
   // card and a Flight Deck card, which is the whole point of the token.

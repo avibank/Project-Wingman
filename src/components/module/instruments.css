@@ -154,7 +154,10 @@
 .tag-band{
   display: flex; align-items: center; justify-content: space-between; gap: 6px;
   padding: 4px 8px 4px 22px;
-  background: var(--caution, var(--active));
+  /* §2.3 — the band takes the ACCENT when there is data and drains to a
+     neutral when there is none, so an idle sticker never looks live. It used
+     the caution colour, which §1.2 reserves for Master Caution alone. */
+  background: var(--active);
   color: var(--ground);
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
   font-size: var(--fs-xs); letter-spacing: .12em;
@@ -176,7 +179,7 @@
 .tag-due{
   display: block; margin-top: 5px;
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
-  font-size: var(--fs-xs); letter-spacing: .10em; color: var(--caution, var(--active));
+  font-size: var(--fs-xs); letter-spacing: .10em; color: var(--active-text);
 }
 .tag-ok{
   display: block; margin-top: 5px;
@@ -253,7 +256,10 @@
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
   font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ok);
 }
-.ipanel-fig[data-under="1"]{ color: var(--caution); }
+/* Under the pass mark is a fail, not a caution. --bad is the semantic for
+   wrong; the caution colour means "something needs you" and nothing else. The
+   [data-under] attribute keeps the state readable without the colour (§1.4). */
+.ipanel-fig[data-under="1"]{ color: var(--bad); }
 .ipanel-mark{
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
   font-size: var(--fs-xs); color: var(--t3);

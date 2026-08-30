@@ -321,7 +321,9 @@
   margin: 0 0 10px;
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
   font-size: var(--fs-xs); letter-spacing: .08em;
-  color: var(--caution);
+  /* Not the caution colour: §1.2 reserves it for Master Caution. A retake
+     notice is information, not a thing that needs you. */
+  color: var(--t2);
 }
 /* Progress as segments — you can always see what is left. */
 .q-seg{ display: flex; gap: 3px; margin: 10px 0 4px; }
