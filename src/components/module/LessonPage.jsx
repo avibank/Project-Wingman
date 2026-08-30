@@ -95,6 +95,8 @@ export default function LessonPage({
   }, [lesson.id]);
 
   const next = nextAfterLesson(chapters, chapter.id, lesson.id, state);
+  const hiddenCount = (chapter.lessons || [])
+    .filter((l) => l.id !== lesson.id && l.id !== next?.lesson?.id).length;
   const tab = session.tab;
   const myNotes = notesFor(session.notes, lesson.id);
   const comments = commentsFor(session.threads, lesson.id);
@@ -133,6 +135,12 @@ export default function LessonPage({
   const composerRef = useRef(null);
   const [draft, setDraft] = useState("");
   const [chip, setChip] = useState(null);
+  // §4 — open on desktop and tablet, closed on a phone. Read once at mount:
+  // this is a starting position, not a live binding to the width.
+  // What collapsing actually hides. The current row and the next one always
+  // show, so a two-lesson chapter hides nothing and must not offer to.
+  const [listOpen, setListOpen] = useState(
+    () => typeof window === "undefined" || window.innerWidth > 560);
   const [detached, setDetached] = useState(false);
   const [justSaved, setJustSaved] = useState(null);
   const focusComposer = () => setTimeout(() => composerRef.current?.focus(), 0);
@@ -234,7 +242,39 @@ export default function LessonPage({
         </div>
       </div>
 
-      <div className="sd">
+      <div className="sd sdcard" data-open={listOpen ? "true" : "false"}>
+
+        {/* §4 — the video list. On a phone it is COLLAPSED by default showing
+            only the next item, because expanded it pushes the notes and
+            comments down and defeats the point of putting them beside the
+            video in the first place. The toggle only exists at that width. */}
+        <div className="sdhead" data-hides={hiddenCount > 0 ? "1" : undefined}>
+          <span className="sdtitle">{chapter.title}</span>
+          <button type="button" className="sdtoggle"
+                  aria-expanded={listOpen ? "true" : "false"}
+                  onClick={() => setListOpen((v) => !v)}>
+            {listOpen ? "Fewer" : `${hiddenCount} more`}
+            <ChevronLeft aria-hidden="true" />
+          </button>
+        </div>
+        <ul className="sdlist">
+          {(chapter.lessons || []).map((l) => {
+            const isHere = l.id === lesson.id;
+            const isNext = next?.lesson?.id === l.id;
+            return (
+              <li key={l.id}>
+                <button type="button" className="sditem"
+                        data-here={isHere ? "1" : undefined}
+                        data-next={isNext ? "1" : undefined}
+                        aria-current={isHere ? "true" : undefined}
+                        onClick={() => onOpenLesson(chapter, l)}>
+                  <span className="sdname">{l.title}</span>
+                  {isHere && <span className="sdnow">Playing</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
 
         {/* Directly under the player and above the tabs on purpose: under a
             comment list this is a footer nobody reaches. */}
@@ -371,6 +411,9 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
     id === "u_you" ? "You" : (people.find((p) => p.id === id)?.callsign || id);
+  // §3.5 — the instructor badge, "where it applies". One resolver, so a badge
+  // can never appear beside a name the same lookup failed to resolve.
+  const teaches = (id) => people.find((p) => p.id === id)?.role === "instructor";
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyBody, setReplyBody] = useState("");
@@ -424,6 +467,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                 <div className="cmt-main">
                   <div className="cmt-head">
                     <span className="cmt-name">{who(c.authorId)}</span>
+                    {teaches(c.authorId) && <span className="cmt-badge">Instructor</span>}
                     <span className="cmt-when">{ago(c.createdAt)}</span>
                     {/* A time inside a comment is pressable — YouTube taught
                         everyone that, and the behaviour already existed here. */}
@@ -462,6 +506,7 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                         <span>
                           <span className="cmt-head">
                             <span className="cmt-name">{who(r.authorId)}</span>
+                            {teaches(r.authorId) && <span className="cmt-badge">Instructor</span>}
                             <span className="cmt-when">{ago(r.createdAt)}</span>
                           </span>
                           <p className="cmt-body">{seekable(r.body, onSeek)}</p>

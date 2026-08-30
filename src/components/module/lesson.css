@@ -823,3 +823,49 @@
   }
   .nbar-handle{ cursor: default; }
 }
+
+/* §3.5 — the instructor badge. A word, not a colour: §1.4 means a reader who
+   cannot separate two hues must still see who is answering. It sits in the
+   accent because it is the livery's job to mark what matters, and it is small
+   enough not to shout over the name it qualifies. */
+.cmt-badge{
+  flex: 0 0 auto;
+  font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--active-text);
+  border: 1px solid color-mix(in srgb, var(--active) 40%, transparent);
+  border-radius: 4px; padding: 2px 5px; line-height: 1;
+}
+
+/* §4 — the video list beside/above the panel. */
+.sdhead{ display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.sdtitle{ font-size: 13px; color: var(--t2); }
+/* The toggle only exists where the list actually collapses. */
+.sdtoggle{
+  display: none; appearance: none; background: none; border: 0;
+  align-items: center; gap: 6px; padding: 0;
+  font: inherit; font-size: 12.5px; color: var(--t2); cursor: pointer;
+}
+.sdtoggle svg{ width: 14px; height: 14px; transform: rotate(-90deg); transition: transform .2s var(--ease, ease); }
+.sdcard[data-open="true"] .sdtoggle svg{ transform: rotate(90deg); }
+.sdlist{ list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.sditem{
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; appearance: none; cursor: pointer; text-align: left;
+  background: transparent; border: 1px solid transparent; border-radius: 8px;
+  padding: 9px 11px; font: inherit; color: var(--t2);
+}
+.sditem:hover{ background: color-mix(in srgb, var(--sunk) 60%, transparent); color: var(--t1); }
+.sditem[data-here]{
+  color: var(--t1);
+  background: color-mix(in srgb, var(--active) 9%, transparent);
+  border-color: color-mix(in srgb, var(--active) 38%, transparent);
+}
+.sdname{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sdnow{ flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--active-text); }
+@media (max-width: 560px){
+  /* Only offered where collapsing would actually hide something. */
+  .sdhead[data-hides] .sdtoggle{ display: inline-flex; }
+  /* Collapsed shows the next item and nothing else. */
+  .sdcard[data-open="false"] .sditem:not([data-next]):not([data-here]){ display: none; }
+}

@@ -2511,7 +2511,8 @@
     {
       "id": "u_two",
       "callsign": "Callsign Two",
-      "initials": "CT"
+      "initials": "CT",
+      "role": "instructor"
     },
     {
       "id": "u_four",
