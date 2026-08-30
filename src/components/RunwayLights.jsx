@@ -92,16 +92,35 @@ function RunwayLights({ route }) {
     // because there is nothing to scroll, so it never repaints and the runway
     // stays hidden on a page that does scroll. Watching the content is what
     // closes that loop.
+    // WATCHING A CHILD IS NOT ENOUGH, and this is the second time the same
+    // shape of bug has bitten here. Observing scroller.firstElementChild caught
+    // the Suspense SKELETON; when the real route replaced it the observed node
+    // was detached, the observer went quiet forever, and the runway stayed
+    // hidden on every code-split route — which was all of them but the first.
+    // Watching document.body as the "shell is not up yet" fallback was just as
+    // dead: inside a fixed shell the body is exactly one viewport and never
+    // resizes again.
+    //
+    // So: the scroller's own box for viewport changes, and a MutationObserver
+    // for content arriving or being swapped. paint is rAF-coalesced and only
+    // touches the DOM when the lit count changes, so reacting to every mutation
+    // costs nothing.
     const ro = new ResizeObserver(paint);
+    const mo = new MutationObserver(paint);
+    let watched = null;
     const watch = () => {
       const sc = findScroller();
-      if (!sc) return false;
+      if (!sc || sc === watched) return Boolean(sc);
+      watched = sc;
       ro.observe(sc);
-      if (sc.firstElementChild) ro.observe(sc.firstElementChild);
+      mo.observe(sc, { childList: true, subtree: true });
       return true;
     };
-    // If the shell is not up yet, watch the body until it is.
-    if (!watch()) ro.observe(document.body);
+    watch();
+    // The shell may not exist yet (a gate is blocking). Watch the document for
+    // it to appear, then bind to it — body's own size will never tell us.
+    const docMo = new MutationObserver(() => { if (watch()) paint(); });
+    docMo.observe(document.body, { childList: true, subtree: true });
 
     paint();
     // And once more after the commit settles. The first paint can land while a
@@ -116,6 +135,8 @@ function RunwayLights({ route }) {
       document.removeEventListener("scroll", onScroll, { capture: true });
       window.removeEventListener("resize", paint);
       ro.disconnect();
+      mo.disconnect();
+      docMo.disconnect();
       document.documentElement.style.removeProperty("--chin-h");
     };
   }, [route]);
