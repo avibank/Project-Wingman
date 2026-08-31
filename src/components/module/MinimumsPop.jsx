@@ -49,7 +49,11 @@ export default function MinimumsPop({ anchor, value, onChange, onClose }) {
     <div className="pop minpop" ref={ref} tabIndex={-1} role="dialog" aria-label="Your minimums"
          style={{
            left: `${left}px`,
-           top: box ? `${box.bottom + window.scrollY + 10}px` : "auto",
+           // No scrollY: the popover is position: fixed, so its coordinates are
+           // viewport coordinates. Adding the scroll offset to a fixed element
+           // pushes it down the page by however far the page happens to be
+           // scrolled.
+           top: box ? `${box.bottom + 10}px` : "auto",
            "--arrow": `${arrow}px`,
            width: `${W}px`,
          }}>

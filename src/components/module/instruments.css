@@ -280,7 +280,15 @@
 
 /* §2.3 — the popover. Not a modal: no page dim, no focus trap. */
 .pop{
-  position: absolute; z-index: 40; width: 286px;
+  /* FIXED, not absolute. Its left/top are computed from the anchor's
+     getBoundingClientRect(), which is VIEWPORT-relative — but an absolutely
+     positioned element resolves those against its nearest positioned
+     ancestor. The Manual finish gives .mcard `position: relative` so its
+     stacked sheets have a containing block, which silently made the card the
+     origin: measured at 1280 wide, the popover ran to x=1347, 67px off the
+     right edge, in Manual only. Fixed positioning means no ancestor can move
+     it in any finish. */
+  position: fixed; z-index: 40; width: 286px;
   background: var(--panel); border: 1px solid var(--edge);
   border-radius: 11px; padding: 15px 15px 13px;
   box-shadow: 0 14px 34px oklch(0 0 0 / .24);
