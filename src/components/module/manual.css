@@ -73,7 +73,7 @@
 
 /* master caution — hatched face, caution-coloured outline, BOTH WORDS intact.
    The lamp keeps --caution in every finish; only its drawing changes. */
-.app[data-paper="1"] .lamp{
+.app[data-paper="1"] .lamp-mark{
   background: repeating-linear-gradient(45deg,
     transparent 0 5px, var(--sketch-hatch) 5px 6px);
   border: 1.25px solid var(--caution-edge);
@@ -81,7 +81,7 @@
   box-shadow: none;
   color: var(--sketch-ink);
 }
-.app[data-paper="1"] .lamp[data-lit="true"]{
+.app[data-paper="1"] .lamp-mark[data-lit="true"]{
   background: var(--caution);
   border-color: var(--caution);
   color: var(--on-caution);

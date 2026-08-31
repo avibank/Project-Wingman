@@ -23,25 +23,27 @@
      INNER edge rather than its outer one. */
   padding-inline: calc(var(--card-pad) + 1px);
 }
-/* Fixed height within a breakpoint — it must not grow with content. */
-.mhero{ min-height: 118px; }
-.mhero > :first-child{ display: flex; flex-direction: column; gap: 13px; flex: 0 0 auto; }
-@media (max-width: 900px){ .mhero{ gap: 20px; min-height: 104px; } }
-@media (max-width: 560px){
-  .mhero{ gap: 12px; min-height: 92px; padding-inline: var(--pad); }
-}
-/* Tablet: the two blocks stack when the width no longer allows them side by
-   side. Nothing else changes. */
-@media (max-width: 900px){
-  .mhero{ grid-template-columns: minmax(0, 1fr); gap: 18px; }
-}
+/* THE HEIGHT WAS RESERVED FOR SOMETHING THAT IS GONE. min-height: 118px kept
+   this banner exactly as tall as the instrument row it used to hold beside the
+   title, so after §1 deleted that row the hero went on holding 68px of empty
+   space above a 68px title — a band of nothing between the title and the card
+   in every finish. It fits its content now. */
+.mhero{ padding-block: 2px; }
+@media (max-width: 900px){ .mhero{ gap: 20px; } }
+@media (max-width: 560px){ .mhero{ gap: 12px; padding-inline: var(--pad); } }
 
 /* §4 — the title steps down to defined sizes; the profile scales continuously.
    Scaling the whole banner uniformly drops the title under readable size and
    shrinks the indicators through the 44px tap floor. */
 .mhero-title{
   font-size: 46px;
-  white-space: nowrap;
+  /* NOT nowrap. At 46px a module name only has to be a few words longer than
+     "Module 1" before a non-wrapping title runs straight out of the page — and
+     nowrap gives it no way to do anything else. Wrapping is the safe default;
+     balance keeps a two-line title from breaking after one word. */
+  min-width: 0;
+  overflow-wrap: break-word;
+  text-wrap: balance;
   line-height: var(--lh-tight);
   letter-spacing: -.02em;
   color: var(--t1);
@@ -129,10 +131,10 @@
 }
 .ind > *{ height: 38px; }
 .ind:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; border-radius: 6px; }
-.ind:hover .gauge, .ind:hover .sticker, .ind:hover .lamp{ border-color: var(--t2); }
+.ind:hover .gauge, .ind:hover .sticker, .ind:hover .lamp-mark{ border-color: var(--t2); }
 .ind[aria-expanded="true"] .gauge,
 .ind[aria-expanded="true"] .sticker,
-.ind[aria-expanded="true"] .lamp{ border-color: var(--active); }
+.ind[aria-expanded="true"] .lamp-mark{ border-color: var(--active); }
 
 /* ---- the gauge: recessed ------------------------------------------------ */
 .gauge{
@@ -178,7 +180,7 @@
 .sticker[data-state="nodata"] .val{ color: var(--t3); }
 
 /* ---- master caution: recessed legend lamp ------------------------------- */
-.lamp{
+.lamp-mark{
   width: 68px; border-radius: 6px;
   border: 1px solid var(--edge); background: var(--lamp-face);
   box-shadow: var(--recess);
@@ -189,17 +191,17 @@
   transition: background .18s var(--ease, ease), color .18s var(--ease, ease),
               box-shadow .18s var(--ease, ease);
 }
-.lamp[data-lit="true"]{
+.lamp-mark[data-lit="true"]{
   background: var(--caution); color: var(--on-caution);
   box-shadow: var(--recess), var(--caution-glow);
 }
 
 /* Reduced motion: the damping and the lamp fade become instant. */
 @media (prefers-reduced-motion: reduce){
-  .g-needle, .lamp, .sticker .band{ transition: none; }
+  .g-needle, .lamp-mark, .sticker .band{ transition: none; }
 }
 .app.smooth-air .g-needle,
-.app.smooth-air .lamp,
+.app.smooth-air .lamp-mark,
 .app.smooth-air .sticker .band{ transition: none; }
 
 /* ======================== §2.4 — THE FLIGHT PROFILE ======================= */
@@ -221,7 +223,7 @@
   .sticker{ width: 57px; }
   .sticker .band{ height: 10px; font-size: 5.6px; }
   .sticker .val{ font-size: 13px; }
-  .lamp{ width: 58px; font-size: 7.2px; }
+  .lamp-mark{ width: 58px; font-size: 7.2px; }
 }
 
 /* --------------------------------------------------- the instrument panels */
@@ -318,21 +320,32 @@
 .pop-act:hover:not(:disabled){ border-color: var(--active); color: var(--active); }
 .pop-act:disabled{ opacity: .42; cursor: default; }
 
-/* SPECIFICITY, and it is load-bearing. `.deck .lamp` in Home's DECK_CSS is a
-   DIFFERENT COMPONENT that happens to share the name — the Flight Deck's leg
-   indicator bars — and it sets height, background and border. DECK_CSS is a
-   <style> in the body, so it wins every (0,2,0) tie against this file, which
-   loads from the head. The caution mark on a module card is inside .deck, so
-   it was being painted as a leg bar: 17px tall, --raised, no caution.
-   Restated here at (0,3,0) so the signal wins wherever it is rendered. */
-.lamp.lamp-mark{
+/* THE NAME IS NOT SHARED ANY MORE, and that is the whole fix.
+   `.deck .lamp` in Home's DECK_CSS is a DIFFERENT COMPONENT that happened to
+   share this name — the Flight Deck's leg indicator bars. The two styled each
+   other in both directions, and only one direction was ever fixed:
+
+     .deck .lamp -> the mark   painted the caution lamp as a 17px leg bar.
+                               Beaten here by restating at (0,3,0).
+     .lamp       -> the bars   sized every leg bar 68px wide. NOT beatable by
+                               specificity, because `.deck .lamp` never set
+                               width, so there was nothing to win. A grid
+                               item's width is its automatic minimum, so three
+                               68px floors held a 101px track set open at
+                               214px and the bars spilled out of the cel.
+
+   CautionMark now renders `lamp-mark` alone, so neither selector can reach
+   the other component and the specificity dance above is retired. Two
+   components must not share a class name; that is cheaper than remembering
+   which of the two directions has been patched. */
+.lamp-mark{
   height: auto;
   background: var(--lamp-face);
   border: 1px solid var(--edge);
   border-radius: 5px;
   color: var(--lamp-legend);
 }
-.lamp.lamp-mark[data-lit="true"]{
+.lamp-mark[data-lit="true"]{
   background: var(--caution);
   border-color: var(--caution);
   color: var(--on-caution);

@@ -165,7 +165,15 @@ const DECK_CSS = `
   background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 5px 13px; color: var(--t3); }
 .deck .ladder b { display: block; font-size: calc(19px * var(--scale, 1)); font-weight: 500; color: var(--on); }
 .deck .bagglyph { width: calc(32px * var(--scale, 1)); height: calc(30px * var(--scale, 1)); color: var(--t3); }
-.deck .lamps { display: grid; grid-template-columns: repeat(var(--legs, 3), 1fr); gap: 5px; width: calc(88px * var(--scale, 1)); }
+/* minmax(0, 1fr), not 1fr. A bare 1fr track is minmax(auto, 1fr), and auto as
+   a MINIMUM resolves to the item's min-content — which for a fixed-width item
+   is that width. So any width landing on a .lamp becomes a floor this track
+   set cannot go below, and the bars march out of the cel. That is exactly what
+   a stray width of 68px on .lamp did. The width is gone, but a track that must
+   fit should say it must fit.
+   NO BACKTICKS IN HERE: this comment lives inside a JS template literal, so a
+   backtick ends the string and the build dies. It has done, three times. */
+.deck .lamps { display: grid; grid-template-columns: repeat(var(--legs, 3), minmax(0, 1fr)); gap: 5px; width: calc(88px * var(--scale, 1)); }
 .deck .lamp { height: calc(17px * var(--scale, 1)); border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
 .deck .lamp.on { background: var(--on); border-color: transparent;
   box-shadow: 0 0 var(--emit) color-mix(in oklab, var(--on), transparent 45%); }

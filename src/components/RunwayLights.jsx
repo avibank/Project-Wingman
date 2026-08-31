@@ -105,8 +105,16 @@ function RunwayLights({ route }) {
     // for content arriving or being swapped. paint is rAF-coalesced and only
     // touches the DOM when the lit count changes, so reacting to every mutation
     // costs nothing.
-    const ro = new ResizeObserver(paint);
-    const mo = new MutationObserver(paint);
+    // COALESCED, not synchronous. paint() calls getBoundingClientRect(), which
+    // forces layout. Wired straight to a subtree MutationObserver that meant a
+    // forced synchronous layout for every DOM mutation anywhere in the
+    // scroller — and while scrolling, React was mutating it every frame, so
+    // this fired mid-scroll, repeatedly, at the worst possible moment. Sharing
+    // the rAF gate the scroll handler already uses collapses a burst of
+    // mutations into one measurement per frame. Same correctness (the guard is
+    // cleared inside paint, so it cannot latch), a fraction of the layout cost.
+    const ro = new ResizeObserver(onScroll);
+    const mo = new MutationObserver(onScroll);
     let watched = null;
     const watch = () => {
       const sc = findScroller();
@@ -119,7 +127,9 @@ function RunwayLights({ route }) {
     watch();
     // The shell may not exist yet (a gate is blocking). Watch the document for
     // it to appear, then bind to it — body's own size will never tell us.
-    const docMo = new MutationObserver(() => { if (watch()) paint(); });
+    // Also coalesced, and for the same reason: this one observes document.body
+    // with subtree: true, so it sees every mutation the app makes anywhere.
+    const docMo = new MutationObserver(() => { if (watch()) onScroll(); });
     docMo.observe(document.body, { childList: true, subtree: true });
 
     paint();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NotebookPen, Play, Search, SearchX, Check, ChevronRight, ChevronLeft, ThumbsUp, ThumbsDown, ClipboardCheck, MessageSquare, History, Plane } from "lucide-react";
 import ChapterQuiz from "./ChapterQuiz.jsx";
 import ChapterComments from "./ChapterComments.jsx";
@@ -34,7 +34,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   const { user } = useUser();
   const displayName = useDisplayName();
   const { prefs: socialPrefs } = useSocialPrefs();
-  const [parallaxY, setParallaxY] = useState(0);
+  const cloudRef = useRef(null);
   const [openId, setOpenId] = useState(null);
   // §7.6 — the body is its own surface, not a row that grew. `openId` still
   // means "where you left off"; `reading` means you are in it.
@@ -102,15 +102,37 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
 
   // The window no longer scrolls — .deck does — so this listened to something
   // that never fires and the parallax silently sat at zero. It reads the
-  // scroller instead, and it is no longer rAF-guarded: if that frame is ever
-  // dropped the guard latches and the effect dies for good, which is the same
-  // trap the runway lights fell into twice.
+  // scroller instead.
+  //
+  // AND IT NO LONGER GOES THROUGH REACT. setState on every scroll event
+  // re-rendered this whole panel once per frame, and each of those renders
+  // mutated the DOM, which woke the runway lights' two subtree
+  // MutationObservers, whose paint() calls getBoundingClientRect() — a forced
+  // synchronous layout, per frame, per scroll. That loop is the scroll jank.
+  //
+  // A parallax offset has exactly one reader: the transform on one layer. It
+  // is presentation, not state — nothing else in the tree branches on it — so
+  // it is written straight to the node. Transform-only, so it composites
+  // without relayout, and rAF-coalesced so a burst of scroll events collapses
+  // into one write per frame.
   useEffect(() => {
     const el = document.querySelector(".deck");
     if (!el) return undefined;
-    const onScroll = () => setParallaxY(el.scrollTop * 0.04);
+    let ticking = false;
+    const paint = () => {
+      ticking = false;
+      const node = cloudRef.current;
+      if (node) node.style.transform = `translateY(${el.scrollTop * 0.04}px)`;
+    };
+    const onScroll = () => {
+      // Not latched: `ticking` is cleared inside paint(), so a dropped frame
+      // cannot wedge this off for good — the trap the runway lights hit twice.
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    };
     el.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    paint();
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -223,7 +245,7 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
 
   return (
     <div className="chapters-wrap">
-      <div className="cloud-layer" aria-hidden="true" style={{ transform: `translateY(${parallaxY}px)` }}>
+      <div className="cloud-layer" ref={cloudRef} aria-hidden="true">
         <span className="cloud cloud-a" />
         <span className="cloud cloud-b" />
         <span className="cloud cloud-c" />

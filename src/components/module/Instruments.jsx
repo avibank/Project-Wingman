@@ -41,9 +41,17 @@ import {
 
    Compact is one line rather than two: at row scale the stacked legend is
    taller than the text beside it and drags the whole row open. */
+// NOT `lamp`. That class has a second, older owner — the Flight Deck's leg
+// indicator bars in Home's DECK_CSS — and sharing it made the two components
+// style each other in BOTH directions. This file's bare `.lamp { width: 68px }`
+// was landing on those bars, and since a grid item's width becomes its
+// automatic minimum, three 68px minimums held a 101px track set open at 214px
+// and the bars spilled out of their cel. Specificity could not fix that:
+// `.deck .lamp` never set width, so there was nothing to win. Not sharing the
+// name is the fix.
 export function CautionMark({ compact = false, className = "" }) {
   return (
-    <span className={`lamp lamp-mark${compact ? " lamp-sm" : ""} ${className}`.trim()}
+    <span className={`lamp-mark${compact ? " lamp-sm" : ""} ${className}`.trim()}
           data-lit="true" role="img" aria-label="Master caution">
       {compact ? <span>MASTER CAUTION</span> : (<><span>MASTER</span><span>CAUTION</span></>)}
     </span>
