@@ -60,6 +60,7 @@ import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
+import { fetchProfiles } from "./lib/squadron.js";
 import { reportContent } from "./lib/squadron.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
@@ -419,6 +420,45 @@ function AppInner() {
     return () => { live = false; };
   }, [isSignedIn, me, flags]);
 
+  // WHO WROTE THIS. Names come from pilot_profiles, and without this they did
+  // not come from anywhere: `people` held only the content fixture's callsigns,
+  // so every real author fell through to the raw id and the room would have
+  // shown "user_2abc..." as somebody's name under their own question. Harmless
+  // while threads were per-account and nobody else's ever appeared; the moment
+  // the tables are shared it is the first thing anyone sees.
+  //
+  // is_staff becomes role: "instructor", which is what the badge already reads,
+  // so the instructor mark works off real standing rather than fixture data.
+  const [profiles, setProfiles] = useState([]);
+  const authorIds = useMemo(() => {
+    const ids = new Set();
+    for (const t of session.threads) if (t.authorId) ids.add(t.authorId);
+    for (const r of session.replies) if (r.authorId) ids.add(r.authorId);
+    for (const m of roomMessages) if (m.authorId) ids.add(m.authorId);
+    return [...ids].sort().join(",");        // a stable key, so the effect
+  }, [session.threads, session.replies, roomMessages]);   // runs on CHANGE only
+  useEffect(() => {
+    const ids = authorIds ? authorIds.split(",") : [];
+    if (!ids.length) { setProfiles([]); return undefined; }
+    let live = true;
+    fetchProfiles(ids).then((byId) => {
+      if (!live) return;
+      setProfiles(Object.values(byId || {}).map((r) => ({
+        id: r.user_id, callsign: r.callsign,
+        role: r.is_staff ? "instructor" : undefined,
+      })));
+    });
+    return () => { live = false; };
+  }, [authorIds]);
+
+  // The fixture's people first, real profiles after: a real profile wins for
+  // the same id, because `who` takes the FIRST match and a live callsign is
+  // never less true than a fixture one.
+  const directory = useMemo(
+    () => [...profiles, ...(useTestContent?.people || [])],
+    [profiles, useTestContent],
+  );
+
   // Unread per squadron, for the badge. Counted against the same pw-room-seen
   // stamp the threads use, so one "seen" gesture settles both registers.
   const chatUnread = useMemo(() => {
@@ -658,7 +698,7 @@ function AppInner() {
             chapters={chaptersFor(activeModuleCode, useTestContent)}
             threads={session.threads}
             replies={session.replies}
-            people={useTestContent?.people || []}
+            people={directory}
             presence={normalisePresence(useTestContent?.presence || [])}
             squadrons={squadrons}
             messages={roomMessages}
@@ -808,7 +848,7 @@ function AppInner() {
                   chapter state, the counts and the Flight Deck all read it. */}
               <LessonPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
-                state={moduleState} people={useTestContent?.people || []}
+                state={moduleState} people={directory}
                 bookmarks={progress.get("pw-bookmarks", [])}
                 onToggleSave={(lessonId, on) => {
                   const cur = progress.get("pw-bookmarks", []);

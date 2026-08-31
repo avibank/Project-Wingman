@@ -97,6 +97,15 @@
 }
 @media (max-width: 1000px){ .room{ grid-template-columns: 274px minmax(0, 1fr); } }
 
+/* Visually hidden, not display:none — the heading has to reach the
+   accessibility tree. Defined here rather than borrowing .sr-only, which lives
+   inside another component's style block and so only exists once that
+   component has rendered. */
+.room-h1{
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
 .room-side{
   display: flex; flex-direction: column; min-height: 0;
   border-right: 1px solid var(--edge-soft);

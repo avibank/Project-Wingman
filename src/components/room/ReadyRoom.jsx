@@ -84,6 +84,12 @@ export default function ReadyRoom({
 
   return (
     <div className="room" data-open={openId ? "1" : "0"}>
+      {/* The page's heading. The room is full-bleed now — no topbar above it —
+          so without this the whole route had no h1 at all: a screen reader
+          arriving here was told nothing about where it had landed. Rendered
+          only while nothing is open, because an open thread or squadron
+          supplies the h1 itself and two would be worse than none. */}
+      {!openId && <h1 className="room-h1">Ready Room</h1>}
       {/* ------------------------------------------------------ the sidebar */}
       <aside className="room-side" ref={listRef} tabIndex={-1} aria-label="Conversations">
         {/* The wordmark and the profile, which the app bar carried until this
