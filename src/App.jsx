@@ -960,6 +960,13 @@ function AppInner() {
                     if (owner) go(routePath.lesson(activeModuleCode, owner.id, lessonId));
                   }}
                   onAnswer={(q, right) => recordAnswer(q.id, right, { fromCaution: route.flow === "caution" })}
+                  // The re-check and put-right flows share Review, so they
+                  // share its results screen — which weighs the sitting
+                  // against the user's bar. Omitted here, `minimums` was
+                  // undefined and QuizResults fell back to the pass mark, so
+                  // these two screens judged by a different standard than
+                  // every other lamp in the app.
+                  minimums={minimums}
                   onDone={() => progress.set("pw-last-recheck", new Date().toISOString())} />
               )}
             </main>

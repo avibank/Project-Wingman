@@ -106,6 +106,11 @@ export default function ReadyRoom({
   // lesson comment box deliberately gets neither.
   const [asking, setAsking] = useState(null);   // {moduleId} | null
   const [askTitle, setAskTitle] = useState("");
+  // The ask form gets its OWN body. It shared `draft` with the reply composer,
+  // and back() cleared neither — so typing half a reply, going back, and
+  // opening "Ask the module" pre-filled the question with the abandoned reply,
+  // one Enter away from publishing it.
+  const [askBody, setAskBody] = useState("");
   const paneRef = useRef(null);
   const listRef = useRef(null);
   const scrollRef = useRef(null);
@@ -118,10 +123,17 @@ export default function ReadyRoom({
     setView(next);
     setDraft("");
     setAsking(null); setAskTitle("");
-    if (next?.id) onSeen?.(next.id);
+    // THE KEY MUST BE WHAT THE BADGE READS. badgeCount tests
+    // seen[thread.id]; chatUnread tests seen[squadron.id]. Stamping next.id
+    // for a thread wrote the MODULE code — a key nothing reads — so opening
+    // the reply you were notified about left the badge lit for ever.
+    const seenKey = next?.kind === "thread" ? next.threadId : next?.id;
+    if (seenKey) onSeen?.(seenKey);
     requestAnimationFrame(() => paneRef.current?.focus());
   };
   const back = () => {
+    // Leaving a conversation abandons what was typed in it.
+    setDraft(""); setAsking(null); setAskTitle(""); setAskBody("");
     // §4c — from a thread the arrow returns to the module feed, not the rail.
     if (view?.kind === "thread") { setView({ kind: "module", id: view.id }); return; }
     setView(null);
@@ -381,25 +393,25 @@ export default function ReadyRoom({
                   {asking?.moduleId === code && (
                     <form className="ask-form" onSubmit={(e) => {
                       e.preventDefault();
-                      const title = askTitle.trim(); const body = draft.trim();
+                      const title = askTitle.trim(); const body = askBody.trim();
                       if (!title || !body) return;
                       onPost?.({ kind: "thread", moduleId: code, title, body });
-                      setAsking(null); setAskTitle(""); setDraft("");
+                      setAsking(null); setAskTitle(""); setAskBody("");
                     }}>
                       <label className="ask-l" htmlFor="ask-title">Your question</label>
                       <input id="ask-title" className="ask-t" value={askTitle} autoFocus
                              placeholder="What are you stuck on?"
                              onChange={(e) => setAskTitle(e.target.value)} />
-                      <textarea className="ask-b" rows={3} value={draft}
+                      <textarea className="ask-b" rows={3} value={askBody}
                                 placeholder="Say a bit more — what you tried, and what you expected."
-                                onChange={(e) => setDraft(e.target.value)} />
+                                onChange={(e) => setAskBody(e.target.value)} />
                       <div className="ask-acts">
                         <button type="button" className="chip is-inline"
-                                onClick={() => { setAsking(null); setAskTitle(""); setDraft(""); }}>
+                                onClick={() => { setAsking(null); setAskTitle(""); setAskBody(""); }}>
                           Cancel
                         </button>
                         <button type="submit" className="newpost is-inline"
-                                disabled={!askTitle.trim() || !draft.trim()}>
+                                disabled={!askTitle.trim() || !askBody.trim()}>
                           Ask the module
                         </button>
                       </div>

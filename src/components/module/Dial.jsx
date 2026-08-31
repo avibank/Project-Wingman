@@ -49,12 +49,21 @@ const f = (n) => n.toFixed(1);
    transform so the damping and the reduced-motion opt-out are both declarative
    — an SVG attribute transform would silently lose them, which is exactly how
    the existing gauge's damping is wired. */
-function useSweep(target, animate) {
-  const [shown, setShown] = useState(target);
+function useSweep(target, animate, start) {
+  // SEEDED AT THE START ANGLE, not the target. Seeding with `target` meant the
+  // first paint was already the destination, the effect then set the same
+  // value and React bailed out, and the transition had nothing to travel from
+  // — the needle rendered at the new average and never moved. The one
+  // animation the brief says is the point of the results screen was dead.
+  const [shown, setShown] = useState(() => (animate ? start : target));
   const first = useRef(true);
   useEffect(() => {
-    if (!animate || first.current) { first.current = false; setShown(target); return undefined; }
-    // One frame at the old value so the transition has somewhere to come from.
+    const wasFirst = first.current;
+    first.current = false;
+    if (!animate) { setShown(target); return undefined; }
+    // A frame is painted at `start` before this runs, so assigning the target
+    // here is what the transition interpolates.
+    if (wasFirst) { setShown(target); return undefined; }
     const id = requestAnimationFrame(() => setShown(target));
     return () => cancelAnimationFrame(id);
   }, [target, animate]);
@@ -77,7 +86,7 @@ export default function Dial({
   // The needle starts at `from` and lands on `dev`; with no data it parks.
   const targetDeg = live ? degFor(dev) : PARKED_DEG;
   const startDeg = live ? degFor(fromDev) : PARKED_DEG;
-  const shownDeg = useSweep(targetDeg, animate && live && startDeg !== targetDeg);
+  const shownDeg = useSweep(targetDeg, animate && live && startDeg !== targetDeg, startDeg);
 
   const pd = passOffset(minimums);
   const passPegged = isPegged(pd);

@@ -32,6 +32,12 @@ import { toThread, toReply, fromThread, fromReply } from "./threadRows.js";
 
 const fail = (e, f) => { if (e) console.error(e); return f; };
 
+/* A WRITE REPORTS WHETHER IT WORKED. `return !fail(error, false)` reads as
+   "false when there was an error", but fail returns its fallback on BOTH
+   branches — so it was `!false`, unconditionally true, and every failed
+   insert, delete and update reported success to its caller. */
+const ok = (e) => { if (e) console.error(e); return !e; };
+
 /* Everything one module's discussion needs, in two queries.
 
    Fly solo is symmetric: you see nobody, so nobody's threads load. Gated here
@@ -74,23 +80,23 @@ export async function fetchDiscussion(moduleId, me) {
    unwind. Never delete something a person typed. */
 export async function insertThread(thread) {
   const { error } = await supabase.from("lesson_threads").insert(fromThread(thread));
-  return !fail(error, false);
+  return ok(error);
 }
 
 export async function insertReply(reply) {
   const { error } = await supabase.from("lesson_replies").insert(fromReply(reply));
-  return !fail(error, false);
+  return ok(error);
 }
 
 /* Replies cascade in the schema, so this is one statement and not two. */
 export async function deleteThread(id) {
   const { error } = await supabase.from("lesson_threads").delete().eq("id", id);
-  return !fail(error, false);
+  return ok(error);
 }
 
 export async function deleteReply(id) {
   const { error } = await supabase.from("lesson_replies").delete().eq("id", id);
-  return !fail(error, false);
+  return ok(error);
 }
 
 /* ------------------------------------------------------- 0010 · the feed --
@@ -129,7 +135,7 @@ export async function toggleReplyVote(replyId, me, on) {
   }
   const { error } = await supabase
     .from("lesson_reply_votes").delete().match({ reply_id: replyId, user_id: me });
-  return !fail(error, false);
+  return ok(error);
 }
 
 /* §4c — the asker's mark. Only the person who asked may set it, which is
@@ -143,5 +149,5 @@ export async function setBestReply(threadId, replyId, me) {
     .update({ best_reply_id: replyId })
     .eq("id", threadId)
     .eq("author_id", me);
-  return !fail(error, false);
+  return ok(error);
 }
