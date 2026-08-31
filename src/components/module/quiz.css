@@ -334,3 +334,50 @@
 .q-seg-i[data-state="done"]{ background: var(--active); }
 .q-seg-i[data-state="now"]{ background: var(--active); opacity: .55; }
 .opt:disabled{ cursor: default; }
+
+/* ======================== §6 · QUIZ RESULTS ==============================
+   Centred, short, and in this order: the lamp when the sitting fell below the
+   user's bar, the score at display size, one line of verdict, the dial, the
+   average moving, the actions. Nothing else.
+   ========================================================================= */
+.qresults .qr-body{
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 34px var(--card-pad, 22px) 8px;
+  text-align: center;
+}
+.qr-lamp{ display: flex; justify-content: center; margin-bottom: 18px; }
+
+.qr-score{
+  margin: 0;
+  font-size: clamp(38px, 8vw, 56px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+}
+.qr-verdict{ margin: 4px 0 0; font-size: 15px; color: var(--t2); }
+
+.qr-dial{ display: flex; justify-content: center; margin: 26px 0 10px; }
+
+.qr-move{ margin: 0; font-size: 14.5px; color: var(--t2); }
+.qr-move b{ color: var(--t1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.qr-note{
+  margin: 14px auto 0; max-width: 44ch;
+  font-size: 13px; color: var(--t3); line-height: 1.45;
+}
+
+.qr-acts{
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  padding: 26px var(--card-pad, 22px) 34px;
+}
+
+@media (max-width: 560px){
+  .qresults .qr-body{ padding-top: 26px; }
+  .qr-dial{ margin: 20px 0 8px; }
+  /* The dial is the instrument; it keeps its size before the text does. */
+  .qr-acts{ padding-bottom: 28px; }
+  .qr-acts .q-btn{ flex: 1 1 auto; }
+}

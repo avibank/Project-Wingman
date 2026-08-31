@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
 import { thumbTile } from "../../lib/familiar.js";
 import { passAt } from "../../lib/quiz.js";
+import { CautionMark } from "./Instruments.jsx";
 import { posterFor } from "../../lib/shell.js";
 import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
 import "./familiar.css";
@@ -111,7 +112,13 @@ function RouteSkeleton({ rows = 4 }) {
   );
 }
 
-export default function RouteTab({ module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz, query = "" }) {
+export default function RouteTab({
+  module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
+  query = "",
+  // §2/§8 — which chapters are below the user's bar, computed once upstream.
+  // A Set rather than a list: this is asked per row inside a render loop.
+  faults = new Set(),
+}) {
   if (!chapters?.length) return <RouteSkeleton />;
   const lessonCount = countLessons(chapters);
   const searching = terms(query).length > 0;
@@ -132,16 +139,36 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                       aria-controls={`kids-${ch.id}`} onClick={() => onToggle(ch.id)}>
                 <span>
                   <span className="cname">{ch.title}</span>
+                  {/* §7 — the subline states the shape of the chapter and
+                      nothing the rows below already say. */}
                   <span className="csub">
-                    {ch.lessons.length} lesson{ch.lessons.length === 1 ? "" : "s"} and a quiz
+                    {ch.lessons.length} lesson{ch.lessons.length === 1 ? "" : "s"} · 1 quiz
                   </span>
                 </span>
-                {/* State in words, never a badge. */}
-                <span className={`cstate${st === "here" ? " here" : ""}`}>
-                  {st === "done" ? "Done"
-                    : st === "here" ? "You are here"
-                    : st === "started" ? "Part way"
-                    : "Not started"}
+                {/* §2 — THE ONLY STATUS SIGNAL ON THIS SCREEN, and it sits on
+                    the smallest thing that owns the problem. The chapter owns
+                    it because the chapter's quiz is what fell below the bar.
+                    It shows whether the chapter is open or collapsed — a lamp
+                    you have to expand a fold to find is not a signal — and the
+                    quiz row inside carries its score and a Re-check instead,
+                    never a second lamp for the same fact. */}
+                {/* ONE SLOT for the lamp and the status word. .chead is a
+                    THREE-COLUMN grid — minmax(0,1fr) auto 12px — so a fourth
+                    child does not get a column of its own: it takes the auto
+                    one, the status is crushed into the 12px chevron track, and
+                    the chevron wraps onto a second row on top of the title.
+                    Measured before this wrapper existed: "Done" rendered 12px
+                    wide. The phone breakpoint also places .cstate and .chv by
+                    grid-column, which only holds while the child count does. */}
+                <span className="cend">
+                  {faults.has(ch.id) && <CautionMark compact />}
+                  {/* State in words, never a badge. */}
+                  <span className={`cstate${st === "here" ? " here" : ""}`}>
+                    {st === "done" ? "Done"
+                      : st === "here" ? "You are here"
+                      : st === "started" ? "Part way"
+                      : "Not started"}
+                  </span>
                 </span>
                 <span className="chv" aria-hidden="true">›</span>
               </button>

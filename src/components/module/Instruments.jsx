@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { mmss } from "./lessonState.js";
+import "./instruments.css";
 import {
   VB, PATH, THRESHOLDS, TOTAL, pointAt, profileState, px,
 } from "../../lib/moduleProfile.js";
@@ -15,86 +16,37 @@ import {
 // contrast is the whole reason the row does not look like three unrelated
 // widgets.
 
-/* ------------------------------------------------------------ 1 · ACCURACY */
-// §2.3 — an ABSOLUTE scale. 0 puts the needle hard left, 100 hard right,
-// sweeping the full arc, and a target tick marks the pass mark wherever it
-// falls. This reverses the earlier centre-zero dial, which showed deviation
-// from the pass mark and so could not answer "what did I actually average".
-// Off-centre is correct and expected: a pass mark of 75 sits three quarters of
-// the way round, not at twelve o'clock.
-const CX = 19, CY = 27, R = 13.5;
+/* THE INSTRUMENT ROW IS GONE — §1 and §2.
 
-// value 0..100 -> degrees, -90 hard left through +90 hard right.
-const sweep = (v) => (Math.max(0, Math.min(100, v)) / 100) * 180 - 90;
-// No data parks the needle BELOW the left end of the arc. Hard left is a real
-// reading of zero, so resting there would be a lie.
-const PARKED = -104;
+   Accuracy, Calibration and MasterCaution used to be three pressable
+   instruments under the module title, each with a popover. The final brief
+   replaces all three: one signal (the lamp, on whichever chapter owns the
+   problem) and one dial (deviation from the user's minimums, in the Library
+   and on the results screen). Nothing floats above the list any more.
 
-export function Accuracy({ mean, passMark = 75, onPress }) {
-  const has = mean != null;
-  const angle = has ? sweep(mean) : PARKED;
-  const label = has
-    ? `Accuracy. Averaging ${Math.round(mean)} out of 100, against a pass mark of ${passMark}.`
-    : "Accuracy. No reading yet — take a quiz and the needle comes alive.";
+   Their popover went with them, and so did AccuracyPanel — the rebuilt
+   Library's Quizzes section IS the quiz record it used to show, chapter by
+   chapter with every score. What survives here is the lamp as a static mark
+   and the flight profile, which still has a home on the Flight Deck's module
+   cards.
+   ========================================================================= */
 
+/* §2 — THE LAMP AS A MARK, for the places that are already a button.
+   A chapter header and a Flight Deck module card are both <button>. A lamp
+   rendered as a button inside one of those is nested interactive content:
+   invalid HTML, and in practice an unreachable inner control that still eats
+   the click. So the mark is a span with role="img", which keeps the lamp
+   nameable — its label folds into the row's own accessible name, giving
+   "Chapter 2 … Master caution" — without adding a second focus stop.
+
+   Compact is one line rather than two: at row scale the stacked legend is
+   taller than the text beside it and drags the whole row open. */
+export function CautionMark({ compact = false, className = "" }) {
   return (
-    <button type="button" className="ind" onClick={(e) => onPress?.(e)} aria-label={label}>
-      <span className="gauge" data-nodata={has ? undefined : ""}>
-        <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
-          <path className="g-arc" d={`M${CX - R},${CY} A${R},${R} 0 0 1 ${CX + R},${CY}`} fill="none" />
-          {/* the pass mark, wherever it falls */}
-          <path className="g-tick" d={`M${CX},12 L${CX},16.4`}
-                transform={`rotate(${sweep(passMark)} ${CX} ${CY})`} />
-          <g className="g-needle" style={{ transform: `rotate(${angle}deg)`, transformOrigin: `${CX}px ${CY}px` }}>
-            <line x1={CX} y1={CY} x2={CX} y2="15.2" />
-          </g>
-          <circle className="g-hub" cx={CX} cy={CY} r="2.3" />
-        </svg>
-      </span>
-    </button>
-  );
-}
-
-/* --------------------------------------------------------- 2 · CALIBRATION */
-// §2.3 — a calibration sticker. A banded header, a value, and it sits proud of
-// the panel. The band takes the accent when there is data and drains to a
-// neutral when there is none, so an idle sticker never looks live.
-//
-// NO CAP on the number. The reference build caps at "9+"; the brief says the
-// actual number, and a student with fourteen to re-check is owed fourteen.
-export function Calibration({ count, hasData = true, onPress }) {
-  const state = !hasData ? "nodata" : count === 0 ? "clear" : "due";
-  const value = state === "nodata" ? "—" : state === "clear" ? "✓" : String(count);
-  const label = state === "nodata" ? "Calibration. Nothing recorded yet."
-    : state === "clear" ? "Calibration. Clear — nothing to re-check."
-      : `Calibration. ${count} question${count === 1 ? "" : "s"} to re-check.`;
-
-  return (
-    <button type="button" className="ind" onClick={(e) => onPress?.(e)} aria-label={label}>
-      <span className="sticker" data-state={state}>
-        <span className="band">CALIBRATION</span>
-        <span className="val">{value}</span>
-      </span>
-    </button>
-  );
-}
-
-/* ------------------------------------------------------ 3 · MASTER CAUTION */
-// §2.3 — a legend lamp, and the only thing in the app entitled to the caution
-// colour. Unlit is a neutral face with the legend still readable: a lamp you
-// cannot read when it is dark is a lamp you cannot learn.
-export function MasterCaution({ count, onPress }) {
-  const lit = count > 0;
-  return (
-    <button type="button" className="ind" onClick={(e) => onPress?.(e)}
-            aria-label={lit
-              ? `Master caution. ${count} question${count === 1 ? "" : "s"} to put right.`
-              : "Master caution. All clear."}>
-      <span className="lamp" data-lit={lit ? "true" : "false"}>
-        <span>MASTER</span>
-        <span>CAUTION</span>
-      </span>
-    </button>
+    <span className={`lamp lamp-mark${compact ? " lamp-sm" : ""} ${className}`.trim()}
+          data-lit="true" role="img" aria-label="Master caution">
+      {compact ? <span>MASTER CAUTION</span> : (<><span>MASTER</span><span>CAUTION</span></>)}
+    </span>
   );
 }
 

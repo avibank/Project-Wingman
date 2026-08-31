@@ -56,9 +56,9 @@ import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
 import Review from "./components/module/Review.jsx";
-import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
+import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
 import { fetchProfiles } from "./lib/squadron.js";
 import { reportContent } from "./lib/squadron.js";
@@ -181,6 +181,12 @@ function AppInner() {
   const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const activeModuleCode = route.moduleCode || preferredModuleCode;
 
+  // §8's second number, read once per render beside the module state it is
+  // weighed against. Every lamp in the app — the chapter header, the Library
+  // quiz row, the results screen and the Flight Deck launcher — is computed
+  // against THIS value, so they cannot disagree.
+  const minimums = readMinimums(progress);
+
   // The meter runs while a module is open, whatever is on screen inside it,
   // and only then — the Flight Deck itself is not time in the module.
   useHobbsMeter(view === "module" ? activeModuleCode : null, progress);
@@ -210,7 +216,6 @@ function AppInner() {
   // The ammeter's panel: each chapter's FIRST-attempt score against the pass
   // mark. A retake is labelled as one and does not move the needle, so the
   // panel has to show which figure the needle is actually reading.
-  const [accuracyOpen, setAccuracyOpen] = useState(false);
   useEffect(() => { if (testContent) seedFrom(testContent); }, [testContent, seedFrom]);
   const moduleState = {
     opened: progress.get("pw-paper-opened", {}),
@@ -932,6 +937,10 @@ function AppInner() {
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} state={moduleState}
                 autoStart={route.resume}
+                // §6 — the results screen weighs the sitting against the same
+                // bar every other lamp in the app is weighed against.
+                minimums={minimums}
+                onRecheck={() => go(routePath.review(activeModuleCode, "caution"))}
                 onAnswer={(q, right) => recordAnswer(q.id, right)}
                 onScore={(chapterId, correct, total) => {
                   // Finishing clears the run: a finished quiz is a score, not
@@ -973,13 +982,14 @@ function AppInner() {
             state={moduleState}
             tab={route.tab === "pdf" ? "library" : route.tab === "people" ? "people" : "route"}
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
-            onLibrarySub={(sub) => go(routePath.library(activeModuleCode, sub))}
             papers={papersFor(activeModuleCode, useTestContent)}
             retention={progress.get(RETENTION_KEY, emptyRetention())}
+            lastRecheck={progress.get("pw-last-recheck", null)}
+            minimums={minimums}
+            onMinimums={(n) => progress.set(MINIMUMS_KEY, clampMinimums(n))}
             onInstrument={(what) => {
-              if (what === "recheck") go(routePath.review(activeModuleCode, "recheck"));
-              else if (what === "caution") go(routePath.review(activeModuleCode, "caution"));
-              else setAccuracyOpen(true);
+              if (what === "caution") go(routePath.review(activeModuleCode, "caution"));
+              else go(routePath.review(activeModuleCode, "recheck"));
             }}
             onOpenPaper={(paper) => {
               // Opened is remembered per account, so the Library can say which
@@ -1070,12 +1080,6 @@ function AppInner() {
         else if (what === "quiz" && lesson) go(routePath.chapter(code, lesson.chapter.id, "quiz"));
       }}
     />
-    {accuracyOpen && (
-      <AccuracyPanel
-        chapters={chaptersFor(activeModuleCode, useTestContent)}
-        scores={moduleState.quiz}
-        onClose={() => setAccuracyOpen(false)} />
-    )}
     <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
     </FirstFlightGate>
     </UsernameGate>

@@ -309,3 +309,25 @@
 }
 .pop-act:hover:not(:disabled){ border-color: var(--active); color: var(--active); }
 .pop-act:disabled{ opacity: .42; cursor: default; }
+
+/* ------------------------------------------------- §2 · THE LAMP AS A MARK
+   The same lamp, in the places that are already a button. Not interactive:
+   see the note above CautionMark for why a <button> cannot go there. */
+.mscreen .lamp-mark,
+.deck .lamp-mark {
+  cursor: inherit;                 /* it is part of the row, not a target of its own */
+  flex: 0 0 auto;                  /* never squashed — a compressed lamp reads as a bug */
+}
+.lamp-sm {
+  width: auto;
+  height: auto;
+  min-height: 0;                   /* the 44px floor is for controls; this is a mark */
+  padding: 4px 7px;
+  flex-direction: row;
+  gap: 0;
+  font-size: 8px;
+  letter-spacing: .11em;
+  white-space: nowrap;
+  border-radius: 5px;
+}
+@media (max-width: 560px) { .lamp-sm { font-size: 7.2px; padding: 3px 6px; } }

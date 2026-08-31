@@ -1,3 +1,4 @@
+import QuizResults from "./QuizResults.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LABELS } from "../../lib/quiz.js";
 import { shuffleOptions, movedLine } from "../../lib/retention.js";
@@ -16,6 +17,11 @@ import "./quiz.css";
 export default function Review({
   title, questions, isRetake = false,
   resumeAt = 0, onProgress, onAnswer, onDone, onLeave, onOpenLesson,
+  // §6 — what the results screen needs. Review owns WHEN the sitting is over;
+  // QuizResults owns WHAT is shown. Passed straight through rather than
+  // recomputed here, so the average on this screen is the same object the
+  // Library's dial reads.
+  minimums, averageBefore = null, averageAfter = null, moduleName, onRecheck,
 }) {
   // LATCHED AT MOUNT, deliberately. Read live, this flips the moment the first
   // attempt records its own score, and the result screen of a first sitting
@@ -81,28 +87,20 @@ export default function Review({
   if (!q) return null;
 
   if (finished) {
+    // §6 — centred, short, and it says what moved. The re-check and put-right
+    // flows share this component, and they have no module average to move, so
+    // they simply pass none and the line is omitted.
     return (
-      <div className="quiz">
-        <div className="quiz-head">
-          <span className="quiz-name">{title}</span>
-          <button type="button" className="quiz-leave" onClick={onLeave}>Close</button>
-        </div>
-        <div className="quiz-body">
-          {/* Not a bare score. The result screen is where the system explains
-              itself, so it says what MOVED. */}
-          <p className="q-score">{tally.right}<span className="q-score-line"> of {set.length}</span></p>
-          <p className="q-score-line">{movedLine(tally)}</p>
-          {retake && (
-            <p className="q-rev-line">
-              This was a retake, so it does not move the accuracy needle — that
-              reads your first attempt at each quiz.
-            </p>
-          )}
-        </div>
-        <div className="quiz-foot">
-          <button type="button" className="q-btn" data-primary="" onClick={onLeave}>Done</button>
-        </div>
-      </div>
+      <QuizResults
+        title={title} right={tally.right} total={set.length}
+        minimums={minimums}
+        averageBefore={averageBefore} averageAfter={averageAfter}
+        retake={retake} moduleName={moduleName}
+        // The re-check and put-right flows have no module average to move —
+        // what moved for them is which questions changed pile. Same slot on
+        // the screen, different sentence, and only ever one of the two.
+        movedNote={averageAfter === null ? movedLine(tally) : null}
+        onRecheck={onRecheck} onLeave={onLeave} />
     );
   }
 

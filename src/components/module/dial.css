@@ -1,0 +1,73 @@
+/* ============================ THE ACCURACY DIAL ===========================
+   Imported by Dial.jsx itself, deliberately.
+
+   The Ready Room renders FlightProfile without importing instruments.css and
+   works only because something else happens to pull that file into the bundle
+   — lazify that other thing and the roster silently loses every stroke. A
+   component that owns an SVG should own its stylesheet, so this one does.
+
+   Every colour is a token. The only colour that carries a meaning here is
+   --caution on the needle when it sits left of centre, and it is corroborated
+   by the needle's position and by the accessible name.
+   ========================================================================= */
+
+.dial {
+  display: inline-block;
+  flex: 0 0 auto;                  /* a dial in a flex header must never be squashed
+                                      into an ellipse — the round instruments in the
+                                      Ready Room were stretched exactly this way */
+  line-height: 0;
+}
+.dial svg { display: block; width: 100%; height: 100%; }
+
+.d-face { fill: var(--sunk); stroke: var(--edge); stroke-width: 1; }
+.d-arc { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.d-ticks path { stroke: var(--t3); stroke-width: 1; }
+
+/* the real pass mark, at its true offset from the user's bar */
+.d-pass { stroke: var(--t1); stroke-width: 1.6; stroke-linecap: round; opacity: .7; }
+.d-pass[data-pegged="1"] { opacity: .35; }
+
+/* the index — the user's own bar, at centre */
+.d-index { fill: var(--t1); }
+
+/* the last quiz */
+.d-last { fill: none; stroke: var(--t2); stroke-width: 1.6; }
+
+.d-needle line { stroke: var(--active); stroke-width: 2.6; stroke-linecap: round; }
+.d-needle circle { fill: var(--active); }
+/* §3 — the needle takes the caution colour when it sits left of centre. */
+.d-needle[data-under="1"] line { stroke: var(--caution); }
+.d-needle[data-under="1"] circle { fill: var(--caution); }
+
+.d-hub { fill: var(--t1); }
+.d-end { stroke: var(--t3); stroke-width: 1.4; stroke-linecap: round; }
+
+/* §3 — the sweep, and it is the ONLY animation on this instrument. Damped,
+   and only where it means something: the results screen. */
+.d-needle[data-sweep="1"] { transition: transform .9s cubic-bezier(.2, .9, .3, 1); }
+
+/* NO DATA. Parked off-scale AND dimmed — two cues, because hard left is a
+   real reading and position alone would be ambiguous. */
+.dial[data-nodata] { filter: saturate(.25); opacity: .62; }
+.dial[data-nodata] .d-needle line { stroke: var(--t3); }
+.dial[data-nodata] .d-needle circle { fill: var(--t3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .d-needle[data-sweep="1"] { transition: none; }
+}
+/* The app's own Smooth Air preference, which every other ambient motion in
+   this codebase respects. */
+.app.smooth-air .d-needle[data-sweep="1"] { transition: none; }
+
+/* ---------------------------------------------------------------- MANUAL --
+   The paper finish draws instruments rather than lighting them. Gated on the
+   attribute the app actually stamps; there is no data-mode in this codebase. */
+.app[data-paper="1"] .d-face { fill: none; stroke: var(--sketch-ink); stroke-width: 1.25; }
+.app[data-paper="1"] .d-arc,
+.app[data-paper="1"] .d-ticks path,
+.app[data-paper="1"] .d-end { stroke: var(--sketch-ink); }
+.app[data-paper="1"] .d-pass { stroke: var(--sketch-ink); }
+.app[data-paper="1"] .d-index,
+.app[data-paper="1"] .d-hub { fill: var(--sketch-ink); }
+.app[data-paper="1"] .d-last { stroke: var(--sketch-ink); }

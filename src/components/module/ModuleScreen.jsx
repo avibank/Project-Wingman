@@ -4,10 +4,8 @@ import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
-import { Accuracy, Calibration, MasterCaution, FlightProfile } from "./Instruments.jsx";
-import InstrumentPop from "./InstrumentPop.jsx";
-import { cautionCount, dueCount } from "../../lib/retention.js";
-import { passAt } from "../../lib/quiz.js";
+import { holdingCount, dueCount } from "../../lib/retention.js";
+import { takenScores, averagePct, lastPct, faultChapters } from "../../lib/minimums.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
@@ -27,7 +25,17 @@ export const HIDDEN_TABS = [{ id: "people", label: "People" }];
 
 export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
-  papers = [], librarySub = "papers", onLibrarySub, onOpenPaper,
+  papers = [], librarySub = "papers", onOpenPaper,
+  // §8's second number. It comes from App with the rest of the account state
+  // rather than being read here, so one render of the app cannot hold two
+  // values for the bar — the deck's lamp and this screen's lamp are the same
+  // fact and must be computed from the same number.
+  minimums, onMinimums,
+  // "6 days ago" on the Calibration row. It is its OWN progress key
+  // (pw-last-recheck), written by the re-check flow when it finishes — NOT a
+  // field on `retention`, which is what it looks like it should be. Reading it
+  // off retention returns undefined forever and the row silently loses its date.
+  lastRecheck = null,
   retention, onInstrument,
   people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
   onOpenQuestion,
@@ -51,21 +59,14 @@ export default function ModuleScreen({
   const toggle = (id) =>
     setOpen((s) => (s.has(id) ? new Set() : new Set([id])));
 
-  // The only figure on the screen. Deliberately absent until there is one —
-  // nothing pretends on a first visit.
-  const taken = chapters.map((c) => state?.quiz?.[c.id]).filter(Boolean);
-  const outOf = taken.length ? taken[0].total : null;
-
-  // The ammeter reads MEAN FIRST-ATTEMPT score as a percentage, against the
-  // pass mark — and it reads from the same data as the rows, because a hero
-  // that is hardcoded is a hero that eventually contradicts the list under it.
-  const avgPct = taken.length
-    ? Math.round(taken.reduce((n, q) => n + (q.correct / q.total) * 100, 0) / taken.length)
-    : null;
-  const passMark = Math.round((passAt(outOf || 8) / (outOf || 8)) * 100);
-
-  const hereIndex = Math.max(0, chapters.findIndex((c) => c.id === here?.chapter?.id));
-  const started = Boolean(here?.chapter?.id) || taken.length > 0;
+  // §8 — EVERYTHING DERIVES FROM TWO NUMBERS: the quiz scores, and the user's
+  // minimums. Computed once here and handed down, so the lamp on a chapter,
+  // the needle in the Library and the row actions cannot form separate
+  // opinions about the same fact.
+  const taken = takenScores(chapters, state?.quiz || {});
+  const avgPct = averagePct(taken);          // the needle
+  const lastQuizPct = lastPct(taken);        // the hollow marker
+  const faults = faultChapters(chapters, state?.quiz || {}, minimums);
 
   // §2.3 — one field, beside the tabs. It belongs to the screen rather than to
   // either tab: the Library used to carry its own, which meant the same words
@@ -74,16 +75,16 @@ export default function ModuleScreen({
   // Cleared when the tab changes. Carrying a query across tabs shows somebody a
   // filtered list they did not ask to filter, and the commonest way to meet an
   // empty tab is to arrive at one still holding a search.
-  // §2.3 — which indicator is open, and the element it is anchored to. Idle
-  // indicators open too: a dark lamp is the one a new student needs explained.
-  const [pop, setPop] = useState(null);
   const [query, setQuery] = useState("");
   useEffect(() => { setQuery(""); }, [tab]);
   const searchable = tab === "route" || tab === "library";
   const searching = terms(query).length > 0;
   const fieldRef = useRef(null);
 
-  const caution = cautionCount(retention);
+  // Calibration is the RIGHT answers kept in currency: `holding`. `due` is how
+  // many of those have come round. Neither is caution, and §5 forbids the two
+  // vocabularies ever meeting.
+  const warm = holdingCount(retention);
   const due = dueCount(retention);
 
   return (
@@ -95,36 +96,16 @@ export default function ModuleScreen({
         </button>
       </div>
 
-      {/* Horizontal in emphasis. The left block names the module; the right is
-          the route, vertically centred against it. */}
+      {/* §1 — THE MODULE TITLE, AND NOTHING ELSE.
+          The instrument row and the flight profile both used to live here. The
+          profile is a fleet view and belongs on the Flight Deck's module cards,
+          where it already is; the three indicators became one signal (the lamp,
+          on whichever chapter owns the problem) and one dial (in the Library).
+          Nothing floats above the list any more, and nothing up here repeats a
+          fact the row beneath it already states. */}
       <div className="mhero">
-        <div>
-          <h1 className="mhero-title">{mod.name}</h1>
-          {/* §2.2 — the indicator row sits directly under the module title,
-              inside the banner's left block, so title and instruments read as
-              one identity rather than as a heading and a toolbar. */}
-          <div className="instrow">
-            <Accuracy mean={avgPct} passMark={passMark}
-                      onPress={(e) => setPop({ kind: "accuracy", el: e.currentTarget })} />
-            <Calibration count={due} hasData={taken.length > 0}
-                         onPress={(e) => setPop({ kind: "calibration", el: e.currentTarget })} />
-            <MasterCaution count={caution}
-                           onPress={(e) => setPop({ kind: "caution", el: e.currentTarget })} />
-          </div>
-          {pop && (
-            <InstrumentPop
-              kind={pop.kind} anchor={pop.el}
-              data={pop.kind === "accuracy" ? { mean: avgPct, passMark }
-                : pop.kind === "calibration" ? { count: due, hasData: taken.length > 0 }
-                  : { count: caution }}
-              onClose={() => { const el = pop.el; setPop(null); el?.focus(); }}
-              onGo={(to) => onInstrument?.(to === "library" ? "accuracy" : to)} />
-          )}
-        </div>
-        <FlightProfile chapters={chapters} atIndex={hereIndex} started={started} />
+        <h1 className="mhero-title">{mod.name}</h1>
       </div>
-
-
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
           the surface below, and the list lives inside the same border. */}
@@ -168,14 +149,26 @@ export default function ModuleScreen({
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query}
+                    // §2 — the lamp, on the chapter whose quiz is below the
+                    // bar. Derived above and handed down so the Lessons tab,
+                    // the Library and the Flight Deck all light from one Set.
+                    faults={faults}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (
           <LibraryTab chapters={chapters} papers={papers} state={state}
-                      sub={librarySub} onSub={onLibrarySub} query={query}
-                      // §2.8 — the same number the Calibration sticker shows.
-                      // One source, passed down, so the two can never disagree.
-                      outstanding={due}
+                      sub={librarySub} query={query}
+                      // §5 — Calibration is the right answers kept warm, and
+                      // it is NOT the caution pile. `warm` is everything in
+                      // holding; `due` is how much of it has come round.
+                      warm={warm} outstanding={due}
+                      lastRecheck={lastRecheck}
+                      // §3 — the dial, on the Quizzes header. Two sizes, two
+                      // places; this is the small one.
+                      average={avgPct} lastQuiz={lastQuizPct}
+                      minimums={minimums} onMinimums={onMinimums}
+                      faults={faults}
+                      onStartCalibration={() => onInstrument?.("recheck")}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "people" && (

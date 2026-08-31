@@ -23,7 +23,17 @@ const KEYS = {
 const ACCOUNT_KEYS = [
   ...Object.values(KEYS),
   "pw-completed", "pw-livery", "pw-finish", "pw-ruled", "pw-notices",
-  "pw-variant", "pw-scale", "pw-streak", "pw-name",
+  "pw-streak",
+  // The user's own bar. A reset has to put it back to the default, or the
+  // next "first visit" starts with somebody else's standard and lamps that
+  // light for no visible reason.
+  "pw-minimums",
+  // These three were listed under names that do not exist — pw-variant,
+  // pw-scale and pw-name — so a reset silently left the real settings behind.
+  // The real keys, verified against every progress.get/set in src.
+  "pw-variant-pin", "pw-font-size", "pw-greet-name",
+  // Retention and its stamp: the re-check pile IS account progress.
+  "pw-retention", "pw-last-recheck",
 ];
 
 const DEVP_CSS = `

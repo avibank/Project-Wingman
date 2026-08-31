@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CautionMark } from "./module/Instruments.jsx";
+import { moduleNeedsYou, readMinimums } from "../lib/minimums.js";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
@@ -211,6 +213,19 @@ const DECK_CSS = `
   transition: border-color .22s, background .22s, opacity .22s; }
 .deck .modin { padding: 14px; display: flex; flex-direction: column; height: 100%; }
 .deck .mcodeline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 15px; }
+/* The right-hand slot: the lamp and the CURRENT badge together, so
+   space-between separates code from status rather than spreading three things
+   across a 180px card. Both are flex:none — a squeezed lamp reads as a bug,
+   and the code beside them may ellipsize instead. */
+.deck .mcodeend { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+.deck .mcodeend .lamp-sm { flex: 0 0 auto; }
+.deck .mcode { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* THE LAMP AND THE CURRENT BADGE NEVER SHARE THE SLOT — §2, "once, never
+   twice in the same view", and §9's specific worry about the two sitting
+   beside each other on the amber livery, where the accent-filled badge and
+   the amber lamp are close enough in hue to read as one object. The lamp is
+   the signal and the badge is a label, so the label is what stands down.
+   That resolves the adjacency without moving a livery's hue. */
 .deck .mcode { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .11em; color: var(--t3); }
 .deck .mchev { display: flex; color: var(--t3); }
 .deck .mcur { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .12em; color: var(--ground);
@@ -355,11 +370,20 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const next = nextChapter(activeChapters, state);
   const nextState = next ? segmentState(next.id, state) : SEGMENT.EMPTY;
 
+  // §2 — the launcher answers WHICH MODULE NEEDS YOU. Same fact, same
+  // function, same bar as the lamp on the chapter header inside the module:
+  // one of this module's quizzes came in below the user's minimums. Nothing
+  // is summed and no second flag is stored — moduleNeedsYou reads the scores.
+  const minimums = readMinimums(progress);
+  const quizScores = progress.get("pw-quiz-scores", {});
   const moduleRows = MODULES.map((m) => {
     const chs = chaptersForModule(m.code);
     const { full, half, total } = chapterCount(moduleSegments(chs, state));
     const pr = total ? Math.min(1, (full + half * 0.5) / total) : 0;
-    return { ...m, chapters: total, pr, full, first: chs[0]?.title || null };
+    return {
+      ...m, chapters: total, pr, full, first: chs[0]?.title || null,
+      caution: moduleNeedsYou(chs, quizScores, minimums),
+    };
   });
   const started = moduleRows.filter((m) => m.pr > 0).length;
   const activeRow = moduleRows.find((m) => m.code === active.code) || moduleRows[0];
@@ -745,11 +769,20 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                   <div className="modin">
                     <div className="mcodeline">
                       <span className="mcode">{m.code}</span>
-                      {m.code === active.code
-                        ? <span className="mcur">CURRENT</span>
-                        : flags["module.interior"]
-                          ? <span className="mchev" dangerouslySetInnerHTML={{ __html: CHEV }} />
-                          : null}
+                      {/* §2/§9 — the lamp sits BESIDE the CURRENT badge, so the
+                          two share the right-hand slot rather than being spread
+                          apart by the row's space-between. A static mark, not a
+                          button: the card is already a button and nesting one
+                          inside it is invalid and unreachable. */}
+                      <span className="mcodeend">
+                        {m.caution
+                          ? <CautionMark compact className="modlamp" />
+                          : m.code === active.code
+                            ? <span className="mcur">CURRENT</span>
+                            : flags["module.interior"]
+                              ? <span className="mchev" dangerouslySetInnerHTML={{ __html: CHEV }} />
+                              : null}
+                      </span>
                     </div>
                     <div className="mname">{m.name}</div>
                     <div className="mmeta">

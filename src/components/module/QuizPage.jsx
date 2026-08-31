@@ -1,3 +1,4 @@
+import { takenScores, averagePct } from "../../lib/minimums.js";
 import { useState } from "react";
 import { ChevronLeft, ArrowRight } from "lucide-react";
 import Review from "./Review.jsx";
@@ -9,7 +10,12 @@ import "./module.css";
 // it. A retake replaces the score rather than adding a second record — the
 // Library and the chapter row read one object, and a quiz you have sat twice
 // is still one quiz.
-export default function QuizPage({ module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswer, onRun }) {
+export default function QuizPage({
+  minimums, onRecheck, module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswer, onRun }) {
+  // Every score in this module, in chapter order — the same helper the module
+  // screen and the Library use, so the average on the results screen and the
+  // average on the dial behind it cannot differ.
+  const takenAll = takenScores(chapters, state?.quiz || {});
   const run = state?.run?.[chapter.id] || null;
   // Arriving here from the deck's Resume means "put me back in the quiz", not
   // "show me the cover of the quiz I was already sitting".
@@ -38,6 +44,17 @@ export default function QuizPage({ module: mod, chapters, chapter, state, onBack
           onProgress={(at) => onRun?.(chapter.id, { at, total: chapter.questions.length })}
           onLeave={() => setRunning(false)}
           onOpenLesson={onOpenLessonById}
+          // §6 — the two averages the needle sweeps between. `after` is the
+          // module average as it now stands (the score is already recorded by
+          // the time this renders); `before` is the same average with THIS
+          // chapter left out, which is exactly where the needle was standing a
+          // moment ago. Computing it by subtraction rather than by
+          // remembering avoids a stale snapshot surviving a remount.
+          minimums={minimums}
+          averageAfter={averagePct(takenAll)}
+          averageBefore={averagePct(takenAll.filter((t) => t.id !== chapter.id))}
+          moduleName={mod?.name}
+          onRecheck={onRecheck}
           onAnswer={onAnswer}
           onDone={(t) => {
             // FIRST ATTEMPT ONLY counts. A retake is labelled on screen and

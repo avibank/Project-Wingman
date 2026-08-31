@@ -144,6 +144,13 @@
   background:none;border:0;font-family:inherit;text-align:left;color:inherit;cursor:pointer;
   /* §1.6 — the same inner edge as the tabs and the banner. */
   padding:17px var(--card-pad)}
+/* The lamp and the status word occupy ONE grid slot together — see the note
+   at the wrapper in RouteTab.jsx. Both flex:none: a squashed lamp reads as a
+   rendering fault, and the status word is short enough to never need to give. */
+.mscreen .cend{ display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mscreen .cend .lamp-sm{ flex: 0 0 auto; }
+.mscreen .cend .cstate{ flex: 0 0 auto; }
+
 /* --t1 for every chapter, current or not. The base was --t2 and only the
    current/done ones were lifted to --t1, which is the same lightness-as-state
    bug from the other end: three chapters measured contrast 5.0, 15.4 and 8.0. */
@@ -676,6 +683,86 @@
     grid-template-areas: none;
     gap: 10px; padding: 15px var(--card-pad);
   }
-  .mscreen .chead .cstate{ grid-area: auto; grid-column: 1; grid-row: 2; justify-self: start; }
+    .mscreen .chead .cend{ grid-area: auto; grid-column: 1; grid-row: 2; justify-self: start; }
   .mscreen .chead .chv{ grid-area: auto; grid-column: 2; grid-row: 1 / -1; }
+}
+
+/* ======================= §5 · THE LIBRARY, REBUILT ========================
+   Two sections in one scroll — Quizzes then Papers — replacing the segmented
+   control. The section heads are plain elements, not buttons: the Quizzes
+   head contains the dial, which is a control, and a button inside a button is
+   invalid nested interactive content.
+   ========================================================================= */
+.mscreen .libtab{ display: block; }
+.mscreen .lsec + .lsec{ border-top: 1px solid var(--edge, var(--hair)); margin-top: 6px; }
+
+.mscreen .lsec-head{
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px var(--card-pad) 10px;
+}
+.mscreen .lsec-id{ min-width: 0; flex: 1 1 auto; }
+.mscreen .lsec-name{
+  margin: 0; font-size: 25px; font-weight: 700; line-height: 1.05; color: var(--t1);
+  letter-spacing: -.01em;
+}
+.mscreen .lsec-sub{ margin: 2px 0 0; font-size: var(--fs-sm); color: var(--t2); }
+
+/* §3 — the dial and its reading. flex-none on both, so a long module name
+   cannot squeeze the instrument into an ellipse. */
+.mscreen .dialwrap{ display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.mscreen .dialread{
+  margin: 0; text-align: right; font-size: var(--fs-sm); color: var(--t2);
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.mscreen .dialread b{ display: block; color: var(--t1); font-weight: 600; font-size: 15px; }
+.mscreen .dialbtn{
+  background: none; border: 0; padding: 0; line-height: 0; cursor: pointer;
+  border-radius: 999px; flex: 0 0 auto;
+}
+.mscreen .dialbtn:focus-visible{ outline: 2px solid var(--active); outline-offset: 3px; }
+
+/* §5 — Calibration, pinned, with a rule beneath it. No caution vocabulary and
+   no lamp: these are the answers already RIGHT, kept in currency. */
+.mscreen .calrow{ border-bottom: 1px solid var(--edge, var(--hair)); border-radius: 0; margin-bottom: 4px; }
+.mscreen .calsticker{
+  flex: 0 0 auto; width: 58px; height: 34px; border-radius: 5px; overflow: hidden;
+  background: var(--panel); border: 1px solid var(--edge); box-shadow: var(--proud);
+  display: flex; flex-direction: column;
+}
+.mscreen .calband{
+  height: 11px; display: grid; place-items: center;
+  background: var(--active-fill); color: var(--active-text);
+  font-family: var(--font-mono); font-weight: 700; font-size: 5.6px;
+  letter-spacing: .1em; text-transform: uppercase; line-height: 1;
+}
+.mscreen .calval{
+  flex: 1; display: grid; place-items: center; font-family: var(--font-mono);
+  font-size: 13px; font-weight: 500; color: var(--t1); font-variant-numeric: tabular-nums;
+}
+.mscreen .calwhen{ color: var(--t3); font-variant-numeric: tabular-nums; }
+.mscreen .score{ font-variant-numeric: tabular-nums; color: var(--t2); }
+
+/* ---------------------------------------------- §3 · the minimums popover */
+.mscreen .minpop h3{ margin: 0 0 4px; }
+.mscreen .minpop-row{ display: block; margin: 12px 0 0; }
+.mscreen .minpop-range{ width: 100%; accent-color: var(--active); margin: 0; }
+.mscreen .minpop-val{
+  margin: 9px 0 0; display: flex; align-items: baseline; gap: 8px;
+  font-size: var(--fs-sm); color: var(--t2);
+}
+.mscreen .minpop-val b{
+  color: var(--t1); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+/* Visually hidden, not display:none — the range still needs its name. */
+.mscreen .sr-only-lbl{
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+@media (max-width: 560px){
+  .mscreen .lsec-head{ gap: 10px; padding: 15px var(--card-pad) 8px; }
+  .mscreen .lsec-name{ font-size: 21px; }
+  /* The reading folds away before the dial does: the instrument is the point,
+     the number beside it is a convenience and is also in the popover. */
+  .mscreen .dialread{ display: none; }
 }
