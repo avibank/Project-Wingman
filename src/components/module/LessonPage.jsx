@@ -296,10 +296,22 @@ export default function LessonPage({
           ) : <span className="next-label">Last in this module</span>}
         </div>
 
+      </div>
+
+      {/* §3.1 — the panel: one column beside the video, sticky, so the tabs
+          stay put while the list under them scrolls. */}
+      <div className="pn">
         {/* Presence, and the face. WhatsApp's "last seen" and Netflix's
             "continue watching" — the most familiar signal that other humans
             exist in a piece of software, and the only one that works with zero
-            classmates online, because it is past tense. No online dots. */}
+            classmates online, because it is past tense. No online dots.
+
+            IT LIVES WITH THE COMMENTS NOW. It is a row of three — avatar, two
+            lines, a button — and it used to sit in the lesson list, which is a
+            294px rail once that list moved to the left. At that width its name
+            wrapped to four lines and its sentence broke to two words a line.
+            The one action it offers is "ask everyone", so the top of the
+            thread it opens is where it belongs. */}
         {here && (
           <div className="face">
             <span className="av" data-size="lg" aria-hidden="true"
@@ -318,11 +330,6 @@ export default function LessonPage({
           </div>
         )}
 
-      </div>
-
-      {/* §3.1 — the panel: one column beside the video, sticky, so the tabs
-          stay put while the list under them scrolls. */}
-      <div className="pn">
         <div className="ltabs" role="tablist" aria-label="Notes and comments">
           <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
                   onClick={() => setTab("notes")}>

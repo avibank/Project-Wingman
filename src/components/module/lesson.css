@@ -39,7 +39,17 @@
      case is the one that counts. Full white also makes the tick marks slightly
      brighter, which for a 2px mark over video is an improvement. */
   --over-video: oklch(1 0 0);
+
+  /* ONE RADIUS FOR THE WHOLE LESSON COLUMN. The Flight Deck card is 13px and
+     .player-slot was 14px, which nobody can see but is exactly how a family
+     stops being one. It lives on :root rather than on .watch because the
+     player LAYER is absolutely positioned outside .watch and has to agree
+     with the slot it sits over — a token scoped to .watch would not reach it,
+     and the layer would round differently from the hole it fills. */
+  --lbox-r: 13px;
 }
+/* Paper does not have soft corners; Manual squares the whole family at once. */
+.app[data-paper="1"]{ --lbox-r: 2px; }
 @media (min-width: 768px){
   :root{ --player-max-h: 52vh; --player-max-w: 100%; }
 }
@@ -52,7 +62,7 @@
   width: min(100%, var(--player-max-w), calc(var(--player-max-h) * 16 / 9));
   aspect-ratio: 16 / 9;
   background: var(--raised);
-  border-radius: 14px;
+  border-radius: var(--lbox-r);
   overflow: hidden;
 }
 
@@ -157,7 +167,7 @@
   object-fit: cover; background: #000;
 }
 .player-layer[data-dock="none"]{ display: none; }
-.player-layer[data-dock="inline"]{ border-radius: 14px; }
+.player-layer[data-dock="inline"]{ border-radius: var(--lbox-r); }
 .player-layer[data-fs="1"]{
   inset: 0 !important; width: 100% !important; height: 100% !important;
   transform: none !important; border-radius: 0;
@@ -668,26 +678,42 @@
    swapped without touching a component.
    ========================================================================= */
 .watch{ display: grid; gap: 26px 24px; }
+/* THE LESSON READS THE WAY A VIDEO PAGE READS. The list of lessons is
+   navigation, so it goes down the left and stays put; everything about the
+   lesson you are actually watching runs down one column on the right, in the
+   order you meet it: the player, then what it is called, then what people said
+   about it. Comments used to sit in a 372px rail beside the video, which is
+   the one place a comment thread cannot breathe. */
 .watch[data-layout="b"]{
-  grid-template-columns: minmax(0, 1fr) 372px;
-  grid-template-areas: "player panel" "meta panel" "side panel";
+  grid-template-columns: clamp(268px, 23vw, 340px) minmax(0, 1fr);
+  grid-template-areas: "side player" "side meta" "side panel";
+  align-items: start;
 }
 .watch .pl{ grid-area: player; }
 .watch .mt{ grid-area: meta; }
 .watch .sd{ grid-area: side; }
 .watch .pn{ grid-area: panel; }
-/* Sticky, so the tabs stay put while the list under them scrolls. */
-.watch[data-layout="b"] .pn{ position: sticky; top: 16px; align-self: start; }
+/* Sticky, so the lesson list stays with you while the comments scroll past.
+   max-height + its own scroll, because a long module would otherwise make the
+   sidebar taller than the viewport and the sticky would never engage. */
+.watch[data-layout="b"] .sd{
+  position: sticky; top: 16px; align-self: start;
+  max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain;
+}
 
-/* §4 — one column on tablet and phone, in reading order: player, title,
-   up-next, then the panel. */
+/* §4 — one column on tablet and phone, in reading order: player, title, the
+   lesson list, then the comments. The list stays ahead of the thread on a
+   phone: it is how you leave this lesson, and burying it under a long
+   conversation would hide the page's own navigation. */
 @media (max-width: 1000px){
   .watch[data-layout="b"]{
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "player" "meta" "side" "panel";
     gap: 20px;
   }
-  .watch[data-layout="b"] .pn{ position: static; }
+  .watch[data-layout="b"] .sd{
+    position: static; max-height: none; overflow: visible;
+  }
 }
 
 /* §3.2 — CAP THE PLAYER AT ~58% OF THE VIEWPORT, and shrink it in BOTH
@@ -869,3 +895,66 @@
   /* Collapsed shows the next item and nothing else. */
   .sdcard[data-open="false"] .sditem:not([data-next]):not([data-here]){ display: none; }
 }
+
+/* ============================================================================
+   THE BOXES, AND THEY ARE THE FLIGHT DECK'S BOXES
+
+   The lesson page used to draw its regions with nothing: no surface, no edge,
+   no sheen, no drop. So it was the one screen that did not change when you
+   changed livery or finish — every other surface in the app picks those up and
+   this one sat flat through all thirty-six skins.
+
+   This is the Flight Deck card recipe, token for token, so the two screens
+   cannot drift apart:
+
+     background        --panel        the livery's surface
+     border            --line         the livery's hairline
+     top / bottom edge --edge-hi/lo   lit from above, shaded below
+     background-image  --sheen-img    the finish's gloss (none in Manual)
+     box-shadow        --drop         the finish's drop (none in Manual)
+
+   Every one of those is written to documentElement by the livery and finish
+   engines, so no rule here needs to know which skin is on.
+   ========================================================================= */
+.watch .sd,
+.watch .pn{
+  background: var(--panel);
+  background-image: var(--sheen-img, none);
+  border: 1px solid var(--line);
+  border-top-color: var(--edge-hi);
+  border-bottom-color: var(--edge-lo);
+  border-radius: var(--lbox-r);
+  box-shadow: var(--drop, none);
+  padding: 16px 17px;
+}
+
+/* The player is the one thing that is NOT a card: a video wants no frame
+   around it, only the same corner the cards use. */
+.watch .player-slot{ border-radius: var(--lbox-r); }
+
+/* The title block sits between two cards without being one, the way a heading
+   sits above a paragraph. It only needs its gutter to line up with them. */
+.watch .mt{ padding-inline: 1px; }
+
+/* The list header reads as the box's own title rather than a floating label. */
+.watch .sd .sdhead{
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.watch .sd .sdtitle{ color: var(--t1); font-weight: 500; }
+
+/* MANUAL DRAWS BOXES, IT DOES NOT FILL THEM. Paper has no gloss and no drop,
+   and its rule is drawn rather than lit, so the same two boxes become ruled
+   rectangles — which is what every other surface already does in this finish.
+   Without this they would be the only filled panels on a paper page. */
+.app[data-paper="1"] .watch .sd,
+.app[data-paper="1"] .watch .pn{
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  border: 1.2px solid var(--rule, var(--line));
+  border-radius: 2px;
+}
+
+.app[data-paper="1"] .watch .sd .sdhead{ border-bottom-color: var(--rule, var(--line)); }
