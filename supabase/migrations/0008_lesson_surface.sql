@@ -3,11 +3,15 @@
 -- Run after 0007. Safe to re-run. Additive only: it creates three tables and
 -- two functions and touches nothing that exists.
 --
--- NOT YET RUN against the live project. The lesson surface ships reading and
--- writing through user_progress, which works and needs no migration but is
--- per account — so a thread written today is visible only to the person who
--- wrote it, and the module cannot actually answer anyone. This file is what
--- makes it real, and running it is a decision rather than a step.
+-- RUN against the live project, and the client is now pointed at it. Verified
+-- on 2026-08-31 by connecting and looking, not inferred: all three tables
+-- exist, both functions are in pg_proc with matching signatures, and the
+-- lesson_threads_anchor_whole CHECK is present.
+--
+-- This header said "NOT YET RUN" for a while after it had been. That is the
+-- same failure the squadron.js comments carry, and the reason nothing in this
+-- project should trust a comment about deployment state: `npm run check:backend`
+-- and `npm run check:threads` are the source of truth. Run them.
 --
 -- THE ONE RULE THIS SCHEMA ENFORCES, because it cannot be enforced by
 -- remembering it: a thread with a lesson carries the moment it is anchored to,

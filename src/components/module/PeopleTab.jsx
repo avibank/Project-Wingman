@@ -38,7 +38,7 @@ function PeopleSkeleton({ rows = 4 }) {
 }
 
 export default function PeopleTab({ module: mod, people = [], onOpenAt, loading }) {
-  const { session, mutate, lastSeen, markSeen } = useSession();
+  const { session, mutate, lastSeen, markSeen, me } = useSession();
   const moduleId = mod.code || mod.id;
   const { threads, replies } = session;
 
@@ -46,11 +46,11 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt, loading 
   const [post, setPost] = useState("");
   const [replyBody, setReplyBody] = useState("");
 
-  const rows = peopleRows(threads, replies, people, moduleId, "u_you", lastSeen);
+  const rows = peopleRows(threads, replies, people, moduleId, me, lastSeen);
   const showSkeleton = loading && rows.length === 0;
   const groups = groupRows(rows);
   const current = open ? threads.find((t) => t.id === open) : null;
-  const who = (id) => (id === "u_you" ? "You"
+  const who = (id) => (id === me ? "You"
     : people.find((p) => p.id === id)?.callsign || id);
 
   // No split pane. The split is what cut 7 of 7 titles — it gave the list
@@ -106,7 +106,7 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt, loading 
                 <button type="button" className="compose-act" data-primary=""
                         onClick={() => {
                           if (!replyBody.trim()) return;
-                          mutate((s) => postReply(s, { threadId: current.id, body: replyBody }));
+                          mutate((s) => postReply(s, { threadId: current.id, body: replyBody, authorId: me }));
                           setReplyBody("");
                         }}>Reply</button>
               </div>
@@ -170,7 +170,7 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt, loading 
             <button type="button" className="compose-act" data-primary=""
                     onClick={() => {
                       if (!post.trim()) return;
-                      mutate((s) => postModulePost(s, { moduleId, body: post }));
+                      mutate((s) => postModulePost(s, { moduleId, body: post, authorId: me }));
                       setPost("");
                     }}>Post</button>
           </div>

@@ -286,7 +286,7 @@ export function closeBar(session, { authorId = 'u_you' } = {}) {
     ? session.notes.map(n => n.id === b.noteId
         ? { ...n, body, updatedAt: new Date().toISOString() } : n)
     : [...session.notes, {
-        id: `N${Date.now().toString(36)}`, lessonId: b.lessonId, t: b.t,
+        id: newId('N'), lessonId: b.lessonId, t: b.t,
         body, authorId, createdAt: new Date().toISOString()
       }];
   return { ...session, notes, bar: null,
@@ -315,7 +315,7 @@ export function publishNote(session, noteId, { moduleId }) {
   return { ...session,
     notes: session.notes.filter(x => x.id !== noteId),
     threads: [...session.threads, {
-      id: `T${Date.now().toString(36)}`, moduleId, lessonId: n.lessonId,
+      id: newId('T'), moduleId, lessonId: n.lessonId,
       t: n.t, body: n.body, authorId: n.authorId,
       createdAt: new Date().toISOString() }] };
 }
@@ -544,11 +544,23 @@ export const repliesFor = (replies, threadId) =>
   replies.filter(r => r.threadId === threadId)
          .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
+/* Ids are generated on this side, deliberately: the row is on screen the
+   instant Post is pressed and it needs its key before any server has seen it.
+   That was safe while threads lived in the account — the only writer was you.
+   In a SHARED table a bare millisecond is not a key: two people posting in the
+   same millisecond collide, the second insert is rejected on the primary key,
+   and the loser is told their post failed for no reason they can see. The
+   suffix is what makes a client-generated id safe to share. */
+export function newId(prefix) {
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `${prefix}${Date.now().toString(36)}${rand}`;
+}
+
 export function postComment(session, { moduleId, lessonId, seconds, body, authorId = 'u_you' }) {
   const text = body.trim();
   if (!text) return session;
   return { ...session, threads: [...session.threads, {
-    id: `T${Date.now().toString(36)}`, moduleId, lessonId,
+    id: newId('T'), moduleId, lessonId,
     t: Math.floor(seconds), body: text, authorId,
     createdAt: new Date().toISOString() }] };
 }
@@ -561,7 +573,7 @@ export function postModulePost(session, { moduleId, body, authorId = 'u_you' }) 
   const text = body.trim();
   if (!text) return session;
   return { ...session, threads: [...session.threads, {
-    id: `T${Date.now().toString(36)}`, moduleId, lessonId: null,
+    id: newId('T'), moduleId, lessonId: null,
     t: null, body: text, authorId, createdAt: new Date().toISOString() }] };
 }
 
@@ -572,7 +584,7 @@ export function postReply(session, { threadId, body, authorId = 'u_you' }) {
   const text = body.trim();
   if (!text) return session;
   return { ...session, replies: [...session.replies, {
-    id: `${threadId}.R${Date.now().toString(36)}`, threadId,
+    id: `${threadId}.${newId('R')}`, threadId,
     body: text, authorId, createdAt: new Date().toISOString() }] };
 }
 

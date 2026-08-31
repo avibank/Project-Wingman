@@ -79,9 +79,9 @@ ids to fill these.
 `supabase/migrations/` — 0000 progress table, 0001 social layer, 0002 threaded posts,
 0003 reactions and attempts and completions, 0004 progress merge, 0005 squadrons and
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
-squawks and teams, 0008 the lesson surface.
+squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary.
 
-**0000-0008 have all been run against the live project.** Verified by connecting
+**0000-0009 have all been run against the live project.** Verified by connecting
 on 2026-08-31, not inferred: all three of 0008's tables exist, both its functions
 are in `pg_proc` with matching signatures, and the `lesson_threads_anchor_whole`
 CHECK constraint is present. All three tables are empty.
@@ -90,9 +90,16 @@ This file previously said 0008 had NOT been run. That was wrong, and it is the
 exact failure the paragraph below warns about — `npm run check:backend` is the
 source of truth, so connect and look rather than believing this file.
 
-The lesson surface still READS AND WRITES through `user_progress`, so the tables
-existing does not by itself make threads multi-user: the client has to be
-pointed at them. That is a code change, not a migration.
+The client IS now pointed at them. Threads and replies live in `lesson_threads`
+and `lesson_replies` and are read by everyone; `npm run check:threads` proves it
+end to end over the anon REST path, writing as two different accounts and
+cleaning up after itself. Notes deliberately stay in `user_progress`: they are
+private, they have exactly one reader, and moving them would buy nothing.
+
+0009 states §7's right-seat boundary as a SQL function rather than an RLS
+policy. That is not a shortcut — `auth.uid()` is NULL on every request in this
+architecture, so a policy referencing it would silently deny every row rather
+than fail. Read 0009's header before writing any policy that mentions it.
 
 0000-0007 ran against `rpfgxxcpfrgajlkpoyes`, the project the deployed bundle points
 at. Verified directly, not inferred: all 31 tables the code reads answer over REST, and

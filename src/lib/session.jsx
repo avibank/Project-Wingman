@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { initialSession, playerReducer, DEFAULT_BAR_POS } from "./lessonSurface.js";
 import { useUserProgress } from "./userProgress.jsx";
+import { fetchDiscussion, insertThread, insertReply, deleteThread, deleteReply } from "./threads.js";
+import { configured as backendConfigured } from "./supabaseClient.js";
 
 // Session state for the lesson surface, and it lives ABOVE the router.
 //
@@ -13,12 +16,25 @@ import { useUserProgress } from "./userProgress.jsx";
 // entire point.
 //
 // What persists and what does not, from the brief:
-//   notes, threads, replies  -> the account, through the progress store
+//   notes                    -> the account, through the progress store. They
+//                               are private and have exactly one reader, so
+//                               the account IS the right home for them and
+//                               moving them to lesson_notes would buy nothing.
+//   threads, replies         -> lesson_threads / lesson_replies, SHARED. See
+//                               threads.js. They used to live in the progress
+//                               store, which is per account — which meant a
+//                               question was visible only to the person who
+//                               asked it and the module could not answer
+//                               anyone. That was the whole defect.
 //   player.seconds           -> the account, per lesson (pw-lesson-pos)
 //   tab, banner, composer    -> memory only
 const NOTES_KEY = "pw-notes";
+// Where threads and replies USED to live, per account. Read exactly once now,
+// to hand anything an account still holds over to the shared tables — see
+// adoptLegacy below. Never written again.
 const THREADS_KEY = "pw-threads";
 const REPLIES_KEY = "pw-replies";
+const ADOPTED_KEY = "pw-threads-adopted";
 const SEEN_KEY = "pw-thread-seen";
 const SEEDED_KEY = "pw-lesson-seeded";
 // Per account: someone who watches at 1.5 watches everything at 1.5, and
@@ -37,10 +53,35 @@ const readBarPos = () => {
   } catch { return DEFAULT_BAR_POS; }
 };
 
+/* The rows added and removed between two versions of a collection, sent on to
+   the server one at a time. Fire-and-forget by design: the row is already on
+   screen, postOptimistic is watching for the failure, and awaiting here would
+   make the composer wait on the network to clear itself. */
+function diffWrite(before, after, add, remove) {
+  if (before === after) return;
+  const was = new Map((before || []).map((r) => [r.id, r]));
+  const is = new Map((after || []).map((r) => [r.id, r]));
+  for (const [id, row] of is) if (!was.has(id)) add(row);
+  for (const id of was.keys()) if (!is.has(id)) remove(id);
+}
+
 const Ctx = createContext(null);
 
 export function SessionProvider({ children }) {
   const progress = useUserProgress();
+  // THE ONE OWNER OF "who am I" for the whole lesson surface.
+  //
+  // This was the string "u_you" written out by hand in five files. That is
+  // fine while every thread is private — you are the only person in your own
+  // copy — and it is exactly wrong the moment the table is shared, because
+  // every account would author, own and be badged for the same id. Clerk's id
+  // is what the user_id columns hold everywhere else in this codebase, so it
+  // is what they hold here.
+  //
+  // Signed out falls back to "u_you": the seeded demo is authored by it and
+  // nothing signed out can write to the shared tables anyway.
+  const { user } = useUser();
+  const me = user?.id || "u_you";
   const progressRef = useRef(progress);
   progressRef.current = progress;
   const [session, setSession] = useState(() => ({ ...initialSession, barPos: readBarPos() }));
@@ -67,8 +108,10 @@ export function SessionProvider({ children }) {
     setSession((s) => ({
       ...s,
       notes: progress.get(NOTES_KEY, []),
-      threads: progress.get(THREADS_KEY, []),
-      replies: progress.get(REPLIES_KEY, []),
+      // threads and replies are NOT read here any more — they come from the
+      // shared tables, per module, in loadDiscussion below. Reading the stale
+      // per-account copy first would flash one student's private history and
+      // then replace it, which looks exactly like data loss.
       // Speed and volume follow the account across devices; the bar's position
       // does not, and was read from localStorage at mount.
       player: {
@@ -89,8 +132,38 @@ export function SessionProvider({ children }) {
   // somebody had just typed with it. Measured: post with the network down and
   // the row appeared, then vanished.
   const seeded = useRef(false);
+  // Set only when the fixture's discussion is standing in for a missing
+  // backend. While it is, the shared tables are left alone entirely — the demo
+  // must not be able to write to them, and a real fetch must not wipe it.
+  // With a backend configured this stays false and the tables are the source.
+  const seededDiscussion = useRef(false);
   const seedFrom = useCallback((content) => {
-    if (!content || !loaded || seeded.current || progress.get(SEEDED_KEY, false)) return;
+    if (!content || !loaded) return;
+    // THE DEMO DISCUSSION ONLY FILLS IN FOR A MISSING BACKEND.
+    //
+    // content.test is `everyone: true` — it is on in production right now — so
+    // gating the shared tables on "is the fixture loaded" would have switched
+    // the real discussion off for every real user while every check still
+    // passed. The fixture supplies STRUCTURE (lessons, quizzes, papers), and
+    // that is orthogonal to whether the discussion is real.
+    //
+    // So: a configured backend wins, always, and the demo comments are not
+    // used at all — an empty room says "open the first thread", which is true,
+    // where forty invented comments from invented callsigns in a real shared
+    // room would not be. With no backend the fixture is all there is, and
+    // without it the room in local dev is permanently and misleadingly empty.
+    //
+    // Either way these rows go into MEMORY and are never written anywhere.
+    if (!backendConfigured) {
+      setSession((s) => ({
+        ...s,
+        threads: content.threads || [],
+        replies: content.replies || [],
+      }));
+      seededDiscussion.current = true;
+    }
+
+    if (seeded.current || progress.get(SEEDED_KEY, false)) return;
     seeded.current = true;
     // Claim hydration before writing. Child effects run before the parent's,
     // so App's seed call lands FIRST and the hydrate effect below would then
@@ -101,14 +174,7 @@ export function SessionProvider({ children }) {
     hydrated.current = true;
     progress.set(SEEDED_KEY, true);
     progress.set(NOTES_KEY, content.notes || []);
-    progress.set(THREADS_KEY, content.threads || []);
-    progress.set(REPLIES_KEY, content.replies || []);
-    setSession((s) => ({
-      ...s,
-      notes: content.notes || [],
-      threads: content.threads || [],
-      replies: content.replies || [],
-    }));
+    setSession((s) => ({ ...s, notes: content.notes || [] }));
 
     // The seeded watch state, so every route-row state is visible on a first
     // run — three lessons done, three part-watched, the rest untouched. Merged
@@ -136,8 +202,20 @@ export function SessionProvider({ children }) {
       const next = fn(s);
       if (next === s) return s;
       if (next.notes !== s.notes) progress.set(NOTES_KEY, next.notes);
-      if (next.threads !== s.threads) progress.set(THREADS_KEY, next.threads);
-      if (next.replies !== s.replies) progress.set(REPLIES_KEY, next.replies);
+      // Threads and replies go to the shared tables, and they go a ROW AT A
+      // TIME. The pure functions in lessonSurface.js all take a session and
+      // return a new one with a row added or removed, so the difference
+      // between the two arrays is exactly the write to make. Diffing here
+      // rather than changing those functions keeps them pure, keeps every call
+      // site untouched, and means there is still one way to post.
+      //
+      // Writing the whole array instead would be the progress clobber again in
+      // a new table: two students posting a minute apart would each send their
+      // own full copy and the second would erase the first.
+      if (!seededDiscussion.current) {
+        diffWrite(s.threads, next.threads, insertThread, deleteThread);
+        diffWrite(s.replies, next.replies, insertReply, deleteReply);
+      }
       return next;
     });
   }, [progress]);
@@ -174,6 +252,58 @@ export function SessionProvider({ children }) {
     progress.set(SEEN_KEY, { ...seen, [threadId]: new Date().toISOString() });
   }, [progress]);
 
+  /* ------------------------------------------------------ the shared read */
+  // One module's discussion, from the shared tables. Called by the app when the
+  // active module changes; the rows for that module are replaced and every
+  // other module's are left alone, so moving between modules and back does not
+  // refetch what is already here or drop what is.
+  const loadDiscussion = useCallback(async (moduleId) => {
+    if (!moduleId || seededDiscussion.current) return;
+    const { threads, replies, failed } = await fetchDiscussion(moduleId, me);
+    // A failed read leaves what is on screen alone. Replacing it with an empty
+    // list would read as "this module has no discussion", which is a much
+    // worse lie than a stale one.
+    if (failed) return;
+    const keep = (rows) => (rows || []).filter((r) => r.moduleId !== moduleId);
+    setSession((s) => {
+      const mine = new Set(threads.map((t) => t.id));
+      return {
+        ...s,
+        threads: [...keep(s.threads), ...threads],
+        // Replies are keyed by thread, not by module, so they are pruned by
+        // the threads they belong to rather than by a moduleId they do not
+        // carry.
+        replies: [
+          ...(s.replies || []).filter((r) => !mine.has(r.threadId)
+            && !threads.some((t) => t.id === r.threadId)),
+          ...replies,
+        ],
+      };
+    });
+  }, [me]);
+
+  // Anything this account wrote back when threads were per-account gets handed
+  // to the shared tables once, then the flag is set and this never runs again.
+  // The alternative is abandoning it in place, which loses posts people wrote
+  // and would be invisible — they simply would not be there any more.
+  const adopting = useRef(false);
+  useEffect(() => {
+    if (!loaded || adopting.current || seededDiscussion.current) return;
+    if (progress.get(ADOPTED_KEY, false)) return;
+    const oldThreads = progress.get(THREADS_KEY, []);
+    const oldReplies = progress.get(REPLIES_KEY, []);
+    adopting.current = true;
+    if (!oldThreads.length && !oldReplies.length) { progress.set(ADOPTED_KEY, true); return; }
+    (async () => {
+      // Sequential and best-effort. An id that is already there fails on the
+      // primary key, which is the correct outcome for a re-run and is why the
+      // flag is set regardless of individual results.
+      for (const t of oldThreads) await insertThread({ ...t, authorId: t.authorId === "u_you" ? me : t.authorId });
+      for (const r of oldReplies) await insertReply({ ...r, authorId: r.authorId === "u_you" ? me : r.authorId });
+      progress.set(ADOPTED_KEY, true);
+    })();
+  }, [loaded, progress, me]);
+
   // Rows in both lists seek the video, and the video is owned by the layer.
   // The request travels as state so the two never hold references to each
   // other: the list asks for a second, the layer applies it and clears it.
@@ -207,13 +337,13 @@ export function SessionProvider({ children }) {
   const clearWatch = useCallback(() => setSession((s) => ({ ...s, watchAt: null })), []);
 
   const value = useMemo(() => ({
-    session, setSession, mutate, dispatchPlayer,
+    session, setSession, mutate, dispatchPlayer, me, loadDiscussion,
     stage, setStage, stageRef,
     seedFrom, markSeen, requestSeek, clearSeek, requestWatch, clearWatch,
     setBarPos, setRate, setVolume, pending, postOptimistic, clearPending,
     lastSeen: progress.get(SEEN_KEY, {}),
     setTab: (tab) => setSession((s) => ({ ...s, tab })),
-  }), [session, stage, mutate, dispatchPlayer, setStage, seedFrom, markSeen,
+  }), [session, stage, mutate, dispatchPlayer, me, loadDiscussion, setStage, seedFrom, markSeen,
        requestSeek, clearSeek, requestWatch, clearWatch,
        setBarPos, setRate, setVolume, pending, postOptimistic, clearPending, progress]);
 

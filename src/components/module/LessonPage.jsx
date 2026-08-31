@@ -9,7 +9,7 @@ import {
 } from "../../lib/familiar.js";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
-  deleteNote, postReply,
+  deleteNote, postReply, newId,
 } from "../../lib/lessonSurface.js";
 import "./module.css";
 import "./lesson.css";
@@ -58,7 +58,7 @@ export default function LessonPage({
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab,
-          clearWatch, pending, postOptimistic } = useSession();
+          clearWatch, pending, postOptimistic, me } = useSession();
   const slotRef = useRef(null);
   const watch = session.watchAt?.lessonId === lesson.id ? session.watchAt : null;
 
@@ -123,7 +123,7 @@ export default function LessonPage({
 
   // The meta line, in the shape of a view count. Watchers comes from presence,
   // which is the only real signal there is — it is not invented.
-  const watchers = presence.filter((p) => p.lessonId === lesson.id && p.userId !== "u_you").length;
+  const watchers = presence.filter((p) => p.lessonId === lesson.id && p.userId !== me).length;
   const added = lesson.addedAt
     ? new Date(lesson.addedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })
     : null;
@@ -152,20 +152,20 @@ export default function LessonPage({
     if (!text) return;
     const t = detached ? null : Math.floor(chip ?? at);
     if (tab === "notes") {
-      const id = `N${Date.now().toString(36)}`;
+      const id = newId('N');
       mutate((st) => ({ ...st, notes: [...st.notes, {
         id, lessonId: lesson.id, t: t ?? 0, body: text,
-        authorId: "u_you", createdAt: new Date().toISOString(),
+        authorId: me, createdAt: new Date().toISOString(),
       }]}));
       setJustSaved(id);
     } else {
-      const id = `T${Date.now().toString(36)}`;
+      const id = newId('T');
       // Posting with the chip attached prefixes the comment, so the moment
       // becomes a link like any other timestamp written by hand.
       const body = t === null ? text : `[${mmss(t)}] ${text}`;
       postOptimistic(id, (st) => ({ ...st, threads: [...st.threads, {
         id, moduleId: mod.code || mod.id, lessonId: lesson.id,
-        t: t ?? 0, body, authorId: "u_you", createdAt: new Date().toISOString(),
+        t: t ?? 0, body, authorId: me, createdAt: new Date().toISOString(),
       }]}));
     }
     setDraft(""); setChip(null); setDetached(false);
@@ -391,7 +391,7 @@ export default function LessonPage({
                          }}
                          lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
                          people={people} onSeek={requestSeek} mutate={mutate}
-                         pending={pending} postOptimistic={postOptimistic} />}
+                         pending={pending} postOptimistic={postOptimistic} me={me} />}
       </div>
 
       </div>
@@ -406,11 +406,11 @@ export default function LessonPage({
 // replies collapsed behind one expander, because that is what everyone has
 // seen ten thousand times and because an expanded thread pushes the next
 // question off the screen.
-function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate, pending, postOptimistic, onReport }) {
+function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate, pending, postOptimistic, onReport, me }) {
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
-    id === "u_you" ? "You" : (people.find((p) => p.id === id)?.callsign || id);
+    id === me ? "You" : (people.find((p) => p.id === id)?.callsign || id);
   // §3.5 — the instructor badge, "where it applies". One resolver, so a badge
   // can never appear beside a name the same lookup failed to resolve.
   const teaches = (id) => people.find((p) => p.id === id)?.role === "instructor";
@@ -436,10 +436,10 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
                   onClick={() => {
                     if (!body.trim()) return;
                     // On screen this frame, settled underneath. No spinner.
-                    const id = `T${Date.now().toString(36)}`;
+                    const id = newId('T');
                     postOptimistic(id, (s) => ({ ...s, threads: [...s.threads, {
                       id, moduleId, lessonId: lesson.id, t: Math.floor(at),
-                      body: body.trim(), authorId: "u_you",
+                      body: body.trim(), authorId: me,
                       createdAt: new Date().toISOString(),
                     }]}));
                     setBody("");

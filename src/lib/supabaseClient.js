@@ -26,7 +26,11 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // failing the queries. createClient() failed later and softer. A same-origin
 // base keeps that shape: requests 404, the app keeps running, and the console
 // says which variable is missing instead of leaving a stack to decipher.
-const configured = Boolean(url && anonKey);
+// Exported because the lesson surface has to know whether there is a real
+// backend to read the shared discussion from. With one, the tables win and the
+// fixture's demo comments are not used at all; without one, the fixture is all
+// there is and the room would otherwise be permanently empty in local dev.
+export const configured = Boolean(url && anonKey);
 if (!configured && typeof console !== "undefined") {
   console.error(
     "Supabase is not configured: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY " +

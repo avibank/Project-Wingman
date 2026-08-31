@@ -58,6 +58,9 @@ import {
 import Review from "./components/module/Review.jsx";
 import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
+import { badgeCount } from "./lib/roomModel.js";
+import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
+import { reportContent } from "./lib/squadron.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
   return (
@@ -202,7 +205,7 @@ function AppInner() {
   // The seeded notes and threads are written into the account once and then
   // owned like anything else — otherwise deleting a seeded note would bring it
   // back on the next reload.
-  const { seedFrom, requestWatch, session, mutate, requestSeek } = useSession();
+  const { seedFrom, requestWatch, session, mutate, requestSeek, me, loadDiscussion } = useSession();
   // The ammeter's panel: each chapter's FIRST-attempt score against the pass
   // mark. A retake is labelled as one and does not move the needle, so the
   // panel has to show which figure the needle is actually reading.
@@ -369,27 +372,67 @@ function AppInner() {
       setStorageWarning(true);
     }
   }, []);
-  useEffect(() => {
-  }, [isSignedIn, user?.id]);
-
   // §8 — the badge counts THINGS ADDRESSED TO YOU and nothing else: unread
   // squadron messages, and replies in threads you are part of. Not every new
   // thread in a module you are enrolled in — that lights permanently within a
   // week and teaches everyone to ignore the one attention mechanism there is.
   // Threads you are merely near get the quiet row dot in the sidebar instead.
-  const roomBadge = useMemo(() => {
+  /* ------------------------------------------------- the room's shared data */
+  // The discussion for whichever module is in front of you, from the shared
+  // tables. Re-run on the module, so walking between modules loads each one
+  // once and keeps what it already had.
+  useEffect(() => { loadDiscussion?.(activeModuleCode); }, [activeModuleCode, loadDiscussion, me]);
+
+  // Squadrons, their chat, and the right seat. These were literal empty arrays
+  // — the room drew its own empty states perfectly over nothing at all.
+  const [squadrons, setSquadrons] = useState([]);
+  const [roomMessages, setRoomMessages] = useState([]);
+  const [rightSeat, setRightSeat] = useState([]);
+  useEffect(() => {
+    if (!isSignedIn || !flags["social.readyroom"]) { setSquadrons([]); setRoomMessages([]); setRightSeat([]); return undefined; }
+    let live = true;
+    (async () => {
+      const sqs = await fetchMySquadrons(me);
+      if (!live) return;
+      setSquadrons(sqs);
+      const [msgs, seat] = await Promise.all([
+        fetchSquadronMessages(me, sqs.map((x) => x.id)),
+        fetchRightSeat(me, sqs),
+      ]);
+      if (!live) return;
+      setRoomMessages(msgs);
+      setRightSeat(seat);
+    })();
+    return () => { live = false; };
+  }, [isSignedIn, me, flags]);
+
+  // Unread per squadron, for the badge. Counted against the same pw-room-seen
+  // stamp the threads use, so one "seen" gesture settles both registers.
+  const chatUnread = useMemo(() => {
     const seen = progress.get("pw-room-seen", {});
-    const mine = progress.get("pw-my-threads", []);
-    const replies = progress.get("pw-thread-replies", {});
-    let n = 0;
-    for (const id of mine) {
-      const last = replies[id] || 0;
-      if (last > (seen[id] || 0)) n += 1;
+    const out = {};
+    for (const m of roomMessages) {
+      if (m.authorId === me) continue;
+      const at = Date.parse(m.createdAt) || 0;
+      if (at > (seen[m.squadronId] || 0)) out[m.squadronId] = (out[m.squadronId] || 0) + 1;
     }
-    const chats = progress.get("pw-squadron-unread", {});
-    for (const k of Object.keys(chats)) n += chats[k] || 0;
-    return n;
-  }, [progress]);
+    return out;
+  }, [roomMessages, progress, me]);
+
+  //
+  // This counted three progress keys — pw-my-threads, pw-thread-replies and
+  // pw-squadron-unread — that NOTHING in the codebase has ever written. The
+  // badge was therefore permanently zero: the one attention mechanism in the
+  // app, wired to nothing. It now counts the rows themselves, through the same
+  // badgeCount the room's own model exposes, so the pill and the sidebar can
+  // never disagree about what is waiting.
+  const roomBadge = useMemo(() => badgeCount({
+    threads: session.threads,
+    replies: session.replies,
+    seen: progress.get("pw-room-seen", {}),
+    chatUnread: chatUnread,
+    me,
+  }), [session.threads, session.replies, progress, chatUnread, me]);
 
   // pw-last-visit is still stamped — the logbook reads it and it is not a
   // streak. What is gone is the counting: pw-streak, pw-longest-streak and the
@@ -598,7 +641,7 @@ function AppInner() {
       {route.name === "ready" && flags["social.readyroom"] ? (
         <main className="content content-taxi content--full">
           <ReadyRoomShell
-            me="u_you"
+            me={me}
             modules={allModules(useTestContent)}
             activeModuleCode={activeModuleCode}
             chapters={chaptersFor(activeModuleCode, useTestContent)}
@@ -606,8 +649,9 @@ function AppInner() {
             replies={session.replies}
             people={useTestContent?.people || []}
             presence={useTestContent?.presence || []}
-            squadrons={[]}
-            messages={[]}
+            squadrons={squadrons}
+            messages={roomMessages}
+            seatCandidates={rightSeat}
             seen={progress.get("pw-room-seen", {})}
             onSeen={(id) => progress.set("pw-room-seen",
               { ...progress.get("pw-room-seen", {}), [id]: Date.now() })}
@@ -623,12 +667,29 @@ function AppInner() {
             }}
             onPost={(ev) => {
               if (ev.kind === "reply") {
-                mutate((sx) => postReply(sx, { threadId: ev.threadId, body: ev.body }));
+                mutate((sx) => postReply(sx, { threadId: ev.threadId, body: ev.body, authorId: me }));
+                return;
               }
-              // Squadron chat and right seat need the shared tables; see the
-              // note in the commit. Threads work today because they already do.
+              if (ev.kind === "message") {
+                const sq = squadrons.find((x) => x.id === ev.squadronId);
+                postSquadronMessage({
+                  me, squadronId: ev.squadronId, moduleCode: sq?.moduleCode, body: ev.body,
+                }).then((row) => { if (row) setRoomMessages((ms) => [...ms, row]); });
+              }
             }}
-            onReport={(what) => console.info("report", what)}
+            onReport={(what) => {
+              // The reports table has existed since 0005 and nothing was
+              // writing to it: a Flag button that only reached the console is
+              // a safety control that does not exist. Fire-and-forget, because
+              // the person reporting is owed an acknowledgement, not a wait.
+              reportContent({
+                reporterId: me,
+                targetType: what?.kind || "message",
+                targetId: String(what?.id || ""),
+                reason: what?.reason || null,
+                channelId: what?.squadronId || null,
+              });
+            }}
           />
         </main>
       ) : settingsPage === "auth" ? (

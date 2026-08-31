@@ -33,7 +33,7 @@ const toggle = (set, k) => {
 export default function ReadyRoom({
   me = "u_you", modules = [], activeModuleCode,
   threads = [], replies = [], people = [], presence = [],
-  squadrons = [], messages = [], seen = {}, chapters = [],
+  squadrons = [], messages = [], seen = {}, chapters = [], seatCandidates = [],
   onOpenLessonAt, onPost, onReport, onBlock, onSeen,
 }) {
   const [openId, setOpenId] = useState(null);     // what the main pane shows
@@ -242,7 +242,12 @@ export default function ReadyRoom({
         )}
 
         {rightSeat && (
-          <RightSeat candidates={presence} who={who} squadrons={squadrons}
+          /* §7 — the people you SHARE A SQUADRON WITH, not everyone who
+             happens to be online. This was handed the raw presence list, which
+             offered every signed-in stranger as someone to sit with — the
+             exact opposite of the boundary rightSeatCandidates states. The
+             filtering happens in roomData, against that one function. */
+          <RightSeat candidates={seatCandidates} who={who} squadrons={squadrons}
                      onBack={back} onPost={onPost} />
         )}
       </section>

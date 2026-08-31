@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { reportContent } from "../lib/squadron.js";
 
 // One tap, and it carries the route and the state with it. The point is that
 // a student never has to describe where they were — the report already knows,
@@ -8,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 // prop every call site forgot to pass.
 export default function ReportProblem({ route, extra = null }) {
   const [sent, setSent] = useState(false);
+  const { user } = useUser();
   // One timer, restarted per report. Two reports four seconds apart used to
   // leave two running, and the FIRST one's expiry cleared the second's
   // confirmation early — so the second report looked like it had not been
@@ -23,10 +26,22 @@ export default function ReportProblem({ route, extra = null }) {
       ua: navigator.userAgent,
       ...extra,
     };
-    // There is no destination yet, and inventing one would be worse than
-    // saying so. It goes to the console until a sink exists — the shape is
-    // what matters now, and the shape is what will be posted.
-    console.info("Problem report", report);
+    // The sink is the `reports` table, which has existed since 0005. This said
+    // "there is no destination yet" and went to the console, which meant the
+    // button was honest about its shape and dishonest about its effect: it
+    // says "noted where you were" to the student, and nothing was noted
+    // anywhere anyone would ever look.
+    //
+    // target_type is 'route' rather than 'message' — this is the broken-page
+    // report, not content moderation, and the two share a table but not a
+    // meaning. The whole context goes in `reason` because that is the column
+    // that takes free text, and the context IS the report here.
+    reportContent({
+      reporterId: user?.id || "anonymous",
+      targetType: "route",
+      targetId: String(route || "unknown"),
+      reason: JSON.stringify(report),
+    });
     setSent(true);
     clearTimeout(clearAt.current);
     clearAt.current = setTimeout(() => setSent(false), 4000);
