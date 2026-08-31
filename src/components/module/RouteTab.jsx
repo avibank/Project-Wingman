@@ -167,9 +167,16 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                     // offer the way back in. It was the highest-value action on
                     // the page and a dead end: the row said "you got 4 of 8"
                     // and gave you nowhere to go with that.
-                    const total = score?.total ?? (ch.quizCount || 8);
-                    const need = passAt(total);
-                    const failed = score != null && score.correct < need;
+                    // No invented count. This fell back to 8, which is right
+                    // for the fixture by coincidence and wrong everywhere else:
+                    // with the content flag off, data.js chapters carry no quiz
+                    // at all and every row would still have advertised "8
+                    // questions" — and passAt(8) would have set a pass mark for
+                    // a quiz that does not exist. A number shown to a student
+                    // has to come from somewhere.
+                    const total = score?.total ?? ch.quizCount ?? null;
+                    const need = total ? passAt(total) : null;
+                    const failed = score != null && need != null && score.correct < need;
                     const state = score != null && !failed ? "done" : "todo";
                     return (
                       <button type="button" className="item" data-state={state}
@@ -178,7 +185,10 @@ export default function RouteTab({ module: mod, chapters, state, here, open, onT
                         <span className="imain">
                           <span className="iname">{ch.title} quiz</span>
                           <span className="imeta">
-                            {total} questions{failed ? " · below the pass mark" : ""}
+                            {[
+                              total ? `${total} question${total === 1 ? "" : "s"}` : null,
+                              failed ? "below the pass mark" : null,
+                            ].filter(Boolean).join(" · ")}
                           </span>
                         </span>
                         <span className="istat">

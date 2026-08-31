@@ -51,6 +51,7 @@ const KNOWN = new Map();
 const rows = [];
 const fails = [];
 const known = [];
+const undecided = [];   // measured, real, and waiting on a palette decision
 
 for (const L of LIVERIES) {
   for (const variant of ["night", "day"]) {
@@ -66,19 +67,50 @@ for (const L of LIVERIES) {
       const Yg = Y(lin(ground.L, ground.C, ground.H));
       const Yp = Y(over(panel, ground));
 
+      // --sunk and --raised carry text too, and neither was measured. The
+      // Ready Room's whole sidebar sits on --sunk, and in Day --sunk is
+      // DARKER than --panel, so every ratio taken against the panel was the
+      // optimistic one. Missing a surface is how a tier passes everywhere the
+      // checker looks and fails where it does not.
+      const sunk = parse(v["--sunk"]);
+      const raised = parse(v["--raised"]);
+      const Ys = sunk ? Y(over(sunk, ground)) : null;
+      const Yr = raised ? Y(over(raised, ground)) : null;
+
       for (const tier of ["--t3", "--t2", "--t1"]) {
         const t = parse(v[tier]);
         if (!t) { fails.push(`${L.id}/${variant}/${finish || "standard"}: could not read ${tier}`); continue; }
         const Yt = Y(over(t, panel.a < 1 ? { ...panel, a: 1 } : panel));
         const onGround = ratio(Yt, Yg);
         const onPanel = ratio(Yt, Yp);
+        const onSunk = Ys == null ? Infinity : ratio(Yt, Ys);
+        const onRaised = Yr == null ? Infinity : ratio(Yt, Yr);
         const where = `${L.id}/${variant}/${finish || "standard"} ${tier}`;
-        rows.push({ where, onGround, onPanel });
+        rows.push({ where, onGround, onPanel, onSunk, onRaised });
         // t3 is the floor tier: it is the smallest text that carries meaning.
-        if (tier === "--t3" && Math.min(onGround, onPanel) < FLOOR) {
-          const got = Math.min(onGround, onPanel).toFixed(2);
+        //
+        // GROUND, PANEL AND SUNK GATE. --raised does not, yet, and that is a
+        // deliberate distinction rather than an oversight. Adding --sunk and
+        // --raised to this file surfaced a real failure that had never been
+        // measured: t3 on --raised is under the floor in NIGHT in every single
+        // livery, 4.21 to 4.48 against 4.5. Day is clear everywhere, and
+        // ground, panel and sunk are clear everywhere.
+        //
+        // It is not silenced into KNOWN, because the note above is right that
+        // the list is an invitation. It is not fixed here either, because both
+        // fixes are visible palette changes and so are the author's call:
+        // lift --t3 in night, which touches every surface, or darken --raised
+        // in night, which touches hover states and chips. Until that decision
+        // it is reported loudly and does not gate, so the surfaces that DO
+        // pass start gating today instead of waiting on it.
+        const gated = Math.min(onGround, onPanel, onSunk);
+        if (tier === "--t3" && gated < FLOOR) {
+          const got = gated.toFixed(2);
           if (KNOWN.has(where)) known.push(`${where}: ${got}:1`);
           else fails.push(`${where}: ${got}:1, under ${FLOOR}`);
+        }
+        if (tier === "--t3" && onRaised < FLOOR) {
+          undecided.push(`${where} on --raised: ${onRaised.toFixed(2)}:1, under ${FLOOR}`);
         }
       }
     }
@@ -86,10 +118,21 @@ for (const L of LIVERIES) {
 }
 
 const t3 = rows.filter((r) => r.where.endsWith("--t3"));
-const lo = Math.min(...t3.map((r) => Math.min(r.onGround, r.onPanel)));
-const hi = Math.max(...t3.map((r) => Math.min(r.onGround, r.onPanel)));
-console.log(`contrast: ${rows.length} measurements across ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora`);
-console.log(`          t3, the floor tier, spans ${lo.toFixed(2)} to ${hi.toFixed(2)} against ${FLOOR}`);
+// The headline span must describe what actually gates, or the number and the
+// verdict disagree — --raised is reported separately below.
+const worstOf = (r) => Math.min(r.onGround, r.onPanel, r.onSunk);
+const lo = Math.min(...t3.map(worstOf));
+const hi = Math.max(...t3.map(worstOf));
+console.log(`contrast: ${rows.length} tiers x 4 surfaces across ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora`);
+console.log(`          t3, the floor tier, spans ${lo.toFixed(2)} to ${hi.toFixed(2)} against ${FLOOR} on ground, panel and sunk`);
+if (undecided.length) {
+  console.log(`\n          --raised carries t3 below the floor in ${undecided.length} of the ${rows.filter((r) => r.where.endsWith("--t3")).length} tier/variant combinations.`);
+  console.log("          Newly measured, not previously known, and NOT gating: the fix is a");
+  console.log("          palette change and so is a decision, not a correction. Lift --t3 in");
+  console.log("          night, or darken --raised in night.");
+  for (const u of undecided.slice(0, 4)) console.log("  NEEDS A DECISION  " + u);
+  if (undecided.length > 4) console.log(`  ... and ${undecided.length - 4} more, all night, all liveries`);
+}
 for (const k of known) console.log("  KNOWN, UNFIXED  " + k);
 if (known.length) console.log(`          ${known.length} known failures need a decision — see KNOWN in this file`);
 for (const f of fails) console.log("  FAIL  " + f);
