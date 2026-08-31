@@ -49,12 +49,90 @@ import {
 // and the bars spilled out of their cel. Specificity could not fix that:
 // `.deck .lamp` never set width, so there was nothing to win. Not sharing the
 // name is the fix.
-export function CautionMark({ compact = false, className = "" }) {
+// `lit` defaults to true because every existing caller renders this ONLY where
+// there is already a fault — the mark exists to say so. Manual's indicator row
+// is the first place the lamp is permanent, so it needs to be able to sit dark:
+// an instrument at rest, hatched, waiting. A lamp that is lit whether or not
+// anything is wrong is not an instrument, it is decoration.
+export function CautionMark({ compact = false, className = "", lit = true }) {
   return (
     <span className={`lamp-mark${compact ? " lamp-sm" : ""} ${className}`.trim()}
-          data-lit="true" role="img" aria-label="Master caution">
+          data-lit={lit ? "true" : "false"} role="img"
+          aria-label={lit ? "Master caution" : "Master caution, off"}>
       {compact ? <span>MASTER CAUTION</span> : (<><span>MASTER</span><span>CAUTION</span></>)}
     </span>
+  );
+}
+
+/* ====================== §2.3 — THE INDICATOR ROW, MANUAL ONLY ==============
+   Three indicators under the module title: accuracy, calibration, master
+   caution. They are the ONE piece of the old module banner that Manual keeps.
+
+   Why only Manual. §1 of the module brief removed this row from the screen,
+   and that removal stands for Standard and Aurora: one signal (the lamp, on
+   whichever chapter owns the problem) and one dial (in the Library). Manual is
+   a different argument — it is a paper file, and a paper file has a cover
+   sheet with the readings written on it. The instruments here are drawn, not
+   lit, so they read as a printed schematic rather than a second dashboard
+   competing with the list below.
+
+   Every value comes from the two numbers ModuleScreen already derived, handed
+   down rather than recomputed, so this row cannot form its own opinion about
+   the same fact — the rule §8 sets for the lamp and the Library dial.
+   ========================================================================= */
+
+/* Absolute scale, 0 hard left to 100 hard right, graduated at 0 / 50 / 100.
+   The needle is a <line> inside .g-needle rather than a path drawn to the
+   computed tip, because both stylesheets already target `.g-needle line`, and
+   .g-needle carries the 650ms damping that stops the needle snapping. Rotating
+   is the same geometry: straight up is 50, so the angle is (v - 0.5) * 180.
+   Checked against the brief — v = 0.68 puts the tip at (30.8, 13.7). */
+function AccuracyGauge({ pct }) {
+  const has = Number.isFinite(pct);
+  const v = has ? Math.max(0, Math.min(1, pct / 100)) : 0;
+  const deg = (v - 0.5) * 180;
+  return (
+    <span className="gauge" data-nodata={has ? undefined : ""} role="img"
+          aria-label={has ? `Accuracy, ${Math.round(pct)} per cent`
+            : "Accuracy, waiting on your first quiz"}>
+      <svg viewBox="0 0 46 30" width="30" height="20" fill="none" aria-hidden="true">
+        <path className="g-arc" d="M6 26 A17 17 0 0 1 40 26" />
+        <path className="g-tick" d="M3.4 26 L7.2 26 M23 6.4 L23 10.2 M42.6 26 L38.8 26" />
+        {/* Parked hard left with no data, which is the off-scale half of the
+            two cues .gauge[data-nodata] gives — never colour alone. */}
+        <g className="g-needle" transform={`rotate(${deg} 23 26)`}>
+          <line x1="23" y1="26" x2="23" y2="11.5" />
+        </g>
+        <circle className="g-hub" cx="23" cy="26" r="2" />
+      </svg>
+    </span>
+  );
+}
+
+/* The legend on a ruled band, the reading beneath it. Manual turns the band's
+   fill off and rules it instead; the perforation the other finishes draw is
+   off here because it strikes through the word CALIBRATION. */
+function CalibrationSticker({ done }) {
+  return (
+    <span className="sticker" data-state={done ? "ok" : "nodata"} role="img"
+          aria-label={done ? "Calibration, current" : "Calibration, a re-check sets this"}>
+      <span className="band">CALIBRATION</span>
+      <span className="val">{done ? "✓" : "–"}</span>
+    </span>
+  );
+}
+
+export function IndicatorRow({ avgPct, calibrated = false, caution = false }) {
+  return (
+    <div className="instrow">
+      {/* Divs, not buttons. .ind carries button styling from when each one
+          opened a panel; those panels are gone, and a cursor: pointer on
+          something that does nothing is a promise the screen does not keep.
+          Manual turns the cursor back to default. */}
+      <div className="ind"><AccuracyGauge pct={avgPct} /></div>
+      <div className="ind"><CalibrationSticker done={calibrated} /></div>
+      <div className="ind"><CautionMark lit={caution} /></div>
+    </div>
   );
 }
 

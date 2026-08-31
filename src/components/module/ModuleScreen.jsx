@@ -8,6 +8,7 @@ import { holdingCount } from "../../lib/retention.js";
 import { takenScores, averagePct, lastPct, faultChapters } from "../../lib/minimums.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
+import { IndicatorRow, FlightProfile } from "./Instruments.jsx";
 import { currentLesson } from "./lessonState.js";
 import "./module.css";
 import "./manual.css";
@@ -36,6 +37,10 @@ export default function ModuleScreen({
   // field on `retention`, which is what it looks like it should be. Reading it
   // off retention returns undefined forever and the row silently loses its date.
   lastRecheck = null,
+  // Manual draws its own cover sheet — the indicator row and the route with
+  // the paper dart. Passed rather than sniffed off the DOM, the same way Home
+  // decides between the instrument strip and PaperStrip.
+  finish = null,
   retention, onInstrument,
   people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
   onOpenQuestion,
@@ -67,6 +72,18 @@ export default function ModuleScreen({
   const avgPct = averagePct(taken);          // the needle
   const lastQuizPct = lastPct(taken);        // the hollow marker
   const faults = faultChapters(chapters, state?.quiz || {}, minimums);
+
+  // Manual's cover sheet. `paper` gates the whole branch, so nothing below is
+  // computed for a finish that will not draw it — and Standard and Aurora keep
+  // the bare <h1> they had.
+  const paper = finish === "manual";
+  const atIndex = here?.chapter?.id
+    ? Math.max(0, chapters.findIndex((c) => c.id === here.chapter.id))
+    : 0;
+  // "Started" is the dart's own question — is there an aircraft on this route
+  // at all. A quiz taken counts as much as a lesson opened; either means you
+  // have left the threshold.
+  const started = taken.length > 0 || Boolean(here);
 
   // §2.3 — one field, beside the tabs. It belongs to the screen rather than to
   // either tab: the Library used to carry its own, which meant the same words
@@ -117,15 +134,35 @@ export default function ModuleScreen({
         </button>
       </div>
 
-      {/* §1 — THE MODULE TITLE, AND NOTHING ELSE.
-          The instrument row and the flight profile both used to live here. The
-          profile is a fleet view and belongs on the Flight Deck's module cards,
-          where it already is; the three indicators became one signal (the lamp,
-          on whichever chapter owns the problem) and one dial (in the Library).
-          Nothing floats above the list any more, and nothing up here repeats a
-          fact the row beneath it already states. */}
+      {/* §1 — THE MODULE TITLE, AND NOTHING ELSE. EXCEPT ON PAPER.
+          The instrument row and the flight profile used to live here in every
+          finish. For Standard and Aurora that removal stands: the profile is a
+          fleet view and belongs on the Flight Deck's module cards where it
+          already is, and the three indicators became one signal (the lamp, on
+          whichever chapter owns the problem) and one dial (in the Library).
+
+          Manual is the exception, and deliberately the only one. It is a paper
+          file, and a paper file opens on a cover sheet with the readings
+          written across it. Drawn, not lit — a printed schematic rather than a
+          second dashboard arguing with the list below.
+
+          The non-paper branch renders the bare <h1> it rendered before, with
+          no wrapper, so those two finishes are untouched down to the box tree.
+          Every value is handed down from the two numbers derived above; this
+          row never recomputes them. */}
       <div className="mhero">
-        <h1 className="mhero-title">{mod.name}</h1>
+        {paper ? (
+          <>
+            <div className="mhero-main">
+              <h1 className="mhero-title">{mod.name}</h1>
+              <IndicatorRow avgPct={avgPct} calibrated={!!lastRecheck}
+                            caution={faults.size > 0} />
+            </div>
+            <FlightProfile chapters={chapters} atIndex={atIndex} started={started} />
+          </>
+        ) : (
+          <h1 className="mhero-title">{mod.name}</h1>
+        )}
       </div>
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to

@@ -1030,6 +1030,7 @@ function AppInner() {
             papers={papersFor(activeModuleCode, useTestContent)}
             retention={progress.get(RETENTION_KEY, emptyRetention())}
             lastRecheck={progress.get("pw-last-recheck", null)}
+            finish={finish}
             minimums={minimums}
             onMinimums={(n) => progress.set(MINIMUMS_KEY, clampMinimums(n))}
             onInstrument={(what) => {

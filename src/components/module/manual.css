@@ -256,3 +256,44 @@
 @media (max-width: 560px){
   .app[data-paper="1"] .mscreen .mcard::after{ display: none; }
 }
+
+/* ------------------------------- 4 · THE COVER SHEET (hero layout, Manual) */
+/* The banner goes back to two columns HERE ONLY: the title with the indicator
+   row beneath it on the left, the route with its paper dart on the right.
+   Standard and Aurora render a bare <h1> and never enter this branch, so none
+   of these rules can reach them — .mhero-main does not exist there. */
+.app[data-paper="1"] .mscreen .mhero{
+  align-items: center;
+  gap: 26px;
+  padding-block: 6px 2px;
+}
+.app[data-paper="1"] .mscreen .mhero-main{
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+/* The route takes the rest of the width and is the part that gives way first:
+   the title and its readings are the content, the profile is the illustration. */
+.app[data-paper="1"] .mscreen .profile-wrap{ flex: 1 1 auto; min-width: 0; }
+
+/* .ind carries button styling from when each indicator opened a panel. Those
+   panels are gone and these are plain divs now, so the pointer cursor would be
+   a promise the screen does not keep. */
+.app[data-paper="1"] .ind{ cursor: default; }
+
+/* The lamp is the only one of the three with height: auto, which left it
+   shorter than the gauge and the tag beside it. All three are one instrument
+   row and must share a baseline and a height. */
+.app[data-paper="1"] .instrow .lamp-mark{
+  height: 38px;
+  justify-content: center;
+}
+
+/* Below the tablet break the route has nowhere to go: the title and its
+   readings take the full width and the illustration steps out rather than
+   being squeezed into a strip. */
+@media (max-width: 900px){
+  .app[data-paper="1"] .mscreen .profile-wrap{ display: none; }
+}

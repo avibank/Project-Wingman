@@ -768,3 +768,26 @@
      the number beside it is a convenience and is also in the popover. */
   .mscreen .dialread{ display: none; }
 }
+
+/* ---------------------------------------------------------------- going up */
+/* THE BACK LINK LINES UP WITH THE TITLE, AND READS AS FULL TEXT.
+   .up is declared bare in lesson.css at --t3 with padding-inline: var(--pad),
+   which is a different gutter from the one .mhero uses — so on this screen
+   "Flight Deck" sat at a different indent from "Module 1" underneath it, and
+   the misalignment is the first thing the eye lands on.
+
+   --card-pad + 1px is exactly what .mhero-title uses (the card's own 1px
+   border sits outside the text column), so the two share a left edge.
+   --t1 is the primary text token: white on the dark variant, near-black on the
+   light one, which is what was asked for. Scoped to .mscreen so the lesson
+   page's own back link is untouched. */
+   The gutter goes on .hdr, not on the button. .hdr already indents by --pad
+   (30px) and .up added another 23px INSIDE that, so the chevron landed at
+   126px while the title sat at 92px — measured, not guessed. Moving the gutter
+   to the parent and zeroing the button's leaves one indent instead of two, and
+   it is the same one .mhero uses. */
+.mscreen .hdr{ padding-inline: calc(var(--card-pad) + 1px); }
+.mscreen .hdr .up{
+  padding-inline: 0;
+  color: var(--t1);
+}
