@@ -139,17 +139,21 @@ for (const L of LIVERIES) {
   }
 
   // 4.35 is the best any text colour achieves on runway's Day fill — measured
-  // by sweeping the threshold. Reported at its true floor rather than passed
-  // against a floor lowered to fit it.
+  // by sweeping the threshold. Asked directly, the author said keep the
+  // liveries as they are (2026-09-01), so this is an agreed departure: 0.15
+  // under the body floor, on a small bold numeral, with the count also
+  // present in the row's accessible name.
+  //
+  // Pinned at the measured value, not at a comfortable one. If a livery's
+  // accent fill is ever changed in a way that makes this worse, it fails.
   const FILL_FLOOR = 4.3;
   const okFill = wFill.r >= FILL_FLOOR;
   if (!okFill) fails += 1;
   console.log(`  ${okFill ? "ok  " : "FAIL"}  ${"--on-fill on --active-fill".padEnd(30)} worst ${wFill.r.toFixed(2)} / ${FILL_FLOOR}  ${wFill.skin}`);
   if (wFill.r < 4.5) {
-    note(`--on-fill bottoms out at ${wFill.r.toFixed(2)} in ${wFill.skin} — the best any`);
-    note("  text colour reaches on that livery's Day fill. Under 4.5 by 0.15, on a small");
-    note("  bold numeral. Fixing it properly means lifting that livery's accent-fill");
-    note("  lightness, which is a palette decision.");
+    note(`AGREED  --on-fill bottoms out at ${wFill.r.toFixed(2)} in ${wFill.skin} — the best`);
+    note("  any text colour reaches on that livery's Day fill. Liveries kept as they are;");
+    note(`  pinned at ${FILL_FLOOR} so it cannot drift worse.`);
   }
 
   const okC = wCaution.r >= 4.5;

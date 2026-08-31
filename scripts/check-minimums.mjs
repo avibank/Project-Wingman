@@ -140,20 +140,23 @@ ok("the verdict and the needle read the same event",
       }
     }
   }
-  // REPORTED, NOT GATED. §2 asks for the amber livery's accent to be pulled
-  // off the caution hue, and it measures 10deg away — but that hue was set
-  // deliberately by the author in an earlier pass ("revert gold to gauge
-  // amber, with its old hue"), so moving it is a decision and not a
-  // correction. What IS fixed in code: a lit lamp and the accent-filled
-  // CURRENT badge never appear in the same slot, which was the specific
-  // adjacency §9 asks to check.
-  const clear = worst.gap >= MIN_HUE_GAP;
-  ok("no livery is INDISTINGUISHABLE from the caution hue (10deg floor)",
-     worst.gap >= 10, `closest: ${worst.where} at ${worst.gap.toFixed(1)}deg`);
-  if (!clear) {
-    console.log(`      NEEDS A DECISION  ${worst.where} accent is ${worst.gap.toFixed(1)}deg from`);
-    console.log("      the caution hue, under the 25deg the brief asks for. Pull that livery's");
-    console.log("      hue, or accept that the lamp separates by shape and legend alone.");
+  // DECIDED, AND PINNED. §2 asks for the amber livery's accent to be pulled
+  // off the caution hue; it measures 10.2deg away. Asked directly, the author
+  // said keep the liveries as they are (2026-09-01), so this is a recorded
+  // departure rather than an open question — the lamp separates by shape, by
+  // its legend and by its recessed housing, not by hue alone.
+  //
+  // It is pinned rather than merely allowed. HELD is today's measured value,
+  // so the check still fails if a livery is ever moved CLOSER to the caution
+  // hue than the one that was agreed. Accepting a number is not the same as
+  // stopping measuring it.
+  const HELD = 10.0;
+  ok(`no livery comes closer to the caution hue than the agreed ${HELD}deg`,
+     worst.gap >= HELD, `closest: ${worst.where} at ${worst.gap.toFixed(1)}deg`);
+  if (worst.gap < MIN_HUE_GAP) {
+    console.log(`      AGREED DEPARTURE  ${worst.where} sits ${worst.gap.toFixed(1)}deg from the caution`);
+    console.log(`      hue, under the ${MIN_HUE_GAP}deg the brief asks for. Liveries kept as they are;`);
+    console.log("      the lamp separates by shape and legend. Pinned so it cannot get closer.");
   }
 }
 

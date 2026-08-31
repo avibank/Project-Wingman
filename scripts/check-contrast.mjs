@@ -51,7 +51,8 @@ const KNOWN = new Map();
 const rows = [];
 const fails = [];
 const known = [];
-const undecided = [];   // measured, real, and waiting on a palette decision
+const undecided = [];   // measured, real, and DECIDED — see the pin below
+let worstRaised = 99;   // the worst t3-on-raised anywhere, for the pin
 
 for (const L of LIVERIES) {
   for (const variant of ["night", "day"]) {
@@ -113,7 +114,8 @@ for (const L of LIVERIES) {
           else fails.push(`${where}: ${got}:1, under ${FLOOR}`);
         }
         if (tier === "--t3" && onRaised < FLOOR) {
-          undecided.push(`${where} on --raised: ${onRaised.toFixed(2)}:1, under ${FLOOR}`);
+          undecided.push({ r: onRaised, s: `${where} on --raised: ${onRaised.toFixed(2)}:1, under ${FLOOR}` });
+          if (onRaised < worstRaised) worstRaised = onRaised;
         }
       }
     }
@@ -128,13 +130,37 @@ const lo = Math.min(...t3.map(worstOf));
 const hi = Math.max(...t3.map(worstOf));
 console.log(`contrast: ${rows.length} tiers x 4 surfaces across ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora/Manual`);
 console.log(`          t3, the floor tier, spans ${lo.toFixed(2)} to ${hi.toFixed(2)} against ${FLOOR} on ground, panel and sunk`);
+/* DECIDED, AND PINNED. Asked directly whether to move the palette to lift
+   these, the author said keep the liveries as they are (2026-09-01). So this
+   stops being an open question and becomes a recorded departure — but a
+   pinned one. T3_RAISED_HELD is the worst value measured on the day it was
+   agreed; if a livery ever makes t3-on-raised WORSE than what was accepted,
+   this fails. Agreeing to a number is not agreeing to whatever it drifts to.
+
+   What keeps it honest in the product: nothing reads t3 on raised. Room
+   placeholders are t2, and a row's quiet text lifts a tier on hover. */
+const T3_RAISED_HELD = 4.05;
 if (undecided.length) {
   console.log(`\n          --raised carries t3 below the floor in ${undecided.length} of the ${rows.filter((r) => r.where.endsWith("--t3")).length} tier/variant combinations.`);
-  console.log("          Newly measured, not previously known, and NOT gating: the fix is a");
-  console.log("          palette change and so is a decision, not a correction. Lift --t3 in");
-  console.log("          night, or darken --raised in night.");
-  for (const u of undecided.slice(0, 4)) console.log("  NEEDS A DECISION  " + u);
+  console.log("          AGREED, not outstanding: lifting these is a palette change, and the");
+  console.log("          liveries are deliberately kept as they are. Nothing reads t3 on");
+  console.log(`          raised. Pinned at ${T3_RAISED_HELD} (runway/night) so it cannot drift worse.`);
+  // SORTED WORST-FIRST, and that is not cosmetic. This list is truncated to
+  // four, and in iteration order the true worst (runway/night at 4.05) fell
+  // into the "and N more" bucket — so the output advertised 4.21 as the floor
+  // while the real one was never printed. A truncated list must be sorted by
+  // the thing it is truncating on, or it is a summary that omits its own
+  // headline. Found by pinning: the pin disagreed with the visible list.
+  const bySeverity = [...undecided].sort((a, b) => a.r - b.r);
+  for (const u of bySeverity.slice(0, 4)) console.log("  AGREED  " + u.s);
   if (undecided.length > 4) console.log(`  ... and ${undecided.length - 4} more, all night, all liveries`);
+  // Compared at the SAME precision it is printed at. The raw worst is
+  // 4.049…, which displays as 4.05; gating on the raw value while showing the
+  // rounded one made the check fail against a number equal to itself. The
+  // displayed fact and the gated fact have to be one fact.
+  if (+worstRaised.toFixed(2) < T3_RAISED_HELD) {
+    fails.push(`t3 on --raised fell to ${worstRaised.toFixed(2)}, below the agreed ${T3_RAISED_HELD} — a livery moved`);
+  }
 }
 for (const k of known) console.log("  KNOWN, UNFIXED  " + k);
 if (known.length) console.log(`          ${known.length} known failures need a decision — see KNOWN in this file`);
