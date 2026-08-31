@@ -33,6 +33,30 @@ const long = new Date(Date.now() + 3 * 86400000).toISOString();
 ok("box 0 is due after a day", R.dueIds(s, long).includes("q1"), `boxDays(0)=${R.boxDays(0)}`);
 ok("boxes double", JSON.stringify(R.BOXES) === JSON.stringify([1, 2, 4, 8, 16]));
 
+// THE LADDER IS CLIMBED, not merely declared. The assertion above passed for a
+// long time while nothing in the codebase ever advanced a box: every correct
+// answer reset it to 1, so the 4, 8 and 16 day rungs were unreachable and a
+// question known cold still came round every second day. Asserting the table
+// tests the constant; this tests the mechanism.
+{
+  let g = R.emptyRetention();
+  g = R.toHolding(g, "q");                       // first sight, correct
+  const boxes = [g.holding.q.box];
+  for (let i = 0; i < 5; i += 1) { g = R.toHolding(g, "q"); boxes.push(g.holding.q.box); }
+  ok("a correct re-check advances the box", boxes[1] > boxes[0], `boxes: ${boxes.join(",")}`);
+  ok("the top rung is reached", boxes.includes(R.BOXES.length - 1), `boxes: ${boxes.join(",")}`);
+  ok("and it stops there", boxes[boxes.length - 1] === R.BOXES.length - 1, `boxes: ${boxes.join(",")}`);
+  ok("the interval actually grows", R.boxDays(boxes[3]) > R.boxDays(boxes[0]),
+     `${R.boxDays(boxes[0])}d -> ${R.boxDays(boxes[3])}d`);
+
+  // and a miss sends it back to the bottom, whatever it had climbed to
+  let m = R.toCaution(g, "q");
+  ok("a miss removes it from holding", !("q" in m.holding) && "q" in m.caution);
+  m = R.toHolding(m, "q", { fromCaution: true });
+  ok("put right after a miss starts at the bottom", m.holding.q.box === 0, `box ${m.holding.q.box}`);
+  ok("the miss count survives the round trip", (m.holding.q.missed || 0) > 0);
+}
+
 // interleaving: a re-check set mixes chapters rather than draining one
 let big = R.emptyRetention();
 const qs = [];

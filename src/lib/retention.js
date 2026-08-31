@@ -31,15 +31,37 @@ const daysBetween = (a, b) => (new Date(b).getTime() - new Date(a).getTime()) / 
 export function toHolding(state, questionId, { fromCaution = false } = {}) {
   const caution = { ...state.caution };
   const prior = caution[questionId];
+  const held = state.holding?.[questionId];
   delete caution[questionId];
+
+  // THE BOX HAS TO CLIMB, and for a long time it did not. This assigned 0 or 1
+  // and nothing else in the codebase ever wrote `box`, so BOXES = [1,2,4,8,16]
+  // described a ladder whose top three rungs could not be reached: every
+  // correct answer put the question back at box 1 and it came round again in
+  // two days, for ever. A question you have known cold for a month was still
+  // being asked every second day, and the re-check pile never shrank by
+  // knowing anything — which is the entire purpose of the mechanism.
+  //
+  // Proven before fixing: six consecutive correct re-checks, interval 2 days
+  // every time. check:retention asserted BOXES was [1,2,4,8,16] — the table,
+  // not the behaviour — so it passed throughout.
+  const box = fromCaution || prior
+    ? 0                                             // put right after a miss:
+                                                    // it has proved it can fade
+    : held
+      ? Math.min(BOXES.length - 1, (held.box ?? 0) + 1)   // recalled: space it out
+      : 1;                                          // first sight, correct
+
   return {
     caution,
     holding: {
       ...state.holding,
       [questionId]: {
-        box: fromCaution || prior ? 0 : 1,
+        box,
         lastSeen: nowIso(),
-        missed: (prior?.missed ?? 0) + (fromCaution ? 1 : 0),
+        // The miss count survives the question moving between piles: it is
+        // what recheckSet weights by, so losing it would flatten the ordering.
+        missed: (prior?.missed ?? held?.missed ?? 0) + (fromCaution ? 1 : 0),
       },
     },
   };
