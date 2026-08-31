@@ -53,8 +53,16 @@ export default function ReportProblem({ route, extra = null }) {
         {sent ? "Thanks — noted where you were." : "Something's wrong here"}
       </button>
       <style>{`
+        /* OPAQUE, because it is fixed and the page scrolls underneath it.
+           With background: none the module screen's chapter rows ran straight
+           through the pill — "Something's wrong here" and "2 lessons · 1 quiz"
+           interleaved letter by letter and neither could be read. --ground is
+           the one surface token with no alpha, so it follows every livery and
+           finish while still stopping the text behind it. --drop lifts it off
+           the page in the finishes that cast one, and is none in Manual. */
         .rpt { position: fixed; left: 12px; bottom: 12px; z-index: 55;
-          background: none; border: 1px solid var(--line); color: var(--t3);
+          background: var(--ground); box-shadow: var(--drop, none);
+          border: 1px solid var(--line); color: var(--t3);
           border-radius: 999px; padding: 9px 15px; font-family: inherit;
           font-size: var(--fs-xs, 13px); cursor: pointer; min-height: var(--tap, 44px); }
         .rpt:hover { color: var(--t1); }
