@@ -1,0 +1,258 @@
+/* ======================= THE MANUAL FINISH — the paper world ==============
+   Scope: Manual ONLY. Every rule in this file is gated on
+   .app[data-paper="1"], which is what the Manual finish already stamps, so
+   Standard and Aurora cannot be reached by anything here.
+
+   ONE DEPARTURE FROM THE BRIEF, and it matters: the brief keys light mode on
+   :root[data-mode="light"]. THIS APP NEVER STAMPS data-mode. It stamps
+   data-variant="day"|"night" on <html>, and the token layer is written as
+   inline custom properties on the same element. A rule hung off data-mode
+   would be dead CSS that looks correct in review — which is exactly how the
+   right/wrong quiz colours were silently missing once before. Light is keyed
+   on :root[data-variant="day"] here.
+
+   The token names are likewise the app's own: --active not
+   --accent-interactive, --ground not --bg-ground, --t1/2/3 not --text-*, and
+   --edge not --line. The genuinely new ones — --sketch-ink, --sketch-hatch,
+   --paper-fill, --paper-edge, --stack-1/2, --panel-solid, --caution-edge — are
+   emitted by finishEngine's manual branch and by nothing else.
+   ========================================================================= */
+
+/* The paper world's structural rule. --edge is the stock border and it is
+   BLUE (hue 262) — a blue hairline reads as a screen chrome, not a sheet of
+   paper, so every border this file draws is warmed here instead. --paper-edge
+   itself is near-white at night, which is right for an ink stroke and far too
+   strong for a 1px border, hence the alpha. */
+.app[data-paper="1"] .mscreen{
+  --paper-rule: color-mix(in oklab, var(--paper-edge) 26%, transparent);
+}
+
+/* ------------------------------------------------ 1 · SKETCHED INDICATORS */
+/* The three metaphors do not change. Only the drawing does: outlines, no
+   fills, a dashed leader under each the way a callout is drawn on a
+   schematic. */
+.app[data-paper="1"] .instrow{ gap: 10px; padding-bottom: 8px; }
+
+.app[data-paper="1"] .ind > *{
+  position: relative;
+  background: transparent;
+  border: 1.25px solid var(--sketch-ink);
+  border-radius: 2px;
+  box-shadow: none;
+}
+.app[data-paper="1"] .ind > *::after{
+  content: "";
+  position: absolute;
+  left: 3px; right: 3px; bottom: -5px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg,
+    var(--sketch-ink) 0 3px, transparent 3px 6px);
+  opacity: .55;
+}
+
+/* accuracy — line art: arc, graduations, needle, hub */
+.app[data-paper="1"] .g-arc{ stroke: var(--sketch-ink); opacity: .9; }
+.app[data-paper="1"] .g-tick{ stroke: var(--sketch-ink); opacity: .8; }
+.app[data-paper="1"] .g-needle line{ stroke: var(--sketch-ink); }
+.app[data-paper="1"] .g-hub{ fill: var(--sketch-ink); }
+.app[data-paper="1"] .gauge{ background: transparent; }
+
+/* calibration — a ruled band, value beneath. The perforation the other
+   finishes draw is OFF here: it strikes through the CALIBRATION legend. */
+.app[data-paper="1"] .sticker{ background: transparent; }
+.app[data-paper="1"] .sticker .band{
+  background: transparent;
+  color: var(--sketch-ink);
+  border-bottom: 1.25px solid var(--sketch-ink);
+  padding: 3px 0 2px;
+}
+.app[data-paper="1"] .sticker[data-state="nodata"] .band{
+  background: transparent; color: var(--sketch-ink); opacity: .6;
+}
+.app[data-paper="1"] .sticker .val{ color: var(--sketch-ink); }
+
+/* master caution — hatched face, caution-coloured outline, BOTH WORDS intact.
+   The lamp keeps --caution in every finish; only its drawing changes. */
+.app[data-paper="1"] .lamp{
+  background: repeating-linear-gradient(45deg,
+    transparent 0 5px, var(--sketch-hatch) 5px 6px);
+  border: 1.25px solid var(--caution-edge);
+  border-radius: 2px;
+  box-shadow: none;
+  color: var(--sketch-ink);
+}
+.app[data-paper="1"] .lamp[data-lit="true"]{
+  background: var(--caution);
+  border-color: var(--caution);
+  color: var(--on-caution);
+  box-shadow: none;
+}
+
+/* --------------------------------------------------- 2 · THE PAPER DART */
+/* Two aircraft are drawn; the finish picks one. */
+.pf-dart{ display: none; }
+.pf-pencil{ display: none; }
+.app[data-paper="1"] .pf-plane{ display: none; }
+.app[data-paper="1"] .pf-dart{ display: block; }
+.app[data-paper="1"] .pf-pencil{ display: block; }
+
+.app[data-paper="1"] .pf-dart-body{
+  fill: var(--paper-fill);
+  stroke: var(--paper-edge);
+  stroke-width: 1.3;
+  vector-effect: non-scaling-stroke;
+}
+.app[data-paper="1"] .pf-dart-fold{
+  fill: none;
+  stroke: var(--paper-edge);
+  stroke-width: 1.1;
+  vector-effect: non-scaling-stroke;
+}
+/* the second pass, under the flown leg */
+.app[data-paper="1"] .pf-pencil{
+  stroke: var(--active);
+  fill: none;
+  stroke-linecap: round;
+  opacity: .5;
+}
+
+/* ------------------------------------------------ 3 · THE LIST AS A FILE */
+/* The card becomes a folder. The tab is cut into its top edge, two sheets
+   show behind it, and the corners square off. */
+.app[data-paper="1"] .mscreen .mcard{
+  border-radius: 2px 9px 4px 4px;
+  /* REQUIRED: the card is `position: static` in deck.css, so the two sheets
+     below resolved their `top: -7px` against some far ancestor and rendered
+     nowhere near the folder. This makes it their containing block. It adds no
+     offsets, so it moves nothing on its own. */
+  position: relative;
+  /* A folder is paper, and paper is opaque. The stock card is 0.8 alpha, which
+     let the sheets show THROUGH the folder instead of behind it. */
+  background: var(--panel-solid);
+  /* REQUIRED: the tab and both sheets break the card's bounds. overflow:hidden
+     kills the folder tab outright. */
+  overflow: visible;
+}
+/* Two sheets peeking above. They sit FULLY above the card — inside a stacking
+   context a negative z-index child paints above the element's own background,
+   so a sliver overlapping the card top would cover it. */
+.app[data-paper="1"] .mscreen .mcard::before,
+.app[data-paper="1"] .mscreen .mcard::after{
+  content: "";
+  position: absolute;
+  border: 1px solid var(--paper-rule);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+}
+.app[data-paper="1"] .mscreen .mcard::before{
+  left: 16px; right: 16px; top: -7px; height: 7px; background: var(--stack-1);
+}
+.app[data-paper="1"] .mscreen .mcard::after{
+  left: 34px; right: 34px; top: -13px; height: 6px; background: var(--stack-2);
+}
+
+/* the folder tab: the active tab grows up out of the bar, and its bottom
+   border is painted in the card's SOLID colour so the two read continuous */
+.app[data-paper="1"] .mscreen .tabsbar{
+  padding: 0 14px;
+  height: 52px;
+  align-items: flex-end;
+  overflow: visible;
+  background: transparent;
+}
+.app[data-paper="1"] .mscreen .tab{
+  border-radius: 8px 8px 0 0;
+  padding: 10px 20px 13px;
+  margin-bottom: -1px;
+}
+.app[data-paper="1"] .mscreen .tab[aria-selected="true"]{
+  margin-top: -22px;
+  padding-top: 24px;
+  background: var(--panel-solid);
+  border: 1px solid var(--paper-rule);
+  border-bottom-color: var(--panel-solid);
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 -10px 22px -14px oklch(0 0 0 / .7);
+}
+.app[data-paper="1"] .mscreen .tabsearch{ align-self: center; margin-bottom: 13px; }
+
+/* the margin rule down the sheet, and the content indented past it */
+.app[data-paper="1"] .mscreen .chaps{ position: relative; }
+.app[data-paper="1"] .mscreen .chaps::before{
+  content: "";
+  position: absolute;
+  left: 42px; top: 0; bottom: 0;
+  width: 1px;
+  background: color-mix(in oklab, var(--active) 45%, transparent);
+}
+.app[data-paper="1"] .mscreen .chead,
+.app[data-paper="1"] .mscreen .kids{ padding-left: 60px; }
+
+/* typed metadata — the form voice against the display face on the headings */
+.app[data-paper="1"] .mscreen .csub,
+.app[data-paper="1"] .mscreen .endnote{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.app[data-paper="1"] .mscreen .imeta{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+
+/* stamped statuses — everything except the live one, which stays straight */
+.app[data-paper="1"] .mscreen .cstate{
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  padding: 3px 8px;
+  transform: rotate(-2.2deg);
+  opacity: .7;
+}
+.app[data-paper="1"] .mscreen .cstate.here{
+  transform: none;
+  opacity: 1;
+  border-color: var(--active);
+  color: var(--active-text);
+}
+/* §11 of the module brief still holds: a stamp that is only a rotation is
+   decoration. Reduced motion does not animate it, and it never moves. */
+
+/* ruled lesson rows; the current one keeps its highlight */
+.app[data-paper="1"] .mscreen .item{
+  border-bottom: 1px dashed color-mix(in oklab, var(--paper-rule) 70%, transparent);
+  border-radius: 0;
+  margin: 0;
+  padding-left: 0;
+}
+.app[data-paper="1"] .mscreen .kids .item:last-child{ border-bottom: 0; }
+.app[data-paper="1"] .mscreen .item[data-here]{
+  border: 1px solid color-mix(in oklab, var(--active) 40%, transparent);
+  border-radius: 6px;
+  margin: 0 -10px;
+  padding: 9px 10px;
+}
+
+/* the closing line reads as a form footer */
+.app[data-paper="1"] .mscreen .endnote{
+  border-top: 1px solid var(--paper-rule);
+  margin: 0 26px 0 60px;
+  padding: 16px 0 20px;
+}
+
+/* No text-shadow on the title in either mode: it halos badly on cream, and
+   there is no aurora here for it to fight. */
+.app[data-paper="1"] .mhero-title{ text-shadow: none; }
+
+/* Phone keeps the full-bleed card, so the folder tab and sheets stay inside
+   the viewport rather than hanging off it. */
+@media (max-width: 560px){
+  .app[data-paper="1"] .mscreen .mcard::after{ display: none; }
+}

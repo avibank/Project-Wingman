@@ -158,9 +158,29 @@ export function FlightProfile({ chapters = [], atIndex = 0, started = false }) {
                          cx={q.x.toFixed(2)} cy={q.y.toFixed(2)} r={P(4.4)} strokeWidth={P(2)} />;
         })}
 
+        {/* Manual's second pencil pass: the same flown path, offset and faded,
+            drawn UNDER the line so the leg reads as drawn rather than plotted.
+            Hidden in Standard and Aurora by room-less default in manual.css. */}
+        {s.started && (
+          <path className="pf-pencil" d={PATH} fill="none"
+                strokeWidth={P(1.2)}
+                strokeDasharray={`${s.behind.toFixed(2)} ${TOTAL + 10}`}
+                transform={`translate(${P(1.5)} ${P(1.8)})`} />
+        )}
+
+        {/* Two aircraft, one shown. CSS picks by finish rather than JS, so the
+            geometry is computed once and neither finish can drift from it. */}
         <g className="pf-plane"
            transform={`translate(${s.x.toFixed(2)},${s.y.toFixed(2)}) rotate(${s.angle.toFixed(2)}) scale(${P(1.15)})`}>
           <path d={PLANE} />
+        </g>
+        {/* The dart. Folded paper: outline, centre fold, top fold. The
+            stroke-linejoin stays round — a mitre reads as a jet, not paper. */}
+        <g className="pf-dart"
+           transform={`translate(${s.x.toFixed(2)},${s.y.toFixed(2)}) rotate(${s.angle.toFixed(2)}) scale(${P(0.92)}) translate(-23 -11)`}>
+          <path className="pf-dart-body" d="M46 11 L0 0 L13 11 L0 22 Z" strokeLinejoin="round" />
+          <path className="pf-dart-fold" d="M46 11 L13 11" />
+          <path className="pf-dart-fold" d="M46 11 L0 0" opacity=".55" />
         </g>
       </svg>
     </div>

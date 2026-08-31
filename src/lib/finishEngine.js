@@ -295,6 +295,23 @@ export function finishVars(liveryId, variant, finish, accent) {
       // The light rig is off entirely. A printed page has no atmosphere, and
       // faking one is what made Day look wrong.
       "--key-int": "0", "--fill-int": "0", "--stars": "0",
+      // ---- Manual-only tokens, for the paper world -------------------------
+      // The sketch ink the indicators are drawn in, the dart's two colours, and
+      // the two sheets showing behind the folder. Named here rather than
+      // inlined in the CSS so check:tokens can see them and so the Day and
+      // Night pairs sit beside each other.
+      "--sketch-ink": night ? "oklch(.80 .008 85)" : "oklch(.40 .012 85)",
+      "--sketch-hatch": night ? "oklch(.80 .008 85 / .18)" : "oklch(.40 .012 85 / .22)",
+      "--paper-fill": night ? "oklch(.30 .010 85)" : "oklch(.985 .006 85)",
+      "--paper-edge": night ? "oklch(.82 .008 85)" : "oklch(.42 .012 85)",
+      "--stack-1": night ? "oklch(.2350 .0080 85)" : "oklch(.955 .010 85)",
+      "--stack-2": night ? "oklch(.2650 .0080 85)" : "oklch(.930 .012 85)",
+      // The folder tab's bottom border has to match the card's SOLID colour,
+      // not the translucent --panel, or the seam shows through it.
+      "--panel-solid": night ? "oklch(.2050 .0070 85)" : "oklch(.992 .005 85)",
+      // The lamp keeps --caution in every finish; this is only its outline.
+      "--caution-edge": "oklch(.48 .09 72.6)",
+
       // The ported value, in both modes. What changes is the material, not the
       // amount: in Day the deck carries Tooth, so this same .17 is multiplied
       // through a directional desaturated turbulence and reads as paper fibre.

@@ -12,6 +12,7 @@ import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
 import "./module.css";
+import "./manual.css";
 
 // The three tabs live in the URL, so a student sharing a link to People lands
 // on People. The tab is not component state.

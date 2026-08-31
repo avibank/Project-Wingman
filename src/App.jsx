@@ -429,6 +429,10 @@ function AppInner() {
   // §2B — the token layer, globally. The ramp is a computation rather than a
   // table, so the base tokens are written onto :root at runtime and every page
   // on the site inherits them, including the ones whose layouts are untouched.
+  // The custom properties written onto :root by the effect below, so the next
+  // run can remove the ones it no longer writes.
+  const appliedVars = useRef(new Set());
+
   useEffect(() => {
     const { vars, C } = deckVars(shownLivery, variant);
     // The finish is layered over the stock, never mixed into it. With no
@@ -438,11 +442,18 @@ function AppInner() {
     const root = document.documentElement;
     Object.entries(all).forEach(([k, v]) => root.style.setProperty(k, v));
     root.style.setProperty("--grain", grain ? all["--grain"] : "0");
-    // Layers that only exist under a finish, cleared otherwise so nothing of
-    // one finish survives into the next.
-    for (const k of ["--star-img", "--star-img-b", "--cloud-img", "--cloud-op"]) {
-      if (!(k in all)) root.style.removeProperty(k);
+    // Anything a finish wrote LAST time and is not writing THIS time gets
+    // removed. This used to be a hand-kept list of four names, which meant
+    // every token a finish added afterwards silently survived a switch back to
+    // Standard — Manual's eight paper tokens were all still set in Aurora.
+    // Harmless while only paper-gated CSS reads them, and one careless
+    // ungated selector away from not being. Diffing the applied set cannot
+    // fall out of date the way the list did.
+    const written = new Set(Object.keys(all));
+    for (const k of appliedVars.current) {
+      if (!written.has(k)) root.style.removeProperty(k);
     }
+    appliedVars.current = written;
   }, [shownLivery, variant, grain, finish]);
 
   const switchTab = (nextTab) => {
