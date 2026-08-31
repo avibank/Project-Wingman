@@ -677,7 +677,10 @@
    up-next below the video. The areas are named so the arrangement can be
    swapped without touching a component.
    ========================================================================= */
-.watch{ display: grid; gap: 26px 24px; }
+/* padding-inline moved here from familiar.css, which used to own half of this
+   element. Two files declaring one layout is how the 32px gap on wide screens
+   went unnoticed; the gutter came with the rest so there is one owner. */
+.watch{ display: grid; gap: 26px 24px; padding-inline: var(--pad); }
 /* THE LESSON READS THE WAY A VIDEO PAGE READS. The list of lessons is
    navigation, so it goes down the left and stays put; everything about the
    lesson you are actually watching runs down one column on the right, in the

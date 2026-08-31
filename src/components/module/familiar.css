@@ -27,15 +27,20 @@
    here has this person never seen before".
    ========================================================================= */
 
-.watch{
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
-  padding-inline: var(--pad);
-}
-@media (min-width: 1120px){
-  .watch{ grid-template-columns: minmax(0, 1fr) 352px; gap: 32px; align-items: start; }
-}
+/* THE COLUMNS MOVED, AND THEY LIVE IN lesson.css NOW. This file used to own
+   the watch layout too — a 352px rail on the RIGHT at 1120px and up. The list
+   is on the left now and the thread runs the full width of the player column,
+   so that rule describes a layout that no longer exists.
+
+   It could not simply be left: lesson.css wins the COLUMNS at (0,2,0) via
+   .watch[data-layout="b"], but `gap` and `align-items` here are (0,1,0) on the
+   same element, so on a monitor wider than 1120px this file's 32px gap quietly
+   took over from lesson.css's 26/24 — the layout right, the rhythm wrong, on
+   exactly the screens least likely to be tested.
+
+   Only LessonPage renders .watch, and it always sets data-layout, so nothing
+   is left to fall back to. The gutter went with the rest, so .watch has ONE
+   owner and this file no longer declares it at all. */
 .watch-main{ min-width: 0; }
 
 /* inside the watch layout the column sets the width; the height cap still
