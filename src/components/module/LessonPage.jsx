@@ -98,7 +98,10 @@ export default function LessonPage({
   const hiddenCount = (chapter.lessons || [])
     .filter((l) => l.id !== lesson.id && l.id !== next?.lesson?.id).length;
   const tab = session.tab;
-  const myNotes = notesFor(session.notes, lesson.id);
+  // `me`, not the default. notesFor filters by author and defaults to the
+  // historical "u_you"; new notes are stamped with the real id, so omitting it
+  // here made every note vanish the instant it was saved.
+  const myNotes = notesFor(session.notes, lesson.id, me);
   const comments = commentsFor(session.threads, lesson.id);
   const at = session.player.seconds || 0;
 

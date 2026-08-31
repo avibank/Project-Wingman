@@ -29,7 +29,7 @@ const DENSITY_H = 18;
 export default function PlayerLayer() {
   const {
     session, setSession, mutate, dispatchPlayer, stage, clearSeek,
-    setBarPos, setRate, setVolume,
+    setBarPos, setRate, setVolume, me,
   } = useSession();
   const { player, bar, banner, hud, barPos } = session;
   const navigate = useNavigate();
@@ -199,8 +199,10 @@ export default function PlayerLayer() {
     else el.pause();
   }, []);
 
+  // `me` — see the note at the LessonPage call site. Without it the marks on
+  // the scrub bar and the note list disagreed about which notes exist.
   const myNotes = useMemo(
-    () => (lesson ? notesFor(session.notes, lesson.id) : []), [session.notes, lesson]);
+    () => (lesson ? notesFor(session.notes, lesson.id, me) : []), [session.notes, lesson, me]);
 
   const onTime = () => {
     const el = ref.current;
@@ -428,8 +430,8 @@ export default function PlayerLayer() {
 
   // ------------------------------------------------------------------- marks
   const marks = useMemo(
-    () => (lesson ? lessonMarks(session.notes, session.threads, lesson.id) : []),
-    [session.notes, session.threads, lesson]);
+    () => (lesson ? lessonMarks(session.notes, session.threads, lesson.id, me) : []),
+    [session.notes, session.threads, lesson, me]);
 
   const [trackW, setTrackW] = useState(0);
   useLayoutEffect(() => {

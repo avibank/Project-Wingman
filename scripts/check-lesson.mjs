@@ -83,5 +83,34 @@ ok("up from a lesson is the module, labelled",
    L.upFrom({ kind: "lesson", moduleId: "M1", moduleName: "Module 1" })?.label === "Module 1");
 ok("no arrow on the Flight Deck", L.upFrom({ kind: "deck" }) === null);
 
+/* --------------------------------------------------------------------------
+   AUTHORSHIP. notesFor, lessonMarks and the Mine filter all take `me` and all
+   default it to the historical "u_you". Notes are STAMPED with the real id, so
+   a call site that omits `me` filters every one of them out: the note is saved
+   and then invisible. That shipped, briefly, and it is invisible in review
+   because the default makes the call look complete.
+*/
+{
+  const me = "user_2abc";
+  const notes = [
+    { id: "N1", lessonId: "L1", t: 5, body: "mine", authorId: me },
+    { id: "N2", lessonId: "L1", t: 9, body: "somebody else", authorId: "u_other" },
+  ];
+  ok("a note stamped with the real id is returned when me is passed",
+     L.notesFor(notes, "L1", me).length === 1
+     && L.notesFor(notes, "L1", me)[0].authorId === me);
+  ok("omitting me drops it — which is why every call site must pass it",
+     L.notesFor(notes, "L1").length === 0);
+  ok("another author's note is never returned",
+     !L.notesFor(notes, "L1", me).some((n) => n.authorId === "u_other"));
+
+  const threads = [{ id: "T1", moduleId: "M1", lessonId: "L1", t: 5, body: "q", authorId: me }];
+  ok("marks carry the notes the same id owns",
+     L.lessonMarks(notes, threads, "L1", me).filter((m) => m.kind === "note").length === 1);
+  ok("and the bar does not show another author's note",
+     L.lessonMarks(notes, threads, "L1", "someone_else")
+      .filter((m) => m.kind === "note").length === 0);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

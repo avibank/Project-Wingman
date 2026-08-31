@@ -65,6 +65,21 @@ function diffWrite(before, after, add, remove) {
   for (const id of was.keys()) if (!is.has(id)) remove(id);
 }
 
+/* The fixture, and anything an account still holds from before identity was
+   real, is authored by the literal "u_you". That string was the current user
+   for as long as there was only ever one; now `me` is a Clerk id, so those
+   rows belong to nobody and the surfaces that filter by author simply drop
+   them — the seeded notes vanish, and the demo threads say "You" while the
+   Mine filter reports none, which is the display and the filter disagreeing
+   about the same fact.
+
+   Rewritten once, on the way in. Notes and the demo discussion only: nothing
+   here is written to a shared table, so this cannot re-attribute anybody
+   else's post. */
+const LEGACY_ME = "u_you";
+const mine = (rows, me) => (rows || []).map((r) => (
+  r.authorId === LEGACY_ME ? { ...r, authorId: me } : r));
+
 const Ctx = createContext(null);
 
 export function SessionProvider({ children }) {
@@ -107,7 +122,7 @@ export function SessionProvider({ children }) {
     hydrated.current = true;
     setSession((s) => ({
       ...s,
-      notes: progress.get(NOTES_KEY, []),
+      notes: mine(progress.get(NOTES_KEY, []), me),
       // threads and replies are NOT read here any more — they come from the
       // shared tables, per module, in loadDiscussion below. Reading the stale
       // per-account copy first would flash one student's private history and
@@ -120,7 +135,7 @@ export function SessionProvider({ children }) {
         volume: progress.get(VOLUME_KEY, 1),
       },
     }));
-  }, [loaded, progress]);
+  }, [loaded, progress, me]);
 
   // The seeded content's notes and threads are demo data, so they are written
   // once and then owned by the account like anything else — otherwise deleting
@@ -164,8 +179,8 @@ export function SessionProvider({ children }) {
       seededDiscussion.current = true;
       setSession((s) => ({
         ...s,
-        threads: content.threads || [],
-        replies: content.replies || [],
+        threads: mine(content.threads || [], me),
+        replies: mine(content.replies || [], me),
       }));
     }
 
@@ -179,8 +194,9 @@ export function SessionProvider({ children }) {
     // counts. One of the two has to own the first write, and it is this one.
     hydrated.current = true;
     progress.set(SEEDED_KEY, true);
-    progress.set(NOTES_KEY, content.notes || []);
-    setSession((s) => ({ ...s, notes: content.notes || [] }));
+    const seededNotes = mine(content.notes || [], me);
+    progress.set(NOTES_KEY, seededNotes);
+    setSession((s) => ({ ...s, notes: seededNotes }));
 
     // The seeded watch state, so every route-row state is visible on a first
     // run — three lessons done, three part-watched, the rest untouched. Merged
@@ -198,7 +214,7 @@ export function SessionProvider({ children }) {
       }
     }
     if (touched) progress.set("pw-lesson-pos", pos);
-  }, [loaded, progress]);
+  }, [loaded, progress, me]);
 
   // One writer per collection. `mutate` takes any of the pure functions from
   // lessonSurface.js — they all take a session and return a new one — applies
