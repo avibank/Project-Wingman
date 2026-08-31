@@ -585,7 +585,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
     : null;
   const contactCap = contactCount
     ? (roomOn ? `${contactCount} · Ready Room` : contactCount)
-    : "Nobody on your route yet";
+    : "The Ready Room finds you company.";
 
   return (
     <>
@@ -640,7 +640,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 blips={contacts.length > 0}
                 caps={[
                   average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`,
-                  bag > 0 ? "Flight bag" : "Nothing saved yet",
+                  bag > 0 ? "Flight bag" : "A bookmark fills the bag.",
                   "Checklist",
                   hobbs ? "Hobbs" : "Your first hour",
                   contactCap,
@@ -716,7 +716,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                   <path d="M4 16h24" stroke="currentColor" strokeWidth="1.6" opacity=".5" />
                 </svg>
               )}
-              <div className="cap">{bag > 0 ? "Flight bag" : "Nothing saved yet"}</div>
+              <div className="cap">{bag > 0 ? "Flight bag" : "A bookmark fills the bag."}</div>
             </div>
 
             <div className="cel">

@@ -47,10 +47,59 @@ else if (!/main\.jsx/.test("main") && !/<ErrorBoundary>/.test(src("src/main.jsx"
 
 // 3 · Empty — says what will fill it, never a bare count of nothing. The rule
 //     from the voice section: never state absence, name the next action.
+/* THESE ONLY EVER LOOKED AT JSX TEXT NODES — `>No items<` — so an empty state
+   written as a STRING LITERAL walked straight past. Two had:
+
+     "Nothing saved yet"          the flight bag caption
+     "Nobody on your route yet"   the radar caption
+
+   Both are on the Flight Deck, the first screen anyone sees, and both state
+   absence and stop — which is the one thing the voice section forbids. They
+   now read "A bookmark fills the bag." and "The Ready Room finds you
+   company.": same length, and each names the thing that ends the emptiness.
+
+   The literal patterns are deliberately narrow. "Nothing is actually wrong."
+   is the amber livery's description, not an empty state, so the rule matches
+   `Nothing` only when followed by saved/here/to see/yet. A rule that flags
+   good copy gets deleted by whoever is in a hurry. */
 const NEVER = [/>\s*No (?:items|results|data)\s*</i, /Nothing here\.?\s*</i, />\s*0 results\s*</i];
 for (const f of all) {
   const t = src(f);
   for (const re of NEVER) if (re.test(t)) fails.push(`${f}: an empty state states absence instead of naming what fills it`);
+}
+
+/* AND THE SAME RULE FOR STRING LITERALS, which the patterns above never saw.
+   A caption assigned to a variable is still an empty state; two were, and both
+   sat on the Flight Deck, the first screen anyone opens.
+
+   Three narrowings, each one earned by a false positive this found:
+
+     comments      App.jsx and NotFound.jsx both quote "nothing here" in a
+                   comment ABOUT this very rule. Prose is not copy.
+     src/lib       voices.js is a bank of greetings — "Nobody's opened the
+                   hangar doors yet." is flavour, not an empty state.
+     length        Profile's invisible-mode note opens "Nobody sees you and
+                   you see nobody" and then explains itself for another sixty
+                   characters. An empty-state caption is short and stops.
+
+   A rule that flags good copy is a rule someone deletes in a hurry, so it is
+   better to miss a long one than to cry wolf on prose. */
+const ABSENCE = [
+  /^\s*Nothing (?:saved|here|to see|yet)\b/i,
+  /^\s*Nobody\b/i,
+  /^\s*No one\b/i,
+  /^\s*No [a-z]+ yet\s*$/i,
+];
+const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+for (const f of all.filter((x) => x.startsWith("src/components/"))) {
+  const t = strip(src(f));
+  for (const m of t.matchAll(/"([^"\\]{2,120})"|'([^'\\]{2,120})'/g)) {
+    const lit = m[1] ?? m[2];
+    if (lit.length > 45) continue;               // a caption is short and stops
+    if (ABSENCE.some((re) => re.test(lit))) {
+      fails.push(`${f}: "${lit}" states absence instead of naming what fills it`);
+    }
+  }
 }
 
 // 4 · The report control — one tap, carrying the route.

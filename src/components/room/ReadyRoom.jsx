@@ -454,8 +454,11 @@ export default function ReadyRoom({
 
                   {!list.length && (
                     <p className="pane-none">
+                      {/* Both name the way out rather than the emptiness. The
+                          second used to open "Nothing here under this filter",
+                          which states absence first and only then helps. */}
                       {f === "all" ? "Ask the first question in this module."
-                        : "Nothing here under this filter. Try All."}
+                        : "All shows every question in this module."}
                     </p>
                   )}
                 </div>
