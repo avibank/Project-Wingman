@@ -731,9 +731,9 @@
 }
 .mscreen .calband{
   height: 11px; display: grid; place-items: center;
-  /* --ground, not --active-text: the two resolve to the same colour, so
-     text on the fill renders invisible at 1:1. */
-  background: var(--active-fill); color: var(--ground);
+  /* --on-fill picks black or white from the fill's own lightness; see the
+     note in app.css. --active-text resolves to the fill itself (1:1). */
+  background: var(--active-fill); color: var(--on-fill);
   font-family: var(--font-mono); font-weight: 700; font-size: 5.6px;
   letter-spacing: .1em; text-transform: uppercase; line-height: 1;
 }

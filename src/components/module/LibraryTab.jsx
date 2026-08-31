@@ -59,7 +59,7 @@ function agoWords(iso) {
 export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper,
   query = "",
-  warm = 0, outstanding = 0, lastRecheck = null,
+  warm = 0, lastRecheck = null,
   average = null, lastQuiz = null, minimums, onMinimums,
   faults = new Set(), onStartCalibration,
 }) {

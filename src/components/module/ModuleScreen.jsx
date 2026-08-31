@@ -4,7 +4,7 @@ import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
-import { holdingCount, dueCount } from "../../lib/retention.js";
+import { holdingCount } from "../../lib/retention.js";
 import { takenScores, averagePct, lastPct, faultChapters } from "../../lib/minimums.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
@@ -84,8 +84,11 @@ export default function ModuleScreen({
   // Calibration is the RIGHT answers kept in currency: `holding`. `due` is how
   // many of those have come round. Neither is caution, and §5 forbids the two
   // vocabularies ever meeting.
+  // §5 — Calibration counts the RIGHT answers kept in currency (`holding`).
+  // `dueCount` used to feed a separate "N to re-check" heading, which the
+  // rebuilt Library dropped: the row says what it holds and offers Start, and
+  // a second number for the same pile was the kind of restatement §7 cuts.
   const warm = holdingCount(retention);
-  const due = dueCount(retention);
 
   return (
     <div className="mscreen">
@@ -161,7 +164,7 @@ export default function ModuleScreen({
                       // §5 — Calibration is the right answers kept warm, and
                       // it is NOT the caution pile. `warm` is everything in
                       // holding; `due` is how much of it has come round.
-                      warm={warm} outstanding={due}
+                      warm={warm}
                       lastRecheck={lastRecheck}
                       // §3 — the dial, on the Quizzes header. Two sizes, two
                       // places; this is the small one.

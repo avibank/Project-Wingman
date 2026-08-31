@@ -13,7 +13,7 @@
    resolve to the SAME colour, so a badge coloured --active-text on
    --active-fill rendered as a blank pill at 1:1 contrast. --active-text is
    accent-coloured text for a normal surface; the app's own pattern for text
-   ON the fill is `background: var(--active-fill); color: var(--ground)`.
+   ON the fill is `background: var(--active-fill); color: var(--on-fill)`.
    ========================================================================= */
 
 /* ------------------------------------------------------------- §1 · FILL --
@@ -115,7 +115,10 @@
   background: none; border: 0; outline: none; width: 100%; min-width: 0;
   color: var(--t1); font: inherit; font-size: 14px;
 }
-.search input::placeholder{ color: var(--t3); }
+/* --t2, not --t3: measured 4.05:1 on --raised in runway/night, under the
+   4.5 floor. A placeholder is the label of an empty field and has to be
+   readable, not merely present. */
+.search input::placeholder{ color: var(--t2); }
 
 /* the right seat block */
 .rightseat{ padding: 2px 14px 14px; border-bottom: 1px solid var(--edge-soft); }
@@ -151,7 +154,7 @@
 }
 .seat-cta svg{ width: 15px; height: 15px; }
 .seat-cta:hover,
-.seat-cta[aria-current="true"]{ background: var(--active-fill); color: var(--ground); }
+.seat-cta[aria-current="true"]{ background: var(--active-fill); color: var(--on-fill); }
 
 .rail-scroll{ overflow-y: auto; overscroll-behavior: contain; padding-bottom: 20px; min-height: 0; }
 .group-head{
@@ -172,6 +175,11 @@
   color: inherit; font: inherit; min-height: 0;
 }
 .row:hover{ background: var(--raised); }
+/* --t3 measures 4.05:1 on --raised in runway/night, so the quiet text lifts a
+   tier the moment the row's background does. Without this the snippet and the
+   time become less readable exactly when the row is being pointed at. */
+.row:hover .row-snip, .row:hover .row-time,
+.row[aria-current="true"] .row-snip, .row[aria-current="true"] .row-time{ color: var(--t2); }
 .row[aria-current="true"]{ background: var(--raised); }
 .row[aria-current="true"]::before{
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
@@ -195,7 +203,7 @@
 .row-meta{ grid-column: 3; grid-row: 2; display: flex; justify-content: flex-end; }
 .badge{
   min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
-  background: var(--active-fill); color: var(--ground); font-size: 11px;
+  background: var(--active-fill); color: var(--on-fill); font-size: 11px;
   font-weight: 700; display: grid; place-items: center;
   font-variant-numeric: tabular-nums;
 }
@@ -214,7 +222,7 @@
   background: var(--raised); flex: 0 0 auto; font-family: var(--font-mono);
   font-size: 12px; font-weight: 600; color: var(--t2); letter-spacing: .02em;
 }
-.row[aria-current="true"] .mod-icon{ background: var(--active-fill); color: var(--ground); }
+.row[aria-current="true"] .mod-icon{ background: var(--active-fill); color: var(--on-fill); }
 
 /* ------------------------------------------------------------- §4 · PANE */
 .pane{ display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--ground); }
@@ -246,7 +254,7 @@
 }
 .daybreak{
   align-self: center; margin: 10px 0 14px; padding: 4px 12px; border-radius: 999px;
-  background: var(--raised); color: var(--t3); font-family: var(--font-mono);
+  background: var(--raised); color: var(--t2); font-family: var(--font-mono);
   font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
 }
 .msg{ display: flex; gap: 9px; align-items: flex-end; max-width: min(68ch, 74%); }
@@ -260,7 +268,7 @@
   padding: 8px 12px 7px; position: relative; min-width: 0;
 }
 .msg.out .bubble{
-  background: var(--active-fill); border-color: transparent; color: var(--ground);
+  background: var(--active-fill); border-color: transparent; color: var(--on-fill);
 }
 .msg.first .bubble{ border-top-left-radius: 5px; }
 .msg.out.first .bubble{ border-top-left-radius: 14px; border-top-right-radius: 5px; }
@@ -292,10 +300,10 @@
   color: var(--t1); font: inherit; font-size: 14.5px; line-height: 1.4;
   padding: 7px 0; max-height: 120px;
 }
-.pill textarea::placeholder{ color: var(--t3); }
+.pill textarea::placeholder{ color: var(--t2); }
 .send{
   width: 42px; height: 42px; min-height: 0; flex: 0 0 auto; border-radius: 999px;
-  background: var(--active-fill); color: var(--ground); border: 0;
+  background: var(--active-fill); color: var(--on-fill); border: 0;
   display: grid; place-items: center; cursor: pointer;
 }
 .send svg{ width: 19px; height: 19px; }
@@ -319,7 +327,7 @@
 .chip:hover{ border-color: var(--active); color: var(--t1); }
 .chip[aria-pressed="true"]{
   background: var(--active-fill); border-color: var(--active-fill);
-  color: var(--ground); font-weight: 600;
+  color: var(--on-fill); font-weight: 600;
 }
 .newpost{
   display: flex; align-items: center; gap: 7px; padding: 6px 14px; min-height: 0;
@@ -357,7 +365,12 @@
 .post-foot svg{ width: 14px; height: 14px; }
 /* §4b — "say so plainly in the caution colour". The words carry it; the
    colour corroborates. */
-.post-waiting{ color: var(--caution); }
+/* THE CAUTION SENTENCE, still amber, still readable. --caution alone
+   measured 2.49:1 on --panel in skydrol/day — an amber mid-tone on a
+   near-white card. Mixed toward --t1 it darkens in Day and lightens in Night,
+   keeping the hue that carries the meaning while clearing the floor at 5.15.
+   The words say it too, so the colour corroborates rather than carries. */
+.post-waiting{ color: color-mix(in oklab, var(--caution) 60%, var(--t1)); }
 
 .tag{
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em;
@@ -436,7 +449,7 @@
   background: none; color: var(--active); font: inherit; font-size: 13px;
   font-weight: 600; cursor: pointer;
 }
-.ask:hover{ background: var(--active-fill); color: var(--ground); }
+.ask:hover{ background: var(--active-fill); color: var(--on-fill); }
 
 /* ------------------------------------------------------------- §2 · PHONE
    Under 760px the rail is the whole screen; opening anything swaps to the
@@ -476,6 +489,6 @@
 .ask-t{ font-size: 15px; font-weight: 600; }
 .ask-b{ font-size: 14px; line-height: 1.45; }
 .ask-t:focus, .ask-b:focus{ outline: none; border-color: var(--active); }
-.ask-t::placeholder, .ask-b::placeholder{ color: var(--t3); }
+.ask-t::placeholder, .ask-b::placeholder{ color: var(--t2); }
 .ask-acts{ display: flex; gap: 8px; justify-content: flex-end; }
 .ask-acts .newpost:disabled{ opacity: .45; cursor: default; }

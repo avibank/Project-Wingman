@@ -204,6 +204,21 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    if that style is ever absent, and so it is declared somewhere a stylesheet
    can see: CSS that reads it, like the full-bleed compensation in module.css,
    is otherwise reading a property nothing in any stylesheet defines. */
+/* TEXT ON THE ACCENT FILL, chosen per skin rather than named.
+   --active-fill ranges from a light green (runway, Day) to a mid blue (sky,
+   Night) across the 36 livery x variant x finish combinations, so no single
+   named token is readable on all of them: --active-text resolves to the fill
+   itself (1:1, a blank pill), --ground bottoms out at 3.94 and --on-mark at
+   4.22. Picking black or white from the fill's OWN lightness clears 4.5 on 35
+   of the 36 and never drops below 4.35.
+   The 0.56 threshold is measured, not guessed — check:surfaces sweeps it.
+   --ground is the fallback for engines without relative colour syntax; the
+   codebase already relies on that syntax elsewhere, so this is the same bet. */
+.app { --on-fill: var(--ground); }
+@supports (color: oklch(from red l c h)) {
+  .app { --on-fill: oklch(from var(--active-fill) clamp(0, (0.56 - l) * 1000, 1) 0 0); }
+}
+
 .app { --font-scale: 1; }
 
 /* minmax(0,1fr), and it is load-bearing. A grid track's automatic minimum is

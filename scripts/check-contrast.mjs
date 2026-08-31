@@ -55,7 +55,10 @@ const undecided = [];   // measured, real, and waiting on a palette decision
 
 for (const L of LIVERIES) {
   for (const variant of ["night", "day"]) {
-    for (const finish of [null, "aurora"]) {
+    // MANUAL INCLUDED. This loop ran null and aurora only, so the finish with
+    // its own icons and its own layout — the one most likely to diverge — was
+    // the one never measured here. check:surfaces found real failures in it.
+    for (const finish of [null, "aurora", "manual"]) {
       const base = deckVars(L.id, variant).vars;
       const over1 = finishVars(L.id, variant, finish, base["--active"]);
       const v = { ...base, ...over1 };
@@ -123,7 +126,7 @@ const t3 = rows.filter((r) => r.where.endsWith("--t3"));
 const worstOf = (r) => Math.min(r.onGround, r.onPanel, r.onSunk);
 const lo = Math.min(...t3.map(worstOf));
 const hi = Math.max(...t3.map(worstOf));
-console.log(`contrast: ${rows.length} tiers x 4 surfaces across ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora`);
+console.log(`contrast: ${rows.length} tiers x 4 surfaces across ${LIVERIES.length} liveries x Light/Dark x Standard/Aurora/Manual`);
 console.log(`          t3, the floor tier, spans ${lo.toFixed(2)} to ${hi.toFixed(2)} against ${FLOOR} on ground, panel and sunk`);
 if (undecided.length) {
   console.log(`\n          --raised carries t3 below the floor in ${undecided.length} of the ${rows.filter((r) => r.where.endsWith("--t3")).length} tier/variant combinations.`);
