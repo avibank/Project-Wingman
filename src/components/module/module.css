@@ -780,13 +780,18 @@
    border sits outside the text column), so the two share a left edge.
    --t1 is the primary text token: white on the dark variant, near-black on the
    light one, which is what was asked for. Scoped to .mscreen so the lesson
-   page's own back link is untouched. */
+   page's own back link is untouched, and NOT gated on the finish: this applies
+   in Standard, Aurora and Manual alike.
+
    The gutter goes on .hdr, not on the button. .hdr already indents by --pad
-   (30px) and .up added another 23px INSIDE that, so the chevron landed at
-   126px while the title sat at 92px — measured, not guessed. Moving the gutter
-   to the parent and zeroing the button's leaves one indent instead of two, and
-   it is the same one .mhero uses. */
-.mscreen .hdr{ padding-inline: calc(var(--card-pad) + 1px); }
+   and .up added another --pad INSIDE that, so at 1252px the chevron sat at
+   139 under a title at 132. Moving the gutter to the parent and zeroing the
+   button's leaves one indent instead of two, and it is the one .mhero uses.
+
+   `padding`, not `padding-inline`, because line 31 sets the shorthand and the
+   two must be the same property for "later wins" to be obvious to whoever
+   reads this next. */
+.mscreen .hdr{ padding: 0 calc(var(--card-pad) + 1px); }
 .mscreen .hdr .up{
   padding-inline: 0;
   color: var(--t1);
