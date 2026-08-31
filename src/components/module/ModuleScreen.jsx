@@ -81,6 +81,24 @@ export default function ModuleScreen({
   const searching = terms(query).length > 0;
   const fieldRef = useRef(null);
 
+  // §12/a11y — ARROW KEYS ON THE TABLIST. The tabs already use roving
+  // tabIndex, which takes the unselected one OUT of the tab order — correct
+  // for a tablist, but only half of the pattern: without arrow-key movement
+  // the second tab becomes unreachable by keyboard entirely, and MODULE_TABS
+  // is the only keyboard route into the Library. Mirrors walkTabs in
+  // Profile.jsx so the two tablists behave identically.
+  const tabsRef = useRef(null);
+  const walkTabs = (e) => {
+    const btns = [...(tabsRef.current?.querySelectorAll('[role="tab"]') || [])];
+    const i = btns.indexOf(document.activeElement);
+    if (i < 0 || !btns.length) return;
+    const move = (n) => { e.preventDefault(); btns[n]?.focus(); onTab(MODULE_TABS[n].id); };
+    if (e.key === "ArrowRight") move((i + 1) % btns.length);
+    if (e.key === "ArrowLeft") move((i - 1 + btns.length) % btns.length);
+    if (e.key === "Home") move(0);
+    if (e.key === "End") move(btns.length - 1);
+  };
+
   // Calibration is the RIGHT answers kept in currency: `holding`. `due` is how
   // many of those have come round. Neither is caution, and §5 forbids the two
   // vocabularies ever meeting.
@@ -114,7 +132,8 @@ export default function ModuleScreen({
           the surface below, and the list lives inside the same border. */}
       <div className="mcard">
       <div className="tabsbar">
-        <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}>
+        <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}
+             ref={tabsRef} onKeyDown={walkTabs}>
           {MODULE_TABS.map((t) => (
             <button key={t.id} type="button" role="tab" className="tab"
                     aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}

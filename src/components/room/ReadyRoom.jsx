@@ -5,7 +5,7 @@ import {
 import {
   matches, presenceRail, PRESENCE_SHOWN,
   titleOf, excerptOf, isAnswered, answerCount, waitingCount,
-  FEED_FILTERS, applyFeedFilter, nestAnswers, isMine,
+  FEED_FILTERS, applyFeedFilter, nestAnswers, isMine, orderThreads, rowUnread,
 } from "../../lib/roomModel.js";
 import { initials, hueFor, ago } from "../../lib/familiar.js";
 import { mmss } from "../module/lessonState.js";
@@ -356,7 +356,18 @@ export default function ReadyRoom({
         {mod && !thread && (() => {
           const code = mod.code || mod.id;
           const f = filters[code] || "all";
-          const list = applyFeedFilter(modThreads, f, { me, replies });
+          // ORDERED, not raw. The query has no .order() and nothing sorted
+          // downstream, so the feed rendered in whatever order Postgres
+          // happened to return — which for a question feed means the thing
+          // waiting on you can sit anywhere. orderThreads is the room's
+          // existing rule: what has moved since you last looked first, then
+          // most recent activity.
+          const list = orderThreads(applyFeedFilter(modThreads, f, { me, replies }), {
+            unread: (t) => rowUnread(t, replies, seen, me),
+            lastAt: (t) => replies
+              .filter((r) => r.threadId === t.id)
+              .reduce((x, r) => Math.max(x, Date.parse(r.createdAt) || 0), 0),
+          });
           return (
             <>
               <header className="pane-head">

@@ -318,6 +318,26 @@
 .pop-act:hover:not(:disabled){ border-color: var(--active); color: var(--active); }
 .pop-act:disabled{ opacity: .42; cursor: default; }
 
+/* SPECIFICITY, and it is load-bearing. `.deck .lamp` in Home's DECK_CSS is a
+   DIFFERENT COMPONENT that happens to share the name — the Flight Deck's leg
+   indicator bars — and it sets height, background and border. DECK_CSS is a
+   <style> in the body, so it wins every (0,2,0) tie against this file, which
+   loads from the head. The caution mark on a module card is inside .deck, so
+   it was being painted as a leg bar: 17px tall, --raised, no caution.
+   Restated here at (0,3,0) so the signal wins wherever it is rendered. */
+.lamp.lamp-mark{
+  height: auto;
+  background: var(--lamp-face);
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  color: var(--lamp-legend);
+}
+.lamp.lamp-mark[data-lit="true"]{
+  background: var(--caution);
+  border-color: var(--caution);
+  color: var(--on-caution);
+}
+
 /* ------------------------------------------------- §2 · THE LAMP AS A MARK
    The same lamp, in the places that are already a button. Not interactive:
    see the note above CautionMark for why a <button> cannot go there. */

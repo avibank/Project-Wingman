@@ -16,7 +16,7 @@ import "./quiz.css";
 // recorded here rather than resolved silently.
 export default function Review({
   title, questions, isRetake = false,
-  resumeAt = 0, onProgress, onAnswer, onDone, onLeave, onOpenLesson,
+  resumeAt = 0, resumeTally = null, onProgress, onAnswer, onDone, onLeave, onOpenLesson,
   // §6 — what the results screen needs. Review owns WHEN the sitting is over;
   // QuizResults owns WHAT is shown. Passed straight through rather than
   // recomputed here, so the average on this screen is the same object the
@@ -35,7 +35,17 @@ export default function Review({
   const [set] = useState(questions);
   const [at, setAt] = useState(Math.min(resumeAt, Math.max(0, set.length - 1)));
   const [picked, setPicked] = useState(null);
-  const [tally, setTally] = useState({ right: 0, toCaution: 0, toHolding: 0 });
+  // SEEDED FROM WHAT WAS ALREADY ANSWERED. Leaving halfway unmounts this
+  // component and destroys the tally, but `at` is restored from the run — so
+  // starting the count at zero on re-entry scored the sitting as if the
+  // questions before the resume point had all been wrong. Only the FIRST
+  // attempt is ever recorded, so that wrong figure is permanent: it feeds the
+  // average, the needle and every lamp weighed against the bar.
+  const [tally, setTally] = useState(() => ({
+    right: resumeTally?.right || 0,
+    toCaution: resumeTally?.toCaution || 0,
+    toHolding: resumeTally?.toHolding || 0,
+  }));
   const [finished, setFinished] = useState(false);
 
   // Option order is shuffled per SITTING, not per render — seeded once so a
@@ -47,7 +57,7 @@ export default function Review({
 
   // Nothing is timed, and leaving keeps your place — but it has to SAY so, or
   // the student assumes it was thrown away and starts again.
-  useEffect(() => { onProgress?.(at); }, [at]);
+  useEffect(() => { onProgress?.(at, tally); }, [at, tally]);
 
 
   const choose = (i) => {

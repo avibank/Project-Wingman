@@ -39,11 +39,32 @@ export default function MinimumsPop({ anchor, value, onChange, onClose }) {
 
   useEffect(() => { ref.current?.focus(); }, []);
 
+  /* CSS ZOOM, and it is the reason these numbers are divided.
+
+     .content carries `zoom: var(--font-scale)` — the text-size control — and
+     CSS zoom scales FIXED descendants too; being position: fixed does not
+     exempt an element from an ancestor's zoom. getBoundingClientRect returns
+     real screen pixels, but the left/top written here are interpreted in the
+     zoomed coordinate space, so at the Large text size every offset came out
+     1.15x too far right and too far down. Dividing converts screen pixels
+     back into the space the style is read in. */
+  const zoom = (() => {
+    let z = 1, el = anchor;
+    while (el && el !== document.documentElement) {
+      const v = parseFloat(getComputedStyle(el).zoom);
+      if (Number.isFinite(v) && v > 0) z *= v;
+      el = el.parentElement;
+    }
+    return z || 1;
+  })();
+
   // Clamped to the viewport so it cannot hang off either edge on a phone.
-  const left = box
-    ? Math.max(8, Math.min(window.innerWidth - W - 8, box.left + box.width / 2 - W / 2))
-    : 8;
-  const arrow = box ? Math.max(14, Math.min(W - 24, box.left + box.width / 2 - left - 5)) : 24;
+  // The clamp is in the same divided space as the value it bounds.
+  const vw = window.innerWidth / zoom;
+  const bx = box ? box.left / zoom : 0;
+  const bw = box ? box.width / zoom : 0;
+  const left = box ? Math.max(8, Math.min(vw - W - 8, bx + bw / 2 - W / 2)) : 8;
+  const arrow = box ? Math.max(14, Math.min(W - 24, bx + bw / 2 - left - 5)) : 24;
 
   return (
     <div className="pop minpop" ref={ref} tabIndex={-1} role="dialog" aria-label="Your minimums"
@@ -53,7 +74,7 @@ export default function MinimumsPop({ anchor, value, onChange, onClose }) {
            // viewport coordinates. Adding the scroll offset to a fixed element
            // pushes it down the page by however far the page happens to be
            // scrolled.
-           top: box ? `${box.bottom + 10}px` : "auto",
+           top: box ? `${box.bottom / zoom + 10}px` : "auto",
            "--arrow": `${arrow}px`,
            width: `${W}px`,
          }}>

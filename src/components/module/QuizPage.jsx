@@ -41,7 +41,16 @@ export default function QuizPage({
           // pw-quiz-run, so "Back to question N" never appears and the Flight
           // Deck's Resume cannot point at a quiz — it is what tells the rest of
           // the app where you got to.
-          onProgress={(at) => onRun?.(chapter.id, { at, total: chapter.questions.length })}
+          // The tally travels with the place. Without it, coming back to
+          // "Back to question N" restarted the count at zero and recorded a
+          // score for a sitting that had already been half answered.
+          onProgress={(at, tally) => onRun?.(chapter.id, {
+            at, total: chapter.questions.length,
+            right: tally?.right || 0,
+            toCaution: tally?.toCaution || 0,
+            toHolding: tally?.toHolding || 0,
+          })}
+          resumeTally={run}
           onLeave={() => setRunning(false)}
           onOpenLesson={onOpenLessonById}
           // §6 — the two averages the needle sweeps between. `after` is the
