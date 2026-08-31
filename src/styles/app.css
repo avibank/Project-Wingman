@@ -198,7 +198,21 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    source order — it has now silently overridden the runway trail, this switch
    and this panel height. Qualifying is the cheap fix; deleting that rule is the
    real one, and it is a bigger change than this. */
-.app .panel-swap { display: grid; transition: height 180ms ease-out; }
+/* The text-size control. App.jsx sets --font-scale as an INLINE style on .app
+   (0.9 / 1 / 1.15) and .content applies it as `zoom`, so this declaration
+   never wins — inline always does. It is here so the token has a real default
+   if that style is ever absent, and so it is declared somewhere a stylesheet
+   can see: CSS that reads it, like the full-bleed compensation in module.css,
+   is otherwise reading a property nothing in any stylesheet defines. */
+.app { --font-scale: 1; }
+
+/* minmax(0,1fr), and it is load-bearing. A grid track's automatic minimum is
+   min-content, so this column sized itself to the WIDEST panel it stacks
+   rather than to the space available: measured on a 375px phone at the Large
+   text size, the track was 364px in a 222px container and the settings blocks
+   rendered 419px wide, with .deck's overflow-x: hidden swallowing the excess.
+   The panels crossfade in one cell, so the track must follow the container. */
+.app .panel-swap { display: grid; grid-template-columns: minmax(0, 1fr); transition: height 180ms ease-out; }
 .app .panel-swap > * { grid-area: 1 / 1; }
 .panel-out { animation: pwPanelOut 120ms ease-out forwards; pointer-events: none; }
 .panel-in { animation: pwPanelIn 180ms ease-out; }

@@ -102,6 +102,45 @@ console.log("threads: the row mapping\n");
   check("50,000 generated ids, none mistaken for the fixture", wrong === 0, `${wrong} were`);
 }
 
+/* ---- the presence rail --------------------------------------------------- */
+{
+  console.log("\nthreads: the presence rail\n");
+  const { presenceRail, normalisePresence, PRESENCE_SHOWN } =
+    await import("../src/lib/roomModel.js");
+
+  // Both shapes reach this: the presence table says user_id/last_seen, the
+  // content fixture says userId/at. Reading only the first is what made the
+  // strip a row of question marks.
+  const norm = normalisePresence([
+    { user_id: "a", last_seen: "2026-08-30T10:00:00Z" },
+    { userId: "b", at: "2026-08-31T10:00:00Z" },
+    { userId: null, at: "2026-08-31T10:00:00Z" },
+  ]);
+  check("both presence shapes normalise", norm.length === 2
+    && norm.every((p) => p.user_id && p.last_seen), JSON.stringify(norm));
+
+  const rows = [
+    { userId: "old", at: "2026-08-01T00:00:00Z" },
+    { userId: "new", at: "2026-08-31T09:00:00Z" },
+    { userId: "mid", at: "2026-08-20T00:00:00Z" },
+    { userId: "newer", at: "2026-08-31T12:00:00Z" },
+    // the same person on three lessons — one row, not three
+    { userId: "new", at: "2026-08-31T08:00:00Z" },
+    { userId: "new", at: "2026-08-31T07:00:00Z" },
+  ];
+  const rail = presenceRail(rows);
+  check(`the rail shows exactly ${PRESENCE_SHOWN}`, rail.shown.length === PRESENCE_SHOWN, `${rail.shown.length}`);
+  check("most recent first", rail.shown[0].user_id === "newer" && rail.shown[1].user_id === "new",
+    rail.shown.map((p) => p.user_id).join(","));
+  check("one row per person", new Set(rail.all.map((p) => p.user_id)).size === rail.all.length,
+    rail.all.map((p) => p.user_id).join(","));
+  check("that person keeps their LATEST moment",
+    rail.all.find((p) => p.user_id === "new").last_seen === "2026-08-31T09:00:00Z");
+  check("nobody is lost behind the overflow",
+    rail.shown.length + rail.rest.length === 4, `${rail.shown.length}+${rail.rest.length}`);
+  check("an empty room yields an empty rail", presenceRail([]).shown.length === 0);
+}
+
 console.log("\nthreads: the shared discussion, over REST as the browser sees it\n");
 
 try {

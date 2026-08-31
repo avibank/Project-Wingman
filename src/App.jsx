@@ -58,7 +58,7 @@ import {
 import Review from "./components/module/Review.jsx";
 import AccuracyPanel from "./components/module/AccuracyPanel.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
-import { badgeCount } from "./lib/roomModel.js";
+import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
 import { reportContent } from "./lib/squadron.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -377,6 +377,19 @@ function AppInner() {
   // thread in a module you are enrolled in — that lights permanently within a
   // week and teaches everyone to ignore the one attention mechanism there is.
   // Threads you are merely near get the quiet row dot in the sidebar instead.
+  // The Ready Room is full-bleed: no topbar above it, the room owns the
+  // viewport. Derived once so the header, the shell class and the room's own
+  // props cannot disagree about which route is in front of you.
+  const roomFull = route.name === "ready" && Boolean(flags["social.readyroom"]);
+
+  // The room renders its own copy of the profile menu, so what the menu does
+  // has to live somewhere both can reach rather than being written out twice.
+  const goProfile = (page) => {
+    setBookmarksMode("list");
+    if (page === "licence" || page === "preferences" || page === "appearance") go(routePath.profile(page));
+    else goSettings(page);
+  };
+
   /* ------------------------------------------------- the room's shared data */
   // The discussion for whichever module is in front of you, from the shared
   // tables. Re-run on the module, so walking between modules loads each one
@@ -544,6 +557,7 @@ function AppInner() {
       className={`app ${variant === "day" ? "theme-light" : ""} ${reduceMotion ? "reduce-motion smooth-air" : ""} ${dyslexiaFont ? "plain-language" : ""}`}
       data-aur={finish === "aurora" && variant !== "day" ? "1" : undefined}
       data-paper={finish === "manual" ? "1" : undefined}
+      data-roomfull={roomFull ? "1" : undefined}
       data-fiche={finish === "manual" && variant !== "day" ? "1" : undefined}
       // Tooth in Day whatever the finish. The Day brief excluded Manual, but
       // paper wants fibre more than anything else here does, and the
@@ -587,27 +601,24 @@ function AppInner() {
       {storageWarning && (
         <div className="storage-warning">Your browser is blocking local storage here, so progress won't be saved on this device.</div>
       )}
-      <header className="topbar">
-        <button className="brandmark" onClick={goHome} aria-label="Go to Flight Deck">
-          Wingman
-        </button>
-        <div className="topbar-right">
-          
-          {/* §8 — the Ready Room takes the spot the streak pill held. One
-              number in the app bar, and it counts things addressed to you. */}
-          <ReadyRoomPill count={roomBadge} onGo={() => go(routePath.ready())} />
-          <ProfileMenu
-            onNavigate={(page) => {
-              setBookmarksMode("list");
-              if (page === "licence" || page === "preferences" || page === "appearance") {
-                go(routePath.profile(page));
-              } else {
-                goSettings(page);
-              }
-            }}
-          />
-        </div>
-      </header>
+      {/* The Ready Room is the one full-screen surface: it takes the banner's
+          height too, and carries the wordmark and the profile inside its own
+          sidebar instead. A messaging shell with a page header above it wastes
+          the one axis it actually needs, and the Ready Room pill would be
+          pointing at the room you are already standing in. */}
+      {!roomFull && (
+        <header className="topbar">
+          <button className="brandmark" onClick={goHome} aria-label="Go to Flight Deck">
+            Wingman
+          </button>
+          <div className="topbar-right">
+            {/* §8 — the Ready Room takes the spot the streak pill held. One
+                number in the app bar, and it counts things addressed to you. */}
+            <ReadyRoomPill count={roomBadge} onGo={() => go(routePath.ready())} />
+            <ProfileMenu onNavigate={goProfile} />
+          </div>
+        </header>
+      )}
 
       {/* THE SCROLLER. tabindex and role because Chrome will not make an
           overflow container focusable on its own, so Page Down and the arrow
@@ -648,10 +659,13 @@ function AppInner() {
             threads={session.threads}
             replies={session.replies}
             people={useTestContent?.people || []}
-            presence={useTestContent?.presence || []}
+            presence={normalisePresence(useTestContent?.presence || [])}
             squadrons={squadrons}
             messages={roomMessages}
             seatCandidates={rightSeat}
+            brand={<button type="button" className="brandmark" onClick={goHome}
+                           aria-label="Go to Flight Deck">Wingman</button>}
+            profile={<ProfileMenu onNavigate={goProfile} />}
             seen={progress.get("pw-room-seen", {})}
             onSeen={(id) => progress.set("pw-room-seen",
               { ...progress.get("pw-room-seen", {}), [id]: Date.now() })}
@@ -802,7 +816,7 @@ function AppInner() {
                     ? [...new Set([...cur, lessonId])]
                     : cur.filter((x) => x !== lessonId));
                 }}
-                presence={useTestContent?.presence || []}
+                presence={normalisePresence(useTestContent?.presence || [])}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}

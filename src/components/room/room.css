@@ -38,6 +38,52 @@
 }
 .app:has(.room) .content--full > .room{ flex: 1 1 auto; min-height: 0; }
 
+/* ---------------------------------------------------------- FULL BLEED ----
+   The room takes the whole viewport, the app bar included. The wordmark and
+   the profile move into the head of the sidebar (see .room-brand below), so
+   nothing is lost — the height they were occupying is simply given to the
+   thing that needs it. data-roomfull is stamped by App rather than inferred,
+   so the header, the shell and the room cannot disagree about the route. */
+.app[data-roomfull="1"]{ height: 100dvh; overflow: hidden; }
+.app[data-roomfull="1"] .deck{
+  padding: 0;                 /* no page gutter, and no chin reservation:
+                                 nothing is docked over a full-bleed room */
+  margin-top: 0;
+  overscroll-behavior: contain;
+}
+.app[data-roomfull="1"] .deck-inner{
+  max-width: none; gap: 0;
+  /* the deck fades its content into the chrome top and bottom; with the room
+     against all four edges that fade would eat the sidebar's first row and
+     the composer */
+  mask-image: none;
+}
+/* .content carries a 28px top margin and, at >=1024px, a 1100px cap — both
+   defined in App.jsx AFTER .content--full clears the cap, so the media query
+   wins on source order and the "full" variant is not actually full. Reset all
+   three here rather than reordering rules in App.jsx, which every other page
+   depends on. */
+.app[data-roomfull="1"] .deck-inner > .content,
+.app[data-roomfull="1"] .deck-inner > .content--full{
+  max-width: none; margin: 0; padding: 0; width: 100%;
+}
+.app[data-roomfull="1"] .room{ border: 0; border-radius: 0; }
+
+/* the wordmark and profile, at the head of the sidebar */
+.room-brand{
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px 0 12px;
+}
+.room-brand-sp{ flex: 1 1 auto; }
+.room-brand .brandmark{
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--t1); font-family: var(--font-ui);
+  font-size: 15px; font-weight: 700; letter-spacing: -.3px;
+  min-height: 0;               /* the global tap-target floor would push the
+                                  row to 44px and reintroduce a banner */
+}
+.room-brand .brandmark:hover{ color: var(--t1); }
+
 .room{
   display: grid;
   grid-template-columns: 326px minmax(0, 1fr);
@@ -79,16 +125,68 @@
   display: block; font-family: var(--font-mono); font-size: var(--fs-xs);
   letter-spacing: .12em; text-transform: uppercase; color: var(--t2);
 }
-.room-faces{ list-style: none; display: flex; margin: 8px 0 0; padding: 0; }
+/* align-items, because a flex row stretches its children by default and these
+   are circles: the row is 44px tall (the tap floor on the buttons inside it),
+   so a stretched 30px circle rendered 30x44 — an egg. */
+.room-faces{ list-style: none; display: flex; align-items: center; margin: 8px 0 0; padding: 0; }
+.room-faces li{ flex: 0 0 auto; }
 .room-faces li + li{ margin-left: -8px; }   /* overlapping, as a strip */
 .room-face{
+  /* The global floor is `.app button:not(.is-inline) { min-height: 44px }`,
+     specificity (0,2,1) — a bare `.room-face { min-height: 0 }` here loses to
+     it, which is exactly what happened first time and left the avatar
+     rendering 30x44. The element carries `is-inline` instead, the hatch the
+     rule itself provides, and the 44px of tappable area it was protecting is
+     put back as a hit box on ::before. The circle keeps its shape and the
+     target keeps its size. */
   position: relative; width: 30px; height: 30px; border-radius: 50%;
   display: grid; place-items: center; cursor: pointer;
   border: 2px solid var(--sunk);
   background: oklch(from var(--active) l c h / .22);
   color: var(--t1); font-family: var(--font-mono); font-size: 10px; padding: 0;
 }
+/* the 44px target the floor was after: 30 + 7 either side. Invisible, and it
+   sits under the dot rather than over it so it cannot swallow the badge. */
+.room-face::before{
+  content: ""; position: absolute; inset: -7px; border-radius: 50%; z-index: 0;
+}
 .room-face:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
+
+/* the overflow face. Reads as a count, not as a person: no hue of its own and
+   no presence dot, because it is not somebody who is online. */
+.room-more{
+  background: var(--raised); color: var(--t2);
+  font-size: 10.5px; letter-spacing: -.02em;
+}
+.room-more:hover{ color: var(--t1); border-color: var(--edge); }
+/* the same disc inside the roster list, where it is a label and not a button */
+.room-face.is-static{ cursor: default; pointer-events: none; }
+.room-face.is-static::before{ content: none; }
+
+/* the roster behind +N */
+.room-roster-pop{
+  margin-top: 8px; border: 1px solid var(--edge-soft); border-radius: 10px;
+  background: var(--panel); padding: 8px; display: grid; gap: 6px;
+}
+.room-roster-find{
+  width: 100%; background: var(--sunk); border: 1px solid transparent;
+  border-radius: 7px; padding: 7px 9px; color: var(--t1); font: inherit; font-size: 12.5px;
+  min-height: 0;
+}
+.room-roster-find:focus{ outline: none; border-color: var(--active); }
+.room-roster-list{
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 2px;
+  max-height: 190px; overflow-y: auto;
+}
+.room-roster-row{
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  background: none; border: 0; border-radius: 7px; padding: 5px 6px;
+  color: var(--t1); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer;
+  min-height: 0;
+}
+.room-roster-row:hover{ background: var(--raised); }
+.room-roster-name{ flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-roster-when{ flex: 0 0 auto; color: var(--t3); font-family: var(--font-mono); font-size: 11px; }
 /* §11 — the dot is corroborated by the accessible name; it is never the only
    thing saying somebody is online. */
 .room-dot{
@@ -165,7 +263,11 @@
 .room-filter{
   background: none; border: 1px solid var(--edge); border-radius: 999px;
   padding: 4px 10px; font: inherit; font-size: 11.5px; color: var(--t2); cursor: pointer;
+  /* Same tap-floor story as .room-face, and the same hatch: a 999px radius on
+     a chip 36 wide and forced to 44 tall is not a pill, it is a tall oval. */
+  position: relative;
 }
+.room-filter::before{ content: ""; position: absolute; inset: -9px -4px; }
 .room-filter[aria-pressed="true"]{
   background: color-mix(in srgb, var(--active) 14%, transparent);
   border-color: var(--active); color: var(--active-text);

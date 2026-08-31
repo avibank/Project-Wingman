@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Search, Radio, Flag, Ban } from "lucide-react";
 import {
   isAnchored, originOf, orderThreads, applyFilter, byModule, openByDefault,
-  rowUnread, matches, FILTERS,
+  rowUnread, matches, FILTERS, presenceRail, PRESENCE_SHOWN,
 } from "../../lib/roomModel.js";
 import { initials, hueFor, ago } from "../../lib/familiar.js";
 import { mmss } from "../module/lessonState.js";
@@ -34,12 +34,15 @@ export default function ReadyRoom({
   me = "u_you", modules = [], activeModuleCode,
   threads = [], replies = [], people = [], presence = [],
   squadrons = [], messages = [], seen = {}, chapters = [], seatCandidates = [],
+  brand = null, profile = null,
   onOpenLessonAt, onPost, onReport, onBlock, onSeen,
 }) {
   const [openId, setOpenId] = useState(null);     // what the main pane shows
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [collapsed, setCollapsed] = useState(() => new Set());
+  const [roster, setRoster] = useState(false);   // the +N roster, open or not
+  const [find, setFind] = useState("");
   const listRef = useRef(null);
   const paneRef = useRef(null);
 
@@ -63,6 +66,9 @@ export default function ReadyRoom({
 
   const openThread = threads.find((t) => t.id === openId) || null;
   const openSquadron = squadrons.find((s) => s.id === openId) || null;
+  // Three shown, the rest behind +N. Memoised because it sorts, and presence
+  // re-renders on every heartbeat.
+  const rail = useMemo(() => presenceRail(presence, PRESENCE_SHOWN), [presence]);
   const rightSeat = openId === "__rightseat__";
 
   const open = (id) => {
@@ -80,6 +86,19 @@ export default function ReadyRoom({
     <div className="room" data-open={openId ? "1" : "0"}>
       {/* ------------------------------------------------------ the sidebar */}
       <aside className="room-side" ref={listRef} tabIndex={-1} aria-label="Conversations">
+        {/* The wordmark and the profile, which the app bar carried until this
+            surface took the whole viewport. They sit at the head of the
+            sidebar rather than in a strip across the top: a bar spanning both
+            columns would be the banner again under another name, and the one
+            axis a messaging shell is short of is height. */}
+        {(brand || profile) && (
+          <div className="room-brand">
+            {brand}
+            <span className="room-brand-sp" />
+            {profile}
+          </div>
+        )}
+
         <div className="room-top">
           <div className="room-search">
             <Search aria-hidden="true" />
@@ -89,13 +108,19 @@ export default function ReadyRoom({
           </div>
 
           {/* §4 — the presence strip. §11: the status is in the accessible
-              name, never carried by the dot's colour alone. */}
+              name, never carried by the dot's colour alone.
+
+              THREE FACES, most recently seen first, and everyone else behind
+              the +N. The strip answers "is anyone about" at a glance; a row of
+              a dozen initials answers it no better and reads as a list you are
+              meant to study. Nobody is hidden — the +N opens the full roster
+              with a filter on it. */}
           <div className="room-presence">
             <span className="room-presence-label">In the room</span>
             <ul className="room-faces">
-              {presence.slice(0, 6).map((p) => (
+              {rail.shown.map((p) => (
                 <li key={p.user_id}>
-                  <button type="button" className="room-face" onClick={() => open("__rightseat__")}
+                  <button type="button" className="room-face is-inline" onClick={() => open("__rightseat__")}
                           aria-label={`${who(p.user_id)}, online`}
                           style={{ "--av-h": hueFor(p.user_id) }}>
                     {initials(who(p.user_id))}
@@ -103,10 +128,49 @@ export default function ReadyRoom({
                   </button>
                 </li>
               ))}
+              {rail.rest.length > 0 && (
+                <li>
+                  <button type="button" className="room-face room-more is-inline"
+                          onClick={() => setRoster((v) => !v)}
+                          aria-expanded={roster}
+                          aria-label={`${rail.rest.length} more in the room. Show everyone.`}>
+                    +{rail.rest.length}
+                  </button>
+                </li>
+              )}
               {presence.length === 0 && (
                 <li className="room-quiet">Nobody in the room just now.</li>
               )}
             </ul>
+
+            {/* The way to reach anyone past the third. A filter rather than a
+                plain list: the point of opening this is that you already have
+                somebody in mind. */}
+            {roster && (
+              <div className="room-roster-pop">
+                <input type="search" className="room-roster-find" value={find}
+                       placeholder="Find someone in the room"
+                       aria-label="Find someone in the room"
+                       onChange={(e) => setFind(e.target.value)} />
+                <ul className="room-roster-list">
+                  {rail.all.filter((p) => matches(find, who(p.user_id))).map((p) => (
+                    <li key={p.user_id}>
+                      <button type="button" className="room-roster-row is-inline"
+                              onClick={() => { setRoster(false); open("__rightseat__"); }}>
+                        <span className="room-face is-static is-inline" style={{ "--av-h": hueFor(p.user_id) }}>
+                          {initials(who(p.user_id))}
+                        </span>
+                        <span className="room-roster-name">{who(p.user_id)}</span>
+                        <span className="room-roster-when">{ago(p.last_seen)}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {rail.all.filter((p) => matches(find, who(p.user_id))).length === 0 && (
+                    <li className="room-quiet">Nobody here by that name — try another.</li>
+                  )}
+                </ul>
+              </div>
+            )}
             <button type="button" className="room-seat" onClick={() => open("__rightseat__")}>
               <Radio aria-hidden="true" /> Right seat
             </button>
@@ -160,7 +224,7 @@ export default function ReadyRoom({
                     {/* §9 — the filter row, built in from the start. */}
                     <div className="room-filters" role="group" aria-label={`Filter ${mod.name} threads`}>
                       {FILTERS.map((f) => (
-                        <button key={f.id} type="button" className="room-filter"
+                        <button key={f.id} type="button" className="room-filter is-inline"
                                 aria-pressed={filter === f.id}
                                 onClick={() => setFilter(f.id)}>{f.label}</button>
                       ))}

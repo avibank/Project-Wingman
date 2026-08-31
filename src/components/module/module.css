@@ -655,8 +655,17 @@
      from two different ancestors and a fixed negative margin would drift. */
   .mscreen .mcard{
     border-radius: 0; border-left: 0; border-right: 0;
-    width: 100vw;
-    margin-inline: calc(50% - 50vw);
+    /* DIVIDED BY THE TEXT SCALE, and that is not a refinement.
+       The text-size control is `zoom: var(--font-scale)` on .content, and vw
+       units do NOT participate in zoom — they stay in viewport pixels while
+       everything around them is multiplied. So at Large this card asked for
+       100vw and rendered at 115% of the screen: 431px inside a 375px phone,
+       with .deck's overflow-x: hidden quietly eating the difference. That is
+       the "Lessons" and "hapter 1" clipping, back by another route.
+       Dividing converts viewport pixels into the zoomed coordinate space the
+       rest of this subtree is already using. */
+    width: calc(100vw / var(--font-scale, 1));
+    margin-inline: calc(50% - (50vw / var(--font-scale, 1)));
   }
 
   /* Three columns do not fit: the status wrapped onto its own line and broke

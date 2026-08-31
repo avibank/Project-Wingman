@@ -125,3 +125,58 @@ export function rightSeatCandidates({ me, members = [], presence = [], blocked =
     .map((p) => ({ ...p, squadronId: members.find((m) => m.user_id === p.user_id
       && mySquadrons.has(m.squadron_id))?.squadron_id }));
 }
+
+/* §4 — the presence strip shows THREE, and they are the three most recently
+   seen. Not the first three the server happened to return, which is what a
+   bare slice gives you: an arbitrary set that also happens to look stable, so
+   nobody notices it is arbitrary.
+
+   Three because the strip is a glance, not a directory. Past three it stops
+   answering "is anyone about" and starts being a list you have to read, and a
+   list you have to read belongs behind the overflow control rather than in
+   front of it — which is what `rest` is for. Everyone stays reachable; only
+   the first three are spent on being seen without asking.
+
+   Ties are broken by user_id so the order cannot flicker between renders when
+   two people share a timestamp. */
+export const PRESENCE_SHOWN = 3;
+
+/* Presence arrives in TWO shapes and the room only ever understood one.
+
+   The `presence` table gives user_id / last_seen. The content fixture gives
+   userId / at. The room read user_id throughout, so on the fixture path every
+   row resolved to undefined: `who(undefined)` fell through to the raw value
+   and `initials()` produced "?" — the strip has been a row of question marks
+   the whole time, which reads as a rendering quirk rather than as data the
+   component cannot see.
+
+   Normalised here, once, so there is a single shape past this point rather
+   than every consumer remembering both. */
+export function normalisePresence(rows = []) {
+  return (rows || [])
+    .map((p) => ({
+      ...p,
+      user_id: p.user_id ?? p.userId ?? null,
+      last_seen: p.last_seen ?? p.lastSeen ?? p.at ?? null,
+    }))
+    .filter((p) => p.user_id);
+}
+
+export function presenceRail(presence = [], limit = PRESENCE_SHOWN) {
+  const when = (p) => Date.parse(p.last_seen || 0) || 0;
+  // ONE ROW PER PERSON. Presence is per person PER LESSON, so somebody who has
+  // opened three lessons is three rows — they appeared in the roster three
+  // times and could take all three face slots on their own, which turns "who
+  // is about" into "who has the most tabs open". Their most recent row wins,
+  // since that is where they actually are.
+  const newest = new Map();
+  for (const p of normalisePresence(presence)) {
+    const held = newest.get(p.user_id);
+    if (!held || when(p) > when(held)) newest.set(p.user_id, p);
+  }
+  const ordered = [...newest.values()].sort((a, b) => {
+    const d = when(b) - when(a);
+    return d !== 0 ? d : String(a.user_id).localeCompare(String(b.user_id));
+  });
+  return { shown: ordered.slice(0, limit), rest: ordered.slice(limit), all: ordered };
+}

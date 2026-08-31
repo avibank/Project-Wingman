@@ -216,8 +216,20 @@ const PROFILE_CSS = `
   margin: 6px 0 0; color: var(--t1); }
 
 .tabs { display: flex; gap: 4px; background: color-mix(in oklab, var(--panel), transparent 20%);
-  border: 1px solid var(--line); border-radius: 11px; padding: 4px; margin-bottom: 20px; max-width: 520px; }
-.tabs button { flex: 1; background: none; border: 0; border-radius: 8px; padding: 10px 8px;
+  border: 1px solid var(--line); border-radius: 11px; padding: 4px; margin-bottom: 20px; max-width: 520px;
+  /* Three tabs at the Large text size come to 288px, which does not fit a
+     375px phone: "Appearance" ran 17px past the edge and .deck's
+     overflow-x: hidden ate it, so the tab was unreachable rather than merely
+     tight. Scrolls instead, the same treatment .mscreen .tabs already has.
+     Nothing changes at sizes where the row fits. */
+  overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+/* flex: 1 0 auto — grow to fill the row exactly as before wherever there is
+   room, and never shrink below the label. A 0 0 auto would have stopped them
+   filling on a desktop, which is a look, not a fix.
+   (No backticks in this block: it is a JS template literal, and one inside a
+   CSS comment ends the string.) */
+.tabs button { flex: 1 0 auto; background: none; border: 0; border-radius: 8px; padding: 10px 8px;
   color: var(--t2); font-size: calc(13px * var(--scale, 1)); font-weight: 600; cursor: pointer;
   transition: background .16s, color .16s; }
 .tabs button[aria-selected="true"] { background: var(--raised); color: var(--t1);

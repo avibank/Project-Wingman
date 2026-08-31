@@ -1,9 +1,30 @@
+/* ====================== THE NOTE DECK ====================================
+   SCOPED, and this is not tidiness. Two of the class names in here are among
+   the most generic in the codebase and both were colliding destructively:
+
+   `.card` is also the Flight Deck's hero card (Home.jsx, `.deck .card`). This
+   file declared `height: 150px` on it and Home declared no height at all, so
+   the hero inherited a height meant for a flip-through card — content 397px
+   tall inside a 150px box with overflow:hidden. The bottom of the resume text
+   and the ENTIRE progress strip were invisible. Worse, it only bit AFTER
+   visiting a lesson: a CSS import is global, so the hero was fine until
+   something loaded this file and broken from then on, which is exactly the
+   "going into a module and back out breaks the hero card" report.
+
+   `.deck` is also the app's one scroller (Deck.jsx). The note deck's wrapper
+   used the same name, so it was picking up overflow-y, the chin padding and
+   the safe-centring of the page scroller — and the app scroller was picking
+   up this file's `margin-top: 14px`.
+
+   Everything from .composer down is deliberately left unscoped: it is shared
+   with LessonPage, which imports this file for exactly those rules.
+   ======================================================================== */
 /* The note deck. Every colour a token; nothing invented here. */
-.deck{ margin-top: 14px; }
+.notedeck{ margin-top: 14px; }
 
 /* FIXED HEIGHT. The text scrolls inside the card rather than the card growing,
    because a deck that changes height as you flip reads as broken. */
-.card{
+.notedeck .card{
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -15,7 +36,7 @@
   border: 1px solid var(--edge, var(--hair));
   border-radius: var(--house-radius, 14px);
 }
-.card-t{
+.notedeck .card-t{
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
@@ -27,54 +48,54 @@
   padding: 0 8px;
   cursor: pointer;
 }
-.card-t:hover{ border-color: var(--active); }
-.card-body{
+.notedeck .card-t:hover{ border-color: var(--active); }
+.notedeck .card-body{
   height: 100%;
   overflow-y: auto;
   font-size: var(--fs-md);
   line-height: var(--lh-body);
   color: var(--t1);
 }
-.card-del{
+.notedeck .card-del{
   min-width: var(--tap); min-height: var(--tap);
   display: grid; place-items: center;
   background: none; border: 0; padding: 0;
   color: var(--t3); cursor: pointer; border-radius: 50%;
 }
-.card-del:hover{ color: var(--bad); background: var(--raised); }
-.card-del svg{ width: 16px; height: 16px; }
+.notedeck .card-del:hover{ color: var(--bad); background: var(--raised); }
+.notedeck .card-del svg{ width: 16px; height: 16px; }
 
-.card-empty{ grid-template-columns: minmax(0,1fr); align-items: center; }
-.card-empty p{
+.notedeck .card-empty{ grid-template-columns: minmax(0,1fr); align-items: center; }
+.notedeck .card-empty p{
   margin: 0; font-size: var(--fs-sm); line-height: var(--lh-body);
   color: var(--t3); max-width: var(--measure);
 }
 
-.deck-nav{
+.notedeck .deck-nav{
   display: flex; align-items: center; gap: 12px;
   margin-top: 10px;
 }
-.deck-arrow{
+.notedeck .deck-arrow{
   min-width: var(--tap); min-height: var(--tap);
   display: grid; place-items: center;
   background: none; border: 1px solid var(--edge, var(--hair));
   border-radius: 999px; color: var(--t2); cursor: pointer;
 }
-.deck-arrow:disabled{ opacity: .4; cursor: default; }
-.deck-arrow svg{ width: 17px; height: 17px; }
-.deck-dots{ display: flex; align-items: center; gap: 6px; flex: 1 1 auto; flex-wrap: wrap; }
+.notedeck .deck-arrow:disabled{ opacity: .4; cursor: default; }
+.notedeck .deck-arrow svg{ width: 17px; height: 17px; }
+.notedeck .deck-dots{ display: flex; align-items: center; gap: 6px; flex: 1 1 auto; flex-wrap: wrap; }
 /* The dot is small but its target is not — a 44px hit area around a 7px mark. */
-.deck-dot{
+.notedeck .deck-dot{
   width: var(--tap); height: var(--tap);
   padding: 0; border: 0; background: none; cursor: pointer;
   display: grid; place-items: center;
 }
-.deck-dot::after{
+.notedeck .deck-dot::after{
   content: ""; width: 7px; height: 7px; border-radius: 50%;
   background: var(--t3); opacity: .55;
 }
-.deck-dot[data-on="1"]::after{ background: var(--active); opacity: 1; }
-.deck-count{
+.notedeck .deck-dot[data-on="1"]::after{ background: var(--active); opacity: 1; }
+.notedeck .deck-count{
   font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--t3);
   white-space: nowrap;

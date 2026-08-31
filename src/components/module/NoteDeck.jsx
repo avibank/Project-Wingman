@@ -40,7 +40,7 @@ export default function NoteDeck({ notes, onSeek, onDelete, jumpTo }) {
 
   if (ordered.length === 0) {
     return (
-      <div className="deck" ref={wrapRef}>
+      <div className="notedeck" ref={wrapRef}>
         <div className="card card-empty">
           <p>
             A line typed while the video runs becomes a card, pinned to that
@@ -54,7 +54,7 @@ export default function NoteDeck({ notes, onSeek, onDelete, jumpTo }) {
   const n = ordered[Math.min(i, ordered.length - 1)];
 
   return (
-    <div className="deck" ref={wrapRef}>
+    <div className="notedeck" ref={wrapRef}>
       {/* Fixed height, and long notes scroll INSIDE the card — the deck must
           not change height as you flip through it. */}
       <div className="card">
