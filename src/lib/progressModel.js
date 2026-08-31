@@ -29,7 +29,18 @@ export function chapterCount(segments) {
 // invitation, per §8.4.
 export function progressCaption(segments) {
   const { full, half, total } = chapterCount(segments);
-  if (!full && !half) return `${total} lessons waiting`;
+  if (!full && !half) {
+    // CHAPTERS, not lessons. `total` is segments.length and a segment is a
+    // chapter — moduleSegments builds one per chapter — so this counted
+    // chapters and called them lessons: the Modules page read "5 lessons
+    // waiting" beside a module with five chapters and about twice that many
+    // lessons. The other branch below has always said chapters, so the two
+    // captions on the same card disagreed about what was being counted.
+    //
+    // The zero is guarded because the Voice rule is that nothing states an
+    // absence: with no chapters at all this said "0 lessons waiting".
+    return total ? `${total} chapters waiting` : "Pick a module and start.";
+  }
   const parts = [`${full} of ${total} chapters`];
   if (half) parts.push(`${half} in progress`);
   return parts.join(" · ");

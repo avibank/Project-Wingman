@@ -37,14 +37,33 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
   reads the global `CHAPTERS` or `PDFS` array directly is a bug waiting to surface —
   both the chapter list and the Library have already had exactly this bug.
 - Module enrollment is real (Supabase `enrollments`, self-serve free enroll/unenroll,
-  no payment yet). All five modules are open — nothing is gated.
+  no payment yet). All four modules are open — nothing is gated.
 
 ## Content
 
-Five modules, four chapters each (20 total): JT, PROP, AERO, NAV, WX. Every chapter has
-authored `body` prose and quiz questions. Only JT chapters have real video clips; the
-other 16 have `clip: null` and render a "not recorded yet" state. Do not invent YouTube
-ids to fill these.
+**There is no real content yet.** This paragraph used to say there was, in
+detail, and every specific was wrong. Verified on 2026-08-31 by reading the two
+files, not inferred:
+
+`src/data.js` — **four** modules, M1 to M4, **five** chapters each (20 total).
+Not five modules of four, and the codes JT, PROP, AERO, NAV and WX appear
+nowhere in this repo. **No chapter has `body` prose. No chapter has questions.
+All 20 have `clip: null`.** It is a skeleton: codes, titles and structure.
+
+`src/content/test-content.json` — the fixture behind the `content.test` flag,
+which is `everyone: true` and therefore what the app actually shows today: four
+modules, three chapters each, two lessons per chapter, with Blender's open
+movies as clips and general-knowledge quiz questions. `npm run check:ship` is
+the gate that stops it reaching a launch, and it currently fails on purpose.
+
+So the two sources disagree about how many chapters a module has — five in
+data.js, three in the fixture — and which one a screen shows depends on whether
+it reads the fixture. That is worth knowing before trusting any count on screen.
+
+Do not invent YouTube ids, chapter prose or questions to fill any of this.
+
+`chaptersForModule()` and `pdfsForModule()` are in data.js and exported, as the
+architecture note above says — that part was accurate.
 
 ## Design system
 

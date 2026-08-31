@@ -571,10 +571,19 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
               <div className="chapter">{heroChapter ? heroChapter.title : active.name}</div>
               <div className="hcode">{heroChapter ? heroChapter.code : active.code} · {active.name}</div>
               <div className="position">
+                {/* No invented number. This was `next?.lessons?.length || 2`,
+                    so a chapter whose lessons had not loaded — or genuinely
+                    had none, since 0 is falsy — told the student "2 lessons
+                    waiting" on no evidence at all. A count shown as fact has
+                    to be one; where there is none, the sentence names the
+                    action instead, which is what the empty-state rule asks
+                    for anyway. */}
                 {resumeLine
                   || (heroStarted
                     ? "Pick up where you left off."
-                    : `${next?.lessons?.length || 2} lessons waiting.`)}
+                    : (next?.lessons?.length
+                      ? `${next.lessons.length} lesson${next.lessons.length === 1 ? "" : "s"} waiting.`
+                      : "Start the first lesson."))}
               </div>
             </div>
             {/* A sibling of the text, not a child of it — that is what puts it

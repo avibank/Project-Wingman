@@ -84,5 +84,33 @@ ok("the result names what moved, never a bare score",
    R.movedLine({ toCaution: 2, toHolding: 3 }) === "3 joined the tag · 2 went to caution",
    R.movedLine({ toCaution: 2, toHolding: 3 }));
 
+
+/* ---------------------------------------------------------------------------
+   The module caption. Two rules it has broken: it counted CHAPTERS and called
+   them lessons, and with nothing at all it stated a zero, which the Voice rule
+   forbids outright.
+*/
+{
+  const P = await import("../src/lib/progressModel.js");
+  const segs = (n) => P.moduleSegments(
+    Array.from({ length: n }, (_, i) => ({ id: `c${i}`, code: `C${i}`, title: "t" })), {});
+
+  const fresh = P.progressCaption(segs(5));
+  ok("the empty caption counts chapters, not lessons",
+     /5 chapters/.test(fresh) && !/lesson/i.test(fresh), fresh);
+  ok("no caption ever states a zero", !/\b0\b/.test(P.progressCaption(segs(0))),
+     P.progressCaption(segs(0)));
+
+  const part = P.progressCaption(P.moduleSegments(
+    [{ id: "c0" }, { id: "c1" }, { id: "c2" }],
+    { completed: new Set(["c0"]), viewed: new Set(["c1"]) }));
+  ok("both captions count the same thing", /chapters/.test(part) && /chapters/.test(fresh), `${fresh} | ${part}`);
+
+  // nextChapter must always resolve — it drives the attitude indicator
+  ok("nextChapter always resolves",
+     P.nextChapter([{ id: "a" }, { id: "b" }], { completed: new Set(["a", "b"]) })?.id === "b");
+  ok("nextChapter on an empty module is null", P.nextChapter([], {}) === null);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

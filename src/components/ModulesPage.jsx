@@ -29,7 +29,15 @@ function ModulesPage({ activeModuleCode, onOpenModule, onGoToChapter, onMakeActi
               <button className="mods-open" onClick={() => onOpenModule(m.code)}>
                 <span className="mods-code">{m.code}</span>
                 <span className="mods-name">{m.name}</span>
-                <span className="mods-count">{full > 0 ? `${full} of ${total}` : `${total} lessons waiting`}</span>
+                {/* The terse figure. It used to repeat the caption below it
+                    word for word AND get the noun wrong — a segment is a
+                    chapter, so this counted chapters and called them lessons
+                    while the caption underneath counted the same segments and
+                    called them chapters. One fact, two sentences, disagreeing.
+                    "0 of 5" is not an option either: nothing states a zero. */}
+                <span className="mods-count">
+                  {full > 0 ? `${full} of ${total}` : `${total} chapters`}
+                </span>
               </button>
               <SegmentedBar
                 segments={segments}
