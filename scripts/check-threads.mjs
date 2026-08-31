@@ -72,6 +72,36 @@ console.log("threads: the row mapping\n");
   check("a reply round-trips", same(fromReply(toReply(rdb)), rdb));
 }
 
+/* ---- the fixture discriminator ------------------------------------------ */
+// The one-time adoption in session.jsx hands anything an account still holds
+// at the old pw-threads key over to the SHARED table. The previous seedFrom
+// wrote the demo discussion into that same key, so this rule is all that
+// stands between the fixture and every real student's module. It is asserted
+// against the actual fixture, in both directions, because reasoning about it
+// produced a version that would have published fourteen demo threads.
+{
+  console.log("\nthreads: the fixture is never adopted\n");
+  const fixture = JSON.parse(
+    await import("node:fs").then((fs) =>
+      fs.readFileSync(new URL("../src/content/test-content.json", import.meta.url), "utf8")));
+  const fixtureThread = (id) => /^T\d+$/.test(String(id || ""));
+  const fixtureReply = (id) => /^T\d+\.R\d+$/.test(String(id || ""));
+
+  const missT = fixture.threads.filter((t) => !fixtureThread(t.id)).map((t) => t.id);
+  const missR = fixture.replies.filter((r) => !fixtureReply(r.id)).map((r) => r.id);
+  check(`all ${fixture.threads.length} fixture threads are refused`, missT.length === 0, missT.join(","));
+  check(`all ${fixture.replies.length} fixture replies are refused`, missR.length === 0, missR.join(","));
+
+  // And the reverse: a real id must never be mistaken for the fixture.
+  const rnd = () => Math.random().toString(36).slice(2, 8);
+  let wrong = 0;
+  for (let i = 0; i < 50000; i += 1) {
+    const id = `T${Date.now().toString(36)}${rnd()}`;
+    if (fixtureThread(id) || fixtureReply(`${id}.R${Date.now().toString(36)}${rnd()}`)) wrong += 1;
+  }
+  check("50,000 generated ids, none mistaken for the fixture", wrong === 0, `${wrong} were`);
+}
+
 console.log("\nthreads: the shared discussion, over REST as the browser sees it\n");
 
 try {

@@ -6,6 +6,38 @@
 
    Every colour is a token. The caution colour appears nowhere in this file.
    ========================================================================= */
+/* THE SHELL NEEDS A DEFINITE HEIGHT, and this is where it gets one.
+   `.room` asked for `height: 100%`, but every ancestor up to <body> is
+   auto-height, and a percentage of auto is auto — so the grid stretched to
+   whichever column was taller and the page scrolled as one document. Measured
+   at 820x900: .room-main was 2546px tall and "Pick a thread or a squadron."
+   sat 1364px down, well below the fold, which is why the pane read as empty.
+   Every internal scroller here (.room-list, .room-body, .room-chat) already
+   has flex:1/min-height:0/overflow-y:auto and was correct — they simply had
+   no bounded parent to scroll inside.
+
+   The app ALREADY has a bounded scroller — `.deck`, from the fixed-shell work
+   — and it is not the problem. The break is `.deck-inner` between it and here:
+   a grid item with min-height auto that grows to its content, so the definite
+   height stops there and never reaches the room. Chaining it down is the whole
+   fix; no viewport arithmetic and no repeated topbar height.
+
+   Scoped with :has() so it lands on the room's route and nowhere else. */
+/* The deck centres short content on purpose — "never stretched, never padded
+   to fill" — and its grid row is therefore content-sized. `height: 100%` on a
+   grid item resolves against that row, which is circular, so it fell back to
+   content and the room floated mid-viewport on a phone. The room is the one
+   surface that must fill: it is a messaging shell, and every scroller inside
+   it (.room-list, .room-body, .room-chat) is written to scroll within a
+   bounded parent. Stretching it here completes that design rather than
+   changing the deck's, which keeps its centring everywhere else. */
+.app:has(.room) .deck{ align-content: stretch; grid-template-rows: minmax(0, 1fr); }
+.app:has(.room) .deck-inner{ height: 100%; min-height: 0; }
+.app:has(.room) .deck-inner > .content--full{
+  height: 100%; min-height: 0; display: flex; padding-bottom: 22px;
+}
+.app:has(.room) .content--full > .room{ flex: 1 1 auto; min-height: 0; }
+
 .room{
   display: grid;
   grid-template-columns: 326px minmax(0, 1fr);

@@ -154,13 +154,19 @@ export function SessionProvider({ children }) {
     // without it the room in local dev is permanently and misleadingly empty.
     //
     // Either way these rows go into MEMORY and are never written anywhere.
-    if (!backendConfigured) {
+    // ONCE per load, and the guard is the point. seedFrom's identity changes
+    // whenever the progress store does — that is, after every single progress
+    // write — so an unguarded seed here re-ran constantly and reset threads to
+    // the fixture, silently deleting a comment the moment anything else saved.
+    // Measured: post a comment, open the Ready Room, come back, and it was
+    // gone and the count had dropped.
+    if (!backendConfigured && !seededDiscussion.current) {
+      seededDiscussion.current = true;
       setSession((s) => ({
         ...s,
         threads: content.threads || [],
         replies: content.replies || [],
       }));
-      seededDiscussion.current = true;
     }
 
     if (seeded.current || progress.get(SEEDED_KEY, false)) return;
@@ -293,13 +299,38 @@ export function SessionProvider({ children }) {
     const oldThreads = progress.get(THREADS_KEY, []);
     const oldReplies = progress.get(REPLIES_KEY, []);
     adopting.current = true;
-    if (!oldThreads.length && !oldReplies.length) { progress.set(ADOPTED_KEY, true); return; }
+    // WHAT MUST NOT BE ADOPTED: the fixture. The previous seedFrom wrote the
+    // demo discussion straight into pw-threads, so every account that has ever
+    // opened this app is holding all 24 demo threads at that key — and six of
+    // them are authored by "u_you". Publishing those would put invented
+    // comments from invented callsigns into a real shared room, permanently,
+    // once per account. Author alone cannot tell them apart.
+    //
+    // The id shape can, and the rule is ALL DIGITS AFTER THE PREFIX. The
+    // fixture ships fixed numeric ids and it ships TWO schemes — T001..T024
+    // and T1000..T1013 — so a digit-count rule misses half of them; matching
+    // /^T\d{3}$/ would have published fourteen demo threads. Every id this app
+    // generates is `T` + Date.now().toString(36) + six random base36 chars,
+    // and the base36 epoch has begun with a letter since 2004 and does so
+    // until 2059, so a generated id always contains a letter and can never be
+    // all digits. Verified against the fixture in scripts/check-threads.mjs
+    // rather than reasoned about, because reasoning about it is what produced
+    // the digit-count version.
+    //
+    // Both conditions have to hold: fixture-shaped ids are skipped, and only
+    // rows this account actually wrote are adopted. It fails closed.
+    const fixtureThread = (id) => /^T\d+$/.test(String(id || ""));
+    const fixtureReply = (id) => /^T\d+\.R\d+$/.test(String(id || ""));
+    const mineOnly = (r) => r.authorId === "u_you" || r.authorId === me;
+    const takeThreads = oldThreads.filter((t) => !fixtureThread(t.id) && mineOnly(t));
+    const takeReplies = oldReplies.filter((r) => !fixtureReply(r.id) && mineOnly(r));
+    if (!takeThreads.length && !takeReplies.length) { progress.set(ADOPTED_KEY, true); return; }
     (async () => {
       // Sequential and best-effort. An id that is already there fails on the
       // primary key, which is the correct outcome for a re-run and is why the
       // flag is set regardless of individual results.
-      for (const t of oldThreads) await insertThread({ ...t, authorId: t.authorId === "u_you" ? me : t.authorId });
-      for (const r of oldReplies) await insertReply({ ...r, authorId: r.authorId === "u_you" ? me : r.authorId });
+      for (const t of takeThreads) await insertThread({ ...t, authorId: me });
+      for (const r of takeReplies) await insertReply({ ...r, authorId: me });
       progress.set(ADOPTED_KEY, true);
     })();
   }, [loaded, progress, me]);
