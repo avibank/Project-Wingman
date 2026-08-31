@@ -1,7 +1,7 @@
 import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
-import { useState, useRef, useEffect, lazy, Suspense, useMemo } from "react";
+import { useState, useRef, useEffect, lazy, Suspense, useMemo, useCallback } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
@@ -51,7 +51,7 @@ import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
-import { postReply } from "./lib/lessonSurface.js";
+import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
@@ -59,6 +59,7 @@ import Review from "./components/module/Review.jsx";
 import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
+import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
 import { fetchProfiles } from "./lib/squadron.js";
 import { reportContent } from "./lib/squadron.js";
@@ -212,7 +213,7 @@ function AppInner() {
   // The seeded notes and threads are written into the account once and then
   // owned like anything else — otherwise deleting a seeded note would bring it
   // back on the next reload.
-  const { seedFrom, requestWatch, session, mutate, requestSeek, me, loadDiscussion } = useSession();
+  const { seedFrom, requestWatch, session, setSession, mutate, requestSeek, me, loadDiscussion } = useSession();
   // The ammeter's panel: each chapter's FIRST-attempt score against the pass
   // mark. A retake is labelled as one and does not move the needle, so the
   // panel has to show which figure the needle is actually reading.
@@ -424,6 +425,19 @@ function AppInner() {
     })();
     return () => { live = false; };
   }, [isSignedIn, me, flags]);
+
+  // §4c — endorsements on answers. Fetched for the replies actually loaded,
+  // keyed by a stable id string so the effect runs when the cast changes
+  // rather than on every render.
+  const [votes, setVotes] = useState({});
+  const replyIds = useMemo(
+    () => session.replies.map((r) => r.id).sort().join(","), [session.replies]);
+  const reloadVotes = useCallback(async () => {
+    const ids = replyIds ? replyIds.split(",") : [];
+    if (!ids.length) { setVotes({}); return; }
+    setVotes(await fetchReplyVotes(ids, me));
+  }, [replyIds, me]);
+  useEffect(() => { reloadVotes(); }, [reloadVotes]);
 
   // WHO WROTE THIS. Names come from pilot_profiles, and without this they did
   // not come from anywhere: `people` held only the content fixture's callsigns,
@@ -708,6 +722,23 @@ function AppInner() {
             squadrons={squadrons}
             messages={roomMessages}
             seatCandidates={rightSeat}
+            votes={votes}
+            onVote={async (replyId, on) => {
+              await toggleReplyVote(replyId, me, on);
+              reloadVotes();
+            }}
+            onBest={async (threadId, replyId) => {
+              // Only the asker may mark an answer, and the server checks it —
+              // the update is scoped by author_id, so this is a no-op for
+              // anyone else rather than a silent success.
+              const ok = await setBestReply(threadId, replyId, me);
+              if (!ok) return;
+              setSession((s0) => ({
+                ...s0,
+                threads: s0.threads.map((t) => (t.id === threadId
+                  ? { ...t, bestReplyId: replyId } : t)),
+              }));
+            }}
             brand={<button type="button" className="brandmark" onClick={goHome}
                            aria-label="Go to Flight Deck">Wingman</button>}
             profile={<ProfileMenu onNavigate={goProfile} />}
@@ -727,6 +758,13 @@ function AppInner() {
             onPost={(ev) => {
               if (ev.kind === "reply") {
                 mutate((sx) => postReply(sx, { threadId: ev.threadId, body: ev.body, authorId: me }));
+                return;
+              }
+              if (ev.kind === "thread") {
+                // §5 — asked in the room, so it carries a title and no lesson.
+                mutate((sx) => postModulePost(sx, {
+                  moduleId: ev.moduleId, body: ev.body, title: ev.title, authorId: me,
+                }));
                 return;
               }
               if (ev.kind === "message") {
@@ -1246,7 +1284,9 @@ function AppInner() {
         /* Full bleed. The bar used to be capped at 1240 and centred, so on a
            wide screen the wordmark and the avatar sat well inside the glass
            with dead space outboard of them. They belong in the corners. */
-        .topbar { position: relative; z-index: 20;
+        /* Row 1 by name, for the same reason .deck is row 2 by name: the
+           two must not depend on each other's presence to be placed. */
+        .topbar { grid-row: 1; position: relative; z-index: 20;
           display: flex; align-items: center; gap: 12px; padding: 14px 24px 12px;
           width: 100%; }
         @media (max-width: 640px) { .topbar { padding: 14px 16px 12px; } }

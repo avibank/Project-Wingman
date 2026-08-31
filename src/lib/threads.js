@@ -92,3 +92,56 @@ export async function deleteReply(id) {
   const { error } = await supabase.from("lesson_replies").delete().eq("id", id);
   return !fail(error, false);
 }
+
+/* ------------------------------------------------------- 0010 · the feed --
+   What turns a list of comments into a question feed: a title, one answer the
+   asker marked as the one that worked, and endorsements on the rest. */
+
+/* Votes for a set of replies, as { replyId: { count, mine } }.
+   One query for the whole feed rather than one per answer — a per-row fetch
+   inside a render loop is how a thread with forty answers makes forty
+   requests. */
+export async function fetchReplyVotes(replyIds = [], me) {
+  const ids = [...new Set(replyIds.filter(Boolean))];
+  if (!ids.length) return {};
+  const { data, error } = await supabase
+    .from("lesson_reply_votes").select("reply_id, user_id").in("reply_id", ids);
+  if (error) return fail(error, {});
+  const out = {};
+  for (const r of data || []) {
+    const v = (out[r.reply_id] = out[r.reply_id] || { count: 0, mine: false });
+    v.count += 1;
+    if (r.user_id === me) v.mine = true;
+  }
+  return out;
+}
+
+/* One vote each, enforced by the primary key rather than by checking first —
+   a check-then-insert races with itself on a double tap. */
+export async function toggleReplyVote(replyId, me, on) {
+  if (!replyId || !me) return false;
+  if (on) {
+    const { error } = await supabase
+      .from("lesson_reply_votes").insert({ reply_id: replyId, user_id: me });
+    // A duplicate is the vote already being there, which is the state the
+    // caller asked for. Not an error worth surfacing.
+    return !error || error.code === "23505";
+  }
+  const { error } = await supabase
+    .from("lesson_reply_votes").delete().match({ reply_id: replyId, user_id: me });
+  return !fail(error, false);
+}
+
+/* §4c — the asker's mark. Only the person who asked may set it, which is
+   enforced here in the app because auth.uid() is NULL in this architecture
+   (see 0009's header) — the eq("author_id", me) is what makes the write a
+   no-op for anybody else rather than a silent success. */
+export async function setBestReply(threadId, replyId, me) {
+  if (!threadId || !me) return false;
+  const { error } = await supabase
+    .from("lesson_threads")
+    .update({ best_reply_id: replyId })
+    .eq("id", threadId)
+    .eq("author_id", me);
+  return !fail(error, false);
+}

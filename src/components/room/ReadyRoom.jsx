@@ -1,570 +1,618 @@
-import { useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Search, Radio, Flag, Ban } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  isAnchored, originOf, orderThreads, applyFilter, byModule, openByDefault,
-  rowUnread, matches, FILTERS, presenceRail, PRESENCE_SHOWN,
+  ChevronLeft, Search, Plus, Send, Flag, Ban, Radio, MessageSquare, ArrowBigUp,
+} from "lucide-react";
+import {
+  matches, presenceRail, PRESENCE_SHOWN,
+  titleOf, excerptOf, isAnswered, answerCount, waitingCount,
+  FEED_FILTERS, applyFeedFilter, nestAnswers, isMine,
 } from "../../lib/roomModel.js";
 import { initials, hueFor, ago } from "../../lib/familiar.js";
 import { mmss } from "../module/lessonState.js";
-import { FlightProfile } from "../module/Instruments.jsx";
 import "./room.css";
 
-// Declared above the component: a dependency array is evaluated during render,
-// so a const declared below is in the temporal dead zone.
-const toggle = (set, k) => {
-  const next = new Set(set);
-  if (next.has(k)) next.delete(k); else next.add(k);
-  return next;
+/* ============================================================================
+   THE READY ROOM — a desktop-messaging layout with one important twist:
+   SQUADRONS ARE GROUP CHATS, MODULES ARE QUESTION FEEDS.
+
+   That twist is the whole design. A squadron is people you know, talking; a
+   module is a body of questions that outlives whoever asked them. Those want
+   opposite shapes — a transcript you skim and forget, versus a feed you search
+   and answer — and the old room tried to be one thing for both.
+
+   What makes the rail read as ONE list rather than a chat list stacked on a
+   channel tree: squadron rows and module rows use the SAME grid. Leading mark,
+   name, time, snippet, badge. Only the content differs.
+
+   TOKENS. Everything here uses the app's real tokens — --ground --panel
+   --raised --sunk --edge --t1/2/3 --active --caution --ok. The brief's list
+   (--bg-ground, --hairline, --text-primary, --accent-interactive) describes a
+   different codebase; so does the reference demo's (--ink, --accent). Neither
+   exists here, and inventing them would be the second design system the brief
+   forbids in its first line.
+
+   LIVERIES. §6 prescribes a CSS hue-triplet so a theme rule cannot overwrite a
+   livery rule. That trap cannot occur in this app: liveryEngine.js computes
+   every token in JS and writes it as an INLINE STYLE on documentElement, which
+   beats any stylesheet rule regardless of specificity. Adding the prescribed
+   CSS would be dead code that looks authoritative. The requirement it protects
+   — an accent that survives a theme switch — is already met, and
+   check:contrast measures it across every livery x variant.
+   ========================================================================= */
+
+/* A short, absolute time for a list row: the clock today, the weekday this
+   week, then the date. Relative time ("2 days ago") is right for a single
+   item and wrong for a column of them, where the eye wants to compare. */
+function when(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const d = new Date(t);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const days = Math.round((now - d) / 86400000);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return d.toLocaleDateString(undefined, { weekday: "short" });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+const dayLabel = (iso) => {
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return "Today";
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return "Yesterday";
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long" });
 };
 
-// §4 — a desktop-messaging shell: a sidebar of conversations, a main pane.
-//
-// THE CRITICAL RULE: every row in the sidebar opens something in the main pane.
-// Modules are HEADINGS, not destinations. Making a module row open a thread
-// list adds a third navigation level, and a two-pane layout has nowhere to put
-// one.
-//
-// §3 — the room holds two genuinely different registers and they must not
-// converge. A THREAD is a question with answers: author, then replies, no
-// bubbles, because it is writing that improves the lesson over time. A SQUADRON
-// CHAT is a group chat: bubbles, own messages right, day separators, fast and
-// disposable. If they looked alike, thread quality would collapse into chatter.
-
-export default function ReadyRoom({
-  me = "u_you", modules = [], activeModuleCode,
-  threads = [], replies = [], people = [], presence = [],
-  squadrons = [], messages = [], seen = {}, chapters = [], seatCandidates = [],
-  brand = null, profile = null,
-  onOpenLessonAt, onPost, onReport, onBlock, onSeen,
-}) {
-  const [openId, setOpenId] = useState(null);     // what the main pane shows
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [collapsed, setCollapsed] = useState(() => new Set());
-  const [roster, setRoster] = useState(false);   // the +N roster, open or not
-  const [find, setFind] = useState("");
-  const listRef = useRef(null);
-  const paneRef = useRef(null);
-
-  const who = (id) => (id === me ? "You" : people.find((p) => p.id === id)?.callsign || id);
-  const teaches = (id) => people.find((p) => p.id === id)?.role === "instructor";
-  const replyCount = (tid) => replies.filter((r) => r.threadId === tid).length;
-  const lessonOf = (lid) => {
-    for (const c of chapters) for (const l of (c.lessons || [])) if (l.id === lid) return { c, l };
-    return null;
-  };
-  const originFor = (t) => originOf(t, {
-    chapterOf: (lid) => lessonOf(lid)?.c.title,
-    lessonName: (lid) => lessonOf(lid)?.l.title,
-    mmss,
-  });
-
-  const grouped = useMemo(() => {
-    const visible = threads.filter((t) => matches(query, t.body, t.moduleId, who(t.authorId)));
-    return byModule(visible);
-  }, [threads, query, people]);
-
-  const openThread = threads.find((t) => t.id === openId) || null;
-  const openSquadron = squadrons.find((s) => s.id === openId) || null;
-  // Three shown, the rest behind +N. Memoised because it sorts, and presence
-  // re-renders on every heartbeat.
-  const rail = useMemo(() => presenceRail(presence, PRESENCE_SHOWN), [presence]);
-  const rightSeat = openId === "__rightseat__";
-
-  const open = (id) => {
-    setOpenId(id);
-    onSeen?.(id);
-    // §11 — focus moves to the conversation when it opens.
-    requestAnimationFrame(() => paneRef.current?.focus());
-  };
-  const back = () => {
-    setOpenId(null);
-    requestAnimationFrame(() => listRef.current?.focus());
-  };
-
-  return (
-    <div className="room" data-open={openId ? "1" : "0"}>
-      {/* The page's heading. The room is full-bleed now — no topbar above it —
-          so without this the whole route had no h1 at all: a screen reader
-          arriving here was told nothing about where it had landed. Rendered
-          only while nothing is open, because an open thread or squadron
-          supplies the h1 itself and two would be worse than none. */}
-      {!openId && <h1 className="room-h1">Ready Room</h1>}
-      {/* ------------------------------------------------------ the sidebar */}
-      <aside className="room-side" ref={listRef} tabIndex={-1} aria-label="Conversations">
-        {/* The wordmark and the profile, which the app bar carried until this
-            surface took the whole viewport. They sit at the head of the
-            sidebar rather than in a strip across the top: a bar spanning both
-            columns would be the banner again under another name, and the one
-            axis a messaging shell is short of is height. */}
-        {(brand || profile) && (
-          <div className="room-brand">
-            {brand}
-            <span className="room-brand-sp" />
-            {profile}
-          </div>
-        )}
-
-        <div className="room-top">
-          <div className="room-search">
-            <Search aria-hidden="true" />
-            <input type="search" value={query} placeholder="Search threads and squadrons"
-                   aria-label="Search threads and squadrons"
-                   onChange={(e) => setQuery(e.target.value)} />
-          </div>
-
-          {/* §4 — the presence strip. §11: the status is in the accessible
-              name, never carried by the dot's colour alone.
-
-              THREE FACES, most recently seen first, and everyone else behind
-              the +N. The strip answers "is anyone about" at a glance; a row of
-              a dozen initials answers it no better and reads as a list you are
-              meant to study. Nobody is hidden — the +N opens the full roster
-              with a filter on it. */}
-          <div className="room-presence">
-            <span className="room-presence-label">In the room</span>
-            <ul className="room-faces">
-              {rail.shown.map((p) => (
-                <li key={p.user_id}>
-                  <button type="button" className="room-face is-inline" onClick={() => open("__rightseat__")}
-                          aria-label={`${who(p.user_id)}, online`}
-                          style={{ "--av-h": hueFor(p.user_id) }}>
-                    {initials(who(p.user_id))}
-                    <i className="room-dot" aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-              {rail.rest.length > 0 && (
-                <li>
-                  <button type="button" className="room-face room-more is-inline"
-                          onClick={() => setRoster((v) => !v)}
-                          aria-expanded={roster}
-                          aria-label={`${rail.rest.length} more in the room. Show everyone.`}>
-                    +{rail.rest.length}
-                  </button>
-                </li>
-              )}
-              {presence.length === 0 && (
-                <li className="room-quiet">Nobody in the room just now.</li>
-              )}
-            </ul>
-
-            {/* The way to reach anyone past the third. A filter rather than a
-                plain list: the point of opening this is that you already have
-                somebody in mind. */}
-            {roster && (
-              <div className="room-roster-pop">
-                <input type="search" className="room-roster-find" value={find}
-                       placeholder="Find someone in the room"
-                       aria-label="Find someone in the room"
-                       onChange={(e) => setFind(e.target.value)} />
-                <ul className="room-roster-list">
-                  {rail.all.filter((p) => matches(find, who(p.user_id))).map((p) => (
-                    <li key={p.user_id}>
-                      <button type="button" className="room-roster-row is-inline"
-                              onClick={() => { setRoster(false); open("__rightseat__"); }}>
-                        <span className="room-face is-static is-inline" style={{ "--av-h": hueFor(p.user_id) }}>
-                          {initials(who(p.user_id))}
-                        </span>
-                        <span className="room-roster-name">{who(p.user_id)}</span>
-                        <span className="room-roster-when">{ago(p.last_seen)}</span>
-                      </button>
-                    </li>
-                  ))}
-                  {rail.all.filter((p) => matches(find, who(p.user_id))).length === 0 && (
-                    <li className="room-quiet">Nobody here by that name — try another.</li>
-                  )}
-                </ul>
-              </div>
-            )}
-            <button type="button" className="room-seat" onClick={() => open("__rightseat__")}>
-              <Radio aria-hidden="true" /> Right seat
-            </button>
-          </div>
-        </div>
-
-        <div className="room-list">
-          {/* Squadrons first — they are global, and they are the rows people
-              return to most. */}
-          <Section title="Squadrons" open={!collapsed.has("__sq__")}
-                   onToggle={() => setCollapsed((c) => toggle(c, "__sq__"))}>
-            {squadrons.filter((s) => matches(query, s.name, s.code)).map((s) => {
-              const unread = s.unread || 0;
-              return (
-                <button key={s.id} type="button" className="room-row" data-active={openId === s.id ? "1" : undefined}
-                        onClick={() => open(s.id)}
-                        aria-label={`${s.name}, squadron${unread ? `, ${unread} unread` : ""}`}>
-                  <span className="room-patch" style={{ "--av-h": hueFor(s.id) }}>{s.code}</span>
-                  <span className="room-row-main">
-                    <span className="room-row-title">{s.name}</span>
-                    <span className="room-row-sub">{s.preview || "No messages yet"}</span>
-                  </span>
-                  <span className="room-row-end">
-                    <span className="room-row-when">{s.at ? ago(s.at) : ""}</span>
-                    {unread > 0 && <span className="room-badge">{unread > 9 ? "9+" : unread}</span>}
-                  </span>
-                </button>
-              );
-            })}
-            {squadrons.length === 0 && (
-              <p className="room-empty">Join a squadron and it appears here.</p>
-            )}
-          </Section>
-
-          {/* One section per module. §9 — modules you are not studying start
-              collapsed, because an active module fills this list fast. */}
-          {modules.map((mod) => {
-            const key = mod.code || mod.id;
-            const all = grouped.get(key) || [];
-            const shown = orderThreads(
-              applyFilter(all, filter, { replyCount, me }),
-              { unread: (t) => rowUnread(t, replies, seen, me) },
-            );
-            const isOpen = collapsed.has(key) ? false : openByDefault(key, activeModuleCode);
-            return (
-              <Section key={key} title={mod.name} count={all.length}
-                       open={isOpen}
-                       onToggle={() => setCollapsed((c) => toggle(c, key))}>
-                {isOpen && (
-                  <>
-                    {/* §9 — the filter row, built in from the start. */}
-                    <div className="room-filters" role="group" aria-label={`Filter ${mod.name} threads`}>
-                      {FILTERS.map((f) => (
-                        <button key={f.id} type="button" className="room-filter is-inline"
-                                aria-pressed={filter === f.id}
-                                onClick={() => setFilter(f.id)}>{f.label}</button>
-                      ))}
-                    </div>
-
-                    {shown.map((t) => {
-                      const n = replyCount(t.id);
-                      const dot = rowUnread(t, replies, seen, me);
-                      return (
-                        <button key={t.id} type="button" className="room-row"
-                                data-active={openId === t.id ? "1" : undefined}
-                                onClick={() => open(t.id)}
-                                aria-label={`${t.body.slice(0, 60)}, ${n} ${n === 1 ? "reply" : "replies"}${dot ? ", unread" : ""}`}>
-                          <span className="av" style={{ "--av-h": hueFor(t.authorId) }} aria-hidden="true">
-                            {initials(who(t.authorId))}
-                          </span>
-                          <span className="room-row-main">
-                            <span className="room-row-title">{t.body}</span>
-                            <span className="room-row-sub">
-                              {n} {n === 1 ? "reply" : "replies"} · {who(t.authorId)}
-                            </span>
-                            {/* §9 — the origin, always. Three threads about one
-                                lesson are indistinguishable without it. */}
-                            <span className="room-row-origin">{originFor(t)}</span>
-                          </span>
-                          {/* §8 — the quiet second level of unread. Never in
-                              the app-bar badge; only here, only while you are
-                              in the room. */}
-                          {dot && <span className="room-dot-row" aria-hidden="true" />}
-                        </button>
-                      );
-                    })}
-
-                    {shown.length === 0 && (
-                      <p className="room-empty">
-                        {filter === "unanswered" ? "Every question here has an answer."
-                          : filter === "mine" ? "Ask one and it appears here."
-                            : "Start the first thread for this module."}
-                      </p>
-                    )}
-
-                    {/* §4 — each module section ends with its own action. */}
-                    <button type="button" className="room-new"
-                            onClick={() => onPost?.({ kind: "new-thread", moduleId: key })}>
-                      New thread in {mod.name}
-                    </button>
-                  </>
-                )}
-              </Section>
-            );
-          })}
-        </div>
-      </aside>
-
-      {/* ----------------------------------------------------- the main pane */}
-      <section className="room-main" ref={paneRef} tabIndex={-1} aria-label="Conversation">
-        {!openId && (
-          <div className="room-blank">
-            <p>Pick a thread or a squadron.</p>
-          </div>
-        )}
-
-        {openThread && (
-          <ThreadView
-            thread={openThread} replies={replies.filter((r) => r.threadId === openThread.id)}
-            who={who} teaches={teaches} origin={originFor(openThread)}
-            onBack={back} onOpenLessonAt={onOpenLessonAt} onReport={onReport} onBlock={onBlock}
-            onPost={(body) => onPost?.({ kind: "reply", threadId: openThread.id, body })}
-          />
-        )}
-
-        {openSquadron && (
-          <SquadronView
-            squadron={openSquadron} messages={messages.filter((m) => m.squadronId === openSquadron.id)}
-            who={who} me={me} presence={presence} chapters={chapters}
-            onBack={back} onReport={onReport} onBlock={onBlock}
-            onPost={(body) => onPost?.({ kind: "message", squadronId: openSquadron.id, body })}
-          />
-        )}
-
-        {rightSeat && (
-          /* §7 — the people you SHARE A SQUADRON WITH, not everyone who
-             happens to be online. This was handed the raw presence list, which
-             offered every signed-in stranger as someone to sit with — the
-             exact opposite of the boundary rightSeatCandidates states. The
-             filtering happens in roomData, against that one function. */
-          <RightSeat candidates={seatCandidates} who={who} squadrons={squadrons}
-                     onBack={back} onPost={onPost} />
-        )}
-      </section>
-    </div>
-  );
+/* §4a — consecutive messages from one sender collapse: the avatar and the
+   name appear only on the first of a run, and a run breaks on a new day. */
+function runs(messages = []) {
+  const out = [];
+  let lastBy = null, lastDay = null;
+  for (const m of messages) {
+    const day = new Date(m.createdAt).toDateString();
+    if (day !== lastDay) { out.push({ divider: dayLabel(m.createdAt), id: `d-${day}` }); lastBy = null; lastDay = day; }
+    out.push({ ...m, first: m.authorId !== lastBy });
+    lastBy = m.authorId;
+  }
+  return out;
 }
 
-function Section({ title, count, open, onToggle, children }) {
+function Avatar({ id, who, size = "" }) {
   return (
-    <section className="room-section">
-      <button type="button" className="room-sec-head" aria-expanded={open} onClick={onToggle}>
-        <ChevronRight aria-hidden="true" className="room-sec-chv" />
-        <span>{title}</span>
-        {count > 0 && <span className="room-sec-n">{count}</span>}
-      </button>
-      {open && <div className="room-sec-body">{children}</div>}
-    </section>
-  );
-}
-
-/* ---------------------------------------------------------- §5 THREAD VIEW */
-// A question with answers. No bubbles — this is writing that improves the
-// lesson, and it is meant to read like a page rather than a conversation.
-function ThreadView({ thread, replies, who, teaches, origin, onBack, onOpenLessonAt, onReport, onBlock, onPost }) {
-  const [body, setBody] = useState("");
-  const anchored = isAnchored(thread);
-  return (
-    <>
-      <header className="room-head">
-        <button type="button" className="room-back" onClick={onBack} aria-label="Back to the list">
-          <ChevronLeft aria-hidden="true" />
-        </button>
-        <div>
-          <h1 className="room-title">{thread.body}</h1>
-          <p className="room-sub">{replies.length} {replies.length === 1 ? "answer" : "answers"} · {who(thread.authorId)}</p>
-        </div>
-      </header>
-
-      {/* §5 — the origin bar. A mirrored thread says where it came from and
-          offers the way there; a hub thread says plainly that it has no lesson,
-          so nobody waits for a link that is never coming. */}
-      <div className="room-origin" data-kind={anchored ? "mirrored" : "hub"}>
-        {anchored ? (
-          <>
-            <span className="room-origin-t">{origin}</span>
-            <button type="button" className="room-origin-go"
-                    onClick={() => onOpenLessonAt?.(thread)}>
-              Open the lesson at {mmss(thread.t)}
-            </button>
-            <span className="room-origin-note">It also appears under that lesson.</span>
-          </>
-        ) : (
-          <span className="room-origin-note">
-            Started here, and not attached to a lesson.
-          </span>
-        )}
-      </div>
-
-      <div className="room-body">
-        <article className="room-answer is-question">
-          <Avatar id={thread.authorId} who={who} />
-          <div>
-            <p className="room-a-head">
-              <span className="room-a-name">{who(thread.authorId)}</span>
-              {teaches(thread.authorId) && <span className="cmt-badge">Instructor</span>}
-              <span className="room-a-when">{ago(thread.createdAt)}</span>
-            </p>
-            <p className="room-a-body">{thread.body}</p>
-          </div>
-        </article>
-
-        {replies.map((r) => (
-          <article key={r.id} className="room-answer">
-            <Avatar id={r.authorId} who={who} />
-            <div>
-              <p className="room-a-head">
-                <span className="room-a-name">{who(r.authorId)}</span>
-                {teaches(r.authorId) && <span className="cmt-badge">Instructor</span>}
-                <span className="room-a-when">{ago(r.createdAt)}</span>
-                <button type="button" className="room-report"
-                        onClick={() => onReport?.({ kind: "reply", id: r.id, authorId: r.authorId })}
-                        aria-label="Report this answer"><Flag aria-hidden="true" /></button>
-                {/* §10 — blocking hides both directions and removes the person
-                    from the presence strip. Offered wherever a person speaks. */}
-                <button type="button" className="room-report"
-                        onClick={() => onBlock?.(r.authorId)}
-                        aria-label={`Block ${who(r.authorId)}`}><Ban aria-hidden="true" /></button>
-              </p>
-              <p className="room-a-body">{r.body}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <Composer value={body} onChange={setBody} placeholder="Write an answer…"
-                onSend={() => { onPost?.(body); setBody(""); }} />
-    </>
-  );
-}
-
-/* ------------------------------------------------------- §6 SQUADRON VIEW */
-// A group chat — bubbles, own messages right — and above it the roster, which
-// is flight profiles rather than progress bars. It reuses the module screen's
-// own profile component, which is the point: one drawing of where somebody is.
-function SquadronView({ squadron, messages, who, me, presence, chapters, onBack, onReport, onBlock, onPost }) {
-  const [body, setBody] = useState("");
-  const online = new Set(presence.map((p) => p.user_id));
-  const roster = squadron.members || [];
-  return (
-    <>
-      <header className="room-head">
-        <button type="button" className="room-back" onClick={onBack} aria-label="Back to the list">
-          <ChevronLeft aria-hidden="true" />
-        </button>
-        <div>
-          <h1 className="room-title">{squadron.name}</h1>
-          <p className="room-sub">
-            {roster.length} {roster.length === 1 ? "member" : "members"} ·{" "}
-            {roster.filter((m) => online.has(m.user_id)).length} online
-          </p>
-        </div>
-      </header>
-
-      {/* §6 — the roster IS flight profiles. Do not substitute a progress bar. */}
-      <ul className="room-roster">
-        {roster.map((m) => {
-          const at = m.atIndex ?? 0;
-          return (
-            <li key={m.user_id} className="room-crew">
-              <span className="room-crew-head">
-                <Avatar id={m.user_id} who={who} small />
-                <span className="room-crew-name">{who(m.user_id)}</span>
-                <span className="room-crew-state">
-                  {online.has(m.user_id) ? "Online" : "Away"}
-                </span>
-              </span>
-              {/* §11 — the position is in words as well as in the drawing. */}
-              <FlightProfile chapters={chapters} atIndex={at} started={at > 0} />
-            </li>
-          );
-        })}
-        {roster.length === 0 && <li className="room-empty">Nobody has joined yet.</li>}
-      </ul>
-
-      <div className="room-chat">
-        {messages.map((msg) => (
-          <div key={msg.id} className="room-msg" data-own={msg.authorId === me ? "1" : undefined}>
-            <span className="room-bubble">{msg.body}</span>
-            <span className="room-msg-when">
-              {ago(msg.createdAt)}
-              <button type="button" className="room-report"
-                      onClick={() => onReport?.({ kind: "message", id: msg.id, authorId: msg.authorId })}
-                      aria-label="Report this message"><Flag aria-hidden="true" /></button>
-              {msg.authorId !== me && (
-                <button type="button" className="room-report"
-                        onClick={() => onBlock?.(msg.authorId)}
-                        aria-label={`Block ${who(msg.authorId)}`}><Ban aria-hidden="true" /></button>
-              )}
-            </span>
-          </div>
-        ))}
-        {messages.length === 0 && (
-          <p className="room-empty">Say the first thing and the room starts.</p>
-        )}
-      </div>
-
-      <Composer value={body} onChange={setBody} placeholder={`Message ${squadron.name}…`}
-                onSend={() => { onPost?.(body); setBody(""); }} />
-    </>
-  );
-}
-
-/* ---------------------------------------------------------- §7 RIGHT SEAT */
-// The empty state matters more than the populated one: with a small user base
-// nobody is online most of the time, and a feature that reads as broken the
-// first three times is a feature nobody opens a fourth.
-function RightSeat({ candidates, who, squadrons, onBack, onPost }) {
-  return (
-    <>
-      <header className="room-head">
-        <button type="button" className="room-back" onClick={onBack} aria-label="Back to the list">
-          <ChevronLeft aria-hidden="true" />
-        </button>
-        <div>
-          <h1 className="room-title">Right seat</h1>
-          <p className="room-sub">Someone to work through questions with, live.</p>
-        </div>
-      </header>
-
-      <div className="room-body">
-        {candidates.length > 0 ? (
-          <ul className="room-seats">
-            {candidates.map((p) => (
-              <li key={p.user_id} className="room-seat-row">
-                <Avatar id={p.user_id} who={who} />
-                <div className="room-row-main">
-                  <span className="room-row-title">{who(p.user_id)}</span>
-                  <span className="room-row-sub">
-                    {squadrons.find((s) => s.id === p.squadronId)?.name || "Your squadron"}
-                    {p.module_code ? ` · on ${p.module_code}` : ""}
-                  </span>
-                </div>
-                {/* One concrete thing to do. "Study together" is not an
-                    activity; quizzing each other from the re-check queues is. */}
-                <button type="button" className="room-go"
-                        onClick={() => onPost?.({ kind: "right-seat", with: p.user_id })}>
-                  Quiz each other
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="room-standing">
-            <p className="room-a-body">
-              Nobody from your squadrons is in the room right now.
-            </p>
-            <button type="button" className="room-go"
-                    onClick={() => onPost?.({ kind: "standing-request" })}>
-              Leave a standing request
-            </button>
-            <p className="room-row-sub">
-              We will match you the next time one of them is here.
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-function Avatar({ id, who, small }) {
-  return (
-    <span className="av" data-size={small ? "sm" : undefined}
-          style={{ "--av-h": hueFor(id) }} aria-hidden="true">
+    <span className={`av ${size}`.trim()} style={{ "--av-h": hueFor(id) }} aria-hidden="true">
       {initials(who(id))}
     </span>
   );
 }
 
-// §4 — one composer at the foot, and its placeholder follows what is open.
-function Composer({ value, onChange, placeholder, onSend }) {
+export default function ReadyRoom({
+  me = "u_you", modules = [], activeModuleCode,
+  threads = [], replies = [], people = [], presence = [],
+  squadrons = [], messages = [], seen = {}, chapters = [],
+  seatCandidates = [], votes = {},
+  brand = null, profile = null,
+  onOpenLessonAt, onPost, onReport, onBlock, onSeen, onVote, onBest,
+}) {
+  // WHAT THE PANE IS SHOWING. One piece of state, not four booleans: the four
+  // states are mutually exclusive and a boolean each is how two of them end up
+  // on screen together.
+  const [view, setView] = useState(null);     // {kind:'squadron'|'module'|'thread'|'seat', id, threadId}
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState({}); // per module — §4b, and only here
+  const [draft, setDraft] = useState("");
+  // §5 — a thread asked here NEEDS a title, because a feed of untitled
+  // paragraphs cannot be scanned. Two fields, and the title is required; the
+  // lesson comment box deliberately gets neither.
+  const [asking, setAsking] = useState(null);   // {moduleId} | null
+  const [askTitle, setAskTitle] = useState("");
+  const paneRef = useRef(null);
+  const listRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  const who = (id) => (id === me ? "You"
+    : people.find((p) => p.id === id)?.callsign || "Someone");
+  const rail = useMemo(() => presenceRail(presence, PRESENCE_SHOWN), [presence]);
+
+  const open = (next) => {
+    setView(next);
+    setDraft("");
+    setAsking(null); setAskTitle("");
+    if (next?.id) onSeen?.(next.id);
+    requestAnimationFrame(() => paneRef.current?.focus());
+  };
+  const back = () => {
+    // §4c — from a thread the arrow returns to the module feed, not the rail.
+    if (view?.kind === "thread") { setView({ kind: "module", id: view.id }); return; }
+    setView(null);
+    requestAnimationFrame(() => listRef.current?.focus());
+  };
+
+  const squadron = view?.kind === "squadron" ? squadrons.find((s) => s.id === view.id) : null;
+  const mod = (view?.kind === "module" || view?.kind === "thread")
+    ? modules.find((m) => (m.code || m.id) === view.id) : null;
+  const modThreads = useMemo(
+    () => threads.filter((t) => t.moduleId === (mod?.code || mod?.id)),
+    [threads, mod]);
+  const thread = view?.kind === "thread" ? modThreads.find((t) => t.id === view.threadId) : null;
+
+  // The transcript sticks to the bottom, the way every chat does.
+  useEffect(() => {
+    if (view?.kind !== "squadron") return;
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [view, messages.length]);
+
+  const online = new Set(rail.all.map((p) => p.user_id));
+  const lessonOf = (lid) => {
+    for (const c of chapters) for (const l of (c.lessons || [])) if (l.id === lid) return { c, l };
+    return null;
+  };
+  const lessonTag = (t) => {
+    if (!t.lessonId) return null;
+    const found = lessonOf(t.lessonId);
+    return found ? `From ${found.l.title}` : "From a lesson";
+  };
+
+  const send = () => {
+    const body = draft.trim();
+    if (!body) return;
+    if (view?.kind === "squadron") onPost?.({ kind: "message", squadronId: view.id, body });
+    else if (view?.kind === "thread") onPost?.({ kind: "reply", threadId: view.threadId, body });
+    setDraft("");
+  };
+
   return (
-    <div className="room-composer">
-      <textarea rows={1} value={value} placeholder={placeholder} aria-label={placeholder}
-                onChange={(e) => onChange(e.target.value)} />
-      <button type="button" className="room-send" disabled={!value.trim()} onClick={onSend}>
-        Send
+    <div className="room" data-mobile={view ? "pane" : "rail"}>
+      {!view && <h1 className="room-h1">Ready Room</h1>}
+
+      {/* ===================================================== §3 · RAIL === */}
+      <aside className="rail" ref={listRef} tabIndex={-1} aria-label="Squadrons and modules">
+        <div className="rail-top">
+          <div className="mark">
+            {brand}
+            <span>Ready Room</span>
+          </div>
+          <button type="button" className="icon-btn is-inline" aria-label="New thread"
+                  onClick={() => {
+                    const code = mod?.code || activeModuleCode;
+                    open({ kind: "module", id: code });
+                    setAsking({ moduleId: code });
+                  }}>
+            <Plus aria-hidden="true" />
+          </button>
+          {profile}
+        </div>
+
+        <div className="search">
+          <Search aria-hidden="true" />
+          <input type="search" value={query} placeholder="Search squadrons and threads"
+                 aria-label="Search squadrons and threads"
+                 onChange={(e) => setQuery(e.target.value)} />
+        </div>
+
+        {/* §3 — the right seat block: three faces you most recently studied
+            with, then the way to everyone else. */}
+        <div className="rightseat">
+          <p className="eyebrow">Right seat</p>
+          {rail.shown.length ? (
+            <div className="seat-row">
+              {rail.shown.map((p) => (
+                <button type="button" key={p.user_id} className="seat is-inline"
+                        onClick={() => open({ kind: "seat" })}
+                        aria-label={`${who(p.user_id)}, online. Open the right seat.`}>
+                  <span className="seat-av">
+                    <Avatar id={p.user_id} who={who} />
+                    <i className="dot on" aria-hidden="true" />
+                  </span>
+                  <span className="seat-name">{who(p.user_id).split(" ")[0]}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="seat-none">You haven&rsquo;t flown with anyone yet.</p>
+          )}
+          <button type="button" className="seat-cta"
+                  aria-current={view?.kind === "seat" ? "true" : undefined}
+                  onClick={() => open({ kind: "seat" })}>
+            <Radio aria-hidden="true" /> Find a right seat
+          </button>
+        </div>
+
+        <div className="rail-scroll">
+          <p className="group-head"><b>Squadrons</b></p>
+          {squadrons.filter((s) => matches(query, s.name, s.code)).map((s) => {
+            const last = messages.filter((m) => m.squadronId === s.id).slice(-1)[0];
+            const unread = messages.filter(
+              (m) => m.squadronId === s.id && m.authorId !== me
+                && (Date.parse(m.createdAt) || 0) > (seen[s.id] || 0)).length;
+            return (
+              <button type="button" key={s.id} className="row"
+                      aria-current={view?.kind === "squadron" && view.id === s.id ? "true" : undefined}
+                      onClick={() => open({ kind: "squadron", id: s.id })}>
+                <span className="av lg sq" style={{ "--av-h": hueFor(s.id) }} aria-hidden="true">
+                  {(s.code || s.name || "?").slice(0, 2).toUpperCase()}
+                </span>
+                <span className="row-line">
+                  <span className="row-name">{s.name}</span>
+                  <span className="row-time">{last ? when(last.createdAt) : ""}</span>
+                </span>
+                <span className="row-snip">
+                  {last ? (<><em>{who(last.authorId)}:</em> {last.body}</>) : "Say the first thing"}
+                </span>
+                <span className="row-meta">{unread > 0 && <span className="badge">{unread}</span>}</span>
+              </button>
+            );
+          })}
+          {!squadrons.length && <p className="rail-none">Join a squadron and it appears here.</p>}
+
+          <p className="group-head"><b>Modules</b></p>
+          {modules.filter((m) => matches(query, m.name, m.code || m.id)).map((m) => {
+            const code = m.code || m.id;
+            const mine = threads.filter((t) => t.moduleId === code);
+            const newest = [...mine].sort(
+              (a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
+            const waiting = waitingCount(mine);
+            const cur = (view?.kind === "module" || view?.kind === "thread") && view.id === code;
+            return (
+              <button type="button" key={code} className="row"
+                      aria-current={cur ? "true" : undefined}
+                      onClick={() => open({ kind: "module", id: code })}>
+                <span className="mod-icon" aria-hidden="true">{code}</span>
+                <span className="row-line">
+                  <span className="row-name">{m.name}</span>
+                  <span className="row-time">{newest ? when(newest.createdAt) : ""}</span>
+                </span>
+                <span className="row-snip">
+                  {newest ? titleOf(newest) : "Ask the first question"}
+                </span>
+                <span className="row-meta">
+                  {waiting > 0 && <span className="badge">{waiting}</span>}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+
+      {/* ===================================================== §4 · PANE === */}
+      <main className="pane" ref={paneRef} tabIndex={-1} aria-label="Conversation">
+        {!view && (
+          <div className="pane-blank"><p>Pick a squadron or a module.</p></div>
+        )}
+
+        {/* ------------------------------------------- §4a squadron chat --- */}
+        {squadron && (
+          <>
+            <header className="pane-head">
+              <button type="button" className="back is-inline" onClick={back} aria-label="Back">
+                <ChevronLeft aria-hidden="true" />
+              </button>
+              <span className="av lg sq" style={{ "--av-h": hueFor(squadron.id) }} aria-hidden="true">
+                {(squadron.code || "?").slice(0, 2).toUpperCase()}
+              </span>
+              <div className="h-id">
+                <h2 className="h-title">{squadron.name}</h2>
+                <p className="h-sub">
+                  {squadron.members?.length || 0} member{squadron.members?.length === 1 ? "" : "s"}
+                  {" · "}
+                  {(squadron.members || []).filter((m) => online.has(m.user_id)).length} online
+                </p>
+              </div>
+            </header>
+
+            <div className="scroll" ref={scrollRef}>
+              <div className="transcript">
+                {runs(messages.filter((m) => m.squadronId === squadron.id)).map((m) => (
+                  m.divider ? (
+                    <p className="daybreak" key={m.id}>{m.divider}</p>
+                  ) : (
+                    <div key={m.id} className={`msg${m.authorId === me ? " out" : ""}${m.first ? " first" : ""}`}>
+                      <Avatar id={m.authorId} who={who} size="sm" />
+                      <div className="bubble">
+                        {m.first && m.authorId !== me && <p className="who">{who(m.authorId)}</p>}
+                        <p>
+                          {m.body}
+                          <span className="stamp">{when(m.createdAt)}</span>
+                        </p>
+                        <span className="msg-acts">
+                          <button type="button" className="icon-btn is-inline"
+                                  onClick={() => onReport?.({ kind: "message", id: m.id, authorId: m.authorId, squadronId: squadron.id })}
+                                  aria-label="Report this message"><Flag aria-hidden="true" /></button>
+                          {m.authorId !== me && (
+                            <button type="button" className="icon-btn is-inline"
+                                    onClick={() => onBlock?.(m.authorId)}
+                                    aria-label={`Block ${who(m.authorId)}`}><Ban aria-hidden="true" /></button>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                ))}
+                {!messages.filter((m) => m.squadronId === squadron.id).length && (
+                  <p className="pane-none">Say the first thing and the room starts.</p>
+                )}
+              </div>
+            </div>
+
+            <Composer value={draft} onChange={setDraft} onSend={send}
+                      placeholder={`Message ${squadron.name}`} />
+          </>
+        )}
+
+        {/* --------------------------------------------- §4b module feed --- */}
+        {mod && !thread && (() => {
+          const code = mod.code || mod.id;
+          const f = filters[code] || "all";
+          const list = applyFeedFilter(modThreads, f, { me, replies });
+          return (
+            <>
+              <header className="pane-head">
+                <button type="button" className="back is-inline" onClick={back} aria-label="Back">
+                  <ChevronLeft aria-hidden="true" />
+                </button>
+                <span className="mod-icon" aria-hidden="true">{code}</span>
+                <div className="h-id">
+                  <h2 className="h-title">{mod.name}</h2>
+                  <p className="h-sub">
+                    {modThreads.length} thread{modThreads.length === 1 ? "" : "s"}
+                    {" · "}{waitingCount(modThreads)} waiting on an answer
+                  </p>
+                </div>
+              </header>
+
+              <div className="scroll">
+                <div className="feed">
+                  <div className="chips">
+                    {FEED_FILTERS.map((c) => (
+                      <button type="button" key={c.id} className="chip is-inline"
+                              aria-pressed={f === c.id}
+                              onClick={() => setFilters((s) => ({ ...s, [code]: c.id }))}>
+                        {c.label}
+                      </button>
+                    ))}
+                    <span className="chips-sp" />
+                    <button type="button" className="newpost is-inline"
+                            onClick={() => setAsking({ moduleId: code })}>
+                      <Plus aria-hidden="true" /> Ask the module
+                    </button>
+                  </div>
+
+                  {asking?.moduleId === code && (
+                    <form className="ask-form" onSubmit={(e) => {
+                      e.preventDefault();
+                      const title = askTitle.trim(); const body = draft.trim();
+                      if (!title || !body) return;
+                      onPost?.({ kind: "thread", moduleId: code, title, body });
+                      setAsking(null); setAskTitle(""); setDraft("");
+                    }}>
+                      <label className="ask-l" htmlFor="ask-title">Your question</label>
+                      <input id="ask-title" className="ask-t" value={askTitle} autoFocus
+                             placeholder="What are you stuck on?"
+                             onChange={(e) => setAskTitle(e.target.value)} />
+                      <textarea className="ask-b" rows={3} value={draft}
+                                placeholder="Say a bit more — what you tried, and what you expected."
+                                onChange={(e) => setDraft(e.target.value)} />
+                      <div className="ask-acts">
+                        <button type="button" className="chip is-inline"
+                                onClick={() => { setAsking(null); setAskTitle(""); setDraft(""); }}>
+                          Cancel
+                        </button>
+                        <button type="submit" className="newpost is-inline"
+                                disabled={!askTitle.trim() || !draft.trim()}>
+                          Ask the module
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {list.map((t) => {
+                    const n = answerCount(t, replies);
+                    return (
+                      <button type="button" key={t.id} className="post"
+                              onClick={() => open({ kind: "thread", id: code, threadId: t.id })}>
+                        <span className="post-top">
+                          <Avatar id={t.authorId} who={who} size="sm" />
+                          <span className="who2">{who(t.authorId)}</span>
+                          <span>·</span><span>{when(t.createdAt)}</span>
+                          {lessonTag(t) && <span className="tag lesson">{lessonTag(t)}</span>}
+                          {isAnswered(t) && <span className="tag solved">Answered</span>}
+                          {isMine(t, replies, me) && <span className="tag mine">Yours</span>}
+                        </span>
+                        <span className="post-title">{titleOf(t)}</span>
+                        {excerptOf(t) && <span className="post-ex">{excerptOf(t)}</span>}
+                        <span className="post-foot">
+                          <span><MessageSquare aria-hidden="true" />{n} {n === 1 ? "answer" : "answers"}</span>
+                          {n === 0 && <span className="post-waiting">Nobody has answered this yet</span>}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {!list.length && (
+                    <p className="pane-none">
+                      {f === "all" ? "Ask the first question in this module."
+                        : "Nothing here under this filter. Try All."}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          );
+        })()}
+
+        {/* ------------------------------------------------- §4c a thread --- */}
+        {thread && (
+          <>
+            <header className="pane-head">
+              <button type="button" className="back is-inline" onClick={back}
+                      aria-label={`Back to ${mod?.name || "the module"}`}>
+                <ChevronLeft aria-hidden="true" />
+              </button>
+              <span className="mod-icon" aria-hidden="true">{mod?.code || mod?.id}</span>
+              <div className="h-id">
+                <h2 className="h-title">Thread</h2>
+                <p className="h-sub">{mod?.name}</p>
+              </div>
+            </header>
+
+            <div className="scroll">
+              <div className="thread">
+                <article className="op">
+                  <p className="post-top">
+                    <Avatar id={thread.authorId} who={who} size="sm" />
+                    <span className="who2">{who(thread.authorId)}</span>
+                    <span>·</span><span>{when(thread.createdAt)}</span>
+                    {lessonTag(thread) && (
+                      <button type="button" className="tag lesson is-inline"
+                              onClick={() => onOpenLessonAt?.(thread)}>
+                        {lessonTag(thread)}{thread.t != null ? ` · ${mmss(thread.t)}` : ""}
+                      </button>
+                    )}
+                  </p>
+                  <h3 className="op-title">{titleOf(thread)}</h3>
+                  {excerptOf(thread) && (
+                    <div className="op-body">
+                      {String(excerptOf(thread)).split(/\n{2,}/).map((para, i) => (
+                        <p key={i}>{para}</p>
+                      ))}
+                    </div>
+                  )}
+                </article>
+
+                <p className="answers-head">
+                  {answerCount(thread, replies)} {answerCount(thread, replies) === 1 ? "answer" : "answers"}
+                </p>
+
+                {nestAnswers(replies, thread.id).map((a) => {
+                  const v = votes[a.id] || { count: 0, mine: false };
+                  const best = thread.bestReplyId === a.id;
+                  return (
+                    <div key={a.id} className={`ans${best ? " best" : ""}`}>
+                      <Avatar id={a.authorId} who={who} size="sm" />
+                      <div className="ans-main">
+                        <p className="ans-head">
+                          <b>{who(a.authorId)}</b>
+                          <span>{when(a.createdAt)}</span>
+                          {best && <span className="tag solved">Best answer</span>}
+                        </p>
+                        <p className="ans-body">{a.body}</p>
+                        <p className="ans-acts">
+                          <button type="button" className="is-inline" aria-pressed={v.mine}
+                                  onClick={() => onVote?.(a.id, !v.mine)}
+                                  aria-label={`${v.count} found this useful. ${v.mine ? "Take back" : "Add"} yours.`}>
+                            <ArrowBigUp aria-hidden="true" />{v.count}
+                          </button>
+                          {/* §4c — only the asker marks the best answer. */}
+                          {thread.authorId === me && (
+                            <button type="button" className="is-inline"
+                                    onClick={() => onBest?.(thread.id, best ? null : a.id)}>
+                              {best ? "Not the one" : "This answered it"}
+                            </button>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {!answerCount(thread, replies) && (
+                  <p className="pane-none">No answers yet. Yours would be the first.</p>
+                )}
+              </div>
+            </div>
+
+            <Composer value={draft} onChange={setDraft} onSend={send} placeholder="Write an answer" />
+          </>
+        )}
+
+        {/* ---------------------------------------------- §4d right seat --- */}
+        {view?.kind === "seat" && (
+          <>
+            <header className="pane-head">
+              <button type="button" className="back is-inline" onClick={back} aria-label="Back">
+                <ChevronLeft aria-hidden="true" />
+              </button>
+              <div className="h-id">
+                <h2 className="h-title">Right seat</h2>
+                <p className="h-sub">People from your squadrons who can study with you now</p>
+              </div>
+            </header>
+
+            <div className="scroll">
+              <div className="match">
+                <div className="match-intro">
+                  <h3>Who&rsquo;s free to fly?</h3>
+                  <p>
+                    You can only take the right seat with someone you share a squadron
+                    with. Sorted by who you flew with most recently.
+                  </p>
+                </div>
+                {seatCandidates.length ? (
+                  <div className="cards">
+                    {seatCandidates.map((p) => (
+                      <div className="card" key={p.user_id}>
+                        <div className="card-top">
+                          <span className="seat-av">
+                            <Avatar id={p.user_id} who={who} size="lg" />
+                            <i className="dot on" aria-hidden="true" />
+                          </span>
+                          <div>
+                            <p className="card-n">{who(p.user_id)}</p>
+                            <p className="card-s">
+                              {squadrons.find((s) => s.id === p.squadronId)?.name || "Your squadron"}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="card-now">
+                          {p.module_code
+                            ? `${p.module_code}${p.chapter_id ? ` · ${p.chapter_id}` : ""}`
+                            : `Last seen ${ago(p.last_seen)}`}
+                        </p>
+                        <button type="button" className="ask"
+                                onClick={() => onPost?.({ kind: "seat", to: p.user_id })}>
+                          Ask to fly
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="pane-none">
+                    Nobody from your squadrons is in the room right now. Leave a
+                    request and the first one back will see it.
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+/* §4a — one pill holding the growing textarea, with the send button outside
+   it. Enter sends, Shift+Enter newlines. */
+function Composer({ value, onChange, onSend, placeholder }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [value]);
+  return (
+    <div className="composer">
+      <div className="pill">
+        <textarea ref={ref} rows={1} value={value} placeholder={placeholder} aria-label={placeholder}
+                  onChange={(e) => onChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+                  }} />
+      </div>
+      <button type="button" className="send" onClick={onSend} disabled={!value.trim()}
+              aria-label="Send">
+        <Send aria-hidden="true" />
       </button>
     </div>
   );

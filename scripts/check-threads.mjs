@@ -51,8 +51,10 @@ const { toThread, toReply, fromThread, fromReply } =
 
 console.log("threads: the row mapping\n");
 {
+  // 0010 added `title` (nullable — null means "mirrored from a lesson") and
+  // `best_reply_id`. The round trip below is key-for-key, so both belong here.
   const db = { id: "T1", module_id: "JT", lesson_id: "L1", t: 90, body: "b",
-               author_id: "u1", created_at: "2026-01-01T00:00:00Z" };
+               author_id: "u1", created_at: "2026-01-01T00:00:00Z", title: null };
   const c = toThread(db);
   check("db -> client keeps every field", c.moduleId === "JT" && c.lessonId === "L1"
     && c.t === 90 && c.authorId === "u1" && c.createdAt === db.created_at);
@@ -70,6 +72,14 @@ console.log("threads: the row mapping\n");
 
   const rdb = { id: "R1", thread_id: "T1", body: "r", author_id: "u2", created_at: "2026-01-01T00:00:01Z" };
   check("a reply round-trips", same(fromReply(toReply(rdb)), rdb));
+
+  // §5 — a mirrored thread must store NULL, not "". An empty string renders
+  // as a blank heading instead of falling back to the comment's first line.
+  check("an absent title stores as null, never as an empty string",
+        fromThread({ id: "T9", moduleId: "JT", body: "b", authorId: "u", title: "   " }).title === null);
+  check("a real title survives, trimmed",
+        fromThread({ id: "TA", moduleId: "JT", body: "b", authorId: "u", title: "  Star vs delta " }).title
+        === "Star vs delta");
 }
 
 /* ---- the fixture discriminator ------------------------------------------ */

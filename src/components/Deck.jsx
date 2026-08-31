@@ -218,6 +218,17 @@ const ROOM_CSS = `
 /* THE SCROLLER — the only thing on the page that scrolls. */
 .deck {
   position: relative; z-index: 1;
+  /* EXPLICIT ROW, and it is load-bearing. .app is a three-row grid — auto,
+     1fr, auto: topbar, scroller, chin — and the scroller was placed by auto
+     flow, which only lands it in row 2 while a topbar is actually rendered
+     above it. The Ready Room hides the topbar, so the deck auto-placed into
+     row 1 (auto, therefore sized by its own content) and the 1fr row sat
+     empty: measured at 1280x820 as rows 737px / 83px / 0px, with 83px of bare
+     page background showing under a room that was supposed to fill the
+     viewport. Naming the row makes the placement independent of whether the
+     bar above it exists.
+     (No backticks in this block: it is a JS template literal.) */
+  grid-row: 2;
   /* REQUIRED. A grid child defaults to min-height:auto and grows to fit its
      content instead of scrolling, which puts the whole page back on the
      window and undoes everything else here. */

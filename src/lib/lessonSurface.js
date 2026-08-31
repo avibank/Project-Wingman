@@ -569,11 +569,15 @@ export function postComment(session, { moduleId, lessonId, seconds, body, author
    rule — a module post has no lessonId, so no lesson query can ever return it.
    Nobody has to remember the rule; there is no data to hang the wrong query
    on. Do not add a check for it. */
-export function postModulePost(session, { moduleId, body, authorId = 'u_you' }) {
+export function postModulePost(session, { moduleId, body, authorId = 'u_you', title = null }) {
   const text = body.trim();
   if (!text) return session;
+  // A thread asked IN the room carries a title; one mirrored from a lesson
+  // comment does not, and null is what says which is which. An empty string
+  // would render as a blank heading instead of falling back to the first line.
+  const heading = String(title || '').trim() || null;
   return { ...session, threads: [...session.threads, {
-    id: newId('T'), moduleId, lessonId: null,
+    id: newId('T'), moduleId, lessonId: null, title: heading,
     t: null, body: text, authorId, createdAt: new Date().toISOString() }] };
 }
 

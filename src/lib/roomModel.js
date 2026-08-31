@@ -180,3 +180,92 @@ export function presenceRail(presence = [], limit = PRESENCE_SHOWN) {
   });
   return { shown: ordered.slice(0, limit), rest: ordered.slice(limit), all: ordered };
 }
+
+/* ===================== §5 · WHAT A THREAD IS CALLED =======================
+   Two kinds of thread, one feed.
+
+   Created IN the Ready Room: it is a question and it has a title, because a
+   feed of untitled paragraphs cannot be scanned.
+
+   Mirrored FROM a lesson comment: it has no title and must not be made to
+   have one. Putting a title field on the lesson comment box would put a form
+   in front of a casual remark, and casual commenting has to stay
+   frictionless. So the comment's first line becomes the heading, and the
+   FROM LESSON tag both explains why the heading is short and links back.
+   ========================================================================= */
+
+const firstLine = (body) => String(body || "").split(/\r?\n/).find((l) => l.trim()) || "";
+
+/* The heading. Never empty: a thread with neither a title nor a body cannot
+   be inserted (0008 CHECKs a non-blank body), so the fallback is a guard
+   against corrupt data rather than a normal path. */
+export function titleOf(thread) {
+  const t = (thread?.title || "").trim();
+  if (t) return t;
+  const line = firstLine(thread?.body).trim();
+  // A whole paragraph is not a heading. Cut on a sentence end if there is one
+  // reasonably early, otherwise let the row's line clamp do the work.
+  if (line.length <= 96) return line;
+  const stop = line.slice(0, 96).lastIndexOf(". ");
+  return stop > 24 ? line.slice(0, stop + 1) : `${line.slice(0, 93).trimEnd()}…`;
+}
+
+/* The two lines of excerpt under the heading. When the heading WAS the first
+   line, the excerpt starts after it — otherwise the card says the same words
+   twice. */
+export function excerptOf(thread) {
+  const body = String(thread?.body || "");
+  if ((thread?.title || "").trim()) return body.trim();
+  const line = firstLine(body);
+  const rest = body.slice(body.indexOf(line) + line.length).trim();
+  // EMPTY, not the title again. A one-line comment mirrored from a lesson has
+  // nothing after its first line, and returning that line meant the card
+  // printed the same sentence twice — heading and excerpt, identical. The
+  // caller omits the excerpt when there is none.
+  return rest;
+}
+
+/* §4b — ANSWERED is the asker's mark, not a reply count. A question with six
+   answers and none of them right is not answered, and saying it is would be
+   the feed lying about the one thing it exists to track. */
+export const isAnswered = (thread) => Boolean(thread?.bestReplyId);
+
+export const answerCount = (thread, replies = []) =>
+  replies.filter((r) => r.threadId === thread?.id).length;
+
+/* §4b — the sticky chip row. Per module, and the filter lives only there. */
+export const FEED_FILTERS = [
+  { id: "yours", label: "Yours" },
+  { id: "answered", label: "Answered" },
+  { id: "all", label: "All" },
+];
+
+export function applyFeedFilter(threads = [], filter = "all", { me, replies = [] } = {}) {
+  if (filter === "yours") {
+    // Yours means you are IN it — you asked, or you answered. The same
+    // definition the badge uses, so a thread cannot be "yours" in one place
+    // and not in another.
+    return threads.filter((t) => isMine(t, replies, me));
+  }
+  if (filter === "answered") return threads.filter(isAnswered);
+  return threads;
+}
+
+/* §4b's header count, and the badge on a module row: how many questions in
+   this module are still waiting for an answer somebody has accepted. */
+export const waitingCount = (threads = []) => threads.filter((t) => !isAnswered(t)).length;
+
+/* §4c — answers nest ONE level only. A reply can hang off an answer, but a
+   reply to a reply goes flat under the same parent, because deep nesting
+   breaks on a phone. The schema is deliberately flat (0008 has no parent_id),
+   so nesting is derived: an answer is a top-level reply, and a reply that
+   opens by naming another answerer is hung under them.
+
+   Until there is a parent_id column this returns every reply as a top-level
+   answer, which is the honest reading of flat data — inventing a hierarchy by
+   guessing at @-mentions would put words in people's mouths. */
+export function nestAnswers(replies = [], threadId) {
+  const mine = replies.filter((r) => r.threadId === threadId)
+    .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+  return mine.map((r) => ({ ...r, children: [] }));
+}
