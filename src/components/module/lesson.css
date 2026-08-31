@@ -213,6 +213,15 @@
   color: oklch(.92 0 0); padding-inline: 8px; flex: none;
 }
 .pspacer{ flex: 1 1 auto; }
+/* The total goes on a phone, the position stays. Measured at 390px: the bar
+   wanted 309px inside a 289px layer, and .player-layer clips its own overflow,
+   so the fullscreen button — the control furthest from the origin — was cut in
+   half and could not be finished tapping.
+   A media query rather than a container query on .player-layer: container-type
+   implies contain: layout, and that layer is the absolutely positioned, JS-sized
+   host the whole player hangs off. This costs nothing and risks nothing; the
+   mini dock already hides the bar entirely. */
+@media (max-width: 560px){ .ptime-dur{ display: none; } }
 
 /* speed: 0.75 · 1 · 1.25 · 1.5 · 1.75 · 2 — a word, not an icon */
 .prate{

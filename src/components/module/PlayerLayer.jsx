@@ -675,7 +675,16 @@ export default function PlayerLayer() {
           <button type="button" className="pbtn" onClick={toggle} aria-label={playing ? "Pause" : "Play"}>
             {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
           </button>
-          <span className="ptime">{mmss(dur * pct)} / {ready ? mmss(dur) : "--:--"}</span>
+          {/* The duration half is its own element so a narrow player can drop
+              it. On a phone the bar is about 289px, and play + time + three
+              44px controls came to 309 — the fullscreen button was clipped by
+              the layer's own overflow: hidden, so the control nearest the edge
+              was the one you could neither see nor finish tapping. YouTube
+              solves it the same way: position stays, total goes. */}
+          <span className="ptime">
+            {mmss(dur * pct)}
+            <span className="ptime-dur"> / {ready ? mmss(dur) : "--:--"}</span>
+          </span>
           <span className="pspacer" />
 
           {/* A pen over a page, and deliberately not the edit pencil used
