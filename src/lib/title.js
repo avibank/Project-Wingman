@@ -35,10 +35,31 @@ export function titleForRoute(route) {
       return formatTitle("Sign in");
     case "features":
       return formatTitle("Admin");
+
+    /* THE APP'S OWN PAGES HAVE NAMES ALREADY. These are not invented copy and
+       not content: each string is the label the page is reached by or headed
+       with -- Modules, Logbook and Ready Room are RootNav's own labels, Saved
+       is the bookmarks h1, and Wrong bay is what the 404 says. Every one of
+       these routes was falling through to the site title, so a tab, a
+       bookmark and a history entry for the Ready Room were indistinguishable
+       from the Flight Deck. */
+    case "modules":
+      return formatTitle("Modules");
+    case "logbook":
+      return formatTitle("Logbook");
+    case "ready":
+      return formatTitle("Ready Room");
+    case "saved":
+      return formatTitle("Saved");
+    case "notfound":
+      return formatTitle("Wrong bay");
+
     default:
-      // Module and chapter titles are not specified yet. They get the default
-      // rather than an invented string; formatTitle already supports the
-      // three-part shape for when that copy is written.
+      // Module, chapter and lesson titles still fall through, and deliberately.
+      // Those names are CONTENT, this file has no access to it, and the rule
+      // against inventing chapter copy applies to a browser tab as much as to
+      // a page. formatTitle already supports the three-part shape for when
+      // that copy exists.
       return HOME_TITLE;
   }
 }
