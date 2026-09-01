@@ -87,7 +87,9 @@
 
        document.documentElement.style.setProperty('--wg-in','320ms')
 
-     --wg-out    how long the outgoing screen takes to go. Short: it should be
+     --wg-in     the whole transition. One number now, because the outgoing
+                 screen no longer animates — see the note under the keyframes.
+     (retired)   how long the outgoing screen takes to go. Short: it should be
                  gone before the new one arrives, or you see both at once.
      --wg-delay  when the incoming screen starts. Roughly --wg-out, so the two
                  hand over rather than overlap.
@@ -101,18 +103,22 @@
                  because it is the one movement you are meant to watch.
      --wg-ease   one curve for all of it. Gentle out of rest, decisive on
                  arrival — what reads as "smooth" rather than "slow". */
-  --wg-out: 140ms;
-  --wg-delay: 130ms;
-  --wg-in: 380ms;
+  /* NOTHING LEAVES ANY MORE, so there is no --wg-out and no --wg-delay. See
+     the block below the keyframes for why the gap between them was the bug. */
+  --wg-in: 300ms;
   --wg-travel: 24px;
-  --wg-scale: .988;
-  --wg-morph: 460ms;
+  /* .988 was 1.2% — below the threshold where the eye reads scale as movement
+     at all, so every navigation looked like a flat fade with a long tail, and
+     a flat fade with a long tail is exactly what "a jump" means here. 3.5% is
+     seen as depth without being theatrical. */
+  --wg-scale: .965;
+  --wg-morph: 380ms;
   --wg-ease: cubic-bezier(.32, .72, 0, 1);
   /* The scene change is slower than any navigation on purpose: nothing is
      moving, so there is no travel to make it feel quick, and a colour
      dissolve reads as abrupt long after a slide would have. */
-  --wg-theme: 520ms;
-  --wg-set: 240ms;
+  --wg-theme: 420ms;
+  --wg-set: 200ms;
 
   /* ----------------------------------------------------------- 3 · shape */
   --r-panel: 13px;      /* the hero card and the crew strip */
@@ -451,7 +457,17 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      how it failed first time: the theme rule sat above this one and lost.
      During a scene change the content must stay part of the root picture, or
      it dissolves on its own timing and the page comes apart into two layers. */
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .app .deck-inner { view-transition-name: wg-content; }
+  /* THE SCROLLER, NOT ITS CONTENTS — and this is the Ready Room regression.
+     .deck-inner is as tall as the page scrolls, so its snapshot is the whole
+     document. Going from a long deck to a viewport-tall room, the group tweened
+     between two very different heights and stretched the held old image for the
+     length of the transition. A smear, not a sail, and worst exactly where the
+     layouts differ most.
+     .deck is the scroll container. It is viewport-sized on every route, so the
+     group never resizes, the snapshot is only what was actually on screen, and
+     the two ends line up pixel for pixel — which is the precondition for a
+     dissolve to read as one picture changing rather than two being blended. */
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .app .deck { view-transition-name: wg-content; }
 
   /* SOFTER, AND LONGER, WITHOUT LOSING THE SNAP. The old curve left almost
      immediately and the short durations made every move read as a cut. This
@@ -462,13 +478,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt]::view-transition-new(wg-content) {
     animation-timing-function: var(--wg-ease);
     animation-fill-mode: both;
-    /* NO ADDITIVE BLEND. plus-lighter was here to stop a cross-fade dipping,
-       and it is the right tool only when the two halves are the same picture.
-       These are two different layouts, so summing them brightened the overlap
-       — the same hitch the scene change had. It is unnecessary now anyway:
-       the old leaves in --wg-out and the new starts at --wg-delay, so the two
-       barely meet, and the root holding underneath means nothing can show
-       through the gap even if they did. */
+    /* NO ADDITIVE BLEND. plus-lighter sums two layers, which is right only
+       when they are the same picture; these are two different layouts, so
+       summing them brightened the overlap. It is unnecessary now regardless:
+       the outgoing layer holds at full opacity, so the pair already sums to
+       full coverage on plain alpha. */
     mix-blend-mode: normal;
   }
 
@@ -484,6 +498,38 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      allowed. It does not change per navigation, so the animation is switched
      off once and never restarted. */
   html[data-vt-on] .route-fade { animation: none; }
+
+  /* ==========================================================================
+     THE OUTGOING SCREEN HOLDS. IT DOES NOT LEAVE.
+
+     This is the whole fix, and the previous version had it exactly backwards.
+
+     Naming .deck-inner lifts it out of BOTH root snapshots, which leaves a
+     transparent hole in each of them where the content sits. So while the
+     content region is mid-transition, the only things that can paint there are
+     the old content layer and the new one. The old faded out over 140ms and
+     the new did not start until 130ms — for the frames in between, the old was
+     gone, the new had not arrived, and both roots had a hole. Nothing painted.
+     That is the flash, and on the Ready Room, whose layout differs from the
+     deck most, it was the worst.
+
+     Holding the old layer fixes it arithmetically rather than by tuning. A
+     layer at opacity `a` over an opaque one composites to new*a + old*(1-a):
+     the two always sum to full coverage, there is no frame where the total is
+     less than one, and nothing is ever added, so there is no dip AND no
+     brightening. It is the correct dissolve, and it is why the same treatment
+     is now on the root and on every shared pair.
+
+     It also means the transition can be SHORT. The old sequence had to spend
+     140ms emptying the screen before it could start filling it, so 300ms of
+     visible movement cost 510ms of clock. Now the incoming screen starts at
+     zero and the whole thing is 300ms — responsive at the front, and the long
+     tail of the easing curve does the settling.
+
+     ONE THING MOVES: the new screen, growing in from --wg-scale. The old is
+     static, so the eye has only one moving edge to follow and reads it as
+     arrival rather than as two pictures blurred together.
+     ========================================================================= */
 
   /* ==========================================================================
      WHY THESE ARE ASYMMETRIC, AND WHY ONLY ONE SIDE MOVES.
@@ -512,9 +558,6 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      guessed at. See the block on :root.
      ========================================================================= */
 
-  /* The old screen: fade, nothing else. */
-  @keyframes wgOut { to { opacity: 0; } }
-
   /* THE ROOM'S SETTLE, NOW FOR EVERY KIND. Deck-to-room was the one that read
      as smooth, and the difference was never the timing — it was that it moved
      in depth only. The others also slid vertically, and a screen doing two
@@ -537,22 +580,22 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   }
 
   html[data-vt] ::view-transition-old(wg-content) {
-    animation: wgOut var(--wg-out) var(--wg-ease) both;
+    animation: none;
   }
   html[data-vt="fwd"]::view-transition-new(wg-content) {
-    animation: wgInDeeper var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+    animation: wgInDeeper var(--wg-in) var(--wg-ease) both;
   }
   html[data-vt="back"]::view-transition-new(wg-content) {
-    animation: wgInBack var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+    animation: wgInBack var(--wg-in) var(--wg-ease) both;
   }
   html[data-vt="swap"]::view-transition-new(wg-content) {
-    animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+    animation: wgInFlat var(--wg-in) var(--wg-ease) both;
   }
   /* Opening a module: the card carries the movement, so the page under it just
      clears out of the way faster and comes back flat. */
   html[data-vt="morph"]::view-transition-new(wg-content),
   html[data-vt="morphBack"]::view-transition-new(wg-content) {
-    animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+    animation: wgInFlat var(--wg-in) var(--wg-ease) both;
   }
 
   /* THE CARD AND THE TITLE ARE ONE THING. The module card on the deck and the
@@ -568,8 +611,8 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     animation-duration: var(--wg-morph);
     animation-timing-function: var(--wg-ease);
   }
-  ::view-transition-old(wg-morph) { animation: wgOut var(--wg-out) var(--wg-ease) both; }
-  ::view-transition-new(wg-morph) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
+  ::view-transition-old(wg-morph) { animation: none; }
+  ::view-transition-new(wg-morph) { animation: wgInFlat var(--wg-in) var(--wg-ease) both; }
 
   /* THE THUMBNAIL BECOMES THE PLAYER. The second shared pair, and the one that
      does the most work: opening a lesson, the tile you tapped grows into the
@@ -688,13 +731,13 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   @keyframes wgPanelInLeft { from { opacity: 0; transform: translateX(calc(var(--wg-travel) * -1)); } }
 
   html[data-vt^="tab"]::view-transition-old(wg-panel) {
-    animation: wgOut var(--wg-out) var(--wg-ease) both;
+    animation: none;
   }
   html[data-vt="tabR"]::view-transition-new(wg-panel) {
-    animation: wgPanelInRight var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+    animation: wgPanelInRight var(--wg-in) var(--wg-ease) both;
   }
   html[data-vt="tabL"]::view-transition-new(wg-panel) {
-    animation: wgPanelInLeft var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+    animation: wgPanelInLeft var(--wg-in) var(--wg-ease) both;
   }
 
   /* The heading is one word becoming another in the same place. */
@@ -702,8 +745,8 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt^="tab"]::view-transition-new(wg-panel),
   html[data-vt^="tab"]::view-transition-old(wg-ptitle),
 
-  html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: wgOut var(--wg-out) both; }
-  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
+  html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: none; }
+  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgInFlat var(--wg-in) var(--wg-ease) both; }
 
   /* The tab itself: the group tweens position and size, so the label and its
      underline travel. Held above the panel so it is never clipped by it. */
@@ -712,7 +755,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     animation-duration: var(--wg-morph);
     animation-timing-function: var(--wg-ease);
   }
-  html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: wgOut var(--wg-out) both; }
+  html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: none; }
   html[data-vt^="tab"]::view-transition-new(wg-tab) { animation: wgInFlat var(--wg-in) var(--wg-ease) both; }
 
   /* The content region must NOT also slide — the frame is staying put and only
