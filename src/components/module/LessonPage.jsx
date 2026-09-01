@@ -136,7 +136,20 @@ export default function LessonPage({
   // tab changes — only its placeholder does — and it carries a timestamp chip
   // pre-filled with the playhead, so nobody has to type a timestamp.
   const composerRef = useRef(null);
-  const [draft, setDraft] = useState("");
+  /* ONE FIELD, TWO DESTINATIONS — AND TWO DRAFTS, which is the part that was
+     missing. The field is shared by design, but the TAB can change under it:
+     type a private note, switch to Comments, and your own words were sitting
+     in the public composer, under the line "Everyone on Module 1 sees this.",
+     one click from being published. A note is private by promise, so the
+     promise cannot survive a tab switch by accident.
+
+     Two drafts rather than clearing on switch: clearing would be safe and
+     would also throw away what someone had typed. This keeps both and shows
+     the one that belongs to where you are. */
+  const [noteDraft, setNoteDraft] = useState("");
+  const [commentDraft, setCommentDraft] = useState("");
+  const draft = tab === "notes" ? noteDraft : commentDraft;
+  const setDraft = tab === "notes" ? setNoteDraft : setCommentDraft;
   const [chip, setChip] = useState(null);
   // §4 — open on desktop and tablet, closed on a phone. Read once at mount:
   // this is a starting position, not a live binding to the width.
