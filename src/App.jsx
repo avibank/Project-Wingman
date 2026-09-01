@@ -278,9 +278,25 @@ function AppInner() {
       if (!warmed) kind = null;
     }
 
+    /* THE SCROLL RESET BELONGS TO THE NEW SCREEN, and it used to run against
+       the old one. It sat after this whole block, synchronously after
+       startViewTransition returns — and the old snapshot is NOT captured
+       inside that call, it is captured at the next rendering step. So the
+       reset landed on the old DOM before it was photographed: the page jumped
+       to the top, and the transition then animated the jumped image. Since
+       .deck is the element carrying wg-content, that is exactly the layer seen
+       to jump, and it happened on every navigation away from a scrolled page —
+       which is most of them, moving back and forth.
+       Inside the callback it applies to the new screen, before the after-
+       snapshot, which is what "the new page starts at the top" should mean. */
+    const resetScroll = () => {
+      if (!keepScroll && deckRef.current) deckRef.current.scrollTop = 0;
+    };
+
     if (!kind) {
       clearMorph();             // nothing will animate, so drop any morph name
       move();
+      resetScroll();
     } else {
       // The token, not the attribute. See endTransition: a navigation that is
       // superseded before it settles must not tear down the one that replaced
@@ -303,6 +319,10 @@ function AppInner() {
         // photographs the old page as the "after" frame and animates it
         // against itself.
         await settleDom();
+        // The new screen exists now, so the scroller has its real content and
+        // resetting it means what it says. Before settleDom it would clamp
+        // against whatever was still mounted.
+        resetScroll();
         // The new screen is in the DOM and the after-snapshot has not been
         // taken yet. This holds it until the returning card exists — the deck
         // commits before its cards do — and gives up quickly if it never does.
@@ -311,7 +331,6 @@ function AppInner() {
       vt.ready?.catch(() => {});
       vt.finished?.catch(() => {}).finally?.(() => { endTransition(token); });
     }
-    if (!keepScroll && deckRef.current) deckRef.current.scrollTop = 0;
   };
   // A BACKSTOP, not the cleanup. The morph name is written on one element for
   // the length of one transition, and a card that kept it would collide with

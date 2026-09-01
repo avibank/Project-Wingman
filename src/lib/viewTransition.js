@@ -298,21 +298,42 @@ export function settleDom({ max = 260 } = {}) {
       clearTimeout(hard);
       resolve();
     };
-    // RESOLVE ON THE COMMIT, NOT ON AN IDLE TIMER. The first version waited
-    // 32ms of quiet after the last mutation, and setTimeout is throttled to
-    // about a second in a background tab — measured, the page sat frozen
-    // behind the snapshot for 989ms. A MutationObserver is not throttled that
-    // way, so the commit itself is the signal and a microtask lets React
-    // finish the batch it is in.
-    mo = new MutationObserver(() => { queueMicrotask(finish); });
-    mo.observe(document.body, { childList: true, subtree: true });
-    // Nothing may mutate at all — an identical screen, or a commit that has
-    // already happened — so this is the floor as well as the ceiling. It is a
-    // timer, and in a background tab it will be throttled; that is acceptable
-    // where the only cost is a still image nobody is looking at.
+
+    /* WAIT FOR THE SKELETON TO GO, not for the first mutation.
+     *
+     * The previous version resolved as soon as anything in the document
+     * changed. When the route suspends, the FIRST thing that changes is the
+     * Suspense fallback being mounted — so the browser took its after-snapshot
+     * of a skeleton, animated that in as the new page, and the real content
+     * appeared after the transition had already finished. A pulse of grey
+     * blocks, then a pop.
+     *
+     * flushSync has already run by the time this is called, so the DOM
+     * reflects the commit: either the real screen, in which case there is
+     * nothing to wait for and this resolves without costing a frame, or the
+     * fallback, in which case the thing to wait for is precisely its removal.
+     * aria-busy is what marks it, and it is on the fallback because it is true
+     * — not as a hook for this.
+     */
+    const settled = () => !document.querySelector('.deck [aria-busy="true"]');
+    const check = () => { if (settled()) queueMicrotask(finish); };
+
+    // A MutationObserver rather than a timer: setTimeout is throttled to about
+    // a second in a background tab, and an earlier version of this sat frozen
+    // behind the snapshot for 989ms because of it.
+    mo = new MutationObserver(check);
+    mo.observe(document.body, {
+      childList: true, subtree: true,
+      attributes: true, attributeFilter: ["aria-busy"],
+    });
+    // Nothing may ever change — a route that renders identically, or a chunk
+    // that never arrives — so this is the ceiling as well as the backstop.
     hard = setTimeout(finish, max);
+    // The common case: the commit was synchronous and we are already done.
+    check();
   });
 }
+
 
 /* A CHANGE THAT IS NOT A NAVIGATION.
  *
