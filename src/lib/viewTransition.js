@@ -133,17 +133,58 @@ const MEDIA = "wg-media";    // a lesson's thumbnail becoming the player
    finishes. */
 let marked = [];
 
+/* WHICH TRANSITION IS THE LIVE ONE.
+ *
+ * Navigate back and forth quickly and two transitions overlap: the first is
+ * aborted the instant the second starts. Its `finished` promise then settles —
+ * as a rejection — and ran the teardown, which deleted data-vt and stripped
+ * every shared name. Those belonged to the SECOND transition, which was still
+ * mid-flight, so all of its per-kind rules stopped matching between one frame
+ * and the next and the shared elements snapped to their unstyled state.
+ *
+ * That is the glitch when moving back and forth, and it is a race rather than
+ * anything about the animation: it only appears when the second navigation
+ * begins before the first has settled.
+ *
+ * A counter fixes it. Each transition takes the next number, and only the one
+ * still holding the current number is allowed to tear anything down. A
+ * superseded transition settles, finds it is no longer current, and does
+ * nothing — which is exactly right, because the transition that replaced it
+ * owns the teardown now.
+ */
+let generation = 0;
+
+export function beginTransition(kind) {
+  document.documentElement.dataset.vt = kind;
+  return ++generation;
+}
+
+export function endTransition(token) {
+  if (token !== generation) return false;
+  clearMorph();
+  delete document.documentElement.dataset.vt;
+  return true;
+}
+
 export function markShared(el, name) {
   if (!el) return;
+  /* ONE NAME, ONE ELEMENT. A duplicate view-transition-name does not degrade
+     the transition, it aborts the whole thing — silently, with nothing in the
+     console. Two overlapping navigations can each want to name a card
+     `wg-morph`, so whoever held it before gives it up here rather than the
+     pair of them cancelling each other out. */
+  for (const m of marked) {
+    if (m.name === name && m.el !== el) m.el.style.viewTransitionName = "";
+  }
   el.style.viewTransitionName = name;
-  marked.push(el);
+  marked.push({ el, name });
 }
 
 export const markMorph = (el) => markShared(el, MORPH);
 export const markMedia = (el) => markShared(el, MEDIA);
 
 export function clearMorph() {
-  for (const el of marked) el.style.viewTransitionName = "";
+  for (const m of marked) m.el.style.viewTransitionName = "";
   marked = [];
 }
 
@@ -293,15 +334,15 @@ export function settleDom({ max = 260 } = {}) {
  */
 export function transitionState(kind, change) {
   if (!canTransition()) { change(); return; }
-  document.documentElement.dataset.vt = kind;
+  // Same race as a navigation: press two liveries quickly and the first one's
+  // teardown would strip the second one's kind while it is still running.
+  const token = beginTransition(kind);
   const vt = document.startViewTransition(() => flushSync(change));
   // Both settle-handlers are needed. An interrupted transition rejects `ready`,
   // and an unhandled rejection there is a console error on a perfectly ordinary
   // action — pressing two liveries quickly.
   vt.ready?.catch(() => {});
-  vt.finished?.catch(() => {}).finally?.(() => {
-    delete document.documentElement.dataset.vt;
-  });
+  vt.finished?.catch(() => {}).finally?.(() => { endTransition(token); });
 }
 
 /* A palette change: everything on screen is a different colour afterwards. */

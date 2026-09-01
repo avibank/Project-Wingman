@@ -101,7 +101,7 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
-import { transitionKind, canTransition, clearMorph, markMorphTarget, settleDom, withTheme, withSetting } from "./lib/viewTransition.js";
+import { transitionKind, canTransition, clearMorph, markMorphTarget, settleDom, withTheme, withSetting, beginTransition, endTransition } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -282,7 +282,10 @@ function AppInner() {
       clearMorph();             // nothing will animate, so drop any morph name
       move();
     } else {
-      document.documentElement.dataset.vt = kind;
+      // The token, not the attribute. See endTransition: a navigation that is
+      // superseded before it settles must not tear down the one that replaced
+      // it, which is the glitch when moving back and forth quickly.
+      const token = beginTransition(kind);
       // BOTH PROMISES ARE CAUGHT, and they have to be. A transition that is
       // interrupted — a second navigation before the first settles, a tab
       // hidden mid-flight — rejects `ready` and `finished`, and an unhandled
@@ -306,10 +309,7 @@ function AppInner() {
         await markMorphTarget(kind, route);
       });
       vt.ready?.catch(() => {});
-      vt.finished?.catch(() => {}).finally?.(() => {
-        clearMorph();
-        delete document.documentElement.dataset.vt;
-      });
+      vt.finished?.catch(() => {}).finally?.(() => { endTransition(token); });
     }
     if (!keepScroll && deckRef.current) deckRef.current.scrollTop = 0;
   };
