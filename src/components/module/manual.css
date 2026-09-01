@@ -81,10 +81,30 @@
   box-shadow: none;
   color: var(--sketch-ink);
 }
+/* AND THE DRAWN LAMP IS THE ONE PAPER ACTUALLY SHOWS.
+   CautionMark always renders data-lit="true" — it is only ever mounted where a
+   fault already exists, so "unlit" is a state that never reaches the screen.
+   This rule used to replace the hatch with a solid --caution fill, which meant
+   Manual never drew the hatched lamp at all and the rule above it was dead in
+   practice: paper got the same lit slab as Standard.
+
+   Manual draws rather than lights. The caution still reads, and reads three
+   ways at once — the outline, a caution-tinted hatch, and the words MASTER
+   CAUTION — which is §1.4's rule that colour is never the only carrier. The
+   legend stays --sketch-ink because that is the ink the rest of the paper
+   world is written in, and it is the pairing this finish is tuned for. */
 .app[data-paper="1"] .lamp-mark[data-lit="true"]{
-  background: var(--caution);
+  /* 68% and not less, and the number was measured rather than chosen. The
+     legend sits ON this hatch wherever a stroke crosses a stripe, so the
+     stripe is the worst case, not the paper. Swept across all six liveries in
+     both variants: at 58% the ink reads 4.15 against the darkest stripe, at
+     64% it is 4.82 and at 68% it is 5.36. On bare paper it is 10.4 — the
+     stripe is the only place this was ever tight. */
+  background: repeating-linear-gradient(45deg,
+    transparent 0 5px,
+    color-mix(in oklab, var(--caution), transparent 68%) 5px 6px);
   border-color: var(--caution);
-  color: var(--on-caution);
+  color: var(--sketch-ink);
   box-shadow: none;
 }
 
