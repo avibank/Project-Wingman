@@ -101,7 +101,7 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
-import { transitionKind, canTransition, clearMorph, markMorphTarget, settleDom, withTheme, withSetting, beginTransition, endTransition } from "./lib/viewTransition.js";
+import { transitionKind, canTransition, settleDom, withTheme, withSetting, beginTransition, endTransition } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -298,7 +298,6 @@ function AppInner() {
     };
 
     if (!kind) {
-      clearMorph();             // nothing will animate, so drop any morph name
       move();
       resetScroll();
     } else {
@@ -327,28 +326,11 @@ function AppInner() {
         // resetting it means what it says. Before settleDom it would clamp
         // against whatever was still mounted.
         resetScroll();
-        // The new screen is in the DOM and the after-snapshot has not been
-        // taken yet. This holds it until the returning card exists — the deck
-        // commits before its cards do — and gives up quickly if it never does.
-        await markMorphTarget(kind, route);
       });
       vt.ready?.catch(() => {});
       vt.finished?.catch(() => {}).finally?.(() => { endTransition(token); });
     }
   };
-  // A BACKSTOP, not the cleanup. The morph name is written on one element for
-  // the length of one transition, and a card that kept it would collide with
-  // the next move, because a view-transition-name has to be unique in the
-  // document. `finished` above is what normally clears it, on the exact frame
-  // the transition ends. This only covers the case where that promise never
-  // settles at all — long enough not to cut a running transition short.
-  useEffect(() => {
-    const t = setTimeout(() => {
-      clearMorph();
-      delete document.documentElement.dataset.vt;
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [location.pathname]);
 
   const goSettings = (page) =>
     go(page === "auth" ? routePath.signin()

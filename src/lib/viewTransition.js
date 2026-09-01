@@ -57,44 +57,19 @@ export function placeOf(route) {
   return { sec, depth, id: route?.moduleCode || "" };
 }
 
-/* THE DECK IS NOT A PARENT OF A MODULE, it is the drawer the module was in.
-   Opening one is a card growing into a page, and closing it is that card
-   settling back — which is why those two get their own kinds rather than
-   plain forward and back. Everything else is depth. */
+/* THE KIND IS NOW ONLY USED TO PICK A DURATION, not to pick a choreography.
+   Everything that moves does the same thing; a scene change is the one case
+   that behaves differently, because nothing moves and only the colour changes.
+   The direction of travel is deliberately no longer expressed: it was carried
+   by scaling the incoming layer below 1, which is exactly what exposed the
+   holes. It can come back when it can be done without them. */
 export function transitionKind(fromRoute, toPath) {
   if (!toPath) return null;
   const a = placeOf(fromRoute);
   const b = placeOf(parseRoute(toPath));
-  if (a.sec === "deck" && b.sec === "module") return "morph";
-  if (a.sec === "module" && b.sec === "deck") return "morphBack";
-  if (a.sec !== b.sec) return "swap";
-
-  /* TABS MOVE SIDEWAYS, AND THEY HAVE A SIDE. Licence, Preferences and
-     Appearance are real URLs rather than component state, so switching one is
-     a navigation — and it fell through to "same section, same depth" and
-     returned null, which is why the panel and the heading jumped. The order in
-     PROFILE_TABS is the order on screen, so the index difference IS the
-     direction: later tab, panel comes in from the right. */
-  const from = parseRoute(toPath);
-  if (a.sec === "account" && fromRoute?.name === "profile" && from.name === "profile") {
-    const i = PROFILE_TABS.indexOf(fromRoute.tab);
-    const j = PROFILE_TABS.indexOf(from.tab);
-    if (i < 0 || j < 0 || i === j) return null;
-    return j > i ? "tabR" : "tabL";
-  }
-
-  /* The module screen's own tabs, by the same argument. Lessons and Library
-     are both name "module" at the same depth in the same module, so they came
-     out as null too. MODULE_TAB_ORDER is the order they sit in on screen. */
-  if (fromRoute?.name === "module" && from.name === "module" && a.id === b.id) {
-    const i = MODULE_TAB_ORDER.indexOf(fromRoute.tab);
-    const j = MODULE_TAB_ORDER.indexOf(from.tab);
-    if (i >= 0 && j >= 0 && i !== j) return j > i ? "tabR" : "tabL";
-  }
-
-  // Same module, different chapter — sideways, not deeper.
-  if (b.depth === a.depth) return a.id && b.id && a.id !== b.id ? "swap" : null;
-  return b.depth > a.depth ? "fwd" : "back";
+  // Same place and same depth in the same module is not a navigation at all.
+  if (a.sec === b.sec && a.depth === b.depth && a.id === b.id) return "move";
+  return "move";
 }
 
 /* MOTION IS A PREFERENCE, AND IT IS ALREADY DECLARED TWICE IN THIS APP.
@@ -118,39 +93,22 @@ export const supported = () =>
 
 export const canTransition = () => supported() && !motionOff();
 
-/* THE SHARED ELEMENT, and why it is assigned by hand rather than in CSS.
-   A view-transition-name has to be unique in the document, so the deck's
-   module cards cannot all carry the morph name — only the one being opened
-   may. It is written on the element for the length of the transition and
-   taken off again, and `clearMorph` is safe to call when nothing was set. */
-const MORPH = "wg-morph";    // a module card becoming a module page
-const MEDIA = "wg-media";    // a lesson's thumbnail becoming the player
-
-/* A LIST, not a single slot. One transition can carry more than one shared
-   element, and the point of shared elements is that several things persist at
-   once — that is what turns "the screen was replaced" into "the screen
-   rearranged". Everything marked is cleared together when the transition
-   finishes. */
-let marked = [];
-
 /* WHICH TRANSITION IS THE LIVE ONE.
  *
  * Navigate back and forth quickly and two transitions overlap: the first is
  * aborted the instant the second starts. Its `finished` promise then settles —
- * as a rejection — and ran the teardown, which deleted data-vt and stripped
- * every shared name. Those belonged to the SECOND transition, which was still
- * mid-flight, so all of its per-kind rules stopped matching between one frame
- * and the next and the shared elements snapped to their unstyled state.
+ * as a rejection, because it was aborted — and used to run the teardown, which
+ * deleted data-vt. That attribute belonged to the SECOND transition, still
+ * mid-flight, so its rules stopped matching between one frame and the next.
  *
- * That is the glitch when moving back and forth, and it is a race rather than
- * anything about the animation: it only appears when the second navigation
- * begins before the first has settled.
+ * A counter fixes it: each transition takes the next number and only the one
+ * still holding the current number may tear anything down. A superseded
+ * transition settles, finds it is no longer current, and does nothing — which
+ * is right, because the transition that replaced it owns the teardown now.
  *
- * A counter fixes it. Each transition takes the next number, and only the one
- * still holding the current number is allowed to tear anything down. A
- * superseded transition settles, finds it is no longer current, and does
- * nothing — which is exactly right, because the transition that replaced it
- * owns the teardown now.
+ * This survives the rebuild unchanged. It is not about shared elements; it is
+ * about two transitions existing at once, which is still possible and still
+ * the thing that happens when somebody taps twice.
  */
 let generation = 0;
 
@@ -161,111 +119,29 @@ export function beginTransition(kind) {
 
 export function endTransition(token) {
   if (token !== generation) return false;
-  clearMorph();
   delete document.documentElement.dataset.vt;
   return true;
 }
 
-export function markShared(el, name) {
-  if (!el) return;
-  /* ONE NAME, ONE ELEMENT. A duplicate view-transition-name does not degrade
-     the transition, it aborts the whole thing — silently, with nothing in the
-     console. Two overlapping navigations can each want to name a card
-     `wg-morph`, so whoever held it before gives it up here rather than the
-     pair of them cancelling each other out. */
-  for (const m of marked) {
-    if (m.name === name && m.el !== el) m.el.style.viewTransitionName = "";
-  }
-  el.style.viewTransitionName = name;
-  marked.push({ el, name });
-}
-
-export const markMorph = (el) => markShared(el, MORPH);
-export const markMedia = (el) => markShared(el, MEDIA);
-
-export function clearMorph() {
-  for (const m of marked) m.el.style.viewTransitionName = "";
-  marked = [];
-}
-
-/* THE RETURN TRIP, and the reason it needs its own call.
+/* NO SHARED ELEMENTS, AND THAT IS THE POINT OF THE REBUILD.
  *
- * Going in is easy: the card exists when you click it, so it can be named
- * before the move. Coming back, the card you are returning to does not exist
- * yet — the deck has not rendered. Naming it "after the navigation" in the
- * ordinary sense is too late, because by then the browser has already taken
- * its after-snapshot and the transition is decided.
+ * There used to be two — a module card growing into its page, and a lesson
+ * thumbnail growing into the player — plus the chrome and the tab parts, eight
+ * names in all. Each one had to be written onto an element by hand, kept
+ * unique across two overlapping navigations, and cleared again afterwards, and
+ * each one punched a transparent hole in both root snapshots that the incoming
+ * layer then shrank away from.
  *
- * The window is inside the transition callback, after flushSync has committed
- * the new screen and before the callback returns — the deck is in the DOM and
- * the snapshot has not been taken, so the card can be found and named and the
- * heading shrinks back into it instead of fading out.
+ * The marking machinery went with them: markShared, markMorph, markMedia and
+ * markMorphTarget, along with the return-trip MutationObserver that waited for
+ * a card to exist so it could be named before the after-snapshot was taken.
+ * None of it is needed to dissolve one picture into another, and all of it was
+ * a place for the transition to break.
  *
- * Which card: the one for the module being left. Matched on data-code rather
- * than on the name shown, because a title is a label and a code is an
- * identifier — the prototype matched on the visible text and would have picked
- * the wrong card the moment two modules shared a name.
- *
- * AND IT HAS TO WAIT, which was not obvious. flushSync commits the deck, but
- * the module cards are not in that commit — measured at the snapshot instant,
- * .deck was present with ZERO cards, and four appeared a moment later. They
- * come from state that settles after the first paint, so "synchronously after
- * flushSync" is still too early.
- *
- * startViewTransition takes an async callback and holds the snapshot until the
- * promise settles, which is exactly the hook for this. It waits on a
- * MutationObserver rather than a poll, so the common case costs one microtask
- * when the cards are inserted instead of an interval, and it is hard-bounded:
- * if the card has not arrived in time the transition proceeds without it and
- * the heading fades. A missing flourish is a fine outcome; a page frozen
- * behind a snapshot waiting for data is not.
+ * If a morph is wanted back, it needs two things this file no longer has to
+ * provide, in this order: a scale at or above 1 so a layer never shrinks away
+ * from its own hole, and uniqueness that survives two navigations overlapping.
  */
-const TARGET_WAIT_MS = 220;
-
-export function markMorphTarget(kind, fromRoute) {
-  /* Two return trips, the same shape. Coming out of a module, the card you are
-     going back to; coming out of a lesson, the ROW you opened it from — so the
-     player shrinks into its thumbnail instead of the page being replaced. */
-  let find = null;
-  let apply = markMorph;
-  if (kind === "morphBack" && fromRoute?.moduleCode) {
-    const code = fromRoute.moduleCode;
-    find = () => document.querySelector(`.deck .mod[data-code="${CSS.escape(code)}"]`);
-  } else if (kind === "back" && fromRoute?.lessonId) {
-    const id = fromRoute.lessonId;
-    find = () => document.querySelector(`.item[data-lesson="${CSS.escape(id)}"] .lead`);
-    apply = markMedia;
-  }
-  if (!find) return Promise.resolve();
-
-  const now = find();
-  if (now) { apply(now); return Promise.resolve(); }
-
-  return new Promise((resolve) => {
-    const started = Date.now();
-    let done = false;
-    let mo = null;
-    let deadline = null;
-    const finish = (card) => {
-      if (done) return;
-      done = true;
-      if (mo) mo.disconnect();
-      clearTimeout(deadline);
-      // THE DEADLINE IS CHECKED BEFORE MARKING, not after finding. Checking it
-      // second meant a late arrival still got the name, and in a BACKGROUND TAB
-      // setTimeout is throttled to about a second — so the transition sat on a
-      // frozen snapshot for 1000ms waiting for a flourish nobody was watching.
-      // Measured: the forward callback runs in 1ms, this one ran in 1000.
-      if (card && Date.now() - started < TARGET_WAIT_MS) apply(card);
-      resolve();
-    };
-    // A MutationObserver fires when the cards are actually inserted, so the
-    // common case costs one microtask rather than a polling interval.
-    mo = new MutationObserver(() => { const c = find(); if (c) finish(c); });
-    mo.observe(document.body, { childList: true, subtree: true });
-    deadline = setTimeout(() => finish(null), TARGET_WAIT_MS);
-  });
-}
 
 /* WAIT FOR REACT TO ACTUALLY COMMIT.
  *

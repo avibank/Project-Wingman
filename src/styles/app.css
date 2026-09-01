@@ -402,345 +402,109 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    never reach this file: the option is not passed, so no transition starts and
    there is nothing to turn off. Off, not faster — the same rule §2 states.
    ========================================================================= */
+/* ============================================================================
+   THE TRANSITION LAYER — rebuilt around one pair of layers.
+
+   WHY THE PREVIOUS ONE COULD NOT BE TUNED RIGHT. It named eight elements, and
+   naming an element REMOVES IT FROM THE ROOT SNAPSHOT and leaves a transparent
+   hole exactly its size. Every incoming layer then animated in at
+   scale(.988) — 98.8% of its own box — so for the whole animation there was a
+   ring around each one where the layer had shrunk away from its own hole and
+   NOTHING painted. Not the old page: nothing. Sixteen holes, on every
+   navigation. That is the flash and the phasing, and it was geometric rather
+   than a matter of timing, which is why every re-timing left it in place.
+
+   Two layers were also cross-fading at once — the root and the content — on
+   overlapping regions with their own curves, which is what beats visibly. And
+   plus-lighter is additive: correct for two versions of one picture, wrong for
+   two different ones, where it sums brighter than either end. That is the
+   brightness spike.
+
+   SO: NOTHING IS NAMED. The page transitions as one picture, which is what the
+   user agent does natively and does well. That removes, by construction rather
+   than by tuning:
+     - holes, so nothing can show through to nothing
+     - a second overlapping ramp, so nothing can phase
+     - additive compositing, so nothing can spike
+     - group tweens, so no held snapshot can smear
+
+   THE OLD LAYER HOLDS AND THE NEW ONE FADES OVER IT. A layer at opacity a over
+   an opaque one composites to new*a + old*(1-a): the pair sums to full coverage
+   at every instant, so there is no frame thinner or brighter than any other. It
+   is the correct dissolve arithmetically, not a tuned one.
+
+   THE SCALE IS ABOVE 1, AND THAT IS THE WHOLE LESSON FROM THE LAST VERSION.
+   The new page starts fractionally LARGER and settles to its true size, so it
+   covers the old one completely for the entire animation. Starting below 1
+   would expose a band of the old page around the edge — the same mistake one
+   level up. It reads as the page settling into place, and it is the only
+   movement here.
+   ========================================================================= */
 @media (prefers-reduced-motion: no-preference) {
-  html::view-transition-old(root),
-  html::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+  :root {
+    /* Two numbers for a navigation, and one for a scene change. That is the
+       whole surface area now. */
+    --wg-in: 280ms;
+    --wg-from: 1.012;
+    --wg-scene: 380ms;
+    --wg-ease: cubic-bezier(.32, .72, 0, 1);
+  }
 
-  /* EXCEPT FOR A SCENE CHANGE. Every navigation holds the room still and moves
-     the content inside it, which is why root is pinned above. A livery or a
-     finish is the opposite: nothing moves and the room itself changes, so the
-     root is the only thing that should animate — and it dissolves as one
-     picture rather than as parts arriving separately. plus-lighter because
-     both halves are full-screen and a plain cross-fade between two palettes
-     dips through the background in the middle. */
-  /* THE ONE PLACE plus-lighter IS WRONG, and the only thing kept from the
-     retuning. It sums two layers, which is right when they are the same
-     picture — that is why it is still on every navigation pair below, where
-     the two halves are the same screen mid-move. A livery or a finish puts two
-     full-screen images in DIFFERENT palettes on top of each other, and summing
-     those makes the midpoint brighter than either end. That was the hitch in
-     Appearance. Here the old holds at full opacity and the new fades over it:
-     new*a + old*(1-a) sums to full coverage on plain alpha, so there is no dip
-     and nothing is added. */
-  html[data-vt="theme"]::view-transition-old(root),
-  html[data-vt="setting"]::view-transition-old(root) { animation: none; }
-  html[data-vt="theme"]::view-transition-new(root) {
-    animation: wgIn var(--wg-theme) var(--wg-ease) both;
+  /* The old page holds: no animation at all, full opacity, no movement. */
+  html[data-vt]::view-transition-old(root) { animation: none; }
+
+  /* The new page arrives over it. mix-blend-mode is stated rather than left to
+     the user agent, because the UA default for the root pair is plus-lighter
+     and that is the brightness spike. */
+  html[data-vt]::view-transition-new(root) {
+    animation: wgIn var(--wg-in) var(--wg-ease) both;
     mix-blend-mode: normal;
   }
-  /* A PREFERENCE — the greeter, the frequency — is the same scene change and
-     shorter. Nothing is named, so the part of the page that did not change is
-     identical on both sides and only the copy that actually changed is seen
-     to change. */
+
+  @keyframes wgIn {
+    from { opacity: 0; transform: scale(var(--wg-from)); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* A LIVERY, A FINISH OR A PREFERENCE IS NOT A NAVIGATION. Nothing moves and
+     the room itself changes colour, so the scale is dropped and only the
+     dissolve remains — a scale here would read as the page twitching while you
+     press a swatch. Longer, because a colour change with no movement reads as
+     abrupt long after a moving one would. */
+  html[data-vt="theme"]::view-transition-new(root),
   html[data-vt="setting"]::view-transition-new(root) {
-    animation: wgIn var(--wg-set) var(--wg-ease) both;
-    mix-blend-mode: normal;
+    animation: wgFade var(--wg-scene) var(--wg-ease) both;
   }
+  html[data-vt="setting"]::view-transition-new(root) { animation-duration: 200ms; }
+  @keyframes wgFade { from { opacity: 0; } to { opacity: 1; } }
 
-
-
-  /* SCOPED, because .deck-inner belongs to Deck.jsx and this file is only
-     adding one property to it. check:collisions failed on the bare form and
-     was right to: two files claiming a name globally is the fault that has
-     shipped three times here. This is the other shape — a local addition to
-     someone else's element, the same as familiar.css adding content-visibility
-     to lesson.css's list — and the ancestor says so. */
-  /* NAMED ONLY WHILE A TRANSITION IS RUNNING, and that is the flicker fix.
-     A view-transition-name pulls its element OUT of the root snapshot and
-     gives it a layer of its own. Named permanently, these elements were being
-     lifted out on EVERY transition — including ones that never animate them —
-     so the new root had a hole where the content was and the layer faded in
-     over it from the UA default. A big dark rectangle for a couple of frames:
-     the flicker.
-
-     data-vt is stamped on <html> BEFORE startViewTransition is called, so it
-     is already set when the browser takes its snapshots — which is the only
-     moment these selectors have to be true. */
-  /* :not(theme), and it is an exclusion rather than a later override because
-     an override at equal specificity depends on rule ORDER — which is exactly
-     how it failed first time: the theme rule sat above this one and lost.
-     During a scene change the content must stay part of the root picture, or
-     it dissolves on its own timing and the page comes apart into two layers. */
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .app .deck-inner { view-transition-name: wg-content; }
-
-  /* SOFTER, AND LONGER, WITHOUT LOSING THE SNAP. The old curve left almost
-     immediately and the short durations made every move read as a cut. This
-     one eases out of rest before it travels, so the screen looks like it is
-     being carried rather than swapped — the deck-to-room settle already felt
-     right, so every other kind is tuned toward it rather than away. */
-  html[data-vt]::view-transition-old(wg-content),
-  html[data-vt]::view-transition-new(wg-content) {
-    animation-timing-function: var(--wg-ease);
-    animation-fill-mode: both;
-    /* PLUS-LIGHTER, AND IT IS THE FLICKER. Two layers cross-fading on plain
-       opacity do not sum to one: at the midpoint both sit near 50% and the
-       combined coverage dips, so the background shows through the pair for a
-       few frames. On a dark ground that reads as a black flash.
-
-       This is the same reason the user agent uses plus-lighter for its own
-       root cross-fade — additive compositing keeps the two halves summing to
-       full coverage the whole way across. Removing it from the root (above)
-       is safe because neither root layer animates; here they both do. */
-    mix-blend-mode: plus-lighter;
-  }
-
-  /* The app's own route fade would run underneath the transition and read as a
-     second, slower crossfade inside the first. */
-  /* data-vt-on, NOT data-vt — and the difference is the flicker itself.
-     .route-fade animates opacity 0 -> 1. Gating this on data-vt disabled it for
-     the length of a transition and then RE-ENABLED it the moment data-vt was
-     removed, which restarts the animation on the same element: the content
-     dropped to opacity 0 and faded back in, every time, right as the
-     transition finished.
-     data-vt-on is set once while transitions are available and motion is
-     allowed. It does not change per navigation, so the animation is switched
-     off once and never restarted. */
+  /* THE APP'S OWN FADES STAND DOWN while a transition owns the movement.
+     Gated on data-vt-on rather than data-vt: gating on data-vt would re-enable
+     them the instant the attribute came off, restarting the animation on the
+     frame the transition ended — which is a flicker in its own right.
+     .panel-in and .panel-swap matter for a second reason: they start at the
+     commit, which is INSIDE the transition callback and therefore before the
+     after-snapshot, so the browser would photograph a panel mid-fade and hold
+     that washed-out still for the whole transition. */
   html[data-vt-on] .route-fade { animation: none; }
-
-  /* THE PROFILE BANNERS, and it is the same bug one level down. .panel-in
-     fades and lifts the incoming panel over 180ms and .panel-swap eases its
-     own height; both start at the commit, which is INSIDE the transition
-     callback and therefore before the after-snapshot. The browser photographs
-     a panel part-way through its own fade and at the wrong height, then holds
-     that washed-out still for the whole transition. The view transition owns
-     this movement now, so the panel's own animation stands down. */
   html[data-vt-on] .app .panel-in,
   html[data-vt-on] .app .panel-out { animation: none; }
   html[data-vt-on] .app .panel-swap { transition: none; }
-
-  /* ==========================================================================
-     WHY THESE ARE ASYMMETRIC, AND WHY ONLY ONE SIDE MOVES.
-
-     The first version ran old and new for the SAME duration with no delay.
-     That means at the midpoint you are looking at half the old page laid over
-     half the new one, each nudged about 3% — a double exposure, not a
-     movement, and the eye resolves a blurred double image as a cut. Making it
-     longer only made the double exposure last longer.
-
-     So: the old screen LEAVES FIRST and does not move at all. The new screen
-     starts after it has essentially gone, and it is the only thing that
-     travels. One object moves and the eye follows it.
-
-     The travel is a real distance rather than a percentage. Below roughly
-     16-20px displacement reads as a glitch instead of motion; 3% of a column
-     was about 20px on a laptop and 8px on a phone, which is why it felt like a
-     twitch on small screens.
-
-     And the direction is expressed in DEPTH plus a little vertical, not
-     sideways. The deck-to-room settle was the one that already felt right and
-     it is the only one that was using scale — sideways reads as a swap,
-     scale reads as one thing becoming another.
-
-     Every number is a custom property so it can be tuned live rather than
-     guessed at. See the block on :root.
-     ========================================================================= */
-
-  /* The old screen: fade, nothing else. */
-  @keyframes wgOut { to { opacity: 0; } }
-
-  /* The new screen: rises into place while it arrives. */
-  @keyframes wgInDeeper {
-    from { opacity: 0; transform: scale(var(--wg-scale)); }
-  }
-  /* Coming back, it settles down from slightly above and slightly larger —
-     the reverse of going in, so back never looks like forward. */
-  @keyframes wgInBack {
-    from { opacity: 0; transform: scale(calc(2 - var(--wg-scale))); }
-  }
-  /* Sideways: no direction to report, so pure depth. This is the deck-to-room
-     one, kept as it was because it is the one that already read correctly. */
-  @keyframes wgInFlat {
-    from { opacity: 0; transform: scale(var(--wg-scale)); }
-  }
-
-  html[data-vt] ::view-transition-old(wg-content) {
-    animation: wgOut var(--wg-out) var(--wg-ease) both;
-  }
-  /* DECK-TO-ROOM'S SETTLE, NOW FOR EVERY KIND, because it is the one that read
-     correctly. fwd and back used to add a vertical slide on top of the depth;
-     a screen doing two things at once is what read as a jump. Direction still
-     survives, in the sign of the depth: wgInDeeper grows into place, wgInBack
-     settles down onto it. */
-  html[data-vt="fwd"]::view-transition-new(wg-content) {
-    animation: wgInDeeper var(--wg-in) var(--wg-ease) var(--wg-delay) both;
-  }
-  html[data-vt="back"]::view-transition-new(wg-content) {
-    animation: wgInBack var(--wg-in) var(--wg-ease) var(--wg-delay) both;
-  }
-  html[data-vt="swap"]::view-transition-new(wg-content) {
-    animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both;
-  }
-  /* Opening a module: the card carries the movement, so the page under it just
-     clears out of the way faster and comes back flat. */
-  html[data-vt="morph"]::view-transition-new(wg-content),
-  html[data-vt="morphBack"]::view-transition-new(wg-content) {
-    animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both;
-  }
-
-  /* THE CARD AND THE TITLE ARE ONE THING. The module card on the deck and the
-     module heading are the same object at two sizes, so they are given one
-     name and the browser tweens between them. The name is on the hero in CSS
-     because there is only ever one; on the card it is written by hand at the
-     moment of the click, because only the card being opened may carry it. */
-  html[data-vt="morph"] .mscreen .mhero,
-  html[data-vt="morphBack"] .mscreen .mhero { view-transition-name: wg-morph; }
-  html[data-vt="morph"]::view-transition-group(wg-morph),
-  html[data-vt="morphBack"]::view-transition-group(wg-morph) {
-    z-index: 30;
-    animation-duration: var(--wg-morph);
-    animation-timing-function: var(--wg-ease);
-  }
-  ::view-transition-old(wg-morph) { animation: wgOut var(--wg-out) var(--wg-ease) both; }
-  ::view-transition-new(wg-morph) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
-
-  /* THE THUMBNAIL BECOMES THE PLAYER. The second shared pair, and the one that
-     does the most work: opening a lesson, the tile you tapped grows into the
-     video; closing it, the video shrinks back into that same tile. The row is
-     named at the moment of the click and the row you RETURN to is named inside
-     the transition callback, because it does not exist until the module screen
-     has re-rendered.
-
-     Only fwd and back — on any other kind the player is not part of the move
-     and naming it would lift it out of the root snapshot for nothing. */
-  html[data-vt="fwd"] .watch .player-slot,
-  html[data-vt="back"] .watch .player-slot { view-transition-name: wg-media; }
-  html[data-vt="fwd"]::view-transition-group(wg-media),
-  html[data-vt="back"]::view-transition-group(wg-media) {
-    z-index: 30;
-    animation-duration: var(--wg-morph);
-    animation-timing-function: var(--wg-ease);
-  }
-  /* The two ends are a thumbnail and a video frame — different pictures at very
-     different sizes — so they cross-dissolve while the GROUP does the moving.
-     plus-lighter keeps that dissolve from dipping, the same as the content. */
-  ::view-transition-old(wg-media),
-  ::view-transition-new(wg-media) { mix-blend-mode: plus-lighter; }
-  ::view-transition-old(wg-media) { animation: wgOut var(--wg-morph) var(--wg-ease) both; }
-  ::view-transition-new(wg-media) { animation: wgIn var(--wg-morph) var(--wg-ease) both; }
-  @keyframes wgIn { from { opacity: 0; } }
-
-  /* ==========================================================================
-     THE CHROME CHANGES WHEN YOU LEAVE FOR THE READY ROOM, and that was the
-     jump. The room draws its own header — wordmark, plus, account — instead of
-     the app's top bar, so on that move the whole bar is REPLACED. Root is
-     pinned to no animation for every navigation, which is right when the
-     chrome stays put and wrong here: the bar cut instantly at t=0 while the
-     body dissolved over 380ms. A hard cut followed by a slow fade reads as a
-     jump no matter how long the fade is.
-
-     Two things are genuinely the same object on both screens: the wordmark and
-     the account button. They are named, so they TRAVEL from the top bar to the
-     room's header rather than being destroyed and recreated. Everything else
-     in the bar — the Ready Room pill, which only exists on one side — is left
-     to the root, which now cross-fades on this kind so it dissolves instead of
-     cutting.
-
-     Only on swap. On every other navigation the bar is the same element in the
-     same place, so naming it would lift it out of the root snapshot for a move
-     it takes no part in. */
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .brandmark { view-transition-name: wg-brand; }
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .avbtn { view-transition-name: wg-avatar; }
-  html[data-vt]::view-transition-group(wg-brand),
-  html[data-vt]::view-transition-group(wg-avatar) {
-    z-index: 40;
-    animation-duration: var(--wg-in);
-    animation-timing-function: var(--wg-ease);
-  }
-  /* The two ends are the same words at slightly different sizes and positions,
-     so the group does the travelling and the pictures dissolve underneath it. */
-  ::view-transition-old(wg-brand),
-  ::view-transition-new(wg-brand),
-  ::view-transition-old(wg-avatar),
-  ::view-transition-new(wg-avatar) {
-    mix-blend-mode: plus-lighter;
-    animation-duration: var(--wg-in);
-    animation-timing-function: var(--wg-ease);
-  }
-  ::view-transition-old(wg-brand),
-  ::view-transition-old(wg-avatar) { animation-name: wgOut; }
-  ::view-transition-new(wg-brand),
-  ::view-transition-new(wg-avatar) { animation-name: wgIn; }
-
-  /* The rest of the bar dissolves rather than cutting. Where the chrome is
-     identical this is invisible and costs nothing; where it changes it is the
-     difference between a fade and a snap. */
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-old(root),
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-new(root) {
-    mix-blend-mode: plus-lighter;
-    animation-duration: var(--wg-in);
-    animation-timing-function: var(--wg-ease);
-  }
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-old(root) { animation-name: wgOut; }
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-new(root) { animation-name: wgIn; }
 }
 
-/* ---------------------------------------------------------------- the tabs */
-/* Licence, Preferences and Appearance are real URLs, so switching one is a
-   navigation — and it used to jump: the panel swapped, the heading swapped,
-   and the selected tab's underline reappeared somewhere else with nothing
-   connecting the two.
+/* THE PROFILE AND MODULE TABS no longer carry names of their own.
 
-   Three things move, and they are three separate names because they travel
-   differently. The panel slides the way you moved. The heading crossfades in
-   place, because it is one word changing rather than a thing going anywhere.
-   The selected tab is ONE name across both states, so the browser tweens it
-   from the old tab's position to the new one — that is the underline sliding
-   rather than cutting.
+   They used to: the panel slid, the heading crossfaded and the selected tab was
+   one name across both states so its underline tweened between positions. Three
+   more names, three more holes, and the same scale(.988) exposing every one of
+   them — the tab switch was among the worst of the flicker precisely because it
+   had the most named parts in the smallest area.
 
-   Naming the selected tab in CSS is safe precisely because only one can be
-   selected: [aria-selected="true"] matches a single element, which is the
-   uniqueness a view-transition-name requires. */
-@media (prefers-reduced-motion: no-preference) {
-  html[data-vt^="tab"] .profile .panel-swap { view-transition-name: wg-panel; }
-  html[data-vt^="tab"] .profile .ptitle { view-transition-name: wg-ptitle; }
-  html[data-vt^="tab"] .profile .tabs [aria-selected="true"] { view-transition-name: wg-tab; }
-  /* The module screen's Lessons/Library strip is the same idea, so it takes the
-     same names. The two screens never render together, so there is no risk of
-     a duplicate name — the uniqueness rule is per document, per moment. */
-  html[data-vt^="tab"] .mscreen .mcard > .pane { view-transition-name: wg-panel; }
-  html[data-vt^="tab"] .mscreen .tabsbar .tab[aria-selected="true"] { view-transition-name: wg-tab; }
+   The page dissolves as one picture now, so the panel and the heading change
+   with it and the underline cuts. A cut that is always clean beats a slide that
+   flickers, and if the slide is wanted back it needs the hole-free treatment
+   first: a scale at or above 1, or no scale at all. */
 
-  /* Tabs keep their sideways direction — here the movement IS the meaning,
-     because the panels sit in a row and you moved along it. But the same
-     asymmetry applies: the old panel goes without moving, and only the
-     arriving one travels. */
-  @keyframes wgPanelInRight { from { opacity: 0; transform: translateX(var(--wg-travel)); } }
-  @keyframes wgPanelInLeft { from { opacity: 0; transform: translateX(calc(var(--wg-travel) * -1)); } }
-
-  html[data-vt^="tab"]::view-transition-old(wg-panel) {
-    animation: none;
-  }
-  html[data-vt="tabR"]::view-transition-new(wg-panel) {
-    animation: wgPanelInRight var(--wg-in) var(--wg-ease) both;
-  }
-  html[data-vt="tabL"]::view-transition-new(wg-panel) {
-    animation: wgPanelInLeft var(--wg-in) var(--wg-ease) both;
-  }
-
-  /* The heading is one word becoming another in the same place. */
-  html[data-vt^="tab"]::view-transition-old(wg-panel),
-  html[data-vt^="tab"]::view-transition-new(wg-panel),
-  html[data-vt^="tab"]::view-transition-old(wg-ptitle),
-
-  html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: none; }
-  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgInFlat var(--wg-in) var(--wg-ease) both; }
-
-  /* The tab itself: the group tweens position and size, so the label and its
-     underline travel. Held above the panel so it is never clipped by it. */
-  html[data-vt^="tab"]::view-transition-group(wg-tab) {
-    z-index: 25;
-    animation-duration: var(--wg-morph);
-    animation-timing-function: var(--wg-ease);
-  }
-  html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: none; }
-  html[data-vt^="tab"]::view-transition-new(wg-tab) { animation: wgInFlat var(--wg-in) var(--wg-ease) both; }
-
-  /* The content region must NOT also slide — the frame is staying put and only
-     the panel inside it is moving. Without this the whole page slides and the
-     tab row goes with it. */
-  html[data-vt^="tab"]::view-transition-old(wg-content),
-  html[data-vt^="tab"]::view-transition-new(wg-content) { animation: none; }
-}
 
 /* --------------------------------------------------------- the tap floor */
 /* The app already enforces 44px on `.app button:not(.is-inline)`, and

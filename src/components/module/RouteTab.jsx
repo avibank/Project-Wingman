@@ -5,7 +5,6 @@ import { thumbTile } from "../../lib/familiar.js";
 import { passAt } from "../../lib/quiz.js";
 import { CautionMark } from "./Instruments.jsx";
 import { posterFor } from "../../lib/shell.js";
-import { markMedia } from "../../lib/viewTransition.js";
 import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
 import "./familiar.css";
 
@@ -54,17 +53,13 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
       : durationWords(lesson.duration) || "";
 
   return (
-    /* data-lesson so the return trip can find this row again, and markMedia so
-       the thumbnail you tapped becomes the player rather than the page being
-       swapped underneath you. Only the row being opened may carry the name — a
-       view-transition-name has to be unique — which is why it is written at
-       the moment of the click rather than declared in CSS for every row. */
+    /* data-lesson identifies the row and is read elsewhere. It used to also be
+       how the return trip found this row to name it, so the player could shrink
+       back into its thumbnail; that mechanism is gone with the rest of the
+       shared elements. */
     <button type="button" className="item" data-state={state} data-lesson={lesson.id}
             aria-current={here ? "true" : undefined}
-            onClick={(e) => {
-              markMedia(e.currentTarget.querySelector(".lead"));
-              onOpen(chapter, lesson);
-            }}>
+            onClick={() => onOpen(chapter, lesson)}>
       <span className="lead" style={thumbTile(lesson.id)}>
         {poster && <img src={poster} alt="" width={58} height={34} loading="lazy" />}
       </span>
