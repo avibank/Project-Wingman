@@ -331,3 +331,106 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      lives in the bottom tab bar instead. */
   .rrpill-word{ display: none; }
 }
+
+/* ============================================================================
+   §2.1 — THE TRANSITION LAYER
+
+   Going deeper slides one way, coming back slides the other, and moving
+   between two top-level places just settles. The direction is the whole point:
+   a screen that always animates the same way tells you nothing.
+
+   WHAT MOVES IS THE CONTENT REGION, AND ONLY THAT. `root` is pinned to no
+   animation, so the lit room, the top bar and the runway strip hold still
+   while the page changes inside them — the thing that separates this from a
+   whole-window crossfade. .deck-inner carries its own name so it can animate
+   independently of the root snapshot.
+
+   Every rule is gated on html[data-vt], which App only sets when the browser
+   has startViewTransition AND motion is allowed. Reduced motion and Smooth Air
+   never reach this file: the option is not passed, so no transition starts and
+   there is nothing to turn off. Off, not faster — the same rule §2 states.
+   ========================================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  html::view-transition-old(root),
+  html::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+  /* SCOPED, because .deck-inner belongs to Deck.jsx and this file is only
+     adding one property to it. check:collisions failed on the bare form and
+     was right to: two files claiming a name globally is the fault that has
+     shipped three times here. This is the other shape — a local addition to
+     someone else's element, the same as familiar.css adding content-visibility
+     to lesson.css's list — and the ancestor says so. */
+  .app .deck-inner { view-transition-name: wg-content; }
+
+  html[data-vt]::view-transition-old(wg-content),
+  html[data-vt]::view-transition-new(wg-content) {
+    animation-timing-function: cubic-bezier(.3, .7, .3, 1);
+    animation-fill-mode: both;
+  }
+
+  /* The app's own route fade would run underneath the transition and read as a
+     second, slower crossfade inside the first. */
+  html[data-vt] .route-fade { animation: none; }
+
+  @keyframes wgOut { to { opacity: 0; } }
+  @keyframes wgIn { from { opacity: 0; } }
+  @keyframes wgOutLeft { to { transform: translateX(-2.5%); } }
+  @keyframes wgInRight { from { transform: translateX(3.5%); } }
+  @keyframes wgOutRight { to { transform: translateX(2.5%); } }
+  @keyframes wgInLeft { from { transform: translateX(-3.5%); } }
+  @keyframes wgSettleDown { to { transform: scale(.985); } }
+  @keyframes wgSettleUp { from { transform: scale(1.015); } }
+
+  /* Deeper. Forward is the slower of the two on purpose: arriving somewhere
+     new deserves more time than returning to somewhere you have been. */
+  html[data-vt="fwd"]::view-transition-old(wg-content) {
+    animation-name: wgOut, wgOutLeft; animation-duration: 230ms;
+  }
+  html[data-vt="fwd"]::view-transition-new(wg-content) {
+    animation-name: wgIn, wgInRight; animation-duration: 230ms;
+  }
+  html[data-vt="back"]::view-transition-old(wg-content) {
+    animation-name: wgOut, wgOutRight; animation-duration: 180ms;
+  }
+  html[data-vt="back"]::view-transition-new(wg-content) {
+    animation-name: wgIn, wgInLeft; animation-duration: 180ms;
+  }
+
+  /* Sideways. No direction, because there is no direction to report. */
+  html[data-vt="swap"]::view-transition-old(wg-content) {
+    animation-name: wgOut, wgSettleDown; animation-duration: 200ms;
+  }
+  html[data-vt="swap"]::view-transition-new(wg-content) {
+    animation-name: wgIn, wgSettleUp; animation-duration: 200ms;
+  }
+
+  /* Opening a module is a card growing into a page, so the page underneath
+     gets out of the way quickly and lets the card carry the movement. */
+  html[data-vt="morph"]::view-transition-old(wg-content) {
+    animation-name: wgOut; animation-duration: 150ms;
+  }
+  html[data-vt="morph"]::view-transition-new(wg-content) {
+    animation-name: wgIn; animation-duration: 230ms; animation-delay: 70ms;
+  }
+  html[data-vt="morphBack"]::view-transition-old(wg-content) {
+    animation-name: wgOut; animation-duration: 130ms;
+  }
+  html[data-vt="morphBack"]::view-transition-new(wg-content) {
+    animation-name: wgIn; animation-duration: 200ms; animation-delay: 60ms;
+  }
+
+  /* THE CARD AND THE TITLE ARE ONE THING. The module card on the deck and the
+     module heading are the same object at two sizes, so they are given one
+     name and the browser tweens between them. The name is on the hero in CSS
+     because there is only ever one; on the card it is written by hand at the
+     moment of the click, because only the card being opened may carry it. */
+  .mscreen .mhero { view-transition-name: wg-morph; }
+  html[data-vt="morph"]::view-transition-group(wg-morph),
+  html[data-vt="morphBack"]::view-transition-group(wg-morph) {
+    z-index: 30;
+    animation-duration: 280ms;
+    animation-timing-function: cubic-bezier(.3, .7, .3, 1);
+  }
+  ::view-transition-old(wg-morph) { animation: wgOut 130ms both; }
+  ::view-transition-new(wg-morph) { animation: wgIn 180ms both 50ms; }
+}

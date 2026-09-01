@@ -21,6 +21,7 @@ import { DEFAULT_CHARACTER } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import PaperStrip from "./PaperStrip.jsx";
+import { markMorph } from "../lib/viewTransition.js";
 
 // The Flight Deck. Ported from the Step 1 reference rig — the colour and
 // lighting system, the hero card with the instrument strip inside it, the
@@ -772,8 +773,14 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
           </div>
           <div className={`railwrap ${railOverflows ? "more" : ""}`} ref={wrapRef}>
             <div className="rail" ref={railRef}>
+              {/* The card is the module at card size. markMorph gives the one
+                  being opened the shared transition name for the length of the
+                  move, so it grows into the module heading rather than the page
+                  crossfading under it. Only one element may carry that name,
+                  which is why it cannot sit in CSS with the other cards. */}
               {moduleRows.map((m) => (
-                <Cell className="mod house" data-press="" key={m.code} open={flags["module.interior"]} onOpen={() => onEnterModule(m)}>
+                <Cell className="mod house" data-press="" key={m.code} open={flags["module.interior"]}
+                      onOpen={(e) => { markMorph(e.currentTarget); onEnterModule(m); }}>
                   <div className="modin">
                     <div className="mcodeline">
                       <span className="mcode">{m.code}</span>

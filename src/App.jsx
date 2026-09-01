@@ -4,6 +4,7 @@ import "./styles/app.css";
 import { useState, useRef, useEffect, lazy, Suspense, useMemo, useCallback } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
+import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
@@ -50,6 +51,7 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
+import { transitionKind, canTransition, clearMorph } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -159,7 +161,63 @@ function AppInner() {
   const pendingChapterId = route.chapterId || null;
 
   // window.scrollTo is a no-op now — the window does not scroll.
-  const go = (to) => { navigate(to); if (deckRef.current) deckRef.current.scrollTop = 0; };
+  //
+  // ONE CHOKE POINT, so the transition layer is wired in one place rather than
+  // on every control that navigates. The direction is derived from where this
+  // move goes, BEFORE it happens — the prototype read it back off the DOM
+  // afterwards, which meant guessing at when React had finished.
+  //
+  // THE TRANSITION IS DRIVEN HERE, NOT BY THE ROUTER, and that is forced.
+  // React Router 7 does take { viewTransition: true } on navigate — but only
+  // under the DATA router (createBrowserRouter + RouterProvider). This app
+  // mounts the component <BrowserRouter>, where the option is accepted and
+  // silently ignored: verified by hooking document.startViewTransition and
+  // watching it never get called while the route changed underneath it.
+  //
+  // So the transition is started explicitly, and navigate() runs inside
+  // flushSync so React has committed the new screen before the browser takes
+  // its "after" snapshot. Without flushSync the update is still queued when
+  // the snapshot is taken and both frames are the OLD page — an animation
+  // between a thing and itself.
+  const go = (to) => {
+    const kind = canTransition() ? transitionKind(route, to) : null;
+    const move = () => { navigate(to); };
+    if (!kind) {
+      clearMorph();             // nothing will animate, so drop any morph name
+      move();
+    } else {
+      document.documentElement.dataset.vt = kind;
+      // BOTH PROMISES ARE CAUGHT, and they have to be. A transition that is
+      // interrupted — a second navigation before the first settles, a tab
+      // hidden mid-flight — rejects `ready` and `finished`, and an unhandled
+      // rejection is a real console error on a perfectly ordinary double tap.
+      // Seen once as "InvalidStateError: Transition was aborted because of
+      // invalid state" before this was added. Interruption is normal here, so
+      // it is swallowed rather than reported; the navigation itself already
+      // happened inside the callback and is unaffected.
+      const vt = document.startViewTransition(() => flushSync(move));
+      vt.ready?.catch(() => {});
+      vt.finished?.catch(() => {}).finally?.(() => {
+        clearMorph();
+        delete document.documentElement.dataset.vt;
+      });
+    }
+    if (deckRef.current) deckRef.current.scrollTop = 0;
+  };
+  // A BACKSTOP, not the cleanup. The morph name is written on one element for
+  // the length of one transition, and a card that kept it would collide with
+  // the next move, because a view-transition-name has to be unique in the
+  // document. `finished` above is what normally clears it, on the exact frame
+  // the transition ends. This only covers the case where that promise never
+  // settles at all — long enough not to cut a running transition short.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      clearMorph();
+      delete document.documentElement.dataset.vt;
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [location.pathname]);
+
   const goSettings = (page) =>
     go(page === "auth" ? routePath.signin()
       : page === "progress" ? routePath.logbook()
