@@ -99,13 +99,17 @@
                  because it is the one movement you are meant to watch.
      --wg-ease   one curve for all of it. Gentle out of rest, decisive on
                  arrival — what reads as "smooth" rather than "slow". */
-  --wg-out: 120ms;
-  --wg-delay: 110ms;
-  --wg-in: 300ms;
-  --wg-travel: 20px;
+  --wg-out: 140ms;
+  --wg-delay: 130ms;
+  --wg-in: 380ms;
+  --wg-travel: 24px;
   --wg-scale: .988;
-  --wg-morph: 380ms;
+  --wg-morph: 460ms;
   --wg-ease: cubic-bezier(.32, .72, 0, 1);
+  /* The scene change is slower than any navigation on purpose: nothing is
+     moving, so there is no travel to make it feel quick, and a colour
+     dissolve reads as abrupt long after a slide would have. */
+  --wg-theme: 520ms;
 
   /* ----------------------------------------------------------- 3 · shape */
   --r-panel: 13px;      /* the hero card and the crew strip */
@@ -391,6 +395,24 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html::view-transition-old(root),
   html::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 
+  /* EXCEPT FOR A SCENE CHANGE. Every navigation holds the room still and moves
+     the content inside it, which is why root is pinned above. A livery or a
+     finish is the opposite: nothing moves and the room itself changes, so the
+     root is the only thing that should animate — and it dissolves as one
+     picture rather than as parts arriving separately. plus-lighter because
+     both halves are full-screen and a plain cross-fade between two palettes
+     dips through the background in the middle. */
+  html[data-vt="theme"]::view-transition-old(root),
+  html[data-vt="theme"]::view-transition-new(root) {
+    mix-blend-mode: plus-lighter;
+    animation-duration: var(--wg-theme);
+    animation-timing-function: var(--wg-ease);
+  }
+  html[data-vt="theme"]::view-transition-old(root) { animation-name: wgOut; }
+  html[data-vt="theme"]::view-transition-new(root) { animation-name: wgIn; }
+
+
+
   /* SCOPED, because .deck-inner belongs to Deck.jsx and this file is only
      adding one property to it. check:collisions failed on the bare form and
      was right to: two files claiming a name globally is the fault that has
@@ -408,7 +430,12 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      data-vt is stamped on <html> BEFORE startViewTransition is called, so it
      is already set when the browser takes its snapshots — which is the only
      moment these selectors have to be true. */
-  html[data-vt] .app .deck-inner { view-transition-name: wg-content; }
+  /* :not(theme), and it is an exclusion rather than a later override because
+     an override at equal specificity depends on rule ORDER — which is exactly
+     how it failed first time: the theme rule sat above this one and lost.
+     During a scene change the content must stay part of the root picture, or
+     it dissolves on its own timing and the page comes apart into two layers. */
+  html[data-vt]:not([data-vt="theme"]) .app .deck-inner { view-transition-name: wg-content; }
 
   /* SOFTER, AND LONGER, WITHOUT LOSING THE SNAP. The old curve left almost
      immediately and the short durations made every move read as a cut. This

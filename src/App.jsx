@@ -8,26 +8,55 @@ import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
-/* THE IMPORT THUNKS, NAMED. Every route below is code-split, and a
-   navigation needs to be able to WARM the chunk it is about to show before
-   the transition starts — see preloadFor in the shell. Declared once and used
-   twice: lazy() takes them here, go() calls them directly. */
+/* A CHUNK THAT VANISHED UNDER YOU, and why this wrapper exists.
+ *
+ * Every route below is code-split and the built filenames carry a content
+ * hash, so a deploy replaces them all. A tab left open across one then asks
+ * for a chunk that no longer exists on the server: the import rejects,
+ * React.lazy throws, the route boundary catches it, and the person is told
+ * that something went wrong and to reload the page.
+ *
+ * Reloading IS the right repair — it fetches the new manifest — which is
+ * exactly why the app should do it rather than ask. The guard is a session
+ * flag so a chunk that is genuinely broken cannot put the tab in a reload
+ * loop: the first failure reloads, a second one is allowed through to the
+ * boundary, which is the case where something really is wrong. App clears the
+ * flag once it has mounted successfully.
+ *
+ * The promise returned on the reload path never settles, deliberately. The
+ * page is going away; resolving would render a component from the old build
+ * into a tree that is about to be thrown out.
+ */
+const CHUNK_RELOADED = "pw-chunk-reloaded";
+const chunk = (factory) => () => factory().catch((err) => {
+  let already = true;
+  try { already = sessionStorage.getItem(CHUNK_RELOADED) === "1"; } catch { /* private mode */ }
+  if (already) throw err;
+  try { sessionStorage.setItem(CHUNK_RELOADED, "1"); } catch { /* ignore */ }
+  window.location.reload();
+  return new Promise(() => {});
+});
+
+/* THE IMPORT THUNKS, NAMED. A navigation needs to be able to WARM the chunk it
+   is about to show before the transition starts — see warmRoute in the shell.
+   Declared once and used twice: lazy() takes them here, go() calls them
+   directly. */
 const CHUNK = {
-  notFound: () => import("./components/NotFound.jsx"),
-  chapters: () => import("./components/ChaptersPanel.jsx"),
-  readyOld: () => import("./components/ReadyRoom.jsx"),
-  modules: () => import("./components/ModulesPage.jsx"),
-  moduleHub: () => import("./components/ModuleHub.jsx"),
-  module: () => import("./components/module/ModuleScreen.jsx"),
-  lesson: () => import("./components/module/LessonPage.jsx"),
-  quiz: () => import("./components/module/QuizPage.jsx"),
-  dev: () => import("./components/DevPanel.jsx"),
-  pdf: () => import("./components/PdfPanel.jsx"),
-  roomShell: () => import("./components/room/ReadyRoom.jsx"),
-  settings: () => import("./components/SettingsPage.jsx"),
-  profile: () => import("./components/Profile.jsx"),
-  progress: () => import("./components/ProgressPage.jsx"),
-  bookmarks: () => import("./components/BookmarksPage.jsx"),
+  notFound: chunk(() => import("./components/NotFound.jsx")),
+  chapters: chunk(() => import("./components/ChaptersPanel.jsx")),
+  readyOld: chunk(() => import("./components/ReadyRoom.jsx")),
+  modules: chunk(() => import("./components/ModulesPage.jsx")),
+  moduleHub: chunk(() => import("./components/ModuleHub.jsx")),
+  module: chunk(() => import("./components/module/ModuleScreen.jsx")),
+  lesson: chunk(() => import("./components/module/LessonPage.jsx")),
+  quiz: chunk(() => import("./components/module/QuizPage.jsx")),
+  dev: chunk(() => import("./components/DevPanel.jsx")),
+  pdf: chunk(() => import("./components/PdfPanel.jsx")),
+  roomShell: chunk(() => import("./components/room/ReadyRoom.jsx")),
+  settings: chunk(() => import("./components/SettingsPage.jsx")),
+  profile: chunk(() => import("./components/Profile.jsx")),
+  progress: chunk(() => import("./components/ProgressPage.jsx")),
+  bookmarks: chunk(() => import("./components/BookmarksPage.jsx")),
 };
 const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
@@ -226,6 +255,26 @@ function AppInner() {
     return ok;
   };
 
+  /* A LIVERY OR A FINISH IS A CHANGE OF SCENE, not a navigation, so it gets a
+     kind of its own. Everything on screen changes colour at once, and doing
+     that in a single frame is the harshest thing the app does — the whole
+     page snaps to another palette.
+
+     This is the one kind where the ROOT cross-fades. Every navigation holds
+     the room still and moves the content inside it; here nothing moves and
+     the room itself is what changes, so the rule is reversed in the CSS.
+     Nothing is named for it either: the point is that the page dissolves as
+     ONE picture rather than as a set of parts arriving separately. */
+  const withTheme = (change) => {
+    if (!canTransition()) { change(); return; }
+    document.documentElement.dataset.vt = "theme";
+    const vt = document.startViewTransition(() => flushSync(change));
+    vt.ready?.catch(() => {});
+    vt.finished?.catch(() => {}).finally?.(() => {
+      delete document.documentElement.dataset.vt;
+    });
+  };
+
   const go = async (to, { keepScroll = false } = {}) => {
     let kind = canTransition() ? transitionKind(route, to) : null;
     const move = () => { navigate(to); };
@@ -406,6 +455,14 @@ function AppInner() {
       quizTaken(progress.get(LOGBOOK_KEY, []), chapterId, activeModuleCode, correct, total));
   };
   const [reduceMotion, setReduceMotion] = useState(false);
+
+  // The app got here, so whatever chunk failed last time was a stale deploy
+  // rather than a broken build. Clearing the flag re-arms the one-shot reload
+  // for the NEXT deploy; leaving it set would mean the next stale chunk went
+  // straight to the error boundary.
+  useEffect(() => {
+    try { sessionStorage.removeItem(CHUNK_RELOADED); } catch { /* private mode */ }
+  }, []);
 
   // The transition layer's own on-switch, stamped once rather than per move.
   // The app's route fade is turned off while this layer is running, and that
@@ -997,11 +1054,11 @@ function AppInner() {
             onBack={() => go(routePath.home())}
             variant={variant}
             variantPin={variantPin}
-            onVariantPin={setVariantPin}
+            onVariantPin={(v) => withTheme(() => setVariantPin(v))}
             livery={shownLivery}
-            onLivery={(id) => { setLivery(id); progress.set("pw-livery", id); }}
+            onLivery={(id) => withTheme(() => { setLivery(id); progress.set("pw-livery", id); })}
             finish={finish}
-            onFinish={setFinish}
+            onFinish={(f) => withTheme(() => setFinish(f))}
             ruled={ruled}
             onRuled={setRuled}
             fontSize={fontSize}
