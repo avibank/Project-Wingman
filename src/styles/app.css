@@ -79,11 +79,32 @@
      Its own rule fixes that height: min-height --tap, offset 12px. */
   --rpt-h: calc(var(--tap, 44px) + 12px);
 
-  /* The transition layer's one curve, declared once so every kind shares it.
-     A gentler start than the curve it replaces: it leaves rest slowly and
-     still arrives with authority, which is what reads as "smooth" rather than
-     "slow". Durations went up with it — a soft curve over a short duration
-     just looks late. */
+  /* ------------------------------------------------- the transition knobs
+     Every number the navigation animation uses, in one place, so it can be
+     tuned by changing a value rather than by editing six rules. They are read
+     live, so setting one on document.documentElement retunes the whole layer
+     without a reload:
+
+       document.documentElement.style.setProperty('--wg-in','320ms')
+
+     --wg-out    how long the outgoing screen takes to go. Short: it should be
+                 gone before the new one arrives, or you see both at once.
+     --wg-delay  when the incoming screen starts. Roughly --wg-out, so the two
+                 hand over rather than overlap.
+     --wg-in     how long the incoming screen takes to arrive and settle.
+     --wg-travel how far it travels on the way in. Under about 16px this reads
+                 as a glitch rather than as movement.
+     --wg-scale  the depth it comes from. Further from 1 is more theatrical.
+     --wg-morph  the card-to-page tween, which is its own thing and slower
+                 because it is the one movement you are meant to watch.
+     --wg-ease   one curve for all of it. Gentle out of rest, decisive on
+                 arrival — what reads as "smooth" rather than "slow". */
+  --wg-out: 120ms;
+  --wg-delay: 110ms;
+  --wg-in: 300ms;
+  --wg-travel: 20px;
+  --wg-scale: .988;
+  --wg-morph: 380ms;
   --wg-ease: cubic-bezier(.32, .72, 0, 1);
 
   /* ----------------------------------------------------------- 3 · shape */
@@ -423,51 +444,68 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      off once and never restarted. */
   html[data-vt-on] .route-fade { animation: none; }
 
-  @keyframes wgOut { to { opacity: 0; } }
-  @keyframes wgIn { from { opacity: 0; } }
-  @keyframes wgOutLeft { to { transform: translateX(-3.2%); } }
-  @keyframes wgInRight { from { transform: translateX(4.4%); } }
-  @keyframes wgOutRight { to { transform: translateX(3.2%); } }
-  @keyframes wgInLeft { from { transform: translateX(-4.4%); } }
-  @keyframes wgSettleDown { to { transform: scale(.985); } }
-  @keyframes wgSettleUp { from { transform: scale(1.015); } }
+  /* ==========================================================================
+     WHY THESE ARE ASYMMETRIC, AND WHY ONLY ONE SIDE MOVES.
 
-  /* Deeper. Forward is the slower of the two on purpose: arriving somewhere
-     new deserves more time than returning to somewhere you have been. */
-  html[data-vt="fwd"]::view-transition-old(wg-content) {
-    animation-name: wgOut, wgOutLeft; animation-duration: 300ms;
+     The first version ran old and new for the SAME duration with no delay.
+     That means at the midpoint you are looking at half the old page laid over
+     half the new one, each nudged about 3% — a double exposure, not a
+     movement, and the eye resolves a blurred double image as a cut. Making it
+     longer only made the double exposure last longer.
+
+     So: the old screen LEAVES FIRST and does not move at all. The new screen
+     starts after it has essentially gone, and it is the only thing that
+     travels. One object moves and the eye follows it.
+
+     The travel is a real distance rather than a percentage. Below roughly
+     16-20px displacement reads as a glitch instead of motion; 3% of a column
+     was about 20px on a laptop and 8px on a phone, which is why it felt like a
+     twitch on small screens.
+
+     And the direction is expressed in DEPTH plus a little vertical, not
+     sideways. The deck-to-room settle was the one that already felt right and
+     it is the only one that was using scale — sideways reads as a swap,
+     scale reads as one thing becoming another.
+
+     Every number is a custom property so it can be tuned live rather than
+     guessed at. See the block on :root.
+     ========================================================================= */
+
+  /* The old screen: fade, nothing else. */
+  @keyframes wgOut { to { opacity: 0; } }
+
+  /* The new screen: rises into place while it arrives. */
+  @keyframes wgInDeeper {
+    from { opacity: 0; transform: translateY(var(--wg-travel)) scale(var(--wg-scale)); }
+  }
+  /* Coming back, it settles down from slightly above and slightly larger —
+     the reverse of going in, so back never looks like forward. */
+  @keyframes wgInBack {
+    from { opacity: 0; transform: translateY(calc(var(--wg-travel) * -0.6)) scale(calc(2 - var(--wg-scale))); }
+  }
+  /* Sideways: no direction to report, so pure depth. This is the deck-to-room
+     one, kept as it was because it is the one that already read correctly. */
+  @keyframes wgInFlat {
+    from { opacity: 0; transform: scale(var(--wg-scale)); }
+  }
+
+  html[data-vt] ::view-transition-old(wg-content) {
+    animation: wgOut var(--wg-out) var(--wg-ease) both;
   }
   html[data-vt="fwd"]::view-transition-new(wg-content) {
-    animation-name: wgIn, wgInRight; animation-duration: 300ms;
-  }
-  html[data-vt="back"]::view-transition-old(wg-content) {
-    animation-name: wgOut, wgOutRight; animation-duration: 260ms;
+    animation: wgInDeeper var(--wg-in) var(--wg-ease) var(--wg-delay) both;
   }
   html[data-vt="back"]::view-transition-new(wg-content) {
-    animation-name: wgIn, wgInLeft; animation-duration: 260ms;
-  }
-
-  /* Sideways. No direction, because there is no direction to report. */
-  html[data-vt="swap"]::view-transition-old(wg-content) {
-    animation-name: wgOut, wgSettleDown; animation-duration: 280ms;
+    animation: wgInBack var(--wg-in) var(--wg-ease) var(--wg-delay) both;
   }
   html[data-vt="swap"]::view-transition-new(wg-content) {
-    animation-name: wgIn, wgSettleUp; animation-duration: 280ms;
+    animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both;
   }
-
-  /* Opening a module is a card growing into a page, so the page underneath
-     gets out of the way quickly and lets the card carry the movement. */
-  html[data-vt="morph"]::view-transition-old(wg-content) {
-    animation-name: wgOut; animation-duration: 200ms;
-  }
-  html[data-vt="morph"]::view-transition-new(wg-content) {
-    animation-name: wgIn; animation-duration: 300ms; animation-delay: 80ms;
-  }
-  html[data-vt="morphBack"]::view-transition-old(wg-content) {
-    animation-name: wgOut; animation-duration: 180ms;
-  }
+  /* Opening a module: the card carries the movement, so the page under it just
+     clears out of the way faster and comes back flat. */
+  html[data-vt="morph"]::view-transition-new(wg-content),
   html[data-vt="morphBack"]::view-transition-new(wg-content) {
-    animation-name: wgIn; animation-duration: 270ms; animation-delay: 70ms;
+    animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both;
   }
 
   /* THE CARD AND THE TITLE ARE ONE THING. The module card on the deck and the
@@ -480,11 +518,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt="morph"]::view-transition-group(wg-morph),
   html[data-vt="morphBack"]::view-transition-group(wg-morph) {
     z-index: 30;
-    animation-duration: 360ms;
+    animation-duration: var(--wg-morph);
     animation-timing-function: var(--wg-ease);
   }
-  ::view-transition-old(wg-morph) { animation: wgOut 170ms both; }
-  ::view-transition-new(wg-morph) { animation: wgIn 240ms both 60ms; }
+  ::view-transition-old(wg-morph) { animation: wgOut var(--wg-out) var(--wg-ease) both; }
+  ::view-transition-new(wg-morph) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
 }
 
 /* ---------------------------------------------------------------- the tabs */
@@ -513,33 +551,40 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt^="tab"] .mscreen .mcard > .pane { view-transition-name: wg-panel; }
   html[data-vt^="tab"] .mscreen .tabsbar .tab[aria-selected="true"] { view-transition-name: wg-tab; }
 
-  @keyframes wgPanelOutLeft { to { opacity: 0; transform: translateX(-18px); } }
-  @keyframes wgPanelInRight { from { opacity: 0; transform: translateX(24px); } }
-  @keyframes wgPanelOutRight { to { opacity: 0; transform: translateX(18px); } }
-  @keyframes wgPanelInLeft { from { opacity: 0; transform: translateX(-24px); } }
+  /* Tabs keep their sideways direction — here the movement IS the meaning,
+     because the panels sit in a row and you moved along it. But the same
+     asymmetry applies: the old panel goes without moving, and only the
+     arriving one travels. */
+  @keyframes wgPanelInRight { from { opacity: 0; transform: translateX(var(--wg-travel)); } }
+  @keyframes wgPanelInLeft { from { opacity: 0; transform: translateX(calc(var(--wg-travel) * -1)); } }
 
-  html[data-vt="tabR"]::view-transition-old(wg-panel) { animation: wgPanelOutLeft 150ms var(--wg-ease) both; }
-  html[data-vt="tabR"]::view-transition-new(wg-panel) { animation: wgPanelInRight 210ms var(--wg-ease) both; }
-  html[data-vt="tabL"]::view-transition-old(wg-panel) { animation: wgPanelOutRight 150ms var(--wg-ease) both; }
-  html[data-vt="tabL"]::view-transition-new(wg-panel) { animation: wgPanelInLeft 210ms var(--wg-ease) both; }
+  html[data-vt^="tab"]::view-transition-old(wg-panel) {
+    animation: wgOut var(--wg-out) var(--wg-ease) both;
+  }
+  html[data-vt="tabR"]::view-transition-new(wg-panel) {
+    animation: wgPanelInRight var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+  }
+  html[data-vt="tabL"]::view-transition-new(wg-panel) {
+    animation: wgPanelInLeft var(--wg-in) var(--wg-ease) var(--wg-delay) both;
+  }
 
   /* The heading is one word becoming another in the same place. */
   html[data-vt^="tab"]::view-transition-old(wg-panel),
   html[data-vt^="tab"]::view-transition-new(wg-panel),
   html[data-vt^="tab"]::view-transition-old(wg-ptitle),
   html[data-vt^="tab"]::view-transition-new(wg-ptitle) { mix-blend-mode: plus-lighter; }
-  html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: wgOut 110ms both; }
-  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgIn 170ms both 40ms; }
+  html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: wgOut var(--wg-out) both; }
+  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
 
   /* The tab itself: the group tweens position and size, so the label and its
      underline travel. Held above the panel so it is never clipped by it. */
   html[data-vt^="tab"]::view-transition-group(wg-tab) {
     z-index: 25;
-    animation-duration: 220ms;
+    animation-duration: var(--wg-morph);
     animation-timing-function: var(--wg-ease);
   }
-  html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: wgOut 90ms both; }
-  html[data-vt^="tab"]::view-transition-new(wg-tab) { animation: wgIn 150ms both; }
+  html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: wgOut var(--wg-out) both; }
+  html[data-vt^="tab"]::view-transition-new(wg-tab) { animation: wgInFlat var(--wg-in) var(--wg-ease) both; }
 
   /* The content region must NOT also slide — the frame is staying put and only
      the panel inside it is moving. Without this the whole page slides and the
