@@ -14,11 +14,32 @@ const DESTINATIONS = [
   { id: "ready",   label: "Ready Room", icon: Radio },
 ];
 
-function RootNav({ current, onGo, readyWarm = false }) {
+/* A DESTINATION IS ONLY OFFERED IF ITS PAGE IS BUILT. Each of these has a
+   flag, and the flags are independent: nav.root turns the bar on, page.logbook
+   turns the Logbook page on. Turn on the bar while that page is still off and
+   the bar gets a tab that lands on "Wrong bay." -- a quarter of the primary
+   navigation, and on a phone one of four thumb targets, dead-ending on a
+   not-found page.
+   Today nav.root is off so nobody has seen it, which is exactly why it would
+   have shipped: the trap springs the first time someone enables the bar. Study
+   and Modules are listed with the flags that gate THEIR pages, so the rule is
+   one thing rather than a special case for Logbook. */
+const GATED_BY = {
+  home: null,                       // the Flight Deck is always there
+  modules: "module.interior",
+  logbook: "page.logbook",
+  ready: "social.readyroom",
+};
+
+function RootNav({ current, onGo, readyWarm = false, flags = {} }) {
+  const shown = DESTINATIONS.filter((d) => {
+    const gate = GATED_BY[d.id];
+    return !gate || flags[gate];
+  });
   return (
     <nav className="rootnav" aria-label="Main">
       <ul>
-        {DESTINATIONS.map((d) => (
+        {shown.map((d) => (
           <li key={d.id}>
             <button
               className={`rootnav-item ${current === d.id ? "is-current" : ""} ${d.id === "ready" && readyWarm ? "is-warm" : ""}`}

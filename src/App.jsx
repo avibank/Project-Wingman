@@ -171,7 +171,21 @@ function AppInner() {
   const navigate = useNavigate();
   const route = parseRoute(location.pathname);
 
-  useDocumentTitle(titleForRoute(route));
+  /* A silent fall-through to the Flight Deck is worse than "nothing here".
+     These routes stay registered, but they say so until they are built — and
+     /admin says nothing at all to anyone who is not an admin.
+     Computed HERE, above the title, rather than further down where it used to
+     sit: the tab has to agree with the page. /logbook was reporting "Logbook ·
+     Wingman" while rendering "Wrong bay.", which is a worse bookmark than the
+     bare site title it replaced. */
+  const notFound =
+    route.name === "notfound"
+    || (route.name === "modules" && !flags["module.interior"])
+    || (route.name === "ready" && !flags["social.readyroom"])
+    || (route.name === "logbook" && !flags["page.logbook"])
+    || (route.name === "saved" && !flags["page.bookmarks"]);
+
+  useDocumentTitle(titleForRoute(notFound ? { name: "notfound" } : route));
 
   // Fly solo is stored with the rest of progress, but the plain functions in
   // lib/ cannot reach the provider and must read it synchronously. Mirror it to
@@ -197,16 +211,6 @@ function AppInner() {
     : route.name === "saved" && flags["page.bookmarks"] ? "bookmarks"
     : route.name === "settings" ? (route.page === "index" ? "about" : route.page)
     : null;
-  // A silent fall-through to the Flight Deck is worse than "nothing here".
-  // These routes stay registered, but they say so until they are built — and
-  // /admin says nothing at all to anyone who is not an admin.
-  const notFound =
-    route.name === "notfound"
-    || (route.name === "modules" && !flags["module.interior"])
-    || (route.name === "ready" && !flags["social.readyroom"])
-    || (route.name === "logbook" && !flags["page.logbook"])
-    || (route.name === "saved" && !flags["page.bookmarks"]);
-
   const tab = route.tab === "pdf" ? "pdf" : "chapters";
   const pendingChapterId = route.chapterId || null;
 
@@ -919,6 +923,7 @@ function AppInner() {
             : route.name === "home" ? "home" : null
           }
           readyWarm={onFrequency > 0}
+          flags={flags}
           onGo={(id) =>
             go(id === "ready" ? routePath.ready()
               : id === "logbook" ? routePath.logbook()
