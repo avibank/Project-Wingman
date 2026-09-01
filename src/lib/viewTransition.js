@@ -27,6 +27,7 @@
  * Section and depth come from parseRoute, the app's own parser, so this can
  * never disagree with the router about where a URL leads.
  */
+import { flushSync } from "react-dom";
 import { parseRoute, PROFILE_TABS } from "./routes.js";
 
 /* Which top-level place a route belongs to, and how deep it sits inside it.
@@ -271,3 +272,41 @@ export function settleDom({ max = 260 } = {}) {
     hard = setTimeout(finish, max);
   });
 }
+
+/* A CHANGE THAT IS NOT A NAVIGATION.
+ *
+ * Picking a livery, a finish, a greeter or a social preset does not move you
+ * anywhere — the screen stays exactly where it is and something on it becomes
+ * something else. That is a scene change, and in a single frame it is a cut:
+ * the palette snaps, or the name and the blurb above a picker swap between one
+ * frame and the next while your eye is still on the control you just pressed.
+ *
+ * It lives here rather than in App because the settings that need it are not
+ * all in App. Threading a wrapper down through Profile as a prop would put the
+ * transition layer in the signature of every component that owns a preference;
+ * importing a function does not.
+ *
+ * Nothing is named for these kinds — see the CSS. The whole point is that the
+ * page dissolves as ONE picture, so the root is the only thing that animates
+ * and every part of the screen that did not change is identical on both sides
+ * of it and therefore invisible.
+ */
+export function transitionState(kind, change) {
+  if (!canTransition()) { change(); return; }
+  document.documentElement.dataset.vt = kind;
+  const vt = document.startViewTransition(() => flushSync(change));
+  // Both settle-handlers are needed. An interrupted transition rejects `ready`,
+  // and an unhandled rejection there is a console error on a perfectly ordinary
+  // action — pressing two liveries quickly.
+  vt.ready?.catch(() => {});
+  vt.finished?.catch(() => {}).finally?.(() => {
+    delete document.documentElement.dataset.vt;
+  });
+}
+
+/* A palette change: everything on screen is a different colour afterwards. */
+export const withTheme = (change) => transitionState("theme", change);
+
+/* A preference: a small region changes and the rest of the page does not. Same
+   mechanism, shorter, because there is less to dissolve. */
+export const withSetting = (change) => transitionState("setting", change);

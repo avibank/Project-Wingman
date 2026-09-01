@@ -7,6 +7,7 @@ import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hu
 import { profileSVG } from "../lib/flightProfile.js";
 import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
+import { withSetting } from "../lib/viewTransition.js";
 import { useFlags } from "../lib/flags.js";
 import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
@@ -600,7 +601,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               <div className="livdesc">{CHARACTERS.find((c) => c.id === character)?.blurb}</div>
               <Seg label="Voice" value={character}
                    options={CHARACTERS.map((c) => ({ id: c.id, label: c.name }))}
-                   onPick={(v) => progress.set("pw-voice", v)} />
+                   /* The name and the blurb above this control are rewritten
+                      by the pick, so in one frame they change under the eye
+                      that is still on the control. Dissolve instead. */
+                   onPick={(v) => withSetting(() => progress.set("pw-voice", v))} />
 
               {/* The greeter's name for you belongs with the greeter, not on the
                   licence: the licence is who you are, this is what you answer to.
@@ -635,7 +639,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <Seg label="Social preset" value={preset}
                  options={PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])
                    || (x.id === "open" && flags["social.crew"] && flags["social.frequency"]))}
-                 onPick={(v) => progress.set("pw-social-preset", v)} />
+                 onPick={(v) => withSetting(() => progress.set("pw-social-preset", v))} />
           </div>
 
           {flags["prefs.notices"] && (
@@ -644,7 +648,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               {NOTICES.map((n) => (
                 <Switch key={n.id} id={`notice-${n.id}`} label={n.label} note={n.note}
                         on={notices[n.id] ?? n.on}
-                        onChange={(v) => progress.set("pw-notices", { ...notices, [n.id]: v })} />
+                        onChange={(v) => withSetting(() => progress.set("pw-notices", { ...notices, [n.id]: v }))} />
               ))}
             </div>
           )}

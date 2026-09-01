@@ -92,7 +92,9 @@
      --wg-delay  when the incoming screen starts. Roughly --wg-out, so the two
                  hand over rather than overlap.
      --wg-in     how long the incoming screen takes to arrive and settle.
-     --wg-travel how far it travels on the way in. Under about 16px this reads
+     --wg-travel how far a TAB PANEL slides sideways. The screens themselves no
+                 longer travel — they move in depth only, which is what the
+                 deck-to-room settle was doing. Under about 16px this reads
                  as a glitch rather than as movement.
      --wg-scale  the depth it comes from. Further from 1 is more theatrical.
      --wg-morph  the card-to-page tween, which is its own thing and slower
@@ -110,6 +112,7 @@
      moving, so there is no travel to make it feel quick, and a colour
      dissolve reads as abrupt long after a slide would have. */
   --wg-theme: 520ms;
+  --wg-set: 240ms;
 
   /* ----------------------------------------------------------- 3 · shape */
   --r-panel: 13px;      /* the hero card and the crew strip */
@@ -399,17 +402,30 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      the content inside it, which is why root is pinned above. A livery or a
      finish is the opposite: nothing moves and the room itself changes, so the
      root is the only thing that should animate — and it dissolves as one
-     picture rather than as parts arriving separately. plus-lighter because
-     both halves are full-screen and a plain cross-fade between two palettes
-     dips through the background in the middle. */
+     picture rather than as parts arriving separately. */
+  /* THE OLD PICTURE HOLDS AND THE NEW ONE FADES OVER IT — no cross-fade, and
+     no plus-lighter. Additive blending is right for two versions of the SAME
+     picture; these are two full-screen images in different palettes, and
+     summing them brightens the midpoint. That was the brightness hitch.
+     Holding the old at full opacity underneath an opaque new one gives a true
+     dissolve: no dip, because the old never thins, and no flare, because
+     nothing is added. */
   html[data-vt="theme"]::view-transition-old(root),
+  html[data-vt="setting"]::view-transition-old(root) { animation: none; }
   html[data-vt="theme"]::view-transition-new(root) {
-    mix-blend-mode: plus-lighter;
-    animation-duration: var(--wg-theme);
-    animation-timing-function: var(--wg-ease);
+    animation: wgIn var(--wg-theme) var(--wg-ease) both;
+    mix-blend-mode: normal;
   }
-  html[data-vt="theme"]::view-transition-old(root) { animation-name: wgOut; }
-  html[data-vt="theme"]::view-transition-new(root) { animation-name: wgIn; }
+  /* A PREFERENCE, same mechanism and shorter. Picking a greeter or a social
+     preset rewrites the name and the blurb above the control you just pressed,
+     and in one frame that is a cut happening under your eye. Nothing is named,
+     so the ninety-odd percent of the page that did not change is identical on
+     both sides and the dissolve is invisible there — only the text that
+     actually changed is seen to change. */
+  html[data-vt="setting"]::view-transition-new(root) {
+    animation: wgIn var(--wg-set) var(--wg-ease) both;
+    mix-blend-mode: normal;
+  }
 
 
 
@@ -435,7 +451,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      how it failed first time: the theme rule sat above this one and lost.
      During a scene change the content must stay part of the root picture, or
      it dissolves on its own timing and the page comes apart into two layers. */
-  html[data-vt]:not([data-vt="theme"]) .app .deck-inner { view-transition-name: wg-content; }
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .app .deck-inner { view-transition-name: wg-content; }
 
   /* SOFTER, AND LONGER, WITHOUT LOSING THE SNAP. The old curve left almost
      immediately and the short durations made every move read as a cut. This
@@ -446,16 +462,14 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt]::view-transition-new(wg-content) {
     animation-timing-function: var(--wg-ease);
     animation-fill-mode: both;
-    /* PLUS-LIGHTER, AND IT IS THE FLICKER. Two layers cross-fading on plain
-       opacity do not sum to one: at the midpoint both sit near 50% and the
-       combined coverage dips, so the background shows through the pair for a
-       few frames. On a dark ground that reads as a black flash.
-
-       This is the same reason the user agent uses plus-lighter for its own
-       root cross-fade — additive compositing keeps the two halves summing to
-       full coverage the whole way across. Removing it from the root (above)
-       is safe because neither root layer animates; here they both do. */
-    mix-blend-mode: plus-lighter;
+    /* NO ADDITIVE BLEND. plus-lighter was here to stop a cross-fade dipping,
+       and it is the right tool only when the two halves are the same picture.
+       These are two different layouts, so summing them brightened the overlap
+       — the same hitch the scene change had. It is unnecessary now anyway:
+       the old leaves in --wg-out and the new starts at --wg-delay, so the two
+       barely meet, and the root holding underneath means nothing can show
+       through the gap even if they did. */
+    mix-blend-mode: normal;
   }
 
   /* The app's own route fade would run underneath the transition and read as a
@@ -501,17 +515,23 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   /* The old screen: fade, nothing else. */
   @keyframes wgOut { to { opacity: 0; } }
 
-  /* The new screen: rises into place while it arrives. */
+  /* THE ROOM'S SETTLE, NOW FOR EVERY KIND. Deck-to-room was the one that read
+     as smooth, and the difference was never the timing — it was that it moved
+     in depth only. The others also slid vertically, and a screen doing two
+     things at once is what was reading as a jump. So the vertical travel is
+     gone and all three are the same motion.
+
+     Direction survives as the SIGN of the depth, which is the whole of what it
+     needs to be: going deeper the new screen grows into place, coming back it
+     settles down onto it. Sideways sits between them and grows, like going in,
+     because a swap is an arrival too. Same curve, same distance, same feel —
+     back still never looks like forward. */
   @keyframes wgInDeeper {
-    from { opacity: 0; transform: translateY(var(--wg-travel)) scale(var(--wg-scale)); }
+    from { opacity: 0; transform: scale(var(--wg-scale)); }
   }
-  /* Coming back, it settles down from slightly above and slightly larger —
-     the reverse of going in, so back never looks like forward. */
   @keyframes wgInBack {
-    from { opacity: 0; transform: translateY(calc(var(--wg-travel) * -0.6)) scale(calc(2 - var(--wg-scale))); }
+    from { opacity: 0; transform: scale(calc(2 - var(--wg-scale))); }
   }
-  /* Sideways: no direction to report, so pure depth. This is the deck-to-room
-     one, kept as it was because it is the one that already read correctly. */
   @keyframes wgInFlat {
     from { opacity: 0; transform: scale(var(--wg-scale)); }
   }
@@ -569,12 +589,13 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     animation-timing-function: var(--wg-ease);
   }
   /* The two ends are a thumbnail and a video frame — different pictures at very
-     different sizes — so they cross-dissolve while the GROUP does the moving.
-     plus-lighter keeps that dissolve from dipping, the same as the content. */
-  ::view-transition-old(wg-media),
-  ::view-transition-new(wg-media) { mix-blend-mode: plus-lighter; }
-  ::view-transition-old(wg-media) { animation: wgOut var(--wg-morph) var(--wg-ease) both; }
-  ::view-transition-new(wg-media) { animation: wgIn var(--wg-morph) var(--wg-ease) both; }
+     different sizes — so the GROUP does the moving and the new one fades in
+     over the old, which stays put underneath. */
+  ::view-transition-old(wg-media) { animation: none; }
+  ::view-transition-new(wg-media) {
+    animation: wgIn var(--wg-morph) var(--wg-ease) both;
+    mix-blend-mode: normal;
+  }
   @keyframes wgIn { from { opacity: 0; } }
 
   /* ==========================================================================
@@ -596,40 +617,41 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      Only on swap. On every other navigation the bar is the same element in the
      same place, so naming it would lift it out of the root snapshot for a move
      it takes no part in. */
-  html[data-vt="swap"] .brandmark { view-transition-name: wg-brand; }
-  html[data-vt="swap"] .avbtn { view-transition-name: wg-avatar; }
-  html[data-vt="swap"]::view-transition-group(wg-brand),
-  html[data-vt="swap"]::view-transition-group(wg-avatar) {
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .brandmark { view-transition-name: wg-brand; }
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"]) .avbtn { view-transition-name: wg-avatar; }
+  html[data-vt]::view-transition-group(wg-brand),
+  html[data-vt]::view-transition-group(wg-avatar) {
     z-index: 40;
     animation-duration: var(--wg-in);
     animation-timing-function: var(--wg-ease);
   }
   /* The two ends are the same words at slightly different sizes and positions,
      so the group does the travelling and the pictures dissolve underneath it. */
-  html[data-vt="swap"]::view-transition-old(wg-brand),
-  html[data-vt="swap"]::view-transition-new(wg-brand),
-  html[data-vt="swap"]::view-transition-old(wg-avatar),
-  html[data-vt="swap"]::view-transition-new(wg-avatar) {
-    mix-blend-mode: plus-lighter;
-    animation-duration: var(--wg-in);
-    animation-timing-function: var(--wg-ease);
+  /* Hold and fade, as everywhere else: the group carries the movement and the
+     new picture arrives over the old one rather than the two being summed. */
+  ::view-transition-old(wg-brand),
+  ::view-transition-old(wg-avatar) { animation: none; }
+  ::view-transition-new(wg-brand),
+  ::view-transition-new(wg-avatar) {
+    animation: wgIn var(--wg-in) var(--wg-ease) both;
+    mix-blend-mode: normal;
   }
-  html[data-vt="swap"]::view-transition-old(wg-brand),
-  html[data-vt="swap"]::view-transition-old(wg-avatar) { animation-name: wgOut; }
-  html[data-vt="swap"]::view-transition-new(wg-brand),
-  html[data-vt="swap"]::view-transition-new(wg-avatar) { animation-name: wgIn; }
 
-  /* The rest of the bar dissolves rather than cutting. Where the chrome is
-     identical this is invisible and costs nothing; where it changes it is the
-     difference between a fade and a snap. */
-  html[data-vt="swap"]::view-transition-old(root),
-  html[data-vt="swap"]::view-transition-new(root) {
-    mix-blend-mode: plus-lighter;
-    animation-duration: var(--wg-in);
-    animation-timing-function: var(--wg-ease);
+  /* EVERY KIND GETS THIS NOW, not just the room. The chrome dissolving rather
+     than cutting is the thing that made deck-to-room read correctly, and there
+     is no navigation it makes worse: where the bar is identical on both sides
+     the dissolve is invisible and costs nothing, and where it changes it is
+     the difference between a fade and a snap. Same hold-and-fade as the scene
+     change, for the same reason. */
+  /* Both scene kinds are excluded by name rather than left to cascade. This
+     selector carries two :not()s and the setting rule above carries one, so
+     the general rule would have WON on specificity and a preference would have
+     dissolved over --wg-in instead of --wg-set. */
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-old(root) { animation: none; }
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-new(root) {
+    animation: wgIn var(--wg-in) var(--wg-ease) both;
+    mix-blend-mode: normal;
   }
-  html[data-vt="swap"]::view-transition-old(root) { animation-name: wgOut; }
-  html[data-vt="swap"]::view-transition-new(root) { animation-name: wgIn; }
 }
 
 /* ---------------------------------------------------------------- the tabs */
@@ -679,7 +701,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt^="tab"]::view-transition-old(wg-panel),
   html[data-vt^="tab"]::view-transition-new(wg-panel),
   html[data-vt^="tab"]::view-transition-old(wg-ptitle),
-  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { mix-blend-mode: plus-lighter; }
+
   html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: wgOut var(--wg-out) both; }
   html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
 

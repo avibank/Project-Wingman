@@ -101,7 +101,7 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
-import { transitionKind, canTransition, clearMorph, markMorphTarget, settleDom } from "./lib/viewTransition.js";
+import { transitionKind, canTransition, clearMorph, markMorphTarget, settleDom, withTheme, withSetting } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -253,26 +253,6 @@ function AppInner() {
     const ok = await Promise.race([loaded, timeout]);
     clearTimeout(timer);
     return ok;
-  };
-
-  /* A LIVERY OR A FINISH IS A CHANGE OF SCENE, not a navigation, so it gets a
-     kind of its own. Everything on screen changes colour at once, and doing
-     that in a single frame is the harshest thing the app does — the whole
-     page snaps to another palette.
-
-     This is the one kind where the ROOT cross-fades. Every navigation holds
-     the room still and moves the content inside it; here nothing moves and
-     the room itself is what changes, so the rule is reversed in the CSS.
-     Nothing is named for it either: the point is that the page dissolves as
-     ONE picture rather than as a set of parts arriving separately. */
-  const withTheme = (change) => {
-    if (!canTransition()) { change(); return; }
-    document.documentElement.dataset.vt = "theme";
-    const vt = document.startViewTransition(() => flushSync(change));
-    vt.ready?.catch(() => {});
-    vt.finished?.catch(() => {}).finally?.(() => {
-      delete document.documentElement.dataset.vt;
-    });
   };
 
   const go = async (to, { keepScroll = false } = {}) => {
@@ -1060,17 +1040,24 @@ function AppInner() {
             finish={finish}
             onFinish={(f) => withTheme(() => setFinish(f))}
             ruled={ruled}
-            onRuled={setRuled}
+            /* Paper, scale and face all repaint the page, so they are scene
+               changes for the same reason a livery is — the only difference is
+               how much of the palette moves. Scale is the loudest of them:
+               every measurement on screen changes at once. */
+            onRuled={(v) => withTheme(() => setRuled(v))}
             fontSize={fontSize}
-            onFontSize={setFontSize}
+            onFontSize={(v) => withTheme(() => setFontSize(v))}
             reduceMotion={reduceMotion}
+            /* NOT WRAPPED, deliberately. This is the switch that turns motion
+               off; animating the act of turning it off is the one place where
+               a transition argues with what it is being asked to do. */
             onReduceMotion={setReduceMotion}
             dyslexiaFont={dyslexiaFont}
-            onDyslexiaFont={setDyslexiaFont}
+            onDyslexiaFont={(v) => withTheme(() => setDyslexiaFont(v))}
             turbulence={turbulence}
-            onTurbulence={setTurbulence}
+            onTurbulence={(v) => withSetting(() => setTurbulence(v))}
             grain={grain}
-            onGrain={setGrain}
+            onGrain={(v) => withSetting(() => setGrain(v))}
           />
         </main>
       ) : route.name === "modules" && flags["module.interior"] ? (
