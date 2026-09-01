@@ -268,7 +268,10 @@ const ROOM_CSS = `
      which is exactly how the reservation went missing once already.
      Both custom properties fall back to 0px, so a page with neither is padded
      by nothing. */
-  padding: 0 40px calc(var(--mini-h, 0px) + var(--chin-h, 0px));
+  /* max(), not a sum: the pill stands 56px off the bottom and the chin is
+     shorter, so they overlap rather than stack. Reserving both would leave a
+     visible gap under the last card. */
+  padding: 0 40px calc(var(--mini-h, 0px) + max(var(--chin-h, 0px), var(--rpt-h)));
   color: var(--t1);
   font-family: var(--font-ui);
 }

@@ -70,6 +70,15 @@
   /* The fixed runway bar: 5px lights + 8px padding either side + 1px border. */
   --runway-h: 22px;
 
+  /* THE REPORT PILL'S FOOTPRINT. .rpt is position: fixed at bottom-left, so it
+     floats over whatever scrolls beneath it — and at the end of a scroll there
+     is nothing left to scroll, so the last row stays under it for good.
+     Measured on a phone: the deck's final crew cell and the Ready Room's last
+     module row were both still covered at full scroll, because the scrollers
+     reserved 20-26px against a control that stands 56px off the bottom.
+     Its own rule fixes that height: min-height --tap, offset 12px. */
+  --rpt-h: calc(var(--tap, 44px) + 12px);
+
   /* ----------------------------------------------------------- 3 · shape */
   --r-panel: 13px;      /* the hero card and the crew strip */
   --r-card: 12px;       /* module cards */

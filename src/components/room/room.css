@@ -156,7 +156,10 @@
 .seat-cta:hover,
 .room .seat-cta[aria-current="true"]{ background: var(--active-fill); color: var(--on-fill); }
 
-.room .rail-scroll{ overflow-y: auto; overscroll-behavior: contain; padding-bottom: 20px; min-height: 0; }
+/* The rail runs to the bottom-left corner, which is where the report pill
+   floats, so its last row needs to be able to clear it. */
+.room .rail-scroll{ overflow-y: auto; overscroll-behavior: contain;
+  padding-bottom: calc(20px + var(--rpt-h)); min-height: 0; }
 .room .group-head{
   display: flex; align-items: center; gap: 8px; margin: 0;
   padding: 16px 16px 7px; font-family: var(--font-mono); font-size: 10px;
@@ -235,7 +238,11 @@
   border-bottom: 1px solid var(--edge-soft); background: var(--panel); min-height: 62px;
 }
 .room .h-id{ min-width: 0; }
-.room .h-title{ margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.2; }
+/* One line, then an ellipsis. The head used to hold the fixed word "Thread",
+   so it could never overflow; now it holds a question, and a long one would
+   push the sub-line down and grow the header. */
+.room .h-title{ margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .room .h-sub{ margin: 1px 0 0; font-size: 12.5px; color: var(--t3); }
 .room .back{
   display: none; width: 32px; height: 32px; min-height: 0; border-radius: 999px;

@@ -484,7 +484,12 @@ export default function ReadyRoom({
               </button>
               <span className="mod-icon" aria-hidden="true">{mod?.code || mod?.id}</span>
               <div className="h-id">
-                <h2 className="h-title">Thread</h2>
+                {/* The QUESTION, not the word "Thread". Every other pane head
+                    names what you are looking at; this one named the type,
+                    which tells you nothing and makes two threads
+                    indistinguishable once you are inside one. titleOf falls
+                    back to the first line and caps its own length. */}
+                <h2 className="h-title">{titleOf(thread)}</h2>
                 <p className="h-sub">{mod?.name}</p>
               </div>
             </header>
