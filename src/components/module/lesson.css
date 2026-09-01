@@ -501,6 +501,9 @@
    ========================================================================= */
 
 .ltabs{ display: flex; gap: 26px; margin-top: 26px; border-bottom: 1px solid var(--hair); }
+/* A 26px gap is right where there is room for it. On a phone the three items
+   are 214px of a 264px row, so the gaps decide whether Export fits at all. */
+@media (max-width: 767px){ .ltabs{ gap: 18px; } }
 .ltab{
   min-height: var(--tap); padding: 0 0 10px;
   background: none; border: 0; border-bottom: 2px solid transparent;
@@ -767,6 +770,15 @@
    widths here; these columns just need their gutters. */
 .watch .mt, .watch .sd, .watch .pn{ min-width: 0; }
 @media (max-width: 1000px){
+  /* THE PADDING WAS APPLIED TWICE. .watch carries padding-inline: var(--pad)
+     for the wide layout, and below 1000px each region takes its own so the
+     player can go edge to edge between them. The container's was never
+     removed, so the two stacked: 47px a side measured on a 375px phone, which
+     left the panel 73% of the screen and 27% margin. It is also why the
+     lesson tab row could not fit Notes, Comments and Export -- Export was
+     pushed off the right edge entirely and could not be tapped.
+     The regions own the inset below this width; the container does not. */
+  .watch{ padding-inline: 0; }
   .watch .mt, .watch .sd, .watch .pn{ padding-inline: var(--pad); }
 }
 
