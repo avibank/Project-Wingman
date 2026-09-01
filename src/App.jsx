@@ -1471,6 +1471,21 @@ function AppInner() {
           --presence-glow: var(--presence-lit);
           --on-presence: var(--text-primary);
           --good: var(--cold);
+          /* LOAD-BEARING, AND IT DOES NOT LOOK IT. This line is what enforces
+             "no red on a wrong quiz answer".
+
+             quiz.css marks a wrong option with var(--bad) and its comment says
+             --bad is a semantic red, deliberately outside the livery. The
+             livery engine agrees and writes --bad: oklch(.620 .180 25) -- a
+             true red, hue 1 -- onto :root. This declaration overrides it for
+             everything inside .app, which is everything the user ever sees, so
+             a wrong answer renders at hue 209: the same blue-grey as --calm,
+             which is exactly what the design rule asks for.
+
+             Measured, both of them: --bad is hue 1 on :root and hue 209 on
+             .app. Delete this line as redundant and every wrong answer in the
+             app turns red, and no test will catch it. --danger stays red on
+             purpose (hue 358) -- that one is for genuine danger states. */
           --bad: var(--text-2);
           --destructive: var(--danger);
           --calm: var(--text-2);
