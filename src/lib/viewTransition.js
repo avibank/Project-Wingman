@@ -122,19 +122,28 @@ export const canTransition = () => supported() && !motionOff();
    module cards cannot all carry the morph name — only the one being opened
    may. It is written on the element for the length of the transition and
    taken off again, and `clearMorph` is safe to call when nothing was set. */
-const MORPH = "wg-morph";
-let morphed = null;
+const MORPH = "wg-morph";    // a module card becoming a module page
+const MEDIA = "wg-media";    // a lesson's thumbnail becoming the player
 
-export function markMorph(el) {
-  clearMorph();
+/* A LIST, not a single slot. One transition can carry more than one shared
+   element, and the point of shared elements is that several things persist at
+   once — that is what turns "the screen was replaced" into "the screen
+   rearranged". Everything marked is cleared together when the transition
+   finishes. */
+let marked = [];
+
+export function markShared(el, name) {
   if (!el) return;
-  morphed = el;
-  el.style.viewTransitionName = MORPH;
+  el.style.viewTransitionName = name;
+  marked.push(el);
 }
 
+export const markMorph = (el) => markShared(el, MORPH);
+export const markMedia = (el) => markShared(el, MEDIA);
+
 export function clearMorph() {
-  if (morphed) morphed.style.viewTransitionName = "";
-  morphed = null;
+  for (const el of marked) el.style.viewTransitionName = "";
+  marked = [];
 }
 
 /* THE RETURN TRIP, and the reason it needs its own call.
@@ -172,13 +181,23 @@ export function clearMorph() {
 const TARGET_WAIT_MS = 220;
 
 export function markMorphTarget(kind, fromRoute) {
-  if (kind !== "morphBack") return Promise.resolve();
-  const code = fromRoute?.moduleCode;
-  if (!code) return Promise.resolve();
-  const find = () => document.querySelector(`.deck .mod[data-code="${CSS.escape(code)}"]`);
+  /* Two return trips, the same shape. Coming out of a module, the card you are
+     going back to; coming out of a lesson, the ROW you opened it from — so the
+     player shrinks into its thumbnail instead of the page being replaced. */
+  let find = null;
+  let apply = markMorph;
+  if (kind === "morphBack" && fromRoute?.moduleCode) {
+    const code = fromRoute.moduleCode;
+    find = () => document.querySelector(`.deck .mod[data-code="${CSS.escape(code)}"]`);
+  } else if (kind === "back" && fromRoute?.lessonId) {
+    const id = fromRoute.lessonId;
+    find = () => document.querySelector(`.item[data-lesson="${CSS.escape(id)}"] .lead`);
+    apply = markMedia;
+  }
+  if (!find) return Promise.resolve();
 
   const now = find();
-  if (now) { markMorph(now); return Promise.resolve(); }
+  if (now) { apply(now); return Promise.resolve(); }
 
   return new Promise((resolve) => {
     const started = Date.now();
@@ -195,7 +214,7 @@ export function markMorphTarget(kind, fromRoute) {
       // setTimeout is throttled to about a second — so the transition sat on a
       // frozen snapshot for 1000ms waiting for a flourish nobody was watching.
       // Measured: the forward callback runs in 1ms, this one ran in 1000.
-      if (card && Date.now() - started < TARGET_WAIT_MS) markMorph(card);
+      if (card && Date.now() - started < TARGET_WAIT_MS) apply(card);
       resolve();
     };
     // A MutationObserver fires when the cards are actually inserted, so the

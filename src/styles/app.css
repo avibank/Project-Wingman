@@ -523,6 +523,32 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   }
   ::view-transition-old(wg-morph) { animation: wgOut var(--wg-out) var(--wg-ease) both; }
   ::view-transition-new(wg-morph) { animation: wgInFlat var(--wg-in) var(--wg-ease) var(--wg-delay) both; }
+
+  /* THE THUMBNAIL BECOMES THE PLAYER. The second shared pair, and the one that
+     does the most work: opening a lesson, the tile you tapped grows into the
+     video; closing it, the video shrinks back into that same tile. The row is
+     named at the moment of the click and the row you RETURN to is named inside
+     the transition callback, because it does not exist until the module screen
+     has re-rendered.
+
+     Only fwd and back — on any other kind the player is not part of the move
+     and naming it would lift it out of the root snapshot for nothing. */
+  html[data-vt="fwd"] .watch .player-slot,
+  html[data-vt="back"] .watch .player-slot { view-transition-name: wg-media; }
+  html[data-vt="fwd"]::view-transition-group(wg-media),
+  html[data-vt="back"]::view-transition-group(wg-media) {
+    z-index: 30;
+    animation-duration: var(--wg-morph);
+    animation-timing-function: var(--wg-ease);
+  }
+  /* The two ends are a thumbnail and a video frame — different pictures at very
+     different sizes — so they cross-dissolve while the GROUP does the moving.
+     plus-lighter keeps that dissolve from dipping, the same as the content. */
+  ::view-transition-old(wg-media),
+  ::view-transition-new(wg-media) { mix-blend-mode: plus-lighter; }
+  ::view-transition-old(wg-media) { animation: wgOut var(--wg-morph) var(--wg-ease) both; }
+  ::view-transition-new(wg-media) { animation: wgIn var(--wg-morph) var(--wg-ease) both; }
+  @keyframes wgIn { from { opacity: 0; } }
 }
 
 /* ---------------------------------------------------------------- the tabs */
