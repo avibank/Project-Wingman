@@ -17,6 +17,7 @@
 // in the same ticket as the rollout, or you accumulate a second codebase by
 // stealth.
 
+import { useMemo } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { loadJSON, saveJSON } from "./storage.js";
 
@@ -130,8 +131,36 @@ export function resolveFlags(isAdmin, overrides = {}) {
   return out;
 }
 
+/* MEMOISED, AND IT IS NOT AN OPTIMISATION — it is the fix for an infinite
+   render loop.
+
+   This returned a fresh object literal, holding a fresh resolveFlags object,
+   on every single render. Anything with `flags` in a dependency array
+   therefore re-ran on every render, and App has an effect that does:
+
+     if (!isSignedIn || !flags["social.readyroom"]) {
+       setSquadrons([]); setRoomMessages([]); setRightSeat([]); return;
+     }
+
+   Three fresh arrays. New state identity, so React re-renders; new render, so
+   `flags` is a new object; new object, so the effect runs again. React climbs
+   to its 50-update ceiling, logs "Maximum update depth exceeded", and then
+   STOPS APPLYING UPDATES — which is the part that actually hurt. A later
+   navigation would push the URL and never re-render: measured, the address bar
+   read /m/m1/M1.01/quiz/resume while App still had location.pathname "/", so
+   the Flight Deck sat under a perfectly correct URL and the deck's Resume
+   button looked broken.
+
+   The identity is now stable while the inputs are. Overrides are compared by
+   value because readOverrides() parses fresh JSON each time and would
+   otherwise be a new object too — the same trap one level down. */
 export function useFlags() {
   const { user } = useUser();
   const isAdmin = user?.publicMetadata?.role === "admin";
-  return { flags: resolveFlags(isAdmin, readOverrides()), isAdmin };
+  const overrides = readOverrides();
+  const overrideKey = JSON.stringify(overrides);
+  return useMemo(
+    () => ({ flags: resolveFlags(isAdmin, JSON.parse(overrideKey)), isAdmin }),
+    [isAdmin, overrideKey],
+  );
 }

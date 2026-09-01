@@ -779,7 +779,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                   crossfading under it. Only one element may carry that name,
                   which is why it cannot sit in CSS with the other cards. */}
               {moduleRows.map((m) => (
-                <Cell className="mod house" data-press="" key={m.code} open={flags["module.interior"]}
+                <Cell className="mod house" data-press="" data-code={m.code} key={m.code} open={flags["module.interior"]}
                       onOpen={(e) => { markMorph(e.currentTarget); onEnterModule(m); }}>
                   <div className="modin">
                     <div className="mcodeline">

@@ -110,3 +110,72 @@ export function clearMorph() {
   if (morphed) morphed.style.viewTransitionName = "";
   morphed = null;
 }
+
+/* THE RETURN TRIP, and the reason it needs its own call.
+ *
+ * Going in is easy: the card exists when you click it, so it can be named
+ * before the move. Coming back, the card you are returning to does not exist
+ * yet — the deck has not rendered. Naming it "after the navigation" in the
+ * ordinary sense is too late, because by then the browser has already taken
+ * its after-snapshot and the transition is decided.
+ *
+ * The window is inside the transition callback, after flushSync has committed
+ * the new screen and before the callback returns — the deck is in the DOM and
+ * the snapshot has not been taken, so the card can be found and named and the
+ * heading shrinks back into it instead of fading out.
+ *
+ * Which card: the one for the module being left. Matched on data-code rather
+ * than on the name shown, because a title is a label and a code is an
+ * identifier — the prototype matched on the visible text and would have picked
+ * the wrong card the moment two modules shared a name.
+ *
+ * AND IT HAS TO WAIT, which was not obvious. flushSync commits the deck, but
+ * the module cards are not in that commit — measured at the snapshot instant,
+ * .deck was present with ZERO cards, and four appeared a moment later. They
+ * come from state that settles after the first paint, so "synchronously after
+ * flushSync" is still too early.
+ *
+ * startViewTransition takes an async callback and holds the snapshot until the
+ * promise settles, which is exactly the hook for this. It waits on a
+ * MutationObserver rather than a poll, so the common case costs one microtask
+ * when the cards are inserted instead of an interval, and it is hard-bounded:
+ * if the card has not arrived in time the transition proceeds without it and
+ * the heading fades. A missing flourish is a fine outcome; a page frozen
+ * behind a snapshot waiting for data is not.
+ */
+const TARGET_WAIT_MS = 220;
+
+export function markMorphTarget(kind, fromRoute) {
+  if (kind !== "morphBack") return Promise.resolve();
+  const code = fromRoute?.moduleCode;
+  if (!code) return Promise.resolve();
+  const find = () => document.querySelector(`.deck .mod[data-code="${CSS.escape(code)}"]`);
+
+  const now = find();
+  if (now) { markMorph(now); return Promise.resolve(); }
+
+  return new Promise((resolve) => {
+    const started = Date.now();
+    let done = false;
+    let mo = null;
+    let deadline = null;
+    const finish = (card) => {
+      if (done) return;
+      done = true;
+      if (mo) mo.disconnect();
+      clearTimeout(deadline);
+      // THE DEADLINE IS CHECKED BEFORE MARKING, not after finding. Checking it
+      // second meant a late arrival still got the name, and in a BACKGROUND TAB
+      // setTimeout is throttled to about a second — so the transition sat on a
+      // frozen snapshot for 1000ms waiting for a flourish nobody was watching.
+      // Measured: the forward callback runs in 1ms, this one ran in 1000.
+      if (card && Date.now() - started < TARGET_WAIT_MS) markMorph(card);
+      resolve();
+    };
+    // A MutationObserver fires when the cards are actually inserted, so the
+    // common case costs one microtask rather than a polling interval.
+    mo = new MutationObserver(() => { const c = find(); if (c) finish(c); });
+    mo.observe(document.body, { childList: true, subtree: true });
+    deadline = setTimeout(() => finish(null), TARGET_WAIT_MS);
+  });
+}

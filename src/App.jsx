@@ -51,7 +51,7 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
-import { transitionKind, canTransition, clearMorph } from "./lib/viewTransition.js";
+import { transitionKind, canTransition, clearMorph, markMorphTarget } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -64,7 +64,7 @@ import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
 import { fetchProfiles } from "./lib/squadron.js";
-import { reportContent } from "./lib/squadron.js";
+import { reportContent, blockUser } from "./lib/squadron.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
   return (
@@ -195,7 +195,14 @@ function AppInner() {
       // invalid state" before this was added. Interruption is normal here, so
       // it is swallowed rather than reported; the navigation itself already
       // happened inside the callback and is unaffected.
-      const vt = document.startViewTransition(() => flushSync(move));
+      const vt = document.startViewTransition(async () => {
+        flushSync(move);
+        // The new screen is in the DOM and the after-snapshot has not been
+        // taken yet. Awaiting holds the snapshot until the returning card
+        // exists — the deck commits before its cards do — and gives up quickly
+        // if it never arrives.
+        await markMorphTarget(kind, route);
+      });
       vt.ready?.catch(() => {});
       vt.finished?.catch(() => {}).finally?.(() => {
         clearMorph();
@@ -831,6 +838,23 @@ function AppInner() {
                   me, squadronId: ev.squadronId, moduleCode: sq?.moduleCode, body: ev.body,
                 }).then((row) => { if (row) setRoomMessages((ms) => [...ms, row]); });
               }
+            }}
+            onBlock={async (userId) => {
+              // §9 — blocking is symmetric and total. The Ban button called
+              // onBlock?.() and nobody supplied it, so it was a safety control
+              // that did nothing: the same shape as the Flag button below,
+              // which had a table waiting for it and no writer.
+              if (!userId || userId === me) return;
+              if (!(await blockUser(me, userId))) return;
+              // Every fetcher already drops blocked authors, so this only
+              // applies that same rule to what is on screen right now rather
+              // than making someone reload to stop seeing them.
+              setRoomMessages((ms) => ms.filter((m) => m.authorId !== userId));
+              setSession((s0) => ({
+                ...s0,
+                threads: s0.threads.filter((t) => t.authorId !== userId),
+                replies: s0.replies.filter((r) => r.authorId !== userId),
+              }));
             }}
             onReport={(what) => {
               // The reports table has existed since 0005 and nothing was
