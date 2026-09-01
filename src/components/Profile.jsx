@@ -207,7 +207,11 @@ function Specimen({ liveryId, variant }) {
 
 const PROFILE_CSS = `
 .profile { max-width: 1240px; margin: 0 auto; padding: 0 40px 80px; }
-@media (max-width: 640px) { .profile { padding: 0 16px 96px; } }
+/* .content already lays a 22px gutter on every page, and .deck another 16
+   outside the zoom. The extra 16 here was a third layer: 38px a side of a
+   326px phone, so 23% of the screen was margin before any content. The bottom
+   padding stays -- that one is clearing the tab bar, not a gutter. */
+@media (max-width: 640px) { .profile { padding: 0 0 96px; } }
 
 .phead { margin: 10px 0 16px; }
 .back { background: none; border: 0; color: var(--t2); font-size: 13px; cursor: pointer; padding: 4px 0;
