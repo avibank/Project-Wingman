@@ -491,3 +491,46 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt^="tab"]::view-transition-old(wg-content),
   html[data-vt^="tab"]::view-transition-new(wg-content) { animation: none; }
 }
+
+/* --------------------------------------------------------- the tap floor */
+/* The app already enforces 44px on `.app button:not(.is-inline)`, and
+   `is-inline` is the deliberate opt-out for a control that sits inside a line
+   of text. `.sw` shows what the opt-out is supposed to cost: it goes back to a
+   pseudo-element that restores the hit area. Five controls took the opt-out
+   and never paid it — measured, not guessed:
+
+     .avbtn        40x40   the account menu, on EVERY screen
+     .icon-btn     39x39   New thread, in the Ready Room
+     .brandmark    23px    the wordmark that goes home
+     .next-title   27px    the lesson's up-next link
+     .cmt-seek     41px    a comment's timestamp
+
+   The account menu is a standalone circle, so it simply grows — four pixels
+   nobody measures. The rest are words or sit in a compact row, where growing
+   the box would move the layout, so they get an invisible overlay centred on
+   the control: the TARGET grows and nothing visible moves.
+
+   THE MESSAGE ACTIONS ARE EXCLUDED, and that is the important line. Report and
+   Block are both .icon-btn.is-inline, 26px, side by side. A 44px hit area on
+   each would overlap the other, and a mis-hit there blocks somebody by
+   accident. A small target you can aim at beats a large one you cannot. */
+.app .avbtn { min-width: var(--tap, 44px); min-height: var(--tap, 44px); }
+
+.app .brandmark,
+.app .next-title,
+.app .cmt-seek,
+.app .icon-btn.is-inline { position: relative; }
+.app .brandmark::after,
+.app .next-title::after,
+.app .cmt-seek::after,
+.app .icon-btn.is-inline::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, var(--tap, 44px));
+  height: max(100%, var(--tap, 44px));
+}
+/* Packed side by side; see above. They keep their own 26px box. */
+.app .msg-acts .icon-btn.is-inline::after { content: none; }
