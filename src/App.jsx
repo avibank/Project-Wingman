@@ -8,36 +8,57 @@ import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
-const NotFound = lazy(() => import("./components/NotFound.jsx"));
+/* THE IMPORT THUNKS, NAMED. Every route below is code-split, and a
+   navigation needs to be able to WARM the chunk it is about to show before
+   the transition starts — see preloadFor in the shell. Declared once and used
+   twice: lazy() takes them here, go() calls them directly. */
+const CHUNK = {
+  notFound: () => import("./components/NotFound.jsx"),
+  chapters: () => import("./components/ChaptersPanel.jsx"),
+  readyOld: () => import("./components/ReadyRoom.jsx"),
+  modules: () => import("./components/ModulesPage.jsx"),
+  moduleHub: () => import("./components/ModuleHub.jsx"),
+  module: () => import("./components/module/ModuleScreen.jsx"),
+  lesson: () => import("./components/module/LessonPage.jsx"),
+  quiz: () => import("./components/module/QuizPage.jsx"),
+  dev: () => import("./components/DevPanel.jsx"),
+  pdf: () => import("./components/PdfPanel.jsx"),
+  roomShell: () => import("./components/room/ReadyRoom.jsx"),
+  settings: () => import("./components/SettingsPage.jsx"),
+  profile: () => import("./components/Profile.jsx"),
+  progress: () => import("./components/ProgressPage.jsx"),
+  bookmarks: () => import("./components/BookmarksPage.jsx"),
+};
+const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
 import { finishVars, ruledLayer } from "./lib/finishEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence } from "./lib/presence.js";
 import { ChevronRight, Lock, Plane } from "lucide-react";
-const ChaptersPanel = lazy(() => import("./components/ChaptersPanel.jsx"));
+const ChaptersPanel = lazy(CHUNK.chapters);
 import Home from "./components/Home.jsx";
-const ReadyRoom = lazy(() => import("./components/ReadyRoom.jsx"));
-const ModulesPage = lazy(() => import("./components/ModulesPage.jsx"));
+const ReadyRoom = lazy(CHUNK.readyOld);
+const ModulesPage = lazy(CHUNK.modules);
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
-const ModuleHub = lazy(() => import("./components/ModuleHub.jsx"));
+const ModuleHub = lazy(CHUNK.moduleHub);
 import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
-const ModuleScreen = lazy(() => import("./components/module/ModuleScreen.jsx"));
-const LessonPage = lazy(() => import("./components/module/LessonPage.jsx"));
-const QuizPage = lazy(() => import("./components/module/QuizPage.jsx"));
+const ModuleScreen = lazy(CHUNK.module);
+const LessonPage = lazy(CHUNK.lesson);
+const QuizPage = lazy(CHUNK.quiz);
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
-const DevPanel = lazy(() => import("./components/DevPanel.jsx"));
+const DevPanel = lazy(CHUNK.dev);
 import RouteError from "./components/RouteError.jsx";
 import ReportProblem from "./components/ReportProblem.jsx";
-const PdfPanel = lazy(() => import("./components/PdfPanel.jsx"));
+const PdfPanel = lazy(CHUNK.pdf);
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import ReadyRoomPill from "./components/ReadyRoomPill.jsx";
-const ReadyRoomShell = lazy(() => import("./components/room/ReadyRoom.jsx"));
-const SettingsPage = lazy(() => import("./components/SettingsPage.jsx"));
-const Profile = lazy(() => import("./components/Profile.jsx"));
-const ProgressPage = lazy(() => import("./components/ProgressPage.jsx"));
-const BookmarksPage = lazy(() => import("./components/BookmarksPage.jsx"));
+const ReadyRoomShell = lazy(CHUNK.roomShell);
+const SettingsPage = lazy(CHUNK.settings);
+const Profile = lazy(CHUNK.profile);
+const ProgressPage = lazy(CHUNK.progress);
+const BookmarksPage = lazy(CHUNK.bookmarks);
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
@@ -51,7 +72,7 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
-import { transitionKind, canTransition, clearMorph, markMorphTarget } from "./lib/viewTransition.js";
+import { transitionKind, canTransition, clearMorph, markMorphTarget, settleDom } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -179,9 +200,55 @@ function AppInner() {
   // its "after" snapshot. Without flushSync the update is still queued when
   // the snapshot is taken and both frames are the OLD page — an animation
   // between a thing and itself.
-  const go = (to) => {
-    const kind = canTransition() ? transitionKind(route, to) : null;
+  /* Which chunks a path needs, and a bounded wait for them.
+     Keyed on the parsed route name so it cannot drift from the router. The
+     bound exists because a click must never feel dead: past it, the caller
+     drops the transition and navigates plainly, which is what the app did
+     before any of this existed. */
+  const warmRoute = async (to) => {
+    const name = parseRoute(to).name;
+    const needed = ({
+      module: [CHUNK.module], chapter: [CHUNK.module, CHUNK.quiz],
+      lesson: [CHUNK.lesson], review: [CHUNK.module],
+      ready: [CHUNK.roomShell], modules: [CHUNK.modules],
+      profile: [CHUNK.profile], settings: [CHUNK.settings],
+      logbook: [CHUNK.progress], saved: [CHUNK.bookmarks],
+      notfound: [CHUNK.notFound],
+    })[name] || [];
+    if (!needed.length) return true;          // the deck is not split
+    let timer;
+    const timeout = new Promise((res) => { timer = setTimeout(() => res(false), 600); });
+    // import() resolves from the module cache after the first call, so this is
+    // a settled promise on every visit but the first.
+    const loaded = Promise.all(needed.map((f) => f())).then(() => true, () => false);
+    const ok = await Promise.race([loaded, timeout]);
+    clearTimeout(timer);
+    return ok;
+  };
+
+  const go = async (to, { keepScroll = false } = {}) => {
+    let kind = canTransition() ? transitionKind(route, to) : null;
     const move = () => { navigate(to); };
+
+    // WARM THE CHUNK FIRST, and this is the stutter.
+    //
+    // Every route is code-split. flushSync cannot render a component whose
+    // module has not arrived, so on a cold chunk it committed nothing: measured
+    // at the snapshot instant, the path already read /ready-room while the DOM
+    // still showed the Flight Deck. The browser then photographed the OLD page
+    // as the "after" frame, animated it against itself — no visible change —
+    // and the real screen appeared afterwards, outside the transition. That
+    // reads exactly as a hitch, a freeze, then a jump.
+    //
+    // Loading BEFORE the transition rather than inside it matters: inside, the
+    // page is frozen behind a snapshot while the network runs. Out here it stays
+    // live and interactive. If the chunk is slow the transition is dropped and
+    // the navigation is plain — no transition beats a broken one.
+    if (kind) {
+      const warmed = await warmRoute(to);
+      if (!warmed) kind = null;
+    }
+
     if (!kind) {
       clearMorph();             // nothing will animate, so drop any morph name
       move();
@@ -197,10 +264,16 @@ function AppInner() {
       // happened inside the callback and is unaffected.
       const vt = document.startViewTransition(async () => {
         flushSync(move);
+        // flushSync commits immediately when nothing suspends. When the route
+        // is code-split it DOES suspend — React.lazy suspends on its first
+        // render whatever the module cache holds — so the commit lands a frame
+        // or two later and this waits for it. Without the wait the browser
+        // photographs the old page as the "after" frame and animates it
+        // against itself.
+        await settleDom();
         // The new screen is in the DOM and the after-snapshot has not been
-        // taken yet. Awaiting holds the snapshot until the returning card
-        // exists — the deck commits before its cards do — and gives up quickly
-        // if it never arrives.
+        // taken yet. This holds it until the returning card exists — the deck
+        // commits before its cards do — and gives up quickly if it never does.
         await markMorphTarget(kind, route);
       });
       vt.ready?.catch(() => {});
@@ -209,7 +282,7 @@ function AppInner() {
         delete document.documentElement.dataset.vt;
       });
     }
-    if (deckRef.current) deckRef.current.scrollTop = 0;
+    if (!keepScroll && deckRef.current) deckRef.current.scrollTop = 0;
   };
   // A BACKSTOP, not the cleanup. The morph name is written on one element for
   // the length of one transition, and a card that kept it would collide with
@@ -643,8 +716,17 @@ function AppInner() {
       }
     }
     scrollPositions.current[tab] = deckRef.current?.scrollTop || 0;
-    navigate(nextTab === "pdf" ? routePath.library(activeModuleCode) : routePath.module(activeModuleCode));
-    requestAnimationFrame(() => { if (deckRef.current) deckRef.current.scrollTop = scrollPositions.current[nextTab] || 0; });
+    // Through go(), so the tab slide applies here as it does on the profile —
+    // keepScroll because this restores each tab's own position below, and go()
+    // would otherwise send both to the top.
+    go(nextTab === "pdf" ? routePath.library(activeModuleCode) : routePath.module(activeModuleCode),
+       { keepScroll: true })
+      // Chained rather than fired straight away: go() is async now, so a bare
+      // requestAnimationFrame could restore the position before the new tab
+      // had committed and scroll the OLD panel instead.
+      .then(() => requestAnimationFrame(() => {
+        if (deckRef.current) deckRef.current.scrollTop = scrollPositions.current[nextTab] || 0;
+      }));
   };
   const goToModule = (moduleCode, targetTab = "chapters") => {
     // Validated against the code it was handed, not against data.js.

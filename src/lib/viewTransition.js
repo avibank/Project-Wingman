@@ -27,7 +27,7 @@
  * Section and depth come from parseRoute, the app's own parser, so this can
  * never disagree with the router about where a URL leads.
  */
-import { parseRoute } from "./routes.js";
+import { parseRoute, PROFILE_TABS } from "./routes.js";
 
 /* Which top-level place a route belongs to, and how deep it sits inside it.
    Depth is what makes "forward" and "back" different from "sideways": moving
@@ -49,6 +49,8 @@ const PLACE = {
   notfound: ["notfound", 0],
 };
 
+const MODULE_TAB_ORDER = ["chapters", "pdf", "people"];
+
 export function placeOf(route) {
   const [sec, depth] = PLACE[route?.name] || ["other", 0];
   return { sec, depth, id: route?.moduleCode || "" };
@@ -65,6 +67,30 @@ export function transitionKind(fromRoute, toPath) {
   if (a.sec === "deck" && b.sec === "module") return "morph";
   if (a.sec === "module" && b.sec === "deck") return "morphBack";
   if (a.sec !== b.sec) return "swap";
+
+  /* TABS MOVE SIDEWAYS, AND THEY HAVE A SIDE. Licence, Preferences and
+     Appearance are real URLs rather than component state, so switching one is
+     a navigation — and it fell through to "same section, same depth" and
+     returned null, which is why the panel and the heading jumped. The order in
+     PROFILE_TABS is the order on screen, so the index difference IS the
+     direction: later tab, panel comes in from the right. */
+  const from = parseRoute(toPath);
+  if (a.sec === "account" && fromRoute?.name === "profile" && from.name === "profile") {
+    const i = PROFILE_TABS.indexOf(fromRoute.tab);
+    const j = PROFILE_TABS.indexOf(from.tab);
+    if (i < 0 || j < 0 || i === j) return null;
+    return j > i ? "tabR" : "tabL";
+  }
+
+  /* The module screen's own tabs, by the same argument. Lessons and Library
+     are both name "module" at the same depth in the same module, so they came
+     out as null too. MODULE_TAB_ORDER is the order they sit in on screen. */
+  if (fromRoute?.name === "module" && from.name === "module" && a.id === b.id) {
+    const i = MODULE_TAB_ORDER.indexOf(fromRoute.tab);
+    const j = MODULE_TAB_ORDER.indexOf(from.tab);
+    if (i >= 0 && j >= 0 && i !== j) return j > i ? "tabR" : "tabL";
+  }
+
   // Same module, different chapter — sideways, not deeper.
   if (b.depth === a.depth) return a.id && b.id && a.id !== b.id ? "swap" : null;
   return b.depth > a.depth ? "fwd" : "back";
@@ -177,5 +203,52 @@ export function markMorphTarget(kind, fromRoute) {
     mo = new MutationObserver(() => { const c = find(); if (c) finish(c); });
     mo.observe(document.body, { childList: true, subtree: true });
     deadline = setTimeout(() => finish(null), TARGET_WAIT_MS);
+  });
+}
+
+/* WAIT FOR REACT TO ACTUALLY COMMIT.
+ *
+ * flushSync alone is not enough when the route is code-split. React.lazy
+ * suspends on its FIRST render whatever the module cache holds — warming the
+ * chunk removes the network wait, not the suspension — so a synchronous flush
+ * commits nothing and the browser photographs the old page as the "after"
+ * frame. Measured: the path already read /ready-room while the DOM still
+ * showed the Flight Deck, so the transition animated the deck against itself
+ * and the room appeared afterwards, outside it. A hitch, then a jump.
+ *
+ * startViewTransition's callback may be async, and the snapshot is held until
+ * it settles. That is the supported hook for exactly this: the wait happens
+ * between the two snapshots rather than after them.
+ *
+ * Bounded twice — a short idle so it returns the instant the commit lands, and
+ * a hard cap so a route that never settles cannot hold the page frozen behind
+ * a still image. The chunk is already warm by the time this runs, so the
+ * common case is one or two frames.
+ */
+export function settleDom({ max = 260 } = {}) {
+  return new Promise((resolve) => {
+    let done = false;
+    let mo = null;
+    let hard = null;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      if (mo) mo.disconnect();
+      clearTimeout(hard);
+      resolve();
+    };
+    // RESOLVE ON THE COMMIT, NOT ON AN IDLE TIMER. The first version waited
+    // 32ms of quiet after the last mutation, and setTimeout is throttled to
+    // about a second in a background tab — measured, the page sat frozen
+    // behind the snapshot for 989ms. A MutationObserver is not throttled that
+    // way, so the commit itself is the signal and a microtask lets React
+    // finish the batch it is in.
+    mo = new MutationObserver(() => { queueMicrotask(finish); });
+    mo.observe(document.body, { childList: true, subtree: true });
+    // Nothing may mutate at all — an identical screen, or a commit that has
+    // already happened — so this is the floor as well as the ceiling. It is a
+    // timer, and in a background tab it will be throttled; that is acceptable
+    // where the only cost is a still image nobody is looking at.
+    hard = setTimeout(finish, max);
   });
 }

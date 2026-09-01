@@ -434,3 +434,60 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   ::view-transition-old(wg-morph) { animation: wgOut 130ms both; }
   ::view-transition-new(wg-morph) { animation: wgIn 180ms both 50ms; }
 }
+
+/* ---------------------------------------------------------------- the tabs */
+/* Licence, Preferences and Appearance are real URLs, so switching one is a
+   navigation — and it used to jump: the panel swapped, the heading swapped,
+   and the selected tab's underline reappeared somewhere else with nothing
+   connecting the two.
+
+   Three things move, and they are three separate names because they travel
+   differently. The panel slides the way you moved. The heading crossfades in
+   place, because it is one word changing rather than a thing going anywhere.
+   The selected tab is ONE name across both states, so the browser tweens it
+   from the old tab's position to the new one — that is the underline sliding
+   rather than cutting.
+
+   Naming the selected tab in CSS is safe precisely because only one can be
+   selected: [aria-selected="true"] matches a single element, which is the
+   uniqueness a view-transition-name requires. */
+@media (prefers-reduced-motion: no-preference) {
+  .profile .panel-swap { view-transition-name: wg-panel; }
+  .profile .ptitle { view-transition-name: wg-ptitle; }
+  .profile .tabs [aria-selected="true"] { view-transition-name: wg-tab; }
+  /* The module screen's Lessons/Library strip is the same idea, so it takes the
+     same names. The two screens never render together, so there is no risk of
+     a duplicate name — the uniqueness rule is per document, per moment. */
+  .mscreen .mcard > .pane { view-transition-name: wg-panel; }
+  .mscreen .tabsbar .tab[aria-selected="true"] { view-transition-name: wg-tab; }
+
+  @keyframes wgPanelOutLeft { to { opacity: 0; transform: translateX(-18px); } }
+  @keyframes wgPanelInRight { from { opacity: 0; transform: translateX(24px); } }
+  @keyframes wgPanelOutRight { to { opacity: 0; transform: translateX(18px); } }
+  @keyframes wgPanelInLeft { from { opacity: 0; transform: translateX(-24px); } }
+
+  html[data-vt="tabR"]::view-transition-old(wg-panel) { animation: wgPanelOutLeft 150ms cubic-bezier(.3,.7,.3,1) both; }
+  html[data-vt="tabR"]::view-transition-new(wg-panel) { animation: wgPanelInRight 210ms cubic-bezier(.3,.7,.3,1) both; }
+  html[data-vt="tabL"]::view-transition-old(wg-panel) { animation: wgPanelOutRight 150ms cubic-bezier(.3,.7,.3,1) both; }
+  html[data-vt="tabL"]::view-transition-new(wg-panel) { animation: wgPanelInLeft 210ms cubic-bezier(.3,.7,.3,1) both; }
+
+  /* The heading is one word becoming another in the same place. */
+  html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: wgOut 110ms both; }
+  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgIn 170ms both 40ms; }
+
+  /* The tab itself: the group tweens position and size, so the label and its
+     underline travel. Held above the panel so it is never clipped by it. */
+  html[data-vt^="tab"]::view-transition-group(wg-tab) {
+    z-index: 25;
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(.3,.7,.3,1);
+  }
+  html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: wgOut 90ms both; }
+  html[data-vt^="tab"]::view-transition-new(wg-tab) { animation: wgIn 150ms both; }
+
+  /* The content region must NOT also slide — the frame is staying put and only
+     the panel inside it is moving. Without this the whole page slides and the
+     tab row goes with it. */
+  html[data-vt^="tab"]::view-transition-old(wg-content),
+  html[data-vt^="tab"]::view-transition-new(wg-content) { animation: none; }
+}
