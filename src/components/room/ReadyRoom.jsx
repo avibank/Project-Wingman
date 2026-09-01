@@ -155,6 +155,14 @@ export default function ReadyRoom({
     if (el) el.scrollTop = el.scrollHeight;
   }, [view, messages.length]);
 
+  /* Filtered once, because the rail needs to know whether the SEARCH emptied
+     it — not just whether a section happens to be empty. Typing something that
+     matches nothing used to leave two bare headings and no words at all: the
+     list vanished and nothing said why or how to get it back. */
+  const shownSquadrons = squadrons.filter((s) => matches(query, s.name, s.code));
+  const shownModules = modules.filter((m) => matches(query, m.name, m.code || m.id));
+  const searchFoundNothing = Boolean(query.trim()) && !shownSquadrons.length && !shownModules.length;
+
   const online = new Set(rail.all.map((p) => p.user_id));
   const lessonOf = (lid) => {
     for (const c of chapters) for (const l of (c.lessons || [])) if (l.id === lid) return { c, l };
@@ -232,8 +240,11 @@ export default function ReadyRoom({
         </div>
 
         <div className="rail-scroll">
-          <p className="group-head"><b>Squadrons</b></p>
-          {squadrons.filter((s) => matches(query, s.name, s.code)).map((s) => {
+          {searchFoundNothing && (
+            <p className="rail-none">Clear the search to see every squadron and module.</p>
+          )}
+          {!searchFoundNothing && <p className="group-head"><b>Squadrons</b></p>}
+          {shownSquadrons.map((s) => {
             const last = messages.filter((m) => m.squadronId === s.id).slice(-1)[0];
             const unread = messages.filter(
               (m) => m.squadronId === s.id && m.authorId !== me
@@ -256,10 +267,15 @@ export default function ReadyRoom({
               </button>
             );
           })}
-          {!squadrons.length && <p className="rail-none">Join a squadron and it appears here.</p>}
+          {/* Only when there are genuinely none — during a search that matched
+              nothing the rail already says one thing, and two messages under
+              one empty list is worse than none. */}
+          {!searchFoundNothing && !squadrons.length && (
+            <p className="rail-none">Join a squadron and it appears here.</p>
+          )}
 
-          <p className="group-head"><b>Modules</b></p>
-          {modules.filter((m) => matches(query, m.name, m.code || m.id)).map((m) => {
+          {!searchFoundNothing && <p className="group-head"><b>Modules</b></p>}
+          {shownModules.map((m) => {
             const code = m.code || m.id;
             const mine = threads.filter((t) => t.moduleId === code);
             const newest = [...mine].sort(
