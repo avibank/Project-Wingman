@@ -369,17 +369,47 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      shipped three times here. This is the other shape — a local addition to
      someone else's element, the same as familiar.css adding content-visibility
      to lesson.css's list — and the ancestor says so. */
-  .app .deck-inner { view-transition-name: wg-content; }
+  /* NAMED ONLY WHILE A TRANSITION IS RUNNING, and that is the flicker fix.
+     A view-transition-name pulls its element OUT of the root snapshot and
+     gives it a layer of its own. Named permanently, these elements were being
+     lifted out on EVERY transition — including ones that never animate them —
+     so the new root had a hole where the content was and the layer faded in
+     over it from the UA default. A big dark rectangle for a couple of frames:
+     the flicker.
+
+     data-vt is stamped on <html> BEFORE startViewTransition is called, so it
+     is already set when the browser takes its snapshots — which is the only
+     moment these selectors have to be true. */
+  html[data-vt] .app .deck-inner { view-transition-name: wg-content; }
 
   html[data-vt]::view-transition-old(wg-content),
   html[data-vt]::view-transition-new(wg-content) {
     animation-timing-function: cubic-bezier(.3, .7, .3, 1);
     animation-fill-mode: both;
+    /* PLUS-LIGHTER, AND IT IS THE FLICKER. Two layers cross-fading on plain
+       opacity do not sum to one: at the midpoint both sit near 50% and the
+       combined coverage dips, so the background shows through the pair for a
+       few frames. On a dark ground that reads as a black flash.
+
+       This is the same reason the user agent uses plus-lighter for its own
+       root cross-fade — additive compositing keeps the two halves summing to
+       full coverage the whole way across. Removing it from the root (above)
+       is safe because neither root layer animates; here they both do. */
+    mix-blend-mode: plus-lighter;
   }
 
   /* The app's own route fade would run underneath the transition and read as a
      second, slower crossfade inside the first. */
-  html[data-vt] .route-fade { animation: none; }
+  /* data-vt-on, NOT data-vt — and the difference is the flicker itself.
+     .route-fade animates opacity 0 -> 1. Gating this on data-vt disabled it for
+     the length of a transition and then RE-ENABLED it the moment data-vt was
+     removed, which restarts the animation on the same element: the content
+     dropped to opacity 0 and faded back in, every time, right as the
+     transition finished.
+     data-vt-on is set once while transitions are available and motion is
+     allowed. It does not change per navigation, so the animation is switched
+     off once and never restarted. */
+  html[data-vt-on] .route-fade { animation: none; }
 
   @keyframes wgOut { to { opacity: 0; } }
   @keyframes wgIn { from { opacity: 0; } }
@@ -433,7 +463,8 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      name and the browser tweens between them. The name is on the hero in CSS
      because there is only ever one; on the card it is written by hand at the
      moment of the click, because only the card being opened may carry it. */
-  .mscreen .mhero { view-transition-name: wg-morph; }
+  html[data-vt="morph"] .mscreen .mhero,
+  html[data-vt="morphBack"] .mscreen .mhero { view-transition-name: wg-morph; }
   html[data-vt="morph"]::view-transition-group(wg-morph),
   html[data-vt="morphBack"]::view-transition-group(wg-morph) {
     z-index: 30;
@@ -461,14 +492,14 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    selected: [aria-selected="true"] matches a single element, which is the
    uniqueness a view-transition-name requires. */
 @media (prefers-reduced-motion: no-preference) {
-  .profile .panel-swap { view-transition-name: wg-panel; }
-  .profile .ptitle { view-transition-name: wg-ptitle; }
-  .profile .tabs [aria-selected="true"] { view-transition-name: wg-tab; }
+  html[data-vt^="tab"] .profile .panel-swap { view-transition-name: wg-panel; }
+  html[data-vt^="tab"] .profile .ptitle { view-transition-name: wg-ptitle; }
+  html[data-vt^="tab"] .profile .tabs [aria-selected="true"] { view-transition-name: wg-tab; }
   /* The module screen's Lessons/Library strip is the same idea, so it takes the
      same names. The two screens never render together, so there is no risk of
      a duplicate name — the uniqueness rule is per document, per moment. */
-  .mscreen .mcard > .pane { view-transition-name: wg-panel; }
-  .mscreen .tabsbar .tab[aria-selected="true"] { view-transition-name: wg-tab; }
+  html[data-vt^="tab"] .mscreen .mcard > .pane { view-transition-name: wg-panel; }
+  html[data-vt^="tab"] .mscreen .tabsbar .tab[aria-selected="true"] { view-transition-name: wg-tab; }
 
   @keyframes wgPanelOutLeft { to { opacity: 0; transform: translateX(-18px); } }
   @keyframes wgPanelInRight { from { opacity: 0; transform: translateX(24px); } }
@@ -481,6 +512,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt="tabL"]::view-transition-new(wg-panel) { animation: wgPanelInLeft 210ms cubic-bezier(.3,.7,.3,1) both; }
 
   /* The heading is one word becoming another in the same place. */
+  html[data-vt^="tab"]::view-transition-old(wg-panel),
+  html[data-vt^="tab"]::view-transition-new(wg-panel),
+  html[data-vt^="tab"]::view-transition-old(wg-ptitle),
+  html[data-vt^="tab"]::view-transition-new(wg-ptitle) { mix-blend-mode: plus-lighter; }
   html[data-vt^="tab"]::view-transition-old(wg-ptitle) { animation: wgOut 110ms both; }
   html[data-vt^="tab"]::view-transition-new(wg-ptitle) { animation: wgIn 170ms both 40ms; }
 

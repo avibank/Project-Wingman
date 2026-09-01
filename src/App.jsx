@@ -406,6 +406,22 @@ function AppInner() {
       quizTaken(progress.get(LOGBOOK_KEY, []), chapterId, activeModuleCode, correct, total));
   };
   const [reduceMotion, setReduceMotion] = useState(false);
+
+  // The transition layer's own on-switch, stamped once rather than per move.
+  // The app's route fade is turned off while this layer is running, and that
+  // has to be a STABLE flag: toggling it per navigation restarted the fade the
+  // instant each transition ended, which is a flicker at the end of every one.
+  useEffect(() => {
+    const root = document.documentElement;
+    const set = () => {
+      if (canTransition()) root.dataset.vtOn = "1";
+      else delete root.dataset.vtOn;
+    };
+    set();
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    mq?.addEventListener?.("change", set);
+    return () => mq?.removeEventListener?.("change", set);
+  }, [reduceMotion]);
   const [fontSize, setFontSize] = useState("medium");
   const [livery, setLivery] = useState(DEFAULT_LIVERY);
   const [variantPin, setVariantPin] = useState(null); // §6.3 Night Ops: "day" | "night" | null = Auto
