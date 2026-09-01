@@ -79,6 +79,13 @@
      Its own rule fixes that height: min-height --tap, offset 12px. */
   --rpt-h: calc(var(--tap, 44px) + 12px);
 
+  /* The transition layer's one curve, declared once so every kind shares it.
+     A gentler start than the curve it replaces: it leaves rest slowly and
+     still arrives with authority, which is what reads as "smooth" rather than
+     "slow". Durations went up with it — a soft curve over a short duration
+     just looks late. */
+  --wg-ease: cubic-bezier(.32, .72, 0, 1);
+
   /* ----------------------------------------------------------- 3 · shape */
   --r-panel: 13px;      /* the hero card and the crew strip */
   --r-card: 12px;       /* module cards */
@@ -382,9 +389,14 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      moment these selectors have to be true. */
   html[data-vt] .app .deck-inner { view-transition-name: wg-content; }
 
+  /* SOFTER, AND LONGER, WITHOUT LOSING THE SNAP. The old curve left almost
+     immediately and the short durations made every move read as a cut. This
+     one eases out of rest before it travels, so the screen looks like it is
+     being carried rather than swapped — the deck-to-room settle already felt
+     right, so every other kind is tuned toward it rather than away. */
   html[data-vt]::view-transition-old(wg-content),
   html[data-vt]::view-transition-new(wg-content) {
-    animation-timing-function: cubic-bezier(.3, .7, .3, 1);
+    animation-timing-function: var(--wg-ease);
     animation-fill-mode: both;
     /* PLUS-LIGHTER, AND IT IS THE FLICKER. Two layers cross-fading on plain
        opacity do not sum to one: at the midpoint both sit near 50% and the
@@ -413,49 +425,49 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
   @keyframes wgOut { to { opacity: 0; } }
   @keyframes wgIn { from { opacity: 0; } }
-  @keyframes wgOutLeft { to { transform: translateX(-2.5%); } }
-  @keyframes wgInRight { from { transform: translateX(3.5%); } }
-  @keyframes wgOutRight { to { transform: translateX(2.5%); } }
-  @keyframes wgInLeft { from { transform: translateX(-3.5%); } }
+  @keyframes wgOutLeft { to { transform: translateX(-3.2%); } }
+  @keyframes wgInRight { from { transform: translateX(4.4%); } }
+  @keyframes wgOutRight { to { transform: translateX(3.2%); } }
+  @keyframes wgInLeft { from { transform: translateX(-4.4%); } }
   @keyframes wgSettleDown { to { transform: scale(.985); } }
   @keyframes wgSettleUp { from { transform: scale(1.015); } }
 
   /* Deeper. Forward is the slower of the two on purpose: arriving somewhere
      new deserves more time than returning to somewhere you have been. */
   html[data-vt="fwd"]::view-transition-old(wg-content) {
-    animation-name: wgOut, wgOutLeft; animation-duration: 230ms;
+    animation-name: wgOut, wgOutLeft; animation-duration: 300ms;
   }
   html[data-vt="fwd"]::view-transition-new(wg-content) {
-    animation-name: wgIn, wgInRight; animation-duration: 230ms;
+    animation-name: wgIn, wgInRight; animation-duration: 300ms;
   }
   html[data-vt="back"]::view-transition-old(wg-content) {
-    animation-name: wgOut, wgOutRight; animation-duration: 180ms;
+    animation-name: wgOut, wgOutRight; animation-duration: 260ms;
   }
   html[data-vt="back"]::view-transition-new(wg-content) {
-    animation-name: wgIn, wgInLeft; animation-duration: 180ms;
+    animation-name: wgIn, wgInLeft; animation-duration: 260ms;
   }
 
   /* Sideways. No direction, because there is no direction to report. */
   html[data-vt="swap"]::view-transition-old(wg-content) {
-    animation-name: wgOut, wgSettleDown; animation-duration: 200ms;
+    animation-name: wgOut, wgSettleDown; animation-duration: 280ms;
   }
   html[data-vt="swap"]::view-transition-new(wg-content) {
-    animation-name: wgIn, wgSettleUp; animation-duration: 200ms;
+    animation-name: wgIn, wgSettleUp; animation-duration: 280ms;
   }
 
   /* Opening a module is a card growing into a page, so the page underneath
      gets out of the way quickly and lets the card carry the movement. */
   html[data-vt="morph"]::view-transition-old(wg-content) {
-    animation-name: wgOut; animation-duration: 150ms;
+    animation-name: wgOut; animation-duration: 200ms;
   }
   html[data-vt="morph"]::view-transition-new(wg-content) {
-    animation-name: wgIn; animation-duration: 230ms; animation-delay: 70ms;
+    animation-name: wgIn; animation-duration: 300ms; animation-delay: 80ms;
   }
   html[data-vt="morphBack"]::view-transition-old(wg-content) {
-    animation-name: wgOut; animation-duration: 130ms;
+    animation-name: wgOut; animation-duration: 180ms;
   }
   html[data-vt="morphBack"]::view-transition-new(wg-content) {
-    animation-name: wgIn; animation-duration: 200ms; animation-delay: 60ms;
+    animation-name: wgIn; animation-duration: 270ms; animation-delay: 70ms;
   }
 
   /* THE CARD AND THE TITLE ARE ONE THING. The module card on the deck and the
@@ -468,11 +480,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt="morph"]::view-transition-group(wg-morph),
   html[data-vt="morphBack"]::view-transition-group(wg-morph) {
     z-index: 30;
-    animation-duration: 280ms;
-    animation-timing-function: cubic-bezier(.3, .7, .3, 1);
+    animation-duration: 360ms;
+    animation-timing-function: var(--wg-ease);
   }
-  ::view-transition-old(wg-morph) { animation: wgOut 130ms both; }
-  ::view-transition-new(wg-morph) { animation: wgIn 180ms both 50ms; }
+  ::view-transition-old(wg-morph) { animation: wgOut 170ms both; }
+  ::view-transition-new(wg-morph) { animation: wgIn 240ms both 60ms; }
 }
 
 /* ---------------------------------------------------------------- the tabs */
@@ -506,10 +518,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   @keyframes wgPanelOutRight { to { opacity: 0; transform: translateX(18px); } }
   @keyframes wgPanelInLeft { from { opacity: 0; transform: translateX(-24px); } }
 
-  html[data-vt="tabR"]::view-transition-old(wg-panel) { animation: wgPanelOutLeft 150ms cubic-bezier(.3,.7,.3,1) both; }
-  html[data-vt="tabR"]::view-transition-new(wg-panel) { animation: wgPanelInRight 210ms cubic-bezier(.3,.7,.3,1) both; }
-  html[data-vt="tabL"]::view-transition-old(wg-panel) { animation: wgPanelOutRight 150ms cubic-bezier(.3,.7,.3,1) both; }
-  html[data-vt="tabL"]::view-transition-new(wg-panel) { animation: wgPanelInLeft 210ms cubic-bezier(.3,.7,.3,1) both; }
+  html[data-vt="tabR"]::view-transition-old(wg-panel) { animation: wgPanelOutLeft 150ms var(--wg-ease) both; }
+  html[data-vt="tabR"]::view-transition-new(wg-panel) { animation: wgPanelInRight 210ms var(--wg-ease) both; }
+  html[data-vt="tabL"]::view-transition-old(wg-panel) { animation: wgPanelOutRight 150ms var(--wg-ease) both; }
+  html[data-vt="tabL"]::view-transition-new(wg-panel) { animation: wgPanelInLeft 210ms var(--wg-ease) both; }
 
   /* The heading is one word becoming another in the same place. */
   html[data-vt^="tab"]::view-transition-old(wg-panel),
@@ -524,7 +536,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt^="tab"]::view-transition-group(wg-tab) {
     z-index: 25;
     animation-duration: 220ms;
-    animation-timing-function: cubic-bezier(.3,.7,.3,1);
+    animation-timing-function: var(--wg-ease);
   }
   html[data-vt^="tab"]::view-transition-old(wg-tab) { animation: wgOut 90ms both; }
   html[data-vt^="tab"]::view-transition-new(wg-tab) { animation: wgIn 150ms both; }

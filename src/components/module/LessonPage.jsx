@@ -292,8 +292,12 @@ export default function LessonPage({
           })}
         </ul>
 
-        {/* Directly under the player and above the tabs on purpose: under a
-            comment list this is a footer nobody reaches. */}
+        {/* ONLY WHEN IT IS NOT ALREADY IN THE LIST ABOVE. The rail lists this
+            chapter's lessons, so when the next one is in this chapter this row
+            repeated a line the eye had just read — "Lesson 2" listed, then
+            "NEXT Lesson 2" underneath it. It earns its place when the next
+            thing is in a DIFFERENT chapter, which the list cannot show. */}
+        {(!next || next.chapter?.id !== chapter.id) && (
         <div className="next-up">
           {next ? (
             <>
@@ -308,6 +312,7 @@ export default function LessonPage({
             </>
           ) : <span className="next-label">Last in this module</span>}
         </div>
+        )}
 
       </div>
 
@@ -405,14 +410,14 @@ export default function LessonPage({
           ? <NoteDeck notes={myNotes} jumpTo={justSaved}
                       onSeek={requestSeek}
                       onDelete={(id) => mutate((st) => deleteNote(st, id))} />
-          : <CommentsTab comments={comments} replies={session.replies} at={at}
+          : <CommentsTab comments={comments} replies={session.replies}
                          onReport={(l) => {
                            // The existing reporter already carries the route
                            // and the state; this only has to point at it.
                            const b = document.querySelector(".rpt");
                            if (b) b.click(); else console.info("Problem report", { lesson: l.id });
                          }}
-                         lesson={lesson} moduleName={mod.name} moduleId={mod.code || mod.id}
+                         lesson={lesson}
                          people={people} onSeek={requestSeek} mutate={mutate}
                          pending={pending} postOptimistic={postOptimistic} me={me} />}
       </div>
@@ -429,7 +434,7 @@ export default function LessonPage({
 // replies collapsed behind one expander, because that is what everyone has
 // seen ten thousand times and because an expanded thread pushes the next
 // question off the screen.
-function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, people, onSeek, mutate, pending, postOptimistic, onReport, me }) {
+function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pending, postOptimistic, onReport, me }) {
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
@@ -437,38 +442,18 @@ function CommentsTab({ comments, replies, at, lesson, moduleName, moduleId, peop
   // §3.5 — the instructor badge, "where it applies". One resolver, so a badge
   // can never appear beside a name the same lookup failed to resolve.
   const teaches = (id) => people.find((p) => p.id === id)?.role === "instructor";
-  const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyBody, setReplyBody] = useState("");
   const [openReplies, setOpenReplies] = useState(() => new Set());
 
   return (
     <>
-      {/* Public: the accent rule, a different placeholder, a different button,
-          and a line that is permanently on screen saying who sees this. Four
-          differences, because the gap in consequence is much bigger than the
-          gap in the interface. */}
-      <div className="compose" data-vis="public">
-        <span className="compose-t">{mmss(at)}</span>
-        <textarea className="compose-field" rows={1} value={body}
-                  placeholder={`Ask everyone on ${moduleName}`}
-                  onChange={(e) => setBody(e.target.value)} />
-        <span className="compose-who">Everyone on {moduleName} sees this, in People.</span>
-        <div className="compose-acts">
-          <button type="button" className="compose-act" data-primary=""
-                  onClick={() => {
-                    if (!body.trim()) return;
-                    // On screen this frame, settled underneath. No spinner.
-                    const id = newId('T');
-                    postOptimistic(id, (s) => ({ ...s, threads: [...s.threads, {
-                      id, moduleId, lessonId: lesson.id, t: Math.floor(at),
-                      body: body.trim(), authorId: me,
-                      createdAt: new Date().toISOString(),
-                    }]}));
-                    setBody("");
-                  }}>Post</button>
-        </div>
-      </div>
+      {/* NO COMPOSER HERE. LessonPage renders ONE above the tab strip, serving
+          both Notes and Comments — that is the stated design, and this tab was
+          rendering a SECOND one underneath it. Two boxes for one job, stacked,
+          with copy that did not even agree: "Everyone on Module 1 sees this."
+          above "Everyone on Module 1 sees this, in People." The reply composer
+          further down stays; it belongs to one comment rather than to the tab. */}
 
       {comments.length === 0 ? (
         <p className="lempty">

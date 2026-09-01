@@ -28,9 +28,9 @@
    ========================================================================= */
 
 /* THE COLUMNS MOVED, AND THEY LIVE IN lesson.css NOW. This file used to own
-   the watch layout too — a 352px rail on the RIGHT at 1120px and up. The list
-   is on the left now and the thread runs the full width of the player column,
-   so that rule describes a layout that no longer exists.
+   the watch layout too — a 352px rail whose sizing no longer matches. The list
+   is on the right and the thread runs the full width of the player column, so
+   that rule described a layout that no longer exists.
 
    It could not simply be left: lesson.css wins the COLUMNS at (0,2,0) via
    .watch[data-layout="b"], but `gap` and `align-items` here are (0,1,0) on the
@@ -261,19 +261,27 @@
    avatar · name · relative time / body / Reply, replies behind one expander
    ========================================================================= */
 
+/* WHAT MADE THIS READ AS REDDIT, and none of it was the structure.
+   The body was --t2 and the name was --fs-xs, so the quiet text and the loud
+   text were the wrong way round: on YouTube the COMMENT is the content and the
+   name is a caption above it. The action row sat on 18px gaps, which is a
+   toolbar rather than two quiet links. And the row carried a third grid column
+   for the flag, which put a control rail down the right of every comment.
+   The flag lives in the row's own flow now and appears on hover, the way it
+   does on the site everyone has this shape from. */
 .cmt{
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  padding: 14px 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0;
 }
 .cmt-main{ min-width: 0; }
 .cmt-head{
-  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-  margin-bottom: 4px;
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 2px;
 }
-.cmt-name{ font-size: var(--fs-xs); font-weight: 600; color: var(--t1); }
-.cmt-when{ font-size: var(--fs-xs); color: var(--t3); }
+.cmt-name{ font-size: 13px; font-weight: 600; color: var(--t1); letter-spacing: -.01em; }
+.cmt-when{ font-size: 12px; color: var(--t3); }
 
 /* The timestamp in a comment is a link that seeks, in the accent. YouTube
    taught everyone this — a time inside a comment is pressable. The behaviour
@@ -288,30 +296,35 @@
 }
 .cmt-seek:hover{ text-decoration: underline; }
 
-.cmt-body{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); }
-.cmt-acts{ display: flex; align-items: center; gap: 18px; margin-top: 6px; }
+/* The comment is the content: primary ink, 14px, generous leading. */
+.cmt-body{
+  font-size: 14px; line-height: 1.45; color: var(--t1);
+  overflow-wrap: anywhere; white-space: pre-wrap; margin: 0;
+}
+.cmt-acts{ display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 .cmt-act{
-  min-height: var(--tap);
-  background: none; border: 0; padding: 0;
-  font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  min-height: 32px; padding: 0 10px; border-radius: 999px;
+  background: none; border: 0;
+  font: inherit; font-size: 12px; font-weight: 600;
   color: var(--t3); cursor: pointer;
 }
-.cmt-act:hover{ color: var(--t1); }
+.cmt-act:hover{ color: var(--t1); background: var(--raised); }
 
 /* Replies start collapsed — what everyone has seen ten thousand times, and an
    expanded thread otherwise pushes the next question off the screen. */
 .cmt-expand{
   display: inline-flex; align-items: center; gap: 6px;
-  min-height: var(--tap);
-  background: none; border: 0; padding: 0;
-  font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  min-height: 32px; padding: 0 10px; border-radius: 999px;
+  background: none; border: 0;
+  font: inherit; font-size: 13px; font-weight: 600;
   color: var(--active); cursor: pointer;
 }
+.cmt-expand:hover{ background: color-mix(in oklab, var(--active), transparent 88%); }
 .cmt-expand svg{ width: 12px; height: 12px; transition: transform var(--t-fast) var(--ease); }
 .cmt-expand[aria-expanded="true"] svg{ transform: rotate(180deg); }
-.cmt-replies{ list-style: none; margin: 8px 0 0; padding: 0 0 0 calc(36px + 12px); }
+.cmt-replies{ list-style: none; margin: 2px 0 0; padding: 0 0 0 calc(40px + 14px); }
 .cmt-replies[hidden]{ display: none; }
-.cmt-reply{ display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0; }
+.cmt-reply{ display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 8px 0; }
 
 /* optimistic states — the row is there before the server answers */
 .cmt[data-pending="1"]{ opacity: .62; }

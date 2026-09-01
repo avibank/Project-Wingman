@@ -697,8 +697,14 @@
    about it. Comments used to sit in a 372px rail beside the video, which is
    the one place a comment thread cannot breathe. */
 .watch[data-layout="b"]{
-  grid-template-columns: clamp(268px, 23vw, 340px) minmax(0, 1fr);
-  grid-template-areas: "side player" "side meta" "side panel";
+  /* THE LIST GOES ON THE RIGHT, which is where every video site puts what
+     plays next — and the reason is reading order, not fashion: the player and
+     the conversation under it are the column you read down, and up-next is the
+     thing you glance at sideways when you are done. It sat on the left for one
+     revision and put a navigation rail between the edge of the screen and the
+     thing you came to watch. */
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 25vw, 402px);
+  grid-template-areas: "player side" "meta side" "panel side";
   align-items: start;
 }
 .watch .pl{ grid-area: player; }
@@ -711,6 +717,9 @@
 .watch[data-layout="b"] .sd{
   position: sticky; top: 16px; align-self: start;
   max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain;
+  /* The rail scrolls its own overflow, so it must not also show a bar unless
+     there is something to scroll. */
+  scrollbar-width: thin;
 }
 
 /* §4 — one column on tablet and phone, in reading order: player, title, the
@@ -970,3 +979,55 @@
 }
 
 .app[data-paper="1"] .watch .sd .sdhead{ border-bottom-color: var(--rule, var(--line)); }
+
+/* ============================================================================
+   THE COMPOSER, IN YOUTUBE'S GRAMMAR
+
+   The left rule was doing real work — it said which consequence you were in,
+   private or public — but a coloured bar down the left of a text block is the
+   one shape that reads as a forum quote, and it was the last thing making this
+   panel feel like a comment site rather than a video page.
+
+   The signal moves rather than goes. YouTube's composer is an UNDERLINE that
+   lights when you focus it, so that is where the accent lives now: private
+   underlines in the hairline, public in the accent. The sentence underneath
+   ("Everyone on Module 1 sees this.") is unchanged and still carries the
+   meaning in words, which is the rule that colour is never the only carrier.
+
+   Scoped to .watch on purpose. .composer is shared with the Ready Room, and
+   the room's chat is not a comment box.
+   ========================================================================= */
+.watch .composer{
+  border-inline-start: 0;
+  margin-inline-start: 0;
+  padding-left: 0;
+  border-bottom: 0;
+  gap: 14px;
+  padding-block: 4px 10px;
+}
+.watch .composer-field{
+  border-bottom: 1px solid var(--line);
+  transition: border-color 140ms var(--ease, ease);
+}
+.watch .composer[data-vis="public"] .composer-field:focus{ border-bottom-color: var(--active); }
+.watch .composer[data-vis="private"] .composer-field:focus{ border-bottom-color: var(--t2); }
+.watch .composer-who{ margin-top: 8px; }
+
+/* The reply box inside a thread, same grammar. */
+.watch .compose{
+  border-inline-start: 0;
+  margin-inline-start: 0;
+  padding-left: 0;
+  border-bottom: 0;
+}
+
+/* ---------------------------------------------------------- the up-next rail */
+/* Tighter, and quieter. It is the thing you glance at, not the thing you read,
+   so the rows lose a step of padding and the header stops shouting. It still
+   breathes: 10px between rows is a list, 2px is a table. */
+.watch .sd{ padding: 14px 14px 12px; }
+.watch .sd .sdhead{ padding-bottom: 8px; margin-bottom: 2px; }
+.watch .sd .sdtitle{ font-size: 12.5px; }
+.watch .sditem{ padding: 8px 10px; gap: 12px; }
+.watch .sdname{ font-size: 13.5px; }
+.watch .sdlist{ gap: 1px; }
