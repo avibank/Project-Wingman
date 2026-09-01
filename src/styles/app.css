@@ -576,6 +576,60 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   ::view-transition-old(wg-media) { animation: wgOut var(--wg-morph) var(--wg-ease) both; }
   ::view-transition-new(wg-media) { animation: wgIn var(--wg-morph) var(--wg-ease) both; }
   @keyframes wgIn { from { opacity: 0; } }
+
+  /* ==========================================================================
+     THE CHROME CHANGES WHEN YOU LEAVE FOR THE READY ROOM, and that was the
+     jump. The room draws its own header — wordmark, plus, account — instead of
+     the app's top bar, so on that move the whole bar is REPLACED. Root is
+     pinned to no animation for every navigation, which is right when the
+     chrome stays put and wrong here: the bar cut instantly at t=0 while the
+     body dissolved over 380ms. A hard cut followed by a slow fade reads as a
+     jump no matter how long the fade is.
+
+     Two things are genuinely the same object on both screens: the wordmark and
+     the account button. They are named, so they TRAVEL from the top bar to the
+     room's header rather than being destroyed and recreated. Everything else
+     in the bar — the Ready Room pill, which only exists on one side — is left
+     to the root, which now cross-fades on this kind so it dissolves instead of
+     cutting.
+
+     Only on swap. On every other navigation the bar is the same element in the
+     same place, so naming it would lift it out of the root snapshot for a move
+     it takes no part in. */
+  html[data-vt="swap"] .brandmark { view-transition-name: wg-brand; }
+  html[data-vt="swap"] .avbtn { view-transition-name: wg-avatar; }
+  html[data-vt="swap"]::view-transition-group(wg-brand),
+  html[data-vt="swap"]::view-transition-group(wg-avatar) {
+    z-index: 40;
+    animation-duration: var(--wg-in);
+    animation-timing-function: var(--wg-ease);
+  }
+  /* The two ends are the same words at slightly different sizes and positions,
+     so the group does the travelling and the pictures dissolve underneath it. */
+  html[data-vt="swap"]::view-transition-old(wg-brand),
+  html[data-vt="swap"]::view-transition-new(wg-brand),
+  html[data-vt="swap"]::view-transition-old(wg-avatar),
+  html[data-vt="swap"]::view-transition-new(wg-avatar) {
+    mix-blend-mode: plus-lighter;
+    animation-duration: var(--wg-in);
+    animation-timing-function: var(--wg-ease);
+  }
+  html[data-vt="swap"]::view-transition-old(wg-brand),
+  html[data-vt="swap"]::view-transition-old(wg-avatar) { animation-name: wgOut; }
+  html[data-vt="swap"]::view-transition-new(wg-brand),
+  html[data-vt="swap"]::view-transition-new(wg-avatar) { animation-name: wgIn; }
+
+  /* The rest of the bar dissolves rather than cutting. Where the chrome is
+     identical this is invisible and costs nothing; where it changes it is the
+     difference between a fade and a snap. */
+  html[data-vt="swap"]::view-transition-old(root),
+  html[data-vt="swap"]::view-transition-new(root) {
+    mix-blend-mode: plus-lighter;
+    animation-duration: var(--wg-in);
+    animation-timing-function: var(--wg-ease);
+  }
+  html[data-vt="swap"]::view-transition-old(root) { animation-name: wgOut; }
+  html[data-vt="swap"]::view-transition-new(root) { animation-name: wgIn; }
 }
 
 /* ---------------------------------------------------------------- the tabs */
