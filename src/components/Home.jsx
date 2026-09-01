@@ -157,8 +157,19 @@ const DECK_CSS = `
   letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
   display: flex; align-items: center; justify-content: center; text-align: center;
   padding: 0 10px; line-height: 1.2; }
-.deck .ai { width: calc(112px * var(--scale, 1)); height: calc(112px * var(--scale, 1)); display: block;
-  cursor: crosshair; }
+/* THE DIAL IS CAPPED BY ITS CELL, and it never was. 112px is the size it
+   wants, but the strip goes to five columns between 761px and roughly 900px,
+   which leaves 106px of content in a cell -- so the instrument hung over the
+   edge of its own card at EVERY instrument scale, by 6px at Standard and 42px
+   at Large. Measured across all four scales, not reasoned about.
+   max-width rather than a breakpoint, because the cell width is a function of
+   the viewport AND the column count AND the scale, and enumerating that in
+   media queries is how it went wrong in the first place. aspect-ratio keeps it
+   circular while it shrinks; a fixed height would have squashed it to an oval
+   the moment the width was capped. */
+.deck .aiwrap { max-width: 100%; }
+.deck .ai { width: calc(112px * var(--scale, 1)); max-width: 100%;
+  height: auto; aspect-ratio: 1 / 1; display: block; cursor: crosshair; }
 .deck .ai-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
 @media (prefers-reduced-motion: reduce) { .deck .ai-rim { transition: none; } }
 .app.smooth-air .deck .ai-rim { transition: none; }

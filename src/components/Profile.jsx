@@ -272,6 +272,43 @@ const PROFILE_CSS = `
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 620px) { .two { grid-template-columns: 1fr; } }
 
+/* A SETTINGS ROW STACKS ON A NARROW SCREEN, and until now it did not.
+   .row is a flex pair: a text block that shrinks and a control that cannot.
+   The segmented control is sized by its labels, so at 375px its intrinsic
+   width was larger than the space left beside the label and it pushed 83px
+   past the row -- measured, not guessed: the row ended at x=291 and the
+   control at x=374, hard against the screen edge. It read as a control that
+   had slipped out of its card.
+   Wrapping is the fix rather than shrinking, because shrinking a segmented
+   control past its labels only moves the problem into the text. Label on top,
+   control full width beneath, which is the pattern every settings screen on a
+   phone already uses -- so it is also the more familiar of the two. */
+@media (max-width: 620px) {
+  .row { flex-wrap: wrap; row-gap: 10px; }
+  /* EVERY segmented control, not the ones in a .row. Writing this per-context
+     found the same overflow three times in three places -- the finish control
+     hung 91px outside its card because it is sized by width: max-content and
+     max-width: 100% caps the BOX without letting the buttons shrink; the
+     preferences pair hung 3px. One rule where the control is, rather than one
+     per container it might sit in. Scoped through .profile to outrank the base
+     rules further down this sheet. */
+  .profile .seg { width: 100%; }
+  .profile .seg > button { flex: 1 1 0; min-width: 0; padding-inline: 8px; }
+
+  /* Same shape, same cause: a 200px floor beside an avatar in a 208px row.
+     On a phone the identity block takes the whole line instead.
+     Scoped through .profile deliberately. Bare .idtext ties with the base rule
+     on specificity, and the base rule is declared further down this sheet, so
+     source order handed it back its flex-basis and its 200px floor -- measured
+     as still 22px past the row after the first attempt. A media query adds no
+     specificity of its own; the extra class is what wins it. */
+  .profile .idtext { flex-basis: 100%; min-width: 0; }
+}
+
+/* An address has no spaces to break at, so a long one runs past its column on
+   any width. This is the only thing here that is not width-conditional. */
+.idmail { overflow-wrap: anywhere; }
+
 .seg { display: inline-flex; background: var(--raised); border: 1px solid var(--line);
   border-radius: 10px; padding: 3px; gap: 3px; }
 .seg button { background: none; border: 0; border-radius: 7px; padding: 8px 15px; color: var(--t2);
