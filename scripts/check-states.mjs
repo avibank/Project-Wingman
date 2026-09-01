@@ -90,6 +90,25 @@ const ABSENCE = [
   /^\s*No one\b/i,
   /^\s*No [a-z]+ yet\s*$/i,
 ];
+/* THE JSX-TEXT SET IS TIGHTER THAN THE LITERAL ONE, and both false positives
+   it produced on the first run are the reason.
+
+   "Nothing here is timed. Leaving keeps your place." is the quiz reassuring
+   you, not an empty state — so the phrase now has to BE the message rather
+   than start it. "Nobody here has it figured out yet. Ask the dumb question."
+   opens on absence but names the action in its second sentence, which is the
+   rule being followed rather than broken — so a sentence that continues past
+   a full stop is left alone.
+
+   Both refusals cost coverage: a long absence-only sentence slips through. A
+   rule that rewrites good copy is worse than one that misses a bad line. */
+const ABSENCE_TEXT = [
+  /^Nothing (?:saved|here|to see)(?: yet)?[.!]?$/i,
+  /^Nobody[^.!?]*$/i,
+  /^No one[^.!?]*$/i,
+  /^No [a-z]+ yet[.!]?$/i,
+];
+
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 for (const f of all.filter((x) => x.startsWith("src/components/"))) {
   const t = strip(src(f));
@@ -98,6 +117,28 @@ for (const f of all.filter((x) => x.startsWith("src/components/"))) {
     if (lit.length > 45) continue;               // a caption is short and stops
     if (ABSENCE.some((re) => re.test(lit))) {
       fails.push(`${f}: "${lit}" states absence instead of naming what fills it`);
+    }
+  }
+
+  /* AND THE SAME COPY WRITTEN AS JSX TEXT, which neither pass above could see.
+     The Ready Room said "Nobody has answered this yet" on every unanswered
+     question — not a string literal, just words between two tags, so the
+     literal scan walked past it. It is the same sentence either way. */
+  for (const m of t.matchAll(/>\s*([A-Z][^<>{}\n]{2,80}?)\s*</g)) {
+    const text = m[1].trim();
+    if (ABSENCE_TEXT.some((re) => re.test(text))) {
+      fails.push(`${f}: "${text}" states absence instead of naming what fills it`);
+    }
+  }
+
+  /* A ZERO COUNT, which the voice section bans in the same breath. This is the
+     shape it takes in JSX: a number beside a singular/plural word, where the
+     zero case renders "0 answers". Only flagged when nothing guards it — a
+     `n > 0 ?` ahead of it means the zero case has its own copy. */
+  for (const m of t.matchAll(/\{(\w+)\}\s*\{\1 === 1 \? "([a-z]+)" : "([a-z]+)"\}/g)) {
+    const before = t.slice(Math.max(0, m.index - 160), m.index);
+    if (!new RegExp(`${m[1]}\\s*>\\s*0\\s*\\?`).test(before)) {
+      fails.push(`${f}: "{${m[1]}} ${m[3]}" renders a zero count when ${m[1]} is 0`);
     }
   }
 }

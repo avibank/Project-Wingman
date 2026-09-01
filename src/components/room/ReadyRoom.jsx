@@ -444,9 +444,16 @@ export default function ReadyRoom({
                         </span>
                         <span className="post-title">{titleOf(t)}</span>
                         {excerptOf(t) && <span className="post-ex">{excerptOf(t)}</span>}
+                        {/* A question with no answers said "0 answers" and
+                            "Nobody has answered this yet" — a zero count and a
+                            statement of absence, which the voice section
+                            forbids in the same sentence. It names the action
+                            now, in the house phrasing the empty pane already
+                            uses ("Ask the first question in this module"). */}
                         <span className="post-foot">
-                          <span><MessageSquare aria-hidden="true" />{n} {n === 1 ? "answer" : "answers"}</span>
-                          {n === 0 && <span className="post-waiting">Nobody has answered this yet</span>}
+                          {n > 0
+                            ? <span><MessageSquare aria-hidden="true" />{n} {n === 1 ? "answer" : "answers"}</span>
+                            : <span className="post-waiting"><MessageSquare aria-hidden="true" />Be the first to answer</span>}
                         </span>
                       </button>
                     );
