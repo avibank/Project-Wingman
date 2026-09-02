@@ -269,11 +269,34 @@
    for the flag, which put a control rail down the right of every comment.
    The flag lives in the row's own flow now and appears on hover, the way it
    does on the site everyone has this shape from. */
+/* THE REFERENCE LAYOUT, matched to the metrics it actually uses: a 40px avatar
+   in its own column, 14px to the content, and the row's whole rhythm carried by
+   the content column rather than by padding on the row. */
 .cmt{
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
-  padding: 12px 0;
+  padding: 16px 0 0;
+  position: relative;
+}
+.cmt > .av{ --av-size: 40px; }
+
+/* THE CONNECTOR. A thread on the reference reads as one object because a line
+   runs from under the avatar to the replies toggle and turns into it -- without
+   it, an expanded thread is just more rows and the eye cannot tell which parent
+   they belong to.
+   Drawn from the avatar column so it lines up with the avatar's centre at any
+   avatar size, and only on rows that actually have replies: a line to nothing
+   is worse than no line. */
+.cmt[data-threaded="1"]::before{
+  content: "";
+  position: absolute;
+  left: calc(var(--av-size, 40px) / 2 - 1px);
+  top: calc(16px + var(--av-size, 40px) + 6px);
+  bottom: 22px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--hair);
 }
 .cmt-main{ min-width: 0; }
 .cmt-head{
@@ -301,7 +324,8 @@
   font-size: 14px; line-height: 1.45; color: var(--t1);
   overflow-wrap: anywhere; white-space: pre-wrap; margin: 0;
 }
-.cmt-acts{ display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.cmt-acts{ display: flex; align-items: center; gap: 2px; margin-top: 6px;
+  flex-wrap: wrap; }
 .cmt-act{
   min-height: 32px; padding: 0 10px; border-radius: 999px;
   background: none; border: 0;
@@ -312,19 +336,31 @@
 
 /* Replies start collapsed — what everyone has seen ten thousand times, and an
    expanded thread otherwise pushes the next question off the screen. */
+/* "N replies" with its chevron, on its own line under the actions rather than
+   beside them -- on the reference it is the foot of the thread, and inline it
+   competed with Reply for the same spot. */
 .cmt-expand{
   display: inline-flex; align-items: center; gap: 6px;
-  min-height: 32px; padding: 0 10px; border-radius: 999px;
+  min-height: 32px; padding: 0 10px 0 0; border-radius: 999px;
+  margin-top: 2px;
   background: none; border: 0;
   font: inherit; font-size: 13px; font-weight: 600;
   color: var(--active); cursor: pointer;
 }
+.cmt-foot{ display: flex; align-items: center; }
 .cmt-expand:hover{ background: color-mix(in oklab, var(--active), transparent 88%); }
 .cmt-expand svg{ width: 12px; height: 12px; transition: transform var(--t-fast) var(--ease); }
 .cmt-expand[aria-expanded="true"] svg{ transform: rotate(180deg); }
-.cmt-replies{ list-style: none; margin: 2px 0 0; padding: 0 0 0 calc(40px + 14px); }
+/* Replies sit in the parent's content column, not indented again from it --
+   the avatar column already provides the step, and indenting twice walks the
+   thread off a phone. */
+.cmt-replies{ list-style: none; margin: 4px 0 0; padding: 0; }
 .cmt-replies[hidden]{ display: none; }
-.cmt-reply{ display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 8px 0; }
+.cmt-reply{
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px; padding: 8px 0;
+}
+.cmt-reply .av{ --av-size: 24px; }
 
 /* optimistic states — the row is there before the server answers */
 .cmt[data-pending="1"]{ opacity: .62; }
@@ -432,7 +468,10 @@
      action instead of wrapping — measured, the two overlapped. */
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px; align-items: center;
-  padding: 14px 0;
+  /* Tighter, because this sits between the title block and the tab strip and
+     its padding was most of what separated them. The rule above it already
+     does the dividing; 14px on top of a border reads as a gap AND a line. */
+  padding: 8px 0 10px;
   border-top: 1px solid var(--hair);
 }
 /* Block, so the name and the line stack — as inline spans they ran together:

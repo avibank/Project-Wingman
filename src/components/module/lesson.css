@@ -102,7 +102,7 @@
 .up svg{ width: 16px; height: 16px; flex: none; }
 [dir="rtl"] .up svg{ transform: scaleX(-1); }
 
-.lesson-head{ padding-inline: var(--pad); margin: 10px 0 22px; }
+.lesson-head{ padding-inline: var(--pad); margin: 0 0 6px; }
 .lesson-code{
   display: block;
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
@@ -119,7 +119,6 @@
   color: var(--t1);
   margin: 0;
 }
-.lesson-where{ display: block; font-size: var(--fs-sm); color: var(--t3); margin-top: 10px; }
 
 /* -- what comes next ------------------------------------------------------ */
 .next-up{
@@ -500,7 +499,10 @@
    6 · THE TAB STRIP — Notes · Comments
    ========================================================================= */
 
-.ltabs{ display: flex; gap: 26px; margin-top: 26px; border-bottom: 1px solid var(--hair); }
+/* Tight to the block above it. 26px of margin plus the grid row gap plus the
+   head's bottom margin put roughly 74px between the title block and the tabs,
+   which read as two unrelated regions rather than one column. */
+.ltabs{ display: flex; gap: 26px; margin-top: 4px; border-bottom: 1px solid var(--hair); }
 /* A 26px gap is right where there is room for it. On a phone the three items
    are 214px of a 264px row, so the gaps decide whether Export fits at all. */
 @media (max-width: 767px){ .ltabs{ gap: 18px; } }
@@ -692,7 +694,12 @@
 /* padding-inline moved here from familiar.css, which used to own half of this
    element. Two files declaring one layout is how the 32px gap on wide screens
    went unnoticed; the gutter came with the rest so there is one owner. */
-.watch{ display: grid; gap: 26px 24px; padding-inline: var(--pad); }
+/* THE ROW GAP IS THE PLAYER-TO-TITLE DISTANCE, and it was one of three things
+   contributing to it: this gap, .mt's own padding-top, and .lesson-head's
+   margin-top, which stacked to about 50px. The title now sits under the player
+   the way it does on any video page. The column gap is untouched -- that one
+   separates the player from the up-next rail and was never the problem. */
+.watch{ display: grid; gap: 16px 24px; padding-inline: var(--pad); }
 /* THE LESSON READS THE WAY A VIDEO PAGE READS. The list of lessons is
    navigation, so it goes down the left and stays put; everything about the
    lesson you are actually watching runs down one column on the right, in the
@@ -762,7 +769,7 @@
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden; text-wrap: balance;
 }
-.watch .mt{ padding-top: 14px; }
+.watch .mt{ padding-top: 0; }
 
 /* .lesson-body caps width to the player's, which is right for the player's own
    column and wrong for the other two — it is why the note deck rendered at
@@ -1015,7 +1022,10 @@
   padding-left: 0;
   border-bottom: 0;
   gap: 14px;
-  padding-block: 4px 10px;
+  /* Sits directly under the tab strip, as the add-a-comment row does under a
+     comment count. The 4px above was reading as a gap on top of the strip's
+     own rule. */
+  padding-block: 12px 6px;
 }
 .watch .composer-field{
   border-bottom: 1px solid var(--line);

@@ -124,9 +124,9 @@ export default function LessonPage({
   const watchedToEnd = done || (state?.pos?.[lesson.id]?.pct || 0) >= 0.9;
   const here = presenceFor(presence, lesson.id, people);
 
-  // The meta line, in the shape of a view count. Watchers comes from presence,
-  // which is the only real signal there is — it is not invented.
-  const watchers = presence.filter((p) => p.lessonId === lesson.id && p.userId !== me).length;
+  // `added` still feeds the sign-off stamp. The watcher count that sat beside
+  // it went with the meta line -- presence is still read for `here` above, so
+  // nothing about who is on the lesson was lost, only a second statement of it.
   const added = lesson.addedAt
     ? new Date(lesson.addedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })
     : null;
@@ -233,13 +233,10 @@ export default function LessonPage({
             }}
           />
         </div>
-        {/* Where a view count sits, and reading like one. This replaces the
-            "Callsign X and 2 others have been here" row. */}
-        <span className="lesson-where">
-          {chapter.title}
-          {watchers > 0 && ` · ${watchers} from your module ${watchers === 1 ? "has" : "have"} watched this`}
-          {added && ` · added ${added}`}
-        </span>
+        {/* The chapter-and-watchers line that sat here is gone. The chapter is
+            already named on the up-next rail and in the breadcrumb above the
+            player, so it was a third statement of the same fact, and the
+            watcher count was pushing the title away from the video it names. */}
 
         <div className="lact">
           <button type="button" className="pill" aria-pressed={saved}
@@ -467,6 +464,9 @@ function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pendin
             const isOpen = openReplies.has(c.id);
             return (
               <li key={c.id} className="cmt"
+                  /* Only a row that HAS replies draws the connector. A line
+                     running down to nothing is worse than no line. */
+                  data-threaded={rs.length > 0 && isOpen ? "1" : undefined}
                   data-pending={pending?.[c.id] === "pending" ? "1" : undefined}
                   data-failed={pending?.[c.id] === "failed" ? "1" : undefined}>
                 <span className="av" aria-hidden="true" style={{ "--av-h": hueFor(c.authorId) }}>
@@ -495,14 +495,21 @@ function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pendin
                     ) : (
                       <button type="button" className="cmt-act" onClick={() => setReplyTo(c.id)}>Reply</button>
                     )}
-                    {rs.length > 0 && (
+                  </div>
+
+                  {/* The replies toggle is the FOOT of the thread, on its own
+                      line, rather than a third item in the action row. Inline
+                      it competed with Reply for the same spot and the count
+                      read as another button instead of as a way in. */}
+                  {rs.length > 0 && (
+                    <div className="cmt-foot">
                       <button type="button" className="cmt-expand" aria-expanded={isOpen}
                               onClick={() => setOpenReplies((o) => toggleReplies(o, c.id))}>
-                        {replyCountLabel(rs.length)}
                         <ChevronDown aria-hidden="true" />
+                        {replyCountLabel(rs.length)}
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   <ul className="cmt-replies" hidden={!isOpen}>
                     {rs.map((r) => (
