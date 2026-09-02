@@ -256,7 +256,7 @@ function AppInner() {
     })[name] || [];
     if (!needed.length) return true;          // the deck is not split
     let timer;
-    const timeout = new Promise((res) => { timer = setTimeout(() => res(false), 600); });
+    const timeout = new Promise((res) => { timer = setTimeout(() => res(false), 1400); });
     // import() resolves from the module cache after the first call, so this is
     // a settled promise on every visit but the first.
     const loaded = Promise.all(needed.map((f) => f())).then(() => true, () => false);
@@ -284,8 +284,23 @@ function AppInner() {
     // live and interactive. If the chunk is slow the transition is dropped and
     // the navigation is plain — no transition beats a broken one.
     if (kind) {
-      const warmed = await warmRoute(to);
-      if (!warmed) kind = null;
+      /* WARM, BUT NEVER CANCEL ON IT. This used to drop the transition when the
+         chunk was slow, and dropping it means a hard cut — so the FIRST visit
+         to every code-split route had no motion at all. That is most of the
+         app, and it is exactly the "it just refreshes" complaint: the routes a
+         person sees for the first time are the ones that cut.
+
+         The bail made sense when it was written. flushSync cannot render a
+         suspended component, so without the chunk the browser photographed the
+         old page as the after-frame. settleDom solves that properly now by
+         waiting for the Suspense fallback to clear INSIDE the transition, and
+         it is capped, so the worst case is a bounded freeze rather than a
+         missing transition.
+
+         The await stays because it is still worth having: the page is live
+         while the chunk arrives out here, and frozen behind a snapshot if it
+         arrives in there. */
+      await warmRoute(to);
     }
 
     /* THE SCROLL RESET BELONGS TO THE NEW SCREEN, and it used to run against
