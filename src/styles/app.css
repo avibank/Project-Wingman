@@ -420,7 +420,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   :root {
     --wg-settle:      418ms;
     --wg-settle-back: 334ms;
-    --wg-exit-fade:   301ms;   /* load-bearing — see the note above */
+    /* SHORT, AND IT CAN BE NOW. It was 301ms because the outgoing layer had to
+       stay and cover the hole the incoming one left while it was undersized.
+       Nothing is undersized any more, so the old screen can leave as fast as it
+       likes — which is the whole of the ghost. */
+    --wg-exit-fade:   140ms;
     /* A HAND-OFF, NOT A CROSS-FADE. The incoming screen starts its spring at
        zero but does not begin to appear until the outgoing one has thinned,
        which is what stops the two being painted over each other. Modelled:
@@ -428,13 +432,26 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
        to 64% — the ghosting — while the hole stays at 6.1px, because what
        covers the hole is the OUTGOING layer's opacity and this does not touch
        it. The screen still moves from the first frame; only its opacity waits. */
-    --wg-enter-fade:  220ms;
-    --wg-enter-delay:  90ms;
+    --wg-enter-fade:  170ms;
+    --wg-enter-delay:  50ms;
     --wg-spring:      linear(0,0.0045,0.0172,0.0367,0.0619,0.0917,0.1253,0.1617,0.2002,0.2402,0.2812,0.3226,0.3639,0.4049,0.4452,0.4846,0.5228,0.5597,0.5952,0.6291,0.6614,0.692,0.7208,0.748,0.7735,0.7973,0.8194,0.8399,0.8589,0.8763,0.8924,0.907,0.9204,0.9325,0.9435,0.9534,0.9622,0.9701,0.9772,0.9834,0.9888,0.9936,0.9978,1.0013,1.0043,1.0069,1.009,1.0108,1.0122,1.0132,1.014,1.0146,1.015,1.0151,1.0152,1.015,1.0148,1.0127,1.0105,1.0085,1.0065,1.0047,1.003,1.0014,1);
-    --wg-fade-out:    cubic-bezier(.4, 0, 1, 1);
+    /* FRONT-LOADED. The old curve was an ease-IN: the outgoing screen held
+       near full opacity for half its duration and then dropped, which is
+       precisely what a lingering ghost is. This sheds most of it in the first
+       third. */
+    --wg-fade-out:    cubic-bezier(.2, .9, .3, 1);
     --wg-fade-in:     cubic-bezier(0, 0, .2, 1);
+    /* NEITHER LAYER EVER GOES BELOW 1, and that is what buys the short fade.
+       A named layer smaller than its own box has shrunk away from the hole
+       naming it left behind, and what shows through is nothing at all — so the
+       other layer had to stay opaque to cover it, which is the ghost. Modelled
+       across both directions: the old pair left a 36px uncovered band on the
+       way in and 28px on the way back. Above 1 there is nothing to cover.
+
+       The depth is still there and still opposite: the outgoing screen grows
+       away from you, the incoming settles forward onto its true size. */
     --wg-scale-out:   1.0770;
-    --wg-scale-in:    0.8900;
+    --wg-scale-in:    1.0200;
     /* 5 rather than 8. The blur is what made the receding screen read as a
        ghost rather than as a card being pushed back — and the preset's own
        note allows dropping it. Costs nothing geometrically: coverage is
@@ -451,9 +468,16 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      screen you are returning to comes forward from behind rather than arriving
      from in front. */
   html[data-vt="back"], html[data-vt="morphBack"] {
-    --wg-settle:    var(--wg-settle-back);
-    --wg-scale-out: 0.9230;
-    --wg-scale-in:  1.1100;
+    --wg-settle:     var(--wg-settle-back);
+    /* Both above 1 here too. The outgoing used to shrink to 0.923, which
+       uncovered ITS hole rather than the incoming layer's — the same defect
+       from the other end. It drifts instead, and the screen you are returning
+       to comes forward decisively from 1.10, which is what reads as back. */
+    --wg-scale-out:  1.0300;
+    --wg-scale-in:   1.1000;
+    --wg-exit-fade:  120ms;
+    --wg-enter-fade: 150ms;
+    --wg-enter-delay: 45ms;
   }
 
   /* The app's own route and panel animations stand down. They start at the

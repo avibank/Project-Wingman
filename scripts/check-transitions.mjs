@@ -52,52 +52,42 @@ import { readFileSync } from "node:fs";
    declaration. */
 const css = readFileSync("src/styles/app.css", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 
-/* THE HOLE, AND WHY THIS LAYER MAY DO WHAT THE LAST ONE COULD NOT.
+/* THE ONE RULE THE WHOLE LAYER RESTS ON: NO LAYER EVER SCALES BELOW 1.
  *
  * Naming an element lifts it out of the root snapshot and leaves a transparent
- * hole its own size. An incoming layer that animates in below scale 1 has
- * shrunk away from that hole, and what shows through is nothing at all — not
- * the old page. That was the flicker in the previous layer and it was
- * geometric, which is why re-timing never fixed it.
+ * hole exactly its size. A layer smaller than its own box has shrunk away from
+ * that hole, and what shows through is nothing at all — not the old page, not
+ * the background. Nothing.
  *
- * Mission Control scales in from 0.89, so it is only safe because the OUTGOING
- * layer covers the hole meanwhile: it scales UP, so it is always larger than
- * the box, and it does not finish fading until --wg-exit-fade. Worked through
- * at 1280px, the incoming layer is 70px short per side at 0ms, 7px at 200ms,
- * 1.5px at 250ms, and back to full at 301ms — exactly when the outgoing layer
- * goes.
+ * That single fact has caused this layer's last three defects. First the
+ * flicker, when the incoming screen arrived from 0.988. Then the ghost: the
+ * incoming screen came from 0.89, so the OUTGOING one had to stay opaque for
+ * 301ms to cover it, and an old screen lingering blurred over a new one for
+ * three tenths of a second is exactly what a ghost is. Then the same thing from
+ * the other end, where going back shrank the outgoing layer to 0.923 and
+ * uncovered its own hole — modelled at 36px on the way in and 28px on the way
+ * back.
  *
- * So the invariant is not "nothing is named" any more. It is: IF the incoming
- * scale is below 1, the exit fade must outlast the time it takes to grow back.
- * Shorten the exit fade, or deepen the scale, and the hole opens.
+ * Keeping every scale at or above 1 removes all three at once, and it is what
+ * lets the exit fade be short: nothing needs covering, so the old screen can
+ * leave as fast as it likes. The depth survives — the outgoing grows away from
+ * you and the incoming settles forward onto its true size — because opposite
+ * directions do not require one of them to be small.
+ *
+ * So this asserts the rule rather than the numbers. Any scale below 1, in any
+ * direction, brings back a hole and with it a reason to slow the fade down.
  */
-const num = (name) => {
-  const m = css.match(new RegExp(`--${name}:\\s*([\\d.]+)`));
-  return m ? Number(m[1]) : null;
-};
-const scaleIn = num("wg-scale-in");
-const scaleOut = num("wg-scale-out");
-const settle = num("wg-settle");
-const exitFade = num("wg-exit-fade");
+const scales = [...css.matchAll(/--wg-scale-(out|in):\s*([\d.]+)/g)]
+  .map((m) => ({ which: m[1], value: Number(m[2]) }));
 
-if (scaleIn === null || scaleOut === null || settle === null || exitFade === null) {
-  fail.push("one of --wg-scale-in / --wg-scale-out / --wg-settle / --wg-exit-fade is missing");
-} else {
-  if (scaleOut <= 1) {
-    fail.push(`--wg-scale-out is ${scaleOut}; the outgoing layer must scale UP (>1) or it `
-      + "stops covering the hole the incoming layer shrinks away from");
-  }
-  if (scaleIn < 1) {
-    /* How far through the spring before the incoming layer covers its own box
-       again. The spring reaches 1 near the end, so require the exit fade to
-       cover most of the settle — 0.6 is the point where the shortfall is under
-       a pixel at 1280px. */
-    const ratio = exitFade / settle;
-    if (ratio < 0.6) {
-      fail.push(`--wg-exit-fade is ${exitFade}ms of a ${settle}ms settle (${ratio.toFixed(2)}). `
-        + `With --wg-scale-in at ${scaleIn} the incoming layer is still short when the outgoing `
-        + "one disappears, and the gap shows through to nothing");
-    }
+if (scales.length < 2) {
+  fail.push("--wg-scale-out / --wg-scale-in are missing");
+}
+for (const s of scales) {
+  if (s.value < 1) {
+    fail.push(`--wg-scale-${s.which} is ${s.value}, below 1. A named layer smaller than its own `
+      + "box shows through to nothing, and the only way to hide that is to keep the other layer "
+      + "opaque over it — which is the ghost");
   }
 }
 
@@ -114,6 +104,6 @@ if (fail.length) {
   console.log("MISMATCH");
   process.exit(1);
 }
-console.log(`  superseded transitions tear down nothing; scale-in ${scaleIn} is covered by `
-    + `scale-out ${scaleOut} for ${exitFade}ms of a ${settle}ms settle`);
+console.log(`  superseded transitions tear down nothing; all ${scales.length} scales at or above 1 `
+  + `(${scales.map((s) => s.value).join(", ")}) so no layer uncovers its own hole`);
 console.log("MATCH");
