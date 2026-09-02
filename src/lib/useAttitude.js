@@ -77,8 +77,24 @@ export const orientationGranted = () => granted;
  * turns reduce-motion on with the deck already open.
  */
 export function useTiltPermission(still = false) {
-  const iosAsks = typeof window !== "undefined"
-    && typeof window.DeviceOrientationEvent?.requestPermission === "function";
+  /* THE API IS NOT THE TEST, and assuming it was is why this prompt kept
+     appearing on desktop. DeviceOrientationEvent.requestPermission was Safari's
+     alone when this was written; Chrome 152 on macOS implements it too, and
+     measured in a real desktop Chrome it returns "function". So the check that
+     was supposed to mean "iOS" meant "a browser that has caught up", and the
+     button rendered next to a mouse cursor on a machine with no sensor at all.
+
+     What the prompt is actually for is a device that HAS an orientation sensor
+     and gates it behind a tap. maxTouchPoints is the signal that survives:
+     0 on every desktop, 5 on an iPhone or iPad. It is a property of the
+     hardware rather than of the vendor, so it does not go stale the next time
+     a browser ships the API.
+
+     Not (pointer: coarse) — an iPad with a trackpad attached reports a fine
+     pointer and would lose the prompt it still needs. */
+  const canBeTilted = typeof window !== "undefined"
+    && typeof window.DeviceOrientationEvent?.requestPermission === "function"
+    && (navigator.maxTouchPoints || 0) > 0;
 
   const [systemStill, setSystemStill] = useState(
     () => typeof window !== "undefined"
@@ -94,7 +110,7 @@ export function useTiltPermission(still = false) {
   const [asked, setAsked] = useState(() => granted);
   useEffect(() => onOrientationGrant(() => setAsked(true)), []);
 
-  return { needed: iosAsks && !asked && !still && !systemStill, ask: askForOrientation };
+  return { needed: canBeTilted && !asked && !still && !systemStill, ask: askForOrientation };
 }
 
 export function askForOrientation() {
