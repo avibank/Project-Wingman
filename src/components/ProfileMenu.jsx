@@ -17,6 +17,13 @@ import { FLY_SOLO_KEY } from "../lib/flySolo.js";
 // The account row IS the Licence link — there is no separate Licence row.
 
 const ICON = {
+  gear: (
+    <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 2.6v2M10 15.4v2M17.4 10h-2M4.6 10h-2M15.2 4.8l-1.4 1.4M6.2 13.8l-1.4 1.4M15.2 15.2l-1.4-1.4M6.2 6.2 4.8 4.8"
+            stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
   person: (
     <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <circle cx="10" cy="7" r="3.1" stroke="currentColor" strokeWidth="1.5" />
@@ -139,6 +146,16 @@ function ProfileMenu({ onNavigate }) {
         </button>
         <button role="menuitem" type="button" onClick={() => go("appearance")}>
           {ICON.look}<span className="mlabel">Appearance</span>
+        </button>
+        {/* SETTINGS WAS UNREACHABLE. The page exists, renders and works — it
+            holds the callsign field and the blocked list — and nothing in the
+            app navigated to it, so the only way in was typing /settings. That
+            left every account without a callsign, which is what people-search
+            matches on, and left blocking with no way to undo it.
+            "index" rather than "settings": routePath.settings appends the page,
+            so the obvious argument produced /settings/settings. */}
+        <button role="menuitem" type="button" onClick={() => go("index")}>
+          {ICON.gear}<span className="mlabel">Settings</span>
         </button>
 
         {/* No Sign out here. The Licence tab carries it, with "On this

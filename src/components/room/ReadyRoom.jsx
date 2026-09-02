@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   ChevronLeft, Search, Plus, Send, Flag, Ban, Radio, MessageSquare, ArrowBigUp, Compass,
 } from "lucide-react";
@@ -12,6 +13,7 @@ import { mmss } from "../module/lessonState.js";
 import Discover from "./Discover.jsx";
 import ProfileSheet from "./ProfileSheet.jsx";
 import { discoverSquadrons, joinSquadron, searchPeople } from "../../lib/discovery.js";
+import { canTransition, beginTransition, endTransition, nameLayers, clearNames } from "../../lib/viewTransition.js";
 import "./room.css";
 
 /* ============================================================================
@@ -167,7 +169,26 @@ export default function ReadyRoom({
     return () => { live = false; clearTimeout(t); };
   }, [query, me]);
 
-  const open = (next) => {
+  /* §4d — THE PANE MOVES, THE RAIL DOES NOT. A pane change is not a route
+     change, so go() never sees it and the transition layer would never fire.
+     The room starts its own: paneR going in, paneL coming back, and the rail
+     is named so it is pinned rather than travelling with the pane it sits
+     beside. Falls through to a plain setView wherever transitions are off. */
+  /* `goingBack` rather than `back`: there is already a back() below and the
+     shadow made this read as though it were calling it. */
+  function open(next, { goingBack = false } = {}) {
+    if (canTransition() && (next || view)) {
+      const token = beginTransition(goingBack ? "paneL" : "paneR");
+      nameLayers("pane");
+      const vt = document.startViewTransition(() => flushSync(() => openNow(next)));
+      vt.ready?.catch(() => {});
+      vt.finished?.catch(() => {}).finally?.(() => { if (endTransition(token)) clearNames(); });
+      return;
+    }
+    openNow(next);
+  }
+
+  function openNow(next) {
     setView(next);
     setDraft("");
     setAsking(null); setAskTitle("");
@@ -182,9 +203,12 @@ export default function ReadyRoom({
   const back = () => {
     // Leaving a conversation abandons what was typed in it.
     setDraft(""); setAsking(null); setAskTitle(""); setAskBody("");
-    // §4c — from a thread the arrow returns to the module feed, not the rail.
-    if (view?.kind === "thread") { setView({ kind: "module", id: view.id }); return; }
-    setView(null);
+    /* THROUGH open(), NOT setView. Going back used to set the view directly,
+       so the pane cut while going in slid — the two halves of one movement
+       disagreeing. §4c: from a thread the arrow returns to the module feed
+       rather than all the way out to the rail. */
+    if (view?.kind === "thread") { open({ kind: "module", id: view.id }, { goingBack: true }); return; }
+    open(null, { goingBack: true });
     requestAnimationFrame(() => listRef.current?.focus());
   };
 
@@ -307,13 +331,17 @@ export default function ReadyRoom({
               {foundPeople.map((p) => (
                 <button type="button" key={p.user_id} className="row"
                         onClick={() => setProfileOf({
-                          user_id: p.user_id, callsign: p.callsign,
+                          /* display_name, not callsign. The server decides what
+                             this searcher may see them as — somebody who goes
+                             by callsign is never returned under their real
+                             name, so there is nothing here to filter. */
+                          user_id: p.user_id, callsign: p.display_name,
                           module_code: p.module_code, hue: hueFor(p.user_id),
                         })}>
                   <span className="av lg" style={{ "--av-h": hueFor(p.user_id) }} aria-hidden="true">
-                    {initials(p.callsign || "?")}
+                    {initials(p.display_name || "?")}
                   </span>
-                  <span className="row-line"><span className="row-name">{p.callsign}</span></span>
+                  <span className="row-line"><span className="row-name">{p.display_name}</span></span>
                   <span className="row-snip">
                     {p.module_code || "In your modules"}
                     {p.shares_squadron ? " · in a squadron with you" : ""}

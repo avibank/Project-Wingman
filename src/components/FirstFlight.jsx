@@ -87,6 +87,32 @@ function PickModule({ value, onPick, onNext }) {
   );
 }
 
+/* THE CALLSIGN, AND WHY IT IS A STEP RATHER THAN A SETTING.
+   Onboarding collected study time and a livery and never asked what to call
+   anybody, so every account reached the app anonymous. That is not cosmetic:
+   people-search matches on the callsign, so an account without one cannot be
+   found by anybody, and the room renders "Someone" beside their messages.
+   Skippable on purpose. A required field here would be a wall in front of the
+   product for somebody who has not decided yet, and Settings still has it. */
+function PickCallsign({ value, onPick, onNext, busy }) {
+  return (
+    <div className="ff-screen">
+      <h1 className="ff-title">What should we call you?</h1>
+      <p className="ff-sub">
+        How you appear in the Ready Room and how squadron-mates find you. Change it
+        whenever you like.
+      </p>
+      <input className="ff-callsign" value={value} maxLength={24} autoFocus
+             placeholder="Callsign" aria-label="Callsign"
+             onChange={(e) => onPick(e.target.value)}
+             onKeyDown={(e) => { if (e.key === "Enter" && value.trim()) onNext(); }} />
+      <button className="ff-go" onClick={onNext} disabled={busy}>
+        {busy ? "One moment…" : value.trim() ? "That's me" : "Skip for now"}
+      </button>
+    </div>
+  );
+}
+
 function PickTime({ value, onPick, onNext, busy }) {
   return (
     <div className="ff-screen">
@@ -120,27 +146,34 @@ function FirstFlight({ onDone }) {
   const [studyTime, setStudyTime] = useState(null);
   const [busy, setBusy] = useState(false);
   const [livery, setLivery] = useState("dawn-patrol");
+  const [callsign, setCallsign] = useState("");
 
   // Both writes are best-effort: a failed placement must not strand someone in
   // onboarding. They land on the Deck either way and get placed on next entry.
   const place = async () => {
     setBusy(true);
     try {
-      await saveProfile(user.id, { study_time: studyTime });
+      await saveProfile(user.id, {
+        study_time: studyTime,
+        // Empty stays null rather than becoming "", so "has no callsign yet"
+        // is one value and not two.
+        callsign: callsign.trim() || null,
+      });
       await assignSquadron(user.id, moduleCode, studyTime);
     } catch (e) {
       console.error(e);
     }
     setBusy(false);
-    setStep(3);
+    setStep(4);
   };
 
   return (
     <div className="ff">
       {step === 0 && <MeetSquadron onNext={() => setStep(1)} />}
       {step === 1 && <PickModule value={moduleCode} onPick={setModuleCode} onNext={() => setStep(2)} />}
-      {step === 2 && <PickTime value={studyTime} onPick={setStudyTime} onNext={place} busy={busy} />}
-      {step === 3 && (
+      {step === 2 && <PickTime value={studyTime} onPick={setStudyTime} onNext={() => setStep(3)} busy={busy} />}
+      {step === 3 && <PickCallsign value={callsign} onPick={setCallsign} onNext={place} busy={busy} />}
+      {step === 4 && (
         <div className="ff-screen ff-screen--wide">
           <h1 className="ff-title">Pick your livery</h1>
           <p className="ff-sub">Your tail, on every screen you share with someone. Two now, more as you finish modules.</p>
@@ -158,8 +191,8 @@ function FirstFlight({ onDone }) {
         </div>
       )}
 
-      <ol className="ff-dots" aria-label={`Step ${step + 1} of 4`}>
-        {[0, 1, 2, 3].map((i) => (
+      <ol className="ff-dots" aria-label={`Step ${step + 1} of 5`}>
+        {[0, 1, 2, 3, 4].map((i) => (
           <li key={i} className={i === step ? "is-here" : i < step ? "is-done" : ""} aria-hidden="true" />
         ))}
       </ol>
@@ -169,6 +202,10 @@ function FirstFlight({ onDone }) {
         .ff { min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
           justify-content: center; padding: 32px 24px 96px; position: relative; }
         .ff-screen { width: 100%; max-width: 480px; }
+        .ff-callsign { width: 100%; margin: 18px 0 22px; padding: 13px 15px;
+          background: var(--raised); border: 1px solid var(--line); border-radius: 11px;
+          color: var(--t1); font: inherit; font-size: 16px; }
+        .ff-callsign:focus { outline: 2px solid var(--active); outline-offset: 1px; }
         .ff-screen--wide { max-width: 720px; }
         .ff-title { font-family: var(--font-ui); font-size: 28px; font-weight: 500;
           letter-spacing: -0.01em; color: var(--text-1); margin: 0 0 8px; }

@@ -566,11 +566,17 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               )}
             </div>
 
-            <Field id="f-first" label="Full name" hint="On your licence and nowhere else."
+            <Field id="f-first" label="Full name" hint="On your licence, and how people find you — unless you go by callsign below."
                    value={holderName} onChange={setHolderName}
                    onCommit={() => {
                      const [first, ...rest] = holderName.trim().split(/\s+/);
                      user?.update({ firstName: first || "", lastName: rest.join(" ") });
+                     /* ALSO TO THE PROFILE, because Clerk is not queryable from
+                        Postgres and people_search runs there. Whether it is
+                        ever MATCHED is the server's decision, not this one:
+                        turning on "Go by callsign" makes it unmatchable without
+                        this line knowing anything about it. */
+                     if (user?.id) saveProfile(user.id, { real_name: holderName.trim() || null });
                    }} />
 
             {/* An everyday option, not a privacy ceremony: no warning styling,
