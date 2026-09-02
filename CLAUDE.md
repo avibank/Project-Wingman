@@ -36,8 +36,12 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
   `pdfsForModule()` in data.js are the single source of that partition. Anything that
   reads the global `CHAPTERS` or `PDFS` array directly is a bug waiting to surface —
   both the chapter list and the Library have already had exactly this bug.
-- Module enrollment is real (Supabase `enrollments`, self-serve free enroll/unenroll,
-  no payment yet). All four modules are open — nothing is gated.
+- **There is no `enrollments` table.** This line used to say there was one in
+  Supabase, with self-serve enroll/unenroll. Verified on 2026-09-02 by querying
+  the live database: no such table, and no client code reads one. All four
+  modules are open and nothing is gated, which is why nothing missed it.
+  What a student studies is derived instead, from `chapter_completions` and
+  `lesson_threads` — see `my_modules` in migration 0011.
 
 ## Content
 
@@ -98,7 +102,22 @@ architecture note above says — that part was accurate.
 `supabase/migrations/` — 0000 progress table, 0001 social layer, 0002 threaded posts,
 0003 reactions and attempts and completions, 0004 progress merge, 0005 squadrons and
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
-squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary.
+squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
+0010 thread titles and answers, 0011 discovery.
+
+**0011 has been run against the live project**, verified by connecting rather
+than inferred: 9 new squadron columns, 4 new profile columns, 2 new tables and
+8 functions all present afterwards where none were before. `npm run
+check:discovery` drives 12 assertions against the real database — a stranger is
+refused by people_search itself, blocks cut both ways, the opt-out works,
+capacity refuses a join by card AND by link — and deletes every row it makes.
+All four discovery RPCs answer over the anon REST path. It is deliberately NOT
+in `npm run check`, because that suite must not need database credentials.
+
+There is **no `enrollments` table**, despite what the Content section of this
+file says. Verified by looking. 0011's `my_modules` is built from
+`chapter_completions` and `lesson_threads` instead, which are the two real
+signals for what somebody studies.
 
 **0000-0009 have all been run against the live project.** Verified by connecting
 on 2026-08-31, not inferred: all three of 0008's tables exist, both its functions
