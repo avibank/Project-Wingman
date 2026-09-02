@@ -499,3 +499,135 @@
 .room .ask-t::placeholder, .room .ask-b::placeholder{ color: var(--t2); }
 .room .ask-acts{ display: flex; gap: 8px; justify-content: flex-end; }
 .room .ask-acts .newpost:disabled{ opacity: .45; cursor: default; }
+
+/* ==========================================================================
+   §5 · DISCOVERY — Find a squadron, and the profile sheet
+   Reuses the room's own tokens throughout: no new colours, no new radii. The
+   demo's shapes, expressed in the variables this app already has.
+   ========================================================================== */
+.room .wrap{ padding: 18px 20px 30px; max-width: 900px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 14px; }
+.room .lede{ display: grid; gap: 6px; }
+.room .lede h3{ margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -.015em; }
+.room .lede p{ margin: 0; font-size: 13.5px; color: var(--t3); max-width: 64ch; line-height: 1.5; }
+
+.room .filters{ display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.room .chip{ padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
+  font-size: 13px; color: var(--t2); background: none; cursor: pointer; transition: .14s; }
+.room .chip:hover{ border-color: var(--active); color: var(--t1); }
+.room .chip[aria-pressed="true"]{ background: var(--active); border-color: var(--active);
+  color: var(--ground); font-weight: 600; }
+.room .filters .spacer{ margin-left: auto; }
+.room .ghost{ display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
+  border-radius: 999px; background: var(--raised); color: var(--t1); border: 0;
+  font-size: 13px; font-weight: 500; cursor: pointer; }
+.room .ghost:hover{ background: var(--panel); }
+.room .ghost svg{ width: 14px; height: 14px; }
+
+/* A room card. The action is centred against the block rather than pinned to
+   its top, because the block's height is the blurb's and varies. */
+.room .sq{ background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
+  padding: 15px 17px; display: flex; gap: 14px; align-items: flex-start;
+  transition: border-color .15s; }
+.room .sq:hover{ border-color: var(--active); }
+.room .sq-main{ flex: 1; min-width: 0; display: grid; gap: 8px; }
+.room .sq h4{ margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }
+.room .sq-blurb{ margin: 0; font-size: 12.5px; color: var(--t3); line-height: 1.45; }
+.room .badge-sq{ width: 46px; height: 46px; border-radius: 13px; background: var(--raised);
+  display: grid; place-items: center; font-family: var(--font-mono); font-size: 12px;
+  font-weight: 600; color: var(--t2); flex: none; }
+.room .tags{ display: flex; gap: 6px; flex-wrap: wrap; }
+.room .tag{ font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 5px;
+  border: 1px solid var(--line); color: var(--t3); }
+.room .tag.hot{ border-color: var(--active); color: var(--active);
+  background: color-mix(in oklab, var(--active), transparent 88%); }
+.room .tag.full{ background: var(--raised); }
+.room .known{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--t2); }
+.room .known .quiet{ color: var(--t3); }
+.room .faces{ display: flex; }
+.room .faces .av{ width: 24px; height: 24px; font-size: 10px;
+  border: 2px solid var(--panel); margin-left: -7px; }
+.room .faces .av:first-child{ margin-left: 0; }
+.room .sq .act{ flex: none; align-self: center; }
+.room .join{ padding: 9px 18px; border-radius: 999px; background: var(--active);
+  color: var(--ground); border: 0; font-size: 13.5px; font-weight: 600;
+  white-space: nowrap; cursor: pointer; transition: .15s; min-height: var(--tap); }
+.room .join:hover:not(:disabled){ filter: brightness(1.08); }
+.room .join.sec{ background: transparent; border: 1px solid var(--active); color: var(--active); }
+.room .join.off, .room .join:disabled{ background: var(--raised); color: var(--t3);
+  border-color: transparent; cursor: not-allowed; filter: none; }
+.room .join svg{ width: 14px; height: 14px; vertical-align: -2px; }
+
+.room .rule{ display: flex; align-items: center; gap: 10px; font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--t3);
+  margin: 8px 0 0; }
+.room .rule::after{ content: ""; flex: 1; height: 1px; background: var(--hair); }
+.room .linkbox{ background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
+  padding: 15px 17px; display: grid; gap: 11px; }
+.room .linkbox .row2{ display: flex; gap: 9px; align-items: center; }
+.room .linkbox .grow{ flex: 1; min-width: 0; }
+.room .sq-name{ font-size: 15px; font-weight: 600; }
+.room .meta{ font-size: 12.5px; color: var(--t3); }
+.room .note{ font-size: 12.5px; color: var(--t3); line-height: 1.45; }
+.room .linkfield{ flex: 1; min-width: 0; background: var(--raised); border: 1px solid var(--line);
+  border-radius: 9px; padding: 10px 12px; color: var(--t1); font: inherit; font-size: 13px; }
+.room .invite-code{ font-family: var(--font-mono); font-size: 12.5px; color: var(--t2);
+  background: var(--raised); border-radius: 9px; padding: 10px 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The scope note under people results — plain words, where the results are. */
+.room .scope{ margin: 10px 16px 4px; padding: 9px 12px; border-radius: 9px;
+  background: var(--raised); border: 1px solid var(--line);
+  font-size: 12px; color: var(--t3); line-height: 1.4; }
+.room .scope b{ color: var(--t2); font-weight: 500; }
+
+/* -------------------------------------------------------- profile sheet --- */
+.veil{ position: fixed; inset: 0; background: oklch(0 0 0 / .45); z-index: 40;
+  opacity: 0; pointer-events: none; transition: opacity .18s; }
+.veil[data-open="true"]{ opacity: 1; pointer-events: auto; }
+.drawer{ position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%);
+  background: var(--panel); border-left: 1px solid var(--line); z-index: 41;
+  transform: translateX(100%); transition: transform .22s cubic-bezier(.4,0,.2,1);
+  display: grid; grid-template-rows: auto 1fr; }
+.drawer[data-open="true"]{ transform: none; }
+@media (prefers-reduced-motion: reduce){ .drawer{ transition: none; } }
+.app.smooth-air .drawer{ transition: none; }
+.dr-head{ display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border-bottom: 1px solid var(--line); }
+.dr-head .h-title{ font-size: 14px; font-weight: 600; }
+.dr-body{ overflow-y: auto; padding: 20px 18px 26px; display: grid; gap: 16px; }
+.who-box{ display: grid; justify-items: center; text-align: center; gap: 7px; }
+.who-box .av{ width: 74px; height: 74px; font-size: 24px; }
+.who-box .nm{ font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+.who-box .sub{ font-size: 13px; color: var(--t2); }
+.pills{ display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.pill2{ font-size: 12px; padding: 4px 11px; border-radius: 999px; background: var(--raised);
+  color: var(--t2); border: 1px solid var(--line); }
+.shared{ background: var(--raised); border-radius: 9px; padding: 11px 13px;
+  font-size: 13px; color: var(--t2); display: grid; gap: 7px; }
+.shared .k{ display: flex; align-items: center; gap: 8px; }
+.shared .k svg{ width: 15px; height: 15px; flex: none; }
+.acts{ display: grid; gap: 8px; }
+.acts .join{ width: 100%; padding: 11px; }
+.answered{ display: grid; gap: 8px; }
+.ansrow{ background: var(--raised); border: 0; border-radius: 9px; padding: 11px 13px;
+  display: grid; gap: 5px; text-align: left; width: 100%; cursor: pointer; }
+.ansrow:hover{ background: var(--panel); }
+.ansrow .q{ font-size: 13.5px; font-weight: 500; line-height: 1.35; color: var(--t1); }
+.ansrow .m{ font-size: 11.5px; color: var(--t3); display: flex; gap: 7px; align-items: center; }
+.tag.best{ border-color: var(--ok); color: var(--ok);
+  background: color-mix(in oklab, var(--ok), transparent 88%); }
+/* Quiet, at the bottom, and never the loudest thing on the sheet. */
+.safety{ display: flex; gap: 16px; justify-content: center; font-size: 12.5px;
+  color: var(--t3); padding-top: 2px; }
+.safety button{ background: none; border: 0; color: var(--t3); cursor: pointer;
+  min-height: var(--tap); }
+.safety button:hover{ color: var(--danger); }
+
+@media (max-width: 760px){
+  .drawer{ width: 100%; }
+  .room .sq{ flex-wrap: wrap; }
+  .room .sq .act, .room .sq .act .join{ width: 100%; }
+}

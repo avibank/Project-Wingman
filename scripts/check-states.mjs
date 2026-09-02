@@ -134,10 +134,12 @@ for (const f of all.filter((x) => x.startsWith("src/components/"))) {
   /* A ZERO COUNT, which the voice section bans in the same breath. This is the
      shape it takes in JSX: a number beside a singular/plural word, where the
      zero case renders "0 answers". Only flagged when nothing guards it — a
-     `n > 0 ?` ahead of it means the zero case has its own copy. */
+     `n > 0 ?` ahead of it means the zero case has its own copy — and so does
+     `n > 0 &&`, which skips the whole block. Only accepting the ternary flagged
+     a correctly guarded count in ProfileSheet, so both forms count. */
   for (const m of t.matchAll(/\{(\w+)\}\s*\{\1 === 1 \? "([a-z]+)" : "([a-z]+)"\}/g)) {
     const before = t.slice(Math.max(0, m.index - 160), m.index);
-    if (!new RegExp(`${m[1]}\\s*>\\s*0\\s*\\?`).test(before)) {
+    if (!new RegExp(`${m[1]}\\s*>\\s*0\\s*(\\?|&&)`).test(before)) {
       fails.push(`${f}: "{${m[1]}} ${m[3]}" renders a zero count when ${m[1]} is 0`);
     }
   }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronLeft, Search, Plus, Send, Flag, Ban, Radio, MessageSquare, ArrowBigUp,
+  ChevronLeft, Search, Plus, Send, Flag, Ban, Radio, MessageSquare, ArrowBigUp, Compass,
 } from "lucide-react";
 import {
   matches, presenceRail, PRESENCE_SHOWN,
@@ -9,6 +9,9 @@ import {
 } from "../../lib/roomModel.js";
 import { initials, hueFor, ago } from "../../lib/familiar.js";
 import { mmss } from "../module/lessonState.js";
+import Discover from "./Discover.jsx";
+import ProfileSheet from "./ProfileSheet.jsx";
+import { discoverSquadrons, joinSquadron, searchPeople } from "../../lib/discovery.js";
 import "./room.css";
 
 /* ============================================================================
@@ -93,6 +96,10 @@ export default function ReadyRoom({
   seatCandidates = [], votes = {},
   brand = null, profile = null,
   onOpenLessonAt, onPost, onReport, onBlock, onSeen, onVote, onBest,
+  /* §5/§6 — discovery's outward edges. All optional: the room renders and works
+     without them, and each one is an action that belongs to the app rather than
+     to this screen. */
+  mySquadron = null, onJoined, onCreateSquadron, onOpenInvite, onCopyInvite, onInvitePerson,
 }) {
   // WHAT THE PANE IS SHOWING. One piece of state, not four booleans: the four
   // states are mutually exclusive and a boolean each is how two of them end up
@@ -111,13 +118,54 @@ export default function ReadyRoom({
   // opening "Ask the module" pre-filled the question with the abandoned reply,
   // one Enter away from publishing it.
   const [askBody, setAskBody] = useState("");
+  /* §5 — the discovery pane's filter and the rooms the server says this account
+     may see. Kept at this level rather than lifted into App: nothing else reads
+     them, and a prop only one screen uses is a fact two files can disagree
+     about. */
+  const [discoverFilter, setDiscoverFilter] = useState("yours");
+  const [rooms, setRooms] = useState([]);
+  /* §4 — the sheet opens from any avatar, so its subject lives here. */
+  const [profileOf, setProfileOf] = useState(null);
+  /* §3 — people results come from the server, already scoped to your orbit.
+     They are deliberately NOT filtered out of `people`: that list is everyone
+     this room happens to know about, and filtering it here would be a student
+     directory with a UI filter in front of it. */
+  const [foundPeople, setFoundPeople] = useState([]);
   const paneRef = useRef(null);
   const listRef = useRef(null);
   const scrollRef = useRef(null);
 
+  /* Which of your squadrons you are both in. The sheet needs the names, and
+     this is the one place that answer is computed. */
+  const sharedWith = (id) => squadrons
+    .filter((sq) => (sq.members || []).includes(id) && (sq.members || []).includes(me))
+    .map((sq) => sq.name);
+
   const who = (id) => (id === me ? "You"
     : people.find((p) => p.id === id)?.callsign || "Someone");
   const rail = useMemo(() => presenceRail(presence, PRESENCE_SHOWN), [presence]);
+
+  /* The rooms you could join. Re-read when the filter changes, guarded so a
+     slow answer for "yours" cannot land after a fast one for "all". */
+  useEffect(() => {
+    if (view?.kind !== "discover" || !me) return undefined;
+    let live = true;
+    discoverSquadrons(me, discoverFilter).then((r) => { if (live) setRooms(r || []); });
+    return () => { live = false; };
+  }, [view?.kind, discoverFilter, me]);
+
+  /* PEOPLE SEARCH IS A ROUND TRIP, and has to be. The scope lives in the SQL
+     function; there is no client-side list that could answer this correctly.
+     Debounced, because it fires per keystroke otherwise. */
+  useEffect(() => {
+    const q = query.trim();
+    if (!q || !me) { setFoundPeople([]); return undefined; }
+    let live = true;
+    const t = setTimeout(() => {
+      searchPeople(me, q).then((r) => { if (live) setFoundPeople(r || []); });
+    }, 180);
+    return () => { live = false; clearTimeout(t); };
+  }, [query, me]);
 
   const open = (next) => {
     setView(next);
@@ -237,11 +285,59 @@ export default function ReadyRoom({
                   onClick={() => open({ kind: "seat" })}>
             <Radio aria-hidden="true" /> Find a right seat
           </button>
+          {/* §5 — the way in for somebody who shares a squadron with nobody
+              yet, which is everyone on their first day. It sits beside the
+              right-seat button because that button is the one they cannot use
+              until they have done this. */}
+          <button type="button" className="seat-cta"
+                  aria-current={view?.kind === "discover" ? "true" : undefined}
+                  onClick={() => open({ kind: "discover" })}>
+            <Compass aria-hidden="true" /> Find a squadron
+          </button>
         </div>
 
         <div className="rail-scroll">
+          {/* §3 — PEOPLE, and only the ones already in your orbit. The list
+              comes back from the server that way; nothing here narrows it,
+              because a filter in the client is a directory with a curtain in
+              front of it. */}
+          {query.trim() && foundPeople.length > 0 && (
+            <>
+              <p className="group-head"><b>People</b></p>
+              {foundPeople.map((p) => (
+                <button type="button" key={p.user_id} className="row"
+                        onClick={() => setProfileOf({
+                          user_id: p.user_id, callsign: p.callsign,
+                          module_code: p.module_code, hue: hueFor(p.user_id),
+                        })}>
+                  <span className="av lg" style={{ "--av-h": hueFor(p.user_id) }} aria-hidden="true">
+                    {initials(p.callsign || "?")}
+                  </span>
+                  <span className="row-line"><span className="row-name">{p.callsign}</span></span>
+                  <span className="row-snip">
+                    {p.module_code || "In your modules"}
+                    {p.shares_squadron ? " · in a squadron with you" : ""}
+                  </span>
+                  <span className="row-meta" />
+                </button>
+              ))}
+              {/* The scope, in plain words, where the results are — not in a
+                  help page nobody opens. */}
+              <p className="scope">
+                <b>People search only covers your own orbit</b> — anyone in a squadron
+                with you, or who has answered in a module you&rsquo;re studying. Students
+                you share nothing with can&rsquo;t be looked up by name.
+              </p>
+            </>
+          )}
           {searchFoundNothing && (
-            <p className="rail-none">Clear the search to see every squadron and module.</p>
+            /* Point at the route that actually works rather than saying
+               "no results" and stopping. */
+            <p className="rail-none">
+              Nothing matched. If someone gave you an invite link or a squadron code,
+              paste it into <b>Find a squadron</b> — that&rsquo;s how you reach people you
+              don&rsquo;t share anything with yet.
+            </p>
           )}
           {!searchFoundNothing && <p className="group-head"><b>Squadrons</b></p>}
           {shownSquadrons.map((s) => {
@@ -640,7 +736,55 @@ export default function ReadyRoom({
             </div>
           </>
         )}
+
+        {/* ------------------------------------------ §5 find a squadron --- */}
+        {view?.kind === "discover" && (
+          <>
+            <header className="pane-head">
+              <button type="button" className="back is-inline" onClick={back} aria-label="Back">
+                <ChevronLeft aria-hidden="true" />
+              </button>
+              <div className="h-id">
+                <h2 className="h-title">Find a squadron</h2>
+                <p className="h-sub">Rooms you can join, sorted by how active they are</p>
+              </div>
+            </header>
+            <Discover
+              rooms={rooms}
+              filter={discoverFilter}
+              onFilter={setDiscoverFilter}
+              who={who}
+              onJoin={async (room) => {
+                /* ONE DOOR. The function decides capacity, blocks and policy,
+                   and the card renders whichever word comes back — it never
+                   decides for itself whether a room is full. */
+                const outcome = await joinSquadron(me, room.id);
+                setRooms((rs) => rs.map((r) => (r.id === room.id
+                  ? { ...r, already_in: outcome === "joined", requested: outcome === "requested" }
+                  : r)));
+                onJoined?.(room, outcome);
+              }}
+              onCreate={() => onCreateSquadron?.()}
+              onOpenLink={(link) => onOpenInvite?.(link)}
+              mySquadron={mySquadron}
+              inviteToken={mySquadron?.invite_token}
+              onCopyInvite={() => onCopyInvite?.(mySquadron)}
+            />
+          </>
+        )}
       </main>
+
+      {/* §4 — one sheet, opened from any avatar on any surface here. */}
+      <ProfileSheet
+        open={Boolean(profileOf)}
+        person={profileOf}
+        sharedSquadrons={profileOf ? sharedWith(profileOf.user_id) : []}
+        onClose={() => setProfileOf(null)}
+        onInvite={(p) => onInvitePerson?.(p)}
+        onAskRightSeat={(p) => onPost?.({ kind: "seat", to: p.user_id })}
+        onReport={(p) => onReport?.({ kind: "person", id: p.user_id })}
+        onBlock={(p) => { onBlock?.(p.user_id); setProfileOf(null); }}
+      />
     </div>
   );
 }
