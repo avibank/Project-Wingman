@@ -91,6 +91,35 @@ for (const s of scales) {
   }
 }
 
+/* NOTHING COMPOSITES ADDITIVELY.
+ *
+ * The user agent's own stylesheet sets mix-blend-mode: plus-lighter on these
+ * pseudo-elements. That is the correct default for the plain cross-fade it
+ * ships with — the two halves are the same picture, and summing them holds
+ * coverage at one the whole way across — and it is wrong for everything this
+ * layer does.
+ *
+ * Both screens carry brightness(0.76) while they move: the outgoing one dims
+ * as it recedes and the incoming one arrives dimmed and resolves. Summed, two
+ * layers at 0.76 make 1.52, and that is the brightness spike — an addition,
+ * not a colour.
+ *
+ * The rule that prevents it has to be universal. Setting it per-layer is how
+ * it went wrong: three rules named it and the other thirteen inherited the
+ * additive default, which is the same as having no rule at all.
+ */
+if (!/::view-transition-old\(\*\)[\s\S]{0,80}mix-blend-mode:\s*normal/.test(css)) {
+  fail.push("no universal mix-blend-mode: normal on the transition layers. The user agent "
+    + "defaults them to plus-lighter, which is additive, and both screens dim to 0.76 while "
+    + "they move — so they sum to 1.52 at the crossover and the page flashes");
+}
+for (const m of css.matchAll(/([^{}]*::view-transition[^{}]*)\{([^}]*)\}/g)) {
+  if (/plus-lighter/.test(m[2])) {
+    fail.push(`${m[1].trim().slice(0, 60)} composites with plus-lighter — additive, and both `
+      + "layers are dimmed while they move");
+  }
+}
+
 /* THE BACKGROUND HOLDS STILL, and that is two separate declarations.
  *
  * First, the OLD root must not animate. Two layers fading past each other do

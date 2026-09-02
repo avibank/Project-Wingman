@@ -491,6 +491,20 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt-on] .app .panel-out { animation: none; }
   html[data-vt-on] .app .panel-swap { transition: none; }
 
+  /* COMPOSITING, DECIDED ONCE FOR EVERY LAYER.
+     The user agent's own stylesheet puts mix-blend-mode: plus-lighter on these
+     pseudo-elements, and plus-lighter is ADDITIVE. It is the right default for
+     the plain cross-fade it ships with, where the two halves are the same
+     picture and summing them keeps coverage at one the whole way across.
+     It is wrong for everything this layer does. Both screens carry
+     brightness(0.76) while they move — the recede and the arrive both dim —
+     so at the crossover the two dimmed layers SUM, and 0.76 + 0.76 is 1.52.
+     That is the brightness spike: not a colour, an addition.
+     Three rules used to set this individually and every other layer inherited
+     the additive default, which is the same bug as having no rule at all. */
+  ::view-transition-old(*),
+  ::view-transition-new(*) { mix-blend-mode: normal; }
+
   @keyframes wgFadeOut { to { opacity: 0; } }
   @keyframes wgFadeIn { from { opacity: 0; } }
   @keyframes wgRecede {
@@ -529,7 +543,6 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt]::view-transition-old(root) { animation: none; }
   html[data-vt]::view-transition-new(root) {
     animation: 200ms var(--wg-fade-in) both wgFadeIn;
-    mix-blend-mode: normal;
   }
 
   /* Mission Control itself, on whole-screen changes only. */
@@ -600,9 +613,9 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt="theme"]::view-transition-old(root),
   html[data-vt="setting"]::view-transition-old(root) { animation: none; }
   html[data-vt="theme"]::view-transition-new(root) {
-    animation: 420ms var(--wg-fade-in) both wgFadeIn; mix-blend-mode: normal; }
+    animation: 420ms var(--wg-fade-in) both wgFadeIn; }
   html[data-vt="setting"]::view-transition-new(root) {
-    animation: 200ms var(--wg-fade-in) both wgFadeIn; mix-blend-mode: normal; }
+    animation: 200ms var(--wg-fade-in) both wgFadeIn; }
 }
 
 /* THE PROFILE AND MODULE TABS no longer carry names of their own.
