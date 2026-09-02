@@ -106,7 +106,8 @@ import { SessionProvider, useSession } from "./lib/session.jsx";
 import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
-import { transitionKind, canTransition, settleDom, withTheme, withSetting, beginTransition, endTransition } from "./lib/viewTransition.js";
+import { transitionKind, canTransition, settleDom, withTheme, withSetting,
+         beginTransition, endTransition, nameLayers, clearNames, scopeOf } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply } from "./lib/lessonSurface.js";
 import {
@@ -303,6 +304,7 @@ function AppInner() {
     };
 
     if (!kind) {
+      clearNames();   // nothing will animate, so nothing should stay named
       move();
       resetScroll();
     } else {
@@ -310,6 +312,12 @@ function AppInner() {
       // superseded before it settles must not tear down the one that replaced
       // it, which is the glitch when moving back and forth quickly.
       const token = beginTransition(kind);
+      /* NAME THE OLD SIDE BEFORE THE SNAPSHOT IS TAKEN, and only the layer this
+         kind actually moves. A tab move names the panel so the frame can hold
+         still; everything else names the screen. Naming both would lift the
+         panel out of the screen and run it on a clock of its own. */
+      const scope = scopeOf(kind);
+      nameLayers(scope);
       // BOTH PROMISES ARE CAUGHT, and they have to be. A transition that is
       // interrupted — a second navigation before the first settles, a tab
       // hidden mid-flight — rejects `ready` and `finished`, and an unhandled
@@ -331,9 +339,12 @@ function AppInner() {
         // resetting it means what it says. Before settleDom it would clamp
         // against whatever was still mounted.
         resetScroll();
+        // The new side is in the DOM now, so whatever just mounted takes the
+        // same names before the after-snapshot.
+        nameLayers(scope);
       });
       vt.ready?.catch(() => {});
-      vt.finished?.catch(() => {}).finally?.(() => { endTransition(token); });
+      vt.finished?.catch(() => {}).finally?.(() => { if (endTransition(token)) clearNames(); });
     }
   };
 

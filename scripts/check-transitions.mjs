@@ -46,31 +46,74 @@ const c = m.beginTransition("move");
 if (m.endTransition(c) !== true) fail.push("the counter latched after one round");
 if (document.documentElement.dataset.vt !== undefined) fail.push("the third kind outlived its transition");
 
-/* NOTHING MAY BE NAMED. The rebuild's whole premise is that no element is
-   lifted out of the root snapshot, because a named element leaves a hole its
-   own size and any incoming layer scaled below 1 shrinks away from that hole
-   and shows through to nothing. Re-adding a name is the one edit that would
-   quietly bring the flicker back. */
-const { readFileSync } = await import("node:fs");
+import { readFileSync } from "node:fs";
+/* Comments are stripped first: this file's own explanation quotes the numbers
+   it is checking, and matching that quote would read the prose instead of the
+   declaration. */
 const css = readFileSync("src/styles/app.css", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-if (/view-transition-name\s*:/.test(css)) {
-  fail.push("app.css names an element again — a named element leaves a hole in "
-    + "both root snapshots; if anything animates in below scale 1 it will show "
-    + "through to nothing. Scale must be >= 1, or do not name it");
-}
-/* And the scale must stay at or above 1 for the same reason. */
-const from = css.match(/--wg-from:\s*([\d.]+)/);
-if (!from) fail.push("--wg-from is gone; the incoming scale is unset");
-else if (Number(from[1]) < 1) {
-  fail.push(`--wg-from is ${from[1]}, below 1 — the incoming page will shrink `
-    + "away from its own edges and expose the page beneath it");
+
+/* THE HOLE, AND WHY THIS LAYER MAY DO WHAT THE LAST ONE COULD NOT.
+ *
+ * Naming an element lifts it out of the root snapshot and leaves a transparent
+ * hole its own size. An incoming layer that animates in below scale 1 has
+ * shrunk away from that hole, and what shows through is nothing at all — not
+ * the old page. That was the flicker in the previous layer and it was
+ * geometric, which is why re-timing never fixed it.
+ *
+ * Mission Control scales in from 0.89, so it is only safe because the OUTGOING
+ * layer covers the hole meanwhile: it scales UP, so it is always larger than
+ * the box, and it does not finish fading until --wg-exit-fade. Worked through
+ * at 1280px, the incoming layer is 70px short per side at 0ms, 7px at 200ms,
+ * 1.5px at 250ms, and back to full at 301ms — exactly when the outgoing layer
+ * goes.
+ *
+ * So the invariant is not "nothing is named" any more. It is: IF the incoming
+ * scale is below 1, the exit fade must outlast the time it takes to grow back.
+ * Shorten the exit fade, or deepen the scale, and the hole opens.
+ */
+const num = (name) => {
+  const m = css.match(new RegExp(`--${name}:\\s*([\\d.]+)`));
+  return m ? Number(m[1]) : null;
+};
+const scaleIn = num("wg-scale-in");
+const scaleOut = num("wg-scale-out");
+const settle = num("wg-settle");
+const exitFade = num("wg-exit-fade");
+
+if (scaleIn === null || scaleOut === null || settle === null || exitFade === null) {
+  fail.push("one of --wg-scale-in / --wg-scale-out / --wg-settle / --wg-exit-fade is missing");
+} else {
+  if (scaleOut <= 1) {
+    fail.push(`--wg-scale-out is ${scaleOut}; the outgoing layer must scale UP (>1) or it `
+      + "stops covering the hole the incoming layer shrinks away from");
+  }
+  if (scaleIn < 1) {
+    /* How far through the spring before the incoming layer covers its own box
+       again. The spring reaches 1 near the end, so require the exit fade to
+       cover most of the settle — 0.6 is the point where the shortfall is under
+       a pixel at 1280px. */
+    const ratio = exitFade / settle;
+    if (ratio < 0.6) {
+      fail.push(`--wg-exit-fade is ${exitFade}ms of a ${settle}ms settle (${ratio.toFixed(2)}). `
+        + `With --wg-scale-in at ${scaleIn} the incoming layer is still short when the outgoing `
+        + "one disappears, and the gap shows through to nothing");
+    }
+  }
 }
 
-console.log("transitions: two overlapping navigations, plus the two invariants the rebuild rests on");
+/* And the chrome must stay out of it: naming the topbar or the rail would make
+   the furniture travel with the screen. */
+if (/view-transition-name:\s*wg-(topbar|brand|avatar)/.test(css)) {
+  fail.push("the chrome is named again — the topbar and the background belong to the root "
+    + "snapshot, which only crossfades, so nothing outside the screen appears to move");
+}
+
+console.log("transitions: two overlapping navigations, plus the geometry Mission Control rests on");
 if (fail.length) {
   for (const f of fail) console.log("  " + f);
   console.log("MISMATCH");
   process.exit(1);
 }
-console.log("  a superseded transition tears down nothing; nothing is named; the incoming scale is >= 1");
+console.log(`  superseded transitions tear down nothing; scale-in ${scaleIn} is covered by `
+    + `scale-out ${scaleOut} for ${exitFade}ms of a ${settle}ms settle`);
 console.log("MATCH");

@@ -57,19 +57,45 @@ export function placeOf(route) {
   return { sec, depth, id: route?.moduleCode || "" };
 }
 
-/* THE KIND IS NOW ONLY USED TO PICK A DURATION, not to pick a choreography.
-   Everything that moves does the same thing; a scene change is the one case
-   that behaves differently, because nothing moves and only the colour changes.
-   The direction of travel is deliberately no longer expressed: it was carried
-   by scaling the incoming layer below 1, which is exactly what exposed the
-   holes. It can come back when it can be done without them. */
+
+/* WHAT KIND OF MOVE THIS IS, and Mission Control needs the answer because it
+   moves three different things.
+
+   Depth decides forward from back: the screen you are going deeper into
+   arrives from in front, the one you are returning to comes forward from
+   behind. A tab is not a move at all — the frame holds and only the panel
+   travels — so it is answered separately and carries the side it travelled.
+
+   THE DECK IS NOT A PARENT OF A MODULE, it is the drawer the module was in, so
+   opening one is its own kind rather than plain depth. */
 export function transitionKind(fromRoute, toPath) {
   if (!toPath) return null;
   const a = placeOf(fromRoute);
-  const b = placeOf(parseRoute(toPath));
-  // Same place and same depth in the same module is not a navigation at all.
-  if (a.sec === b.sec && a.depth === b.depth && a.id === b.id) return "move";
-  return "move";
+  const to = parseRoute(toPath);
+  const b = placeOf(to);
+
+  /* Tabs first: they are the same section at the same depth, so every test
+     below would call them nothing at all and the panel would cut. The index
+     difference IS the direction — a later tab arrives from the right. */
+  if (a.sec === "account" && fromRoute?.name === "profile" && to.name === "profile") {
+    const i = PROFILE_TABS.indexOf(fromRoute.tab);
+    const j = PROFILE_TABS.indexOf(to.tab);
+    if (i < 0 || j < 0 || i === j) return null;
+    return j > i ? "tabR" : "tabL";
+  }
+  if (fromRoute?.name === "module" && to.name === "module" && a.id === b.id) {
+    const i = MODULE_TAB_ORDER.indexOf(fromRoute.tab);
+    const j = MODULE_TAB_ORDER.indexOf(to.tab);
+    if (i >= 0 && j >= 0 && i !== j) return j > i ? "tabR" : "tabL";
+  }
+
+  if (a.sec === "deck" && b.sec === "module") return "morph";
+  if (a.sec === "module" && b.sec === "deck") return "morphBack";
+  if (a.sec !== b.sec) return "swap";
+
+  // Same module, different chapter is sideways rather than deeper.
+  if (b.depth === a.depth) return a.id && b.id && a.id !== b.id ? "swap" : null;
+  return b.depth > a.depth ? "fwd" : "back";
 }
 
 /* MOTION IS A PREFERENCE, AND IT IS ALREADY DECLARED TWICE IN THIS APP.
@@ -123,25 +149,64 @@ export function endTransition(token) {
   return true;
 }
 
-/* NO SHARED ELEMENTS, AND THAT IS THE POINT OF THE REBUILD.
+/* WHICH LAYER GETS ITS OWN SNAPSHOT, AND WHY IT IS EXACTLY ONE.
  *
- * There used to be two — a module card growing into its page, and a lesson
- * thumbnail growing into the player — plus the chrome and the tab parts, eight
- * names in all. Each one had to be written onto an element by hand, kept
- * unique across two overlapping navigations, and cleared again afterwards, and
- * each one punched a transparent hole in both root snapshots that the incoming
- * layer then shrank away from.
+ * Mission Control moves three different things depending on what changed: a
+ * whole screen, a tab panel inside a screen, or the Ready Room's pane beside
+ * its rail. Each needs its own snapshot to move independently of the chrome.
  *
- * The marking machinery went with them: markShared, markMorph, markMedia and
- * markMorphTarget, along with the return-trip MutationObserver that waited for
- * a card to exist so it could be named before the after-snapshot was taken.
- * None of it is needed to dissolve one picture into another, and all of it was
- * a place for the transition to break.
+ * But only the one that is actually moving may be named. Naming a tab panel
+ * during a whole-screen change lifts it OUT of the screen and animates it on a
+ * clock of its own, which is how a transition comes apart — two children of one
+ * movement, running at different speeds, sliding against each other.
  *
- * If a morph is wanted back, it needs two things this file no longer has to
- * provide, in this order: a scale at or above 1 so a layer never shrinks away
- * from its own hole, and uniqueness that survives two navigations overlapping.
+ * So this clears every name first and then sets exactly the set the scope calls
+ * for. It is a full reset rather than a diff because a name left behind from
+ * the previous navigation is not visible in any way until it silently aborts
+ * the next one.
  */
+const CONTENT = [".deck-inner", ".content"];
+const PANELS = [".mcard > .pane", ".profile .panel-swap"];
+const PANE = [".room > .pane"];
+const RAIL = [".room > .rail"];
+const ALL = [...CONTENT, ...PANELS, ...PANE, ...RAIL];
+
+export function clearNames() {
+  for (const sel of ALL) {
+    for (const el of document.querySelectorAll(sel)) el.style.viewTransitionName = "";
+  }
+}
+
+export function nameLayers(scope) {
+  clearNames();
+  /* The screen itself, always — it is what recedes and arrives. First match
+     wins: .deck-inner is the page, .content is the fallback for a route that
+     does not use it. */
+  for (const sel of CONTENT) {
+    const el = document.querySelector(sel);
+    if (el) { el.style.viewTransitionName = "wg-content"; break; }
+  }
+  if (scope === "tab") {
+    for (const sel of PANELS) {
+      const el = document.querySelector(sel);
+      if (el) el.style.viewTransitionName = "wg-tabpanel";
+    }
+  }
+  if (scope === "pane") {
+    for (const sel of PANE) {
+      const el = document.querySelector(sel);
+      if (el) el.style.viewTransitionName = "wg-pane";
+    }
+    /* Pinned so it does not travel with the pane. The rail is furniture. */
+    for (const sel of RAIL) {
+      const el = document.querySelector(sel);
+      if (el) el.style.viewTransitionName = "wg-rail";
+    }
+  }
+}
+
+/* A tab move animates the panel; everything else animates the screen. */
+export const scopeOf = (kind) => (String(kind).startsWith("tab") ? "tab" : "screen");
 
 /* WAIT FOR REACT TO ACTUALLY COMMIT.
  *

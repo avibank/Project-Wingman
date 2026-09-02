@@ -385,111 +385,162 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 }
 
 /* ============================================================================
-   §2.1 — THE TRANSITION LAYER
-
-   Going deeper slides one way, coming back slides the other, and moving
-   between two top-level places just settles. The direction is the whole point:
-   a screen that always animates the same way tells you nothing.
-
-   WHAT MOVES IS THE CONTENT REGION, AND ONLY THAT. `root` is pinned to no
-   animation, so the lit room, the top bar and the runway strip hold still
-   while the page changes inside them — the thing that separates this from a
-   whole-window crossfade. .deck-inner carries its own name so it can animate
-   independently of the root snapshot.
-
-   Every rule is gated on html[data-vt], which App only sets when the browser
-   has startViewTransition AND motion is allowed. Reduced motion and Smooth Air
-   never reach this file: the option is not passed, so no transition starts and
-   there is nothing to turn off. Off, not faster — the same rule §2 states.
-   ========================================================================= */
 /* ============================================================================
-   THE TRANSITION LAYER — rebuilt around one pair of layers.
+   THE TRANSITION LAYER — Mission Control.
 
-   WHY THE PREVIOUS ONE COULD NOT BE TUNED RIGHT. It named eight elements, and
-   naming an element REMOVES IT FROM THE ROOT SNAPSHOT and leaves a transparent
-   hole exactly its size. Every incoming layer then animated in at
-   scale(.988) — 98.8% of its own box — so for the whole animation there was a
-   ring around each one where the layer had shrunk away from its own hole and
-   NOTHING painted. Not the old page: nothing. Sixteen holes, on every
-   navigation. That is the flash and the phasing, and it was geometric rather
-   than a matter of timing, which is why every re-timing left it in place.
+   A spring, not a curve. 420ms response at damping 0.80, which settles in
+   418ms; back runs at 0.80 of that. Opacity never rides the spring — a fade
+   that overshoots reads as a flicker — so the exit fade is 0.72 of the settle
+   and the enter fade 0.65, both on their own plain curves.
 
-   Two layers were also cross-fading at once — the root and the content — on
-   overlapping regions with their own curves, which is what beats visibly. And
-   plus-lighter is additive: correct for two versions of one picture, wrong for
-   two different ones, where it sums brighter than either end. That is the
-   brightness spike.
+   The outgoing screen recedes: it scales UP to 1.077, blurs, dims and rounds
+   its corners, like a card being pushed back into a stack. The incoming one
+   arrives from 0.89 and resolves. The two move by different amounts, which is
+   the parallax, and it is what makes one read as behind the other.
 
-   SO: NOTHING IS NAMED. The page transitions as one picture, which is what the
-   user agent does natively and does well. That removes, by construction rather
-   than by tuning:
-     - holes, so nothing can show through to nothing
-     - a second overlapping ramp, so nothing can phase
-     - additive compositing, so nothing can spike
-     - group tweens, so no held snapshot can smear
+   WHY THE INCOMING SCALE MAY BE BELOW 1 HERE, having been forbidden before.
+   Naming an element lifts it out of the root snapshot and leaves a hole its own
+   size, so a layer that animates in below scale 1 shows through to nothing —
+   that was the flicker in the previous layer, and it was geometric rather than
+   a matter of timing.
 
-   THE OLD LAYER HOLDS AND THE NEW ONE FADES OVER IT. A layer at opacity a over
-   an opaque one composites to new*a + old*(1-a): the pair sums to full coverage
-   at every instant, so there is no frame thinner or brighter than any other. It
-   is the correct dissolve arithmetically, not a tuned one.
+   It is safe here because the OUTGOING layer covers the hole while the incoming
+   one is still undersized: it scales UP, so it is always larger than the box,
+   and it does not finish fading until 301ms. Worked through at 1280px: the
+   incoming layer is 70px short per side at 0ms, 7px at 200ms, 1.5px at 250ms,
+   and back to full at 301ms — the exact moment the outgoing layer disappears.
+   The 0.72 exit-fade factor is what makes that true, so it is load-bearing
+   rather than a taste setting. Lower it and the hole opens.
 
-   THE SCALE IS ABOVE 1, AND THAT IS THE WHOLE LESSON FROM THE LAST VERSION.
-   The new page starts fractionally LARGER and settles to its true size, so it
-   covers the old one completely for the entire animation. Starting below 1
-   would expose a band of the old page around the edge — the same mistake one
-   level up. It reads as the page settling into place, and it is the only
-   movement here.
+   The chrome never moves. The topbar and the background sit in the root
+   snapshot, which only crossfades, and the Ready Room's rail is pinned
+   explicitly.
    ========================================================================= */
 @media (prefers-reduced-motion: no-preference) {
   :root {
-    /* Two numbers for a navigation, and one for a scene change. That is the
-       whole surface area now. */
-    --wg-in: 280ms;
-    --wg-from: 1.012;
-    --wg-scene: 380ms;
-    --wg-ease: cubic-bezier(.32, .72, 0, 1);
+    --wg-settle:      418ms;
+    --wg-settle-back: 334ms;
+    --wg-exit-fade:   301ms;   /* load-bearing — see the note above */
+    --wg-enter-fade:  272ms;
+    --wg-spring:      linear(0,0.0045,0.0172,0.0367,0.0619,0.0917,0.1253,0.1617,0.2002,0.2402,0.2812,0.3226,0.3639,0.4049,0.4452,0.4846,0.5228,0.5597,0.5952,0.6291,0.6614,0.692,0.7208,0.748,0.7735,0.7973,0.8194,0.8399,0.8589,0.8763,0.8924,0.907,0.9204,0.9325,0.9435,0.9534,0.9622,0.9701,0.9772,0.9834,0.9888,0.9936,0.9978,1.0013,1.0043,1.0069,1.009,1.0108,1.0122,1.0132,1.014,1.0146,1.015,1.0151,1.0152,1.015,1.0148,1.0127,1.0105,1.0085,1.0065,1.0047,1.003,1.0014,1);
+    --wg-fade-out:    cubic-bezier(.4, 0, 1, 1);
+    --wg-fade-in:     cubic-bezier(0, 0, .2, 1);
+    --wg-scale-out:   1.0770;
+    --wg-scale-in:    0.8900;
+    --wg-blur:        8px;
+    --wg-blur-in:     4.8px;
+    --wg-dim:         0.760;
+    --wg-radius:      14px;
+    --wg-panel-travel: 12px;
+    --wg-pane-travel:  14px;
   }
 
-  /* The old page holds: no animation at all, full opacity, no movement. */
-  html[data-vt]::view-transition-old(root) { animation: none; }
-
-  /* The new page arrives over it. mix-blend-mode is stated rather than left to
-     the user agent, because the UA default for the root pair is plus-lighter
-     and that is the brightness spike. */
-  html[data-vt]::view-transition-new(root) {
-    animation: wgIn var(--wg-in) var(--wg-ease) both;
-    mix-blend-mode: normal;
+  /* Back is the same spring, shorter, with the scales swapped end for end: the
+     screen you are returning to comes forward from behind rather than arriving
+     from in front. */
+  html[data-vt="back"], html[data-vt="morphBack"] {
+    --wg-settle:    var(--wg-settle-back);
+    --wg-scale-out: 0.9230;
+    --wg-scale-in:  1.1100;
   }
 
-  @keyframes wgIn {
-    from { opacity: 0; transform: scale(var(--wg-from)); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  /* A LIVERY, A FINISH OR A PREFERENCE IS NOT A NAVIGATION. Nothing moves and
-     the room itself changes colour, so the scale is dropped and only the
-     dissolve remains — a scale here would read as the page twitching while you
-     press a swatch. Longer, because a colour change with no movement reads as
-     abrupt long after a moving one would. */
-  html[data-vt="theme"]::view-transition-new(root),
-  html[data-vt="setting"]::view-transition-new(root) {
-    animation: wgFade var(--wg-scene) var(--wg-ease) both;
-  }
-  html[data-vt="setting"]::view-transition-new(root) { animation-duration: 200ms; }
-  @keyframes wgFade { from { opacity: 0; } to { opacity: 1; } }
-
-  /* THE APP'S OWN FADES STAND DOWN while a transition owns the movement.
-     Gated on data-vt-on rather than data-vt: gating on data-vt would re-enable
-     them the instant the attribute came off, restarting the animation on the
-     frame the transition ended — which is a flicker in its own right.
-     .panel-in and .panel-swap matter for a second reason: they start at the
-     commit, which is INSIDE the transition callback and therefore before the
-     after-snapshot, so the browser would photograph a panel mid-fade and hold
-     that washed-out still for the whole transition. */
+  /* The app's own route and panel animations stand down. They start at the
+     commit, which is INSIDE the transition callback and so before the
+     after-snapshot — the browser would photograph a panel mid-fade and hold
+     that washed-out still for the whole transition. Gated on data-vt-on rather
+     than data-vt so they are switched off once rather than restarted on the
+     frame each transition ends. */
   html[data-vt-on] .route-fade { animation: none; }
   html[data-vt-on] .app .panel-in,
   html[data-vt-on] .app .panel-out { animation: none; }
   html[data-vt-on] .app .panel-swap { transition: none; }
+
+  @keyframes wgFadeOut { to { opacity: 0; } }
+  @keyframes wgFadeIn { from { opacity: 0; } }
+  @keyframes wgRecede {
+    from { transform: scale(1); filter: blur(0) brightness(1); border-radius: 0; }
+    to   { transform: scale(var(--wg-scale-out));
+           filter: blur(var(--wg-blur)) brightness(var(--wg-dim));
+           border-radius: var(--wg-radius); }
+  }
+  @keyframes wgArrive {
+    from { transform: scale(var(--wg-scale-in));
+           filter: blur(var(--wg-blur-in)) brightness(var(--wg-dim));
+           border-radius: var(--wg-radius); }
+    to   { transform: scale(1); filter: blur(0) brightness(1); border-radius: 0; }
+  }
+  @keyframes wgPanelOutL { to { transform: translateX(calc(var(--wg-panel-travel) * -1)); } }
+  @keyframes wgPanelInR { from { transform: translateX(var(--wg-panel-travel)); } }
+  @keyframes wgPanelOutR { to { transform: translateX(var(--wg-panel-travel)); } }
+  @keyframes wgPanelInL { from { transform: translateX(calc(var(--wg-panel-travel) * -1)); } }
+  @keyframes wgPaneInR { from { transform: translateX(var(--wg-pane-travel)); } }
+  @keyframes wgPaneInL { from { transform: translateX(calc(var(--wg-pane-travel) * -1)); } }
+
+  /* THE CHROME HOLDS STILL. The topbar and the background live in the root
+     snapshot and only their content crossfades, so nothing outside the screen
+     being replaced appears to move. */
+  html[data-vt]::view-transition-old(root) { animation: 160ms var(--wg-fade-out) both wgFadeOut; }
+  html[data-vt]::view-transition-new(root) { animation: 200ms var(--wg-fade-in) both wgFadeIn; }
+
+  /* Mission Control itself, on whole-screen changes only. */
+  html[data-vt="fwd"]::view-transition-old(wg-content),
+  html[data-vt="swap"]::view-transition-old(wg-content),
+  html[data-vt="morph"]::view-transition-old(wg-content),
+  html[data-vt="morphBack"]::view-transition-old(wg-content),
+  html[data-vt="back"]::view-transition-old(wg-content) {
+    animation: var(--wg-settle) var(--wg-spring) both wgRecede,
+               var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut;
+  }
+  html[data-vt="fwd"]::view-transition-new(wg-content),
+  html[data-vt="swap"]::view-transition-new(wg-content),
+  html[data-vt="morph"]::view-transition-new(wg-content),
+  html[data-vt="morphBack"]::view-transition-new(wg-content),
+  html[data-vt="back"]::view-transition-new(wg-content) {
+    animation: var(--wg-settle) var(--wg-spring) both wgArrive,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn;
+  }
+
+  /* A TAB IS NOT A SCREEN CHANGE. The frame holds and only the panel moves, so
+     the whole page does not recede because somebody changed a filter. */
+  html[data-vt^="tab"]::view-transition-old(wg-content) { animation: 120ms var(--wg-fade-out) both wgFadeOut; }
+  html[data-vt^="tab"]::view-transition-new(wg-content) { animation: 120ms var(--wg-fade-in) both wgFadeIn; }
+
+  html[data-vt="tabR"]::view-transition-old(wg-tabpanel) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelOutL,
+               var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut; }
+  html[data-vt="tabR"]::view-transition-new(wg-tabpanel) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelInR,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
+  html[data-vt="tabL"]::view-transition-old(wg-tabpanel) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelOutR,
+               var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut; }
+  html[data-vt="tabL"]::view-transition-new(wg-tabpanel) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelInL,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
+
+  /* The Ready Room's rail is furniture: it never travels with the pane. */
+  ::view-transition-group(wg-rail) { animation-duration: 1ms; }
+  ::view-transition-old(wg-rail),
+  ::view-transition-new(wg-rail) { animation: none; }
+
+  /* The box resize belongs to the same movement, not to a 250ms user-agent
+     default running alongside it at a different speed. */
+  ::view-transition-group(wg-content),
+  ::view-transition-group(wg-tabpanel) {
+    animation-duration: var(--wg-settle);
+    animation-timing-function: var(--wg-spring);
+  }
+
+  /* A scene change is not a navigation: nothing moves and the room itself
+     changes colour, so the spring would read as the page twitching under the
+     swatch you just pressed. Dissolve only, and the old layer holds at full
+     opacity underneath so the pair never thins or brightens. */
+  html[data-vt="theme"]::view-transition-old(root),
+  html[data-vt="setting"]::view-transition-old(root) { animation: none; }
+  html[data-vt="theme"]::view-transition-new(root) {
+    animation: 420ms var(--wg-fade-in) both wgFadeIn; mix-blend-mode: normal; }
+  html[data-vt="setting"]::view-transition-new(root) {
+    animation: 200ms var(--wg-fade-in) both wgFadeIn; mix-blend-mode: normal; }
 }
 
 /* THE PROFILE AND MODULE TABS no longer carry names of their own.
