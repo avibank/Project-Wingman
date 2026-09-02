@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { ChevronLeft, ChevronDown, Bookmark, BookmarkCheck,
          MessageSquare, PenLine } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
 import {
-  initials, hueFor, ago, replyCountLabel, toggleReplies, presenceFor,
+  initials, hueFor, ago, replyCountLabel, toggleReplies,
 } from "../../lib/familiar.js";
 import {
   observeSlot, notesFor, commentsFor, repliesFor,
@@ -14,6 +15,8 @@ import {
 import "./module.css";
 import "./lesson.css";
 import "./familiar.css";
+import { useUserProgress } from "../../lib/userProgress.jsx";
+import { FLY_SOLO_KEY } from "../../lib/flySolo.js";
 import NoteDeck from "./NoteDeck.jsx";
 import SignOff from "./SignOff.jsx";
 import "./deck.css";
@@ -53,7 +56,7 @@ function seekable(text, onSeek) {
 // The player is NOT rendered here. This page renders an empty sized slot and
 // the one player, which lives above the router, positions itself over it.
 export default function LessonPage({
-  module: mod, chapters, chapter, lesson, state, people = [], presence = [],
+  module: mod, chapters, chapter, lesson, state, people = [],
   bookmarks = [], onToggleSave,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
@@ -122,11 +125,10 @@ export default function LessonPage({
   // threshold the completion rule already uses, read from the saved position
   // so it survives a reload rather than only arming inside one sitting.
   const watchedToEnd = done || (state?.pos?.[lesson.id]?.pct || 0) >= 0.9;
-  const here = presenceFor(presence, lesson.id, people);
 
-  // `added` still feeds the sign-off stamp. The watcher count that sat beside
-  // it went with the meta line -- presence is still read for `here` above, so
-  // nothing about who is on the lesson was lost, only a second statement of it.
+  // `added` still feeds the sign-off stamp. The watcher count and the
+  // "who was here" block that used to read presence are both gone, so this
+  // screen no longer takes the presence prop at all.
   const added = lesson.addedAt
     ? new Date(lesson.addedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })
     : null;
@@ -151,13 +153,18 @@ export default function LessonPage({
   const draft = tab === "notes" ? noteDraft : commentDraft;
   const setDraft = tab === "notes" ? setNoteDraft : setCommentDraft;
   const [chip, setChip] = useState(null);
+  // Same two conditions the app bar's avatar uses, so the composer can never
+  // show a face the top of the screen is hiding.
+  const { user: clerkUser } = useUser();
+  const progress = useUserProgress();
+  const myPhoto = !progress.get(FLY_SOLO_KEY, false) && clerkUser?.imageUrl
+    ? clerkUser.imageUrl : null;
   // §4 — open on desktop and tablet, closed on a phone. Read once at mount:
   // this is a starting position, not a live binding to the width.
   // What collapsing actually hides. The current row and the next one always
   // show, so a two-lesson chapter hides nothing and must not offer to.
   const [listOpen, setListOpen] = useState(
     () => typeof window === "undefined" || window.innerWidth > 560);
-  const [detached, setDetached] = useState(false);
   const [justSaved, setJustSaved] = useState(null);
   const focusComposer = () => setTimeout(() => composerRef.current?.focus(), 0);
 
@@ -166,7 +173,10 @@ export default function LessonPage({
   const submitDraft = () => {
     const text = draft.trim();
     if (!text) return;
-    const t = detached ? null : Math.floor(chip ?? at);
+    // Only when "Mark this moment" put one there. Before, every comment was
+    // silently prefixed with the playhead time, which is not what a comment
+    // box does anywhere else.
+    const t = chip == null ? null : Math.floor(chip);
     if (tab === "notes") {
       const id = newId('N');
       mutate((st) => ({ ...st, notes: [...st.notes, {
@@ -184,7 +194,7 @@ export default function LessonPage({
         t: t ?? 0, body, authorId: me, createdAt: new Date().toISOString(),
       }]}));
     }
-    setDraft(""); setChip(null); setDetached(false);
+    setDraft(""); setChip(null);
   };
 
   return (
@@ -327,23 +337,10 @@ export default function LessonPage({
             wrapped to four lines and its sentence broke to two words a line.
             The one action it offers is "ask everyone", so the top of the
             thread it opens is where it belongs. */}
-        {here && (
-          <div className="face">
-            <span className="av" data-size="lg" aria-hidden="true"
-                  style={{ "--av-h": hueFor(here.people[0].id) }}>
-              {initials(here.people[0].callsign)}
-            </span>
-            <span>
-              <span className="face-name">{here.label}</span>
-              {/* Not "ask your teacher" — you are a student and the platform
-                  does not teach. A person, a line, one action. */}
-              <span className="face-line">Ask the module and it stays pinned to this moment.</span>
-            </span>
-            <button type="button" className="face-act" onClick={() => setTab("comments")}>
-              Ask everyone
-            </button>
-          </div>
-        )}
+        {/* The "Callsign X was here" block is gone. It was a presence report
+            with an invitation attached, sitting between the title and the tab
+            strip, and it was most of what pushed the panel down the page. The
+            tab strip is the top of this card now. */}
 
         <div className="ltabs" role="tablist" aria-label="Notes and comments">
           <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
@@ -366,12 +363,25 @@ export default function LessonPage({
 
         {/* ONE composer, one position. Only the placeholder changes. */}
         <div className="composer" data-vis={tab === "notes" ? "private" : "public"}>
-          <button type="button" className="chip" data-off={detached ? "1" : undefined}
-                  onClick={() => setDetached((v) => !v)}
-                  aria-pressed={!detached}
-                  aria-label={detached ? "Attach the current timestamp" : "Detach the timestamp"}>
-            {mmss(chip ?? Math.floor(at))}
-          </button>
+          {/* YOUR ACCOUNT ICON, and the same one the app bar shows rather than a
+              second idea of what you look like. Initials were wrong here: the
+              module's people list does not contain you, so it fell through to
+              "You" and rendered a lone "Y". Photo when Clerk has one and Fly
+              Solo is off, the person glyph otherwise — which is exactly what
+              the avatar in the top bar does.
+              The timestamp control that used to sit here is gone: a comment
+              posts plain unless "Mark this moment" set one, which is the only
+              time a moment was ever meant to be attached. */}
+          <span className={`avbtn-face composer-av ${myPhoto ? "has" : ""}`} aria-hidden="true"
+                style={myPhoto ? { backgroundImage: `url(${myPhoto})` } : undefined}>
+            {myPhoto ? null : (
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.7"
+                      strokeLinecap="round" />
+              </svg>
+            )}
+          </span>
           <textarea ref={composerRef} className="composer-field" rows={1} value={draft}
                     // A placeholder is not a label. It is only a fallback for
                     // the accessible name, and it disappears the moment there
@@ -392,14 +402,11 @@ export default function LessonPage({
           {draft.trim() && (
             <div className="composer-acts">
               <button type="button" className="composer-act"
-                      onClick={() => { setDraft(""); setDetached(false); setChip(null); }}>Cancel</button>
+                      onClick={() => { setDraft(""); setChip(null); }}>Cancel</button>
               <button type="button" className="composer-act" data-primary="" onClick={submitDraft}>
                 {tab === "notes" ? "Save note" : "Post"}
               </button>
             </div>
-          )}
-          {tab === "comments" && (
-            <span className="composer-who">Everyone on {mod.name} sees this.</span>
           )}
         </div>
 
@@ -452,12 +459,13 @@ function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pendin
           above "Everyone on Module 1 sees this, in People." The reply composer
           further down stays; it belongs to one comment rather than to the tab. */}
 
-      {comments.length === 0 ? (
-        <p className="lempty">
-          The first question asked here stays pinned to its moment, for whoever
-          reaches it next.
-        </p>
-      ) : (
+      {/* Nothing is rendered for an empty list. The site this is modelled on
+          says nothing there either, and the composer directly above it is
+          already the invitation — a sentence explaining that the list is empty
+          is the thing the voice rule calls stating an absence.
+          (A JSX comment cannot be the branch of a ternary: it parses as a
+          second expression. It goes above.) */}
+      {comments.length === 0 ? null : (
         <ul className="llist">
           {comments.map((c) => {
             const rs = repliesFor(replies, c.id);

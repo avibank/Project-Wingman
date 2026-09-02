@@ -1129,7 +1129,6 @@ function AppInner() {
                     ? [...new Set([...cur, lessonId])]
                     : cur.filter((x) => x !== lessonId));
                 }}
-                presence={normalisePresence(useTestContent?.presence || [])}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}

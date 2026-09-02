@@ -499,10 +499,10 @@
    6 · THE TAB STRIP — Notes · Comments
    ========================================================================= */
 
-/* Tight to the block above it. 26px of margin plus the grid row gap plus the
-   head's bottom margin put roughly 74px between the title block and the tabs,
-   which read as two unrelated regions rather than one column. */
-.ltabs{ display: flex; gap: 26px; margin-top: 4px; border-bottom: 1px solid var(--hair); }
+/* THE TOP OF THE CARD. Nothing sits above the tab strip any more -- the
+   presence block that used to is gone -- so there is no margin here at all and
+   Notes | Comments is the first thing in the panel. */
+.ltabs{ display: flex; gap: 26px; margin-top: 0; border-bottom: 1px solid var(--hair); }
 /* A 26px gap is right where there is room for it. On a phone the three items
    are 214px of a 264px row, so the gaps decide whether Export fits at all. */
 @media (max-width: 767px){ .ltabs{ gap: 18px; } }
@@ -616,6 +616,9 @@
 .lreply-open:hover{ color: var(--active); }
 
 /* -- empty is the shipping state ------------------------------------------ */
+/* Still used by the notes side, which does have copy. The comments side
+   renders nothing at all now. */
+.lempty:empty{ display: none; }
 .lempty{
   padding: 20px 0; font-size: var(--fs-sm); line-height: var(--lh-body);
   color: var(--t3); max-width: var(--measure);
@@ -1021,12 +1024,23 @@
   margin-inline-start: 0;
   padding-left: 0;
   border-bottom: 0;
+  /* Avatar, then the field. 14px is the same step the comment rows use, so the
+     box lines up with the list under it rather than sitting in its own margin. */
   gap: 14px;
-  /* Sits directly under the tab strip, as the add-a-comment row does under a
-     comment count. The 4px above was reading as a gap on top of the strip's
-     own rule. */
-  padding-block: 12px 6px;
+  align-items: center;
+  padding-block: 14px 6px;
 }
+/* The account icon at comment-avatar size. .avbtn-face is the app bar's own
+   glyph and is sized by the button around it there, so it needs its box given
+   to it here. */
+.watch .composer-av{
+  width: 40px; height: 40px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--raised); color: var(--t2);
+  background-size: cover; background-position: center;
+}
+.watch .composer-av.has{ color: transparent; }
 .watch .composer-field{
   border-bottom: 1px solid var(--line);
   transition: border-color 140ms var(--ease, ease);
