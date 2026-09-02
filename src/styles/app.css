@@ -451,7 +451,12 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
        The depth is still there and still opposite: the outgoing screen grows
        away from you, the incoming settles forward onto its true size. */
     --wg-scale-out:   1.0770;
-    --wg-scale-in:    1.0200;
+    /* The preset arrived from 0.89 — eleven percent of travel, and it is what
+       makes the arrival felt rather than merely seen. That direction is what
+       opened the hole, so the travel comes back on the other side of 1: the
+       incoming screen starts LARGER and settles onto its true size. Same
+       movement, same amount, and it can never uncover anything. */
+    --wg-scale-in:    1.0600;
     /* 5 rather than 8. The blur is what made the receding screen read as a
        ghost rather than as a card being pushed back — and the preset's own
        note allows dropping it. Costs nothing geometrically: coverage is

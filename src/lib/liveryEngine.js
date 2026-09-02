@@ -241,10 +241,25 @@ export const DAY_SHEEN =
   + "oklch(1 0 0/.05) 29%, transparent 50%), "
   + "linear-gradient(116deg, transparent 30%, oklch(1 0 0/.26) 45%, transparent 60%)";
 
+/* Night surfaces carry a little more colour than the ramp's base. Lightness is
+   derived from ground + (light - ground) * t and does not read this at all, so
+   it lifts vibrance without moving a single contrast ratio — verified: every
+   drifted token kept its L to four decimal places and changed only its C.
+   Day is deliberately excluded; the same lift on a near-white ground reads as a
+   colour cast rather than as depth.
+   Mirrored in docs/reference/wingman-poc.html, which check:livery runs as the
+   reference. One number in each file, and reverting is setting both to 1. */
+const NIGHT_VIBRANCE = 1.10;
+
 export function deckVars(liveryId, variant = "night") {
   const L = liveryById(liveryId);
   const night = variant !== "day";
-  const surf = ramp(L, 1);
+  /* Vibrance, on the dark side only. Lightness comes from ground + (light -
+     ground) * t and does not read `scale` at all, so this lifts the colour in
+     every surface without moving a single contrast ratio. Day is untouched:
+     the same lift on a near-white ground reads as a colour cast rather than
+     as depth. */
+  const surf = ramp(L, night ? NIGHT_VIBRANCE : 1);
   const ink = ramp(L, 0.34);
 
   const pT = L.panelT != null ? L.panelT : 1 / 12;

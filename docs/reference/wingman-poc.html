@@ -798,8 +798,8 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none !important;tra
 
   function tokens(){
     const L = LIVERIES[preview != null ? preview : liv];
-    const surf = ramp(L,1), ink = ramp(L,.34), s = $("deck").style;
     const night = isNight();
+    const surf = ramp(L, night ? 1.10 : 1), ink = ramp(L,.34), s = $("deck").style;
     const pT = L.panelT != null ? L.panelT : 1/12;
     const gl = L.glass != null ? L.glass : LIGHT.glass;
     const H = hueAt(L,.55).toFixed(1), Cc = L.chroma*L.midC;
