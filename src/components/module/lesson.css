@@ -102,7 +102,7 @@
 .up svg{ width: 16px; height: 16px; flex: none; }
 [dir="rtl"] .up svg{ transform: scaleX(-1); }
 
-.lesson-head{ padding-inline: var(--pad); margin: 0 0 6px; }
+.lesson-head{ padding-inline: var(--pad); margin: 0 0 2px; }
 .lesson-code{
   display: block;
   font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
@@ -702,7 +702,10 @@
    margin-top, which stacked to about 50px. The title now sits under the player
    the way it does on any video page. The column gap is untouched -- that one
    separates the player from the up-next rail and was never the problem. */
-.watch{ display: grid; gap: 12px 24px; padding-inline: var(--pad); }
+/* A HAIR, NOT A GAP. The row gap is the only thing between the title block and
+   the panel now, so Notes | Comments and the thread under it read as part of
+   the title rather than as a separate region further down the page. */
+.watch{ display: grid; gap: 6px 24px; padding-inline: var(--pad); }
 /* THE LESSON READS THE WAY A VIDEO PAGE READS. The list of lessons is
    navigation, so it goes down the left and stays put; everything about the
    lesson you are actually watching runs down one column on the right, in the
@@ -968,7 +971,11 @@
   border-bottom-color: var(--edge-lo);
   border-radius: var(--lbox-r);
   box-shadow: var(--drop, none);
-  padding: 16px 17px;
+  /* Tighter on top than on the other three sides on purpose. The tab strip is
+     the first thing in this card, so this padding is the last gap between the
+     tabs and the title above them — the strip needs to clear the border, not
+     to sit in a margin. */
+  padding: 8px 17px 16px;
 }
 
 /* The player is the one thing that is NOT a card: a video wants no frame
