@@ -146,8 +146,23 @@ if (!/\.deck-light\s*\{\s*view-transition-name:\s*wg-bg/.test(css)) {
   fail.push("the ambient background is no longer named — it goes back into the root snapshot "
     + "and dissolves between two different moments of its own drift");
 }
-if (!/::view-transition-(old|new)\(wg-bg\)[^}]*animation:\s*none/.test(css)) {
+if (!/::view-transition-new\(wg-bg\)[^}]*animation:\s*none/.test(css)) {
   fail.push("wg-bg is named but not frozen; naming it alone only changes which layer it stutters in");
+}
+/* AND EXACTLY ONE COPY IS PAINTED. .deck-light is a transparent container whose
+   pseudo-elements SCREEN light onto what is behind them — additive by design.
+   Holding both its old and new snapshots at full opacity paints that glow
+   twice, and two screens stacked are brighter than one: the page lifts for the
+   length of the transition and drops back when the old snapshot goes. A pinned
+   pair must drop one side rather than hold both. */
+for (const name of ["wg-bg", "wg-rail"]) {
+  const re = new RegExp(`::view-transition-old\\(${name}\\)[^}]*\\{([^}]*)\\}`);
+  const m = css.match(re);
+  if (!m || !/display:\s*none/.test(m[1])) {
+    fail.push(`::view-transition-old(${name}) is still painted. A pinned layer renders on both `
+      + "sides, so anything translucent or additive in it is composited twice and the page "
+      + "brightens for the length of the transition");
+  }
 }
 
 /* And the chrome must stay out of it: naming the topbar or the rail would make

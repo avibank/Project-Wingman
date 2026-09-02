@@ -590,12 +590,27 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      Named and frozen, it is the same layer before and after: still. */
   html[data-vt] .deck-light { view-transition-name: wg-bg; }
   ::view-transition-group(wg-bg) { animation-duration: 1ms; }
-  ::view-transition-old(wg-bg),
+  /* EXACTLY ONE COPY IS PAINTED, and that is the whole point of this rule.
+     .deck-light has no background of its own: it is a transparent container
+     whose ::before and ::after SCREEN light onto whatever is behind them —
+     "light adds, it does not veil", as Deck.jsx puts it. Its snapshot is
+     therefore translucent and additive.
+     Holding both the old and the new at full opacity painted that glow TWICE
+     for the length of every transition. Two screens stacked are brighter than
+     one, so the page lifted while it moved and dropped back when the old
+     snapshot went — a brightness spike with no colour change, caused by
+     freezing the layer rather than by anything the layer does.
+     The old side is removed instead of held. The two are identical, so there
+     is nothing to dissolve between and nothing lost by dropping one. */
+  ::view-transition-old(wg-bg) { display: none; }
   ::view-transition-new(wg-bg) { animation: none; }
 
   /* The Ready Room's rail is furniture: it never travels with the pane. */
   ::view-transition-group(wg-rail) { animation-duration: 1ms; }
-  ::view-transition-old(wg-rail),
+  /* Same treatment for the same reason. The rail is opaque, so doubling it is
+     invisible rather than harmful — but a pinned pair should paint once as a
+     rule, not because this particular layer happens to hide the mistake. */
+  ::view-transition-old(wg-rail) { display: none; }
   ::view-transition-new(wg-rail) { animation: none; }
 
   /* The box resize belongs to the same movement, not to a 250ms user-agent
