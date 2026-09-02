@@ -58,14 +58,43 @@ export const orientationGranted = () => granted;
  * Whether iOS still needs to be asked, and the asking.
  * `needed` is false everywhere that does not gate orientation behind a prompt.
  */
-export function useTiltPermission() {
-  const [needed, setNeeded] = useState(
+/* WHETHER TO OFFER THE TAP AT ALL.
+ *
+ * requestPermission exists only on iOS, which is the whole reason this prompt
+ * exists: iOS will not report attitude until it has been asked, and it will
+ * only ask from a real tap. Every other platform either reports attitude
+ * freely or has no sensor, and on both the button is noise.
+ *
+ * AND IT HAS TO HONOUR STILLNESS, which it did not. useAttitude already stops
+ * the ball for prefers-reduced-motion and for Smooth Air, but this hook knew
+ * about neither — so on an iPhone with motion switched off the deck still
+ * offered "Tap for tilt", asking permission to start something the app has
+ * already agreed not to do. Tapping it would have granted a permission and
+ * changed nothing on screen, which is the worst kind of control.
+ *
+ * `still` is the in-app switch, passed in because only the caller knows it.
+ * The system one is read here, so the answer cannot be stale when somebody
+ * turns reduce-motion on with the deck already open.
+ */
+export function useTiltPermission(still = false) {
+  const iosAsks = typeof window !== "undefined"
+    && typeof window.DeviceOrientationEvent?.requestPermission === "function";
+
+  const [systemStill, setSystemStill] = useState(
     () => typeof window !== "undefined"
-      && typeof window.DeviceOrientationEvent?.requestPermission === "function"
-      && !granted,
-  );
-  useEffect(() => onOrientationGrant(() => setNeeded(false)), []);
-  return { needed, ask: askForOrientation };
+      && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!mq) return undefined;
+    const onChange = () => setSystemStill(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const [asked, setAsked] = useState(() => granted);
+  useEffect(() => onOrientationGrant(() => setAsked(true)), []);
+
+  return { needed: iosAsks && !asked && !still && !systemStill, ask: askForOrientation };
 }
 
 export function askForOrientation() {

@@ -421,14 +421,26 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     --wg-settle:      418ms;
     --wg-settle-back: 334ms;
     --wg-exit-fade:   301ms;   /* load-bearing — see the note above */
-    --wg-enter-fade:  272ms;
+    /* A HAND-OFF, NOT A CROSS-FADE. The incoming screen starts its spring at
+       zero but does not begin to appear until the outgoing one has thinned,
+       which is what stops the two being painted over each other. Modelled:
+       both screens were up to 78% visible together, and the delay takes that
+       to 64% — the ghosting — while the hole stays at 6.1px, because what
+       covers the hole is the OUTGOING layer's opacity and this does not touch
+       it. The screen still moves from the first frame; only its opacity waits. */
+    --wg-enter-fade:  220ms;
+    --wg-enter-delay:  90ms;
     --wg-spring:      linear(0,0.0045,0.0172,0.0367,0.0619,0.0917,0.1253,0.1617,0.2002,0.2402,0.2812,0.3226,0.3639,0.4049,0.4452,0.4846,0.5228,0.5597,0.5952,0.6291,0.6614,0.692,0.7208,0.748,0.7735,0.7973,0.8194,0.8399,0.8589,0.8763,0.8924,0.907,0.9204,0.9325,0.9435,0.9534,0.9622,0.9701,0.9772,0.9834,0.9888,0.9936,0.9978,1.0013,1.0043,1.0069,1.009,1.0108,1.0122,1.0132,1.014,1.0146,1.015,1.0151,1.0152,1.015,1.0148,1.0127,1.0105,1.0085,1.0065,1.0047,1.003,1.0014,1);
     --wg-fade-out:    cubic-bezier(.4, 0, 1, 1);
     --wg-fade-in:     cubic-bezier(0, 0, .2, 1);
     --wg-scale-out:   1.0770;
     --wg-scale-in:    0.8900;
-    --wg-blur:        8px;
-    --wg-blur-in:     4.8px;
+    /* 5 rather than 8. The blur is what made the receding screen read as a
+       ghost rather than as a card being pushed back — and the preset's own
+       note allows dropping it. Costs nothing geometrically: coverage is
+       opacity, not sharpness. */
+    --wg-blur:        5px;
+    --wg-blur-in:     3px;
     --wg-dim:         0.760;
     --wg-radius:      14px;
     --wg-panel-travel: 12px;
@@ -497,7 +509,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt="morphBack"]::view-transition-new(wg-content),
   html[data-vt="back"]::view-transition-new(wg-content) {
     animation: var(--wg-settle) var(--wg-spring) both wgArrive,
-               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn;
+               var(--wg-enter-fade) var(--wg-fade-in) var(--wg-enter-delay) both wgFadeIn;
   }
 
   /* A TAB IS NOT A SCREEN CHANGE. The frame holds and only the panel moves, so

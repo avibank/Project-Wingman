@@ -416,7 +416,8 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // centred dial, so the attitude is written for whichever one is mounted.
   const paperDial = finish === "manual";
   const ballRef = useAttitude(still, paperDial ? { cx: 40, cy: 44, travel: 0.8 } : undefined);
-  const tilt = useTiltPermission();
+  // `still` so the prompt is not offered when motion is switched off.
+  const tilt = useTiltPermission(still);
 
   // Hobbs — hours on this module's airframe. Wall-clock time spent inside the
   // module, counted by the meter in lib/hobbs.js while a module is open, not
