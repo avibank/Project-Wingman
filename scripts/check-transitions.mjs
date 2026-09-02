@@ -91,6 +91,34 @@ for (const s of scales) {
   }
 }
 
+/* :not() MUST NOT APPEAR ON A VIEW-TRANSITION SELECTOR.
+ *
+ * The minifier strips it. A view-transition pseudo-element can only attach to
+ * the originating element, so lightningcss treats everything qualifying it as
+ * redundant and drops the whole compound —
+ *
+ *   html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-old(root)
+ *   becomes
+ *   ::view-transition-old(root)
+ *
+ * — which is true of the `html` part and emphatically false of the attribute
+ * selectors that decide WHICH KIND of transition is running. Every rule guarded
+ * that way silently applied to every kind in the built CSS, and the last one in
+ * the file won.
+ *
+ * That is why the dev server and production disagreed, and why fix after fix
+ * verified locally and changed nothing on the deployed site. Plain attribute
+ * selectors survive intact, so kinds are enumerated instead. It is longer and
+ * it works.
+ */
+for (const m of css.matchAll(/([^{}\n]*::view-transition[^{}\n]*)\{/g)) {
+  if (/:not\(/.test(m[1])) {
+    fail.push(`${m[1].trim().slice(0, 70)} uses :not() on a view-transition selector. The `
+      + "minifier drops the qualifier, so the rule applies to every kind in the built CSS. "
+      + "Enumerate the kinds instead");
+  }
+}
+
 /* NOTHING COMPOSITES ADDITIVELY.
  *
  * The user agent's own stylesheet sets mix-blend-mode: plus-lighter on these
@@ -142,7 +170,7 @@ for (const m of css.matchAll(/([^{}]*::view-transition[^{}]*)\{([^}]*)\}/g)) {
    densify by about a fifth at half-fade — the flash on the icons. Dropping the
    old side is the only version with no artefact, and there is nothing to
    dissolve: between two routes the topbar is nearly always identical. */
-const navRoot = css.match(/:not\(\[data-vt="setting"\]\)::view-transition-old\(root\)\s*\{([^}]*)\}/);
+const navRoot = css.match(/html\[data-vt="fwd"\]::view-transition-old\(root\)[\s\S]{0,600}?\{([^}]*)\}/);
 if (!navRoot || !/display:\s*none/.test(navRoot[1])) {
   fail.push("the old root is still painted on a navigation. Stacked on the new one it "
     + "over-covers every translucent pixel in the chrome — the topbar pills densify by about "

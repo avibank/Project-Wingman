@@ -566,10 +566,43 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      Scoped away from the scene changes: a livery or a finish is the one case
      where the two roots really are different pictures and the dissolve is the
      entire point. */
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-old(root) {
+  /* EVERY KIND LISTED, because :not() does not survive the build.
+
+     This was written as html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])
+     and the minifier stripped the whole compound, leaving a bare
+     ::view-transition-old(root). A view-transition pseudo-element can only
+     attach to the originating element, so the minifier treats the qualifiers
+     on it as redundant and drops them — which is true for `html` and very much
+     not true for the attribute selectors that decide WHICH KIND of transition
+     is running.
+
+     The effect was that every rule guarded that way applied to every kind, and
+     the last one in the file won. It is why the built CSS and the dev server
+     disagreed, and why fixes verified locally kept not landing.
+
+     Simple attribute selectors survive intact — the per-kind wg-content rules
+     below are proof — so the kinds are enumerated. Adding a kind means adding
+     it here; a :not() would be shorter and would silently stop working. */
+  html[data-vt="fwd"]::view-transition-old(root),
+  html[data-vt="back"]::view-transition-old(root),
+  html[data-vt="swap"]::view-transition-old(root),
+  html[data-vt="morph"]::view-transition-old(root),
+  html[data-vt="morphBack"]::view-transition-old(root),
+  html[data-vt="tabR"]::view-transition-old(root),
+  html[data-vt="tabL"]::view-transition-old(root),
+  html[data-vt="paneR"]::view-transition-old(root),
+  html[data-vt="paneL"]::view-transition-old(root) {
     display: none;
   }
-  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-new(root) {
+  html[data-vt="fwd"]::view-transition-new(root),
+  html[data-vt="back"]::view-transition-new(root),
+  html[data-vt="swap"]::view-transition-new(root),
+  html[data-vt="morph"]::view-transition-new(root),
+  html[data-vt="morphBack"]::view-transition-new(root),
+  html[data-vt="tabR"]::view-transition-new(root),
+  html[data-vt="tabL"]::view-transition-new(root),
+  html[data-vt="paneR"]::view-transition-new(root),
+  html[data-vt="paneL"]::view-transition-new(root) {
     animation: none;
   }
 
