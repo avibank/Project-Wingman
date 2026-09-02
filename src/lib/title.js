@@ -53,6 +53,11 @@ export function titleForRoute(route) {
       return formatTitle("Saved");
     case "notfound":
       return formatTitle("Wrong bay");
+    /* The squadron's own name is not known until the token resolves, and this
+       is often the first page a new student sees. The heading it renders is
+       what the tab says. */
+    case "invite":
+      return formatTitle("You were invited");
 
     default:
       // Module, chapter and lesson titles still fall through, and deliberately.

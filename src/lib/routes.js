@@ -45,6 +45,15 @@ export function parseRoute(pathname) {
     return { name: "redirect", to: "/ready-room" + (parts[1] ? `/${parts[1]}` : "") };
   }
 
+  /* §6 — THE INVITE LINK, and it is deliberately the shortest path in the app.
+     wingman.institute/j/<token>. Most people arrive this way: a classmate
+     pastes it into the group chat they already have, so it has to survive
+     being retyped, and it is matched case-insensitively for the same reason.
+     Signed out, the app routes through sign-in and comes back here. */
+  if (parts[0] === "j" && parts[1]) {
+    return { name: "invite", token: parts[1] };
+  }
+
   if (parts[0] === "m") {
     const moduleCode = (parts[1] || "").toUpperCase();
     if (!moduleCode) return { name: "modules" };
@@ -109,5 +118,6 @@ export const path = {
   saved: () => "/saved",
   settings: (page) => (page && page !== "index" ? `/settings/${page}` : "/settings"),
   signin: () => "/signin",
+  invite: (token) => `/j/${token}`,
   profile: (tab) => `/account/${PROFILE_TABS.includes(tab) ? tab : "licence"}`,
 };

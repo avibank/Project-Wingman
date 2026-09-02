@@ -45,6 +45,10 @@ const CHUNK = {
   notFound: chunk(() => import("./components/NotFound.jsx")),
   chapters: chunk(() => import("./components/ChaptersPanel.jsx")),
   readyOld: chunk(() => import("./components/ReadyRoom.jsx")),
+  // §6 — its own chunk. An invite link is very often a cold first load on a
+  // phone, so it should not drag the whole Ready Room down the wire to render
+  // one room name and one button.
+  invite: chunk(() => import("./components/room/InviteLanding.jsx")),
   modules: chunk(() => import("./components/ModulesPage.jsx")),
   moduleHub: chunk(() => import("./components/ModuleHub.jsx")),
   module: chunk(() => import("./components/module/ModuleScreen.jsx")),
@@ -67,6 +71,7 @@ import { ChevronRight, Lock, Plane } from "lucide-react";
 const ChaptersPanel = lazy(CHUNK.chapters);
 import Home from "./components/Home.jsx";
 const ReadyRoom = lazy(CHUNK.readyOld);
+const InviteLanding = lazy(CHUNK.invite);
 const ModulesPage = lazy(CHUNK.modules);
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
@@ -1073,6 +1078,19 @@ function AppInner() {
             onOpenModule={(code) => { setPreferredModuleCode(code); go(routePath.module(code)); }}
             onGoToChapter={goToChapter}
             onMakeActive={(code) => setPreferredModuleCode(code)}
+          />
+        </main>
+      ) : route.name === "invite" ? (
+        /* §6 — an invite link, and it gets a screen of its own rather than a
+           modal over whatever was behind it. This is very often the FIRST page
+           a new student ever sees, arriving from a group chat, so it carries no
+           deck, no rail and no nav: one room, one decision. */
+        <main className="content content-taxi">
+          <InviteLanding
+            me={me}
+            token={route.token}
+            onEnter={() => go(routePath.ready())}
+            onFindInstead={() => go(routePath.ready())}
           />
         </main>
       ) : route.name === "ready" && flags["social.readyroom"] ? (
