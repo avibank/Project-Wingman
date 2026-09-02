@@ -702,7 +702,7 @@
    margin-top, which stacked to about 50px. The title now sits under the player
    the way it does on any video page. The column gap is untouched -- that one
    separates the player from the up-next rail and was never the problem. */
-.watch{ display: grid; gap: 16px 24px; padding-inline: var(--pad); }
+.watch{ display: grid; gap: 12px 24px; padding-inline: var(--pad); }
 /* THE LESSON READS THE WAY A VIDEO PAGE READS. The list of lessons is
    navigation, so it goes down the left and stays put; everything about the
    lesson you are actually watching runs down one column on the right, in the

@@ -155,7 +155,7 @@
 }
 
 /* ---------------------------------------------------- the action row pills */
-.lact{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.lact{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
 .pill{
   display: inline-flex; align-items: center; gap: 8px;
   min-height: var(--tap); padding: 0 16px;
