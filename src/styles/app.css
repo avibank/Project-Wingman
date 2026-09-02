@@ -515,8 +515,22 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   /* THE CHROME HOLDS STILL. The topbar and the background live in the root
      snapshot and only their content crossfades, so nothing outside the screen
      being replaced appears to move. */
-  html[data-vt]::view-transition-old(root) { animation: 160ms var(--wg-fade-out) both wgFadeOut; }
-  html[data-vt]::view-transition-new(root) { animation: 200ms var(--wg-fade-in) both wgFadeIn; }
+  /* THE OLD ROOT HOLDS. It used to cross-fade — old out over 160ms while new
+     came in over 200ms — and two layers fading past each other do not sum to
+     one: at the midpoint both sit near half and the pair thins, so everything
+     in the root pulsed on every navigation. The root is the background, the
+     topbar and the runway lights, none of which is what you are navigating,
+     and all of which were dipping because the content moved.
+
+     Held at full opacity underneath, with the new one fading in on top,
+     new*a + old*(1-a) sums to full coverage at every instant. Where the root
+     is identical between two routes — which is nearly always — the result is
+     literally no change at all. Where it differs, it dissolves. */
+  html[data-vt]::view-transition-old(root) { animation: none; }
+  html[data-vt]::view-transition-new(root) {
+    animation: 200ms var(--wg-fade-in) both wgFadeIn;
+    mix-blend-mode: normal;
+  }
 
   /* Mission Control itself, on whole-screen changes only. */
   html[data-vt="fwd"]::view-transition-old(wg-content),
@@ -553,6 +567,18 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   html[data-vt="tabL"]::view-transition-new(wg-tabpanel) {
     animation: var(--wg-settle) var(--wg-spring) both wgPanelInL,
                var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
+
+  /* THE BACKGROUND IS NOT PART OF THE NAVIGATION, so it is lifted out of the
+     root and pinned rather than left to whatever the root is doing. It is one
+     continuous element across every route — it lives outside .deck-inner, so
+     React never even remounts it — and it drifts under its own animations. Two
+     snapshots of a drifting field taken 200ms apart are not identical, and
+     dissolving between them is a visible stutter in the stars.
+     Named and frozen, it is the same layer before and after: still. */
+  html[data-vt] .deck-light { view-transition-name: wg-bg; }
+  ::view-transition-group(wg-bg) { animation-duration: 1ms; }
+  ::view-transition-old(wg-bg),
+  ::view-transition-new(wg-bg) { animation: none; }
 
   /* The Ready Room's rail is furniture: it never travels with the pane. */
   ::view-transition-group(wg-rail) { animation-duration: 1ms; }

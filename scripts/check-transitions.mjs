@@ -91,6 +91,36 @@ for (const s of scales) {
   }
 }
 
+/* THE BACKGROUND HOLDS STILL, and that is two separate declarations.
+ *
+ * First, the OLD root must not animate. Two layers fading past each other do
+ * not sum to one — at the midpoint both sit near half and the pair thins — so
+ * a cross-faded root pulses everything in it on every navigation: the
+ * background, the topbar, the runway lights. None of those is what is being
+ * navigated. Held at full opacity with the new one fading in on top, the two
+ * always sum to full coverage, and where the root is identical the result is
+ * no change at all.
+ *
+ * Second, the ambient layer is named so it is lifted out of the root entirely
+ * and frozen. It is one continuous element across every route and it drifts
+ * under its own animations; two snapshots of a drifting starfield 200ms apart
+ * are not the same picture, and dissolving between them is a stutter.
+ */
+const rootOld = css.match(/html\[data-vt\]::view-transition-old\(root\)\s*\{([^}]*)\}/);
+if (!rootOld) {
+  fail.push("no rule holds the old root still — the background will cross-fade with the content");
+} else if (!/animation:\s*none/.test(rootOld[1])) {
+  fail.push("the old root animates again. Two layers fading past each other thin at the midpoint, "
+    + "so the background and the topbar pulse on every navigation");
+}
+if (!/\.deck-light\s*\{\s*view-transition-name:\s*wg-bg/.test(css)) {
+  fail.push("the ambient background is no longer named — it goes back into the root snapshot "
+    + "and dissolves between two different moments of its own drift");
+}
+if (!/::view-transition-(old|new)\(wg-bg\)[^}]*animation:\s*none/.test(css)) {
+  fail.push("wg-bg is named but not frozen; naming it alone only changes which layer it stutters in");
+}
+
 /* And the chrome must stay out of it: naming the topbar or the rail would make
    the furniture travel with the screen. */
 if (/view-transition-name:\s*wg-(topbar|brand|avatar)/.test(css)) {
