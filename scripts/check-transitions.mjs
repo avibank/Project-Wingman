@@ -135,12 +135,18 @@ for (const m of css.matchAll(/([^{}]*::view-transition[^{}]*)\{([^}]*)\}/g)) {
  * under its own animations; two snapshots of a drifting starfield 200ms apart
  * are not the same picture, and dissolving between them is a stutter.
  */
-const rootOld = css.match(/html\[data-vt\]::view-transition-old\(root\)\s*\{([^}]*)\}/);
-if (!rootOld) {
-  fail.push("no rule holds the old root still — the background will cross-fade with the content");
-} else if (!/animation:\s*none/.test(rootOld[1])) {
-  fail.push("the old root animates again. Two layers fading past each other thin at the midpoint, "
-    + "so the background and the topbar pulse on every navigation");
+/* THE ROOT PAINTS ONCE on a navigation. Holding the old root and fading the new
+   over it is a correct dissolve for opaque pixels and wrong for translucent
+   ones: a pixel with alpha p under a layer fading at o covers o*p + p*(1-o*p),
+   which is more than p. The topbar's pills sit at .87 and .585, so they
+   densify by about a fifth at half-fade — the flash on the icons. Dropping the
+   old side is the only version with no artefact, and there is nothing to
+   dissolve: between two routes the topbar is nearly always identical. */
+const navRoot = css.match(/:not\(\[data-vt="setting"\]\)::view-transition-old\(root\)\s*\{([^}]*)\}/);
+if (!navRoot || !/display:\s*none/.test(navRoot[1])) {
+  fail.push("the old root is still painted on a navigation. Stacked on the new one it "
+    + "over-covers every translucent pixel in the chrome — the topbar pills densify by about "
+    + "a fifth at half-fade, which is the flash on the icons");
 }
 if (!/\.deck-light\s*\{\s*view-transition-name:\s*wg-bg/.test(css)) {
   fail.push("the ambient background is no longer named — it goes back into the root snapshot "

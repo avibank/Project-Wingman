@@ -545,9 +545,32 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      new*a + old*(1-a) sums to full coverage at every instant. Where the root
      is identical between two routes — which is nearly always — the result is
      literally no change at all. Where it differs, it dissolves. */
-  html[data-vt]::view-transition-old(root) { animation: none; }
-  html[data-vt]::view-transition-new(root) {
-    animation: 200ms var(--wg-fade-in) both wgFadeIn;
+  /* THE ROOT PAINTS ONCE ON A NAVIGATION, and this is the last form of the
+     same mistake.
+
+     Holding the old root and fading the new one over it is a correct dissolve
+     for OPAQUE pixels: new*o + old*(1-o) is exactly the picture. It is not
+     correct for translucent ones. A pixel with its own alpha p, under a layer
+     fading at o, ends up covering o*p + p*(1 - o*p) — which is MORE than p.
+     Measured on the two the eye actually catches: .rrpill sits at alpha .87
+     and .avbtn at .585, and at half-fade the avatar composites to .707 instead
+     of .585. Twenty-one percent denser, on a pale pill over a dark gradient,
+     for the length of every navigation. That is the flash on the icons.
+
+     There is nothing to dissolve anyway. Between two routes the topbar is
+     almost always identical, and where it is not — the Ready Room takes the
+     whole screen — a cut on the chrome is what "the chrome does not move"
+     means. So the old side is dropped and the new one paints immediately, the
+     same rule already applied to the background and the rail.
+
+     Scoped away from the scene changes: a livery or a finish is the one case
+     where the two roots really are different pictures and the dissolve is the
+     entire point. */
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-old(root) {
+    display: none;
+  }
+  html[data-vt]:not([data-vt="theme"]):not([data-vt="setting"])::view-transition-new(root) {
+    animation: none;
   }
 
   /* Mission Control itself, on whole-screen changes only. */
