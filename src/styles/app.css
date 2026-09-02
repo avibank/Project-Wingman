@@ -642,32 +642,25 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     animation: var(--wg-settle) var(--wg-spring) both wgPanelInL,
                var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
 
-  /* THE BACKGROUND IS NOT PART OF THE NAVIGATION, so it is lifted out of the
-     root and pinned rather than left to whatever the root is doing. It is one
-     continuous element across every route — it lives outside .deck-inner, so
-     React never even remounts it — and it drifts under its own animations. Two
-     snapshots of a drifting field taken 200ms apart are not identical, and
-     dissolving between them is a visible stutter in the stars.
-     Named and frozen, it is the same layer before and after: still. */
-  html[data-vt] .deck-light { view-transition-name: wg-bg; }
-  ::view-transition-group(wg-bg) { animation-duration: 1ms; }
-  /* EXACTLY ONE COPY IS PAINTED, and that is the whole point of this rule.
-     .deck-light has no background of its own: it is a transparent container
-     whose ::before and ::after SCREEN light onto whatever is behind them —
-     "light adds, it does not veil", as Deck.jsx puts it. Its snapshot is
-     therefore translucent and additive.
-     Holding both the old and the new at full opacity painted that glow TWICE
-     for the length of every transition. Two screens stacked are brighter than
-     one, so the page lifted while it moved and dropped back when the old
-     snapshot went — a brightness spike with no colour change, caused by
-     freezing the layer rather than by anything the layer does.
-     The old side is removed instead of held. The two are identical, so there
-     is nothing to dissolve between and nothing lost by dropping one. */
-  ::view-transition-old(wg-bg) { display: none; }
-  ::view-transition-new(wg-bg) { animation: none; }
+  /* THE BACKGROUND IS NOT NAMED, and taking the name off is what stops the
+     icons flashing.
 
-  /* The Ready Room's rail is furniture: it never travels with the pane. */
-  ::view-transition-group(wg-rail) { animation-duration: 1ms; }
+     It was named and pinned so it would hold still. It does hold still — but
+     .deck-light carries isolation: isolate and its ::before/::after blend with
+     mix-blend-mode: screen. Lifting it into a snapshot of its own changes what
+     those pseudo-elements composite AGAINST: instead of screening over the
+     dark ground behind them they screen over a transparent backdrop, which is
+     the case where screen does nothing to restrain the glow. It renders at
+     full strength for the length of the transition, and the topbar's
+     translucent pills sit directly on top of it — which is why the brightness
+     showed up on the icons specifically rather than across the page.
+
+     It does not need naming to be still. It lives in the root, the root paints
+     once on a navigation (old dropped, new instant, below), and a layer that
+     never animates and is never re-composited is as still as a layer can be.
+     The pin was solving a problem the root rule already solved, and paying for
+     it with a blend-mode change. */
+
   /* Same treatment for the same reason. The rail is opaque, so doubling it is
      invisible rather than harmful — but a pinned pair should paint once as a
      rule, not because this particular layer happens to hide the mistake. */

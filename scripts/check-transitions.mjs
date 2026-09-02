@@ -176,12 +176,19 @@ if (!navRoot || !/display:\s*none/.test(navRoot[1])) {
     + "over-covers every translucent pixel in the chrome — the topbar pills densify by about "
     + "a fifth at half-fade, which is the flash on the icons");
 }
-if (!/\.deck-light\s*\{\s*view-transition-name:\s*wg-bg/.test(css)) {
-  fail.push("the ambient background is no longer named — it goes back into the root snapshot "
-    + "and dissolves between two different moments of its own drift");
-}
-if (!/::view-transition-new\(wg-bg\)[^}]*animation:\s*none/.test(css)) {
-  fail.push("wg-bg is named but not frozen; naming it alone only changes which layer it stutters in");
+/* THE BACKGROUND MUST NOT BE NAMED. It was, so it would hold still, and that
+   pinned it at the cost of its blend mode: .deck-light isolates and its
+   pseudo-elements screen, so lifting it into its own snapshot made them
+   composite against a transparent backdrop instead of the dark ground. Screen
+   over nothing does not restrain the glow, it renders it at full strength —
+   and the topbar's translucent pills sit on top of it, which is why the
+   brightness appeared on the icons and nowhere else.
+   It does not need a name to be still: it lives in the root, and the root
+   paints once on a navigation. */
+if (/\.deck-light[^{]*\{\s*view-transition-name/.test(css)) {
+  fail.push("the ambient background is named again. It isolates and blends with screen, so "
+    + "lifting it into its own snapshot composites that glow against a transparent backdrop "
+    + "and it blows out — visible as a brightness spike on the topbar's translucent icons");
 }
 /* AND EXACTLY ONE COPY IS PAINTED. .deck-light is a transparent container whose
    pseudo-elements SCREEN light onto what is behind them — additive by design.
@@ -189,7 +196,7 @@ if (!/::view-transition-new\(wg-bg\)[^}]*animation:\s*none/.test(css)) {
    twice, and two screens stacked are brighter than one: the page lifts for the
    length of the transition and drops back when the old snapshot goes. A pinned
    pair must drop one side rather than hold both. */
-for (const name of ["wg-bg", "wg-rail"]) {
+for (const name of ["wg-rail"]) {
   const re = new RegExp(`::view-transition-old\\(${name}\\)[^}]*\\{([^}]*)\\}`);
   const m = css.match(re);
   if (!m || !/display:\s*none/.test(m[1])) {
