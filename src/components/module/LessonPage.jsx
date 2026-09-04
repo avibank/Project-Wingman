@@ -442,7 +442,7 @@ function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pendin
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
-    id === me ? "You" : (people.find((p) => p.id === id)?.callsign || id);
+    id === me ? "You" : (people.find((p) => p.id === id)?.callsign || "Someone");
   // §3.5 — the instructor badge, "where it applies". One resolver, so a badge
   // can never appear beside a name the same lookup failed to resolve.
   const teaches = (id) => people.find((p) => p.id === id)?.role === "instructor";

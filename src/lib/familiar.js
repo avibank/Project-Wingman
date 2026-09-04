@@ -303,7 +303,12 @@ export function peopleRows(threads, replies, people, moduleId, me = 'u_you', las
       id: t.id,
       author: byId[t.authorId],
       title: t.body,                                   // one full line, never cut to nothing
-      preview: last ? `${byId[last.authorId]?.callsign ?? ''}: ${last.body}` : null,
+      // No name means no prefix. `?? ''` put a bare colon in front of the last
+      // reply — ": Test 2" — whenever the replier had not set a callsign.
+      preview: last
+        ? (byId[last.authorId]?.callsign
+            ? `${byId[last.authorId].callsign}: ${last.body}` : last.body)
+        : null,
       when: ago(lastAt, now),
       replies: rr.length,
       anchored: t.lessonId != null,

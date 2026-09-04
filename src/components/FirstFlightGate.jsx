@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { fetchProfileStatus } from "../lib/squadron.js";
+import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
 import FirstFlight from "./FirstFlight.jsx";
 import Spooling from "./Spooling.jsx";
 
@@ -21,6 +21,21 @@ function FirstFlightGate({ children }) {
     fetchProfileStatus(user.id)
       .then(({ profile, failed }) => {
         if (!live) return;
+        /* HEALING THE CALLSIGN ON THE WAY PAST.
+
+           The Licence tab used to write a callsign to Clerk alone, so every
+           account that set one before that was fixed still has a NULL in
+           pilot_profiles — which is the column the room, the comments, the
+           roster and people_search all read. They would stay "Someone" to
+           everybody forever, and unfindable, without ever being told why.
+
+           This is the one place with both facts in hand at startup, and it is
+           already reading the profile, so the check is free. One write, only
+           when the two actually disagree. */
+        const mine = user.username?.trim();
+        if (profile && mine && profile.callsign !== mine) {
+          saveProfile(user.id, { callsign: mine }).catch(() => {});
+        }
         setState(failed || profile ? "through" : "onboarding");
       })
       .catch(() => live && setState("through"));

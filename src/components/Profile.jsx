@@ -591,9 +591,28 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                    value={bio} onChange={setBio}
                    onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
 
+            {/* AND TO THE PROFILE, for the same reason the full name goes
+                there — Clerk is not queryable from Postgres, and the callsign
+                is what the whole social layer reads: the room, the lesson
+                comments, the roster, people_search.
+
+                It went only to Clerk before, so setting a callsign here left
+                pilot_profiles.callsign NULL. The effect was that you had a
+                name in your own chrome and were "Someone" to everybody else,
+                and people_search — which matches on that column — could not
+                find you at all.
+
+                Order matters: Clerk owns uniqueness, so the mirror happens
+                only after it accepts. A name that was taken must not be
+                written anywhere. */}
             <Field id="f-user" label="Callsign" hint="How everyone else sees you."
                    value={username} onChange={setUsername}
-                   onCommit={() => user?.update({ username: username.trim() }).catch(() => setSaveNote("That callsign is taken."))} />
+                   onCommit={() => {
+                     const next = username.trim();
+                     user?.update({ username: next })
+                       .then(() => { if (user?.id) saveProfile(user.id, { callsign: next || null }); })
+                       .catch(() => setSaveNote("That callsign is taken."));
+                   }} />
 
             {/* Off shows your full name, on shows your callsign. Sits under the
                 callsign field rather than above it: you pick the name first,

@@ -50,8 +50,12 @@ export default function PeopleTab({ module: mod, people = [], onOpenAt, loading 
   const showSkeleton = loading && rows.length === 0;
   const groups = groupRows(rows);
   const current = open ? threads.find((t) => t.id === open) : null;
+  // "Someone", never the id. An account that has not set a callsign yet — and
+  // signup lets you skip it — otherwise puts a raw Clerk id under their own
+  // question. The room already says "Someone" for the same case; this is the
+  // same feed in a second place and must not disagree with it.
   const who = (id) => (id === me ? "You"
-    : people.find((p) => p.id === id)?.callsign || id);
+    : people.find((p) => p.id === id)?.callsign || "Someone");
 
   // No split pane. The split is what cut 7 of 7 titles — it gave the list
   // 253px of a wide screen — so the rows are full width and opening a thread
