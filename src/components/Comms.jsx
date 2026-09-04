@@ -8,7 +8,7 @@ import {
 } from "../lib/comms.js";
 import { WINGMAN_ID, WINGMAN_NAME } from "../data/openers.js";
 import { fetchProfiles, fetchSquadron, assignMarkings } from "../lib/squadron.js";
-import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import Tail, { TailStyles } from "./Tail.jsx";
 import PilotSheet from "./PilotSheet.jsx";
 
 // §7.8 — a channel, not a forum. No threads, no upvotes, no accepted answers,
@@ -80,11 +80,10 @@ function Comms({ moduleCode, currentChapterId = null }) {
 
   const marked = Object.fromEntries(
     assignMarkings(
-      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() })),
-      hueOf
+      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() }))
     ).map((p) => [p.user_id, p])
   );
-  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", livery: "dawn-patrol", marking: "solid" };
+  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", marking: "solid" };
 
   const send = async () => {
     const body = draft.trim();
@@ -122,13 +121,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
   const currentChapter = chapterById[currentChapterId];
 
   return (
-    <div
-      className="cm"
-      // §2.12 — the squadron's livery paints this surface for the duration.
-      // Scoped to the container, so the rest of the cockpit stays yours (§2.8).
-      data-livery={squadron?.livery || undefined}
-      data-variant={squadron?.livery ? (document.documentElement.getAttribute("data-variant") || "night") : undefined}
-    >
+    <div className="cm">
       <header className="cm-head">
         <h2 className="cm-title">Comms</h2>
         {currentChapter && (
@@ -147,7 +140,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
           <p className="cm-pins-head">Pinned to {currentChapter?.code}</p>
           {pinned.map((p) => (
             <div key={p.id} className="cm-pin">
-              <span className="cm-pin-edge" style={{ "--edge": `var(--tail-${who(p.user_id).livery})` }} aria-hidden="true" />
+              <span className="cm-pin-edge" style={{ "--edge": "var(--active)" }} aria-hidden="true" />
               <span className="cm-pin-body">{p.body}</span>
               <button className="cm-pin-undo" onClick={() => unpin(p.id).then(load)}>Unpin</button>
             </div>
@@ -174,7 +167,7 @@ function Comms({ moduleCode, currentChapterId = null }) {
                 <span className="cm-wingman-mark" aria-hidden="true" />
               ) : (
                 <button className="cm-avatar" onClick={() => setSheet(who(g.user_id))}>
-                  <Tail name={who(g.user_id).callsign} livery={who(g.user_id).livery}
+                  <Tail name={who(g.user_id).callsign}
                     marking={who(g.user_id).marking} size={36} staff={who(g.user_id).is_staff} />
                 </button>
               )}
@@ -192,9 +185,9 @@ function Comms({ moduleCode, currentChapterId = null }) {
                   return (
                     <div key={m.id} className="cm-msg">
                       {/* §2.8 — a 2px leading edge in the sender's warm channel.
-                          The only place another livery touches a message. */}
+                          The only place another colour touches a message. */}
                       <span className="cm-edge"
-                        style={{ "--edge": m.user_id === WINGMAN_ID ? "var(--cold)" : `var(--tail-${who(m.user_id).livery})` }}
+                        style={{ "--edge": m.user_id === WINGMAN_ID ? "var(--cold)" : "var(--active)" }}
                         aria-hidden="true" />
                       <div className="cm-bubble">
                         {ch && <span className="cm-chip">{ch.code}</span>}

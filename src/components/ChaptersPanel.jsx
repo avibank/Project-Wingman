@@ -25,10 +25,9 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   // Slide-over state for the notebook / discussion entry points.
   const [panel, setPanel] = useState(null); // { kind: "notebook"|"threads", chapter }
   const [counts, setCounts] = useState({});
-  // §7.6 — the glow is the user's own hue when nobody else is here, and it has
-  // a settings toggle. Default on; the body stays fully usable at 0% glow.
+  // §7.6 — the glow has a settings toggle. Default on; the body stays fully
+  // usable at 0% glow.
   const [profile, setProfile] = useState(null);
-  const ownLivery = profile?.livery || "dawn-patrol";
   const glowEnabled = profile ? profile.glow_enabled !== false : true;
   const progress = useUserProgress();
   const { user } = useUser();
@@ -334,8 +333,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
               {isOpen && readingChapter && (
                 <div className="chapter-body chapter-body-opening" id="reader-panel" role={readingChapter ? "tabpanel" : undefined} aria-labelledby={readingChapter ? `reader-tab-${chapterTab}` : undefined}>
                   {/* §7.6 — the body's one social element, and it is lighting,
-                      not an element. At n = 0 it is 3% of the user's own hue. */}
-                  <StudyGlow chapterId={ch.id} ownLivery={ownLivery} enabled={glowEnabled}
+                      not an element. At n = 0 it is 3%. */}
+                  <StudyGlow chapterId={ch.id} enabled={glowEnabled}
                     onSayHi={() => setPanel({ kind: "threads", chapter: ch })} />
                   <div className="chapter-video">
                     {!ch.clip ? (

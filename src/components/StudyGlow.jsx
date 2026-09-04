@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchChapterPresence } from "../lib/presence.js";
 import { fetchProfiles, fetchBlocks, assignMarkings } from "../lib/squadron.js";
-import { computeGlow } from "../lib/glow.js";
-import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import { computeGlow, GLOW_HUE } from "../lib/glow.js";
+import Tail, { TailStyles } from "./Tail.jsx";
 import PilotSheet from "./PilotSheet.jsx";
 
 // §7.6 — the chapter body's one social element, and it is not an element: it is
@@ -12,7 +12,7 @@ import PilotSheet from "./PilotSheet.jsx";
 
 const POLL_MS = 60_000;
 
-function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSayHi }) {
+function StudyGlow({ chapterId, enabled = true, onSayHi }) {
   const { user } = useUser();
   const [others, setOthers] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -36,7 +36,6 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
         rows
           // §8.3 — invisible users do not warm the room and are not counted.
           .filter((r) => !map[r.user_id]?.invisible && !blocked.includes(r.user_id))
-          .map((r) => ({ ...r, livery: map[r.user_id]?.livery || "dawn-patrol" }))
           .sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen))
       );
     };
@@ -49,18 +48,17 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
   // The chapter body must remain fully usable at 0% glow (§7.6).
   if (!enabled) return null;
 
-  const { n, hue, alpha } = computeGlow({ others, ownLivery });
+  const { n, alpha } = computeGlow({ others });
   const marked = assignMarkings(
     others.slice(0, 8).map((o) => ({
       ...o,
       callsign: profiles[o.user_id]?.callsign || o.display_name || "Pilot",
       is_staff: profiles[o.user_id]?.is_staff || false,
       joined_at: o.last_seen,
-    })),
-    hueOf
+    }))
   );
 
-  const vars = { "--glow-h": hue, "--glow-a": alpha };
+  const vars = { "--glow-a": alpha };
 
   return (
     <>
@@ -83,7 +81,7 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
               {marked.map((p) => (
                 <li key={p.user_id}>
                   <button className="glow-face" onClick={() => setSheet(p)}>
-                    <Tail name={p.callsign} livery={p.livery} marking={p.marking} size={44} staff={p.is_staff} />
+                    <Tail name={p.callsign} marking={p.marking} size={44} staff={p.is_staff} />
                     <span className="glow-face-name">{p.callsign}</span>
                   </button>
                 </li>
@@ -110,21 +108,21 @@ function StudyGlow({ chapterId, ownLivery = "dawn-patrol", enabled = true, onSay
 
       <TailStyles />
       <style>{`
-        /* A gradient is not an animatable value. Registering the two inputs
-           makes them interpolate, and the gradient recomputes per frame. */
-        @property --glow-h { syntax: '<number>'; inherits: true; initial-value: 55; }
+        /* A gradient is not an animatable value. Registering the alpha makes
+           it interpolate, and the gradient recomputes per frame. The hue is a
+           constant now — presence changes the brightness, not the colour. */
         @property --glow-a { syntax: '<number>'; inherits: true; initial-value: 0.03; }
         .glow { position: fixed; inset: 0; pointer-events: none; z-index: 0;
           background: radial-gradient(90% 60% at 50% 0%,
-            oklch(0.80 0.135 var(--glow-h) / var(--glow-a)) 0%, transparent 70%);
-          transition: --glow-h 2s linear, --glow-a 2s linear; }
+            oklch(0.80 0.135 ${GLOW_HUE} / var(--glow-a)) 0%, transparent 70%);
+          transition: --glow-a 2s linear; }
         .glow-tap { display: inline-flex; align-items: center; justify-content: center;
           width: 44px; height: 44px; background: none; border: none; cursor: pointer; padding: 0; }
         /* §7.6 — no counter and no faces on the body. A single warm point, in
            the colour the room is already lit in. */
         .glow-tap-mark { width: 7px; height: 7px; border-radius: 50%;
-          background: oklch(0.80 0.135 var(--glow-h));
-          box-shadow: 0 0 0 3px oklch(0.80 0.135 var(--glow-h) / 0.22); }
+          background: oklch(0.80 0.135 ${GLOW_HUE});
+          box-shadow: 0 0 0 3px oklch(0.80 0.135 ${GLOW_HUE} / 0.22); }
         @media (prefers-reduced-motion: reduce) { .glow-tap-mark { box-shadow: none; outline: 2px solid currentColor; } }
 
         .glow-sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end;

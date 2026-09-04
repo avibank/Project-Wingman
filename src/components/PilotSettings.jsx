@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
 import { NOTIFY_MODES } from "../lib/readyRoom.js";
-import LiveryPicker from "./LiveryPicker.jsx";
 import Tail, { TailStyles } from "./Tail.jsx";
 import Spooling from "./Spooling.jsx";
 
@@ -40,7 +39,7 @@ function Toggle({ id, on, onChange, label, hint, busy }) {
   );
 }
 
-function PilotSettings({ modulesCompleted = 0 }) {
+function PilotSettings() {
   const { user, isSignedIn } = useUser();
   const [profile, setProfile] = useState(null);
   const [state, setState] = useState("loading");   // loading | ready | unavailable
@@ -102,17 +101,6 @@ function PilotSettings({ modulesCompleted = 0 }) {
             onClick={() => patch({ callsign: callsign.trim() || null })}
           >Save</button>
         </div>
-      </div>
-
-      <div className="ps2-block">
-        <p className="ps2-row-label">Livery</p>
-        <LiveryPicker
-          current={profile?.livery}
-          modulesCompleted={modulesCompleted}
-          onSelect={(id) => {
-            patch({ livery: id });
-          }}
-        />
       </div>
 
       <div className="ps2-block">

@@ -40,21 +40,11 @@
   /* §4.1 gives one ambient rig per screen; the v2 cheatline was a second one. */
   --cheatline: none;
 
-  /* A person carries no colour of their own under this system. */
+  /* A person carries no colour of their own under this system. There were
+     twelve more of these, one per id in each of the two things that were both
+     called a livery, and every single one resolved to exactly this pair. */
   --tail-ink: var(--active);
   --tail-bg: var(--raised);
-  --tail-sky: var(--active);          --tail-sky-bg: var(--raised);
-  --tail-amber: var(--active);        --tail-amber-bg: var(--raised);
-  --tail-tarmac: var(--active);       --tail-tarmac-bg: var(--raised);
-  --tail-beacon: var(--active);       --tail-beacon-bg: var(--raised);
-  --tail-runway: var(--active);       --tail-runway-bg: var(--raised);
-  --tail-skydrol: var(--active);      --tail-skydrol-bg: var(--raised);
-  --tail-aurora: var(--active);       --tail-aurora-bg: var(--raised);
-  --tail-contrail: var(--active);     --tail-contrail-bg: var(--raised);
-  --tail-night-ops: var(--active);    --tail-night-ops-bg: var(--raised);
-  --tail-carrier-deck: var(--active); --tail-carrier-deck-bg: var(--raised);
-  --tail-altimeter: var(--active);    --tail-altimeter-bg: var(--raised);
-  --tail-dawn-patrol: var(--active);  --tail-dawn-patrol-bg: var(--raised);
 
   /* ------------------------------------------------------------ 2 · type */
   --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;

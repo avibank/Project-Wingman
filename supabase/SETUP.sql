@@ -521,6 +521,564 @@ as $$
 $$;
 
 
+-- 0009_right_seat_boundary.sql
+
+create or replace function my_squadron_ids(p_me text)
+returns setof uuid
+language sql
+stable
+as $$
+  select squadron_id from squadron_members where user_id = p_me;
+$$;
+
+create or replace function right_seat(p_me text, p_since interval default '90 seconds')
+returns table (
+  user_id      text,
+  squadron_id  uuid,
+  module_code  text,
+  chapter_id   text,
+  last_seen    timestamptz
+)
+language sql
+stable
+as $$
+  select distinct on (p.user_id)
+         p.user_id,
+         sm.squadron_id,
+         p.module_code,
+         p.chapter_id,
+         p.last_seen
+  from presence p
+  join squadron_members sm
+    on sm.user_id = p.user_id
+   and sm.squadron_id in (select my_squadron_ids(p_me))
+  where p.user_id <> p_me
+    and p.last_seen >= now() - p_since
+    and not exists (
+      select 1 from blocks b
+      where (b.user_id = p_me and b.blocked_id = p.user_id)
+         or (b.user_id = p.user_id and b.blocked_id = p_me)
+    )
+  order by p.user_id, p.last_seen desc;
+$$;
+
+drop policy if exists lesson_notes_open on lesson_notes;
+
+create policy lesson_notes_no_bulk_read on lesson_notes
+  for select using (false);
+create policy lesson_notes_write on lesson_notes
+  for insert with check (true);
+create policy lesson_notes_update on lesson_notes
+  for update using (true) with check (true);
+create policy lesson_notes_delete on lesson_notes
+  for delete using (true);
+
+
+-- 0010_thread_titles_and_answers.sql
+
+alter table lesson_threads add column if not exists title text;
+
+alter table lesson_threads
+  add column if not exists best_reply_id text
+  references lesson_replies (id) on delete set null;
+
+create table if not exists lesson_reply_votes (
+  reply_id   text        not null references lesson_replies (id) on delete cascade,
+  user_id    text        not null,
+  created_at timestamptz not null default now(),
+  primary key (reply_id, user_id)
+);
+create index if not exists lesson_reply_votes_reply_idx on lesson_reply_votes (reply_id);
+
+alter table lesson_reply_votes enable row level security;
+create policy lesson_reply_votes_open on lesson_reply_votes
+  for all using (true) with check (true);
+
+
+-- 0011_discovery.sql
+
+alter table squadrons add column if not exists name         text;
+alter table squadrons add column if not exists blurb        text;
+alter table squadrons add column if not exists owner_id     text;
+alter table squadrons add column if not exists exam_window  text;
+
+alter table squadrons add column if not exists join_policy  text not null default 'invite_only';
+do $$ begin
+  alter table squadrons add constraint squadrons_join_policy_known
+    check (join_policy in ('open', 'request', 'invite_only'));
+exception when duplicate_object then null; end $$;
+
+alter table squadrons add column if not exists member_cap   integer default 32;
+
+alter table squadrons add column if not exists invite_token       text;
+alter table squadrons add column if not exists invite_expires_at  timestamptz;
+alter table squadrons add column if not exists invite_revoked_at  timestamptz;
+create unique index if not exists squadrons_invite_token_idx
+  on squadrons (lower(invite_token)) where invite_token is not null;
+
+alter table pilot_profiles add column if not exists exam_window   text;
+alter table pilot_profiles add column if not exists active_window text;   -- morning|afternoon|evening|night
+alter table pilot_profiles add column if not exists timezone      text;
+alter table pilot_profiles add column if not exists discoverable  boolean not null default true;
+
+create table if not exists squadron_join_requests (
+  squadron_id uuid        not null references squadrons (id) on delete cascade,
+  user_id     text        not null,
+  state       text        not null default 'pending' check (state in ('pending','accepted','declined')),
+  created_at  timestamptz not null default now(),
+  decided_at  timestamptz,
+  primary key (squadron_id, user_id)
+);
+create index if not exists squadron_join_requests_user_idx on squadron_join_requests (user_id, state);
+
+create table if not exists squadron_invites (
+  id           uuid        primary key default gen_random_uuid(),
+  squadron_id  uuid        not null references squadrons (id) on delete cascade,
+  inviter_id   text        not null,
+  invitee_id   text        not null,
+  state        text        not null default 'pending' check (state in ('pending','accepted','declined','revoked')),
+  created_at   timestamptz not null default now(),
+  unique (squadron_id, invitee_id)
+);
+create index if not exists squadron_invites_invitee_idx on squadron_invites (invitee_id, state);
+
+do $$
+declare t text;
+begin
+  foreach t in array array['squadron_join_requests', 'squadron_invites'] loop
+    execute format('alter table %I enable row level security', t);
+    execute format('drop policy if exists %I on %I', t || '_open', t);
+    execute format('create policy %I on %I for all using (true) with check (true)', t || '_open', t);
+  end loop;
+end $$;
+
+create or replace function my_modules(p_me text)
+returns setof text
+language sql
+stable
+as $$
+  select module_code from chapter_completions where user_id = p_me
+  union
+  select module_id   from lesson_threads      where author_id = p_me;
+$$;
+
+create or replace function in_my_orbit(p_me text, p_them text)
+returns boolean
+language sql
+stable
+as $$
+  select p_me is not null and p_them is not null and p_me <> p_them and (
+    exists (
+      select 1 from squadron_members a
+      join squadron_members b on b.squadron_id = a.squadron_id
+      where a.user_id = p_me and b.user_id = p_them
+    )
+    or exists (
+      select 1 from lesson_threads t
+      where t.author_id = p_them and t.module_id in (select my_modules(p_me))
+    )
+    or exists (
+      select 1 from lesson_replies r
+      join lesson_threads t on t.id = r.thread_id
+      where r.author_id = p_them and t.module_id in (select my_modules(p_me))
+    )
+  );
+$$;
+
+create or replace function people_search(p_me text, p_q text)
+returns table (user_id text, callsign text, module_code text, shares_squadron boolean)
+language sql
+stable
+as $$
+  select
+    p.user_id,
+    p.callsign,
+    (select c.module_code from chapter_completions c
+      where c.user_id = p.user_id order by c.completed_at desc limit 1) as module_code,
+    exists (
+      select 1 from squadron_members a
+      join squadron_members b on b.squadron_id = a.squadron_id
+      where a.user_id = p_me and b.user_id = p.user_id
+    ) as shares_squadron
+  from pilot_profiles p
+  where p.discoverable
+    and in_my_orbit(p_me, p.user_id)
+    and not exists (select 1 from blocks b
+                    where (b.user_id = p_me and b.blocked_id = p.user_id)
+                       or (b.user_id = p.user_id and b.blocked_id = p_me))
+    and coalesce(btrim(p_q), '') <> ''
+    and p.callsign ilike '%' || btrim(p_q) || '%'
+  order by shares_squadron desc, p.callsign
+  limit 20;
+$$;
+
+create or replace function squadron_headcount(p_squadron uuid)
+returns integer
+language sql
+stable
+as $$
+  select count(*)::int from squadron_members where squadron_id = p_squadron;
+$$;
+
+create or replace function squadron_is_full(p_squadron uuid)
+returns boolean
+language sql
+stable
+as $$
+  select s.member_cap is not null and squadron_headcount(s.id) >= s.member_cap
+  from squadrons s where s.id = p_squadron;
+$$;
+
+create or replace function discover_squadrons(p_me text, p_filter text default 'all')
+returns table (
+  id uuid, name text, blurb text, module_code text, exam_window text,
+  join_policy text, members integer, active_week integer, is_full boolean,
+  known_ids text[], already_in boolean, requested boolean
+)
+language sql
+stable
+as $$
+  with mine as (select squadron_id from squadron_members where user_id = p_me),
+  active as (
+    select m.squadron_id, count(distinct pr.user_id)::int as n
+    from squadron_members m
+    left join presence pr
+      on pr.user_id = m.user_id and pr.last_seen > now() - interval '7 days'
+    group by m.squadron_id
+  )
+  select
+    s.id, s.name, s.blurb, s.module_code, s.exam_window, s.join_policy,
+    squadron_headcount(s.id) as members,
+    coalesce(a.n, 0) as active_week,
+    coalesce(squadron_is_full(s.id), false) as is_full,
+    coalesce((
+      select array_agg(sm.user_id)
+      from squadron_members sm
+      where sm.squadron_id = s.id and in_my_orbit(p_me, sm.user_id)
+    ), '{}') as known_ids,
+    s.id in (select squadron_id from mine) as already_in,
+    exists (select 1 from squadron_join_requests r
+            where r.squadron_id = s.id and r.user_id = p_me and r.state = 'pending') as requested
+  from squadrons s
+  left join active a on a.squadron_id = s.id
+  where s.join_policy in ('open', 'request')
+    and (p_filter <> 'yours' or s.module_code in (select my_modules(p_me)))
+    and (p_filter <> 'exam'  or s.exam_window is not distinct from
+         (select pp.exam_window from pilot_profiles pp where pp.user_id = p_me))
+  order by coalesce(a.n, 0) desc, squadron_headcount(s.id) desc
+  limit 40;
+$$;
+
+create or replace function join_squadron(p_me text, p_squadron uuid)
+returns text
+language plpgsql
+volatile
+as $$
+declare s squadrons%rowtype;
+begin
+  select * into s from squadrons where id = p_squadron;
+  if not found then return 'missing'; end if;
+  if exists (select 1 from squadron_members where squadron_id = s.id and user_id = p_me)
+    then return 'already_in'; end if;
+  if exists (
+    select 1 from squadron_members m
+    join blocks b on (b.user_id = p_me and b.blocked_id = m.user_id)
+                  or (b.user_id = m.user_id and b.blocked_id = p_me)
+    where m.squadron_id = s.id
+  ) then return 'unavailable'; end if;
+  if coalesce(squadron_is_full(s.id), false) then return 'full'; end if;
+
+  if s.join_policy = 'open' then
+    insert into squadron_members (squadron_id, user_id) values (s.id, p_me)
+      on conflict do nothing;
+    return 'joined';
+  elsif s.join_policy = 'request' then
+    insert into squadron_join_requests (squadron_id, user_id) values (s.id, p_me)
+      on conflict (squadron_id, user_id) do update set state = 'pending', decided_at = null;
+    return 'requested';
+  else
+    return 'invite_only';
+  end if;
+end $$;
+
+create or replace function squadron_by_invite(p_me text, p_token text)
+returns table (id uuid, name text, blurb text, members integer, state text)
+language sql
+stable
+as $$
+  select s.id, s.name, s.blurb, squadron_headcount(s.id) as members,
+    case
+      when s.invite_revoked_at is not null then 'missing'
+      when s.invite_expires_at is not null and s.invite_expires_at < now() then 'missing'
+      when exists (select 1 from squadron_members m where m.squadron_id = s.id and m.user_id = p_me)
+        then 'already_in'
+      when exists (
+        select 1 from squadron_members m
+        join blocks b on (b.user_id = p_me and b.blocked_id = m.user_id)
+                      or (b.user_id = m.user_id and b.blocked_id = p_me)
+        where m.squadron_id = s.id
+      ) then 'unavailable'
+      when coalesce(squadron_is_full(s.id), false) then 'full'
+      else 'ok'
+    end as state
+  from squadrons s
+  where lower(s.invite_token) = lower(btrim(p_token));
+$$;
+
+
+-- 0012_search_and_suggestions.sql
+
+alter table pilot_profiles add column if not exists real_name text;
+
+/* DROPPED AND RECREATED, not replaced. The signature changes — it returned
+   `callsign` and now returns `display_name`, because what a searcher may see is
+   no longer always the same string — and Postgres will not let a replace change
+   a return type. Dropping a function is not data loss; the guard on the SQL
+   runner treats every drop the same and this one needs saying out loud. */
+drop function if exists people_search(text, text);
+
+create function people_search(p_me text, p_q text)
+returns table (user_id text, display_name text, module_code text, shares_squadron boolean)
+language sql
+stable
+as $$
+  with me_prefs as (select p_me as uid)
+  select
+    p.user_id,
+    /* What the searcher is allowed to see them as. Never coalesce to real_name
+       for somebody who goes by callsign — that is the leak. */
+    case when coalesce(up.identity_display, 'real') = 'username'
+         then p.callsign
+         else coalesce(p.real_name, p.callsign) end as display_name,
+    (select c.module_code from chapter_completions c
+      where c.user_id = p.user_id order by c.completed_at desc limit 1) as module_code,
+    exists (
+      select 1 from squadron_members a
+      join squadron_members b on b.squadron_id = a.squadron_id
+      where a.user_id = p_me and b.user_id = p.user_id
+    ) as shares_squadron
+  from pilot_profiles p
+  left join user_prefs up on up.user_id = p.user_id
+  cross join me_prefs
+  where p.discoverable
+    and in_my_orbit(p_me, p.user_id)
+    and not exists (select 1 from blocks b
+                    where (b.user_id = p_me and b.blocked_id = p.user_id)
+                       or (b.user_id = p.user_id and b.blocked_id = p_me))
+    and coalesce(btrim(p_q), '') <> ''
+    and (
+      p.callsign ilike '%' || btrim(p_q) || '%'
+      /* The real name is matchable ONLY while they have not chosen otherwise. */
+      or (coalesce(up.identity_display, 'real') <> 'username'
+          and p.real_name ilike '%' || btrim(p_q) || '%')
+    )
+  order by shares_squadron desc, display_name
+  limit 20;
+$$;
+
+create or replace function suggest_squadrons(p_me text, p_limit integer default 12)
+returns table (
+  id uuid, name text, blurb text, module_code text, exam_window text,
+  join_policy text, members integer, active_week integer, is_full boolean,
+  known_ids text[], score integer, reason text
+)
+language sql
+stable
+as $$
+  with mine as (select squadron_id from squadron_members where user_id = p_me),
+  my_mods as (select * from my_modules(p_me)),
+  my_exam as (select exam_window e from pilot_profiles where user_id = p_me),
+  active as (
+    select m.squadron_id, count(distinct pr.user_id)::int n
+    from squadron_members m
+    left join presence pr on pr.user_id = m.user_id and pr.last_seen > now() - interval '7 days'
+    group by m.squadron_id
+  ),
+  scored as (
+    select s.*,
+      coalesce(a.n, 0) as active_week,
+      squadron_headcount(s.id) as members,
+      coalesce(squadron_is_full(s.id), false) as full_now,
+      coalesce((select array_agg(sm.user_id) from squadron_members sm
+                where sm.squadron_id = s.id and in_my_orbit(p_me, sm.user_id)), '{}') as known,
+      (s.module_code in (select * from my_mods))                            as mod_hit,
+      (s.exam_window is not null
+        and s.exam_window = (select e from my_exam))                        as exam_hit,
+      (select count(*) from squadron_members sm
+        where sm.squadron_id = s.id and in_my_orbit(p_me, sm.user_id))::int as known_n
+    from squadrons s
+    left join active a on a.squadron_id = s.id
+    where s.join_policy in ('open', 'request')
+      and s.id not in (select squadron_id from mine)
+      /* Never suggest a room where somebody has blocked you, or you them. */
+      and not exists (
+        select 1 from squadron_members m
+        join blocks b on (b.user_id = p_me and b.blocked_id = m.user_id)
+                      or (b.user_id = m.user_id and b.blocked_id = p_me)
+        where m.squadron_id = s.id)
+  )
+  select id, name, blurb, module_code, exam_window, join_policy,
+    members, active_week, full_now as is_full, known,
+    (   case when mod_hit  then 40 else 0 end
+      + case when exam_hit then 20 else 0 end
+      + least(known_n * 8, 24)
+      + least(active_week, 10) * 2
+      + case when full_now then -35 else 0 end
+    )::int as score,
+    /* ONE REASON, THE STRONGEST. Three reasons on a card is a specification;
+       one is a suggestion. Ordered by what actually persuades somebody to join:
+       who is already in there beats what it is about. */
+    case
+      when known_n > 0    then 'known'
+      when mod_hit        then 'module'
+      when exam_hit       then 'exam'
+      when active_week > 0 then 'busy'
+      else 'open'
+    end as reason
+  from scored
+  order by score desc, active_week desc, members desc
+  limit greatest(1, p_limit);
+$$;
+
+create or replace function suggest_people(p_me text, p_limit integer default 8)
+returns table (
+  user_id text, display_name text, module_code text,
+  shared_squadrons integer, score integer, reason text
+)
+language sql
+stable
+as $$
+  with me as (
+    select p.exam_window, p.active_window
+    from pilot_profiles p where p.user_id = p_me
+  ),
+  cand as (
+    select p.user_id, p.callsign, p.real_name, p.exam_window, p.active_window,
+      coalesce(up.identity_display, 'real') as ident,
+      (select count(*) from squadron_members a
+        join squadron_members b on b.squadron_id = a.squadron_id
+        where a.user_id = p_me and b.user_id = p.user_id)::int as shared_sq,
+      (select count(*) from lesson_threads t
+        where t.author_id = p.user_id and t.module_id in (select * from my_modules(p_me)))::int as posts_here,
+      (select max(pr.last_seen) from presence pr where pr.user_id = p.user_id) as seen
+    from pilot_profiles p
+    left join user_prefs up on up.user_id = p.user_id
+    where p.discoverable
+      and in_my_orbit(p_me, p.user_id)
+      and not exists (select 1 from blocks b
+                      where (b.user_id = p_me and b.blocked_id = p.user_id)
+                         or (b.user_id = p.user_id and b.blocked_id = p_me))
+  )
+  select c.user_id,
+    case when c.ident = 'username' then c.callsign
+         else coalesce(c.real_name, c.callsign) end as display_name,
+    (select ch.module_code from chapter_completions ch
+      where ch.user_id = c.user_id order by ch.completed_at desc limit 1) as module_code,
+    c.shared_sq as shared_squadrons,
+    (   least(c.shared_sq * 25, 50)
+      + least(c.posts_here * 6, 18)
+      + case when c.exam_window is not null
+              and c.exam_window = (select exam_window from me) then 15 else 0 end
+      + case when c.active_window is not null
+              and c.active_window = (select active_window from me) then 10 else 0 end
+      + case when c.seen > now() - interval '7 days' then 8 else 0 end
+    )::int as score,
+    case
+      when c.shared_sq > 0 then 'squadron'
+      when c.posts_here > 0 then 'answers'
+      when c.exam_window = (select exam_window from me) then 'exam'
+      when c.active_window = (select active_window from me) then 'hours'
+      else 'module'
+    end as reason
+  from cand c
+  order by score desc, c.seen desc nulls last
+  limit greatest(1, p_limit);
+$$;
+
+
+-- 0013_retire_pilot_livery.sql
+
+create or replace function assign_squadron(uid text, mod text, stime text)
+returns uuid
+language plpgsql
+as $$
+declare target uuid;
+begin
+  select s.id into target
+    from squadron_members m join squadrons s on s.id = m.squadron_id
+   where m.user_id = uid and s.module_code = mod
+   limit 1;
+  if target is not null then return target; end if;
+
+  select s.id into target from squadrons s
+   where s.module_code = mod and s.study_time is not distinct from stime
+     and (select count(*) from squadron_members m where m.squadron_id = s.id) < 20
+   order by (select count(*) from squadron_members m where m.squadron_id = s.id) desc
+   limit 1;
+
+  if target is null then
+    select s.id into target from squadrons s
+     where s.module_code = mod
+       and (select count(*) from squadron_members m where m.squadron_id = s.id) < 20
+     order by (select count(*) from squadron_members m where m.squadron_id = s.id) desc
+     limit 1;
+  end if;
+
+  if target is null then
+    select s.id into target from squadrons s
+     where s.study_time is not distinct from stime
+       and (select count(*) from squadron_members m where m.squadron_id = s.id) < 20
+     order by (select count(*) from squadron_members m where m.squadron_id = s.id) desc
+     limit 1;
+  end if;
+
+  if target is null then
+    select s.id into target from squadrons s
+     where (select count(*) from squadron_members m where m.squadron_id = s.id) < 20
+     order by (select count(*) from squadron_members m where m.squadron_id = s.id) desc
+     limit 1;
+  end if;
+
+  if target is null then
+    insert into squadrons (module_code, study_time)
+    values (mod, stime)
+    returning id into target;
+  end if;
+
+  insert into squadron_members (squadron_id, user_id)
+  values (target, uid)
+  on conflict do nothing;
+
+  update squadrons
+     set status = case
+       when (select count(*) from squadron_members m where m.squadron_id = target) >= 10
+       then 'active' else 'forming' end
+   where id = target;
+
+  return target;
+end $$;
+
+drop function if exists squadron_roster(text, uuid);
+
+create function squadron_roster(uid text, sid uuid)
+returns table (user_id text, callsign text, marking text, is_staff boolean, joined_at timestamptz)
+language sql
+stable
+as $$
+  select m.user_id, p.callsign, m.marking,
+         coalesce(p.is_staff, false), m.joined_at
+    from squadron_members m
+    left join pilot_profiles p on p.user_id = m.user_id
+   where m.squadron_id = sid
+     and m.user_id not in (select blocked_id from blocks where blocks.user_id = uid)
+     and m.user_id not in (select b.user_id from blocks b where b.blocked_id = uid)
+   order by m.joined_at;
+$$;
+
+alter table pilot_profiles drop column if exists livery;
+alter table squadrons      drop column if exists livery;
+
+
 -- ============================================================================
 -- Setup. Neither of these is schema, and neither default is what you want.
 

@@ -1,16 +1,13 @@
-import { resolveLivery, tailHue } from "../lib/liveries.js";
-
-// §2.9 — a tail is hue + marking + initial, always, at every size. Colour is
-// never the sole channel for identity anywhere in this app. Below ~16px the
-// initial stops being legible and drops; the marking stays.
-
-// §3.4 — under monochrome the only hue a person carries is their livery's
-// presence temperature. Marking collisions (§2.9) are computed against it.
-export const hueOf = (livery) => tailHue(livery);
-// The paint comes from the generated livery tokens, never from a hue
-// re-derived here: the liveries are authored in oklch, and the same number
-// read as an HSL hue lands in a different colour entirely.
-const liveryId = (id) => resolveLivery(id);
+// §2.9 — a tail is marking + initial, always, at every size. Colour is never
+// the sole channel for identity anywhere in this app. Below ~16px the initial
+// stops being legible and drops; the marking stays.
+//
+// THE PAINT IS THE ROOM'S, NOT THE PERSON'S. A tail used to be tinted by a
+// livery the pilot picked at signup. That system is gone: --tail-ink and
+// --tail-bg resolve to --active and --raised for everybody, which is what the
+// twelve per-livery aliases in app.css had already collapsed to anyway. What
+// separates two people here is the marking and the initial, with the callsign
+// beside them.
 
 const MARKING_LABEL = {
   solid: "solid ring",
@@ -19,7 +16,7 @@ const MARKING_LABEL = {
   notched: "notched ring",
 };
 
-function Tail({ name, livery = "dawn-patrol", marking = "solid", size = 40, staff = false }) {
+function Tail({ name, marking = "solid", size = 40, staff = false }) {
   const initial = (name || "?").trim().charAt(0).toUpperCase() || "?";
   const showInitial = size >= 16;
   const stroke = Math.max(1.5, size * 0.075);
@@ -37,11 +34,7 @@ function Tail({ name, livery = "dawn-patrol", marking = "solid", size = 40, staf
   return (
     <span
       className={`tail ${staff ? "is-staff" : ""}`}
-      style={{
-        "--tail-ink": `var(--tail-${liveryId(livery)})`,
-        "--tail-bg": `var(--tail-${liveryId(livery)}-bg)`,
-        width: size, height: size,
-      }}
+      style={{ width: size, height: size }}
       title={`${name || "Pilot"} · ${MARKING_LABEL[marking] || marking}`}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">

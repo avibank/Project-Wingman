@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient.js";
 import { isFlySolo } from "./flySolo.js";
+import { hueFor } from "./familiar.js";
 
 // Squadrons, profiles and safety. §7.1, §8.3, §9.
 //
@@ -46,7 +47,7 @@ export async function fetchSquadron(userId, moduleCode) {
   if (!userId) return null;
   const { data, error } = await supabase
     .from("squadron_members")
-    .select("squadron_id, squadrons!inner(id, module_code, livery, status, study_time)")
+    .select("squadron_id, squadrons!inner(id, module_code, status, study_time)")
     .eq("user_id", userId)
     .eq("squadrons.module_code", moduleCode)
     .maybeSingle();
@@ -76,8 +77,8 @@ export async function fetchProfileStatus(userId) {
   return { profile: data || null, failed: false };
 }
 
-// Liveries for a set of user ids, so a presence rail can paint each face in
-// its owner's own tail. Missing rows simply have no profile yet.
+// Names and staff badges for a set of user ids, so a presence rail can label
+// each face. Missing rows simply have no profile yet.
 export async function fetchProfiles(ids = []) {
   // Fly solo is symmetric: you see nobody. Gated here rather than in each
   // component, so no caller can forget and leak.
@@ -86,7 +87,7 @@ export async function fetchProfiles(ids = []) {
   if (!unique.length) return {};
   const { data, error } = await supabase
     .from("pilot_profiles")
-    .select("user_id, callsign, livery, is_staff")
+    .select("user_id, callsign, is_staff")
     .in("user_id", unique);
   if (error) return fail(error, {});
   return Object.fromEntries((data || []).map((r) => [r.user_id, r]));
@@ -126,7 +127,7 @@ export async function fetchRecentPilots(userId, limit = 8) {
   if (isFlySolo()) return [];
   const { data, error } = await supabase
     .from("pilot_profiles")
-    .select("user_id, callsign, livery, is_staff, study_time, created_at")
+    .select("user_id, callsign, is_staff, study_time, created_at")
     .eq("invisible", false)
     .order("created_at", { ascending: false })
     .limit(limit + 1);
@@ -152,11 +153,16 @@ export function seatLayout(roster, target = TARGET_SQUADRON) {
 }
 
 // §2.9 — collisions are resolved with markings, never by reassigning a hue.
-// Two members within 13° of warm hue: the later joiner takes the next marking.
-export function assignMarkings(roster, hueOf) {
+// Two members within 13° of hue: the later joiner takes the next marking.
+//
+// The hue is hueFor(user_id) — the same deterministic per-person colour the
+// rest of the app uses. It used to be the presence temperature of a livery the
+// pilot chose at signup, which meant six possible hues clustered between 20°
+// and 70°, so almost everybody collided with almost everybody.
+export function assignMarkings(roster) {
   const out = [];
   for (const member of [...roster].sort((a, b) => new Date(a.joined_at) - new Date(b.joined_at))) {
-    const hue = hueOf(member.livery);
+    const hue = hueFor(member.user_id);
     const clash = out.filter((o) => {
       const d = Math.abs(o.hue - hue);
       return Math.min(d, 360 - d) < 13;

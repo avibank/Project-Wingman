@@ -5,7 +5,7 @@ import { groupMessages } from "../lib/commsGrouping.js";
 import { splitQuestions, answeredStrip, composerPlaceholder, SQUAWK, SQUAWK_LABEL } from "../lib/questions.js";
 import { markAnswer, setQuestion, markVerified, canVerify } from "../lib/readyRoom.js";
 import { fetchProfiles, assignMarkings } from "../lib/squadron.js";
-import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import Tail, { TailStyles } from "./Tail.jsx";
 
 // §9.3.4 — chat-shaped and live, but calmer. Ready Room mechanics, academic
 // manners: no haptics, no arrival animation, muted rather than warm. A
@@ -49,11 +49,10 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
 
   const marked = Object.fromEntries(
     assignMarkings(
-      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() })),
-      hueOf
+      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() }))
     ).map((p) => [p.user_id, p])
   );
-  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", livery: "dawn-patrol", marking: "solid" };
+  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", marking: "solid" };
 
   const { open } = splitQuestions(messages);
   const strip = answeredStrip(messages);
@@ -119,7 +118,7 @@ function ChapterComments({ chapterId, chapterCode, moduleCode, onSignIn }) {
             <div key={g.id} className="cc-day"><span>{dayLabel(g.at)}</span></div>
           ) : (
             <article key={g.id} className={`cc-group ${g.user_id === user?.id ? "is-own" : ""}`}>
-              <Tail name={who(g.user_id).callsign} livery={who(g.user_id).livery}
+              <Tail name={who(g.user_id).callsign}
                 marking={who(g.user_id).marking} size={32} staff={who(g.user_id).is_staff} />
               <div className="cc-stack">
                 <p className="cc-meta">

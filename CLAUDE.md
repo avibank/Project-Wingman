@@ -79,6 +79,14 @@ architecture note above says — that part was accurate.
   them via `calc()`. Changing the hue re-tints the app. Five user-selectable liveries.
 - `--accent-dim` is for decorative labels; `--accent-tint` is for text that carries
   meaning (chapter codes). Using dim for the latter makes it unreadable.
+- **There is one livery system, and it is the app's.** A second one — a livery a
+  pilot picked at signup to tint their own tail, with ids like `dawn-patrol` and
+  `night-ops` — existed alongside it for a long time and was removed on
+  2026-09-04, along with `src/lib/liveries.js`, `LiveryPicker.jsx`, the signup
+  step that asked for it and the two database columns. It had already stopped
+  painting anything: all twelve `--tail-<id>` tokens resolved to `var(--active)`.
+  If you see the word livery, it means the accent hue, and it means
+  `liveryEngine.js`.
 - No glow rings. "Active" reads structurally — a filled top edge, a gradient inside a
   progress bar. Glow is reserved for presence and the current leg only.
 - The brand faces are Instrument Sans and Geist Mono, and they are reached through
@@ -103,7 +111,8 @@ architecture note above says — that part was accurate.
 0003 reactions and attempts and completions, 0004 progress merge, 0005 squadrons and
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
 squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
-0010 thread titles and answers, 0011 discovery.
+0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
+0013 retiring the pilot livery.
 
 **0011 has been run against the live project**, verified by connecting rather
 than inferred: 9 new squadron columns, 4 new profile columns, 2 new tables and

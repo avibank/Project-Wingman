@@ -38,7 +38,7 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
       <button className="ps-scrim" onClick={onClose} aria-label="Close" />
       <div className="ps-sheet">
         <div className="ps-head">
-          <Tail name={name} livery={pilot.livery} marking={pilot.marking} size={44} staff={pilot.is_staff} />
+          <Tail name={name} marking={pilot.marking} size={44} staff={pilot.is_staff} />
           <span className="ps-name">{name}</span>
         </div>
 

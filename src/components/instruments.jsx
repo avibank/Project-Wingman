@@ -89,8 +89,8 @@ export function SplitFlap({ text, className = "" }) {
 // in this module, and angle is arbitrary but stable per member, so a person
 // keeps their bearing between visits. Tapping a dot opens that person.
 //
-// `contacts` are { user_id, callsign, livery, pct }. `pct` is theirs; `you` is
-// yours. Centre is your position.
+// `contacts` are { user_id, callsign, pct }. `pct` is theirs; `you` is yours.
+// Centre is your position.
 export function RadarScope({ contacts = [], you = 0, size = 148, onPick }) {
   const c = size / 2;
   const usable = c - 12;
@@ -128,7 +128,7 @@ export function RadarScope({ contacts = [], you = 0, size = 148, onPick }) {
             {/* a generous invisible target: the visible dot is 4px */}
             <circle cx={p.x} cy={p.y} r="14" fill="transparent" />
             <circle className={`radar-blip ${p.delta >= 0 ? "is-ahead" : "is-behind"}`}
-              cx={p.x} cy={p.y} r="4" style={{ "--blip": `var(--tail-${p.livery || "dawn-patrol"})` }} />
+              cx={p.x} cy={p.y} r="4" style={{ "--blip": "var(--active)" }} />
           </g>
         ))}
       </svg>

@@ -48,7 +48,7 @@ export async function fetchMySquadrons(me) {
 
   const { data: mine, error: e1 } = await supabase
     .from("squadron_members")
-    .select("squadron_id, squadrons!inner(id, module_code, livery, status, study_time)")
+    .select("squadron_id, squadrons!inner(id, module_code, status, study_time)")
     .eq("user_id", me);
   if (e1) return fail(e1, []);
 
@@ -78,9 +78,9 @@ export async function fetchMySquadrons(me) {
     const sq = r.squadrons;
     return {
       id: sq.id,
-      // A squadron has no name column — its identity is its module and its
-      // livery, which is what the roster screen already calls it. Inventing a
-      // names table here would be a second owner of the same fact.
+      // Identity is the module, which is what the roster screen already
+      // calls it. Inventing a names table here would be a second owner of the
+      // same fact.
       name: `${sq.module_code} squadron`,
       code: sq.module_code,
       moduleCode: sq.module_code,

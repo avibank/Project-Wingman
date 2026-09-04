@@ -11,7 +11,7 @@ import {
 import { rankPartners, partnerReason, teamCapacity, TEAM_MIN } from "../lib/teams.js";
 import { SQUAWK_LABEL } from "../lib/questions.js";
 import { visibleFormations, formationLabel, FORMATION_MAX } from "../lib/formation.js";
-import Tail, { TailStyles, hueOf } from "./Tail.jsx";
+import Tail, { TailStyles } from "./Tail.jsx";
 import Comms from "./Comms.jsx";
 
 // §9.4 — a room, not a feed. Present tense only: feeds are graveyards at low
@@ -98,11 +98,10 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
 
   const marked = Object.fromEntries(
     assignMarkings(
-      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() })),
-      hueOf
+      Object.values(profiles).map((p) => ({ ...p, joined_at: p.created_at || new Date(0).toISOString() }))
     ).map((p) => [p.user_id, p])
   );
-  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", livery: "dawn-patrol", marking: "solid" };
+  const who = (id) => marked[id] || { user_id: id, callsign: "Pilot", marking: "solid" };
 
   // §10 — a module with no social surface is fine; one with a visibly abandoned
   // surface is not. `enabled` is null when the table is missing, in which case
@@ -126,7 +125,7 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
             {here.map((p) => (
               <li key={p.user_id}>
                 <button className="rr-face" onClick={() => p.chapter_id && onGoToChapter?.(p.module_code, p.chapter_id)}>
-                  <Tail name={who(p.user_id).callsign} livery={who(p.user_id).livery}
+                  <Tail name={who(p.user_id).callsign}
                     marking={who(p.user_id).marking} size={40} staff={who(p.user_id).is_staff} />
                   <span className="rr-face-name">{who(p.user_id).callsign}</span>
                   <span className="rr-face-where">{chapterCode(p.chapter_id) || p.module_code}</span>
@@ -151,7 +150,7 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
                 <span className="rr-formation-when">{formationLabel(f)}</span>
                 <span className="rr-formation-faces">
                   {f.members.map((m) => (
-                    <Tail key={m.user_id} name={who(m.user_id).callsign} livery={who(m.user_id).livery}
+                    <Tail key={m.user_id} name={who(m.user_id).callsign}
                       marking={who(m.user_id).marking} size={24} />
                   ))}
                 </span>
@@ -178,7 +177,7 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
               <li key={s.id}>
                 <button className="rr-squawk" onClick={() => onGoToChapter?.(s.module_code, s.chapter_id, "comments")}>
                   <span className="rr-squawk-top">
-                    <Tail name={who(s.user_id).callsign} livery={who(s.user_id).livery}
+                    <Tail name={who(s.user_id).callsign}
                       marking={who(s.user_id).marking} size={26} />
                     <span className="rr-squawk-who">{who(s.user_id).callsign}</span>
                     <span className="rr-squawk-where">{chapterCode(s.chapter_id) || s.module_code}</span>
@@ -217,7 +216,7 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
               <ul className="rr-team-roster">
                 {roster.map((m) => (
                   <li key={m.user_id}>
-                    <Tail name={who(m.user_id).callsign} livery={who(m.user_id).livery}
+                    <Tail name={who(m.user_id).callsign}
                       marking={who(m.user_id).marking} size={28} staff={who(m.user_id).is_staff} />
                     <span>{who(m.user_id).callsign}</span>
                   </li>
@@ -254,7 +253,7 @@ function ReadyRoom({ moduleCode, onGoToChapter, onOpenChannel }) {
             <ul>
               {partners.slice(0, 3).map((p) => (
                 <li key={p.id}>
-                  <Tail name={who(p.id).callsign} livery={who(p.id).livery}
+                  <Tail name={who(p.id).callsign}
                     marking={who(p.id).marking} size={28} staff={who(p.id).is_staff} />
                   <span className="rr-partner-text">
                     <span className="rr-partner-name">{who(p.id).callsign}</span>

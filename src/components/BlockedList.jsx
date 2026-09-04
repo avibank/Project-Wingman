@@ -10,7 +10,7 @@ function Row({ id, profile, action, onAct, busy }) {
   const name = profile?.callsign || "A pilot";
   return (
     <li className="bl-row">
-      <Tail name={name} livery={profile?.livery} marking="solid" size={36} staff={profile?.is_staff} />
+      <Tail name={name} marking="solid" size={36} staff={profile?.is_staff} />
       <span className="bl-name">{name}</span>
       <button className="bl-undo" disabled={busy} onClick={() => onAct(id)}>{action}</button>
     </li>

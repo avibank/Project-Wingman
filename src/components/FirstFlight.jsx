@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, chaptersForModule } from "../data.js";
 import { fetchRecentPilots, saveProfile, assignSquadron, assignMarkings } from "../lib/squadron.js";
-import Tail, { TailStyles, hueOf } from "./Tail.jsx";
-import LiveryPicker from "./LiveryPicker.jsx";
+import Tail, { TailStyles } from "./Tail.jsx";
 
 // §7.1 — three screens, and a course picker is not the first one. You meet
 // people, then choose material, then say when you fly. Assignment happens once
@@ -23,7 +22,7 @@ function MeetSquadron({ onNext }) {
   useEffect(() => {
     let live = true;
     fetchRecentPilots(user?.id, 8)
-      .then((p) => live && setPilots(assignMarkings(p || [], hueOf)))
+      .then((p) => live && setPilots(assignMarkings(p || [])))
       .catch(() => live && setPilots([]));
     return () => { live = false; };
   }, [user?.id]);
@@ -40,7 +39,7 @@ function MeetSquadron({ onNext }) {
           <ul className="ff-pilots">
             {pilots.map((p, i) => (
               <li key={p.user_id} className="ff-pilot" style={{ "--i": i }}>
-                <Tail name={p.callsign} livery={p.livery} marking={p.marking} size={44} staff={p.is_staff} />
+                <Tail name={p.callsign} marking={p.marking} size={44} staff={p.is_staff} />
                 <span className="ff-pilot-name">{p.callsign || "Pilot"}</span>
               </li>
             ))}
@@ -88,8 +87,8 @@ function PickModule({ value, onPick, onNext }) {
 }
 
 /* THE CALLSIGN, AND WHY IT IS A STEP RATHER THAN A SETTING.
-   Onboarding collected study time and a livery and never asked what to call
-   anybody, so every account reached the app anonymous. That is not cosmetic:
+   Onboarding collected a study time and never asked what to call anybody, so
+   every account reached the app anonymous. That is not cosmetic:
    people-search matches on the callsign, so an account without one cannot be
    found by anybody, and the room renders "Someone" beside their messages.
    Skippable on purpose. A required field here would be a wall in front of the
@@ -145,7 +144,6 @@ function FirstFlight({ onDone }) {
   const [moduleCode, setModuleCode] = useState(null);
   const [studyTime, setStudyTime] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [livery, setLivery] = useState("dawn-patrol");
   const [callsign, setCallsign] = useState("");
 
   // Both writes are best-effort: a failed placement must not strand someone in
@@ -164,7 +162,7 @@ function FirstFlight({ onDone }) {
       console.error(e);
     }
     setBusy(false);
-    setStep(4);
+    onDone?.({ moduleCode, studyTime });
   };
 
   return (
@@ -173,26 +171,9 @@ function FirstFlight({ onDone }) {
       {step === 1 && <PickModule value={moduleCode} onPick={setModuleCode} onNext={() => setStep(2)} />}
       {step === 2 && <PickTime value={studyTime} onPick={setStudyTime} onNext={() => setStep(3)} busy={busy} />}
       {step === 3 && <PickCallsign value={callsign} onPick={setCallsign} onNext={place} busy={busy} />}
-      {step === 4 && (
-        <div className="ff-screen ff-screen--wide">
-          <h1 className="ff-title">Pick your livery</h1>
-          <p className="ff-sub">Your tail, on every screen you share with someone. Two now, more as you finish modules.</p>
-          <LiveryPicker
-            current={livery}
-            modulesCompleted={0}
-            onSelect={(id) => {
-              setLivery(id);
-              saveProfile(user.id, { livery: id }).catch(console.error);
-            }}
-          />
-          <button className="ff-go" onClick={() => onDone?.({ moduleCode, studyTime, livery })}>
-            Start flying
-          </button>
-        </div>
-      )}
 
-      <ol className="ff-dots" aria-label={`Step ${step + 1} of 5`}>
-        {[0, 1, 2, 3, 4].map((i) => (
+      <ol className="ff-dots" aria-label={`Step ${step + 1} of 4`}>
+        {[0, 1, 2, 3].map((i) => (
           <li key={i} className={i === step ? "is-here" : i < step ? "is-done" : ""} aria-hidden="true" />
         ))}
       </ol>
@@ -206,7 +187,6 @@ function FirstFlight({ onDone }) {
           background: var(--raised); border: 1px solid var(--line); border-radius: 11px;
           color: var(--t1); font: inherit; font-size: 16px; }
         .ff-callsign:focus { outline: 2px solid var(--active); outline-offset: 1px; }
-        .ff-screen--wide { max-width: 720px; }
         .ff-title { font-family: var(--font-ui); font-size: 28px; font-weight: 500;
           letter-spacing: -0.01em; color: var(--text-1); margin: 0 0 8px; }
         .ff-sub { font-size: 16px; line-height: 1.55; color: var(--text-2); margin: 0 0 28px; max-width: 46ch; }

@@ -152,8 +152,8 @@ the hero card and the radar need a different destination, and §5 doesn't give o
 | — Keyboard-shortcuts note | keep | Accurate, small. |
 | Appearance tab | **new** | §6.3 in full: Night Ops, the seven-circle livery picker, the specimen, instrument scale, the four switches. |
 | — Grain switch | **new** | §4.5 makes grain user-toggleable. |
-| Livery picker (current) | reskin | §6.3: seven 34px circles, three shades at 145°, ring in the livery's accent, click-only preview. Current one is a ramp-strip gallery and has the retired v2 ids. |
-| Livery unlock ladder | **hide** | Not in Build 01. §6.3 offers all seven. |
+| Livery picker (old build) | **done** | Removed 2026-09-04, not reskinned: it set a *pilot* livery, a separate system from the app's, and every id it offered painted the same colour. The Appearance tab's picker is the surviving one. |
+| Livery unlock ladder | **done** | Removed with it. It gated ids that were already indistinguishable. |
 | Settings → Pilot ("Your pilot") | **hide** | Superseded by the three profile tabs. |
 | — Callsign | **hide** | §6.1's three name fields replace it. |
 | — When you usually study | **hide** | Not in Build 01. |
