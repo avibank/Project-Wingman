@@ -8,10 +8,8 @@ import NotebookPanel from "./NotebookPanel.jsx";
 import ThreadsPanel from "./ThreadsPanel.jsx";
 import { countAnnotations } from "../lib/notebook.js";
 import { countThreads } from "../lib/discussion.js";
-import { heartbeat } from "../lib/presence.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useUser } from "@clerk/clerk-react";
-import { useDisplayName } from "../lib/identity.js";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
 import StudyGlow from "./StudyGlow.jsx";
@@ -31,7 +29,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   const glowEnabled = profile ? profile.glow_enabled !== false : true;
   const progress = useUserProgress();
   const { user } = useUser();
-  const displayName = useDisplayName();
   const { prefs: socialPrefs } = useSocialPrefs();
   const cloudRef = useRef(null);
   const [openId, setOpenId] = useState(null);
@@ -195,20 +192,20 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
     progress.set("pw-chapter-progress", next);
   };
 
-  // Chip counts and co-presence for whichever chapter is open.
+  // Chip counts for whichever chapter is open.
+  //
+  // The presence heartbeat used to be here as well, and here is the one place
+  // it could not run: this panel lives inside ModuleHub, the fallback that
+  // `module.screen` — everyone: true — makes unreachable. App owns the beat
+  // now, on every route, and one writer is the point.
   useEffect(() => {
-    if (!openId) return;
+    if (!openId) return undefined;
     let live = true;
     Promise.all([countAnnotations(openId), countThreads(openId)]).then(([notes, threads]) => {
       if (live) setCounts((c) => ({ ...c, [openId]: { notes, threads } }));
     });
-    const ping = () => {
-      heartbeat({ userId: user?.id, displayName, moduleCode: activeModuleCode, chapterId: openId });
-    };
-    ping();
-    const t = setInterval(ping, 45000);
-    return () => { live = false; clearInterval(t); };
-  }, [openId, activeModuleCode, user?.id, displayName]);
+    return () => { live = false; };
+  }, [openId]);
 
   const readingChapter = reading ? moduleChapters.find((c) => c.id === openId) || null : null;
   const readingPct = readingChapter

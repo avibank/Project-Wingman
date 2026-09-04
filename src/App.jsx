@@ -66,7 +66,8 @@ const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
 import { finishVars, ruledLayer } from "./lib/finishEngine.js";
 import { useFlags } from "./lib/flags.js";
-import { fetchAllPresence } from "./lib/presence.js";
+import { fetchAllPresence, heartbeat } from "./lib/presence.js";
+import { useDisplayName } from "./lib/identity.js";
 import { ChevronRight, Lock, Plane } from "lucide-react";
 const ChaptersPanel = lazy(CHUNK.chapters);
 import Home from "./components/Home.jsx";
@@ -370,20 +371,60 @@ function AppInner() {
       : routePath.settings(page));
   const goHome = () => go(routePath.home());
 
-  // §4.4 — the door warms when people are in there, and only then.
-  const [onFrequency, setOnFrequency] = useState(0);
-  useEffect(() => {
-    let live = true;
-    fetchAllPresence(user?.id)
-      .then((rows) => live && setOnFrequency((rows || []).length))
-      .catch(() => {});
-    return () => { live = false; };
-  }, [user?.id]);
   const [bookmarksMode, setBookmarksMode] = useState("list");
   // The persisted "active module" is a preference the hero on Home reads.
   // Inside a module the URL wins.
   const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
   const activeModuleCode = route.moduleCode || preferredModuleCode;
+
+  /* WHO IS ACTUALLY HERE.
+
+     Both halves of this were broken, in opposite directions, and the table
+     proved it: one row, written 2026-08-25, carrying module code JT — a code
+     this app stopped having. Nothing had marked anybody present since.
+
+     The WRITE lived in ChaptersPanel, which is inside ModuleHub, which is the
+     fallback that `module.screen` (everyone: true) makes unreachable. So the
+     heartbeat was dead code. It lives here now, where every route passes.
+
+     The READ reached the Ready Room as `useTestContent.presence` — six
+     invented rows from late August, identical on every device, so the room's
+     online faces were demo pilots who could never leave and real people could
+     never join. The rows are live now, polled on the same clock as the beat.
+
+     §4.4 — the door warms when people are in there, and only then. */
+  const displayName = useDisplayName();
+  const [presenceRows, setPresenceRows] = useState([]);
+  const onFrequency = presenceRows.length;
+  const presenceChapterId = route.chapterId || null;
+  useEffect(() => {
+    let live = true;
+    // A backgrounded tab must not keep somebody standing in the room they
+    // walked away from, so the beat skips while hidden and the window expires
+    // the row on its own.
+    const beat = async () => {
+      if (isSignedIn && user?.id && document.visibilityState === "visible") {
+        await heartbeat({
+          userId: user.id, displayName,
+          moduleCode: activeModuleCode, chapterId: presenceChapterId,
+        }).catch(() => {});
+      }
+      const rows = await fetchAllPresence(user?.id).catch(() => []);
+      if (live) setPresenceRows(rows || []);
+    };
+    beat();
+    const t = setInterval(beat, 45000);
+    // Coming back to the tab beats immediately rather than waiting out the
+    // rest of the interval — otherwise returning to a page you left open can
+    // leave you invisible for the better part of a minute.
+    const onShow = () => { if (document.visibilityState === "visible") beat(); };
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      live = false;
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [user?.id, isSignedIn, displayName, activeModuleCode, presenceChapterId]);
 
   // §8's second number, read once per render beside the module state it is
   // weighed against. Every lamp in the app — the chapter header, the Library
@@ -628,7 +669,24 @@ function AppInner() {
   // The discussion for whichever module is in front of you, from the shared
   // tables. Re-run on the module, so walking between modules loads each one
   // once and keeps what it already had.
-  useEffect(() => { loadDiscussion?.(activeModuleCode); }, [activeModuleCode, loadDiscussion, me]);
+  //
+  // AND EVERY MODULE ONCE THE ROOM IS OPEN. The room lists all four at the same
+  // time, with the last question and a count on each row — but session.threads
+  // only ever held the ACTIVE module's rows, so the other three said "Ask the
+  // first question" no matter what was in the table. Somebody asking in M2
+  // while you were reading M1 had posted into a room that, for you, was empty.
+  // loadDiscussion merges per module and leaves the others alone, so asking
+  // for all of them is four reads on entry and nothing after.
+  const roomOpen = route.name === "ready";
+  const moduleCodes = useMemo(
+    () => allModules(useTestContent).map((m) => m.code).join(","),
+    [useTestContent],
+  );
+  useEffect(() => {
+    if (!loadDiscussion) return;
+    if (roomOpen) for (const code of moduleCodes.split(",")) loadDiscussion(code);
+    else loadDiscussion(activeModuleCode);
+  }, [activeModuleCode, loadDiscussion, me, roomOpen, moduleCodes]);
 
   // Squadrons, their chat, and the right seat. These were literal empty arrays
   // — the room drew its own empty states perfectly over nothing at all.
@@ -681,8 +739,12 @@ function AppInner() {
     for (const t of session.threads) if (t.authorId) ids.add(t.authorId);
     for (const r of session.replies) if (r.authorId) ids.add(r.authorId);
     for (const m of roomMessages) if (m.authorId) ids.add(m.authorId);
+    // Somebody can be in the room without having written a word, and the rail
+    // still has to know their name — otherwise the online faces are labelled
+    // with a raw Clerk id.
+    for (const p of presenceRows) if (p.user_id) ids.add(p.user_id);
     return [...ids].sort().join(",");        // a stable key, so the effect
-  }, [session.threads, session.replies, roomMessages]);   // runs on CHANGE only
+  }, [session.threads, session.replies, roomMessages, presenceRows]);  // on CHANGE only
   useEffect(() => {
     const ids = authorIds ? authorIds.split(",") : [];
     if (!ids.length) { setProfiles([]); return undefined; }
@@ -955,7 +1017,7 @@ function AppInner() {
             threads={session.threads}
             replies={session.replies}
             people={directory}
-            presence={normalisePresence(useTestContent?.presence || [])}
+            presence={normalisePresence(presenceRows)}
             squadrons={squadrons}
             messages={roomMessages}
             seatCandidates={rightSeat}
@@ -1322,8 +1384,11 @@ function AppInner() {
             people={{
               // The callsigns behind the author ids. Threads themselves come
               // from the session, not from here — they are the same rows the
-              // lesson screen shows.
-              people: useTestContent?.people || [],
+              // lesson screen shows. This was the fixture's five demo
+              // callsigns ALONE, so a real author fell through to their raw
+              // Clerk id; `directory` is the same list with live profiles in
+              // front of it, which is what the room already uses.
+              people: directory,
               wingman: null, groups: [], questions: [],
               // Real or absent. The figures this row is meant to carry —
               // how many have finished, the most replayed minute — have no
