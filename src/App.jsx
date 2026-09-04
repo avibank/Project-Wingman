@@ -27,6 +27,17 @@ import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
  * page is going away; resolving would render a component from the old build
  * into a tree that is about to be thrown out.
  */
+/* How often the app asks whether anyone has said anything.
+
+   There is no socket. supabaseClient.js keeps realtime out of the bundle
+   deliberately — the client is PostgREST and nothing else — so "live" here
+   means a short poll, and it only runs while the tab is visible.
+
+   20s is picked against the presence window, which is 3 minutes: someone shows
+   as here for well over the time it takes their reply to arrive, so the room
+   never says a person is present while their message is not. */
+const DISCUSSION_POLL_MS = 20000;
+
 const CHUNK_RELOADED = "pw-chunk-reloaded";
 const chunk = (factory) => () => factory().catch((err) => {
   let already = true;
@@ -677,15 +688,28 @@ function AppInner() {
   // while you were reading M1 had posted into a room that, for you, was empty.
   // loadDiscussion merges per module and leaves the others alone, so asking
   // for all of them is four reads on entry and nothing after.
+  //
+  // AND ON A CLOCK. This client is PostgREST only — supabaseClient.js keeps
+  // realtime out of the bundle on purpose, and says so — so a reply arriving
+  // has to be noticed by asking. It was asked exactly once per module entry,
+  // which is why an answer needed a refresh to appear and why the badge sat on
+  // whatever number it had when the page loaded. Same discipline as the
+  // presence beat: nothing while the tab is hidden, and a read the moment it
+  // comes back, so a phone in a pocket is not polling all afternoon.
   const roomOpen = route.name === "ready";
   const moduleCodes = useMemo(
     () => allModules(useTestContent).map((m) => m.code).join(","),
     [useTestContent],
   );
   useEffect(() => {
-    if (!loadDiscussion) return;
-    if (roomOpen) for (const code of moduleCodes.split(",")) loadDiscussion(code);
-    else loadDiscussion(activeModuleCode);
+    if (!loadDiscussion) return undefined;
+    const codes = roomOpen ? moduleCodes.split(",") : [activeModuleCode];
+    const read = () => { for (const code of codes) loadDiscussion(code); };
+    read();
+    const tick = () => { if (document.visibilityState === "visible") read(); };
+    const t = setInterval(tick, DISCUSSION_POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", tick); };
   }, [activeModuleCode, loadDiscussion, me, roomOpen, moduleCodes]);
 
   // Squadrons, their chat, and the right seat. These were literal empty arrays
@@ -696,19 +720,36 @@ function AppInner() {
   useEffect(() => {
     if (!isSignedIn || !flags["social.readyroom"]) { setSquadrons([]); setRoomMessages([]); setRightSeat([]); return undefined; }
     let live = true;
-    (async () => {
+    let ids = [];
+    const full = async () => {
       const sqs = await fetchMySquadrons(me);
       if (!live) return;
       setSquadrons(sqs);
+      ids = sqs.map((x) => x.id);
       const [msgs, seat] = await Promise.all([
-        fetchSquadronMessages(me, sqs.map((x) => x.id)),
+        fetchSquadronMessages(me, ids),
         fetchRightSeat(me, sqs),
       ]);
       if (!live) return;
       setRoomMessages(msgs);
       setRightSeat(seat);
-    })();
-    return () => { live = false; };
+    };
+    // Only the messages on the interval. Which squadrons you are in and who
+    // could take the right seat do not change between two ticks of a chat.
+    const messagesOnly = async () => {
+      if (!ids.length) return;
+      const msgs = await fetchSquadronMessages(me, ids);
+      if (live) setRoomMessages(msgs);
+    };
+    full();
+    const tick = () => { if (document.visibilityState === "visible") messagesOnly(); };
+    const t = setInterval(tick, DISCUSSION_POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      live = false;
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", tick);
+    };
   }, [isSignedIn, me, flags]);
 
   // §4c — endorsements on answers. Fetched for the replies actually loaded,

@@ -251,6 +251,10 @@ export function SessionProvider({ children }) {
   // which is right for a setting and wrong for a sentence someone wrote, so
   // the pending set is tracked here rather than inferred from the store.
   const [pending, setPending] = useState(() => ({}));
+  // Read by loadDiscussion, which is not allowed to depend on this state: a
+  // poll must not get a new identity every time a row settles.
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
   const postOptimistic = useCallback((id, fn) => {
     setPending((m) => ({ ...m, [id]: "pending" }));
     mutate(fn);
@@ -286,21 +290,64 @@ export function SessionProvider({ children }) {
     // list would read as "this module has no discussion", which is a much
     // worse lie than a stale one.
     if (failed) return;
-    const keep = (rows) => (rows || []).filter((r) => r.moduleId !== moduleId);
+    /* A ROW STILL IN FLIGHT IS NOT A ROW THE SERVER FORGOT.
+
+       This read replaces every local row for the module with what came back,
+       which was safe while it ran once on entry and is not safe now that it
+       runs on a timer. A poll landing between "post appeared on screen" and
+       "insert returned" would take the post away, and it would come back on
+       the next poll — the row someone just typed, blinking. Anything still
+       pending (or failed, which must never be dropped) is held. */
+    const held = pendingRef.current || {};
+    const fetchedThreads = new Set(threads.map((t) => t.id));
+    const fetchedReplies = new Set(replies.map((r) => r.id));
+    /* A row is held if the write may not have landed yet.
+
+       `pending` is the precise signal and clears about 900ms after posting.
+       The minute of grace behind it is for the case that signal cannot cover:
+       an insert slower than that, racing a read that was already in flight
+       when it started. Only your own rows, only if the server did not return
+       them, and only for a minute — long enough that nothing anyone typed can
+       blink out, short enough that a genuinely failed write is not pretended
+       into existence for the rest of the session. */
+    const GRACE_MS = 60000;
+    const young = (row) => row.authorId === me
+      && Date.parse(row.createdAt) > Date.now() - GRACE_MS;
+    const holdThread = (t) => held[t.id] != null || (young(t) && !fetchedThreads.has(t.id));
+    const holdReply = (r) => held[r.id] != null || (young(r) && !fetchedReplies.has(r.id));
+
     setSession((s) => {
-      const mine = new Set(threads.map((t) => t.id));
-      return {
-        ...s,
-        threads: [...keep(s.threads), ...threads],
-        // Replies are keyed by thread, not by module, so they are pruned by
-        // the threads they belong to rather than by a moduleId they do not
-        // carry.
-        replies: [
-          ...(s.replies || []).filter((r) => !mine.has(r.threadId)
-            && !threads.some((t) => t.id === r.threadId)),
-          ...replies,
-        ],
-      };
+      // This module's local rows give way to the fetched ones; every other
+      // module's are untouched, and anything in flight is held either way.
+      const keptThreads = (s.threads || [])
+        .filter((t) => t.moduleId !== moduleId || holdThread(t));
+      const haveThread = new Set(keptThreads.map((t) => t.id));
+
+      // Replies are keyed by thread, not by module, so they are pruned by the
+      // threads they belong to rather than by a moduleId they do not carry.
+      const keptReplies = (s.replies || [])
+        .filter((r) => holdReply(r) || !fetchedThreads.has(r.threadId));
+      const haveReply = new Set(keptReplies.map((r) => r.id));
+
+      const nextThreads = [...keptThreads, ...threads.filter((t) => !haveThread.has(t.id))];
+      const nextReplies = [...keptReplies, ...replies.filter((r) => !haveReply.has(r.id))];
+
+      /* A POLL THAT FOUND NOTHING MUST CHANGE NOTHING.
+
+         These are fresh arrays every time, so returning them unconditionally
+         would give session a new identity every 20 seconds and re-render the
+         whole app — including whatever is playing — to say that nothing has
+         happened. The signature carries bestReplyId because marking an answer
+         is a change to a row that is otherwise identical. */
+      // Sorted, because the merge moves a module's rows to the end of the list
+      // and the room loads four modules in turn — so a plain join would report
+      // a change on every cycle purely from the order rotating.
+      const sig = (ts, rs) =>
+        `${ts.map((t) => `${t.id}:${t.bestReplyId || ""}`).sort().join(",")}`
+        + `|${rs.map((r) => r.id).sort().join(",")}`;
+      if (sig(nextThreads, nextReplies) === sig(s.threads || [], s.replies || [])) return s;
+
+      return { ...s, threads: nextThreads, replies: nextReplies };
     });
   }, [me]);
 
