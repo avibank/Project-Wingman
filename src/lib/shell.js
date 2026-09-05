@@ -324,12 +324,30 @@ const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeo
 /* Never block a render on this. Rows paint with the generated tile immediately;
    a captured frame replaces it when it arrives, and because both are exactly
    128x72 nothing shifts. */
+/* A FAILURE IS A RESULT, AND IT HAS TO BE REMEMBERED TOO.
+
+   Only successes were cached, so a source that cannot be captured was retried
+   on every single render of the lesson list: six video metadata loads per
+   module visit that could never succeed, and six CORS errors in the console
+   each time. The seeded clips are on archive.org, which sends no CORS headers,
+   and captureFrame needs crossorigin to read pixels out of the frame — so this
+   was every visit, for everybody, permanently.
+
+   The sentinel carries the src it failed on, so replacing the video makes it
+   try again exactly once rather than never. */
+const NO_POSTER = "none:";
+
 export async function posterFor(lesson) {
   if (lesson.thumb) return lesson.thumb;                 // a real poster URL wins
+  const src = lesson.video?.src || "";
   const hit = cachedPoster(lesson.id);
-  if (hit) return hit;
-  const frame = await captureFrame(lesson.video?.src);
-  if (frame) { try { localStorage.setItem(posterKey(lesson.id), frame); } catch {} }
+  if (hit && !hit.startsWith(NO_POSTER)) return hit;
+  // A sentinel for THIS src means do not try again. A sentinel for a different
+  // one means the video was replaced: fall through and try once more. Returning
+  // it as if it were a poster would put "none:https://…" in an img src.
+  if (hit === `${NO_POSTER}${src}`) return null;
+  const frame = await captureFrame(src);
+  try { localStorage.setItem(posterKey(lesson.id), frame || `${NO_POSTER}${src}`); } catch { /* private mode */ }
   return frame;                                          // null -> keep the tile
 }
 

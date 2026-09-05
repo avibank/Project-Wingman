@@ -53,6 +53,11 @@ export function titleForRoute(route) {
       return formatTitle("Saved");
     case "notfound":
       return formatTitle("Wrong bay");
+    /* Settings was falling through with the rest, and it does not belong with
+       them: "Settings" is this app's own name for the page, the same kind of
+       fact as Modules and Ready Room, not content it has no access to. */
+    case "settings":
+      return formatTitle("Settings");
     /* The squadron's own name is not known until the token resolves, and this
        is often the first page a new student sees. The heading it renders is
        what the tab says. */
