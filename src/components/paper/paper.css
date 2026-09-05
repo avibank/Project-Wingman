@@ -166,6 +166,19 @@
 .mrow-foot { font-size: 13px; color: var(--t3); }
 .mnone { font-size: 13px; line-height: 1.55; color: var(--t2); margin: 0; }
 
+/* The author queue. Deliberately plainer than a mark row: it is a worklist,
+   not a thing to read the paper through. */
+.qrow { display: grid; gap: 5px; padding: 11px; background: var(--panel); border-left: 2px solid var(--line); }
+.qrow-quote { margin: 0; font-size: 13px; line-height: 1.45; color: var(--t3); font-style: italic; }
+.qrow-body { margin: 0; font-size: 13px; line-height: 1.5; color: var(--t1); }
+.qrow-foot { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--t3); }
+.qrow-act {
+  margin-left: auto; min-height: 30px; padding: 0 10px; border-radius: var(--r-chip);
+  background: var(--raised); border: 1px solid var(--line); color: var(--t2);
+  font-size: 13px; cursor: pointer;
+}
+.qrow-act:hover { color: var(--t1); border-color: var(--edge-hi); }
+
 /* ---------------------------------------------------------------- the pages */
 .pscroll { position: relative; overflow: auto; padding: 18px 0 64px; background: var(--ground); }
 .pcol { display: grid; justify-items: center; }

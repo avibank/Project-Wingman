@@ -180,7 +180,9 @@ console.log("\nR9 and R12 — visibility is the server's decision");
 {
   const sql = read("supabase/migrations/0014_paper_annotations.sql");
   ok("R9", "a correction reaches its author and the staff, nobody else",
-     /a\.kind <> 'correction' or me\.staff/.test(sql));
+     /case when a\.kind = 'correction' then me\.staff/.test(sql));
+  ok("R9", "and the ring it was stored with cannot widen that",
+     /then me\.staff\s*\n?\s*else ring_covers/.test(sql));
   ok("R12", "Fly solo is symmetric and lives in the query",
      /me\.solo/.test(sql) && /invisible/.test(sql));
   ok("R12", "one ring helper, not two", (sql.match(/create or replace function ring_covers/g) || []).length === 1);

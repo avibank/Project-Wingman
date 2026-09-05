@@ -134,6 +134,36 @@ try {
   const queueForB = await rpc("paper_corrections_for", { uid: B, p_module: "M1" });
   ok("R9 · a student sees no correction queue at all", (queueForB.body || []).length === 0);
 
+  // The other side of the same rule: the author does see it, and sees who
+  // found it. B is promoted to staff for one call and put back afterwards.
+  await rest("pilot_profiles", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ user_id: B, is_staff: true }),
+  });
+  const queueForAuthor = await rpc("paper_corrections_for", { uid: B, p_module: "M1" });
+  const found = (queueForAuthor.body || []).find((r) => r.body === "This figure is out of date.");
+  ok("R9 · the author does see it, with the passage and the finder", !!found,
+     JSON.stringify((queueForAuthor.body || []).length));
+  ok("R9 · and the correction itself reaches staff on the page too",
+     ((await rpc("paper_annotations_for", { uid: B, p_paper: PAPER })).body || [])
+       .some((r) => r.kind === "correction"));
+
+  if (found) {
+    await rest(`paper_annotations?id=eq.${found.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ resolved_at: new Date().toISOString() }),
+    });
+    const after = await rpc("paper_corrections_for", { uid: B, p_module: "M1" });
+    ok("R9 · resolving it takes it off the queue",
+       !(after.body || []).some((r) => r.id === found.id));
+  }
+  await rest("pilot_profiles", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ user_id: B, is_staff: false }),
+  });
+
   console.log("\norphaning");
   await rpc("paper_annotation_status", { p_id: h.id, p_status: "orphaned" });
   const after = await rpc("paper_annotations_for", { uid: A, p_paper: PAPER });

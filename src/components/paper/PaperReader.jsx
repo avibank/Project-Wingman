@@ -11,7 +11,7 @@ import {
 } from "../../lib/paperMarks.js";
 import {
   fetchAnnotations, createAnnotation, deleteAnnotation,
-  markOrphaned, askOnPassage,
+  markOrphaned, askOnPassage, fetchCorrections, resolveCorrection,
 } from "../../lib/annotations.js";
 import PaperPage from "./PaperPage.jsx";
 import PaperThumbs from "./PaperThumbs.jsx";
@@ -166,6 +166,7 @@ export default function PaperReader({
   const [ring, setRing] = useState("module");
   const [busy, setBusy] = useState(false);
 
+  const [queue, setQueue] = useState([]);
   const [query, setQuery] = useState("");
   const [findOpen, setFindOpen] = useState(false);
   const [findAt, setFindAt] = useState(0);
@@ -292,6 +293,18 @@ export default function PaperReader({
     document.addEventListener("visibilitychange", onVis);
     return () => { stop(); document.removeEventListener("visibilitychange", onVis); };
   }, [me, paper?.id, syncFromServer]);
+
+  /* R9's other half — the author queue.
+
+     A correction is invisible on the page to everyone but its writer, so
+     without somewhere for it to arrive it is a message nobody receives. The
+     function returns nothing at all for a student, so this is safe to call
+     unconditionally: a queue you cannot see should not tell you it exists. */
+  const loadQueue = useCallback(async () => {
+    if (!me || !moduleCode) return;
+    setQueue(await fetchCorrections(me, moduleCode));
+  }, [me, moduleCode]);
+  useEffect(() => { loadQueue(); }, [loadQueue]);
 
   /* R2 — resolve against the text as it is now, and record anything that lost
      its place. Never relocated, never dropped. */
@@ -624,10 +637,47 @@ export default function PaperReader({
                       onClick={() => setRail("thumbs")}>Pages</button>
               <button type="button" role="tab" aria-selected={rail === "marks"}
                       onClick={() => setRail("marks")}>Marks</button>
+              {isStaff && (
+                <button type="button" role="tab" aria-selected={rail === "queue"}
+                        onClick={() => setRail("queue")}>
+                  Queue{queue.length ? ` ${queue.length}` : ""}
+                </button>
+              )}
             </div>
 
             {rail === "thumbs" && (
               <PaperThumbs doc={doc} pages={sizes.length} current={page} onPick={goToPage} />
+            )}
+
+            {rail === "queue" && isStaff && (
+              <div className="prail-marks">
+                {queue.length ? (
+                  <ul className="mlist">
+                    {queue.map((c) => (
+                      <li key={c.id}>
+                        <div className="qrow">
+                          <p className="qrow-quote">“{c.anchor?.quote}”</p>
+                          <p className="qrow-body">{c.body}</p>
+                          <p className="qrow-foot">
+                            <span>{c.author_name}</span>
+                            <button type="button" className="qrow-act"
+                                    onClick={async () => {
+                                      await resolveCorrection(c.id);
+                                      loadQueue();
+                                    }}>Done with it</button>
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  /* R11 again: not "0 corrections". */
+                  <p className="mnone">
+                    Nothing reported on this module yet. A student who spots
+                    something wrong can tell you from the passage itself.
+                  </p>
+                )}
+              </div>
             )}
 
             {rail === "marks" && (

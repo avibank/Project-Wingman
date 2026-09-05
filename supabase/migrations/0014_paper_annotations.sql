@@ -153,9 +153,15 @@ as $$
             and not exists (select 1 from blocks b where b.user_id = uid and b.blocked_id = a.author_id)
             and not exists (select 1 from blocks b where b.user_id = a.author_id and b.blocked_id = uid)
             and not exists (select 1 from mutes m where m.user_id = uid and m.muted_id = a.author_id)
-            -- R9: a correction is for its author and the staff, and nobody else
-            and (a.kind <> 'correction' or me.staff)
-            and ring_covers(a.author_id, uid, a.ring, a.module_code)
+            /* R9 — a correction is for its author and the staff, and for
+               nobody else. Deliberately NOT "the ring rule, plus a staff
+               exception": whichever ring a correction was stored with is
+               irrelevant to who may see it, and making staff visibility depend
+               on the ring meant the author could not see a correction written
+               to the writer's own ring — which is every correction, since that
+               is what the composer sets. The kind decides. */
+            and (case when a.kind = 'correction' then me.staff
+                      else ring_covers(a.author_id, uid, a.ring, a.module_code) end)
           ))
    order by a.created_at;
 $$;
