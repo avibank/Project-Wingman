@@ -114,6 +114,12 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers.
 
+**0013 has been run against the live project.** Both `livery` columns are gone
+from `pilot_profiles` and `squadrons`, and `squadron_roster` was rebuilt without
+one. Verified by counting the columns afterwards, and by re-running
+check:backend, check:schema, check:threads and check:discovery, all of which
+still pass.
+
 **0014 has been run against the live project.** `paper_annotations`, four
 functions, and the `anchor_is_text_only` CHECK that refuses any anchor
 carrying a page, rect or bbox — R1 of the annotation brief, enforced where it
