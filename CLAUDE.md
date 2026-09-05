@@ -112,7 +112,15 @@ architecture note above says — that part was accurate.
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
 squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
-0013 retiring the pilot livery.
+0013 retiring the pilot livery, 0014 the annotation layer on papers.
+
+**0014 has been run against the live project.** `paper_annotations`, four
+functions, and the `anchor_is_text_only` CHECK that refuses any anchor
+carrying a page, rect or bbox — R1 of the annotation brief, enforced where it
+cannot be argued with. `npm run check:paper-db` drives 17 assertions against
+the real database as two different accounts and deletes every row it makes;
+like check:discovery it is NOT in `npm run check`, because that suite must not
+need credentials. `npm run check:paper` holds the 61 that need neither.
 
 **0011 has been run against the live project**, verified by connecting rather
 than inferred: 9 new squadron columns, 4 new profile columns, 2 new tables and
@@ -163,6 +171,30 @@ second environment ever needs building.
 the live database already has it, so 0000 is a no-op there, but without it the series
 cannot rebuild an empty database. Both bundles take 0005 and up, so 0000 is
 deliberately outside them.
+
+## The annotation layer
+
+A layer over a Library paper. The paper is never edited by a reader; every
+highlight, note, question and correction is a separate record pointing at a
+passage, so filtering is just deciding which records to draw and nothing a
+reader does can damage the paper. Module 1 only for now, behind
+`library.reader`.
+
+- **An anchor is text, never coordinates.** `src/lib/anchor.js` came with the
+  brief, is tested by `npm run check:anchor` (29 cases), and is the one file not
+  to rewrite. A mark stores the words plus 32 characters of context either side,
+  so it survives the paper being reflowed, re-extracted, or becoming native
+  content later. Coordinates are measured at draw time from the rendered text
+  layer and never stored.
+- **A lost mark is orphaned, never relocated.** `resolveAnchor` returns null
+  rather than guessing, and the reader lists what lost its place.
+- **pdf.js is pinned exactly**, not caret-ranged. A minor version changes how
+  text runs are split, which changes the extracted string, which silently
+  orphans every mark ever made. See the header of `src/lib/paperText.js`.
+- The reader is its own lazy chunk (~390KB) and `check:bundle` asserts pdf.js
+  never reaches the entry chunk.
+- The test paper is fetched, not committed: `npm run paper:fetch`. `papersFor()`
+  adds it to Module 1 under `import.meta.env.DEV` only.
 
 ## Status
 

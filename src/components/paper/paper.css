@@ -1,0 +1,365 @@
+/* =============================================================================
+   THE PAPER READER — R14, the house style.
+
+   OKLCH tokens only. There is no hex literal in this file and check:paper fails
+   the build if one appears: a fixed colour here would be the one thing on the
+   screen that does not move when somebody changes their livery, and the paper
+   is the surface people will stare at longest.
+
+   Density is the livery accent at low alpha. It is not a new colour, it does not
+   get a scale of its own, and the three levels are three alphas of the same
+   thing — so a busy passage reads as MORE of what a quiet one already is.
+
+   The page itself carries a hairline, not a shadow. Every reader people know
+   floats the page on a drop shadow; the house style does not have drop shadows,
+   and a hairline separates the paper from the ground just as well without
+   inventing a second elevation language for one screen.
+   ========================================================================== */
+
+/* A column, not a grid.
+
+   `grid-template-rows: auto auto 1fr auto` was wrong in the one state that
+   matters most — the ordinary one. The find bar is conditional, so with it
+   closed there are three children for four rows and the page column landed in
+   an `auto` row instead of the `1fr` one: every page squeezed into a band a
+   few pixels tall. A column with one growing child cannot develop that class
+   of bug, because nothing depends on how many children there are.
+
+   Fixed and above the app bar, because that is what a document reader does
+   everywhere people already use one. The way out is the arrow at top left. */
+.paper {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column;
+  background: var(--ground); color: var(--t1);
+  font-family: var(--font-ui);
+}
+.pbar, .findbar, .pfoot { flex: 0 0 auto; }
+
+/* ------------------------------------------------------------------ the bar */
+.pbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; min-height: 52px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.pbar-l, .pbar-r { display: flex; align-items: center; gap: 4px; }
+.pbar-l { flex: 1 1 0; min-width: 0; }
+.pbar-r { flex: 1 1 0; justify-content: flex-end; }
+.pbar-c { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.pbar-title {
+  font-size: 15px; font-weight: 500; margin: 0 0 0 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--t1);
+}
+.pbar-rule { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+
+/* Named .ptool and .pcoda, not .pbtn and .pend: lesson.css already claims
+   those two globally, and both stylesheets can be loaded in the same session —
+   a student who watches a lesson and then opens a paper would have had each
+   file quietly restyling the other. check:collisions is what caught it. */
+/* 44px targets, at 13px type or larger, everywhere in this screen. */
+.ptool {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 34px; padding: 0 7px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
+  color: var(--t2); cursor: pointer; text-decoration: none;
+  transition: background 140ms ease, color 140ms ease;
+}
+.ptool:hover:not(:disabled) { background: var(--raised); color: var(--t1); }
+.ptool:disabled { opacity: .4; cursor: default; }
+.ptool[aria-pressed="true"] { background: var(--raised); color: var(--t1); border-color: var(--line); }
+.ptool:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+.pnum {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 13px; color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+.pnum input {
+  width: 3.2ch; text-align: right; padding: 3px 4px;
+  background: var(--raised); border: 1px solid var(--line); border-radius: var(--r-chip);
+  color: var(--t1); font: inherit; font-variant-numeric: tabular-nums;
+}
+.pnum input:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+.pzoom {
+  display: inline-flex; align-items: center; gap: 3px;
+  min-width: 62px; height: 34px; padding: 0 8px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
+  color: var(--t2); cursor: pointer;
+  font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.pzoom:hover { background: var(--raised); color: var(--t1); }
+
+/* ----------------------------------------------------------------- the find */
+.findbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; background: var(--panel);
+  border-bottom: 1px solid var(--line); color: var(--t2);
+}
+.findbar input {
+  flex: 1; min-width: 0; background: transparent; border: none;
+  color: var(--t1); font-size: 14px;
+}
+.findbar input:focus { outline: none; }
+.find-count {
+  font-family: var(--font-mono); font-size: 13px; color: var(--t3);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- the body */
+.pbody { flex: 1 1 auto; display: grid; grid-template-columns: 1fr; min-height: 0; }
+.paper[data-rail="thumbs"] .pbody,
+.paper[data-rail="marks"] .pbody { grid-template-columns: 236px 1fr; }
+
+.prail {
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.prail-tabs { display: flex; border-bottom: 1px solid var(--line); }
+.prail-tabs button {
+  flex: 1; min-height: 40px; background: transparent; border: none;
+  border-bottom: 2px solid transparent; color: var(--t3);
+  font-size: 13px; cursor: pointer;
+}
+.prail-tabs button[aria-selected="true"] { color: var(--t1); border-bottom-color: var(--active); }
+
+.thumbs { list-style: none; margin: 0; padding: 12px; overflow-y: auto; display: grid; gap: 10px; }
+.thumb {
+  display: grid; gap: 4px; justify-items: center; width: 100%;
+  background: transparent; border: none; padding: 0; cursor: pointer;
+}
+.thumb-shot {
+  display: block; width: 108px; border: 1px solid var(--line);
+  border-radius: var(--r-chip); overflow: hidden; background: var(--raised);
+}
+.thumb-shot canvas { display: block; width: 100%; height: auto; }
+.thumb[aria-current="true"] .thumb-shot { border-color: var(--active); }
+.thumb-n {
+  font-family: var(--font-mono); font-size: 13px; color: var(--t3);
+  font-variant-numeric: tabular-nums;
+}
+.thumb[aria-current="true"] .thumb-n { color: var(--t1); }
+
+.prail-marks { overflow-y: auto; padding: 12px; display: grid; gap: 12px; align-content: start; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 30px; padding: 0 10px; border-radius: var(--r-pill);
+  background: var(--raised); border: 1px solid var(--line); color: var(--t2);
+  font-size: 13px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { color: var(--t1); border-color: var(--active); }
+.mlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--line); }
+.mrow {
+  display: grid; gap: 3px; width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 11px; background: var(--panel); border: none; color: var(--t1);
+  border-left: 2px solid transparent;
+}
+.mrow:hover { background: var(--raised); }
+.mrow[data-kind="note"] { border-left-color: var(--active); }
+/* A question is the same accent, dashed. R14 allows one accent off the livery,
+   so the difference between a note and a question has to be a shape. */
+.mrow[data-kind="question"] { border-left-color: var(--active); border-left-style: dashed; }
+.mrow[data-orphan] { opacity: .62; cursor: default; }
+.mrow-quote { font-size: 13px; line-height: 1.45; }
+.mrow-foot { font-size: 13px; color: var(--t3); }
+.mnone { font-size: 13px; line-height: 1.55; color: var(--t2); margin: 0; }
+
+/* ---------------------------------------------------------------- the pages */
+.pscroll { position: relative; overflow: auto; padding: 18px 0 64px; background: var(--ground); }
+.pcol { display: grid; justify-items: center; }
+.pslot { display: grid; justify-items: center; gap: 10px; width: 100%; }
+
+.pp { position: relative; background: var(--raised); border: 1px solid var(--line); }
+.pp-ghost { background: var(--raised); }
+.pp-canvas { display: block; position: relative; z-index: 0; }
+.pp-wait { position: absolute; inset: 0; background: var(--raised); }
+
+.pp-marks { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.pp-mark { position: absolute; border-radius: 1px; }
+
+/* Density: three alphas of the livery accent, and nothing else. */
+.pp-mark[data-density="1"] { background: oklch(from var(--active) l c h / .07); }
+.pp-mark[data-density="2"] { background: oklch(from var(--active) l c h / .13); }
+.pp-mark[data-density="3"] { background: oklch(from var(--active) l c h / .20); }
+
+/* Yours, your wingman's, your formation's — drawn as marks, not as weather.
+   A note and a question are the same wash with a different edge, because the
+   house style has one accent and identity comes from shape. */
+.pp-mark[data-kind] { background: oklch(from var(--active) l c h / .24); }
+.pp-mark[data-kind="note"] { box-shadow: inset 0 -2px 0 0 oklch(from var(--active) l c h / .85); }
+.pp-mark[data-kind="question"] {
+  box-shadow: none;
+  background-image: linear-gradient(to right,
+    oklch(from var(--active) l c h / .9) 0 4px, transparent 4px 8px);
+  background-repeat: repeat-x; background-size: 8px 2px; background-position: bottom left;
+}
+.pp-mark[data-active] { background: oklch(from var(--active) l c h / .38); }
+
+.pp-mark[data-kind="find"] { background: oklch(from var(--t1) l c h / .18); }
+.pp-mark[data-kind="find-current"] { background: oklch(from var(--t1) l c h / .42); }
+
+/* pdf.js's text layer: invisible letters exactly over the drawn ones, so the
+   page can be selected, searched and copied like text — which is also what
+   makes an anchor possible at all. */
+.pp-text {
+  position: absolute; inset: 0; z-index: 2;
+  overflow: hidden; line-height: 1; text-align: initial;
+  forced-color-adjust: none; transform-origin: 0 0;
+}
+.pp-text :is(span, br) {
+  color: transparent; position: absolute; white-space: pre;
+  cursor: text; transform-origin: 0 0;
+}
+.pp-text span[role="img"] { user-select: none; }
+.pp-text ::selection { background: oklch(from var(--active) l c h / .32); }
+.pp-text br { user-select: none; }
+
+/* --------------------------------------------------------- the mark toolbar */
+.selbar {
+  position: absolute; z-index: 6; transform: translate(-50%, -100%);
+  display: flex; align-items: center; gap: 2px;
+  padding: 4px; border-radius: var(--r-control);
+  background: var(--panel); border: 1px solid var(--line);
+}
+.selbar-main {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 34px; padding: 0 12px; border-radius: var(--r-chip);
+  background: var(--active); border: none; color: var(--ground);
+  font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.selbar-rule { width: 1px; align-self: stretch; background: var(--line); margin: 0 3px; }
+.selbar-act {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 34px; padding: 0 9px; border-radius: var(--r-chip);
+  background: transparent; border: none; color: var(--t2);
+  font-size: 13px; cursor: pointer;
+}
+.selbar-act:hover { background: var(--raised); color: var(--t1); }
+
+/* ------------------------------------------------------------- the composer */
+.cc-scrim {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  padding: 20px; background: oklch(from var(--ground) l c h / .72);
+}
+.composer-card {
+  width: min(560px, 100%); display: grid; gap: 10px;
+  padding: 16px; border-radius: var(--r-panel);
+  background: var(--panel); border: 1px solid var(--line);
+}
+.cc-title { margin: 0; font-size: 15px; font-weight: 500; color: var(--t1); }
+.cc-quote {
+  margin: 0; padding: 8px 11px; border-left: 2px solid var(--active);
+  background: var(--raised); color: var(--t2);
+  font-size: 13px; line-height: 1.5;
+}
+.cc-field {
+  width: 100%; padding: 10px 11px; border-radius: var(--r-control);
+  background: var(--raised); border: 1px solid var(--line);
+  color: var(--t1); font: inherit; font-size: 14px; resize: vertical;
+}
+.cc-field:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+.cc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cc-ring { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--t3); }
+.cc-ring select {
+  min-height: 34px; padding: 0 8px; border-radius: var(--r-chip);
+  background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 13px;
+}
+.cc-acts { display: flex; gap: 8px; margin-left: auto; }
+.cc-ghost, .cc-go {
+  min-height: 36px; padding: 0 14px; border-radius: var(--r-control);
+  font-family: var(--font-ui); font-size: 14px; cursor: pointer;
+}
+.cc-ghost { background: transparent; border: 1px solid var(--line); color: var(--t2); }
+.cc-go { background: var(--active); border: none; color: var(--ground); font-weight: 500; }
+.cc-go:disabled { background: var(--raised); color: var(--t3); cursor: default; }
+.cc-hint { margin: 0; font-size: 13px; line-height: 1.5; color: var(--t3); }
+
+/* ------------------------------------------------- notes, inline, in the flow */
+.mcardp {
+  width: min(720px, calc(100% - 32px));
+  display: grid; gap: 7px; padding: 12px 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card);
+  border-left-width: 2px; border-left-color: var(--active);
+}
+.mcardp[data-kind="question"] { border-left-style: dashed; }
+.mcardp.is-active { background: var(--raised); }
+.mcardp-quote {
+  display: block; width: 100%; text-align: left; padding: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--t3); font-size: 13px; line-height: 1.5; font-style: italic;
+}
+.mcardp-quote:hover { color: var(--t2); }
+.mcardp-body { margin: 0; font-size: 14px; line-height: 1.55; color: var(--t1); }
+.mcardp-foot { margin: 0; font-size: 13px; color: var(--t3); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mcardp-foot b { color: var(--t2); font-weight: 500; }
+.mcardp-ring { color: var(--t3); }
+.mcardp-link { background: none; border: none; padding: 0; color: var(--active); font-size: 13px; cursor: pointer; }
+.mcardp-del { background: none; border: none; padding: 4px; color: var(--t3); cursor: pointer; margin-left: auto; }
+.mcardp-del:hover { color: var(--t1); }
+
+/* ------------------------------------------------------------- the quiet line */
+.pendline {
+  position: sticky; top: 0; z-index: 5; display: block;
+  width: min(720px, calc(100% - 32px)); margin: 0 auto 14px;
+  min-height: 36px; padding: 8px 14px; border-radius: var(--r-pill);
+  background: var(--panel); border: 1px solid var(--line);
+  color: var(--t2); font-size: 13px; cursor: pointer;
+}
+.pendline:hover { color: var(--t1); border-color: var(--edge-hi); }
+
+.perr {
+  width: min(720px, calc(100% - 32px)); margin: 0 auto 14px;
+  padding: 10px 14px; border-radius: var(--r-control);
+  background: var(--panel); border: 1px solid var(--line);
+  color: var(--t2); font-size: 13px;
+}
+
+.orphans {
+  width: min(720px, calc(100% - 32px)); margin: 26px auto 0;
+  padding-top: 16px; border-top: 1px solid var(--line);
+}
+.orphans h2 { margin: 0 0 8px; font-size: 14px; font-weight: 500; color: var(--t2); }
+.orphans ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.orph-q { display: block; font-size: 13px; line-height: 1.5; color: var(--t3); font-style: italic; }
+.orph-b { display: block; font-size: 13px; color: var(--t2); }
+
+.pcoda {
+  width: min(720px, calc(100% - 32px)); margin: 26px auto 0;
+  font-size: 13px; color: var(--t3); text-align: center;
+}
+
+/* ----------------------------------------------------------------- the foot */
+.pfoot {
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 14px; min-height: 42px;
+  background: var(--panel); border-top: 1px solid var(--line);
+}
+.dtoggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--t2); cursor: pointer; }
+.dtoggle input { accent-color: var(--active); width: 15px; height: 15px; }
+.pstaff {
+  margin-left: auto; font-family: var(--font-mono); font-size: 13px; color: var(--t3);
+}
+
+/* ------------------------------------------------------------------- phones */
+@media (max-width: 860px) {
+  .paper[data-rail="thumbs"] .pbody,
+  .paper[data-rail="marks"] .pbody { grid-template-columns: 1fr; }
+  .prail { position: absolute; inset: 52px 0 0 0; z-index: 8; border-right: none; }
+  .pbar { flex-wrap: wrap; }
+  .pbar-c { order: 3; width: 100%; justify-content: center; padding-top: 4px; }
+  .pbar-l, .pbar-r { flex: 1 1 auto; }
+  .mcardp, .pendline, .perr, .orphans, .pcoda { width: calc(100% - 24px); }
+}
+
+/* R13 — Smooth Air and prefers-reduced-motion turn all of it off. No new
+   mechanism: the app's own two classes, and the media query behind them. */
+.app.smooth-air .ptool,
+.app.smooth-air .pzoom,
+.app.smooth-air .mrow,
+.app.smooth-air .pendline { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ptool, .pzoom, .mrow, .pendline { transition: none; }
+  .pscroll { scroll-behavior: auto; }
+}

@@ -48,8 +48,28 @@ export function chaptersFor(code, content) {
   }));
 }
 
+/* The reference paper, in development only.
+ *
+ * The brief asks for the pdf.js test paper on Module 1 so the annotation layer
+ * is exercised against real body text with real repeated phrases. It is not
+ * committed — `npm run paper:fetch` puts it in public/papers — so this entry
+ * exists only under DEV, and production never points at a file that is not
+ * there. Nothing else in the app treats it specially: it is a paper. */
+const DEV_PAPER = {
+  id: "M1.DEV",
+  title: "Trace-based Just-in-Time Type Specialization",
+  scope: { module: "M1", chapter: null, lesson: null },
+  file: "papers/tracemonkey.pdf",
+  pages: 14,
+  kind: "PDF",
+};
+
 export function papersFor(code, content) {
-  return content ? moduleByCode(code, content).papers : [];
+  const own = content ? moduleByCode(code, content).papers : [];
+  if (import.meta.env?.DEV && String(code).toUpperCase() === "M1") {
+    return [DEV_PAPER, ...(own || [])];
+  }
+  return own;
 }
 
 export function allModules(content) {

@@ -59,6 +59,7 @@ function agoWords(iso) {
 export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper,
   query = "",
+  readerOn = false, readerPin = null, onOpenReader,
   warm = 0, lastRecheck = null,
   average = null, lastQuiz = null, minimums, onMinimums,
   faults = new Set(), onStartCalibration,
@@ -222,6 +223,37 @@ export default function LibraryTab({
         )}
 
         <div className="libwrap">
+          {/* §5's own pattern, reused: the thing you are in the middle of is
+              pinned above the list, with a rule beneath it, exactly as
+              Calibration sits above the chapter quizzes. A paper you have open
+              is the same kind of fact as a pile of questions kept warm — it is
+              where you were, and it should not be somewhere you have to hunt
+              for it.
+
+              §10 — with nothing opened yet this names the next action inside
+              the sentence rather than reporting an absence. */}
+          {readerOn && !searching && (
+            <button type="button" className="item calrow" onClick={() => onOpenReader?.()}>
+              <span className="calsticker" aria-hidden="true">
+                <span className="calband">Reading</span>
+                <span className="calval">{readerPin?.paper ? readerPin.page : "—"}</span>
+              </span>
+              <span className="imain">
+                <span className="iname">
+                  {readerPin?.paper ? readerPin.paper.title : "Open a paper and mark it up"}
+                </span>
+                <span className="imeta">
+                  {readerPin?.paper
+                    ? `Page ${readerPin.page}${readerPin.pages ? ` of ${readerPin.pages}` : ""} · highlight, note, ask`
+                    : "Highlight a line, leave a note, ask the module about it"}
+                </span>
+              </span>
+              <span className="istat">
+                <span className="go">{readerPin?.paper ? "Resume" : "Open"}</span>
+              </span>
+            </button>
+          )}
+
           {shownPapers.map((p) => (
             <button type="button" key={p.id} className="item" onClick={() => onOpenPaper(p)}>
               <span className="lead mark">{DOC}</span>

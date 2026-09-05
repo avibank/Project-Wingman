@@ -25,3 +25,4 @@ pnpm-debug.log*
 # Vercel
 .vercel
 .claude/launch.json
+public/papers/tracemonkey.pdf

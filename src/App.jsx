@@ -64,6 +64,10 @@ const CHUNK = {
   moduleHub: chunk(() => import("./components/ModuleHub.jsx")),
   module: chunk(() => import("./components/module/ModuleScreen.jsx")),
   lesson: chunk(() => import("./components/module/LessonPage.jsx")),
+  // Its own chunk, and it matters more here than anywhere else: pdf.js is the
+  // largest thing this app has ever depended on, and nobody who never opens a
+  // paper should pay a byte of it. check:bundle is the gate that says so.
+  paper: chunk(() => import("./components/paper/PaperReader.jsx")),
   quiz: chunk(() => import("./components/module/QuizPage.jsx")),
   dev: chunk(() => import("./components/DevPanel.jsx")),
   pdf: chunk(() => import("./components/PdfPanel.jsx")),
@@ -92,6 +96,7 @@ const ModuleHub = lazy(CHUNK.moduleHub);
 import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
 const ModuleScreen = lazy(CHUNK.module);
 const LessonPage = lazy(CHUNK.lesson);
+const PaperReader = lazy(CHUNK.paper);
 const QuizPage = lazy(CHUNK.quiz);
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
 const DevPanel = lazy(CHUNK.dev);
@@ -131,7 +136,7 @@ import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
-import { fetchProfiles } from "./lib/squadron.js";
+import { fetchProfiles, fetchProfile } from "./lib/squadron.js";
 import { reportContent, blockUser } from "./lib/squadron.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
@@ -221,7 +226,11 @@ function AppInner() {
 
   // A review flow is a module screen, not the hub. It was left out of this list
   // once and the Flight Deck rendered underneath a perfectly correct URL.
-  const MODULE_ROUTES = new Set(["module", "chapter", "lesson", "review"]);
+  // A paper is inside a module, like a lesson is. Leaving it out sent the whole
+  // route to the Flight Deck: `view === "hub"` is tested before the paper
+  // branch in the render, so the deck matched first and the reader never
+  // mounted while the browser tab said "Paper".
+  const MODULE_ROUTES = new Set(["module", "chapter", "lesson", "review", "paper"]);
   const view = MODULE_ROUTES.has(route.name) ? "module" : "hub";
   const settingsPage =
     route.name === "signin" ? "auth"
@@ -774,6 +783,51 @@ function AppInner() {
   //
   // is_staff becomes role: "instructor", which is what the badge already reads,
   // so the instructor mark works off real standing rather than fixture data.
+  /* Am I the author? The correction queue and the author view hang off this
+     one flag, and it is a single read of my own row rather than a claim the
+     client makes about itself. */
+  const [myProfile, setMyProfile] = useState(null);
+  useEffect(() => {
+    if (!isSignedIn || !me) { setMyProfile(null); return undefined; }
+    let live = true;
+    fetchProfile(me).then((row) => { if (live) setMyProfile(row); });
+    return () => { live = false; };
+  }, [isSignedIn, me]);
+
+  /* ------------------------------------------------------ the paper reader
+     Module 1 only for now, and behind a flag on top of that. Everything else
+     keeps opening the file in a tab, which is what it did before this existed
+     — a module without the reader must not lose its papers. */
+  const readerOn = flags["library.reader"] && activeModuleCode === "M1";
+  const paperPlace = progress.get("pw-paper-place", null);
+  const modulePapers = useMemo(
+    () => papersFor(activeModuleCode, useTestContent) || [],
+    [activeModuleCode, useTestContent],
+  );
+  const lastPaper = useMemo(
+    () => modulePapers.find((p) => p.id === paperPlace?.paperId) || null,
+    [modulePapers, paperPlace],
+  );
+  const readerPin = readerOn
+    ? { paper: lastPaper, page: paperPlace?.page || 1, pages: lastPaper?.pages || null }
+    : null;
+
+  const openPaper = useCallback((paper) => {
+    if (!paper) return;
+    // Opened is remembered per account, so the Library can say which ones have
+    // been. Written before anything navigates: a popup blocker, or a chunk that
+    // will not load, must not cost the record of having tried.
+    progress.set("pw-paper-opened", {
+      ...progress.get("pw-paper-opened", {}), [paper.id]: true,
+    });
+    recordPlace({ kind: "paper", paperId: paper.id, title: paper.title, file: paper.file });
+    if (flags["library.reader"] && activeModuleCode === "M1") {
+      go(routePath.paper(activeModuleCode, paper.id));
+    } else {
+      window.open(`/${String(paper.file).replace(/^\//, "")}`, "_blank", "noopener");
+    }
+  }, [progress, flags, activeModuleCode]);
+
   const [profiles, setProfiles] = useState([]);
   const authorIds = useMemo(() => {
     const ids = new Set();
@@ -1255,6 +1309,25 @@ function AppInner() {
             onOpenChannel={(code) => go(routePath.ready(code))}
           />
         </main>
+      ) : route.name === "paper" ? (
+        (() => {
+          const paper = modulePapers.find((x) => x.id === route.paperId) || null;
+          if (!paper) return <main className="content content-taxi content--full" />;
+          return (
+            <main className="content content-taxi content--full">
+              <PaperReader
+                paper={paper}
+                moduleCode={activeModuleCode}
+                me={me}
+                isStaff={!!myProfile?.is_staff}
+                onBack={() => go(routePath.library(activeModuleCode))}
+                onPlace={(page) => progress.set("pw-paper-place", { paperId: paper.id, page })}
+                onOpenThread={() => go(routePath.ready(activeModuleCode))}
+                onOpenOriginal={(p) => window.open(`/${String(p.file).replace(/^\//, "")}`, "_blank", "noopener")}
+              />
+            </main>
+          );
+        })()
       ) : flags["module.screen"] && route.name === "lesson" ? (
         (() => {
           const chs = chaptersFor(activeModuleCode, useTestContent);
@@ -1412,16 +1485,10 @@ function AppInner() {
               if (what === "caution") go(routePath.review(activeModuleCode, "caution"));
               else go(routePath.review(activeModuleCode, "recheck"));
             }}
-            onOpenPaper={(paper) => {
-              // Opened is remembered per account, so the Library can say which
-              // ones have been. Written before the tab opens: a popup blocker
-              // must not cost the record of having tried.
-              progress.set("pw-paper-opened", {
-                ...progress.get("pw-paper-opened", {}), [paper.id]: true,
-              });
-              recordPlace({ kind: "paper", paperId: paper.id, title: paper.title, file: paper.file });
-              window.open(`/${paper.file.replace(/^\//, "")}`, "_blank", "noopener");
-            }}
+            onOpenPaper={(paper) => openPaper(paper)}
+            readerOn={readerOn}
+            readerPin={readerPin}
+            onOpenReader={() => openPaper(lastPaper || papersFor(activeModuleCode, useTestContent)[0])}
             people={{
               // The callsigns behind the author ids. Threads themselves come
               // from the session, not from here — they are the same rows the

@@ -41,6 +41,7 @@ export const FLAGS = [
   // what is coming rather than pretending.
   { id: "module.interior", label: "Module interior", note: "Opening a module at all. Off means clicking one does nothing.", everyone: true },
   { id: "module.screen", label: "Module screen", note: "Lessons, Library and People. Off falls back to the old hub.", everyone: true },
+  { id: "library.reader", label: "Paper reader", note: "Papers open in the reader, with marking. Off opens the file in a tab.", everyone: true },
   // The one switch that takes the dev panel out. Off for everyone including
   // admins until it is turned on deliberately, and the panel additionally
   // refuses to render for anyone who is not an admin — two locks, because this

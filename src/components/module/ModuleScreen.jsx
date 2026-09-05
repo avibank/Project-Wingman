@@ -26,6 +26,7 @@ export const HIDDEN_TABS = [{ id: "people", label: "People" }];
 export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
   papers = [], librarySub = "papers", onOpenPaper,
+  readerOn = false, readerPin = null, onOpenReader,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
@@ -187,6 +188,7 @@ export default function ModuleScreen({
         {tab === "library" && (
           <LibraryTab chapters={chapters} papers={papers} state={state}
                       sub={librarySub} query={query}
+                      readerOn={readerOn} readerPin={readerPin} onOpenReader={onOpenReader}
                       // §5 — Calibration is the right answers kept warm, and
                       // it is NOT the caution pile. `warm` is everything in
                       // holding; `due` is how much of it has come round.

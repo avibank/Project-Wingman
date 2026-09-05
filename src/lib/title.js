@@ -58,6 +58,11 @@ export function titleForRoute(route) {
        what the tab says. */
     case "invite":
       return formatTitle("You were invited");
+    /* The paper's own name is content and this file has none, but "Paper" is
+       the surface's name and beats the site title for a tab somebody has left
+       open beside four others. */
+    case "paper":
+      return formatTitle("Paper");
 
     default:
       // Module, chapter and lesson titles still fall through, and deliberately.
