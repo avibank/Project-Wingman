@@ -70,6 +70,12 @@
 .ptool[aria-pressed="true"] { background: var(--raised); color: var(--t1); border-color: var(--line); }
 .ptool:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
 
+/* The one moving thing in the toolbar, and it only moves while it is working. */
+@keyframes pspin { to { transform: rotate(360deg); } }
+.ptool [data-spin] { animation: pspin 900ms linear infinite; }
+.app.smooth-air .ptool [data-spin] { animation: none; }
+@media (prefers-reduced-motion: reduce) { .ptool [data-spin] { animation: none; } }
+
 .pnum {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: var(--font-mono); font-size: 13px; color: var(--t2);

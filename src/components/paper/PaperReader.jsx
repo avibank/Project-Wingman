@@ -3,12 +3,12 @@ import { createPortal } from "react-dom";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Search, X, Minus, Plus,
   RotateCw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
-  HelpCircle, Flag, Trash2,
+  HelpCircle, Flag, Trash2, RefreshCw,
 } from "lucide-react";
 import { loadPaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
 import {
-  resolveAll, segmentsFor, anchorFor, splitIncoming, mergeRows,
-  applyFilter, FILTERS, RINGS, ringLabel, nextPoll,
+  resolveAll, segmentsFor, anchorFor, mergeRows,
+  applyFilter, FILTERS, RINGS, ringLabel,
 } from "../../lib/paperMarks.js";
 import {
   fetchAnnotations, createAnnotation, deleteAnnotation,
@@ -156,7 +156,7 @@ export default function PaperReader({
   const [rail, setRail] = useState("thumbs");      // thumbs | marks | null
 
   const [rows, setRows] = useState([]);
-  const [pending, setPending] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState("all");
   const [density, setDensity] = useState(true);
   const [activeId, setActiveId] = useState(null);
@@ -200,7 +200,6 @@ export default function PaperReader({
   const scrollRef = useRef(null);
   const pageEls = useRef(new Map());
   const divsByPage = useRef(new Map());
-  const emptyRuns = useRef(0);
   const lastSync = useRef(null);
 
   const registerEl = useCallback((num, el) => { if (el) pageEls.current.set(num, el); }, []);
@@ -279,46 +278,47 @@ export default function PaperReader({
   }, []);
 
   /* ------------------------------------------------------------ the marks */
-  const syncFromServer = useCallback(async (since = null) => {
+  const syncFromServer = useCallback(async (merge = false) => {
     if (!me || !paper?.id) return;
-    const incoming = await fetchAnnotations(me, paper.id, since);
-    if (!incoming.length) { emptyRuns.current += 1; return; }
-    emptyRuns.current = 0;
+    const incoming = await fetchAnnotations(me, paper.id, null);
     lastSync.current = new Date().toISOString();
-    if (!since) { setRows(incoming); return; }
-    // R6 — density lands silently because it moves nothing; anything that opens
-    // in the flow waits behind a quiet line until the reader asks for it.
-    const { silent, pending: waits } = splitIncoming(incoming.filter((r) => r.author_id !== me));
-    if (silent.length) setRows((held) => mergeRows(held, silent));
-    if (waits.length) setPending((p) => mergeRows(p, waits));
-    const mine = incoming.filter((r) => r.author_id === me);
-    if (mine.length) setRows((held) => mergeRows(held, mine));
+    // Merge rather than replace on a refresh, so a mark made a second ago and
+    // still in flight is not wiped by the answer to a question asked before it.
+    setRows((held) => (merge ? mergeRows(held, incoming) : incoming));
   }, [me, paper?.id]);
 
   useEffect(() => {
-    setRows([]); setPending([]); lastSync.current = null; emptyRuns.current = 0;
-    syncFromServer(null);
+    setRows([]); lastSync.current = null;
+    syncFromServer(false);
   }, [syncFromServer]);
 
-  /* R7 — one timer, owned here. It does not run while the tab is hidden, it
-     backs off while nothing is happening, and it is cleared on unmount. */
-  useEffect(() => {
-    if (!me || !paper?.id) return undefined;
-    let timer = null;
-    const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
-    const arm = () => {
-      stop();
-      if (document.visibilityState !== "visible") return;
-      timer = setTimeout(async () => {
-        await syncFromServer(lastSync.current);
-        arm();
-      }, nextPoll(emptyRuns.current));
-    };
-    const onVis = () => { if (document.visibilityState === "visible") arm(); else stop(); };
-    arm();
-    document.addEventListener("visibilitychange", onVis);
-    return () => { stop(); document.removeEventListener("visibilitychange", onVis); };
-  }, [me, paper?.id, syncFromServer]);
+  /* THE ONE SCREEN WHERE A REFRESH IS THE MECHANISM, AND ON PURPOSE.
+
+     Everywhere else in this app a socket delivers the moment somebody types —
+     see lib/live.js. A paper is the exception, and it is the exception because
+     of R6: notes open inline and push text down, so anything arriving on its
+     own moves the page under somebody who is reading it. That is the single
+     most likely way to make this feel broken while every part of it works.
+
+     So marks arrive when the reader asks, and the button is the asking. The
+     scroll position is pinned across the change anyway: the page you are on
+     stays where it is even when four notes land above it. */
+  const refreshNow = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    const el = scrollRef.current;
+    const anchorNode = pageEls.current.get(page);
+    const before = anchorNode ? anchorNode.getBoundingClientRect().top : null;
+    await syncFromServer(true);
+    requestAnimationFrame(() => {
+      const node = pageEls.current.get(page);
+      if (el && before != null && node) {
+        const after = node.getBoundingClientRect().top;
+        el.scrollTop += after - before;
+      }
+      setRefreshing(false);
+    });
+  }, [refreshing, syncFromServer, page]);
 
   /* R9's other half — the author queue.
 
@@ -493,24 +493,6 @@ export default function PaperReader({
     await deleteAnnotation(mark.id);
   };
 
-  /* R6 — applying the buffer must not move the page under the reader. The
-     topmost visible page is measured before the DOM changes and put back
-     exactly where it was after. */
-  const applyPending = () => {
-    const el = scrollRef.current;
-    const anchorNode = pageEls.current.get(page);
-    const before = anchorNode ? anchorNode.getBoundingClientRect().top : null;
-    setRows((held) => mergeRows(held, pending));
-    setPending([]);
-    requestAnimationFrame(() => {
-      if (!el || before == null) return;
-      const node = pageEls.current.get(page);
-      if (!node) return;
-      const after = node.getBoundingClientRect().top;
-      el.scrollTop += after - before;
-    });
-  };
-
   /* ------------------------------------------------------------- keyboard */
   useEffect(() => {
     const onKey = (e) => {
@@ -610,6 +592,10 @@ export default function PaperReader({
         </div>
 
         <div className="pbar-r">
+          <button type="button" className="ptool" onClick={refreshNow} disabled={refreshing}
+                  aria-label="Check for new marks on this paper">
+            <RefreshCw size={16} aria-hidden="true" data-spin={refreshing ? "" : undefined} />
+          </button>
           <button type="button" className="ptool" aria-label="Find in this paper"
                   aria-pressed={findOpen ? "true" : "false"} onClick={() => setFindOpen(!findOpen)}>
             <Search size={16} aria-hidden="true" />
@@ -757,12 +743,6 @@ export default function PaperReader({
 
         {/* ------------------------------------------------------ the pages */}
         <div className="pscroll" ref={scrollRef} onScroll={onScroll}>
-          {pending.length > 0 && (
-            <button type="button" className="pendline" onClick={applyPending}>
-              {pending.length} new {pending.length === 1 ? "note" : "notes"} — show
-            </button>
-          )}
-
           {error && <p className="perr">{error}</p>}
 
           <div className="pcol" style={{ gap: PAGE_GAP }}>

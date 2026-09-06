@@ -109,20 +109,18 @@ export function segmentsFor(placed = []) {
 }
 
 /* -----------------------------------------------------------------------------
-   R6 — what may land silently, and what has to wait.
+   R6 — nothing arrives on this screen unbidden.
 
-   Density changes no layout, so a new bare highlight can appear under a reader
-   without moving anything. A note opens inline and pushes text down, so it
-   waits in a buffer behind a quiet line until the reader asks for it.
+   There used to be a split here: density could land silently because it moves
+   nothing, while a note waited behind a quiet line because it opens inline and
+   pushes text down. That machinery is gone because the thing it defended
+   against is gone — the paper has no timer at all now. Marks arrive when the
+   reader presses refresh, which is a gesture, and the scroll position is pinned
+   across the change regardless.
+
+   Every other surface in the app went the other way, to a socket. The paper is
+   the exception precisely BECAUSE its notes move the page.
    -------------------------------------------------------------------------- */
-export const movesLayout = (a) => a.kind === "note" || a.kind === "question";
-
-export function splitIncoming(rows = []) {
-  const silent = [];
-  const pending = [];
-  for (const r of rows) (movesLayout(r) ? pending : silent).push(r);
-  return { silent, pending };
-}
 
 /* Merge a fetched batch over what is held, newest wins, by id. Optimistic rows
    carry a temp id and are replaced when the real row arrives for the same
@@ -154,8 +152,3 @@ export function applyFilter(list, filter, me) {
   }
 }
 
-/* R7 — the backoff, as a function so the timer has nothing to decide.
-   Five minutes, then ten, then twenty while nothing is happening; back to five
-   the moment anything lands. */
-export const POLL_STEPS = [5, 10, 20].map((m) => m * 60_000);
-export const nextPoll = (emptyRuns) => POLL_STEPS[Math.min(emptyRuns, POLL_STEPS.length - 1)];

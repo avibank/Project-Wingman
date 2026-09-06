@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
 import {
-  densityLevel, segmentsFor, splitIncoming, nextPoll, POLL_STEPS,
+  densityLevel, segmentsFor,
   applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS,
 } from "../src/lib/paperMarks.js";
 
@@ -131,38 +131,55 @@ console.log("\nR5 — the cheapest mark is wordless");
      /addMark\(\{ kind: "highlight"/.test(fn) && !/setComposer/.test(fn), fn.length ? "" : "not found");
 }
 
-/* ---- R6 · notes never insert themselves under a reader ------------------ */
+/* ---- R6 · nothing arrives on the paper unbidden -------------------------- */
 console.log("\nR6 — notes never insert themselves under a reader");
 {
-  const rows = [
-    { id: "1", kind: "highlight" }, { id: "2", kind: "note" },
-    { id: "3", kind: "question" }, { id: "4", kind: "highlight" },
-  ];
-  const { silent, pending } = splitIncoming(rows);
-  ok("R6", "bare highlights land silently", silent.length === 2 && silent.every((r) => r.kind === "highlight"));
-  ok("R6", "anything that opens in the flow waits", pending.length === 2);
-
   const reader = read("src/components/paper/PaperReader.jsx");
-  ok("R6", "a quiet line offers them rather than inserting them",
-     /pendline/.test(reader) && /applyPending/.test(reader));
-  ok("R6", "applying restores the reader's scroll position",
-     /getBoundingClientRect\(\)\.top[\s\S]{0,420}scrollTop \+= after - before/.test(reader));
-  ok("R6", "only applyPending moves buffered rows into the page",
-     (reader.match(/setPending\(/g) || []).length <= 3);
+
+  /* The rule used to be defended with a pending buffer and a quiet line,
+     because a poll could drop a note in above somebody mid-paragraph. The
+     paper has no timer at all now, so there is nothing left that could: marks
+     arrive on a gesture, and the gesture is a button. That is a stronger
+     guarantee than the buffer was, and this asserts it directly. */
+  ok("R6", "the reader runs no timer of its own",
+     !/setInterval\(/.test(reader) && !/setTimeout\([^)]*syncFromServer/.test(reader));
+  ok("R6", "marks arrive only on mount or on the refresh gesture",
+     (reader.match(/syncFromServer\(/g) || []).length <= 3
+     && /const refreshNow = useCallback/.test(reader));
+  ok("R6", "and refreshing pins the page the reader is on",
+     /getBoundingClientRect\(\)\.top[\s\S]{0,400}scrollTop \+= after - before/.test(reader));
+  ok("R6", "the refresh control says what it does",
+     /aria-label="Check for new marks on this paper"/.test(reader));
 }
 
-/* ---- R7 · polling is free when nothing is happening --------------------- */
-console.log("\nR7 — polling is free when nothing is happening");
+/* ---- R7 · live everywhere else, and cheap when nothing is happening ------ */
+console.log("\nR7 — the socket, and what happens when it is not there");
 {
-  ok("R7", "the first interval is five minutes", nextPoll(0) === 5 * 60_000);
-  ok("R7", "three empty answers back off to twenty", nextPoll(3) === 20 * 60_000);
-  ok("R7", "and it never goes past twenty", nextPoll(99) === POLL_STEPS.at(-1));
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const live = read("src/lib/live.js");
+  const app = read("src/App.jsx");
+
+  ok("R7", "realtime is imported lazily, never into the entry chunk",
+     /await import\("@supabase\/realtime-js"\)|import\("@supabase\/realtime-js"\)/.test(live));
+  ok("R7", "supabaseClient still takes PostgrestClient alone",
+     !/realtime/i.test(read("src/lib/supabaseClient.js").split("const url")[0].replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, "")));
+  ok("R7", "listen always hands back a way to stop", /return \(\) => \{[\s\S]{0,200}unsubscribe\(\)/.test(live));
+  ok("R7", "one socket for the whole app", /let clientPromise = null/.test(live));
+  ok("R7", "the payload is a doorbell, not a delivery — the caller re-reads",
+     /onChange\(table\)/.test(live) && !/payload\.new/.test(live));
+
+  ok("R7", "the fallback slows right down while the socket is up",
+     /POLL_WHEN_LIVE_MS = 60000/.test(app) && /POLL_WHEN_DOWN_MS = 5000/.test(app));
+  ok("R7", "and it is the fallback, not the mechanism",
+     /liveOn \? POLL_WHEN_LIVE_MS : POLL_WHEN_DOWN_MS/.test(app));
   ok("R7", "the tab going away pauses it rather than skipping a tick",
-     /visibilitychange/.test(reader) && /document\.visibilityState !== "visible"[\s\S]{0,60}return/.test(reader));
-  ok("R7", "the timer is cleared on unmount",
-     /return \(\) => \{ stop\(\); document\.removeEventListener\("visibilitychange"/.test(reader));
-  ok("R7", "anything arriving resets the backoff", /emptyRuns\.current = 0/.test(reader));
+     /document\.visibilityState === "visible"/.test(app));
+  ok("R7", "both the socket and the timer are cleared on unmount",
+     /stop\(\);\s*\n\s*clearInterval\(t\);/.test(app));
+  // Comments stripped first: this file's own header says the word "presence"
+  // while explaining why presence is not on the socket, and a checker that
+  // reads its own prose as evidence has been wrong here before.
+  const liveCode = live.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  ok("R7", "presence is deliberately not on the socket", !/presence/i.test(liveCode));
 }
 
 /* ---- R8 · your own marks are instant ------------------------------------ */

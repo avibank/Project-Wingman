@@ -27,16 +27,19 @@ import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
  * page is going away; resolving would render a component from the old build
  * into a tree that is about to be thrown out.
  */
-/* How often the app asks whether anyone has said anything.
+/* The fallback timer, which is not the mechanism any more.
 
-   There is no socket. supabaseClient.js keeps realtime out of the bundle
-   deliberately — the client is PostgREST and nothing else — so "live" here
-   means a short poll, and it only runs while the tab is visible.
+   A socket tells the app the moment somebody posts — see lib/live.js. This is
+   what runs when that socket is not up: on a network that blocks websockets, in
+   the seconds before it connects, or if it drops. Five seconds while it is
+   down, a slow minute while it is up, because a listener that is working needs
+   a safety net rather than a second opinion.
 
-   20s is picked against the presence window, which is 3 minutes: someone shows
-   as here for well over the time it takes their reply to arrive, so the room
-   never says a person is present while their message is not. */
-const DISCUSSION_POLL_MS = 20000;
+   Twenty seconds used to be the mechanism, and twenty seconds is not live to
+   anybody standing next to the person who just typed. They look, nothing is
+   there, and they refresh — which is exactly what was reported. */
+const POLL_WHEN_LIVE_MS = 60000;
+const POLL_WHEN_DOWN_MS = 5000;
 
 const CHUNK_RELOADED = "pw-chunk-reloaded";
 const chunk = (factory) => () => factory().catch((err) => {
@@ -82,6 +85,7 @@ import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib
 import { finishVars, ruledLayer } from "./lib/finishEngine.js";
 import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence, heartbeat } from "./lib/presence.js";
+import { listen, LIVE_TABLES } from "./lib/live.js";
 import { useDisplayName } from "./lib/identity.js";
 import { ChevronRight, Lock, Plane } from "lucide-react";
 const ChaptersPanel = lazy(CHUNK.chapters);
@@ -710,16 +714,29 @@ function AppInner() {
     () => allModules(useTestContent).map((m) => m.code).join(","),
     [useTestContent],
   );
+  const [liveOn, setLiveOn] = useState(false);
   useEffect(() => {
     if (!loadDiscussion) return undefined;
     const codes = roomOpen ? moduleCodes.split(",") : [activeModuleCode];
     const read = () => { for (const code of codes) loadDiscussion(code); };
     read();
+
+    // The socket. A row landing anywhere in the discussion re-reads the modules
+    // this screen is showing — the payload is a doorbell, not a delivery, so
+    // there is still exactly one path that turns rows into state.
+    const stop = listen(LIVE_TABLES.discussion, read, (status) => {
+      setLiveOn(status === "SUBSCRIBED");
+    });
+
     const tick = () => { if (document.visibilityState === "visible") read(); };
-    const t = setInterval(tick, DISCUSSION_POLL_MS);
+    const t = setInterval(tick, liveOn ? POLL_WHEN_LIVE_MS : POLL_WHEN_DOWN_MS);
     document.addEventListener("visibilitychange", tick);
-    return () => { clearInterval(t); document.removeEventListener("visibilitychange", tick); };
-  }, [activeModuleCode, loadDiscussion, me, roomOpen, moduleCodes]);
+    return () => {
+      stop();
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [activeModuleCode, loadDiscussion, me, roomOpen, moduleCodes, liveOn]);
 
   // Squadrons, their chat, and the right seat. These were literal empty arrays
   // — the room drew its own empty states perfectly over nothing at all.
@@ -751,11 +768,13 @@ function AppInner() {
       if (live) setRoomMessages(msgs);
     };
     full();
+    const stopLive = listen(LIVE_TABLES.chat, messagesOnly);
     const tick = () => { if (document.visibilityState === "visible") messagesOnly(); };
-    const t = setInterval(tick, DISCUSSION_POLL_MS);
+    const t = setInterval(tick, POLL_WHEN_DOWN_MS * 6);
     document.addEventListener("visibilitychange", tick);
     return () => {
       live = false;
+      stopLive();
       clearInterval(t);
       document.removeEventListener("visibilitychange", tick);
     };
