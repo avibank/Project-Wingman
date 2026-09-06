@@ -349,20 +349,35 @@
   padding: 8px 14px; min-height: 42px;
   background: var(--panel); border-top: 1px solid var(--line);
 }
-.dtoggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--t2); cursor: pointer; }
+/* A label is the target, not the box inside it — but a 21px label is not a
+   target on a phone either. Measured at 390px before this line existed. */
+.dtoggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+  font-size: 13px; color: var(--t2); cursor: pointer; }
 .dtoggle input { accent-color: var(--active); width: 15px; height: 15px; }
 .pstaff {
   margin-left: auto; font-family: var(--font-mono); font-size: 13px; color: var(--t3);
 }
 
-/* ------------------------------------------------------------------- phones */
-@media (max-width: 860px) {
+/* ------------------------------------------------------------------- phones
+   768px, which is one of the three breakpoints foundations.css declares — not
+   a fourth invented here. check:responsive names that rule, and a component
+   with its own breakpoint is how two layouts start disagreeing about what a
+   phone is. Between 768 and 900 the rail and a page are tight but workable,
+   and the rail closes. */
+@media (max-width: 768px) {
   .paper[data-rail="thumbs"] .pbody,
   .paper[data-rail="marks"] .pbody { grid-template-columns: 1fr; }
   .prail { position: absolute; inset: 52px 0 0 0; z-index: 8; border-right: none; }
-  .pbar { flex-wrap: wrap; }
-  .pbar-c { order: 3; width: 100%; justify-content: center; padding-top: 4px; }
-  .pbar-l, .pbar-r { flex: 1 1 auto; }
+  .pbar { flex-wrap: wrap; padding: 6px 8px; gap: 2px; }
+  .pbar-c { order: 3; width: 100%; justify-content: center; padding-top: 2px; }
+  /* One row for the two groups, not two. Both were `flex: 1 1 auto`, so each
+     asked for room and neither would give any up: the strip wrapped to three
+     rows and took 169px of an 844px screen. The left side takes what is left
+     and the title truncates into it; the right side keeps its natural width. */
+  .pbar-l { flex: 1 1 0; min-width: 0; }
+  .pbar-r { flex: 0 0 auto; }
+  .pbar-title { font-size: 14px; }
+  .ptool[data-optional] { display: none; }
   .mcardp, .pendline, .perr, .orphans, .pcoda { width: calc(100% - 24px); }
 }
 

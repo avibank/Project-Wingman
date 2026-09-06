@@ -588,11 +588,15 @@ export default function PaperReader({
                   aria-pressed={findOpen ? "true" : "false"} onClick={() => setFindOpen(!findOpen)}>
             <Search size={16} aria-hidden="true" />
           </button>
-          <button type="button" className="ptool" aria-label="Rotate"
+          {/* Optional on a phone. Marked rather than duplicated into a
+              second toolbar: the strip wrapped to three rows at 390px and ate
+              a fifth of the screen, and rotate and print are the two controls
+              nobody reaches for on a handset. */}
+          <button type="button" className="ptool" data-optional="" aria-label="Rotate"
                   onClick={() => setRotation((r) => (r + 90) % 360)}>
             <RotateCw size={16} aria-hidden="true" />
           </button>
-          <button type="button" className="ptool" aria-label="Print" onClick={() => onOpenOriginal?.(paper)}>
+          <button type="button" className="ptool" data-optional="" aria-label="Print" onClick={() => onOpenOriginal?.(paper)}>
             <Printer size={16} aria-hidden="true" />
           </button>
           <a className="ptool" href={url} download aria-label="Download the original">
