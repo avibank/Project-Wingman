@@ -827,6 +827,20 @@ function AppInner() {
     () => modulePapers.find((p) => p.id === paperPlace?.paperId) || null,
     [modulePapers, paperPlace],
   );
+
+  /* WHAT THE PINNED ROW OPENS WHEN YOU HAVE NOT OPENED ANYTHING YET.
+     It used to be papers[0], which on Module 1 is a ONE PAGE handout — a
+     reader with no pages to turn, no thumbnails worth having and nothing to
+     scroll, which is the worst possible first look at it. The longest paper
+     instead: the pin says "open a paper and mark it up", so it should open the
+     one with the most in it. Ties keep the author's order. */
+  const fullestPaper = useMemo(
+    () => modulePapers.reduce(
+      (best, p) => ((p.pages || 0) > (best?.pages || 0) ? p : best),
+      modulePapers[0] || null,
+    ),
+    [modulePapers],
+  );
   const readerPin = readerOn
     ? { paper: lastPaper, page: paperPlace?.page || 1, pages: lastPaper?.pages || null }
     : null;
@@ -1507,7 +1521,7 @@ function AppInner() {
             onOpenPaper={(paper) => openPaper(paper)}
             readerOn={readerOn}
             readerPin={readerPin}
-            onOpenReader={() => openPaper(lastPaper || papersFor(activeModuleCode, useTestContent)[0])}
+            onOpenReader={() => openPaper(lastPaper || fullestPaper)}
             people={{
               // The callsigns behind the author ids. Threads themselves come
               // from the session, not from here — they are the same rows the
