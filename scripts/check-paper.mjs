@@ -15,8 +15,8 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
 import {
-  densityLevel, segmentsFor,
-  applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS,
+  densityLevel, segmentsFor, sentenceAround,
+  applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS, DOCKS, TOOL_SIZES,
 } from "../src/lib/paperMarks.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -283,6 +283,54 @@ console.log("\nfilters");
   ok("—", "questions", applyFilter(list, "questions", "me").length === 1);
   ok("—", "orphaned", applyFilter(list, "orphaned", "me").length === 1);
   ok("—", "everything", applyFilter(list, "all", "me").length === 4);
+}
+
+/* ---- tap anywhere still anchors to words -------------------------------- */
+console.log("\ntap anywhere");
+{
+  const t = "Alpha beta gamma. Delta epsilon zeta eta. Theta iota kappa lambda.";
+  ok("R1", "a tap resolves to the sentence it landed in",
+     t.slice(...Object.values(sentenceAround(t, 25))) === "Delta epsilon zeta eta.");
+  ok("R1", "a tap at the very start works", sentenceAround(t, 0).start === 0);
+  ok("R1", "and the quote never starts on whitespace",
+     !/^\s/.test(t.slice(...Object.values(sentenceAround(t, 20)))));
+
+  const reader = read("src/components/paper/PaperReader.jsx");
+  ok("R1", "the tap becomes an anchor like any other, not a coordinate",
+     /sentenceAround\(model\.text, at\)/.test(reader)
+     && !/hint: \{[^}]*x:/.test(reader));
+  ok("—", "a drag is still a drag, not a tap",
+     /getSelection\(\)\?\.toString\(\)\.trim\(\)\) return/.test(reader));
+}
+
+/* ---- one panel, two kinds ----------------------------------------------- */
+console.log("\nthe Spotlight");
+{
+  const reader = read("src/components/paper/PaperReader.jsx");
+  const css = read("src/components/paper/paper.css");
+  ok("—", "note and question are a toggle inside one panel, not two dialogs",
+     /role="tablist"/.test(reader) && (reader.match(/function Spotlight/g) || []).length === 1);
+  ok("—", "the field takes the keyboard on open", /ref\.current\?\.focus\(\)/.test(reader));
+  ok("—", "Escape puts it away", /e\.key === "Escape"\) onCancel\(\)/.test(reader));
+  ok("—", "a correction offers no ring, because it has one reader",
+     /kind !== "correction" \? \(\s*\n?\s*<label className="spot-ring"/.test(reader));
+  ok("R13", "and it does not animate under Smooth Air",
+     /\.app\.smooth-air \.spot, \.app\.smooth-air \.spot-scrim \{ animation: none; \}/.test(css));
+}
+
+/* ---- the rail moves and scales ------------------------------------------ */
+console.log("\nthe tool rail");
+{
+  const css = read("src/components/paper/paper.css");
+  const reader = read("src/components/paper/PaperReader.jsx");
+  ok("—", "three docks, and each lays the grid out for itself",
+     DOCKS.map((d) => d.id).join(",") === "left,right,top"
+     && /\[data-dock="right"\]/.test(css) && /\[data-dock="top"\]/.test(css));
+  ok("—", "one knob decides the size", /--rail-btn/.test(css)
+     && TOOL_SIZES.every((z) => new RegExp(`\\[data-toolsize="${z.id}"\\]`).test(css)));
+  ok("—", "where it sits is a per-device preference, not an account one",
+     /localStorage\.setItem\("pw-paper-dock"/.test(reader)
+     && !/progress\.set\("pw-paper-dock"/.test(reader));
 }
 
 /* ---- the reader is full screen, and stays that way ---------------------- */

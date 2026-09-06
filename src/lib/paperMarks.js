@@ -152,3 +152,55 @@ export function applyFilter(list, filter, me) {
   }
 }
 
+
+/* -----------------------------------------------------------------------------
+   Tap anywhere.
+
+   A note needs a passage — R1 is not negotiable, an anchor is the words. But
+   asking somebody to drag across a sentence before they can write anything is
+   a second gesture in front of a first thought. So a tap picks the sentence it
+   landed in, and that is what the note anchors to.
+
+   Sentence rather than paragraph, and rather than the text run under the
+   finger: a run is wherever the PDF happened to break, which is meaningless to
+   a reader, and a paragraph is usually too much to quote back.
+   -------------------------------------------------------------------------- */
+const STOPS = ".!?";
+
+export function sentenceAround(text, offset, max = 420) {
+  if (!text || offset == null) return null;
+  const at = Math.max(0, Math.min(offset, text.length - 1));
+
+  let start = at;
+  while (start > 0 && at - start < max) {
+    const ch = text[start - 1];
+    if (STOPS.includes(ch) || (ch === "\n" && text[start - 2] === "\n")) break;
+    start -= 1;
+  }
+  let end = at;
+  while (end < text.length && end - at < max) {
+    const ch = text[end];
+    end += 1;
+    if (STOPS.includes(ch)) break;
+    if (ch === "\n" && text[end] === "\n") { end -= 1; break; }
+  }
+
+  // Trim the whitespace the walk collected, so the quote starts on a word.
+  while (start < end && /\s/.test(text[start])) start += 1;
+  while (end > start && /\s/.test(text[end - 1])) end -= 1;
+  return end > start ? { start, end } : null;
+}
+
+/* Where the tool rail sits and how big it is. A per-device preference, like the
+   player bar's position: it belongs to the screen in front of you, not to the
+   account. */
+export const DOCKS = [
+  { id: "left", label: "Left" },
+  { id: "right", label: "Right" },
+  { id: "top", label: "Top" },
+];
+export const TOOL_SIZES = [
+  { id: "s", label: "Small" },
+  { id: "m", label: "Medium" },
+  { id: "l", label: "Large" },
+];

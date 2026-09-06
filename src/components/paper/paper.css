@@ -29,8 +29,12 @@
    everywhere people already use one. The way out is the arrow at top left. */
 .paper {
   position: fixed; inset: 0; z-index: 50;
+  /* One knob for the rail's size, so the column, the buttons and the icons
+     cannot disagree about how big "large" is. */
+  --rail-btn: 34px;
+  --rail-w: calc(var(--rail-btn) + 12px);
   display: grid;
-  grid-template-columns: 46px 1fr;
+  grid-template-columns: var(--rail-w) 1fr;
   grid-template-areas:
     "bar   bar"
     "find  find"
@@ -41,6 +45,33 @@
   background: var(--ground); color: var(--t1);
   font-family: var(--font-ui);
 }
+.paper[data-toolsize="s"] { --rail-btn: 30px; }
+.paper[data-toolsize="m"] { --rail-btn: 34px; }
+.paper[data-toolsize="l"] { --rail-btn: 44px; }
+
+/* The rail moves. Three docks and nothing in between, because a rail you can
+   drop anywhere is a rail you have to put back. */
+.paper[data-dock="right"] {
+  grid-template-columns: 1fr var(--rail-w);
+  grid-template-areas:
+    "bar   bar"
+    "find  find"
+    "props rail"
+    "body  rail"
+    "foot  foot";
+}
+.paper[data-dock="right"] .ptools { border-right: none; border-left: 1px solid var(--line); }
+.paper[data-dock="top"] {
+  grid-template-columns: 1fr;
+  grid-template-areas: "bar" "find" "rail" "props" "body" "foot";
+  grid-template-rows: auto auto auto auto 1fr auto;
+}
+.paper[data-dock="top"] .ptools {
+  flex-direction: row; justify-content: center; gap: 4px;
+  padding: 5px 8px; border-right: none; border-bottom: 1px solid var(--line);
+}
+.paper[data-dock="top"] .ptools-gap { width: 12px; height: auto; }
+
 .pbar { grid-area: bar; }
 .findbar { grid-area: find; }
 .ptools { grid-area: rail; }
@@ -55,8 +86,10 @@
   padding: 6px 0; background: var(--panel);
   border-right: 1px solid var(--line);
 }
+.ptools-gap { height: 10px; }
 .ptoolbtn {
-  display: grid; place-items: center; width: 34px; height: 34px;
+  display: grid; place-items: center;
+  width: var(--rail-btn); height: var(--rail-btn);
   background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
   color: var(--t3); cursor: pointer;
 }
@@ -85,6 +118,29 @@
 .pprops-ring select {
   min-height: 30px; padding: 0 8px; border-radius: var(--r-chip);
   background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 13px;
+}
+
+/* The dock chooser. Anchored to the rail, plain, and it closes itself. */
+.dockpop {
+  position: absolute; z-index: 12; margin: 4px;
+  display: grid; gap: 6px; padding: 12px; width: 214px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-panel);
+}
+.paper[data-dock="left"] .dockpop { left: var(--rail-w); bottom: 8px; }
+.paper[data-dock="right"] .dockpop { right: var(--rail-w); bottom: 8px; }
+.paper[data-dock="top"] .dockpop { right: 8px; top: 92px; }
+.dockpop-h { margin: 0; font-size: 13px; color: var(--t3); }
+.dockpop-row { display: flex; gap: 4px; }
+.dockpop-row button {
+  flex: 1; min-height: 32px; border-radius: var(--r-chip);
+  background: var(--raised); border: 1px solid var(--line); color: var(--t2);
+  font-size: 13px; cursor: pointer;
+}
+.dockpop-row button[aria-pressed="true"] { color: var(--t1); border-color: var(--active); }
+.dockpop-done {
+  min-height: 32px; margin-top: 4px; border-radius: var(--r-chip);
+  background: var(--active); border: none; color: var(--ground);
+  font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer;
 }
 
 /* ------------------------------------------------------------------ the bar */
@@ -309,43 +365,77 @@
 }
 .selbar-act:hover { background: var(--raised); color: var(--t1); }
 
-/* ------------------------------------------------------------- the composer */
-.cc-scrim {
-  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
-  padding: 20px; background: oklch(from var(--ground) l c h / .72);
+/* ------------------------------------------------------------- the Spotlight
+   Over the thing you were reading, not beside it. One field, the keyboard
+   already in it, Escape to put it away — the shape people already know from
+   the one on their menu bar, doing the job this screen has for it. */
+.spot-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; align-items: start; justify-items: center;
+  padding: 12vh 20px 20px;
+  background: color-mix(in oklab, var(--ground) 62%, transparent);
+  animation: spot-veil 140ms ease-out both;
 }
-.composer-card {
-  width: min(560px, 100%); display: grid; gap: 10px;
-  padding: 16px; border-radius: var(--r-panel);
-  background: var(--panel); border: 1px solid var(--line);
+@keyframes spot-veil { from { opacity: 0; } to { opacity: 1; } }
+
+.spot {
+  width: min(620px, 100%);
+  display: grid; gap: 12px; padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--edge-hi);
+  border-radius: 18px;
+  animation: spot-in 180ms cubic-bezier(.2,.9,.3,1) both;
 }
-.cc-title { margin: 0; font-size: 15px; font-weight: 500; color: var(--t1); }
-.cc-quote {
-  margin: 0; padding: 8px 11px; border-left: 2px solid var(--active);
-  background: var(--raised); color: var(--t2);
-  font-size: 13px; line-height: 1.5;
+@keyframes spot-in {
+  from { opacity: 0; transform: translateY(-8px) scale(.985); }
+  to   { opacity: 1; transform: none; }
 }
-.cc-field {
-  width: 100%; padding: 10px 11px; border-radius: var(--r-control);
+
+/* The split tab. A note and a question are the same gesture on the same
+   passage; which one it is should be a toggle inside the panel, not a choice
+   you make before you know what you want to say. */
+.spot-seg {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px;
+  padding: 3px; border-radius: var(--r-pill);
   background: var(--raised); border: 1px solid var(--line);
-  color: var(--t1); font: inherit; font-size: 14px; resize: vertical;
 }
-.cc-field:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
-.cc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.cc-ring { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--t3); }
-.cc-ring select {
+.spot-tab {
+  min-height: 32px; border-radius: var(--r-pill);
+  background: transparent; border: none; color: var(--t3);
+  font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+}
+.spot-tab:hover { color: var(--t1); }
+.spot-tab[aria-selected="true"] { background: var(--panel); color: var(--t1); font-weight: 500; }
+.spot-tab:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+.spot-quote {
+  margin: 0; padding: 8px 12px; border-left: 2px solid var(--active);
+  background: var(--raised); border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  color: var(--t2); font-size: 13px; line-height: 1.5;
+  max-height: 5.2em; overflow: hidden;
+}
+
+.spot-field {
+  width: 100%; padding: 12px 13px; border-radius: 12px;
+  background: var(--raised); border: 1px solid var(--line);
+  color: var(--t1); font: inherit; font-size: 15px; line-height: 1.5; resize: vertical;
+}
+.spot-field::placeholder { color: var(--t3); }
+.spot-field:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+.spot-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.spot-ring { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--t3); }
+.spot-ring select {
   min-height: 34px; padding: 0 8px; border-radius: var(--r-chip);
   background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 13px;
 }
-.cc-acts { display: flex; gap: 8px; margin-left: auto; }
-.cc-ghost, .cc-go {
-  min-height: 36px; padding: 0 14px; border-radius: var(--r-control);
-  font-family: var(--font-ui); font-size: 14px; cursor: pointer;
+.spot-go {
+  margin-left: auto; min-height: 36px; padding: 0 18px; border-radius: var(--r-pill);
+  background: var(--active); border: none; color: var(--ground);
+  font-family: var(--font-ui); font-size: 14px; font-weight: 500; cursor: pointer;
 }
-.cc-ghost { background: transparent; border: 1px solid var(--line); color: var(--t2); }
-.cc-go { background: var(--active); border: none; color: var(--ground); font-weight: 500; }
-.cc-go:disabled { background: var(--raised); color: var(--t3); cursor: default; }
-.cc-hint { margin: 0; font-size: 13px; line-height: 1.5; color: var(--t3); }
+.spot-go:disabled { background: var(--raised); color: var(--t3); cursor: default; }
+.spot-hint { margin: 0; font-size: 13px; line-height: 1.5; color: var(--t3); }
 
 /* ------------------------------------------------- notes, inline, in the flow */
 .mcardp {
@@ -448,6 +538,8 @@
 
 /* R13 — Smooth Air and prefers-reduced-motion turn all of it off. No new
    mechanism: the app's own two classes, and the media query behind them. */
+.app.smooth-air .spot, .app.smooth-air .spot-scrim { animation: none; }
+@media (prefers-reduced-motion: reduce) { .spot, .spot-scrim { animation: none; } }
 .app.smooth-air .ptool,
 .app.smooth-air .pzoom,
 .app.smooth-air .mrow,

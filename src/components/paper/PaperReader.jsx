@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 import { loadPaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
 import {
-  resolveAll, segmentsFor, anchorFor, mergeRows,
-  applyFilter, FILTERS, RINGS, ringLabel,
+  resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
+  applyFilter, FILTERS, RINGS, ringLabel, DOCKS, TOOL_SIZES,
 } from "../../lib/paperMarks.js";
 import {
   fetchAnnotations, createAnnotation, deleteAnnotation,
@@ -51,8 +51,8 @@ import "./paper.css";
 const TOOLS = [
   { id: "select", label: "Select", hint: "Drag to select. The bar that appears offers everything below.", icon: <MousePointer2 size={17} aria-hidden="true" /> },
   { id: "highlight", label: "Highlight", hint: "Select any line and it is marked. Nothing to type.", icon: <Highlighter size={17} aria-hidden="true" /> },
-  { id: "note", label: "Note", hint: "Select a passage and write what you want to remember.", icon: <MessageSquare size={17} aria-hidden="true" /> },
-  { id: "question", label: "Question", hint: "Select a passage and ask. It opens a thread in the Ready Room.", icon: <HelpCircle size={17} aria-hidden="true" /> },
+  { id: "note", label: "Note", hint: "Tap a line, or select one. Write what you want to remember.", icon: <MessageSquare size={17} aria-hidden="true" /> },
+  { id: "question", label: "Question", hint: "Tap a line, or select one. It opens a thread in the Ready Room.", icon: <HelpCircle size={17} aria-hidden="true" /> },
   { id: "correction", label: "Correction", hint: "Select what is wrong. Only the author ever sees it.", icon: <Flag size={17} aria-hidden="true" /> },
 ];
 
@@ -90,45 +90,66 @@ function SelectionBar({ at, onHighlight, onNote, onAsk, onCorrect, canCorrect })
   );
 }
 
-/* The composer, for the three marks that carry words. A highlight never opens
-   this — that is the whole of R5. */
-function Composer({ kind, quote, ring, onRing, value, onChange, onSave, onCancel, busy }) {
+/* THE SPOTLIGHT.
+
+   One panel, and what it makes is a segmented choice inside it rather than a
+   different dialog per kind. That matters more than it looks: a note and a
+   question are the same gesture on the same passage, differing only in who is
+   meant to answer, and making them two doors means deciding which door before
+   you have written the sentence that tells you.
+
+   Spotlight's shape because Spotlight's shape is the right one for this — it
+   arrives over the thing you were looking at, it is one field, it takes the
+   keyboard immediately, and Escape puts it away. A highlight never opens it;
+   that is the whole of R5. */
+const KINDS = [
+  { id: "note", label: "Note", say: "What do you want to remember?" },
+  { id: "question", label: "Question", say: "What is not landing?" },
+  { id: "correction", label: "Correction", say: "What is wrong with this passage?" },
+];
+
+function Spotlight({ kind, onKind, quote, ring, onRing, value, onChange, onSave, onCancel, busy }) {
   const ref = useRef(null);
-  useEffect(() => { ref.current?.focus(); }, []);
-  const title = kind === "note" ? "Add a note"
-    : kind === "question" ? "Ask the module"
-      : "Tell the author what is wrong";
-  const hint = kind === "note" ? "Only the people in the ring you pick will see it."
-    : kind === "question" ? "This opens a thread in the Ready Room, with the passage quoted."
-      : "This goes to the author's queue. Nobody else on the module sees it, ever.";
+  useEffect(() => { ref.current?.focus(); }, [kind]);
+  const here = KINDS.find((k) => k.id === kind) || KINDS[0];
+  const hint = kind === "correction"
+    ? "Goes to the author. Nobody else on the module ever sees it."
+    : kind === "question"
+      ? "Opens a thread in the Ready Room, with the passage quoted."
+      : "Only the people in the ring you pick will see it.";
+
   return (
-    <div className="composer-card" role="dialog" aria-label={title}>
-      <p className="cc-title">{title}</p>
-      <blockquote className="cc-quote">{quote}</blockquote>
-      <textarea ref={ref} className="cc-field" rows={3} value={value}
-                placeholder={kind === "question" ? "What is not landing?" : "What do you want to remember?"}
+    <div className="spot" role="dialog" aria-label={here.label} aria-modal="true">
+      <div className="spot-seg" role="tablist" aria-label="What kind of mark">
+        {KINDS.map((k) => (
+          <button key={k.id} type="button" role="tab" aria-selected={kind === k.id}
+                  className="spot-tab" onClick={() => onKind(k.id)}>{k.label}</button>
+        ))}
+      </div>
+
+      <blockquote className="spot-quote">{quote}</blockquote>
+
+      <textarea ref={ref} className="spot-field" rows={3} value={value} placeholder={here.say}
                 onChange={(e) => onChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") onCancel();
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSave();
                 }} />
-      <div className="cc-foot">
+
+      <div className="spot-foot">
         {kind !== "correction" ? (
-          <label className="cc-ring">
+          <label className="spot-ring">
             <span>Who sees it</span>
             <select value={ring} onChange={(e) => onRing(e.target.value)}>
               {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </label>
-        ) : <p className="cc-hint">{hint}</p>}
-        <div className="cc-acts">
-          <button type="button" className="cc-ghost" onClick={onCancel}>Cancel</button>
-          <button type="button" className="cc-go" disabled={busy || !value.trim()} onClick={onSave}>
-            {busy ? "Saving…" : kind === "question" ? "Ask" : "Save"}
-          </button>
-        </div>
+        ) : <span className="spot-hint">{hint}</span>}
+        <button type="button" className="spot-go" disabled={busy || !value.trim()} onClick={onSave}>
+          {busy ? "Saving…" : kind === "question" ? "Ask" : "Save"}
+        </button>
       </div>
-      {kind !== "correction" && <p className="cc-hint">{hint}</p>}
+      {kind !== "correction" && <p className="spot-hint">{hint}</p>}
     </div>
   );
 }
@@ -184,6 +205,18 @@ export default function PaperReader({
   const [activeId, setActiveId] = useState(null);
 
   const [tool, setTool] = useState("select");
+  /* Where the rail sits and how big it is. localStorage and not the account,
+     for the same reason the player bar's position is: it belongs to the screen
+     in front of you. A phone and a laptop should not argue about it. */
+  const [dock, setDock] = useState(() => {
+    try { return localStorage.getItem("pw-paper-dock") || "left"; } catch { return "left"; }
+  });
+  const [toolSize, setToolSize] = useState(() => {
+    try { return localStorage.getItem("pw-paper-toolsize") || "m"; } catch { return "m"; }
+  });
+  const [dockOpen, setDockOpen] = useState(false);
+  useEffect(() => { try { localStorage.setItem("pw-paper-dock", dock); } catch { /* private */ } }, [dock]);
+  useEffect(() => { try { localStorage.setItem("pw-paper-toolsize", toolSize); } catch { /* private */ } }, [toolSize]);
   const [sel, setSel] = useState(null);            // { start, end, x, y }
   const [composer, setComposer] = useState(null);  // { kind, start, end, quote }
   const [draft, setDraft] = useState("");
@@ -420,6 +453,25 @@ export default function PaperReader({
     return item.start + Math.min(offset, item.str.length);
   }, []);
 
+  /* TAP ANYWHERE.
+
+     A note still anchors to words — R1 does not bend — but asking somebody to
+     drag across a sentence before they can write anything puts a second
+     gesture in front of a first thought. So the tap picks the sentence it
+     landed in and the Spotlight opens on that. The browser is asked where the
+     caret would go; both spellings of that API are in the wild. */
+  const offsetFromPoint = useCallback((x, y) => {
+    let node = null, off = 0;
+    if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(x, y);
+      if (pos) { node = pos.offsetNode; off = pos.offset; }
+    } else if (document.caretRangeFromPoint) {
+      const r = document.caretRangeFromPoint(x, y);
+      if (r) { node = r.startContainer; off = r.startOffset; }
+    }
+    return node ? locate(node, off) : null;
+  }, [locate]);
+
   const readSelection = useCallback(() => {
     const s = window.getSelection();
     if (!s || s.isCollapsed || !s.rangeCount) { setSel(null); return; }
@@ -483,6 +535,20 @@ export default function PaperReader({
     clearSelection();
     await addMark({ kind: "highlight", start, end });
   }, [sel, addMark]);
+
+  const tapToMark = useCallback((e) => {
+    if (tool !== "note" && tool !== "question" && tool !== "correction") return;
+    if (!model) return;
+    if (window.getSelection()?.toString().trim()) return;      // a drag, not a tap
+    if (e.target.closest?.("button, a, input, textarea, select, .mcardp, .spot")) return;
+    const at = offsetFromPoint(e.clientX, e.clientY);
+    if (at == null) return;
+    const span = sentenceAround(model.text, at);
+    if (!span) return;
+    setComposer({ kind: tool, start: span.start, end: span.end, quote: quoteOf(model, span.start, span.end) });
+    setDraft("");
+    if (tool === "correction") setRing("solo");
+  }, [tool, model, offsetFromPoint]);
 
   const openComposer = (kind, from = sel) => {
     if (!from || !model) return;
@@ -584,7 +650,7 @@ export default function PaperReader({
   if (!paper || !host) return null;
 
   return createPortal(
-    <div className="paper" data-rail={rail || "none"}>
+    <div className="paper" data-rail={rail || "none"} data-dock={dock} data-toolsize={toolSize}>
       {/* ------------------------------------------------------------ bar */}
       <header className="pbar">
         <div className="pbar-l">
@@ -693,6 +759,34 @@ export default function PaperReader({
             {t.icon}
           </button>
         ))}
+
+        <span className="ptools-gap" aria-hidden="true" />
+
+        <button type="button" className="ptoolbtn" aria-label="Where the tools sit"
+                aria-expanded={dockOpen ? "true" : "false"} title="Where the tools sit"
+                onClick={() => setDockOpen(!dockOpen)}>
+          <PanelLeft size={16} aria-hidden="true" />
+        </button>
+
+        {dockOpen && (
+          <div className="dockpop" role="dialog" aria-label="Where the tools sit">
+            <p className="dockpop-h">Side</p>
+            <div className="dockpop-row">
+              {DOCKS.map((d) => (
+                <button key={d.id} type="button" aria-pressed={dock === d.id}
+                        onClick={() => setDock(d.id)}>{d.label}</button>
+              ))}
+            </div>
+            <p className="dockpop-h">Size</p>
+            <div className="dockpop-row">
+              {TOOL_SIZES.map((z) => (
+                <button key={z.id} type="button" aria-pressed={toolSize === z.id}
+                        onClick={() => setToolSize(z.id)}>{z.label}</button>
+              ))}
+            </div>
+            <button type="button" className="dockpop-done" onClick={() => setDockOpen(false)}>Done</button>
+          </div>
+        )}
       </div>
 
       <div className="pprops">
@@ -806,7 +900,7 @@ export default function PaperReader({
         )}
 
         {/* ------------------------------------------------------ the pages */}
-        <div className="pscroll" ref={scrollRef} onScroll={onScroll}>
+        <div className="pscroll" ref={scrollRef} onScroll={onScroll} onClick={tapToMark}>
           {error && <p className="perr">{error}</p>}
 
           <div className="pcol" style={{ gap: PAGE_GAP }}>
@@ -871,10 +965,14 @@ export default function PaperReader({
       </div>
 
       {composer && (
-        <div className="cc-scrim" onClick={(e) => { if (e.target === e.currentTarget) setComposer(null); }}>
-          <Composer kind={composer.kind} quote={composer.quote} ring={ring} onRing={setRing}
-                    value={draft} onChange={setDraft} busy={busy}
-                    onSave={saveComposer} onCancel={() => setComposer(null)} />
+        <div className="spot-scrim" onClick={(e) => { if (e.target === e.currentTarget) setComposer(null); }}>
+          <Spotlight kind={composer.kind} onKind={(k) => {
+                       setComposer((c) => ({ ...c, kind: k }));
+                       if (k === "correction") setRing("solo");
+                     }}
+                     quote={composer.quote} ring={ring} onRing={setRing}
+                     value={draft} onChange={setDraft} busy={busy}
+                     onSave={saveComposer} onCancel={() => setComposer(null)} />
         </div>
       )}
 
