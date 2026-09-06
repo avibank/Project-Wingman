@@ -38,10 +38,8 @@
   grid-template-areas:
     "bar   bar"
     "find  find"
-    "rail  props"
-    "rail  body"
-    "foot  foot";
-  grid-template-rows: auto auto auto 1fr auto;
+    "rail  body";
+  grid-template-rows: auto auto 1fr;
   background: var(--ground); color: var(--t1);
   font-family: var(--font-ui);
 }
@@ -54,17 +52,15 @@
 .paper[data-dock="right"] {
   grid-template-columns: 1fr var(--rail-w);
   grid-template-areas:
-    "bar   bar"
-    "find  find"
-    "props rail"
-    "body  rail"
-    "foot  foot";
+    "bar  bar"
+    "find find"
+    "body rail";
 }
 .paper[data-dock="right"] .ptools { border-right: none; border-left: 1px solid var(--line); }
 .paper[data-dock="top"] {
   grid-template-columns: 1fr;
-  grid-template-areas: "bar" "find" "rail" "props" "body" "foot";
-  grid-template-rows: auto auto auto auto 1fr auto;
+  grid-template-areas: "bar" "find" "rail" "body";
+  grid-template-rows: auto auto auto 1fr;
 }
 .paper[data-dock="top"] .ptools {
   flex-direction: row; justify-content: center; gap: 4px;
@@ -75,9 +71,7 @@
 .pbar { grid-area: bar; }
 .findbar { grid-area: find; }
 .ptools { grid-area: rail; }
-.pprops { grid-area: props; }
 .pbody { grid-area: body; }
-.pfoot { grid-area: foot; }
 
 /* The tool rail. Big, quiet, always there — the one part of this screen that
    is Drawboard rather than Edge. */
@@ -101,47 +95,21 @@
 }
 .ptoolbtn:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
 
-/* The properties row. It carries the one property a mark here actually has —
-   who can see it — because the colour a highlighter would offer is spoken for:
-   the accent IS the density layer. */
-.pprops {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 14px; min-height: 38px;
-  background: var(--panel); border-bottom: 1px solid var(--line);
-}
-.pprops-what { font-size: 13px; font-weight: 500; color: var(--t1); }
-.pprops-hint {
-  font-size: 13px; color: var(--t3); min-width: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.pprops-ring { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; font-size: 13px; color: var(--t3); }
-.pprops-ring select {
-  min-height: 30px; padding: 0 8px; border-radius: var(--r-chip);
-  background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 13px;
-}
 
-/* The dock chooser. Anchored to the rail, plain, and it closes itself. */
-.dockpop {
-  position: absolute; z-index: 12; margin: 4px;
-  display: grid; gap: 6px; padding: 12px; width: 214px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-panel);
-}
-.paper[data-dock="left"] .dockpop { left: var(--rail-w); bottom: 8px; }
-.paper[data-dock="right"] .dockpop { right: var(--rail-w); bottom: 8px; }
-.paper[data-dock="top"] .dockpop { right: 8px; top: 92px; }
-.dockpop-h { margin: 0; font-size: 13px; color: var(--t3); }
-.dockpop-row { display: flex; gap: 4px; }
-.dockpop-row button {
-  flex: 1; min-height: 32px; border-radius: var(--r-chip);
-  background: var(--raised); border: 1px solid var(--line); color: var(--t2);
-  font-size: 13px; cursor: pointer;
-}
-.dockpop-row button[aria-pressed="true"] { color: var(--t1); border-color: var(--active); }
-.dockpop-done {
-  min-height: 32px; margin-top: 4px; border-radius: var(--r-chip);
-  background: var(--active); border: none; color: var(--ground);
-  font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ------------------------------------------------------------------ the bar */
 .pbar {
@@ -224,7 +192,7 @@
 /* ---------------------------------------------------------------- the body */
 .pbody { flex: 1 1 auto; display: grid; grid-template-columns: 1fr; min-height: 0; }
 .paper[data-rail="thumbs"] .pbody,
-.paper[data-rail="marks"] .pbody { grid-template-columns: 236px 1fr; }
+.paper[data-rail="marks"] .pbody { grid-template-columns: 208px 1fr; }
 
 .prail {
   border-right: 1px solid var(--line);
@@ -292,6 +260,48 @@
   font-size: 13px; cursor: pointer;
 }
 .qrow-act:hover { color: var(--t1); border-color: var(--edge-hi); }
+
+/* The overflow menu. Everything not reached every minute lives behind one
+   control, which is what Preview and Chrome both do — rotate, print and
+   download are not worth a permanent button each, and this screen was carrying
+   three horizontal bars before the page even started. */
+.menu-scrim { position: fixed; inset: 0; z-index: 11; background: none; border: none; cursor: default; }
+/* PANEL OVER GROUND, NOT PANEL ALONE.
+
+   --panel carries alpha in several finishes — that is what makes a surface sit
+   on the deck rather than cover it. Correct for a surface, wrong for something
+   that floats above the document: the paper read straight through this menu.
+   Painting the panel tint over an opaque ground keeps the colour the livery
+   chose and makes it solid. */
+.pmenu {
+  position: absolute; z-index: 12; top: 50px; right: 10px; width: 268px;
+  display: grid; gap: 1px; padding: 6px;
+  background: linear-gradient(var(--panel), var(--panel)), var(--ground);
+  border: 1px solid var(--edge-hi); border-radius: 14px;
+}
+.pmenu > button, .pmenu > a {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 36px; padding: 0 10px; border-radius: var(--r-control);
+  background: transparent; border: none; color: var(--t1);
+  font-family: var(--font-ui); font-size: 13px; text-align: left;
+  text-decoration: none; cursor: pointer;
+}
+.pmenu > button:hover, .pmenu > a:hover { background: var(--raised); }
+.pmenu > button svg, .pmenu > a svg { color: var(--t3); flex: none; }
+/* The tick keeps its place in the layout whether it is showing or not, so the
+   labels do not shuffle sideways when something is switched on. */
+.pmenu [role="menuitemcheckbox"] svg { opacity: 0; }
+.pmenu [role="menuitemcheckbox"] svg[data-on] { opacity: 1; color: var(--active); }
+.pmenu-rule { height: 1px; background: var(--line); margin: 5px 4px; }
+.pmenu-pick {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 36px; padding: 0 10px; font-size: 13px; color: var(--t3);
+}
+.pmenu-pick select {
+  margin-left: auto; min-height: 30px; padding: 0 6px; border-radius: var(--r-chip);
+  background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 13px;
+}
+.pmenu-note { margin: 6px 10px 2px; font-size: 13px; color: var(--t3); }
 
 /* ---------------------------------------------------------------- the pages */
 .pscroll { position: relative; overflow: auto; padding: 18px 0 64px; background: var(--ground); }
@@ -381,7 +391,8 @@
 .spot {
   width: min(620px, 100%);
   display: grid; gap: 12px; padding: 16px;
-  background: var(--panel);
+  /* Opaque, for the same reason the menu is: it floats over the paper. */
+  background: linear-gradient(var(--panel), var(--panel)), var(--ground);
   border: 1px solid var(--edge-hi);
   border-radius: 18px;
   animation: spot-in 180ms cubic-bezier(.2,.9,.3,1) both;
@@ -460,16 +471,6 @@
 .mcardp-del { background: none; border: none; padding: 4px; color: var(--t3); cursor: pointer; margin-left: auto; }
 .mcardp-del:hover { color: var(--t1); }
 
-/* ------------------------------------------------------------- the quiet line */
-.pendline {
-  position: sticky; top: 0; z-index: 5; display: block;
-  width: min(720px, calc(100% - 32px)); margin: 0 auto 14px;
-  min-height: 36px; padding: 8px 14px; border-radius: var(--r-pill);
-  background: var(--panel); border: 1px solid var(--line);
-  color: var(--t2); font-size: 13px; cursor: pointer;
-}
-.pendline:hover { color: var(--t1); border-color: var(--edge-hi); }
-
 .perr {
   width: min(720px, calc(100% - 32px)); margin: 0 auto 14px;
   padding: 10px 14px; border-radius: var(--r-control);
@@ -491,20 +492,10 @@
   font-size: 13px; color: var(--t3); text-align: center;
 }
 
-/* ----------------------------------------------------------------- the foot */
-.pfoot {
-  display: flex; align-items: center; gap: 14px;
-  padding: 8px 14px; min-height: 42px;
-  background: var(--panel); border-top: 1px solid var(--line);
-}
-/* A label is the target, not the box inside it — but a 21px label is not a
-   target on a phone either. Measured at 390px before this line existed. */
-.dtoggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
-  font-size: 13px; color: var(--t2); cursor: pointer; }
-.dtoggle input { accent-color: var(--active); width: 15px; height: 15px; }
-.pstaff {
-  margin-left: auto; font-family: var(--font-mono); font-size: 13px; color: var(--t3);
-}
+
+
+
+
 
 /* ------------------------------------------------------------------- phones
    768px, which is one of the three breakpoints foundations.css declares — not
@@ -518,10 +509,9 @@
   /* The rail goes horizontal on a phone: a 46px column is a tenth of the
      screen, and thumbs are already reachable from the panel toggle. */
   .paper { grid-template-columns: 1fr;
-    grid-template-areas: "bar" "find" "rail" "props" "body" "foot"; }
+    grid-template-areas: "bar" "find" "rail" "body"; }
   .ptools { flex-direction: row; justify-content: space-around; padding: 4px 6px;
     border-right: none; border-bottom: 1px solid var(--line); }
-  .pprops-hint { display: none; }
   .prail { position: absolute; inset: 52px 0 0 0; z-index: 8; border-right: none; }
   .pbar { flex-wrap: wrap; padding: 6px 8px; gap: 2px; }
   .pbar-c { order: 3; width: 100%; justify-content: center; padding-top: 2px; }
@@ -533,7 +523,8 @@
   .pbar-r { flex: 0 0 auto; }
   .pbar-title { font-size: 14px; }
   .ptool[data-optional] { display: none; }
-  .mcardp, .pendline, .perr, .orphans, .pcoda { width: calc(100% - 24px); }
+  .mcardp, .perr, .orphans, .pcoda { width: calc(100% - 24px); }
+  .pmenu { right: 6px; width: calc(100vw - 12px); max-width: 300px; }
 }
 
 /* R13 — Smooth Air and prefers-reduced-motion turn all of it off. No new
@@ -543,8 +534,8 @@
 .app.smooth-air .ptool,
 .app.smooth-air .pzoom,
 .app.smooth-air .mrow,
-.app.smooth-air .pendline { transition: none; }
+.app.smooth-air .mrow { transition: none; }
 @media (prefers-reduced-motion: reduce) {
-  .ptool, .pzoom, .mrow, .pendline { transition: none; }
+  .ptool, .pzoom, .mrow { transition: none; }
   .pscroll { scroll-behavior: auto; }
 }

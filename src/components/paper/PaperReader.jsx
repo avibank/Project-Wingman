@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Search, X, Minus, Plus,
   RotateCw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
-  HelpCircle, Flag, Trash2, RefreshCw, MousePointer2,
+  HelpCircle, Flag, Trash2, RefreshCw, MousePointer2, MoreHorizontal, Check,
 } from "lucide-react";
 import { loadPaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
 import {
@@ -711,18 +711,71 @@ export default function PaperReader({
               second toolbar: the strip wrapped to three rows at 390px and ate
               a fifth of the screen, and rotate and print are the two controls
               nobody reaches for on a handset. */}
-          <button type="button" className="ptool" data-optional="" aria-label="Rotate"
-                  onClick={() => setRotation((r) => (r + 90) % 360)}>
-            <RotateCw size={16} aria-hidden="true" />
+          <button type="button" className="ptool" aria-label="More"
+                  aria-expanded={dockOpen ? "true" : "false"}
+                  onClick={() => setDockOpen(!dockOpen)}>
+            <MoreHorizontal size={17} aria-hidden="true" />
           </button>
-          <button type="button" className="ptool" data-optional="" aria-label="Print" onClick={() => onOpenOriginal?.(paper)}>
-            <Printer size={16} aria-hidden="true" />
-          </button>
-          <a className="ptool" href={url} download aria-label="Download the original">
-            <Download size={16} aria-hidden="true" />
-          </a>
         </div>
       </header>
+
+      {/* THE OVERFLOW MENU.
+
+          Everything not reached every minute lives here, which is the rule the
+          readers people already use all follow: Preview and Chrome put rotate,
+          print and download behind one control and give the rest of the window
+          to the document. This screen had three horizontal bars — a toolbar, a
+          properties strip and a footer — 141px of furniture before the page
+          started. */}
+      {dockOpen && (
+        <>
+          <button type="button" className="menu-scrim" aria-label="Close menu"
+                  onClick={() => setDockOpen(false)} />
+          <div className="pmenu" role="menu" aria-label="More">
+            <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 90) % 360)}>
+              <RotateCw size={15} aria-hidden="true" /> Rotate
+            </button>
+            <button type="button" role="menuitem" onClick={() => { onOpenOriginal?.(paper); setDockOpen(false); }}>
+              <Printer size={15} aria-hidden="true" /> Open the original
+            </button>
+            <a role="menuitem" href={url} download onClick={() => setDockOpen(false)}>
+              <Download size={15} aria-hidden="true" /> Download
+            </a>
+
+            <span className="pmenu-rule" aria-hidden="true" />
+
+            <button type="button" role="menuitemcheckbox" aria-checked={density}
+                    onClick={() => setDensity(!density)}>
+              <Check size={15} aria-hidden="true" data-on={density ? "" : undefined} />
+              Show what the module marked
+            </button>
+
+            <span className="pmenu-rule" aria-hidden="true" />
+
+            {/* A default, not a decision you look at all day. Per mark it is
+                still chosen in the Spotlight, where you are actually deciding. */}
+            <label className="pmenu-pick">
+              <span>New marks seen by</span>
+              <select value={ring} onChange={(e) => setRing(e.target.value)}>
+                {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+              </select>
+            </label>
+            <label className="pmenu-pick">
+              <span>Tools on</span>
+              <select value={dock} onChange={(e) => setDock(e.target.value)}>
+                {DOCKS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+              </select>
+            </label>
+            <label className="pmenu-pick">
+              <span>Tool size</span>
+              <select value={toolSize} onChange={(e) => setToolSize(e.target.value)}>
+                {TOOL_SIZES.map((z) => <option key={z.id} value={z.id}>{z.label}</option>)}
+              </select>
+            </label>
+            {isStaff && <p className="pmenu-note">You are looking at this as the author.</p>}
+          </div>
+        </>
+      )}
 
       {findOpen && (
         <div className="findbar">
@@ -755,51 +808,12 @@ export default function PaperReader({
       <div className="ptools" role="toolbar" aria-label="Marking tools" aria-orientation="vertical">
         {TOOLS.map((t) => (
           <button key={t.id} type="button" className="ptoolbtn" aria-pressed={tool === t.id}
-                  aria-label={t.label} title={t.label} onClick={() => setTool(t.id)}>
+                  aria-label={t.label} title={`${t.label} — ${t.hint}`}
+                  onClick={() => setTool(t.id)}>
             {t.icon}
           </button>
         ))}
 
-        <span className="ptools-gap" aria-hidden="true" />
-
-        <button type="button" className="ptoolbtn" aria-label="Where the tools sit"
-                aria-expanded={dockOpen ? "true" : "false"} title="Where the tools sit"
-                onClick={() => setDockOpen(!dockOpen)}>
-          <PanelLeft size={16} aria-hidden="true" />
-        </button>
-
-        {dockOpen && (
-          <div className="dockpop" role="dialog" aria-label="Where the tools sit">
-            <p className="dockpop-h">Side</p>
-            <div className="dockpop-row">
-              {DOCKS.map((d) => (
-                <button key={d.id} type="button" aria-pressed={dock === d.id}
-                        onClick={() => setDock(d.id)}>{d.label}</button>
-              ))}
-            </div>
-            <p className="dockpop-h">Size</p>
-            <div className="dockpop-row">
-              {TOOL_SIZES.map((z) => (
-                <button key={z.id} type="button" aria-pressed={toolSize === z.id}
-                        onClick={() => setToolSize(z.id)}>{z.label}</button>
-              ))}
-            </div>
-            <button type="button" className="dockpop-done" onClick={() => setDockOpen(false)}>Done</button>
-          </div>
-        )}
-      </div>
-
-      <div className="pprops">
-        <span className="pprops-what">{TOOLS.find((t) => t.id === tool)?.label}</span>
-        <span className="pprops-hint">{TOOLS.find((t) => t.id === tool)?.hint}</span>
-        {tool !== "select" && tool !== "correction" && (
-          <label className="pprops-ring">
-            <span>Who sees it</span>
-            <select value={ring} onChange={(e) => setRing(e.target.value)}>
-              {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
-          </label>
-        )}
       </div>
 
       <div className="pbody">
@@ -976,13 +990,6 @@ export default function PaperReader({
         </div>
       )}
 
-      <div className="pfoot">
-        <label className="dtoggle">
-          <input type="checkbox" checked={density} onChange={(e) => setDensity(e.target.checked)} />
-          <span>Show what the module marked</span>
-        </label>
-        {isStaff && <span className="pstaff">Author view</span>}
-      </div>
     </div>,
     host,
   );
