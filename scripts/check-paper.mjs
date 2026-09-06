@@ -268,6 +268,26 @@ console.log("\nfilters");
   ok("—", "everything", applyFilter(list, "all", "me").length === 4);
 }
 
+/* ---- the reader is full screen, and stays that way ---------------------- */
+console.log("\nfull screen");
+{
+  const reader = read("src/components/paper/PaperReader.jsx");
+  const css = read("src/components/paper/paper.css");
+  ok("—", "the screen is fixed to the viewport", /\.paper \{[^}]*position: fixed; inset: 0/.test(css));
+
+  /* The rule this protects, and it cost an hour to find: `position: fixed` is
+     only the size of the window if no ancestor has been promoted to its own
+     composited layer. `.deck-inner` carries `.route-fade`, which animates
+     opacity on every navigation, so the reader painted as a strip a few pixels
+     tall while every box it owned measured perfectly. Layout was right the
+     whole time; painting was not. */
+  ok("—", "and it renders through a portal, outside the deck's animated wrapper",
+     /createPortal\(/.test(reader) && /document\.querySelector\("\.app"\)/.test(reader));
+  ok("—", "into .app rather than the body, so Smooth Air still reaches it",
+     /document\.querySelector\("\.app"\) \|\| document\.body/.test(reader)
+     && /\.app\.smooth-air/.test(css));
+}
+
 /* ---- the reader is not on the first-paint path -------------------------- */
 console.log("\nweight");
 {

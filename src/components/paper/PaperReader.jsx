@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Search, X, Minus, Plus,
   RotateCw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
@@ -170,6 +171,31 @@ export default function PaperReader({
   const [query, setQuery] = useState("");
   const [findOpen, setFindOpen] = useState(false);
   const [findAt, setFindAt] = useState(0);
+
+  /* WHY THIS SCREEN IS A PORTAL, AND IT IS NOT A PREFERENCE.
+
+     The reader is `position: fixed; inset: 0`, which should make it the size of
+     the window wherever it sits in the tree. It did not: it painted as a white
+     strip a few pixels tall, across the middle of the page.
+
+     Every box measured correctly — 1280x720 for the screen, 996x1408 for the
+     page, the canvas full of ink — which is what made this take so long to
+     believe. Layout was never wrong. Painting was.
+
+     The cause is two ancestors up. `.deck-inner` carries `.route-fade`, which
+     animates opacity on every navigation, and an animating element gets its own
+     composited layer. A fixed-position descendant inside that layer is painted
+     against it rather than against the window, and `.deck-inner` is 28px tall
+     on this route because its only child is the empty <main> the paper route
+     renders. Hence a strip.
+
+     Rendering into `.app` instead puts the reader outside the deck's animated
+     wrapper. `.app` and not `document.body` on purpose: the Smooth Air rules
+     are written `.app.smooth-air …`, and a portal to the body would take the
+     reader out of their reach and quietly break R13. */
+  const [host] = useState(() => (typeof document === "undefined"
+    ? null
+    : document.querySelector(".app") || document.body));
 
   const scrollRef = useRef(null);
   const pageEls = useRef(new Map());
@@ -532,9 +558,9 @@ export default function PaperReader({
   const visible = (n) => Math.abs(n - page) <= WINDOW;
   const marksList = applyFilter([...placed, ...orphans.map((o) => ({ ...o, status: "orphaned" }))], filter, me);
 
-  if (!paper) return null;
+  if (!paper || !host) return null;
 
-  return (
+  return createPortal(
     <div className="paper" data-rail={rail || "none"}>
       {/* ------------------------------------------------------------ bar */}
       <header className="pbar">
@@ -815,6 +841,7 @@ export default function PaperReader({
         </label>
         {isStaff && <span className="pstaff">Author view</span>}
       </div>
-    </div>
+    </div>,
+    host,
   );
 }
