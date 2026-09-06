@@ -29,11 +29,63 @@
    everywhere people already use one. The way out is the arrow at top left. */
 .paper {
   position: fixed; inset: 0; z-index: 50;
-  display: flex; flex-direction: column;
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  grid-template-areas:
+    "bar   bar"
+    "find  find"
+    "rail  props"
+    "rail  body"
+    "foot  foot";
+  grid-template-rows: auto auto auto 1fr auto;
   background: var(--ground); color: var(--t1);
   font-family: var(--font-ui);
 }
-.pbar, .findbar, .pfoot { flex: 0 0 auto; }
+.pbar { grid-area: bar; }
+.findbar { grid-area: find; }
+.ptools { grid-area: rail; }
+.pprops { grid-area: props; }
+.pbody { grid-area: body; }
+.pfoot { grid-area: foot; }
+
+/* The tool rail. Big, quiet, always there — the one part of this screen that
+   is Drawboard rather than Edge. */
+.ptools {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 0; background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+.ptoolbtn {
+  display: grid; place-items: center; width: 34px; height: 34px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
+  color: var(--t3); cursor: pointer;
+}
+.ptoolbtn:hover { background: var(--raised); color: var(--t1); }
+/* Selection reads structurally — a filled leading edge, not a glow. */
+.ptoolbtn[aria-pressed="true"] {
+  background: var(--raised); color: var(--t1);
+  box-shadow: inset 2px 0 0 var(--active);
+}
+.ptoolbtn:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+/* The properties row. It carries the one property a mark here actually has —
+   who can see it — because the colour a highlighter would offer is spoken for:
+   the accent IS the density layer. */
+.pprops {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px; min-height: 38px;
+  background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.pprops-what { font-size: 13px; font-weight: 500; color: var(--t1); }
+.pprops-hint {
+  font-size: 13px; color: var(--t3); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pprops-ring { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; font-size: 13px; color: var(--t3); }
+.pprops-ring select {
+  min-height: 30px; padding: 0 8px; border-radius: var(--r-chip);
+  background: var(--raised); border: 1px solid var(--line); color: var(--t1); font-size: 13px;
+}
 
 /* ------------------------------------------------------------------ the bar */
 .pbar {
@@ -373,6 +425,13 @@
 @media (max-width: 768px) {
   .paper[data-rail="thumbs"] .pbody,
   .paper[data-rail="marks"] .pbody { grid-template-columns: 1fr; }
+  /* The rail goes horizontal on a phone: a 46px column is a tenth of the
+     screen, and thumbs are already reachable from the panel toggle. */
+  .paper { grid-template-columns: 1fr;
+    grid-template-areas: "bar" "find" "rail" "props" "body" "foot"; }
+  .ptools { flex-direction: row; justify-content: space-around; padding: 4px 6px;
+    border-right: none; border-bottom: 1px solid var(--line); }
+  .pprops-hint { display: none; }
   .prail { position: absolute; inset: 52px 0 0 0; z-index: 8; border-right: none; }
   .pbar { flex-wrap: wrap; padding: 6px 8px; gap: 2px; }
   .pbar-c { order: 3; width: 100%; justify-content: center; padding-top: 2px; }

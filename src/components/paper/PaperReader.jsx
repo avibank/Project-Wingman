@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Search, X, Minus, Plus,
   RotateCw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
-  HelpCircle, Flag, Trash2, RefreshCw,
+  HelpCircle, Flag, Trash2, RefreshCw, MousePointer2,
 } from "lucide-react";
 import { loadPaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
 import {
@@ -33,6 +33,28 @@ import "./paper.css";
    alike (R6). A rail would have meant two layouts and a column of orphaned
    speech bubbles pointing at nothing.
    ========================================================================= */
+
+/* THE TOOL RAIL — Drawboard's shape, inside this app's rules.
+
+   Drawboard puts the marking tools in a vertical rail down the left and shows
+   the active tool's properties beside it; Edge puts the document controls in
+   one slim bar across the top. This screen does both, because they answer
+   different questions: the top bar is "where am I in this paper", the rail is
+   "what happens when I select something".
+
+   What it deliberately does NOT borrow is the colour palette. Every reader
+   like this offers six highlighter colours, and R14 allows one accent off the
+   livery — the density layer IS that accent at low alpha, so a second colour
+   would stop meaning anything the moment two people used it differently. The
+   property a mark actually has here is who can see it, so that is what the
+   properties row carries. */
+const TOOLS = [
+  { id: "select", label: "Select", hint: "Drag to select. The bar that appears offers everything below.", icon: <MousePointer2 size={17} aria-hidden="true" /> },
+  { id: "highlight", label: "Highlight", hint: "Select any line and it is marked. Nothing to type.", icon: <Highlighter size={17} aria-hidden="true" /> },
+  { id: "note", label: "Note", hint: "Select a passage and write what you want to remember.", icon: <MessageSquare size={17} aria-hidden="true" /> },
+  { id: "question", label: "Question", hint: "Select a passage and ask. It opens a thread in the Ready Room.", icon: <HelpCircle size={17} aria-hidden="true" /> },
+  { id: "correction", label: "Correction", hint: "Select what is wrong. Only the author ever sees it.", icon: <Flag size={17} aria-hidden="true" /> },
+];
 
 const ZOOMS = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const PAGE_GAP = 18;
@@ -161,6 +183,7 @@ export default function PaperReader({
   const [density, setDensity] = useState(true);
   const [activeId, setActiveId] = useState(null);
 
+  const [tool, setTool] = useState("select");
   const [sel, setSel] = useState(null);            // { start, end, x, y }
   const [composer, setComposer] = useState(null);  // { kind, start, end, quote }
   const [draft, setDraft] = useState("");
@@ -415,6 +438,10 @@ export default function PaperReader({
     });
   }, [locate]);
 
+  /* With a tool armed, a selection IS the action — no popup, no second click.
+     That is the whole point of a tool rail, and it is how both references
+     behave. `select` keeps the popup, so the one-tap flow still exists for
+     somebody who never touches the rail. */
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return undefined;
@@ -457,13 +484,27 @@ export default function PaperReader({
     await addMark({ kind: "highlight", start, end });
   }, [sel, addMark]);
 
-  const openComposer = (kind) => {
-    if (!sel || !model) return;
-    setComposer({ kind, start: sel.start, end: sel.end, quote: quoteOf(model, sel.start, sel.end) });
+  const openComposer = (kind, from = sel) => {
+    if (!from || !model) return;
+    setComposer({ kind, start: from.start, end: from.end, quote: quoteOf(model, from.start, from.end) });
     setDraft("");
-    setRing(kind === "correction" ? "solo" : "module");
+    if (kind === "correction") setRing("solo");
     clearSelection();
   };
+
+  /* The armed tool fires as soon as a selection settles. Held in a ref and read
+     inside the effect rather than listed as a dependency, because rebinding the
+     listener on every tool change is how a selection ends up handled twice. */
+  useEffect(() => {
+    if (!sel || tool === "select") return;
+    const made = sel;
+    if (tool === "highlight") {
+      clearSelection();
+      addMark({ kind: "highlight", start: made.start, end: made.end });
+    } else {
+      openComposer(tool, made);
+    }
+  }, [sel, tool]);
 
   const saveComposer = async () => {
     if (!composer || !draft.trim()) return;
@@ -643,6 +684,29 @@ export default function PaperReader({
           </button>
         </div>
       )}
+
+      {/* Drawboard's rail, and the properties row that belongs to it. */}
+      <div className="ptools" role="toolbar" aria-label="Marking tools" aria-orientation="vertical">
+        {TOOLS.map((t) => (
+          <button key={t.id} type="button" className="ptoolbtn" aria-pressed={tool === t.id}
+                  aria-label={t.label} title={t.label} onClick={() => setTool(t.id)}>
+            {t.icon}
+          </button>
+        ))}
+      </div>
+
+      <div className="pprops">
+        <span className="pprops-what">{TOOLS.find((t) => t.id === tool)?.label}</span>
+        <span className="pprops-hint">{TOOLS.find((t) => t.id === tool)?.hint}</span>
+        {tool !== "select" && tool !== "correction" && (
+          <label className="pprops-ring">
+            <span>Who sees it</span>
+            <select value={ring} onChange={(e) => setRing(e.target.value)}>
+              {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
 
       <div className="pbody">
         {/* ------------------------------------------------------- the rail */}
