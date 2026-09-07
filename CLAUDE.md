@@ -105,6 +105,33 @@ architecture note above says — that part was accurate.
 - No red on wrong quiz answers — `--calm` instead. Red is for genuine danger states.
 - No guilt language on a broken streak; it resets silently.
 
+## The quiz
+
+A chapter quiz is an **exam**: answer everything, hand it in, then go through
+it. `src/components/module/Exam.jsx` runs it and `src/lib/quiz.js` holds every
+rule about what an attempt is — nothing about one is decided in the component.
+
+`Review.jsx` is the **drill**, and it is a different exercise, not a different
+mode. The re-check and put-right flows hand you back something you already got
+wrong, so they mark as you go; withholding the answer there withholds the only
+thing the student came for. Both files' headers carry the argument. Do not
+merge them back together.
+
+- **Nothing is marked before hand-in**, and that is the one rule a tidy-up
+  breaks silently. `check:exam` asserts no `data-mark` reaches the question
+  screen and no score is computed while the paper is open.
+- The option order is shuffled per sitting and **seeded from the attempt**, not
+  from the clock. An answer is stored as "the second option"; reseed on the way
+  back in and every restored answer is quietly wrong.
+- The attempt is written to localStorage on every change and every change is a
+  **function of the previous attempt** — two changes in one frame both built on
+  the render's closure lose one, silently.
+- Retention is fed **once, with the whole paper**, through `recordAnswers`.
+  Eight separate `recordAnswer` calls in one tick all read the same pre-render
+  state, so seven were overwritten and one question of eight reached the
+  caution pile — with the score and the review both perfectly correct.
+- Elapsed time, never a countdown. `npm run check:exam` is 76 assertions.
+
 ## Migrations
 
 `supabase/migrations/` — 0000 progress table, 0001 social layer, 0002 threaded posts,

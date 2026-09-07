@@ -499,12 +499,30 @@ function AppInner() {
   // chapter that contains the work.
   // The one writer for the question lifecycle. Both counts on the strip derive
   // from this single record, so the tag and the lamp cannot disagree.
-  const recordAnswer = (questionId, right, { fromCaution = false } = {}) => {
-    const cur = progress.get(RETENTION_KEY, emptyRetention());
-    progress.set(RETENTION_KEY, right
-      ? toHolding(cur, questionId, { fromCaution })
-      : toCaution(cur, questionId));
+  /* ONE ANSWER, OR A WHOLE PAPER, THROUGH THE SAME FOLD.
+
+     recordAnswer reads the retention state, moves one question, and writes it
+     back — which is correct exactly once per render. The exam hands in eight
+     answers in a single tick, and eight calls all read the SAME pre-render
+     state: each one built its patch on the base the last one had, so seven
+     were overwritten and one question reached the caution pile out of eight.
+     Nothing looked broken — the score was right, the review was right, and
+     only "Put right" was quietly almost empty.
+
+     So the fold is the primitive and the single answer is the special case.
+     `results` is [questionId, right] pairs, applied in order to one value and
+     written once. */
+  const recordAnswers = (results, { fromCaution = false } = {}) => {
+    if (!results.length) return;
+    let next = progress.get(RETENTION_KEY, emptyRetention());
+    for (const [questionId, right] of results) {
+      next = right ? toHolding(next, questionId, { fromCaution }) : toCaution(next, questionId);
+    }
+    progress.set(RETENTION_KEY, next);
   };
+
+  const recordAnswer = (questionId, right, opts = {}) =>
+    recordAnswers([[questionId, right]], opts);
 
   const recordPlace = (place) =>
     progress.set(PLACE_KEY,
@@ -1468,7 +1486,7 @@ function AppInner() {
                 // bar every other lamp in the app is weighed against.
                 minimums={minimums}
                 onRecheck={() => go(routePath.review(activeModuleCode, "caution"))}
-                onAnswer={(q, right) => recordAnswer(q.id, right)}
+                onAnswers={(results) => recordAnswers(results)}
                 onScore={(chapterId, correct, total) => {
                   // Finishing clears the run: a finished quiz is a score, not
                   // a place to go back to.

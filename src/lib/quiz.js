@@ -37,8 +37,26 @@ export const SECONDS_PER_Q = 75;        // nominal, for the estimate only
 /* NO COUNTDOWN. A timer measures reaction speed, not knowledge, and it is
    stressful — fine for a classroom game with a projector, wrong for someone
    revising alone at midnight. Show the estimate on the start screen and then
-   leave them alone. */
+   leave them alone.
+
+   ELAPSED IS NOT A COUNTDOWN, and the difference is the whole argument. A
+   number counting down is a threat: it decides when you stop. A number counting
+   up is information you asked for — the real paper these students sit is timed
+   at 75 seconds a question, and somebody practising for it should be able to
+   see whether they are inside that without a stopwatch beside the laptop. It
+   never turns red, it never warns, and it never ends the sitting. */
 export const estimate = n => `about ${Math.max(1, Math.round(n * SECONDS_PER_Q / 60))} minutes`;
+
+export function elapsed(startedAt, now = Date.now()) {
+  const from = new Date(startedAt).getTime();
+  if (!Number.isFinite(from)) return "0:00";
+  const secs = Math.max(0, Math.floor((now - from) / 1000));
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  const mm = h ? String(m).padStart(2, "0") : String(m);
+  return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
+}
 
 export const passAt = n => Math.ceil(n * PASS_MARK);   // 8 -> 6
 
@@ -106,6 +124,34 @@ export const submitWarning = a => {
 
 export function submit(a) {
   return a.submittedAt ? a : { ...a, submittedAt: new Date().toISOString() };
+}
+
+export const flagged = a => a.flagged.reduce((acc, v, i) => v ? [...acc, i] : acc, []);
+
+/* WHAT THE HAND-IN SCREEN SAYS, decided here rather than in the component.
+
+   It is the last thing between a student and a score they cannot take back, so
+   it states what is true and nothing else: how many are answered, which have
+   no answer, and which were flagged. Never "are you sure?" — a question that
+   carries no information and that everybody clicks through.
+
+   R11 of the house voice applies: no sentence here states a zero. A paper with
+   nothing outstanding gets one line saying so, in the affirmative. */
+export function handIn(a) {
+  const blanks = unanswered(a);
+  const marks = flagged(a);
+  return {
+    answered: answeredCount(a),
+    total: a.answers.length,
+    blanks,
+    marks,
+    clean: blanks.length === 0 && marks.length === 0,
+    line: blanks.length === 0
+      ? "Every question has an answer."
+      : blanks.length === 1
+        ? "One question has no answer yet."
+        : `${blanks.length} questions have no answer yet.`,
+  };
 }
 
 
@@ -247,12 +293,17 @@ export function quizKey(e) {
    you always know what is left and whether you skipped one.
    ========================================================================= */
 
-export function navigator(a) {
+export function navigator(a, marks = null) {
   return a.answers.map((v, i) => ({
     index: i,
     n: i + 1,
     state: i === a.at ? 'current' : v !== null ? 'answered' : 'blank',
-    flagged: a.flagged[i]
+    flagged: a.flagged[i],
+    /* After the paper is handed in the same row of squares becomes the map of
+       the review, so it carries the mark as well. Before then `marks` is null
+       and nothing on this screen knows whether anything is right — which is
+       the whole point of an exam. */
+    mark: marks ? (marks[i] ? 'right' : 'wrong') : null,
   }));
 }
 /* Flagged is a separate mark, not a fourth state — a question can be both
@@ -260,9 +311,28 @@ export function navigator(a) {
 
 
 /* ============================================================================
+   6b · THE OPTION ORDER, AND WHY IT IS SEEDED FROM THE ATTEMPT
+
+   Options are shuffled per sitting so a student cannot learn "it is always B".
+   The seed has to come from the ATTEMPT, not from the clock, because an exam
+   can be left and come back to: an answer is stored as "the second option", and
+   if the shuffle is reseeded on the way back in, the second option is a
+   different sentence and every restored answer is silently wrong.
+
+   startedAt is part of the attempt and is persisted with it, so it is the one
+   number that is guaranteed to be the same on the way back.
+   ========================================================================= */
+export function seedOf(attempt) {
+  const t = new Date(attempt?.startedAt || 0).getTime();
+  return Number.isFinite(t) ? Math.abs(t % 100000) : 1;
+}
+
+
+/* ============================================================================
    7 · WHAT WAS DELIBERATELY NOT TAKEN
    ----------------------------------------------------------------------------
-   · No countdown timer.
+   · No countdown timer. Elapsed time only — see `elapsed` above for the
+     difference, which is not a quibble.
    · No points, leaderboards, streaks, memes or sound. With eleven classmates
      who all know each other, a leaderboard is a ranking of your friends.
    · No four fixed answer colours. That is Kahoot's branding and it breaks the

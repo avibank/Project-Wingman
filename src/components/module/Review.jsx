@@ -4,24 +4,33 @@ import { LABELS } from "../../lib/quiz.js";
 import { shuffleOptions, movedLine } from "../../lib/retention.js";
 import "./quiz.css";
 
-// ONE component, three uses: the chapter quiz, the calibration re-check, and
-// putting caution questions right. Built once so the three cannot drift apart —
-// they are the same interaction and a student should not have to learn it three
-// times.
+// THE DRILL. Two uses now: the calibration re-check, and putting caution
+// questions right.
 //
-// This REVERSES Part 14's quiz, deliberately and on instruction. That brief
-// said answer everything, submit, then review, because the model was the exam.
-// This one says immediate feedback: answer, see why, move on, and never
-// withhold results to the end. The newer instruction wins; the reversal is
-// recorded here rather than resolved silently.
+// It was three. The chapter quiz used to run through here as well, on the
+// principle that one interaction learned once beats three that drift — and
+// that principle is still right about these two, which ARE the same exercise.
+//
+// It was wrong about the third. This file's header used to record that Part
+// 14's exam (answer everything, submit, then review) had been reversed on
+// instruction into immediate feedback, and that reversal was correct for a
+// drill: you are being handed back something you already got wrong, and the
+// moment of being wrong again is the entire lesson. Withholding the answer
+// there withholds the only thing the student came for.
+//
+// A chapter quiz is not that. It is a rehearsal for a paper these students sit
+// under exam conditions, and it moved to Exam.jsx, whose header carries the
+// argument. Neither instruction was overturned; they were about two different
+// exercises that had been sharing a component.
+/* The signature is what the two drill flows actually pass, and nothing else.
+   It used to carry the chapter quiz's needs as well — a place to resume from, a
+   tally to carry, a module average for the needle to sweep, a name to go back
+   to. Those went with the quiz to Exam.jsx, and leaving them declared here
+   would have been a component advertising six things no caller ever hands it.
+   check:props is what noticed. */
 export default function Review({
   title, questions, isRetake = false,
-  resumeAt = 0, resumeTally = null, onProgress, onAnswer, onDone, onLeave, onOpenLesson,
-  // §6 — what the results screen needs. Review owns WHEN the sitting is over;
-  // QuizResults owns WHAT is shown. Passed straight through rather than
-  // recomputed here, so the average on this screen is the same object the
-  // Library's dial reads.
-  minimums, averageBefore = null, averageAfter = null, moduleName, onRecheck,
+  onAnswer, onDone, onLeave, onOpenLesson, minimums,
 }) {
   // LATCHED AT MOUNT, deliberately. Read live, this flips the moment the first
   // attempt records its own score, and the result screen of a first sitting
@@ -33,7 +42,7 @@ export default function Review({
   // skip questions and end early. Which questions you were given is decided when
   // you start, not renegotiated after every answer.
   const [set] = useState(questions);
-  const [at, setAt] = useState(Math.min(resumeAt, Math.max(0, set.length - 1)));
+  const [at, setAt] = useState(0);
   const [picked, setPicked] = useState(null);
   // SEEDED FROM WHAT WAS ALREADY ANSWERED. Leaving halfway unmounts this
   // component and destroys the tally, but `at` is restored from the run — so
@@ -41,11 +50,7 @@ export default function Review({
   // questions before the resume point had all been wrong. Only the FIRST
   // attempt is ever recorded, so that wrong figure is permanent: it feeds the
   // average, the needle and every lamp weighed against the bar.
-  const [tally, setTally] = useState(() => ({
-    right: resumeTally?.right || 0,
-    toCaution: resumeTally?.toCaution || 0,
-    toHolding: resumeTally?.toHolding || 0,
-  }));
+  const [tally, setTally] = useState({ right: 0, toCaution: 0, toHolding: 0 });
   const [finished, setFinished] = useState(false);
 
   // Option order is shuffled per SITTING, not per render — seeded once so a
@@ -55,9 +60,6 @@ export default function Review({
   const shuffled = useMemo(
     () => (q ? shuffleOptions(q, seed.current + at * 17) : null), [q, at]);
 
-  // Nothing is timed, and leaving keeps your place — but it has to SAY so, or
-  // the student assumes it was thrown away and starts again.
-  useEffect(() => { onProgress?.(at, tally); }, [at, tally]);
 
 
   const choose = (i) => {
@@ -104,13 +106,12 @@ export default function Review({
       <QuizResults
         title={title} right={tally.right} total={set.length}
         minimums={minimums}
-        averageBefore={averageBefore} averageAfter={averageAfter}
-        retake={retake} moduleName={moduleName}
-        // The re-check and put-right flows have no module average to move —
-        // what moved for them is which questions changed pile. Same slot on
-        // the screen, different sentence, and only ever one of the two.
-        movedNote={averageAfter === null ? movedLine(tally) : null}
-        onRecheck={onRecheck} onLeave={onLeave} />
+        retake={retake}
+        /* A drill has no module average to move — what moved for it is which
+           questions changed pile. Same slot on the screen, different sentence,
+           and now only ever this one. */
+        movedNote={movedLine(tally)}
+        onLeave={onLeave} />
     );
   }
 

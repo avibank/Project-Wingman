@@ -28,6 +28,14 @@ export default function QuizResults({
   title, right, total, minimums = PASS_PCT,
   averageBefore = null, averageAfter = null,
   retake = false, moduleName, onRecheck, onLeave, movedNote = null,
+  /* GOING THROUGH THE PAPER IS A SECOND SCREEN, not more of this one.
+
+     The brief above says "nothing else", and it is right: hanging fourteen
+     explanations off the bottom of the score buries the one number the student
+     came for. So the review is a door rather than a drawer, and the drill flows
+     — which mark as they go and have nothing left to explain — simply pass no
+     handler and get no door. */
+  onReview = null,
 }) {
   const pct = total > 0 ? Math.round((right / total) * 100) : null;
   const below = isBelow(pct, minimums);
@@ -90,6 +98,12 @@ export default function QuizResults({
         {below && onRecheck && (
           <button type="button" className="q-btn" data-primary="" onClick={onRecheck}>
             Re-check
+          </button>
+        )}
+        {onReview && (
+          <button type="button" className="q-btn" data-primary={below ? undefined : ""}
+                  onClick={onReview}>
+            Go through the paper
           </button>
         )}
         <button type="button" className="q-btn" onClick={onLeave}>

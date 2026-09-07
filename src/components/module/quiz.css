@@ -381,3 +381,102 @@
   .qr-acts{ padding-bottom: 28px; }
   .qr-acts .q-btn{ flex: 1 1 auto; }
 }
+
+/* ============================================================================
+   8 · THE PAPER — what an exam needs that a drill does not
+
+   The rest of this stylesheet was written for the exam and then sat unused
+   while the runner did instant feedback instead: the navigator, the flag, the
+   arrows, the one filled button, the marked-option states. All of it is above,
+   unchanged. What follows is only what the exam adds.
+   ========================================================================= */
+
+/* "Question 3" and "of 8" are one phrase and they sit together. `.quiz-count`
+   carries `margin-inline-start: auto` for the drill, where it is the only thing
+   on the right — here the clock claims that side, and two auto margins in one
+   flex row split the space between them and left the count stranded mid-header. */
+.exam .quiz-count{ margin-inline-start: 0; }
+/* On the screens that carry no count, Leave is the only thing on the right and
+   has to claim that side itself — `.quiz-count` was the one holding the auto
+   margin, so without it the button sat against the title. */
+.quiz-head > .quiz-leave:last-child{ margin-inline-start: auto; }
+
+/* Elapsed, not remaining. It counts up, it never turns a colour, and it never
+   ends the sitting — see lib/quiz.js for why that distinction is the whole
+   argument. Tabular so the digits do not dance. */
+.exam-clock{
+  margin-inline-start: auto;
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--t3);
+}
+.quiz-head .exam-clock + .quiz-leave{ margin-inline-start: 0; }
+
+/* The sentence that makes an exam an exam, said on every question rather than
+   once on the cover — because the question it answers is asked here. */
+.exam-quiet{
+  margin: 18px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--t3);
+}
+
+/* THE PAPER IS AS TALL AS THE PAPER.
+
+   `.quiz` asks for `min-height: 100dvh`, which is a viewport this screen does
+   not have: it lives inside `.deck`, the app's scroller, which is the viewport
+   MINUS the topbar and the chin — 650px of a 720px window. So every sitting
+   was born 70px taller than the room it had and always scrolled, before a
+   single question was drawn.
+
+   The exam sizes to its own content instead. The footer is sticky, so on a
+   long question it still pins to the bottom of the scroller; on a short one it
+   simply sits under the last option, which is where it belongs.
+
+   The drill keeps 100dvh. It is the same overshoot there, and worth fixing —
+   but not in the same change as the thing it would be blamed on. */
+.quiz.exam{ min-height: 0; }
+.exam .quiz-body{ padding-block: 22px 26px; }
+
+/* THE FOOTER CARRIES THREE THINGS AND THE MIDDLE ONE GROWS.
+
+   flag · navigator · move. The navigator is the only one whose width depends
+   on the paper, so it is the one allowed to wrap, and on a narrow screen it
+   takes a row of its own rather than squeezing the other two out. */
+.exam-foot{ flex-wrap: wrap; row-gap: 10px; }
+.exam-foot .nav{
+  flex: 1 1 260px;
+  padding: 0; border-top: 0;
+  justify-content: center;
+  gap: 6px;
+}
+@media (max-width: 720px){
+  .exam-foot .nav{ order: -1; flex-basis: 100%; justify-content: flex-start; }
+  .exam-foot .q-flag{ font-size: var(--fs-sm); }
+}
+
+/* The same squares, used inside the body rather than the footer. */
+.nav-inline{ padding: 0; border-top: 0; margin: 4px 0 18px; }
+
+.handin-set{ margin-top: 22px; }
+
+/* After the paper is in, the squares become the map of the review: the same
+   row, now carrying the mark. Never colour alone — right is filled and wrong
+   is hollow with a dashed edge, so the two are told apart by shape as well,
+   which matters on a licence where colour vision is tested. */
+.nav-sq[data-mark="right"]{
+  background: var(--ok); border-color: var(--ok); color: var(--on-mark);
+}
+.nav-sq[data-mark="wrong"]{
+  background: none; border-color: var(--bad); border-style: dashed; color: var(--t1);
+}
+
+/* Going through it: what you said, then what was right. Your answer first,
+   because that is the one you are looking for. */
+.q-rev-yours{ color: var(--t3); }
+.q-rev-right{ color: var(--t1); font-weight: 500; }
+.q-rev-q b{
+  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-variant-numeric: tabular-nums; color: var(--t3); font-weight: 400;
+  margin-inline-end: 6px;
+}

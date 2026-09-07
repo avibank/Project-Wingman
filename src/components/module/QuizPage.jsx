@@ -1,7 +1,8 @@
 import { takenScores, averagePct } from "../../lib/minimums.js";
+import { passAt, estimate } from "../../lib/quiz.js";
 import { useState } from "react";
 import { ChevronLeft, ArrowRight } from "lucide-react";
-import Review from "./Review.jsx";
+import Exam from "./Exam.jsx";
 import { nextAfterQuiz, nextLabel, nextWhere } from "./nextUp.js";
 import { upFrom } from "../../lib/lessonSurface.js";
 import "./module.css";
@@ -11,7 +12,7 @@ import "./module.css";
 // Library and the chapter row read one object, and a quiz you have sat twice
 // is still one quiz.
 export default function QuizPage({
-  minimums, onRecheck, module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswer, onRun }) {
+  minimums, onRecheck, module: mod, chapters, chapter, state, onBack, onOpenLesson, onOpenQuiz, onScore, autoStart, onOpenLessonById, onAnswers, onRun }) {
   // Every score in this module, in chapter order — the same helper the module
   // screen and the Library use, so the average on the results screen and the
   // average on the dial behind it cannot differ.
@@ -27,30 +28,42 @@ export default function QuizPage({
   if (running && chapter.questions?.length) {
     return (
       <div className="mscreen">
-        {/* The same component the re-check and put-right flows use. One
-            interaction, learned once. */}
-        <Review
+        {/* AN EXAM, NOT THE DRILL.
+
+            This used to be Review, the same runner the re-check and put-right
+            flows use — one interaction, learned once. It is a different
+            exercise and it stopped pretending otherwise. A drill hands you back
+            something you already got wrong and the moment of being wrong again
+            is the lesson; a chapter quiz is a rehearsal for a paper these
+            students sit under exam conditions, where you commit without being
+            told, change your mind, flag what you are unsure of, and find out at
+            the end. Exam.jsx's header carries the full argument. */}
+        <Exam
           key={chapter.id}
+          quizId={chapter.quizId || chapter.id}
           title={`${chapter.title} quiz`}
           questions={chapter.questions}
           isRetake={Boolean(score)}
           // Where you were, so leaving halfway and coming back returns you to
           // the question rather than to the cover.
           resumeAt={run?.at || 0}
-          // REPORTS THE PLACE ON EVERY QUESTION. Without this nothing writes
-          // pw-quiz-run, so "Back to question N" never appears and the Flight
-          // Deck's Resume cannot point at a quiz — it is what tells the rest of
-          // the app where you got to.
-          // The tally travels with the place. Without it, coming back to
-          // "Back to question N" restarted the count at zero and recorded a
-          // score for a sitting that had already been half answered.
-          onProgress={(at, tally) => onRun?.(chapter.id, {
+          /* REPORTS THE PLACE ON EVERY QUESTION. Without this nothing writes
+             pw-quiz-run, so "Back to question N" never appears and the Flight
+             Deck's Resume cannot point at a quiz — it is what tells the rest of
+             the app where you got to.
+
+             THE TALLY NO LONGER TRAVELS WITH THE PLACE, and that removes a
+             whole class of bug rather than fixing one. Under the drill the
+             running count lived in component state, so leaving halfway
+             destroyed it while `at` survived — and the count restarted at zero,
+             scoring every question before the resume point as wrong, permanently,
+             because only the first attempt is ever recorded. An exam holds the
+             ANSWERS, not a tally, and the answers are written to localStorage on
+             every keystroke. The score is computed from them at hand-in, so
+             there is nothing to carry and nothing to lose. */
+          onProgress={(at) => onRun?.(chapter.id, {
             at, total: chapter.questions.length,
-            right: tally?.right || 0,
-            toCaution: tally?.toCaution || 0,
-            toHolding: tally?.toHolding || 0,
           })}
-          resumeTally={run}
           onLeave={() => setRunning(false)}
           onOpenLesson={onOpenLessonById}
           // §6 — the two averages the needle sweeps between. `after` is the
@@ -64,7 +77,7 @@ export default function QuizPage({
           averageBefore={averagePct(takenAll.filter((t) => t.id !== chapter.id))}
           moduleName={mod?.name}
           onRecheck={onRecheck}
-          onAnswer={onAnswer}
+          onAnswers={onAnswers}
           onDone={(t) => {
             // FIRST ATTEMPT ONLY counts. A retake is labelled on screen and
             // must not move the needle, so it is not recorded as a score.
@@ -93,12 +106,14 @@ export default function QuizPage({
       </div>
 
       <div className="lbody" style={{ padding: "6px var(--pad) 0" }}>
-        <p className="cap">{count} questions</p>
+        <p className="cap">
+          {count} questions · pass mark {passAt(count)} · {estimate(count)}
+        </p>
         <p>
           {score
             ? "One score, wherever you reach it from — this quiz and the one in the Library are the same record."
             : chapter.questions?.length
-              ? "Answer, see why, move on. Nothing is timed and you can leave at any point."
+              ? `Answer all ${chapter.questions.length}, then hand it in — nothing is marked until you do. Flag anything you want to come back to. You can leave at any point and your answers keep.`
               : "The questions arrive with the content."}
         </p>
 
