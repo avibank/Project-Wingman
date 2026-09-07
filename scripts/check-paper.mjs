@@ -16,8 +16,16 @@ import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
 import {
   densityLevel, segmentsFor, sentenceAround,
-  applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS, DOCKS, TOOL_SIZES,
+  applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS, DOCKS, TOOL_SIZES, KINDS,
 } from "../src/lib/paperMarks.js";
+import {
+  INK_COLOURS, COLOUR_IDS, PEN_SIZES, thin, pathFor, toFraction, toPixels,
+  strokeHit, strokesUnder, colourOr, penWidth, THIN_TOLERANCE,
+} from "../src/lib/paperInk.js";
+import {
+  spreads, spreadOf, pagesToDraw, stepZoom, fitScale, findAll,
+  flattenOutline, ZOOM_STEPS, LAYOUTS, PAPER_LIGHTS, FITS,
+} from "../src/lib/paperView.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const read = (p) => readFileSync(join(ROOT, p), "utf8");
@@ -122,13 +130,12 @@ console.log("\nR5 — the cheapest mark is wordless");
   const reader = read("src/components/paper/PaperReader.jsx");
   ok("R5", "the highlight control is the first and largest in the selection bar",
      reader.indexOf("selbar-main") < reader.indexOf("selbar-act"));
-  // The body of highlightNow, on its own: it must reach addMark and must never
-  // reach the composer. Sliced to the function rather than a character window,
-  // so the assertion cannot drift when a line is added above it.
-  const body = reader.slice(reader.indexOf("const highlightNow"));
-  const fn = body.slice(0, body.indexOf("}, [sel, addMark]);"));
+  /* The body of markSelection, on its own: it must reach addMark and must never
+     reach setComposer. It was highlightNow until underline and strikethrough
+     joined it — three kinds, one gesture, still nothing to type. */
+  const fn = (reader.split("const markSelection = useCallback(")[1] || "").split("}, [")[0];
   ok("R5", "and it opens no composer",
-     /addMark\(\{ kind: "highlight"/.test(fn) && !/setComposer/.test(fn), fn.length ? "" : "not found");
+     /addMark\(\{ kind, start, end \}\)/.test(fn) && !/setComposer/.test(fn), fn.length ? "" : "not found");
 }
 
 /* ---- R6 · nothing arrives on the paper unbidden -------------------------- */
@@ -209,7 +216,9 @@ console.log("\nR9 and R12 — visibility is the server's decision");
   const annots = read("src/lib/annotations.js");
   ok("R9", "the client never selects annotations directly",
      !/from\("paper_annotations"\)\s*\.select/.test(annots)
-     && /rpc\("paper_annotations_for"/.test(annots));
+     /* paper_marks_for since 0017 — the shape was widened for the highlighter
+        colour, and a function's return columns cannot be widened in place. */
+     && /rpc\("paper_marks_for"/.test(annots));
 }
 
 /* ---- R10 · a question is a Snag, and it mirrors ------------------------- */
@@ -329,7 +338,8 @@ console.log("\nthe tool rail");
   ok("—", "one knob decides the size", /--rail-btn/.test(css)
      && TOOL_SIZES.every((z) => new RegExp(`\\[data-toolsize="${z.id}"\\]`).test(css)));
   ok("—", "where it sits is a per-device preference, not an account one",
-     /localStorage\.setItem\("pw-paper-dock"/.test(reader)
+     /write\("pw-paper-dock", dock\)/.test(reader)
+     && /localStorage\.setItem\(key, value\)/.test(reader)
      && !/progress\.set\("pw-paper-dock"/.test(reader));
 }
 
@@ -367,6 +377,275 @@ console.log("\nweight");
     const src = entry ? read(`dist/assets/${entry}`) : "";
     ok("—", "and pdf.js is not in the entry chunk", !/GlobalWorkerOptions/.test(src));
   }
+}
+
+
+/* ---- ink · coordinates are fractions of the page, never pixels ---------- */
+console.log("\nink — a stroke is fractions of the page");
+{
+  const box = { width: 800, height: 1000 };
+  const there = toFraction(200, 500, box, 0);
+  ok("ink", "a pointer becomes a fraction", there[0] === 0.25 && there[1] === 0.5, JSON.stringify(there));
+  const back = toPixels(there, box, 0);
+  ok("ink", "and comes back to the same pixel", back[0] === 200 && back[1] === 500);
+
+  // The point of storing fractions: the same stroke at a different zoom.
+  const bigger = toPixels(there, { width: 1600, height: 2000 }, 0);
+  ok("ink", "the same stroke doubles with the page", bigger[0] === 400 && bigger[1] === 1000);
+
+  // Rotation is undone on the way in and reapplied on the way out, so a stroke
+  // drawn on a sideways page turns with it instead of staying put.
+  for (const r of [0, 90, 180, 270]) {
+    const f = toFraction(200, 500, box, r);
+    const px = toPixels(f, box, r);
+    ok("ink", `rotation ${r} round-trips`, Math.abs(px[0] - 200) < 1e-9 && Math.abs(px[1] - 500) < 1e-9);
+  }
+
+  const sql = read("supabase/migrations/0017_paper_ink.sql");
+  const inkTable = (sql.match(/create table if not exists paper_ink \(([\s\S]*?)\n\);/) || [])[1] || "";
+  ok("R1", "ink lives in its own table", inkTable.length > 0);
+  ok("R1", "and that table has no anchor to smuggle a position into",
+     !/\banchor\b/.test(inkTable.replace(/--[^\n]*/g, "")), inkTable.slice(0, 60));
+  ok("R1", "and 0014's text-only anchor constraint is untouched",
+     !/drop constraint[^;]*anchor_is_text_only/i.test(sql));
+  const ink = read("src/lib/ink.js");
+  ok("ink", "strokes are read through the function, never a raw select",
+     /rpc\("paper_ink_for"/.test(ink) && !/from\("paper_ink"\)\s*\.select/.test(ink));
+}
+
+/* ---- ink · thinning keeps the shape ------------------------------------- */
+console.log("\nink — thinning");
+{
+  // A straight line sampled 200 times is two points, and both ends survive.
+  const line = Array.from({ length: 200 }, (_, i) => [i / 199, i / 199]);
+  const thinned = thin(line);
+  ok("ink", "a straight line collapses to its ends", thinned.length === 2, `${thinned.length}`);
+  ok("ink", "the first and last point are never dropped",
+     thinned[0][0] === 0 && thinned.at(-1)[0] === 1);
+
+  // A corner is shape, and shape is kept.
+  const corner = [[0, 0], [0.25, 0], [0.5, 0], [0.5, 0.25], [0.5, 0.5]];
+  ok("ink", "a corner survives", thin(corner).length === 3, JSON.stringify(thin(corner)));
+
+  // Nothing thrown away is further than the tolerance from the line kept.
+  const wobble = Array.from({ length: 500 }, (_, i) =>
+    [i / 499, Math.sin(i / 8) * 0.02 + 0.5]);
+  const cut = thin(wobble);
+  ok("ink", "a wobbly stroke thins but keeps its wobble",
+     cut.length < wobble.length / 2 && cut.length > 8, `${wobble.length} -> ${cut.length}`);
+
+  // The recursive form of this blows a stack on exactly the input you cannot
+  // reproduce: one long, fast stroke. The iterative form does not.
+  const huge = Array.from({ length: 60000 }, (_, i) => [i / 59999, (i % 97) / 3000]);
+  let survived = true;
+  try { thin(huge); } catch { survived = false; }
+  ok("ink", "60,000 points do not blow the stack", survived);
+  ok("ink", "a stroke of one point is left alone", thin([[0.5, 0.5]]).length === 1);
+}
+
+/* ---- ink · the path is a curve, and the eraser hits segments ------------- */
+console.log("\nink — drawing and erasing");
+{
+  const box = { width: 100, height: 100 };
+  ok("ink", "three points make a curve, not a polyline",
+     /C /.test(pathFor([[0, 0], [0.5, 0.5], [1, 0]], box)));
+  ok("ink", "two points make a line", /^M [^C]*L/.test(pathFor([[0, 0], [1, 1]], box)));
+  ok("ink", "one point still draws something a round cap can show",
+     pathFor([[0.5, 0.5]], box).length > 0);
+  ok("ink", "no points draw nothing", pathFor([], box) === "");
+
+  /* The eraser tests the SEGMENTS, not the stored points. A long line drawn
+     with two points would otherwise only be erasable at its ends — which is
+     exactly the shape thinning produces. */
+  const stroke = { id: 1, page: 1, width: 0.003, points: [[0, 0], [1, 1]] };
+  ok("ink", "the middle of a two-point line is erasable",
+     strokeHit(stroke, [0.5, 0.5], 0.01));
+  ok("ink", "and a miss is a miss", !strokeHit(stroke, [0.1, 0.9], 0.01));
+  ok("ink", "the eraser only reaches the page it is on",
+     strokesUnder([stroke], [0.5, 0.5], 0.01, 2).length === 0
+     && strokesUnder([stroke], [0.5, 0.5], 0.01, 1).length === 1);
+
+  const reader = read("src/components/paper/PaperReader.jsx");
+  ok("ink", "the eraser only ever removes strokes this account drew",
+     /s\.author_id === me/.test(reader));
+  const page = read("src/components/paper/PaperInk.jsx");
+  ok("ink", "the live stroke is written to the DOM, not through setState",
+     /setAttribute\("d"/.test(page) && !/setPoints|useState\(\[\]\)/.test(page));
+  ok("ink", "and every position the pointer recorded is used, not just the last",
+     /getCoalescedEvents/.test(page));
+  ok("ink", "the layer is inert unless a drawing tool is armed",
+     /data-armed=\{drawingTool \? "" : undefined\}/.test(page));
+}
+
+/* ---- the palette · names are stored, colours are decided in CSS --------- */
+console.log("\nthe palette");
+{
+  const sql = read("supabase/migrations/0017_paper_ink.sql");
+  const css = read("src/components/paper/paper.css");
+  for (const c of COLOUR_IDS) {
+    ok("colour", `the database knows ${c}`, new RegExp(`'${c}'`).test(sql));
+    ok("colour", `and the stylesheet paints ${c}`, new RegExp(`--ink-${c}:`).test(css));
+  }
+  ok("colour", "eight of them, and no more", INK_COLOURS.length === 8);
+  ok("colour", "an unknown name reads as the default rather than as nothing",
+     colourOr("chartreuse") === "yellow" && colourOr(null) === "yellow");
+
+  const annots = read("src/lib/annotations.js");
+  ok("colour", "the client sends a name, never a colour",
+     /colour: colour \|\| null/.test(annots) && !/oklch|#[0-9a-f]{3}/i.test(annots));
+  ok("R14", "and the palette is OKLCH like everything else here",
+     (css.match(/--ink-[a-z]+:\s*oklch/g) || []).length === 8);
+
+  /* Graphite is the one colour that has to move: it is defined by being darker
+     than paper, and in night mode the paper is dark. */
+  ok("colour", "graphite becomes chalk when the page is inverted",
+     /\[data-light="night"\][\s\S]{0,120}data-colour="graphite"/.test(css));
+}
+
+/* ---- five nibs, and a width that is a fraction of the page -------------- */
+console.log("\nthe nib");
+{
+  ok("nib", "five sizes, smallest first",
+     PEN_SIZES.length === 5 && PEN_SIZES.every((p, i) => i === 0 || p.w > PEN_SIZES[i - 1].w));
+  ok("nib", "a width is a fraction of the page, not a pixel count",
+     PEN_SIZES.every((p) => p.w > 0 && p.w < 0.05));
+  ok("nib", "an unknown nib falls back rather than vanishing", penWidth("nope") === PEN_SIZES[2].w);
+  const sql = read("supabase/migrations/0017_paper_ink.sql");
+  ok("nib", "and the database refuses a width that could only be pixels",
+     /width > 0 and width < 0\.2/.test(sql));
+}
+
+/* ---- two more ways to mark the same passage ----------------------------- */
+console.log("\nunderline and strikethrough");
+{
+  ok("marks", "six kinds now, and they are the same six in the database",
+     KINDS.join(",") === "highlight,underline,strikethrough,note,question,correction");
+  const sql = read("supabase/migrations/0017_paper_ink.sql");
+  for (const k of KINDS) ok("marks", `the database allows ${k}`, new RegExp(`'${k}'`).test(sql));
+
+  // A passage can be highlighted AND struck through by the same person, and
+  // both are true at once — so decorations stack rather than compete.
+  const seg = segmentsFor([
+    { id: 1, kind: "highlight", colour: "blue", close: true, start: 0, end: 10 },
+    { id: 2, kind: "strikethrough", colour: "red", close: true, start: 0, end: 10 },
+  ]).segments[0];
+  ok("marks", "the fill leads and the line is drawn over it",
+     seg.kind === "highlight" && seg.deco.includes("strike"));
+  ok("marks", "the colour comes from the mark that leads, not from another one",
+     seg.colour === "blue");
+
+  // The crowd stays one colour on purpose: eleven people's greens and yellows
+  // averaged together would be a smear rather than information.
+  const crowd = segmentsFor([
+    { id: 1, kind: "highlight", colour: "pink", close: false, start: 0, end: 5 },
+    { id: 2, kind: "highlight", colour: "green", close: false, start: 0, end: 5 },
+  ]).segments[0];
+  ok("marks", "the module's density carries no colour of its own", crowd.colour === null);
+}
+
+/* ---- the view · zoom, layout and light ---------------------------------- */
+console.log("\nthe view");
+{
+  ok("view", "three zooms up and three down land back where they started",
+     stepZoom(stepZoom(stepZoom(stepZoom(stepZoom(stepZoom(1, 1), 1), 1), -1), -1), -1) === 1);
+  ok("view", "and it stops rather than running off the end",
+     stepZoom(ZOOM_STEPS[0], -1) === ZOOM_STEPS[0]
+     && stepZoom(ZOOM_STEPS.at(-1), 1) === ZOOM_STEPS.at(-1));
+
+  /* A book opens with the cover alone. Pairing 1-2 puts every spread one page
+     out for the whole document, which is wrong on anything with a cover. */
+  ok("view", "a spread opens with the cover by itself",
+     JSON.stringify(spreads(7)) === "[[1],[2,3],[4,5],[6,7]]");
+  ok("view", "an odd last page is alone too", JSON.stringify(spreads(4).at(-1)) === "[4]");
+  ok("view", "and a page knows which spread it is in",
+     spreadOf(1) === 0 && spreadOf(2) === 1 && spreadOf(3) === 1 && spreadOf(4) === 2);
+
+  ok("view", "continuous keeps a window either side",
+     JSON.stringify(pagesToDraw("scroll", 5, 14)) === "[3,4,5,6,7]");
+  ok("view", "and a paged layout does not render thirteen pages nobody is looking at",
+     pagesToDraw("single", 5, 14).length === 3);
+
+  /* Rotation swaps the page's sides BEFORE anything is divided. Leaving that
+     out is why a landscape page turned upright fits wrong. */
+  const port = fitScale("width", { w: 600, h: 800, rotated: false }, { width: 1048, height: 800 });
+  const land = fitScale("width", { w: 600, h: 800, rotated: true }, { width: 1048, height: 800 });
+  ok("view", "a turned page fits by its new width", port > land);
+  ok("view", "two across get half the room each",
+     fitScale("width", { w: 600, h: 800, rotated: false }, { width: 1248, height: 800 }, { x: 48, y: 48 }, 2)
+     === fitScale("width", { w: 600, h: 800, rotated: false }, { width: 648, height: 800 }, { x: 48, y: 48 }, 1));
+  ok("view", "actual size is one, by definition", fitScale("actual", { w: 600, h: 800 }, { width: 100, height: 100 }) === 1);
+
+  ok("view", "three layouts and four lights",
+     LAYOUTS.length === 3 && PAPER_LIGHTS.length === 4 && FITS.length === 3);
+  const css = read("src/components/paper/paper.css");
+  ok("view", "the light falls on the picture and not on the marks",
+     /light === "day" \? undefined : \{ filter: lightFilter\(light\) \}/.test(read("src/components/paper/PaperPage.jsx")));
+  ok("view", "and the ground follows it, so the surround is never the brightest thing",
+     /\[data-light="night"\] \.pscroll/.test(css));
+}
+
+/* ---- find · the two options every find bar has -------------------------- */
+console.log("\nfind");
+{
+  const t = "Bolt the bolted bolt. BOLT.";
+  ok("find", "case is ignored by default", findAll(t, "bolt").length === 4);
+  ok("find", "until it is not", findAll(t, "bolt", { matchCase: true }).length === 2);
+  ok("find", "whole words means a boundary, not a space",
+     findAll(t, "bolt", { wholeWord: true }).length === 3);
+  ok("find", "an empty query finds nothing rather than everything",
+     findAll(t, "   ").length === 0);
+}
+
+/* ---- the outline is the paper's own, flattened -------------------------- */
+console.log("\nthe contents");
+{
+  const flat = flattenOutline([
+    { title: "One", dest: "a", items: [{ title: "One a", dest: "b", items: [] }] },
+    { title: "Two", dest: "c" },
+  ]);
+  ok("outline", "a tree becomes a list with a depth on each row",
+     flat.map((r) => `${r.depth}:${r.title}`).join(" ") === "0:One 1:One a 0:Two");
+  ok("outline", "a heading with no title still has one", flattenOutline([{ dest: "x" }])[0].title === "Untitled");
+  const out = read("src/components/paper/PaperOutline.jsx");
+  ok("R11", "and a paper without one says what to do instead of stating a zero",
+     /carries no contents of its own/.test(out) && !/\b0 (headings|sections)\b/.test(out));
+}
+
+/* ---- the rail carries ten tools without eating the window --------------- */
+console.log("\nthe rail, at ten tools");
+{
+  const reader = read("src/components/paper/PaperReader.jsx");
+  const css = read("src/components/paper/paper.css");
+  ok("rail", "ten tools in four groups",
+     (reader.match(/\{ id: "[a-z]+", group: \d/g) || []).length === 10);
+  /* Every button in this app is at least 44px on its shortest side (§12), so a
+     single column of ten is 659px of a 720px window. Two abreast is 7 rows. */
+  ok("rail", "and it runs two abreast rather than shrinking the hit targets",
+     /grid-template-columns: repeat\(2, var\(--rail-btn\)\)/.test(css)
+     && !/\.ptoolbtn[^{]*\{[^}]*min-height:\s*(2\d|3\d)px/.test(css));
+  ok("rail", "the armed tool's settings appear beside it and no others exist",
+     /if \(tool === "select"\) return null;/.test(reader));
+  ok("rail", "and the tray clears the sidebar instead of covering the thumbnails",
+     /--side-w/.test(css) && /left: calc\(100% \+ var\(--side-w\)/.test(css));
+
+  /* Naming panels one at a time is a rule that breaks the next time one is
+     added, and it did: Contents and Queue opened at the full width of the
+     window because the grid rule listed only thumbs and marks. */
+  ok("rail", "the sidebar is open or it is not — no panel is named twice",
+     /\.paper:not\(\[data-rail="none"\]\) \{ --side-w/.test(css));
+}
+
+/* ---- a selection offset means two different things ---------------------- */
+console.log("\nselection");
+{
+  const reader = read("src/components/paper/PaperReader.jsx");
+  /* In a text node an offset is a character; in an ELEMENT it is a child-node
+     index. A double-click, a triple-click and a drag that lands on a span
+     boundary all give element endpoints, and treating the index as a character
+     count silently truncates the mark to its first letter. */
+  ok("select", "an element endpoint is converted, not trusted",
+     /const isText = node\?\.nodeType === 3/.test(reader)
+     && /childNodes[\s\S]{0,160}textContent\?\.length/.test(reader));
 }
 
 console.log(`\npaper: ${pass} passed, ${fails.length} failed`);

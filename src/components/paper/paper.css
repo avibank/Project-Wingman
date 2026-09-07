@@ -30,9 +30,10 @@
 .paper {
   position: fixed; inset: 0; z-index: 50;
   /* One knob for the rail's size, so the column, the buttons and the icons
-     cannot disagree about how big "large" is. */
+     cannot disagree about how big "large" is. The rail runs two abreast, so the
+     column is two of them plus the gap and the padding. */
   --rail-btn: 34px;
-  --rail-w: calc(var(--rail-btn) + 12px);
+  --rail-w: calc(var(--rail-btn) * 2 + 14px);
   display: grid;
   grid-template-columns: var(--rail-w) 1fr;
   grid-template-areas:
@@ -190,18 +191,39 @@
 }
 
 /* ---------------------------------------------------------------- the body */
-.pbody { flex: 1 1 auto; display: grid; grid-template-columns: 1fr; min-height: 0; }
-.paper[data-rail="thumbs"] .pbody,
-.paper[data-rail="marks"] .pbody { grid-template-columns: 208px 1fr; }
+/* ONE VARIABLE FOR THE SIDEBAR'S WIDTH, and it is not tidiness.
+
+   This rule used to name two of the four panels — thumbs and marks — so the
+   other two got `1fr` and opened at the full width of the window with the
+   document squeezed out beside them. Listing panels by name is a rule that
+   breaks every time one is added, which is exactly what happened when Contents
+   arrived. Now the panel is open or it is not. */
+.paper { --side-w: 0px; }
+.paper:not([data-rail="none"]) { --side-w: 248px; }
+.pbody {
+  position: relative;
+  flex: 1 1 auto; display: grid; min-height: 0;
+  grid-template-columns: var(--side-w) 1fr;
+}
 
 .prail {
   border-right: 1px solid var(--line);
   background: var(--panel);
   display: flex; flex-direction: column; min-height: 0;
 }
-.prail-tabs { display: flex; border-bottom: 1px solid var(--line); }
+/* `flex: none` is load-bearing, not tidiness. Giving this row `overflow-x:
+   auto` so four tabs can scroll on a narrow rail ALSO changes its automatic
+   minimum size from `auto` to zero — that is what the spec says overflow does —
+   so as a flex item in a column beside a scrolling list it was squashed to a
+   1px sliver with four 44px buttons still inside it. */
+.prail-tabs {
+  flex: none; display: flex; border-bottom: 1px solid var(--line);
+  overflow-x: auto; scrollbar-width: none;
+}
+.prail-tabs::-webkit-scrollbar { display: none; }
 .prail-tabs button {
-  flex: 1; min-height: 40px; background: transparent; border: none;
+  flex: 1 1 auto; min-width: 0; padding: 0 9px; min-height: 40px;
+  background: transparent; border: none; white-space: nowrap;
   border-bottom: 2px solid transparent; color: var(--t3);
   font-size: 13px; cursor: pointer;
 }
@@ -504,15 +526,50 @@
    phone is. Between 768 and 900 the rail and a page are tight but workable,
    and the rail closes. */
 @media (max-width: 768px) {
-  .paper[data-rail="thumbs"] .pbody,
-  .paper[data-rail="marks"] .pbody { grid-template-columns: 1fr; }
-  /* The rail goes horizontal on a phone: a 46px column is a tenth of the
-     screen, and thumbs are already reachable from the panel toggle. */
-  .paper { grid-template-columns: 1fr;
-    grid-template-areas: "bar" "find" "rail" "body"; }
-  .ptools { flex-direction: row; justify-content: space-around; padding: 4px 6px;
-    border-right: none; border-bottom: 1px solid var(--line); }
-  .prail { position: absolute; inset: 52px 0 0 0; z-index: 8; border-right: none; }
+  .paper:not([data-rail="none"]) { --side-w: 0px; }
+  .pbody { grid-template-columns: 1fr; }
+  /* THE RAIL GOES TO THE BOTTOM, where the thumb is.
+
+     Two changes here, and the first one was a real bug: this rule listed four
+     areas while grid-template-rows still declared three, so `1fr` landed on the
+     RAIL and the document got an implicit `auto` row. The tools took 450px of
+     an 812px screen and the page sat in whatever was left.
+
+     The second is deliberate. On a laptop the tools belong beside the document
+     because the pointer is already there; on a phone the reach is the whole
+     argument, and every app that draws on a phone puts its tools within a
+     thumb's travel of the bottom edge. */
+  .paper {
+    grid-template-columns: 1fr;
+    grid-template-areas: "bar" "find" "body" "rail";
+    grid-template-rows: auto auto 1fr auto;
+  }
+  .ptools { flex-direction: row; justify-content: flex-start; padding: 4px 6px;
+    overflow-x: auto; scrollbar-width: none;
+    border-right: none; border-top: 1px solid var(--line);
+    padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+  .ptools::-webkit-scrollbar { display: none; }
+  /* Four groups of two columns is 350px of a 390px screen. In a line they are
+     ten buttons that scroll, which is what a phone does with a toolbar. */
+  .ptoolgroup { grid-auto-flow: column; grid-template-columns: none;
+    padding: 0 5px; border-bottom: none; border-right: 1px solid var(--line); }
+  .ptoolgroup:last-of-type { border-right: none; }
+  /* The app's floating "Something's wrong here" bubble is z-index 55 and pinned
+     to the bottom left, which on a phone is exactly where the tool rail now
+     lives — it covered three tools. Lifted rather than hidden: the newest
+     screen in the app is the last one that should lose its way to report a
+     fault. */
+  .app:has(.paper) .rpt { bottom: 74px; }
+
+  /* And the tray sits above the rail rather than under the thumb holding it. */
+  .ptray { position: absolute; top: auto; bottom: calc(100% + 8px);
+    left: 8px; right: 8px; width: auto; z-index: 14; }
+  /* The panel becomes an overlay over the DOCUMENT, and it is positioned
+     against the document's own box rather than against the window with a 52px
+     guess. The bar wraps to two rows on a phone, so that number was wrong the
+     moment the page controls moved onto their own line — the panel started
+     halfway up the toolbar and covered it. */
+  .prail { position: absolute; inset: 0; z-index: 8; border-right: none; }
   .pbar { flex-wrap: wrap; padding: 6px 8px; gap: 2px; }
   .pbar-c { order: 3; width: 100%; justify-content: center; padding-top: 2px; }
   /* One row for the two groups, not two. Both were `flex: 1 1 auto`, so each
@@ -539,3 +596,283 @@
   .ptool, .pzoom, .mrow { transition: none; }
   .pscroll { scroll-behavior: auto; }
 }
+
+/* =============================================================================
+   THE INK PALETTE — the third colour category, and it is deliberate.
+
+   The house style has two: a module hue for wayfinding (where am I) and the
+   presence amber for what is live and what the one action on a screen is. Ink
+   is neither. It is what the reader put on the page themselves, and it must not
+   move when the app re-tints — a livery change that turned somebody's yellow
+   highlight green would be the app editing their notes.
+
+   So these eight are fixed, and they are the only fixed colours in the reader.
+   Everything else on this screen still derives from the livery, density
+   included: the crowd is drawn in the accent at low alpha precisely BECAUSE it
+   is the app talking, not a person.
+
+   Written in OKLCH like everything else here — R14 forbids a hex literal in
+   this file and check:paper fails the build on one. Stated as raw channels so a
+   highlight can take the same colour at a fraction of the alpha a pen takes it
+   at, without declaring sixteen tokens to say eight things.
+   ========================================================================== */
+.paper {
+  --ink-yellow:   oklch(.87 .165 96);
+  --ink-green:    oklch(.79 .165 148);
+  --ink-blue:     oklch(.70 .150 245);
+  --ink-pink:     oklch(.74 .175 348);
+  --ink-orange:   oklch(.77 .170 62);
+  --ink-purple:   oklch(.64 .180 300);
+  --ink-red:      oklch(.62 .205 27);
+  --ink-graphite: oklch(.42 .020 250);
+}
+.paper [data-colour="yellow"]   { --ink: var(--ink-yellow); }
+.paper [data-colour="green"]    { --ink: var(--ink-green); }
+.paper [data-colour="blue"]     { --ink: var(--ink-blue); }
+.paper [data-colour="pink"]     { --ink: var(--ink-pink); }
+.paper [data-colour="orange"]   { --ink: var(--ink-orange); }
+.paper [data-colour="purple"]   { --ink: var(--ink-purple); }
+.paper [data-colour="red"]      { --ink: var(--ink-red); }
+.paper [data-colour="graphite"] { --ink: var(--ink-graphite); }
+
+/* GRAPHITE IS THE ONE COLOUR THAT HAS TO MOVE.
+
+   Night inverts the page, so the paper is dark. Every other colour in the
+   palette still reads against it; a pencil does not, because a pencil is
+   defined by being darker than paper. It becomes chalk instead — the same
+   thing the same person would reach for on a blackboard, and the only honest
+   answer to "draw me a dark line on a dark page". */
+.paper[data-light="night"] [data-colour="graphite"],
+.paper[data-light="dim"] [data-colour="graphite"] { --ink: oklch(.90 .012 250); }
+
+/* --------------------------------------------------------------- the marks */
+/* A highlight takes the ink at the alpha a highlighter actually lays down: you
+   can still read the words through it, which is the whole point of one. */
+.pp-mark[data-kind="highlight"][data-colour],
+.pp-mark[data-kind="note"][data-colour],
+.pp-mark[data-kind="question"][data-colour] { background: oklch(from var(--ink) l c h / .30); }
+.pp-mark[data-active][data-colour] { background: oklch(from var(--ink) l c h / .46); }
+
+/* A note keeps its solid underline and a question keeps its dashed one — the
+   shape says which it is, so the colour is free to say whose it is. */
+.pp-mark[data-kind="note"][data-colour] { box-shadow: inset 0 -2px 0 0 var(--ink); }
+.pp-mark[data-kind="question"][data-colour] {
+  box-shadow: inset 0 -2px 0 0 var(--ink);
+  border-bottom: 1px dashed var(--ink);
+}
+
+/* An underline and a strike carry no fill at all. Filling behind them would
+   make three tools that all look like a highlighter with an extra line. */
+.pp-mark[data-kind="underline"] { background: none; box-shadow: inset 0 -2px 0 0 var(--ink, var(--active)); }
+.pp-mark[data-kind="strikethrough"] { background: none; }
+.pp-mark[data-kind="strikethrough"]::after,
+.pp-mark[data-deco~="strike"]::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: 1.5px; background: var(--ink, var(--t1)); transform: translateY(-50%);
+}
+.pp-mark[data-deco~="underline"] { box-shadow: inset 0 -2px 0 0 var(--ink, var(--active)); }
+
+/* ------------------------------------------------------------------ the ink */
+.pp-ink {
+  position: absolute; inset: 0; z-index: 2;
+  pointer-events: none; touch-action: pan-y;
+}
+/* Only a drawing tool takes the pointer. Every other moment this layer is not
+   in the way of selecting a word, and a stray click still reaches the text. */
+.pp-ink[data-armed] { pointer-events: auto; cursor: crosshair; touch-action: none; }
+.pp-ink[data-tool="eraser"] { cursor: cell; }
+.ink-stroke {
+  fill: none; stroke: var(--ink, var(--ink-graphite));
+  stroke-linecap: round; stroke-linejoin: round;
+}
+/* A marker is translucent and multiplies, so overlapping strokes darken the way
+   a real one does and the words underneath survive it. */
+.ink-stroke[data-tool="marker"] { stroke-opacity: .32; mix-blend-mode: multiply; }
+.paper[data-light="night"] .ink-stroke[data-tool="marker"] { mix-blend-mode: screen; }
+/* While a drawing tool is armed the words stop taking the pointer, or the first
+   stroke comes out as a text selection instead of a line. */
+.paper[data-drawing] .pp-text { pointer-events: none; user-select: none; }
+
+/* ------------------------------------------------------- the properties tray
+   Drawboard's idea and the reason this screen has one toolbar instead of three:
+   the armed tool's settings appear beside the rail, and no others exist. It
+   floats over the document rather than taking a band, because every pixel of
+   furniture is a pixel of paper. */
+.ptools { position: relative; overflow: visible; }
+/* Two abreast, group by group, with a hairline between groups. See the note in
+   PaperReader.jsx: one column of ten is 659px of a 720px window. */
+.ptoolgroup {
+  display: grid; grid-template-columns: repeat(2, var(--rail-btn)); gap: 2px;
+  padding: 5px 0; border-bottom: 1px solid var(--line);
+}
+.ptoolgroup:last-of-type { border-bottom: none; }
+.paper[data-dock="right"] .ptoolgroup { grid-template-columns: repeat(2, var(--rail-btn)); }
+.paper[data-dock="top"] .ptoolgroup {
+  grid-auto-flow: column; grid-template-columns: none; padding: 0 6px;
+  border-bottom: none; border-right: 1px solid var(--line);
+}
+.paper[data-dock="top"] .ptoolgroup:last-of-type { border-right: none; }
+
+.ptray {
+  position: absolute; top: 6px; left: calc(100% + var(--side-w) + 8px);
+  z-index: 12; width: 226px;
+  display: grid; gap: 9px; padding: 11px;
+  background: linear-gradient(var(--panel), var(--panel)), var(--ground);
+  border: 1px solid var(--line); border-radius: var(--r-panel, 10px);
+}
+/* PAST THE SIDEBAR, NOT ON TOP OF IT.
+
+   The tray floats over the document, which is right — it belongs to the tool in
+   your hand and it should not cost the page a band of its own. But anchored to
+   the rail it landed on the page thumbnails, which is the one thing on this
+   screen that is unreadable when something is over it. So it clears the
+   sidebar's width when the sidebar is open, and sits against the rail when it
+   is not. */
+/* On the right the sidebar is on the FAR side of the document, so the tray
+   already clears it by floating inward. */
+.paper[data-dock="right"] .ptray { left: auto; right: calc(100% + 8px); }
+.paper[data-dock="top"] .ptray { top: calc(100% + 8px); left: calc(var(--side-w) + 8px); }
+
+.tray-name { margin: 0; font-size: 13px; font-weight: 500; color: var(--t1); }
+.tray-hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--t3); }
+/* THE TARGET IS 44px AND THE DOT IS 22px, which is not a compromise — it is how
+   a colour picker is supposed to work. §12's floor is about fingers, and a
+   finger needs the whole square; an eye only needs the dot. Drawing the swatch
+   AS the button would have meant either a 44px disc the size of a thumbnail or
+   a 22px target nobody can hit. */
+.tray-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+
+.swatch {
+  display: grid; place-items: center; padding: 0; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
+}
+.swatch::before {
+  content: ""; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--ink); border: 1px solid oklch(from var(--ink) calc(l - .14) c h);
+}
+.swatch:hover { background: var(--raised); }
+.swatch[aria-checked="true"] { background: var(--raised); border-color: var(--ink); }
+.swatch:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+.tray-nibs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+.nib {
+  display: grid; place-items: center; padding: 0;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
+  cursor: pointer;
+}
+.nib span { display: block; border-radius: 50%; background: var(--t2); }
+.nib:hover { background: var(--raised); }
+.nib[aria-checked="true"] { background: var(--raised); border-color: var(--line); }
+.nib[aria-checked="true"] span { background: var(--t1); }
+.nib:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
+
+.tray-ring { display: grid; gap: 4px; font-size: 13px; color: var(--t3); }
+.tray-ring select {
+  background: var(--raised); color: var(--t1); border: 1px solid var(--line);
+  border-radius: var(--r-control); padding: 5px 6px; font: inherit; font-size: 13px;
+}
+/* The armed tool wears the colour it will lay down, so the rail answers "what
+   happens if I drag now" without opening the tray. */
+.ptoolbtn[data-colour] { box-shadow: inset 2px 0 0 var(--ink); color: var(--t1); }
+.paper[data-dock="top"] .ptoolbtn[data-colour] { box-shadow: inset 0 2px 0 var(--ink); }
+
+/* ---------------------------------------------------------------- the menus */
+.pmenu-head {
+  margin: 2px 10px 4px; font-size: 13px; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.pmenu-tick { margin-left: auto; }
+.pmenu-zoom, .pmenu-view { max-height: min(70vh, 560px); overflow-y: auto; }
+
+.lights { display: flex; gap: 6px; padding: 2px 8px 4px; }
+.light {
+  flex: 1 1 0; display: grid; justify-items: center; gap: 4px; padding: 7px 2px;
+  background: transparent; border: 1px solid var(--line); border-radius: var(--r-control);
+  color: var(--t3); font: inherit; font-size: 13px; cursor: pointer; min-height: 46px;
+}
+.light:hover { background: var(--raised); color: var(--t1); }
+.light[aria-checked="true"] { color: var(--t1); border-color: var(--active); }
+.light-chip { width: 100%; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
+.light[data-light="day"] .light-chip { background: oklch(.98 0 0); }
+.light[data-light="sepia"] .light-chip { background: oklch(.90 .045 78); }
+.light[data-light="dim"] .light-chip { background: oklch(.72 .005 250); }
+.light[data-light="night"] .light-chip { background: oklch(.22 .01 250); }
+
+/* The ground follows the light. A bright surround beside a dimmed page is worse
+   than either on its own — the eye adapts to the brightest thing in view, and
+   at midnight that would be the desk rather than the paper. */
+.paper[data-light="dim"] .pscroll { background: oklch(from var(--ground) calc(l * .88) c h); }
+.paper[data-light="night"] .pscroll { background: oklch(from var(--ground) calc(l * .72) c h); }
+/* The thumbnails go with it. A column of bright white cards beside a dimmed
+   page is the exact failure the paragraph above is about — the eye adapts to
+   the brightest thing in view, and leaving the rail alone would make it the
+   rail. */
+.paper[data-light="dim"] .thumb-shot canvas { filter: brightness(.82) contrast(1.03); }
+.paper[data-light="night"] .thumb-shot canvas { filter: invert(1) hue-rotate(180deg) brightness(.9); }
+.paper[data-light="sepia"] .thumb-shot canvas { filter: sepia(.34) brightness(.97) saturate(.9); }
+
+/* ----------------------------------------------------------------- the find */
+.findopt {
+  min-height: 30px; padding: 0 8px; font: inherit; font-size: 13px;
+  font-family: var(--font-mono); background: transparent; color: var(--t3);
+  border: 1px solid transparent; border-radius: var(--r-control); cursor: pointer;
+}
+.findopt:hover { background: var(--raised); color: var(--t1); }
+.findopt[aria-pressed="true"] { background: var(--raised); color: var(--t1); border-color: var(--active); }
+
+/* -------------------------------------------------------------- the contents */
+.outline { list-style: none; margin: 0; padding: 4px 0; display: grid; gap: 1px; }
+.outline-row {
+  display: block; width: 100%; text-align: left; padding: 7px 10px 7px 0;
+  background: none; border: none; color: var(--t2);
+  font: inherit; font-size: 13px; line-height: 1.4; cursor: pointer; min-height: 32px;
+}
+.outline-row:hover { background: var(--raised); color: var(--t1); }
+.outline-row[data-bold] { color: var(--t1); font-weight: 500; }
+
+/* ---------------------------------------------------------------- the sheets */
+.psheet {
+  width: min(520px, 92vw); max-height: 76vh; overflow-y: auto;
+  display: grid; gap: 12px; padding: 16px;
+  background: linear-gradient(var(--panel), var(--panel)), var(--ground);
+  border: 1px solid var(--line); border-radius: var(--r-panel, 12px);
+}
+.psheet-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.psheet-top h2 { margin: 0; font-size: 15px; font-weight: 500; color: var(--t1); }
+.psheet-note { margin: 0; font-size: 13px; line-height: 1.55; color: var(--t3); }
+.keys { margin: 0; display: grid; gap: 1px; background: var(--line); }
+.keys > div {
+  display: flex; align-items: baseline; gap: 14px;
+  padding: 9px 11px; background: var(--panel);
+}
+.keys dt {
+  flex: 0 0 152px; font-family: var(--font-mono); font-size: 13px;
+  font-variant-numeric: tabular-nums; color: var(--t1);
+}
+.keys dd { margin: 0; font-size: 13px; line-height: 1.45; color: var(--t2); }
+
+/* --------------------------------------------------------------- the layouts */
+/* Continuous is the default and needs nothing. The paged layouts simply stop
+   showing the pages you have not turned to — one DOM, three arrangements, so
+   marks and measuring have exactly one code path. */
+.pslot[data-off] { display: none; }
+.paper[data-layout="spread"] .pcol {
+  grid-auto-flow: column; justify-content: center; align-items: start;
+}
+.paper[data-layout="single"] .pscroll,
+.paper[data-layout="spread"] .pscroll { padding-top: 22px; }
+
+/* ------------------------------------------------------- the selection bar */
+.selbar-ico {
+  display: grid; place-items: center; min-width: 30px; min-height: 30px;
+  background: transparent; border: none; border-radius: var(--r-control);
+  color: var(--t2); cursor: pointer;
+}
+.selbar-ico:hover { background: var(--raised); color: var(--t1); }
+/* The highlight button wears the colour it will lay down. */
+.selbar-main[data-colour] { box-shadow: inset 0 -2px 0 0 var(--ink); }
+
+/* Colour reaches the lists too, so a mark is recognisable in the rail as the
+   one you made on the page. */
+.mrow[data-colour] { border-left-color: var(--ink); }
+.mcardp[data-colour] { border-left-color: var(--ink); }

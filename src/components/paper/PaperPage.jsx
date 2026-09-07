@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { itemsInRange } from "../../lib/paperText.js";
 import { pdfjs } from "../../lib/paperText.js";
+import { lightFilter } from "../../lib/paperView.js";
+import PaperInk from "./PaperInk.jsx";
 
 /* =============================================================================
    One page of the paper: the picture, the words, and the marks on them.
@@ -9,6 +11,7 @@ import { pdfjs } from "../../lib/paperText.js";
 
      canvas    the page as pdf.js draws it
      marks     highlights and density, painted UNDER the words
+     ink       freehand strokes, over the picture and under the words
      text      pdf.js's transparent text layer, on top, so selection works
 
    Putting the marks above the text would tint the letters; putting them below
@@ -25,7 +28,8 @@ import { pdfjs } from "../../lib/paperText.js";
 
 export default function PaperPage({
   doc, model, pageNumber, scale, rotation = 0,
-  segments = [], activeId = null,
+  segments = [], activeId = null, light = "day",
+  strokes = [], inkTool = null, inkColour, inkWidth, onInk, onErase, me,
   onDivs, registerEl,
 }) {
   const wrapRef = useRef(null);
@@ -185,7 +189,15 @@ export default function PaperPage({
   return (
     <div className="pp" ref={wrapRef} data-page={pageNumber}
          style={size ? { width: size.w, height: size.h } : undefined}>
-      <canvas className="pp-canvas" ref={canvasRef} />
+      {/* THE LIGHT FALLS ON THE PICTURE AND NOTHING ELSE.
+
+          Night is a filter on the rendered page, which is how every reader
+          that offers it does it: the file is untouched, the text layer is
+          untouched, and — the part that matters — the marks are untouched.
+          Inverting the whole stack would turn somebody's yellow highlight
+          blue, which is worse than a bright page at midnight. */}
+      <canvas className="pp-canvas" ref={canvasRef}
+              style={light === "day" ? undefined : { filter: lightFilter(light) }} />
 
       <div className="pp-marks" aria-hidden="true">
         {rects.map((r) => (
@@ -193,12 +205,24 @@ export default function PaperPage({
             key={r.key}
             className="pp-mark"
             data-kind={r.seg.kind || undefined}
+            data-colour={r.seg.colour || undefined}
+            data-deco={r.seg.deco?.length ? r.seg.deco.join(" ") : undefined}
             data-density={r.seg.density || undefined}
             data-active={r.seg.ids.includes(activeId) ? "" : undefined}
             style={{ left: r.x, top: r.y, width: r.w, height: r.h }}
           />
         ))}
       </div>
+
+      {size && (
+        <PaperInk
+          strokes={strokes} page={pageNumber} me={me}
+          width={size.w} height={size.h} rotation={rotation}
+          tool={inkTool} colour={inkColour} penWidth={inkWidth}
+          onCommit={(pts) => onInk?.(pageNumber, pts)}
+          onErase={(ids) => onErase?.(ids)}
+        />
+      )}
 
       <div className="pp-text" ref={textRef} />
 

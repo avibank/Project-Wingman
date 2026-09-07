@@ -113,7 +113,15 @@ safety and comms, 0006 openers and rate limits and moderation, 0007 questions an
 squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
-0015 live updates, 0016 the three-character code.
+0015 live updates, 0016 the three-character code, 0017 ink and the palette.
+
+**0017 has been run against the live project.** It adds `paper_ink`,
+`paper_annotations.colour`, two more kinds (`underline`, `strikethrough`) and
+`paper_ink_for`. It is deliberately ADDITIVE — nothing is dropped. Widening
+`paper_annotations_for` to carry the colour would have meant dropping it first,
+because a function's return columns cannot be widened in place, so the new
+shape took a new name: **the reader now calls `paper_marks_for`**, and
+`paper_annotations_for` is dead but still standing. Drop it when convenient.
 
 **0015 and 0016 have been run against the live project.** 0015 publishes
 `lesson_threads`, `lesson_replies` and `comms_messages` to the realtime
@@ -134,7 +142,7 @@ carrying a page, rect or bbox — R1 of the annotation brief, enforced where it
 cannot be argued with. `npm run check:paper-db` drives 17 assertions against
 the real database as two different accounts and deletes every row it makes;
 like check:discovery it is NOT in `npm run check`, because that suite must not
-need credentials. `npm run check:paper` holds the 61 that need neither.
+need credentials. `npm run check:paper` holds the 170 that need neither.
 
 **0011 has been run against the live project**, verified by connecting rather
 than inferred: 9 new squadron columns, 4 new profile columns, 2 new tables and
@@ -205,8 +213,26 @@ reader does can damage the paper. Module 1 only for now, behind
 - **pdf.js is pinned exactly**, not caret-ranged. A minor version changes how
   text runs are split, which changes the extracted string, which silently
   orphans every mark ever made. See the header of `src/lib/paperText.js`.
-- The reader is its own lazy chunk (~390KB) and `check:bundle` asserts pdf.js
+- The reader is its own lazy chunk (~428KB) and `check:bundle` asserts pdf.js
   never reaches the entry chunk.
+- **Ink is not an annotation, and that is not a loophole.** A pen stroke is
+  coordinates and nothing else — there is no sentence you could store instead
+  that would let you draw it again — so it lives in `paper_ink`, which has no
+  anchor column to smuggle a position into. R1 is untouched and just as strict.
+  Points are fractions of the unrotated page (0..1), never pixels, so a stroke
+  drawn at 80% on a phone is the same stroke at 250% on a laptop. The cost is
+  stated rather than hidden: a stroke cannot survive a re-extraction the way a
+  mark can.
+- **The ink palette is a third colour category.** Module hue is wayfinding,
+  `--presence` amber is presence and action, and ink is what the reader put on
+  the page themselves. It is the only fixed colour in the reader, and it is
+  fixed on purpose: a livery change that re-tinted somebody's yellow highlight
+  would be the app editing their notes. Eight names, stored as names; what a
+  name looks like is a CSS decision. Graphite becomes chalk under the night
+  light, because a pencil is defined by being darker than paper.
+- The rail carries ten tools **two abreast**. Every button in this app is at
+  least 44px on its shortest side (§12, enforced globally in App.jsx), so one
+  column of ten is 659px of a 720px window. Do not shrink the buttons.
 - The test paper is fetched, not committed: `npm run paper:fetch`. `papersFor()`
   adds it to Module 1 under `import.meta.env.DEV` only.
 

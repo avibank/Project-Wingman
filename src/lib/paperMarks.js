@@ -8,8 +8,20 @@
    ========================================================================= */
 
 import { createAnchor, resolveAnchor, flatten } from "./anchor.js";
+import { colourOr, DEFAULT_HIGHLIGHT } from "./paperInk.js";
 
-export const KINDS = ["highlight", "note", "question", "correction"];
+/* Underline and strikethrough are text marks in every sense that matters: same
+   anchor, same rings, same survival across a re-extraction. They are a
+   different way of DRAWING the passage you picked, not a different kind of
+   claim about it, which is why they live here and not with the ink. */
+export const KINDS = ["highlight", "underline", "strikethrough", "note", "question", "correction"];
+
+/* Which mark decides how a shared passage looks. A question outranks a note
+   because it is the stronger claim on the reader's attention; a fill outranks a
+   line because a line drawn over a fill still reads, and a fill drawn over a
+   line hides it. */
+const RANK = { question: 5, note: 4, highlight: 3, underline: 2, strikethrough: 1 };
+export const DECORATIONS = { underline: "underline", strikethrough: "strike" };
 
 /* The rings, in the app's own words. `solo` is "nobody" from the reader's side:
    a mark you keep to yourself. */
@@ -87,18 +99,32 @@ export function segmentsFor(placed = []) {
     const mine = marks.filter((m) => m.close);
     const crowd = marks.length;
     if (crowd > maxCrowd) maxCrowd = crowd;
+
+    /* One mark leads, and it brings its colour with it. Taking the kind from
+       one mark and the colour from another would produce a passage that is
+       shaped like a question and coloured like somebody else's highlight,
+       which is a sentence nobody can read back. */
+    const lead = mine.reduce(
+      (best, m) => (!best || (RANK[m.kind] || 0) > (RANK[best.kind] || 0) ? m : best),
+      null,
+    );
+
+    /* Decorations stack rather than compete: a passage can be highlighted AND
+       struck through by the same reader, and both are true at once. */
+    const deco = [...new Set(mine.map((m) => DECORATIONS[m.kind]).filter(Boolean))];
+
     return {
       start: s.start,
       end: s.end,
       count: crowd,
       mine,
       ids: s.ids,
-      // The kind that decides the segment's own colour: a question outranks a
-      // note, a note outranks a bare highlight, because the stronger claim on
-      // the reader's attention should be the one they see.
-      kind: mine.some((m) => m.kind === "question") ? "question"
-        : mine.some((m) => m.kind === "note") ? "note"
-          : mine.length ? "highlight" : null,
+      kind: lead ? lead.kind : null,
+      // Only marks the reader is close to carry a colour. The crowd is density,
+      // and density is one colour by design — eleven people's yellows and
+      // greens averaged together would be a smear, not information.
+      colour: lead && lead.close ? colourOr(lead.colour, DEFAULT_HIGHLIGHT) : null,
+      deco,
     };
   });
 
@@ -137,6 +163,7 @@ export function mergeRows(held = [], incoming = []) {
 export const FILTERS = [
   { id: "all", label: "Everything" },
   { id: "mine", label: "Mine" },
+  { id: "highlights", label: "Highlights" },
   { id: "notes", label: "Notes" },
   { id: "questions", label: "Questions" },
   { id: "orphaned", label: "Lost their place" },
@@ -145,6 +172,8 @@ export const FILTERS = [
 export function applyFilter(list, filter, me) {
   switch (filter) {
     case "mine": return list.filter((a) => a.author_id === me);
+    case "highlights": return list.filter(
+      (a) => a.kind === "highlight" || a.kind === "underline" || a.kind === "strikethrough");
     case "notes": return list.filter((a) => a.kind === "note");
     case "questions": return list.filter((a) => a.kind === "question");
     case "orphaned": return list.filter((a) => a.status === "orphaned");

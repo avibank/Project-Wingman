@@ -23,7 +23,11 @@ const fail = (e, f) => { if (e) console.error(e); return f; };
    updated_at, and one vocabulary through the whole feature beats two. */
 export async function fetchAnnotations(me, paperId, since = null) {
   if (!me || !paperId) return [];
-  const { data, error } = await supabase.rpc("paper_annotations_for", {
+  /* paper_marks_for, not paper_annotations_for. 0017 widened the shape to carry
+     the highlighter colour, and a function's return columns cannot be widened
+     in place — so the new shape took a new name and the old function was left
+     answering rather than dropped in the same breath. See 0017's header. */
+  const { data, error } = await supabase.rpc("paper_marks_for", {
     uid: me, p_paper: paperId, p_since: since,
   });
   if (error) return fail(error, []);
@@ -34,7 +38,7 @@ export async function fetchAnnotations(me, paperId, since = null) {
    not expected to pass one. */
 export async function createAnnotation({
   paperId, moduleCode, me, kind = "highlight", ring = "module",
-  body = null, anchor, threadId = null, hint = null, id = null,
+  body = null, anchor, threadId = null, hint = null, id = null, colour = null,
 }) {
   if (!me || !paperId || !anchor) return null;
   const row = {
@@ -45,6 +49,10 @@ export async function createAnnotation({
     ring,
     body: body || null,
     thread_id: threadId,
+    /* The NAME of a colour, never a colour. What "blue" looks like stays a CSS
+       decision, so the palette can be re-tinted for the night theme without a
+       migration and without changing what anybody's existing mark means. */
+    colour: colour || null,
     anchor,
     hint,
   };
