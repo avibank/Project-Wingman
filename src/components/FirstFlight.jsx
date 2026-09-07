@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES, chaptersForModule } from "../data.js";
-import { fetchRecentPilots, saveProfile, assignSquadron, assignMarkings } from "../lib/squadron.js";
+import { fetchRecentPilots, saveProfile, assignSquadron, assignMarkings, claimCode, freeCode } from "../lib/squadron.js";
+import { normaliseCode, isCode } from "../lib/code.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 
 // §7.1 — three screens, and a course picker is not the first one. You meet
@@ -93,7 +94,12 @@ function PickModule({ value, onPick, onNext }) {
    found by anybody, and the room renders "Someone" beside their messages.
    Skippable on purpose. A required field here would be a wall in front of the
    product for somebody who has not decided yet, and Settings still has it. */
-function PickCallsign({ value, onPick, onNext, busy }) {
+/* THE CODE SHARES THIS SCREEN RATHER THAN GETTING ITS OWN.
+   It is required, and a required field is worth one screen — but not a fifth
+   one. Both answers here are "what are you called": one in words, one in three
+   characters. A suggestion is filled in before anybody arrives, so the required
+   field is already satisfied and typing over it is a choice rather than a toll. */
+function PickCallsign({ value, onPick, code, onCode, codeNote, onNext, busy }) {
   return (
     <div className="ff-screen">
       <h1 className="ff-title">What should we call you?</h1>
@@ -105,8 +111,21 @@ function PickCallsign({ value, onPick, onNext, busy }) {
              placeholder="Callsign" aria-label="Callsign"
              onChange={(e) => onPick(e.target.value)}
              onKeyDown={(e) => { if (e.key === "Enter" && value.trim()) onNext(); }} />
-      <button className="ff-go" onClick={onNext} disabled={busy}>
-        {busy ? "One moment…" : value.trim() ? "That's me" : "Skip for now"}
+
+      <label className="ff-code-l" htmlFor="ff-code">Your code</label>
+      <p className="ff-code-h">
+        Three characters, yours alone. It goes on your licence, and it is what
+        gets stamped on a chapter when you finish it.
+      </p>
+      <input id="ff-code" className="ff-code" value={code} maxLength={3}
+             placeholder="A7K" aria-label="Your three character code"
+             autoCapitalize="characters" autoComplete="off" spellCheck="false"
+             onChange={(e) => onCode(e.target.value)}
+             onKeyDown={(e) => { if (e.key === "Enter" && isCode(code)) onNext(); }} />
+      {codeNote && <p className="ff-code-note">{codeNote}</p>}
+
+      <button className="ff-go" onClick={onNext} disabled={busy || !isCode(code)}>
+        {busy ? "One moment…" : "That's me"}
       </button>
     </div>
   );
@@ -145,11 +164,36 @@ function FirstFlight({ onDone }) {
   const [studyTime, setStudyTime] = useState(null);
   const [busy, setBusy] = useState(false);
   const [callsign, setCallsign] = useState("");
+  const [code, setCode] = useState("");
+  const [codeNote, setCodeNote] = useState(null);
+
+  /* A free code is fetched before the screen is reached, so the required field
+     arrives already satisfied. If the fetch fails, one is made up locally and
+     the claim below is what actually settles whether it was free. */
+  useEffect(() => {
+    let live = true;
+    freeCode().then((c) => { if (live && c) setCode(c); });
+    return () => { live = false; };
+  }, []);
 
   // Both writes are best-effort: a failed placement must not strand someone in
   // onboarding. They land on the Deck either way and get placed on next entry.
+  //
+  // THE CODE IS THE EXCEPTION. It is unique, so it is the one thing here that
+  // can be refused for a reason the person can do something about — somebody
+  // else took it a second ago. That refusal keeps them on this screen with
+  // another suggestion, rather than sending them in without one.
   const place = async () => {
     setBusy(true);
+    setCodeNote(null);
+    const got = await claimCode(user.id, code);
+    if (!got) {
+      const next = await freeCode();
+      setCode(next || "");
+      setCodeNote(`${normaliseCode(code)} has just been taken. Here is another.`);
+      setBusy(false);
+      return;
+    }
     try {
       await saveProfile(user.id, {
         study_time: studyTime,
@@ -162,7 +206,7 @@ function FirstFlight({ onDone }) {
       console.error(e);
     }
     setBusy(false);
-    onDone?.({ moduleCode, studyTime });
+    onDone?.({ moduleCode, studyTime, code: got });
   };
 
   return (
@@ -170,7 +214,11 @@ function FirstFlight({ onDone }) {
       {step === 0 && <MeetSquadron onNext={() => setStep(1)} />}
       {step === 1 && <PickModule value={moduleCode} onPick={setModuleCode} onNext={() => setStep(2)} />}
       {step === 2 && <PickTime value={studyTime} onPick={setStudyTime} onNext={() => setStep(3)} busy={busy} />}
-      {step === 3 && <PickCallsign value={callsign} onPick={setCallsign} onNext={place} busy={busy} />}
+      {step === 3 && (
+        <PickCallsign value={callsign} onPick={setCallsign}
+                      code={code} onCode={(v) => { setCode(normaliseCode(v)); setCodeNote(null); }}
+                      codeNote={codeNote} onNext={place} busy={busy} />
+      )}
 
       <ol className="ff-dots" aria-label={`Step ${step + 1} of 4`}>
         {[0, 1, 2, 3].map((i) => (
@@ -187,6 +235,20 @@ function FirstFlight({ onDone }) {
           background: var(--raised); border: 1px solid var(--line); border-radius: 11px;
           color: var(--t1); font: inherit; font-size: 16px; }
         .ff-callsign:focus { outline: 2px solid var(--active); outline-offset: 1px; }
+
+        /* The code is typed in the face it will be read in: monospaced, spaced
+           out, upper case. Three characters in a field the width of a sentence
+           would look like a field somebody forgot to finish. */
+        .ff-code-l { display: block; font-size: 14px; color: var(--text-2); margin: 4px 0 2px; }
+        .ff-code-h { font-size: 14px; line-height: 1.5; color: var(--text-3); margin: 0 0 10px; max-width: 46ch; }
+        .ff-code {
+          width: 6.5ch; margin: 0 0 6px; padding: 12px 0; text-align: center;
+          background: var(--raised); border: 1px solid var(--line); border-radius: 11px;
+          color: var(--text-1); font-family: var(--font-mono); font-size: 26px;
+          letter-spacing: .16em; text-transform: uppercase;
+        }
+        .ff-code:focus { outline: 2px solid var(--active); outline-offset: 1px; }
+        .ff-code-note { font-size: 14px; color: var(--text-2); margin: 0 0 12px; }
         .ff-title { font-family: var(--font-ui); font-size: 28px; font-weight: 500;
           letter-spacing: -0.01em; color: var(--text-1); margin: 0 0 8px; }
         .ff-sub { font-size: 16px; line-height: 1.55; color: var(--text-2); margin: 0 0 28px; max-width: 46ch; }

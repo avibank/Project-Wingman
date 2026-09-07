@@ -164,6 +164,17 @@
 .mscreen .chap.done .cname{color:var(--t1)}
 .mscreen .csub{display:block;font-size:15px;color:var(--t3);margin-top:6px}
 .mscreen .cstate{font-size:15px;color:var(--t3);white-space:nowrap}
+/* THE STAMP. Monospaced, spaced out and boxed, because it is a mark rather
+   than a word — the same three characters that sit on the licence. Tabular
+   figures so two stamps in a column line up. */
+.mscreen .stamp{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:4.4ch;padding:3px 7px;border-radius:var(--r-chip);
+  background:var(--raised);border:1px solid var(--line);
+  color:var(--t2);font-family:var(--font-mono);font-size:13px;
+  letter-spacing:.12em;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+
 .mscreen .cstate.here{color:var(--active);font-weight:600}
 .mscreen .chv{color:var(--t3);opacity:.55;font-size:17px;line-height:1;text-align:center;transition:transform .22s ease}
 .mscreen .chead[aria-expanded="true"]>.chv{transform:rotate(90deg)}

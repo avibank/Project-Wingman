@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 import { isFlySolo } from "./flySolo.js";
 import { hueFor } from "./familiar.js";
+import { normaliseCode, randomCode } from "./code.js";
 
 // Squadrons, profiles and safety. §7.1, §8.3, §9.
 //
@@ -29,6 +30,30 @@ export async function saveProfile(userId, patch) {
     .select()
     .single();
   if (error) return fail(error, null);
+  return data;
+}
+
+/* ------------------------------------------------------------------- code
+   The three-character code. Claiming goes through the function and never
+   through an upsert: the code is unique, so "is it free? then take it" in two
+   steps leaves a gap that two people signing up together will walk through at
+   the same moment. claim_code decides in one statement and returns the code it
+   granted, or null when it was somebody else's. */
+export async function claimCode(userId, want) {
+  if (!userId) return null;
+  const { data, error } = await supabase.rpc("claim_code", {
+    uid: userId, want: normaliseCode(want),
+  });
+  if (error) return fail(error, null);
+  return data || null;
+}
+
+/* A code nobody has, to suggest. Falls back to inventing one locally if the
+   server cannot answer — the claim is what settles it either way, so a
+   suggestion being stale costs one retry and nothing else. */
+export async function freeCode() {
+  const { data, error } = await supabase.rpc("suggest_code", {});
+  if (error || !data) { if (error) console.error(error); return randomCode(); }
   return data;
 }
 

@@ -112,7 +112,15 @@ architecture note above says — that part was accurate.
 safety and comms, 0006 openers and rate limits and moderation, 0007 questions and
 squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
-0013 retiring the pilot livery, 0014 the annotation layer on papers.
+0013 retiring the pilot livery, 0014 the annotation layer on papers,
+0015 live updates, 0016 the three-character code.
+
+**0015 and 0016 have been run against the live project.** 0015 publishes
+`lesson_threads`, `lesson_replies` and `comms_messages` to the realtime
+publication — presence is deliberately not among them. 0016 adds
+`pilot_profiles.code`, a unique index, a CHECK carrying the same alphabet as
+`src/lib/code.js`, and `claim_code`/`suggest_code`. Verified atomic: four
+simultaneous claims for one code granted exactly one.
 
 **0013 has been run against the live project.** Both `livery` columns are gone
 from `pilot_profiles` and `squadrons`, and `squadron_roster` was rebuilt without

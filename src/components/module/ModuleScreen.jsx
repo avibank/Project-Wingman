@@ -27,6 +27,7 @@ export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
   papers = [], librarySub = "papers", onOpenPaper,
   readerOn = false, readerPin = null, onOpenReader,
+  code = null,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
@@ -178,7 +179,7 @@ export default function ModuleScreen({
       <div className="pane" role="tabpanel">
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
-                    open={open} onToggle={toggle} query={query}
+                    open={open} onToggle={toggle} query={query} code={code}
                     // §2 — the lamp, on the chapter whose quiz is below the
                     // bar. Derived above and handed down so the Lessons tab,
                     // the Library and the Flight Deck all light from one Set.

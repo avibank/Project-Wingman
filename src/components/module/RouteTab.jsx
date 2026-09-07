@@ -30,7 +30,7 @@ const QuizMark = () => (
   </span>
 );
 
-function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
+function RouteRow({ lesson, chapter, done, here, pct, onOpen, code }) {
 
   // A real frame from the lesson's own video, when one can be had. The row
   // paints with the generated tile immediately and the frame replaces it when
@@ -69,9 +69,16 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen }) {
       </span>
       {/* The current row is the only lesson row with a button. */}
       <span className="istat">
-        {done ? <span className="tick"><Check aria-hidden="true" /> Done</span>
-          : here ? <span className="go">Resume</span>
-            : null}
+        {/* THE STAMP. A tick says "this is finished"; the code says who
+            finished it, which is the same fact with a name on it — and it is
+            the mark that goes on anything printed. An account with no code yet
+            keeps the tick, so nothing is ever blank here. */}
+        {done ? (
+          code
+            ? <span className="stamp" title={`Finished — ${code}`}>{code}</span>
+            : <span className="tick"><Check aria-hidden="true" /> Done</span>
+        ) : here ? <span className="go">Resume</span>
+          : null}
       </span>
     </button>
   );
@@ -117,6 +124,7 @@ function RouteSkeleton({ rows = 4 }) {
 }
 
 export default function RouteTab({
+  code,
   module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
   query = "",
   // §2/§8 — which chapters are below the user's bar, computed once upstream.
@@ -182,7 +190,7 @@ export default function RouteTab({
               <div className="kidswrap" id={`kids-${ch.id}`}>
                 <div className="kids">
                   {ch.lessons.map((l) => (
-                    <RouteRow key={l.id} lesson={l} chapter={ch}
+                    <RouteRow code={code} key={l.id} lesson={l} chapter={ch}
                               done={isDone(state, l.id)}
                               here={l.id === here?.lesson?.id}
                               pct={state?.pos?.[l.id]?.pct || 0}

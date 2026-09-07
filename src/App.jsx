@@ -1521,6 +1521,7 @@ function AppInner() {
             onOpenPaper={(paper) => openPaper(paper)}
             readerOn={readerOn}
             readerPin={readerPin}
+            code={myProfile?.code || null}
             onOpenReader={() => openPaper(lastPaper || fullestPaper)}
             people={{
               // The callsigns behind the author ids. Threads themselves come

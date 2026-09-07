@@ -11,7 +11,8 @@ import { withSetting } from "../lib/viewTransition.js";
 import { useFlags } from "../lib/flags.js";
 import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
-import { saveProfile } from "../lib/squadron.js";
+import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.js";
+import { normaliseCode, isCode } from "../lib/code.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
 
@@ -351,6 +352,16 @@ const PROFILE_CSS = `
 /* The one centred block on this page, deliberately: name over description over
    swatches, narrowing to the specimen. Scoped rather than set on .livname and
    .livdesc, which the Preferences tab also uses and which stay left. */
+.codeblock { display: grid; gap: 6px; padding-top: 4px; }
+.codefield {
+  width: 6.5ch; padding: 10px 0; text-align: center;
+  background: var(--bg-raised); border: 1px solid var(--hairline); border-radius: 10px;
+  color: var(--text-primary); font-family: var(--font-mono); font-size: 24px;
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.codefield:focus-visible { outline: 2px solid var(--accent-interactive); outline-offset: 1px; }
+.codenote { margin: 0; font-size: 13px; color: var(--text-3); }
+
 .block-livery .livname,
 .block-livery .livdesc { text-align: center; }
 .block-livery .livgrid { justify-content: center; gap: 10px; }
@@ -460,6 +471,9 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const [greetName, setGreetName] = useState("");
   const [saveNote, setSaveNote] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [code, setCode] = useState("");
+  const [savedCode, setSavedCode] = useState("");
+  const [codeNote, setCodeNote] = useState(null);
 
   useEffect(() => {
     setHolderName(user?.fullName || "");
@@ -468,6 +482,23 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     setGreetName(progress.get("pw-greet-name", "") || "");
     setBio(progress.get("pw-bio", "") || "");
   }, [user?.fullName, user?.username, user?.firstName, progress.loaded]);
+
+  /* The code comes from the profile, not from Clerk — Clerk has never heard of
+     it. An account from before this existed has none, so one is claimed on
+     sight: it is required, and the licence is where somebody looks for it. */
+  useEffect(() => {
+    let live = true;
+    if (!user?.id) return undefined;
+    fetchProfile(user.id).then(async (row) => {
+      if (!live) return;
+      if (row?.code) { setCode(row.code); setSavedCode(row.code); return; }
+      for (let tries = 0; tries < 3 && live; tries++) {
+        const got = await claimCode(user.id, await freeCode());
+        if (got) { if (live) { setCode(got); setSavedCode(got); } return; }
+      }
+    });
+    return () => { live = false; };
+  }, [user?.id]);
 
   // §6.1 — on by default. Off is the unusual choice, so the copy says so.
   const byUsername = (prefs?.identity_display || "username") === "username";
@@ -620,6 +651,32 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <Switch id="go-by-callsign" label="Go by callsign"
                     note="One of these gets said out loud when someone finds you. Pick the one you'd like hearing."
                     on={byUsername} onChange={setIdentity} />
+
+            {/* THE CODE, ON THE LICENCE, SET APART FROM THE NAMES.
+
+                It is not a third way of being called something — it is the mark
+                that gets stamped on a chapter when you finish it, and the thing
+                that goes on anything printed. So it is shown the way it will be
+                seen: large, monospaced, spaced out.
+
+                Unique, so it is committed through claim_code rather than saved
+                like a preference: the answer can be no. */}
+            <div className="codeblock">
+              <span className="eyebrow">Your code</span>
+              <input className="codefield" value={code} maxLength={3}
+                     aria-label="Your three character code"
+                     autoCapitalize="characters" autoComplete="off" spellCheck="false"
+                     onChange={(e) => { setCode(normaliseCode(e.target.value)); setCodeNote(null); }}
+                     onBlur={async () => {
+                       if (!user?.id || !isCode(code) || code === savedCode) return;
+                       const got = await claimCode(user.id, code);
+                       if (got) { setSavedCode(got); setCodeNote("Saved."); }
+                       else { setCode(savedCode); setCodeNote(`${code} is somebody else's.`); }
+                     }} />
+              <p className="codenote">
+                {codeNote || "Three characters, yours alone. Stamped on every chapter you finish."}
+              </p>
+            </div>
           </div>
 
           <div className="block">
