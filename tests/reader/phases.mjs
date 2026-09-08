@@ -906,3 +906,31 @@ group("the quiz · a paper you sit", () => {
     });
   });
 });
+
+/* ========================================================================= */
+group("§4.6 · a big paper lays out before it downloads", () => {
+  it("every page has a slot at the right height straight away", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      const shape = await page.evaluate(() => {
+        const slots = [...document.querySelectorAll(".pslot")];
+        const ghosts = [...document.querySelectorAll(".pp-ghost")];
+        return {
+          slots: slots.length,
+          /* A placeholder is a page-shaped card at the right ratio — never a
+             bare rectangle and never zero-height. */
+          ghosts: ghosts.length,
+          ratios: ghosts.slice(0, 3).map((g) => {
+            const r = g.getBoundingClientRect();
+            return r.height > 0 ? Math.round((r.width / r.height) * 100) / 100 : 0;
+          }),
+        };
+      });
+      expect(shape.slots).toBeAtLeast(14, "the paper did not lay out");
+      expect(shape.ghosts).toBeAtLeast(1, "no placeholders — a page not yet drawn is a blank");
+      for (const r of shape.ratios) {
+        expect(r).toBeAtLeast(0.5, "a placeholder with no shape is a blank rectangle");
+      }
+    });
+  });
+});

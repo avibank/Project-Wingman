@@ -52,16 +52,84 @@ const docs = new Map();
    paper is in so the reader can say so rather than guess. */
 export const RANGE_CHUNK = 65536;
 
-export function loadPaper(url) {
+/* -----------------------------------------------------------------------------
+   WHY WE DO THE RANGING OURSELVES ON STORAGE URLS.
+
+   pdf.js decides whether a URL supports ranges by READING the response
+   headers — `Accept-Ranges` on the first request, `Content-Range` on the
+   probe. Neither of those is a CORS-safelisted response header, so on a
+   cross-origin fetch the browser hides them unless the server sends
+   `Access-Control-Expose-Headers`.
+
+   Supabase Storage does not send it. Measured, not assumed: a ranged GET to
+   the bucket returns `206 Partial Content` with a correct `Content-Range` —
+   the server is doing everything right — and from a browser the header is
+   simply absent. pdf.js therefore concluded ranges were unsupported and pulled
+   the whole file: a real 44MB, 1012-page manual took 27 seconds to show page
+   one, having downloaded all of it.
+
+   The transport below sidesteps the detection entirely. We do not need to READ
+   `Content-Range` to know ranging works — we already know, and the body of a
+   206 is readable cross-origin regardless. So we fetch the ranges ourselves and
+   hand pdf.js the bytes. The length comes from a HEAD, because `Content-Length`
+   IS safelisted, with the manifest's byte count as a fallback.
+
+   Same-origin files (the repo's own /papers/*.pdf) keep pdf.js's built-in
+   path, which works and is better tested than anything here.
+   -------------------------------------------------------------------------- */
+const sameOrigin = (url) => {
+  try { return new URL(url, location.href).origin === location.origin; }
+  catch { return true; }
+};
+
+async function byteLength(url, hint) {
+  try {
+    const head = await fetch(url, { method: "HEAD" });
+    const n = Number(head.headers.get("content-length"));
+    if (Number.isFinite(n) && n > 0) return n;
+  } catch { /* fall through to the hint */ }
+  return hint || 0;
+}
+
+function rangeTransport(url, length) {
+  const T = pdfjs.PDFDataRangeTransport;
+  const t = new T(length, new Uint8Array(0), false);
+  /* One flight of fetches at a time per range, and every one abortable — a
+     flung scrollbar must not leave fifty requests in the air. */
+  const inflight = new Map();
+  t.requestDataRange = (begin, end) => {
+    const key = `${begin}-${end}`;
+    if (inflight.has(key)) return;
+    const ctrl = new AbortController();
+    inflight.set(key, ctrl);
+    fetch(url, { headers: { Range: `bytes=${begin}-${end - 1}` }, signal: ctrl.signal })
+      .then((r) => r.arrayBuffer())
+      .then((buf) => { inflight.delete(key); t.onDataRange(begin, new Uint8Array(buf)); })
+      .catch(() => { inflight.delete(key); });
+  };
+  t.abort = () => {
+    for (const c of inflight.values()) c.abort();
+    inflight.clear();
+  };
+  return t;
+}
+
+export function loadPaper(url, hintBytes) {
   if (!docs.has(url)) {
-    const task = pdfjs.getDocument({
-      url,
-      isEvalSupported: false,
-      disableAutoFetch: true,
-      disableStream: false,
-      rangeChunkSize: RANGE_CHUNK,
-    });
-    docs.set(url, task.promise.catch((e) => { docs.delete(url); throw e; }));
+    const promise = (async () => {
+      const common = { isEvalSupported: false, disableAutoFetch: true, rangeChunkSize: RANGE_CHUNK };
+      if (sameOrigin(url)) {
+        return pdfjs.getDocument({ url, disableStream: false, ...common }).promise;
+      }
+      const length = await byteLength(url, hintBytes);
+      if (!length) {
+        // Nothing to range against; fall back to the ordinary path rather than
+        // failing, so a paper always opens even if slowly.
+        return pdfjs.getDocument({ url, disableStream: false, ...common }).promise;
+      }
+      return pdfjs.getDocument({ range: rangeTransport(url, length), ...common }).promise;
+    })();
+    docs.set(url, promise.catch((e) => { docs.delete(url); throw e; }));
   }
   return docs.get(url);
 }

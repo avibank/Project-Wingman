@@ -888,3 +888,14 @@
 .scope-name em { font-style: normal; font-size: 13px; color: var(--t3); }
 .addpaper-said { color: var(--t2); }
 .addpaper-work .q-btn { justify-self: start; margin-top: 8px; }
+
+/* A paper that is missing, still arriving, or still being prepared. Three
+   states that used to be one empty <main> — which is how an uploaded paper
+   opened as a black screen with nothing on it at all. */
+.paper-state {
+  display: grid; gap: 12px; justify-items: start;
+  max-width: 52ch; margin: 0 auto; padding: 18vh var(--pad) 0;
+}
+.paper-state h1 { margin: 0; font-size: 22px; font-weight: 500; color: var(--t1); }
+.paper-state p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--t2); }
+.paper-state .nextgo { margin-top: 6px; }

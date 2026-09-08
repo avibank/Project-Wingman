@@ -695,5 +695,47 @@ console.log("\nselection");
      && /childNodes[\s\S]{0,160}textContent\?\.length/.test(reader));
 }
 
+/* ---- §4.6 · the PDF is opened for pixels and nothing else --------------- */
+console.log("\n§4.6 — big papers");
+{
+  const reader = read("src/components/paper/PaperReader.jsx");
+  const text = read("src/lib/paperText.js");
+  const papers = read("src/lib/papers.js");
+
+  /* Asking a 1012-page document for every viewport made 1012 range requests
+     before anything drew — measured at 119MB over the wire on a 44MB file,
+     with the first page never appearing. The manifest answers the same
+     question from a row we already have. */
+  ok("§4.6", "the layout comes from the manifest, not from the document",
+     /const boxes = paper\?\.manifest\?\.boxes/.test(reader)
+     && /setSizes\(boxes\.map/.test(reader));
+  ok("§4.6", "and the document is only asked when there is no manifest",
+     /if \(!boxes\?\.length\) \{[\s\S]{0,400}getViewport/.test(reader));
+  ok("§4.6", "a page released after its size is read, not left parsed",
+     /page2\.cleanup\(\)/.test(reader));
+
+  /* 3MB of text layer between opening a paper and seeing any of it, for a file
+     only search needs. */
+  ok("§4.6", "the text layer is fetched but never awaited before the pages draw",
+     /textPromise\.then\(\(t\) => \{ if \(live && t\) setModel\(t\); \}\)/.test(reader)
+     && !/const stored = paper\?\.file \? await storedText/.test(reader));
+  ok("§4.6", "and it is read from storage rather than extracted per open",
+     /export async function storedText/.test(papers) && /text\.json/.test(papers));
+
+  /* Supabase sends a correct 206 and does NOT send
+     Access-Control-Expose-Headers, so a browser cannot read Content-Range and
+     pdf.js concludes ranges are unsupported. We do the ranging ourselves. */
+  ok("§4.6", "cross-origin papers range through our own transport",
+     /PDFDataRangeTransport/.test(text) && /requestDataRange/.test(text));
+  ok("§4.6", "same-origin papers keep pdf.js's own path",
+     /const sameOrigin = \(url\)/.test(text) && /if \(sameOrigin\(url\)\)/.test(text));
+  ok("§4.6", "and in-flight ranges are abortable, so a flung scroll drops them",
+     /new AbortController\(\)/.test(text) && /for \(const c of inflight\.values\(\)\) c\.abort\(\)/.test(text));
+
+  ok("§4.6", "an absolute storage URL is not prefixed with a slash",
+     /export const fileHref/.test(papers)
+     && !/`\/\$\{String\(paper\.file\)/.test(reader));
+}
+
 console.log(`\npaper: ${pass} passed, ${fails.length} failed`);
 if (fails.length) process.exit(1);

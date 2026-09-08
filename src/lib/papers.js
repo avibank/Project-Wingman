@@ -37,6 +37,18 @@ export function needsSetup(error) {
 }
 
 export const publicUrl = (path) => pub(BUCKET, path);
+
+/* WHERE A PAPER'S FILE ACTUALLY IS.
+
+   A fixture paper is a path relative to the site root; an uploaded one is an
+   absolute URL into storage. Prefixing a slash to both — which is what the
+   reader did — turns `https://…` into `/https://…`, and the request 404s
+   against our own origin. One helper, so there is one answer. */
+export const fileHref = (file) => {
+  const f = String(file || "");
+  if (/^(https?:)?\/\//.test(f) || f.startsWith("blob:") || f.startsWith("data:")) return f;
+  return `/${f.replace(/^\//, "")}`;
+};
 const at = (id, rest) => `${id}/${rest}`;
 
 export async function listPapers(moduleCode, me) {
@@ -140,4 +152,55 @@ export function paperId(moduleCode, title, existing = []) {
   if (!existing.includes(stem)) return stem;
   for (let n = 2; n < 99; n++) if (!existing.includes(`${stem}-${n}`)) return `${stem}-${n}`;
   return `${stem}-${Date.now().toString(36)}`;
+}
+
+
+/* -----------------------------------------------------------------------------
+   THE STORED TEXT LAYER, in the shape paperText.js produces.
+
+   Search and every anchor read this, and it is written once at ingest. The
+   alternative is extracting it in the browser on every open, which on a
+   1012-page manual means parsing the whole document to read one page of it.
+
+   The joining rule has to match paperText.js exactly — the same runs, the same
+   newline on hasEOL — or an anchor made against one resolves a few characters
+   out against the other. Ingest stores per-page runs; this joins them the same
+   way, with a blank line between pages.
+   -------------------------------------------------------------------------- */
+const textCache = new Map();
+
+export async function storedText(paper) {
+  const id = paper?.id;
+  if (!id || !paper?.manifest) return null;          // fixture papers have none
+  if (textCache.has(id)) return textCache.get(id);
+
+  const promise = (async () => {
+    const res = await fetch(publicUrl(`${id}/text.json`));
+    if (!res.ok) return null;
+    const pages = await res.json();
+    if (!Array.isArray(pages) || !pages.length) return null;
+
+    const items = [];
+    const pageStart = [];
+    let text = "";
+    for (const pg of pages) {
+      if (pg.page > 1) text += "\n\n";
+      pageStart.push(text.length);
+      const base = text.length;
+      for (const run of pg.runs || []) {
+        items.push({
+          page: pg.page,
+          index: run.index,
+          start: base + run.start,
+          end: base + run.end,
+          str: pg.text.slice(run.start, run.end),
+        });
+      }
+      text += pg.text;
+    }
+    return { text, items, pageStart, pages: pages.length };
+  })().catch(() => null);
+
+  textCache.set(id, promise);
+  return promise;
 }

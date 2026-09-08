@@ -31,6 +31,7 @@ import {
   markOrphaned, askOnPassage, fetchCorrections, resolveCorrection, agreeWithMark,
 } from "../../lib/annotations.js";
 import { fetchInk, createStroke, deleteStrokes } from "../../lib/ink.js";
+import { fileHref, storedText } from "../../lib/papers.js";
 import PaperPage from "./PaperPage.jsx";
 import PaperThumbs from "./PaperThumbs.jsx";
 import PaperOutline from "./PaperOutline.jsx";
@@ -464,7 +465,7 @@ function Sheet({ title, onClose, children }) {
 export default function PaperReader({
   paper, moduleCode, me, isStaff = false, onBack, onOpenThread, onOpenOriginal, onPlace,
 }) {
-  const url = paper ? `/${String(paper.file).replace(/^\//, "")}` : null;
+  const url = paper ? fileHref(paper.file) : null;
 
   const [doc, setDoc] = useState(null);
   const [model, setModel] = useState(null);
@@ -633,21 +634,59 @@ export default function PaperReader({
     setError(null);
     (async () => {
       try {
-        const d = await loadPaper(url);
+        /* THE SIDECARS FIRST, AND THE PDF ONLY FOR PIXELS.
+
+           §4.6: never touch the PDF for anything the manifest can answer. The
+           layout — how many pages, how big each one is — comes from the
+           manifest written at ingest, so a thousand page-shaped placeholders
+           are on screen at the right height before a single PDF byte arrives.
+
+           This is not a nicety. Asking the document for all 1012 viewports
+           made 1012 range requests before anything drew: measured at 119MB
+           over the wire on a 44MB file, and the first page never appeared at
+           all. The manifest answers the same question in one row we already
+           have. */
+        const boxes = paper?.manifest?.boxes;
+        if (boxes?.length) {
+          setSizes(boxes.map((b) => ({ w: b.w, h: b.h })));
+        }
+
+        /* The text layer likewise: stored at ingest, fetched as one file.
+           Extracting it here would mean parsing every page of the document to
+           read a paper.
+
+           NOT AWAITED HERE. It is 3MB on a long manual and nothing on screen
+           needs it — the pages draw without it, and marks resolve against it
+           when it lands. Awaiting it put three seconds between opening a paper
+           and seeing any of it, for a file that is only needed to search. */
+        const textPromise = paper?.manifest ? storedText(paper) : Promise.resolve(null);
+        textPromise.then((t) => { if (live && t) setModel(t); });
+
+        const d = await loadPaper(url, paper?.bytes);
         if (!live) return;
         setDoc(d);
-        // Every page's size up front, so a page that has not rendered yet still
-        // holds the right amount of room and the scrollbar never lies.
-        const all = [];
-        for (let n = 1; n <= d.numPages; n++) {
-          const v = (await d.getPage(n)).getViewport({ scale: 1 });
-          all.push({ w: v.width, h: v.height });
+
+        /* Only when there is no manifest — the repo's own fixture papers, which
+           are small and local. */
+        if (!boxes?.length) {
+          const all = [];
+          for (let n = 1; n <= d.numPages; n++) {
+            const page2 = await d.getPage(n);
+            const v = page2.getViewport({ scale: 1 });
+            all.push({ w: v.width, h: v.height });
+            page2.cleanup();
+          }
+          if (!live) return;
+          setSizes(all);
         }
-        if (!live) return;
-        setSizes(all);
+
         d.getMetadata().then((m) => { if (live) setMeta(m); }).catch(() => {});
-        const m = await paperText(url);
-        if (live) setModel(m);
+        /* Only extract in the browser when nothing was stored — the fixture
+           papers, which are small and local. */
+        if (!(await textPromise)) {
+          const m = await paperText(url);
+          if (live) setModel(m);
+        }
       } catch (e) {
         console.error(e);
         if (live) setError("This paper would not open. The original still will.");

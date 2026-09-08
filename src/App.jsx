@@ -141,7 +141,7 @@ import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
 import Review from "./components/module/Review.jsx";
-import { listPapers } from "./lib/papers.js";
+import { listPapers, fileHref } from "./lib/papers.js";
 import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
@@ -845,9 +845,32 @@ function AppInner() {
   const readerOn = flags["library.reader"] && activeModuleCode === "M1";
   const [addingPaper, setAddingPaper] = useState(false);
   const paperPlace = progress.get("pw-paper-place", null);
+
+  /* Papers added by hand live in a table; the fixture's live in a file. They
+     are merged ONCE, here, into the list every screen reads — the Library, the
+     Flight Deck's pin, and the reader's own route.
+     
+     They were not, and that was the whole of "the paper opens blank": the
+     route resolved the id against the fixture alone, found nothing, and
+     rendered an empty <main>. A merge that only reaches one of three readers
+     is not a merge. */
+  const [addedPapers, setAddedPapers] = useState([]);
+  const [papersLoading, setPapersLoading] = useState(true);
+  useEffect(() => {
+    if (!activeModuleCode || !me) { setPapersLoading(false); return undefined; }
+    let live = true;
+    setPapersLoading(true);
+    listPapers(activeModuleCode, me).then(({ papers: rows }) => {
+      if (!live) return;
+      setAddedPapers(rows || []);
+      setPapersLoading(false);
+    });
+    return () => { live = false; };
+  }, [activeModuleCode, me]);
+
   const modulePapers = useMemo(
-    () => papersFor(activeModuleCode, useTestContent) || [],
-    [activeModuleCode, useTestContent],
+    () => [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers],
+    [activeModuleCode, useTestContent, addedPapers],
   );
   const lastPaper = useMemo(
     () => modulePapers.find((p) => p.id === paperPlace?.paperId) || null,
@@ -857,14 +880,6 @@ function AppInner() {
   const readerPin = readerOn
     ? { paper: lastPaper, page: paperPlace?.page || 1, pages: lastPaper?.pages || null }
     : null;
-
-  /* Papers added by hand live in a table; the fixture's live in a file. The
-     Library reads one list, so they are merged here and nowhere else. */
-  const [addedPapers, setAddedPapers] = useState([]);
-  useEffect(() => {
-    if (!activeModuleCode) return;
-    listPapers(activeModuleCode, me).then(({ papers: rows }) => setAddedPapers(rows || []));
-  }, [activeModuleCode, me]);
 
   const openPaper = useCallback((paper) => {
     if (!paper) return;
@@ -1366,7 +1381,51 @@ function AppInner() {
       ) : route.name === "paper" ? (
         (() => {
           const paper = modulePapers.find((x) => x.id === route.paperId) || null;
-          if (!paper) return <main className="content content-taxi content--full" />;
+
+          /* THREE STATES, AND NONE OF THEM IS A BLANK PAGE (rule 10).
+
+             Still fetching, genuinely not there, and still being processed are
+             three different things and a reader arriving at any of them
+             deserves to be told which. This used to return an empty <main> for
+             all three, which is how a real uploaded paper opened as a black
+             screen with nothing on it at all. */
+          if (!paper && papersLoading) {
+            return (
+              <main className="content content-taxi content--full">
+                <div className="paper-state"><p>Finding that paper…</p></div>
+              </main>
+            );
+          }
+          if (!paper) {
+            return (
+              <main className="content content-taxi content--full">
+                <div className="paper-state">
+                  <h1>That paper is not in this module</h1>
+                  <p>It may have been removed, or the link may be to a paper
+                     somebody keeps to themselves.</p>
+                  <button type="button" className="nextgo"
+                          onClick={() => go(routePath.library(activeModuleCode))}>
+                    Back to the Library
+                  </button>
+                </div>
+              </main>
+            );
+          }
+          if (paper.status === "pending") {
+            return (
+              <main className="content content-taxi content--full">
+                <div className="paper-state">
+                  <h1>{paper.title}</h1>
+                  <p>Still being prepared — its text layer and thumbnails are
+                     being built. It opens as soon as they are done.</p>
+                  <button type="button" className="nextgo"
+                          onClick={() => go(routePath.library(activeModuleCode))}>
+                    Back to the Library
+                  </button>
+                </div>
+              </main>
+            );
+          }
           return (
             <main className="content content-taxi content--full">
               <PaperReader
@@ -1377,7 +1436,7 @@ function AppInner() {
                 onBack={() => go(routePath.library(activeModuleCode))}
                 onPlace={(page) => progress.set("pw-paper-place", { paperId: paper.id, page })}
                 onOpenThread={() => go(routePath.ready(activeModuleCode))}
-                onOpenOriginal={(p) => window.open(`/${String(p.file).replace(/^\//, "")}`, "_blank", "noopener")}
+                onOpenOriginal={(p) => window.open(fileHref(p.file), "_blank", "noopener")}
               />
             </main>
           );
@@ -1542,9 +1601,9 @@ function AppInner() {
             readerPin={readerPin}
             code={myProfile?.code || null}
             onAddPaper={() => setAddingPaper(true)}
-            /* One list: the fixture's papers and the ones somebody added by
-               hand. The Library must not know there are two sources. */
-            papers={[...papersFor(activeModuleCode, useTestContent), ...addedPapers]}
+            /* One list, merged once, above. The Library must not know there
+               are two sources. */
+            papers={modulePapers}
             people={{
               // The callsigns behind the author ids. Threads themselves come
               // from the session, not from here — they are the same rows the
