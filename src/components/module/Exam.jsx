@@ -200,7 +200,7 @@ export default function Exam({
     const s = score(attempt, quiz);
     const wrong = review(attempt, quiz);
     return (
-      <div className="quiz" ref={rootRef}>
+      <div className="quiz exam" ref={rootRef}>
         <div className="quiz-head">
           <span className="quiz-where">{title}</span>
           <span className="quiz-name">Going through it</span>
@@ -259,7 +259,7 @@ export default function Exam({
     const h = handIn(attempt);
     const jump = (i) => { put((a) => goTo(a, i, paper.length)); setPhase("paper"); };
     return (
-      <div className="quiz" ref={rootRef}>
+      <div className="quiz exam" ref={rootRef}>
         <div className="quiz-head">
           <span className="quiz-where">{title}</span>
           <span className="quiz-name">Hand it in</span>
@@ -349,12 +349,14 @@ export default function Exam({
               </button>
             ))}
           </div>
-          {/* The one sentence that makes an exam an exam. It is said on every
-              question rather than once on the cover, because the question a
-              student is actually asking — "why has it not told me?" — is asked
-              here, not there. */}
-          <p className="exam-quiet">Nothing is marked until you hand it in.</p>
         </div>
+
+        {/* The one sentence that makes an exam an exam. It is said on every
+            question rather than once on the cover, because the question a
+            student is actually asking — "why has it not told me?" — is asked
+            here, not there. Below the card, not inside it: crammed against the
+            last option it read as a fourth answer. */}
+        <p className="exam-quiet">Nothing is marked until you hand it in.</p>
       </div>
 
       <div className="quiz-foot exam-foot">
