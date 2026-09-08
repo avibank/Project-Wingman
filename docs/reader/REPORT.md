@@ -47,6 +47,30 @@ Measured on your file at each step:
 Still above the brief's sub-second target on a cold production load; most of
 what is left is app boot rather than the paper. Honest number, not a rounded one.
 
+**Those numbers are now re-measurable, against your file.** `npm run
+measure:manual` reads the real row, hands it to the harness, proxies storage
+through to the real project so the ranged requests are real ones, and reports
+layout time, first paint, bytes, live canvases and frame times. It writes
+nothing. Re-run after the shipped-DOM pass:
+
+| | |
+|---|---|
+| all 1012 page slots laid out | 572ms |
+| first page drawn | 2.4s |
+| over the wire | 1.34MB in 46 requests, 21 ranged |
+| after scrolling to page 25 | 6 canvases alive |
+| frame time while scrolling | 18ms average, 67ms worst |
+
+It caught its own first answer being wrong, which is worth recording: run
+naively it reported **88.7MB** — two whole-file downloads. The harness pins
+`VITE_SUPABASE_URL` to its own origin, so the paper's storage URL came out
+same-origin, and `sameOrigin()` in paperText.js hands those to pdf.js's own
+loader rather than to this app's range transport. Production never takes that
+branch. The harness now serves storage from `localhost` while the page is on
+`127.0.0.1` — same server, deliberately a different origin — and strips
+`Access-Control-Expose-Headers` on the way through, which is the exact
+condition that made pdf.js give up on ranging in the first place.
+
 **I linearized your file for you.** `qpdf` is now installed, the manual was
 downloaded, linearized, re-uploaded in place and its row updated. You do not
 need to run `paper:linearize` on this one.

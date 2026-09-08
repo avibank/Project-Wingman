@@ -140,7 +140,11 @@ const RPC = {
     row.updated_at = new Date().toISOString();
     return row.agree_count;
   },
-  papers_for: () => [],
+  /* Normally there are no uploaded papers in the harness — the reader is
+     exercised against the committed dev paper. `scripts/measure-manual.mjs`
+     sets this to the real 1012-page manual's row so the timings are measured
+     against the real file over the real wire, not a 14-page stand-in. */
+  papers_for: () => (process.env.HARNESS_REAL_PAPER ? JSON.parse(process.env.HARNESS_REAL_PAPER) : []),
   add_paper: (s, b) => [{ made_id: b.p_id, made_visibility: b.p_visibility || "solo", made_status: "pending", downgraded: false }],
   paper_status: () => null,
   delete_paper: () => true,
