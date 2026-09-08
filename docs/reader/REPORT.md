@@ -24,6 +24,10 @@ production, you would run them yourself after checking — and the reader was
 built so this is the only thing waiting. **Until it runs, adding a paper will
 tell you to run exactly this and stop.** That is a setup state, not an error.
 
+Until it runs, the browser console shows one failed request per module view —
+the Library asking for a `papers` table that is not there yet. Harmless, and it
+stops the moment you run the command.
+
 The migration is additive: no column is dropped, no row is touched, every
 existing mark keeps working. The one function it replaces (`paper_marks_for`)
 is dropped and recreated within the same file, and the already-dead

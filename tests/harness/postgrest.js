@@ -41,6 +41,10 @@ export function makeStore() {
        would drown the console assertion that catches real errors. */
     presence: [], comms_messages: [], reports: [], question_attempts: [],
     paper_reads: [], lesson_progress: [],
+    /* Empty, but present — the state after 0018 has been run. The Library asks
+       for it on every module view, and a 501 here is the harness missing a
+       table rather than the product failing. */
+    papers: [],
   };
 }
 
