@@ -562,3 +562,36 @@
 /* Two words on one line, and the clock never jumps as its digits change. */
 .exam .quiz-head { gap: 10px; }
 .exam-clock { font-variant-numeric: tabular-nums; }
+
+/* ---- going through it, in full ------------------------------------------ */
+.exam-done { font-size: var(--fs-sm); color: var(--t3); }
+
+/* Where the questions came from, before the questions themselves. */
+.q-weak { display: grid; gap: 4px; margin: 4px 0 22px; }
+.q-weak-row {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  min-height: 44px; padding: 10px 12px; text-align: left;
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 10px;
+  font: inherit; color: var(--t2); cursor: pointer;
+}
+.q-weak-row:hover { border-color: var(--edge-hi); color: var(--t1); }
+.q-weak-row b { font-size: var(--fs-md); font-weight: 500; color: var(--t1); }
+.q-weak-row em { font-style: normal; font-size: var(--fs-sm); color: var(--t3); margin-inline-start: auto; }
+
+/* The misses lead; the ones you got right fold away underneath. */
+.q-rev[data-mark="right"] { border-inline-start-color: var(--ok); }
+.q-rev[data-mark="wrong"] { border-inline-start-color: var(--bad); }
+.q-got { margin-top: 22px; }
+.q-got > summary {
+  min-height: 44px; display: flex; align-items: center;
+  font-size: var(--fs-md); color: var(--t2); cursor: pointer;
+  list-style: none;
+}
+.q-got > summary::-webkit-details-marker { display: none; }
+.q-got > summary::before {
+  content: "›"; margin-inline-end: 9px; color: var(--t3);
+  transition: transform .2s var(--paper-ease); display: inline-block;
+}
+.q-got[open] > summary::before { transform: rotate(90deg); }
+.q-got > summary:hover { color: var(--t1); }
+.q-got .q-review { margin-top: 10px; }

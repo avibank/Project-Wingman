@@ -5,7 +5,7 @@ import {
   newAttempt, answer, flag, goTo, next as nextQ, prev as prevQ,
   submit, score, review, handIn, navigator as navRow, elapsed, seedOf,
   saveAttempt, loadAttempt, clearAttempt, resumeLine, quizKey,
-  passAt, scoreLine, LABELS,
+  passAt, scoreLine, LABELS, retakeWrong, weakLessons, answeredCount,
 } from "../../lib/quiz.js";
 import { shuffleOptions } from "../../lib/retention.js";
 import "./quiz.css";
@@ -40,11 +40,17 @@ import "./quiz.css";
    ========================================================================= */
 
 export default function Exam({
-  title, questions, isRetake = false,
+  title, questions, isRetake = false, lessons = [],
   quizId, resumeAt = 0, onProgress, onAnswers, onDone, onLeave, onOpenLesson,
   minimums, averageBefore = null, averageAfter = null, moduleName, onRecheck,
 }) {
   const [retake] = useState(isRetake);
+  /* A lesson id is not a name. Without this the "where these came from" list
+     reads as a row of ids, which is a worse answer than no list. */
+  const lessonName = useCallback(
+    (id2) => lessons.find((l) => l.id === id2)?.title || "That lesson",
+    [lessons],
+  );
   /* A SITTING IS A FIXED SET, latched at mount. Same reason as Review: a set
      derived from a list that changes underneath an index makes the paper skip
      questions and end early. */
@@ -199,6 +205,9 @@ export default function Exam({
   if (phase === "review") {
     const s = score(attempt, quiz);
     const wrong = review(attempt, quiz);
+    const weak = weakLessons(attempt, quiz);
+    const missed = new Set(s.wrong);
+
     return (
       <div className="quiz exam" ref={rootRef}>
         <div className="quiz-head">
@@ -218,7 +227,29 @@ export default function Exam({
             ))}
           </div>
 
-          {/* R11 — a clean sheet is stated in the affirmative, never as a zero. */}
+          {/* WHICH LESSONS TO GO BACK TO, before the questions themselves.
+              A student who missed three questions does not need three
+              explanations, they need the one lesson all three came from. The
+              join is on lessonId and never on resemblance. */}
+          {weak.length > 0 && onOpenLesson && (
+            <section className="q-weak">
+              <h3 className="q-n">Where these came from</h3>
+              {weak.map((w) => (
+                <button key={w.lessonId} type="button" className="q-weak-row"
+                        onClick={() => onOpenLesson(w.lessonId)}>
+                  <b>{lessonName(w.lessonId)}</b>
+                  <em>{w.missed} {w.missed === 1 ? "question" : "questions"} from here</em>
+                </button>
+              ))}
+            </section>
+          )}
+
+          {/* EVERY QUESTION, NOT ONLY THE MISSES.
+
+              Showing the wrong ones alone throws away the other half of what a
+              student wants to know: which of the ones they got right were
+              actually guesses. The ones you missed lead, because that is what
+              you came for; the rest fold away underneath. */}
           {!wrong.length ? (
             <p className="q-rev-line">
               Every one of them right. The next chapter is where this goes now.
@@ -226,7 +257,7 @@ export default function Exam({
           ) : (
             <div className="q-review">
               {wrong.map((r) => (
-                <article className="q-rev" key={r.index}>
+                <article className="q-rev" key={r.index} data-mark="wrong">
                   <p className="q-rev-q"><b>{r.index + 1}.</b> {r.question}</p>
                   <p className="q-rev-line">
                     <span className="q-rev-yours">
@@ -245,11 +276,63 @@ export default function Exam({
               ))}
             </div>
           )}
+
+          {s.right > 0 && (
+            <details className="q-got">
+              <summary>
+                The {s.right} you got right
+              </summary>
+              <div className="q-review">
+                {paper.map((q2, i) => (missed.has(i) ? null : (
+                  <article className="q-rev" key={q2.id || i} data-mark="right">
+                    <p className="q-rev-q"><b>{i + 1}.</b> {q2.question}</p>
+                    <p className="q-rev-line q-rev-right">
+                      {LABELS[attempt.answers[i]]} — {q2.options[attempt.answers[i]]}
+                    </p>
+                    {q2.explain && <p className="q-rev-explain">{q2.explain}</p>}
+                  </article>
+                )))}
+              </div>
+            </details>
+          )}
         </div>
 
         <div className="quiz-foot">
-          <button type="button" className="q-btn" data-primary="" onClick={onLeave}>Done</button>
+          {/* THE MOST USEFUL REVISION FEATURE FOR THE LEAST WORK — lib/quiz.js
+              has said so since Part 14 and nothing had ever called it. Sit
+              only the ones you missed, as their own paper. */}
+          {wrong.length > 0 && (
+            <button type="button" className="q-btn" onClick={() => setPhase("retake")}>
+              Just the {wrong.length} I missed
+            </button>
+          )}
+          <div className="q-move">
+            <button type="button" className="q-btn" data-primary="" onClick={onLeave}>Done</button>
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  /* Retaking only the misses. A separate sitting on a separate paper, so it
+     cannot overwrite the score of the one you already sat — the first attempt
+     is the record and a drill is not a retake of it. */
+  if (phase === "retake") {
+    const only = retakeWrong(attempt, quiz);
+    if (!only) { setPhase("review"); return null; }
+    return (
+      <div ref={rootRef}>
+        <Exam
+          key={`${id}.retake`}
+          quizId={`${id}.retake`}
+          title={`${title} — the ones you missed`}
+          questions={only.quiz.questions}
+          isRetake
+          minimums={minimums}
+          moduleName={moduleName}
+          onOpenLesson={onOpenLesson}
+          onLeave={() => setPhase("review")}
+        />
       </div>
     );
   }
@@ -322,6 +405,9 @@ export default function Exam({
         <span className="quiz-where">{title}</span>
         <span className="quiz-name">Question {at + 1}</span>
         <span className="quiz-count">of {paper.length}</span>
+        {/* How far in you are, without a bar. A count tells you what is left;
+            a bar tells you how much of your life is gone. */}
+        <span className="exam-done">{answeredCount(attempt)} answered</span>
         <span className="exam-clock" aria-label="Time on this paper">
           {elapsed(attempt.startedAt, now)}
         </span>

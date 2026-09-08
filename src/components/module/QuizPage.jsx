@@ -43,6 +43,7 @@ export default function QuizPage({
           quizId={chapter.quizId || chapter.id}
           title={`${chapter.title} quiz`}
           questions={chapter.questions}
+          lessons={chapter.lessons || []}
           isRetake={Boolean(score)}
           // Where you were, so leaving halfway and coming back returns you to
           // the question rather than to the cover.
