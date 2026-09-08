@@ -165,7 +165,13 @@ straight to page one instead of fetching the end of the file first. If qpdf is
 not installed the paper still works — the reader records which state it is in
 and shows it under **Document details**.
 
-**Then:** Module 1 → Library → Papers → **Add a paper** → choose the file.
+**Then:** Module 1 → Library → Papers → **Add a paper** → choose the file →
+pick who else can see it.
+
+Your manual is **1012 pages and 44MB**, so: the file goes up first with a real
+progress bar, and the text layer takes a few minutes after that. It is not
+linearized, so run the command above if you can — it is worth the ten seconds on
+a file this size.
 
 → It builds the manifest, the text layer and the thumbnails from your copy
 before sending anything. A long manual takes a minute and shows what it is

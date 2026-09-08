@@ -8,63 +8,65 @@ instruction, and verified — see below.
 
 ## Read this first
 
-**Both of the things that needed you are done.** You asked me to run them, so I
-did, and verified each one.
+**Both of the things that were waiting have been run, and verified.**
 
-### 1. The migration is in
+### Migration 0018 and 0019 are on production
 
-`npm run reader:setup` ran against production on 2026-09-08. Verified by
-querying afterwards rather than by trusting the exit code:
+`npm run reader:setup` ran. Verified by querying afterwards rather than
+inferred: the `papers` table and its storage bucket exist, `paper_annotations`
+carries `anonymous`, `agree_count`, `deleted_at` and `style`, `lesson_threads`
+carries the passage back-link, `paper_marks_for` and `agree_with_mark` are in
+`pg_proc`, and the dead `paper_annotations_for` is gone.
 
-| | |
-|---|---|
-| `papers` table | created |
-| `papers` storage bucket | created, public, 256MB limit |
-| `paper_annotations.anonymous / agree_count / deleted_at / style` | all four added |
-| `lesson_threads.paper_id / page / anchor` | added — §14's return leg |
-| `paper_marks_for` | recreated with the wider shape |
-| `agree_with_mark` | created |
-| `paper_annotations_for` | dropped — dead since 0017 |
-| existing marks | **5, untouched by the migration** |
+0019 followed: a paper now records **who it is for**. Adding is open to
+everybody; module-wide is instructors only, gated in SQL rather than in the
+browser.
 
-**The colour constraint proved itself on the way in.** A test row with an
-invalid colour was refused by `colour_is_a_name` rather than stored.
+**The anonymity rule was then checked against the real database**, which is the
+gap this report used to flag. A throwaway anonymous question and a correction,
+read back as three different people:
 
-**And the rule the brief cares most about is now verified against the real SQL,
-not against my harness.** A throwaway anonymous question and correction were
-written, read back as three different people, and deleted:
-
-| Reading as | question | correction |
+| Reading as | Gets | Author |
 |---|---|---|
-| another student | `author_id` **null**, name "Anonymous" | **absent from the payload entirely** |
-| an instructor | `author_id` present | present |
-| the author | present, "You" | present |
+| another student | the question only — **no correction row at all** | stripped to null |
+| an instructor | both | the real id |
+| the author | both | their own |
 
-`npm run check:paper-db` — **20 assertions against production, all green**, 4
-rows written and 0 left behind. That was the outstanding item in the first draft
-of this report; it is closed.
+That is §6.2 and R9 proved on the live SQL, not on my harness. The probe rows
+were deleted.
 
-### 2. The placeholder marks are gone, and restorable
+### The content clear-out is complete
 
-The five marks on `M1.P1` are deleted. They were all mine from testing — the
-anchors read *"Placeholder paper TEST CONTENT ONLY — NOT COURSE MATERIAL"*.
+28 placeholder papers gone from the fixture, 6 generated PDFs gone from
+`public/papers/`, and the marks with them. Production now has **0 papers, 0
+marks, 0 ink** — a clean bed for the real manual. The backup is still
+`backups/content-clearout-2026-09-08T01-25-33/` and still restores everything.
 
-Backup: `backups/content-clearout-2026-09-08T06-26-24/rows.sql` — five INSERT
-statements that restore them with their original ids.
+### One thing that was yours
 
-```
-node scripts/clear-placeholder-content.mjs --restore content-clearout-2026-09-08T06-26-24
-```
+Your 44MB upload had left an **orphaned row** — 1012 pages, status `pending`,
+with no file behind it, because the upload threw before it sent anything. It is
+deleted, so your retry starts clean. The cause is in the next section.
 
-**Production now:** 0 marks, 0 ink, 0 papers, `papers` bucket ready.
-3 profiles, 3 progress rows, 2 threads — all untouched.
+## The bug that stopped your upload — and it was mine
 
-**A gap the run found in the clear-out script itself.** Its two halves can run
-on different days, but the second half derived the paper ids it was allowed to
-delete from the first half's input — so once the fixture was emptied, a later
-`--rows` would find nothing and silently succeed. It now takes `--from <backup>`
-and reads the ids out of the backup, which keeps the deletion scoped to exactly
-the papers this clear-out removed instead of letting it become a loose query.
+**"That file would not open as a PDF. Cannot read properties of undefined
+(reading 'from')" was not your file.** It was `supabase.storage.from` — and
+this app's Supabase client is a bare PostgrestClient with no `.storage` at all,
+deliberately, because `createClient` drags auth-js, storage-js, realtime-js and
+phoenix into the entry chunk for features with no call site. I wrote the upload
+against an API that was never there, and a catch wide enough to swallow
+anything reported a storage fault as a parser fault.
+
+Storage now goes over its REST API — four endpoints, no library — on XHR rather
+than fetch, so a 44MB transfer has a real progress bar instead of looking like a
+hang. And the order changed: open the file and take the manifest (seconds),
+reserve the row so the Library says "Preparing…" at once, send the file, **then**
+build the slow text layer and thumbnails. The first version did several minutes
+of work before moving a byte and threw all of it away on any failure — which is
+exactly what happened to you.
+
+Proved end to end against the real backend with a real PDF, then cleaned up.
 
 ## The bug that was live while I worked
 
@@ -97,7 +99,7 @@ surviving a rewrite, in the same file.
 | 5 · Chrome and layout | Done |
 | 6 · The tool tray | Done |
 | 7 · The mark card | Done |
-| 8 · Navigation | Partial — page jump, thumbnails, contents, find, per-paper memory. **No** tick rail, scrubber, back-pill, deep links, bookmarks, snapshot. |
+| 8 · Navigation | Mostly — page jump, thumbnails, contents, find, per-paper memory, **tick rail, back pill and page scrubber**. No deep links, bookmarks or snapshot. |
 | 9 · Marks-only view | **Not built** |
 | 10 · Export, print, offline | Partial — print and download exist. **No** burn-in, no export, no offline copy, no photo notes. |
 | 11 · Verify, fix, polish | Done — 44 browser assertions, 54 screenshots reviewed |
@@ -266,9 +268,7 @@ replies, progress.
 
 ## Things I would fix next, in order
 
-1. **Phase 8's navigation.** The tick rail and the back-pill are the two a
-   student feels every session in a 1000-page manual, and neither is built.
-2. **Auto-routing beyond threads.** `unsure → thread` works. The other four
+1. **Auto-routing beyond threads.** `unsure → thread` works. The other four
    colours are labelled correctly and say what they will do, but the revision
    deck, the glossary and the question-bank records are not written yet — the
    Weak spot colour does not yet feed Master Caution.
