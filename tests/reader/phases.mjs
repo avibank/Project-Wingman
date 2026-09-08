@@ -654,3 +654,133 @@ group("§6.3 · the chips are the destinations", () => {
     });
   });
 });
+
+/* ========================================================================= */
+group("§11 · the rack and the pills", () => {
+  it("the tick rail shows every mark in the paper, positioned by page", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(1200);
+      const rail = await page.evaluate(() => {
+        const r = document.querySelector(".pticks");
+        if (!r) return null;
+        const box = r.getBoundingClientRect();
+        return {
+          width: Math.round(box.width),
+          ticks: [...r.querySelectorAll(".ptick")].map((t) => ({
+            colour: t.dataset.colour || null, mine: t.hasAttribute("data-mine"), top: t.style.top,
+          })),
+          you: !!r.querySelector(".pticks-you"),
+        };
+      });
+      expect(rail).toBeTruthy("no tick rail");
+      expect(rail.ticks.length).toBeAtLeast(3, "the fixture's marks are not on the rail");
+      /* Yours are drawn wider and opaque; the module's narrower and lighter. */
+      expect(rail.ticks.some((t) => t.mine)).toBeTruthy();
+      expect(rail.ticks.some((t) => !t.mine)).toBeTruthy();
+      expect(rail.you).toBeTruthy("no marker for where the reader is");
+      expect(rail.width).toBeAtLeast(30, "a rail a thumb cannot find");
+    });
+  });
+
+  it("the rail is one control, not forty tiny ones", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      const buttons = await page.evaluate(
+        () => document.querySelectorAll(".pticks button, button.ptick").length);
+      expect(buttons).toBe(0, "each tick is its own button — forty targets nobody can hit");
+      expect(await page.locator("button.pticks").count()).toBe(1);
+    });
+  });
+
+  it("clicking the rail jumps, and the way back appears", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(1200);
+      const before = await page.evaluate(() => Number(document.querySelector(".pnum input").value));
+      await page.evaluate(() => {
+        const r = document.querySelector(".pticks");
+        const box = r.getBoundingClientRect();
+        r.dispatchEvent(new MouseEvent("click", {
+          bubbles: true, clientX: box.left + 15, clientY: box.top + box.height * 0.62,
+        }));
+      });
+      await page.waitForTimeout(900);
+      const after = await page.evaluate(() => Number(document.querySelector(".pnum input").value));
+      expect(after).toBeAtLeast(before + 1, "the rail did not move the reader");
+      /* §11.1 — and it says how to get back. */
+      const pill = await page.locator(".pback").count();
+      expect(pill).toBe(1, "no way back after a jump");
+      expect(await page.locator(".pback").innerText()).toContain(String(before));
+    });
+  });
+
+  it("the way back returns to the exact place, then goes away", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => { document.querySelector(".pscroll").scrollTop = 900; });
+      await page.waitForTimeout(500);
+      const top = await page.evaluate(() => document.querySelector(".pscroll").scrollTop);
+      await page.evaluate(() => {
+        const r = document.querySelector(".pticks");
+        const box = r.getBoundingClientRect();
+        r.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: box.left + 15, clientY: box.top + box.height * 0.8 }));
+      });
+      await page.waitForTimeout(900);
+      await page.click(".pback");
+      await page.waitForTimeout(900);
+      const back = await page.evaluate(() => document.querySelector(".pscroll").scrollTop);
+      expect(Math.abs(back - top)).toBeAtMost(30, "it did not come back to where it left");
+      expect(await page.locator(".pback").count()).toBe(0, "the pill stayed after it was used");
+    });
+  });
+
+  it("the page number is a scrubber, and it says what is near", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(900);
+      const moved = await page.evaluate(async () => {
+        const input = document.querySelector(".pnum input");
+        const r = input.getBoundingClientRect();
+        const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        const opts = (X) => ({ bubbles: true, pointerId: 4, pointerType: "mouse", isPrimary: true, clientX: X, clientY: y });
+        input.dispatchEvent(new PointerEvent("pointerdown", opts(x)));
+        input.dispatchEvent(new PointerEvent("pointermove", opts(x + 240)));
+        await new Promise((res) => setTimeout(res, 250));
+        const card = document.querySelector(".pscrub");
+        const shown = card ? card.innerText.replace(/\n/g, " ") : null;
+        const value = input.value;
+        input.dispatchEvent(new PointerEvent("pointerup", opts(x + 240)));
+        return { shown, value };
+      });
+      expect(moved.shown).toBeTruthy("no card while scrubbing");
+      expect(Number(moved.value)).toBeAtLeast(2, "dragging did not move the target page");
+      await page.waitForTimeout(700);
+      expect(await page.locator(".pscrub").count()).toBe(0, "the card stayed after the drag");
+    });
+  });
+});
+
+group("§11 · the rail stays reachable", () => {
+  it("the rail is not underneath the panel", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.evaluate(() => {
+        const p = document.querySelector(".paper");
+        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+      });
+      await page.waitForTimeout(700);
+      const clear = await page.evaluate(() => {
+        const rail = document.querySelector(".pticks");
+        const panel = document.querySelector(".prail");
+        if (!rail || !panel) return null;
+        const a = rail.getBoundingClientRect(), b = panel.getBoundingClientRect();
+        return { overlaps: a.right > b.left && a.left < b.right, railRight: Math.round(a.right), panelLeft: Math.round(b.left) };
+      });
+      expect(clear).toBeTruthy("rail or panel missing");
+      expect(clear.overlaps).toBeFalsy(
+        `the rail is under the panel — you cannot reach it while jumping about (${clear.railRight} vs ${clear.panelLeft})`);
+    });
+  });
+});

@@ -243,8 +243,13 @@ console.log('\nR11 — empty reads "not yet", never "nothing"');
   const reader = read("src/components/paper/PaperReader.jsx");
   ok("R11", "the empty state names the next action",
      /Nobody has marked this one up yet\. Select a line and yours will be the first\./.test(reader));
+  /* COMMENTS FIRST. This has now caught its own prose three times: a note
+     explaining why the code never says "0 marks" contains the string "0
+     marks". A checker that reads its own explanation is a checker that fails
+     when somebody documents the rule properly. */
+  const readerCode = reader.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
   ok("R11", "no zero is ever stated",
-     !/\b0 (marks|notes|highlights)\b/.test(reader) && !/>No marks</.test(reader));
+     !/\b0 (marks|notes|highlights)\b/.test(readerCode) && !/>No marks</.test(readerCode));
   ok("R11", "the orphan list is absent rather than empty",
      /orphans\.length > 0 && \(/.test(reader));
 }

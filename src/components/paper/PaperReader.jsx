@@ -514,6 +514,23 @@ export default function PaperReader({
   const [density, setDensity] = useState(true);
   const [activeId, setActiveId] = useState(null);
   const [picked, setPicked] = useState(null);   // { mark, at } — the mark card
+  /* §11.1 — where you were before you jumped. A jump from the Marks panel, the
+     tick rail or a search result is the most-missed control in a long manual:
+     you go and look at a figure and then cannot find your way back. */
+  const [cameFrom, setCameFrom] = useState(null);
+  /* THE DRAG LIVES IN A REF AND ONLY ITS RESULT LIVES IN STATE.
+
+     Held in state alone, the move handler reads whatever the last render
+     captured — and pointerdown and the first pointermove can land in the same
+     tick, so the drag had not started yet as far as the handler could tell and
+     nothing happened. The ref is written synchronously; the state is only what
+     the card draws. */
+  const drag = useRef(null);
+  const [scrub, setScrub] = useState(null);     // { page } while dragging
+  const [railAt, setRailAt] = useState(null);   // hovering the tick rail
+  /* The rail's snapping reads the ticks from a ref rather than closing over
+     them, so the handler does not need rebuilding every time a mark is made. */
+  const ticksRef = useRef([]);
 
   const [tool, setTool] = useState("select");
   /* THE TRAY. Loaded per device class, so a laptop and a tablet keep their own.
@@ -765,6 +782,15 @@ export default function PaperReader({
     if (layout === "scroll") scrollRef.current.scrollTo({ top: node.offsetTop - 12, behavior: "auto" });
     else scrollRef.current.scrollTo({ top: 0, behavior: "auto" });
   }, [layout, sizes.length]);
+
+  /* §11.1 — every jump that is not a page-turn records where it left from.
+     Turning a page is not a jump, because you can turn back; the long moves —
+     a mark in the panel, a tick on the rail, a search hit — are the ones that
+     lose you. */
+  const jumpTo = useCallback((n) => {
+    setCameFrom({ page, top: scrollRef.current?.scrollTop ?? 0 });
+    goToPage(n);
+  }, [goToPage, page]);
 
   /* A spread turns two pages at a time, except at the cover. Stepping by one
      from an open book leaves you looking at the same two pages with the number
@@ -1324,8 +1350,10 @@ export default function PaperReader({
 
   useEffect(() => {
     if (!finds.length) return;
-    goToPage(pageOf(model, finds[Math.min(findAt, finds.length - 1)].start));
-  }, [findAt, finds, model, goToPage]);
+    jumpTo(pageOf(model, finds[Math.min(findAt, finds.length - 1)].start));
+    // jumpTo is deliberately not a dependency: it changes with `page`, and
+    // depending on it would re-fire this jump every time the page moved.
+  }, [findAt, finds, model]);
 
   /* ---------------------------------------------------------------- render */
   const notesOnPage = useCallback(
@@ -1351,6 +1379,30 @@ export default function PaperReader({
   const everything = [...placed, ...orphans.map((o) => ({ ...o, status: "orphaned" }))];
   const counts = filterCounts(everything, me);
   const marksList = applyFilter(everything, filter, me);
+
+  /* Which page a height on the rail means — and, if a mark is within a few
+     pages of it, that mark's page instead. Aiming roughly at a tick should
+     land on it. */
+  const pageAtRail = useCallback((y, height) => {
+    const raw = Math.max(1, Math.min(totalPages, Math.round((y / Math.max(1, height)) * totalPages)));
+    const snap = Math.max(1, Math.round(totalPages / 60));
+    const near = ticksRef.current
+      .filter((t) => Math.abs(t.page - raw) <= snap)
+      .sort((a, b) => Math.abs(a.page - raw) - Math.abs(b.page - raw))[0];
+    return near ? near.page : raw;
+  }, [totalPages]);
+
+  /* §11.2 — every mark in the whole paper, positioned by page. Yours are drawn
+     wider and fully opaque, the module's narrower and lighter, so a manual
+     somebody has worked through reads as a used book at a glance. */
+  const ticks = useMemo(() => (model ? placed.map((m) => ({
+    id: m.id,
+    page: pageOf(model, m.start),
+    colour: m.colour || null,
+    mine: m.author_id === me,
+    name: m.colour ? meaning(m.colour).name : "Marked",
+  })) : []), [placed, model, me]);
+  ticksRef.current = ticks;
   const closeMenus = () => setMenu(null);
   const info = meta?.info || {};
 
@@ -1684,12 +1736,42 @@ export default function PaperReader({
                   onClick={() => turn(-1)} disabled={page <= 1}>
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
-          <span className="pnum">
-            <input value={page} aria-label="Page"
+          {/* §11.3 — THE PAGE NUMBER IS A SCRUBBER. Drag it and fly through
+              the manual, with a card showing where you would land and how many
+              marks are near it. In a 1012-page document this is faster than
+              typing a number and far faster than scrolling. */}
+          <span className="pnum" data-scrubbing={scrub ? "" : undefined}>
+            <input value={scrub ? scrub.page : page} aria-label="Page"
+                   title="Drag to fly through the paper"
                    onChange={(e) => {
                      const n = Number(e.target.value.replace(/\D/g, ""));
-                     if (n >= 1 && n <= totalPages) goToPage(n);
-                   }} />
+                     if (n >= 1 && n <= totalPages) jumpTo(n);
+                   }}
+                   onPointerDown={(e) => {
+                     if (totalPages < 8) return;          // nothing to fly through
+                     try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch { /* not ours */ }
+                     drag.current = { x: e.clientX, from: page, page };
+                     setScrub({ page });
+                   }}
+                   onPointerMove={(e) => {
+                     const d = drag.current;
+                     if (!d) return;
+                     e.preventDefault();
+                     /* The whole paper across roughly half a screen width, so a
+                        thousand pages is a comfortable drag rather than a
+                        twitch. */
+                     const perPx = totalPages / Math.max(320, window.innerWidth * 0.55);
+                     const n = Math.max(1, Math.min(totalPages,
+                       Math.round(d.from + (e.clientX - d.x) * perPx)));
+                     if (n !== d.page) { d.page = n; setScrub({ page: n }); }
+                   }}
+                   onPointerUp={() => {
+                     const d = drag.current;
+                     drag.current = null;
+                     setScrub(null);
+                     if (d && d.page !== d.from) jumpTo(d.page);
+                   }}
+                   onPointerCancel={() => { drag.current = null; setScrub(null); }} />
             <span>/ {totalPages || "—"}</span>
           </span>
           <button type="button" className="ptool" aria-label="Next page"
@@ -1747,12 +1829,12 @@ export default function PaperReader({
             </div>
 
             {rail === "thumbs" && (
-              <PaperThumbs doc={doc} pages={totalPages} current={page} onPick={goToPage} />
+              <PaperThumbs doc={doc} pages={totalPages} current={page} onPick={jumpTo} />
             )}
 
             {rail === "outline" && (
               <div className="prail-marks">
-                <PaperOutline doc={doc} onPick={goToPage} />
+                <PaperOutline doc={doc} onPick={jumpTo} />
               </div>
             )}
 
@@ -1814,7 +1896,7 @@ export default function PaperReader({
                                 onClick={() => {
                                   if (a.status === "orphaned") return;
                                   setActiveId(a.id);
-                                  goToPage(pageOf(model, a.start));
+                                  jumpTo(pageOf(model, a.start));
                                 }}>
                           <span className="mrow-quote">
                             {a.status === "orphaned"
@@ -1840,6 +1922,55 @@ export default function PaperReader({
               </div>
             )}
           </aside>
+        )}
+
+        {/* THE TICK RAIL (§11.2). Every mark in the paper, down the right
+            edge, positioned by page. In a 1000-page manual this is the only
+            view of the whole thing you ever get — where you have been, where
+            the class has been, and how far in you are. */}
+        {ticks.length > 0 && totalPages > 1 && (
+          /* THE RAIL IS THE CONTROL, AND THE TICKS ARE DRAWN ON IT.
+
+             Forty separate 3px buttons is forty targets nobody can hit and
+             forty things for a screen reader to read out. One control, one job
+             (rule 7): the rail takes the click, works out which page that
+             height is, and SNAPS to a nearby mark if there is one — so aiming
+             roughly at a tick lands on it, and aiming at empty rail lands on
+             that page. */
+          <button
+            type="button" className="pticks"
+            aria-label={`Marks across this paper — ${ticks.length} of them. Click to jump.`}
+            onPointerMove={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              setRailAt({ y: e.clientY - r.top, page: pageAtRail(e.clientY - r.top, r.height) });
+            }}
+            onPointerLeave={() => setRailAt(null)}
+            onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              jumpTo(pageAtRail(e.clientY - r.top, r.height));
+            }}
+          >
+            <span className="pticks-trk" aria-hidden="true" />
+            {ticks.map((t) => (
+              <span key={t.id} className="ptick" aria-hidden="true"
+                    data-colour={t.colour || undefined}
+                    data-mine={t.mine ? "" : undefined}
+                    style={{ top: `${((t.page - 0.5) / totalPages) * 100}%` }} />
+            ))}
+            <span className="pticks-you" aria-hidden="true"
+                  style={{ top: `${((page - 0.5) / totalPages) * 100}%` }} />
+          </button>
+        )}
+
+        {railAt && (
+          <div className="pticks-tip" style={{ top: railAt.y }} role="status">
+            {(() => {
+              const near = ticks.filter((t) => t.page === railAt.page);
+              return near.length
+                ? <><b data-colour={near[0].colour || undefined}>{near[0].name}</b><em className="mono">p.{railAt.page}</em></>
+                : <em className="mono">p.{railAt.page}</em>;
+            })()}
+          </div>
         )}
 
         {/* ------------------------------------------------------ the pages */}
@@ -1896,7 +2027,7 @@ export default function PaperReader({
                   {notesOnPage(n).map((mark) => (
                     <MarkCard key={mark.id} mark={mark} me={me} active={activeId === mark.id}
                               onOpenThread={onOpenThread} onDelete={removeMark}
-                              onJump={(m) => { setActiveId(m.id); goToPage(pageOf(model, m.start)); }} />
+                              onJump={(m) => { setActiveId(m.id); jumpTo(pageOf(model, m.start)); }} />
                   ))}
                 </div>
               );
@@ -1948,6 +2079,35 @@ export default function PaperReader({
           />
         </div>
       </div>
+
+      {scrub && (
+        <div className="pscrub" role="status">
+          <b className="mono">{scrub.page}</b>
+          <span>
+            of {totalPages}
+            <em>{(() => {
+              const near = ticks.filter((t) => Math.abs(t.page - scrub.page) <= 2).length;
+              /* Never "0 marks near here" — an absence stated is an absence
+                 you have to read. Silence says it better. */
+              return near ? `${near} mark${near === 1 ? "" : "s"} near here` : "";
+            })()}</em>
+          </span>
+        </div>
+      )}
+
+      {/* §11.1 — the way back. Appears after a jump, says where it goes, and
+          goes away once used. */}
+      {cameFrom && cameFrom.page !== page && (
+        <button type="button" className="pback"
+                onClick={() => {
+                  goToPage(cameFrom.page);
+                  if (scrollRef.current && cameFrom.top != null) scrollRef.current.scrollTop = cameFrom.top;
+                  setCameFrom(null);
+                }}>
+          <ChevronLeft size={15} aria-hidden="true" />
+          Back to page <b className="mono">{cameFrom.page}</b>
+        </button>
+      )}
 
       {composer && (
         <div className="spot-scrim" onClick={(e) => { if (e.target === e.currentTarget) setComposer(null); }}>

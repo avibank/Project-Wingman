@@ -863,8 +863,8 @@ function AppInner() {
   const [addedPapers, setAddedPapers] = useState([]);
   useEffect(() => {
     if (!activeModuleCode) return;
-    listPapers(activeModuleCode).then(({ papers: rows }) => setAddedPapers(rows || []));
-  }, [activeModuleCode]);
+    listPapers(activeModuleCode, me).then(({ papers: rows }) => setAddedPapers(rows || []));
+  }, [activeModuleCode, me]);
 
   const openPaper = useCallback((paper) => {
     if (!paper) return;
@@ -1589,6 +1589,7 @@ function AppInner() {
                 moduleCode={activeModuleCode}
                 content={useTestContent}
                 me={me}
+                isStaff={!!myProfile?.is_staff}
                 onClose={() => setAddingPaper(false)}
                 onAdded={(row) => {
                   setAddedPapers((held) => [...held.filter((p) => p.id !== row.id), row]);

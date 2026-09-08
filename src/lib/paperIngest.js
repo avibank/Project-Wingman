@@ -115,21 +115,41 @@ export async function makeThumbs(doc, onProgress, limit = 60) {
 export const hasTextLayer = (textPages) =>
   textPages.some((p) => p.text.replace(/\s/g, "").length > 40);
 
-/* The whole thing, in the order that lets the caller show progress. */
-export async function ingest(file, onProgress) {
+/* OPENED ONCE, IN TWO HALVES.
+
+   The manifest is needed before anything can be stored — it is what the row
+   records and what lets the reader lay the paper out. The text layer and the
+   thumbnails are not: they take minutes on a long manual and are worth nothing
+   until the file itself is safely up.
+
+   So the document is opened, the manifest taken, and the handle kept. The
+   caller uploads, then comes back for the rest. `close()` must be called
+   either way or a 44MB parse stays in memory for the life of the tab.
+
+   The bytes are handed to pdf.js as a COPY, because it transfers the buffer to
+   its worker and a transferred ArrayBuffer is detached — reading it afterwards
+   to check linearization would find a zero-length array. */
+export async function open(file, onProgress) {
   const bytes = new Uint8Array(await file.arrayBuffer());
+  const linear = isLinearized(bytes);
   onProgress?.(0, 1, "reading");
-  const doc = await pdfjs.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
-  try {
-    const manifest = await buildManifest(doc);
-    onProgress?.(1, 1, "manifest");
-    const text = await extractText(doc, onProgress);
-    const thumbs = await makeThumbs(doc, onProgress);
-    return {
-      bytes,
-      manifest: { ...manifest, linearized: isLinearized(bytes), hasText: hasTextLayer(text) },
-      text,
-      thumbs,
-    };
-  } finally { doc.destroy?.(); }
+
+  const doc = await pdfjs.getDocument({
+    data: bytes.slice(0), isEvalSupported: false,
+  }).promise;
+
+  const manifest = await buildManifest(doc);
+  onProgress?.(1, 1, "manifest");
+
+  return {
+    doc,
+    manifest: { ...manifest, linearized: linear, hasText: null },
+    /* The slow half, on demand. */
+    rest: async (progress) => {
+      const text = await extractText(doc, progress);
+      const thumbs = await makeThumbs(doc, progress);
+      return { text, thumbs, hasText: hasTextLayer(text) };
+    },
+    close: () => { try { doc.destroy?.(); } catch { /* already gone */ } },
+  };
 }

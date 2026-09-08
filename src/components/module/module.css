@@ -867,3 +867,24 @@
 .ihair { display: block; height: 2px; margin-top: 6px; border-radius: 2px; background: var(--edge); overflow: hidden; }
 .ihair i { display: block; height: 100%; background: var(--active); }
 .item[data-here] .iname { color: var(--t1); }
+
+/* Who else can see a paper. */
+.addpaper-scope { border: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.addpaper-scope legend { padding: 0 0 6px; font-size: 13px; color: var(--t3); }
+.scope-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px 11px;
+  min-height: 44px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--raised); cursor: pointer;
+}
+.scope-row[data-on] { border-color: var(--active); }
+.scope-row input { position: absolute; opacity: 0; width: 0; height: 0; }
+.scope-tick {
+  width: 18px; height: 18px; flex: none; margin-top: 1px;
+  border-radius: 50%; border: 1px solid var(--edge);
+  display: grid; place-items: center; color: var(--on-active, var(--ground));
+}
+.scope-row[data-on] .scope-tick { background: var(--active); border-color: var(--active); }
+.scope-name b { display: block; font-size: 14px; font-weight: 500; color: var(--t1); }
+.scope-name em { font-style: normal; font-size: 13px; color: var(--t3); }
+.addpaper-said { color: var(--t2); }
+.addpaper-work .q-btn { justify-self: start; margin-top: 8px; }

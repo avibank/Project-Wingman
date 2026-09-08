@@ -140,6 +140,10 @@ const RPC = {
     row.updated_at = new Date().toISOString();
     return row.agree_count;
   },
+  papers_for: () => [],
+  add_paper: (s, b) => [{ made_id: b.p_id, made_visibility: b.p_visibility || "solo", made_status: "pending", downgraded: false }],
+  paper_status: () => null,
+  delete_paper: () => true,
   my_modules: () => [],
   right_seat: () => [],
   presence_touch: () => null,
