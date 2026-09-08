@@ -185,6 +185,30 @@ it will say so — that is honest, not broken.
 
 ---
 
+## Part 8 — the two things a browser here cannot answer (both, 2 minutes)
+
+Everything else in this script is checked automatically as well. These two are
+not, because the headless browsers lie about them.
+
+**8.1 The glass.** Open the marks panel with the paper behind it. Every floating
+surface is 82% opaque over a 30px backdrop blur, and the blur is doing most of
+the work — without it the panel is a list of sentences printed over another list
+of sentences. Headless WebKit does not composite the blur, so the iPad
+screenshots show it see-through and I cannot tell from here whether Safari does
+the same. → **The page behind the panel should be a soft wash, not readable.**
+There is a fallback for browsers that report no support at all; this is about
+one that reports support and then does not paint it.
+
+**8.2 The proportions, on the device.** These were all wrong until this pass,
+all from one global rule stretching every control in the reader, and all fixed
+by measuring rather than looking. Worth ten seconds of your eyes on the real
+thing: → the colour swatches in the tool inspector are **circles**, not ovals.
+→ the dock's tools are **square**. → the panel's Marks/Pages/Contents strip is a
+slim segmented control, not three tall slabs. → on the iPad, the bottom bar is
+**one line**: "25 / 1012" and "Fit width" must not wrap.
+
+---
+
 ## Anything that goes wrong
 
 Note the step number and what happened. If the reader misbehaves badly, turn off
