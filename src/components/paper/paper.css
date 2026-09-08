@@ -33,6 +33,11 @@
      cannot disagree about how big "large" is. The rail runs two abreast, so the
      column is two of them plus the gap and the padding. */
   --rail-btn: 34px;
+  /* One curve for everything in this screen, and one page colour. Both are
+     brief 8.3; the curve is the reference build's and it is the only easing
+     used anywhere below. */
+  --paper-ease: cubic-bezier(.32, .72, 0, 1);
+  --sheet: oklch(1 0 0);
   --rail-w: calc(var(--rail-btn) * 2 + 14px);
   display: grid;
   grid-template-columns: var(--rail-w) 1fr;
@@ -200,11 +205,25 @@
    arrived. Now the panel is open or it is not. */
 .paper { --side-w: 0px; }
 .paper:not([data-rail="none"]) { --side-w: 248px; }
+/* NAMED AREAS, BECAUSE AUTO-PLACEMENT COST THE DOCUMENT ITS WIDTH.
+
+   This was `grid-template-columns: var(--side-w) 1fr` and nothing else, and the
+   panel is CONDITIONALLY RENDERED. With the panel shut there is one child, it
+   auto-placed into the first column — the one sized `var(--side-w)`, which is
+   0px when the panel is shut — and the paper was painted off the left edge at
+   zero width. Closing the Pages panel emptied the reader.
+
+   The stylesheet's own opening note warns about exactly this: a layout must not
+   depend on how many children it has. Naming the areas is what makes that true
+   — the document sits in `doc` whether or not anything sits in `side`. */
 .pbody {
   position: relative;
   flex: 1 1 auto; display: grid; min-height: 0;
   grid-template-columns: var(--side-w) 1fr;
+  grid-template-areas: "side doc";
 }
+.prail { grid-area: side; }
+.pscroll { grid-area: doc; }
 
 .prail {
   border-right: 1px solid var(--line);
@@ -330,10 +349,40 @@
 .pcol { display: grid; justify-items: center; }
 .pslot { display: grid; justify-items: center; gap: 10px; width: 100%; }
 
-.pp { position: relative; background: var(--raised); border: 1px solid var(--line); }
-.pp-ghost { background: var(--raised); }
-.pp-canvas { display: block; position: relative; z-index: 0; }
-.pp-wait { position: absolute; inset: 0; background: var(--raised); }
+/* THE PAGE, AND WHAT IS UNDER IT BEFORE THERE IS A PAGE.
+
+   Rule 1 of the brief: never an empty white rectangle where a page belongs. The
+   sheet is drawn from the manifest's page box, so it is the right SHAPE from
+   the first frame — before a byte of the PDF has arrived — which is also what
+   makes the scroll height correct from the start and stops the scrollbar
+   jumping as pages resolve.
+
+   Three depths and no fourth (brief 8.2). The page is depth 1: a hairline and a
+   soft shadow, so a sheet reads as a sheet lying on a surface. This replaces
+   the older house rule of a hairline and NO shadow — the reference build is the
+   visual spec and it floats the page, and with floating chrome above it the
+   page needs to sit at a different depth from the bars or the whole stack
+   flattens. check:paper asserts the new shape rather than the old one. */
+.pp {
+  position: relative;
+  background: var(--sheet);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px oklch(0 0 0 / .3), 0 18px 50px oklch(0 0 0 / .45);
+}
+.app[data-variant="day"] .pp { box-shadow: 0 1px 2px oklch(.25 .02 255 / .18), 0 14px 36px oklch(.25 .02 255 / .16); }
+.pp-sheet { position: absolute; inset: 0; background: var(--sheet); border-radius: 3px; }
+/* The number lives in the gutter beside the page, not on it. */
+.pp-no {
+  position: absolute; left: -34px; top: 2px;
+  font-family: var(--font-mono); font-size: 13px;
+  font-variant-numeric: tabular-nums; color: var(--t3);
+}
+.pp-ghost { background: var(--sheet); }
+.pp-canvas {
+  display: block; position: absolute; inset: 0; z-index: 0;
+  opacity: 0; transition: opacity .16s var(--paper-ease);
+}
+.pp-canvas[data-on] { opacity: 1; z-index: 1; }
 
 .pp-marks { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .pp-mark { position: absolute; border-radius: 1px; }
@@ -527,7 +576,10 @@
    and the rail closes. */
 @media (max-width: 768px) {
   .paper:not([data-rail="none"]) { --side-w: 0px; }
-  .pbody { grid-template-columns: 1fr; }
+  /* One column on a phone, and the panel overlays rather than sitting beside
+     the page — so it leaves the grid entirely rather than keeping an area. */
+  .pbody { grid-template-columns: 1fr; grid-template-areas: "doc"; }
+  .prail { grid-area: auto; }
   /* THE RAIL GOES TO THE BOTTOM, where the thumb is.
 
      Two changes here, and the first one was a real bug: this rule listed four
@@ -782,7 +834,13 @@
   text-transform: uppercase; letter-spacing: .06em;
 }
 .pmenu-tick { margin-left: auto; }
-.pmenu-zoom, .pmenu-view { max-height: min(70vh, 560px); overflow-y: auto; }
+.pmenu-zoom, .pmenu-view { max-height: min(70dvh, 560px); overflow-y: auto; }
+/* The number the label no longer carries. Secondary, inside the menu, where
+   somebody who wants it is already looking. */
+.pmenu-read {
+  margin: 2px 10px 6px; font-size: 13px; color: var(--t3);
+  font-variant-numeric: tabular-nums;
+}
 
 .lights { display: flex; gap: 6px; padding: 2px 8px 4px; }
 .light {

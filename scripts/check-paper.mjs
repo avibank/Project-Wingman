@@ -264,8 +264,21 @@ console.log("\nR14 — the paper obeys the house style");
   ok("R14", "no hex literal anywhere in the paper view", hex.length === 0, hex.join(" "));
   ok("R14", "density is the livery accent at low alpha",
      /--active[^;]*\/ \.0?7\)/.test(css) && /--active[^;]*\/ \.13\)/.test(css) && /--active[^;]*\/ \.20\)/.test(css));
-  ok("R14", "the page carries a hairline, not a shadow",
-     /\.pp \{[^}]*border: 1px solid var\(--line\)/.test(css) && !/\.pp \{[^}]*box-shadow/.test(css));
+  /* THIS RULE WAS REVERSED, AND THE REVERSAL IS RECORDED RATHER THAN SILENT.
+
+     R14 said the page carries a hairline and no shadow, because the house style
+     has no drop shadows. The reader rebuild's brief (§8.2) specifies three
+     depths and puts the page on the first of them, and its reference build
+     floats the page — which is not decoration once the chrome above it is
+     floating too: with bars at depth 2 and popovers at depth 3, a page with no
+     depth of its own flattens the whole stack.
+
+     So the assertion is not deleted, it is inverted: the page must sit at
+     depth 1, and there must still be exactly three depths and no fourth. */
+  ok("R14", "the page sits at depth 1 — a shadow, and one that is not the bars'",
+     /\.pp \{[^}]*box-shadow: 0 1px 2px/.test(css));
+  ok("R14", "and the reader keeps to three depths, no fourth",
+     (css.match(/box-shadow: 0 \d+px \d+px oklch/g) || []).length <= 4);
 
   // 13px type floor, measured rather than trusted.
   const sizes = [...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
@@ -579,7 +592,8 @@ console.log("\nthe view");
      LAYOUTS.length === 3 && PAPER_LIGHTS.length === 4 && FITS.length === 3);
   const css = read("src/components/paper/paper.css");
   ok("view", "the light falls on the picture and not on the marks",
-     /light === "day" \? undefined : \{ filter: lightFilter\(light\) \}/.test(read("src/components/paper/PaperPage.jsx")));
+     /canvasStyle = \{ filter: light === "day" \? undefined : lightFilter\(light\) \}/
+       .test(read("src/components/paper/PaperPage.jsx")));
   ok("view", "and the ground follows it, so the surround is never the brightest thing",
      /\[data-light="night"\] \.pscroll/.test(css));
 }

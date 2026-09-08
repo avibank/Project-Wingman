@@ -26,3 +26,9 @@ pnpm-debug.log*
 .vercel
 .claude/launch.json
 public/papers/tracemonkey.pdf
+
+# Playwright
+tests/artifacts/
+tests/report/
+tests/screens/
+tests/last-run.json

@@ -7,7 +7,8 @@ import {
   Pen, Eraser, Underline, Strikethrough, Maximize2, Minimize2, Info, Keyboard,
   Rows3, Square, Columns2, Sun,
 } from "lucide-react";
-import { loadPaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
+import { loadPaper, releasePaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
+import { setRasterFocus } from "../../lib/rasterBudget.js";
 import {
   resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
   applyFilter, FILTERS, RINGS, ringLabel, DOCKS, TOOL_SIZES,
@@ -102,7 +103,7 @@ const INK_TOOLS = new Set(["pen", "marker", "eraser"]);
 const WRITTEN = new Set(["note", "question", "correction"]);
 const toolAt = (id) => TOOLS.find((t) => t.id === id) || TOOLS[0];
 
-const PAGE_GAP = 18;
+const PAGE_GAP = 24;      // brief 4.3 — a sheet reads as a sheet
 const tempId = () => `tmp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private */ } };
@@ -478,7 +479,10 @@ export default function PaperReader({
         if (live) setError("This paper would not open. The original still will.");
       }
     })();
-    return () => { live = false; };
+    /* Let the document go when the reader closes. Without this every paper
+       opened in a session stays parsed for the life of the tab, which on a
+       tablet is the difference between a long session and a reload. */
+    return () => { live = false; releasePaper(url); };
   }, [url]);
 
   /* --------------------------------------------------------------- the fit */
@@ -502,6 +506,74 @@ export default function PaperReader({
     window.addEventListener("resize", on);
     return () => window.removeEventListener("resize", on);
   }, [measure]);
+
+  /* ZOOM HOLDS THE POINT THE READER WAS LOOKING AT (rule 6).
+
+     Without this, zooming in on a diagram halfway down page 400 throws you to
+     the top of it, and the fix is not "scroll back" — it is that the paragraph
+     under the cursor should still be under the cursor afterwards. The
+     arithmetic is the same either way: work out where the anchor sits as a
+     fraction of the scrolled content, apply the new scale, put that fraction
+     back under the same screen position.
+
+     Anchored to the pointer, then the pinch centre, then the middle of the
+     viewport, in that order — brief 4.4. */
+  const zoomAbout = useCallback((next, clientY) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    const at = clientY == null ? box.height / 2 : clientY - box.top;
+    const before = el.scrollTop + at;
+    const factor = next / scale;
+    setFit(null);
+    setScale(next);
+    /* After the layout has been recomputed at the new scale — one frame is
+       enough, and it must not be a timeout: a timeout lands after the browser
+       has already painted the jump. */
+    requestAnimationFrame(() => {
+      const node = scrollRef.current;
+      if (node) node.scrollTop = before * factor - at;
+    });
+  }, [scale]);
+
+  /* Ctrl/⌘ + wheel on a desktop, pinch on a tablet. Passive:false because both
+     have to be prevented — otherwise the browser zooms the whole page instead,
+     which puts the reader's own chrome under a magnifying glass. */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return undefined;
+    const onWheel = (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      zoomAbout(clampZoom(scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12)), e.clientY);
+    };
+    let pinch = null;
+    const onTouchStart = (e) => {
+      if (e.touches.length !== 2) return;
+      const [a, b] = e.touches;
+      pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), from: scale,
+                y: (a.clientY + b.clientY) / 2 };
+    };
+    const onTouchMove = (e) => {
+      if (!pinch || e.touches.length !== 2) return;
+      const [a, b] = e.touches;
+      const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (!pinch.d) return;
+      e.preventDefault();
+      zoomAbout(clampZoom(pinch.from * (d / pinch.d)), pinch.y);
+    };
+    const onTouchEnd = () => { pinch = null; };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [scale, zoomAbout]);
 
   /* --------------------------------------------------------------- reading */
   /* Only the continuous layout reads the page off the scroll position. In the
@@ -916,8 +988,8 @@ export default function PaperReader({
       if (cmd && e.key.toLowerCase() === "f") { e.preventDefault(); setFindOpen(true); return; }
       if (cmd && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
       if (cmd && e.key.toLowerCase() === "p") { e.preventDefault(); printNow(); return; }
-      if (cmd && (e.key === "=" || e.key === "+")) { e.preventDefault(); setFit(null); setScale((z) => stepZoom(z, 1)); return; }
-      if (cmd && e.key === "-") { e.preventDefault(); setFit(null); setScale((z) => stepZoom(z, -1)); return; }
+      if (cmd && (e.key === "=" || e.key === "+")) { e.preventDefault(); zoomAbout(stepZoom(scale, 1)); return; }
+      if (cmd && e.key === "-") { e.preventDefault(); zoomAbout(stepZoom(scale, -1)); return; }
       if (cmd && e.key === "0") { e.preventDefault(); setFit("width"); return; }
       if (cmd) return;
       if (e.key === "Escape") { setComposer(null); setFindOpen(false); setSel(null); setMenu(null); setSheet(null); return; }
@@ -931,7 +1003,11 @@ export default function PaperReader({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sizes.length, goToPage, step, undo, printNow]);
+  }, [sizes.length, goToPage, step, undo, printNow, scale, zoomAbout]);
+
+  /* The raster budget evicts the page furthest from where the reader is
+     looking, so it has to be told where that is. */
+  useEffect(() => { setRasterFocus(page); }, [page]);
 
   /* Where you got to, so the Library can offer to put you back. Written on the
      page you settle on rather than on every scroll event. */
@@ -1012,16 +1088,21 @@ export default function PaperReader({
           <span className="pbar-rule" aria-hidden="true" />
 
           <button type="button" className="ptool" aria-label="Zoom out"
-                  onClick={() => { setFit(null); setScale((z) => stepZoom(z, -1)); }}>
+                  onClick={() => zoomAbout(stepZoom(scale, -1))}>
             <Minus size={16} aria-hidden="true" />
           </button>
+          {/* THE LABEL IS THE MODE, NOT THE NUMBER (brief 4.4, rule 8).
+
+              "Fit width" is what a student means; 176% is what the renderer
+              happens to be doing about it. The percentage is still there —
+              inside the menu, where somebody who wants it is already looking. */}
           <button type="button" className="pzoom" aria-expanded={menu === "zoom" ? "true" : "false"}
                   onClick={() => setMenu(menu === "zoom" ? null : "zoom")}>
-            {Math.round(scale * 100)}%
+            {fit ? (FITS.find((f) => f.id === fit)?.label ?? "Fit width") : `${Math.round(scale * 100)}%`}
             <ChevronDown size={13} aria-hidden="true" />
           </button>
           <button type="button" className="ptool" aria-label="Zoom in"
-                  onClick={() => { setFit(null); setScale((z) => stepZoom(z, 1)); }}>
+                  onClick={() => zoomAbout(stepZoom(scale, 1))}>
             <Plus size={16} aria-hidden="true" />
           </button>
         </div>
@@ -1074,6 +1155,7 @@ export default function PaperReader({
             </button>
           ))}
           <span className="pmenu-rule" aria-hidden="true" />
+          <p className="pmenu-read mono">Now at {Math.round(scale * 100)}%</p>
           {ZOOM_STEPS.filter((z) => z >= 0.5 && z <= 4).map((z) => (
             <button key={z} type="button" role="menuitemradio"
                     aria-checked={!fit && Math.abs(scale - z) < 0.005}
@@ -1354,7 +1436,7 @@ export default function PaperReader({
                   {!hidden && drawSet.has(n) ? (
                     <PaperPage
                       doc={doc} model={model} pageNumber={n} scale={scale} rotation={rotation}
-                      segments={drawSegments} activeId={activeId} light={light}
+                      size={s} segments={drawSegments} activeId={activeId} light={light}
                       strokes={strokes} me={me}
                       inkTool={drawing ? tool : null} inkColour={penColour}
                       inkWidth={penWidth(penSize) * (tool === "marker" ? 3.2 : 1)}
@@ -1362,8 +1444,14 @@ export default function PaperReader({
                       registerEl={registerEl} onDivs={takeDivs}
                     />
                   ) : (
+                    /* Rule 1 — never an empty white rectangle where a page
+                       belongs. A page outside the window keeps its box and its
+                       number, at the right shape, because the size came from
+                       the manifest rather than from the file. */
                     <div className="pp pp-ghost" data-page={n} style={{ width: w, height: h }}
-                         ref={(el) => { if (el) pageEls.current.set(n, el); }} />
+                         ref={(el) => { if (el) pageEls.current.set(n, el); }}>
+                      <span className="pp-no mono" aria-hidden="true">{n}</span>
+                    </div>
                   )}
 
                   {notesOnPage(n).map((mark) => (
