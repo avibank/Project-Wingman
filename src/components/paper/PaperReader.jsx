@@ -8,7 +8,7 @@ import {
   Eye, EyeOff,
   Rows3, Square, Columns2, Sun, Undo2, Redo2, Users, ThumbsUp, Plus as PlusIcon, Type, Ruler, Stamp, Shapes,
 } from "lucide-react";
-import { loadPaper, releasePaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
+import { loadPaper, releasePaper, paperText, quoteOf, pageOf, warmWorker, PDFJS_VERSION } from "../../lib/paperText.js";
 import { setRasterFocus } from "../../lib/rasterBudget.js";
 import {
   resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
@@ -464,6 +464,10 @@ function Sheet({ title, onClose, children }) {
 }
 
 /* ========================================================================= */
+/* Called by App the moment a paper route is entered, before this component
+   renders, so pdf.js's worker is in the cache by the time it is needed. */
+export const warm = () => warmWorker();
+
 export default function PaperReader({
   paper, moduleCode, me, isStaff = false, onBack, onOpenThread, onOpenOriginal, onPlace,
 }) {

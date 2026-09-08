@@ -8,6 +8,18 @@
     <meta name="description" content="We made the mistakes. You get the answers. Lessons, quizzes and papers for aircraft maintenance students." />
 
     <link rel="canonical" href="https://www.wingman.institute/" />
+
+    <!-- THE THREE HOSTS EVERY PAGE TALKS TO, OPENED WHILE THE BUNDLE PARSES.
+
+         Measured on a cold load of a real paper: the browser did not begin the
+         TLS handshake with Supabase until it had parsed enough JavaScript to
+         make a request, roughly a second in. A preconnect costs a few packets
+         and moves that handshake to the moment the HTML lands, so the first
+         data request pays no setup at all. `crossorigin` is required on these
+         or the anonymous connection they open is not the one fetch reuses. -->
+    <link rel="preconnect" href="https://rpfgxxcpfrgajlkpoyes.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://clerk.wingman.institute" crossorigin />
+    <link rel="dns-prefetch" href="https://rpfgxxcpfrgajlkpoyes.supabase.co" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230B1526'/%3E%3Cpath fill='%236FA0F0' d='M12 2 L14 8 L23 17 L14 15 L17 22 L12 19 L7 22 L10 15 L1 17 L10 8 Z'/%3E%3C/svg%3E" />
 
     <!-- Static, not set from React: link-preview bots fetch index.html and do

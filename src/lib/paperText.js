@@ -24,6 +24,14 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
+/* The worker script is only fetched when the first document opens, which puts
+   a download in the middle of the one moment that matters. Priming the HTTP
+   cache while the reader chunk is still arriving costs nothing and takes that
+   fetch off the critical path. */
+export function warmWorker() {
+  try { fetch(workerUrl, { cache: "force-cache" }).catch(() => {}); } catch { /* no fetch */ }
+}
+
 export const PDFJS_VERSION = pdfjs.version;
 export { pdfjs };
 

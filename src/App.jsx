@@ -844,6 +844,24 @@ function AppInner() {
      — a module without the reader must not lose its papers. */
   const readerOn = flags["library.reader"] && activeModuleCode === "M1";
   const [addingPaper, setAddingPaper] = useState(false);
+
+  /* THE READER STARTS LOADING WHEN THE URL SAYS PAPER, NOT WHEN THE ROW LANDS.
+
+     The chain was strictly serial: boot, then Clerk, then the papers query,
+     then — only once a row had come back naming the file — the reader chunk,
+     then pdf.js, then the first bytes of the document. Measured on a cold
+     production load, the reader chunk was not even REQUESTED until 1.5s in,
+     and it does not need the row: it is the same 430KB whichever paper you
+     open. Asking for it in parallel takes half a second off the front.
+
+     Fire-and-forget on purpose. If it fails, the ordinary lazy import runs
+     again at render and the only cost is the time this was meant to save. */
+  useEffect(() => {
+    if (route.name !== "paper" && route.tab !== "library") return;
+    CHUNK.paper()
+      .then((m) => m?.warm?.())
+      .catch(() => {});
+  }, [route.name, route.tab]);
   const paperPlace = progress.get("pw-paper-place", null);
 
   /* Papers added by hand live in a table; the fixture's live in a file. They
@@ -854,16 +872,24 @@ function AppInner() {
      route resolved the id against the fixture alone, found nothing, and
      rendered an empty <main>. A merge that only reaches one of three readers
      is not a merge. */
-  const [addedPapers, setAddedPapers] = useState([]);
+  /* The list is remembered so a second open of the same paper resolves the
+     route from the first frame instead of after a round trip — which is what
+     the reader, pdf.js and the document's first bytes are all waiting on. The
+     server's answer replaces it the moment it arrives, so a stale entry costs
+     one render and never survives. */
+  const [addedPapers, setAddedPapers] = useState(
+    () => progress.get(`pw-papers:${activeModuleCode}`, []) || []);
   const [papersLoading, setPapersLoading] = useState(true);
   useEffect(() => {
     if (!activeModuleCode || !me) { setPapersLoading(false); return undefined; }
     let live = true;
+    setAddedPapers(progress.get(`pw-papers:${activeModuleCode}`, []) || []);
     setPapersLoading(true);
     listPapers(activeModuleCode, me).then(({ papers: rows }) => {
       if (!live) return;
       setAddedPapers(rows || []);
       setPapersLoading(false);
+      progress.set(`pw-papers:${activeModuleCode}`, rows || []);
     });
     return () => { live = false; };
   }, [activeModuleCode, me]);
