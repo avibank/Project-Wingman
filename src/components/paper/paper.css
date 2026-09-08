@@ -49,7 +49,14 @@
   --hair: oklch(from var(--t1) l c h / .09);
   --lift: oklch(from var(--t1) l c h / .06);
 
-  background: var(--ground); color: var(--t1);
+  /* The demo's ground: a wash of accent from the top right over a vertical
+     fall. It is what stops the surround reading as a flat black rectangle
+     behind a white page. Built from the livery accent rather than a fixed
+     blue, so it re-tints with everything else. */
+  background:
+    radial-gradient(1200px 700px at 70% -10%, oklch(from var(--active) l c h / .10), transparent 60%),
+    linear-gradient(180deg, oklch(from var(--ground) calc(l * 1.25) c h), var(--ground));
+  color: var(--t1);
   font-family: var(--font-ui);
 }
 .app[data-variant="day"] .paper {
@@ -262,8 +269,10 @@
      is under the dock — unreadable, and worse, un-drawable, because the dock
      takes the pointer. Measured: a pen aimed at the left margin landed on a
      tool button. */
-  padding: 78px calc(var(--rail-btn) + 44px) 92px;
-  padding-inline-end: calc(var(--rail-btn) + 52px);
+  /* Room for the chrome on both sides: the dock on the left, the tick rail on
+     the right. Floating is not the same as overlapping — a page under a
+     control is a page with a control on it. */
+  padding: 78px 46px 92px calc(var(--rail-btn) + 44px);
   background: none;
   scrollbar-width: none;
 }
@@ -404,7 +413,8 @@
    `position: relative` block that GREW to 22,000px instead of scrolling — so
    the paper could not be scrolled at all, and a test that set scrollTop was
    setting it on an element with nothing to scroll.) */
-.pcol { display: grid; justify-items: center; }
+/* The demo's stack: a centred column with 26px between sheets. */
+.pcol { display: flex; flex-direction: column; align-items: center; padding: 0 24px; }
 .pslot { display: grid; justify-items: center; gap: 10px; width: 100%; }
 
 /* THE PAGE, AND WHAT IS UNDER IT BEFORE THERE IS A PAGE.
@@ -841,9 +851,12 @@
    on the same side. Now the panel floats on the other edge, so that offset
    pushed the inspector off the screen — visible as a card cut in half at the
    left margin. */
+/* The reference anchors the inspector beside the dock and vertically centred,
+   at 296px — wide enough for the live preview to be a preview. */
 .ptray {
-  position: absolute; top: 6px; left: calc(100% + 8px);
-  z-index: 12; width: 226px;
+  position: absolute; top: 50%; transform: translateY(-50%);
+  left: calc(100% + 8px);
+  z-index: 12; width: 296px;
   display: grid; gap: 9px; padding: 11px;
   background: linear-gradient(var(--panel), var(--panel)), var(--ground);
   border: 1px solid var(--line); border-radius: var(--r-panel, 10px);
@@ -1047,8 +1060,10 @@
    Above 1200px the panel has its own column of space and the rail sits just
    inside it; below that the panel overlays temporarily and the rail keeps the
    edge. */
+/* The reference puts the rail at right:8px, 14px wide. The visible track sits
+   exactly there; the button around it is 28px so a thumb can still find it. */
 .pticks {
-  position: absolute; right: 0; top: 64px; bottom: 92px;
+  position: absolute; right: 0; top: 64px; bottom: 76px;
   width: 30px; z-index: 43; cursor: pointer;
   background: none; border: none; padding: 0;
 }
@@ -1242,6 +1257,7 @@
    neither readable. Every floating surface that holds a LIST gets an opaque
    backing painted under the glass; the bars stay translucent, because a row of
    icons over a page still reads. */
+.prail { transition: opacity .16s var(--paper-ease); }
 .prail, .ptray, .pmenu, .psheet, .selbar {
   background: linear-gradient(var(--glass-2), var(--glass-2)), var(--ground);
 }
@@ -1338,3 +1354,102 @@
 
 /* Both live where the bottom bar is, so they cannot sit on top of it. */
 @media (max-width: 768px) { .pback, .pscrub { bottom: 96px; } }
+
+/* The rail's slots hold their shape before they hold a picture, so it never
+   reflows as thumbnails arrive. */
+.thumb-slot { display: block; }
+.thumb-shot img { display: block; width: 100%; height: auto; }
+
+/* The pages outside the window, as one box of exactly their height. The
+   scrollbar cannot tell the difference and nothing jumps. */
+.ppgap { width: 1px; flex: none; }
+.thumb-space { list-style: none; }
+
+/* ============================================================================
+   THE FURNITURE GETS OUT OF THE WAY
+
+   Rule 5 one step further: the chrome recedes while you are reading, not only
+   while you are marking. Sit still and it fades back; move and it returns.
+
+   It FADES rather than vanishes. A control that disappears completely is one
+   you have to remember exists; one at a tenth of its opacity is still visibly
+   there and still exactly where you left it — and the moment a pointer comes
+   near it, it is solid again.
+   ========================================================================= */
+.paper[data-quiet] .pbar,
+.paper[data-quiet] .ptools,
+.paper[data-quiet] .pbot,
+.paper[data-quiet] .pticks,
+.paper[data-quiet] .findbar {
+  opacity: .12;
+  transition: opacity .55s var(--paper-ease);
+}
+.pbar, .ptools, .pbot, .pticks, .findbar {
+  transition: opacity .16s var(--paper-ease);
+}
+
+/* Anything the pointer is actually on comes back on its own, so reaching for a
+   faded control never means aiming at something you cannot see. */
+.paper[data-quiet] .pbar:hover,
+.paper[data-quiet] .ptools:hover,
+.paper[data-quiet] .pbot:hover,
+.paper[data-quiet] .pticks:hover,
+.paper[data-quiet] .findbar:hover,
+.paper[data-quiet] .pbar:focus-within,
+.paper[data-quiet] .ptools:focus-within,
+.paper[data-quiet] .pbot:focus-within,
+.paper[data-quiet] .findbar:focus-within { opacity: 1; }
+
+/* Just the paper. The same fade, taken all the way and kept there — with the
+   same escape: move the pointer and everything is back. */
+/* The panel goes too. "Just the paper" that leaves a 322px panel solid down
+   the side is not just the paper. */
+.paper[data-hush] .pbar,
+.paper[data-hush] .ptools,
+.paper[data-hush] .pbot,
+.paper[data-hush] .prail,
+.paper[data-hush] .pticks { opacity: 0; pointer-events: none; }
+.paper[data-hush]:hover .pbar,
+.paper[data-hush]:hover .ptools,
+.paper[data-hush]:hover .pbot,
+.paper[data-hush]:hover .prail,
+.paper[data-hush]:hover .pticks { opacity: .16; pointer-events: auto; }
+.paper[data-hush] .pbar:hover,
+.paper[data-hush] .ptools:hover,
+.paper[data-hush] .pbot:hover,
+.paper[data-hush] .prail:hover,
+.paper[data-hush] .pticks:hover { opacity: 1; }
+/* And the page takes the room the panel gave up — the dock and the rail are
+   faded but still where they are, so their inset stays. */
+.paper[data-hush] .pscroll { padding-inline: calc(var(--rail-btn) + 44px) 46px; }
+
+/* While the nib is down, everything drops away — §8.7, and it wins over the
+   idle fade because it is the more specific intent. */
+.paper[data-drawing] .pbar,
+.paper[data-drawing] .pbot,
+.paper[data-drawing] .pticks { opacity: .2; transition: opacity .5s var(--paper-ease); }
+
+/* Marks, cards and anything a person opened are never faded — they are the
+   subject, not the furniture. */
+.paper[data-quiet] .prail,
+.paper[data-quiet] .selbar,
+.paper[data-quiet] .ptray,
+.paper[data-quiet] .mcardp { opacity: 1; }
+
+/* THE PAGE GETS THE ROOM THE CHROME GAVE UP.
+
+   With the panel shut the document was still sitting in a column sized for one.
+   Nothing else on this screen is the subject; the paper should have the width. */
+/* With the panel shut the page takes the room the panel gave up — but not the
+   room the DOCK and the RAIL still occupy. Zeroing both insets put the page
+   under the tick rail, which is the exact thing "floating is not overlapping"
+   was supposed to prevent. */
+.paper[data-rail="none"] .pscroll {
+  padding-inline: calc(var(--rail-btn) + 44px) 46px;
+}
+
+.app.smooth-air .pbar, .app.smooth-air .ptools,
+.app.smooth-air .pbot, .app.smooth-air .pticks { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .pbar, .ptools, .pbot, .pticks, .findbar { transition: none; }
+}

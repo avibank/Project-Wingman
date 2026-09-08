@@ -915,7 +915,12 @@ group("§4.6 · a big paper lays out before it downloads", () => {
       const shape = await page.evaluate(() => {
         const slots = [...document.querySelectorAll(".pslot")];
         const ghosts = [...document.querySelectorAll(".pp-ghost")];
+        const sc = document.querySelector(".pscroll");
         return {
+          /* The COLUMN is the whole document even though only a handful of
+             slots are mounted — spacers hold the rest. Counting slots would be
+             counting the window, which is the thing that must stay small. */
+          scrollable: sc.scrollHeight - sc.clientHeight,
           slots: slots.length,
           /* A placeholder is a page-shaped card at the right ratio — never a
              bare rectangle and never zero-height. */
@@ -926,11 +931,210 @@ group("§4.6 · a big paper lays out before it downloads", () => {
           }),
         };
       });
-      expect(shape.slots).toBeAtLeast(14, "the paper did not lay out");
+      expect(shape.scrollable).toBeAtLeast(3000,
+        "the column is not the height of the whole paper — the scrollbar is lying");
+      expect(shape.slots).toBeAtMost(20, "every page is mounted; the column is not virtualised");
       expect(shape.ghosts).toBeAtLeast(1, "no placeholders — a page not yet drawn is a blank");
       for (const r of shape.ratios) {
         expect(r).toBeAtLeast(0.5, "a placeholder with no shape is a blank rectangle");
       }
+    });
+  });
+});
+
+/* ========================================================================= */
+group("§8.7 · the paper is the subject", () => {
+  const op = (page, sel) => page.evaluate(
+    (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; }, sel);
+
+  it("the chrome recedes when you sit still, and returns when you move", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(600);
+      expect(await op(page, ".pbar")).toBe(1, "the bar was not solid to begin with");
+
+      await page.waitForTimeout(3200);                    // sit still
+      expect(await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-quiet")))
+        .toBeTruthy("it never went quiet");
+      const faded = await op(page, ".pbar");
+      expect(faded).toBeAtMost(0.2, "the bar did not recede");
+      /* Faded, not gone. A control that vanishes is one you have to remember
+         exists. */
+      expect(faded).toBeAtLeast(0.05, "the bar disappeared completely");
+
+      await page.mouse.move(700, 500);
+      await page.waitForTimeout(300);
+      expect(await op(page, ".pbar")).toBe(1, "moving did not bring it back");
+    });
+  });
+
+  it("a panel you opened is never faded", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.evaluate(() => {
+        const p = document.querySelector(".paper");
+        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+      });
+      await page.waitForTimeout(3400);
+      expect(await op(page, ".prail")).toBe(1, "the panel faded — it is something you chose to open");
+    });
+  });
+
+  it("nothing fades while a menu or a composer is open", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.click('.ptool[aria-label="More"]');
+      await page.waitForTimeout(3400);
+      expect(await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-quiet")))
+        .toBeFalsy("the chrome faded under an open menu");
+    });
+  });
+
+  it("Just the paper hides everything, and a pointer brings it back", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.click('.ptool[aria-label="Just the paper"]');
+      await page.waitForTimeout(500);
+      expect(await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-hush")))
+        .toBeTruthy("the toggle did nothing");
+      /* And the way out is the label itself, which now says how to undo it. */
+      expect(await page.locator('.ptool[aria-label="Bring the controls back"]').count()).toBe(1);
+      /* Reaching for the bar makes it solid, so it can never trap you. */
+      await page.hover(".pbar");
+      await page.waitForTimeout(300);
+      expect(await op(page, ".pbar")).toBe(1, "the bar stayed hidden under the pointer");
+    });
+  });
+
+  it("the document is never underneath the panel or the rail", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(900);
+      const boxes = await page.evaluate(() => {
+        const pg = document.querySelector(".pp:not(.pp-ghost)");
+        const panel = document.querySelector(".prail");
+        const rail = document.querySelector(".pticks");
+        if (!pg) return null;
+        const a = pg.getBoundingClientRect();
+        return {
+          underPanel: panel ? a.right > panel.getBoundingClientRect().left : false,
+          underRail: rail ? a.right > rail.getBoundingClientRect().left : false,
+        };
+      });
+      expect(boxes.underPanel).toBeFalsy("the page runs under the panel");
+      expect(boxes.underRail).toBeFalsy("the page runs under the tick rail");
+    });
+  });
+});
+
+group("§4.5 · a thousand pages stay light", () => {
+  it("only the pages near you exist, and only they have canvases", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(1200);
+      const counted = await page.evaluate(() => ({
+        slots: document.querySelectorAll(".pslot").length,
+        canvases: document.querySelectorAll(".pscroll canvas").length,
+        spacers: document.querySelectorAll(".pspacer").length,
+        total: Number(document.querySelector(".pnum + span")?.textContent?.replace(/\D/g, "") || 0),
+      }));
+      /* The fixture is 14 pages, so a window plus spacers — not fourteen slots
+         and certainly not a thousand. The rule this guards is the one that made
+         a 1012-page manual unusable: every page mounted, every page rendered. */
+      expect(counted.slots).toBeAtMost(12, "every page is mounted — this does not scale");
+      expect(counted.canvases).toBeAtMost(6, "more canvases than the render window");
+    });
+  });
+
+  it("the page rail draws what you can see, not every page", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.evaluate(() => {
+        const p = document.querySelector(".paper");
+        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+      });
+      await page.waitForTimeout(1200);
+      const rail = await page.evaluate(() => ({
+        thumbs: document.querySelectorAll(".thumbs .thumb").length,
+        canvases: document.querySelectorAll(".thumbs canvas").length,
+        spacers: document.querySelectorAll(".thumb-space").length,
+      }));
+      expect(rail.thumbs).toBeAtLeast(1, "the rail is empty");
+      /* 1012 thumbnail canvases was 8,368 DOM nodes and a 161-second frame. */
+      expect(rail.canvases).toBeAtMost(30, "the rail is rendering pages nobody can see");
+    });
+  });
+});
+
+/* ========================================================================= */
+group("the paper is the subject", () => {
+  it("the furniture fades while you read and returns when you move", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(900);
+      const read = () => page.evaluate(() => {
+        const o = (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; };
+        return { quiet: document.querySelector(".paper").hasAttribute("data-quiet"),
+                 bar: o(".pbar"), dock: o(".ptools"), bot: o(".pbot") };
+      });
+      const awake = await read();
+      expect(awake.bar).toBe(1, "the chrome starts hidden");
+
+      /* Sit still. Nothing touches the page. */
+      await page.waitForTimeout(3400);
+      const idle = await read();
+      expect(idle.quiet).toBeTruthy("the chrome never faded");
+      expect(idle.bar).toBeAtMost(0.3, "the bar stayed solid while reading");
+      expect(idle.dock).toBeAtMost(0.3);
+      expect(idle.bot).toBeAtMost(0.3);
+      /* Faded, NOT gone — a control that disappears is one you have to
+         remember exists. */
+      expect(idle.bar).toBeAtLeast(0.05, "the bar vanished completely");
+
+      await page.mouse.move(700, 500);
+      await page.waitForTimeout(400);
+      const back = await read();
+      expect(back.quiet).toBeFalsy();
+      expect(back.bar).toBe(1, "moving did not bring the chrome back");
+    });
+  });
+
+  it("Just the paper hides everything, and reaching for it brings it back", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.click('.ptool[aria-label="Just the paper"]');
+      await page.waitForTimeout(500);
+      await page.mouse.move(30, 870);
+      await page.waitForTimeout(400);
+      const hushed = await page.evaluate(() => {
+        const o = (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; };
+        return { hush: document.querySelector(".paper").hasAttribute("data-hush"),
+                 bar: o(".pbar"), panel: o(".prail") };
+      });
+      expect(hushed.hush).toBeTruthy();
+      expect(hushed.bar).toBeAtMost(0.3, "the bar is still solid in Just the paper");
+      if (hushed.panel !== null) {
+        expect(hushed.panel).toBeAtMost(0.3, "a 322px panel is not just the paper");
+      }
+      /* And the way back is a control that says so. */
+      expect(await page.locator('.ptool[aria-label="Bring the controls back"]').count()).toBe(1);
+      await page.click('.ptool[aria-label="Bring the controls back"]');
+      await page.waitForTimeout(400);
+      expect(await page.evaluate(() => Number(getComputedStyle(document.querySelector(".pbar")).opacity))).toBe(1);
+    });
+  });
+
+  it("a thousand pages do not become a thousand canvases", async () => {
+    await withPage(laptop, async (page) => {
+      await openReader(page);
+      await page.waitForTimeout(1200);
+      const weight = await page.evaluate(() => ({
+        canvases: document.querySelectorAll(".paper canvas").length,
+        slots: document.querySelectorAll(".pslot").length,
+      }));
+      /* The window is a handful of pages either side, never the document. */
+      expect(weight.slots).toBeAtMost(40, "every page has a slot mounted");
+      expect(weight.canvases).toBeAtMost(40, "every page has a canvas mounted");
     });
   });
 });

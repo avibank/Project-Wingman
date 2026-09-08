@@ -44,6 +44,13 @@ export const publicUrl = (path) => pub(BUCKET, path);
    absolute URL into storage. Prefixing a slash to both — which is what the
    reader did — turns `https://…` into `/https://…`, and the request 404s
    against our own origin. One helper, so there is one answer. */
+/* Where a stored thumbnail is. Ingest writes the first sixty; beyond that the
+   rail renders on demand, which is fine because nobody scrolls to page 400 of
+   a thumbnail rail without meaning to. */
+export const THUMBS_STORED = 60;
+export const thumbUrl = (paper, page) =>
+  (paper?.id && page <= THUMBS_STORED ? publicUrl(`${paper.id}/thumbs/${page}.jpg`) : null);
+
 export const fileHref = (file) => {
   const f = String(file || "");
   if (/^(https?:)?\/\//.test(f) || f.startsWith("blob:") || f.startsWith("data:")) return f;

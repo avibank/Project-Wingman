@@ -31,7 +31,15 @@ try {
       await page.waitForSelector(".pp:not(.pp-ghost) canvas[data-on]", { timeout: 25_000 });
       await page.waitForTimeout(1200);
 
-      const shot = async (name) => page.screenshot({ path: `${SHOTS}/${s.id}-${variant}-${name}.png` });
+      /* Nudge the pointer first. A screenshot is not somebody sitting still,
+         and the chrome now fades after a couple of seconds of stillness — so
+         every shot came out in the idle state, which is not what these are
+         for. */
+      const shot = async (name) => {
+        await page.mouse.move(420, 400);
+        await page.waitForTimeout(240);
+        return page.screenshot({ path: `${SHOTS}/${s.id}-${variant}-${name}.png` });
+      };
       await shot("rest");
 
       // The tray, with a marking tool in hand.

@@ -5,6 +5,7 @@ import {
   RotateCw, RotateCcw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
   HelpCircle, Flag, Trash2, RefreshCw, MousePointer2, MoreHorizontal, Check,
   Pen, Eraser, Underline, Strikethrough, Maximize2, Minimize2, Info, Keyboard,
+  Eye, EyeOff,
   Rows3, Square, Columns2, Sun, Undo2, Redo2, Users, ThumbsUp, Plus as PlusIcon, Type, Ruler, Stamp, Shapes,
 } from "lucide-react";
 import { loadPaper, releasePaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
@@ -31,7 +32,7 @@ import {
   markOrphaned, askOnPassage, fetchCorrections, resolveCorrection, agreeWithMark,
 } from "../../lib/annotations.js";
 import { fetchInk, createStroke, deleteStrokes } from "../../lib/ink.js";
-import { fileHref, storedText } from "../../lib/papers.js";
+import { fileHref, storedText, thumbUrl } from "../../lib/papers.js";
 import PaperPage from "./PaperPage.jsx";
 import PaperThumbs from "./PaperThumbs.jsx";
 import PaperOutline from "./PaperOutline.jsx";
@@ -124,6 +125,7 @@ const WRITTEN = new Set(["note", "question", "correction"]);
 const toolAt = (id) => TOOLS.find((t) => t.id === id) || TOOLS[0];
 
 const PAGE_GAP = 24;      // brief 4.3 — a sheet reads as a sheet
+const EMPTY = [];
 const tempId = () => `tmp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private */ } };
@@ -529,6 +531,24 @@ export default function PaperReader({
   const drag = useRef(null);
   const [scrub, setScrub] = useState(null);     // { page } while dragging
   const [railAt, setRailAt] = useState(null);   // hovering the tick rail
+
+  /* THE PAPER IS THE SUBJECT, SO THE FURNITURE GETS OUT OF THE WAY.
+
+     Rule 5 of the brief — chrome recedes while the nib is down and returns
+     when it lifts — is the same instinct one step further: it recedes while
+     you are READING too. Sit still for a couple of seconds and the bars fade
+     back; move the pointer, touch the screen or press a key and they are
+     there again, immediately.
+
+     They fade rather than vanish. A control that disappears completely is a
+     control you have to remember exists; one at a tenth of its opacity is
+     still visibly there and still exactly where you left it.
+
+     `hush` is the deliberate version of the same thing — a toggle for somebody
+     who wants nothing but the page. The way back is any pointer movement, so
+     it can never trap you. */
+  const [quiet, setQuiet] = useState(false);
+  const [hush, setHush] = useState(() => read("pw-paper-hush", "0") === "1");
   /* The rail's snapping reads the ticks from a ref rather than closing over
      them, so the handler does not need rebuilding every time a mark is made. */
   const ticksRef = useRef([]);
@@ -571,6 +591,7 @@ export default function PaperReader({
   useEffect(() => { write("pw-paper-toolsize", toolSize); }, [toolSize]);
   useEffect(() => { write("pw-paper-layout", want); }, [want]);
   useEffect(() => { write("pw-paper-light", light); }, [light]);
+  useEffect(() => { write("pw-paper-hush", hush ? "1" : "0"); }, [hush]);
   useEffect(() => { write("pw-paper-hl", hlColour); }, [hlColour]);
   useEffect(() => { write("pw-paper-pen", penColour); }, [penColour]);
   useEffect(() => { write("pw-paper-nib", penSize); }, [penSize]);
@@ -626,6 +647,32 @@ export default function PaperReader({
     if (spans) divsByPage.current.set(num, { divs: spans, items });
     else divsByPage.current.delete(num);
   }, []);
+
+  /* Idle is measured from the last thing a person did, not from a clock. Held
+     in a ref so a wake-up costs no render when it is already awake. */
+  const awake = useRef(0);
+  useEffect(() => {
+    if (!host) return undefined;
+    let timer = 0;
+    const sleep = () => setQuiet(true);
+    const wake = () => {
+      awake.current = Date.now();
+      setQuiet((q) => (q ? false : q));
+      clearTimeout(timer);
+      timer = setTimeout(sleep, 2400);
+    };
+    wake();
+    const opts = { passive: true };
+    for (const ev of ["pointermove", "pointerdown", "keydown", "wheel"]) {
+      window.addEventListener(ev, wake, opts);
+    }
+    return () => {
+      clearTimeout(timer);
+      for (const ev of ["pointermove", "pointerdown", "keydown", "wheel"]) {
+        window.removeEventListener(ev, wake, opts);
+      }
+    };
+  }, [host]);
 
   /* ------------------------------------------------------------- the paper */
   useEffect(() => {
@@ -704,14 +751,19 @@ export default function PaperReader({
     const el = scrollRef.current;
     if (!el || !sizes.length || !fit) return;
     const first = sizes[0];
-    /* THE CONTENT BOX, NOT THE PADDING BOX.
+    /* MEASURE THE BOX THE PAGE ACTUALLY SITS IN.
 
-       `clientWidth` includes padding, and the scroller's padding is where the
-       floating panel sits — 322px of it at desktop widths. Fitting to the
-       padding box made the page 322px too wide, so it ran under the panel and
-       off the right edge of the window. */
+       `clientWidth` on the scroller includes its padding — 398px of it when the
+       panel is open — and the column inside has 24px of its own. Fitting to
+       either one alone makes the page too wide, and it then runs under the
+       panel or the tick rail. Asking the column for its content width accounts
+       for every box between the scroller and the sheet, with no arithmetic to
+       get wrong the next time the padding changes. */
+    const col = el.querySelector(".pcol");
     const cs = getComputedStyle(el);
-    const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const room = col
+      ? col.clientWidth - parseFloat(getComputedStyle(col).paddingLeft) - parseFloat(getComputedStyle(col).paddingRight)
+      : el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const tall = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     setScale(fitScale(
       fit,
@@ -720,7 +772,13 @@ export default function PaperReader({
       { x: 0, y: 0 },
       across,
     ));
-  }, [sizes, fit, rotation, across]);
+    /* `rail` and `hush` are dependencies because both CHANGE THE SCROLLER'S
+       PADDING, and the padding is the room. Without them the scale was
+       whatever it had been when the panel was last in a different state — so
+       opening the panel left the page 322px too wide and running under it, and
+       closing it left the page too narrow. The measurement was right; it was
+       simply never taken again. */
+  }, [sizes, fit, rotation, across, rail, hush]);
 
   useEffect(() => { measure(); }, [measure, rail]);
   useEffect(() => {
@@ -801,26 +859,86 @@ export default function PaperReader({
   /* Only the continuous layout reads the page off the scroll position. In the
      paged layouts the page IS the state and the scroll is just where you are
      inside it, so letting the scroll write back would fight every navigation. */
-  const onScroll = useCallback(() => {
-    if (layout !== "scroll") return;
-    const el = scrollRef.current;
-    if (!el) return;
-    const mid = el.scrollTop + el.clientHeight * 0.35;
-    let best = 1;
-    for (const [n, node] of pageEls.current) {
-      if (node && node.offsetTop <= mid) best = Math.max(best, n);
+  /* WHICH PAGE YOU ARE ON, WITHOUT ASKING THE DOM.
+
+     This used to walk every registered page node reading `offsetTop`, which
+     forces layout — 3,036 nodes and 6ms on every scroll event of a 1012-page
+     manual, on the main thread, while the reader was trying to hold 60fps.
+
+     The page heights are already known (from the manifest), so where each page
+     starts is arithmetic. A running total, computed once per scale change, and
+     a binary search into it: no layout, no DOM, O(log n).
+
+     Coalesced into a frame as well, because a trackpad fires scroll events far
+     faster than anything can usefully answer them. */
+  const offsets = useMemo(() => {
+    const out = new Float64Array(sizes.length + 1);
+    const rotated = rotation % 180 !== 0;
+    let y = 0;
+    for (let i = 0; i < sizes.length; i++) {
+      out[i] = y;
+      const h = (rotated ? sizes[i].w : sizes[i].h) * scale;
+      y += h + PAGE_GAP;
     }
-    setPage(best);
-  }, [layout]);
+    out[sizes.length] = y;
+    return out;
+  }, [sizes, scale, rotation]);
+
+  const at = useCallback((y) => {
+    let lo = 0, hi = offsets.length - 1;
+    while (lo < hi - 1) {
+      const m = (lo + hi) >> 1;
+      if (offsets[m] <= y) lo = m; else hi = m;
+    }
+    return lo;
+  }, [offsets]);
+
+  /* WHICH SLOTS EXIST AT ALL.
+
+     A thousand page slots re-reconciling on every scroll tick is the last of
+     the lag: React does not care that 1009 of them are empty divs, it walks
+     them all. Only the pages near the viewport are rendered; the rest are two
+     spacers holding exactly the height they would have taken, so the scrollbar
+     is unchanged and nothing jumps. */
+  const [win, setWin] = useState([0, 8]);
+  const scrollTick = useRef(0);
+  const onScroll = useCallback(() => {
+    if (scrollTick.current) return;
+    scrollTick.current = requestAnimationFrame(() => {
+      scrollTick.current = 0;
+      const el = scrollRef.current;
+      if (!el || offsets.length < 2) return;
+      const first = at(el.scrollTop);
+      const last = at(el.scrollTop + el.clientHeight);
+      setWin(([a, b]) => {
+        const na = Math.max(0, first - 3);
+        const nb = Math.min(sizes.length, last + 4);
+        return (a === na && b === nb) ? [a, b] : [na, nb];
+      });
+      if (layout !== "scroll") return;
+      setPage(Math.min(sizes.length || 1, at(el.scrollTop + el.clientHeight * 0.35) + 1));
+    });
+  }, [layout, offsets, sizes.length, at]);
+
+  /* The window has to be right before the first scroll event too. */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || offsets.length < 2) return;
+    setWin([Math.max(0, at(el.scrollTop) - 3), Math.min(sizes.length, at(el.scrollTop + el.clientHeight) + 4)]);
+  }, [offsets, sizes.length, at]);
+  useEffect(() => () => { if (scrollTick.current) cancelAnimationFrame(scrollTick.current); }, []);
 
   const goToPage = useCallback((n) => {
     const want = Math.max(1, Math.min(n, sizes.length || n));
     setPage(want);
-    const node = pageEls.current.get(want);
-    if (!node || !scrollRef.current) return;
-    if (layout === "scroll") scrollRef.current.scrollTo({ top: node.offsetTop - 12, behavior: "auto" });
-    else scrollRef.current.scrollTo({ top: 0, behavior: "auto" });
-  }, [layout, sizes.length]);
+    const el = scrollRef.current;
+    if (!el) return;
+    /* Arithmetic, not a DOM lookup: with the column virtualised the target
+       page very often is not mounted yet, and `offsets` already knows exactly
+       where it starts. */
+    if (layout === "scroll") el.scrollTo({ top: Math.max(0, (offsets[want - 1] || 0) - 12), behavior: "auto" });
+    else el.scrollTo({ top: 0, behavior: "auto" });
+  }, [layout, sizes.length, offsets]);
 
   /* §11.1 — every jump that is not a page-turn records where it left from.
      Turning a page is not a jump, because you can turn back; the long moves —
@@ -1395,12 +1513,21 @@ export default function PaperReader({
   }, [findAt, finds, model]);
 
   /* ---------------------------------------------------------------- render */
-  const notesOnPage = useCallback(
-    (n) => shown.filter((a) => (a.kind === "note" || a.kind === "question") && a.body
-      && pageOf(model, a.start) === n)
-      .map((a) => ({ ...a, quote: quoteOf(model, a.start, a.end, 120) })),
-    [shown, model],
-  );
+  /* Grouped once rather than filtered per page. Filtering the whole mark list
+     inside the render of every one of a thousand slots is O(pages x marks) on
+     every scroll tick. */
+  const notesByPage = useMemo(() => {
+    const out = new Map();
+    if (!model) return out;
+    for (const a of shown) {
+      if ((a.kind !== "note" && a.kind !== "question") || !a.body) continue;
+      const n = pageOf(model, a.start);
+      const row = { ...a, quote: quoteOf(model, a.start, a.end, 120) };
+      if (out.has(n)) out.get(n).push(row); else out.set(n, [row]);
+    }
+    return out;
+  }, [shown, model]);
+  const notesOnPage = useCallback((n) => notesByPage.get(n) || EMPTY, [notesByPage]);
 
   const drawing = INK_TOOLS.has(tool);
   const totalPages = sizes.length || paper?.pages || 0;
@@ -1451,7 +1578,12 @@ export default function PaperReader({
     <div className="paper" ref={shellRef}
          data-rail={rail || "none"} data-dock={dock} data-toolsize={toolSize}
          data-layout={layout} data-light={light} data-drawing={drawing ? "" : undefined}
-         data-editing={editing ? "" : undefined}>
+         data-editing={editing ? "" : undefined}
+         /* The furniture recedes while you read, and comes back the moment you
+            move. Never while something is open — a menu that faded under the
+            pointer would be a menu you cannot use. */
+         data-quiet={quiet && !menu && !sheet && !composer && !editing ? "" : undefined}
+         data-hush={hush ? "" : undefined}>
 
       {/* ------------------------------------------------------------ bar */}
       <header className="pbar">
@@ -1480,6 +1612,13 @@ export default function PaperReader({
                   aria-expanded={menu === "view" ? "true" : "false"}
                   onClick={() => setMenu(menu === "view" ? null : "view")}>
             <Sun size={16} aria-hidden="true" />
+          </button>
+          <button type="button" className="ptool"
+                  aria-label={hush ? "Bring the controls back" : "Just the paper"}
+                  aria-pressed={hush ? "true" : "false"}
+                  title={hush ? "Bring the controls back" : "Just the paper"}
+                  onClick={() => setHush(!hush)}>
+            {hush ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
           </button>
           <button type="button" className="ptool" aria-label="More"
                   aria-expanded={menu === "more" ? "true" : "false"}
@@ -1868,7 +2007,9 @@ export default function PaperReader({
             </div>
 
             {rail === "thumbs" && (
-              <PaperThumbs doc={doc} pages={totalPages} current={page} onPick={jumpTo} />
+              <PaperThumbs doc={doc} pages={totalPages} current={page} onPick={jumpTo}
+                           boxes={paper?.manifest?.boxes}
+                           thumbSrc={paper?.manifest ? (n) => thumbUrl(paper, n) : null} />
             )}
 
             {rail === "outline" && (
@@ -2034,7 +2175,10 @@ export default function PaperReader({
           {error && <p className="perr">{error}</p>}
 
           <div className="pcol" style={{ gap: PAGE_GAP }}>
-            {sizes.map((s, i) => {
+            {/* The pages above the window, as one box of exactly their height. */}
+            {win[0] > 0 && <div className="ppgap" style={{ height: offsets[win[0]] }} aria-hidden="true" />}
+            {sizes.slice(win[0], win[1]).map((s, k) => {
+              const i = win[0] + k;
               const n = i + 1;
               const rotated = rotation % 180 !== 0;
               const w = (rotated ? s.h : s.w) * scale;
@@ -2071,6 +2215,10 @@ export default function PaperReader({
                 </div>
               );
             })}
+            {win[1] < sizes.length && (
+              <div className="ppgap" aria-hidden="true"
+                   style={{ height: Math.max(0, offsets[sizes.length] - offsets[win[1]]) }} />
+            )}
           </div>
 
           {orphans.length > 0 && (

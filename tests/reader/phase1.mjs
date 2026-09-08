@@ -46,7 +46,11 @@ group("Phase 1 · the renderer", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const { rows } = await pageState(page);
-      expect(rows.length).toBeAtLeast(10, "the whole paper is laid out up front");
+      /* The COLUMN is the height of the whole paper; only a window of it is
+         mounted, with spacers holding the rest. Counting mounted slots counts
+         the window, which is the thing that has to stay small — a thousand
+         page slots was most of the lag on a real manual. */
+      expect(rows.length).toBeAtLeast(3, "nothing was laid out at all");
       expect(rows.every((r) => r.hasSheet)).toBeTruthy("a page with no sheet is a bare white rectangle");
       expect(rows.every((r) => r.boxW > 0)).toBeTruthy("every page holds its box");
     });
@@ -179,7 +183,7 @@ group("Phase 1 · the renderer", () => {
       const gap = await page.evaluate(() => getComputedStyle(document.querySelector(".pcol")).rowGap);
       expect(parseInt(gap, 10)).toBeAtLeast(20, "pages need a gutter between them");
       const nums = await page.locator(".pp-no").count();
-      expect(nums).toBeAtLeast(10, "every page carries its number in the gutter");
+      expect(nums).toBeAtLeast(3, "pages do not carry their number in the gutter");
       await shot(page, "phase1-reader-at-rest");
     });
   });

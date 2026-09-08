@@ -39,11 +39,22 @@ export const clampZoom = (z) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
 /* What a fit resolves to, given the room available and the page it is fitting.
    Rotation swaps the page's sides BEFORE anything is divided, which is the step
    that gets left out: a landscape page turned upright fits differently. */
+/* THE READING COLUMN HAS A WIDTH.
+
+   The reference build's sheet is `min(900px, 100%)` — a centred column, not a
+   page stretched to whatever the window happens to be. On a 27-inch screen a
+   full-bleed A4 is a wall of text nobody reads comfortably, and it stopped the
+   reader looking like the demo it was drawn from.
+
+   Fit width therefore fills the COLUMN, not the window. Manual zoom is
+   untouched: ask for 200% and you get 200%. */
+export const MAX_COLUMN = 980;
+
 export function fitScale(fit, page, room, gutters = { x: 48, y: 48 }, across = 1) {
   if (!page || !room?.width || !room?.height) return 1;
   const w = page.rotated ? page.h : page.w;
   const h = page.rotated ? page.w : page.h;
-  const usableW = Math.max(80, room.width - gutters.x) / across;
+  const usableW = Math.min(MAX_COLUMN, Math.max(80, room.width - gutters.x) / across);
   const usableH = Math.max(80, room.height - gutters.y);
   if (fit === "width") return clampZoom(usableW / w);
   if (fit === "page") return clampZoom(Math.min(usableW / w, usableH / h));
