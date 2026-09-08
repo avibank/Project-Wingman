@@ -129,6 +129,13 @@ const RPC = {
     if (!s.user_progress.includes(row)) s.user_progress.push(row);
     return null;
   },
+  agree_with_mark: (s, b) => {
+    const row = s.paper_annotations.find((a) => a.id === b.p_id);
+    if (!row) return null;
+    row.agree_count = (row.agree_count || 0) + 1;
+    row.updated_at = new Date().toISOString();
+    return row.agree_count;
+  },
   my_modules: () => [],
   right_seat: () => [],
   presence_touch: () => null,

@@ -16,122 +16,175 @@
    inventing a second elevation language for one screen.
    ========================================================================== */
 
-/* A column, not a grid.
+/* NOTHING TOUCHES AN EDGE (brief §8.1).
 
-   `grid-template-rows: auto auto 1fr auto` was wrong in the one state that
-   matters most — the ordinary one. The find bar is conditional, so with it
-   closed there are three children for four rows and the page column landed in
-   an `auto` row instead of the `1fr` one: every page squeezed into a band a
-   few pixels tall. A column with one growing child cannot develop that class
-   of bug, because nothing depends on how many children there are.
+   This was three permanent full-width frames welded to the window — a top bar,
+   a tool rail and a side panel — and at 1423px the document got 63% of the
+   width while the panel showed a single thumbnail. The frames are gone. The
+   document is now the ONLY thing in the layout; every control floats over it as
+   a detached, rounded, blurred island, and the paper is the only thing that
+   reads as the subject.
 
-   Fixed and above the app bar, because that is what a document reader does
-   everywhere people already use one. The way out is the arrow at top left. */
+   That also removes the class of bug that emptied the document: with the
+   scroller filling the shell and the chrome positioned over it, there is no
+   grid whose column count can change when a panel is closed. */
 .paper {
   position: fixed; inset: 0; z-index: 50;
-  /* One knob for the rail's size, so the column, the buttons and the icons
-     cannot disagree about how big "large" is. The rail runs two abreast, so the
-     column is two of them plus the gap and the padding. */
-  --rail-btn: 34px;
-  /* One curve for everything in this screen, and one page colour. Both are
-     brief 8.3; the curve is the reference build's and it is the only easing
-     used anywhere below. */
+  /* One knob for the dock's size, so the buttons and the icons cannot disagree
+     about how big "large" is. */
+  --rail-btn: 38px;
+  /* One curve for everything in this screen, and one page colour — brief §8.3.
+     There is no second easing anywhere below. */
   --paper-ease: cubic-bezier(.32, .72, 0, 1);
   --sheet: oklch(1 0 0);
-  --rail-w: calc(var(--rail-btn) * 2 + 14px);
-  display: grid;
-  grid-template-columns: var(--rail-w) 1fr;
-  grid-template-areas:
-    "bar   bar"
-    "find  find"
-    "rail  body";
-  grid-template-rows: auto auto 1fr;
+
+  /* THE THREE DEPTHS, AND NO FOURTH (brief §8.2). The page is 1, the floating
+     bars are 2, anything opening above a bar is 3. Stated once here so a new
+     surface cannot invent a fourth by guessing. */
+  --d1: 0 1px 2px oklch(0 0 0 / .3), 0 18px 50px oklch(0 0 0 / .45);
+  --d2: 0 24px 70px oklch(0 0 0 / .62), 0 3px 10px oklch(0 0 0 / .4);
+  --d3: 0 34px 90px oklch(0 0 0 / .72), 0 6px 18px oklch(0 0 0 / .5);
+  --glass: oklch(from var(--panel) l c h / .82);
+  --glass-2: oklch(from var(--panel) calc(l + .03) c h / .96);
+  --hair: oklch(from var(--t1) l c h / .09);
+  --lift: oklch(from var(--t1) l c h / .06);
+
   background: var(--ground); color: var(--t1);
   font-family: var(--font-ui);
 }
-.paper[data-toolsize="s"] { --rail-btn: 30px; }
-.paper[data-toolsize="m"] { --rail-btn: 34px; }
+.app[data-variant="day"] .paper {
+  --d1: 0 1px 2px oklch(.25 .02 255 / .18), 0 14px 36px oklch(.25 .02 255 / .16);
+  --d2: 0 22px 60px oklch(.25 .02 255 / .24), 0 2px 8px oklch(.25 .02 255 / .14);
+  --d3: 0 30px 80px oklch(.25 .02 255 / .3), 0 4px 14px oklch(.25 .02 255 / .18);
+  --hair: oklch(from var(--t1) l c h / .13);
+  --lift: oklch(1 0 0 / .9);
+}
+
+/* Every floating surface, in one place. Brief §8.1 to the letter. */
+.pbar, .ptools, .prail, .pbot, .ptray, .pmenu, .psheet, .selbar, .findbar {
+  background: var(--glass);
+  backdrop-filter: blur(30px) saturate(1.7);
+  -webkit-backdrop-filter: blur(30px) saturate(1.7);
+  border: 1px solid var(--hair);
+  box-shadow: var(--d2), inset 0 1px 0 var(--lift);
+  border-radius: 18px;
+}
+/* Depth 3 for anything that opens above a bar. */
+.pmenu, .psheet, .selbar, .ptray { box-shadow: var(--d3), inset 0 1px 0 var(--lift); background: var(--glass-2); }
+
+/* A blur this wide across several panels stutters on older iPads. Measured
+   there rather than removed here: the radius drops on a coarse pointer, which
+   keeps the effect and gives back the frames. */
+@media (pointer: coarse) {
+  .pbar, .ptools, .prail, .pbot, .ptray, .pmenu, .psheet, .selbar, .findbar {
+    backdrop-filter: blur(18px) saturate(1.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  }
+}
+
+/* CHROME RECEDES WHILE THE NIB IS DOWN (rule 5, §8.7). Not hidden — dimmed, so
+   it is still there to glance at and still there to reach. */
+.paper[data-writing] .pbar,
+.paper[data-writing] .prail,
+.paper[data-writing] .pbot,
+.paper[data-writing] .ptools { opacity: .2; }
+.pbar, .prail, .pbot, .ptools { transition: opacity .5s var(--paper-ease); }
+
+/* THE DOCK — a tray the student builds, floating, vertically centred (§8.4).
+
+   Left or right by the existing setting; on a narrow screen it goes to the
+   bottom, where a thumb is. It is never a full-height frame. */
+.ptools {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  left: 16px; z-index: 45;
+  width: max-content;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 7px 6px;
+  overflow: visible;
+}
+.paper[data-dock="right"] { --dock-side: right; }
+.paper[data-dock="right"] .ptools { left: auto; right: 16px; }
+.paper[data-dock="top"] .ptools {
+  top: 74px; left: 50%; transform: translateX(-50%);
+  flex-direction: row; align-items: center;
+}
+.paper[data-toolsize="s"] { --rail-btn: 34px; }
+.paper[data-toolsize="m"] { --rail-btn: 38px; }
 .paper[data-toolsize="l"] { --rail-btn: 44px; }
 
-/* The rail moves. Three docks and nothing in between, because a rail you can
-   drop anywhere is a rail you have to put back. */
-.paper[data-dock="right"] {
-  grid-template-columns: 1fr var(--rail-w);
-  grid-template-areas:
-    "bar  bar"
-    "find find"
-    "body rail";
+.ptoolgroup {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 3px 0; border-bottom: 1px solid var(--hair);
 }
-.paper[data-dock="right"] .ptools { border-right: none; border-left: 1px solid var(--line); }
-.paper[data-dock="top"] {
-  grid-template-columns: 1fr;
-  grid-template-areas: "bar" "find" "rail" "body";
-  grid-template-rows: auto auto auto 1fr;
+.ptoolgroup:last-of-type { border-bottom: none; }
+.paper[data-dock="top"] .ptoolgroup {
+  flex-direction: row; padding: 0 4px;
+  border-bottom: none; border-right: 1px solid var(--hair);
 }
-.paper[data-dock="top"] .ptools {
-  flex-direction: row; justify-content: center; gap: 4px;
-  padding: 5px 8px; border-right: none; border-bottom: 1px solid var(--line);
-}
-.paper[data-dock="top"] .ptools-gap { width: 12px; height: auto; }
+.paper[data-dock="top"] .ptoolgroup:last-of-type { border-right: none; }
 
-.pbar { grid-area: bar; }
-.findbar { grid-area: find; }
-.ptools { grid-area: rail; }
-.pbody { grid-area: body; }
-
-/* The tool rail. Big, quiet, always there — the one part of this screen that
-   is Drawboard rather than Edge. */
-.ptools {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 6px 0; background: var(--panel);
-  border-right: 1px solid var(--line);
-}
-.ptools-gap { height: 10px; }
+/* A tool button carries THREE things at once (§8.8): what it is, what colour it
+   will lay down, and whether it is the one in your hand. */
 .ptoolbtn {
+  position: relative;
   display: grid; place-items: center;
-  width: var(--rail-btn); height: var(--rail-btn);
-  background: transparent; border: 1px solid transparent; border-radius: var(--r-control);
+  width: var(--rail-btn); height: var(--rail-btn); min-height: var(--rail-btn);
+  background: transparent; border: 1px solid transparent; border-radius: 11px;
+  color: var(--t2); cursor: pointer;
+  transition: background .18s var(--paper-ease), color .18s var(--paper-ease);
+  -webkit-touch-callout: none; user-select: none;
+}
+.ptoolbtn:hover { background: var(--hair); color: var(--t1); }
+/* Active is three cues together — a filled pill, an accent bar on the dock's
+   edge, and the icon going full strength. One of them alone reads as hover. */
+.ptoolbtn[aria-pressed="true"] {
+  background: var(--hair); color: var(--t1);
+  box-shadow: inset 0 1px 0 var(--lift);
+}
+.ptoolbtn[aria-pressed="true"]::before {
+  content: ""; position: absolute; left: -7px; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 16px; border-radius: 2px; background: var(--active);
+}
+.paper[data-dock="right"] .ptoolbtn[aria-pressed="true"]::before { left: auto; right: -7px; }
+.paper[data-dock="top"] .ptoolbtn[aria-pressed="true"]::before {
+  left: 50%; top: -7px; transform: translateX(-50%); width: 16px; height: 3px;
+}
+.ptoolbtn:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+/* The colour the tool will lay down, under the glyph — so the dock answers
+   "what happens if I drag now" without opening anything (rule 2). */
+.ptool-sw {
+  position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 2.5px; border-radius: 2px; background: var(--ink, var(--t3));
+}
+.ptool-add {
+  display: grid; place-items: center;
+  width: var(--rail-btn); height: var(--rail-btn); min-height: var(--rail-btn);
+  margin-top: 3px;
+  background: transparent; border: 1px dashed var(--hair); border-radius: 11px;
   color: var(--t3); cursor: pointer;
 }
-.ptoolbtn:hover { background: var(--raised); color: var(--t1); }
-/* Selection reads structurally — a filled leading edge, not a glow. */
-.ptoolbtn[aria-pressed="true"] {
-  background: var(--raised); color: var(--t1);
-  box-shadow: inset 2px 0 0 var(--active);
-}
-.ptoolbtn:focus-visible { outline: 2px solid var(--active); outline-offset: 1px; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.ptool-add:hover { color: var(--t1); border-color: var(--t3); background: var(--hair); }
 
 /* ------------------------------------------------------------------ the bar */
+/* Floating, centred, and it never spans the window. §8.4. */
 .pbar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; min-height: 52px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 46;
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px 8px;
+  max-width: calc(100% - 40px);
 }
-.pbar-l, .pbar-r { display: flex; align-items: center; gap: 4px; }
-.pbar-l { flex: 1 1 0; min-width: 0; }
-.pbar-r { flex: 1 1 0; justify-content: flex-end; }
+.pbar-l, .pbar-r { display: flex; align-items: center; gap: 2px; }
+.pbar-l { min-width: 0; }
 .pbar-c { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
 .pbar-title {
-  font-size: 15px; font-weight: 500; margin: 0 0 0 4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  color: var(--t1);
+  margin: 0 6px; font-size: 14px; font-weight: 500; color: var(--t1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;
+}
+.pbar-mod {
+  font-family: var(--font-mono); font-size: 13px; color: var(--t3);
+  margin-inline-start: 6px;
 }
 .pbar-rule { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
 
@@ -196,45 +249,37 @@
 }
 
 /* ---------------------------------------------------------------- the body */
-/* ONE VARIABLE FOR THE SIDEBAR'S WIDTH, and it is not tidiness.
-
-   This rule used to name two of the four panels — thumbs and marks — so the
-   other two got `1fr` and opened at the full width of the window with the
-   document squeezed out beside them. Listing panels by name is a rule that
-   breaks every time one is added, which is exactly what happened when Contents
-   arrived. Now the panel is open or it is not. */
-.paper { --side-w: 0px; }
-.paper:not([data-rail="none"]) { --side-w: 248px; }
-/* NAMED AREAS, BECAUSE AUTO-PLACEMENT COST THE DOCUMENT ITS WIDTH.
-
-   This was `grid-template-columns: var(--side-w) 1fr` and nothing else, and the
-   panel is CONDITIONALLY RENDERED. With the panel shut there is one child, it
-   auto-placed into the first column — the one sized `var(--side-w)`, which is
-   0px when the panel is shut — and the paper was painted off the left edge at
-   zero width. Closing the Pages panel emptied the reader.
-
-   The stylesheet's own opening note warns about exactly this: a layout must not
-   depend on how many children it has. Naming the areas is what makes that true
-   — the document sits in `doc` whether or not anything sits in `side`. */
-.pbody {
-  position: relative;
-  flex: 1 1 auto; display: grid; min-height: 0;
-  grid-template-columns: var(--side-w) 1fr;
-  grid-template-areas: "side doc";
+/* One surface. The document fills the screen and every control floats over it,
+   so nothing here depends on how many panels happen to be rendered. */
+.pbody { position: absolute; inset: 0; display: block; }
+.pscroll {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  /* Room for the floating bars, so a page can always scroll clear of them. */
+  padding: 78px 34px 92px;
+  background: none;
+  scrollbar-width: none;
 }
-.prail { grid-area: side; }
-.pscroll { grid-area: doc; }
+.pscroll::-webkit-scrollbar { width: 0; }
 
+/* THE PANEL FLOATS AND, BELOW 1200px, OVERLAYS (brief §8.6, hard rule).
+   It never takes width from the page on a tablet — it comes over it and
+   dismisses. Above 1200px it still floats; the document simply gets padding
+   on that side so nothing is hidden underneath. */
 .prail {
-  border-right: 1px solid var(--line);
-  background: var(--panel);
-  display: flex; flex-direction: column; min-height: 0;
+  position: absolute; right: 30px; top: 64px; bottom: 86px;
+  width: var(--side-w, 322px); z-index: 44;
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
 }
-/* `flex: none` is load-bearing, not tidiness. Giving this row `overflow-x:
-   auto` so four tabs can scroll on a narrow rail ALSO changes its automatic
-   minimum size from `auto` to zero — that is what the spec says overflow does —
-   so as a flex item in a column beside a scrolling list it was squashed to a
-   1px sliver with four 44px buttons still inside it. */
+.paper[data-rail="none"] .prail { display: none; }
+@media (min-width: 1200px) {
+  .paper:not([data-rail="none"]) .pscroll { padding-right: calc(var(--side-w, 322px) + 46px); }
+}
+@media (max-width: 1199px) {
+  /* Overlay sheets only. An iPad is below this in BOTH orientations. */
+  .prail { right: 12px; left: auto; width: min(360px, calc(100% - 24px)); }
+}
+
 .prail-tabs {
   flex: none; display: flex; border-bottom: 1px solid var(--line);
   overflow-x: auto; scrollbar-width: none;
@@ -750,7 +795,9 @@
    the armed tool's settings appear beside the rail, and no others exist. It
    floats over the document rather than taking a band, because every pixel of
    furniture is a pixel of paper. */
-.ptools { position: relative; overflow: visible; }
+/* (The dock's own positioning is at the top of this file. A `position:
+   relative` here used to sit below it and quietly win, which turned the
+   floating dock back into a full-width block.) */
 /* Two abreast, group by group, with a hairline between groups. See the note in
    PaperReader.jsx: one column of ten is 659px of a 720px window. */
 .ptoolgroup {
@@ -765,8 +812,14 @@
 }
 .paper[data-dock="top"] .ptoolgroup:last-of-type { border-right: none; }
 
+/* THE INSPECTOR SITS BESIDE THE DOCK, and only beside the dock.
+
+   It used to clear the panel's width as well, from when the panel was a column
+   on the same side. Now the panel floats on the other edge, so that offset
+   pushed the inspector off the screen — visible as a card cut in half at the
+   left margin. */
 .ptray {
-  position: absolute; top: 6px; left: calc(100% + var(--side-w) + 8px);
+  position: absolute; top: 6px; left: calc(100% + 8px);
   z-index: 12; width: 226px;
   display: grid; gap: 9px; padding: 11px;
   background: linear-gradient(var(--panel), var(--panel)), var(--ground);
@@ -783,7 +836,8 @@
 /* On the right the sidebar is on the FAR side of the document, so the tray
    already clears it by floating inward. */
 .paper[data-dock="right"] .ptray { left: auto; right: calc(100% + 8px); }
-.paper[data-dock="top"] .ptray { top: calc(100% + 8px); left: calc(var(--side-w) + 8px); }
+.paper[data-dock="top"] .ptray { top: calc(100% + 8px); left: 0; }
+
 
 .tray-name { margin: 0; font-size: 13px; font-weight: 500; color: var(--t1); }
 .tray-hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--t3); }
@@ -934,3 +988,143 @@
    one you made on the page. */
 .mrow[data-colour] { border-left-color: var(--ink); }
 .mcardp[data-colour] { border-left-color: var(--ink); }
+
+/* ============================================================================
+   THE BOTTOM BAR — brief §8.4
+
+   Undo and redo are here, and they are here rather than only on ⌘Z because
+   rule 4 says undo is a button, always. The primary device is a tablet with a
+   pen and no keyboard attached; a shortcut is not a control.
+   ========================================================================= */
+.pbot {
+  position: absolute; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: 50%; transform: translateX(-50%);
+  z-index: 46;
+  display: flex; align-items: center; gap: 3px;
+  padding: 5px 7px;
+  max-width: calc(100% - 40px);
+}
+.pbot-c { display: flex; align-items: center; gap: 2px; }
+.pbot-rule { width: 1px; height: 20px; background: var(--hair); margin: 0 5px; flex: 0 0 auto; }
+
+/* ---------------------------------------------------------- the tick rail
+   Every mark in the whole paper, positioned by page, down the right edge
+   (§11.2). Yours are wider and opaque; the class's are narrower and lighter,
+   so a busy manual reads as a used book rather than as noise. */
+.pticks {
+  position: absolute; right: 8px; top: 64px; bottom: 92px;
+  width: 14px; z-index: 43; cursor: pointer;
+}
+.pticks-trk {
+  position: absolute; left: 6px; top: 0; bottom: 0;
+  width: 2px; border-radius: 2px; background: var(--hair);
+}
+.ptick {
+  position: absolute; left: 1px; width: 12px; height: 3px;
+  border-radius: 2px; background: var(--ink, var(--active));
+  opacity: .85; border: none; padding: 0; cursor: pointer;
+  transition: transform .18s var(--paper-ease), opacity .18s;
+}
+.ptick[data-mine] { left: 0; width: 14px; height: 4px; opacity: 1; }
+.ptick:hover { transform: scaleX(1.5); opacity: 1; }
+.pticks-you {
+  position: absolute; left: -3px; width: 20px; height: 20px; margin-top: -10px;
+  border-radius: 6px; border: 1.5px solid var(--active);
+  background: oklch(from var(--active) l c h / .16);
+  pointer-events: none; transition: top .28s var(--paper-ease);
+}
+
+/* ---------------------------------------------------- the five meanings
+   Fixed across every livery, because they carry meaning: a student who has
+   learned that amber means "exam likely" must not find it means something else
+   after changing livery. This is the second exception to the livery system
+   after ink, and the last. */
+.paper [data-colour="critical"]   { --ink: oklch(.80 .155 84); }
+.paper [data-colour="definition"] { --ink: oklch(.70 .135 253); }
+.paper [data-colour="limit"]      { --ink: oklch(.74 .125 162); }
+.paper [data-colour="unsure"]     { --ink: oklch(.70 .135 320); }
+.paper [data-colour="wrong"]      { --ink: oklch(.68 .165 32); }
+
+/* §6.1 — violet has a state. The colour says "this is a question"; the
+   treatment says whether anybody has dealt with it, at a glance and without
+   opening anything. Hollow while open, filled once answered. */
+.pp-mark[data-colour="unsure"][data-thread="open"] {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.pp-mark[data-colour="unsure"][data-thread="answered"] {
+  background: oklch(from var(--ink) l c h / .34);
+}
+
+/* ============================================================================
+   THE MARK CARD — brief §10
+   ========================================================================= */
+.selbar {
+  position: absolute; z-index: 56; width: 286px;
+  padding: 0; overflow: hidden;
+  animation: mc-in .22s var(--paper-ease);
+}
+@keyframes mc-in { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+.app.smooth-air .selbar { animation: none; }
+
+.mc-head { display: flex; align-items: center; gap: 8px; padding: 11px 8px 8px 13px; }
+.mc-head i { width: 9px; height: 9px; border-radius: 3px; background: var(--ink, var(--active)); flex: none; }
+.mc-head b { font-size: 14px; font-weight: 500; color: var(--t1); }
+.mc-head em { font-style: normal; font-size: 13px; color: var(--t3); margin-inline-start: auto; }
+.mc-x { min-width: 28px; min-height: 28px; }
+.mc-does { margin: 0; padding: 0 13px 11px; font-size: 13px; line-height: 1.45; color: var(--t2); }
+
+.mc-who {
+  display: flex; align-items: center; gap: 9px; padding: 10px 13px;
+  border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+}
+.mc-av {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-weight: 500; flex: none;
+  background: oklch(from var(--active) l c h / .16); color: var(--active);
+}
+.mc-av[data-anon] { background: var(--raised); color: var(--t3); }
+.mc-name { display: grid; min-width: 0; }
+.mc-name b { font-size: 13px; font-weight: 500; color: var(--t1); }
+.mc-name span { font-size: 13px; color: var(--t3); }
+.mc-agree {
+  margin-inline-start: auto; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 30px; padding: 0 9px; border-radius: 9px;
+  background: transparent; border: 1px solid var(--hair);
+  color: var(--t2); font: inherit; font-size: 13px; cursor: pointer;
+}
+.mc-agree:hover { background: var(--raised); color: var(--t1); }
+
+.mc-thread {
+  display: flex; align-items: center; gap: 8px; padding: 9px 13px;
+  border-bottom: 1px solid var(--hair); font-size: 13px; color: var(--t2);
+}
+.mc-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+/* Hollow while open, filled once answered — the same grammar as on the page. */
+.mc-dot[data-state="open"] { border: 1.5px solid oklch(.70 .135 320); }
+.mc-dot[data-state="answered"] { background: oklch(.74 .125 162); }
+.mc-link {
+  margin-inline-start: auto; background: none; border: none; padding: 0;
+  color: var(--active); font: inherit; font-size: 13px; cursor: pointer;
+}
+
+.mc-acts { display: flex; align-items: center; gap: 3px; padding: 7px 8px; }
+.mc-cols { display: flex; align-items: center; gap: 2px; }
+.mc-acts .swatch { min-height: 30px; }
+.mc-acts .swatch::before { width: 18px; height: 18px; }
+.mc-go {
+  flex: 1; min-height: 34px; border-radius: 10px;
+  background: oklch(from var(--active) l c h / .16); color: var(--active);
+  border: none; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.mc-note { margin: 0; padding: 0 13px 11px; font-size: 13px; color: var(--t3); }
+
+/* The meaning card in the tool tray — the same fact, where a colour is chosen
+   rather than where a mark is inspected. */
+.tray-mean {
+  display: flex; gap: 8px; padding: 9px 10px; border-radius: 10px;
+  background: var(--raised); border: 1px solid var(--hair);
+}
+.tray-mean i { width: 8px; height: 8px; border-radius: 2px; background: var(--ink); flex: none; margin-top: 4px; }
+.tray-mean b { display: block; font-size: 13px; font-weight: 500; color: var(--t1); }
+.tray-mean span { font-size: 13px; line-height: 1.4; color: var(--t3); }

@@ -132,3 +132,14 @@ export async function fetchCorrections(me, moduleCode) {
 export async function resolveCorrection(id) {
   return updateAnnotation(id, { resolved_at: new Date().toISOString() });
 }
+
+/* §10 — agreeing with somebody else's mark.
+   A counter incremented where it lives rather than read-modify-written from the
+   browser: two people pressing it in the same second must both count, and a
+   client that reads 4 and writes 5 loses one of them. */
+export async function agreeWithMark(id) {
+  if (!id) return null;
+  const { data, error } = await supabase.rpc("agree_with_mark", { p_id: id });
+  if (error) return fail(error, null);
+  return data;
+}

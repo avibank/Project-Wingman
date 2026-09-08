@@ -5,7 +5,7 @@ import {
   RotateCw, RotateCcw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
   HelpCircle, Flag, Trash2, RefreshCw, MousePointer2, MoreHorizontal, Check,
   Pen, Eraser, Underline, Strikethrough, Maximize2, Minimize2, Info, Keyboard,
-  Rows3, Square, Columns2, Sun,
+  Rows3, Square, Columns2, Sun, Undo2, Redo2, Users, ThumbsUp,
 } from "lucide-react";
 import { loadPaper, releasePaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
 import { setRasterFocus } from "../../lib/rasterBudget.js";
@@ -13,8 +13,9 @@ import {
   resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
   applyFilter, FILTERS, RINGS, ringLabel, DOCKS, TOOL_SIZES,
 } from "../../lib/paperMarks.js";
+import { MEANINGS, meaning, threadState, takesMeaning, meaningOr, DEFAULT_MEANING } from "../../lib/meanings.js";
 import {
-  INK_COLOURS, PEN_SIZES, penWidth, colourOr,
+  INK_COLOURS, PEN_SIZES, penWidth,
   DEFAULT_HIGHLIGHT, DEFAULT_PEN, DEFAULT_PEN_SIZE,
 } from "../../lib/paperInk.js";
 import {
@@ -22,8 +23,8 @@ import {
   spreads, spreadOf, pagesToDraw, findAll,
 } from "../../lib/paperView.js";
 import {
-  fetchAnnotations, createAnnotation, deleteAnnotation,
-  markOrphaned, askOnPassage, fetchCorrections, resolveCorrection,
+  fetchAnnotations, createAnnotation, deleteAnnotation, updateAnnotation,
+  markOrphaned, askOnPassage, fetchCorrections, resolveCorrection, agreeWithMark,
 } from "../../lib/annotations.js";
 import { fetchInk, createStroke, deleteStrokes } from "../../lib/ink.js";
 import PaperPage from "./PaperPage.jsx";
@@ -153,12 +154,14 @@ function SelectionBar({ at, colour, onHighlight, onUnderline, onStrike, onNote, 
 
    It floats over the document rather than taking a band of its own, because
    every pixel this screen spends on furniture is a pixel of paper. */
-function Swatches({ value, onPick, label }) {
+function Swatches({ value, onPick, label, set = INK_COLOURS }) {
   return (
     <div className="tray-row" role="radiogroup" aria-label={label}>
-      {INK_COLOURS.map((c) => (
+      {set.map((c) => (
         <button key={c.id} type="button" role="radio" aria-checked={value === c.id}
-                className="swatch" data-colour={c.id} title={c.label} aria-label={c.label}
+                className="swatch" data-colour={c.id}
+                title={c.does ? `${c.name} — ${c.does}` : c.label}
+                aria-label={c.name || c.label}
                 onClick={() => onPick(c.id)} />
       ))}
     </div>
@@ -184,7 +187,18 @@ function ToolTray({ tool, hlColour, penColour, penSize, ring, onHl, onPen, onSiz
   return (
     <div className="ptray" role="group" aria-label={`${spec.label} settings`}>
       <p className="tray-name">{spec.label}</p>
-      {spec.colour === "hl" && <Swatches value={hlColour} onPick={onHl} label="Highlighter colour" />}
+      {spec.colour === "hl" && (
+        <>
+          <Swatches value={hlColour} onPick={onHl} label="What this mark means" set={MEANINGS} />
+          {/* THE MEANING CARD. The panel is settings without it: a student has
+              to be able to see what the colour in their hand will DO, at the
+              moment they pick it, not remember it. */}
+          <div className="tray-mean" data-colour={hlColour}>
+            <i aria-hidden="true" />
+            <span><b>{meaning(hlColour).name}</b>{meaning(hlColour).does}</span>
+          </div>
+        </>
+      )}
       {spec.colour === "pen" && <Swatches value={penColour} onPick={onPen} label="Ink colour" />}
       {spec.size && <Nibs value={penSize} onPick={onSize} />}
       {spec.ring && (
@@ -260,6 +274,111 @@ function Spotlight({ kind, onKind, quote, ring, onRing, value, onChange, onSave,
         </button>
       </div>
       {kind !== "correction" && <p className="spot-hint">{hint}</p>}
+    </div>
+  );
+}
+
+
+/* =============================================================================
+   THE MARK CARD (brief §10). Named MarkPop so it does not collide with the
+   inline note card further down — that one is a note in the FLOW under a page,
+   this one is a popover over a mark, and they are different objects.
+
+   One popover does everything: what a mark is, who made it, and the right
+   actions for whose it is. It REPLACES the idea of a separate selection
+   toolbar — two overlapping popovers is exactly the clutter this rebuild is
+   removing.
+
+   It opens on hover after 240ms on a desktop AND on tap, and the second half
+   is not optional: an iPad has no hover, so a card that only appears on hover
+   is a card an iPad user can never see. That is called out specifically in the
+   brief because it is the sort of thing that ships broken.
+   ========================================================================= */
+function MarkPop({ mark, me, at, isStaff, onRecolour, onDelete, onNote, onAgree, onThread, onClose }) {
+  if (!mark || !at) return null;
+  const mine = mark.author_id === me;
+  const anon = mark.anonymous && !mine;
+  const m = meaning(mark.colour);
+  const thread = threadState(mark);
+  const who = anon ? "Asked anonymously" : mine ? "You" : (mark.author_name || "Someone");
+
+  return (
+    <div className="selbar" role="dialog" aria-label={`${m.name} mark`}
+         style={{ left: at.x, top: at.y }} data-flip={at.flip ? "" : undefined}>
+      <div className="mc-head" data-colour={mark.colour || undefined}>
+        <i aria-hidden="true" />
+        <b>{m.name}</b>
+        <em className="mono">p.{at.page}</em>
+        <button type="button" className="ptool mc-x" onClick={onClose} aria-label="Close">
+          <X size={14} aria-hidden="true" />
+        </button>
+      </div>
+
+      {/* Rule: the card always states what the colour DOES. A student should
+          never have to remember which of five things amber was. */}
+      <p className="mc-does">{m.does}</p>
+
+      <div className="mc-who">
+        <span className="mc-av" data-anon={anon ? "" : undefined} aria-hidden="true">
+          {anon ? "?" : (who.slice(0, 2) || "?").toUpperCase()}
+        </span>
+        <span className="mc-name">
+          <b>{who}</b>
+          <span>
+            {anon
+              ? "Name hidden on questions"
+              : mine ? "Yours" : `${mark.agree_count || 0} agreed`}
+          </span>
+        </span>
+        {!mine && (
+          <button type="button" className="mc-agree" onClick={() => onAgree(mark)}>
+            <ThumbsUp size={14} aria-hidden="true" /> {mark.agree_count || 0}
+          </button>
+        )}
+      </div>
+
+      {/* §6.1 — the thread strip, violet only. Open or answered, said in words
+          as well as in the treatment on the page. */}
+      {thread && (
+        <div className="mc-thread">
+          <span className="mc-dot" data-state={thread} aria-hidden="true" />
+          {thread === "answered" ? "Answered" : "Open thread"}
+          <button type="button" className="mc-link" onClick={() => onThread(mark)}>
+            Open in the Ready Room
+          </button>
+        </div>
+      )}
+
+      <div className="mc-acts">
+        {mine ? (
+          <>
+            {/* Restyle in place — the five, and nothing else, for a text mark. */}
+            <span className="mc-cols" role="radiogroup" aria-label="What this mark means">
+              {MEANINGS.map((c) => (
+                <button key={c.id} type="button" className="swatch" role="radio"
+                        aria-checked={mark.colour === c.id} data-colour={c.id}
+                        title={`${c.name} — ${c.destination}`} aria-label={c.name}
+                        onClick={() => onRecolour(mark, c.id)} />
+              ))}
+            </span>
+            <button type="button" className="ptool" onClick={() => onNote(mark)}
+                    aria-label="Add a note" title="Add a note">
+              <MessageSquare size={15} aria-hidden="true" />
+            </button>
+            <button type="button" className="ptool" onClick={() => onDelete(mark)}
+                    aria-label="Delete this mark" title="Delete">
+              <Trash2 size={15} aria-hidden="true" />
+            </button>
+          </>
+        ) : (
+          <button type="button" className="mc-go" onClick={() => onThread(mark)}>
+            {thread ? "Answer this" : anon ? "Reply" : `Ask ${(mark.author_name || "them").split(" ")[0]}`}
+          </button>
+        )}
+      </div>
+      {isStaff && mark.anonymous && (
+        <p className="mc-note">Instructors can see who asked.</p>
+      )}
     </div>
   );
 }
@@ -376,9 +495,10 @@ export default function PaperReader({
   const [filter, setFilter] = useState("all");
   const [density, setDensity] = useState(true);
   const [activeId, setActiveId] = useState(null);
+  const [picked, setPicked] = useState(null);   // { mark, at } — the mark card
 
   const [tool, setTool] = useState("select");
-  const [hlColour, setHlColour] = useState(() => read("pw-paper-hl", DEFAULT_HIGHLIGHT));
+  const [hlColour, setHlColour] = useState(() => read("pw-paper-hl", DEFAULT_MEANING));
   const [penColour, setPenColour] = useState(() => read("pw-paper-pen", DEFAULT_PEN));
   const [penSize, setPenSize] = useState(() => read("pw-paper-nib", DEFAULT_PEN_SIZE));
 
@@ -440,11 +560,6 @@ export default function PaperReader({
   const pageEls = useRef(new Map());
   const divsByPage = useRef(new Map());
   const lastSync = useRef(null);
-  /* What this session made, newest last. Undo pops it. Nothing is kept for a
-     redo: putting a deleted row back would mean re-inserting it under a new id,
-     and everything that pointed at the old one — a Ready Room thread, a
-     neighbour's reply — would be pointing at a mark that no longer exists. */
-  const undoStack = useRef([]);
 
   const registerEl = useCallback((num, el) => { if (el) pageEls.current.set(num, el); }, []);
   const takeDivs = useCallback((num, spans, items) => {
@@ -491,16 +606,25 @@ export default function PaperReader({
     const el = scrollRef.current;
     if (!el || !sizes.length || !fit) return;
     const first = sizes[0];
+    /* THE CONTENT BOX, NOT THE PADDING BOX.
+
+       `clientWidth` includes padding, and the scroller's padding is where the
+       floating panel sits — 322px of it at desktop widths. Fitting to the
+       padding box made the page 322px too wide, so it ran under the panel and
+       off the right edge of the window. */
+    const cs = getComputedStyle(el);
+    const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const tall = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     setScale(fitScale(
       fit,
       { w: first.w, h: first.h, rotated: rotation % 180 !== 0 },
-      { width: el.clientWidth, height: el.clientHeight },
-      { x: 48, y: 48 },
+      { width: room, height: tall },
+      { x: 0, y: 0 },
       across,
     ));
   }, [sizes, fit, rotation, across]);
 
-  useEffect(() => { measure(); }, [measure]);
+  useEffect(() => { measure(); }, [measure, rail]);
   useEffect(() => {
     const on = () => measure();
     window.addEventListener("resize", on);
@@ -603,7 +727,7 @@ export default function PaperReader({
   /* A spread turns two pages at a time, except at the cover. Stepping by one
      from an open book leaves you looking at the same two pages with the number
      changed, which reads as a broken button. */
-  const step = useCallback((direction) => {
+  const turn = useCallback((direction) => {
     if (layout !== "spread") { goToPage(page + direction); return; }
     const list = spreads(sizes.length);
     const at = spreadOf(page) + direction;
@@ -801,6 +925,73 @@ export default function PaperReader({
   /* --------------------------------------------------------------- writing */
   const clearSelection = () => { window.getSelection()?.removeAllRanges(); setSel(null); };
 
+  /* ONE STACK, REACHING EVERY ACTION (§5.4).
+
+     An undo that only reaches "the last thing you drew" is the one people
+     discover is missing at the worst moment — after recolouring the wrong mark,
+     or deleting somebody's note by mistake. Every operation pushes its own
+     INVERSE, as data rather than as a closure, so the stack survives the
+     component re-rendering and each step can be replayed in either direction.
+
+     Cleared on paper change, kept across navigation within one paper. */
+  const [depth, setDepth] = useState({ past: 0, future: 0 });
+  const past = useRef([]);
+  const future = useRef([]);
+  const remember = useCallback((step) => {
+    past.current.push(step);
+    future.current = [];
+    setDepth({ past: past.current.length, future: 0 });
+  }, []);
+
+  const putBack = useCallback(async (row) => {
+    if (row.__ink) {
+      setStrokes((held) => [...held.filter((k) => k.id !== row.id), row]);
+      await createStroke({ ...row, paperId: row.paper_id, moduleCode: row.module_code, me: row.author_id });
+    } else {
+      setRows((held) => [...held.filter((r) => r.id !== row.id), row]);
+      await createAnnotation({
+        id: row.id, paperId: row.paper_id, moduleCode: row.module_code, me: row.author_id,
+        kind: row.kind, ring: row.ring, body: row.body, anchor: row.anchor,
+        threadId: row.thread_id, colour: row.colour,
+      });
+    }
+  }, []);
+
+  const takeAway = useCallback(async (row) => {
+    if (row.__ink) {
+      setStrokes((held) => held.filter((k) => k.id !== row.id));
+      await deleteStrokes([row.id]);
+    } else {
+      setRows((held) => held.filter((r) => r.id !== row.id));
+      await deleteAnnotation(row.id);
+    }
+  }, []);
+
+  const applyStyle = useCallback((id, patch) => {
+    setRows((held) => held.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    updateAnnotation(id, patch);
+  }, []);
+
+  const step = useCallback(async (from, to, direction) => {
+    const move = from.current.pop();
+    if (!move) return;
+    const forward = direction === "redo";
+    if (move.op === "add") { if (forward) await putBack(move.row); else await takeAway(move.row); }
+    else if (move.op === "del") { if (forward) await takeAway(move.row); else await putBack(move.row); }
+    else if (move.op === "style") applyStyle(move.id, forward ? move.after : move.before);
+    to.current.push(move);
+    setDepth({ past: past.current.length, future: future.current.length });
+  }, [putBack, takeAway, applyStyle]);
+
+  const undo = useCallback(() => step(past, future, "undo"), [step]);
+  const redo = useCallback(() => step(future, past, "redo"), [step]);
+  const canUndo = depth.past > 0;
+  const canRedo = depth.future > 0;
+
+  /* A different paper is a different stack. Undoing your way out of one paper
+     and into edits on another is not a feature. */
+  useEffect(() => { past.current = []; future.current = []; setDepth({ past: 0, future: 0 }); }, [paper?.id]);
+
   /* R8 — your own marks are instant. The row goes in with a temporary id on the
      frame the button is pressed and is reconciled when the insert returns. On
      failure it is removed and the reason is said out loud, rather than left
@@ -808,7 +999,12 @@ export default function PaperReader({
   const addMark = useCallback(async ({ kind, start, end, body = null, ringId, threadId = null, colour }) => {
     if (!model || !me) return null;
     const anchor = anchorFor(model.text, start, end);
-    const paint = TEXT_MARKS.has(kind) ? colourOr(colour || hlColour) : null;
+    /* A TEXT MARK TAKES A MEANING, NOT A COLOUR. The five are closed for
+       highlight, underline and strike — there is deliberately no plain one,
+       because a plain highlight is the one everybody picks and it means
+       nothing. Free colour stays with the pen and the marker, where ink is
+       ink. See lib/meanings.js. */
+    const paint = takesMeaning(kind) ? meaningOr(colour || hlColour) : null;
     const optimistic = {
       id: tempId(), paper_id: paper.id, module_code: moduleCode, author_id: me,
       author_name: "You", kind, ring: ringId || ring, body, thread_id: threadId,
@@ -823,7 +1019,7 @@ export default function PaperReader({
       ? held.map((r) => (r.id === optimistic.id ? { ...saved, author_name: "You", close: true } : r))
       : held.filter((r) => r.id !== optimistic.id)));
     if (!saved) setError("That mark did not save. Nothing else was touched.");
-    else undoStack.current.push({ what: "mark", id: saved.id });
+    else remember({ op: "add", row: { ...saved, author_name: "You", close: true } });
     return saved;
   }, [model, me, paper, moduleCode, ring, hlColour]);
 
@@ -855,7 +1051,7 @@ export default function PaperReader({
       ? held.map((s) => (s.id === optimistic.id ? { ...saved, author_name: "You", mine: true } : s))
       : held.filter((s) => s.id !== optimistic.id)));
     if (!saved) setError("That stroke did not save. Nothing else was touched.");
-    else undoStack.current.push({ what: "ink", id: saved.id });
+    else remember({ op: "add", row: { ...saved, __ink: true, author_name: "You", mine: true } });
   }, [me, paper, moduleCode, tool, penColour, penSize, ring]);
 
   const eraseStrokes = useCallback(async (ids) => {
@@ -865,19 +1061,63 @@ export default function PaperReader({
     await deleteStrokes(list.filter((id) => !String(id).startsWith("tmp_")));
   }, [strokes, me]);
 
-  const undo = useCallback(async () => {
-    const last = undoStack.current.pop();
-    if (!last) return;
-    if (last.what === "ink") {
-      setStrokes((held) => held.filter((s) => s.id !== last.id));
-      await deleteStrokes([last.id]);
-    } else {
-      setRows((held) => held.filter((r) => r.id !== last.id));
-      await deleteAnnotation(last.id);
-    }
-  }, []);
+  /* ------------------------------------------------------- picking one up
+     §5.3 — hit-test a mark on click or tap.
+
+     The marks layer is `pointer-events: none` (it has to be, or it would eat
+     every text selection), so the hit test is done in DOCUMENT OFFSETS rather
+     than in pixels: the click is mapped to a character position, and a mark
+     covers it if that position is inside its span. That is exact, it costs
+     nothing, and it works identically for a pen, a finger and a mouse. */
+  const markAt = useCallback((x, y) => {
+    const off = offsetFromPoint(x, y);
+    if (off == null) return null;
+    const hits = placed.filter((m) => off >= m.start && off <= m.end);
+    if (!hits.length) return null;
+    // The tightest one wins, so a note inside a long highlight is reachable.
+    return hits.reduce((best, m) => (m.end - m.start < best.end - best.start ? m : best));
+  }, [placed, offsetFromPoint]);
+
+  const cardFor = useCallback((mark, clientX, clientY) => {
+    const host2 = scrollRef.current?.getBoundingClientRect();
+    if (!host2) return null;
+    const W = 286, H = 210;
+    const above = clientY - host2.top - H - 14;
+    return {
+      x: Math.max(12, Math.min(clientX - host2.left - W / 2, host2.width - W - 12)),
+      y: above > 8 ? above : Math.min(host2.height - H - 12, clientY - host2.top + 18),
+      flip: above <= 8,
+      page: pageOf(model, mark.start),
+    };
+  }, [model]);
+
+  const open = useCallback((mark, x, y) => {
+    if (!mark) { setPicked(null); return; }
+    setActiveId(mark.id);
+    setPicked({ mark, at: cardFor(mark, x, y) });
+  }, [cardFor]);
+
+  /* Hover on a desktop, tap on touch — and the tap half is the one that
+     matters. An iPad reports no hover, so a card that only opens on hover is a
+     card half the users can never see. */
+  const hoverT = useRef(null);
+  const onPageMove = useCallback((e) => {
+    if (e.pointerType === "touch" || e.pointerType === "pen") return;
+    clearTimeout(hoverT.current);
+    hoverT.current = setTimeout(() => {
+      const m = markAt(e.clientX, e.clientY);
+      if (m) open(m, e.clientX, e.clientY);
+    }, 240);
+  }, [markAt, open]);
 
   const tapToMark = useCallback((e) => {
+    /* A tap on an existing mark opens its card, whatever tool is in hand —
+       except while a drawing tool is armed, where a tap is a dot. */
+    if (!INK_TOOLS.has(tool) && !window.getSelection()?.toString().trim()) {
+      const hit = markAt(e.clientX, e.clientY);
+      if (hit) { open(hit, e.clientX, e.clientY); return; }
+      setPicked(null);
+    }
     if (!WRITTEN.has(tool)) return;
     if (!model) return;
     if (window.getSelection()?.toString().trim()) return;      // a drag, not a tap
@@ -889,7 +1129,7 @@ export default function PaperReader({
     setComposer({ kind: tool, start: span.start, end: span.end, quote: quoteOf(model, span.start, span.end) });
     setDraft("");
     if (tool === "correction") setRing("solo");
-  }, [tool, model, offsetFromPoint]);
+  }, [tool, model, offsetFromPoint, markAt, open]);
 
   const openComposer = (kind, from = sel) => {
     if (!from || !model) return;
@@ -937,9 +1177,26 @@ export default function PaperReader({
   };
 
   const removeMark = async (mark) => {
+    remember({ op: "del", row: mark });
     setRows((held) => held.filter((r) => r.id !== mark.id));
     await deleteAnnotation(mark.id);
   };
+
+  /* §10 — agreeing with somebody else's mark. A counter, incremented where it
+     lives, so two people agreeing in the same second both count. */
+  const agree = useCallback((mark) => {
+    setRows((held) => held.map((r) => (r.id === mark.id ? { ...r, agree_count: (r.agree_count || 0) + 1 } : r)));
+    setPicked((p) => (p ? { ...p, mark: { ...p.mark, agree_count: (p.mark.agree_count || 0) + 1 } } : p));
+    agreeWithMark(mark.id);
+  }, []);
+
+  /* §5.3 — a mark can be picked back up and restyled in place, and that is an
+     undoable step like any other. */
+  const recolour = useCallback((mark, colour) => {
+    if (!mark || mark.colour === colour) return;
+    remember({ op: "style", id: mark.id, before: { colour: mark.colour }, after: { colour } });
+    applyStyle(mark.id, { colour });
+  }, [remember, applyStyle]);
 
   /* ---------------------------------------------------------- the whole window */
   const toggleFull = useCallback(async () => {
@@ -986,7 +1243,7 @@ export default function PaperReader({
       }
       const cmd = e.metaKey || e.ctrlKey;
       if (cmd && e.key.toLowerCase() === "f") { e.preventDefault(); setFindOpen(true); return; }
-      if (cmd && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
+      if (cmd && e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (cmd && e.key.toLowerCase() === "p") { e.preventDefault(); printNow(); return; }
       if (cmd && (e.key === "=" || e.key === "+")) { e.preventDefault(); zoomAbout(stepZoom(scale, 1)); return; }
       if (cmd && e.key === "-") { e.preventDefault(); zoomAbout(stepZoom(scale, -1)); return; }
@@ -996,14 +1253,14 @@ export default function PaperReader({
       // One letter per tool, the way every editor people already use does it.
       const byKey = TOOLS.find((t) => t.key.toLowerCase() === e.key.toLowerCase());
       if (byKey) { e.preventDefault(); setTool(byKey.id); return; }
-      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); step(1); }
-      if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); step(-1); }
+      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); turn(1); }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); turn(-1); }
       if (e.key === "Home") { e.preventDefault(); goToPage(1); }
       if (e.key === "End") { e.preventDefault(); goToPage(sizes.length); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sizes.length, goToPage, step, undo, printNow, scale, zoomAbout]);
+  }, [sizes.length, goToPage, turn, undo, redo, printNow, scale, zoomAbout]);
 
   /* The raster budget evicts the page furthest from where the reader is
      looking, so it has to be told where that is. */
@@ -1065,46 +1322,7 @@ export default function PaperReader({
             <PanelLeft size={17} aria-hidden="true" />
           </button>
           <h1 className="pbar-title">{paper.title}</h1>
-        </div>
-
-        <div className="pbar-c">
-          <button type="button" className="ptool" aria-label="Previous page"
-                  onClick={() => step(-1)} disabled={page <= 1}>
-            <ChevronLeft size={16} aria-hidden="true" />
-          </button>
-          <span className="pnum">
-            <input value={page} aria-label="Page"
-                   onChange={(e) => {
-                     const n = Number(e.target.value.replace(/\D/g, ""));
-                     if (n >= 1 && n <= totalPages) goToPage(n);
-                   }} />
-            <span>/ {totalPages || "—"}</span>
-          </span>
-          <button type="button" className="ptool" aria-label="Next page"
-                  onClick={() => step(1)} disabled={page >= totalPages}>
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
-
-          <span className="pbar-rule" aria-hidden="true" />
-
-          <button type="button" className="ptool" aria-label="Zoom out"
-                  onClick={() => zoomAbout(stepZoom(scale, -1))}>
-            <Minus size={16} aria-hidden="true" />
-          </button>
-          {/* THE LABEL IS THE MODE, NOT THE NUMBER (brief 4.4, rule 8).
-
-              "Fit width" is what a student means; 176% is what the renderer
-              happens to be doing about it. The percentage is still there —
-              inside the menu, where somebody who wants it is already looking. */}
-          <button type="button" className="pzoom" aria-expanded={menu === "zoom" ? "true" : "false"}
-                  onClick={() => setMenu(menu === "zoom" ? null : "zoom")}>
-            {fit ? (FITS.find((f) => f.id === fit)?.label ?? "Fit width") : `${Math.round(scale * 100)}%`}
-            <ChevronDown size={13} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool" aria-label="Zoom in"
-                  onClick={() => zoomAbout(stepZoom(scale, 1))}>
-            <Plus size={16} aria-hidden="true" />
-          </button>
+          {moduleCode && <span className="pbar-mod mono">{moduleCode}</span>}
         </div>
 
         <div className="pbar-r">
@@ -1314,6 +1532,69 @@ export default function PaperReader({
                   onSize={setPenSize} onRing={setRing} />
       </div>
 
+
+      {/* THE BOTTOM BAR (§8.4). Undo and redo live here because rule 4 says
+          undo is a button, always — not a shortcut a student on an iPad with
+          no keyboard cannot reach. Then where you are in the paper, then what
+          the module marked, then zoom. */}
+      <div className="pbot">
+        <button type="button" className="ptool" onClick={undo} disabled={!canUndo}
+                aria-label="Undo" title="Undo (⌘Z)">
+          <Undo2 size={17} aria-hidden="true" />
+        </button>
+        <button type="button" className="ptool" onClick={redo} disabled={!canRedo}
+                aria-label="Redo" title="Redo (⇧⌘Z)">
+          <Redo2 size={17} aria-hidden="true" />
+        </button>
+        <span className="pbot-rule" aria-hidden="true" />
+        <div className="pbot-c">
+          <button type="button" className="ptool" aria-label="Previous page"
+                  onClick={() => turn(-1)} disabled={page <= 1}>
+            <ChevronLeft size={16} aria-hidden="true" />
+          </button>
+          <span className="pnum">
+            <input value={page} aria-label="Page"
+                   onChange={(e) => {
+                     const n = Number(e.target.value.replace(/\D/g, ""));
+                     if (n >= 1 && n <= totalPages) goToPage(n);
+                   }} />
+            <span>/ {totalPages || "—"}</span>
+          </span>
+          <button type="button" className="ptool" aria-label="Next page"
+                  onClick={() => turn(1)} disabled={page >= totalPages}>
+            <ChevronRight size={16} aria-hidden="true" />
+          </button>
+
+          <span className="pbot-rule" aria-hidden="true" />
+
+          <button type="button" className="ptool" aria-label="Zoom out"
+                  onClick={() => zoomAbout(stepZoom(scale, -1))}>
+            <Minus size={16} aria-hidden="true" />
+          </button>
+          {/* THE LABEL IS THE MODE, NOT THE NUMBER (brief 4.4, rule 8).
+
+              "Fit width" is what a student means; 176% is what the renderer
+              happens to be doing about it. The percentage is still there —
+              inside the menu, where somebody who wants it is already looking. */}
+          <button type="button" className="pzoom" aria-expanded={menu === "zoom" ? "true" : "false"}
+                  onClick={() => setMenu(menu === "zoom" ? null : "zoom")}>
+            {fit ? (FITS.find((f) => f.id === fit)?.label ?? "Fit width") : `${Math.round(scale * 100)}%`}
+            <ChevronDown size={13} aria-hidden="true" />
+          </button>
+          <button type="button" className="ptool" aria-label="Zoom in"
+                  onClick={() => zoomAbout(stepZoom(scale, 1))}>
+            <Plus size={16} aria-hidden="true" />
+          </button>
+        </div>
+
+        <span className="pbot-rule" aria-hidden="true" />
+        <button type="button" className="ptool" aria-pressed={density ? "true" : "false"}
+                onClick={() => setDensity(!density)}
+                aria-label="Show what the module marked" title="What the module marked">
+          <Users size={17} aria-hidden="true" />
+        </button>
+      </div>
+
       <div className="pbody">
         {/* ------------------------------------------------------- the rail */}
         {rail && (
@@ -1421,7 +1702,9 @@ export default function PaperReader({
         )}
 
         {/* ------------------------------------------------------ the pages */}
-        <div className="pscroll" ref={scrollRef} onScroll={onScroll} onClick={tapToMark}>
+        <div className="pscroll" ref={scrollRef} onScroll={onScroll} onClick={tapToMark}
+             onPointerMove={onPageMove}
+             onPointerLeave={() => clearTimeout(hoverT.current)}>
           {error && <p className="perr">{error}</p>}
 
           <div className="pcol" style={{ gap: PAGE_GAP }}>
@@ -1487,6 +1770,16 @@ export default function PaperReader({
               {totalPages === 1 ? "" : "s"}. Marked with pdf.js {PDFJS_VERSION}.
             </p>
           )}
+
+          <MarkPop
+            mark={picked?.mark} at={picked?.at} me={me} isStaff={isStaff}
+            onRecolour={(m, c) => { recolour(m, c); setPicked((p) => (p ? { ...p, mark: { ...p.mark, colour: c } } : p)); }}
+            onDelete={(m) => { removeMark(m); setPicked(null); }}
+            onNote={(m) => { setPicked(null); setComposer({ kind: "note", start: m.start, end: m.end, quote: quoteOf(model, m.start, m.end) }); setDraft(""); }}
+            onAgree={(m) => agree(m)}
+            onThread={(m) => { if (m.thread_id) onOpenThread?.(m.thread_id); else { setPicked(null); setComposer({ kind: "question", start: m.start, end: m.end, quote: quoteOf(model, m.start, m.end) }); setDraft(""); } }}
+            onClose={() => setPicked(null)}
+          />
 
           <SelectionBar
             at={sel} canCorrect={!!me} colour={hlColour}

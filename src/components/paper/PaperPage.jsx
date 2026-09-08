@@ -307,6 +307,7 @@ export default function PaperPage({
             className="pp-mark"
             data-kind={r.seg.kind || undefined}
             data-colour={r.seg.colour || undefined}
+            data-thread={r.seg.thread || undefined}
             data-deco={r.seg.deco?.length ? r.seg.deco.join(" ") : undefined}
             data-density={r.seg.density || undefined}
             data-active={r.seg.ids.includes(activeId) ? "" : undefined}

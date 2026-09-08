@@ -123,7 +123,13 @@ export function segmentsFor(placed = []) {
       // Only marks the reader is close to carry a colour. The crowd is density,
       // and density is one colour by design — eleven people's yellows and
       // greens averaged together would be a smear, not information.
-      colour: lead && lead.close ? colourOr(lead.colour, DEFAULT_HIGHLIGHT) : null,
+      colour: lead && lead.close ? (lead.colour || DEFAULT_HIGHLIGHT) : null,
+      /* §6.1 — a violet mark shows whether its thread has been answered, on
+         the page, without opening anything. The colour says "question"; this
+         says "somebody has dealt with it". */
+      thread: lead && (lead.colour === "unsure" || lead.kind === "question")
+        ? (lead.resolved_at || lead.answered ? "answered" : "open")
+        : null,
       deco,
     };
   });
