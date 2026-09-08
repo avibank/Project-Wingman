@@ -1,4 +1,10 @@
-/* THE RULES ONLY THE DATABASE CAN ANSWER.
+/* NOTE — reads go through `paper_marks_for` since 0018.
+ * The shape had to widen twice (0017 for the highlighter colour, 0018 for
+ * anonymity, agree counts and tombstones) and a function's return columns
+ * cannot be widened in place. 0017 took a new name and left the old function
+ * standing; 0018 dropped both and recreated one. There is now exactly one.
+ *
+ * THE RULES ONLY THE DATABASE CAN ANSWER.
  *
  * R9 says a correction written by one student is ABSENT from another student's
  * payload — not hidden, absent. R12 says a Fly solo reader sees only their own.
@@ -91,12 +97,12 @@ try {
   ok("R10 · a question without a thread is refused", noThread.status >= 400, `status ${noThread.status}`);
 
   console.log("\nreading, as the author");
-  const mine = await rpc("paper_annotations_for", { uid: A, p_paper: PAPER });
+  const mine = await rpc("paper_marks_for", { uid: A, p_paper: PAPER });
   ok("—  · the author sees all four of their own", mine.body?.length === 4, `got ${mine.body?.length}`);
   ok("—  · and they are marked close", (mine.body || []).every((r) => r.close === true));
 
   console.log("\nreading, as somebody else on the module");
-  const theirs = await rpc("paper_annotations_for", { uid: B, p_paper: PAPER });
+  const theirs = await rpc("paper_marks_for", { uid: B, p_paper: PAPER });
   const kinds = (theirs.body || []).map((r) => r.kind).sort();
   ok("R9 · the correction is ABSENT from another student's payload",
      !kinds.includes("correction"), JSON.stringify(kinds));
@@ -113,7 +119,7 @@ try {
     headers: { Prefer: "resolution=merge-duplicates" },
     body: JSON.stringify({ user_id: B, invisible: true }),
   });
-  const soloRead = await rpc("paper_annotations_for", { uid: B, p_paper: PAPER });
+  const soloRead = await rpc("paper_marks_for", { uid: B, p_paper: PAPER });
   ok("R12 · a Fly solo reader's payload holds only their own",
      (soloRead.body || []).length === 0, `got ${soloRead.body?.length}`);
 
@@ -125,7 +131,7 @@ try {
 
   console.log("\nblocks");
   await rest("blocks", { method: "POST", body: JSON.stringify({ user_id: B, blocked_id: A }) });
-  const blocked = await rpc("paper_annotations_for", { uid: B, p_paper: PAPER });
+  const blocked = await rpc("paper_marks_for", { uid: B, p_paper: PAPER });
   ok("—  · blocking the author removes their marks", (blocked.body || []).length === 0,
      `got ${blocked.body?.length}`);
   await rest(`blocks?user_id=eq.${B}&blocked_id=eq.${A}`, { method: "DELETE" });
@@ -146,7 +152,7 @@ try {
   ok("R9 · the author does see it, with the passage and the finder", !!found,
      JSON.stringify((queueForAuthor.body || []).length));
   ok("R9 · and the correction itself reaches staff on the page too",
-     ((await rpc("paper_annotations_for", { uid: B, p_paper: PAPER })).body || [])
+     ((await rpc("paper_marks_for", { uid: B, p_paper: PAPER })).body || [])
        .some((r) => r.kind === "correction"));
 
   if (found) {
@@ -166,7 +172,7 @@ try {
 
   console.log("\norphaning");
   await rpc("paper_annotation_status", { p_id: h.id, p_status: "orphaned" });
-  const after = await rpc("paper_annotations_for", { uid: A, p_paper: PAPER });
+  const after = await rpc("paper_marks_for", { uid: A, p_paper: PAPER });
   const row = (after.body || []).find((r) => r.id === h.id);
   ok("R2 · an orphaned mark is still there, marked", row && row.status === "orphaned",
      JSON.stringify(row?.status));

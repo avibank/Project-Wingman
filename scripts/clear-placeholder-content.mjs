@@ -54,6 +54,18 @@ const APPLY = argv.includes("--apply");
    who has read the backup. */
 const ROWS = argv.includes("--rows");
 const RESTORE = argv.includes("--restore") ? argv[argv.indexOf("--restore") + 1] : null;
+/* WHERE THE PAPER IDS COME FROM WHEN THE FIXTURE IS ALREADY EMPTY.
+
+   The two halves of this clear-out can run on different days: the files land in
+   a commit, the rows wait for somebody who has read the backup. But the second
+   half derives the ids it is allowed to delete FROM the first half's input, and
+   once the fixture is emptied there is nothing left to derive them from — so a
+   later `--rows` would find nothing to do and silently succeed.
+
+   `--from <backup>` reads them out of the backup instead. That keeps the
+   deletion scoped to exactly the papers this clear-out removed, rather than
+   letting it become an ad-hoc query against whatever is in the table. */
+const FROM = argv.includes("--from") ? argv[argv.indexOf("--from") + 1] : null;
 
 const CONTENT = join(ROOT, "src/content/test-content.json");
 const PAPERS_DIR = join(ROOT, "public/papers");
@@ -104,11 +116,14 @@ async function connect() {
 if (RESTORE) { await restore(RESTORE); process.exit(0); }
 
 const content = JSON.parse(readFileSync(CONTENT, "utf8"));
+const source = FROM
+  ? JSON.parse(readFileSync(join(BACKUPS, FROM, "test-content.json"), "utf8"))
+  : content;
 
 /* Every paper about to go, by id, so the database statements can be scoped to
    exactly these and nothing else. */
 const going = [];
-for (const m of content.modules || []) {
+for (const m of source.modules || []) {
   for (const p of m.papers || []) going.push({ ...p, module: m.id });
 }
 
@@ -118,11 +133,12 @@ const placeholderFiles = existsSync(PAPERS_DIR)
 
 say("\nPlaceholder papers to remove\n");
 if (!going.length) say("  (none — the fixture already has no papers)");
-for (const m of content.modules || []) {
+for (const m of source.modules || []) {
   const own = m.papers || [];
   say(`  ${m.id}  ${own.length ? own.map((p) => p.id).join(" ") : "(already empty)"}`);
 }
 say(`\nGenerated files to delete: ${placeholderFiles.length ? placeholderFiles.join(", ") : "(none)"}`);
+if (FROM) say(`(paper ids read from backups/${FROM})`);
 
 /* --------------------------------------------------------------- the DB --- */
 const client = await connect();

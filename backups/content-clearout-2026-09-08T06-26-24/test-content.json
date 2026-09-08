@@ -1,0 +1,2279 @@
+{
+  "note": "PLACEHOLDER TEST CONTENT. General knowledge, not course material. Every title, question, paper, note and thread here exists only so the module screen, the player, the quizzes, the papers, the notes and the comments can be exercised end to end. Replace all of it before launch. | Video sources kept from the working import: the gtv-videos-bucket URLs answer 403.",
+  "videoSource": "Blender open movies (CC-BY) via archive.org, plus one CC0 clip from MDN. The previous gtv-videos-bucket URLs now answer 403 and played nowhere.",
+  "modules": [
+    {
+      "id": "M1",
+      "name": "Module 1",
+      "chapters": [
+        {
+          "id": "M1.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M1.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
+              },
+              "duration": "9:56",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.01",
+                "lesson": "M1.01.1"
+              },
+              "thumb": null,
+              "durationS": 596,
+              "watchedS": 596
+            },
+            {
+              "id": "M1.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 5,
+                "file": "flower.mp4"
+              },
+              "duration": "1:00",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.01",
+                "lesson": "M1.01.2"
+              },
+              "thumb": null,
+              "durationS": 60,
+              "watchedS": 60
+            }
+          ],
+          "quiz": {
+            "id": "M1.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "How many minutes are there in a day?",
+                "options": [
+                  "2,160",
+                  "720",
+                  "1,440"
+                ],
+                "correct": 2,
+                "explain": "24 hours x 60 minutes.",
+                "lessonId": "M1.01.1"
+              },
+              {
+                "question": "Water freezes at which temperature, at sea level?",
+                "options": [
+                  "-10 C",
+                  "0 C",
+                  "10 C"
+                ],
+                "correct": 1,
+                "explain": "0 degrees Celsius, which is 32 Fahrenheit.",
+                "lessonId": "M1.01.2"
+              },
+              {
+                "question": "Which gas do people breathe out most of?",
+                "options": [
+                  "Carbon dioxide",
+                  "Nitrogen",
+                  "Oxygen"
+                ],
+                "correct": 0,
+                "explain": "Carbon dioxide is the main waste gas.",
+                "lessonId": "M1.01.1"
+              },
+              {
+                "question": "How many sides does a hexagon have?",
+                "options": [
+                  "seven",
+                  "six",
+                  "five"
+                ],
+                "correct": 1,
+                "explain": "Hex means six.",
+                "lessonId": "M1.01.2"
+              },
+              {
+                "question": "What is the largest planet in the solar system?",
+                "options": [
+                  "Jupiter",
+                  "Saturn",
+                  "Neptune"
+                ],
+                "correct": 0,
+                "explain": "Jupiter, by a wide margin.",
+                "lessonId": "M1.01.1"
+              },
+              {
+                "question": "Sound travels fastest through which of these?",
+                "options": [
+                  "water",
+                  "air",
+                  "steel"
+                ],
+                "correct": 2,
+                "explain": "Solids carry sound fastest; a vacuum carries none.",
+                "lessonId": "M1.01.2"
+              },
+              {
+                "question": "How many bones are in the adult human body?",
+                "options": [
+                  "186",
+                  "206",
+                  "226"
+                ],
+                "correct": 1,
+                "explain": "206 in a typical adult.",
+                "lessonId": "M1.01.1"
+              },
+              {
+                "question": "What does a thermometer measure?",
+                "options": [
+                  "pressure",
+                  "temperature",
+                  "humidity"
+                ],
+                "correct": 1,
+                "explain": "Temperature.",
+                "lessonId": "M1.01.2"
+              }
+            ],
+            "scope": {
+              "module": "M1",
+              "chapter": "M1.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.01",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M1.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M1.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
+              },
+              "duration": "14:48",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.02",
+                "lesson": "M1.02.1"
+              },
+              "thumb": null,
+              "durationS": 888,
+              "watchedS": 888
+            },
+            {
+              "id": "M1.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
+              },
+              "duration": "0:57",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.02",
+                "lesson": "M1.02.2"
+              },
+              "thumb": null,
+              "durationS": 57,
+              "watchedS": 23
+            }
+          ],
+          "quiz": {
+            "id": "M1.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "Which of these is a renewable source of energy?",
+                "options": [
+                  "wind",
+                  "coal",
+                  "diesel"
+                ],
+                "correct": 0,
+                "explain": "Wind replenishes; the others do not.",
+                "lessonId": "M1.02.1"
+              },
+              {
+                "question": "How many degrees are in a right angle?",
+                "options": [
+                  "45",
+                  "90",
+                  "60"
+                ],
+                "correct": 1,
+                "explain": "90 degrees.",
+                "lessonId": "M1.02.2"
+              },
+              {
+                "question": "What is the chemical symbol for gold?",
+                "options": [
+                  "Au",
+                  "Gd",
+                  "Go"
+                ],
+                "correct": 0,
+                "explain": "Au, from the Latin aurum.",
+                "lessonId": "M1.02.1"
+              },
+              {
+                "question": "Roughly what percentage of the Earth's surface is water?",
+                "options": [
+                  "50%",
+                  "71%",
+                  "61%"
+                ],
+                "correct": 1,
+                "explain": "About 71 percent.",
+                "lessonId": "M1.02.2"
+              },
+              {
+                "question": "Which of these is not a state of matter?",
+                "options": [
+                  "solid",
+                  "mineral",
+                  "liquid"
+                ],
+                "correct": 1,
+                "explain": "Mineral is a type of substance, not a state.",
+                "lessonId": "M1.02.1"
+              },
+              {
+                "question": "What force pulls objects toward the ground?",
+                "options": [
+                  "magnetism",
+                  "gravity",
+                  "friction"
+                ],
+                "correct": 1,
+                "explain": "Gravity.",
+                "lessonId": "M1.02.2"
+              },
+              {
+                "question": "How many hours are in a week?",
+                "options": [
+                  "158",
+                  "168",
+                  "148"
+                ],
+                "correct": 1,
+                "explain": "7 x 24 = 168.",
+                "lessonId": "M1.02.1"
+              },
+              {
+                "question": "Light travels faster than sound. True or false?",
+                "options": [
+                  "false",
+                  "only in water",
+                  "true"
+                ],
+                "correct": 2,
+                "explain": "Which is why you see lightning before you hear thunder.",
+                "lessonId": "M1.02.2"
+              }
+            ],
+            "scope": {
+              "module": "M1",
+              "chapter": "M1.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.02",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M1.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M1.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
+              },
+              "duration": "10:53",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.03",
+                "lesson": "M1.03.1"
+              },
+              "thumb": null,
+              "durationS": 653,
+              "watchedS": 0
+            },
+            {
+              "id": "M1.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
+              },
+              "duration": "0:47",
+              "scope": {
+                "module": "M1",
+                "chapter": "M1.03",
+                "lesson": "M1.03.2"
+              },
+              "thumb": null,
+              "durationS": 47,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M1.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "What is the boiling point of water at sea level?",
+                "options": [
+                  "100 C",
+                  "90 C",
+                  "110 C"
+                ],
+                "correct": 0,
+                "explain": "100 degrees Celsius.",
+                "lessonId": "M1.03.1"
+              },
+              {
+                "question": "Which organ pumps blood around the body?",
+                "options": [
+                  "liver",
+                  "heart",
+                  "lungs"
+                ],
+                "correct": 1,
+                "explain": "The heart.",
+                "lessonId": "M1.03.2"
+              },
+              {
+                "question": "How many millimetres are in a metre?",
+                "options": [
+                  "1,000",
+                  "100",
+                  "10,000"
+                ],
+                "correct": 0,
+                "explain": "1,000 millimetres.",
+                "lessonId": "M1.03.1"
+              },
+              {
+                "question": "What is the most abundant gas in the air we breathe?",
+                "options": [
+                  "nitrogen",
+                  "oxygen",
+                  "argon"
+                ],
+                "correct": 0,
+                "explain": "Nitrogen, at about 78 percent.",
+                "lessonId": "M1.03.2"
+              },
+              {
+                "question": "A circle has how many degrees?",
+                "options": [
+                  "270",
+                  "360",
+                  "180"
+                ],
+                "correct": 1,
+                "explain": "360 degrees.",
+                "lessonId": "M1.03.1"
+              },
+              {
+                "question": "Which of these is a metal?",
+                "options": [
+                  "rubber",
+                  "copper",
+                  "granite"
+                ],
+                "correct": 1,
+                "explain": "Copper.",
+                "lessonId": "M1.03.2"
+              },
+              {
+                "question": "What does an anemometer measure?",
+                "options": [
+                  "pressure",
+                  "rainfall",
+                  "wind speed"
+                ],
+                "correct": 2,
+                "explain": "Wind speed.",
+                "lessonId": "M1.03.1"
+              },
+              {
+                "question": "How many seconds are in an hour?",
+                "options": [
+                  "3,600",
+                  "1,800",
+                  "2,400"
+                ],
+                "correct": 0,
+                "explain": "60 x 60 = 3,600.",
+                "lessonId": "M1.03.2"
+              }
+            ],
+            "scope": {
+              "module": "M1",
+              "chapter": "M1.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M1",
+            "chapter": "M1.03",
+            "lesson": null
+          }
+        }
+      ],
+      "papers": [],
+      "scope": {
+        "module": "M1",
+        "chapter": null,
+        "lesson": null
+      }
+    },
+    {
+      "id": "M2",
+      "name": "Module 2",
+      "chapters": [
+        {
+          "id": "M2.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M2.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
+              },
+              "duration": "14:48",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.01",
+                "lesson": "M2.01.1"
+              },
+              "thumb": null,
+              "durationS": 888,
+              "watchedS": 559
+            },
+            {
+              "id": "M2.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 5,
+                "file": "flower.mp4"
+              },
+              "duration": "0:35",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.01",
+                "lesson": "M2.01.2"
+              },
+              "thumb": null,
+              "durationS": 35,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M2.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "What is the capital city of Japan?",
+                "options": [
+                  "Kyoto",
+                  "Tokyo",
+                  "Osaka"
+                ],
+                "correct": 1,
+                "explain": "Tokyo.",
+                "lessonId": "M2.01.1"
+              },
+              {
+                "question": "Which is the longest river in the world?",
+                "options": [
+                  "Yangtze",
+                  "Nile",
+                  "Amazon"
+                ],
+                "correct": 1,
+                "explain": "The Nile, on the most common measurement.",
+                "lessonId": "M2.01.2"
+              },
+              {
+                "question": "How many continents are there?",
+                "options": [
+                  "seven",
+                  "six",
+                  "five"
+                ],
+                "correct": 0,
+                "explain": "Seven, by the usual reckoning.",
+                "lessonId": "M2.01.1"
+              },
+              {
+                "question": "Which ocean is the largest?",
+                "options": [
+                  "Atlantic",
+                  "Indian",
+                  "Pacific"
+                ],
+                "correct": 2,
+                "explain": "The Pacific.",
+                "lessonId": "M2.01.2"
+              },
+              {
+                "question": "Mount Everest sits on the border between which two countries?",
+                "options": [
+                  "Nepal and China",
+                  "China and Bhutan",
+                  "India and Nepal"
+                ],
+                "correct": 0,
+                "explain": "Nepal and China.",
+                "lessonId": "M2.01.1"
+              },
+              {
+                "question": "What is the smallest country in the world by area?",
+                "options": [
+                  "Vatican City",
+                  "Monaco",
+                  "Malta"
+                ],
+                "correct": 0,
+                "explain": "Vatican City.",
+                "lessonId": "M2.01.2"
+              },
+              {
+                "question": "Which desert is the largest hot desert?",
+                "options": [
+                  "Kalahari",
+                  "Gobi",
+                  "Sahara"
+                ],
+                "correct": 2,
+                "explain": "The Sahara.",
+                "lessonId": "M2.01.1"
+              },
+              {
+                "question": "Kuwait borders which two countries?",
+                "options": [
+                  "Iraq and Iran",
+                  "Iraq and Saudi Arabia",
+                  "Saudi Arabia and Qatar"
+                ],
+                "correct": 1,
+                "explain": "Iraq to the north, Saudi Arabia to the south.",
+                "lessonId": "M2.01.2"
+              }
+            ],
+            "scope": {
+              "module": "M2",
+              "chapter": "M2.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.01",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M2.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M2.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
+              },
+              "duration": "10:53",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.02",
+                "lesson": "M2.02.1"
+              },
+              "thumb": null,
+              "durationS": 653,
+              "watchedS": 0
+            },
+            {
+              "id": "M2.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
+              },
+              "duration": "0:31",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.02",
+                "lesson": "M2.02.2"
+              },
+              "thumb": null,
+              "durationS": 31,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M2.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "Which country has the most people?",
+                "options": [
+                  "India",
+                  "China",
+                  "United States"
+                ],
+                "correct": 0,
+                "explain": "India, since 2023.",
+                "lessonId": "M2.02.1"
+              },
+              {
+                "question": "The Equator passes through which of these?",
+                "options": [
+                  "Kenya",
+                  "Morocco",
+                  "Egypt"
+                ],
+                "correct": 0,
+                "explain": "Kenya.",
+                "lessonId": "M2.02.2"
+              },
+              {
+                "question": "What is the capital of Australia?",
+                "options": [
+                  "Canberra",
+                  "Melbourne",
+                  "Sydney"
+                ],
+                "correct": 0,
+                "explain": "Canberra, not Sydney.",
+                "lessonId": "M2.02.1"
+              },
+              {
+                "question": "Which sea is the saltiest?",
+                "options": [
+                  "Red Sea",
+                  "Dead Sea",
+                  "Black Sea"
+                ],
+                "correct": 1,
+                "explain": "The Dead Sea.",
+                "lessonId": "M2.02.2"
+              },
+              {
+                "question": "How many time zones does Russia span?",
+                "options": [
+                  "seven",
+                  "nine",
+                  "eleven"
+                ],
+                "correct": 2,
+                "explain": "Eleven.",
+                "lessonId": "M2.02.1"
+              },
+              {
+                "question": "Which mountain range separates Europe from Asia?",
+                "options": [
+                  "Urals",
+                  "Caucasus",
+                  "Alps"
+                ],
+                "correct": 0,
+                "explain": "The Urals.",
+                "lessonId": "M2.02.2"
+              },
+              {
+                "question": "What is the largest island in the world?",
+                "options": [
+                  "Madagascar",
+                  "Borneo",
+                  "Greenland"
+                ],
+                "correct": 2,
+                "explain": "Greenland.",
+                "lessonId": "M2.02.1"
+              },
+              {
+                "question": "Which city is furthest north?",
+                "options": [
+                  "Reykjavik",
+                  "Helsinki",
+                  "Oslo"
+                ],
+                "correct": 0,
+                "explain": "Reykjavik.",
+                "lessonId": "M2.02.2"
+              }
+            ],
+            "scope": {
+              "module": "M2",
+              "chapter": "M2.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.02",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M2.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M2.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
+              },
+              "duration": "12:14",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.03",
+                "lesson": "M2.03.1"
+              },
+              "thumb": null,
+              "durationS": 734,
+              "watchedS": 0
+            },
+            {
+              "id": "M2.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
+              },
+              "duration": "0:15",
+              "scope": {
+                "module": "M2",
+                "chapter": "M2.03",
+                "lesson": "M2.03.2"
+              },
+              "thumb": null,
+              "durationS": 15,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M2.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "The Suez Canal connects the Mediterranean to which sea?",
+                "options": [
+                  "Red Sea",
+                  "Black Sea",
+                  "Arabian Sea"
+                ],
+                "correct": 0,
+                "explain": "The Red Sea.",
+                "lessonId": "M2.03.1"
+              },
+              {
+                "question": "Which country is both in Europe and Asia?",
+                "options": [
+                  "Cyprus",
+                  "Turkey",
+                  "Greece"
+                ],
+                "correct": 1,
+                "explain": "Turkey.",
+                "lessonId": "M2.03.2"
+              },
+              {
+                "question": "What is the deepest point in the ocean?",
+                "options": [
+                  "Puerto Rico Trench",
+                  "Mariana Trench",
+                  "Java Trench"
+                ],
+                "correct": 1,
+                "explain": "The Mariana Trench.",
+                "lessonId": "M2.03.1"
+              },
+              {
+                "question": "Which African country has the largest population?",
+                "options": [
+                  "Nigeria",
+                  "Egypt",
+                  "Ethiopia"
+                ],
+                "correct": 0,
+                "explain": "Nigeria.",
+                "lessonId": "M2.03.2"
+              },
+              {
+                "question": "The Strait of Hormuz lies between Oman and which country?",
+                "options": [
+                  "Qatar",
+                  "Iran",
+                  "Iraq"
+                ],
+                "correct": 1,
+                "explain": "Iran.",
+                "lessonId": "M2.03.1"
+              },
+              {
+                "question": "Which is the highest waterfall in the world?",
+                "options": [
+                  "Victoria",
+                  "Angel Falls",
+                  "Niagara"
+                ],
+                "correct": 1,
+                "explain": "Angel Falls in Venezuela.",
+                "lessonId": "M2.03.2"
+              },
+              {
+                "question": "What is the largest lake by surface area?",
+                "options": [
+                  "Lake Victoria",
+                  "Caspian Sea",
+                  "Lake Superior"
+                ],
+                "correct": 1,
+                "explain": "The Caspian Sea, counted as a lake.",
+                "lessonId": "M2.03.1"
+              },
+              {
+                "question": "Which continent has no permanent residents?",
+                "options": [
+                  "South America",
+                  "Australia",
+                  "Antarctica"
+                ],
+                "correct": 2,
+                "explain": "Antarctica.",
+                "lessonId": "M2.03.2"
+              }
+            ],
+            "scope": {
+              "module": "M2",
+              "chapter": "M2.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M2",
+            "chapter": "M2.03",
+            "lesson": null
+          }
+        }
+      ],
+      "papers": [],
+      "scope": {
+        "module": "M2",
+        "chapter": null,
+        "lesson": null
+      }
+    },
+    {
+      "id": "M3",
+      "name": "Module 3",
+      "chapters": [
+        {
+          "id": "M3.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M3.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
+              },
+              "duration": "10:53",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.01",
+                "lesson": "M3.01.1"
+              },
+              "thumb": null,
+              "durationS": 653,
+              "watchedS": 117
+            },
+            {
+              "id": "M3.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 5,
+                "file": "flower.mp4"
+              },
+              "duration": "0:15",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.01",
+                "lesson": "M3.01.2"
+              },
+              "thumb": null,
+              "durationS": 15,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M3.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "What is 15 percent of 200?",
+                "options": [
+                  "20",
+                  "25",
+                  "30"
+                ],
+                "correct": 2,
+                "explain": "30.",
+                "lessonId": "M3.01.1"
+              },
+              {
+                "question": "How many centimetres are in 2.5 metres?",
+                "options": [
+                  "25",
+                  "2,500",
+                  "250"
+                ],
+                "correct": 2,
+                "explain": "250 centimetres.",
+                "lessonId": "M3.01.2"
+              },
+              {
+                "question": "What is 7 x 8?",
+                "options": [
+                  "48",
+                  "56",
+                  "54"
+                ],
+                "correct": 1,
+                "explain": "56.",
+                "lessonId": "M3.01.1"
+              },
+              {
+                "question": "Half of three quarters is:",
+                "options": [
+                  "three eighths",
+                  "one quarter",
+                  "one half"
+                ],
+                "correct": 0,
+                "explain": "Three eighths.",
+                "lessonId": "M3.01.2"
+              },
+              {
+                "question": "A kilogram is how many grams?",
+                "options": [
+                  "100",
+                  "500",
+                  "1,000"
+                ],
+                "correct": 2,
+                "explain": "1,000 grams.",
+                "lessonId": "M3.01.1"
+              },
+              {
+                "question": "What is the square root of 144?",
+                "options": [
+                  "12",
+                  "13",
+                  "11"
+                ],
+                "correct": 0,
+                "explain": "12.",
+                "lessonId": "M3.01.2"
+              },
+              {
+                "question": "If something costs 80 and is reduced by 25 percent, what do you pay?",
+                "options": [
+                  "55",
+                  "60",
+                  "65"
+                ],
+                "correct": 1,
+                "explain": "60.",
+                "lessonId": "M3.01.1"
+              },
+              {
+                "question": "How many minutes is 2.5 hours?",
+                "options": [
+                  "120",
+                  "135",
+                  "150"
+                ],
+                "correct": 2,
+                "explain": "150 minutes.",
+                "lessonId": "M3.01.2"
+              }
+            ],
+            "scope": {
+              "module": "M3",
+              "chapter": "M3.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.01",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M3.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M3.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
+              },
+              "duration": "12:14",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.02",
+                "lesson": "M3.02.1"
+              },
+              "thumb": null,
+              "durationS": 734,
+              "watchedS": 0
+            },
+            {
+              "id": "M3.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
+              },
+              "duration": "0:15",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.02",
+                "lesson": "M3.02.2"
+              },
+              "thumb": null,
+              "durationS": 15,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M3.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "What is 100 divided by 4?",
+                "options": [
+                  "30",
+                  "25",
+                  "20"
+                ],
+                "correct": 1,
+                "explain": "25.",
+                "lessonId": "M3.02.1"
+              },
+              {
+                "question": "Which is heavier: a kilogram of steel or a kilogram of feathers?",
+                "options": [
+                  "feathers",
+                  "steel",
+                  "the same"
+                ],
+                "correct": 2,
+                "explain": "They weigh the same.",
+                "lessonId": "M3.02.2"
+              },
+              {
+                "question": "How many millilitres are in a litre?",
+                "options": [
+                  "100",
+                  "1,000",
+                  "10"
+                ],
+                "correct": 1,
+                "explain": "1,000.",
+                "lessonId": "M3.02.1"
+              },
+              {
+                "question": "What is 3 squared plus 4 squared?",
+                "options": [
+                  "12",
+                  "25",
+                  "49"
+                ],
+                "correct": 1,
+                "explain": "9 + 16 = 25.",
+                "lessonId": "M3.02.2"
+              },
+              {
+                "question": "Twenty percent of a number is 14. What is the number?",
+                "options": [
+                  "70",
+                  "64",
+                  "56"
+                ],
+                "correct": 0,
+                "explain": "70.",
+                "lessonId": "M3.02.1"
+              },
+              {
+                "question": "How many days are in a leap year?",
+                "options": [
+                  "364",
+                  "366",
+                  "365"
+                ],
+                "correct": 1,
+                "explain": "366.",
+                "lessonId": "M3.02.2"
+              },
+              {
+                "question": "What is one third of 90?",
+                "options": [
+                  "30",
+                  "33",
+                  "20"
+                ],
+                "correct": 0,
+                "explain": "30.",
+                "lessonId": "M3.02.1"
+              },
+              {
+                "question": "A right-angled triangle has one angle of 90 and one of 35. The third is:",
+                "options": [
+                  "50",
+                  "45",
+                  "55"
+                ],
+                "correct": 2,
+                "explain": "180 - 90 - 35 = 55.",
+                "lessonId": "M3.02.2"
+              }
+            ],
+            "scope": {
+              "module": "M3",
+              "chapter": "M3.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.02",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M3.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M3.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
+              },
+              "duration": "9:56",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.03",
+                "lesson": "M3.03.1"
+              },
+              "thumb": null,
+              "durationS": 596,
+              "watchedS": 0
+            },
+            {
+              "id": "M3.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
+              },
+              "duration": "1:00",
+              "scope": {
+                "module": "M3",
+                "chapter": "M3.03",
+                "lesson": "M3.03.2"
+              },
+              "thumb": null,
+              "durationS": 60,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M3.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "What is 12 x 12?",
+                "options": [
+                  "132",
+                  "124",
+                  "144"
+                ],
+                "correct": 2,
+                "explain": "144.",
+                "lessonId": "M3.03.1"
+              },
+              {
+                "question": "How many inches are in a foot?",
+                "options": [
+                  "10",
+                  "14",
+                  "12"
+                ],
+                "correct": 2,
+                "explain": "12.",
+                "lessonId": "M3.03.2"
+              },
+              {
+                "question": "What is 0.25 as a fraction?",
+                "options": [
+                  "one half",
+                  "one quarter",
+                  "one third"
+                ],
+                "correct": 1,
+                "explain": "One quarter.",
+                "lessonId": "M3.03.1"
+              },
+              {
+                "question": "If a car travels 60 km in 45 minutes, its speed is:",
+                "options": [
+                  "70 km/h",
+                  "80 km/h",
+                  "75 km/h"
+                ],
+                "correct": 1,
+                "explain": "80 km/h.",
+                "lessonId": "M3.03.2"
+              },
+              {
+                "question": "What is 5 percent of 1,000?",
+                "options": [
+                  "5",
+                  "100",
+                  "50"
+                ],
+                "correct": 2,
+                "explain": "50.",
+                "lessonId": "M3.03.1"
+              },
+              {
+                "question": "How many degrees in the angles of a triangle, added up?",
+                "options": [
+                  "270",
+                  "90",
+                  "180"
+                ],
+                "correct": 2,
+                "explain": "180 degrees.",
+                "lessonId": "M3.03.2"
+              },
+              {
+                "question": "What comes next: 2, 4, 8, 16, ...",
+                "options": [
+                  "20",
+                  "24",
+                  "32"
+                ],
+                "correct": 2,
+                "explain": "Doubling each time, so 32.",
+                "lessonId": "M3.03.1"
+              },
+              {
+                "question": "What is 1,000 divided by 8?",
+                "options": [
+                  "125",
+                  "115",
+                  "120"
+                ],
+                "correct": 0,
+                "explain": "125.",
+                "lessonId": "M3.03.2"
+              }
+            ],
+            "scope": {
+              "module": "M3",
+              "chapter": "M3.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M3",
+            "chapter": "M3.03",
+            "lesson": null
+          }
+        }
+      ],
+      "papers": [],
+      "scope": {
+        "module": "M3",
+        "chapter": null,
+        "lesson": null
+      }
+    },
+    {
+      "id": "M4",
+      "name": "Module 4",
+      "chapters": [
+        {
+          "id": "M4.01",
+          "name": "Chapter 1",
+          "lessons": [
+            {
+              "id": "M4.01.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+                "seconds": 596,
+                "file": "big_buck_bunny_720p_surround.mp4"
+              },
+              "duration": "12:14",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.01",
+                "lesson": "M4.01.1"
+              },
+              "thumb": null,
+              "durationS": 734,
+              "watchedS": 0
+            },
+            {
+              "id": "M4.01.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                "seconds": 5,
+                "file": "flower.mp4"
+              },
+              "duration": "0:57",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.01",
+                "lesson": "M4.01.2"
+              },
+              "thumb": null,
+              "durationS": 57,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M4.01.Q",
+            "name": "Chapter 1 quiz",
+            "questions": [
+              {
+                "question": "How many strings does a standard guitar have?",
+                "options": [
+                  "six",
+                  "four",
+                  "five"
+                ],
+                "correct": 0,
+                "explain": "Six.",
+                "lessonId": "M4.01.1"
+              },
+              {
+                "question": "Which planet is known as the red planet?",
+                "options": [
+                  "Mercury",
+                  "Mars",
+                  "Venus"
+                ],
+                "correct": 1,
+                "explain": "Mars.",
+                "lessonId": "M4.01.2"
+              },
+              {
+                "question": "How many players are on a football team on the pitch?",
+                "options": [
+                  "nine",
+                  "eleven",
+                  "ten"
+                ],
+                "correct": 1,
+                "explain": "Eleven.",
+                "lessonId": "M4.01.1"
+              },
+              {
+                "question": "What colour do you get mixing blue and yellow?",
+                "options": [
+                  "green",
+                  "purple",
+                  "orange"
+                ],
+                "correct": 0,
+                "explain": "Green.",
+                "lessonId": "M4.01.2"
+              },
+              {
+                "question": "How many letters are in the English alphabet?",
+                "options": [
+                  "26",
+                  "25",
+                  "24"
+                ],
+                "correct": 0,
+                "explain": "26.",
+                "lessonId": "M4.01.1"
+              },
+              {
+                "question": "Which animal is the fastest on land?",
+                "options": [
+                  "horse",
+                  "cheetah",
+                  "lion"
+                ],
+                "correct": 1,
+                "explain": "The cheetah.",
+                "lessonId": "M4.01.2"
+              },
+              {
+                "question": "How many days are in February in a normal year?",
+                "options": [
+                  "27",
+                  "28",
+                  "29"
+                ],
+                "correct": 1,
+                "explain": "28.",
+                "lessonId": "M4.01.1"
+              },
+              {
+                "question": "What is the largest mammal?",
+                "options": [
+                  "blue whale",
+                  "giraffe",
+                  "elephant"
+                ],
+                "correct": 0,
+                "explain": "The blue whale.",
+                "lessonId": "M4.01.2"
+              }
+            ],
+            "scope": {
+              "module": "M4",
+              "chapter": "M4.01",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.01",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M4.02",
+          "name": "Chapter 2",
+          "lessons": [
+            {
+              "id": "M4.02.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-surround.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-surround.mp4"
+              },
+              "duration": "9:56",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.02",
+                "lesson": "M4.02.1"
+              },
+              "thumb": null,
+              "durationS": 596,
+              "watchedS": 0
+            },
+            {
+              "id": "M4.02.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4",
+                "seconds": 654,
+                "file": "ed_1024_512kb.mp4"
+              },
+              "duration": "0:47",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.02",
+                "lesson": "M4.02.2"
+              },
+              "thumb": null,
+              "durationS": 47,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M4.02.Q",
+            "name": "Chapter 2 quiz",
+            "questions": [
+              {
+                "question": "How many wheels does a standard bicycle have?",
+                "options": [
+                  "two",
+                  "one",
+                  "three"
+                ],
+                "correct": 0,
+                "explain": "Two.",
+                "lessonId": "M4.02.1"
+              },
+              {
+                "question": "What is the freezing point of water in Fahrenheit?",
+                "options": [
+                  "0",
+                  "32",
+                  "64"
+                ],
+                "correct": 1,
+                "explain": "32 Fahrenheit.",
+                "lessonId": "M4.02.2"
+              },
+              {
+                "question": "Which of these is a primary colour in paint?",
+                "options": [
+                  "green",
+                  "orange",
+                  "red"
+                ],
+                "correct": 2,
+                "explain": "Red.",
+                "lessonId": "M4.02.1"
+              },
+              {
+                "question": "How many hours are in two days?",
+                "options": [
+                  "42",
+                  "36",
+                  "48"
+                ],
+                "correct": 2,
+                "explain": "48.",
+                "lessonId": "M4.02.2"
+              },
+              {
+                "question": "What do bees make?",
+                "options": [
+                  "honey",
+                  "silk",
+                  "wax only"
+                ],
+                "correct": 0,
+                "explain": "Honey, and wax.",
+                "lessonId": "M4.02.1"
+              },
+              {
+                "question": "How many continents start with the letter A?",
+                "options": [
+                  "four",
+                  "three",
+                  "two"
+                ],
+                "correct": 1,
+                "explain": "Africa, Asia, Antarctica.",
+                "lessonId": "M4.02.2"
+              },
+              {
+                "question": "What is the tallest animal?",
+                "options": [
+                  "giraffe",
+                  "elephant",
+                  "camel"
+                ],
+                "correct": 0,
+                "explain": "The giraffe.",
+                "lessonId": "M4.02.1"
+              },
+              {
+                "question": "How many sides does a triangle have?",
+                "options": [
+                  "two",
+                  "four",
+                  "three"
+                ],
+                "correct": 2,
+                "explain": "Three.",
+                "lessonId": "M4.02.2"
+              }
+            ],
+            "scope": {
+              "module": "M4",
+              "chapter": "M4.02",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.02",
+            "lesson": null
+          }
+        },
+        {
+          "id": "M4.03",
+          "name": "Chapter 3",
+          "lessons": [
+            {
+              "id": "M4.03.1",
+              "name": "Lesson 1",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/ElephantsDream/ed_hd.mp4",
+                "seconds": 654,
+                "file": "ed_hd.mp4"
+              },
+              "duration": "14:48",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.03",
+                "lesson": "M4.03.1"
+              },
+              "thumb": null,
+              "durationS": 888,
+              "watchedS": 0
+            },
+            {
+              "id": "M4.03.2",
+              "name": "Lesson 2",
+              "video": {
+                "kind": "mp4",
+                "src": "https://archive.org/download/Sintel/sintel-2048-stereo.mp4",
+                "seconds": 888,
+                "file": "sintel-2048-stereo.mp4"
+              },
+              "duration": "0:35",
+              "scope": {
+                "module": "M4",
+                "chapter": "M4.03",
+                "lesson": "M4.03.2"
+              },
+              "thumb": null,
+              "durationS": 35,
+              "watchedS": 0
+            }
+          ],
+          "quiz": {
+            "id": "M4.03.Q",
+            "name": "Chapter 3 quiz",
+            "questions": [
+              {
+                "question": "Which shape has all sides equal and all angles 90 degrees?",
+                "options": [
+                  "rhombus",
+                  "square",
+                  "rectangle"
+                ],
+                "correct": 1,
+                "explain": "A square.",
+                "lessonId": "M4.03.1"
+              },
+              {
+                "question": "How many months have 31 days?",
+                "options": [
+                  "seven",
+                  "six",
+                  "five"
+                ],
+                "correct": 0,
+                "explain": "Seven.",
+                "lessonId": "M4.03.2"
+              },
+              {
+                "question": "What is the main ingredient in bread?",
+                "options": [
+                  "rice",
+                  "flour",
+                  "corn"
+                ],
+                "correct": 1,
+                "explain": "Flour.",
+                "lessonId": "M4.03.1"
+              },
+              {
+                "question": "How many minutes in three quarters of an hour?",
+                "options": [
+                  "30",
+                  "40",
+                  "45"
+                ],
+                "correct": 2,
+                "explain": "45.",
+                "lessonId": "M4.03.2"
+              },
+              {
+                "question": "Which of these floats in water?",
+                "options": [
+                  "wood",
+                  "iron",
+                  "lead"
+                ],
+                "correct": 0,
+                "explain": "Wood, usually.",
+                "lessonId": "M4.03.1"
+              },
+              {
+                "question": "How many zeros are in one million?",
+                "options": [
+                  "four",
+                  "six",
+                  "five"
+                ],
+                "correct": 1,
+                "explain": "Six.",
+                "lessonId": "M4.03.2"
+              },
+              {
+                "question": "What do you call a baby cat?",
+                "options": [
+                  "calf",
+                  "kitten",
+                  "cub"
+                ],
+                "correct": 1,
+                "explain": "A kitten.",
+                "lessonId": "M4.03.1"
+              },
+              {
+                "question": "How many colours are in a rainbow, traditionally?",
+                "options": [
+                  "seven",
+                  "six",
+                  "five"
+                ],
+                "correct": 0,
+                "explain": "Seven.",
+                "lessonId": "M4.03.2"
+              }
+            ],
+            "scope": {
+              "module": "M4",
+              "chapter": "M4.03",
+              "lesson": null
+            }
+          },
+          "scope": {
+            "module": "M4",
+            "chapter": "M4.03",
+            "lesson": null
+          }
+        }
+      ],
+      "papers": [],
+      "scope": {
+        "module": "M4",
+        "chapter": null,
+        "lesson": null
+      }
+    }
+  ],
+  "contentModel": {
+    "scope": "Every content object carries {module, chapter, lesson}. Absent levels are null. The Library groups papers by it. It is no longer used for an edge rail — that feature is cancelled.",
+    "notes": "Private. Yours only. {lessonId, t, body} — body may be empty, a bare pin is allowed and is the point. Never has replies. Never visible to anyone else.",
+    "threads": "One table. lessonId + t set = a comment: appears under that video AND in People. lessonId null = a module post: People only, never under a video. This asymmetry is the whole rule and it enforces itself.",
+    "replies": "Belong to a thread, never to a moment. One mark per thread, at the moment it was asked. Replies get no marks and no timestamps of their own.",
+    "quizQuestions": "Three options, labelled A/B/C. Every question carries lessonId — the join key for the post-quiz review. Never match notes to questions semantically.",
+    "lessons": "Each lesson carries durationS, watchedS and thumb. thumb is null until there is real video — the tile is generated deterministically from the lesson id, so nothing looks broken and swapping in a real URL later changes nothing else. Progress is watchedS/durationS and it is the ONLY place watched state is shown. Titles never dim.",
+    "people": "initials are generated from the callsign and the avatar hue from the id, at render time. Neither is stored — one source of truth. Avatars are drawn, never uploaded: no file storage, no moderation, no cropper, and nobody has an empty avatar on day one.",
+    "presence": "Who has been on a lesson and when. Needs nobody online and is full on day one. This is what makes a room of eleven feel inhabited."
+  },
+  "notes": [
+    {
+      "id": "N001",
+      "lessonId": "M1.01.1",
+      "t": 42,
+      "body": "First definition starts here. Comes up again in the quiz.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-11T09:07:00Z"
+    },
+    {
+      "id": "N002",
+      "lessonId": "M1.01.1",
+      "t": 305,
+      "body": "Come back to this bit.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-12T09:14:00Z"
+    },
+    {
+      "id": "N003",
+      "lessonId": "M1.01.1",
+      "t": 511,
+      "body": "Worked example on the handout matches this exactly.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-13T09:21:00Z"
+    },
+    {
+      "id": "N004",
+      "lessonId": "M1.01.2",
+      "t": 44,
+      "body": "Short lesson — the whole point is the last thirty seconds.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-14T09:28:00Z"
+    },
+    {
+      "id": "N005",
+      "lessonId": "M1.02.1",
+      "t": 96,
+      "body": "",
+      "authorId": "u_you",
+      "createdAt": "2026-08-15T09:35:00Z"
+    },
+    {
+      "id": "N006",
+      "lessonId": "M1.02.1",
+      "t": 260,
+      "body": "Diagram at this point is the one I keep forgetting.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-16T09:42:00Z"
+    },
+    {
+      "id": "N007",
+      "lessonId": "M1.02.2",
+      "t": 71,
+      "body": "",
+      "authorId": "u_you",
+      "createdAt": "2026-08-17T09:49:00Z"
+    },
+    {
+      "id": "N008",
+      "lessonId": "M1.03.1",
+      "t": 130,
+      "body": "Two terms used for the same thing here.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-18T09:56:00Z"
+    },
+    {
+      "id": "N009",
+      "lessonId": "M1.03.2",
+      "t": 55,
+      "body": "Good summary line — use it for revision.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-19T09:03:00Z"
+    },
+    {
+      "id": "N010",
+      "lessonId": "M2.01.1",
+      "t": 88,
+      "body": "Same pattern as Module 1 but the names change.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-20T09:10:00Z"
+    },
+    {
+      "id": "N011",
+      "lessonId": "M2.02.1",
+      "t": 150,
+      "body": "Worth rewatching before the chapter quiz.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-21T09:17:00Z"
+    },
+    {
+      "id": "N012",
+      "lessonId": "M3.01.1",
+      "t": 64,
+      "body": "Start of the part I did not follow.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-22T09:24:00Z"
+    }
+  ],
+  "threads": [
+    {
+      "id": "T001",
+      "moduleId": "M1",
+      "lessonId": "M1.01.1",
+      "t": 137,
+      "body": "Why is this step before the other one?",
+      "authorId": "u_two",
+      "createdAt": "2026-08-13T11:01:00Z"
+    },
+    {
+      "id": "T002",
+      "moduleId": "M1",
+      "lessonId": "M1.01.2",
+      "t": 18,
+      "body": "Is the number here the same one from Lesson 1?",
+      "authorId": "u_you",
+      "createdAt": "2026-08-14T12:02:00Z"
+    },
+    {
+      "id": "T003",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 260,
+      "body": "What happens if the value is zero?",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-15T13:03:00Z"
+    },
+    {
+      "id": "T004",
+      "moduleId": "M1",
+      "lessonId": "M1.02.2",
+      "t": 71,
+      "body": "This contradicts the reference sheet, or I read it wrong.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-16T14:04:00Z"
+    },
+    {
+      "id": "T005",
+      "moduleId": "M1",
+      "lessonId": "M1.03.1",
+      "t": 212,
+      "body": "Anyone else lose the thread around here?",
+      "authorId": "u_four",
+      "createdAt": "2026-08-17T15:05:00Z"
+    },
+    {
+      "id": "T006",
+      "moduleId": "M1",
+      "lessonId": null,
+      "t": null,
+      "body": "Anyone got a good way to remember the order in Chapter 2?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-18T16:00:00Z"
+    },
+    {
+      "id": "T007",
+      "moduleId": "M1",
+      "lessonId": null,
+      "t": null,
+      "body": "What is everyone using to take notes outside this?",
+      "authorId": "u_you",
+      "createdAt": "2026-08-19T17:01:00Z"
+    },
+    {
+      "id": "T008",
+      "moduleId": "M2",
+      "lessonId": "M2.01.1",
+      "t": 220,
+      "body": "Where does this number come from?",
+      "authorId": "u_four",
+      "createdAt": "2026-08-20T18:02:00Z"
+    },
+    {
+      "id": "T009",
+      "moduleId": "M2",
+      "lessonId": null,
+      "t": null,
+      "body": "Study group for the Module 2 quiz on Thursday?",
+      "authorId": "u_two",
+      "createdAt": "2026-08-21T19:03:00Z"
+    },
+    {
+      "id": "T010",
+      "moduleId": "M3",
+      "lessonId": "M3.01.1",
+      "t": 150,
+      "body": "Is this the same idea as Module 1 Chapter 3?",
+      "authorId": "u_you",
+      "createdAt": "2026-08-22T10:04:00Z"
+    },
+    {
+      "id": "T1000",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 332,
+      "body": "Lost me here — what is being cancelled out?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-16T09:00:00Z"
+    },
+    {
+      "id": "T1001",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 338,
+      "body": "Same, had to replay this part twice.",
+      "authorId": "u_four",
+      "createdAt": "2026-08-17T09:01:00Z"
+    },
+    {
+      "id": "T1002",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 341,
+      "body": "Is the unit still the same after this step?",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-18T09:02:00Z"
+    },
+    {
+      "id": "T1003",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 347,
+      "body": "Why does the sign change here?",
+      "authorId": "u_two",
+      "createdAt": "2026-08-19T09:03:00Z"
+    },
+    {
+      "id": "T1004",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 352,
+      "body": "This is the bit the quiz asks about I think.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-20T09:04:00Z"
+    },
+    {
+      "id": "T1005",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 356,
+      "body": "Does this hold if the value is negative?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-21T09:05:00Z"
+    },
+    {
+      "id": "T1006",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 361,
+      "body": "Took me a while: it is the same rule as the first lesson.",
+      "authorId": "u_four",
+      "createdAt": "2026-08-22T09:06:00Z"
+    },
+    {
+      "id": "T1007",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 366,
+      "body": "Can someone say this in plain words?",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-23T09:07:00Z"
+    },
+    {
+      "id": "T1008",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 372,
+      "body": "The worked example in the papers covers this one.",
+      "authorId": "u_two",
+      "createdAt": "2026-08-24T09:08:00Z"
+    },
+    {
+      "id": "T1009",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 381,
+      "body": "Clearer at 0.75 speed.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-25T09:09:00Z"
+    },
+    {
+      "id": "T1010",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 120,
+      "body": "What is the assumption being made here?",
+      "authorId": "u_five",
+      "createdAt": "2026-08-16T09:10:00Z"
+    },
+    {
+      "id": "T1011",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 126,
+      "body": "Follow-up: does the order matter?",
+      "authorId": "u_four",
+      "createdAt": "2026-08-17T09:11:00Z"
+    },
+    {
+      "id": "T1012",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 690,
+      "body": "Good explanation of the setup.",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-18T09:12:00Z"
+    },
+    {
+      "id": "T1013",
+      "moduleId": "M1",
+      "lessonId": "M1.02.1",
+      "t": 742,
+      "body": "Worth a note — comes up again later.",
+      "authorId": "u_two",
+      "createdAt": "2026-08-19T09:13:00Z"
+    }
+  ],
+  "replies": [
+    {
+      "id": "T001.R1",
+      "threadId": "T001",
+      "body": "Order matters here — the second depends on the result of the first.",
+      "authorId": "u_five",
+      "createdAt": "2026-08-15T11:21:00Z"
+    },
+    {
+      "id": "T001.R2",
+      "threadId": "T001",
+      "body": "That makes sense, thanks.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-15T12:22:00Z"
+    },
+    {
+      "id": "T003.R1",
+      "threadId": "T003",
+      "body": "It falls back to the default — said at 4:52.",
+      "authorId": "u_you",
+      "createdAt": "2026-08-17T11:21:00Z"
+    },
+    {
+      "id": "T005.R1",
+      "threadId": "T005",
+      "body": "Same. Watch it at 0.75 speed, it helped.",
+      "authorId": "u_two",
+      "createdAt": "2026-08-19T11:21:00Z"
+    },
+    {
+      "id": "T006.R1",
+      "threadId": "T006",
+      "body": "I wrote it on a card and stuck it to the wall. Low tech, works.",
+      "authorId": "u_nine",
+      "createdAt": "2026-08-20T11:21:00Z"
+    }
+  ],
+  "people": [
+    {
+      "id": "u_you",
+      "callsign": "You",
+      "initials": "Y"
+    },
+    {
+      "id": "u_two",
+      "callsign": "Callsign Two",
+      "initials": "CT",
+      "role": "instructor"
+    },
+    {
+      "id": "u_four",
+      "callsign": "Callsign Four",
+      "initials": "CF"
+    },
+    {
+      "id": "u_five",
+      "callsign": "Callsign Five",
+      "initials": "CF"
+    },
+    {
+      "id": "u_nine",
+      "callsign": "Callsign Nine",
+      "initials": "CN"
+    }
+  ],
+  "presence": [
+    {
+      "lessonId": "M1.01.1",
+      "userId": "u_two",
+      "at": "2026-08-27T19:12:00Z"
+    },
+    {
+      "lessonId": "M1.01.1",
+      "userId": "u_five",
+      "at": "2026-08-28T08:40:00Z"
+    },
+    {
+      "lessonId": "M1.01.2",
+      "userId": "u_nine",
+      "at": "2026-08-28T21:05:00Z"
+    },
+    {
+      "lessonId": "M1.02.1",
+      "userId": "u_two",
+      "at": "2026-08-28T22:30:00Z"
+    },
+    {
+      "lessonId": "M1.02.2",
+      "userId": "u_five",
+      "at": "2026-08-29T07:15:00Z"
+    },
+    {
+      "lessonId": "M1.02.2",
+      "userId": "u_four",
+      "at": "2026-08-29T09:02:00Z"
+    },
+    {
+      "lessonId": "M1.02.2",
+      "userId": "u_nine",
+      "at": "2026-08-29T09:44:00Z"
+    },
+    {
+      "lessonId": "M1.03.1",
+      "userId": "u_two",
+      "at": "2026-08-26T16:20:00Z"
+    },
+    {
+      "lessonId": "M2.01.1",
+      "userId": "u_four",
+      "at": "2026-08-28T12:00:00Z"
+    }
+  ],
+  "quizRules": {
+    "options": 3,
+    "labels": [
+      "A",
+      "B",
+      "C"
+    ],
+    "passMark": 0.75,
+    "secondsPerQuestion": 75,
+    "note": "Shaped after the EASA Part-66 basic examination: three alternatives labelled (A) (B) (C), one correct and two plausible-but-incomplete distractors, 75% pass mark, a nominal 75 seconds per question. 8 questions therefore reads as 'about 10 minutes' and the pass mark as '6 of 8'. NOT a real examination and the copy must never imply it is."
+  }
+}

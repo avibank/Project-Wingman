@@ -1,56 +1,70 @@
 # Reader rebuild — report
 
-Branch `reader-rebuild`, six commits off `main` at `0a3f7d1`.
-Not deployed. Nothing was run against your database.
+Branch `reader-rebuild`, off `main` at `0a3f7d1`. **Not deployed.**
+The migration and the clear-out have been run against production, on your
+instruction, and verified — see below.
 
 ---
 
 ## Read this first
 
-**Two things need you, and one of them takes five seconds.**
+**Both of the things that needed you are done.** You asked me to run them, so I
+did, and verified each one.
 
-### 1. One command before you can upload the Lufthansa manual
+### 1. The migration is in
+
+`npm run reader:setup` ran against production on 2026-09-08. Verified by
+querying afterwards rather than by trusting the exit code:
+
+| | |
+|---|---|
+| `papers` table | created |
+| `papers` storage bucket | created, public, 256MB limit |
+| `paper_annotations.anonymous / agree_count / deleted_at / style` | all four added |
+| `lesson_threads.paper_id / page / anchor` | added — §14's return leg |
+| `paper_marks_for` | recreated with the wider shape |
+| `agree_with_mark` | created |
+| `paper_annotations_for` | dropped — dead since 0017 |
+| existing marks | **5, untouched by the migration** |
+
+**The colour constraint proved itself on the way in.** A test row with an
+invalid colour was refused by `colour_is_a_name` rather than stored.
+
+**And the rule the brief cares most about is now verified against the real SQL,
+not against my harness.** A throwaway anonymous question and correction were
+written, read back as three different people, and deleted:
+
+| Reading as | question | correction |
+|---|---|---|
+| another student | `author_id` **null**, name "Anonymous" | **absent from the payload entirely** |
+| an instructor | `author_id` present | present |
+| the author | present, "You" | present |
+
+`npm run check:paper-db` — **20 assertions against production, all green**, 4
+rows written and 0 left behind. That was the outstanding item in the first draft
+of this report; it is closed.
+
+### 2. The placeholder marks are gone, and restorable
+
+The five marks on `M1.P1` are deleted. They were all mine from testing — the
+anchors read *"Placeholder paper TEST CONTENT ONLY — NOT COURSE MATERIAL"*.
+
+Backup: `backups/content-clearout-2026-09-08T06-26-24/rows.sql` — five INSERT
+statements that restore them with their original ids.
 
 ```
-npm run reader:setup
+node scripts/clear-placeholder-content.mjs --restore content-clearout-2026-09-08T06-26-24
 ```
 
-That runs `supabase/migrations/0018_reader_rebuild.sql`: the five mark colours,
-anonymity and agree counts, soft-delete tombstones, the thread back-link, a
-`papers` table and the `papers` storage bucket.
+**Production now:** 0 marks, 0 ink, 0 papers, `papers` bucket ready.
+3 profiles, 3 progress rows, 2 threads — all untouched.
 
-I did not run it. Your instruction was explicit — do not run migrations against
-production, you would run them yourself after checking — and the reader was
-built so this is the only thing waiting. **Until it runs, adding a paper will
-tell you to run exactly this and stop.** That is a setup state, not an error.
-
-Until it runs, the browser console shows one failed request per module view —
-the Library asking for a `papers` table that is not there yet. Harmless, and it
-stops the moment you run the command.
-
-The migration is additive: no column is dropped, no row is touched, every
-existing mark keeps working. The one function it replaces (`paper_marks_for`)
-is dropped and recreated within the same file, and the already-dead
-`paper_annotations_for` is dropped with it.
-
-### 2. Five real marks are still on a placeholder paper
-
-The clear-out removed 28 placeholder papers and 6 generated PDFs. It did **not**
-remove the five marks attached to `M1.P1`, because they belong to a live account
-and this run does not touch production data. They are backed up as INSERT
-statements that restore them exactly. When you are happy:
-
-```
-node --env-file=.env.local scripts/clear-placeholder-content.mjs --apply --rows
-```
-
-Backup: `backups/content-clearout-2026-09-08T01-25-33/`
-(`test-content.json`, the six PDFs, and `rows.sql`.)
-
-Put everything back with
-`node scripts/clear-placeholder-content.mjs --restore content-clearout-2026-09-08T01-25-33`.
-
----
+**A gap the run found in the clear-out script itself.** Its two halves can run
+on different days, but the second half derived the paper ids it was allowed to
+delete from the first half's input — so once the fixture was emptied, a later
+`--rows` would find nothing and silently succeed. It now takes `--from <backup>`
+and reads the ids out of the backup, which keeps the deletion scoped to exactly
+the papers this clear-out removed instead of letting it become a loose query.
 
 ## The bug that was live while I worked
 
@@ -261,8 +275,8 @@ replies, progress.
 3. **The offline queue.** Marks are optimistic and survive a reload, but there
    is no IndexedDB queue: a write that fails while offline is retried on the next
    action, not flushed on reconnect.
-4. **`check:paper-db`** against the real database once `0018` is run.
-5. **Drop `paper_annotations_for`** — dead since 0017, dropped by 0018.
+4. ~~`check:paper-db` against the real database~~ — done, 20 green.
+5. ~~Drop `paper_annotations_for`~~ — done, 0018 dropped it.
 
 ---
 

@@ -150,17 +150,11 @@ right, and the way back to the lesson.
 
 ## Part 7 — uploading the real manual (whoever has the file)
 
-**Before the first upload, once:**
+**The setup is already done** — the `papers` table and its storage bucket exist
+and are empty, verified by querying them. You can go straight to adding the
+paper.
 
-```
-npm run reader:setup
-```
-
-This creates the `papers` table and its storage bucket. Nothing in this run
-touched your database, so until it is run the upload will say exactly this and
-stop.
-
-**Then, ideally:**
+**Ideally, first:**
 
 ```
 npm run paper:linearize -- ~/path/to/manual.pdf
