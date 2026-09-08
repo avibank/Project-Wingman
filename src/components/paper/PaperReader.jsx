@@ -5,15 +5,19 @@ import {
   RotateCw, RotateCcw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
   HelpCircle, Flag, Trash2, RefreshCw, MousePointer2, MoreHorizontal, Check,
   Pen, Eraser, Underline, Strikethrough, Maximize2, Minimize2, Info, Keyboard,
-  Rows3, Square, Columns2, Sun, Undo2, Redo2, Users, ThumbsUp,
+  Rows3, Square, Columns2, Sun, Undo2, Redo2, Users, ThumbsUp, Plus as PlusIcon, Type, Ruler, Stamp, Shapes,
 } from "lucide-react";
 import { loadPaper, releasePaper, paperText, quoteOf, pageOf, PDFJS_VERSION } from "../../lib/paperText.js";
 import { setRasterFocus } from "../../lib/rasterBudget.js";
 import {
   resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
-  applyFilter, FILTERS, RINGS, ringLabel, DOCKS, TOOL_SIZES,
+  applyFilter, FILTERS, filterCounts, RINGS, ringLabel, DOCKS, TOOL_SIZES,
 } from "../../lib/paperMarks.js";
 import { MEANINGS, meaning, threadState, takesMeaning, meaningOr, DEFAULT_MEANING } from "../../lib/meanings.js";
+import {
+  DEFAULT_TRAY, LOCKED, GROUPS, capFor, loadTray, saveTray,
+  addTool, removeTool, moveTool, shortcutFor,
+} from "../../lib/paperTray.js";
 import {
   INK_COLOURS, PEN_SIZES, penWidth,
   DEFAULT_HIGHLIGHT, DEFAULT_PEN, DEFAULT_PEN_SIZE,
@@ -72,9 +76,16 @@ const TOOLS = [
   { id: "pen", group: 2, label: "Pen", key: "P", hint: "Draw anywhere on the page.", ink: true, colour: "pen", size: true },
   { id: "marker", group: 2, label: "Marker", key: "M", hint: "A broad translucent nib, over the words.", ink: true, colour: "pen", size: true },
   { id: "eraser", group: 2, label: "Eraser", key: "E", hint: "Touch a stroke you drew and it goes.", ink: true },
-  { id: "note", group: 3, label: "Note", key: "N", hint: "Tap a line, or select one. Write what you want to remember.", ring: true },
-  { id: "question", group: 3, label: "Question", key: "Q", hint: "Tap a line, or select one. It opens a thread in the Ready Room.", ring: true },
-  { id: "correction", group: 3, label: "Correction", key: "C", hint: "Select what is wrong. Only the author ever sees it." },
+  { id: "note", group: 5, label: "Note", key: "N", hint: "Tap a line, or select one. Write what you want to remember.", ring: true },
+  { id: "question", group: 5, label: "Question", key: "Q", hint: "Tap a line, or select one. It opens a thread in the Ready Room.", ring: true },
+  { id: "correction", group: 5, label: "Correction", key: "C", hint: "Select what is wrong. Only the author ever sees it." },
+  /* On the tray only if a student adds them. Nothing is unreachable — the Add
+     sheet always lists the full set — but nothing is on the rail by default
+     that most people will never touch. */
+  { id: "shape", group: 3, label: "Shape", key: "R", hint: "Line, arrow, box or circle.", colour: "pen", size: true },
+  { id: "text", group: 3, label: "Text box", key: "T", hint: "Type on the page.", colour: "pen" },
+  { id: "measure", group: 3, label: "Measure", key: "K", hint: "Calibrate once, then measure." },
+  { id: "stamp", group: 4, label: "Sign off", key: "G", hint: "An inspection seal with your code on it." },
 ];
 const TOOL_ICONS = {
   select: <MousePointer2 size={17} aria-hidden="true" />,
@@ -85,10 +96,19 @@ const TOOL_ICONS = {
   marker: <Highlighter size={17} aria-hidden="true" />,
   eraser: <Eraser size={17} aria-hidden="true" />,
   note: <MessageSquare size={17} aria-hidden="true" />,
+  shape: <Shapes size={17} aria-hidden="true" />,
+  text: <Type size={17} aria-hidden="true" />,
+  measure: <Ruler size={17} aria-hidden="true" />,
+  stamp: <Stamp size={17} aria-hidden="true" />,
   question: <HelpCircle size={17} aria-hidden="true" />,
   correction: <Flag size={17} aria-hidden="true" />,
 };
-/* TEN TOOLS IN A COLUMN IS 659px OF RAIL, and this window is 720px tall.
+/* THE TRAY IS BUILT, NOT SHIPPED. See lib/paperTray.js.
+
+   What follows is the note from before the tray existed, kept because the
+   arithmetic is why the tray exists at all:
+
+   TEN TOOLS IN A COLUMN IS 659px OF RAIL, and this window is 720px tall.
 
    Every button in this app is at least 44px on its shortest side — §12, enforced
    globally in App.jsx because it had leaked in eleven places — so a single
@@ -97,8 +117,6 @@ const TOOL_ICONS = {
    to stop insisting on one column: the rail runs two abreast, group by group,
    which is what Drawboard's own rail does once it has more than a handful. Ten
    tools, four groups, seven rows, and the hit targets untouched. */
-const GROUPS = [0, 1, 2, 3].map((g) => TOOLS.filter((t) => t.group === g));
-
 const TEXT_MARKS = new Set(["highlight", "underline", "strikethrough"]);
 const INK_TOOLS = new Set(["pen", "marker", "eraser"]);
 const WRITTEN = new Set(["note", "question", "correction"]);
@@ -498,6 +516,30 @@ export default function PaperReader({
   const [picked, setPicked] = useState(null);   // { mark, at } — the mark card
 
   const [tool, setTool] = useState("select");
+  /* THE TRAY. Loaded per device class, so a laptop and a tablet keep their own.
+     See lib/paperTray.js for why they must not be one list. */
+  const [tray, setTray] = useState(() => loadTray(
+    typeof window === "undefined" ? 1440 : window.innerWidth, TOOLS,
+  ));
+  const [trayNote, setTrayNote] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [addTab, setAddTab] = useState(1);
+  const cap = capFor(typeof window === "undefined" ? 1440 : window.innerWidth);
+  const keepTray = useCallback((next) => {
+    setTray(next);
+    saveTray(window.innerWidth, next);
+  }, []);
+  const dragging = useRef(null);
+  const pressT = useRef(null);
+  /* LONG-PRESS THE DOCK TO REARRANGE IT. `-webkit-touch-callout: none` and
+     `user-select: none` are on the dock in CSS, or iOS raises its own callout
+     menu over this and the gesture belongs to Safari instead. */
+  const startLongPress = useCallback((e) => {
+    if (!e.target.closest?.(".ptoolbtn")) return;
+    pressT.current = setTimeout(() => { setEditing(true); setAdding(false); }, 450);
+  }, []);
+  const cancelLongPress = useCallback(() => { clearTimeout(pressT.current); }, []);
   const [hlColour, setHlColour] = useState(() => read("pw-paper-hl", DEFAULT_MEANING));
   const [penColour, setPenColour] = useState(() => read("pw-paper-pen", DEFAULT_PEN));
   const [penSize, setPenSize] = useState(() => read("pw-paper-nib", DEFAULT_PEN_SIZE));
@@ -1110,7 +1152,11 @@ export default function PaperReader({
     }, 240);
   }, [markAt, open]);
 
+  const handled = useRef(0);
   const tapToMark = useCallback((e) => {
+    /* Click and pointerup both arrive for a mouse; one gesture, one action. */
+    if (e.timeStamp && e.timeStamp === handled.current) return;
+    handled.current = e.timeStamp;
     /* A tap on an existing mark opens its card, whatever tool is in hand —
        except while a drawing tool is armed, where a tap is a dot. */
     if (!INK_TOOLS.has(tool) && !window.getSelection()?.toString().trim()) {
@@ -1249,10 +1295,12 @@ export default function PaperReader({
       if (cmd && e.key === "-") { e.preventDefault(); zoomAbout(stepZoom(scale, -1)); return; }
       if (cmd && e.key === "0") { e.preventDefault(); setFit("width"); return; }
       if (cmd) return;
-      if (e.key === "Escape") { setComposer(null); setFindOpen(false); setSel(null); setMenu(null); setSheet(null); return; }
-      // One letter per tool, the way every editor people already use does it.
-      const byKey = TOOLS.find((t) => t.key.toLowerCase() === e.key.toLowerCase());
-      if (byKey) { e.preventDefault(); setTool(byKey.id); return; }
+      if (e.key === "Escape") { setComposer(null); setFindOpen(false); setSel(null); setMenu(null); setSheet(null); setPicked(null); setAdding(false); setEditing(false); return; }
+      /* One letter per tool — but ONLY for tools on the tray. A key that
+         silently switches to something the student took off is the tray not
+         meaning anything. */
+      const byKey = shortcutFor(tray, TOOLS, e.key);
+      if (byKey) { e.preventDefault(); setTool(byKey); return; }
       if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); turn(1); }
       if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); turn(-1); }
       if (e.key === "Home") { e.preventDefault(); goToPage(1); }
@@ -1260,7 +1308,7 @@ export default function PaperReader({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sizes.length, goToPage, turn, undo, redo, printNow, scale, zoomAbout]);
+  }, [sizes.length, goToPage, turn, undo, redo, printNow, scale, zoomAbout, tray]);
 
   /* The raster budget evicts the page furthest from where the reader is
      looking, so it has to be told where that is. */
@@ -1300,7 +1348,9 @@ export default function PaperReader({
     return new Set([page]);
   }, [layout, page, totalPages]);
 
-  const marksList = applyFilter([...placed, ...orphans.map((o) => ({ ...o, status: "orphaned" }))], filter, me);
+  const everything = [...placed, ...orphans.map((o) => ({ ...o, status: "orphaned" }))];
+  const counts = filterCounts(everything, me);
+  const marksList = applyFilter(everything, filter, me);
   const closeMenus = () => setMenu(null);
   const info = meta?.info || {};
 
@@ -1309,7 +1359,8 @@ export default function PaperReader({
   return createPortal(
     <div className="paper" ref={shellRef}
          data-rail={rail || "none"} data-dock={dock} data-toolsize={toolSize}
-         data-layout={layout} data-light={light} data-drawing={drawing ? "" : undefined}>
+         data-layout={layout} data-light={light} data-drawing={drawing ? "" : undefined}
+         data-editing={editing ? "" : undefined}>
 
       {/* ------------------------------------------------------------ bar */}
       <header className="pbar">
@@ -1513,23 +1564,104 @@ export default function PaperReader({
 
       {/* Drawboard's rail, in four groups, with the armed tool's settings
           floating beside it rather than taking a band of their own. */}
-      <div className="ptools" role="toolbar" aria-label="Marking tools">
-        {GROUPS.map((group, gi) => (
-          <div className="ptoolgroup" key={gi}>
-            {group.map((t) => (
-              <button key={t.id} type="button" className="ptoolbtn" aria-pressed={tool === t.id}
-                      aria-label={t.label} title={`${t.label} (${t.key}) — ${t.hint}`}
-                      data-colour={tool === t.id && t.colour
-                        ? (t.colour === "hl" ? hlColour : penColour) : undefined}
-                      onClick={() => setTool(t.id)}>
-                {TOOL_ICONS[t.id]}
-              </button>
-            ))}
+      {/* THE DOCK — the student's tray, grouped, with the way to change it at
+          the bottom. Long-press anywhere on it to rearrange. */}
+      <div className="ptools" role="toolbar" aria-label="Marking tools"
+           onPointerDown={startLongPress} onPointerUp={cancelLongPress}
+           onPointerLeave={cancelLongPress} onPointerCancel={cancelLongPress}>
+        {GROUPS.map((g) => {
+          const mine = tray.map((id) => toolAt(id)).filter((t) => t.group === g.id);
+          if (!mine.length) return null;
+          return (
+            <div className="ptoolgroup" key={g.id}>
+              {mine.map((t) => (
+                <span className="ptoolslot" key={t.id}
+                      draggable={editing}
+                      onDragStart={() => { dragging.current = t.id; }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => { e.preventDefault(); if (dragging.current) keepTray(moveTool(tray, dragging.current, t.id)); dragging.current = null; }}>
+                  <button type="button" className="ptoolbtn" aria-pressed={tool === t.id}
+                          aria-label={t.label} title={`${t.label} (${t.key}) — ${t.hint}`}
+                          onClick={() => { if (!editing) setTool(t.id); }}>
+                    {TOOL_ICONS[t.id]}
+                    {t.colour && (
+                      <span className="ptool-sw" aria-hidden="true"
+                            data-colour={t.colour === "hl" ? hlColour : penColour} />
+                    )}
+                  </button>
+                  {editing && !LOCKED.includes(t.id) && (
+                    <button type="button" className="ptool-rm"
+                            aria-label={`Take ${t.label} off the tray`}
+                            onClick={() => keepTray(removeTool(tray, t.id))}>
+                      <X size={11} aria-hidden="true" />
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+
+        <button type="button" className="ptool-add" aria-label="Add a tool"
+                aria-expanded={adding ? "true" : "false"}
+                onClick={() => { setAdding(!adding); setEditing(false); }}>
+          <PlusIcon size={17} aria-hidden="true" />
+        </button>
+
+        {editing && (
+          <div className="ptray ptray-edit" role="status">
+            <p className="tray-name">Rearranging</p>
+            <p className="tray-hint">Drag to reorder. Take one off with its ✕. Select stays.</p>
+            <button type="button" className="tray-done" onClick={() => setEditing(false)}>Done</button>
           </div>
-        ))}
-        <ToolTray tool={tool} hlColour={hlColour} penColour={penColour} penSize={penSize}
+        )}
+
+        {/* ADD A TOOL — the full set, always, so nothing a student removed is
+            ever unreachable. Tools already on the tray are shown dimmed rather
+            than hidden, so the sheet reads the same every time. */}
+        {adding && !editing && (
+          <div className="ptray ptray-add" role="dialog" aria-label="Add a tool">
+            <p className="tray-name">Add a tool</p>
+            <div className="add-tabs" role="tablist">
+              {GROUPS.map((g) => (
+                <button key={g.id} type="button" role="tab" aria-selected={addTab === g.id}
+                        onClick={() => setAddTab(g.id)}>{g.name}</button>
+              ))}
+            </div>
+            <div className="add-grid">
+              {TOOLS.filter((t) => t.group === addTab).map((t) => (
+                <button key={t.id} type="button" className="add-cell"
+                        data-have={tray.includes(t.id) ? "" : undefined}
+                        disabled={tray.includes(t.id)}
+                        onClick={() => {
+                          const { tray: next, note } = addTool(tray, t.id, TOOLS, cap);
+                          setTrayNote(note);
+                          if (!note) { keepTray(next); setTool(t.id); setAdding(false); }
+                        }}>
+                  <span className="add-ic">{TOOL_ICONS[t.id]}</span>
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="tray-hint">
+              {trayNote || `${tray.length} of ${cap} on your tray`}
+            </p>
+            <div className="tray-foot">
+              <button type="button" className="tray-done"
+                      onClick={() => { setAdding(false); setEditing(true); }}>
+                Rearrange
+              </button>
+              <button type="button" className="tray-done"
+                      onClick={() => { keepTray([...DEFAULT_TRAY]); setTrayNote(null); }}>
+                Reset to the course default
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!adding && !editing && <ToolTray tool={tool} hlColour={hlColour} penColour={penColour} penSize={penSize}
                   ring={ring} onHl={setHlColour} onPen={setPenColour}
-                  onSize={setPenSize} onRing={setRing} />
+                  onSize={setPenSize} onRing={setRing} />}
       </div>
 
 
@@ -1657,11 +1789,20 @@ export default function PaperReader({
 
             {rail === "marks" && (
               <div className="prail-marks">
-                <div className="chips" role="group" aria-label="Filter marks">
-                  {FILTERS.map((f) => (
-                    <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id}
-                            onClick={() => setFilter(f.id)}>{f.label}</button>
-                  ))}
+                <div className="chips" role="group" aria-label="Where your marks went">
+                  {FILTERS.map((f) => {
+                    const n = counts[f.id] || 0;
+                    return (
+                      <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id}
+                              data-colour={f.id} disabled={!n && f.id !== "all"}
+                              onClick={() => setFilter(f.id)}>
+                        {f.label}
+                        {/* A count only where there is something to count — a
+                            chip reading 0 is a chip stating an absence. */}
+                        {n > 0 && f.id !== "all" && <em className="mono">{n}</em>}
+                      </button>
+                    );
+                  })}
                 </div>
                 {marksList.length ? (
                   <ul className="mlist">
@@ -1703,6 +1844,21 @@ export default function PaperReader({
 
         {/* ------------------------------------------------------ the pages */}
         <div className="pscroll" ref={scrollRef} onScroll={onScroll} onClick={tapToMark}
+             /* A TAP OPENS THE CARD, and it is bound to pointerup rather than
+                only to click: iOS does not reliably synthesise a click from a
+                touch sequence on a scrolling surface, and a card that needs a
+                mouse is a card an iPad user never sees. Click stays for the
+                mouse and for the keyboard's activation. */
+             onPointerUp={(e) => { if (e.pointerType !== "mouse") tapToMark(e); }}
+             /* AND a touch fallback. Not every WebKit build raises pointer
+                events for a touch on a scrolling surface — the harness's does
+                not — and the cost of being wrong about that is the mark card
+                being unreachable on the primary device. Two listeners, one
+                action: the dedupe below drops whichever arrives second. */
+             onTouchEnd={(e) => {
+               const t = e.changedTouches?.[0];
+               if (t) tapToMark({ clientX: t.clientX, clientY: t.clientY, target: e.target, timeStamp: e.timeStamp });
+             }}
              onPointerMove={onPageMove}
              onPointerLeave={() => clearTimeout(hoverT.current)}>
           {error && <p className="perr">{error}</p>}

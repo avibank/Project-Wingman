@@ -630,8 +630,15 @@ console.log("\nthe rail, at ten tools");
 {
   const reader = read("src/components/paper/PaperReader.jsx");
   const css = read("src/components/paper/paper.css");
-  ok("rail", "ten tools in four groups",
-     (reader.match(/\{ id: "[a-z]+", group: \d/g) || []).length === 10);
+  /* Fourteen tools in six groups now — the full set §9 lists. The DEFAULT
+     tray is still six of them; the rest are one tap away in the Add sheet and
+     none of them is unreachable, which is the rule that makes trimming safe. */
+  ok("rail", "the full tool set is fourteen, in six groups",
+     (reader.match(/\{ id: "[a-z]+", group: \d/g) || []).length === 14
+     && /GROUPS/.test(read("src/lib/paperTray.js")));
+  ok("rail", "and the tray ships six of them",
+     /DEFAULT_TRAY = \["select", "highlight", "pen", "eraser", "note", "question"\]/
+       .test(read("src/lib/paperTray.js")));
   /* Every button in this app is at least 44px on its shortest side (§12), so a
      single column of ten is 659px of a 720px window. Two abreast is 7 rows. */
   ok("rail", "and it runs two abreast rather than shrinking the hit targets",
@@ -639,8 +646,13 @@ console.log("\nthe rail, at ten tools");
      && !/\.ptoolbtn[^{]*\{[^}]*min-height:\s*(2\d|3\d)px/.test(css));
   ok("rail", "the armed tool's settings appear beside it and no others exist",
      /if \(tool === "select"\) return null;/.test(reader));
-  ok("rail", "and the tray clears the sidebar instead of covering the thumbnails",
-     /--side-w/.test(css) && /left: calc\(100% \+ var\(--side-w\)/.test(css));
+  /* The inspector sits beside the DOCK and only beside the dock. It used to
+     clear the panel's width as well, from when the panel was a column on the
+     same side; now the panel floats on the other edge and that offset pushed
+     the inspector off the screen. */
+  ok("rail", "the inspector sits against the dock, not offset by a panel that moved",
+     /\.ptray \{[^}]*left: calc\(100% \+ 8px\)/.test(css)
+     && !/\.ptray \{[^}]*var\(--side-w\)/.test(css));
 
   /* Naming panels one at a time is a rule that breaks the next time one is
      added, and it did: Contents and Queue opened at the full width of the

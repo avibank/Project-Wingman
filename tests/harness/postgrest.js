@@ -175,7 +175,22 @@ export function postgrestMiddleware() {
     const url = new URL(req.url, "http://localhost");
     if (!url.pathname.startsWith("/rest/v1/") && !url.pathname.startsWith("/harness/")) return next();
 
+    /* `.single()` in supabase-js asks for ONE OBJECT with an Accept header,
+       and a real PostgREST answers with a bare object rather than an array of
+       one. Ignoring that header made every `.insert().select().single()`
+       resolve to an array, which the client then spread into an object with
+       numeric keys — a saved row that looked saved and rendered as nothing.
+       A harness that is kinder than the server is worse than no harness. */
+    const wantsOne = String(req.headers.accept || "").includes("pgrst.object");
     const send = (code, body) => {
+      if (wantsOne && Array.isArray(body)) {
+        if (body.length !== 1) {
+          res.statusCode = 406;
+          res.setHeader("content-type", "application/json");
+          return res.end(JSON.stringify({ message: `harness: expected 1 row, got ${body.length}` }));
+        }
+        [body] = body;
+      }
       res.statusCode = code;
       res.setHeader("content-type", "application/json");
       res.setHeader("access-control-allow-origin", "*");

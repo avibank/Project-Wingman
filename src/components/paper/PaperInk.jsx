@@ -55,11 +55,58 @@ export default function PaperInk({
     el.setAttribute("d", pathFor(points.current, box, rotation));
   }, [box, rotation]);
 
+  /* =========================================================================
+     WHAT IS ALLOWED TO DRAW (brief §8.9)
+
+     A FINGER NEVER DRAWS. Not while an ink tool is armed, not ever. A finger
+     pans and pinches, and that is the whole of its job on this surface. This is
+     the single most common failure in a web annotator and it makes the app
+     unusable inside seconds: you go to scroll and leave a line across the page.
+
+     PALM REJECTION, two ways, because one is not enough. Once a pen has been
+     seen, touch is ignored on this surface for 800ms — a resting hand lands
+     before and during a stroke, not 800ms after the nib lifts. And a broad
+     contact is refused outright whatever else is happening: a palm is wide, a
+     nib is not, so anything reporting more than ~28px of contact is a hand.
+
+     A mouse draws, because a mouse is somebody choosing to draw. `pen` draws
+     with pressure. Everything else is navigation.
+     ====================================================================== */
+  const lastPen = useRef(0);
+  const PALM_MS = 800;
+  const BROAD_PX = 28;
+
+  const mayDraw = useCallback((e) => {
+    if (e.pointerType === "pen") { lastPen.current = Date.now(); return true; }
+    if (e.pointerType === "mouse") return true;
+    return false;                       // touch, and anything unrecognised
+  }, []);
+
+  /* A contact this surface should behave as if it never happened — a palm
+     resting while the pen is down, or a broad contact at any time. */
+  const isPalm = useCallback((e) => {
+    if (e.pointerType !== "touch") return false;
+    if (Date.now() - lastPen.current < PALM_MS) return true;
+    return (e.width || 0) > BROAD_PX || (e.height || 0) > BROAD_PX;
+  }, []);
+
   const down = useCallback((e) => {
     if (!drawingTool || e.button === 2) return;
+    /* A finger on the page is a scroll, so let it through to the scroller
+       rather than swallowing it — the paper must still move under a thumb
+       while the pen is in the tray. A palm is swallowed, because a palm
+       resting on the page should do nothing at all. */
+    if (isPalm(e)) { e.preventDefault(); return; }
+    if (!mayDraw(e)) return;
     const at = point(e);
     if (!at) return;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
+    /* Capture is an OPTIMISATION, not a precondition. `setPointerCapture`
+       throws InvalidPointerId for a pointer the browser does not recognise —
+       a synthetic event, a pointer already released, some stylus drivers — and
+       the throw used to abort this handler before `drawing` was ever set, so
+       the stroke silently never started. Losing capture costs a stroke that
+       stops at the edge of the page; letting it throw costs every stroke. */
+    try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch { /* not ours to hold */ }
     drawing.current = true;
 
     if (tool === "eraser") {
@@ -71,10 +118,12 @@ export default function PaperInk({
     }
     points.current = [at];
     redrawLive();
-  }, [drawingTool, point, tool, strokes, eraserRadius, page, me, onErase, redrawLive]);
+  }, [drawingTool, point, tool, strokes, eraserRadius, page, me, onErase, redrawLive, isPalm, mayDraw]);
 
   const move = useCallback((e) => {
+    if (isPalm(e)) { e.preventDefault(); return; }
     if (!drawing.current) return;
+    if (!mayDraw(e)) return;
 
     /* Every position the browser recorded since the last frame, not just the
        one it woke us for. On a trackpad or a stylus that is often four or five
@@ -100,7 +149,7 @@ export default function PaperInk({
       if (at) points.current.push(at);
     }
     redrawLive();
-  }, [tool, point, strokes, eraserRadius, page, me, onErase, redrawLive]);
+  }, [tool, point, strokes, eraserRadius, page, me, onErase, redrawLive, isPalm, mayDraw]);
 
   const up = useCallback(() => {
     if (!drawing.current) return;
@@ -133,6 +182,10 @@ export default function PaperInk({
       ref={svgRef}
       className="pp-ink"
       data-armed={drawingTool ? "" : undefined}
+      /* `pan-y pinch-zoom` even while armed, so a finger still scrolls and
+         pinches the paper. The pen's own gestures are prevented per-event, not
+         by taking the whole surface away from touch. */
+      style={{ touchAction: drawingTool ? "pan-y pinch-zoom" : undefined }}
       data-tool={drawingTool ? tool : undefined}
       width={width} height={height}
       viewBox={`0 0 ${width} ${height}`}

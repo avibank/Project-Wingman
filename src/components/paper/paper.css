@@ -255,8 +255,14 @@
 .pscroll {
   position: absolute; inset: 0;
   overflow-y: auto; overflow-x: hidden;
-  /* Room for the floating bars, so a page can always scroll clear of them. */
-  padding: 78px 34px 92px;
+  /* ROOM FOR THE CHROME, so the page is never underneath it.
+
+     Floating is not the same as overlapping. The dock sits at the left edge
+     and the tick rail at the right; without this the first inch of every page
+     is under the dock — unreadable, and worse, un-drawable, because the dock
+     takes the pointer. Measured: a pen aimed at the left margin landed on a
+     tool button. */
+  padding: 78px calc(var(--rail-btn) + 44px) 92px;
   background: none;
   scrollbar-width: none;
 }
@@ -390,7 +396,11 @@
 .pmenu-note { margin: 6px 10px 2px; font-size: 13px; color: var(--t3); }
 
 /* ---------------------------------------------------------------- the pages */
-.pscroll { position: relative; overflow: auto; padding: 18px 0 64px; background: var(--ground); }
+/* (The scroller's own rule is at the top of this file. The original one used to
+   sit here and quietly win by source order, which left `.pscroll` as a
+   `position: relative` block that GREW to 22,000px instead of scrolling — so
+   the paper could not be scrolled at all, and a test that set scrollTop was
+   setting it on an element with nothing to scroll.) */
 .pcol { display: grid; justify-items: center; }
 .pslot { display: grid; justify-items: center; gap: 10px; width: 100%; }
 
@@ -774,6 +784,16 @@
   position: absolute; inset: 0; z-index: 2;
   pointer-events: none; touch-action: pan-y;
 }
+/* THE CHILDREN TOO, AND NOT ONLY THE LAYER.
+
+   `pointer-events: none` on an SVG does not reliably keep its own <path>
+   children out of hit-testing in WebKit — a stroke drawn across a paragraph
+   was answering `elementFromPoint` and `caretRangeFromPoint` while no ink tool
+   was armed, so a tap over an inked passage found no text, no mark, and opened
+   nothing. On an iPad that is the mark card being unreachable exactly where
+   somebody has been working hardest. */
+.pp-ink:not([data-armed]),
+.pp-ink:not([data-armed]) * { pointer-events: none; }
 /* Only a drawing tool takes the pointer. Every other moment this layer is not
    in the way of selecting a word, and a stray click still reaches the text. */
 .pp-ink[data-armed] { pointer-events: auto; cursor: crosshair; touch-action: none; }
@@ -1071,7 +1091,7 @@
 .mc-head i { width: 9px; height: 9px; border-radius: 3px; background: var(--ink, var(--active)); flex: none; }
 .mc-head b { font-size: 14px; font-weight: 500; color: var(--t1); }
 .mc-head em { font-style: normal; font-size: 13px; color: var(--t3); margin-inline-start: auto; }
-.mc-x { min-width: 28px; min-height: 28px; }
+.mc-x { min-width: 30px; min-height: 30px; }
 .mc-does { margin: 0; padding: 0 13px 11px; font-size: 13px; line-height: 1.45; color: var(--t2); }
 
 .mc-who {
@@ -1128,3 +1148,104 @@
 .tray-mean i { width: 8px; height: 8px; border-radius: 2px; background: var(--ink); flex: none; margin-top: 4px; }
 .tray-mean b { display: block; font-size: 13px; font-weight: 500; color: var(--t1); }
 .tray-mean span { font-size: 13px; line-height: 1.4; color: var(--t3); }
+
+/* ============================================================================
+   THE TRAY — brief §9
+   ========================================================================= */
+.ptoolslot { position: relative; display: block; }
+.paper[data-editing] .ptoolbtn { animation: jig .34s var(--paper-ease) infinite alternate; }
+@keyframes jig { from { transform: rotate(-1.1deg); } to { transform: rotate(1.1deg); } }
+.app.smooth-air .paper[data-editing] .ptoolbtn { animation: none; }
+@media (prefers-reduced-motion: reduce) { .paper[data-editing] .ptoolbtn { animation: none; } }
+
+/* THE BADGE IS 18px AND THE TARGET IS 30px, which is the same trick as the
+   colour swatches: a thumb needs the whole square, an eye only needs the dot.
+   An 18px hit target on a jiggling icon is a control most people miss. */
+.ptool-rm {
+  position: absolute; top: -11px; left: -11px;
+  width: 30px; height: 30px; min-height: 30px; padding: 0;
+  display: grid; place-items: center;
+  background: none; border: none; cursor: pointer; z-index: 3;
+  color: oklch(.18 .03 32);
+}
+.ptool-rm::before {
+  content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+  background: oklch(.68 .165 32); box-shadow: 0 1px 4px oklch(0 0 0 / .5);
+}
+.ptool-rm svg { position: relative; }
+
+.ptray-edit, .ptray-add { width: 268px; }
+.ptray-add { max-height: min(70dvh, 520px); overflow-y: auto; }
+.tray-done {
+  min-height: 34px; padding: 0 12px; border-radius: 9px;
+  background: oklch(from var(--active) l c h / .16); color: var(--active);
+  border: none; font: inherit; font-size: 13px; cursor: pointer;
+}
+.add-tabs {
+  display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--hair); padding-bottom: 1px;
+}
+.add-tabs::-webkit-scrollbar { display: none; }
+.add-tabs button {
+  flex: 0 0 auto; padding: 0 0 8px; min-height: 32px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--t3); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer;
+}
+.add-tabs button[aria-selected="true"] { color: var(--t1); border-bottom-color: var(--active); }
+
+.add-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.add-cell {
+  display: grid; justify-items: center; gap: 6px; padding: 10px 4px 8px;
+  min-height: 66px; border-radius: 11px; border: 1px solid transparent;
+  background: transparent; color: var(--t2); font: inherit; font-size: 13px;
+  text-align: center; line-height: 1.2; cursor: pointer;
+}
+.add-cell:hover:not([data-have]) { background: var(--raised); color: var(--t1); }
+/* Already on the tray: dimmed rather than removed, so the sheet reads the same
+   every time and nothing appears to have gone missing. */
+.add-cell[data-have] { opacity: .38; cursor: default; }
+.add-ic {
+  width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--raised);
+}
+.tray-foot { display: flex; gap: 6px; flex-wrap: wrap; }
+.tray-foot .tray-done { flex: 1 1 auto; }
+
+/* ============================================================================
+   Seen only by looking at the screenshots (§15b.3)
+   ========================================================================= */
+
+/* THE PANEL NEEDS A FLOOR UNDER ITS GLASS.
+
+   `--panel` carries alpha, and at 82% over a white page the thumbnails and the
+   paper behind them were legible through each other — two things at once and
+   neither readable. Every floating surface that holds a LIST gets an opaque
+   backing painted under the glass; the bars stay translucent, because a row of
+   icons over a page still reads. */
+.prail, .ptray, .pmenu, .psheet, .selbar {
+  background: linear-gradient(var(--glass-2), var(--glass-2)), var(--ground);
+}
+
+/* "Fit width" is two words and must stay on one line — the bar reflows around
+   it otherwise, which on a phone put the page controls on a second row. */
+.pzoom { white-space: nowrap; }
+.pbot, .pbar { flex-wrap: nowrap; }
+
+/* §17 — the floating "Something's wrong here" pill goes while a paper is open.
+   The Correction tool is on the tray and the mark card is one tap away; two
+   controls for one job, and the pill is the one that covers the document. It
+   is hidden rather than removed, because it belongs to the rest of the app. */
+.app:has(.paper) .rpt { display: none; }
+
+/* The destination chips carry their colour and their count. */
+.chip { display: inline-flex; align-items: center; gap: 7px; }
+.chip[data-colour="critical"], .chip[data-colour="definition"], .chip[data-colour="limit"],
+.chip[data-colour="unsure"], .chip[data-colour="wrong"] { padding-inline-start: 9px; }
+.chip[data-colour="critical"]::before, .chip[data-colour="definition"]::before,
+.chip[data-colour="limit"]::before, .chip[data-colour="unsure"]::before,
+.chip[data-colour="wrong"]::before {
+  content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--ink);
+}
+.chip em { font-style: normal; font-size: 13px; color: var(--t3); font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] em { color: var(--t1); }
+.chip:disabled { opacity: .4; cursor: default; }
