@@ -28,7 +28,7 @@ try {
         headers: { "content-type": "application/json", "x-harness-store": `shot-${s.id}-${variant}` },
       });
       await page.goto(readerUrl(), { waitUntil: "domcontentloaded" });
-      await page.waitForSelector(".pp:not(.pp-ghost) canvas[data-on]", { timeout: 25_000 });
+      await page.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 25_000 });
       await page.waitForTimeout(1200);
 
       /* Nudge the pointer first. A screenshot is not somebody sitting still,
@@ -43,17 +43,17 @@ try {
       await shot("rest");
 
       // The tray, with a marking tool in hand.
-      await page.click('.ptoolbtn[aria-label="Highlight"]').catch(() => {});
+      await page.click('.tool[aria-label="Highlighter"]').catch(() => {});
       await page.waitForTimeout(500);
       await shot("tray");
 
       // The panel, opened rather than toggled — it starts open on a laptop.
       await page.evaluate(() => {
-        const p = document.querySelector(".paper");
-        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+        const p = document.querySelector(".rdr");
+        if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(600);
-      await page.click('.prail-tabs button:nth-child(3)').catch(() => {});   // Marks
+      await page.click('.bar-panel .segs button:nth-child(3)').catch(() => {});   // Marks
       await page.waitForTimeout(500);
       await shot("panel-marks");
 

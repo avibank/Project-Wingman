@@ -4,6 +4,20 @@
 **Scope:** the papers reader (module Library → paper viewer, e.g. `/m/m1/paper/M1.P1`) and its Ready Room integration
 **Reference build:** the interactive demo published alongside this brief. Open it in a browser before you start. Where this brief and the demo disagree on *behaviour*, this brief wins. Where they disagree on *look*, the demo wins.
 
+**Do not reimplement the look from this description.** Four files ship together and three of them are code to be used, not read:
+
+| File | What to do with it |
+|---|---|
+| `BRIEF.md` (this) | Behaviour, data, phases, tests |
+| `reference.html` | Open it. The interactive spec. |
+| `reader.css` | **Copy verbatim into the codebase.** Every token, class and value. |
+| `reader-icons.js` | **Copy verbatim.** Icon paths, tool table, the five colours. |
+| `COMPONENTS.md` | The exact DOM for every component. Produce this markup. |
+
+The class names in `reader.css` and the markup in `COMPONENTS.md` are built to match. Produce that DOM, include that stylesheet, and the appearance is finished — there is no visual judgement left to exercise. Do not rename classes, do not swap the icons for an icon library, do not re-express the CSS in a styling framework, do not re-time the animations. Those substitutions are exactly how a rebuild ends up approximately right instead of right.
+
+If a class in `reader.css` is unused when you finish, a component is missing. If you needed a class that isn't in it, you invented something — check the reference build first.
+
 ---
 
 ## 0. How to work this

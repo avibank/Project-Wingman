@@ -58,7 +58,8 @@
     "test:reader:ui": "./node_modules/.bin/playwright test --ui",
     "test:reader:one": "node scripts/reader-tests.mjs --project=laptop",
     "reader:setup": "node --env-file=.env.local scripts/run-sql.mjs supabase/migrations/0018_reader_rebuild.sql --yes --force",
-    "paper:linearize": "node scripts/linearize-paper.mjs"
+    "paper:linearize": "node scripts/linearize-paper.mjs",
+    "reader:css": "node scripts/scope-reader-css.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

@@ -30,6 +30,13 @@ import {
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const read = (p) => readFileSync(join(ROOT, p), "utf8");
+/* paper.css is gone. The reader is styled by the shipped sheet, scoped
+   verbatim by `npm run reader:css`, plus the additions file that carries
+   everything the demo had no need for — page internals, ink, the two
+   virtualised rails. The cascade sees one stylesheet, so these rules are
+   asked of one string. */
+const readerCss = () =>
+  read("src/components/paper/reader.css") + "\n" + read("src/components/paper/reader-additions.css");
 
 let pass = 0;
 const fails = [];
@@ -129,14 +136,22 @@ console.log("\nR5 — the cheapest mark is wordless");
      /kind = "highlight", ring = "module",\s*\n?\s*body = null/.test(annots.replace(/\s+/g, " "))
      || /body = null/.test(annots));
   const reader = read("src/components/paper/PaperReader.jsx");
-  ok("R5", "the highlight control is the first and largest in the selection bar",
-     reader.indexOf("selbar-main") < reader.indexOf("selbar-act"));
-  /* The body of markSelection, on its own: it must reach addMark and must never
-     reach setComposer. It was highlightNow until underline and strikethrough
-     joined it — three kinds, one gesture, still nothing to type. */
-  const fn = (reader.split("const markSelection = useCallback(")[1] || "").split("}, [")[0];
-  ok("R5", "and it opens no composer",
-     /addMark\(\{ kind, start, end \}\)/.test(fn) && !/setComposer/.test(fn), fn.length ? "" : "not found");
+  /* THE SELECTION BAR IS GONE. This used to assert that the highlight button
+     came first and largest in it; COMPONENTS.md deletes the bar outright —
+     "One popover does properties, ownership and actions. There is no separate
+     selection toolbar." — and an armed marking tool now fires the moment a
+     selection settles. That is a cheaper wordless mark than the bar was, so
+     the rule is stronger, not waived; what it asserts had to change. */
+  ok("R5", "there is no selection toolbar to reach for",
+     !/selbar/.test(reader));
+  /* The effect that fires on a settled selection: it must reach addMark for a
+     text-marking tool and must never reach setComposer on that branch. It was
+     highlightNow, then markSelection, before the tool became the gesture. */
+  const fn = (reader.split("if (!sel || tool === \"sel\" || isInk(tool)) return;")[1] || "").split("}, [sel, tool]);")[0];
+  ok("R5", "and marking a selection opens no composer",
+     /addMark\(\{ kind: kindOf\(tool\), start: made\.start, end: made\.end \}\)/.test(fn)
+     && /marksText\(tool\)/.test(fn)
+     && !/setComposer/.test(fn), fn.length ? "" : "not found");
 }
 
 /* ---- R6 · nothing arrives on the paper unbidden -------------------------- */
@@ -156,8 +171,10 @@ console.log("\nR6 — notes never insert themselves under a reader");
      && /const refreshNow = useCallback/.test(reader));
   ok("R6", "and refreshing pins the page the reader is on",
      /getBoundingClientRect\(\)\.top[\s\S]{0,400}scrollTop \+= after - before/.test(reader));
+  /* COMPONENTS.md's top bar names this button "Check for new marks", and the
+     shipped label is the one that ships. */
   ok("R6", "the refresh control says what it does",
-     /aria-label="Check for new marks on this paper"/.test(reader));
+     /aria-label="Check for new marks"/.test(reader));
 }
 
 /* ---- R7 · live everywhere else, and cheap when nothing is happening ------ */
@@ -257,7 +274,7 @@ console.log('\nR11 — empty reads "not yet", never "nothing"');
 /* ---- R13 · Smooth Air turns it off -------------------------------------- */
 console.log("\nR13 — Smooth Air turns it all off");
 {
-  const css = read("src/components/paper/paper.css");
+  const css = readerCss();
   ok("R13", "the app's own class, not a new mechanism", /\.app\.smooth-air/.test(css));
   ok("R13", "and prefers-reduced-motion with it", /prefers-reduced-motion: reduce/.test(css));
 }
@@ -265,11 +282,26 @@ console.log("\nR13 — Smooth Air turns it all off");
 /* ---- R14 · the house style ---------------------------------------------- */
 console.log("\nR14 — the paper obeys the house style");
 {
-  const css = read("src/components/paper/paper.css");
+  const css = readerCss();
   const hex = css.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
-  ok("R14", "no hex literal anywhere in the paper view", hex.length === 0, hex.join(" "));
+  /* TWO OF R14'S RULES ARE OVERRIDDEN HERE, AND THE OVERRIDE IS RECORDED
+     RATHER THAN SILENT — see REPORT.md, "what the shipped sheet overrules".
+
+     R14 banned hex literals and required OKLCH, because the house style is
+     OKLCH end to end and a hex in a livery-aware surface is a colour that
+     cannot be re-tinted. The reader is now painted by reader.css, which was
+     handed over with "copy verbatim into the codebase" and is hex from top to
+     bottom, including the five mark meanings that MUST NOT re-tint (CLAUDE.md
+     — a livery change that recoloured somebody's yellow highlight would be the
+     app editing their notes). So the reader is the one surface that does not
+     derive its colour from the accent channels, on purpose, and this asserts
+     the thing that still matters: that it is the SHIPPED palette and not a
+     second one somebody typed. */
+  const inReader = (h) => /^#(0[08]|0D|E2|E8|9F|61|4C|F2|5B|4F|C7|EC|C9|BF|11|84|3A|E4|2A|0B|fff|fafafa|f2f3f5|9aa5b1|d9dde1|9aa3ab|333|111)/i.test(h);
+  ok("R14", "no hex the shipped palette did not bring", hex.filter((h) => !inReader(h)).length === 0,
+     hex.filter((h) => !inReader(h)).join(" "));
   ok("R14", "density is the livery accent at low alpha",
-     /--active[^;]*\/ \.0?7\)/.test(css) && /--active[^;]*\/ \.13\)/.test(css) && /--active[^;]*\/ \.20\)/.test(css));
+     /--accent\) 7%/.test(css) && /--accent\) 13%/.test(css) && /--accent\) 20%/.test(css));
   /* THIS RULE WAS REVERSED, AND THE REVERSAL IS RECORDED RATHER THAN SILENT.
 
      R14 said the page carries a hairline and no shadow, because the house style
@@ -282,14 +314,28 @@ console.log("\nR14 — the paper obeys the house style");
      So the assertion is not deleted, it is inverted: the page must sit at
      depth 1, and there must still be exactly three depths and no fourth. */
   ok("R14", "the page sits at depth 1 — a shadow, and one that is not the bars'",
-     /\.pp \{[^}]*box-shadow: 0 1px 2px/.test(css));
-  ok("R14", "and the reader keeps to three depths, no fourth",
-     (css.match(/box-shadow: 0 \d+px \d+px oklch/g) || []).length <= 4);
+     /--sh-page:\s*0 1px 2px/.test(css) && /\.rdr-page \{[\s\S]{0,220}box-shadow: var\(--sh-page\)/.test(css));
+  /* Four depths in the shipped sheet, declared once as tokens rather than
+     typed at each use: the page, the tooltip, the bars, the popovers above
+     them. A fifth would be a surface belonging to no layer. */
+  ok("R14", "and the reader keeps to the shipped depths, no fifth",
+     ["--sh-page:", "--sh-md:", "--sh-bar:", "--sh-pop:"].every((t) => css.includes(t))
+     && !/--sh-(?!page|md|bar|pop)[a-z]+:/.test(css));
 
   // 13px type floor, measured rather than trusted.
   const sizes = [...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
-  const small = sizes.filter((n) => n < 13);
-  ok("R14", `every font-size is at least 13px (${sizes.length} declared)`, small.length === 0, small.join(", "));
+  /* THE 13px FLOOR IS THE OTHER OVERRIDE. The shipped sheet's type runs 8.5px
+     to 26px — the dock's preset counts are 8.5px superscripts and the mono
+     page numbers are 10px — and it is the sheet the app was told to copy. What
+     survives is the floor for anything the reader has to READ, as opposed to
+     glance at: the mark card's body, the panel rows, the composer. */
+  const small = sizes.filter((n) => n < 8.5);
+  ok("R14", `no type below the shipped sheet's own floor (${sizes.length} declared)`,
+     small.length === 0, small.join(", "));
+  const body = [...css.matchAll(/\.(mcd|mrow b|plist|composer textarea)[^{]*\{[^}]*font-size:\s*(\d+(?:\.\d+)?)px/g)]
+    .map((m) => Number(m[2]));
+  ok("R14", "and what is read rather than glanced at is 12px or more",
+     body.every((n) => n >= 12), body.join(", "));
 
   // 44px targets: the controls that are smaller carry padding to reach it, so
   // this asserts the floor on the min-height declarations that exist.
@@ -350,27 +396,35 @@ console.log("\ntap anywhere");
 console.log("\nthe Spotlight");
 {
   const reader = read("src/components/paper/PaperReader.jsx");
-  const css = read("src/components/paper/paper.css");
-  ok("—", "note and question are a toggle inside one panel, not two dialogs",
-     /role="tablist"/.test(reader) && (reader.match(/function Spotlight/g) || []).length === 1);
+  const css = readerCss();
+  /* It was Spotlight; COMPONENTS.md has no composer of its own — the demo
+     opens notes inline — so this build keeps one panel and borrows the
+     inspector's chrome for it. One component, three kinds, still one dialog. */
+  ok("—", "note, question and correction are one panel, not three dialogs",
+     /role="tablist"/.test(reader) && (reader.match(/function Composer\(/g) || []).length === 1);
   ok("—", "the field takes the keyboard on open", /ref\.current\?\.focus\(\)/.test(reader));
   ok("—", "Escape puts it away", /e\.key === "Escape"\) onCancel\(\)/.test(reader));
   ok("—", "a correction offers no ring, because it has one reader",
-     /kind !== "correction" \? \(\s*\n?\s*<label className="spot-ring"/.test(reader));
+     /kind !== "correction"/.test(reader) && /setRing\("solo"\)/.test(reader));
   ok("R13", "and it does not animate under Smooth Air",
-     /\.app\.smooth-air \.spot, \.app\.smooth-air \.spot-scrim \{ animation: none; \}/.test(css));
+     /\.app\.smooth-air \.composer, \.app\.smooth-air \.rdr-scrim \{ animation: none; \}/.test(css));
 }
 
 /* ---- the rail moves and scales ------------------------------------------ */
 console.log("\nthe tool rail");
 {
-  const css = read("src/components/paper/paper.css");
+  const css = readerCss();
   const reader = read("src/components/paper/PaperReader.jsx");
-  ok("—", "three docks, and each lays the grid out for itself",
+  ok("—", "three docks, and each lays the dock out for itself",
      DOCKS.map((d) => d.id).join(",") === "left,right,top"
      && /\[data-dock="right"\]/.test(css) && /\[data-dock="top"\]/.test(css));
-  ok("—", "one knob decides the size", /--rail-btn/.test(css)
-     && TOOL_SIZES.every((z) => new RegExp(`\\[data-toolsize="${z.id}"\\]`).test(css)));
+  /* The shipped sheet sizes the tool itself — 38px on a pointer, 44px under
+     900px — rather than through a knob the reader turns. One number, in one
+     place, and the touch case is the media query's. */
+  ok("—", "one number decides the size",
+     /\.tool \{[\s\S]{0,90}width:38px; height:38px/.test(css)
+     && /\.addbtn \{[\s\S]{0,40}width:38px; height:38px/.test(css)
+     && /\.tool, [^{]*\.addbtn \{ width:44px; height:44px; \}/.test(css));
   ok("—", "where it sits is a per-device preference, not an account one",
      /write\("pw-paper-dock", dock\)/.test(reader)
      && /localStorage\.setItem\(key, value\)/.test(reader)
@@ -381,8 +435,8 @@ console.log("\nthe tool rail");
 console.log("\nfull screen");
 {
   const reader = read("src/components/paper/PaperReader.jsx");
-  const css = read("src/components/paper/paper.css");
-  ok("—", "the screen is fixed to the viewport", /\.paper \{[^}]*position: fixed; inset: 0/.test(css));
+  const css = readerCss();
+  ok("—", "the screen is fixed to the viewport", /\.rdr \{\s*\n?\s*position: fixed; inset: 0/.test(css));
 
   /* The rule this protects, and it cost an hour to find: `position: fixed` is
      only the size of the window if no ancestor has been promoted to its own
@@ -515,10 +569,11 @@ console.log("\nink — drawing and erasing");
 console.log("\nthe palette");
 {
   const sql = read("supabase/migrations/0017_paper_ink.sql");
-  const css = read("src/components/paper/paper.css");
+  const css = readerCss();
   for (const c of COLOUR_IDS) {
     ok("colour", `the database knows ${c}`, new RegExp(`'${c}'`).test(sql));
-    ok("colour", `and the stylesheet paints ${c}`, new RegExp(`--ink-${c}:`).test(css));
+    ok("colour", `and the stylesheet paints ${c}`,
+       new RegExp(`\\[data-ink="${c}"\\][^{]*\\{[^}]*--ink:`).test(css));
   }
   ok("colour", "eight of them, and no more", INK_COLOURS.length === 8);
   ok("colour", "an unknown name reads as the default rather than as nothing",
@@ -527,13 +582,17 @@ console.log("\nthe palette");
   const annots = read("src/lib/annotations.js");
   ok("colour", "the client sends a name, never a colour",
      /colour: colour \|\| null/.test(annots) && !/oklch|#[0-9a-f]{3}/i.test(annots));
-  ok("R14", "and the palette is OKLCH like everything else here",
-     (css.match(/--ink-[a-z]+:\s*oklch/g) || []).length === 8);
+  /* It was OKLCH, like everything else here. It is hex now, for the reason
+     recorded against R14 above: the reader is painted by the shipped sheet and
+     the shipped sheet is hex. Eight names, eight colours, one token. */
+  ok("R14", "eight names and no ninth",
+     new Set((css.match(/\[data-ink="([a-z]+)"\][^{]*\{[^}]*--ink:/g) || [])
+       .map((m) => m.match(/"([a-z]+)"/)[1])).size === 8);
 
   /* Graphite is the one colour that has to move: it is defined by being darker
      than paper, and in night mode the paper is dark. */
   ok("colour", "graphite becomes chalk when the page is inverted",
-     /\[data-light="night"\][\s\S]{0,120}data-colour="graphite"/.test(css));
+     /\[data-look="night"\] \[data-ink="graphite"\]/.test(css));
 }
 
 /* ---- five nibs, and a width that is a fraction of the page -------------- */
@@ -609,14 +668,24 @@ console.log("\nthe view");
      === fitScale("width", { w: 600, h: 800, rotated: false }, { width: 648, height: 800 }, { x: 48, y: 48 }, 1));
   ok("view", "actual size is one, by definition", fitScale("actual", { w: 600, h: 800 }, { width: 100, height: 100 }) === 1);
 
-  ok("view", "three layouts and four lights",
-     LAYOUTS.length === 3 && PAPER_LIGHTS.length === 4 && FITS.length === 3);
-  const css = read("src/components/paper/paper.css");
+  /* Five lights, because "follow the app" is one of them — the reader that
+     never opens the light menu still gets the theme the rest of the app is
+     wearing, which is the case the other four cannot cover. */
+  ok("view", "three layouts, five lights and three fits",
+     LAYOUTS.length === 3 && PAPER_LIGHTS.length === 5 && FITS.length === 3
+     && PAPER_LIGHTS[0].id === "follow");
+  /* The reader has two GROUNDS, not four: the shipped sheet's `data-look` is
+     paper or night, and the four reading lights are a filter on the raster.
+     A light that also repainted the surround would be two systems arguing. */
+  ok("view", "and two grounds, which the four lights sit inside",
+     /\.rdr\[data-look="paper"\] \{/.test(readerCss()));
+  const css = readerCss();
   ok("view", "the light falls on the picture and not on the marks",
      /canvasStyle = \{ filter: light === "day" \? undefined : lightFilter\(light\) \}/
        .test(read("src/components/paper/PaperPage.jsx")));
   ok("view", "and the ground follows it, so the surround is never the brightest thing",
-     /\[data-light="night"\] \.pscroll/.test(css));
+     /\.rdr\[data-look="paper"\][\s\S]{0,300}--bg:\s*#C9CFD6/.test(css)
+     && /\.rdr \{[\s\S]{0,120}--bg:\s*#080B0F/.test(css));
 }
 
 /* ---- find · the two options every find bar has -------------------------- */
@@ -650,36 +719,51 @@ console.log("\nthe contents");
 console.log("\nthe rail, at ten tools");
 {
   const reader = read("src/components/paper/PaperReader.jsx");
-  const css = read("src/components/paper/paper.css");
+  const css = readerCss();
   /* Fourteen tools in six groups now — the full set §9 lists. The DEFAULT
      tray is still six of them; the rest are one tap away in the Add sheet and
      none of them is unreachable, which is the rule that makes trimming safe. */
+  /* The set is readerIcons.js's now, copied byte for byte from the spec, and
+     paperTray.js re-exports it rather than keeping a second opinion. */
+  const icons = read("src/lib/readerIcons.js");
   ok("rail", "the full tool set is fourteen, in six groups",
-     (reader.match(/\{ id: "[a-z]+", group: \d/g) || []).length === 14
-     && /GROUPS/.test(read("src/lib/paperTray.js")));
+     (icons.match(/\{ id:'[a-z]+',/g) || []).length === 14
+     && /GROUPS = \['Select','Mark up','Ink','Draw','Sign off','Talk'\]/.test(icons));
   ok("rail", "and the tray ships six of them",
-     /DEFAULT_TRAY = \["select", "highlight", "pen", "eraser", "note", "question"\]/
-       .test(read("src/lib/paperTray.js")));
-  /* Every button in this app is at least 44px on its shortest side (§12), so a
-     single column of ten is 659px of a 720px window. Two abreast is 7 rows. */
-  ok("rail", "and it runs two abreast rather than shrinking the hit targets",
-     /grid-template-columns: repeat\(2, var\(--rail-btn\)\)/.test(css)
-     && !/\.ptoolbtn[^{]*\{[^}]*min-height:\s*(2\d|3\d)px/.test(css));
+     /DEFAULT_TRAY = \['sel','hl','pen','era','note','ask'\]/.test(icons)
+     && /export \{ DEFAULT_TRAY, TRAY_CAP, GROUPS \}/.test(read("src/lib/paperTray.js")));
+  /* This used to read "two abreast rather than shrinking the hit targets",
+     because a single column of TEN 44px tools is 659px of a 720px window. The
+     shipped design answers it at the other end: the tray ships six, the cap is
+     ten only on a desktop, and the column is one wide. Six 38px tools is
+     250px. The rule the two-abreast grid existed to protect is the one that
+     is asserted. */
+  ok("rail", "and a column of the default tray fits a laptop window",
+     /DEFAULT_TRAY = \['sel','hl','pen','era','note','ask'\]/.test(icons)
+     && /flex-direction:column/.test(css.match(/\.bar-dock \{[^}]*\}/)[0]));
+  /* Select has no settings, so it closes the inspector rather than opening an
+     empty one. The decision is at the point the tool is picked, which is the
+     only place that knows a tool was picked at all. */
   ok("rail", "the armed tool's settings appear beside it and no others exist",
-     /if \(tool === "select"\) return null;/.test(reader));
+     /setInspOpen\(id !== "sel"\)/.test(reader)
+     && /open=\{inspOpen && !adding && !editing\}/.test(reader));
   /* The inspector sits beside the DOCK and only beside the dock. It used to
      clear the panel's width as well, from when the panel was a column on the
      same side; now the panel floats on the other edge and that offset pushed
      the inspector off the screen. */
   ok("rail", "the inspector sits against the dock, not offset by a panel that moved",
-     /\.ptray \{[^}]*left: calc\(100% \+ 8px\)/.test(css)
-     && !/\.ptray \{[^}]*var\(--side-w\)/.test(css));
+     /\.bar-insp \{[\s\S]{0,60}left:70px/.test(css)
+     && !/\.bar-insp \{[^}]*var\(--side-w\)/.test(css));
 
   /* Naming panels one at a time is a rule that breaks the next time one is
      added, and it did: Contents and Queue opened at the full width of the
      window because the grid rule listed only thumbs and marks. */
-  ok("rail", "the sidebar is open or it is not — no panel is named twice",
-     /\.paper:not\(\[data-rail="none"\]\) \{ --side-w/.test(css));
+  /* Naming panels one at a time is a rule that broke the next time one was
+     added, and it did. It cannot now: the shipped panel floats over the page
+     instead of taking a column from it, so there is no width to switch on and
+     nothing to name. `data-panel` carries which one is showing, once. */
+  ok("rail", "the sidebar floats, so no panel has to be named twice",
+     !/--side-w/.test(css) && /data-panel=\{rail \|\| "none"\}/.test(reader));
 }
 
 /* ---- a selection offset means two different things ---------------------- */
@@ -735,6 +819,47 @@ console.log("\n§4.6 — big papers");
   ok("§4.6", "an absolute storage URL is not prefixed with a slash",
      /export const fileHref/.test(papers)
      && !/`\/\$\{String\(paper\.file\)/.test(reader));
+}
+
+/* ---- the shipped files are used, not reinterpreted ---------------------- */
+console.log("\nthe shipped spec");
+{
+  const shippedCss = read("docs/reader/reader.css");
+  const builtCss = read("src/components/paper/reader.css");
+  /* Selectors move so the reader's class names cannot restyle the rest of the
+     app — seventeen of them collide with a dozen other screens. Nothing else
+     may move: same tokens, same values, same timings, same radii. */
+  const decls = (css) => (css.replace(/\/\*[\s\S]*?\*\//g, "").match(/[^{}]+(?=\})/g) || [])
+    .join("|").replace(/\s+/g, " ").trim();
+  ok("spec", "reader.css is used, not reinterpreted — every declaration identical",
+     decls(shippedCss) === decls(builtCss));
+  ok("spec", "and it is generated from the shipped file, so the two cannot drift",
+     /GENERATED — do not edit\. Source: docs\/reader\/reader\.css/.test(builtCss));
+  ok("spec", "every rule is scoped to the reader",
+     !/(?:^|\n)\.(?!rdr)[a-z]/i.test(builtCss.replace(/\/\*[\s\S]*?\*\//g, "")));
+
+  const shippedIcons = read("docs/reader/reader-icons.js");
+  ok("spec", "reader-icons.js is copied byte for byte",
+     shippedIcons === read("src/lib/readerIcons.js"));
+  ok("spec", "and the reader draws from it rather than an icon library",
+     /from "\.\.\/\.\.\/lib\/readerIcons\.js"/.test(read("src/components/paper/Icon.jsx")));
+
+  /* THE BRIEF'S OWN TEST, RUN RATHER THAN READ: "If a class in reader.css is
+     unused when you finish, a component is missing." A stylesheet is a list of
+     the parts the design has; a class nothing renders is a part that was
+     skipped, and it fails silently because unused CSS never errors. This
+     caught three — `.s.is-marked`, `.is-open-thread`, `.is-selected` — which
+     were being drawn from a second set of rules under different names. */
+  const shipped = read("docs/reader/reader.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const shippedClasses = new Set([...shipped.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)].map((m) => m[1]));
+  let markup = read("src/lib/readerIcons.js");
+  for (const f of readdirSync(join(ROOT, "src/components/paper"))) {
+    if (f.endsWith(".jsx")) markup += read(`src/components/paper/${f}`);
+  }
+  const unused = [...shippedClasses]
+    .filter((c) => !new RegExp(`["\`\\s]${c}(?![a-zA-Z0-9_-])`).test(markup));
+  ok("spec", `every class in it is rendered by something (${shippedClasses.size} classes)`,
+     unused.length === 0, unused.join(" "));
 }
 
 console.log(`\npaper: ${pass} passed, ${fails.length} failed`);

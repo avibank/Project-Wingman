@@ -1,24 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  ChevronLeft, ChevronRight, ChevronDown, Search, X, Minus, Plus,
-  RotateCw, RotateCcw, Download, Printer, PanelLeft, Highlighter, MessageSquare,
-  HelpCircle, Flag, Trash2, RefreshCw, MousePointer2, MoreHorizontal, Check,
-  Pen, Eraser, Underline, Strikethrough, Maximize2, Minimize2, Info, Keyboard,
-  Eye, EyeOff,
-  Rows3, Square, Columns2, Sun, Undo2, Redo2, Users, ThumbsUp, Plus as PlusIcon, Type, Ruler, Stamp, Shapes,
-} from "lucide-react";
 import { loadPaper, releasePaper, paperText, quoteOf, pageOf, warmWorker, PDFJS_VERSION } from "../../lib/paperText.js";
 import { setRasterFocus } from "../../lib/rasterBudget.js";
 import {
   resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
-  applyFilter, FILTERS, filterCounts, RINGS, ringLabel, DOCKS, TOOL_SIZES,
+  applyFilter, FILTERS, filterCounts, RINGS, DOCKS,
 } from "../../lib/paperMarks.js";
-import { MEANINGS, meaning, threadState, takesMeaning, meaningOr, DEFAULT_MEANING } from "../../lib/meanings.js";
+import { meaning, threadState, meaningOr, DEFAULT_MEANING } from "../../lib/meanings.js";
 import {
   DEFAULT_TRAY, LOCKED, GROUPS, capFor, loadTray, saveTray,
   addTool, removeTool, moveTool, shortcutFor,
 } from "../../lib/paperTray.js";
+import {
+  TOOLS, COLOURS, tool as toolAt, kindOf, marksText, isInk, isWritten,
+  takesMeaning, takesFreeColour, hasColour, colour as colourAt,
+} from "../../lib/readerTools.js";
 import {
   INK_COLOURS, PEN_SIZES, penWidth,
   DEFAULT_HIGHLIGHT, DEFAULT_PEN, DEFAULT_PEN_SIZE,
@@ -33,428 +29,368 @@ import {
 } from "../../lib/annotations.js";
 import { fetchInk, createStroke, deleteStrokes } from "../../lib/ink.js";
 import { fileHref, storedText, thumbUrl } from "../../lib/papers.js";
+import Icon from "./Icon.jsx";
 import PaperPage from "./PaperPage.jsx";
 import PaperThumbs from "./PaperThumbs.jsx";
 import PaperOutline from "./PaperOutline.jsx";
-import "./paper.css";
+import "./reader.css";
+import "./reader-additions.css";
 
 /* =============================================================================
    THE PAPER READER
 
-   The layout is the one every reader already knows, because a student opening a
-   handout should not have to learn anything: a slim bar across the top, a rail
-   of tools down one side, a panel of pages and contents, and the document
-   itself taking every pixel that is left.
+   The markup below is COMPONENTS.md, transliterated and not reinterpreted:
+   the same class names, the same nesting, the same state as data attributes on
+   one root. reader.css is the shipped stylesheet, generated into src/ with
+   every selector scoped under `.rdr` and no value touched — see
+   scripts/scope-reader-css.mjs for the one reason that was necessary.
 
-   Three references, and each answers a different question:
-
-     Edge      the document controls belong in ONE slim bar, and everything
-               that is not reached every minute belongs behind a menu.
-     Drawboard the marking tools belong in a rail, and the armed tool's
-               properties belong beside it — not in a third horizontal band.
-     Preview   the page floats on the ground with nothing around it, and the
-               chrome gets out of the way the moment you stop touching it.
-
-   What is NOT the familiar reader: there is no margin rail of comments. Notes
-   open in the flow, under the page they belong to, on a phone and on a desktop
-   alike (R6). A rail would have meant two layouts and a column of orphaned
-   speech bubbles pointing at nothing.
+   What this file owns is state, data and events. What it does not own is the
+   look: if something here looks wrong, the DOM diverged from COMPONENTS.md,
+   and that is the thing to fix rather than a value in the stylesheet.
    ========================================================================= */
 
-/* THE TOOLS, IN FOUR GROUPS.
+/* Called by App the moment a paper route is entered, before this component
+   renders, so pdf.js's worker is already in the cache when it is needed. */
+export const warm = () => warmWorker();
 
-   Grouped and not listed, because ten buttons in a column is a menu wearing a
-   rail's clothes. The groups are the four things a person does to a document:
-   point at it, mark the words, draw on it, and say something about it.
-
-   `ink` marks a tool that draws freehand rather than acting on a selection —
-   the text layer stops taking pointer events while one is armed, or the first
-   stroke would come out as a text selection. */
-const TOOLS = [
-  { id: "select", group: 0, label: "Select", key: "V", hint: "Drag to select. The bar that appears offers everything below." },
-  { id: "highlight", group: 1, label: "Highlight", key: "H", hint: "Select any line and it is marked. Nothing to type.", colour: "hl" },
-  { id: "underline", group: 1, label: "Underline", key: "U", hint: "A line under the words, in the colour you pick.", colour: "hl" },
-  { id: "strikethrough", group: 1, label: "Strike through", key: "S", hint: "A line through the words, for what no longer applies.", colour: "hl" },
-  { id: "pen", group: 2, label: "Pen", key: "P", hint: "Draw anywhere on the page.", ink: true, colour: "pen", size: true },
-  { id: "marker", group: 2, label: "Marker", key: "M", hint: "A broad translucent nib, over the words.", ink: true, colour: "pen", size: true },
-  { id: "eraser", group: 2, label: "Eraser", key: "E", hint: "Touch a stroke you drew and it goes.", ink: true },
-  { id: "note", group: 5, label: "Note", key: "N", hint: "Tap a line, or select one. Write what you want to remember.", ring: true },
-  { id: "question", group: 5, label: "Question", key: "Q", hint: "Tap a line, or select one. It opens a thread in the Ready Room.", ring: true },
-  { id: "correction", group: 5, label: "Correction", key: "C", hint: "Select what is wrong. Only the author ever sees it." },
-  /* On the tray only if a student adds them. Nothing is unreachable — the Add
-     sheet always lists the full set — but nothing is on the rail by default
-     that most people will never touch. */
-  { id: "shape", group: 3, label: "Shape", key: "R", hint: "Line, arrow, box or circle.", colour: "pen", size: true },
-  { id: "text", group: 3, label: "Text box", key: "T", hint: "Type on the page.", colour: "pen" },
-  { id: "measure", group: 3, label: "Measure", key: "K", hint: "Calibrate once, then measure." },
-  { id: "stamp", group: 4, label: "Sign off", key: "G", hint: "An inspection seal with your code on it." },
-];
-const TOOL_ICONS = {
-  select: <MousePointer2 size={17} aria-hidden="true" />,
-  highlight: <Highlighter size={17} aria-hidden="true" />,
-  underline: <Underline size={17} aria-hidden="true" />,
-  strikethrough: <Strikethrough size={17} aria-hidden="true" />,
-  pen: <Pen size={17} aria-hidden="true" />,
-  marker: <Highlighter size={17} aria-hidden="true" />,
-  eraser: <Eraser size={17} aria-hidden="true" />,
-  note: <MessageSquare size={17} aria-hidden="true" />,
-  shape: <Shapes size={17} aria-hidden="true" />,
-  text: <Type size={17} aria-hidden="true" />,
-  measure: <Ruler size={17} aria-hidden="true" />,
-  stamp: <Stamp size={17} aria-hidden="true" />,
-  question: <HelpCircle size={17} aria-hidden="true" />,
-  correction: <Flag size={17} aria-hidden="true" />,
-};
-/* THE TRAY IS BUILT, NOT SHIPPED. See lib/paperTray.js.
-
-   What follows is the note from before the tray existed, kept because the
-   arithmetic is why the tray exists at all:
-
-   TEN TOOLS IN A COLUMN IS 659px OF RAIL, and this window is 720px tall.
-
-   Every button in this app is at least 44px on its shortest side — §12, enforced
-   globally in App.jsx because it had leaked in eleven places — so a single
-   column of ten leaves the document eight pixels. The answer is not to shrink
-   the buttons, because 44px is a finger and fingers have not got smaller. It is
-   to stop insisting on one column: the rail runs two abreast, group by group,
-   which is what Drawboard's own rail does once it has more than a handful. Ten
-   tools, four groups, seven rows, and the hit targets untouched. */
-const TEXT_MARKS = new Set(["highlight", "underline", "strikethrough"]);
-const INK_TOOLS = new Set(["pen", "marker", "eraser"]);
-const WRITTEN = new Set(["note", "question", "correction"]);
-const toolAt = (id) => TOOLS.find((t) => t.id === id) || TOOLS[0];
-
-const PAGE_GAP = 24;      // brief 4.3 — a sheet reads as a sheet
+const PAGE_GAP = 26;
 const EMPTY = [];
 const tempId = () => `tmp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private */ } };
+const rgba = (hex, a) => {
+  const n = parseInt(String(hex).slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+};
 
 /* ---------------------------------------------------------------------------
-   The bar that appears over a selection. R5: the first and largest control is
-   the highlight, and it needs nothing typed. Everything after it is one tap
-   further away, in the order people reach for them.
+   THE MARK CARD — one popover for properties, ownership and actions.
+
+   §10: it replaces the idea of a separate selection toolbar, because two
+   overlapping popovers is exactly the clutter being removed. It opens on hover
+   AND on tap; an iPad has no hover, and a card that only ever appears under a
+   mouse is a card an iPad user can never see.
    ------------------------------------------------------------------------ */
-function SelectionBar({ at, colour, onHighlight, onUnderline, onStrike, onNote, onAsk, onCorrect, canCorrect }) {
-  if (!at) return null;
+function MarkCard({ mark, me, at, onRecolour, onDelete, onNote, onAgree, onThread, onHold, onLeave }) {
+  if (!mark || !at) return null;
+  const c = colourAt(mark.colour || DEFAULT_MEANING);
+  const mine = mark.author_id === me;
+  const anon = !!mark.anonymous && !mine;
+  const thread = mark.colour === "unsure" || mark.kind === "question";
+  const state = threadState(mark);
+  const who = anon ? "Asked anonymously" : mine ? "You" : (mark.author_name || "Someone");
+  const initials = anon ? "?" : mine ? "YOU"
+    : (mark.author_name || "S").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+
   return (
-    <div className="selbar" style={{ left: at.x, top: at.y }} role="toolbar" aria-label="Mark this passage">
-      <button type="button" className="selbar-main" onClick={onHighlight} data-colour={colour}>
-        <Highlighter size={16} aria-hidden="true" /> Highlight
-      </button>
-      <button type="button" className="selbar-ico" onClick={onUnderline} aria-label="Underline">
-        <Underline size={15} aria-hidden="true" />
-      </button>
-      <button type="button" className="selbar-ico" onClick={onStrike} aria-label="Strike through">
-        <Strikethrough size={15} aria-hidden="true" />
-      </button>
-      <span className="selbar-rule" aria-hidden="true" />
-      <button type="button" className="selbar-act" onClick={onNote}>
-        <MessageSquare size={15} aria-hidden="true" /> Note
-      </button>
-      <button type="button" className="selbar-act" onClick={onAsk}>
-        <HelpCircle size={15} aria-hidden="true" /> Ask
-      </button>
-      {canCorrect && (
-        <button type="button" className="selbar-act" onClick={onCorrect}>
-          <Flag size={15} aria-hidden="true" /> Correction
-        </button>
+    <div className="bar pop mark-card is-open"
+         style={{ left: at.left, top: at.top }}
+         onMouseEnter={onHold} onMouseLeave={onLeave}
+         role="dialog" aria-label={`${c.name} on page ${mark.page ?? ""}`}>
+      <div className="mch" style={{ "--c": c.hex }}>
+        <i /><b>{c.name}</b><em>p.{mark.page ?? "—"}</em>
+      </div>
+      <div className="mcd">{c.does}</div>
+
+      <div className="mcw">
+        <span className={`av${mine ? "" : " other"}`}>{initials}</span>
+        <div>
+          <b>{who}</b>
+          <span>
+            {mark.when || "just now"}
+            {anon && " · name hidden on questions"}
+            {!mine && !anon && mark.contribution ? ` · ${mark.contribution}` : ""}
+          </span>
+        </div>
+        {!mine && !thread && (
+          <button type="button" className="btn grow" data-act="agree"
+                  onClick={() => onAgree(mark)} aria-label="Agree">
+            <Icon name="agree" size={15} /> {mark.agree_count || 0}
+          </button>
+        )}
+      </div>
+
+      {thread && (
+        <div className="thr">
+          <span className={`state${state === "open" ? " is-open" : ""}`} />
+          {state === "open"
+            ? `Open thread · ${mark.replies || 0} ${(mark.replies || 0) === 1 ? "reply" : "replies"}`
+            : `Answered · ${mark.replies || 0} ${(mark.replies || 0) === 1 ? "reply" : "replies"}`}
+          <u role="button" tabIndex={0} onClick={() => onThread(mark)}
+             onKeyDown={(e) => e.key === "Enter" && onThread(mark)}>Open in Ready Room</u>
+        </div>
       )}
+
+      <div className="mca">
+        {mine ? (
+          <>
+            {COLOURS.map((cc) => (
+              <button key={cc.key} type="button"
+                      className={`sw${cc.key === mark.colour ? " is-on" : ""}`}
+                      data-colour={cc.key}
+                      style={{ "--c": cc.hex }} aria-label={cc.name}
+                      onClick={() => onRecolour(mark, cc.key)}><i /></button>
+            ))}
+            <span className="sep" />
+            <button type="button" className="ib" aria-label="Add a note" onClick={() => onNote(mark)}>
+              <Icon tool="note" size={16} />
+            </button>
+            <button type="button" className="ib" aria-label="Delete" onClick={() => onDelete(mark)}>
+              <Icon name="trash" size={16} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" className="btn primary" data-act="ask" onClick={() => onThread(mark)}>
+              {thread ? "Answer this" : anon ? "Reply" : `Ask ${(mark.author_name || "them").split(/\s+/)[0]}`}
+            </button>
+            <button type="button" className="btn grow" data-act="follow">Follow</button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-/* THE PROPERTIES TRAY — Drawboard's idea, and the reason this screen has one
-   toolbar instead of three.
-
-   The armed tool's settings appear beside the rail and nowhere else. A
-   highlighter has a colour; a pen has a colour and a nib; an eraser has a size;
-   a note has an audience; the pointer has nothing at all and the tray is simply
-   absent. A permanent properties strip would have to show all of those at once,
-   which means showing six controls that do nothing to the tool in your hand.
-
-   It floats over the document rather than taking a band of its own, because
-   every pixel this screen spends on furniture is a pixel of paper. */
-function Swatches({ value, onPick, label, set = INK_COLOURS }) {
-  return (
-    <div className="tray-row" role="radiogroup" aria-label={label}>
-      {set.map((c) => (
-        <button key={c.id} type="button" role="radio" aria-checked={value === c.id}
-                className="swatch" data-colour={c.id}
-                title={c.does ? `${c.name} — ${c.does}` : c.label}
-                aria-label={c.name || c.label}
-                onClick={() => onPick(c.id)} />
-      ))}
-    </div>
-  );
-}
-
-function Nibs({ value, onPick }) {
-  return (
-    <div className="tray-nibs" role="radiogroup" aria-label="Nib">
-      {PEN_SIZES.map((p) => (
-        <button key={p.id} type="button" role="radio" aria-checked={value === p.id}
-                className="nib" title={p.label} aria-label={p.label} onClick={() => onPick(p.id)}>
-          <span style={{ width: 3 + PEN_SIZES.indexOf(p) * 3.5, height: 3 + PEN_SIZES.indexOf(p) * 3.5 }} />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ToolTray({ tool, hlColour, penColour, penSize, ring, onHl, onPen, onSize, onRing }) {
+/* ---------------------------------------------------------------------------
+   THE INSPECTOR — §8.5. The live preview is the single most important detail;
+   without it the panel is a settings sheet.
+   ------------------------------------------------------------------------ */
+function Inspector({
+  open, tool, meaningId, inkColour, size, opacity, smart, smooth, recent,
+  onMeaning, onInk, onSize, onOpacity, onSmart, onSmooth, onReset,
+}) {
   const spec = toolAt(tool);
-  if (tool === "select") return null;
+  const ink = takesFreeColour(tool);
+  const c = ink ? { hex: inkColour, name: "", does: "" } : colourAt(meaningId);
+  const ticks = ink ? [1, 2, 4, 8, 16] : [4, 8, 12, 20, 32];
+  const [foldOpen, setFoldOpen] = useState(true);
+
   return (
-    <div className="ptray" role="group" aria-label={`${spec.label} settings`}>
-      <p className="tray-name">{spec.label}</p>
-      {spec.colour === "hl" && (
-        <>
-          <Swatches value={hlColour} onPick={onHl} label="What this mark means" set={MEANINGS} />
-          {/* THE MEANING CARD. The panel is settings without it: a student has
-              to be able to see what the colour in their hand will DO, at the
-              moment they pick it, not remember it. */}
-          <div className="tray-mean" data-colour={hlColour}>
-            <i aria-hidden="true" />
-            <span><b>{meaning(hlColour).name}</b>{meaning(hlColour).does}</span>
+    <div className={`bar pop bar-insp${open ? " is-open" : ""}`} aria-label={`${spec.name} settings`}>
+      <header>
+        <h3>{spec.name} <Icon name="chevron" size={13} /></h3>
+        <button type="button" className="ib" aria-label="Reset tool" onClick={onReset}>
+          <Icon name="reset" size={15} />
+        </button>
+      </header>
+
+      <div className="body">
+        {!hasColour(tool) ? (
+          /* Tools with no colour get one drawing and one sentence, never a
+             panel of controls that do nothing. */
+          <div className="empty">
+            <Icon tool={tool} size={40} />
+            {spec.hint}.
           </div>
-        </>
-      )}
-      {spec.colour === "pen" && <Swatches value={penColour} onPick={onPen} label="Ink colour" />}
-      {spec.size && <Nibs value={penSize} onPick={onSize} />}
-      {spec.ring && (
-        <label className="tray-ring">
-          <span>Seen by</span>
-          <select value={ring} onChange={(e) => onRing(e.target.value)}>
-            {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-          </select>
-        </label>
-      )}
-      <p className="tray-hint">{spec.hint}</p>
+        ) : (
+          <>
+            <div className="preview">
+              {ink ? (
+                <svg width="200" height="34" viewBox="0 0 200 34" aria-hidden="true">
+                  <path d="M6 24C34 4 46 30 72 17s38-16 60-3 40 12 62 2" fill="none"
+                        stroke={c.hex} strokeOpacity={opacity / 100}
+                        strokeWidth={Math.max(1, size)} strokeLinecap="round" />
+                </svg>
+              ) : tool === "ul" || tool === "st" ? (
+                <span className="smp" style={{
+                  textDecoration: tool === "ul" ? "underline" : "line-through",
+                  textUnderlineOffset: 3,
+                  textDecorationColor: rgba(c.hex, opacity / 100),
+                  textDecorationThickness: `${size}px`,
+                }}>Sample text</span>
+              ) : (
+                <span className="smp" style={{
+                  background: rgba(c.hex, opacity / 100),
+                  padding: `${Math.round(size / 4)}px 8px`,
+                }}>Sample text</span>
+              )}
+            </div>
+
+            <div className="row">
+              <div className="rowhead"><span>Size</span><span className="pill">{size} pt</span></div>
+              <input type="range" min={ticks[0]} max={ticks[ticks.length - 1]} value={size}
+                     aria-label="Size"
+                     style={{ "--trk": `linear-gradient(90deg,${c.hex},${rgba(c.hex, .25)})` }}
+                     onChange={(e) => onSize(Number(e.target.value))} />
+              <div className="ticks">{ticks.map((t) => <b key={t}>{t}</b>)}</div>
+            </div>
+
+            <div className="row">
+              {recent.length > 0 && (
+                <div className="recent">
+                  <span className="lb">Recent</span>
+                  {recent.map((k) => (
+                    <button key={k} type="button" className="sw sm" style={{ "--c": colourAt(k).hex }}
+                            aria-label={colourAt(k).name} onClick={() => onMeaning(k)}><i /></button>
+                  ))}
+                </div>
+              )}
+              <div className="rowhead"><span>{ink ? "Ink colour" : "All colours"}</span></div>
+              <div className="colours">
+                {(ink ? INK_COLOURS : COLOURS).map((cc) => {
+                  const key = ink ? cc.id : cc.key;
+                  const hex = ink ? undefined : cc.hex;
+                  const on = ink ? inkColour === cc.id : meaningId === cc.key;
+                  return (
+                    <button key={key} type="button" className={`sw${on ? " is-on" : ""}`}
+                            data-ink={ink ? cc.id : undefined}
+                            data-colour={ink ? undefined : cc.key}
+                            style={hex ? { "--c": hex } : undefined}
+                            aria-label={ink ? cc.label : cc.name}
+                            onClick={() => (ink ? onInk(cc.id) : onMeaning(cc.key))}><i /></button>
+                  );
+                })}
+                <button type="button" className="more" aria-label="More colours">···</button>
+              </div>
+            </div>
+
+            {/* What this colour DOES. §6 — the picker shows the meaning; the
+                card states it again. A colour that only looks different is a
+                colour nobody uses consistently. */}
+            {!ink && (
+              <div className="row">
+                <div className="meaning" style={{ "--c": c.hex }}>
+                  <i />
+                  <div style={{ flex: 1 }}>
+                    <b>{c.name}</b>
+                    <u>{c.does}</u>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="row" style={{ marginBottom: 4 }}>
+              <div className="rowhead"><span>Opacity</span><span className="pill">{opacity}%</span></div>
+              <input type="range" min="10" max="100" value={opacity} aria-label="Opacity"
+                     style={{ "--trk": `linear-gradient(90deg,${rgba(c.hex, .12)},${c.hex})` }}
+                     onChange={(e) => onOpacity(Number(e.target.value))} />
+              <div className="ticks"><b>25%</b><b>50%</b><b>75%</b><b>100%</b></div>
+            </div>
+
+            {ink && (
+              <div className={`fold${foldOpen ? " is-open" : ""}`}>
+                <button type="button" onClick={() => setFoldOpen(!foldOpen)}>
+                  Smart inking <Icon name="chevron" size={13} />
+                </button>
+                <div className="inner">
+                  <div className="tgl">
+                    <div className="lab">
+                      <b>Ink to line</b><span>Snap a stroke to the shape you meant</span>
+                    </div>
+                    <button type="button" className={`switch${smart ? " is-on" : ""}`}
+                            role="switch" aria-checked={smart} aria-label="Ink to line"
+                            onClick={() => onSmart(!smart)} />
+                  </div>
+                  <div className="rowhead"><span>Smoothness</span><span className="pill">{smooth}%</span></div>
+                  <input type="range" min="0" max="100" value={smooth} aria-label="Smoothness"
+                         onChange={(e) => onSmooth(Number(e.target.value))} />
+                  <div className="ticks"><b>25%</b><b>50%</b><b>75%</b><b>100%</b></div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-/* THE SPOTLIGHT.
+/* ---------------------------------------------------------------------------
+   THE ADD-TOOL SHEET — §9. The full set is always here, so nothing a student
+   takes off the tray becomes unreachable.
+   ------------------------------------------------------------------------ */
+function AddSheet({ open, tray, cap, onAdd, onReset, meaningId, inkColour }) {
+  const [tab, setTab] = useState("Mark up");
+  const full = tray.length >= cap;
+  return (
+    <div className={`bar pop bar-add${open ? " is-open" : ""}`} aria-label="Add a tool">
+      <header><h3>Add a tool</h3></header>
+      <div className="satabs" role="tablist">
+        {GROUPS.map((g) => (
+          <button key={g} type="button" role="tab" aria-selected={tab === g}
+                  className={tab === g ? "is-on" : ""} onClick={() => setTab(g)}>{g}</button>
+        ))}
+      </div>
+      <div className="sagrid">
+        {TOOLS.filter((t) => t.group === tab).map((t) => (
+          <button key={t.id} type="button"
+                  className={`sacell${tray.includes(t.id) ? " is-have" : ""}`}
+                  data-add={t.id} onClick={() => onAdd(t.id)}>
+            <span className="ic" style={t.colour
+              ? { color: t.freeColour ? undefined : colourAt(meaningId).hex }
+              : undefined}
+              data-ink={t.freeColour ? inkColour : undefined}>
+              <Icon tool={t.id} size={20} />
+            </span>
+            <span>{t.name}</span>
+          </button>
+        ))}
+      </div>
+      <div className="safoot">
+        {/* When it is full it says so rather than silently refusing. */}
+        <span>{full ? `Tray is full — remove one first (${cap} max)` : `${tray.length} of ${cap} on your tray`}</span>
+        <u role="button" tabIndex={0} onClick={onReset}
+           onKeyDown={(e) => e.key === "Enter" && onReset()}>Reset to course default</u>
+      </div>
+    </div>
+  );
+}
 
-   One panel, and what it makes is a segmented choice inside it rather than a
-   different dialog per kind. That matters more than it looks: a note and a
-   question are the same gesture on the same passage, differing only in who is
-   meant to answer, and making them two doors means deciding which door before
-   you have written the sentence that tells you.
-
-   Spotlight's shape because Spotlight's shape is the right one for this — it
-   arrives over the thing you were looking at, it is one field, it takes the
-   keyboard immediately, and Escape puts it away. A highlight never opens it;
-   that is the whole of R5. */
+/* The composer for a note, a question or a correction. Not in COMPONENTS.md —
+   the demo opens notes inline — so it borrows the inspector's own classes
+   rather than inventing a look. */
 const KINDS = [
   { id: "note", label: "Note", say: "What do you want to remember?" },
   { id: "question", label: "Question", say: "What is not landing?" },
   { id: "correction", label: "Correction", say: "What is wrong with this passage?" },
 ];
 
-function Spotlight({ kind, onKind, quote, ring, onRing, value, onChange, onSave, onCancel, busy }) {
+function Composer({ kind, onKind, quote, ring, onRing, value, onChange, onSave, onCancel, busy }) {
   const ref = useRef(null);
   useEffect(() => { ref.current?.focus(); }, [kind]);
   const here = KINDS.find((k) => k.id === kind) || KINDS[0];
-  const hint = kind === "correction"
-    ? "Goes to the author. Nobody else on the module ever sees it."
-    : kind === "question"
-      ? "Opens a thread in the Ready Room, with the passage quoted."
-      : "Only the people in the ring you pick will see it.";
-
   return (
-    <div className="spot" role="dialog" aria-label={here.label} aria-modal="true">
-      <div className="spot-seg" role="tablist" aria-label="What kind of mark">
+    <div className="bar pop composer" role="dialog" aria-label={here.label} aria-modal="true">
+      <div className="segs" role="tablist" aria-label="What kind of mark">
         {KINDS.map((k) => (
           <button key={k.id} type="button" role="tab" aria-selected={kind === k.id}
-                  className="spot-tab" onClick={() => onKind(k.id)}>{k.label}</button>
+                  className={kind === k.id ? "is-on" : ""} onClick={() => onKind(k.id)}>{k.label}</button>
         ))}
       </div>
-
-      <blockquote className="spot-quote">{quote}</blockquote>
-
-      <textarea ref={ref} className="spot-field" rows={3} value={value} placeholder={here.say}
+      <blockquote>{quote}</blockquote>
+      <textarea ref={ref} rows={3} value={value} placeholder={here.say}
                 onChange={(e) => onChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") onCancel();
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSave();
                 }} />
-
-      <div className="spot-foot">
+      <div className="composer-foot">
         {kind !== "correction" ? (
-          <label className="spot-ring">
+          <label>
             <span>Who sees it</span>
             <select value={ring} onChange={(e) => onRing(e.target.value)}>
               {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </label>
-        ) : <span className="spot-hint">{hint}</span>}
-        <button type="button" className="spot-go" disabled={busy || !value.trim()} onClick={onSave}>
+        ) : <span className="quiet">Goes to the author. Nobody else on the module sees it.</span>}
+        <button type="button" className="btn primary" disabled={busy || !value.trim()} onClick={onSave}>
           {busy ? "Saving…" : kind === "question" ? "Ask" : "Save"}
         </button>
       </div>
-      {kind !== "correction" && <p className="spot-hint">{hint}</p>}
     </div>
   );
 }
-
-
-/* =============================================================================
-   THE MARK CARD (brief §10). Named MarkPop so it does not collide with the
-   inline note card further down — that one is a note in the FLOW under a page,
-   this one is a popover over a mark, and they are different objects.
-
-   One popover does everything: what a mark is, who made it, and the right
-   actions for whose it is. It REPLACES the idea of a separate selection
-   toolbar — two overlapping popovers is exactly the clutter this rebuild is
-   removing.
-
-   It opens on hover after 240ms on a desktop AND on tap, and the second half
-   is not optional: an iPad has no hover, so a card that only appears on hover
-   is a card an iPad user can never see. That is called out specifically in the
-   brief because it is the sort of thing that ships broken.
-   ========================================================================= */
-function MarkPop({ mark, me, at, isStaff, onRecolour, onDelete, onNote, onAgree, onThread, onClose }) {
-  if (!mark || !at) return null;
-  const mine = mark.author_id === me;
-  const anon = mark.anonymous && !mine;
-  const m = meaning(mark.colour);
-  const thread = threadState(mark);
-  const who = anon ? "Asked anonymously" : mine ? "You" : (mark.author_name || "Someone");
-
-  return (
-    <div className="selbar" role="dialog" aria-label={`${m.name} mark`}
-         style={{ left: at.x, top: at.y }} data-flip={at.flip ? "" : undefined}>
-      <div className="mc-head" data-colour={mark.colour || undefined}>
-        <i aria-hidden="true" />
-        <b>{m.name}</b>
-        <em className="mono">p.{at.page}</em>
-        <button type="button" className="ptool mc-x" onClick={onClose} aria-label="Close">
-          <X size={14} aria-hidden="true" />
-        </button>
-      </div>
-
-      {/* Rule: the card always states what the colour DOES. A student should
-          never have to remember which of five things amber was. */}
-      <p className="mc-does">{m.does}</p>
-
-      <div className="mc-who">
-        <span className="mc-av" data-anon={anon ? "" : undefined} aria-hidden="true">
-          {anon ? "?" : (who.slice(0, 2) || "?").toUpperCase()}
-        </span>
-        <span className="mc-name">
-          <b>{who}</b>
-          <span>
-            {anon
-              ? "Name hidden on questions"
-              : mine ? "Yours" : `${mark.agree_count || 0} agreed`}
-          </span>
-        </span>
-        {!mine && (
-          <button type="button" className="mc-agree" onClick={() => onAgree(mark)}>
-            <ThumbsUp size={14} aria-hidden="true" /> {mark.agree_count || 0}
-          </button>
-        )}
-      </div>
-
-      {/* §6.1 — the thread strip, violet only. Open or answered, said in words
-          as well as in the treatment on the page. */}
-      {thread && (
-        <div className="mc-thread">
-          <span className="mc-dot" data-state={thread} aria-hidden="true" />
-          {thread === "answered" ? "Answered" : "Open thread"}
-          <button type="button" className="mc-link" onClick={() => onThread(mark)}>
-            Open in the Ready Room
-          </button>
-        </div>
-      )}
-
-      <div className="mc-acts">
-        {mine ? (
-          <>
-            {/* Restyle in place — the five, and nothing else, for a text mark. */}
-            <span className="mc-cols" role="radiogroup" aria-label="What this mark means">
-              {MEANINGS.map((c) => (
-                <button key={c.id} type="button" className="swatch" role="radio"
-                        aria-checked={mark.colour === c.id} data-colour={c.id}
-                        title={`${c.name} — ${c.destination}`} aria-label={c.name}
-                        onClick={() => onRecolour(mark, c.id)} />
-              ))}
-            </span>
-            <button type="button" className="ptool" onClick={() => onNote(mark)}
-                    aria-label="Add a note" title="Add a note">
-              <MessageSquare size={15} aria-hidden="true" />
-            </button>
-            <button type="button" className="ptool" onClick={() => onDelete(mark)}
-                    aria-label="Delete this mark" title="Delete">
-              <Trash2 size={15} aria-hidden="true" />
-            </button>
-          </>
-        ) : (
-          <button type="button" className="mc-go" onClick={() => onThread(mark)}>
-            {thread ? "Answer this" : anon ? "Reply" : `Ask ${(mark.author_name || "them").split(" ")[0]}`}
-          </button>
-        )}
-      </div>
-      {isStaff && mark.anonymous && (
-        <p className="mc-note">Instructors can see who asked.</p>
-      )}
-    </div>
-  );
-}
-
-/* A note in the flow, under the page it belongs to. */
-function MarkCard({ mark, me, onOpenThread, onDelete, onJump, active }) {
-  const kindWord = mark.kind === "question" ? "asked" : "noted";
-  return (
-    <article className={`mcardp ${active ? "is-active" : ""}`} data-kind={mark.kind}
-             data-colour={mark.colour || undefined}>
-      <button type="button" className="mcardp-quote" onClick={() => onJump(mark)}>
-        {mark.quote}
-      </button>
-      <p className="mcardp-body">{mark.body}</p>
-      <p className="mcardp-foot">
-        <b>{mark.author_name}</b> {kindWord}
-        {mark.ring !== "module" && <span className="mcardp-ring"> · {ringLabel(mark.ring)}</span>}
-        {mark.kind === "question" && mark.thread_id && (
-          <button type="button" className="mcardp-link" onClick={() => onOpenThread(mark.thread_id)}>
-            Answer in the Ready Room
-          </button>
-        )}
-        {mark.author_id === me && (
-          <button type="button" className="mcardp-del" onClick={() => onDelete(mark)} aria-label="Delete this mark">
-            <Trash2 size={14} aria-hidden="true" />
-          </button>
-        )}
-      </p>
-    </article>
-  );
-}
-
-/* The keys, written down. Every reader worth using has this sheet and it is
-   always the same sheet, so nobody has to read it twice. */
-const SHORTCUTS = [
-  ["⌘F / Ctrl F", "Find in this paper"],
-  ["⌘+ / ⌘−", "Zoom in and out"],
-  ["⌘0", "Fit the width"],
-  ["⌘Z", "Undo the last thing you made"],
-  ["← →", "Previous and next page"],
-  ["Home / End", "First and last page"],
-  ["V H U S", "Pointer, highlight, underline, strike"],
-  ["P M E", "Pen, marker, eraser"],
-  ["N Q", "Note, question"],
-  ["Esc", "Put away whatever is open"],
-];
 
 function Sheet({ title, onClose, children }) {
   return (
-    <div className="spot-scrim" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="psheet" role="dialog" aria-label={title} aria-modal="true">
-        <header className="psheet-top">
-          <h2>{title}</h2>
-          <button type="button" className="ptool" onClick={onClose} aria-label="Close">
-            <X size={16} aria-hidden="true" />
+    <div className="rdr-scrim" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bar pop rdr-sheet" role="dialog" aria-label={title} aria-modal="true">
+        <header>
+          <h3>{title}</h3>
+          <button type="button" className="ib" onClick={onClose} aria-label="Close">
+            <Icon name="close" size={16} />
           </button>
         </header>
         {children}
@@ -463,11 +399,19 @@ function Sheet({ title, onClose, children }) {
   );
 }
 
-/* ========================================================================= */
-/* Called by App the moment a paper route is entered, before this component
-   renders, so pdf.js's worker is in the cache by the time it is needed. */
-export const warm = () => warmWorker();
-
+const SHORTCUTS = [
+  ["⌘F / Ctrl F", "Find in this paper"],
+  ["⌘+ / ⌘−", "Zoom in and out"],
+  ["⌘0", "Fit the width"],
+  ["⌘Z / ⇧⌘Z", "Undo and redo"],
+  ["← →", "Previous and next page"],
+  ["Home / End", "First and last page"],
+  ["1 – 5", "Recolour the selected mark"],
+  ["V H U S", "Pointer, highlight, underline, strike"],
+  ["P M E", "Pen, marker, eraser"],
+  ["N Q C", "Note, question, correction"],
+  ["Esc", "Put away whatever is open"],
+];
 export default function PaperReader({
   paper, moduleCode, me, isStaff = false, onBack, onOpenThread, onOpenOriginal, onPlace,
 }) {
@@ -511,10 +455,39 @@ export default function PaperReader({
     window.addEventListener("resize", on);
     return () => window.removeEventListener("resize", on);
   }, []);
-  const [light, setLight] = useState(() => read("pw-paper-light", "day"));
+  /* "follow" is the default and it means what it says: whatever the app is.
+     A reader with its own remembered theme is a screen that disagrees with the
+     one it opened from. */
+  const [light, setLight] = useState(() => read("pw-paper-light", "follow"));
+  const [appVariant, setAppVariant] = useState("night");
+  useEffect(() => {
+    const root = document.querySelector(".app");
+    if (!root) return undefined;
+    const read2 = () => setAppVariant(root.dataset.variant === "day" ? "day" : "night");
+    read2();
+    const mo = new MutationObserver(read2);
+    mo.observe(root, { attributes: true, attributeFilter: ["data-variant"] });
+    return () => mo.disconnect();
+  }, []);
+
+  /* §8.3 — the accent comes from the livery. Everything else in the shipped
+     palette is fixed, the five mark colours especially: they carry meaning and
+     must not shift between liveries. */
+  const [accent, setAccent] = useState(null);
+  useEffect(() => {
+    const root = document.querySelector(".app");
+    if (!root) return;
+    const cs = getComputedStyle(root);
+    const a = cs.getPropertyValue("--active").trim();
+    if (a) setAccent(a);
+  }, [appVariant]);
   const [full, setFull] = useState(false);
 
   const [rows, setRows] = useState([]);
+  /* Read by the refresh so it can say how many arrived, without making the
+     handler depend on the list and rebuild on every mark. */
+  const rowsRef = useRef([]);
+  rowsRef.current = rows;
   const [strokes, setStrokes] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState("all");
@@ -557,31 +530,18 @@ export default function PaperReader({
      them, so the handler does not need rebuilding every time a mark is made. */
   const ticksRef = useRef([]);
 
-  const [tool, setTool] = useState("select");
+  const [tool, setTool] = useState("sel");
   /* THE TRAY. Loaded per device class, so a laptop and a tablet keep their own.
      See lib/paperTray.js for why they must not be one list. */
   const [tray, setTray] = useState(() => loadTray(
     typeof window === "undefined" ? 1440 : window.innerWidth, TOOLS,
   ));
-  const [trayNote, setTrayNote] = useState(null);
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [addTab, setAddTab] = useState(1);
   const cap = capFor(typeof window === "undefined" ? 1440 : window.innerWidth);
-  const keepTray = useCallback((next) => {
-    setTray(next);
-    saveTray(window.innerWidth, next);
-  }, []);
-  const dragging = useRef(null);
-  const pressT = useRef(null);
   /* LONG-PRESS THE DOCK TO REARRANGE IT. `-webkit-touch-callout: none` and
      `user-select: none` are on the dock in CSS, or iOS raises its own callout
      menu over this and the gesture belongs to Safari instead. */
-  const startLongPress = useCallback((e) => {
-    if (!e.target.closest?.(".ptoolbtn")) return;
-    pressT.current = setTimeout(() => { setEditing(true); setAdding(false); }, 450);
-  }, []);
-  const cancelLongPress = useCallback(() => { clearTimeout(pressT.current); }, []);
   const [hlColour, setHlColour] = useState(() => read("pw-paper-hl", DEFAULT_MEANING));
   const [penColour, setPenColour] = useState(() => read("pw-paper-pen", DEFAULT_PEN));
   const [penSize, setPenSize] = useState(() => read("pw-paper-nib", DEFAULT_PEN_SIZE));
@@ -590,7 +550,7 @@ export default function PaperReader({
      for the same reason the player bar's position is: it belongs to the screen
      in front of you. A phone and a laptop should not argue about it. */
   const [dock, setDock] = useState(() => read("pw-paper-dock", "left"));
-  const [toolSize, setToolSize] = useState(() => read("pw-paper-toolsize", "m"));
+  const [toolSize] = useState(() => read("pw-paper-toolsize", "m"));
   useEffect(() => { write("pw-paper-dock", dock); }, [dock]);
   useEffect(() => { write("pw-paper-toolsize", toolSize); }, [toolSize]);
   useEffect(() => { write("pw-paper-layout", want); }, [want]);
@@ -614,6 +574,150 @@ export default function PaperReader({
   const [findAt, setFindAt] = useState(0);
   const [matchCase, setMatchCase] = useState(false);
   const [wholeWord, setWholeWord] = useState(false);
+
+  /* ---------------------------------------------------------------------
+     What the shipped markup needs that the old one did not.
+     ------------------------------------------------------------------ */
+  const [mode, setMode] = useState("read");        // read | rev  (§12)
+  const [penDown, setPenDown] = useState(false);   // §8.7 chrome recedes
+  const [inspOpen, setInspOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [freshMarks, setFreshMarks] = useState(false);
+
+  /* The inspector's values, per tool family. A highlighter's 12pt and a pen's
+     4pt are not the same number wearing two hats. */
+  const [hlSize, setHlSize] = useState(() => Number(read("pw-paper-hlsize", "12")) || 12);
+  const [opacity, setOpacity] = useState(() => Number(read("pw-paper-op", "42")) || 42);
+  const [smart, setSmart] = useState(() => read("pw-paper-smart", "1") === "1");
+  const [smooth, setSmooth] = useState(() => Number(read("pw-paper-smooth", "100")) || 100);
+  const [recent, setRecent] = useState(() => {
+    try { return JSON.parse(read("pw-paper-recent", "[]")) || []; } catch { return []; }
+  });
+  useEffect(() => { write("pw-paper-hlsize", String(hlSize)); }, [hlSize]);
+  useEffect(() => { write("pw-paper-op", String(opacity)); }, [opacity]);
+  useEffect(() => { write("pw-paper-smart", smart ? "1" : "0"); }, [smart]);
+  useEffect(() => { write("pw-paper-smooth", String(smooth)); }, [smooth]);
+  useEffect(() => { write("pw-paper-recent", JSON.stringify(recent)); }, [recent]);
+
+  const dockRef = useRef(null);
+  const dragId = useRef(null);
+  /* The scrubber's handlers are stable, so what they need about the document
+     comes through refs rather than through a closure that would rebuild them
+     on every page change. */
+  const totalPagesRef = useRef(0);
+  const pageRef = useRef(1);
+  const jumpToRef = useRef(null);
+
+  /* Picking a tool opens its inspector, because the inspector IS the tool's
+     properties and a tool with hidden properties is a tool you have to guess
+     at. Select has none, so it closes it. */
+  const pickTool = useCallback((id) => {
+    if (editing) return;
+    setTool(id);
+    setAdding(false);
+    setInspOpen(id !== "sel");
+    if (id !== "sel") setPicked(null);
+  }, [editing]);
+
+  const pickMeaning = useCallback((key) => {
+    setHlColour(key);
+    setRecent((r) => [key, ...r.filter((x) => x !== key)].slice(0, 3));
+  }, []);
+  const pickInk = useCallback((id) => setPenColour(id), []);
+
+  const resetTool = useCallback(() => {
+    if (takesFreeColour(tool)) { setPenColour(DEFAULT_PEN); setPenSize(4); }
+    else { setHlColour(DEFAULT_MEANING); setHlSize(12); }
+    setOpacity(takesFreeColour(tool) ? 100 : 42);
+  }, [tool]);
+
+  /* The tray. Nothing is unreachable: the Add sheet always lists the full set,
+     so a tool taken off can always be found again. */
+  const pushTool = useCallback((id) => {
+    /* addTool returns { tray, note } — the note is why it refused, and the
+       Add sheet's footer is already saying it, so a full tray is a no-op
+       here rather than a second message. Reading `tray` from the closure is
+       safe: this only ever runs from a click, one add at a time. */
+    const { tray: next } = addTool(tray, id, TOOLS, cap);
+    if (next === tray) return;
+    setTray(next);
+    saveTray(window.innerWidth, next);
+    pickTool(id);
+  }, [tray, cap, pickTool]);
+
+  const dropFromTray = useCallback((id) => {
+    setTray((held) => {
+      const next = removeTool(held, id);
+      saveTray(window.innerWidth, next);
+      if (tool === id) setTool(next[0] || "sel");
+      return next;
+    });
+  }, [tool]);
+
+  const dropTool = useCallback((onto) => {
+    const from = dragId.current;
+    dragId.current = null;
+    if (!from || from === onto) return;
+    setTray((held) => {
+      const next = moveTool(held, from, onto);
+      saveTray(window.innerWidth, next);
+      return next;
+    });
+  }, []);
+
+  /* Long-press the dock to edit it (§9). 450ms, and only from a press that
+     stays put — a press that becomes a drag is a drag. */
+  const lp = useRef(0);
+  const onDockPointerDown = useCallback((e) => {
+    if (!e.target.closest?.(".tool")) return;
+    clearTimeout(lp.current);
+    lp.current = setTimeout(() => { setEditing(true); setInspOpen(false); setAdding(false); }, 450);
+  }, []);
+  const onDockPointerUp = useCallback(() => clearTimeout(lp.current), []);
+  useEffect(() => () => clearTimeout(lp.current), []);
+
+  /* The page number is a scrubber (§11.3). The drag lives in a ref because
+     pointerdown and the first pointermove can land in the same tick. */
+  const scrubDown = useCallback((e) => {
+    if (totalPagesRef.current < 8) return;
+    try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch { /* not ours */ }
+    drag.current = { x: e.clientX, from: pageRef.current, page: pageRef.current };
+    setScrub({ page: pageRef.current });
+  }, []);
+  const scrubMove = useCallback((e) => {
+    const d = drag.current;
+    if (!d) return;
+    e.preventDefault();
+    const total = totalPagesRef.current;
+    const perPx = total / Math.max(320, window.innerWidth * 0.55);
+    const n = Math.max(1, Math.min(total, Math.round(d.from + (e.clientX - d.x) * perPx)));
+    if (n !== d.page) { d.page = n; setScrub({ page: n }); }
+  }, []);
+  const scrubUp = useCallback(() => {
+    const d = drag.current;
+    drag.current = null;
+    setScrub(null);
+    if (d && d.page !== d.from) jumpToRef.current?.(d.page);
+  }, []);
+
+  /* The mark card is held open while the pointer is on it — otherwise moving
+     from the mark to the card dismisses the card on the way. */
+  const cardTimer = useRef(0);
+  const holdCard = useCallback(() => clearTimeout(cardTimer.current), []);
+  const leaveCard = useCallback(() => {
+    clearTimeout(cardTimer.current);
+    cardTimer.current = setTimeout(() => setPicked(null), 260);
+  }, []);
+  useEffect(() => () => clearTimeout(cardTimer.current), []);
+
+  const openNoteOn = useCallback((mark) => {
+    if (!model) return;
+    setComposer({ kind: "note", start: mark.start, end: mark.end,
+                  quote: quoteOf(model, mark.start, mark.end) });
+    setDraft(mark.body || "");
+    setPicked(null);
+  }, [model]);
+
 
   /* WHY THIS SCREEN IS A PORTAL, AND IT IS NOT A PREFERENCE.
 
@@ -974,8 +1078,10 @@ export default function PaperReader({
     lastSync.current = new Date().toISOString();
     // Merge rather than replace on a refresh, so a mark made a second ago and
     // still in flight is not wiped by the answer to a question asked before it.
-    setRows((held) => (merge ? mergeRows(held, incoming) : incoming));
+    let after = 0;
+    setRows((held) => { const next = merge ? mergeRows(held, incoming) : incoming; after = next.length; return next; });
     setStrokes((held) => (merge ? mergeRows(held, ink) : ink));
+    return after;
   }, [me, paper?.id]);
 
   useEffect(() => {
@@ -1000,7 +1106,8 @@ export default function PaperReader({
     const el = scrollRef.current;
     const anchorNode = pageEls.current.get(page);
     const before = anchorNode ? anchorNode.getBoundingClientRect().top : null;
-    await syncFromServer(true);
+    const had = rowsRef.current.length;
+    const now = await syncFromServer(true);
     requestAnimationFrame(() => {
       const node = pageEls.current.get(page);
       if (el && before != null && node) {
@@ -1008,8 +1115,31 @@ export default function PaperReader({
         el.scrollTop += after - before;
       }
       setRefreshing(false);
+      /* §7.1 — it says what it found, in a sentence, and marks the button when
+         something came in. "Up to date" is not an absence stated: it is the
+         answer to the question that was asked. */
+      const gained = Math.max(0, (typeof now === "number" ? now : rowsRef.current.length) - had);
+      setFreshMarks(gained > 0);
+      setToast({
+        text: gained
+          ? `${gained} new ${gained === 1 ? "mark" : "marks"} from the module.`
+          : "Up to date. No new marks on this paper.",
+      });
     });
   }, [refreshing, syncFromServer, page]);
+
+  /* The toast says one thing and goes. */
+  useEffect(() => {
+    if (!toast) return undefined;
+    const t = setTimeout(() => setToast(null), 4200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  /* The dot clears when the Marks panel is opened, which is where the new ones
+     are. */
+  useEffect(() => { if (rail === "marks") setFreshMarks(false); }, [rail]);
+
+
 
   /* R9's other half — the author queue.
 
@@ -1252,22 +1382,16 @@ export default function PaperReader({
     return saved;
   }, [model, me, paper, moduleCode, ring, hlColour]);
 
-  const markSelection = useCallback(async (kind, from = sel) => {
-    if (!from) return;
-    const { start, end } = from;
-    clearSelection();
-    await addMark({ kind, start, end });
-  }, [sel, addMark]);
 
   /* ------------------------------------------------------------------ ink */
   /* Same optimistic shape as a mark, and for the same reason: a line that
      appears a beat after the finger lifts is a line you drew twice. */
   const addStroke = useCallback(async (pageNumber, points) => {
     if (!me || !paper?.id || !points.length) return;
-    const wide = penWidth(penSize) * (tool === "marker" ? 3.2 : 1);
+    const wide = penWidth(penSize) * (tool === "mkr" ? 3.2 : 1);
     const optimistic = {
       id: tempId(), paper_id: paper.id, module_code: moduleCode, author_id: me,
-      author_name: "You", page: pageNumber, tool: tool === "marker" ? "marker" : "pen",
+      author_name: "You", page: pageNumber, tool: tool === "mkr" ? "marker" : "pen",
       colour: penColour, width: wide, ring, points, mine: true,
       created_at: new Date().toISOString(),
     };
@@ -1312,32 +1436,24 @@ export default function PaperReader({
     if (!host2) return null;
     const W = 286, H = 210;
     const above = clientY - host2.top - H - 14;
+    /* `left`/`top`, because that is what the card's style reads. It used to
+       hand back x/y and the card rendered at nothing at all. */
     return {
-      x: Math.max(12, Math.min(clientX - host2.left - W / 2, host2.width - W - 12)),
-      y: above > 8 ? above : Math.min(host2.height - H - 12, clientY - host2.top + 18),
+      left: Math.max(12, Math.min(clientX - host2.left - W / 2, host2.width - W - 12)),
+      top: above > 8 ? above : Math.min(host2.height - H - 12, clientY - host2.top + 18),
       flip: above <= 8,
-      page: pageOf(model, mark.start),
     };
   }, [model]);
 
   const open = useCallback((mark, x, y) => {
     if (!mark) { setPicked(null); return; }
     setActiveId(mark.id);
-    setPicked({ mark, at: cardFor(mark, x, y) });
+    setPicked({ mark: { ...mark, page: model ? pageOf(model, mark.start) : null }, at: cardFor(mark, x, y) });
   }, [cardFor]);
 
   /* Hover on a desktop, tap on touch — and the tap half is the one that
      matters. An iPad reports no hover, so a card that only opens on hover is a
      card half the users can never see. */
-  const hoverT = useRef(null);
-  const onPageMove = useCallback((e) => {
-    if (e.pointerType === "touch" || e.pointerType === "pen") return;
-    clearTimeout(hoverT.current);
-    hoverT.current = setTimeout(() => {
-      const m = markAt(e.clientX, e.clientY);
-      if (m) open(m, e.clientX, e.clientY);
-    }, 240);
-  }, [markAt, open]);
 
   const handled = useRef(0);
   const tapToMark = useCallback((e) => {
@@ -1346,22 +1462,22 @@ export default function PaperReader({
     handled.current = e.timeStamp;
     /* A tap on an existing mark opens its card, whatever tool is in hand —
        except while a drawing tool is armed, where a tap is a dot. */
-    if (!INK_TOOLS.has(tool) && !window.getSelection()?.toString().trim()) {
+    if (!isInk(tool) && !window.getSelection()?.toString().trim()) {
       const hit = markAt(e.clientX, e.clientY);
       if (hit) { open(hit, e.clientX, e.clientY); return; }
       setPicked(null);
     }
-    if (!WRITTEN.has(tool)) return;
+    if (!isWritten(tool)) return;
     if (!model) return;
     if (window.getSelection()?.toString().trim()) return;      // a drag, not a tap
-    if (e.target.closest?.("button, a, input, textarea, select, .mcardp, .spot, .ptray")) return;
+    if (e.target.closest?.("button, a, input, textarea, select, .rdr-note, .composer, .bar-insp, .mark-card")) return;
     const at = offsetFromPoint(e.clientX, e.clientY);
     if (at == null) return;
     const span = sentenceAround(model.text, at);
     if (!span) return;
-    setComposer({ kind: tool, start: span.start, end: span.end, quote: quoteOf(model, span.start, span.end) });
+    setComposer({ kind: kindOf(tool), start: span.start, end: span.end, quote: quoteOf(model, span.start, span.end) });
     setDraft("");
-    if (tool === "correction") setRing("solo");
+    if (tool === "cor") setRing("solo");
   }, [tool, model, offsetFromPoint, markAt, open]);
 
   const openComposer = (kind, from = sel) => {
@@ -1376,13 +1492,16 @@ export default function PaperReader({
      inside the effect rather than listed as a dependency, because rebinding the
      listener on every tool change is how a selection ends up handled twice. */
   useEffect(() => {
-    if (!sel || tool === "select" || INK_TOOLS.has(tool)) return;
+    if (!sel || tool === "sel" || isInk(tool)) return;
     const made = sel;
-    if (TEXT_MARKS.has(tool)) {
+    if (marksText(tool)) {
       clearSelection();
-      addMark({ kind: tool, start: made.start, end: made.end });
+      addMark({ kind: kindOf(tool), start: made.start, end: made.end });
     } else {
-      openComposer(tool, made);
+      /* kindOf, not the tool id. `ask` is the tool; `question` is what the
+         row is, what the CHECK constraint allows, and what saveComposer
+         tests for before it opens the thread. */
+      openComposer(kindOf(tool), made);
     }
   }, [sel, tool]);
 
@@ -1482,7 +1601,15 @@ export default function PaperReader({
       if (cmd && e.key === "-") { e.preventDefault(); zoomAbout(stepZoom(scale, -1)); return; }
       if (cmd && e.key === "0") { e.preventDefault(); setFit("width"); return; }
       if (cmd) return;
-      if (e.key === "Escape") { setComposer(null); setFindOpen(false); setSel(null); setMenu(null); setSheet(null); setPicked(null); setAdding(false); setEditing(false); return; }
+      if (e.key === "Escape") {
+        setComposer(null); setFindOpen(false); setSel(null); setMenu(null);
+        setSheet(null); setPicked(null); setAdding(false); setEditing(false);
+        /* Below the panel breakpoint it is an overlay, and an overlay
+           dismisses (§8.6). Above it, it is the workspace — closing it
+           on Escape would throw away a place the reader is working. */
+        if (window.innerWidth < 1240) setRail("none");
+        return;
+      }
       /* One letter per tool — but ONLY for tools on the tray. A key that
          silently switches to something the student took off is the tray not
          meaning anything. */
@@ -1533,8 +1660,16 @@ export default function PaperReader({
   }, [shown, model]);
   const notesOnPage = useCallback((n) => notesByPage.get(n) || EMPTY, [notesByPage]);
 
-  const drawing = INK_TOOLS.has(tool);
+  const drawing = isInk(tool);
   const totalPages = sizes.length || paper?.pages || 0;
+
+  /* Feed the scrubber. Its handlers are deliberately stable (§11.3) — a
+     closure rebuilt on every page change would drop the drag mid-flight —
+     so this is the one place they learn how long the paper is, where the
+     reader is, and how to move. Without it the scrubber is inert. */
+  useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
+  useEffect(() => { pageRef.current = page; }, [page]);
+  useEffect(() => { jumpToRef.current = jumpTo; }, [jumpTo]);
   const drawSet = useMemo(
     () => new Set(pagesToDraw(layout, page, totalPages)), [layout, page, totalPages],
   );
@@ -1578,92 +1713,567 @@ export default function PaperReader({
 
   if (!paper || !host) return null;
 
+  /* THE READER FOLLOWS THE APP, and the reading light is a change ON TOP of
+     it rather than a second theme.
+
+     `data-look` decides which of the shipped palettes is in force. Defaulting
+     it to "paper" meant the reader opened light inside a night app — the whole
+     screen disagreeing with the one it came from. It takes the app's variant
+     unless the reader's own light has been set to something that overrides it:
+     Warm and Paper are light, Dim and Night are dark. */
+  const look = light === "paper" ? "paper"
+    : light === "night" || light === "dim" ? "night"
+      : light === "sepia" ? "paper"
+        : appVariant === "day" ? "paper" : "night";
+
   return createPortal(
-    <div className="paper" ref={shellRef}
-         data-rail={rail || "none"} data-dock={dock} data-toolsize={toolSize}
-         data-layout={layout} data-light={light} data-drawing={drawing ? "" : undefined}
-         data-editing={editing ? "" : undefined}
-         /* The furniture recedes while you read, and comes back the moment you
-            move. Never while something is open — a menu that faded under the
-            pointer would be a menu you cannot use. */
-         data-quiet={quiet && !menu && !sheet && !composer && !editing ? "" : undefined}
+    /* ONE ROOT, CARRYING THE STATE AS DATA ATTRIBUTES. The stylesheet reads
+       these; they are not duplicated as classes. */
+    <div className={`rdr${drawing && penDown ? " is-writing" : ""}`} ref={shellRef}
+         style={accent ? {
+           "--accent": accent,
+           "--accent-dim": `color-mix(in srgb, ${accent} 16%, transparent)`,
+         } : undefined}
+         data-look={look}
+         data-tool={tool}
+         data-mode={mode}
+         data-mark={marksText(tool) ? "1" : "0"}
+         data-edit={editing ? "1" : "0"}
+         data-dock={dock}
+         data-panel={rail || "none"}
+         data-quiet={quiet && !menu && !sheet && !composer && !editing && !adding ? "" : undefined}
          data-hush={hush ? "" : undefined}>
 
-      {/* ------------------------------------------------------------ bar */}
-      <header className="pbar">
-        <div className="pbar-l">
-          <button type="button" className="ptool" onClick={onBack} aria-label="Back to the Library">
-            <ChevronLeft size={18} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool" aria-pressed={rail ? "true" : "false"}
-                  aria-label="Pages and contents" onClick={() => setRail(rail ? null : "thumbs")}>
-            <PanelLeft size={17} aria-hidden="true" />
-          </button>
-          <h1 className="pbar-title">{paper.title}</h1>
-          {moduleCode && <span className="pbar-mod mono">{moduleCode}</span>}
+      {/* ── the document ─────────────────────────────────────────────── */}
+      <div className="rdr-scroll" ref={scrollRef} onScroll={onScroll}
+           onClick={tapToMark} onPointerUp={tapToMark}>
+        {error && <p className="rdr-err">{error}</p>}
+
+        <div className="rdr-stack" style={{ gap: PAGE_GAP }}>
+          {win[0] > 0 && <div className="rdr-gap" style={{ height: offsets[win[0]] }} aria-hidden="true" />}
+          {sizes.slice(win[0], win[1]).map((s, k) => {
+            const i = win[0] + k;
+            const n = i + 1;
+            const rotated = rotation % 180 !== 0;
+            const w = (rotated ? s.h : s.w) * scale;
+            const h = (rotated ? s.w : s.h) * scale;
+            const hidden = onScreen ? !onScreen.has(n) : false;
+            if (hidden) return null;
+
+            return drawSet.has(n) ? (
+              <PaperPage
+                key={n}
+                doc={doc} model={model} pageNumber={n} scale={scale} rotation={rotation} size={s}
+                segments={drawSegments} activeId={activeId} light={light}
+                strokes={strokes} me={me}
+                inkTool={drawing ? tool : null} inkColour={penColour}
+                inkWidth={penWidth(penSize) * (tool === "mkr" ? 3.2 : 1)}
+                onInk={addStroke} onErase={eraseStrokes}
+                onPenDown={() => setPenDown(true)} onPenUp={() => setPenDown(false)}
+                registerEl={registerEl} onDivs={takeDivs}
+                notes={notesOnPage(n)} onOpenThread={onOpenThread}
+                onDeleteNote={removeMark}
+              />
+            ) : (
+              /* §4.1 — NEVER a bare white box. A page-shaped card at the right
+                 ratio, its number quietly in the gutter, so the scroll height
+                 is right before any PDF byte arrives. */
+              <article className="rdr-page is-placeholder" key={n} data-page={n}
+                       style={{ width: w, height: h }}
+                       ref={(el) => { if (el) pageEls.current.set(n, el); }}>
+                <span className="pg-num mono">{n}</span>
+                <span className="pg-label">Page {n}</span>
+              </article>
+            );
+          })}
+          {win[1] < sizes.length && (
+            <div className="rdr-gap" aria-hidden="true"
+                 style={{ height: Math.max(0, offsets[sizes.length] - offsets[win[1]]) }} />
+          )}
         </div>
 
-        <div className="pbar-r">
-          <button type="button" className="ptool" onClick={refreshNow} disabled={refreshing}
-                  aria-label="Check for new marks on this paper">
-            <RefreshCw size={16} aria-hidden="true" data-spin={refreshing ? "" : undefined} />
-          </button>
-          <button type="button" className="ptool" aria-label="Find in this paper"
-                  aria-pressed={findOpen ? "true" : "false"} onClick={() => setFindOpen(!findOpen)}>
-            <Search size={16} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool" aria-label="How the page is shown"
-                  aria-expanded={menu === "view" ? "true" : "false"}
-                  onClick={() => setMenu(menu === "view" ? null : "view")}>
-            <Sun size={16} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool"
-                  aria-label={hush ? "Bring the controls back" : "Just the paper"}
-                  aria-pressed={hush ? "true" : "false"}
-                  title={hush ? "Bring the controls back" : "Just the paper"}
-                  onClick={() => setHush(!hush)}>
-            {hush ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
-          </button>
-          <button type="button" className="ptool" aria-label="More"
-                  aria-expanded={menu === "more" ? "true" : "false"}
-                  onClick={() => setMenu(menu === "more" ? null : "more")}>
-            <MoreHorizontal size={17} aria-hidden="true" />
-          </button>
+        {orphans.length > 0 && (
+          <section className="rdr-orphans">
+            <h2>
+              {orphans.length} {orphans.length === 1 ? "mark" : "marks"} lost
+              {orphans.length === 1 ? " its" : " their"} place when this paper changed
+            </h2>
+            <ul>
+              {orphans.map((o) => (
+                <li key={o.id}>
+                  <span>“{o.anchor?.quote}”</span>
+                  {o.body && <em>{o.body}</em>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      {/* ── marks-only revision view (§12) ───────────────────────────── */}
+      <div className="rev">
+        <div className="revwrap">
+          <div className="revhead">
+            <div>
+              <h2>Marks only</h2>
+              <p>
+                {marksList.length
+                  ? `${marksList.length} ${marksList.length === 1 ? "passage" : "passages"} across ${
+                      new Set(marksList.map((m) => (model ? pageOf(model, m.start) : 0))).size} pages of this paper.`
+                  : "Mark a passage and it appears here, grouped by what the colour does."}
+              </p>
+            </div>
+            <button type="button" className="ib" aria-label="Back to the paper"
+                    onClick={() => setMode("read")}>
+              <Icon name="close" size={17} />
+            </button>
+          </div>
+
+          <div className="revfilters">
+            {FILTERS.map((f) => {
+              const n = counts[f.id] || 0;
+              if (!n && f.id !== "all") return null;
+              return (
+                <button key={f.id} type="button" className={`chp${filter === f.id ? " is-on" : ""}`}
+                        onClick={() => setFilter(f.id)}>
+                  {f.label}
+                  {f.id !== "all" && <span style={{ color: COLOURS.find((c) => c.key === f.id)?.hex }}> {n}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {COLOURS.map((c) => {
+            const group = marksList.filter((m) => m.colour === c.key);
+            if (!group.length) return null;
+            return (
+              <div className="rgroup" key={c.key}>
+                <div className="rgh" style={{ "--c": c.hex }}>
+                  <i /><b>{c.name}</b>
+                  <em>{group.length} {group.length === 1 ? "passage" : "passages"} · {c.dest}</em>
+                </div>
+                {group.map((m) => (
+                  <div className="rcard" key={m.id} style={{ "--c": c.hex }}
+                       role="button" tabIndex={0}
+                       onClick={() => { setMode("read"); jumpTo(pageOf(model, m.start)); }}
+                       onKeyDown={(e) => e.key === "Enter" && (setMode("read"), jumpTo(pageOf(model, m.start)))}>
+                    <div className="st" />
+                    <p>{m.status === "orphaned" ? (m.anchor?.quote || "This passage") : quoteOf(model, m.start, m.end, 220)}</p>
+                    <span className="pg mono">p.{model ? pageOf(model, m.start) : "—"}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
-      </header>
+      </div>
 
-      {/* THE MENUS.
+      {/* ── top bar ──────────────────────────────────────────────────── */}
+      <div className="bar bar-top">
+        <button type="button" className="ib" aria-label="Back to the Library" onClick={onBack}>
+          <Icon name="back" size={17} />
+        </button>
+        <button type="button" className={`ib${rail && rail !== "none" ? " is-on" : ""}`}
+                aria-label="Pages" onClick={() => setRail(rail && rail !== "none" ? null : "thumbs")}>
+          <Icon name="pages" size={17} />
+        </button>
+        <button type="button" className="title">
+          <span className="mono mod">{moduleCode}</span><b>{paper.title}</b>
+        </button>
+        <span className="sep" />
+        <button type="button" className="ib" aria-label="Check for new marks"
+                onClick={refreshNow} disabled={refreshing}>
+          <Icon name="refresh" size={17} className={refreshing ? "is-spinning" : undefined} />
+          <span className="dot" hidden={!freshMarks} />
+        </button>
+        <button type="button" className={`ib${findOpen ? " is-on" : ""}`} aria-label="Find"
+                onClick={() => setFindOpen(!findOpen)}>
+          <Icon name="find" size={17} />
+        </button>
+        <button type="button" className={`ib${mode === "rev" ? " is-on" : ""}`} aria-label="Marks only"
+                onClick={() => setMode(mode === "rev" ? "read" : "rev")}>
+          <Icon name="revision" size={17} />
+        </button>
+        <button type="button" className={`ib${rail === "marks" ? " is-on" : ""}`} aria-label="Marks"
+                onClick={() => setRail(rail === "marks" ? null : "marks")}>
+          <Icon name="marks" size={17} />
+          <span className="dot" hidden={!marksList.length} />
+        </button>
+        <button type="button" className={`ib${menu === "view" ? " is-on" : ""}`} aria-label="Reading light"
+                onClick={() => setMenu(menu === "view" ? null : "view")}>
+          <Icon name="light" size={17} />
+        </button>
+        <button type="button" className={`ib${hush ? " is-on" : ""}`}
+                aria-label={hush ? "Bring the controls back" : "Just the paper"}
+                onClick={() => setHush(!hush)}>
+          <Icon name={hush ? "light" : "close"} size={17} />
+        </button>
+        <button type="button" className={`ib${menu === "more" ? " is-on" : ""}`} aria-label="More"
+                onClick={() => setMenu(menu === "more" ? null : "more")}>
+          <Icon name="more" size={17} />
+        </button>
+      </div>
 
-          Everything not reached every minute lives behind one of two, which is
-          the rule the readers people already use all follow: Preview and Edge
-          put rotate, print and download behind a control and give the rest of
-          the window to the document. This screen once had three horizontal
-          bands — a toolbar, a properties strip and a footer — 141px of
-          furniture before the page started.
+      {/* ── the dock: a tray the student builds (§9) ─────────────────── */}
+      <div className="bar bar-dock" ref={dockRef}
+           onPointerDown={onDockPointerDown} onPointerUp={onDockPointerUp}
+           onPointerLeave={onDockPointerUp} onPointerCancel={onDockPointerUp}>
+        {tray.map((id, i) => {
+          const t = toolAt(id);
+          const prev = i > 0 ? toolAt(tray[i - 1]) : null;
+          const swatch = takesFreeColour(id)
+            ? INK_COLOURS.find((c) => c.id === penColour)
+            : takesMeaning(id) ? colourAt(hlColour) : null;
+          return (
+            <span key={id} style={{ display: "contents" }}>
+              {prev && prev.group !== t.group && <div className="dsep" />}
+              <button type="button"
+                      className={`tool${tool === id ? " is-on" : ""}${LOCKED.includes(id) ? " is-locked" : ""}`}
+                      data-tool={id} draggable aria-label={t.name}
+                      /* §15 — the look is the class, the meaning is the ARIA.
+                         A screen reader cannot see `is-on`. */
+                      aria-pressed={tool === id}
+                      onClick={() => pickTool(id)}
+                      onDragStart={() => (dragId.current = id)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => { e.preventDefault(); dropTool(id); }}>
+                <Icon tool={id} />
+                {t.presets && <span className="cnt mono">{t.presets}</span>}
+                {t.colour && (
+                  <span className="swatch"
+                        style={{ background: swatch ? (swatch.hex || `var(--ink-${swatch.id})`) : undefined }} />
+                )}
+                {t.mode && <span className="mode" />}
+                <span className="x" role="button" tabIndex={-1} aria-label={`Remove ${t.name}`}
+                      onClick={(e) => { e.stopPropagation(); dropFromTray(id); }}>×</span>
+                <span className="tip">
+                  {t.name}<kbd>{t.key}</kbd><em>{t.hint}</em>
+                </span>
+              </button>
+            </span>
+          );
+        })}
+        <div className="dsep" />
+        <button type="button" className="addbtn" aria-label="Add a tool"
+                onClick={() => { setAdding(!adding); setInspOpen(false); }}>
+          <Icon name="add" size={17} />
+        </button>
+      </div>
 
-          Two menus and not one, because they answer different questions. The
-          sun is "how does this page look"; the ellipsis is "what else can I do
-          with it". A single list of fourteen items answers neither. */}
-      {menu && (
-        <button type="button" className="menu-scrim" aria-label="Close menu" onClick={closeMenus} />
+      <div className="bar pop bar-edit">
+        Drag to reorder · tap ✕ to remove
+        <button type="button" onClick={() => setEditing(false)}>Done</button>
+      </div>
+
+      <Inspector
+        open={inspOpen && !adding && !editing}
+        tool={tool}
+        meaningId={hlColour} inkColour={penColour}
+        size={takesFreeColour(tool) ? penSize : hlSize}
+        opacity={opacity} smart={smart} smooth={smooth} recent={recent}
+        onMeaning={pickMeaning} onInk={pickInk}
+        onSize={(v) => (takesFreeColour(tool) ? setPenSize(v) : setHlSize(v))}
+        onOpacity={setOpacity} onSmart={setSmart} onSmooth={setSmooth}
+        onReset={resetTool}
+      />
+
+      <AddSheet
+        open={adding} tray={tray} cap={cap}
+        meaningId={hlColour} inkColour={penColour}
+        onAdd={(id) => { pushTool(id); }}
+        onReset={() => { setTray([...DEFAULT_TRAY]); saveTray(window.innerWidth, [...DEFAULT_TRAY]); }}
+      />
+
+      {/* ── marks panel ──────────────────────────────────────────────── */}
+      <div className={`bar bar-panel${rail && rail !== "none" ? " is-open" : ""}`}>
+        <header>
+          <div className="segs" role="tablist" aria-label="What the panel shows">
+            <button type="button" role="tab" aria-selected={rail === "marks"}
+                    className={rail === "marks" ? "is-on" : ""}
+                    onClick={() => setRail("marks")}>Marks</button>
+            <button type="button" role="tab" aria-selected={rail === "thumbs"}
+                    className={rail === "thumbs" ? "is-on" : ""}
+                    onClick={() => setRail("thumbs")}>Pages</button>
+            <button type="button" role="tab" aria-selected={rail === "outline"}
+                    className={rail === "outline" ? "is-on" : ""}
+                    onClick={() => setRail("outline")}>Contents</button>
+            {isStaff && (
+              <button type="button" role="tab" aria-selected={rail === "queue"}
+                      className={rail === "queue" ? "is-on" : ""}
+                      onClick={() => setRail("queue")}>Queue</button>
+            )}
+          </div>
+        </header>
+
+        {rail === "marks" && (
+          <>
+            <div className="chips">
+              {FILTERS.map((f) => {
+                const n = counts[f.id] || 0;
+                return (
+                  <button key={f.id} type="button"
+                          className={`chp${filter === f.id ? " is-on" : ""}`}
+                          aria-pressed={filter === f.id}
+                          disabled={!n && f.id !== "all"}
+                          onClick={() => setFilter(f.id)}>
+                    {f.label}
+                    {/* The count is its own element, the way the reference
+                       draws it — a label and a number run together read as
+                       one string to anything reading the DOM. */}
+                    {n > 0 && f.id !== "all" && (
+                      <span style={{ color: COLOURS.find((c) => c.key === f.id)?.hex }}>{n}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="plist">
+              {marksList.length ? (() => {
+                let last = null;
+                return marksList.map((m) => {
+                  const pg = model ? pageOf(model, m.start) : 0;
+                  const head = pg !== last ? (last = pg, true) : false;
+                  const c = colourAt(m.colour || DEFAULT_MEANING);
+                  return (
+                    <span key={m.id} style={{ display: "contents" }}>
+                      {head && <div className="pgh">Page {pg}</div>}
+                      <div className="mrow" data-mark-id={m.id} style={{ "--c": c.hex }}
+                           role="button" tabIndex={0}
+                           onClick={() => { setActiveId(m.id); jumpTo(pg); }}
+                           onKeyDown={(e) => e.key === "Enter" && (setActiveId(m.id), jumpTo(pg))}>
+                        <div className="stripe" />
+                        <div>
+                          <div className="t"><b>{c.name}</b><em>p.{pg}</em></div>
+                          <p>{m.status === "orphaned"
+                            ? (m.anchor?.quote || "This passage")
+                            : quoteOf(model, m.start, m.end, 160)}</p>
+                          <div className="w">
+                            {m.author_id === me ? "You" : (m.anonymous ? "Anonymous" : m.author_name)}
+                            {m.status === "orphaned" ? " · couldn’t be placed" : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </span>
+                  );
+                });
+              })() : (
+                /* A drawing and one useful line, never an apology.
+                   COMPONENTS.md's own copy opens "Nothing matches this
+                   filter." — the shape is the ship's, the sentence is not:
+                   this app never states absence, it names the next action
+                   (CLAUDE.md, Voice). Two cases, because they have different
+                   next actions. */
+                <div className="empty">
+                  <Icon name="marks" size={42} />
+                  {filter === "all"
+                    ? "Nobody has marked this one up yet. Select a line and yours will be the first."
+                    : "Mark a sentence with this meaning and it lands here, with its page and its sentence."}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {rail === "thumbs" && (
+          <PaperThumbs doc={doc} pages={totalPages} current={page} onPick={jumpTo}
+                       boxes={paper?.manifest?.boxes}
+                       thumbSrc={paper?.manifest ? (n) => thumbUrl(paper, n) : null} />
+        )}
+
+        {rail === "outline" && (
+          <div className="plist"><PaperOutline doc={doc} onPick={jumpTo} /></div>
+        )}
+
+        {rail === "queue" && isStaff && (
+          <div className="plist">
+            {queue.length ? queue.map((c) => (
+              <div className="mrow" key={c.id} style={{ "--c": "var(--c-wrong)" }}>
+                <div className="stripe" />
+                <div>
+                  <div className="t"><b>Correction</b><em>{c.author_name}</em></div>
+                  <p>{c.body}</p>
+                  <div className="w">
+                    <button type="button" className="btn" onClick={async () => {
+                      await resolveCorrection(c.id); loadQueue();
+                    }}>Done with it</button>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="empty">
+                <Icon tool="cor" size={42} />
+                Nothing reported on this module yet. A student who spots something
+                wrong can tell you from the passage itself.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── tick rail (§11.2) ────────────────────────────────────────── */}
+      {ticks.length > 0 && totalPages > 1 && (
+        <div className="rail" title="Your marks across this paper"
+             role="button" tabIndex={0}
+             onPointerMove={(e) => {
+               const r = e.currentTarget.getBoundingClientRect();
+               setRailAt({ y: e.clientY - r.top, page: pageAtRail(e.clientY - r.top, r.height) });
+             }}
+             onPointerLeave={() => setRailAt(null)}
+             onKeyDown={(e) => { if (e.key === "Enter") jumpTo(page); }}
+             onClick={(e) => {
+               const r = e.currentTarget.getBoundingClientRect();
+               jumpTo(pageAtRail(e.clientY - r.top, r.height));
+             }}>
+          <div className="trk" />
+          <div className="you" style={{ top: `${((page - 0.5) / totalPages) * 100}%` }} />
+          {ticks.map((t) => (
+            <div key={t.id} className={`tk${t.mine ? " is-mine" : ""}`} data-page={t.page}
+                 style={{ top: `${((t.page - 0.5) / totalPages) * 100}%`,
+                          "--c": colourAt(t.colour || DEFAULT_MEANING).hex }} />
+          ))}
+        </div>
+      )}
+      {railAt && (
+        <div className="bar pop railtip is-open"
+             style={{ top: railAt.y + 64, "--c": colourAt(ticks.find((t) => t.page === railAt.page)?.colour || DEFAULT_MEANING).hex }}>
+          <b>{ticks.find((t) => t.page === railAt.page)?.name || "Page"}</b>
+          <em>p.{railAt.page}</em>
+        </div>
       )}
 
+      {/* ── bottom bar ───────────────────────────────────────────────── */}
+      <div className="bar bar-bot">
+        <button type="button" className="ib" aria-label="Undo" onClick={undo} disabled={!canUndo}>
+          <Icon name="undo" size={17} />
+        </button>
+        <button type="button" className="ib" aria-label="Redo" onClick={redo} disabled={!canRedo}>
+          <Icon name="redo" size={17} />
+        </button>
+        <span className="sep" />
+        <div className="pgctl">
+          <button type="button" className="ib" aria-label="Previous page"
+                  onClick={() => step(-1)} disabled={page <= 1}>
+            <Icon name="prev" size={15} />
+          </button>
+          <span className="pgpill" title="Drag to fly through this paper"
+                role="button" tabIndex={0}
+                onPointerDown={scrubDown} onPointerMove={scrubMove}
+                onPointerUp={scrubUp} onPointerCancel={scrubUp}>
+            {scrub ? scrub.page : page}
+          </span>
+          <span className="tot">/ {totalPages || "—"}</span>
+          <button type="button" className="ib" aria-label="Next page"
+                  onClick={() => step(1)} disabled={page >= totalPages}>
+            <Icon name="next" size={15} />
+          </button>
+        </div>
+        <span className="sep" />
+        <button type="button" className={`ib${density ? " is-on" : ""}`} aria-label="Class marks"
+                onClick={() => setDensity(!density)}>
+          <Icon name="density" size={17} />
+        </button>
+        <span className="sep" />
+        <div className="zoom">
+          <button type="button" className="ib" aria-label="Zoom out"
+                  onClick={() => { setFit(null); setScale((z) => stepZoom(z, -1)); }}>
+            <Icon name="zoomOut" size={15} />
+          </button>
+          <button type="button" className="v" onClick={() => setMenu(menu === "zoom" ? null : "zoom")}>
+            {fit ? (FITS.find((f) => f.id === fit)?.label || "Fit width") : `${Math.round(scale * 100)}%`}
+          </button>
+          <button type="button" className="ib" aria-label="Zoom in"
+                  onClick={() => { setFit(null); setScale((z) => stepZoom(z, 1)); }}>
+            <Icon name="zoomIn" size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── scrubber, back pill, toast ───────────────────────────────── */}
+      {scrub && (
+        <div className="bar pop scrub is-open">
+          <div className="thumb">
+            <i className="t" /><i /><i /><i className="m" /><i /><i />
+          </div>
+          <div className="meta">
+            <b className="mono">{scrub.page}</b>
+            <span>of {totalPages}</span>
+            {(() => {
+              const near = ticks.filter((t) => Math.abs(t.page - scrub.page) <= 2).length;
+              return near > 0 ? <u>{near} {near === 1 ? "mark" : "marks"} near here</u> : null;
+            })()}
+          </div>
+        </div>
+      )}
+
+      {cameFrom && cameFrom.page !== page && (
+        <div className="bar pop back is-open">
+          <b className="mono">Back to page {cameFrom.page}</b>
+          <button type="button" className="ib" aria-label="Go back"
+                  onClick={() => {
+                    goToPage(cameFrom.page);
+                    if (scrollRef.current && cameFrom.top != null) scrollRef.current.scrollTop = cameFrom.top;
+                    setCameFrom(null);
+                  }}>
+            <Icon name="backTo" size={16} />
+          </button>
+        </div>
+      )}
+
+      {toast && (
+        <div className="bar pop toast is-open" role="status">
+          <span>{toast.text}</span>
+          {toast.action && <button type="button" onClick={toast.action.run}>{toast.action.label}</button>}
+        </div>
+      )}
+
+      {/* ── find ─────────────────────────────────────────────────────── */}
+      {findOpen && (
+        <div className="bar pop findbar is-open">
+          <Icon name="find" size={15} />
+          <input autoFocus value={query} placeholder="Find in this paper" aria-label="Find in this paper"
+                 onChange={(e) => { setQuery(e.target.value); setFindAt(0); }}
+                 onKeyDown={(e) => {
+                   if (e.key === "Enter") setFindAt((i) => (finds.length ? (i + (e.shiftKey ? -1 : 1) + finds.length) % finds.length : 0));
+                   if (e.key === "Escape") { setFindOpen(false); setQuery(""); }
+                 }} />
+          <button type="button" className={`chp${matchCase ? " is-on" : ""}`} title="Match case"
+                  onClick={() => setMatchCase(!matchCase)}>Aa</button>
+          <button type="button" className={`chp${wholeWord ? " is-on" : ""}`} title="Whole words only"
+                  onClick={() => setWholeWord(!wholeWord)}>Ab|</button>
+          <span className="tot">
+            {query.trim() ? (finds.length ? `${findAt + 1} of ${finds.length}` : "Nothing yet") : ""}
+          </span>
+          <button type="button" className="ib" aria-label="Previous match"
+                  onClick={() => setFindAt((i) => (finds.length ? (i - 1 + finds.length) % finds.length : 0))}>
+            <Icon name="prev" size={15} />
+          </button>
+          <button type="button" className="ib" aria-label="Next match"
+                  onClick={() => setFindAt((i) => (finds.length ? (i + 1) % finds.length : 0))}>
+            <Icon name="next" size={15} />
+          </button>
+          <button type="button" className="ib" aria-label="Close find"
+                  onClick={() => { setFindOpen(false); setQuery(""); }}>
+            <Icon name="close" size={15} />
+          </button>
+        </div>
+      )}
+
+      {/* ── menus ────────────────────────────────────────────────────── */}
+      {menu && <button type="button" className="rdr-scrim-quiet" aria-label="Close menu" onClick={closeMenus} />}
+
       {menu === "zoom" && (
-        <div className="pmenu pmenu-zoom" role="menu" aria-label="Zoom">
+        <div className="bar pop rdr-menu rdr-menu-zoom" role="menu" aria-label="Zoom">
           {FITS.map((f) => (
             <button key={f.id} type="button" role="menuitemradio" aria-checked={fit === f.id}
                     onClick={() => { setFit(f.id); if (f.id === "actual") setScale(1); closeMenus(); }}>
-              <Check size={15} aria-hidden="true" data-on={fit === f.id ? "" : undefined} />
               {f.label}
             </button>
           ))}
-          <span className="pmenu-rule" aria-hidden="true" />
-          <p className="pmenu-read mono">Now at {Math.round(scale * 100)}%</p>
+          <span className="dsep" />
           {ZOOM_STEPS.filter((z) => z >= 0.5 && z <= 4).map((z) => (
             <button key={z} type="button" role="menuitemradio"
                     aria-checked={!fit && Math.abs(scale - z) < 0.005}
                     onClick={() => { setFit(null); setScale(clampZoom(z)); closeMenus(); }}>
-              <Check size={15} aria-hidden="true" data-on={!fit && Math.abs(scale - z) < 0.005 ? "" : undefined} />
               {Math.round(z * 100)}%
             </button>
           ))}
@@ -1671,674 +2281,102 @@ export default function PaperReader({
       )}
 
       {menu === "view" && (
-        <div className="pmenu pmenu-view" role="menu" aria-label="How the page is shown">
-          <p className="pmenu-head">Pages</p>
+        <div className="bar pop rdr-menu rdr-menu-view" role="menu" aria-label="How the page is shown">
+          <p className="rdr-menu-head">Pages</p>
           {LAYOUTS.map((l) => (
             <button key={l.id} type="button" role="menuitemradio" aria-checked={layout === l.id}
-                    onClick={() => { setLayout(l.id); closeMenus(); }}>
-              {l.id === "scroll" ? <Rows3 size={15} aria-hidden="true" />
-                : l.id === "single" ? <Square size={15} aria-hidden="true" />
-                  : <Columns2 size={15} aria-hidden="true" />}
-              {l.label}
-              {layout === l.id && <Check size={14} aria-hidden="true" className="pmenu-tick" data-on="" />}
-            </button>
+                    onClick={() => { setLayout(l.id); closeMenus(); }}>{l.label}</button>
           ))}
-
-          <span className="pmenu-rule" aria-hidden="true" />
-          <p className="pmenu-head">Light</p>
-          <div className="lights" role="radiogroup" aria-label="Light">
+          <span className="dsep" />
+          <p className="rdr-menu-head">Light</p>
+          <div className="rdr-lights" role="radiogroup" aria-label="Light">
             {PAPER_LIGHTS.map((l) => (
               <button key={l.id} type="button" role="radio" aria-checked={light === l.id}
-                      className="light" data-light={l.id} onClick={() => setLight(l.id)}>
-                <span className="light-chip" aria-hidden="true" />
-                {l.label}
-              </button>
+                      className={`chp${light === l.id ? " is-on" : ""}`} data-light={l.id}
+                      onClick={() => setLight(l.id)}>{l.label}</button>
             ))}
           </div>
-
-          <span className="pmenu-rule" aria-hidden="true" />
-          <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 270) % 360)}>
-            <RotateCcw size={15} aria-hidden="true" /> Turn left
-          </button>
-          <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 90) % 360)}>
-            <RotateCw size={15} aria-hidden="true" /> Turn right
-          </button>
+          <span className="dsep" />
+          <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 270) % 360)}>Turn left</button>
+          <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 90) % 360)}>Turn right</button>
           <button type="button" role="menuitem" onClick={() => { toggleFull(); closeMenus(); }}>
-            {full ? <Minimize2 size={15} aria-hidden="true" /> : <Maximize2 size={15} aria-hidden="true" />}
             {full ? "Leave full screen" : "Full screen"}
           </button>
         </div>
       )}
 
       {menu === "more" && (
-        <div className="pmenu" role="menu" aria-label="More">
-          <button type="button" role="menuitemcheckbox" aria-checked={density}
-                  onClick={() => setDensity(!density)}>
-            <Check size={15} aria-hidden="true" data-on={density ? "" : undefined} />
-            Show what the module marked
-          </button>
-
-          <span className="pmenu-rule" aria-hidden="true" />
-
-          {/* A default, not a decision you look at all day. Per mark it is
-              still chosen in the Spotlight, where you are actually deciding. */}
-          <label className="pmenu-pick">
+        <div className="bar pop rdr-menu" role="menu" aria-label="More">
+          <label className="rdr-menu-pick">
             <span>New marks seen by</span>
             <select value={ring} onChange={(e) => setRing(e.target.value)}>
               {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </label>
-          <label className="pmenu-pick">
+          <label className="rdr-menu-pick">
             <span>Tools on</span>
             <select value={dock} onChange={(e) => setDock(e.target.value)}>
               {DOCKS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
             </select>
           </label>
-          <label className="pmenu-pick">
-            <span>Tool size</span>
-            <select value={toolSize} onChange={(e) => setToolSize(e.target.value)}>
-              {TOOL_SIZES.map((z) => <option key={z.id} value={z.id}>{z.label}</option>)}
-            </select>
-          </label>
-
-          <span className="pmenu-rule" aria-hidden="true" />
-
-          <button type="button" role="menuitem" onClick={() => { printNow(); closeMenus(); }}>
-            <Printer size={15} aria-hidden="true" /> Print
-          </button>
-          <a role="menuitem" href={url} download onClick={closeMenus}>
-            <Download size={15} aria-hidden="true" /> Download
-          </a>
+          <span className="dsep" />
+          <button type="button" role="menuitem" onClick={() => { printNow(); closeMenus(); }}>Print</button>
+          <a role="menuitem" href={url} download onClick={closeMenus}>Download</a>
           <button type="button" role="menuitem" onClick={() => { onOpenOriginal?.(paper); closeMenus(); }}>
-            <Search size={15} aria-hidden="true" /> Open the original
+            Open the original
           </button>
-
-          <span className="pmenu-rule" aria-hidden="true" />
-
+          <span className="dsep" />
           <button type="button" role="menuitem" onClick={() => { setSheet("details"); closeMenus(); }}>
-            <Info size={15} aria-hidden="true" /> Document details
+            Document details
           </button>
           <button type="button" role="menuitem" onClick={() => { setSheet("keys"); closeMenus(); }}>
-            <Keyboard size={15} aria-hidden="true" /> Keyboard shortcuts
-          </button>
-          {isStaff && <p className="pmenu-note">You are looking at this as the author.</p>}
-        </div>
-      )}
-
-      {findOpen && (
-        <div className="findbar">
-          <Search size={15} aria-hidden="true" />
-          <input autoFocus value={query} placeholder="Find in this paper"
-                 onChange={(e) => { setQuery(e.target.value); setFindAt(0); }}
-                 onKeyDown={(e) => {
-                   if (e.key === "Enter") setFindAt((i) => (finds.length ? (i + (e.shiftKey ? -1 : 1) + finds.length) % finds.length : 0));
-                   if (e.key === "Escape") { setFindOpen(false); setQuery(""); }
-                 }} />
-          <button type="button" className="findopt" aria-pressed={matchCase ? "true" : "false"}
-                  title="Match case" onClick={() => setMatchCase(!matchCase)}>Aa</button>
-          <button type="button" className="findopt" aria-pressed={wholeWord ? "true" : "false"}
-                  title="Whole words only" onClick={() => setWholeWord(!wholeWord)}>Ab|</button>
-          <span className="find-count">
-            {query.trim() ? (finds.length ? `${findAt + 1} of ${finds.length}` : "Nothing yet") : ""}
-          </span>
-          <button type="button" className="ptool" aria-label="Previous match"
-                  onClick={() => setFindAt((i) => (finds.length ? (i - 1 + finds.length) % finds.length : 0))}>
-            <ChevronLeft size={15} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool" aria-label="Next match"
-                  onClick={() => setFindAt((i) => (finds.length ? (i + 1) % finds.length : 0))}>
-            <ChevronRight size={15} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool" aria-label="Close find"
-                  onClick={() => { setFindOpen(false); setQuery(""); }}>
-            <X size={15} aria-hidden="true" />
+            Keyboard shortcuts
           </button>
         </div>
       )}
 
-      {/* Drawboard's rail, in four groups, with the armed tool's settings
-          floating beside it rather than taking a band of their own. */}
-      {/* THE DOCK — the student's tray, grouped, with the way to change it at
-          the bottom. Long-press anywhere on it to rearrange. */}
-      <div className="ptools" role="toolbar" aria-label="Marking tools"
-           onPointerDown={startLongPress} onPointerUp={cancelLongPress}
-           onPointerLeave={cancelLongPress} onPointerCancel={cancelLongPress}>
-        {GROUPS.map((g) => {
-          const mine = tray.map((id) => toolAt(id)).filter((t) => t.group === g.id);
-          if (!mine.length) return null;
-          return (
-            <div className="ptoolgroup" key={g.id}>
-              {mine.map((t) => (
-                <span className="ptoolslot" key={t.id}
-                      draggable={editing}
-                      onDragStart={() => { dragging.current = t.id; }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => { e.preventDefault(); if (dragging.current) keepTray(moveTool(tray, dragging.current, t.id)); dragging.current = null; }}>
-                  <button type="button" className="ptoolbtn" aria-pressed={tool === t.id}
-                          aria-label={t.label} title={`${t.label} (${t.key}) — ${t.hint}`}
-                          onClick={() => { if (!editing) setTool(t.id); }}>
-                    {TOOL_ICONS[t.id]}
-                    {t.colour && (
-                      <span className="ptool-sw" aria-hidden="true"
-                            data-colour={t.colour === "hl" ? hlColour : penColour} />
-                    )}
-                  </button>
-                  {editing && !LOCKED.includes(t.id) && (
-                    <button type="button" className="ptool-rm"
-                            aria-label={`Take ${t.label} off the tray`}
-                            onClick={() => keepTray(removeTool(tray, t.id))}>
-                      <X size={11} aria-hidden="true" />
-                    </button>
-                  )}
-                </span>
-              ))}
-            </div>
-          );
-        })}
-
-        <button type="button" className="ptool-add" aria-label="Add a tool"
-                aria-expanded={adding ? "true" : "false"}
-                onClick={() => { setAdding(!adding); setEditing(false); }}>
-          <PlusIcon size={17} aria-hidden="true" />
-        </button>
-
-        {editing && (
-          <div className="ptray ptray-edit" role="status">
-            <p className="tray-name">Rearranging</p>
-            <p className="tray-hint">Drag to reorder. Take one off with its ✕. Select stays.</p>
-            <button type="button" className="tray-done" onClick={() => setEditing(false)}>Done</button>
-          </div>
-        )}
-
-        {/* ADD A TOOL — the full set, always, so nothing a student removed is
-            ever unreachable. Tools already on the tray are shown dimmed rather
-            than hidden, so the sheet reads the same every time. */}
-        {adding && !editing && (
-          <div className="ptray ptray-add" role="dialog" aria-label="Add a tool">
-            <p className="tray-name">Add a tool</p>
-            <div className="add-tabs" role="tablist">
-              {GROUPS.map((g) => (
-                <button key={g.id} type="button" role="tab" aria-selected={addTab === g.id}
-                        onClick={() => setAddTab(g.id)}>{g.name}</button>
-              ))}
-            </div>
-            <div className="add-grid">
-              {TOOLS.filter((t) => t.group === addTab).map((t) => (
-                <button key={t.id} type="button" className="add-cell"
-                        data-have={tray.includes(t.id) ? "" : undefined}
-                        disabled={tray.includes(t.id)}
-                        onClick={() => {
-                          const { tray: next, note } = addTool(tray, t.id, TOOLS, cap);
-                          setTrayNote(note);
-                          if (!note) { keepTray(next); setTool(t.id); setAdding(false); }
-                        }}>
-                  <span className="add-ic">{TOOL_ICONS[t.id]}</span>
-                  <span>{t.label}</span>
-                </button>
-              ))}
-            </div>
-            <p className="tray-hint">
-              {trayNote || `${tray.length} of ${cap} on your tray`}
-            </p>
-            <div className="tray-foot">
-              <button type="button" className="tray-done"
-                      onClick={() => { setAdding(false); setEditing(true); }}>
-                Rearrange
-              </button>
-              <button type="button" className="tray-done"
-                      onClick={() => { keepTray([...DEFAULT_TRAY]); setTrayNote(null); }}>
-                Reset to the course default
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!adding && !editing && <ToolTray tool={tool} hlColour={hlColour} penColour={penColour} penSize={penSize}
-                  ring={ring} onHl={setHlColour} onPen={setPenColour}
-                  onSize={setPenSize} onRing={setRing} />}
-      </div>
-
-
-      {/* THE BOTTOM BAR (§8.4). Undo and redo live here because rule 4 says
-          undo is a button, always — not a shortcut a student on an iPad with
-          no keyboard cannot reach. Then where you are in the paper, then what
-          the module marked, then zoom. */}
-      <div className="pbot">
-        <button type="button" className="ptool" onClick={undo} disabled={!canUndo}
-                aria-label="Undo" title="Undo (⌘Z)">
-          <Undo2 size={17} aria-hidden="true" />
-        </button>
-        <button type="button" className="ptool" onClick={redo} disabled={!canRedo}
-                aria-label="Redo" title="Redo (⇧⌘Z)">
-          <Redo2 size={17} aria-hidden="true" />
-        </button>
-        <span className="pbot-rule" aria-hidden="true" />
-        <div className="pbot-c">
-          <button type="button" className="ptool" aria-label="Previous page"
-                  onClick={() => turn(-1)} disabled={page <= 1}>
-            <ChevronLeft size={16} aria-hidden="true" />
-          </button>
-          {/* §11.3 — THE PAGE NUMBER IS A SCRUBBER. Drag it and fly through
-              the manual, with a card showing where you would land and how many
-              marks are near it. In a 1012-page document this is faster than
-              typing a number and far faster than scrolling. */}
-          <span className="pnum" data-scrubbing={scrub ? "" : undefined}>
-            <input value={scrub ? scrub.page : page} aria-label="Page"
-                   title="Drag to fly through the paper"
-                   onChange={(e) => {
-                     const n = Number(e.target.value.replace(/\D/g, ""));
-                     if (n >= 1 && n <= totalPages) jumpTo(n);
-                   }}
-                   onPointerDown={(e) => {
-                     if (totalPages < 8) return;          // nothing to fly through
-                     try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch { /* not ours */ }
-                     drag.current = { x: e.clientX, from: page, page };
-                     setScrub({ page });
-                   }}
-                   onPointerMove={(e) => {
-                     const d = drag.current;
-                     if (!d) return;
-                     e.preventDefault();
-                     /* The whole paper across roughly half a screen width, so a
-                        thousand pages is a comfortable drag rather than a
-                        twitch. */
-                     const perPx = totalPages / Math.max(320, window.innerWidth * 0.55);
-                     const n = Math.max(1, Math.min(totalPages,
-                       Math.round(d.from + (e.clientX - d.x) * perPx)));
-                     if (n !== d.page) { d.page = n; setScrub({ page: n }); }
-                   }}
-                   onPointerUp={() => {
-                     const d = drag.current;
-                     drag.current = null;
-                     setScrub(null);
-                     if (d && d.page !== d.from) jumpTo(d.page);
-                   }}
-                   onPointerCancel={() => { drag.current = null; setScrub(null); }} />
-            <span>/ {totalPages || "—"}</span>
-          </span>
-          <button type="button" className="ptool" aria-label="Next page"
-                  onClick={() => turn(1)} disabled={page >= totalPages}>
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
-
-          <span className="pbot-rule" aria-hidden="true" />
-
-          <button type="button" className="ptool" aria-label="Zoom out"
-                  onClick={() => zoomAbout(stepZoom(scale, -1))}>
-            <Minus size={16} aria-hidden="true" />
-          </button>
-          {/* THE LABEL IS THE MODE, NOT THE NUMBER (brief 4.4, rule 8).
-
-              "Fit width" is what a student means; 176% is what the renderer
-              happens to be doing about it. The percentage is still there —
-              inside the menu, where somebody who wants it is already looking. */}
-          <button type="button" className="pzoom" aria-expanded={menu === "zoom" ? "true" : "false"}
-                  onClick={() => setMenu(menu === "zoom" ? null : "zoom")}>
-            {fit ? (FITS.find((f) => f.id === fit)?.label ?? "Fit width") : `${Math.round(scale * 100)}%`}
-            <ChevronDown size={13} aria-hidden="true" />
-          </button>
-          <button type="button" className="ptool" aria-label="Zoom in"
-                  onClick={() => zoomAbout(stepZoom(scale, 1))}>
-            <Plus size={16} aria-hidden="true" />
-          </button>
-        </div>
-
-        <span className="pbot-rule" aria-hidden="true" />
-        <button type="button" className="ptool" aria-pressed={density ? "true" : "false"}
-                onClick={() => setDensity(!density)}
-                aria-label="Show what the module marked" title="What the module marked">
-          <Users size={17} aria-hidden="true" />
-        </button>
-      </div>
-
-      <div className="pbody">
-        {/* ------------------------------------------------------- the rail */}
-        {rail && (
-          <aside className="prail" aria-label="Pages, contents and marks">
-            <div className="prail-tabs" role="tablist">
-              <button type="button" role="tab" aria-selected={rail === "thumbs"}
-                      onClick={() => setRail("thumbs")}>Pages</button>
-              <button type="button" role="tab" aria-selected={rail === "outline"}
-                      onClick={() => setRail("outline")}>Contents</button>
-              <button type="button" role="tab" aria-selected={rail === "marks"}
-                      onClick={() => setRail("marks")}>Marks</button>
-              {isStaff && (
-                <button type="button" role="tab" aria-selected={rail === "queue"}
-                        onClick={() => setRail("queue")}>
-                  Queue{queue.length ? ` ${queue.length}` : ""}
-                </button>
-              )}
-            </div>
-
-            {rail === "thumbs" && (
-              <PaperThumbs doc={doc} pages={totalPages} current={page} onPick={jumpTo}
-                           boxes={paper?.manifest?.boxes}
-                           thumbSrc={paper?.manifest ? (n) => thumbUrl(paper, n) : null} />
-            )}
-
-            {rail === "outline" && (
-              <div className="prail-marks">
-                <PaperOutline doc={doc} onPick={jumpTo} />
-              </div>
-            )}
-
-            {rail === "queue" && isStaff && (
-              <div className="prail-marks">
-                {queue.length ? (
-                  <ul className="mlist">
-                    {queue.map((c) => (
-                      <li key={c.id}>
-                        <div className="qrow">
-                          <p className="qrow-quote">“{c.anchor?.quote}”</p>
-                          <p className="qrow-body">{c.body}</p>
-                          <p className="qrow-foot">
-                            <span>{c.author_name}</span>
-                            <button type="button" className="qrow-act"
-                                    onClick={async () => {
-                                      await resolveCorrection(c.id);
-                                      loadQueue();
-                                    }}>Done with it</button>
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  /* R11 again: not "0 corrections". */
-                  <p className="mnone">
-                    Nothing reported on this module yet. A student who spots
-                    something wrong can tell you from the passage itself.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {rail === "marks" && (
-              <div className="prail-marks">
-                <div className="chips" role="group" aria-label="Where your marks went">
-                  {FILTERS.map((f) => {
-                    const n = counts[f.id] || 0;
-                    return (
-                      <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id}
-                              data-colour={f.id} disabled={!n && f.id !== "all"}
-                              onClick={() => setFilter(f.id)}>
-                        {f.label}
-                        {/* A count only where there is something to count — a
-                            chip reading 0 is a chip stating an absence. */}
-                        {n > 0 && f.id !== "all" && <em className="mono">{n}</em>}
-                      </button>
-                    );
-                  })}
-                </div>
-                {marksList.length ? (
-                  <ul className="mlist">
-                    {marksList.map((a) => (
-                      <li key={a.id}>
-                        <button type="button" className="mrow" data-kind={a.kind}
-                                data-colour={a.colour || undefined}
-                                data-orphan={a.status === "orphaned" ? "" : undefined}
-                                onClick={() => {
-                                  if (a.status === "orphaned") return;
-                                  setActiveId(a.id);
-                                  jumpTo(pageOf(model, a.start));
-                                }}>
-                          <span className="mrow-quote">
-                            {a.status === "orphaned"
-                              ? a.anchor?.quote || "This passage"
-                              : quoteOf(model, a.start, a.end, 90)}
-                          </span>
-                          <span className="mrow-foot">
-                            {a.author_name}
-                            {a.body ? " · " : ""}
-                            {a.body ? a.body.slice(0, 60) : ""}
-                            {a.status === "orphaned" && <em> · lost its place</em>}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  /* R11 — empty reads "not yet", never "nothing". */
-                  <p className="mnone">
-                    Nobody has marked this one up yet. Select a line and yours will be the first.
-                  </p>
-                )}
-              </div>
-            )}
-          </aside>
-        )}
-
-        {/* THE TICK RAIL (§11.2). Every mark in the paper, down the right
-            edge, positioned by page. In a 1000-page manual this is the only
-            view of the whole thing you ever get — where you have been, where
-            the class has been, and how far in you are. */}
-        {ticks.length > 0 && totalPages > 1 && (
-          /* THE RAIL IS THE CONTROL, AND THE TICKS ARE DRAWN ON IT.
-
-             Forty separate 3px buttons is forty targets nobody can hit and
-             forty things for a screen reader to read out. One control, one job
-             (rule 7): the rail takes the click, works out which page that
-             height is, and SNAPS to a nearby mark if there is one — so aiming
-             roughly at a tick lands on it, and aiming at empty rail lands on
-             that page. */
-          <button
-            type="button" className="pticks"
-            aria-label={`Marks across this paper — ${ticks.length} of them. Click to jump.`}
-            onPointerMove={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              setRailAt({ y: e.clientY - r.top, page: pageAtRail(e.clientY - r.top, r.height) });
-            }}
-            onPointerLeave={() => setRailAt(null)}
-            onClick={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              jumpTo(pageAtRail(e.clientY - r.top, r.height));
-            }}
-          >
-            <span className="pticks-trk" aria-hidden="true" />
-            {ticks.map((t) => (
-              <span key={t.id} className="ptick" aria-hidden="true"
-                    data-colour={t.colour || undefined}
-                    data-mine={t.mine ? "" : undefined}
-                    style={{ top: `${((t.page - 0.5) / totalPages) * 100}%` }} />
-            ))}
-            <span className="pticks-you" aria-hidden="true"
-                  style={{ top: `${((page - 0.5) / totalPages) * 100}%` }} />
-          </button>
-        )}
-
-        {railAt && (
-          <div className="pticks-tip" style={{ top: railAt.y }} role="status">
-            {(() => {
-              const near = ticks.filter((t) => t.page === railAt.page);
-              return near.length
-                ? <><b data-colour={near[0].colour || undefined}>{near[0].name}</b><em className="mono">p.{railAt.page}</em></>
-                : <em className="mono">p.{railAt.page}</em>;
-            })()}
-          </div>
-        )}
-
-        {/* ------------------------------------------------------ the pages */}
-        <div className="pscroll" ref={scrollRef} onScroll={onScroll} onClick={tapToMark}
-             /* A TAP OPENS THE CARD, and it is bound to pointerup rather than
-                only to click: iOS does not reliably synthesise a click from a
-                touch sequence on a scrolling surface, and a card that needs a
-                mouse is a card an iPad user never sees. Click stays for the
-                mouse and for the keyboard's activation. */
-             onPointerUp={(e) => { if (e.pointerType !== "mouse") tapToMark(e); }}
-             /* AND a touch fallback. Not every WebKit build raises pointer
-                events for a touch on a scrolling surface — the harness's does
-                not — and the cost of being wrong about that is the mark card
-                being unreachable on the primary device. Two listeners, one
-                action: the dedupe below drops whichever arrives second. */
-             onTouchEnd={(e) => {
-               const t = e.changedTouches?.[0];
-               if (t) tapToMark({ clientX: t.clientX, clientY: t.clientY, target: e.target, timeStamp: e.timeStamp });
-             }}
-             onPointerMove={onPageMove}
-             onPointerLeave={() => clearTimeout(hoverT.current)}>
-          {error && <p className="perr">{error}</p>}
-
-          <div className="pcol" style={{ gap: PAGE_GAP }}>
-            {/* The pages above the window, as one box of exactly their height. */}
-            {win[0] > 0 && <div className="ppgap" style={{ height: offsets[win[0]] }} aria-hidden="true" />}
-            {sizes.slice(win[0], win[1]).map((s, k) => {
-              const i = win[0] + k;
-              const n = i + 1;
-              const rotated = rotation % 180 !== 0;
-              const w = (rotated ? s.h : s.w) * scale;
-              const h = (rotated ? s.w : s.h) * scale;
-              const hidden = onScreen ? !onScreen.has(n) : false;
-              return (
-                <div className="pslot" key={n} data-off={hidden ? "" : undefined}>
-                  {!hidden && drawSet.has(n) ? (
-                    <PaperPage
-                      doc={doc} model={model} pageNumber={n} scale={scale} rotation={rotation}
-                      size={s} segments={drawSegments} activeId={activeId} light={light}
-                      strokes={strokes} me={me}
-                      inkTool={drawing ? tool : null} inkColour={penColour}
-                      inkWidth={penWidth(penSize) * (tool === "marker" ? 3.2 : 1)}
-                      onInk={addStroke} onErase={eraseStrokes}
-                      registerEl={registerEl} onDivs={takeDivs}
-                    />
-                  ) : (
-                    /* Rule 1 — never an empty white rectangle where a page
-                       belongs. A page outside the window keeps its box and its
-                       number, at the right shape, because the size came from
-                       the manifest rather than from the file. */
-                    <div className="pp pp-ghost" data-page={n} style={{ width: w, height: h }}
-                         ref={(el) => { if (el) pageEls.current.set(n, el); }}>
-                      <span className="pp-no mono" aria-hidden="true">{n}</span>
-                    </div>
-                  )}
-
-                  {notesOnPage(n).map((mark) => (
-                    <MarkCard key={mark.id} mark={mark} me={me} active={activeId === mark.id}
-                              onOpenThread={onOpenThread} onDelete={removeMark}
-                              onJump={(m) => { setActiveId(m.id); jumpTo(pageOf(model, m.start)); }} />
-                  ))}
-                </div>
-              );
-            })}
-            {win[1] < sizes.length && (
-              <div className="ppgap" aria-hidden="true"
-                   style={{ height: Math.max(0, offsets[sizes.length] - offsets[win[1]]) }} />
-            )}
-          </div>
-
-          {orphans.length > 0 && (
-            <section className="orphans">
-              <h2>
-                {orphans.length} {orphans.length === 1 ? "mark" : "marks"} lost
-                {orphans.length === 1 ? " its" : " their"} place when this paper changed
-              </h2>
-              <ul>
-                {orphans.map((o) => (
-                  <li key={o.id}>
-                    <span className="orph-q">“{o.anchor?.quote}”</span>
-                    {o.body && <span className="orph-b">{o.body}</span>}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {layout === "scroll" && (
-            <p className="pcoda">
-              That is all of {paper.title} — {totalPages} page
-              {totalPages === 1 ? "" : "s"}. Marked with pdf.js {PDFJS_VERSION}.
-            </p>
-          )}
-
-          <MarkPop
-            mark={picked?.mark} at={picked?.at} me={me} isStaff={isStaff}
-            onRecolour={(m, c) => { recolour(m, c); setPicked((p) => (p ? { ...p, mark: { ...p.mark, colour: c } } : p)); }}
-            onDelete={(m) => { removeMark(m); setPicked(null); }}
-            onNote={(m) => { setPicked(null); setComposer({ kind: "note", start: m.start, end: m.end, quote: quoteOf(model, m.start, m.end) }); setDraft(""); }}
-            onAgree={(m) => agree(m)}
-            onThread={(m) => { if (m.thread_id) onOpenThread?.(m.thread_id); else { setPicked(null); setComposer({ kind: "question", start: m.start, end: m.end, quote: quoteOf(model, m.start, m.end) }); setDraft(""); } }}
-            onClose={() => setPicked(null)}
-          />
-
-          <SelectionBar
-            at={sel} canCorrect={!!me} colour={hlColour}
-            onHighlight={() => markSelection("highlight")}
-            onUnderline={() => markSelection("underline")}
-            onStrike={() => markSelection("strikethrough")}
-            onNote={() => openComposer("note")}
-            onAsk={() => openComposer("question")}
-            onCorrect={() => openComposer("correction")}
-          />
-        </div>
-      </div>
-
-      {scrub && (
-        <div className="pscrub" role="status">
-          <b className="mono">{scrub.page}</b>
-          <span>
-            of {totalPages}
-            <em>{(() => {
-              const near = ticks.filter((t) => Math.abs(t.page - scrub.page) <= 2).length;
-              /* Never "0 marks near here" — an absence stated is an absence
-                 you have to read. Silence says it better. */
-              return near ? `${near} mark${near === 1 ? "" : "s"} near here` : "";
-            })()}</em>
-          </span>
-        </div>
-      )}
-
-      {/* §11.1 — the way back. Appears after a jump, says where it goes, and
-          goes away once used. */}
-      {cameFrom && cameFrom.page !== page && (
-        <button type="button" className="pback"
-                onClick={() => {
-                  goToPage(cameFrom.page);
-                  if (scrollRef.current && cameFrom.top != null) scrollRef.current.scrollTop = cameFrom.top;
-                  setCameFrom(null);
-                }}>
-          <ChevronLeft size={15} aria-hidden="true" />
-          Back to page <b className="mono">{cameFrom.page}</b>
-        </button>
+      {/* ── the mark card ────────────────────────────────────────────── */}
+      {picked && (
+        <MarkCard
+          mark={picked.mark} me={me} at={picked.at}
+          onHold={holdCard} onLeave={leaveCard}
+          onRecolour={recolour} onDelete={(m) => { removeMark(m); setPicked(null); }}
+          onNote={(m) => openNoteOn(m)} onAgree={agree}
+          onThread={(m) => onOpenThread?.(m.thread_id)}
+        />
       )}
 
       {composer && (
-        <div className="spot-scrim" onClick={(e) => { if (e.target === e.currentTarget) setComposer(null); }}>
-          <Spotlight kind={composer.kind} onKind={(k) => {
-                       setComposer((c) => ({ ...c, kind: k }));
-                       if (k === "correction") setRing("solo");
-                     }}
-                     quote={composer.quote} ring={ring} onRing={setRing}
-                     value={draft} onChange={setDraft} busy={busy}
-                     onSave={saveComposer} onCancel={() => setComposer(null)} />
+        <div className="rdr-scrim" onClick={(e) => { if (e.target === e.currentTarget) setComposer(null); }}>
+          <Composer kind={composer.kind}
+                    onKind={(k) => { setComposer((c) => ({ ...c, kind: k })); if (k === "correction") setRing("solo"); }}
+                    quote={composer.quote} ring={ring} onRing={setRing}
+                    value={draft} onChange={setDraft} busy={busy}
+                    onSave={saveComposer} onCancel={() => setComposer(null)} />
         </div>
       )}
 
       {sheet === "keys" && (
         <Sheet title="Keyboard shortcuts" onClose={() => setSheet(null)}>
-          <dl className="keys">
-            {SHORTCUTS.map(([k, what]) => (
-              <div key={k}><dt>{k}</dt><dd>{what}</dd></div>
-            ))}
+          <dl className="rdr-keys">
+            {SHORTCUTS.map(([k, what]) => <div key={k}><dt className="mono">{k}</dt><dd>{what}</dd></div>)}
           </dl>
         </Sheet>
       )}
 
       {sheet === "details" && (
         <Sheet title="Document details" onClose={() => setSheet(null)}>
-          <dl className="keys">
+          <dl className="rdr-keys">
             <div><dt>Title</dt><dd>{info.Title || paper.title}</dd></div>
             {info.Author && <div><dt>Author</dt><dd>{info.Author}</dd></div>}
-            {info.Producer && <div><dt>Made with</dt><dd>{info.Producer}</dd></div>}
-            <div><dt>Pages</dt><dd>{totalPages}</dd></div>
-            <div><dt>Version</dt><dd>PDF {info.PDFFormatVersion || "—"}</dd></div>
-            <div><dt>Drawn by</dt><dd>pdf.js {PDFJS_VERSION}</dd></div>
+            <div><dt>Pages</dt><dd className="mono">{totalPages}</dd></div>
+            <div><dt>Size</dt><dd className="mono">{paper.bytes ? `${(paper.bytes / 1e6).toFixed(1)} MB` : "—"}</dd></div>
+            <div><dt>Loads by range</dt><dd>{paper.linearized ? "Yes — linearized" : "Slower — not linearized"}</dd></div>
+            <div><dt>Searchable</dt><dd>{paper.has_text === false ? "No text layer in this file" : "Yes"}</dd></div>
+            <div><dt>Drawn by</dt><dd className="mono">pdf.js {PDFJS_VERSION}</dd></div>
           </dl>
-          <p className="psheet-note">
-            Marks are stored against the words, not against a position, so they
-            survive this paper being re-issued. Ink is drawn on the page itself.
-          </p>
         </Sheet>
       )}
-
     </div>,
     host,
   );

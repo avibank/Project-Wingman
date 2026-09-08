@@ -12,19 +12,16 @@
    other, so the key carries the device class and the two never meet.
    ========================================================================= */
 
-export const DEFAULT_TRAY = ["select", "highlight", "pen", "eraser", "note", "question"];
+/* THE SHIPPED TABLE IS THE SOURCE. readerIcons.js carries the tool ids, the
+   default tray, the cap and the group names, copied byte for byte from the
+   spec; re-declaring any of them here would be a second opinion that drifts. */
+import { DEFAULT_TRAY, TRAY_CAP, GROUPS } from "./readerIcons.js";
+
+export { DEFAULT_TRAY, TRAY_CAP, GROUPS };
 /* Select is the way back out of every other tool. Removing it would leave a
    student holding a highlighter with no way to stop marking. */
-export const LOCKED = ["select"];
+export const LOCKED = ["sel"];
 
-export const GROUPS = [
-  { id: 0, name: "Select" },
-  { id: 1, name: "Mark up" },
-  { id: 2, name: "Ink" },
-  { id: 3, name: "Draw" },
-  { id: 4, name: "Sign off" },
-  { id: 5, name: "Talk" },
-];
 
 /* A cap per device, because a tray longer than the screen is a scrolling
    toolbar, which is the thing being replaced. Adding past it SAYS SO rather

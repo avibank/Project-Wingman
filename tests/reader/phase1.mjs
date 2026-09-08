@@ -12,31 +12,31 @@ const laptop = SURFACES[0];
    Checking `data-on` alone would pass on a canvas that is present and empty,
    which is the exact failure being tested for. */
 const pageState = (page) => page.evaluate(() => {
-  const rows = [...document.querySelectorAll(".pp")].map((p) => {
+  const rows = [...document.querySelectorAll(".rdr-page")].map((p) => {
     const c = p.querySelector("canvas");
     const box = p.getBoundingClientRect();
     const onScreen = box.bottom > 70 && box.top < innerHeight - 30 && box.width > 0;
     return {
       n: Number(p.dataset.page),
       onScreen,
-      ghost: p.classList.contains("pp-ghost"),
-      hasSheet: !!p.querySelector(".pp-sheet") || p.classList.contains("pp-ghost"),
+      ghost: p.classList.contains("is-placeholder"),
+      hasSheet: p.classList.contains("rdr-page"),
       boxW: Math.round(box.width),
       drawn: !!c && c.width > 1 && c.hasAttribute("data-on"),
       fills: !!c && Math.abs(c.getBoundingClientRect().width - box.width) < 2,
     };
   });
-  return { rows, scrollTop: document.querySelector(".pscroll").scrollTop };
+  return { rows, scrollTop: document.querySelector(".rdr-scroll").scrollTop };
 });
 
 group("Phase 1 · the renderer", () => {
   it("the document keeps its width whether the panel is open or shut", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const open = await page.evaluate(() => Math.round(document.querySelector(".pscroll").getBoundingClientRect().width));
-      await page.click('.ptool[aria-label="Pages and contents"]');
+      const open = await page.evaluate(() => Math.round(document.querySelector(".rdr-scroll").getBoundingClientRect().width));
+      await page.click('.ib[aria-label="Pages"]');
       await page.waitForTimeout(400);
-      const shut = await page.evaluate(() => Math.round(document.querySelector(".pscroll").getBoundingClientRect().width));
+      const shut = await page.evaluate(() => Math.round(document.querySelector(".rdr-scroll").getBoundingClientRect().width));
       expect(open).toBeAtLeast(600, "with the panel open");
       expect(shut).toBeAtLeast(open, "with the panel shut the document should be WIDER, never zero");
     });
@@ -59,9 +59,9 @@ group("Phase 1 · the renderer", () => {
   it("the scroll height is right from the first frame, so the scrollbar never jumps", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const first = await page.evaluate(() => document.querySelector(".pscroll").scrollHeight);
+      const first = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollHeight);
       await page.waitForTimeout(2500);
-      const later = await page.evaluate(() => document.querySelector(".pscroll").scrollHeight);
+      const later = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollHeight);
       expect(Math.abs(later - first)).toBeAtMost(4, "the height moved as pages resolved");
     });
   });
@@ -72,7 +72,7 @@ group("Phase 1 · the renderer", () => {
       const seen = [];
       for (let i = 0; i <= 10; i++) {
         await page.evaluate((f) => {
-          const s = document.querySelector(".pscroll");
+          const s = document.querySelector(".rdr-scroll");
           s.scrollTop = (s.scrollHeight - s.clientHeight) * f;
         }, i / 10);
         await page.waitForTimeout(700);
@@ -102,7 +102,7 @@ group("Phase 1 · the renderer", () => {
   it("the zoom control names the mode, not a percentage", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      expect(await page.locator(".pzoom").textContent()).toContain("Fit width");
+      expect(await page.locator(".zoom .v").textContent()).toContain("Fit width");
     });
   });
 
@@ -111,18 +111,18 @@ group("Phase 1 · the renderer", () => {
       await openReader(page);
       // Put a known page under a known screen position, then zoom in about it.
       await page.evaluate(() => {
-        const s = document.querySelector(".pscroll");
+        const s = document.querySelector(".rdr-scroll");
         s.scrollTop = s.scrollHeight * 0.12;
       });
       await page.waitForTimeout(600);
       const before = await page.evaluate(() => {
-        const s = document.querySelector(".pscroll");
+        const s = document.querySelector(".rdr-scroll");
         return { top: s.scrollTop, h: s.scrollHeight };
       });
-      await page.click('.ptool[aria-label="Zoom in"]');
+      await page.click('.ib[aria-label="Zoom in"]');
       await page.waitForTimeout(700);
       const after = await page.evaluate(() => {
-        const s = document.querySelector(".pscroll");
+        const s = document.querySelector(".rdr-scroll");
         return { top: s.scrollTop, h: s.scrollHeight };
       });
       /* The same content should sit at the same fraction of the document. If
@@ -180,9 +180,9 @@ group("Phase 1 · the renderer", () => {
   it("pages are separated, numbered, and sit on their own sheet", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const gap = await page.evaluate(() => getComputedStyle(document.querySelector(".pcol")).rowGap);
+      const gap = await page.evaluate(() => getComputedStyle(document.querySelector(".rdr-stack")).rowGap);
       expect(parseInt(gap, 10)).toBeAtLeast(20, "pages need a gutter between them");
-      const nums = await page.locator(".pp-no").count();
+      const nums = await page.locator(".pg-num").count();
       expect(nums).toBeAtLeast(3, "pages do not carry their number in the gutter");
       await shot(page, "phase1-reader-at-rest");
     });
@@ -191,7 +191,7 @@ group("Phase 1 · the renderer", () => {
   it("nothing logs an error while a paper opens and scrolls", async () => {
     await withPage(laptop, async (page, { errors }) => {
       await openReader(page);
-      await page.evaluate(() => { const s = document.querySelector(".pscroll"); s.scrollTop = s.scrollHeight * 0.5; });
+      await page.evaluate(() => { const s = document.querySelector(".rdr-scroll"); s.scrollTop = s.scrollHeight * 0.5; });
       await page.waitForTimeout(1500);
       expect(errors.filter((e) => !/favicon|ResizeObserver loop/i.test(e))).toEqual([]);
     });

@@ -26,7 +26,7 @@ import { pathFor, toFraction, strokesUnder } from "../../lib/paperInk.js";
 export default function PaperInk({
   strokes = [], width, height, rotation = 0, page,
   tool, colour, penWidth, eraserRadius = 0.012,
-  onCommit, onErase, me,
+  onCommit, onErase, me, onDown, onUp,
 }) {
   const svgRef = useRef(null);
   const liveRef = useRef(null);
@@ -108,6 +108,7 @@ export default function PaperInk({
        stops at the edge of the page; letting it throw costs every stroke. */
     try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch { /* not ours to hold */ }
     drawing.current = true;
+    onDown?.();
 
     if (tool === "eraser") {
       erased.current = new Set();
@@ -154,12 +155,13 @@ export default function PaperInk({
   const up = useCallback(() => {
     if (!drawing.current) return;
     drawing.current = false;
+    onUp?.();
     if (tool === "eraser") { erased.current = new Set(); return; }
     const made = points.current;
     points.current = [];
     liveRef.current?.setAttribute("d", "");
     if (made.length) onCommit?.(made);
-  }, [tool, onCommit]);
+  }, [tool, onCommit, onUp]);
 
   /* A pointer that leaves the window mid-stroke still ends the stroke. Without
      this, letting go outside the page leaves `drawing` true and the next tap
@@ -180,7 +182,7 @@ export default function PaperInk({
   return (
     <svg
       ref={svgRef}
-      className="pp-ink"
+      className="rdr-ink"
       data-armed={drawingTool ? "" : undefined}
       /* `pan-y pinch-zoom` even while armed, so a finger still scrolls and
          pinches the paper. The pen's own gestures are prevented per-event, not

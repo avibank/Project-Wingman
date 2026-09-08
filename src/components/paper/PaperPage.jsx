@@ -59,7 +59,8 @@ export default function PaperPage({
   doc, model, pageNumber, scale, rotation = 0, size,
   segments = [], activeId = null, light = "day",
   strokes = [], inkTool = null, inkColour, inkWidth, onInk, onErase, me,
-  onDivs, registerEl,
+  onDivs, registerEl, onPenDown, onPenUp,
+  notes = [], onOpenThread, onDeleteNote,
 }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
@@ -281,14 +282,13 @@ export default function PaperPage({
   const canvasStyle = { filter: light === "day" ? undefined : lightFilter(light) };
 
   return (
-    <div className="pp" ref={wrapRef} data-page={pageNumber}
-         data-drawn={ready ? "" : undefined}
-         style={boxW ? { width: boxW, height: boxH } : undefined}>
-      {/* Rule 1 — never an empty white rectangle where a page belongs. The
-          sheet is the right shape from the first frame, before any byte of the
-          PDF has arrived, because its size comes from the manifest. */}
-      <span className="pp-sheet" aria-hidden="true" />
-      <span className="pp-no mono" aria-hidden="true">{pageNumber}</span>
+    /* COMPONENTS.md: a page is an <article class="rdr-page"> with its number in
+       the gutter. The stylesheet gives it the sheet, the radius and the one
+       shadow that is depth 1 — nothing here paints it. */
+    <article className="rdr-page" ref={wrapRef} data-page={pageNumber}
+             data-drawn={ready ? "" : undefined}
+             style={boxW ? { width: boxW, height: boxH } : undefined}>
+      <span className="pg-num mono">{pageNumber}</span>
 
       {/* THE LIGHT FALLS ON THE PICTURE AND NOTHING ELSE.
 
@@ -297,20 +297,29 @@ export default function PaperPage({
           untouched, and — the part that matters — the marks are untouched.
           Inverting the whole stack would turn somebody's yellow highlight
           blue, which is worse than a bright page at midnight. */}
-      <canvas className="pp-canvas" ref={canvasRef} data-on={ready ? "" : undefined}
+      <canvas className="rdr-canvas" ref={canvasRef} data-on={ready ? "" : undefined}
               style={canvasStyle} />
 
-      <div className="pp-marks" aria-hidden="true">
+      <div className="rdr-marks" aria-hidden="true">
         {rects.map((r) => (
+          /* THE SHIPPED CLASSES, ON THE ELEMENT THAT IS ACTUALLY PAINTED.
+             COMPONENTS.md puts `s is-marked` on a sentence span in the text
+             layer; pdf.js's text layer is RUNS, not sentences — a mark
+             routinely covers the tail of one run, two whole ones and the head
+             of a fourth — so this build measures the mark and draws it as a
+             rectangle over that layer instead. Same classes, same two
+             variables, same rules out of reader.css; a different element
+             carries them. `.rdr-mark` is what positions it. */
           <span
             key={r.key}
-            className="pp-mark"
+            className={`s is-marked rdr-mark${
+              r.seg.thread === "open" ? " is-open-thread" : ""}${
+              r.seg.ids.includes(activeId) ? " is-selected" : ""}`}
             data-kind={r.seg.kind || undefined}
             data-colour={r.seg.colour || undefined}
             data-thread={r.seg.thread || undefined}
             data-deco={r.seg.deco?.length ? r.seg.deco.join(" ") : undefined}
             data-density={r.seg.density || undefined}
-            data-active={r.seg.ids.includes(activeId) ? "" : undefined}
             style={{ left: r.x, top: r.y, width: r.w, height: r.h }}
           />
         ))}
@@ -323,10 +332,38 @@ export default function PaperPage({
           tool={inkTool} colour={inkColour} penWidth={inkWidth}
           onCommit={(pts) => onInk?.(pageNumber, pts)}
           onErase={(ids) => onErase?.(ids)}
+          onDown={onPenDown} onUp={onPenUp}
         />
       )}
 
-      <div className="pp-text" ref={textRef} />
-    </div>
+      <div className="rdr-text" ref={textRef} />
+
+      {/* §8 — notes open IN THE FLOW, under the page they belong to, on a
+          phone and a desktop alike. A margin rail would have meant two layouts
+          and a column of speech bubbles pointing at nothing. */}
+      {notes?.length > 0 && (
+        <div className="rdr-notes">
+          {notes.map((n) => (
+            <article key={n.id} className="rdr-note" data-colour={n.colour || undefined}>
+              <p className="q">{n.quote}</p>
+              <p className="b">{n.body}</p>
+              <p className="w">
+                <b>{n.anonymous && n.author_id !== me ? "Anonymous" : n.author_name}</b>
+                {n.kind === "question" ? " asked" : " noted"}
+                {n.kind === "question" && n.thread_id && (
+                  <button type="button" className="btn" onClick={() => onOpenThread?.(n.thread_id)}>
+                    Answer in the Ready Room
+                  </button>
+                )}
+                {n.author_id === me && (
+                  <button type="button" className="ib" aria-label="Delete this mark"
+                          onClick={() => onDeleteNote?.(n)}>×</button>
+                )}
+              </p>
+            </article>
+          ))}
+        </div>
+      )}
+    </article>
   );
 }

@@ -128,12 +128,17 @@ export function pagesToDraw(layout, current, total, window = 2) {
    somebody revising.
    -------------------------------------------------------------------------- */
 export const PAPER_LIGHTS = [
-  { id: "day", label: "Paper", filter: "none" },
+  /* "Follow" is the default: the reader is a screen inside the app, not a
+     second app, and it should not have its own opinion about light until
+     somebody gives it one. */
+  { id: "follow", label: "Follow the app", filter: "none" },
+  { id: "paper", label: "Paper", filter: "none" },
   { id: "sepia", label: "Warm", filter: "sepia(.34) brightness(.97) saturate(.9)" },
   { id: "dim", label: "Dim", filter: "brightness(.82) contrast(1.03)" },
   { id: "night", label: "Night", filter: "invert(1) hue-rotate(180deg) brightness(.9) contrast(1.08)" },
 ];
 export const lightFilter = (id) => (PAPER_LIGHTS.find((l) => l.id === id) || PAPER_LIGHTS[0]).filter;
+export const isDarkLight = (id) => id === "night" || id === "dim";
 
 /* -----------------------------------------------------------------------------
    FINDING

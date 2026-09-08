@@ -35,13 +35,13 @@ export default function PaperOutline({ doc, onPick }) {
     } catch { /* a destination the file got wrong; the rest still work */ }
   };
 
-  if (rows === null) return <p className="mnone">Reading this paper’s contents…</p>;
+  if (rows === null) return <p className="empty">Reading this paper’s contents…</p>;
 
   /* R11 — an empty state names what to do instead, and never states a zero.
      Plenty of handouts carry no contents at all, and that is not a fault. */
   if (!rows.length) {
     return (
-      <p className="mnone">
+      <p className="empty">
         This paper carries no contents of its own. The page rail beside it shows
         every page, and Find will take you to any word in it.
       </p>

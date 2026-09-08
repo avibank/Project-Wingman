@@ -97,8 +97,8 @@ export const readerUrl = (uid = "student_one", staff = false, extra = "") =>
 
 export async function openReader(page, { uid = "student_one", staff = false, extra = "" } = {}) {
   await page.goto(readerUrl(uid, staff, extra), { waitUntil: "domcontentloaded" });
-  await page.waitForSelector(".paper", { timeout: 25_000 });
-  await page.waitForSelector(".pp:not(.pp-ghost) canvas[data-on]", { timeout: 25_000 });
+  await page.waitForSelector(".rdr", { timeout: 25_000 });
+  await page.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 25_000 });
   return page;
 }
 

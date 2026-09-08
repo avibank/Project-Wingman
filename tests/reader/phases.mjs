@@ -6,28 +6,28 @@ const ipadP = SURFACES[2];
 
 /* Mark a passage the way a student does: drag across a run of text with the
    tool armed, and let the armed tool fire. */
-async function markFirstRun(page, tool = "Highlight") {
-  await page.click(`.ptoolbtn[aria-label="${tool}"]`);
+async function markFirstRun(page, tool = "Highlighter") {
+  await page.click(`.tool[aria-label="${tool}"]`);
   await page.waitForTimeout(200);
   await page.evaluate(() => {
     /* Well away from the fixture's own marks. Overlapping ones FLATTEN into
        one segment by design, so marking on top of an existing highlight adds a
        mark without adding a rectangle — which is correct, and which made the
        first version of this test measure the wrong thing. */
-    const spans = [...document.querySelectorAll('.pp-text span[data-item]')]
+    const spans = [...document.querySelectorAll('.rdr-text span[data-item]')]
       .filter((s) => s.textContent.trim().length > 30);
     const target = spans[Math.floor(spans.length * 0.6)];
     const r = document.createRange();
     r.setStart(target.firstChild, 0);
     r.setEnd(target.firstChild, Math.min(24, target.firstChild.length));
     const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-    document.querySelector(".pscroll").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    document.querySelector(".rdr-scroll").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
   });
   await page.waitForTimeout(900);
 }
 
 const markCount = (page) => page.evaluate(
-  () => document.querySelectorAll(".pp-mark[data-colour]").length);
+  () => document.querySelectorAll(".rdr-mark[data-colour]").length);
 
 /* Marks arrive after the payload AND after the text model resolves them, which
    is two round trips past "a canvas is showing". Taking a baseline before that
@@ -56,7 +56,7 @@ group("Phase 2 · marks are objects", () => {
 
       const page2 = await ctx.newPage();
       await page2.goto(page.url(), { waitUntil: "domcontentloaded" });
-      await page2.waitForSelector(".pp:not(.pp-ghost) canvas[data-on]", { timeout: 25_000 });
+      await page2.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 25_000 });
       await page2.waitForTimeout(1200);
       const reloaded = await markCount(page2);
       expect(reloaded).toBeAtLeast(after, "the mark did not survive a reload");
@@ -72,11 +72,11 @@ group("Phase 2 · marks are objects", () => {
 
       /* From the BUTTON, not the keyboard — rule 4, because the primary device
          has no keyboard attached. */
-      await page.click('.pbot .ptool[aria-label="Undo"]');
+      await page.click('.bar-bot .ib[aria-label="Undo"]');
       await page.waitForTimeout(700);
       expect(await markCount(page)).toBe(start, "undo did not remove the mark");
 
-      await page.click('.pbot .ptool[aria-label="Redo"]');
+      await page.click('.bar-bot .ib[aria-label="Redo"]');
       await page.waitForTimeout(900);
       expect(await markCount(page)).toBeAtLeast(start + 1, "redo did not put it back");
     });
@@ -85,8 +85,8 @@ group("Phase 2 · marks are objects", () => {
   it("undo is disabled with nothing to undo, and says so", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      expect(await page.locator('.pbot .ptool[aria-label="Undo"]').isDisabled()).toBeTruthy();
-      expect(await page.locator('.pbot .ptool[aria-label="Redo"]').isDisabled()).toBeTruthy();
+      expect(await page.locator('.bar-bot .ib[aria-label="Undo"]').isDisabled()).toBeTruthy();
+      expect(await page.locator('.bar-bot .ib[aria-label="Redo"]').isDisabled()).toBeTruthy();
     });
   });
 
@@ -108,10 +108,10 @@ group("Phase 3 · colours are verbs", () => {
   it("a text mark offers the five meanings and nothing else", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptoolbtn[aria-label="Highlight"]');
+      await page.click('.tool[aria-label="Highlighter"]');
       await page.waitForTimeout(400);
       const swatches = await page.evaluate(
-        () => [...document.querySelectorAll('.ptray [role="radiogroup"] .swatch')].map((b) => b.dataset.colour));
+        () => [...document.querySelectorAll('.bar-insp .colours .sw[data-colour]')].map((b) => b.dataset.colour));
       expect(swatches).toEqual(["critical", "definition", "limit", "unsure", "wrong"],
         "the closed set is the whole design — a plain highlight kills it");
     });
@@ -120,9 +120,9 @@ group("Phase 3 · colours are verbs", () => {
   it("the tray says what the colour in your hand will do", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptoolbtn[aria-label="Highlight"]');
+      await page.click('.tool[aria-label="Highlighter"]');
       await page.waitForTimeout(400);
-      const txt = await page.locator(".tray-mean").innerText();
+      const txt = await page.locator(".bar-insp .meaning").innerText();
       expect(txt).toContain("Exam likely");
       expect(txt).toContain("revision deck");
     });
@@ -131,12 +131,16 @@ group("Phase 3 · colours are verbs", () => {
   it("the pen keeps free colour, because ink is just ink", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptoolbtn[aria-label="Pen"]');
+      await page.click('.tool[aria-label="Pen"]');
       await page.waitForTimeout(400);
+      /* Ink swatches carry data-ink, not data-colour: the five meanings are a
+         closed set with jobs attached, and free ink is a different category. */
       const swatches = await page.evaluate(
-        () => [...document.querySelectorAll('.ptray [role="radiogroup"] .swatch')].map((b) => b.dataset.colour));
+        () => [...document.querySelectorAll(".bar-insp .colours .sw[data-ink]")].map((b) => b.dataset.ink));
       expect(swatches.length).toBe(8, "the ink palette is eight names");
       expect(swatches).toContain("graphite");
+      expect(await page.locator(".bar-insp .colours .sw[data-colour]").count()).toBe(0,
+        "the pen was offered the five meanings — ink carries no meaning");
     });
   });
 
@@ -145,7 +149,7 @@ group("Phase 3 · colours are verbs", () => {
       await openReader(page);
       await page.waitForTimeout(800);
       const state = await page.evaluate(
-        () => document.querySelector('.pp-mark[data-colour="unsure"]')?.dataset.thread || null);
+        () => document.querySelector('.rdr-mark[data-colour="unsure"]')?.dataset.thread || null);
       expect(state).toBe("open", "the fixture's question is unanswered and must read as open");
     });
   });
@@ -158,7 +162,7 @@ group("Phase 5 · the chrome floats", () => {
       await openReader(page);
       const boxes = await page.evaluate(() => {
         const out = {};
-        for (const sel of [".pbar", ".ptools", ".pbot"]) {
+        for (const sel of [".bar-top", ".bar-dock", ".bar-bot"]) {
           const el = document.querySelector(sel);
           if (!el) continue;
           const r = el.getBoundingClientRect();
@@ -177,7 +181,7 @@ group("Phase 5 · the chrome floats", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const s = await page.evaluate(() => {
-        const cs = getComputedStyle(document.querySelector(".pbar"));
+        const cs = getComputedStyle(document.querySelector(".bar-top"));
         return { radius: cs.borderRadius, blur: cs.backdropFilter, border: cs.borderTopWidth };
       });
       expect(parseInt(s.radius, 10)).toBeAtLeast(14);
@@ -191,13 +195,13 @@ group("Phase 5 · the chrome floats", () => {
       await withPage(surface, async (page) => {
         await openReader(page);
         await page.evaluate(() => {
-          const p = document.querySelector(".paper");
-          if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+          const p = document.querySelector(".rdr");
+          if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
         });
         await page.waitForTimeout(700);
         const r = await page.evaluate(() => {
-          const panel = document.querySelector(".prail");
-          const doc = document.querySelector(".pscroll");
+          const panel = document.querySelector(".bar-panel");
+          const doc = document.querySelector(".rdr-scroll");
           if (!panel) return null;
           const a = panel.getBoundingClientRect(), b = doc.getBoundingClientRect();
           return { overlaps: a.left < b.right && a.right > b.left, docWidth: Math.round(b.width), vw: innerWidth };
@@ -215,7 +219,7 @@ group("Phase 5 · the chrome floats", () => {
       const usesSafeArea = await page.evaluate(() => {
         const css = [...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch { return []; } })
           .map((r) => r.cssText).join("");
-        return /\.pbot[^{]*\{[^}]*env\(safe-area-inset-bottom/.test(css);
+        return /\.bar-bot[^{]*\{[^}]*env\(safe-area-inset-bottom/.test(css);
       });
       expect(usesSafeArea).toBeTruthy("the bottom bar will sit under the home indicator");
     });
@@ -225,40 +229,40 @@ group("Phase 5 · the chrome floats", () => {
 /* ========================================================================= */
 group("Phase 6 · the tray", () => {
   const trayIds = (page) => page.evaluate(
-    () => [...document.querySelectorAll(".ptools .ptoolbtn")].map((b) => b.getAttribute("aria-label")));
+    () => [...document.querySelectorAll(".bar-dock .tool")].map((b) => b.getAttribute("aria-label")));
 
   it("the default tray is six tools, not fourteen", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      expect(await trayIds(page)).toEqual(["Select", "Highlight", "Pen", "Eraser", "Note", "Question"]);
+      expect(await trayIds(page)).toEqual(["Select", "Highlighter", "Pen", "Eraser", "Note", "Question"]);
     });
   });
 
   it("a tool can be added from the sheet and lands in the tool set's own order", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptool-add');
+      await page.click('.addbtn');
       await page.waitForTimeout(300);
-      await page.click('.add-tabs button:nth-child(2)');           // Mark up
+      await page.click('.satabs button:nth-child(2)');           // Mark up
       await page.waitForTimeout(200);
-      await page.click('.add-cell:has-text("Underline")');
+      await page.click('.sacell:has-text("Underline")');
       await page.waitForTimeout(500);
       const ids = await trayIds(page);
       expect(ids).toContain("Underline");
-      expect(ids.indexOf("Underline")).toBe(ids.indexOf("Highlight") + 1, "it should sit beside Highlight");
+      expect(ids.indexOf("Underline")).toBe(ids.indexOf("Highlighter") + 1, "it should sit beside Highlight");
     });
   });
 
   it("every tool stays reachable from the Add sheet", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptool-add');
+      await page.click('.addbtn');
       await page.waitForTimeout(300);
       let seen = 0;
       for (let tab = 0; tab < 6; tab++) {
-        await page.click(`.add-tabs button:nth-child(${tab + 1})`);
+        await page.click(`.satabs button:nth-child(${tab + 1})`);
         await page.waitForTimeout(150);
-        seen += await page.locator(".add-cell").count();
+        seen += await page.locator(".sacell").count();
       }
       expect(seen).toBe(14, "the full set must always be listed, including what was removed");
     });
@@ -267,17 +271,25 @@ group("Phase 6 · the tray", () => {
   it("Select cannot be taken off", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      /* The discoverable way in. A long-press does the same thing and is
-         covered by the manual script, because a synthetic press is not a
-         thumb. */
-      await page.click(".ptool-add");
-      await page.waitForTimeout(300);
-      await page.click('.tray-foot .tray-done:has-text("Rearrange")');
-      await page.waitForTimeout(400);
-      const editing = await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-editing"));
+      /* The only way in, per COMPONENTS.md: a 450ms press anywhere on the
+         dock. There is no button — a button would sit in the rail forever
+         for the one day a student rearranges it. */
+      const box = await page.locator(".bar-dock .tool").first().boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(700);
+      const editing = await page.evaluate(
+        () => document.querySelector(".rdr").getAttribute("data-edit") === "1");
+      await page.mouse.up();
+      await page.waitForTimeout(200);
       expect(editing).toBeTruthy("long-press did not enter edit mode");
+      /* COMPONENTS.md draws the ✕ on every tool including Select, and the
+         shipped sheet hides it with `.tool.is-locked .x { display:none }`.
+         So the question is what is on screen, not what is in the DOM. */
       const removable = await page.evaluate(
-        () => [...document.querySelectorAll(".ptool-rm")].map((b) => b.getAttribute("aria-label")));
+        () => [...document.querySelectorAll(".tool .x")]
+          .filter((b) => b.offsetParent !== null)
+          .map((b) => b.getAttribute("aria-label")));
       expect(removable.join(" ")).notToContain("Select", "Select must not be removable");
       expect(removable.length).toBeAtLeast(4, "everything else should be removable");
     });
@@ -286,18 +298,18 @@ group("Phase 6 · the tray", () => {
   it("resetting puts the course default back", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptool-add');
+      await page.click('.addbtn');
       await page.waitForTimeout(250);
-      await page.click('.add-tabs button:nth-child(2)');
+      await page.click('.satabs button:nth-child(2)');
       await page.waitForTimeout(150);
-      await page.click('.add-cell:has-text("Strike through")');
+      await page.click('.sacell:has-text("Strike")');
       await page.waitForTimeout(400);
-      expect(await trayIds(page)).toContain("Strike through");
-      await page.click(".ptool-add");
+      expect(await trayIds(page)).toContain("Strike");
+      await page.click(".addbtn");
       await page.waitForTimeout(300);
-      await page.click('.tray-foot .tray-done:has-text("Reset")');
+      await page.click('.safoot u');
       await page.waitForTimeout(400);
-      expect(await trayIds(page)).toEqual(["Select", "Highlight", "Pen", "Eraser", "Note", "Question"]);
+      expect(await trayIds(page)).toEqual(["Select", "Highlighter", "Pen", "Eraser", "Note", "Question"]);
     });
   });
 
@@ -307,12 +319,12 @@ group("Phase 6 · the tray", () => {
       await page.keyboard.press("u");                    // Underline, not on the default tray
       await page.waitForTimeout(300);
       const armed = await page.evaluate(
-        () => document.querySelector('.ptoolbtn[aria-pressed="true"]')?.getAttribute("aria-label"));
+        () => document.querySelector('.tool[aria-pressed="true"]')?.getAttribute("aria-label"));
       expect(armed).notToContain("Underline", "a key switched to a tool the student had removed");
       await page.keyboard.press("h");                    // Highlight, which IS on the tray
       await page.waitForTimeout(300);
       expect(await page.evaluate(
-        () => document.querySelector('.ptoolbtn[aria-pressed="true"]')?.getAttribute("aria-label"))).toBe("Highlight");
+        () => document.querySelector('.tool[aria-pressed="true"]')?.getAttribute("aria-label"))).toBe("Highlighter");
     });
   });
 });
@@ -328,10 +340,10 @@ group("Phase 7 · the mark card", () => {
          across a scroll is a detached node reporting a stale rectangle — which
          is how this test kept aiming at the bottom bar. */
       const box = await page.evaluate(async () => {
-        const sc = document.querySelector(".pscroll");
+        const sc = document.querySelector(".rdr-scroll");
         const clear = (r) => r.top > 130 && r.bottom < innerHeight - 150 && r.width > 6;
         for (let tries = 0; tries < 14; tries++) {
-          const m = [...document.querySelectorAll(".pp-mark[data-colour]")]
+          const m = [...document.querySelectorAll(".rdr-mark[data-colour]")]
             .find((x) => clear(x.getBoundingClientRect()));
           if (m) {
             const r = m.getBoundingClientRect();
@@ -348,14 +360,14 @@ group("Phase 7 · the mark card", () => {
          constructible in WebKit, so the gesture is expressed as the
          PointerEvent that real iOS Safari raises for it. */
       await page.evaluate(({ x, y }) => {
-        const target = document.elementFromPoint(x, y) || document.querySelector(".pscroll");
+        const target = document.elementFromPoint(x, y) || document.querySelector(".rdr-scroll");
         target.dispatchEvent(new PointerEvent("pointerup", {
           pointerType: "touch", pointerId: 1, isPrimary: true,
           clientX: x, clientY: y, bubbles: true, cancelable: true, composed: true,
         }));
       }, box);
       await page.waitForTimeout(700);
-      expect(await page.locator(".selbar").count()).toBeAtLeast(1, "an iPad user can never see this card");
+      expect(await page.locator(".mark-card").count()).toBeAtLeast(1, "an iPad user can never see this card");
       await shot(page, "markcard-tap");
     });
   });
@@ -365,18 +377,18 @@ group("Phase 7 · the mark card", () => {
       await openReader(page);
       await page.waitForTimeout(800);
       const box = await page.evaluate(() => {
-        const m = document.querySelector('.pp-mark[data-colour="critical"]');
+        const m = document.querySelector('.rdr-mark[data-colour="critical"]');
         const r = m.getBoundingClientRect();
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       });
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(500);
-      const card = await page.locator(".selbar").innerText();
+      const card = await page.locator(".mark-card").innerText();
       expect(card).toContain("Exam likely");
       expect(card).toContain("revision deck");
       // Mine: the five colours to restyle, plus a note and a delete.
-      expect(await page.locator(".mc-cols .swatch").count()).toBe(5);
-      expect(await page.locator('.mc-acts [aria-label="Delete this mark"]').count()).toBe(1);
+      expect(await page.locator(".mark-card .mca .sw").count()).toBe(5);
+      expect(await page.locator('.mark-card [aria-label="Delete"]').count()).toBe(1);
     });
   });
 
@@ -393,9 +405,9 @@ group("Phase 7 · the mark card", () => {
          which is what makes this one findable AND what makes it worth
          checking. */
       const box = await page.evaluate(async () => {
-        const m = document.querySelector('.pp-mark[data-colour="unsure"]');
+        const m = document.querySelector('.rdr-mark[data-colour="unsure"]');
         if (!m) return null;
-        const sc = document.querySelector(".pscroll");
+        const sc = document.querySelector(".rdr-scroll");
         sc.scrollTop += (m.getBoundingClientRect().top - (innerHeight * 0.45));
         await new Promise((res) => setTimeout(res, 700));
         const r = m.getBoundingClientRect();
@@ -404,12 +416,16 @@ group("Phase 7 · the mark card", () => {
       expect(box).toBeTruthy("the other student's question did not resolve");
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(700);
-      const card = await page.locator(".selbar").innerText();
+      const card = await page.locator(".mark-card").innerText();
       expect(card).toContain("Asked anonymously");
-      expect(card).toContain("Name hidden on questions");
-      expect(await page.locator('.mc-acts [aria-label="Delete this mark"]').count()).toBe(0,
+      expect(card).toContain("name hidden on questions");
+      expect(await page.locator('.mark-card [aria-label="Delete"]').count()).toBe(0,
         "you can delete somebody else's mark");
-      expect(await page.locator(".mc-agree").count()).toBe(1);
+      /* COMPONENTS.md: an anonymous question offers Answer this and Follow —
+         not Agree, which is for somebody's ordinary mark. */
+      expect(card).toContain("Answer this");
+      expect(card).toContain("Follow");
+      expect(await page.locator('.mark-card [data-act="follow"]').count()).toBe(1);
     });
   });
 
@@ -418,15 +434,15 @@ group("Phase 7 · the mark card", () => {
       await openReader(page);
       await page.waitForTimeout(800);
       const box = await page.evaluate(() => {
-        const r = document.querySelector(".pp-mark[data-colour]").getBoundingClientRect();
+        const r = document.querySelector(".rdr-mark[data-colour]").getBoundingClientRect();
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       });
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(400);
-      expect(await page.locator(".selbar").count()).toBe(1);
+      expect(await page.locator(".mark-card").count()).toBe(1);
       await page.keyboard.press("Escape");
       await page.waitForTimeout(400);
-      expect(await page.locator(".selbar").count()).toBe(0);
+      expect(await page.locator(".mark-card").count()).toBe(0);
     });
   });
 });
@@ -490,14 +506,14 @@ group("§8.9 · pen, finger and palm", () => {
   it("a finger scrolls and never draws while an ink tool is armed", async () => {
     await withPage(ipadL, async (page) => {
       await openReader(page);
-      await page.click('.ptoolbtn[aria-label="Pen"]');
+      await page.click('.tool[aria-label="Pen"]');
       await page.waitForTimeout(300);
       const before = await page.evaluate(
         () => [...document.querySelectorAll(".ink-stroke")].filter((p) => p.getAttribute("d")).length);
       /* A real touch pointer across the page. It must move the paper, not
          mark it — the single most common failure in a web annotator. */
       await page.evaluate(() => {
-        const svg = document.querySelector(".pp-ink");
+        const svg = document.querySelector(".rdr-ink");
         const r = svg.getBoundingClientRect();
         const opts = (x, y) => ({ pointerType: "touch", pointerId: 7, isPrimary: true,
                                   clientX: x, clientY: y, bubbles: true, width: 40, height: 40 });
@@ -515,12 +531,12 @@ group("§8.9 · pen, finger and palm", () => {
   it("a palm resting during pen input produces nothing", async () => {
     await withPage(ipadL, async (page) => {
       await openReader(page);
-      await page.click('.ptoolbtn[aria-label="Pen"]');
+      await page.click('.tool[aria-label="Pen"]');
       await page.waitForTimeout(300);
       const before = await page.evaluate(
         () => [...document.querySelectorAll(".ink-stroke")].filter((p) => p.getAttribute("d")).length);
       await page.evaluate(() => {
-        const svg = document.querySelector(".pp-ink");
+        const svg = document.querySelector(".rdr-ink");
         const r = svg.getBoundingClientRect();
         const pen = (t, x, y) => new PointerEvent(t, { pointerType: "pen", pointerId: 1, isPrimary: true,
           pressure: .5, button: 0, buttons: 1, clientX: x, clientY: y, bubbles: true, width: 2, height: 2 });
@@ -545,12 +561,12 @@ group("§8.9 · pen, finger and palm", () => {
   it("a pen draws", async () => {
     await withPage(ipadL, async (page) => {
       await openReader(page);
-      await page.click('.ptoolbtn[aria-label="Pen"]');
+      await page.click('.tool[aria-label="Pen"]');
       await page.waitForTimeout(300);
       const before = await page.evaluate(
         () => [...document.querySelectorAll(".ink-stroke")].filter((p) => p.getAttribute("d")).length);
       await page.evaluate(() => {
-        const svg = document.querySelector(".pp-ink");
+        const svg = document.querySelector(".rdr-ink");
         const r = svg.getBoundingClientRect();
         const opts = (x, y, p) => ({ pointerType: "pen", pointerId: 3, isPrimary: true, pressure: p,
                                      clientX: x, clientY: y, bubbles: true, width: 2, height: 2 });
@@ -570,11 +586,11 @@ group("§8.9 · pen, finger and palm", () => {
   it("the page surface does not take touch unless a drawing tool is armed", async () => {
     await withPage(ipadL, async (page) => {
       await openReader(page);
-      const idle = await page.evaluate(() => getComputedStyle(document.querySelector(".pp-ink")).pointerEvents);
+      const idle = await page.evaluate(() => getComputedStyle(document.querySelector(".rdr-ink")).pointerEvents);
       expect(idle).toBe("none", "the ink layer is eating taps while no ink tool is armed");
-      await page.click('.ptoolbtn[aria-label="Pen"]');
+      await page.click('.tool[aria-label="Pen"]');
       await page.waitForTimeout(300);
-      const armed = await page.evaluate(() => getComputedStyle(document.querySelector(".pp-ink")).pointerEvents);
+      const armed = await page.evaluate(() => getComputedStyle(document.querySelector(".rdr-ink")).pointerEvents);
       expect(armed).toBe("auto");
     });
   });
@@ -585,7 +601,7 @@ group("§15 · the quality bar", () => {
   it("every icon-only control has an accessible name", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const nameless = await page.evaluate(() => [...document.querySelectorAll(".paper button")]
+      const nameless = await page.evaluate(() => [...document.querySelectorAll(".rdr button")]
         .filter((b) => !b.textContent.trim() && !b.getAttribute("aria-label") && !b.getAttribute("title"))
         .map((b) => b.className));
       expect(nameless).toEqual([], "a screen reader would announce these as 'button'");
@@ -606,9 +622,14 @@ group("§15 · the quality bar", () => {
   it("every control is at least 44px on its shortest side on touch", async () => {
     await withPage(ipadP, async (page) => {
       await openReader(page);
-      const small = await page.evaluate(() => [...document.querySelectorAll(".paper button")]
+      const small = await page.evaluate(() => [...document.querySelectorAll(".rdr button")]
         .filter((b) => b.offsetParent !== null)
-        .map((b) => ({ c: b.className, w: Math.round(b.getBoundingClientRect().width), h: Math.round(b.getBoundingClientRect().height) }))
+        .map((b) => ({
+          /* Name the offender: a bare `class=""` in the failure tells you
+             nothing about which button is too small to hit. */
+          c: b.className || `${b.parentElement?.className || "?"} > ${b.textContent.trim().slice(0, 18) || b.getAttribute("aria-label") || "?"}`,
+          w: Math.round(b.getBoundingClientRect().width), h: Math.round(b.getBoundingClientRect().height),
+        }))
         .filter((b) => Math.min(b.w, b.h) > 0 && Math.min(b.w, b.h) < 30));
       expect(small).toEqual([], "controls under 30px on a touch screen");
     });
@@ -621,16 +642,16 @@ group("§6.3 · the chips are the destinations", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.evaluate(() => {
-        const p = document.querySelector(".paper");
-        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+        const p = document.querySelector(".rdr");
+        if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(500);
-      await page.click('.prail-tabs button:has-text("Marks")');
+      await page.click('.bar-panel .segs button:has-text("Marks")');
       await page.waitForTimeout(600);
       /* The label without its count — the count is a separate element inside
          the chip, so textContent runs them together. */
-      const chips = await page.evaluate(() => [...document.querySelectorAll(".chip")].map((c) => {
-        const n = c.querySelector("em");
+      const chips = await page.evaluate(() => [...document.querySelectorAll(".chp")].map((c) => {
+        const n = c.querySelector("span, em");
         return c.textContent.replace(n ? n.textContent : "", "").trim();
       }));
       expect(chips).toContain("Revision");
@@ -643,8 +664,8 @@ group("§6.3 · the chips are the destinations", () => {
       /* The counts are real: the fixture has one Revision mark and one Thread. */
       const counted = await page.evaluate(() => {
         const out = {};
-        for (const c of document.querySelectorAll(".chip")) {
-          const n = c.querySelector("em");
+        for (const c of document.querySelectorAll(".chp")) {
+          const n = c.querySelector("span, em");
           if (n) out[c.textContent.replace(n.textContent, "").trim()] = Number(n.textContent);
         }
         return out;
@@ -662,24 +683,39 @@ group("§11 · the rack and the pills", () => {
       await openReader(page);
       await page.waitForTimeout(1200);
       const rail = await page.evaluate(() => {
-        const r = document.querySelector(".pticks");
+        const r = document.querySelector(".rail");
         if (!r) return null;
         const box = r.getBoundingClientRect();
         return {
           width: Math.round(box.width),
-          ticks: [...r.querySelectorAll(".ptick")].map((t) => ({
-            colour: t.dataset.colour || null, mine: t.hasAttribute("data-mine"), top: t.style.top,
+          ticks: [...r.querySelectorAll(".tk")].map((t) => ({
+            colour: t.style.getPropertyValue("--c") || null, mine: t.classList.contains("is-mine"), top: t.style.top,
           })),
-          you: !!r.querySelector(".pticks-you"),
+          you: !!r.querySelector(".rail .you"),
         };
       });
       expect(rail).toBeTruthy("no tick rail");
       expect(rail.ticks.length).toBeAtLeast(3, "the fixture's marks are not on the rail");
       /* Yours are drawn wider and opaque; the module's narrower and lighter. */
-      expect(rail.ticks.some((t) => t.mine)).toBeTruthy();
-      expect(rail.ticks.some((t) => !t.mine)).toBeTruthy();
+      expect(rail.ticks.some((t) => t.mine)).toBeTruthy("no mark of the reader's own on the rail");
+      expect(rail.ticks.some((t) => !t.mine)).toBeTruthy("no mark from the module on the rail");
       expect(rail.you).toBeTruthy("no marker for where the reader is");
-      expect(rail.width).toBeAtLeast(30, "a rail a thumb cannot find");
+      /* The shipped sheet answers "can a thumb hit this?" by not showing the
+         rail to a thumb at all — it is 14px on a pointer and display:none
+         under 900px. So the width to hold is the shipped one, and the touch
+         case is the assertion below. */
+      expect(rail.width).toBeAtLeast(12, "the rail is thinner than the shipped 14px");
+    });
+  });
+
+  it("the rail is not offered to a thumb it is too thin for", async () => {
+    await withPage(ipadP, async (page) => {
+      await openReader(page);
+      const shown = await page.evaluate(() => {
+        const r = document.querySelector(".rail");
+        return !!r && r.getBoundingClientRect().width > 0;
+      });
+      expect(shown).toBeFalsy("a 14px rail is on screen on a touch surface");
     });
   });
 
@@ -687,9 +723,11 @@ group("§11 · the rack and the pills", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const buttons = await page.evaluate(
-        () => document.querySelectorAll(".pticks button, button.ptick").length);
+        () => document.querySelectorAll(".rail button, button.tk").length);
       expect(buttons).toBe(0, "each tick is its own button — forty targets nobody can hit");
-      expect(await page.locator("button.pticks").count()).toBe(1);
+      /* COMPONENTS.md draws the rail as a div; §15 still wants one control, so
+         it carries the role rather than the tag. */
+      expect(await page.locator('.rail[role="button"]').count()).toBe(1);
     });
   });
 
@@ -697,21 +735,21 @@ group("§11 · the rack and the pills", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.waitForTimeout(1200);
-      const before = await page.evaluate(() => Number(document.querySelector(".pnum input").value));
+      const before = await page.evaluate(() => Number(document.querySelector(".pgpill").textContent));
       await page.evaluate(() => {
-        const r = document.querySelector(".pticks");
+        const r = document.querySelector(".rail");
         const box = r.getBoundingClientRect();
         r.dispatchEvent(new MouseEvent("click", {
           bubbles: true, clientX: box.left + 15, clientY: box.top + box.height * 0.62,
         }));
       });
       await page.waitForTimeout(900);
-      const after = await page.evaluate(() => Number(document.querySelector(".pnum input").value));
+      const after = await page.evaluate(() => Number(document.querySelector(".pgpill").textContent));
       expect(after).toBeAtLeast(before + 1, "the rail did not move the reader");
       /* §11.1 — and it says how to get back. */
-      const pill = await page.locator(".pback").count();
+      const pill = await page.locator(".back").count();
       expect(pill).toBe(1, "no way back after a jump");
-      expect(await page.locator(".pback").innerText()).toContain(String(before));
+      expect(await page.locator(".back").innerText()).toContain(String(before));
     });
   });
 
@@ -719,20 +757,20 @@ group("§11 · the rack and the pills", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.waitForTimeout(1000);
-      await page.evaluate(() => { document.querySelector(".pscroll").scrollTop = 900; });
+      await page.evaluate(() => { document.querySelector(".rdr-scroll").scrollTop = 900; });
       await page.waitForTimeout(500);
-      const top = await page.evaluate(() => document.querySelector(".pscroll").scrollTop);
+      const top = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollTop);
       await page.evaluate(() => {
-        const r = document.querySelector(".pticks");
+        const r = document.querySelector(".rail");
         const box = r.getBoundingClientRect();
         r.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: box.left + 15, clientY: box.top + box.height * 0.8 }));
       });
       await page.waitForTimeout(900);
-      await page.click(".pback");
+      await page.click(".back");
       await page.waitForTimeout(900);
-      const back = await page.evaluate(() => document.querySelector(".pscroll").scrollTop);
+      const back = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollTop);
       expect(Math.abs(back - top)).toBeAtMost(30, "it did not come back to where it left");
-      expect(await page.locator(".pback").count()).toBe(0, "the pill stayed after it was used");
+      expect(await page.locator(".back").count()).toBe(0, "the pill stayed after it was used");
     });
   });
 
@@ -741,23 +779,23 @@ group("§11 · the rack and the pills", () => {
       await openReader(page);
       await page.waitForTimeout(900);
       const moved = await page.evaluate(async () => {
-        const input = document.querySelector(".pnum input");
+        const input = document.querySelector(".pgpill");
         const r = input.getBoundingClientRect();
         const x = r.left + r.width / 2, y = r.top + r.height / 2;
         const opts = (X) => ({ bubbles: true, pointerId: 4, pointerType: "mouse", isPrimary: true, clientX: X, clientY: y });
         input.dispatchEvent(new PointerEvent("pointerdown", opts(x)));
         input.dispatchEvent(new PointerEvent("pointermove", opts(x + 240)));
         await new Promise((res) => setTimeout(res, 250));
-        const card = document.querySelector(".pscrub");
+        const card = document.querySelector(".scrub");
         const shown = card ? card.innerText.replace(/\n/g, " ") : null;
-        const value = input.value;
+        const value = input.textContent;
         input.dispatchEvent(new PointerEvent("pointerup", opts(x + 240)));
         return { shown, value };
       });
       expect(moved.shown).toBeTruthy("no card while scrubbing");
       expect(Number(moved.value)).toBeAtLeast(2, "dragging did not move the target page");
       await page.waitForTimeout(700);
-      expect(await page.locator(".pscrub").count()).toBe(0, "the card stayed after the drag");
+      expect(await page.locator(".scrub").count()).toBe(0, "the card stayed after the drag");
     });
   });
 });
@@ -767,13 +805,13 @@ group("§11 · the rail stays reachable", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.evaluate(() => {
-        const p = document.querySelector(".paper");
-        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+        const p = document.querySelector(".rdr");
+        if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(700);
       const clear = await page.evaluate(() => {
-        const rail = document.querySelector(".pticks");
-        const panel = document.querySelector(".prail");
+        const rail = document.querySelector(".rail");
+        const panel = document.querySelector(".bar-panel");
         if (!rail || !panel) return null;
         const a = rail.getBoundingClientRect(), b = panel.getBoundingClientRect();
         return { overlaps: a.right > b.left && a.left < b.right, railRight: Math.round(a.right), panelLeft: Math.round(b.left) };
@@ -913,9 +951,9 @@ group("§4.6 · a big paper lays out before it downloads", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const shape = await page.evaluate(() => {
-        const slots = [...document.querySelectorAll(".pslot")];
-        const ghosts = [...document.querySelectorAll(".pp-ghost")];
-        const sc = document.querySelector(".pscroll");
+        const slots = [...document.querySelectorAll(".rdr-page")];
+        const ghosts = [...document.querySelectorAll(".rdr-page.is-placeholder")];
+        const sc = document.querySelector(".rdr-scroll");
         return {
           /* The COLUMN is the whole document even though only a handful of
              slots are mounted — spacers hold the rest. Counting slots would be
@@ -951,12 +989,12 @@ group("§8.7 · the paper is the subject", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.waitForTimeout(600);
-      expect(await op(page, ".pbar")).toBe(1, "the bar was not solid to begin with");
+      expect(await op(page, ".bar-top")).toBe(1, "the bar was not solid to begin with");
 
       await page.waitForTimeout(3200);                    // sit still
-      expect(await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-quiet")))
+      expect(await page.evaluate(() => document.querySelector(".rdr").hasAttribute("data-quiet")))
         .toBeTruthy("it never went quiet");
-      const faded = await op(page, ".pbar");
+      const faded = await op(page, ".bar-top");
       expect(faded).toBeAtMost(0.2, "the bar did not recede");
       /* Faded, not gone. A control that vanishes is one you have to remember
          exists. */
@@ -964,7 +1002,7 @@ group("§8.7 · the paper is the subject", () => {
 
       await page.mouse.move(700, 500);
       await page.waitForTimeout(300);
-      expect(await op(page, ".pbar")).toBe(1, "moving did not bring it back");
+      expect(await op(page, ".bar-top")).toBe(1, "moving did not bring it back");
     });
   });
 
@@ -972,20 +1010,20 @@ group("§8.7 · the paper is the subject", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.evaluate(() => {
-        const p = document.querySelector(".paper");
-        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+        const p = document.querySelector(".rdr");
+        if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(3400);
-      expect(await op(page, ".prail")).toBe(1, "the panel faded — it is something you chose to open");
+      expect(await op(page, ".bar-panel")).toBe(1, "the panel faded — it is something you chose to open");
     });
   });
 
   it("nothing fades while a menu or a composer is open", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptool[aria-label="More"]');
+      await page.click('.ib[aria-label="More"]');
       await page.waitForTimeout(3400);
-      expect(await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-quiet")))
+      expect(await page.evaluate(() => document.querySelector(".rdr").hasAttribute("data-quiet")))
         .toBeFalsy("the chrome faded under an open menu");
     });
   });
@@ -993,16 +1031,16 @@ group("§8.7 · the paper is the subject", () => {
   it("Just the paper hides everything, and a pointer brings it back", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptool[aria-label="Just the paper"]');
+      await page.click('.ib[aria-label="Just the paper"]');
       await page.waitForTimeout(500);
-      expect(await page.evaluate(() => document.querySelector(".paper").hasAttribute("data-hush")))
+      expect(await page.evaluate(() => document.querySelector(".rdr").hasAttribute("data-hush")))
         .toBeTruthy("the toggle did nothing");
       /* And the way out is the label itself, which now says how to undo it. */
-      expect(await page.locator('.ptool[aria-label="Bring the controls back"]').count()).toBe(1);
+      expect(await page.locator('.ib[aria-label="Bring the controls back"]').count()).toBe(1);
       /* Reaching for the bar makes it solid, so it can never trap you. */
-      await page.hover(".pbar");
+      await page.hover(".bar-top");
       await page.waitForTimeout(300);
-      expect(await op(page, ".pbar")).toBe(1, "the bar stayed hidden under the pointer");
+      expect(await op(page, ".bar-top")).toBe(1, "the bar stayed hidden under the pointer");
     });
   });
 
@@ -1011,9 +1049,9 @@ group("§8.7 · the paper is the subject", () => {
       await openReader(page);
       await page.waitForTimeout(900);
       const boxes = await page.evaluate(() => {
-        const pg = document.querySelector(".pp:not(.pp-ghost)");
-        const panel = document.querySelector(".prail");
-        const rail = document.querySelector(".pticks");
+        const pg = document.querySelector(".rdr-page:not(.is-placeholder)");
+        const panel = document.querySelector(".bar-panel");
+        const rail = document.querySelector(".rail");
         if (!pg) return null;
         const a = pg.getBoundingClientRect();
         return {
@@ -1033,10 +1071,10 @@ group("§4.5 · a thousand pages stay light", () => {
       await openReader(page);
       await page.waitForTimeout(1200);
       const counted = await page.evaluate(() => ({
-        slots: document.querySelectorAll(".pslot").length,
-        canvases: document.querySelectorAll(".pscroll canvas").length,
+        slots: document.querySelectorAll(".rdr-page").length,
+        canvases: document.querySelectorAll(".rdr-scroll canvas").length,
         spacers: document.querySelectorAll(".pspacer").length,
-        total: Number(document.querySelector(".pnum + span")?.textContent?.replace(/\D/g, "") || 0),
+        total: Number(document.querySelector(".pgctl + span")?.textContent?.replace(/\D/g, "") || 0),
       }));
       /* The fixture is 14 pages, so a window plus spacers — not fourteen slots
          and certainly not a thousand. The rule this guards is the one that made
@@ -1050,8 +1088,8 @@ group("§4.5 · a thousand pages stay light", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.evaluate(() => {
-        const p = document.querySelector(".paper");
-        if (p.dataset.rail === "none") document.querySelector('.ptool[aria-label="Pages and contents"]').click();
+        const p = document.querySelector(".rdr");
+        if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(1200);
       const rail = await page.evaluate(() => ({
@@ -1074,8 +1112,8 @@ group("the paper is the subject", () => {
       await page.waitForTimeout(900);
       const read = () => page.evaluate(() => {
         const o = (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; };
-        return { quiet: document.querySelector(".paper").hasAttribute("data-quiet"),
-                 bar: o(".pbar"), dock: o(".ptools"), bot: o(".pbot") };
+        return { quiet: document.querySelector(".rdr").hasAttribute("data-quiet"),
+                 bar: o(".bar-top"), dock: o(".bar-dock"), bot: o(".bar-bot") };
       });
       const awake = await read();
       expect(awake.bar).toBe(1, "the chrome starts hidden");
@@ -1102,14 +1140,14 @@ group("the paper is the subject", () => {
   it("Just the paper hides everything, and reaching for it brings it back", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.ptool[aria-label="Just the paper"]');
+      await page.click('.ib[aria-label="Just the paper"]');
       await page.waitForTimeout(500);
       await page.mouse.move(30, 870);
       await page.waitForTimeout(400);
       const hushed = await page.evaluate(() => {
         const o = (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; };
-        return { hush: document.querySelector(".paper").hasAttribute("data-hush"),
-                 bar: o(".pbar"), panel: o(".prail") };
+        return { hush: document.querySelector(".rdr").hasAttribute("data-hush"),
+                 bar: o(".bar-top"), panel: o(".bar-panel") };
       });
       expect(hushed.hush).toBeTruthy();
       expect(hushed.bar).toBeAtMost(0.3, "the bar is still solid in Just the paper");
@@ -1117,10 +1155,10 @@ group("the paper is the subject", () => {
         expect(hushed.panel).toBeAtMost(0.3, "a 322px panel is not just the paper");
       }
       /* And the way back is a control that says so. */
-      expect(await page.locator('.ptool[aria-label="Bring the controls back"]').count()).toBe(1);
-      await page.click('.ptool[aria-label="Bring the controls back"]');
+      expect(await page.locator('.ib[aria-label="Bring the controls back"]').count()).toBe(1);
+      await page.click('.ib[aria-label="Bring the controls back"]');
       await page.waitForTimeout(400);
-      expect(await page.evaluate(() => Number(getComputedStyle(document.querySelector(".pbar")).opacity))).toBe(1);
+      expect(await page.evaluate(() => Number(getComputedStyle(document.querySelector(".bar-top")).opacity))).toBe(1);
     });
   });
 
@@ -1129,8 +1167,8 @@ group("the paper is the subject", () => {
       await openReader(page);
       await page.waitForTimeout(1200);
       const weight = await page.evaluate(() => ({
-        canvases: document.querySelectorAll(".paper canvas").length,
-        slots: document.querySelectorAll(".pslot").length,
+        canvases: document.querySelectorAll(".rdr canvas").length,
+        slots: document.querySelectorAll(".rdr-page").length,
       }));
       /* The window is a handful of pages either side, never the document. */
       expect(weight.slots).toBeAtMost(40, "every page has a slot mounted");
