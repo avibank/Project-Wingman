@@ -158,7 +158,7 @@
 .rdr .thumb-shot { display: block; width: 108px; border-radius: 2px; overflow: hidden;
   background: #fff; border: 1px solid var(--hair); box-shadow: var(--sh-md); }
 .rdr .thumb-shot canvas, .rdr .thumb-shot img { display: block; width: 100%; height: auto; }
-.rdr .thumb-n { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--txt-3); }
+.rdr .thumb-n { font-family: var(--font-mono); font-size: 10px; color: var(--txt-3); }
 .rdr .thumb[aria-current="true"] .thumb-shot { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
 .rdr .thumb[aria-current="true"] .thumb-n { color: var(--txt); }
 .rdr .outline { list-style: none; margin: 0; padding: 4px 0; display: grid; gap: 1px; }
@@ -201,7 +201,7 @@
   display: flex; align-items: center; gap: 5px; padding: 6px 8px; }
 .rdr .findbar input { flex: 1; min-width: 200px; background: none; border: 0; outline: none;
   font: inherit; font-size: 13px; color: var(--txt); }
-.rdr .findbar .chp { font-family: "IBM Plex Mono", monospace; }
+.rdr .findbar .chp { font-family: var(--font-mono); }
 
 .rdr .composer { position: relative; width: min(460px, 92vw); padding: 14px; display: grid; gap: 11px; }
 .rdr .composer blockquote { margin: 0; padding-inline-start: 10px; border-inline-start: 2px solid var(--hair);
@@ -247,12 +247,27 @@
 .rdr[data-hush] .bar-top:hover, .rdr[data-hush] .bar-dock:hover, .rdr[data-hush] .bar-bot:hover,
 .rdr[data-hush] .bar-panel:hover, .rdr[data-hush] .rail:hover { opacity: 1; }
 
-/* ── the panel sits BESIDE the page above 1200px, and the page keeps clear
-      of the dock and the rail at every size (§8.6) ───────────────────── */
-.rdr .rdr-scroll { padding-inline: 92px 46px; }
+/* ── the panel sits BESIDE the page above 1240px (§8.6) ────────────────────
+   The shipped sheet's own padding — `78px 34px 96px 0` — is left alone. It
+   works at every width the reader is used at: the page is capped at 900px and
+   centred, so at 1440 its left edge lands at 253 and the dock's is 68. The
+   page only needs pushing when the panel takes a column.
+
+   THE RAIL DOES NOT MOVE, and a rule here used to move it. `.rail` is
+   `right:8px` and the panel is `right:30px` at 322 wide, so the rail sits in
+   the 30px gutter OUTSIDE the panel — the shipped layout already clears it.
+   The rule that pushed it to `right:360px` put it on top of the page instead,
+   where its ticks were invisible against white. Measured: x=1066 in a 1440
+   window, where the reference draws it at 1418.
+
+   THE DEVIATION HERE IS THE PAGE, and it is the brief overruling the demo.
+   reference.html lets the panel float over the page's right margin — 65px at
+   1440, which is harmless, and 164px at 1241, which is text. §8.6's table says
+   "resizable panel beside the page" above 1200 and §15 tests it, so the
+   document keeps clear. The 92px on the other side is the dock: without it the
+   page centres at x=70 and the dock's right edge is 68. */
 @media (min-width: 1241px) {
-  .rdr[data-panel]:not([data-panel="none"]) .rdr-scroll { padding-inline-end: 400px; }
-  .rdr[data-panel]:not([data-panel="none"]) .rail { right: 360px; }
+  .rdr[data-panel]:not([data-panel="none"]) .rdr-scroll { padding-inline: 92px 400px; }
 }
 @media (max-width: 900px) {
   .rdr .rdr-scroll { padding-inline: 16px; padding-bottom: 140px; }
@@ -271,6 +286,38 @@
    two controls for one job, and the pill is the one that covers the document. */
 .app:has(.rdr) .rpt { display: none; }
 
+/* ── §12's tap floor, and why the reader pays it differently ───────────────
+   App.jsx enforces `min-height:44px` on `.app button:not(.is-inline)` — a
+   global rule, because the 44px minimum had leaked in eleven places. The
+   reader is a portal INSIDE `.app`, so it inherits that rule, and the rule
+   fights the shipped sheet on every control it has. Measured, not guessed:
+
+     .tool          38x38 shipped   ->  38x44   the dock, stretched
+     .sw            27x27 shipped   ->  27x44   round swatches, drawn as ovals
+     .more          27x27 shipped   ->  27x44   same
+     .segs button   ~28px shipped   ->  93x44   the panel's tabs
+
+   Every one of those is an aspect ratio the reference does not have, and the
+   swatches are the giveaway: a circle is a circle because width equals height.
+
+   So inside `.rdr` the shipped sheet owns the box, and §12 is paid the way the
+   sheet itself pays it — by growing the control under `max-width:900px`, which
+   is the touch case the floor exists for. On a pointer there is no thumb and
+   38px is not a problem; reader.css already grows `.ib`, `.tool` and `.addbtn`
+   to 44 there, and the block below grows the ones it left behind.
+
+   THE SWATCH ROW IS THE ONE EXCEPTION, and the app has already made this call
+   once: `.msg-acts .icon-btn.is-inline` keeps its 26px box because those
+   controls are packed side by side, and a 44px hit area on each would overlap
+   its neighbours — which does not make them easier to hit, it makes the wrong
+   one fire. Six swatches in a 266px row cannot be 44px. They are 36px with an
+   8px gap, so the PITCH is 44px, which is what a thumb actually needs. */
+.app .rdr button:not(.is-inline),
+.app .rdr [role="tab"],
+.app .rdr input:not([type="checkbox"]):not([type="radio"]),
+.app .rdr select,
+.app .rdr textarea { min-height: 0; }
+
 /* ── touch targets the shipped sheet's own 900px block does not reach ──────
    reader.css grows `.ib`, `.tool` and `.addbtn` to 44px under
    `max-width:900px` and stops there. The Add sheet's tabs are text, so they
@@ -279,8 +326,24 @@
    tap area inside the breakpoint the shipped sheet already uses for exactly
    this, and §12 is a global rule in this app, not a reader opinion. */
 @media (max-width: 900px) {
+  /* §12's floor, put back for everything the shipped sheet does not size
+     itself. `.ib`, `.tool` and `.addbtn` are already 44px here by its own
+     rule; `.sw` and `.more` are the packed swatch row, excluded for the reason
+     above. Everything else — the sheet's tabs, the panel's segmented control,
+     the filter chips, the buttons in a mark card — goes back to 44. */
+  .app .rdr button:not(.is-inline):not(.ib):not(.tool):not(.addbtn):not(.sw):not(.more) {
+    min-height: 44px;
+  }
+  /* "Ink" is 16px of text. A tab you cannot miss vertically is still a tab you
+     cannot hit horizontally. */
   .rdr .satabs { gap: 4px; }
   .rdr .satabs button { min-width: 44px; padding: 0 8px 9px; }
+  /* Not a button, so the rule above does not reach it. */
+  .rdr .pgpill { display: inline-block; min-width: 44px; padding: 12px 6px; }
+  /* Packed side by side: 36px on a 44px pitch — see the note above. */
+  .rdr .colours { gap: 8px; }
+  .rdr .sw, .rdr .more { width: 36px; height: 36px; }
+  .rdr .sw.sm { width: 30px; height: 30px; }
 }
 
 /* ── the tablet panel ──────────────────────────────────────────────────────
@@ -304,9 +367,14 @@
   .rdr .bar-panel { display: flex; }
 }
 @media (max-width: 900px) {
+  /* A sheet down the right, not a slab across the bottom. The first version of
+     this was `left:12px; right:12px; bottom:130px` and it took 54% of an iPad
+     and sat on top of the dock — a panel that overlays should still leave the
+     paper being the thing you are looking at. Full height, clear of the dock,
+     and narrow enough that the page is still readable behind it. */
   .rdr .bar-panel {
-    right: 12px; left: 12px; width: auto; top: auto; bottom: 130px;
-    max-height: 54vh;
+    left: auto; right: 12px; width: min(360px, 86vw);
+    top: 64px; bottom: 132px;
   }
 }
 
@@ -361,4 +429,103 @@
   .rdr[data-dock="top"] .bar-add.is-open { transform: translateX(-50%) scale(1); }
   /* The top dock sits where the top bar does, so the bar steps aside for it. */
   .rdr[data-dock="top"] .bar-top { top: 72px; }
+}
+
+/* ── the mono face ─────────────────────────────────────────────────────────
+   reader.css names `"IBM Plex Mono", monospace` at eighteen places. This app
+   does not load IBM Plex Mono and is not going to: the brand faces are
+   Instrument Sans and Geist Mono, reached through `--font-ui` and
+   `--font-mono` and never named directly (CLAUDE.md, Design system). Left
+   alone, every one of those eighteen falls through to whatever the browser
+   calls `monospace` — which is not the shipped look either, it is a fallback
+   that differs on every machine, and it is the kind of difference the "compare
+   surface by surface" pass is supposed to catch.
+
+   So the family is re-pointed and nothing else is: same elements, same sizes,
+   same letter-spacing, same tabular numerals. Every selector reader.css gives
+   the mono face is listed here, which is why this is a list and not a
+   wildcard — a wildcard would also catch the next one it adds, silently. */
+.rdr .mono, .rdr .pill, .rdr .tip kbd, .rdr .tool .cnt, .rdr .ticks b,
+.rdr .pgh, .rdr .mrow .t em, .rdr .mch em, .rdr .railtip em,
+.rdr .pgpill, .rdr .tot, .rdr .zoom .v, .rdr .scrub .meta b, .rdr .back b,
+.rdr .rgh em, .rdr .rcard .pg,
+.rdr .rdr-page .pg-label, .rdr .rdr-page .pg-num {
+  font-family: var(--font-mono);
+}
+
+/* ── quarantine: eight class names this app already had ────────────────────
+   reader.css was scoped by prefixing `.rdr ` to every selector, which stops
+   the reader painting the REST of the app. It does not stop the rest of the
+   app painting the READER, and eight of the shipped sheet's 109 class names
+   already exist here as bare rules. Found by looking, and the swatches are how
+   it surfaced: every colour circle had a grey disc inside it, offset up and
+   left — app.css's `.sw` is a TOGGLE SWITCH, 44x25 with a 17px knob drawn as
+   `::after`, and the reader's `.sw` is a 27px colour swatch. Two designs, one
+   name, and the switch's knob was landing in the middle of the swatch.
+
+   `.rdr .x` (0,2,0) beats a bare `.x` (0,1,0) for the properties it declares.
+   The damage is everything it does NOT declare, and every pseudo-element:
+
+     .sw     app.css          a switch knob inside every swatch, and a border
+     .pop    instruments.css  a rotated arrow ::before on EVERY popover, and
+                              h3 styles — and instruments.css is loaded, the
+                              reader opens from the module screen
+     .pill   deck.css         min-height:var(--tap) — the 44px floor again, on
+                              a span this time, so "12 PT" is twice its height
+     .scrub  lesson.css       height:4px and a background: the scrub card, the
+                              one that says which page you are flying to, drawn
+                              as a 4px progress bar
+     .av     familiar.css     36px, where the mark card's initials are 26px
+     .plist  familiar.css     list-style/margin/padding — all three overridden
+     .row    room.css         only `.row:hover .row-snip`; no .row-snip here
+     .title  foundations.css  overflow-wrap:anywhere, which is fine
+
+   The last three are listed rather than fixed because listing them is the
+   point: the next person needs the whole list, not the subset that bit. */
+.app .rdr .sw { background: none; border: 0; padding: 0; }
+.app .rdr .sw::before { content: none; }
+.app .rdr .sw::after { content: none; background: none; }
+/* And width/height with it: reader.css draws the selected ring with
+   `inset:-4px` and no size, which is over-constrained the moment app.css's
+   17x17 knob keeps its dimensions — left+width win, so the ring came out
+   small and anchored to the top-left corner instead of around the circle. */
+.app .rdr .sw.is-on::after { content: ""; width: auto; height: auto; }
+.app .rdr .pop::before, .app .rdr .pop::after { content: none; }
+.app .rdr .bar.pop { position: absolute; }
+.app .rdr .pill { min-height: 0; display: inline-block; gap: 0; }
+.app .rdr .scrub { height: auto; background: var(--glass-2); margin: 0; }
+.app .rdr .av { width: 26px; height: 26px; }
+
+/* ── marks only is a takeover ──────────────────────────────────────────────
+   reader.css hides the document and the tick rail under `data-mode="rev"` and
+   stops there; the demo happened to have the panel shut when it was built. The
+   panel is not shut here, and it floats over the right third of the list — the
+   group headers read "1 passage · Revision de…" with the destination, which is
+   the whole point of the line, cut off underneath it. The marks list and the
+   marks panel are the same marks: showing both at once is the takeover not
+   taking over. */
+.rdr[data-mode="rev"] .bar-panel { display: none; }
+
+/* ── the bottom bar does not wrap ──────────────────────────────────────────
+   It is one row of controls and a readout, and on an 834px iPad it came apart:
+   "1" above "/ 14", "Fit" above "width". A control bar that reflows is a
+   control bar whose buttons move while you are reaching for one. It scrolls
+   sideways instead, which is what the dock already does at this width. */
+.rdr .bar-bot { max-width: calc(100% - 24px); flex-wrap: nowrap; overflow-x: auto; }
+.rdr .bar-bot::-webkit-scrollbar { height: 0; }
+.rdr .pgctl, .rdr .zoom { flex-wrap: nowrap; }
+.rdr .pgctl > *, .rdr .zoom > *, .rdr .tot, .rdr .zoom .v { white-space: nowrap; flex: 0 0 auto; }
+
+/* ── when the glass cannot blur ────────────────────────────────────────────
+   Every floating surface here is `rgba(22,28,36,.82)` over a 30px backdrop
+   blur, and the blur is doing most of the work: at 82% with a sharp page
+   behind it, the marks panel is a list of sentences printed over another list
+   of sentences. Caught on WebKit, where the blur did not apply and the panel
+   came out see-through with the paper legible straight through the rows.
+   Where the blur works this changes nothing. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rdr .bar, .rdr .bar.pop { background: var(--bg-2); }
+  /* Paper's own `--glass-2` is already 96% white — the shipped token, not a
+     colour typed here, which is the rule the check enforces. */
+  .rdr[data-look="paper"] .bar, .rdr[data-look="paper"] .bar.pop { background: var(--glass-2); }
 }

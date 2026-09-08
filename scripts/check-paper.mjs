@@ -10,7 +10,7 @@
  *
  * Run: npm run check:paper
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
@@ -860,6 +860,57 @@ console.log("\nthe shipped spec");
     .filter((c) => !new RegExp(`["\`\\s]${c}(?![a-zA-Z0-9_-])`).test(markup));
   ok("spec", `every class in it is rendered by something (${shippedClasses.size} classes)`,
      unused.length === 0, unused.join(" "));
+
+  /* AND THE FONT THE SHEET ASKS FOR IS ONE THE APP ACTUALLY HAS. reader.css
+     names "IBM Plex Mono" at eighteen places; nothing loads it here, so left
+     alone every one of them falls through to the browser's default monospace,
+     which differs per machine and is not the shipped look either. Each is
+     re-pointed at --font-mono by name, and this asserts none was missed —
+     including any the sheet gains later. */
+  const scoped = read("src/components/paper/reader.css");
+  const additions = read("src/components/paper/reader-additions.css");
+  const monoSelectors = new Set([...scoped.matchAll(/([^{}]+)\{[^}]*IBM Plex Mono/g)]
+    .map((m) => m[1].trim().split("\n").pop().trim()));
+  const adrift = [...monoSelectors]
+    .filter((sel) => !additions.includes(sel.replace(/^\.rdr-page/, ".rdr .rdr-page")));
+  ok("spec", `the mono face is the app's own, everywhere the sheet asks for one (${monoSelectors.size})`,
+     adrift.length === 0, adrift.join(" | "));
+  /* Comments first — for the fourth time in this file. The rule is explained
+     in a comment that names the font the rule exists to remove. */
+  /* THE COLLISION LIST, KEPT CURRENT BY FAILING. Scoping reader.css stops the
+     reader painting the app; it does nothing about the app painting the
+     reader, and eight of the shipped sheet's class names already existed here.
+     A bare `.x` loses to `.rdr .x` for the properties the reader declares —
+     the damage is everything it does not declare, and every pseudo-element.
+     A ninth would be silent, so it is this that has to speak. */
+  const QUARANTINED = ["sw", "pop", "pill", "scrub", "av", "plist", "row", "title"];
+  const appCss = [];
+  (function walk(d) {
+    for (const f of readdirSync(join(ROOT, d))) {
+      const rel = `${d}/${f}`;
+      if (statSync(join(ROOT, rel)).isDirectory()) walk(rel);
+      else if (rel.endsWith(".css") && !rel.includes("paper/reader")) appCss.push(rel);
+    }
+  })("src");
+  const collisions = new Set();
+  for (const f of appCss) {
+    const body = read(f).replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of body.matchAll(/(^|[},])\s*([^{}@]*?)\{/g)) {
+      for (const sel of m[2].split(",")) {
+        const bare = sel.trim().match(/^\.([a-zA-Z][a-zA-Z0-9_-]*)(?:[:.[\s>]|$)/);
+        if (bare && shippedClasses.has(bare[1])) collisions.add(bare[1]);
+      }
+    }
+  }
+  const unlisted = [...collisions].filter((c) => !QUARANTINED.includes(c));
+  ok("spec", `no class name the app already uses arrives unquarantined (${collisions.size} known)`,
+     unlisted.length === 0, unlisted.join(" "));
+  ok("spec", "and the ones that painted the reader are undone",
+     ["sw", "pop", "pill", "scrub", "av"].every((c) => new RegExp(`\\.app \\.rdr \\.${c}[ .:{]`).test(additions)));
+
+  ok("spec", "and it is reached through the token, not named",
+     /font-family: var\(--font-mono\);/.test(additions)
+     && !/IBM Plex Mono/.test(additions.replace(/\/\*[\s\S]*?\*\//g, "")));
 }
 
 console.log(`\npaper: ${pass} passed, ${fails.length} failed`);

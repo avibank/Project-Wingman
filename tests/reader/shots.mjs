@@ -42,10 +42,35 @@ try {
       };
       await shot("rest");
 
-      // The tray, with a marking tool in hand.
+      /* COMPONENTS.md names the surfaces to compare: dock, inspector, mark
+         card, marks panel, tick rail, bottom bar, marks-only view. One shot
+         each, in both lights, at all three sizes. */
+
+      // The dock with a marking tool in hand — which also opens its inspector.
       await page.click('.tool[aria-label="Highlighter"]').catch(() => {});
       await page.waitForTimeout(500);
       await shot("tray");
+
+      // The Add sheet, over the dock.
+      await page.click(".addbtn").catch(() => {});
+      await page.waitForTimeout(500);
+      await shot("add-sheet");
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
+
+      // A mark card, opened on a mark that is already in the fixture.
+      await page.evaluate(() => {
+        const m = document.querySelector(".rdr-mark");
+        if (!m) return;
+        const b = m.getBoundingClientRect();
+        document.querySelector(".rdr-scroll").dispatchEvent(new MouseEvent("click", {
+          bubbles: true, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2,
+        }));
+      });
+      await page.waitForTimeout(600);
+      await shot("mark-card");
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
 
       // The panel, opened rather than toggled — it starts open on a laptop.
       await page.evaluate(() => {
@@ -53,9 +78,20 @@ try {
         if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(600);
-      await page.click('.bar-panel .segs button:nth-child(3)').catch(() => {});   // Marks
+      await page.click('.bar-panel .segs button:nth-child(1)').catch(() => {});   // Marks
       await page.waitForTimeout(500);
       await shot("panel-marks");
+
+      await page.click('.bar-panel .segs button:nth-child(2)').catch(() => {});   // Pages
+      await page.waitForTimeout(700);
+      await shot("panel-pages");
+
+      // Marks only — the whole screen becomes the list.
+      await page.click('.ib[aria-label="Marks only"]').catch(() => {});
+      await page.waitForTimeout(800);
+      await shot("marks-only");
+      await page.click('.ib[aria-label="Back to the paper"]').catch(() => {});
+      await page.waitForTimeout(500);
 
       await ctx.close();
       console.log(`  ${s.id} · ${variant}`);

@@ -292,6 +292,102 @@ real Pencil tap is still unverified** — see MANUAL-TESTS U3.
 
 ---
 
+## The shipped files, and where they and the codebase disagreed
+
+You then sent four files and a new §0: `reader.css` and `reader-icons.js` to be
+copied verbatim, `COMPONENTS.md` as the exact DOM, and the rule that an unused
+class means a missing component. The reader was rebuilt to them. Everything
+below is a place where following that instruction collided with something this
+codebase already had, and what won.
+
+**`reader.css` is scoped, not global — and it is generated, so it cannot
+drift.** `npm run reader:css` reads `docs/reader/reader.css`, prefixes `.rdr `
+to every selector, and then asserts that the declarations are byte-identical
+before and after. If they are not, it refuses and writes nothing. The reason is
+seventeen of its class names — `.row`, `.title`, `.pill`, `.sw`, `.pop`, `.av`
+— which a dozen other screens here already use. `check:paper` re-runs the same
+comparison, so the file in `src/` can never quietly diverge from the one you
+sent.
+
+**Scoping stopped the reader painting the app. It did not stop the app painting
+the reader,** and eight class names already existed here as bare rules. A bare
+`.x` loses to `.rdr .x` on the properties the reader declares; the damage is
+everything it does not declare, and every pseudo-element. The one that showed
+it: every colour swatch in the inspector had a grey disc inside it, offset up
+and left. `app.css`'s `.sw` is a *toggle switch* — 44×25 with a 17px knob drawn
+as `::after` — and the knob was landing in the middle of the reader's 27px
+colour circle. `instruments.css`'s `.pop` was putting a rotated arrow on every
+popover, and it loads whenever the reader does. `lesson.css`'s `.scrub` was
+drawing the page-scrubber card as a 4px progress bar. All eight are quarantined
+in `reader-additions.css` and listed there; a ninth fails `check:paper`.
+
+**§12's global 44px floor was distorting every control the sheet has.**
+`App.jsx` sets `min-height:44px` on `.app button:not(.is-inline)`, and the
+reader is a portal inside `.app`. Measured: `.tool` 38×**44** where the sheet
+says 38×38, `.sw` 27×**44** where it says 27×27 — which is why the swatches
+were ovals — and `.segs button` 93×**44** against ~28. Inside `.rdr` the sheet
+owns the box now, and §12 is paid the way the sheet itself pays it: under
+`max-width:900px`, which is the touch case the floor exists for. The one
+exception is the swatch row, where six 44px targets in a 266px row would
+overlap each other — this app had already made that call once, for
+`.msg-acts .icon-btn`. They are 36px on a 44px pitch.
+
+**The mono face is Geist Mono, not IBM Plex Mono.** The sheet names IBM Plex
+Mono at eighteen places. Nothing loads it here and nothing is going to — the
+brand faces are Instrument Sans and Geist Mono, through `--font-ui` and
+`--font-mono`, never named. Left alone, all eighteen fell through to whatever
+the browser calls `monospace`, which is a different face on every machine and
+is not the shipped look either. Each is re-pointed by name, and `check:paper`
+fails if the sheet gains a nineteenth.
+
+**Three of R14's rules are overruled by the sheet, and the override is
+recorded.** No hex (it is hex from top to bottom), OKLCH (same), and the 13px
+type floor (it runs 8.5px to 26px). The reader is now the one surface in this
+app that does not re-tint with the livery — which is the same reason the five
+mark meanings do not: a livery change that recoloured somebody's yellow
+highlight would be the app editing their notes. What survives of R14 is that
+the palette must be the *shipped* one and not a second one somebody typed, and
+that anything meant to be read rather than glanced at stays at 12px or more.
+
+**Marks are drawn as measured rectangles, not as classes on a text span.**
+`COMPONENTS.md` puts `s is-marked` on a sentence span. pdf.js's text layer is
+*runs*, not sentences — a mark routinely covers the tail of one run, two whole
+ones and the head of a fourth. So the mark is measured and drawn over that
+layer. The element carries the shipped classes and takes the shipped rules;
+only the two that assume an inline box (a 2px padding bleed with a -2px margin)
+are neutralised. Nothing about R1 changes: coordinates are still measured at
+draw time and never stored.
+
+**Two places the brief is stricter than the reference build, and the brief
+won.** `reader.css` ends `@media (max-width:1240px){ .bar-panel{display:none} }`
+— the demo simply has no marks panel on a tablet. §8.6's hard rule is "below
+1200px, no panel ever sits BESIDE the page; panels overlay and dismiss", and
+§15 checks both iPad orientations, so it comes back as a right-hand overlay
+sheet rather than vanishing off every iPad. Second: the reference lets the
+panel float over the page's right margin — 65px at 1440, harmless, but 164px at
+1241, which is text. Above 1240 the document keeps clear.
+
+**Two things in the reference build that are not in the shipped pair.** Its
+filter chips filter by *meaning* (Exam likely, Definition…); §6.3 says the
+chips are the destinations (Revision, Glossary, Threads, Master Caution) and
+`check:paper` asserts it, so this build keeps the destinations. And its empty
+state opens "Nothing matches this filter." — this app never states absence, it
+names the next action, so the shape is the sheet's and the sentence is not.
+
+**Marks-only hides the panel.** The sheet hides the document and the tick rail
+under `data-mode="rev"` and stops there; the demo happened to be built with the
+panel shut. It is not shut here, and it floated over the right third of the
+list, cutting off the destination on every group header. A takeover that shows
+the same marks twice is not taking over.
+
+**The dock's other two positions are laid out here.** The sheet pins it left
+(and moves it to the bottom under 900px). This app's More menu has always
+offered left, right and top, so the two the demo had no need for are in
+`reader-additions.css`, every metric mirrored from the shipped one. The
+inspector and the Add sheet follow the dock, because they open against it.
+
+---
+
 ## The content clear-out
 
 `node --env-file=.env.local scripts/clear-placeholder-content.mjs [--apply] [--rows]`

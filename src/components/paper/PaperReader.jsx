@@ -1818,8 +1818,11 @@ export default function PaperReader({
               <h2>Marks only</h2>
               <p>
                 {marksList.length
-                  ? `${marksList.length} ${marksList.length === 1 ? "passage" : "passages"} across ${
-                      new Set(marksList.map((m) => (model ? pageOf(model, m.start) : 0))).size} pages of this paper.`
+                  ? (() => {
+                      const pages = new Set(marksList.map((m) => (model ? pageOf(model, m.start) : 0))).size;
+                      return `${marksList.length} ${marksList.length === 1 ? "passage" : "passages"} `
+                        + `across ${pages} ${pages === 1 ? "page" : "pages"} of this paper.`;
+                    })()
                   : "Mark a passage and it appears here, grouped by what the colour does."}
               </p>
             </div>
@@ -2019,9 +2022,11 @@ export default function PaperReader({
                     {f.label}
                     {/* The count is its own element, the way the reference
                        draws it — a label and a number run together read as
-                       one string to anything reading the DOM. */}
+                       one string to anything reading the DOM. The space is
+                       the reference's too, and without it the chip says
+                       "Revision1". */}
                     {n > 0 && f.id !== "all" && (
-                      <span style={{ color: COLOURS.find((c) => c.key === f.id)?.hex }}>{n}</span>
+                      <>{" "}<span style={{ color: COLOURS.find((c) => c.key === f.id)?.hex }}>{n}</span></>
                     )}
                   </button>
                 );
