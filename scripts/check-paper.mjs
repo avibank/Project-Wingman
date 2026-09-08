@@ -16,7 +16,8 @@ import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
 import {
   densityLevel, segmentsFor, sentenceAround,
-  applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS, DOCKS, TOOL_SIZES, KINDS,
+  applyFilter, FILTERS, filterCounts, RINGS, DENSITY_MIN, DENSITY_LEVELS,
+  DOCKS, TOOL_SIZES, KINDS,
 } from "../src/lib/paperMarks.js";
 import {
   INK_COLOURS, COLOUR_IDS, PEN_SIZES, thin, pathFor, toFraction, toPixels,
@@ -291,20 +292,35 @@ console.log("\nR14 — the paper obeys the house style");
   ok("R14", "no control declares a height under 30px", heights.every((h) => h >= 30), heights.join(", "));
 }
 
-/* ---- the filter strip is reused, not rebuilt ---------------------------- */
+/* ---- the chips are the destinations, not invented categories ------------ */
 console.log("\nfilters");
 {
+  /* §6.3 — where a mark WENT is the only grouping a student can act on. This
+     replaced a filter by what a mark looks like ("Highlights", "Notes"), which
+     answered nothing: a student does not think "show me my underlines", they
+     think "what is in my revision deck". */
   const list = [
-    { id: 1, author_id: "me", kind: "highlight", status: "ok" },
-    { id: 2, author_id: "you", kind: "note", status: "ok" },
-    { id: 3, author_id: "you", kind: "question", status: "ok" },
-    { id: 4, author_id: "me", kind: "highlight", status: "orphaned" },
+    { id: 1, author_id: "me", kind: "highlight", colour: "critical", status: "ok" },
+    { id: 2, author_id: "you", kind: "highlight", colour: "definition", status: "ok" },
+    { id: 3, author_id: "you", kind: "question", colour: "unsure", status: "ok" },
+    { id: 4, author_id: "me", kind: "highlight", colour: "critical", status: "orphaned" },
   ];
-  ok("—", "mine", applyFilter(list, "mine", "me").length === 2);
-  ok("—", "notes", applyFilter(list, "notes", "me").length === 1);
-  ok("—", "questions", applyFilter(list, "questions", "me").length === 1);
-  ok("—", "orphaned", applyFilter(list, "orphaned", "me").length === 1);
-  ok("—", "everything", applyFilter(list, "all", "me").length === 4);
+  ok("§6.3", "everything", applyFilter(list, "all", "me").length === 4);
+  ok("§6.3", "mine", applyFilter(list, "mine", "me").length === 2);
+  ok("§6.3", "revision", applyFilter(list, "critical", "me").length === 2);
+  ok("§6.3", "glossary", applyFilter(list, "definition", "me").length === 1);
+  ok("§6.3", "threads", applyFilter(list, "unsure", "me").length === 1);
+  ok("§6.3", "lost their place", applyFilter(list, "orphaned", "me").length === 1);
+
+  const ids = FILTERS.map((f) => f.id).join(",");
+  ok("§6.3", "the five destinations are the five meanings",
+     ids === "all,mine,critical,definition,limit,unsure,wrong,orphaned", ids);
+  ok("§6.3", "and they are labelled as destinations, not as kinds",
+     FILTERS.map((f) => f.label).join(",")
+       === "Everything,Mine,Revision,Glossary,Questions,Threads,Master Caution,Lost their place");
+
+  const counts = filterCounts(list, "me");
+  ok("§6.3", "the counts are real", counts.critical === 2 && counts.mine === 2 && counts.orphaned === 1);
 }
 
 /* ---- tap anywhere still anchors to words -------------------------------- */

@@ -57,10 +57,9 @@ function agoWords(iso) {
 }
 
 export default function LibraryTab({
-  chapters, papers, state, sub, onOpenQuiz, onOpenPaper,
+  chapters, papers, state, sub, onOpenQuiz, onOpenPaper, onAddPaper,
   query = "",
-  readerOn = false, readerPin = null, onOpenReader,
-  warm = 0, lastRecheck = null,
+  readerPin = null, warm = 0, lastRecheck = null,
   average = null, lastQuiz = null, minimums, onMinimums,
   faults = new Set(), onStartCalibration,
 }) {
@@ -192,9 +191,12 @@ export default function LibraryTab({
             <p className="lsec-sub">
               {papers.length
                 ? `${papers.length} document${papers.length === 1 ? "" : "s"} for this module`
-                : "Documents arrive with the content"}
+                : "Add one and it opens in the reader"}
             </p>
           </div>
+          {onAddPaper && papers.length > 0 && (
+            <button type="button" className="lsec-act" onClick={onAddPaper}>Add a paper</button>
+          )}
         </div>
 
         {papers.length > 0 && (
@@ -232,49 +234,62 @@ export default function LibraryTab({
 
               §10 — with nothing opened yet this names the next action inside
               the sentence rather than reporting an absence. */}
-          {readerOn && !searching && (
-            <button type="button" className="item calrow" onClick={() => onOpenReader?.()}>
-              <span className="calsticker" aria-hidden="true">
-                <span className="calband">Reading</span>
-                <span className="calval">{readerPin?.paper ? readerPin.page : "—"}</span>
-              </span>
-              <span className="imain">
-                <span className="iname">
-                  {readerPin?.paper ? readerPin.paper.title : "Open a paper and mark it up"}
+          {/* §17 — ONE ROW PER PAPER. There used to be two: a pinned "Reading"
+              row above the list, and the paper's own row below it, for the same
+              document. The one you are in the middle of now gets its Resume and
+              a progress hairline on its own row, which is the same fact in one
+              place instead of two. */}
+          {shownPapers.map((p) => {
+            const here = readerPin?.paper?.id === p.id;
+            const through = here && readerPin?.page && p.pages
+              ? Math.min(100, Math.round((readerPin.page / p.pages) * 100)) : 0;
+            /* A paper still being ingested is not openable yet, and says so
+               rather than opening a viewer with nothing behind it. */
+            const preparing = p.status === "pending";
+            return (
+              <button type="button" key={p.id} className="item" data-here={here ? "" : undefined}
+                      disabled={preparing}
+                      onClick={() => onOpenPaper(p)}>
+                <span className="lead mark">{DOC}</span>
+                <span className="imain">
+                  <span className="iname">{p.title}</span>
+                  <span className="imeta">
+                    {preparing
+                      ? "Preparing — the text layer and thumbnails are being built"
+                      : [p.kind || "PDF",
+                         p.pages ? `${p.pages} page${p.pages === 1 ? "" : "s"}` : null,
+                         here ? `you are on page ${readerPin.page}` : null]
+                        .filter(Boolean).join(" · ")}
+                  </span>
+                  {/* The hairline, not a second row. */}
+                  {through > 0 && (
+                    <span className="ihair" aria-hidden="true"><i style={{ width: `${through}%` }} /></span>
+                  )}
                 </span>
-                <span className="imeta">
-                  {readerPin?.paper
-                    ? `Page ${readerPin.page}${readerPin.pages ? ` of ${readerPin.pages}` : ""} · highlight, note, ask`
-                    : "Highlight a line, leave a note, ask the module about it"}
+                <span className="istat">
+                  <span className={`go ${here ? "" : "ghost"}`}>
+                    {preparing ? "Preparing…" : here ? "Resume" : "Open"}
+                  </span>
                 </span>
-              </span>
-              <span className="istat">
-                <span className="go">{readerPin?.paper ? "Resume" : "Open"}</span>
-              </span>
-            </button>
-          )}
-
-          {shownPapers.map((p) => (
-            <button type="button" key={p.id} className="item" onClick={() => onOpenPaper(p)}>
-              <span className="lead mark">{DOC}</span>
-              <span className="imain">
-                <span className="iname">{p.title}</span>
-                {/* §7 — never state a duration twice in one row, and no
-                    progress state on a document. */}
-                <span className="imeta">
-                  {[p.kind || "PDF", p.pages ? `${p.pages} page${p.pages === 1 ? "" : "s"}` : null]
-                    .filter(Boolean).join(" · ")}
-                </span>
-              </span>
-              <span className="istat"><span className="go ghost">Open</span></span>
-            </button>
-          ))}
+              </button>
+            );
+          })}
+          {/* §17b — the empty state names the next action inside the sentence
+              and gives it a button. It never states an absence. */}
           {!shownPapers.length && (
-            <p className="endnote">
-              {papers.length
-                ? "Try a paper title, a chapter name, or the All chip."
-                : "The papers for this module arrive with the content."}
-            </p>
+            papers.length ? (
+              <p className="endnote">Try a paper title, a chapter name, or the All chip.</p>
+            ) : (
+              <div className="libempty">
+                <p>
+                  Add the first paper for this module and it opens in the reader —
+                  highlight a line, leave a note, ask the module about it.
+                </p>
+                {onAddPaper && (
+                  <button type="button" className="go" onClick={onAddPaper}>Add a paper</button>
+                )}
+              </div>
+            )
           )}
         </div>
       </section>
