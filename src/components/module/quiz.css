@@ -480,3 +480,85 @@
   font-variant-numeric: tabular-nums; color: var(--t3); font-weight: 400;
   margin-inline-end: 6px;
 }
+
+/* ============================================================================
+   9 · THE SAME LANGUAGE AS THE READER
+
+   The reader stopped welding its chrome to the window: a top bar and a bottom
+   bar as floating islands over one surface, with the thing you are working on
+   as the only subject. The exam is the same screen shape — a header, one thing
+   to look at, a bar of controls — and it was still full-bleed frames with a
+   rule across the top and a slab across the bottom.
+
+   One vocabulary across both, so a student moving from a paper to a quiz is not
+   learning a second app. Nothing here changes what the exam DOES.
+   ========================================================================= */
+.quiz.exam {
+  /* TALL ENOUGH THAT THE FOOTER SITS AT THE BOTTOM, and no taller.
+
+     `100dvh` is not this screen's height — the exam lives inside the app's
+     scroller, which is the viewport minus the top bar and the chin, so asking
+     for a full viewport made every sitting scroll before a question was drawn
+     (the note in section 8 records that). Subtracting the chrome instead puts
+     the footer on the floor without inventing a scrollbar. */
+  min-height: min(100dvh - 96px, 940px);
+  --paper-ease: cubic-bezier(.32, .72, 0, 1);
+  --glass: oklch(from var(--panel) l c h / .82);
+  --hair: oklch(from var(--t1) l c h / .09);
+  --lift: oklch(from var(--t1) l c h / .06);
+  --d2: 0 24px 70px oklch(0 0 0 / .5), 0 3px 10px oklch(0 0 0 / .34);
+  position: relative;
+  grid-template-rows: auto 1fr auto;
+  padding-bottom: 0;
+}
+.app[data-variant="day"] .quiz.exam {
+  --d2: 0 18px 50px oklch(.25 .02 255 / .2), 0 2px 8px oklch(.25 .02 255 / .12);
+  --hair: oklch(from var(--t1) l c h / .13);
+  --lift: oklch(1 0 0 / .9);
+}
+
+.exam .quiz-head,
+.exam .quiz-foot {
+  background: linear-gradient(var(--glass), var(--glass)), var(--ground);
+  backdrop-filter: blur(30px) saturate(1.7);
+  -webkit-backdrop-filter: blur(30px) saturate(1.7);
+  border: 1px solid var(--hair);
+  box-shadow: var(--d2), inset 0 1px 0 var(--lift);
+  border-radius: 18px;
+}
+@media (pointer: coarse) {
+  .exam .quiz-head, .exam .quiz-foot {
+    backdrop-filter: blur(18px) saturate(1.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  }
+}
+.exam .quiz-head {
+  margin: 14px auto 0; padding: 9px 14px;
+  width: min(100% - 28px, 860px);
+}
+.exam .quiz-foot {
+  position: sticky; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  margin: 0 auto 14px; padding: 7px 10px;
+  width: min(100% - 28px, 860px);
+}
+
+/* The hand-in and the review are the same screen shape without a card, so they
+   want the column and the bars and not the vertical centring — a list of what
+   is still blank starts at the top. */
+.exam .quiz-body:not(:has(.q-card)) { align-self: start; }
+
+/* The card is the subject, and it gets the room to be one. */
+/* One column: the header, the card and the footer are the same width, so the
+   three read as one thing rather than as three panels that happen to be near
+   each other. */
+.exam .quiz-body { width: min(100% - 28px, 860px); padding-block: 26px 20px; align-self: center; }
+.exam .q-card {
+  width: 100%; margin: 0; padding: 26px 26px 24px;
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 16px;
+}
+.exam .q-text { font-size: var(--fs-lg); line-height: 1.4; margin-bottom: 18px; }
+.exam-quiet { margin: 14px 2px 0; font-size: var(--fs-sm); color: var(--t3); }
+
+/* Two words on one line, and the clock never jumps as its digits change. */
+.exam .quiz-head { gap: 10px; }
+.exam-clock { font-variant-numeric: tabular-nums; }

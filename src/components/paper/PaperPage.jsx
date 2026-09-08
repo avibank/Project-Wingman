@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { itemsInRange } from "../../lib/paperText.js";
 import { pdfjs } from "../../lib/paperText.js";
 import { lightFilter } from "../../lib/paperView.js";
+import { claimRaster, releaseRaster, MAX_RASTER_PX } from "../../lib/rasterBudget.js";
 import PaperInk from "./PaperInk.jsx";
 
 /* =============================================================================
    One page of the paper: the picture, the words, and the marks on them.
 
-   Three layers, in this order, and the order is the whole trick:
+   Five layers, in this order, and the order is the whole trick:
 
-     canvas    the page as pdf.js draws it
+     sheet     a page-shaped card in the page colour — ALWAYS present
+     canvas    the page as pdf.js draws it, two of them (see below)
      marks     highlights and density, painted UNDER the words
      ink       freehand strokes, over the picture and under the words
      text      pdf.js's transparent text layer, on top, so selection works
@@ -24,10 +26,37 @@ import PaperInk from "./PaperInk.jsx";
    Range over the rendered text run, and whatever rects it reports. Working the
    geometry out from the PDF transform instead gets subtly wrong on rotated
    pages, on runs with letter-spacing, and on every font pdf.js substitutes.
+
+   -----------------------------------------------------------------------------
+   WHY THE PAGE IS RENDERED OFF SCREEN AND THEN COPIED IN
+
+   Setting `canvas.width` clears the canvas. So re-rendering at a new zoom —
+   which is every zoom change, every rotation, every window resize — necessarily
+   blanks the page for as long as the render takes, and on a dense schematic
+   that is most of a second of white.
+
+   So the render goes to a detached canvas, and when it finishes the visible one
+   is resized and the finished picture is copied onto it — in one synchronous
+   run, so no frame is ever painted between the clear and the copy. Until that
+   moment the visible canvas keeps its previous raster, stretched to the new
+   box, which reads as soft rather than as missing. The transition is a
+   sharpening. There is never a frame where this page has nothing on it.
+
+   This was two canvases swapping a `data-on` attribute, which is the obvious
+   design and is wrong: two renders overlap whenever the zoom changes mid-pass,
+   a cancelled run's late swap lands after a fresh run's, and the page settles
+   showing the SOFT raster with the sharp one finished and hidden beside it.
+   Measured, not theorised. One canvas and an atomic copy has nothing to race.
    ========================================================================= */
 
+/* A fast pass at a fraction of the target, painted first so a page entering the
+   window has something real on it within a frame or two, then the sharp pass
+   over the top. Below this scale the fast pass is not worth the extra render. */
+const FAST_SCALE = 0.35;
+const SHARP_DELAY = 90;          // ms — a zoom drag must not queue twenty renders
+
 export default function PaperPage({
-  doc, model, pageNumber, scale, rotation = 0,
+  doc, model, pageNumber, scale, rotation = 0, size,
   segments = [], activeId = null, light = "day",
   strokes = [], inkTool = null, inkColour, inkWidth, onInk, onErase, me,
   onDivs, registerEl,
@@ -35,7 +64,7 @@ export default function PaperPage({
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const textRef = useRef(null);
-  const [size, setSize] = useState(null);
+  const [ready, setReady] = useState(false);   // is there a raster on this page yet
   const [divs, setDivs] = useState(null);
   const [tick, setTick] = useState(0);
 
@@ -57,100 +86,159 @@ export default function PaperPage({
     [model, pageNumber],
   );
 
-  /* WHAT THIS PAGE HAS ALREADY DRAWN.
+  /* The page's own box, from the manifest rather than from the file. This is
+     what lets 1012 pages lay out at the right height before a single PDF byte
+     arrives — the placeholder is the correct shape from the first frame, so the
+     scroll height is right and the scrollbar never jumps. */
+  const rotated = rotation % 180 !== 0;
+  const boxW = Math.round((rotated ? size?.h : size?.w) * scale) || 0;
+  const boxH = Math.round((rotated ? size?.w : size?.h) * scale) || 0;
 
-     The effect below cancels its predecessor, and a cancelled render never
-     reaches the text layer — so a re-run for a page that is already correct is
-     not merely wasted work, it takes the selectable text away and puts nothing
-     back. The signature is the only thing a render actually depends on; if it
-     has not moved, there is nothing to do. */
   const drawn = useRef("");
+  const hasRaster = useRef(false);              // has anything been painted here yet
+  const held = useRef(null);                    // our claim on the raster budget
 
   /* ---------------------------------------------------------------- render */
-  useEffect(() => {
-    if (!doc || !model) return undefined;
-    const signature = `${pageNumber}@${scale}r${rotation}#${model.pages}`;
-    if (drawn.current === signature) return undefined;
-    let live = true;
-    let task = null;
+  const paint = useCallback(async (run, atScale, withText, cssW, cssH) => {
+    if (!doc || !model) return false;
+    const page = await doc.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: atScale, rotation });
 
-    (async () => {
-      const page = await doc.getPage(pageNumber);
-      if (!live) return;
-      const viewport = page.getViewport({ scale, rotation });
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+    /* A canvas above ~4000px on a side is where iPad Safari's total-canvas-area
+       ceiling starts refusing to allocate, and it refuses by handing back a
+       BLANK one rather than throwing — indistinguishable from the renderer
+       giving up. Cap the bitmap and let it be soft: soft is a legible page,
+       blank is not. */
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const want = Math.max(viewport.width, viewport.height) * dpr;
+    const shrink = want > MAX_RASTER_PX ? MAX_RASTER_PX / want : 1;
+    const bw = Math.max(1, Math.floor(viewport.width * dpr * shrink));
+    const bh = Math.max(1, Math.floor(viewport.height * dpr * shrink));
 
-      // Crisp on a retina screen: the bitmap is bigger than the box it sits in.
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(viewport.width * dpr);
-      canvas.height = Math.floor(viewport.height * dpr);
-      canvas.style.width = `${Math.floor(viewport.width)}px`;
-      canvas.style.height = `${Math.floor(viewport.height)}px`;
-
-      setSize({ w: Math.floor(viewport.width), h: Math.floor(viewport.height) });
-
+    if (withText) {
       /* THE WORDS BEFORE THE PICTURE, and the order is load-bearing.
 
-         A canvas render is cancelled whenever this effect re-runs — a rescale,
-         a re-mount, anything. When the text layer was built after `await
-         task.promise`, every cancellation took the selectable text with it and
-         put nothing back: a page you could see and could not select a word of,
+         A canvas render is cancelled whenever this effect re-runs — a rescale, a
+         re-mount, anything. When the text layer was built after the render
+         awaited, every cancellation took the selectable text with it and put
+         nothing back: a page you could see and could not select a word of,
          which also means a page nobody can annotate. The text layer is cheap,
          it does not depend on the canvas, and building it first means the only
-         thing a cancelled render costs is a repainted picture.
-
-         pdf.js positions its spans from this custom property, so it has to be
-         set before render(). */
+         thing a cancelled render costs is a repainted picture. */
       const holder = textRef.current;
-      if (!holder) return;
-      holder.replaceChildren();
-      holder.style.setProperty("--scale-factor", String(scale));
-      holder.style.width = `${Math.floor(viewport.width)}px`;
-      holder.style.height = `${Math.floor(viewport.height)}px`;
-      const layer = new pdfjs.TextLayer({
-        textContentSource: await page.getTextContent(),
-        container: holder,
-        viewport,
-      });
-      await layer.render();
-      if (!live) return;
+      if (holder) {
+        holder.replaceChildren();
+        holder.style.setProperty("--scale-factor", String(atScale));
+        holder.style.width = `${cssW}px`;
+        holder.style.height = `${cssH}px`;
+        const layer = new pdfjs.TextLayer({
+          textContentSource: await page.getTextContent(),
+          container: holder,
+          viewport,
+        });
+        await layer.render();
 
+        /* The spans and my runs have to line up one for one, because a mark is
+           stored as "characters 412 to 470 of the paper" and the span is the
+           only thing that knows where those characters are on screen. pdf.js
+           builds one span per text run, in the same order getTextContent
+           reported them, so position IS the mapping — but it is checked rather
+           than assumed. A page where they disagree draws no marks at all, which
+           is the only honest failure: a mark in the wrong place cannot be
+           spotted by the person reading it. */
+        const spans = layer.textDivs || [];
+        const aligned = spans.length === pageItems.length;
+        if (aligned) spans.forEach((el, i) => { el.dataset.item = String(i); });
+        setDivs(aligned ? spans : null);
+        cbs.current.onDivs?.(pageNumber, aligned ? spans : null, pageItems);
+        setTick((t) => t + 1);
+      }
+    }
 
-      /* The spans and my runs have to line up one for one, because a mark is
-         stored as "characters 412 to 470 of the paper" and the span is the only
-         thing that knows where those characters are on screen. pdf.js builds
-         one span per text run, in the same order getTextContent reported them,
-         so position IS the mapping — but it is checked rather than assumed. A
-         page where they disagree draws no marks at all, which is the only
-         honest failure: a mark in the wrong place cannot be spotted by the
-         person reading it. */
-      const spans = layer.textDivs || [];
-      const aligned = spans.length === pageItems.length;
-      if (aligned) spans.forEach((el, i) => { el.dataset.item = String(i); });
-      setDivs(aligned ? spans : null);
-      cbs.current.onDivs?.(pageNumber, aligned ? spans : null, pageItems);
-      setTick((t) => t + 1);
+    const off = document.createElement("canvas");
+    off.width = bw;
+    off.height = bh;
+    const ctx = off.getContext("2d", { alpha: false });
+    ctx.setTransform(dpr * shrink, 0, 0, dpr * shrink, 0, 0);
+    const task = page.render({ canvasContext: ctx, viewport });
+    run.task = task;
+    try { await task.promise; } catch { return false; }
 
-      // Now the picture. A cancellation here costs a repaint and nothing else.
-      const ctx = canvas.getContext("2d", { alpha: false });
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      task = page.render({ canvasContext: ctx, viewport });
-      try { await task.promise; } catch { return; }      // superseded by a rescale
-      if (live) drawn.current = signature;
+    /* THE CANCELLED RUN MUST NOT SWAP. This check is here, immediately before
+       the pixels land, and not in the caller — by the time `paint` has returned
+       it is too late, the picture is already on screen. A fast third-resolution
+       pass that resolved after the sharp one had finished was overwriting it,
+       and the page settled soft with the sharp raster thrown away. */
+    if (!run.on) return false;
+
+    /* The swap, and it is one run of synchronous work on purpose: the browser
+       cannot paint between clearing the visible canvas and copying the finished
+       picture onto it, so there is no white frame to see. */
+    const vis = canvasRef.current;
+    if (!vis) return false;
+    vis.width = bw;
+    vis.height = bh;
+    vis.style.width = `${cssW}px`;
+    vis.style.height = `${cssH}px`;
+    vis.getContext("2d", { alpha: false }).drawImage(off, 0, 0);
+    off.width = off.height = 0;         // let the transient bitmap go at once
+
+    /* Let go of the parsed page too. Without this every page ever scrolled past
+       stays in memory for the life of the document, which on a thousand-page
+       manual is the whole file. */
+    try { page.cleanup(); } catch { /* already gone */ }
+    return true;
+  }, [doc, model, pageNumber, rotation, pageItems]);
+
+  useEffect(() => {
+    if (!doc || !model || !size) return undefined;
+    const signature = `${pageNumber}@${scale}r${rotation}#${model.pages}`;
+    if (drawn.current === signature) return undefined;
+
+    const run = { on: true, task: null };
+    let timer = null;
+
+    (async () => {
+      /* A fast pass first, but only when this page has nothing on it yet. Once
+         a raster exists, letting the browser stretch it is both sharper and
+         free — a low-resolution re-render would be a visible step DOWN in
+         quality on the way back up. */
+      if (!hasRaster.current) {
+        const ok = await paint(run, Math.max(0.2, scale * FAST_SCALE), false, boxW, boxH);
+        if (!run.on) return;
+        if (ok) { hasRaster.current = true; setReady(true); }
+      }
+
+      /* Debounced, so a zoom drag does not queue twenty renders. */
+      await new Promise((r) => { timer = setTimeout(r, SHARP_DELAY); });
+      if (!run.on) return;
+
+      const ok = await paint(run, scale, true, boxW, boxH);
+      if (!run.on || !ok) return;
+      held.current = claimRaster(pageNumber, held.current);
+      hasRaster.current = true;
+      setReady(true);
+      drawn.current = signature;
     })();
 
-    return () => { live = false; try { task?.cancel(); } catch { /* already done */ } };
+    return () => {
+      run.on = false;
+      clearTimeout(timer);
+      // Cancel aggressively: a flung scrollbar must not queue fifty renders.
+      try { run.task?.cancel(); } catch { /* already done */ }
+    };
     // pageItems is deliberately NOT a dependency: it is a fresh array on every
     // parent render, and as a dependency it restarted this effect continuously.
-  }, [doc, model, pageNumber, scale, rotation, pageItems]);
+    // `paint` already closes over it and carries the same identity.
+  }, [doc, model, size, pageNumber, scale, rotation, paint, boxW, boxH]);
 
+  useEffect(() => () => releaseRaster(held.current), []);
   useEffect(() => { cbs.current.registerEl?.(pageNumber, wrapRef.current); }, [pageNumber]);
 
   /* ----------------------------------------------------------- mark rects */
   // Measured from the spans, so this recomputes whenever the page re-renders.
   const rects = useMemo(() => {
-    if (!divs || !size) return [];
+    if (!divs || !boxW) return [];
     const box = textRef.current?.getBoundingClientRect();
     if (!box) return [];
     const out = [];
@@ -184,11 +272,24 @@ export default function PaperPage({
     return out;
     // `tick` is the signal that the spans were just rebuilt; without it this
     // memo would hold rects measured against the previous scale.
-  }, [divs, size, segments, model, pageNumber, pageItems, tick]);
+  }, [divs, boxW, segments, model, pageNumber, pageItems, tick]);
+
+  /* The raster on screen may have been drawn at a different zoom, or at a third
+     of the resolution. Nothing has to be done about either: the canvas ELEMENT
+     is sized to the page box regardless, so the browser stretches whatever
+     pixels it is holding. The page softens and re-sharpens; it never blanks. */
+  const canvasStyle = { filter: light === "day" ? undefined : lightFilter(light) };
 
   return (
     <div className="pp" ref={wrapRef} data-page={pageNumber}
-         style={size ? { width: size.w, height: size.h } : undefined}>
+         data-drawn={ready ? "" : undefined}
+         style={boxW ? { width: boxW, height: boxH } : undefined}>
+      {/* Rule 1 — never an empty white rectangle where a page belongs. The
+          sheet is the right shape from the first frame, before any byte of the
+          PDF has arrived, because its size comes from the manifest. */}
+      <span className="pp-sheet" aria-hidden="true" />
+      <span className="pp-no mono" aria-hidden="true">{pageNumber}</span>
+
       {/* THE LIGHT FALLS ON THE PICTURE AND NOTHING ELSE.
 
           Night is a filter on the rendered page, which is how every reader
@@ -196,8 +297,8 @@ export default function PaperPage({
           untouched, and — the part that matters — the marks are untouched.
           Inverting the whole stack would turn somebody's yellow highlight
           blue, which is worse than a bright page at midnight. */}
-      <canvas className="pp-canvas" ref={canvasRef}
-              style={light === "day" ? undefined : { filter: lightFilter(light) }} />
+      <canvas className="pp-canvas" ref={canvasRef} data-on={ready ? "" : undefined}
+              style={canvasStyle} />
 
       <div className="pp-marks" aria-hidden="true">
         {rects.map((r) => (
@@ -206,6 +307,7 @@ export default function PaperPage({
             className="pp-mark"
             data-kind={r.seg.kind || undefined}
             data-colour={r.seg.colour || undefined}
+            data-thread={r.seg.thread || undefined}
             data-deco={r.seg.deco?.length ? r.seg.deco.join(" ") : undefined}
             data-density={r.seg.density || undefined}
             data-active={r.seg.ids.includes(activeId) ? "" : undefined}
@@ -214,10 +316,10 @@ export default function PaperPage({
         ))}
       </div>
 
-      {size && (
+      {boxW > 0 && (
         <PaperInk
           strokes={strokes} page={pageNumber} me={me}
-          width={size.w} height={size.h} rotation={rotation}
+          width={boxW} height={boxH} rotation={rotation}
           tool={inkTool} colour={inkColour} penWidth={inkWidth}
           onCommit={(pts) => onInk?.(pageNumber, pts)}
           onErase={(ids) => onErase?.(ids)}
@@ -225,8 +327,6 @@ export default function PaperPage({
       )}
 
       <div className="pp-text" ref={textRef} />
-
-      {!size && <div className="pp-wait" aria-hidden="true" />}
     </div>
   );
 }

@@ -8,7 +8,7 @@
    ========================================================================= */
 
 import { createAnchor, resolveAnchor, flatten } from "./anchor.js";
-import { colourOr, DEFAULT_HIGHLIGHT } from "./paperInk.js";
+import { DEFAULT_HIGHLIGHT } from "./paperInk.js";
 
 /* Underline and strikethrough are text marks in every sense that matters: same
    anchor, same rings, same survival across a re-extraction. They are a
@@ -109,6 +109,17 @@ export function segmentsFor(placed = []) {
       null,
     );
 
+    /* A QUESTION IS ALWAYS DRAWN INDIVIDUALLY, whoever asked it.
+
+       Everything else from outside your rings becomes density, and that is
+       right: thirty people highlighting one chapter turns a page into soup. A
+       question is not that. It is an invitation to answer, addressed to
+       anybody who can, and §6.1 requires its state — open or answered — to be
+       visible at a glance. Rolled into heat it is invisible, and the one mark
+       that most wants a reply is the one nobody can see. */
+    const ask = marks.find((m) => m.colour === "unsure" || m.kind === "question");
+    const shown = lead || ask || null;
+
     /* Decorations stack rather than compete: a passage can be highlighted AND
        struck through by the same reader, and both are true at once. */
     const deco = [...new Set(mine.map((m) => DECORATIONS[m.kind]).filter(Boolean))];
@@ -119,11 +130,16 @@ export function segmentsFor(placed = []) {
       count: crowd,
       mine,
       ids: s.ids,
-      kind: lead ? lead.kind : null,
+      kind: shown ? shown.kind : null,
       // Only marks the reader is close to carry a colour. The crowd is density,
       // and density is one colour by design — eleven people's yellows and
       // greens averaged together would be a smear, not information.
-      colour: lead && lead.close ? colourOr(lead.colour, DEFAULT_HIGHLIGHT) : null,
+      colour: lead && lead.close ? (lead.colour || DEFAULT_HIGHLIGHT)
+        : ask ? (ask.colour || "unsure") : null,
+      /* §6.1 — a violet mark shows whether its thread has been answered, on
+         the page, without opening anything. The colour says "question"; this
+         says "somebody has dealt with it". */
+      thread: ask ? (ask.resolved_at || ask.answered ? "answered" : "open") : null,
       deco,
     };
   });
@@ -160,24 +176,48 @@ export function mergeRows(held = [], incoming = []) {
 /* -----------------------------------------------------------------------------
    The filter strip. Same four questions the threads screen asks.
    -------------------------------------------------------------------------- */
+/* THE CHIPS ARE THE FIVE DESTINATIONS, NOT INVENTED CATEGORIES (§6).
+
+   "Highlights" and "Notes" filter by what a mark LOOKS like, which answers
+   nothing a student is actually asking. Where a mark WENT is the only grouping
+   they can act on — five piles they already know, with real counts — and it is
+   the same five the colours create. Everything and Mine stay because they are
+   how you get back to the whole list and to your own.
+
+   "Lost their place" stays too, and it is not a category: it is R2's promise
+   kept in public. A mark that could not be found is listed rather than dropped,
+   and this is where it is listed. */
 export const FILTERS = [
   { id: "all", label: "Everything" },
   { id: "mine", label: "Mine" },
-  { id: "highlights", label: "Highlights" },
-  { id: "notes", label: "Notes" },
-  { id: "questions", label: "Questions" },
+  { id: "critical", label: "Revision" },
+  { id: "definition", label: "Glossary" },
+  { id: "limit", label: "Questions" },
+  { id: "unsure", label: "Threads" },
+  { id: "wrong", label: "Master Caution" },
   { id: "orphaned", label: "Lost their place" },
 ];
 
+/* Real counts, per chip. A chip that says 12 when there are 3 is worse than a
+   chip with no number on it. */
+export function filterCounts(list = [], me = null) {
+  const out = { all: list.length, mine: 0, orphaned: 0 };
+  for (const f of FILTERS) if (!(f.id in out)) out[f.id] = 0;
+  for (const m of list) {
+    if (m.author_id === me) out.mine += 1;
+    if (m.status === "orphaned") out.orphaned += 1;
+    if (m.colour in out) out[m.colour] += 1;
+  }
+  return out;
+}
+
 export function applyFilter(list, filter, me) {
   switch (filter) {
+    case "all": return list;
     case "mine": return list.filter((a) => a.author_id === me);
-    case "highlights": return list.filter(
-      (a) => a.kind === "highlight" || a.kind === "underline" || a.kind === "strikethrough");
-    case "notes": return list.filter((a) => a.kind === "note");
-    case "questions": return list.filter((a) => a.kind === "question");
     case "orphaned": return list.filter((a) => a.status === "orphaned");
-    default: return list;
+    /* Everything else is a destination, which is to say a colour. */
+    default: return list.filter((a) => a.colour === filter);
   }
 }
 

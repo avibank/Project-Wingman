@@ -52,7 +52,13 @@
     "check:paper": "node scripts/check-paper.mjs",
     "check:paper-db": "node --env-file=.env.local scripts/check-paper-db.mjs",
     "check:code": "node scripts/check-code.mjs",
-    "check:exam": "node scripts/check-exam.mjs"
+    "check:exam": "node scripts/check-exam.mjs",
+    "harness": "./node_modules/.bin/vite --config tests/harness/vite.config.js",
+    "test:reader": "node tests/reader/index.mjs",
+    "test:reader:ui": "./node_modules/.bin/playwright test --ui",
+    "test:reader:one": "node scripts/reader-tests.mjs --project=laptop",
+    "reader:setup": "node --env-file=.env.local scripts/run-sql.mjs supabase/migrations/0018_reader_rebuild.sql --yes --force",
+    "paper:linearize": "node scripts/linearize-paper.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
@@ -64,6 +70,7 @@
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^7.1.1",

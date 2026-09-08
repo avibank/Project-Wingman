@@ -31,9 +31,36 @@ export { pdfjs };
    text extraction all want the same one and a PDF is not cheap to parse. */
 const docs = new Map();
 
+/* LOADED BY RANGE, NEVER WHOLE-FILE.
+
+   A module manual is 40MB today and may be 200MB later, and the time to the
+   first page must not depend on either number. `disableAutoFetch` is the switch
+   that makes pdf.js fetch only what is looked at instead of quietly pulling the
+   rest of the file in the background once the first page is up — without it,
+   range loading looks like it works and still costs the whole download.
+
+   Verified against production rather than assumed: wingman.institute advertises
+   `Accept-Ranges: bytes` and answers a ranged GET with `206 Partial Content`
+   and a correct `Content-Range`, through Vercel's edge cache, unbuffered. See
+   docs/reader/DISCOVERY.md §2.
+
+   The other half of that condition — the file being linearized — is NOT met by
+   anything currently in the repo, and cannot be fixed in the browser. An
+   unlinearized file still range-loads; it just has to fetch the trailer first
+   to find the cross-reference table. `npm run paper:linearize` does it properly
+   before upload when qpdf is installed, and the manifest records which state a
+   paper is in so the reader can say so rather than guess. */
+export const RANGE_CHUNK = 65536;
+
 export function loadPaper(url) {
   if (!docs.has(url)) {
-    const task = pdfjs.getDocument({ url, isEvalSupported: false });
+    const task = pdfjs.getDocument({
+      url,
+      isEvalSupported: false,
+      disableAutoFetch: true,
+      disableStream: false,
+      rangeChunkSize: RANGE_CHUNK,
+    });
     docs.set(url, task.promise.catch((e) => { docs.delete(url); throw e; }));
   }
   return docs.get(url);
@@ -74,6 +101,17 @@ export async function paperText(url) {
   })();
   extracted.set(url, promise);
   return promise;
+}
+
+/* Let go of a document when its reader closes. Without this every paper opened
+   in a session stays parsed in memory for the life of the tab, which on a
+   tablet is the difference between a long revision session and a reload. */
+export function releasePaper(url) {
+  const held = docs.get(url);
+  if (!held) return;
+  docs.delete(url);
+  extracted.delete(url);
+  held.then((d) => d.destroy?.()).catch(() => {});
 }
 
 /* -----------------------------------------------------------------------------

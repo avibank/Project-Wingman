@@ -71,6 +71,11 @@ const CHUNK = {
   // largest thing this app has ever depended on, and nobody who never opens a
   // paper should pay a byte of it. check:bundle is the gate that says so.
   paper: chunk(() => import("./components/paper/PaperReader.jsx")),
+  /* Adding a paper runs the whole ingest — pdf.js, the text layer, thumbnail
+     rendering — so it is lazy for the same reason the reader is: nobody who is
+     not adding a paper should pay a byte of it. check:bundle caught this as a
+     428KB regression on first paint when it was a static import. */
+  addPaper: chunk(() => import("./components/module/AddPaper.jsx")),
   quiz: chunk(() => import("./components/module/QuizPage.jsx")),
   dev: chunk(() => import("./components/DevPanel.jsx")),
   pdf: chunk(() => import("./components/PdfPanel.jsx")),
@@ -101,6 +106,7 @@ import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
 const ModuleScreen = lazy(CHUNK.module);
 const LessonPage = lazy(CHUNK.lesson);
 const PaperReader = lazy(CHUNK.paper);
+const AddPaper = lazy(CHUNK.addPaper);
 const QuizPage = lazy(CHUNK.quiz);
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
 const DevPanel = lazy(CHUNK.dev);
@@ -135,6 +141,7 @@ import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
 import Review from "./components/module/Review.jsx";
+import { listPapers } from "./lib/papers.js";
 import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
@@ -836,6 +843,7 @@ function AppInner() {
      keeps opening the file in a tab, which is what it did before this existed
      — a module without the reader must not lose its papers. */
   const readerOn = flags["library.reader"] && activeModuleCode === "M1";
+  const [addingPaper, setAddingPaper] = useState(false);
   const paperPlace = progress.get("pw-paper-place", null);
   const modulePapers = useMemo(
     () => papersFor(activeModuleCode, useTestContent) || [],
@@ -846,22 +854,17 @@ function AppInner() {
     [modulePapers, paperPlace],
   );
 
-  /* WHAT THE PINNED ROW OPENS WHEN YOU HAVE NOT OPENED ANYTHING YET.
-     It used to be papers[0], which on Module 1 is a ONE PAGE handout — a
-     reader with no pages to turn, no thumbnails worth having and nothing to
-     scroll, which is the worst possible first look at it. The longest paper
-     instead: the pin says "open a paper and mark it up", so it should open the
-     one with the most in it. Ties keep the author's order. */
-  const fullestPaper = useMemo(
-    () => modulePapers.reduce(
-      (best, p) => ((p.pages || 0) > (best?.pages || 0) ? p : best),
-      modulePapers[0] || null,
-    ),
-    [modulePapers],
-  );
   const readerPin = readerOn
     ? { paper: lastPaper, page: paperPlace?.page || 1, pages: lastPaper?.pages || null }
     : null;
+
+  /* Papers added by hand live in a table; the fixture's live in a file. The
+     Library reads one list, so they are merged here and nowhere else. */
+  const [addedPapers, setAddedPapers] = useState([]);
+  useEffect(() => {
+    if (!activeModuleCode) return;
+    listPapers(activeModuleCode).then(({ papers: rows }) => setAddedPapers(rows || []));
+  }, [activeModuleCode]);
 
   const openPaper = useCallback((paper) => {
     if (!paper) return;
@@ -1527,7 +1530,6 @@ function AppInner() {
             state={moduleState}
             tab={route.tab === "pdf" ? "library" : route.tab === "people" ? "people" : "route"}
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
-            papers={papersFor(activeModuleCode, useTestContent)}
             retention={progress.get(RETENTION_KEY, emptyRetention())}
             lastRecheck={progress.get("pw-last-recheck", null)}
             minimums={minimums}
@@ -1537,10 +1539,12 @@ function AppInner() {
               else go(routePath.review(activeModuleCode, "recheck"));
             }}
             onOpenPaper={(paper) => openPaper(paper)}
-            readerOn={readerOn}
             readerPin={readerPin}
             code={myProfile?.code || null}
-            onOpenReader={() => openPaper(lastPaper || fullestPaper)}
+            onAddPaper={() => setAddingPaper(true)}
+            /* One list: the fixture's papers and the ones somebody added by
+               hand. The Library must not know there are two sources. */
+            papers={[...papersFor(activeModuleCode, useTestContent), ...addedPapers]}
             people={{
               // The callsigns behind the author ids. Threads themselves come
               // from the session, not from here — they are the same rows the
@@ -1575,6 +1579,25 @@ function AppInner() {
               go(routePath.lesson(activeModuleCode, ch.id, target.lessonId));
             }}
           />
+          {/* Adding a paper is a sheet over the Library rather than a route:
+              it is one action on one screen, and it has to be able to fail
+              back to exactly where it was started. */}
+          {addingPaper && (
+            <div className="sheet-scrim" onClick={(e) => { if (e.target === e.currentTarget) setAddingPaper(false); }}>
+              <Suspense fallback={<div className="addpaper"><p>Getting the tools…</p></div>}>
+              <AddPaper
+                moduleCode={activeModuleCode}
+                content={useTestContent}
+                me={me}
+                onClose={() => setAddingPaper(false)}
+                onAdded={(row) => {
+                  setAddedPapers((held) => [...held.filter((p) => p.id !== row.id), row]);
+                  setAddingPaper(false);
+                }}
+              />
+              </Suspense>
+            </div>
+          )}
         </main>
       ) : (
         <main className="content content-taxi content--full">

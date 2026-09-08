@@ -16,7 +16,8 @@ import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
 import {
   densityLevel, segmentsFor, sentenceAround,
-  applyFilter, RINGS, DENSITY_MIN, DENSITY_LEVELS, DOCKS, TOOL_SIZES, KINDS,
+  applyFilter, FILTERS, filterCounts, RINGS, DENSITY_MIN, DENSITY_LEVELS,
+  DOCKS, TOOL_SIZES, KINDS,
 } from "../src/lib/paperMarks.js";
 import {
   INK_COLOURS, COLOUR_IDS, PEN_SIZES, thin, pathFor, toFraction, toPixels,
@@ -264,8 +265,21 @@ console.log("\nR14 — the paper obeys the house style");
   ok("R14", "no hex literal anywhere in the paper view", hex.length === 0, hex.join(" "));
   ok("R14", "density is the livery accent at low alpha",
      /--active[^;]*\/ \.0?7\)/.test(css) && /--active[^;]*\/ \.13\)/.test(css) && /--active[^;]*\/ \.20\)/.test(css));
-  ok("R14", "the page carries a hairline, not a shadow",
-     /\.pp \{[^}]*border: 1px solid var\(--line\)/.test(css) && !/\.pp \{[^}]*box-shadow/.test(css));
+  /* THIS RULE WAS REVERSED, AND THE REVERSAL IS RECORDED RATHER THAN SILENT.
+
+     R14 said the page carries a hairline and no shadow, because the house style
+     has no drop shadows. The reader rebuild's brief (§8.2) specifies three
+     depths and puts the page on the first of them, and its reference build
+     floats the page — which is not decoration once the chrome above it is
+     floating too: with bars at depth 2 and popovers at depth 3, a page with no
+     depth of its own flattens the whole stack.
+
+     So the assertion is not deleted, it is inverted: the page must sit at
+     depth 1, and there must still be exactly three depths and no fourth. */
+  ok("R14", "the page sits at depth 1 — a shadow, and one that is not the bars'",
+     /\.pp \{[^}]*box-shadow: 0 1px 2px/.test(css));
+  ok("R14", "and the reader keeps to three depths, no fourth",
+     (css.match(/box-shadow: 0 \d+px \d+px oklch/g) || []).length <= 4);
 
   // 13px type floor, measured rather than trusted.
   const sizes = [...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
@@ -278,20 +292,35 @@ console.log("\nR14 — the paper obeys the house style");
   ok("R14", "no control declares a height under 30px", heights.every((h) => h >= 30), heights.join(", "));
 }
 
-/* ---- the filter strip is reused, not rebuilt ---------------------------- */
+/* ---- the chips are the destinations, not invented categories ------------ */
 console.log("\nfilters");
 {
+  /* §6.3 — where a mark WENT is the only grouping a student can act on. This
+     replaced a filter by what a mark looks like ("Highlights", "Notes"), which
+     answered nothing: a student does not think "show me my underlines", they
+     think "what is in my revision deck". */
   const list = [
-    { id: 1, author_id: "me", kind: "highlight", status: "ok" },
-    { id: 2, author_id: "you", kind: "note", status: "ok" },
-    { id: 3, author_id: "you", kind: "question", status: "ok" },
-    { id: 4, author_id: "me", kind: "highlight", status: "orphaned" },
+    { id: 1, author_id: "me", kind: "highlight", colour: "critical", status: "ok" },
+    { id: 2, author_id: "you", kind: "highlight", colour: "definition", status: "ok" },
+    { id: 3, author_id: "you", kind: "question", colour: "unsure", status: "ok" },
+    { id: 4, author_id: "me", kind: "highlight", colour: "critical", status: "orphaned" },
   ];
-  ok("—", "mine", applyFilter(list, "mine", "me").length === 2);
-  ok("—", "notes", applyFilter(list, "notes", "me").length === 1);
-  ok("—", "questions", applyFilter(list, "questions", "me").length === 1);
-  ok("—", "orphaned", applyFilter(list, "orphaned", "me").length === 1);
-  ok("—", "everything", applyFilter(list, "all", "me").length === 4);
+  ok("§6.3", "everything", applyFilter(list, "all", "me").length === 4);
+  ok("§6.3", "mine", applyFilter(list, "mine", "me").length === 2);
+  ok("§6.3", "revision", applyFilter(list, "critical", "me").length === 2);
+  ok("§6.3", "glossary", applyFilter(list, "definition", "me").length === 1);
+  ok("§6.3", "threads", applyFilter(list, "unsure", "me").length === 1);
+  ok("§6.3", "lost their place", applyFilter(list, "orphaned", "me").length === 1);
+
+  const ids = FILTERS.map((f) => f.id).join(",");
+  ok("§6.3", "the five destinations are the five meanings",
+     ids === "all,mine,critical,definition,limit,unsure,wrong,orphaned", ids);
+  ok("§6.3", "and they are labelled as destinations, not as kinds",
+     FILTERS.map((f) => f.label).join(",")
+       === "Everything,Mine,Revision,Glossary,Questions,Threads,Master Caution,Lost their place");
+
+  const counts = filterCounts(list, "me");
+  ok("§6.3", "the counts are real", counts.critical === 2 && counts.mine === 2 && counts.orphaned === 1);
 }
 
 /* ---- tap anywhere still anchors to words -------------------------------- */
@@ -579,7 +608,8 @@ console.log("\nthe view");
      LAYOUTS.length === 3 && PAPER_LIGHTS.length === 4 && FITS.length === 3);
   const css = read("src/components/paper/paper.css");
   ok("view", "the light falls on the picture and not on the marks",
-     /light === "day" \? undefined : \{ filter: lightFilter\(light\) \}/.test(read("src/components/paper/PaperPage.jsx")));
+     /canvasStyle = \{ filter: light === "day" \? undefined : lightFilter\(light\) \}/
+       .test(read("src/components/paper/PaperPage.jsx")));
   ok("view", "and the ground follows it, so the surround is never the brightest thing",
      /\[data-light="night"\] \.pscroll/.test(css));
 }
@@ -616,8 +646,15 @@ console.log("\nthe rail, at ten tools");
 {
   const reader = read("src/components/paper/PaperReader.jsx");
   const css = read("src/components/paper/paper.css");
-  ok("rail", "ten tools in four groups",
-     (reader.match(/\{ id: "[a-z]+", group: \d/g) || []).length === 10);
+  /* Fourteen tools in six groups now — the full set §9 lists. The DEFAULT
+     tray is still six of them; the rest are one tap away in the Add sheet and
+     none of them is unreachable, which is the rule that makes trimming safe. */
+  ok("rail", "the full tool set is fourteen, in six groups",
+     (reader.match(/\{ id: "[a-z]+", group: \d/g) || []).length === 14
+     && /GROUPS/.test(read("src/lib/paperTray.js")));
+  ok("rail", "and the tray ships six of them",
+     /DEFAULT_TRAY = \["select", "highlight", "pen", "eraser", "note", "question"\]/
+       .test(read("src/lib/paperTray.js")));
   /* Every button in this app is at least 44px on its shortest side (§12), so a
      single column of ten is 659px of a 720px window. Two abreast is 7 rows. */
   ok("rail", "and it runs two abreast rather than shrinking the hit targets",
@@ -625,8 +662,13 @@ console.log("\nthe rail, at ten tools");
      && !/\.ptoolbtn[^{]*\{[^}]*min-height:\s*(2\d|3\d)px/.test(css));
   ok("rail", "the armed tool's settings appear beside it and no others exist",
      /if \(tool === "select"\) return null;/.test(reader));
-  ok("rail", "and the tray clears the sidebar instead of covering the thumbnails",
-     /--side-w/.test(css) && /left: calc\(100% \+ var\(--side-w\)/.test(css));
+  /* The inspector sits beside the DOCK and only beside the dock. It used to
+     clear the panel's width as well, from when the panel was a column on the
+     same side; now the panel floats on the other edge and that offset pushed
+     the inspector off the screen. */
+  ok("rail", "the inspector sits against the dock, not offset by a panel that moved",
+     /\.ptray \{[^}]*left: calc\(100% \+ 8px\)/.test(css)
+     && !/\.ptray \{[^}]*var\(--side-w\)/.test(css));
 
   /* Naming panels one at a time is a rule that breaks the next time one is
      added, and it did: Contents and Queue opened at the full width of the

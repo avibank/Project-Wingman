@@ -807,3 +807,63 @@
   padding-inline: 0;
   color: var(--t1);
 }
+
+/* ============================================================================
+   ADDING A PAPER — §17b
+   ========================================================================= */
+.sheet-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center; padding: 20px;
+  background: oklch(from var(--ground) l c h / .72);
+  backdrop-filter: blur(8px);
+}
+.addpaper {
+  width: min(460px, 100%); max-height: 86dvh; overflow-y: auto;
+  display: grid; gap: 14px; padding: 18px;
+  background: linear-gradient(var(--panel), var(--panel)), var(--ground);
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.addpaper-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.addpaper-top h3 { margin: 0; font-size: 15px; font-weight: 500; color: var(--t1); }
+.addpaper-drop {
+  display: grid; justify-items: center; gap: 8px; padding: 22px 16px;
+  border: 1px dashed var(--edge); border-radius: 12px;
+  background: var(--raised); color: var(--t2);
+  font: inherit; font-size: 14px; cursor: pointer; text-align: center;
+}
+.addpaper-drop:hover { border-color: var(--active); color: var(--t1); }
+.addpaper-drop em { font-style: normal; font-size: 13px; color: var(--t3); }
+.addpaper-f { display: grid; gap: 5px; font-size: 13px; color: var(--t3); }
+.addpaper-f input, .addpaper-f select {
+  min-height: 44px; padding: 0 11px; font: inherit; font-size: 14px;
+  background: var(--raised); color: var(--t1);
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.addpaper-work p, .addpaper-setup p { margin: 0 0 6px; font-size: 13px; line-height: 1.5; color: var(--t2); }
+.addpaper-note { color: var(--t3); }
+.addpaper-bar { display: block; height: 4px; border-radius: 3px; background: var(--edge); overflow: hidden; }
+.addpaper-bar i { display: block; height: 100%; background: var(--active); transition: width .2s ease; }
+.addpaper-setup {
+  padding: 12px; border-radius: 10px;
+  background: var(--raised); border: 1px solid var(--line);
+}
+.addpaper-setup code {
+  display: block; margin: 8px 0; padding: 9px 11px;
+  font-family: var(--font-mono); font-size: 13px; color: var(--t1);
+  background: var(--sunk, var(--ground)); border-radius: 8px; overflow-x: auto;
+}
+.addpaper-err { margin: 0; font-size: 13px; line-height: 1.5; color: var(--t1); }
+.addpaper-foot { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* The Library's own empty state and the in-progress hairline. */
+.libempty { display: grid; gap: 12px; justify-items: start; padding: 18px 0 6px; }
+.libempty p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--t2); max-width: 52ch; }
+.lsec-act {
+  min-height: 44px; padding: 0 14px; border-radius: 999px;
+  background: none; border: 1px solid var(--edge); color: var(--t2);
+  font: inherit; font-size: 13px; cursor: pointer;
+}
+.lsec-act:hover { color: var(--t1); border-color: var(--edge-hi); }
+.ihair { display: block; height: 2px; margin-top: 6px; border-radius: 2px; background: var(--edge); overflow: hidden; }
+.ihair i { display: block; height: 100%; background: var(--active); }
+.item[data-here] .iname { color: var(--t1); }

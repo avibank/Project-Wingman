@@ -42,6 +42,12 @@ export const FLAGS = [
   { id: "module.interior", label: "Module interior", note: "Opening a module at all. Off means clicking one does nothing.", everyone: true },
   { id: "module.screen", label: "Module screen", note: "Lessons, Library and People. Off falls back to the old hub.", everyone: true },
   { id: "library.reader", label: "Paper reader", note: "Papers open in the reader, with marking. Off opens the file in a tab.", everyone: true },
+  /* The rebuild. On for everyone because it is what the reader is now, and a
+     switch rather than a replacement because it is a large change landing the
+     night before two people study on it: turning it off puts the previous
+     reader back with one click and no deploy. Delete it once a week has passed
+     without anybody reaching for it. */
+  { id: "reader.v2", label: "Reader rebuild", note: "The rebuilt papers reader — floating chrome, a tray you build, marks as objects. Off is the previous reader.", everyone: true },
   // The one switch that takes the dev panel out. Off for everyone including
   // admins until it is turned on deliberately, and the panel additionally
   // refuses to render for anyone who is not an admin — two locks, because this
