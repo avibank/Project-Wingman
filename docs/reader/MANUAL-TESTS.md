@@ -23,7 +23,7 @@ moment you touch it, so they are step 1.
 | U2 | Palm rejection with a real hand | Tested with synthetic broad-contact touch events. A real palm is many contacts, arriving in an order no test reproduces. |
 | U3 | Pencil hover (recent iPads) | WebKit-under-Playwright reports no hover. The mark card is bound to tap **as well as** hover for exactly this reason — that part is tested. |
 | U4 | Real iOS Safari | The harness runs WebKit, which is not Safari. Passes there are necessary and not sufficient. |
-| U5 | A 40–200MB paper | The fixture is 1MB. Range loading is configured and the host serves `206`s — both tested — but pdf.js does not switch to ranged mode on a file this small, so the large-file path itself is unexercised. |
+| ~~U5~~ | ~~A 40–200MB paper~~ | **Now verified.** The real 44MB / 1012-page manual opens in about 3 seconds locally and 6 on a cold production load, fetching 0.5–1.1MB across 9–19 ranged requests instead of the whole file. What is still unverified is how that feels on an iPad over a phone connection. |
 | U6 | `backdrop-filter` performance on an older iPad | The blur drops from 30px to 18px on a coarse pointer. Whether that is enough is a question for the device. |
 | U7 | IndexedDB eviction in private browsing | The offline queue degrades rather than throwing, by construction. |
 

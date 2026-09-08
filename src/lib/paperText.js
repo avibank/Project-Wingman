@@ -82,13 +82,20 @@ const sameOrigin = (url) => {
   catch { return true; }
 };
 
+/* THE HINT FIRST, AND THE HEAD ONLY IF THERE ISN'T ONE.
+
+   The papers row already records the file's size, so asking the server for it
+   again is a full round trip to storage before a single byte of the document
+   can be requested. Measured on the real manual, that round trip is most of a
+   second on a cold load for a number we were already holding. */
 async function byteLength(url, hint) {
+  if (Number.isFinite(hint) && hint > 0) return hint;
   try {
     const head = await fetch(url, { method: "HEAD" });
     const n = Number(head.headers.get("content-length"));
     if (Number.isFinite(n) && n > 0) return n;
-  } catch { /* fall through to the hint */ }
-  return hint || 0;
+  } catch { /* no length, no ranging — the caller falls back */ }
+  return 0;
 }
 
 function rangeTransport(url, length) {
@@ -127,7 +134,16 @@ export function loadPaper(url, hintBytes) {
         // failing, so a paper always opens even if slowly.
         return pdfjs.getDocument({ url, disableStream: false, ...common }).promise;
       }
-      return pdfjs.getDocument({ range: rangeTransport(url, length), ...common }).promise;
+      try {
+        return await pdfjs.getDocument({ range: rangeTransport(url, length), ...common }).promise;
+      } catch (e) {
+        /* A stale byte count — a paper re-uploaded after its row was written —
+           makes the transport ask past the end of the file. Rather than leaving
+           the reader with nothing, fall back to the ordinary path, which is
+           slower and always correct. */
+        console.warn("Ranged load failed, falling back to a whole-file fetch.", e);
+        return pdfjs.getDocument({ url, disableStream: false, ...common }).promise;
+      }
     })();
     docs.set(url, promise.catch((e) => { docs.delete(url); throw e; }));
   }

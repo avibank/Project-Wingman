@@ -6,6 +6,53 @@ instruction, and verified — see below.
 
 ---
 
+## The real manual — what happened when you uploaded it
+
+Your 44MB, 1012-page manual is up, linearized, and opens. Getting there found
+four faults and three of them were mine.
+
+**It opened blank.** The paper route resolved the id against the fixture list
+alone, so an uploaded paper was never found and the route returned an empty
+`<main>`. A merge that reaches one of three readers is not a merge — the
+Library had it, the route and the Flight Deck pin did not. Missing, still
+arriving and still processing are now three designed states.
+
+**The file URL was wrong.** A fixture paper is a path; an uploaded one is an
+absolute storage URL. The reader prefixed a slash to both, so `https://…`
+became `/https://…`.
+
+**Range loading never engaged.** pdf.js decides whether a URL supports ranges
+by *reading* `Accept-Ranges` and `Content-Range`, and neither is CORS-safelisted.
+Supabase sends a correct `206` and does **not** send
+`Access-Control-Expose-Headers`, so from a browser those headers are simply
+absent and pdf.js concluded ranges were unsupported. The reader now does the
+ranging itself and never asks.
+
+**And the PDF was being opened for things the manifest already answered.** The
+reader asked the document for all 1012 viewports — 1012 range requests before
+anything drew, 119MB over the wire on a 44MB file, first page never appearing.
+§4.6 says exactly this and I had built the manifest at ingest and then not used
+it.
+
+Measured on your file at each step:
+
+| | first page | over the wire |
+|---|---|---|
+| As you found it | 27s | 44MB (the whole file) |
+| Custom range transport | never drew | 119MB |
+| Layout from the manifest | 10s | 44MB |
+| Text layer off the critical path | 3.0s | 0.7MB |
+| On production, cold | 6.2s | 0.53MB |
+
+Still above the brief's sub-second target on a cold production load; most of
+what is left is app boot rather than the paper. Honest number, not a rounded one.
+
+**I linearized your file for you.** `qpdf` is now installed, the manual was
+downloaded, linearized, re-uploaded in place and its row updated. You do not
+need to run `paper:linearize` on this one.
+
+---
+
 ## Read this first
 
 **Both of the things that were waiting have been run, and verified.**
