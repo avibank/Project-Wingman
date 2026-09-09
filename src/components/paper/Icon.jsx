@@ -1,30 +1,27 @@
-import { ICONS, TOOLS } from "../../lib/readerIcons.js";
-
 /* =============================================================================
-   THE READER'S ICONS.
+   One place that turns a name into an SVG, and the only one.
+   -----------------------------------------------------------------------------
+   v5 changed what an icon IS. In v4 every glyph was a stroked path on a 20px
+   grid and the tool's colour lived in a separate `.swatch` element beside it.
+   In v5 THE ICON IS THE SWATCH: `icon(id, colour)` returns a filled drawing in
+   the tool's own colour, which is why the bar reads as a tray of pens rather
+   than a row of settings. There is no swatch element any more, and adding one
+   back would be reinstating v4's look inside v5's markup.
 
-   Every glyph in this screen comes from lib/readerIcons.js, which is the
-   shipped file copied byte for byte — the paths, the tool table and the five
-   colours. Not an icon library: the marking tools are drawn as tilted physical
-   objects, a nib and a chisel and a marker barrel, and that is what makes the
-   dock read as a pen tray rather than a settings menu. A generic set loses
-   exactly that.
-
-   One 20px grid, 1.5px stroke, round caps and joins, rendered at 19px unless
-   asked otherwise — the wrapper the file's own header specifies.
+   So a tool glyph comes from readerIcons.js's `icon()` — the reference build's
+   function, verbatim — and a chrome glyph from readerChrome.js. Nothing here
+   draws anything itself.
    ========================================================================= */
-export default function Icon({ name, tool, size = 19, className }) {
-  const d = tool
-    ? TOOLS.find((t) => t.id === tool)?.svg
-    : ICONS[name];
-  if (!d) return null;
+import { icon } from "../../lib/readerIcons.js";
+import { chrome, LOGO } from "../../lib/readerChrome.js";
+
+export default function Icon({ tool, name, colour, size, className }) {
+  const svg = tool ? icon(tool, colour, size || 21)
+    : name === "logo" ? LOGO
+      : chrome(name, size || 17);
+  if (!svg) return null;
   return (
-    <svg
-      width={size} height={size} viewBox="0 0 20 20" fill="none"
-      stroke="currentColor" strokeWidth="1.5"
-      strokeLinecap="round" strokeLinejoin="round"
-      className={className} aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: d }}
-    />
+    <span className={className} aria-hidden="true" style={{ display: "contents" }}
+          dangerouslySetInnerHTML={{ __html: svg }} />
   );
 }

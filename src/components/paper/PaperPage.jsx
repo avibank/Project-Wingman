@@ -4,6 +4,8 @@ import { pdfjs } from "../../lib/paperText.js";
 import { lightFilter } from "../../lib/paperView.js";
 import { claimRaster, releaseRaster, MAX_RASTER_PX } from "../../lib/rasterBudget.js";
 import PaperInk from "./PaperInk.jsx";
+import { Note } from "./parts.jsx";
+import { colourKey } from "../../lib/readerIcons.js";
 
 /* =============================================================================
    One page of the paper: the picture, the words, and the marks on them.
@@ -60,7 +62,9 @@ export default function PaperPage({
   segments = [], activeId = null, light = "day",
   strokes = [], inkTool = null, inkColour, inkWidth, onInk, onErase, me,
   onDivs, registerEl, onPenDown, onPenUp,
-  notes = [], onOpenThread, onDeleteNote,
+  notes = [], dropOn = null,
+  onNoteGrab, onNoteOpen, onNoteClose, onNoteTitle, onNoteBody, onNoteColour,
+  onNoteDelete, onNoteExcRemove,
 }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
@@ -282,13 +286,13 @@ export default function PaperPage({
   const canvasStyle = { filter: light === "day" ? undefined : lightFilter(light) };
 
   return (
-    /* COMPONENTS.md: a page is an <article class="rdr-page"> with its number in
-       the gutter. The stylesheet gives it the sheet, the radius and the one
-       shadow that is depth 1 — nothing here paints it. */
-    <article className="rdr-page" ref={wrapRef} data-page={pageNumber}
+    /* COMPONENTS.md v5: a page is an <article class="page"> with its number in
+       the gutter as `.pnum`. The stylesheet gives it the sheet, the radius and
+       the shadow — nothing here paints it. */
+    <article className="page" ref={wrapRef} data-page={pageNumber}
              data-drawn={ready ? "" : undefined}
              style={boxW ? { width: boxW, height: boxH } : undefined}>
-      <span className="pg-num mono">{pageNumber}</span>
+      <span className="pnum">{pageNumber}</span>
 
       {/* THE LIGHT FALLS ON THE PICTURE AND NOTHING ELSE.
 
@@ -312,11 +316,12 @@ export default function PaperPage({
              carries them. `.rdr-mark` is what positions it. */
           <span
             key={r.key}
-            className={`s is-marked rdr-mark${
-              r.seg.thread === "open" ? " is-open-thread" : ""}${
-              r.seg.ids.includes(activeId) ? " is-selected" : ""}`}
+            className={`s m rdr-mark${r.seg.ids.includes(activeId) ? " sel" : ""}`}
             data-kind={r.seg.kind || undefined}
-            data-colour={r.seg.colour || undefined}
+            /* The stylesheet paints from the reference's colour KEY, and the
+               row carries the stored meaning. readerIcons is the only place
+               either name is translated. */
+            data-k={r.seg.colour ? colourKey(r.seg.colour) : undefined}
             data-thread={r.seg.thread || undefined}
             data-deco={r.seg.deco?.length ? r.seg.deco.join(" ") : undefined}
             data-density={r.seg.density || undefined}
@@ -338,32 +343,24 @@ export default function PaperPage({
 
       <div className="rdr-text" ref={textRef} />
 
-      {/* §8 — notes open IN THE FLOW, under the page they belong to, on a
-          phone and a desktop alike. A margin rail would have meant two layouts
-          and a column of speech bubbles pointing at nothing. */}
-      {notes?.length > 0 && (
-        <div className="rdr-notes">
-          {notes.map((n) => (
-            <article key={n.id} className="rdr-note" data-colour={n.colour || undefined}>
-              <p className="q">{n.quote}</p>
-              <p className="b">{n.body}</p>
-              <p className="w">
-                <b>{n.anonymous && n.author_id !== me ? "Anonymous" : n.author_name}</b>
-                {n.kind === "question" ? " asked" : " noted"}
-                {n.kind === "question" && n.thread_id && (
-                  <button type="button" className="btn" onClick={() => onOpenThread?.(n.thread_id)}>
-                    Answer in the Ready Room
-                  </button>
-                )}
-                {n.author_id === me && (
-                  <button type="button" className="ib" aria-label="Delete this mark"
-                          onClick={() => onDeleteNote?.(n)}>×</button>
-                )}
-              </p>
-            </article>
-          ))}
-        </div>
-      )}
+      {/* v5's notes are WINDOWS ON THE PAGE, not a column under it. Each is
+          held at a fraction of the page (0..1), so a note written at 80% on a
+          phone is in the same place at 250% on a laptop — the same rule as
+          ink, and for the same reason. Rendered here rather than in the reader
+          because only the page knows where its own corners are. */}
+      {notes.map((n) => (
+        <Note key={n.id} note={n}
+              at={{ left: `${(n.x ?? .7) * 100}%`, top: `${(n.y ?? .3) * 100}%` }}
+              dropping={dropOn === n.id}
+              onGrab={(e) => onNoteGrab?.(n.id, e)}
+              onOpen={() => onNoteOpen?.(n.id)}
+              onClose={() => onNoteClose?.(n.id)}
+              onTitle={(v) => onNoteTitle?.(n.id, v)}
+              onBody={(v) => onNoteBody?.(n.id, v)}
+              onColour={(k) => onNoteColour?.(n.id, k)}
+              onDelete={() => onNoteDelete?.(n.id)}
+              onRemoveExc={(i) => onNoteExcRemove?.(n.id, i)} />
+      ))}
     </article>
   );
 }

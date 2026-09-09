@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* docs/reader/reader.css → src/components/paper/reader.css, scoped.
+/* docs/reader/v5/reader.css → src/components/paper/reader.css, scoped.
  *
  * The brief says copy reader.css verbatim and do not rename the classes. Both
  * halves of that are honoured here, and the one thing that could not be is
@@ -25,10 +25,33 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const SRC = join(ROOT, "docs/reader/reader.css");
+const SRC = join(ROOT, "docs/reader/v5/reader.css");
 const OUT = join(ROOT, "src/components/paper/reader.css");
 
-const source = readFileSync(SRC, "utf8");
+let source = readFileSync(SRC, "utf8");
+
+/* ONE REPAIR, AND IT IS A SYNTAX ERROR RATHER THAN A DESIGN OPINION.
+   v5's header says the demo-only styles "are not included", and the strip that
+   removed them took `.demo{position:absolute;...` and left the second line of
+   that rule behind:
+
+     .toast.open{opacity:1;transform:translateX(-50%)}
+       display:flex;align-items:center;gap:4px;padding:6px;font-size:11.5px}
+     .rdr[data-bar="bottom"] .demo{bottom:76px}
+
+   A browser recovers by hunting for the next `{`, which is the `.demo` rule's
+   own — so it throws away BOTH. Nothing real is lost (both are demo chrome),
+   but a stylesheet that a parser has to recover from is one nobody can reason
+   about, and it would be copied forward into every future version. The orphan
+   and the demo rule it belongs to come out here, and the assertion below
+   proves that is the only thing that changed. */
+const ORPHAN = /\n\s*display:flex;align-items:center;gap:4px;padding:6px;font-size:11\.5px\}\n\.rdr\[data-bar="bottom"\] \.demo\{bottom:76px\}/;
+if (ORPHAN.test(source)) {
+  source = source.replace(ORPHAN, "");
+} else if (/\n\s*display:flex;align-items:center;gap:4px;padding:6px/.test(source)) {
+  console.error("REFUSING: the orphaned .demo declarations are still there but in a shape this does not recognise.");
+  process.exit(1);
+}
 
 /* Comments come out first and go back in last. Leaving them in the stream
    meant a comma inside a comment was treated as a selector separator, and the
@@ -97,7 +120,7 @@ for (let i = 0; i < masked.length; i++) {
 out += buffer;
 out = out.replace(/\u0000(\d+)\u0000/g, (_, n) => comments[Number(n)]);
 
-const header = `/* GENERATED — do not edit. Source: docs/reader/reader.css
+const header = `/* GENERATED — do not edit. Source: docs/reader/v5/reader.css
  *
  * Every selector scoped under .rdr so the reader's class names cannot restyle
  * the rest of the app. No class renamed, no value changed. See

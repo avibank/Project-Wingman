@@ -77,7 +77,7 @@ function Thumb({ doc, pageNumber, ratio, current, onPick, src, near }) {
 
   return (
     <li>
-      <button type="button" className="thumb" aria-current={current ? "true" : undefined}
+      <button type="button" className={`th${current ? " on" : ""}`} aria-current={current ? "true" : undefined}
               data-page={pageNumber}
               onClick={() => onPick(pageNumber)}>
         {/* The slot is the right shape whether or not it has a picture in it,
@@ -89,7 +89,7 @@ function Thumb({ doc, pageNumber, ratio, current, onPick, src, near }) {
             ? <img src={src} alt="" loading="lazy" decoding="async" width={THUMB_W} />
             : near ? <canvas ref={ref} /> : null}
         </span>
-        <span className="thumb-n">{pageNumber}</span>
+        <b>{pageNumber}</b>
       </button>
     </li>
   );

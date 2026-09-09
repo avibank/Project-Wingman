@@ -4,21 +4,23 @@ import { loadPaper, releasePaper, paperText, quoteOf, pageOf, warmWorker, PDFJS_
 import { setRasterFocus } from "../../lib/rasterBudget.js";
 import {
   resolveAll, segmentsFor, anchorFor, mergeRows, sentenceAround,
-  applyFilter, FILTERS, filterCounts, RINGS, DOCKS,
+  applyFilter, FILTERS, filterCounts, RINGS,
 } from "../../lib/paperMarks.js";
 import { meaning, threadState, meaningOr, DEFAULT_MEANING } from "../../lib/meanings.js";
 import {
-  DEFAULT_TRAY, LOCKED, GROUPS, capFor, loadTray, saveTray,
+  DEF, CAP, LOCKED, capFor, loadTray, saveTray,
   addTool, removeTool, moveTool, shortcutFor,
 } from "../../lib/paperTray.js";
+/* The shipped table and the shipped icon function, both copied verbatim out of
+   the reference build, plus the join between its five colour keys and the five
+   meanings the database has stored since 0017. */
 import {
-  TOOLS, COLOURS, tool as toolAt, kindOf, marksText, isInk, isWritten,
-  takesMeaning, takesFreeColour, hasColour, colour as colourAt,
-} from "../../lib/readerTools.js";
-import {
-  INK_COLOURS, PEN_SIZES, penWidth,
-  DEFAULT_HIGHLIGHT, DEFAULT_PEN, DEFAULT_PEN_SIZE,
-} from "../../lib/paperInk.js";
+  TOOLS, COL, GROUPS, tool as T, col, colourKey, MEANING_OF, INK_OF,
+  TOOL_COLOUR, TOOL_SIZE, TOOL_ALPHA,
+  kindOf, marksText, isInk, isTaker, hasColour, fixedColour, variants,
+} from "../../lib/readerIcons.js";
+import { readPlatform, watchPlatform } from "../../lib/readerPlatform.js";
+import { penWidth } from "../../lib/paperInk.js";
 import {
   LAYOUTS, PAPER_LIGHTS, FITS, ZOOM_STEPS, stepZoom, clampZoom, fitScale,
   spreads, spreadOf, pagesToDraw, findAll,
@@ -30,6 +32,7 @@ import {
 import { fetchInk, createStroke, deleteStrokes } from "../../lib/ink.js";
 import { fileHref, storedText, thumbUrl } from "../../lib/papers.js";
 import Icon from "./Icon.jsx";
+import { Card, SelPop, Props, Chest, Coach } from "./parts.jsx";
 import PaperPage from "./PaperPage.jsx";
 import PaperThumbs from "./PaperThumbs.jsx";
 import PaperOutline from "./PaperOutline.jsx";
@@ -59,345 +62,18 @@ const EMPTY = [];
 const tempId = () => `tmp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private */ } };
+/* A per-tool map, merged over the shipped defaults so a tool added in a later
+   build arrives with its own starting values rather than undefined. */
+const readJSON = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? { ...fallback, ...JSON.parse(raw) } : { ...fallback };
+  } catch { return { ...fallback }; }
+};
 const rgba = (hex, a) => {
   const n = parseInt(String(hex).slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };
-
-/* ---------------------------------------------------------------------------
-   THE MARK CARD — one popover for properties, ownership and actions.
-
-   §10: it replaces the idea of a separate selection toolbar, because two
-   overlapping popovers is exactly the clutter being removed. It opens on hover
-   AND on tap; an iPad has no hover, and a card that only ever appears under a
-   mouse is a card an iPad user can never see.
-   ------------------------------------------------------------------------ */
-function MarkCard({ mark, me, at, onRecolour, onDelete, onNote, onAgree, onThread, onHold, onLeave }) {
-  if (!mark || !at) return null;
-  const c = colourAt(mark.colour || DEFAULT_MEANING);
-  const mine = mark.author_id === me;
-  const anon = !!mark.anonymous && !mine;
-  const thread = mark.colour === "unsure" || mark.kind === "question";
-  const state = threadState(mark);
-  const who = anon ? "Asked anonymously" : mine ? "You" : (mark.author_name || "Someone");
-  const initials = anon ? "?" : mine ? "YOU"
-    : (mark.author_name || "S").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-
-  return (
-    <div className="bar pop mark-card is-open"
-         style={{ left: at.left, top: at.top }}
-         onMouseEnter={onHold} onMouseLeave={onLeave}
-         role="dialog" aria-label={`${c.name} on page ${mark.page ?? ""}`}>
-      <div className="mch" style={{ "--c": c.hex }}>
-        <i /><b>{c.name}</b><em>p.{mark.page ?? "—"}</em>
-      </div>
-      <div className="mcd">{c.does}</div>
-
-      <div className="mcw">
-        <span className={`av${mine ? "" : " other"}`}>{initials}</span>
-        <div>
-          <b>{who}</b>
-          <span>
-            {mark.when || "just now"}
-            {anon && " · name hidden on questions"}
-            {!mine && !anon && mark.contribution ? ` · ${mark.contribution}` : ""}
-          </span>
-        </div>
-        {!mine && !thread && (
-          <button type="button" className="btn grow" data-act="agree"
-                  onClick={() => onAgree(mark)} aria-label="Agree">
-            <Icon name="agree" size={15} /> {mark.agree_count || 0}
-          </button>
-        )}
-      </div>
-
-      {thread && (
-        <div className="thr">
-          <span className={`state${state === "open" ? " is-open" : ""}`} />
-          {state === "open"
-            ? `Open thread · ${mark.replies || 0} ${(mark.replies || 0) === 1 ? "reply" : "replies"}`
-            : `Answered · ${mark.replies || 0} ${(mark.replies || 0) === 1 ? "reply" : "replies"}`}
-          <u role="button" tabIndex={0} onClick={() => onThread(mark)}
-             onKeyDown={(e) => e.key === "Enter" && onThread(mark)}>Open in Ready Room</u>
-        </div>
-      )}
-
-      <div className="mca">
-        {mine ? (
-          <>
-            {COLOURS.map((cc) => (
-              <button key={cc.key} type="button"
-                      className={`sw${cc.key === mark.colour ? " is-on" : ""}`}
-                      data-colour={cc.key}
-                      style={{ "--c": cc.hex }} aria-label={cc.name}
-                      onClick={() => onRecolour(mark, cc.key)}><i /></button>
-            ))}
-            <span className="sep" />
-            <button type="button" className="ib" aria-label="Add a note" onClick={() => onNote(mark)}>
-              <Icon tool="note" size={16} />
-            </button>
-            <button type="button" className="ib" aria-label="Delete" onClick={() => onDelete(mark)}>
-              <Icon name="trash" size={16} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button type="button" className="btn primary" data-act="ask" onClick={() => onThread(mark)}>
-              {thread ? "Answer this" : anon ? "Reply" : `Ask ${(mark.author_name || "them").split(/\s+/)[0]}`}
-            </button>
-            <button type="button" className="btn grow" data-act="follow">Follow</button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------------------------
-   THE INSPECTOR — §8.5. The live preview is the single most important detail;
-   without it the panel is a settings sheet.
-   ------------------------------------------------------------------------ */
-function Inspector({
-  open, tool, meaningId, inkColour, size, opacity, smart, smooth, recent,
-  onMeaning, onInk, onSize, onOpacity, onSmart, onSmooth, onReset,
-}) {
-  const spec = toolAt(tool);
-  const ink = takesFreeColour(tool);
-  const c = ink ? { hex: inkColour, name: "", does: "" } : colourAt(meaningId);
-  const ticks = ink ? [1, 2, 4, 8, 16] : [4, 8, 12, 20, 32];
-  const [foldOpen, setFoldOpen] = useState(true);
-
-  return (
-    <div className={`bar pop bar-insp${open ? " is-open" : ""}`} aria-label={`${spec.name} settings`}>
-      <header>
-        <h3>{spec.name} <Icon name="chevron" size={13} /></h3>
-        <button type="button" className="ib" aria-label="Reset tool" onClick={onReset}>
-          <Icon name="reset" size={15} />
-        </button>
-      </header>
-
-      <div className="body">
-        {!hasColour(tool) ? (
-          /* Tools with no colour get one drawing and one sentence, never a
-             panel of controls that do nothing. */
-          <div className="empty">
-            <Icon tool={tool} size={40} />
-            {spec.hint}.
-          </div>
-        ) : (
-          <>
-            <div className="preview">
-              {ink ? (
-                <svg width="200" height="34" viewBox="0 0 200 34" aria-hidden="true">
-                  <path d="M6 24C34 4 46 30 72 17s38-16 60-3 40 12 62 2" fill="none"
-                        stroke={c.hex} strokeOpacity={opacity / 100}
-                        strokeWidth={Math.max(1, size)} strokeLinecap="round" />
-                </svg>
-              ) : tool === "ul" || tool === "st" ? (
-                <span className="smp" style={{
-                  textDecoration: tool === "ul" ? "underline" : "line-through",
-                  textUnderlineOffset: 3,
-                  textDecorationColor: rgba(c.hex, opacity / 100),
-                  textDecorationThickness: `${size}px`,
-                }}>Sample text</span>
-              ) : (
-                <span className="smp" style={{
-                  background: rgba(c.hex, opacity / 100),
-                  padding: `${Math.round(size / 4)}px 8px`,
-                }}>Sample text</span>
-              )}
-            </div>
-
-            <div className="row">
-              <div className="rowhead"><span>Size</span><span className="pill">{size} pt</span></div>
-              <input type="range" min={ticks[0]} max={ticks[ticks.length - 1]} value={size}
-                     aria-label="Size"
-                     style={{ "--trk": `linear-gradient(90deg,${c.hex},${rgba(c.hex, .25)})` }}
-                     onChange={(e) => onSize(Number(e.target.value))} />
-              <div className="ticks">{ticks.map((t) => <b key={t}>{t}</b>)}</div>
-            </div>
-
-            <div className="row">
-              {recent.length > 0 && (
-                <div className="recent">
-                  <span className="lb">Recent</span>
-                  {recent.map((k) => (
-                    <button key={k} type="button" className="sw sm" style={{ "--c": colourAt(k).hex }}
-                            aria-label={colourAt(k).name} onClick={() => onMeaning(k)}><i /></button>
-                  ))}
-                </div>
-              )}
-              <div className="rowhead"><span>{ink ? "Ink colour" : "All colours"}</span></div>
-              <div className="colours">
-                {(ink ? INK_COLOURS : COLOURS).map((cc) => {
-                  const key = ink ? cc.id : cc.key;
-                  const hex = ink ? undefined : cc.hex;
-                  const on = ink ? inkColour === cc.id : meaningId === cc.key;
-                  return (
-                    <button key={key} type="button" className={`sw${on ? " is-on" : ""}`}
-                            data-ink={ink ? cc.id : undefined}
-                            data-colour={ink ? undefined : cc.key}
-                            style={hex ? { "--c": hex } : undefined}
-                            aria-label={ink ? cc.label : cc.name}
-                            onClick={() => (ink ? onInk(cc.id) : onMeaning(cc.key))}><i /></button>
-                  );
-                })}
-                <button type="button" className="more" aria-label="More colours">···</button>
-              </div>
-            </div>
-
-            {/* What this colour DOES. §6 — the picker shows the meaning; the
-                card states it again. A colour that only looks different is a
-                colour nobody uses consistently. */}
-            {!ink && (
-              <div className="row">
-                <div className="meaning" style={{ "--c": c.hex }}>
-                  <i />
-                  <div style={{ flex: 1 }}>
-                    <b>{c.name}</b>
-                    <u>{c.does}</u>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="row" style={{ marginBottom: 4 }}>
-              <div className="rowhead"><span>Opacity</span><span className="pill">{opacity}%</span></div>
-              <input type="range" min="10" max="100" value={opacity} aria-label="Opacity"
-                     style={{ "--trk": `linear-gradient(90deg,${rgba(c.hex, .12)},${c.hex})` }}
-                     onChange={(e) => onOpacity(Number(e.target.value))} />
-              <div className="ticks"><b>25%</b><b>50%</b><b>75%</b><b>100%</b></div>
-            </div>
-
-            {ink && (
-              <div className={`fold${foldOpen ? " is-open" : ""}`}>
-                <button type="button" onClick={() => setFoldOpen(!foldOpen)}>
-                  Smart inking <Icon name="chevron" size={13} />
-                </button>
-                <div className="inner">
-                  <div className="tgl">
-                    <div className="lab">
-                      <b>Ink to line</b><span>Snap a stroke to the shape you meant</span>
-                    </div>
-                    <button type="button" className={`switch${smart ? " is-on" : ""}`}
-                            role="switch" aria-checked={smart} aria-label="Ink to line"
-                            onClick={() => onSmart(!smart)} />
-                  </div>
-                  <div className="rowhead"><span>Smoothness</span><span className="pill">{smooth}%</span></div>
-                  <input type="range" min="0" max="100" value={smooth} aria-label="Smoothness"
-                         onChange={(e) => onSmooth(Number(e.target.value))} />
-                  <div className="ticks"><b>25%</b><b>50%</b><b>75%</b><b>100%</b></div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------------------------
-   THE ADD-TOOL SHEET — §9. The full set is always here, so nothing a student
-   takes off the tray becomes unreachable.
-   ------------------------------------------------------------------------ */
-function AddSheet({ open, tray, cap, onAdd, onReset, meaningId, inkColour }) {
-  const [tab, setTab] = useState("Mark up");
-  const full = tray.length >= cap;
-  return (
-    <div className={`bar pop bar-add${open ? " is-open" : ""}`} aria-label="Add a tool">
-      <header><h3>Add a tool</h3></header>
-      <div className="satabs" role="tablist">
-        {GROUPS.map((g) => (
-          <button key={g} type="button" role="tab" aria-selected={tab === g}
-                  className={tab === g ? "is-on" : ""} onClick={() => setTab(g)}>{g}</button>
-        ))}
-      </div>
-      <div className="sagrid">
-        {TOOLS.filter((t) => t.group === tab).map((t) => (
-          <button key={t.id} type="button"
-                  className={`sacell${tray.includes(t.id) ? " is-have" : ""}`}
-                  data-add={t.id} onClick={() => onAdd(t.id)}>
-            <span className="ic" style={t.colour
-              ? { color: t.freeColour ? undefined : colourAt(meaningId).hex }
-              : undefined}
-              data-ink={t.freeColour ? inkColour : undefined}>
-              <Icon tool={t.id} size={20} />
-            </span>
-            <span>{t.name}</span>
-          </button>
-        ))}
-      </div>
-      <div className="safoot">
-        {/* When it is full it says so rather than silently refusing. */}
-        <span>{full ? `Tray is full — remove one first (${cap} max)` : `${tray.length} of ${cap} on your tray`}</span>
-        <u role="button" tabIndex={0} onClick={onReset}
-           onKeyDown={(e) => e.key === "Enter" && onReset()}>Reset to course default</u>
-      </div>
-    </div>
-  );
-}
-
-/* The composer for a note, a question or a correction. Not in COMPONENTS.md —
-   the demo opens notes inline — so it borrows the inspector's own classes
-   rather than inventing a look. */
-const KINDS = [
-  { id: "note", label: "Note", say: "What do you want to remember?" },
-  { id: "question", label: "Question", say: "What is not landing?" },
-  { id: "correction", label: "Correction", say: "What is wrong with this passage?" },
-];
-
-function Composer({ kind, onKind, quote, ring, onRing, value, onChange, onSave, onCancel, busy }) {
-  const ref = useRef(null);
-  useEffect(() => { ref.current?.focus(); }, [kind]);
-  const here = KINDS.find((k) => k.id === kind) || KINDS[0];
-  return (
-    <div className="bar pop composer" role="dialog" aria-label={here.label} aria-modal="true">
-      <div className="segs" role="tablist" aria-label="What kind of mark">
-        {KINDS.map((k) => (
-          <button key={k.id} type="button" role="tab" aria-selected={kind === k.id}
-                  className={kind === k.id ? "is-on" : ""} onClick={() => onKind(k.id)}>{k.label}</button>
-        ))}
-      </div>
-      <blockquote>{quote}</blockquote>
-      <textarea ref={ref} rows={3} value={value} placeholder={here.say}
-                onChange={(e) => onChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") onCancel();
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSave();
-                }} />
-      <div className="composer-foot">
-        {kind !== "correction" ? (
-          <label>
-            <span>Who sees it</span>
-            <select value={ring} onChange={(e) => onRing(e.target.value)}>
-              {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
-          </label>
-        ) : <span className="quiet">Goes to the author. Nobody else on the module sees it.</span>}
-        <button type="button" className="btn primary" disabled={busy || !value.trim()} onClick={onSave}>
-          {busy ? "Saving…" : kind === "question" ? "Ask" : "Save"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Sheet({ title, onClose, children }) {
-  return (
-    <div className="rdr-scrim" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bar pop rdr-sheet" role="dialog" aria-label={title} aria-modal="true">
-        <header>
-          <h3>{title}</h3>
-          <button type="button" className="ib" onClick={onClose} aria-label="Close">
-            <Icon name="close" size={16} />
-          </button>
-        </header>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 const SHORTCUTS = [
   ["⌘F / Ctrl F", "Find in this paper"],
@@ -538,13 +214,73 @@ export default function PaperReader({
   ));
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
-  const cap = capFor(typeof window === "undefined" ? 1440 : window.innerWidth);
   /* LONG-PRESS THE DOCK TO REARRANGE IT. `-webkit-touch-callout: none` and
      `user-select: none` are on the dock in CSS, or iOS raises its own callout
      menu over this and the gesture belongs to Safari instead. */
-  const [hlColour, setHlColour] = useState(() => read("pw-paper-hl", DEFAULT_MEANING));
-  const [penColour, setPenColour] = useState(() => read("pw-paper-pen", DEFAULT_PEN));
-  const [penSize, setPenSize] = useState(() => read("pw-paper-nib", DEFAULT_PEN_SIZE));
+  /* ONE PALETTE, PER TOOL. v4 split this in two — five closed meanings for the
+     text tools and eight free colours for the ink — and v5 collapses it: every
+     tool that has a colour picks from the same five, and the tool remembers
+     its own. A highlighter at 38% and a marker at 55% are different
+     instruments; one shared slider made every tool wrong but the last touched.
+     What gets STORED is unchanged, which is the point of readerIcons' join. */
+  const [tcol, setTcol] = useState(() => readJSON("pw-reader-colour", TOOL_COLOUR));
+  const [tsize, setTsize] = useState(() => readJSON("pw-reader-size", TOOL_SIZE));
+  const [talpha, setTalpha] = useState(() => readJSON("pw-reader-alpha", TOOL_ALPHA));
+  const [variant, setVariant] = useState(() => readJSON("pw-reader-variant", {}));
+  const [inkOnly, setInkOnly] = useState(() => read("pw-reader-inkonly", "1") === "1");
+
+  /* ── v5's root state ────────────────────────────────────────────────────
+     PLATFORM IS NOT A BREAKPOINT. A 1024px window on a Mac is desktop and a
+     1024px iPad is tablet; width alone cannot tell them apart, so the question
+     asked is what the pointer can do. Everything downstream is CSS — the whole
+     platform layer hangs off this one attribute. */
+  const [plat, setPlat] = useState(() => readPlatform());
+  const cap = capFor(plat);
+  useEffect(() => watchPlatform(setPlat), []);
+
+  /* WHERE THE BAR SITS, AND THE PANEL ALWAYS OPPOSITE IT. Two settings would
+     let a student put both on the same edge, which is the one arrangement that
+     cannot work — so there is one setting and the other is derived. */
+  const [bar, setBar] = useState(() => read("pw-reader-bar", "left"));
+  const side = bar === "right" ? "left" : "right";
+  useEffect(() => { write("pw-reader-bar", bar); }, [bar]);
+
+  /* AUTO-HIDE. 2800ms idle hides the chrome; any input brings it back; a
+     marking pointerdown hides it at once. Popovers hold it open with a COUNTER
+     rather than a boolean, because two open at once and closing one would
+     otherwise let the whole lot fade while the other is still up. */
+  const [chromeOn, setChromeOn] = useState(true);
+  const holds = useRef(0);
+  const idleT = useRef(0);
+  const wake = useCallback(() => {
+    setChromeOn(true);
+    clearTimeout(idleT.current);
+    if (holds.current > 0) return;
+    idleT.current = setTimeout(() => setChromeOn(false), 2800);
+  }, []);
+  const hold = useCallback((on) => {
+    holds.current = Math.max(0, holds.current + (on ? 1 : -1));
+    if (on) { clearTimeout(idleT.current); setChromeOn(true); } else wake();
+  }, [wake]);
+  useEffect(() => () => clearTimeout(idleT.current), []);
+
+  /* A course paper routes marks somewhere; your own document does not. The
+     sheet removes the whole class layer on [data-ctx="me"], so this is one
+     attribute rather than a condition repeated at every mention of it. */
+  const ctx = paper?.visibility === "solo" ? "me" : "course";
+
+  /* Notes and pins: windows on the page, at a FRACTION of it (0..1) so a note
+     written at 80% on a phone is in the same place at 250% on a laptop. Same
+     rule as ink, and for the same reason. */
+  const [notes, setNotes] = useState([]);
+  const [selPop, setSelPop] = useState(null);   // { left, top, start, end, quote }
+  const [dragNote, setDragNote] = useState(null);
+  const [dropOn, setDropOn] = useState(null);
+  const [coach, setCoach] = useState(() => (read("pw-reader-coached", "0") === "1" ? -1 : 0));
+  /* Read wherever the armed tool's own value is wanted. */
+  const ck = tcol[tool] || "y";
+  const size = tsize[tool] ?? 12;
+  const alpha = talpha[tool] ?? 100;
 
   /* Where the rail sits and how big it is. localStorage and not the account,
      for the same reason the player bar's position is: it belongs to the screen
@@ -556,9 +292,11 @@ export default function PaperReader({
   useEffect(() => { write("pw-paper-layout", want); }, [want]);
   useEffect(() => { write("pw-paper-light", light); }, [light]);
   useEffect(() => { write("pw-paper-hush", hush ? "1" : "0"); }, [hush]);
-  useEffect(() => { write("pw-paper-hl", hlColour); }, [hlColour]);
-  useEffect(() => { write("pw-paper-pen", penColour); }, [penColour]);
-  useEffect(() => { write("pw-paper-nib", penSize); }, [penSize]);
+  useEffect(() => { write("pw-reader-colour", JSON.stringify(tcol)); }, [tcol]);
+  useEffect(() => { write("pw-reader-size", JSON.stringify(tsize)); }, [tsize]);
+  useEffect(() => { write("pw-reader-alpha", JSON.stringify(talpha)); }, [talpha]);
+  useEffect(() => { write("pw-reader-variant", JSON.stringify(variant)); }, [variant]);
+  useEffect(() => { write("pw-reader-inkonly", inkOnly ? "1" : "0"); }, [inkOnly]);
 
   const [menu, setMenu] = useState(null);          // view | more | zoom | null
   const [sheet, setSheet] = useState(null);        // keys | details | null
@@ -619,16 +357,20 @@ export default function PaperReader({
     if (id !== "sel") setPicked(null);
   }, [editing]);
 
-  const pickMeaning = useCallback((key) => {
-    setHlColour(key);
-    setRecent((r) => [key, ...r.filter((x) => x !== key)].slice(0, 3));
-  }, []);
-  const pickInk = useCallback((id) => setPenColour(id), []);
+  /* Setting a colour sets it FOR THE ARMED TOOL. v5 dropped the recents row —
+     five colours never needed one, and it was a fourth thing in the panel
+     competing with the three that matter. */
+  const pickColour = useCallback((k) => setTcol((m) => ({ ...m, [tool]: k })), [tool]);
+  const pickSize = useCallback((n) => setTsize((m) => ({ ...m, [tool]: n })), [tool]);
+  const pickAlpha = useCallback((n) => setTalpha((m) => ({ ...m, [tool]: n })), [tool]);
+  const pickVariant = useCallback((i) => setVariant((m) => ({ ...m, [tool]: i })), [tool]);
 
+  /* Reset puts THIS tool back where it shipped, not the whole reader. */
   const resetTool = useCallback(() => {
-    if (takesFreeColour(tool)) { setPenColour(DEFAULT_PEN); setPenSize(4); }
-    else { setHlColour(DEFAULT_MEANING); setHlSize(12); }
-    setOpacity(takesFreeColour(tool) ? 100 : 42);
+    setTcol((m) => ({ ...m, [tool]: TOOL_COLOUR[tool] || "y" }));
+    setTsize((m) => ({ ...m, [tool]: TOOL_SIZE[tool] ?? 12 }));
+    setTalpha((m) => ({ ...m, [tool]: TOOL_ALPHA[tool] ?? 100 }));
+    setVariant((m) => ({ ...m, [tool]: 0 }));
   }, [tool]);
 
   /* The tray. Nothing is unreachable: the Add sheet always lists the full set,
@@ -1363,7 +1105,12 @@ export default function PaperReader({
        because a plain highlight is the one everybody picks and it means
        nothing. Free colour stays with the pen and the marker, where ink is
        ink. See lib/meanings.js. */
-    const paint = takesMeaning(kind) ? meaningOr(colour || hlColour) : null;
+    /* The five are closed, and every text tool takes one — there is
+       deliberately no plain highlight, because a plain highlight is the one
+       everybody picks and it means nothing. `colour` arrives as a reference
+       key (y·b·g·p·r); what is stored is the meaning. */
+    const paint = kind && kind !== "correction"
+      ? meaningOr(MEANING_OF[colour] || MEANING_OF[ck] || DEFAULT_MEANING) : null;
     const optimistic = {
       id: tempId(), paper_id: paper.id, module_code: moduleCode, author_id: me,
       author_name: "You", kind, ring: ringId || ring, body, thread_id: threadId,
@@ -1380,7 +1127,7 @@ export default function PaperReader({
     if (!saved) setError("That mark did not save. Nothing else was touched.");
     else remember({ op: "add", row: { ...saved, author_name: "You", close: true } });
     return saved;
-  }, [model, me, paper, moduleCode, ring, hlColour]);
+  }, [model, me, paper, moduleCode, ring, ck]);
 
 
   /* ------------------------------------------------------------------ ink */
@@ -1388,24 +1135,24 @@ export default function PaperReader({
      appears a beat after the finger lifts is a line you drew twice. */
   const addStroke = useCallback(async (pageNumber, points) => {
     if (!me || !paper?.id || !points.length) return;
-    const wide = penWidth(penSize) * (tool === "mkr" ? 3.2 : 1);
+    const wide = penWidth(size) * (tool === "mkr" ? 3.2 : 1);
     const optimistic = {
       id: tempId(), paper_id: paper.id, module_code: moduleCode, author_id: me,
       author_name: "You", page: pageNumber, tool: tool === "mkr" ? "marker" : "pen",
-      colour: penColour, width: wide, ring, points, mine: true,
+      colour: INK_OF[ck] || "blue", width: wide, ring, points, mine: true,
       created_at: new Date().toISOString(),
     };
     setStrokes((held) => [...held, optimistic]);
     const saved = await createStroke({
       paperId: paper.id, moduleCode, me, page: pageNumber,
-      tool: optimistic.tool, colour: penColour, width: wide, ring, points,
+      tool: optimistic.tool, colour: INK_OF[ck] || "blue", width: wide, ring, points,
     });
     setStrokes((held) => (saved
       ? held.map((s) => (s.id === optimistic.id ? { ...saved, author_name: "You", mine: true } : s))
       : held.filter((s) => s.id !== optimistic.id)));
     if (!saved) setError("That stroke did not save. Nothing else was touched.");
     else remember({ op: "add", row: { ...saved, __ink: true, author_name: "You", mine: true } });
-  }, [me, paper, moduleCode, tool, penColour, penSize, ring]);
+  }, [me, paper, moduleCode, tool, ck, size, ring]);
 
   const eraseStrokes = useCallback(async (ids) => {
     const list = ids.filter((id) => strokes.some((s) => s.id === id && s.author_id === me));
@@ -1467,7 +1214,7 @@ export default function PaperReader({
       if (hit) { open(hit, e.clientX, e.clientY); return; }
       setPicked(null);
     }
-    if (!isWritten(tool)) return;
+    if (!isTaker(tool)) return;
     if (!model) return;
     if (window.getSelection()?.toString().trim()) return;      // a drag, not a tap
     if (e.target.closest?.("button, a, input, textarea, select, .rdr-note, .composer, .bar-insp, .mark-card")) return;
@@ -1711,6 +1458,177 @@ export default function PaperReader({
   const closeMenus = () => setMenu(null);
   const info = meta?.info || {};
 
+  /* ── the panel's tabs ────────────────────────────────────────────────── */
+  const PANELS = useMemo(() => [
+    { id: "marks", label: "Marks", icon: "panel" },
+    { id: "thumbs", label: "Pages", icon: "grip" },
+    { id: "outline", label: "Contents", icon: "rev" },
+    { id: "find", label: "Find", icon: "sync" },
+    ...(isStaff ? [{ id: "queue", label: "Corrections", icon: "trash" }] : []),
+  ], [isStaff]);
+
+  /* The zoom readout names the MODE, never a percentage. "Fit width" is what
+     the reader asked for; 118% is a number they have to translate back. */
+  const zoomLabel = fit === "width" ? "Fit width"
+    : fit === "page" ? "Fit page"
+      : fit === "actual" ? "Actual size"
+        : `${Math.round(scale * 100)}%`;
+  const zoom = useCallback((dir) => { setFit("free"); zoomAbout(stepZoom(scale, dir)); }, [scale, zoomAbout]);
+
+  /* Marks-only groups by meaning, so it needs them the other way round from
+     the panel: colour first, then the passages under it. */
+  const rowsForColour = useCallback(
+    (k) => marksList.filter((m) => colourKey(m.colour) === k),
+    [marksList],
+  );
+
+  /* ── notes and pins ─────────────────────────────────────────────────────
+     A note is a window ON the page, held at a fraction of it. Everything below
+     is the same three lines with a different field, so they share one setter
+     rather than nine copies of the map. */
+  const notesOn = useCallback((n) => notes.filter((x) => x.p === n), [notes]);
+  const editNote = useCallback((id, patch) => {
+    setNotes((all) => all.map((n) => (n.id === id ? { ...n, ...patch } : n)));
+  }, []);
+  const noteTitle = useCallback((id, v) => editNote(id, { title: v }), [editNote]);
+  const noteBody = useCallback((id, v) => editNote(id, { body: v }), [editNote]);
+  const noteColour = useCallback((id, k) => editNote(id, { k }), [editNote]);
+  const openNote = useCallback((id) => editNote(id, { open: 1 }), [editNote]);
+  const shutNote = useCallback((id) => editNote(id, { open: 0 }), [editNote]);
+  const dropNote = useCallback((id) => setNotes((all) => all.filter((n) => n.id !== id)), []);
+  const dropExcerpt = useCallback((id, i) => {
+    setNotes((all) => all.map((n) => (n.id === id
+      ? { ...n, exc: (n.exc || []).filter((_, j) => j !== i) } : n)));
+  }, []);
+
+  /* Dragging a note by its header. The pointer is captured on the element, so
+     a fast drag cannot outrun it and drop the note halfway. */
+  const grabNote = useCallback((id, e) => {
+    if (e.target.closest?.("button, input, textarea")) return;
+    const el = e.currentTarget.closest?.(".note, .pin");
+    const pageEl = el?.closest?.(".page");
+    if (!pageEl) return;
+    try { el.setPointerCapture?.(e.pointerId); } catch { /* not ours */ }
+    setDragNote({ id, pageEl, dx: e.clientX, dy: e.clientY });
+  }, []);
+  useEffect(() => {
+    if (!dragNote) return undefined;
+    const move = (e) => {
+      const r = dragNote.pageEl.getBoundingClientRect();
+      editNote(dragNote.id, {
+        x: Math.min(0.98, Math.max(0, (e.clientX - r.left) / r.width)),
+        y: Math.min(0.98, Math.max(0, (e.clientY - r.top) / r.height)),
+      });
+    };
+    const up = () => setDragNote(null);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [dragNote, editNote]);
+
+  /* Making a note from a mark's card — the card's own "Note" button. */
+  const noteOnMark = useCallback((mark) => {
+    const pg = mark.page ?? (model ? pageOf(model, mark.start) : 1);
+    setNotes((all) => [...all, {
+      id: tempId(), p: pg, x: 0.72, y: 0.3, k: colourKey(mark.colour),
+      kind: "note", title: "", body: "", open: 1,
+      exc: [{ text: mark.quote || "", page: pg }],
+    }]);
+    setPicked(null);
+  }, [model]);
+
+  /* ── the selection popover ──────────────────────────────────────────────
+     Select any text and the five colours plus Note / Ask / Copy appear over
+     it. No tool to arm first: this is the single most intuitive thing a reader
+     can do, and v4 made it the one thing you could not.
+
+     It opens on pointerup and closes when the selection collapses, which is
+     what `selectionchange` is for — polling would fight the caret. */
+  const closeSel = useCallback(() => { setSelPop(null); hold(false); }, [hold]);
+
+  /* THE POPOVER IS DRIVEN BY THE SELECTION THE READER ALREADY TRACKS.
+     `readSelection` above already turns a DOM Range into offsets in the
+     model's text through `locate`, and getting that right — across text runs,
+     across pages — was most of the work in this file. Listening a second time
+     would be a second answer to the same question, and the two would disagree
+     the first time one of them was fixed. */
+  useEffect(() => {
+    if (!sel || !model) { closeSel(); return; }
+    if (sel.end - sel.start < 4) { closeSel(); return; }
+    /* An armed marking tool acts on the selection itself (see the effect that
+       fires addMark), so the popover would be a second way to do the thing
+       that already happened. It is for Select — which is also the tool a
+       reader who has never touched the bar is holding. */
+    if (tool !== "sel") { closeSel(); return; }
+    setSelPop({
+      left: sel.x, top: Math.max(8, sel.y - 44),
+      start: sel.start, end: sel.end,
+      quote: quoteOf(model, sel.start, sel.end),
+    });
+    hold(true);
+  }, [sel, model, tool, hold, closeSel]);
+
+  const clearSel = useCallback(() => {
+    try { window.getSelection()?.removeAllRanges(); } catch { /* nothing to clear */ }
+    closeSel();
+  }, [closeSel]);
+
+  const markSelection = useCallback((k) => {
+    if (!selPop) return;
+    addMark({ kind: kindOf(tool) && marksText(tool) ? kindOf(tool) : "highlight",
+      start: selPop.start, end: selPop.end, colour: k });
+    clearSel();
+  }, [selPop, tool, addMark, clearSel]);
+
+  /* Note and Ask open their widget WITH THE PASSAGE ALREADY IN IT. The
+     passage is the reason you are writing the note. */
+  const takeFromSelection = useCallback((kind) => {
+    if (!selPop || !model) return;
+    const pg = pageOf(model, selPop.start);
+    setNotes((all) => [...all, {
+      id: tempId(), p: pg, x: 0.7, y: 0.28,
+      k: kind === "question" ? "p" : ck,
+      kind, title: "", body: "", open: 1, anon: kind === "question",
+      exc: [{ text: selPop.quote, page: pg }],
+    }]);
+    clearSel();
+  }, [selPop, model, ck, clearSel]);
+
+  const copySelection = useCallback(() => {
+    if (!selPop) return;
+    try { navigator.clipboard?.writeText(selPop.quote); } catch { /* denied */ }
+    setToast("Copied.");
+    clearSel();
+  }, [selPop, clearSel]);
+
+  /* ── the first-run coach ────────────────────────────────────────────────
+     Three quiet hints at the three things that are not discoverable by
+     looking. Dismissed by the button or after fourteen seconds, and the fact
+     is stored so they never come back. */
+  const coachAt = useMemo(() => {
+    if (coach < 0 || coach > 2) return null;
+    if (coach === 0) return bar === "right" ? { right: 76, top: "44%" } : { left: 76, top: "44%" };
+    if (coach === 1) return side === "right" ? { right: 34, top: 96 } : { left: 34, top: 96 };
+    return { left: "50%", bottom: 44, transform: "translateX(-50%)" };
+  }, [coach, bar, side]);
+  const nextCoach = useCallback(() => {
+    setCoach((n) => {
+      const next = n + 1;
+      if (next > 2) { write("pw-reader-coached", "1"); return -1; }
+      return next;
+    });
+  }, []);
+  useEffect(() => {
+    if (coach < 0 || coach > 2) return undefined;
+    const t = setTimeout(nextCoach, 14000);
+    return () => clearTimeout(t);
+  }, [coach, nextCoach]);
+
   if (!paper || !host) return null;
 
   /* THE READER FOLLOWS THE APP, and the reading light is a change ON TOP of
@@ -1721,35 +1639,46 @@ export default function PaperReader({
      screen disagreeing with the one it came from. It takes the app's variant
      unless the reader's own light has been set to something that overrides it:
      Warm and Paper are light, Dim and Night are dark. */
-  const look = light === "paper" ? "paper"
-    : light === "night" || light === "dim" ? "night"
-      : light === "sepia" ? "paper"
-        : appVariant === "day" ? "paper" : "night";
+  /* v5 HAS TWO GROUNDS, dark and light, and that is the whole of `data-look`.
+     v4's four reading lights were four grounds AND four raster filters at
+     once; v5 keeps the filter on the picture (see PaperPage) and gives the
+     surround two states, because a surround that is the brightest thing on
+     screen is the bug either way. "Follow" is still the default and still
+     means the app's own variant, so a reader who never opens the light menu
+     gets the theme the rest of the app is wearing. */
+  const look = light === "dark" || light === "night" || light === "dim" ? "dark"
+    : light === "light" || light === "paper" || light === "sepia" ? "light"
+      : appVariant === "day" ? "light" : "dark";
 
   return createPortal(
-    /* ONE ROOT, CARRYING THE STATE AS DATA ATTRIBUTES. The stylesheet reads
-       these; they are not duplicated as classes. */
-    <div className={`rdr${drawing && penDown ? " is-writing" : ""}`} ref={shellRef}
+    /* ONE ROOT, CARRYING THE STATE AS DATA ATTRIBUTES — COMPONENTS.md v5's own
+       list, in its own order. The stylesheet reads these; nothing here is
+       duplicated as a class, and no layout decision is taken in JS beyond
+       setting them. */
+    <div className="rdr" ref={shellRef}
          style={accent ? {
-           "--accent": accent,
-           "--accent-dim": `color-mix(in srgb, ${accent} 16%, transparent)`,
+           "--lv": accent,
+           "--accent-soft": `color-mix(in srgb, ${accent} 18%, transparent)`,
          } : undefined}
          data-look={look}
-         data-tool={tool}
+         data-plat={plat}
+         data-ctx={ctx}
+         data-bar={bar}
+         data-side={side}
          data-mode={mode}
+         data-tool={tool}
          data-mark={marksText(tool) ? "1" : "0"}
+         data-chrome={chromeOn ? "on" : "off"}
          data-edit={editing ? "1" : "0"}
-         data-dock={dock}
-         data-panel={rail || "none"}
-         data-quiet={quiet && !menu && !sheet && !composer && !editing && !adding ? "" : undefined}
-         data-hush={hush ? "" : undefined}>
+         onPointerMove={wake}
+         onKeyDown={wake}>
 
       {/* ── the document ─────────────────────────────────────────────── */}
-      <div className="rdr-scroll" ref={scrollRef} onScroll={onScroll}
+      <div className="stage" ref={scrollRef} onScroll={onScroll}
            onClick={tapToMark} onPointerUp={tapToMark}>
         {error && <p className="rdr-err">{error}</p>}
 
-        <div className="rdr-stack" style={{ gap: PAGE_GAP }}>
+        <div className="stack" style={{ gap: PAGE_GAP }}>
           {win[0] > 0 && <div className="rdr-gap" style={{ height: offsets[win[0]] }} aria-hidden="true" />}
           {sizes.slice(win[0], win[1]).map((s, k) => {
             const i = win[0] + k;
@@ -1764,25 +1693,28 @@ export default function PaperReader({
               <PaperPage
                 key={n}
                 doc={doc} model={model} pageNumber={n} scale={scale} rotation={rotation} size={s}
-                segments={drawSegments} activeId={activeId} light={light}
+                segments={drawSegments} activeId={activeId} light={look}
                 strokes={strokes} me={me}
-                inkTool={drawing ? tool : null} inkColour={penColour}
-                inkWidth={penWidth(penSize) * (tool === "mkr" ? 3.2 : 1)}
+                inkTool={drawing ? tool : null} inkColour={INK_OF[ck] || "blue"}
+                inkWidth={penWidth(size) * (tool === "mkr" ? 3.2 : 1)}
                 onInk={addStroke} onErase={eraseStrokes}
-                onPenDown={() => setPenDown(true)} onPenUp={() => setPenDown(false)}
+                onPenDown={() => { setPenDown(true); setChromeOn(false); }}
+                onPenUp={() => setPenDown(false)}
                 registerEl={registerEl} onDivs={takeDivs}
-                notes={notesOnPage(n)} onOpenThread={onOpenThread}
-                onDeleteNote={removeMark}
+                notes={notesOn(n)} dropOn={dropOn}
+                onNoteGrab={grabNote} onNoteOpen={openNote} onNoteClose={shutNote}
+                onNoteTitle={noteTitle} onNoteBody={noteBody} onNoteColour={noteColour}
+                onNoteDelete={dropNote} onNoteExcRemove={dropExcerpt}
               />
             ) : (
               /* §4.1 — NEVER a bare white box. A page-shaped card at the right
                  ratio, its number quietly in the gutter, so the scroll height
                  is right before any PDF byte arrives. */
-              <article className="rdr-page is-placeholder" key={n} data-page={n}
+              <article className="page ph" key={n} data-page={n}
                        style={{ width: w, height: h }}
                        ref={(el) => { if (el) pageEls.current.set(n, el); }}>
-                <span className="pg-num mono">{n}</span>
-                <span className="pg-label">Page {n}</span>
+                <span className="pnum">{n}</span>
+                <span>Page {n}</span>
               </article>
             );
           })}
@@ -1791,285 +1723,242 @@ export default function PaperReader({
                  style={{ height: Math.max(0, offsets[sizes.length] - offsets[win[1]]) }} />
           )}
         </div>
+      </div>
 
-        {orphans.length > 0 && (
-          <section className="rdr-orphans">
-            <h2>
-              {orphans.length} {orphans.length === 1 ? "mark" : "marks"} lost
-              {orphans.length === 1 ? " its" : " their"} place when this paper changed
-            </h2>
-            <ul>
-              {orphans.map((o) => (
-                <li key={o.id}>
-                  <span>“{o.anchor?.quote}”</span>
-                  {o.body && <em>{o.body}</em>}
-                </li>
-              ))}
-            </ul>
-          </section>
+      {/* ── the logo: pinned, and the one thing that never fades ─────── */}
+      <button type="button" className="logo" aria-label="Wingman — Flight Deck" onClick={onBack}>
+        <Icon name="logo" />
+        <b>Wingman</b>
+      </button>
+
+      {/* ── the document's name, floating centre-top ─────────────────── */}
+      <div className="chrome glass docbar">
+        <button type="button" className="doc" onClick={() => setSheet("details")}>
+          <b>{paper?.title || "Paper"}</b>
+          <em>{[moduleCode, paper?.id].filter(Boolean).join(" · ")}</em>
+        </button>
+      </div>
+
+      {/* ── actions, top-right ───────────────────────────────────────── */}
+      <div className="chrome glass acts">
+        <button type="button" className="ic courseonly" aria-label="Check for new marks"
+                onClick={refreshNow}>
+          <Icon name="sync" className={refreshing ? "is-spinning" : undefined} />
+          {freshMarks && <span className="badge" />}
+        </button>
+        <button type="button" className={`ic${mode === "rev" ? " on" : ""}`} aria-label="Marks only"
+                onClick={() => setMode(mode === "rev" ? "read" : "rev")}>
+          <Icon name="rev" />
+        </button>
+        <button type="button" className={`ic${rail && rail !== "none" ? " on" : ""}`} aria-label="Panel"
+                onClick={() => setRail(rail && rail !== "none" ? "none" : "marks")}>
+          <Icon name="panel" />
+        </button>
+        <button type="button" className="ic" aria-label="Reading light"
+                onClick={() => setLight(look === "dark" ? "light" : "dark")}>
+          <Icon name="look" />
+        </button>
+        <button type="button" className={`ic${menu === "more" ? " on" : ""}`} aria-label="More"
+                onClick={() => setMenu(menu === "more" ? null : "more")}>
+          <Icon name="more" />
+        </button>
+      </div>
+
+      {/* ── the tool bar — four positions, and the panel always opposite ─ */}
+      <div className="chrome glass tools" ref={dockRef}
+           onPointerDown={onDockPointerDown} onPointerUp={onDockPointerUp}
+           onPointerLeave={onDockPointerUp} onPointerCancel={onDockPointerUp}>
+        <button type="button" className={`chest${adding ? " on" : ""}`} aria-label="Tool chest"
+                onClick={() => { setAdding(!adding); setInspOpen(false); }}>
+          <Icon tool="chest" size={21} />
+          <span className="tip">Tool chest</span>
+        </button>
+        <div className="railsep" />
+        {tray.map((id) => {
+          const spec = T(id);
+          const paint = spec.c ? col(spec.fixed || tcol[id] || "y").hex : undefined;
+          return (
+            <button key={id} type="button"
+                    className={`t${tool === id ? " on" : ""}${LOCKED.includes(id) ? " lock" : ""}`}
+                    data-tool={id} draggable aria-label={spec.n} aria-pressed={tool === id}
+                    onClick={() => pickTool(id)}
+                    onDragStart={() => (dragId.current = id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); dropTool(id); }}>
+              <Icon tool={id} colour={paint} size={21} />
+              {spec.p && <span className="cnt">{spec.p}</span>}
+              <span className="x" role="button" tabIndex={-1} aria-label={`Remove ${spec.n}`}
+                    onClick={(e) => { e.stopPropagation(); dropFromTray(id); }}>×</span>
+              <span className="tip">{spec.n}<kbd>{spec.k}</kbd></span>
+            </button>
+          );
+        })}
+        <div className="railsep" />
+        <button type="button" className="addb" aria-label="Add a tool"
+                onClick={() => { setAdding(!adding); setInspOpen(false); }}>
+          <Icon name="add" size={19} />
+          <span className="tip">Add a tool</span>
+        </button>
+        {editing && (
+          <button type="button" className="collapse" aria-label="Done"
+                  onClick={() => setEditing(false)}>
+            <Icon name="close" size={17} />
+            <span className="tip">Done</span>
+          </button>
         )}
       </div>
 
-      {/* ── marks-only revision view (§12) ───────────────────────────── */}
-      <div className="rev">
-        <div className="revwrap">
-          <div className="revhead">
-            <div>
-              <h2>Marks only</h2>
-              <p>
-                {marksList.length
-                  ? (() => {
-                      const pages = new Set(marksList.map((m) => (model ? pageOf(model, m.start) : 0))).size;
-                      return `${marksList.length} ${marksList.length === 1 ? "passage" : "passages"} `
-                        + `across ${pages} ${pages === 1 ? "page" : "pages"} of this paper.`;
-                    })()
-                  : "Mark a passage and it appears here, grouped by what the colour does."}
-              </p>
-            </div>
-            <button type="button" className="ib" aria-label="Back to the paper"
-                    onClick={() => setMode("read")}>
-              <Icon name="close" size={17} />
-            </button>
-          </div>
+      <Props
+        open={inspOpen && !adding && !editing && T(tool)?.id !== "sel"}
+        tool={tool} variant={variant[tool] || 0}
+        colourKey={T(tool)?.fixed || ck} size={size} opacity={alpha}
+        inkOnly={inkOnly} ctx={ctx}
+        onVariant={pickVariant} onColour={pickColour} onSize={pickSize}
+        onOpacity={pickAlpha} onInkOnly={setInkOnly} onReset={resetTool}
+        onClose={() => setInspOpen(false)}
+      />
 
-          <div className="revfilters">
-            {FILTERS.map((f) => {
-              const n = counts[f.id] || 0;
-              if (!n && f.id !== "all") return null;
-              return (
-                <button key={f.id} type="button" className={`chp${filter === f.id ? " is-on" : ""}`}
-                        onClick={() => setFilter(f.id)}>
-                  {f.label}
-                  {f.id !== "all" && <span style={{ color: COLOURS.find((c) => c.key === f.id)?.hex }}> {n}</span>}
-                </button>
-              );
-            })}
-          </div>
+      <Chest
+        open={adding} tray={tray} cap={cap} bar={bar} ctx={ctx}
+        colourOf={(id) => col(T(id)?.fixed || tcol[id] || "y").hex}
+        onAdd={pushTool}
+        onReset={() => { setTray([...DEF]); saveTray(plat, [...DEF]); }}
+        onBar={setBar}
+        onClose={() => setAdding(false)}
+      />
 
-          {COLOURS.map((c) => {
-            const group = marksList.filter((m) => m.colour === c.key);
-            if (!group.length) return null;
-            return (
-              <div className="rgroup" key={c.key}>
-                <div className="rgh" style={{ "--c": c.hex }}>
-                  <i /><b>{c.name}</b>
-                  <em>{group.length} {group.length === 1 ? "passage" : "passages"} · {c.dest}</em>
-                </div>
-                {group.map((m) => (
-                  <div className="rcard" key={m.id} style={{ "--c": c.hex }}
-                       role="button" tabIndex={0}
-                       onClick={() => { setMode("read"); jumpTo(pageOf(model, m.start)); }}
-                       onKeyDown={(e) => e.key === "Enter" && (setMode("read"), jumpTo(pageOf(model, m.start)))}>
-                    <div className="st" />
-                    <p>{m.status === "orphaned" ? (m.anchor?.quote || "This passage") : quoteOf(model, m.start, m.end, 220)}</p>
-                    <span className="pg mono">p.{model ? pageOf(model, m.start) : "—"}</span>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+      {/* ── corners ──────────────────────────────────────────────────── */}
+      <div className="chrome glass corner-ul">
+        <button type="button" className="ic" aria-label="Undo" disabled={!canUndo}
+                title={canUndo ? "Undo" : "Nothing to undo yet"} onClick={undo}>
+          <Icon name="undo" />
+        </button>
+        <button type="button" className="ic" aria-label="Redo" disabled={!canRedo}
+                title={canRedo ? "Redo" : "Nothing to redo yet"} onClick={redo}>
+          <Icon name="redo" />
+        </button>
+      </div>
+
+      <div className="chrome glass corner-z">
+        <button type="button" className="ic" aria-label="Zoom out" onClick={() => zoom(-1)}>
+          <Icon name="zoomOut" size={15} />
+        </button>
+        {/* The mode NAME, never a percentage — "Fit width" is what the reader
+            asked for and 118% is a number they have to translate. */}
+        <span className="v">{zoomLabel}</span>
+        <button type="button" className="ic" aria-label="Zoom in" onClick={() => zoom(1)}>
+          <Icon name="zoomIn" size={15} />
+        </button>
+      </div>
+
+      {/* ── the mark card, and the selection popover that is not it ───── */}
+      <Card
+        mark={picked?.mark} me={me} at={picked?.at} ctx={ctx}
+        onRecolour={recolour} onDelete={removeMark} onNote={noteOnMark}
+        onAgree={agree} onThread={onOpenThread}
+        onHold={holdCard} onLeave={leaveCard}
+      />
+      <SelPop
+        at={selPop} ctx={ctx}
+        onColour={markSelection} onNote={() => takeFromSelection("note")}
+        onAsk={() => takeFromSelection("question")} onCopy={copySelection}
+      />
+
+      {/* ── the tick rail: every mark in the paper, by page ───────────── */}
+      {ticks.length > 0 && totalPages > 1 && (
+        <div className="chrome rail courseonly" title="Your marks across this paper"
+             role="button" tabIndex={0}
+             onPointerMove={(e) => {
+               const r = e.currentTarget.getBoundingClientRect();
+               setRailAt({ y: e.clientY - r.top, page: pageAtRail(e.clientY - r.top, r.height) });
+             }}
+             onPointerLeave={() => setRailAt(null)}
+             onKeyDown={(e) => { if (e.key === "Enter") jumpTo(page); }}
+             onClick={(e) => {
+               const r = e.currentTarget.getBoundingClientRect();
+               jumpTo(pageAtRail(e.clientY - r.top, r.height));
+             }}>
+          <div className="trk" />
+          <div className="now" style={{ top: `${((page - 0.5) / totalPages) * 100}%` }} />
+          {ticks.map((t) => (
+            <div key={t.id} className={`tk${t.mine ? " mine" : ""}`} data-page={t.page}
+                 style={{ top: `${((t.page - 0.5) / totalPages) * 100}%`,
+                          "--k": col(colourKey(t.colour)).hex }} />
+          ))}
         </div>
-      </div>
+      )}
+      {railAt && (
+        <div className="chrome glass pop railtip on"
+             style={{ top: railAt.y + 74, "--k": col(colourKey(ticks.find((t) => t.page === railAt.page)?.colour)).hex }}>
+          <b>{ticks.find((t) => t.page === railAt.page)?.name || "Page"}</b>
+          <em>p.{railAt.page}</em>
+        </div>
+      )}
 
-      {/* ── top bar ──────────────────────────────────────────────────── */}
-      <div className="bar bar-top">
-        <button type="button" className="ib" aria-label="Back to the Library" onClick={onBack}>
-          <Icon name="back" size={17} />
-        </button>
-        <button type="button" className={`ib${rail && rail !== "none" ? " is-on" : ""}`}
-                aria-label="Pages" onClick={() => setRail(rail && rail !== "none" ? null : "thumbs")}>
-          <Icon name="pages" size={17} />
-        </button>
-        <button type="button" className="title">
-          <span className="mono mod">{moduleCode}</span><b>{paper.title}</b>
-        </button>
-        <span className="sep" />
-        <button type="button" className="ib" aria-label="Check for new marks"
-                onClick={refreshNow} disabled={refreshing}>
-          <Icon name="refresh" size={17} className={refreshing ? "is-spinning" : undefined} />
-          <span className="dot" hidden={!freshMarks} />
-        </button>
-        <button type="button" className={`ib${findOpen ? " is-on" : ""}`} aria-label="Find"
-                onClick={() => setFindOpen(!findOpen)}>
-          <Icon name="find" size={17} />
-        </button>
-        <button type="button" className={`ib${mode === "rev" ? " is-on" : ""}`} aria-label="Marks only"
-                onClick={() => setMode(mode === "rev" ? "read" : "rev")}>
-          <Icon name="revision" size={17} />
-        </button>
-        <button type="button" className={`ib${rail === "marks" ? " is-on" : ""}`} aria-label="Marks"
-                onClick={() => setRail(rail === "marks" ? null : "marks")}>
-          <Icon name="marks" size={17} />
-          <span className="dot" hidden={!marksList.length} />
-        </button>
-        <button type="button" className={`ib${menu === "view" ? " is-on" : ""}`} aria-label="Reading light"
-                onClick={() => setMenu(menu === "view" ? null : "view")}>
-          <Icon name="light" size={17} />
-        </button>
-        <button type="button" className={`ib${hush ? " is-on" : ""}`}
-                aria-label={hush ? "Bring the controls back" : "Just the paper"}
-                onClick={() => setHush(!hush)}>
-          <Icon name={hush ? "light" : "close"} size={17} />
-        </button>
-        <button type="button" className={`ib${menu === "more" ? " is-on" : ""}`} aria-label="More"
-                onClick={() => setMenu(menu === "more" ? null : "more")}>
-          <Icon name="more" size={17} />
-        </button>
-      </div>
-
-      {/* ── the dock: a tray the student builds (§9) ─────────────────── */}
-      <div className="bar bar-dock" ref={dockRef}
-           onPointerDown={onDockPointerDown} onPointerUp={onDockPointerUp}
-           onPointerLeave={onDockPointerUp} onPointerCancel={onDockPointerUp}>
-        {tray.map((id, i) => {
-          const t = toolAt(id);
-          const prev = i > 0 ? toolAt(tray[i - 1]) : null;
-          const swatch = takesFreeColour(id)
-            ? INK_COLOURS.find((c) => c.id === penColour)
-            : takesMeaning(id) ? colourAt(hlColour) : null;
-          return (
-            <span key={id} style={{ display: "contents" }}>
-              {prev && prev.group !== t.group && <div className="dsep" />}
-              <button type="button"
-                      className={`tool${tool === id ? " is-on" : ""}${LOCKED.includes(id) ? " is-locked" : ""}`}
-                      data-tool={id} draggable aria-label={t.name}
-                      /* §15 — the look is the class, the meaning is the ARIA.
-                         A screen reader cannot see `is-on`. */
-                      aria-pressed={tool === id}
-                      onClick={() => pickTool(id)}
-                      onDragStart={() => (dragId.current = id)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => { e.preventDefault(); dropTool(id); }}>
-                <Icon tool={id} />
-                {t.presets && <span className="cnt mono">{t.presets}</span>}
-                {t.colour && (
-                  <span className="swatch"
-                        style={{ background: swatch ? (swatch.hex || `var(--ink-${swatch.id})`) : undefined }} />
-                )}
-                {t.mode && <span className="mode" />}
-                <span className="x" role="button" tabIndex={-1} aria-label={`Remove ${t.name}`}
-                      onClick={(e) => { e.stopPropagation(); dropFromTray(id); }}>×</span>
-                <span className="tip">
-                  {t.name}<kbd>{t.key}</kbd><em>{t.hint}</em>
-                </span>
-              </button>
-            </span>
-          );
-        })}
-        <div className="dsep" />
-        <button type="button" className="addbtn" aria-label="Add a tool"
-                onClick={() => { setAdding(!adding); setInspOpen(false); }}>
-          <Icon name="add" size={17} />
-        </button>
-      </div>
-
-      <div className="bar pop bar-edit">
-        Drag to reorder · tap ✕ to remove
-        <button type="button" onClick={() => setEditing(false)}>Done</button>
-      </div>
-
-      <Inspector
-        open={inspOpen && !adding && !editing}
-        tool={tool}
-        meaningId={hlColour} inkColour={penColour}
-        size={takesFreeColour(tool) ? penSize : hlSize}
-        opacity={opacity} smart={smart} smooth={smooth} recent={recent}
-        onMeaning={pickMeaning} onInk={pickInk}
-        onSize={(v) => (takesFreeColour(tool) ? setPenSize(v) : setHlSize(v))}
-        onOpacity={setOpacity} onSmart={setSmart} onSmooth={setSmooth}
-        onReset={resetTool}
-      />
-
-      <AddSheet
-        open={adding} tray={tray} cap={cap}
-        meaningId={hlColour} inkColour={penColour}
-        onAdd={(id) => { pushTool(id); }}
-        onReset={() => { setTray([...DEFAULT_TRAY]); saveTray(window.innerWidth, [...DEFAULT_TRAY]); }}
-      />
-
-      {/* ── marks panel ──────────────────────────────────────────────── */}
-      <div className={`bar bar-panel${rail && rail !== "none" ? " is-open" : ""}`}>
-        <header>
-          <div className="segs" role="tablist" aria-label="What the panel shows">
-            <button type="button" role="tab" aria-selected={rail === "marks"}
-                    className={rail === "marks" ? "is-on" : ""}
-                    onClick={() => setRail("marks")}>Marks</button>
-            <button type="button" role="tab" aria-selected={rail === "thumbs"}
-                    className={rail === "thumbs" ? "is-on" : ""}
-                    onClick={() => setRail("thumbs")}>Pages</button>
-            <button type="button" role="tab" aria-selected={rail === "outline"}
-                    className={rail === "outline" ? "is-on" : ""}
-                    onClick={() => setRail("outline")}>Contents</button>
-            {isStaff && (
-              <button type="button" role="tab" aria-selected={rail === "queue"}
-                      className={rail === "queue" ? "is-on" : ""}
-                      onClick={() => setRail("queue")}>Queue</button>
-            )}
-          </div>
-        </header>
+      {/* ── the panel, always opposite the bar ────────────────────────── */}
+      <div className={`glass pop panel${rail && rail !== "none" ? " open" : ""}`}
+           onPointerEnter={() => hold(true)} onPointerLeave={() => hold(false)}>
+        <div className="ptabs" role="tablist" aria-label="What the panel shows">
+          {PANELS.map((p) => (
+            <button key={p.id} type="button" role="tab" aria-selected={rail === p.id}
+                    className={`pt${rail === p.id ? " on" : ""}`} aria-label={p.label}
+                    title={p.label} onClick={() => setRail(p.id)}>
+              <Icon name={p.icon} size={16} />
+            </button>
+          ))}
+          <span className="sp" />
+          <button type="button" className="pt" aria-label="Close the panel"
+                  onClick={() => setRail("none")}>
+            <Icon name="close" size={15} />
+          </button>
+        </div>
 
         {rail === "marks" && (
           <>
-            <div className="chips">
+            <div className="filters">
               {FILTERS.map((f) => {
                 const n = counts[f.id] || 0;
+                if (!n && f.id !== "all") return null;
                 return (
-                  <button key={f.id} type="button"
-                          className={`chp${filter === f.id ? " is-on" : ""}`}
-                          aria-pressed={filter === f.id}
-                          disabled={!n && f.id !== "all"}
-                          onClick={() => setFilter(f.id)}>
+                  <button key={f.id} type="button" className={`f${filter === f.id ? " on" : ""}`}
+                          aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
                     {f.label}
-                    {/* The count is its own element, the way the reference
-                       draws it — a label and a number run together read as
-                       one string to anything reading the DOM. The space is
-                       the reference's too, and without it the chip says
-                       "Revision1". */}
                     {n > 0 && f.id !== "all" && (
-                      <>{" "}<span style={{ color: COLOURS.find((c) => c.key === f.id)?.hex }}>{n}</span></>
+                      <>{" "}<span style={{ color: col(colourKey(f.id)).hex }}>{n}</span></>
                     )}
                   </button>
                 );
               })}
             </div>
-            <div className="plist">
+            <div className="pbody">
               {marksList.length ? (() => {
+                const out = [];
                 let last = null;
-                return marksList.map((m) => {
+                for (const m of marksList) {
                   const pg = model ? pageOf(model, m.start) : 0;
-                  const head = pg !== last ? (last = pg, true) : false;
-                  const c = colourAt(m.colour || DEFAULT_MEANING);
-                  return (
-                    <span key={m.id} style={{ display: "contents" }}>
-                      {head && <div className="pgh">Page {pg}</div>}
-                      <div className="mrow" data-mark-id={m.id} style={{ "--c": c.hex }}
-                           role="button" tabIndex={0}
-                           onClick={() => { setActiveId(m.id); jumpTo(pg); }}
-                           onKeyDown={(e) => e.key === "Enter" && (setActiveId(m.id), jumpTo(pg))}>
-                        <div className="stripe" />
-                        <div>
-                          <div className="t"><b>{c.name}</b><em>p.{pg}</em></div>
-                          <p>{m.status === "orphaned"
-                            ? (m.anchor?.quote || "This passage")
-                            : quoteOf(model, m.start, m.end, 160)}</p>
-                          <div className="w">
-                            {m.author_id === me ? "You" : (m.anonymous ? "Anonymous" : m.author_name)}
-                            {m.status === "orphaned" ? " · couldn’t be placed" : ""}
-                          </div>
+                  if (pg !== last) { out.push(<div className="gh" key={`h${pg}`}>Page {pg}</div>); last = pg; }
+                  const c = col(colourKey(m.colour));
+                  out.push(
+                    <div className="row" key={m.id} style={{ "--k": c.hex }} role="button" tabIndex={0}
+                         onClick={() => { setActiveId(m.id); jumpTo(pg); }}
+                         onKeyDown={(e) => e.key === "Enter" && (setActiveId(m.id), jumpTo(pg))}>
+                      <div className="bar" />
+                      <div>
+                        <div className="t2">
+                          <b>{ctx === "course" ? c.course : c.name}</b>
+                          <em>p.{pg}</em>
                         </div>
+                        <p>{m.quote}</p>
+                        <div className="meta">{m.author_id === me ? "You" : (m.anonymous ? "Anonymous" : m.author_name)}</div>
                       </div>
-                    </span>
+                    </div>,
                   );
-                });
+                }
+                return out;
               })() : (
-                /* A drawing and one useful line, never an apology.
-                   COMPONENTS.md's own copy opens "Nothing matches this
-                   filter." — the shape is the ship's, the sentence is not:
-                   this app never states absence, it names the next action
-                   (CLAUDE.md, Voice). Two cases, because they have different
-                   next actions. */
-                <div className="empty">
-                  <Icon name="marks" size={42} />
+                /* A drawing and one useful line, never an apology. */
+                <div className="blank">
+                  <Icon name="panel" size={38} />
                   {filter === "all"
                     ? "Nobody has marked this one up yet. Select a line and yours will be the first."
                     : "Mark a sentence with this meaning and it lands here, with its page and its sentence."}
@@ -2086,27 +1975,55 @@ export default function PaperReader({
         )}
 
         {rail === "outline" && (
-          <div className="plist"><PaperOutline doc={doc} onPick={jumpTo} /></div>
+          <div className="pbody"><PaperOutline doc={doc} onPick={jumpTo} /></div>
+        )}
+
+        {rail === "find" && (
+          <>
+            <div className="srch">
+              <Icon name="sync" size={15} />
+              <input value={query} placeholder="Find in this paper" aria-label="Find in this paper"
+                     onChange={(e) => setQuery(e.target.value)} />
+            </div>
+            <div className="pbody">
+              {finds.length ? finds.map((f, i) => (
+                <div className="row" key={i} role="button" tabIndex={0}
+                     style={{ "--k": "var(--txt-3)" }}
+                     onClick={() => { setFindAt(i); jumpTo(pageOf(model, f.start)); }}
+                     onKeyDown={(e) => e.key === "Enter" && (setFindAt(i), jumpTo(pageOf(model, f.start)))}>
+                  <div className="bar" />
+                  <div>
+                    <div className="t2"><b>Page {pageOf(model, f.start)}</b></div>
+                    <p>{quoteOf(model, Math.max(0, f.start - 30), f.end + 30)}</p>
+                  </div>
+                </div>
+              )) : (
+                <div className="blank">
+                  {query ? "Nothing in this paper matches that. Try a shorter phrase."
+                    : "Type a phrase and every page carrying it lands here."}
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {rail === "queue" && isStaff && (
-          <div className="plist">
+          <div className="pbody">
             {queue.length ? queue.map((c) => (
-              <div className="mrow" key={c.id} style={{ "--c": "var(--c-wrong)" }}>
-                <div className="stripe" />
+              <div className="row" key={c.id} style={{ "--k": col("r").hex }}>
+                <div className="bar" />
                 <div>
-                  <div className="t"><b>Correction</b><em>{c.author_name}</em></div>
+                  <div className="t2"><b>Correction</b><em>{c.author_name}</em></div>
                   <p>{c.body}</p>
-                  <div className="w">
-                    <button type="button" className="btn" onClick={async () => {
+                  <div className="meta">
+                    <button type="button" className="f" onClick={async () => {
                       await resolveCorrection(c.id); loadQueue();
                     }}>Done with it</button>
                   </div>
                 </div>
               </div>
             )) : (
-              <div className="empty">
-                <Icon tool="cor" size={42} />
+              <div className="blank">
                 Nothing reported on this module yet. A student who spots something
                 wrong can tell you from the passage itself.
               </div>
@@ -2115,92 +2032,27 @@ export default function PaperReader({
         )}
       </div>
 
-      {/* ── tick rail (§11.2) ────────────────────────────────────────── */}
-      {ticks.length > 0 && totalPages > 1 && (
-        <div className="rail" title="Your marks across this paper"
-             role="button" tabIndex={0}
-             onPointerMove={(e) => {
-               const r = e.currentTarget.getBoundingClientRect();
-               setRailAt({ y: e.clientY - r.top, page: pageAtRail(e.clientY - r.top, r.height) });
-             }}
-             onPointerLeave={() => setRailAt(null)}
-             onKeyDown={(e) => { if (e.key === "Enter") jumpTo(page); }}
-             onClick={(e) => {
-               const r = e.currentTarget.getBoundingClientRect();
-               jumpTo(pageAtRail(e.clientY - r.top, r.height));
-             }}>
-          <div className="trk" />
-          <div className="you" style={{ top: `${((page - 0.5) / totalPages) * 100}%` }} />
-          {ticks.map((t) => (
-            <div key={t.id} className={`tk${t.mine ? " is-mine" : ""}`} data-page={t.page}
-                 style={{ top: `${((t.page - 0.5) / totalPages) * 100}%`,
-                          "--c": colourAt(t.colour || DEFAULT_MEANING).hex }} />
-          ))}
-        </div>
-      )}
-      {railAt && (
-        <div className="bar pop railtip is-open"
-             style={{ top: railAt.y + 64, "--c": colourAt(ticks.find((t) => t.page === railAt.page)?.colour || DEFAULT_MEANING).hex }}>
-          <b>{ticks.find((t) => t.page === railAt.page)?.name || "Page"}</b>
-          <em>p.{railAt.page}</em>
-        </div>
-      )}
-
-      {/* ── bottom bar ───────────────────────────────────────────────── */}
-      <div className="bar bar-bot">
-        <button type="button" className="ib" aria-label="Undo" onClick={undo} disabled={!canUndo}>
-          <Icon name="undo" size={17} />
-        </button>
-        <button type="button" className="ib" aria-label="Redo" onClick={redo} disabled={!canRedo}>
-          <Icon name="redo" size={17} />
-        </button>
-        <span className="sep" />
-        <div className="pgctl">
-          <button type="button" className="ib" aria-label="Previous page"
-                  onClick={() => step(-1)} disabled={page <= 1}>
-            <Icon name="prev" size={15} />
-          </button>
-          <span className="pgpill" title="Drag to fly through this paper"
-                role="button" tabIndex={0}
-                onPointerDown={scrubDown} onPointerMove={scrubMove}
-                onPointerUp={scrubUp} onPointerCancel={scrubUp}>
-            {scrub ? scrub.page : page}
-          </span>
-          <span className="tot">/ {totalPages || "—"}</span>
-          <button type="button" className="ib" aria-label="Next page"
-                  onClick={() => step(1)} disabled={page >= totalPages}>
-            <Icon name="next" size={15} />
-          </button>
-        </div>
-        <span className="sep" />
-        <button type="button" className={`ib${density ? " is-on" : ""}`} aria-label="Class marks"
-                onClick={() => setDensity(!density)}>
-          <Icon name="density" size={17} />
-        </button>
-        <span className="sep" />
-        <div className="zoom">
-          <button type="button" className="ib" aria-label="Zoom out"
-                  onClick={() => { setFit(null); setScale((z) => stepZoom(z, -1)); }}>
-            <Icon name="zoomOut" size={15} />
-          </button>
-          <button type="button" className="v" onClick={() => setMenu(menu === "zoom" ? null : "zoom")}>
-            {fit ? (FITS.find((f) => f.id === fit)?.label || "Fit width") : `${Math.round(scale * 100)}%`}
-          </button>
-          <button type="button" className="ib" aria-label="Zoom in"
-                  onClick={() => { setFit(null); setScale((z) => stepZoom(z, 1)); }}>
-            <Icon name="zoomIn" size={15} />
-          </button>
+      {/* ── the scrubber along the bottom edge ────────────────────────── */}
+      <div className={`chrome scrub${scrub ? " live" : ""}`}
+           onPointerDown={scrubDown} onPointerMove={scrubMove}
+           onPointerUp={scrubUp} onPointerCancel={scrubUp}>
+        <div className="line" />
+        <div className="fill" style={{ width: `${((page - 0.5) / Math.max(1, totalPages)) * 100}%` }} />
+        <div className="knob" style={{ left: `${((page - 0.5) / Math.max(1, totalPages)) * 100}%` }} />
+        <div className="glass read" style={{ left: `${(((scrub?.page ?? page) - 0.5) / Math.max(1, totalPages)) * 100}%` }}>
+          {scrub?.page ?? page}<em>of {totalPages}</em>
         </div>
       </div>
 
-      {/* ── scrubber, back pill, toast ───────────────────────────────── */}
+      {/* ── the scrubber's card, while you are dragging it ────────────── */}
       {scrub && (
-        <div className="bar pop scrub is-open">
-          <div className="thumb">
-            <i className="t" /><i /><i /><i className="m" /><i /><i />
+        <div className="glass pop scard open"
+             style={{ left: `${((scrub.page - 0.5) / Math.max(1, totalPages)) * 100}%` }}>
+          <div className="th2">
+            <i className="h" /><i /><i /><i className="m" /><i /><i />
           </div>
-          <div className="meta">
-            <b className="mono">{scrub.page}</b>
+          <div className="mt">
+            <b>{scrub.page}</b>
             <span>of {totalPages}</span>
             {(() => {
               const near = ticks.filter((t) => Math.abs(t.page - scrub.page) <= 2).length;
@@ -2210,178 +2062,93 @@ export default function PaperReader({
         </div>
       )}
 
+      {/* ── the way back, after any jump ──────────────────────────────── */}
       {cameFrom && cameFrom.page !== page && (
-        <div className="bar pop back is-open">
-          <b className="mono">Back to page {cameFrom.page}</b>
-          <button type="button" className="ib" aria-label="Go back"
+        <div className="chrome glass pop backp open">
+          <b>Back to page {cameFrom.page}</b>
+          <button type="button" className="ic" aria-label="Go back"
                   onClick={() => {
                     goToPage(cameFrom.page);
                     if (scrollRef.current && cameFrom.top != null) scrollRef.current.scrollTop = cameFrom.top;
                     setCameFrom(null);
                   }}>
-            <Icon name="backTo" size={16} />
+            <Icon name="back" size={15} />
           </button>
         </div>
       )}
 
-      {toast && (
-        <div className="bar pop toast is-open" role="status">
-          <span>{toast.text}</span>
-          {toast.action && <button type="button" onClick={toast.action.run}>{toast.action.label}</button>}
-        </div>
-      )}
-
-      {/* ── find ─────────────────────────────────────────────────────── */}
-      {findOpen && (
-        <div className="bar pop findbar is-open">
-          <Icon name="find" size={15} />
-          <input autoFocus value={query} placeholder="Find in this paper" aria-label="Find in this paper"
-                 onChange={(e) => { setQuery(e.target.value); setFindAt(0); }}
-                 onKeyDown={(e) => {
-                   if (e.key === "Enter") setFindAt((i) => (finds.length ? (i + (e.shiftKey ? -1 : 1) + finds.length) % finds.length : 0));
-                   if (e.key === "Escape") { setFindOpen(false); setQuery(""); }
-                 }} />
-          <button type="button" className={`chp${matchCase ? " is-on" : ""}`} title="Match case"
-                  onClick={() => setMatchCase(!matchCase)}>Aa</button>
-          <button type="button" className={`chp${wholeWord ? " is-on" : ""}`} title="Whole words only"
-                  onClick={() => setWholeWord(!wholeWord)}>Ab|</button>
-          <span className="tot">
-            {query.trim() ? (finds.length ? `${findAt + 1} of ${finds.length}` : "Nothing yet") : ""}
-          </span>
-          <button type="button" className="ib" aria-label="Previous match"
-                  onClick={() => setFindAt((i) => (finds.length ? (i - 1 + finds.length) % finds.length : 0))}>
-            <Icon name="prev" size={15} />
-          </button>
-          <button type="button" className="ib" aria-label="Next match"
-                  onClick={() => setFindAt((i) => (finds.length ? (i + 1) % finds.length : 0))}>
-            <Icon name="next" size={15} />
-          </button>
-          <button type="button" className="ib" aria-label="Close find"
-                  onClick={() => { setFindOpen(false); setQuery(""); }}>
-            <Icon name="close" size={15} />
-          </button>
-        </div>
-      )}
-
-      {/* ── menus ────────────────────────────────────────────────────── */}
-      {menu && <button type="button" className="rdr-scrim-quiet" aria-label="Close menu" onClick={closeMenus} />}
-
-      {menu === "zoom" && (
-        <div className="bar pop rdr-menu rdr-menu-zoom" role="menu" aria-label="Zoom">
-          {FITS.map((f) => (
-            <button key={f.id} type="button" role="menuitemradio" aria-checked={fit === f.id}
-                    onClick={() => { setFit(f.id); if (f.id === "actual") setScale(1); closeMenus(); }}>
-              {f.label}
+      {/* ── marks only ───────────────────────────────────────────────── */}
+      <div className="rev">
+        <div className="revw">
+          <div className="revh">
+            <div>
+              <h2>Marks only</h2>
+              <p>
+                {marksList.length
+                  ? (() => {
+                      const pages = new Set(marksList.map((m) => (model ? pageOf(model, m.start) : 0))).size;
+                      return `${marksList.length} ${marksList.length === 1 ? "passage" : "passages"} `
+                        + `across ${pages} ${pages === 1 ? "page" : "pages"}.`;
+                    })()
+                  : "Mark a passage and it appears here, grouped by what the colour does."}
+              </p>
+            </div>
+            <button type="button" className="ic" aria-label="Back to the paper"
+                    style={{ background: "var(--fill)" }} onClick={() => setMode("read")}>
+              <Icon name="close" size={16} />
             </button>
-          ))}
-          <span className="dsep" />
-          {ZOOM_STEPS.filter((z) => z >= 0.5 && z <= 4).map((z) => (
-            <button key={z} type="button" role="menuitemradio"
-                    aria-checked={!fit && Math.abs(scale - z) < 0.005}
-                    onClick={() => { setFit(null); setScale(clampZoom(z)); closeMenus(); }}>
-              {Math.round(z * 100)}%
-            </button>
-          ))}
-        </div>
-      )}
-
-      {menu === "view" && (
-        <div className="bar pop rdr-menu rdr-menu-view" role="menu" aria-label="How the page is shown">
-          <p className="rdr-menu-head">Pages</p>
-          {LAYOUTS.map((l) => (
-            <button key={l.id} type="button" role="menuitemradio" aria-checked={layout === l.id}
-                    onClick={() => { setLayout(l.id); closeMenus(); }}>{l.label}</button>
-          ))}
-          <span className="dsep" />
-          <p className="rdr-menu-head">Light</p>
-          <div className="rdr-lights" role="radiogroup" aria-label="Light">
-            {PAPER_LIGHTS.map((l) => (
-              <button key={l.id} type="button" role="radio" aria-checked={light === l.id}
-                      className={`chp${light === l.id ? " is-on" : ""}`} data-light={l.id}
-                      onClick={() => setLight(l.id)}>{l.label}</button>
-            ))}
           </div>
-          <span className="dsep" />
-          <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 270) % 360)}>Turn left</button>
-          <button type="button" role="menuitem" onClick={() => setRotation((r) => (r + 90) % 360)}>Turn right</button>
-          <button type="button" role="menuitem" onClick={() => { toggleFull(); closeMenus(); }}>
-            {full ? "Leave full screen" : "Full screen"}
-          </button>
+          <div className="revf">
+            <button type="button" className={`f${filter === "all" ? " on" : ""}`}
+                    onClick={() => setFilter("all")}>Everything</button>
+            {COL.map((c) => {
+              const n = rowsForColour(c.k).length;
+              if (!n) return null;
+              return (
+                <button key={c.k} type="button" className={`f${filter === c.k ? " on" : ""}`}
+                        onClick={() => setFilter(c.k)}>
+                  {ctx === "course" ? c.course : c.name}{" "}
+                  <span style={{ color: c.hex }}>{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div>
+            {COL.map((c) => {
+              const group = rowsForColour(c.k).filter(
+                (m) => filter === "all" || filter === c.k,
+              );
+              if (!group.length) return null;
+              return (
+                <div className="rgrp" key={c.k}>
+                  <div className="rgh" style={{ "--k": c.hex }}>
+                    <i /><b>{ctx === "course" ? c.course : c.name}</b>
+                    <em>{group.length} {group.length === 1 ? "passage" : "passages"}</em>
+                  </div>
+                  {group.map((m) => {
+                    const pg = model ? pageOf(model, m.start) : 0;
+                    return (
+                      <div className="rcard" key={m.id} data-id={m.id} data-p={pg}
+                           style={{ "--k": c.hex }} role="button" tabIndex={0}
+                           onClick={() => { setMode("read"); setActiveId(m.id); jumpTo(pg); }}
+                           onKeyDown={(e) => e.key === "Enter" && (setMode("read"), setActiveId(m.id), jumpTo(pg))}>
+                        <div className="st" />
+                        <p>{m.quote}</p>
+                        <span className="pg">p.{pg}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
 
-      {menu === "more" && (
-        <div className="bar pop rdr-menu" role="menu" aria-label="More">
-          <label className="rdr-menu-pick">
-            <span>New marks seen by</span>
-            <select value={ring} onChange={(e) => setRing(e.target.value)}>
-              {RINGS.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
-          </label>
-          <label className="rdr-menu-pick">
-            <span>Tools on</span>
-            <select value={dock} onChange={(e) => setDock(e.target.value)}>
-              {DOCKS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-            </select>
-          </label>
-          <span className="dsep" />
-          <button type="button" role="menuitem" onClick={() => { printNow(); closeMenus(); }}>Print</button>
-          <a role="menuitem" href={url} download onClick={closeMenus}>Download</a>
-          <button type="button" role="menuitem" onClick={() => { onOpenOriginal?.(paper); closeMenus(); }}>
-            Open the original
-          </button>
-          <span className="dsep" />
-          <button type="button" role="menuitem" onClick={() => { setSheet("details"); closeMenus(); }}>
-            Document details
-          </button>
-          <button type="button" role="menuitem" onClick={() => { setSheet("keys"); closeMenus(); }}>
-            Keyboard shortcuts
-          </button>
-        </div>
-      )}
+      {/* ── the toast, and the first-run coach ────────────────────────── */}
+      {toast && <div className="glass pop toast open">{toast}</div>}
+      <Coach step={coach} at={coachAt} onDone={nextCoach} />
 
-      {/* ── the mark card ────────────────────────────────────────────── */}
-      {picked && (
-        <MarkCard
-          mark={picked.mark} me={me} at={picked.at}
-          onHold={holdCard} onLeave={leaveCard}
-          onRecolour={recolour} onDelete={(m) => { removeMark(m); setPicked(null); }}
-          onNote={(m) => openNoteOn(m)} onAgree={agree}
-          onThread={(m) => onOpenThread?.(m.thread_id)}
-        />
-      )}
-
-      {composer && (
-        <div className="rdr-scrim" onClick={(e) => { if (e.target === e.currentTarget) setComposer(null); }}>
-          <Composer kind={composer.kind}
-                    onKind={(k) => { setComposer((c) => ({ ...c, kind: k })); if (k === "correction") setRing("solo"); }}
-                    quote={composer.quote} ring={ring} onRing={setRing}
-                    value={draft} onChange={setDraft} busy={busy}
-                    onSave={saveComposer} onCancel={() => setComposer(null)} />
-        </div>
-      )}
-
-      {sheet === "keys" && (
-        <Sheet title="Keyboard shortcuts" onClose={() => setSheet(null)}>
-          <dl className="rdr-keys">
-            {SHORTCUTS.map(([k, what]) => <div key={k}><dt className="mono">{k}</dt><dd>{what}</dd></div>)}
-          </dl>
-        </Sheet>
-      )}
-
-      {sheet === "details" && (
-        <Sheet title="Document details" onClose={() => setSheet(null)}>
-          <dl className="rdr-keys">
-            <div><dt>Title</dt><dd>{info.Title || paper.title}</dd></div>
-            {info.Author && <div><dt>Author</dt><dd>{info.Author}</dd></div>}
-            <div><dt>Pages</dt><dd className="mono">{totalPages}</dd></div>
-            <div><dt>Size</dt><dd className="mono">{paper.bytes ? `${(paper.bytes / 1e6).toFixed(1)} MB` : "—"}</dd></div>
-            <div><dt>Loads by range</dt><dd>{paper.linearized ? "Yes — linearized" : "Slower — not linearized"}</dd></div>
-            <div><dt>Searchable</dt><dd>{paper.has_text === false ? "No text layer in this file" : "Yes"}</dd></div>
-            <div><dt>Drawn by</dt><dd className="mono">pdf.js {PDFJS_VERSION}</dd></div>
-          </dl>
-        </Sheet>
-      )}
     </div>,
     host,
   );
