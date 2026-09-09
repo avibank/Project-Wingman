@@ -196,7 +196,7 @@
    this app already loads as `--font-ui`. Reaching it through the token rather
    than by name is the house rule (CLAUDE.md, Design system), and it is also
    the only way the reader follows a livery that changes the face. */
-.rdr { font-family: var(--font-ui); }
+.app .rdr { font-family: var(--font-ui); }
 .rdr .cnt, .rdr .tip kbd, .rdr .scard .mt b, .rdr .lbl b,
 .rdr .corner-z .v, .rdr .th b, .rdr .thumb-n, .rdr .pnum {
   font-family: var(--font-mono);
@@ -258,3 +258,20 @@
 .rdr[data-plat="tablet"][data-side="right"] .stage:has(~ .panel.open) { padding-right: 390px; }
 .rdr[data-plat="desktop"][data-side="left"] .stage:has(~ .panel.open),
 .rdr[data-plat="tablet"][data-side="left"] .stage:has(~ .panel.open) { padding-left: 390px; }
+
+/* ── the three properties the markup sets inline ───────────────────────────
+   `--k` is the colour a row, a tick, a swatch or a group header carries;
+   `--nk` and `--nb` are a note's key colour and its body tint. All three come
+   from the DATA — which of the five a mark is — so COMPONENTS.md sets them on
+   the element, and the stylesheet only ever reads them.
+
+   A custom property nothing declares does not error. It falls back to the
+   initial value, so a `background: var(--k)` on an element that missed its
+   inline style is not a wrong colour, it is NO colour: an invisible row, an
+   invisible tick, a note with no header. That is the failure check:tokens
+   exists to catch, and the fix is the same one it always is — declare the
+   fallback where the property is used, so the worst case is the wrong colour
+   rather than nothing at all. */
+.rdr .c, .rdr .tk, .rdr .row, .rdr .rgh, .rdr .rcard,
+.rdr .ch, .rdr .mean, .rdr .th .dot, .rdr .railtip { --k: var(--hl-y); }
+.rdr .note, .rdr .pin, .rdr .exc { --nk: var(--hl-y); --nb: #FBF6E6; }

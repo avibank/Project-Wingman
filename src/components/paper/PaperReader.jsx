@@ -2037,6 +2037,13 @@ export default function PaperReader({
                 );
               })}
             </div>
+            {/* Which page the list is standing on. The shipped `.pchip` — one
+                line, centred, so a long list still says where you are. */}
+            {marksList.length > 0 && (
+              <span className="pchip">
+                {marksList.length} {marksList.length === 1 ? "mark" : "marks"} in this paper
+              </span>
+            )}
             <div className="pbody">
               {marksList.length ? (() => {
                 const out = [];
@@ -2060,6 +2067,29 @@ export default function PaperReader({
                       </div>
                     </div>,
                   );
+                }
+                /* R11 — A MARK THAT LOST ITS PLACE IS LISTED, NEVER DROPPED.
+                   `resolveAnchor` returns null rather than guessing, which is
+                   the right call: a mark in the wrong place cannot be spotted
+                   by the person reading it. But a mark that silently stops
+                   existing is worse than one that says it is lost, so the ones
+                   that could not be found go at the end with what they said. */
+                if (orphans.length > 0 && filter === "all") {
+                  out.push(<div className="gh" key="hlost">Lost their place</div>);
+                  for (const o of orphans) {
+                    out.push(
+                      <div className="row" key={o.id} style={{ "--k": "var(--txt-3)" }}>
+                        <div className="bar" />
+                        <div>
+                          <div className="t2"><b>Lost its place</b></div>
+                          <p>{o.anchor?.quote || "This passage is no longer in the paper."}</p>
+                          <div className="meta">
+                            The words it was on are not in this version. It is kept, not deleted.
+                          </div>
+                        </div>
+                      </div>,
+                    );
+                  }
                 }
                 return out;
               })() : (
