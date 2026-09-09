@@ -243,3 +243,18 @@
    is also where the Correction tool covers its job, with the passage attached
    instead of a screenshot and a guess. */
 .app:has(.rdr) .rpt { display: none; }
+
+/* ── the stage clears the furniture ───────────────────────────────────────
+   The demo's page is a fixed 870px in a 1440px window, so it never had to
+   think about the bar or the panel: there was always room. Ours is a real
+   document at a real scale, and at fit-width it takes everything it is given.
+
+   So the stage is given less. The bar is 50px and sits 18px from its edge; the
+   panel is 342px and sits 30px from the opposite one. Both are floating, so
+   this is padding on the scroller rather than a column in a layout — the page
+   stays centred in what is left, and nothing reflows when a panel opens. */
+.rdr[data-plat="desktop"] .stage, .rdr[data-plat="tablet"] .stage { padding-inline: 86px; }
+.rdr[data-plat="desktop"][data-side="right"] .stage:has(~ .panel.open),
+.rdr[data-plat="tablet"][data-side="right"] .stage:has(~ .panel.open) { padding-right: 390px; }
+.rdr[data-plat="desktop"][data-side="left"] .stage:has(~ .panel.open),
+.rdr[data-plat="tablet"][data-side="left"] .stage:has(~ .panel.open) { padding-left: 390px; }

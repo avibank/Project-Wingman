@@ -59,6 +59,10 @@ export const warm = () => warmWorker();
 
 const PAGE_GAP = 26;
 const EMPTY = [];
+/* reader.css: `.page { width: min(870px, 100%) }`. Named here because the
+   scale is what enforces it. */
+const PAGE_MAX = 870;
+
 const tempId = () => `tmp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private */ } };
@@ -609,11 +613,20 @@ export default function PaperReader({
        panel or the tick rail. Asking the column for its content width accounts
        for every box between the scroller and the sheet, with no arithmetic to
        get wrong the next time the padding changes. */
-    const col = el.querySelector(".pcol");
+    const stack = el.querySelector(".stack");
     const cs = getComputedStyle(el);
-    const room = col
-      ? col.clientWidth - parseFloat(getComputedStyle(col).paddingLeft) - parseFloat(getComputedStyle(col).paddingRight)
+    let room = stack
+      ? stack.clientWidth - parseFloat(getComputedStyle(stack).paddingLeft) - parseFloat(getComputedStyle(stack).paddingRight)
       : el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    /* AND NO WIDER THAN THE SHEET'S OWN CAP. `.page` is `min(870px, 100%)` in
+       reader.css, which is a measured line length and not an accident: 870px
+       of body text at this size is about 90 characters, and past that the eye
+       loses the start of the next line. The reader rasterises at a scale
+       rather than transform-scaling a fixed box — a transformed canvas is a
+       blurry canvas — so the cap has to be applied to the scale instead, or
+       fit-width fills a 1440px window with one page and runs it under the
+       panel and the tool bar both. */
+    room = Math.min(room, PAGE_MAX);
     const tall = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     setScale(fitScale(
       fit,
@@ -631,10 +644,27 @@ export default function PaperReader({
   }, [sizes, fit, rotation, across, rail, hush]);
 
   useEffect(() => { measure(); }, [measure, rail]);
+  /* WATCH THE BOX, NOT THE WINDOW.
+
+     `resize` only fires when the WINDOW changes, and the reader's box changes
+     for other reasons: a pane that opens beside it, a tab restored from the
+     background, an embed that starts at zero and is given its size a frame
+     later. Found the hard way — opened in a preview pane that reported a 0x0
+     viewport, the reader came up as `phone` with a zero-width stage, and when
+     the pane was given its real size nothing told it: no resize event was
+     fired, so the platform stayed phone and the page never drew. A
+     ResizeObserver asks the element itself, which is the only thing that
+     actually knows. */
   useEffect(() => {
-    const on = () => measure();
-    window.addEventListener("resize", on);
-    return () => window.removeEventListener("resize", on);
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") {
+      const on = () => { measure(); setPlat(readPlatform()); };
+      window.addEventListener("resize", on);
+      return () => window.removeEventListener("resize", on);
+    }
+    const ro = new ResizeObserver(() => { measure(); setPlat(readPlatform()); });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [measure]);
 
   /* ZOOM HOLDS THE POINT THE READER WAS LOOKING AT (rule 6).
@@ -1606,6 +1636,77 @@ export default function PaperReader({
     clearSel();
   }, [selPop, clearSel]);
 
+  /* ── drag a mark into a note ────────────────────────────────────────────
+     The one that makes people sit up, and the reason is that it is the whole
+     workflow for anybody building a question bank: read, mark, drag the good
+     ones into a note, and the note is the draft.
+
+     Four steps, and the second is the one that matters. A pointerdown on a
+     marked sentence only ARMS it — the drag does not start until the pointer
+     has moved 8px, because starting on pointerdown would mean every tap on a
+     mark to open its card began by picking the mark up. */
+  const arm = useRef(null);
+  const [ghost, setGhost] = useState(null);
+  /* The listener below is bound once and never rebuilt — rebinding it on every
+     pointermove is how a drag ends up handled twice — so what it needs about
+     the drop target comes through a ref rather than a closure. */
+  const dropOnRef = useRef(null);
+  useEffect(() => { dropOnRef.current = dropOn; }, [dropOn]);
+
+  const armDrag = useCallback((e) => {
+    if (tool !== "sel" || !model) return;
+    const hit = markAt(e.clientX, e.clientY);
+    if (!hit) return;
+    arm.current = {
+      mark: hit, x: e.clientX, y: e.clientY, live: false,
+      quote: quoteOf(model, hit.start, hit.end),
+      page: pageOf(model, hit.start),
+    };
+  }, [tool, model, markAt]);
+
+  useEffect(() => {
+    const move = (e) => {
+      const a = arm.current;
+      if (!a) return;
+      if (!a.live) {
+        if (Math.hypot(e.clientX - a.x, e.clientY - a.y) < 8) return;
+        a.live = true;
+        hold(true);
+        /* A drag is not a selection. Without this the browser paints its own
+           blue over the passage the whole way across the screen. */
+        try { window.getSelection()?.removeAllRanges(); } catch { /* nothing to clear */ }
+      }
+      setGhost({ x: e.clientX, y: e.clientY, text: a.quote });
+      /* What is under the pointer — not what the pointer started on. The
+         ghost itself is pointer-events:none, so it never finds itself. */
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      const target = under?.closest?.(".note, .pin");
+      setDropOn(target?.dataset?.note || null);
+    };
+    const up = () => {
+      const a = arm.current;
+      arm.current = null;
+      if (!a?.live) return;
+      hold(false);
+      setGhost(null);
+      const onto = dropOnRef.current;
+      setDropOn(null);
+      if (!onto) return;
+      setNotes((all) => all.map((n) => (n.id === onto
+        ? { ...n, open: 1, exc: [...(n.exc || []), { text: a.quote, page: a.page }] }
+        : n)));
+      setToast(`Added to the note, with p.${a.page}.`);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [hold]);
+
   /* ── the first-run coach ────────────────────────────────────────────────
      Three quiet hints at the three things that are not discoverable by
      looking. Dismissed by the button or after fourteen seconds, and the fact
@@ -1675,7 +1776,7 @@ export default function PaperReader({
 
       {/* ── the document ─────────────────────────────────────────────── */}
       <div className="stage" ref={scrollRef} onScroll={onScroll}
-           onClick={tapToMark} onPointerUp={tapToMark}>
+           onClick={tapToMark} onPointerUp={tapToMark} onPointerDown={armDrag}>
         {error && <p className="rdr-err">{error}</p>}
 
         <div className="stack" style={{ gap: PAGE_GAP }}>
@@ -1776,7 +1877,13 @@ export default function PaperReader({
         <div className="railsep" />
         {tray.map((id) => {
           const spec = T(id);
-          const paint = spec.c ? col(spec.fixed || tcol[id] || "y").hex : undefined;
+          /* `fixed` counts as having a colour. Question is fixed to purple —
+             a question is a question whatever is in your hand — and it has no
+             `c` flag because there is nothing to PICK, not because there is
+             nothing to paint. Without this it drew in currentColor: a plain
+             white disc where the reference has a purple one. */
+          const paint = spec.c || spec.fixed
+            ? col(spec.fixed || tcol[id] || "y").hex : undefined;
           return (
             <button key={id} type="button"
                     className={`t${tool === id ? " on" : ""}${LOCKED.includes(id) ? " lock" : ""}`}
@@ -2144,6 +2251,14 @@ export default function PaperReader({
           </div>
         </div>
       </div>
+
+      {/* The passage, following the pointer. Fixed rather than absolute: it
+          has to be able to leave the page it came from. */}
+      {ghost && (
+        <div className="ghost" style={{ left: ghost.x + 14, top: ghost.y + 14 }}>
+          {ghost.text}
+        </div>
+      )}
 
       {/* ── the toast, and the first-run coach ────────────────────────── */}
       {toast && <div className="glass pop toast open">{toast}</div>}
