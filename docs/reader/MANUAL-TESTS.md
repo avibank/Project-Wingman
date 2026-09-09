@@ -11,6 +11,75 @@ deploy.
 
 ---
 
+## v5 — what is new, and what to try first (10 minutes)
+
+The reader was rebuilt again, to the three files you sent whose first line is
+"Supersedes v1–v4". Parts 1–8 below still describe v4 and most of them still
+apply — the marks, the pen, the quiz and the save integrity are unchanged. The
+list here is what is genuinely new, and each one is a thing no automated test
+in this repo can settle.
+
+**V1 · Platform, not width.** Open the reader on the iPad, then open it on the
+laptop and drag the window narrow — narrower than the iPad's 1194px.
+→ The **iPad** should have big targets, no tooltips, and a panel that opens on
+a tap. The **narrow laptop window** should keep its small targets and its
+tooltips, because it still has a mouse. If the laptop starts behaving like a
+tablet, the pointer test is not working.
+
+**V2 · The selection popover.** With no tool armed at all — the arrow, straight
+after opening — select any sentence.
+→ Five colours plus **Note**, **Ask** and **Copy** appear over the selection.
+This is the single most important thing in v5: it is what a reader who has
+never looked at the tool bar can do.
+
+**V3 · Note and Ask carry the passage.** From that popover, tap **Note**.
+→ A note opens **on the page**, with the sentence you selected already in it as
+a quoted excerpt with its page number. You should not have to paste anything.
+
+**V4 · Drag a mark into a note.** Make a couple of highlights. With the arrow,
+press on one and drag it onto the note.
+→ A small card follows your finger, the note lights up with a ring as you cross
+it, and releasing drops the passage in. This is the question-bank workflow:
+read, mark, drag the good ones in, and the note is the draft.
+
+**V5 · Notes collapse to pins.** Tap the chevron on a note.
+→ It becomes a coloured pill with its title. Drag it somewhere. Reopen it. On a
+phone it should be a **bottom sheet**, not a floating window — a draggable
+window on a 390px screen is a fight nobody wins.
+
+**V6 · Move the bar.** Tool chest → **Bar position** → Right.
+→ The tool bar moves to the right edge and the marks panel and tick rail move
+to the **left**. They are always opposite; there is no way to put them on the
+same side. Try Top and Bottom too.
+
+**V7 · Variants.** Arm Shape, then open its properties.
+→ Line / Arrow / Box / Ellipse across the top. This is how thirteen tools fit
+six slots: the seventh thing you need is inside the tool you already picked.
+Check the eraser has **Ink only** on by default — rubbing out a stroke must
+never eat a highlight.
+
+**V8 · The chrome gets out of the way.** Sit still for three seconds.
+→ Everything fades except the **logo**, which never hides. Move, and it comes
+back. Start drawing and it should go at once rather than fading.
+
+**V9 · The first-run coach.** Only on a device that has never opened it, or
+after clearing site data.
+→ Three quiet hints, staggered, then gone forever. If they come back on the
+second open, the flag is not being stored.
+
+**And the two the headless browsers still cannot answer:**
+
+**V10 · The glass.** Open the marks panel over the page. The page behind it
+should be a soft wash, not readable. Headless WebKit does not composite the
+blur, so the iPad screenshots here are unreliable and I cannot tell from this
+side whether Safari does the same.
+
+**V11 · The proportions.** Ten seconds of your eyes on the real device: the
+colour circles in a tool's properties are **circles**, the tool icons are
+**square**, and the bar is a slim column rather than a row of tall slabs.
+
+---
+
 ## Read this first — what could NOT be verified without you
 
 Everything in this section was built correctly by construction and is

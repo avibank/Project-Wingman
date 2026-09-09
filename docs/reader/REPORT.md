@@ -1,8 +1,74 @@
 # Reader rebuild — report
 
-Branch `reader-rebuild`, off `main` at `0a3f7d1`. **Not deployed.**
-The migration and the clear-out have been run against production, on your
-instruction, and verified — see below.
+Branch `reader-v5`, off `main`. **Not deployed** — `main` still carries v4,
+which is live and working, so the site is safe while this lands.
+
+---
+
+## v5 — read this first
+
+You sent three files (`reader.css`, `reference.html`, `COMPONENTS.md`) whose
+first line is "Supersedes v1–v4." They are in `docs/reader/v5/`, kept exactly
+as sent. This is not a revision of the v4 pass; it is a different reader, and
+everything below the v5 section describes the one it replaces.
+
+**What actually changed, as opposed to moved.**
+
+| | v4 | v5 |
+|---|---|---|
+| Chrome | one top bar, one bottom bar, a fixed left dock | four corners, a **movable** tool bar, and the panel always opposite it |
+| Tool icons | stroked outlines with a separate colour swatch beside them | **filled and coloured — the icon IS the swatch**, so there is no swatch element any more |
+| Thirteen tools, six slots | a tray you add to from a chest | every tool carries its own **variants**: Line / Arrow / Box / Ellipse is one bar entry |
+| Layout | three breakpoints | three **platforms**, chosen by pointer capability |
+| Notes | a dialog you compose in, then a row in a list | a **window on the page** you can drag, which collapses to a pin |
+| Selecting text | nothing, unless a tool was armed first | the **selection popover**: five colours plus Note / Ask / Copy |
+| Colour | five closed meanings for text, eight free ink colours | **one palette of five**, and every tool that has a colour picks from it |
+
+**Platform is not a breakpoint, and this is the part worth knowing.** The
+formula asks what the pointer can do, not how wide the window is:
+
+```js
+const coarse = matchMedia('(pointer:coarse)').matches || !matchMedia('(hover:hover)').matches;
+const plat = w < 680 ? 'phone' : (coarse || w < 1100) ? 'tablet' : 'desktop';
+```
+
+A 1024px window on a Mac is **desktop**; a 1024px iPad is **tablet**. That one
+line is why most web readers feel wrong on an iPad. The reference build
+specifies it and never implements it — nothing in it ever writes `data-plat`,
+so its own phone and tablet layers are dead code there. They are not here, and
+the harness now has four surfaces that each prove they pick the right one.
+
+**One repair to a file you told me to copy verbatim.** v5's header says the
+demo-only styles "are not included"; the strip that removed them took
+`.demo{position:absolute;…` and left the second line of that rule behind. A
+browser recovers by hunting for the next `{`, which is the `.demo` rule's own —
+so it silently throws away both. Nothing real is lost (both are demo chrome),
+but a stylesheet a parser has to recover from is one nobody can reason about,
+and it would have been copied forward into v6. The generator removes it and
+asserts that is the only thing that changed.
+
+**Six class names this app already had**, down from v4's eight: `.pop`,
+`.scrub`, `.mt`, `.av`, `.row`, `.acts`. Scoping `reader.css` stops the reader
+painting the app; it does nothing about the app painting the reader. All six
+are quarantined and listed in `reader-additions.css`; a seventh fails
+`check:paper`.
+
+**Two gaps the checks found, both real.** The orphan list was being computed
+and never shown — R11 says a mark that lost its place is *listed*, not dropped,
+and a mark that silently stops existing is worse than one that says it is lost.
+And `.pchip`, the panel's own page chip, was in the sheet and in nothing else.
+
+**Three things only a screenshot could have told me.** Question drew as a plain
+white disc, because its table entry has `fixed:'p'` and no `c` flag — there is
+nothing to *pick*, which is not the same as nothing to paint. At fit-width the
+page filled a 1440px window and ran under both the panel and the bar. And the
+reader could not recover from a zero-width start: opened in a pane reporting a
+0×0 viewport it came up as `phone` with a zero-width stage, and no resize event
+is fired when that pane is later given its real size. It watches its own box
+with a ResizeObserver now.
+
+**Still v4's, and not yet moved:** the reader test suite. `npm run check` is
+green, including all 200 of `check:paper`.
 
 ---
 

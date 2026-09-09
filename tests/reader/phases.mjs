@@ -21,7 +21,7 @@ async function markFirstRun(page, tool = "Highlighter") {
     r.setStart(target.firstChild, 0);
     r.setEnd(target.firstChild, Math.min(24, target.firstChild.length));
     const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-    document.querySelector(".rdr-scroll").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    document.querySelector(".stage").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
   });
   await page.waitForTimeout(900);
 }
@@ -56,7 +56,7 @@ group("Phase 2 · marks are objects", () => {
 
       const page2 = await ctx.newPage();
       await page2.goto(page.url(), { waitUntil: "domcontentloaded" });
-      await page2.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 25_000 });
+      await page2.waitForSelector(".page:not(.ph) canvas[data-on]", { timeout: 25_000 });
       await page2.waitForTimeout(1200);
       const reloaded = await markCount(page2);
       expect(reloaded).toBeAtLeast(after, "the mark did not survive a reload");
@@ -72,11 +72,11 @@ group("Phase 2 · marks are objects", () => {
 
       /* From the BUTTON, not the keyboard — rule 4, because the primary device
          has no keyboard attached. */
-      await page.click('.bar-bot .ib[aria-label="Undo"]');
+      await page.click('.corner-z .ib[aria-label="Undo"]');
       await page.waitForTimeout(700);
       expect(await markCount(page)).toBe(start, "undo did not remove the mark");
 
-      await page.click('.bar-bot .ib[aria-label="Redo"]');
+      await page.click('.corner-z .ib[aria-label="Redo"]');
       await page.waitForTimeout(900);
       expect(await markCount(page)).toBeAtLeast(start + 1, "redo did not put it back");
     });
@@ -85,8 +85,8 @@ group("Phase 2 · marks are objects", () => {
   it("undo is disabled with nothing to undo, and says so", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      expect(await page.locator('.bar-bot .ib[aria-label="Undo"]').isDisabled()).toBeTruthy();
-      expect(await page.locator('.bar-bot .ib[aria-label="Redo"]').isDisabled()).toBeTruthy();
+      expect(await page.locator('.corner-z .ib[aria-label="Undo"]').isDisabled()).toBeTruthy();
+      expect(await page.locator('.corner-z .ib[aria-label="Redo"]').isDisabled()).toBeTruthy();
     });
   });
 
@@ -111,7 +111,7 @@ group("Phase 3 · colours are verbs", () => {
       await page.click('.tool[aria-label="Highlighter"]');
       await page.waitForTimeout(400);
       const swatches = await page.evaluate(
-        () => [...document.querySelectorAll('.bar-insp .colours .sw[data-colour]')].map((b) => b.dataset.colour));
+        () => [...document.querySelectorAll('.props .colours .sw[data-colour]')].map((b) => b.dataset.colour));
       expect(swatches).toEqual(["critical", "definition", "limit", "unsure", "wrong"],
         "the closed set is the whole design — a plain highlight kills it");
     });
@@ -122,7 +122,7 @@ group("Phase 3 · colours are verbs", () => {
       await openReader(page);
       await page.click('.tool[aria-label="Highlighter"]');
       await page.waitForTimeout(400);
-      const txt = await page.locator(".bar-insp .meaning").innerText();
+      const txt = await page.locator(".props .meaning").innerText();
       expect(txt).toContain("Exam likely");
       expect(txt).toContain("revision deck");
     });
@@ -136,10 +136,10 @@ group("Phase 3 · colours are verbs", () => {
       /* Ink swatches carry data-ink, not data-colour: the five meanings are a
          closed set with jobs attached, and free ink is a different category. */
       const swatches = await page.evaluate(
-        () => [...document.querySelectorAll(".bar-insp .colours .sw[data-ink]")].map((b) => b.dataset.ink));
+        () => [...document.querySelectorAll(".props .colours .sw[data-ink]")].map((b) => b.dataset.ink));
       expect(swatches.length).toBe(8, "the ink palette is eight names");
       expect(swatches).toContain("graphite");
-      expect(await page.locator(".bar-insp .colours .sw[data-colour]").count()).toBe(0,
+      expect(await page.locator(".props .colours .sw[data-colour]").count()).toBe(0,
         "the pen was offered the five meanings — ink carries no meaning");
     });
   });
@@ -162,7 +162,7 @@ group("Phase 5 · the chrome floats", () => {
       await openReader(page);
       const boxes = await page.evaluate(() => {
         const out = {};
-        for (const sel of [".bar-top", ".bar-dock", ".bar-bot"]) {
+        for (const sel of [".acts", ".tools", ".corner-z"]) {
           const el = document.querySelector(sel);
           if (!el) continue;
           const r = el.getBoundingClientRect();
@@ -181,7 +181,7 @@ group("Phase 5 · the chrome floats", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const s = await page.evaluate(() => {
-        const cs = getComputedStyle(document.querySelector(".bar-top"));
+        const cs = getComputedStyle(document.querySelector(".acts"));
         return { radius: cs.borderRadius, blur: cs.backdropFilter, border: cs.borderTopWidth };
       });
       expect(parseInt(s.radius, 10)).toBeAtLeast(14);
@@ -200,8 +200,8 @@ group("Phase 5 · the chrome floats", () => {
         });
         await page.waitForTimeout(700);
         const r = await page.evaluate(() => {
-          const panel = document.querySelector(".bar-panel");
-          const doc = document.querySelector(".rdr-scroll");
+          const panel = document.querySelector(".panel");
+          const doc = document.querySelector(".stage");
           if (!panel) return null;
           const a = panel.getBoundingClientRect(), b = doc.getBoundingClientRect();
           return { overlaps: a.left < b.right && a.right > b.left, docWidth: Math.round(b.width), vw: innerWidth };
@@ -219,7 +219,7 @@ group("Phase 5 · the chrome floats", () => {
       const usesSafeArea = await page.evaluate(() => {
         const css = [...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch { return []; } })
           .map((r) => r.cssText).join("");
-        return /\.bar-bot[^{]*\{[^}]*env\(safe-area-inset-bottom/.test(css);
+        return /\.corner-z[^{]*\{[^}]*env\(safe-area-inset-bottom/.test(css);
       });
       expect(usesSafeArea).toBeTruthy("the bottom bar will sit under the home indicator");
     });
@@ -229,7 +229,7 @@ group("Phase 5 · the chrome floats", () => {
 /* ========================================================================= */
 group("Phase 6 · the tray", () => {
   const trayIds = (page) => page.evaluate(
-    () => [...document.querySelectorAll(".bar-dock .tool")].map((b) => b.getAttribute("aria-label")));
+    () => [...document.querySelectorAll(".tools .t")].map((b) => b.getAttribute("aria-label")));
 
   it("the default tray is six tools, not fourteen", async () => {
     await withPage(laptop, async (page) => {
@@ -241,11 +241,11 @@ group("Phase 6 · the tray", () => {
   it("a tool can be added from the sheet and lands in the tool set's own order", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.addbtn');
+      await page.click('.addb');
       await page.waitForTimeout(300);
-      await page.click('.satabs button:nth-child(2)');           // Mark up
+      await page.click('.tabs button:nth-child(2)');           // Mark up
       await page.waitForTimeout(200);
-      await page.click('.sacell:has-text("Underline")');
+      await page.click('.cell:has-text("Underline")');
       await page.waitForTimeout(500);
       const ids = await trayIds(page);
       expect(ids).toContain("Underline");
@@ -256,13 +256,13 @@ group("Phase 6 · the tray", () => {
   it("every tool stays reachable from the Add sheet", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.addbtn');
+      await page.click('.addb');
       await page.waitForTimeout(300);
       let seen = 0;
       for (let tab = 0; tab < 6; tab++) {
-        await page.click(`.satabs button:nth-child(${tab + 1})`);
+        await page.click(`.tabs button:nth-child(${tab + 1})`);
         await page.waitForTimeout(150);
-        seen += await page.locator(".sacell").count();
+        seen += await page.locator(".cell").count();
       }
       expect(seen).toBe(14, "the full set must always be listed, including what was removed");
     });
@@ -274,7 +274,7 @@ group("Phase 6 · the tray", () => {
       /* The only way in, per COMPONENTS.md: a 450ms press anywhere on the
          dock. There is no button — a button would sit in the rail forever
          for the one day a student rearranges it. */
-      const box = await page.locator(".bar-dock .tool").first().boundingBox();
+      const box = await page.locator(".tools .t").first().boundingBox();
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
       await page.mouse.down();
       await page.waitForTimeout(700);
@@ -298,14 +298,14 @@ group("Phase 6 · the tray", () => {
   it("resetting puts the course default back", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      await page.click('.addbtn');
+      await page.click('.addb');
       await page.waitForTimeout(250);
-      await page.click('.satabs button:nth-child(2)');
+      await page.click('.tabs button:nth-child(2)');
       await page.waitForTimeout(150);
-      await page.click('.sacell:has-text("Strike")');
+      await page.click('.cell:has-text("Strike")');
       await page.waitForTimeout(400);
       expect(await trayIds(page)).toContain("Strike");
-      await page.click(".addbtn");
+      await page.click(".addb");
       await page.waitForTimeout(300);
       await page.click('.safoot u');
       await page.waitForTimeout(400);
@@ -340,7 +340,7 @@ group("Phase 7 · the mark card", () => {
          across a scroll is a detached node reporting a stale rectangle — which
          is how this test kept aiming at the bottom bar. */
       const box = await page.evaluate(async () => {
-        const sc = document.querySelector(".rdr-scroll");
+        const sc = document.querySelector(".stage");
         const clear = (r) => r.top > 130 && r.bottom < innerHeight - 150 && r.width > 6;
         for (let tries = 0; tries < 14; tries++) {
           const m = [...document.querySelectorAll(".rdr-mark[data-colour]")]
@@ -360,14 +360,14 @@ group("Phase 7 · the mark card", () => {
          constructible in WebKit, so the gesture is expressed as the
          PointerEvent that real iOS Safari raises for it. */
       await page.evaluate(({ x, y }) => {
-        const target = document.elementFromPoint(x, y) || document.querySelector(".rdr-scroll");
+        const target = document.elementFromPoint(x, y) || document.querySelector(".stage");
         target.dispatchEvent(new PointerEvent("pointerup", {
           pointerType: "touch", pointerId: 1, isPrimary: true,
           clientX: x, clientY: y, bubbles: true, cancelable: true, composed: true,
         }));
       }, box);
       await page.waitForTimeout(700);
-      expect(await page.locator(".mark-card").count()).toBeAtLeast(1, "an iPad user can never see this card");
+      expect(await page.locator(".card").count()).toBeAtLeast(1, "an iPad user can never see this card");
       await shot(page, "markcard-tap");
     });
   });
@@ -383,12 +383,12 @@ group("Phase 7 · the mark card", () => {
       });
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(500);
-      const card = await page.locator(".mark-card").innerText();
+      const card = await page.locator(".card").innerText();
       expect(card).toContain("Exam likely");
       expect(card).toContain("revision deck");
       // Mine: the five colours to restyle, plus a note and a delete.
-      expect(await page.locator(".mark-card .mca .sw").count()).toBe(5);
-      expect(await page.locator('.mark-card [aria-label="Delete"]').count()).toBe(1);
+      expect(await page.locator(".card .mca .sw").count()).toBe(5);
+      expect(await page.locator('.card [aria-label="Delete"]').count()).toBe(1);
     });
   });
 
@@ -407,7 +407,7 @@ group("Phase 7 · the mark card", () => {
       const box = await page.evaluate(async () => {
         const m = document.querySelector('.rdr-mark[data-colour="unsure"]');
         if (!m) return null;
-        const sc = document.querySelector(".rdr-scroll");
+        const sc = document.querySelector(".stage");
         sc.scrollTop += (m.getBoundingClientRect().top - (innerHeight * 0.45));
         await new Promise((res) => setTimeout(res, 700));
         const r = m.getBoundingClientRect();
@@ -416,16 +416,16 @@ group("Phase 7 · the mark card", () => {
       expect(box).toBeTruthy("the other student's question did not resolve");
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(700);
-      const card = await page.locator(".mark-card").innerText();
+      const card = await page.locator(".card").innerText();
       expect(card).toContain("Asked anonymously");
       expect(card).toContain("name hidden on questions");
-      expect(await page.locator('.mark-card [aria-label="Delete"]').count()).toBe(0,
+      expect(await page.locator('.card [aria-label="Delete"]').count()).toBe(0,
         "you can delete somebody else's mark");
       /* COMPONENTS.md: an anonymous question offers Answer this and Follow —
          not Agree, which is for somebody's ordinary mark. */
       expect(card).toContain("Answer this");
       expect(card).toContain("Follow");
-      expect(await page.locator('.mark-card [data-act="follow"]').count()).toBe(1);
+      expect(await page.locator('.card [data-act="follow"]').count()).toBe(1);
     });
   });
 
@@ -439,10 +439,10 @@ group("Phase 7 · the mark card", () => {
       });
       await page.mouse.click(box.x, box.y);
       await page.waitForTimeout(400);
-      expect(await page.locator(".mark-card").count()).toBe(1);
+      expect(await page.locator(".card").count()).toBe(1);
       await page.keyboard.press("Escape");
       await page.waitForTimeout(400);
-      expect(await page.locator(".mark-card").count()).toBe(0);
+      expect(await page.locator(".card").count()).toBe(0);
     });
   });
 });
@@ -646,11 +646,11 @@ group("§6.3 · the chips are the destinations", () => {
         if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(500);
-      await page.click('.bar-panel .segs button:has-text("Marks")');
+      await page.click('.panel .segs button:has-text("Marks")');
       await page.waitForTimeout(600);
       /* The label without its count — the count is a separate element inside
          the chip, so textContent runs them together. */
-      const chips = await page.evaluate(() => [...document.querySelectorAll(".chp")].map((c) => {
+      const chips = await page.evaluate(() => [...document.querySelectorAll(".f")].map((c) => {
         const n = c.querySelector("span, em");
         return c.textContent.replace(n ? n.textContent : "", "").trim();
       }));
@@ -664,7 +664,7 @@ group("§6.3 · the chips are the destinations", () => {
       /* The counts are real: the fixture has one Revision mark and one Thread. */
       const counted = await page.evaluate(() => {
         const out = {};
-        for (const c of document.querySelectorAll(".chp")) {
+        for (const c of document.querySelectorAll(".f")) {
           const n = c.querySelector("span, em");
           if (n) out[c.textContent.replace(n.textContent, "").trim()] = Number(n.textContent);
         }
@@ -735,7 +735,7 @@ group("§11 · the rack and the pills", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.waitForTimeout(1200);
-      const before = await page.evaluate(() => Number(document.querySelector(".pgpill").textContent));
+      const before = await page.evaluate(() => Number(document.querySelector(".scrub .read").textContent));
       await page.evaluate(() => {
         const r = document.querySelector(".rail");
         const box = r.getBoundingClientRect();
@@ -744,7 +744,7 @@ group("§11 · the rack and the pills", () => {
         }));
       });
       await page.waitForTimeout(900);
-      const after = await page.evaluate(() => Number(document.querySelector(".pgpill").textContent));
+      const after = await page.evaluate(() => Number(document.querySelector(".scrub .read").textContent));
       expect(after).toBeAtLeast(before + 1, "the rail did not move the reader");
       /* §11.1 — and it says how to get back. */
       const pill = await page.locator(".back").count();
@@ -757,9 +757,9 @@ group("§11 · the rack and the pills", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.waitForTimeout(1000);
-      await page.evaluate(() => { document.querySelector(".rdr-scroll").scrollTop = 900; });
+      await page.evaluate(() => { document.querySelector(".stage").scrollTop = 900; });
       await page.waitForTimeout(500);
-      const top = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollTop);
+      const top = await page.evaluate(() => document.querySelector(".stage").scrollTop);
       await page.evaluate(() => {
         const r = document.querySelector(".rail");
         const box = r.getBoundingClientRect();
@@ -768,7 +768,7 @@ group("§11 · the rack and the pills", () => {
       await page.waitForTimeout(900);
       await page.click(".back");
       await page.waitForTimeout(900);
-      const back = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollTop);
+      const back = await page.evaluate(() => document.querySelector(".stage").scrollTop);
       expect(Math.abs(back - top)).toBeAtMost(30, "it did not come back to where it left");
       expect(await page.locator(".back").count()).toBe(0, "the pill stayed after it was used");
     });
@@ -779,7 +779,7 @@ group("§11 · the rack and the pills", () => {
       await openReader(page);
       await page.waitForTimeout(900);
       const moved = await page.evaluate(async () => {
-        const input = document.querySelector(".pgpill");
+        const input = document.querySelector(".scrub .read");
         const r = input.getBoundingClientRect();
         const x = r.left + r.width / 2, y = r.top + r.height / 2;
         const opts = (X) => ({ bubbles: true, pointerId: 4, pointerType: "mouse", isPrimary: true, clientX: X, clientY: y });
@@ -811,7 +811,7 @@ group("§11 · the rail stays reachable", () => {
       await page.waitForTimeout(700);
       const clear = await page.evaluate(() => {
         const rail = document.querySelector(".rail");
-        const panel = document.querySelector(".bar-panel");
+        const panel = document.querySelector(".panel");
         if (!rail || !panel) return null;
         const a = rail.getBoundingClientRect(), b = panel.getBoundingClientRect();
         return { overlaps: a.right > b.left && a.left < b.right, railRight: Math.round(a.right), panelLeft: Math.round(b.left) };
@@ -951,9 +951,9 @@ group("§4.6 · a big paper lays out before it downloads", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const shape = await page.evaluate(() => {
-        const slots = [...document.querySelectorAll(".rdr-page")];
-        const ghosts = [...document.querySelectorAll(".rdr-page.is-placeholder")];
-        const sc = document.querySelector(".rdr-scroll");
+        const slots = [...document.querySelectorAll(".page")];
+        const ghosts = [...document.querySelectorAll(".page.ph")];
+        const sc = document.querySelector(".stage");
         return {
           /* The COLUMN is the whole document even though only a handful of
              slots are mounted — spacers hold the rest. Counting slots would be
@@ -989,12 +989,12 @@ group("§8.7 · the paper is the subject", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       await page.waitForTimeout(600);
-      expect(await op(page, ".bar-top")).toBe(1, "the bar was not solid to begin with");
+      expect(await op(page, ".acts")).toBe(1, "the bar was not solid to begin with");
 
       await page.waitForTimeout(3200);                    // sit still
       expect(await page.evaluate(() => document.querySelector(".rdr").hasAttribute("data-quiet")))
         .toBeTruthy("it never went quiet");
-      const faded = await op(page, ".bar-top");
+      const faded = await op(page, ".acts");
       expect(faded).toBeAtMost(0.2, "the bar did not recede");
       /* Faded, not gone. A control that vanishes is one you have to remember
          exists. */
@@ -1002,7 +1002,7 @@ group("§8.7 · the paper is the subject", () => {
 
       await page.mouse.move(700, 500);
       await page.waitForTimeout(300);
-      expect(await op(page, ".bar-top")).toBe(1, "moving did not bring it back");
+      expect(await op(page, ".acts")).toBe(1, "moving did not bring it back");
     });
   });
 
@@ -1014,7 +1014,7 @@ group("§8.7 · the paper is the subject", () => {
         if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
       });
       await page.waitForTimeout(3400);
-      expect(await op(page, ".bar-panel")).toBe(1, "the panel faded — it is something you chose to open");
+      expect(await op(page, ".panel")).toBe(1, "the panel faded — it is something you chose to open");
     });
   });
 
@@ -1038,9 +1038,9 @@ group("§8.7 · the paper is the subject", () => {
       /* And the way out is the label itself, which now says how to undo it. */
       expect(await page.locator('.ib[aria-label="Bring the controls back"]').count()).toBe(1);
       /* Reaching for the bar makes it solid, so it can never trap you. */
-      await page.hover(".bar-top");
+      await page.hover(".acts");
       await page.waitForTimeout(300);
-      expect(await op(page, ".bar-top")).toBe(1, "the bar stayed hidden under the pointer");
+      expect(await op(page, ".acts")).toBe(1, "the bar stayed hidden under the pointer");
     });
   });
 
@@ -1049,8 +1049,8 @@ group("§8.7 · the paper is the subject", () => {
       await openReader(page);
       await page.waitForTimeout(900);
       const boxes = await page.evaluate(() => {
-        const pg = document.querySelector(".rdr-page:not(.is-placeholder)");
-        const panel = document.querySelector(".bar-panel");
+        const pg = document.querySelector(".page:not(.ph)");
+        const panel = document.querySelector(".panel");
         const rail = document.querySelector(".rail");
         if (!pg) return null;
         const a = pg.getBoundingClientRect();
@@ -1071,10 +1071,10 @@ group("§4.5 · a thousand pages stay light", () => {
       await openReader(page);
       await page.waitForTimeout(1200);
       const counted = await page.evaluate(() => ({
-        slots: document.querySelectorAll(".rdr-page").length,
-        canvases: document.querySelectorAll(".rdr-scroll canvas").length,
-        spacers: document.querySelectorAll(".pspacer").length,
-        total: Number(document.querySelector(".pgctl + span")?.textContent?.replace(/\D/g, "") || 0),
+        slots: document.querySelectorAll(".page").length,
+        canvases: document.querySelectorAll(".stage canvas").length,
+        spacers: document.querySelectorAll(".rdr-gap").length,
+        total: Number(document.querySelector(".corner-z + span")?.textContent?.replace(/\D/g, "") || 0),
       }));
       /* The fixture is 14 pages, so a window plus spacers — not fourteen slots
          and certainly not a thousand. The rule this guards is the one that made
@@ -1113,7 +1113,7 @@ group("the paper is the subject", () => {
       const read = () => page.evaluate(() => {
         const o = (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; };
         return { quiet: document.querySelector(".rdr").hasAttribute("data-quiet"),
-                 bar: o(".bar-top"), dock: o(".bar-dock"), bot: o(".bar-bot") };
+                 bar: o(".acts"), dock: o(".tools"), bot: o(".corner-z") };
       });
       const awake = await read();
       expect(awake.bar).toBe(1, "the chrome starts hidden");
@@ -1147,7 +1147,7 @@ group("the paper is the subject", () => {
       const hushed = await page.evaluate(() => {
         const o = (s) => { const e = document.querySelector(s); return e ? Number(getComputedStyle(e).opacity) : null; };
         return { hush: document.querySelector(".rdr").hasAttribute("data-hush"),
-                 bar: o(".bar-top"), panel: o(".bar-panel") };
+                 bar: o(".acts"), panel: o(".panel") };
       });
       expect(hushed.hush).toBeTruthy();
       expect(hushed.bar).toBeAtMost(0.3, "the bar is still solid in Just the paper");
@@ -1158,7 +1158,7 @@ group("the paper is the subject", () => {
       expect(await page.locator('.ib[aria-label="Bring the controls back"]').count()).toBe(1);
       await page.click('.ib[aria-label="Bring the controls back"]');
       await page.waitForTimeout(400);
-      expect(await page.evaluate(() => Number(getComputedStyle(document.querySelector(".bar-top")).opacity))).toBe(1);
+      expect(await page.evaluate(() => Number(getComputedStyle(document.querySelector(".acts")).opacity))).toBe(1);
     });
   });
 
@@ -1168,7 +1168,7 @@ group("the paper is the subject", () => {
       await page.waitForTimeout(1200);
       const weight = await page.evaluate(() => ({
         canvases: document.querySelectorAll(".rdr canvas").length,
-        slots: document.querySelectorAll(".rdr-page").length,
+        slots: document.querySelectorAll(".page").length,
       }));
       /* The window is a handful of pages either side, never the document. */
       expect(weight.slots).toBeAtMost(40, "every page has a slot mounted");
