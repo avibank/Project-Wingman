@@ -1,8 +1,10 @@
 /* GENERATED — do not edit. Source: docs/reader/v5/reader.css
  *
  * Every selector scoped under .rdr so the reader's class names cannot restyle
- * the rest of the app. No class renamed, no value changed. See
- * scripts/scope-reader-css.mjs for why, and run `npm run reader:css` to
+ * the rest of the app. No class renamed, no value changed.
+ * Cut on the way through, and only this:
+ *   - the orphaned .demo declarations, which are a parse error
+ * See scripts/scope-reader-css.mjs for why, and run `npm run reader:css` to
  * regenerate.
  */
 /* ============================================================================
@@ -438,6 +440,7 @@
   font-size:12.5px;color:var(--txt-2);opacity:0;pointer-events:none;
   transition:opacity .24s,transform .28s var(--ease)}
 .rdr .toast.open{opacity:1;transform:translateX(-50%)}
+
 
 /* ── variant strip ──────────────────────────────────────────────────── */
 .rdr .segs{display:flex;gap:3px;background:var(--fill);padding:3px;border-radius:var(--r-sm);margin-bottom:14px}

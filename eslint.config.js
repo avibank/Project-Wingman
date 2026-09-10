@@ -40,4 +40,22 @@ export default [
       "no-unreachable": "error",
     },
   },
+  // The reader's chrome, generated verbatim out of docs/reader/v6/reader.js by
+  // scripts/build-reader-v6.mjs. It is a COPY, not source: HANDOVER's one rule
+  // is that it is finished and gets copied, so a lint rule here would only
+  // ever be an argument for editing it. `npm run check:paper` checks the thing
+  // that actually matters instead — that these files are still what the
+  // handed-over file produces, byte for byte.
+  //
+  // Two of the four rules genuinely do not apply to it: the parts read
+  // `window.WM` as a bare global, which is the interface the handover
+  // documents, and they call hoisted consts the way the file was written.
+  {
+    files: ["src/components/paper/v6/part*.js"],
+    rules: {
+      "no-undef": "off",
+      "no-unused-vars": "off",
+      "no-use-before-define": "off",
+    },
+  },
 ];

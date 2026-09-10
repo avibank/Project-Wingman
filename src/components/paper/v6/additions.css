@@ -1,0 +1,203 @@
+/* ============================================================================
+   WHAT THE SHIPPED SHEET DOES NOT KNOW ABOUT
+
+   reader.css is copied verbatim and generated into this folder scoped under
+   `.rdr`. Nothing in it is edited. This file is everything the demo it was
+   written against did not have to answer for, and every block says which.
+
+   Three kinds of thing live here and nothing else:
+     1  a real PDF page where the demo had a card of marked-up prose
+     2  the rest of this app painting the reader, which scoping cannot stop
+     3  preferences and platforms the demo had no settings screen for
+
+   If something looks wrong in the reader, the answer is almost never a value
+   in reader.css. It is a rule in here, or a rule of the app's that should be
+   in here and is not.
+   ========================================================================= */
+
+/* ── the reader is a surface over the app ────────────────────────────────
+   `.rdr` is `position:fixed;inset:0`, and it renders inside `.app` rather
+   than into the body so the app's own preference classes — Smooth Air, the
+   livery — still reach it. It has to sit above everything the app draws. */
+.app .rdr { z-index: 60; }
+
+/* ── a real page, where the demo had a card of prose ─────────────────────
+   reader.css gives `.sheetpg` `padding:44px 52px` and lets its height come
+   from the paragraphs inside it. Ours has no paragraphs: it is a raster of a
+   PDF page at a measured aspect ratio, and any padding puts the marks off the
+   words by exactly that much. The width still comes from `--pw`, which is
+   what the island's zoom writes to, so zoom and fit are unchanged. */
+.rdr .sheetpg[data-real] { padding: 0; overflow: visible; }
+/* A page nobody has rastered yet is the right shape and the right colour from
+   the first frame — that is what stops the scrollbar jumping on a 1012-page
+   manual. It is never blank-white-on-white: it carries the paper colour. */
+.rdr .sheetpg[data-real] > canvas {
+  display: block; width: 100%; height: 100%; border-radius: inherit;
+}
+.rdr .sheetpg[data-real] > canvas:not([data-on]) { visibility: hidden; }
+
+/* The spacer that holds the height of every page outside the window. It has
+   to be in the flow and take no ink. */
+.rdr .sheetgap { width: 100%; flex: 0 0 auto; pointer-events: none; }
+
+/* pdf.js's text layer takes the place of the demo's <p> elements, and
+   HANDOVER section 1 fixes where it sits: above `.marks` at z-index 2, so the
+   words stay crisp under a highlight and stay selectable. */
+.rdr .textLayer {
+  position: absolute; inset: 0; overflow: hidden; z-index: 2;
+  line-height: 1; opacity: 1; text-size-adjust: none; forced-color-adjust: none;
+  transform-origin: 0 0;
+}
+.rdr .textLayer span, .rdr .textLayer br {
+  position: absolute; white-space: pre; cursor: text;
+  transform-origin: 0 0; color: transparent;
+}
+/* Only the Select tool selects. reader.css already says so with `data-sel`;
+   this is the same rule reaching pdf.js's spans, which reader.css never saw. */
+.rdr:not([data-sel="1"]) .textLayer { pointer-events: none; user-select: none; }
+
+/* The page number the demo printed inside the card. On a real page it belongs
+   outside the paper, in the gutter, so it never covers a word. */
+.rdr .sheetpg[data-real] .pgno {
+  bottom: auto; top: 6px; right: -46px; opacity: .5; color: var(--txt-3);
+}
+@media (max-width: 900px) {
+  .rdr .sheetpg[data-real] .pgno { right: 6px; top: auto; bottom: 6px; color: var(--pink); }
+}
+
+/* ── quarantine: seven class names this app already had ──────────────────
+   Scoping reader.css stops the reader painting the REST of the app. It does
+   not stop the rest of the app painting the READER, and seven of v6's 187
+   class names already exist here as bare rules. `.rdr .x` (0,2,0) beats a
+   bare `.x` (0,1,0) for the properties it declares; the damage is everything
+   it does NOT declare, and every pseudo-element, which specificity has no
+   opinion about at all.
+
+   Measured in a browser rather than reasoned about, because the last three
+   times this was reasoned about it was wrong. */
+
+/* `.sw` — app.css, a 44x25 TOGGLE SWITCH with a 17px round knob as ::after
+   and a 44px tap strip as ::before. v6's `.warm .sw` is the warmth slider's
+   track. Left alone, every warmth slider grows a switch knob sitting inside
+   it. This is the same bug that drew v4's colour swatches as ovals. */
+.app .rdr .sw::after, .app .rdr .sw::before { content: none; }
+.app .rdr .sw { width: auto; background: none; border: 0; border-radius: 0; min-height: 0; }
+
+/* `.pop` — instruments.css, a fixed 286px panel with a rotated arrow as
+   ::before and its own h3 rules. Every popover in the reader is one of these,
+   and the reader opens from the module screen, so instruments.css is always
+   loaded when it matters. v6's `.pop` declares only a background and a
+   shadow: everything else leaks. */
+.app .rdr .pop::before, .app .rdr .pop::after { content: none; }
+.app .rdr .pop {
+  position: static; width: auto; border: 0; border-radius: inherit;
+  padding: 0; box-shadow: var(--sh-pop), inset 0 1px 0 var(--lift);
+}
+
+/* `.chip` — deck.css, which makes it monospace with tabular numerals. The
+   panel's filter chips are prose: "Everything", "Questions", "To revise". */
+.app .rdr .chip { font-family: var(--font-ui); font-variant-numeric: normal; }
+
+/* `.pres` — familiar.css, a flex row with `padding:12px 0` and a border-top.
+   v6's `.pres` is the row of tool presets inside the properties popover, and
+   it does not want a rule across the top of it. */
+.app .rdr .pres { align-items: stretch; padding: 0; border-top: 0; font-size: inherit; }
+
+/* `.scrub` — lesson.css, `height:4px` and a background: the lesson player's
+   progress bar. In v6 `.scrub` is a path inside a drawn icon, and an SVG
+   child ignores height, background and margin — so this one costs nothing
+   today. It is written down because the next person needs the whole list and
+   not just the subset that bit, and because the day `.scrub` becomes an HTML
+   element again is the day it bites. */
+.app .rdr svg .scrub { cursor: inherit; }
+
+/* `.mt` — lesson.css has only `.mt .titlerow`, and there is no `.titlerow`
+   in the reader. Nothing to undo. Listed for the same reason as `.scrub`. */
+
+/* `.av` — familiar.css, 36px square. v6 declares its own width and height in
+   both places it uses `.av`, so the box is safe; what leaks is everything
+   familiar.css says that v6 does not. */
+.app .rdr .av { overflow: visible; text-transform: none; }
+
+/* ── section 12's tap floor, and why the reader pays it differently ───────
+   App.jsx enforces `min-height:44px` on `.app button:not(.is-inline)`,
+   globally, because the 44px minimum had leaked in eleven places. The reader
+   is inside `.app`, so it inherits that rule, and the rule fights the shipped
+   sheet on every control it has: measured on v4, `.tool` came out 38x44 where
+   the sheet says 38x38, and every colour swatch drew as an oval.
+
+   The reader answers the touch case itself and answers it better than a width
+   can — `data-plat` is set from `pointer:coarse`, on capability. So inside
+   `.rdr` the shipped sheet owns the box, and section 12 is paid below. */
+.app .rdr button:not(.is-inline),
+.app .rdr [role="tab"],
+.app .rdr input:not([type="checkbox"]):not([type="radio"]),
+.app .rdr select,
+.app .rdr textarea { min-height: 0; }
+
+/* And here is section 12, paid on the platform that actually needs it. Every
+   control the student aims at with a finger, not a mouse. */
+.rdr[data-plat="tablet"] .t, .rdr[data-plat="phone"] .t,
+.rdr[data-plat="tablet"] .util, .rdr[data-plat="phone"] .util,
+.rdr[data-plat="tablet"] .selp .a, .rdr[data-plat="phone"] .selp .a,
+.rdr[data-plat="tablet"] .chip, .rdr[data-plat="phone"] .chip,
+.rdr[data-plat="tablet"] .pseg button, .rdr[data-plat="phone"] .pseg button {
+  min-height: 44px; min-width: 44px;
+}
+
+/* ── the faces, through the tokens ───────────────────────────────────────
+   reader.css names "Instrument Sans" directly. This app already loads it as
+   `--font-ui`, and the house rule (CLAUDE.md, Design system) is that the
+   brand faces are reached through tokens and never by name — which is also
+   the only way the reader follows a livery that changes the face. */
+.app .rdr { font-family: var(--font-ui); }
+.rdr .cnt, .rdr .pgno, .rdr .cn, .rdr .pcell .n, .rdr .pgh b, .rdr .tip kbd {
+  font-family: var(--font-mono);
+}
+
+/* ── Smooth Air ──────────────────────────────────────────────────────────
+   reader.css ends on a `prefers-reduced-motion` block and stops there,
+   because the demo had no settings screen. This app has one, and the rule is
+   older than the reader: every ambient motion respects the Smooth Air
+   preference as well as the media query. */
+.app.smooth-air .rdr *,
+.app.smooth-air .rdr *::before,
+.app.smooth-air .rdr *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+}
+
+/* ── when the glass cannot blur ──────────────────────────────────────────
+   Every floating surface here is a translucent panel over a backdrop blur,
+   and the blur is doing most of the work: without it the marks panel is a
+   list of sentences printed over another list of sentences. Where the blur
+   works this changes nothing. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rdr .glass, .rdr .pop, .rdr .tip, .rdr .isl, .rdr .pan { background: var(--ink-1); }
+  .rdr[data-look="light"] .glass, .rdr[data-look="light"] .pop,
+  .rdr[data-look="light"] .tip, .rdr[data-look="light"] .isl,
+  .rdr[data-look="light"] .pan { background: #EDF1F5; }
+}
+
+/* ── the app's own furniture, while a paper is open ──────────────────────
+   The report pill belongs to the rest of the app. It is hidden while a paper
+   is open rather than deleted, because the reader's own Correction tool
+   covers its job with the passage attached instead of a screenshot. */
+.app:has(.rdr) .rpt { display: none; }
+
+/* ── a paper that will not open ──────────────────────────────────────────
+   The demo's paper is markup and cannot fail. A real one can: the file can be
+   missing, the range requests can be refused, the worker can fail to load.
+   Every empty state names its next action inside the sentence (CLAUDE.md,
+   Voice), so this one is a sentence with a button in it. */
+.rdr .sheeterr {
+  margin: 90px auto 0; max-width: 460px; text-align: center;
+  color: var(--txt-2); font-size: 13.5px; line-height: 1.6;
+}
+.rdr .sheeterr b { display: block; color: var(--txt); font-weight: 600; margin-bottom: 6px; }
+.rdr .sheeterr button {
+  margin-top: 12px; padding: 8px 14px; border-radius: 99px;
+  border: 1px solid var(--hair); background: var(--fill); color: var(--txt);
+  font-size: 12.5px;
+}

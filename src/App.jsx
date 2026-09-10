@@ -70,7 +70,7 @@ const CHUNK = {
   // Its own chunk, and it matters more here than anywhere else: pdf.js is the
   // largest thing this app has ever depended on, and nobody who never opens a
   // paper should pay a byte of it. check:bundle is the gate that says so.
-  paper: chunk(() => import("./components/paper/PaperReader.jsx")),
+  paper: chunk(() => import("./components/paper/v6/ReaderV6.jsx")),
   /* Adding a paper runs the whole ingest — pdf.js, the text layer, thumbnail
      rendering — so it is lazy for the same reason the reader is: nobody who is
      not adding a paper should pay a byte of it. check:bundle caught this as a
@@ -1463,6 +1463,12 @@ function AppInner() {
                 onPlace={(page) => progress.set("pw-paper-place", { paperId: paper.id, page })}
                 onOpenThread={() => go(routePath.ready(activeModuleCode))}
                 onOpenOriginal={(p) => window.open(fileHref(p.file), "_blank", "noopener")}
+                /* THERE IS ONE LIVERY SYSTEM AND IT IS THE APP'S. The reader's
+                   `--lv` is fed from it, and the picker in the reader's You
+                   tray changes the app's livery rather than a private copy. */
+                livery={shownLivery}
+                variant={variant}
+                onLivery={(id) => withTheme(() => { setLivery(id); progress.set("pw-livery", id); })}
               />
             </main>
           );
