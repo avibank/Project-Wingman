@@ -28,8 +28,18 @@
    it, marks measured onto that layer, and an ink layer over both. The shipped
    sheet styles `.page` itself and stops at its edge, which is the right place
    for it to stop — everything below is this codebase's, not the design's. */
-.rdr .page { position: relative; padding: 0; overflow: visible; }
-.rdr .page.ph { padding: 0; }
+/* NO PADDING, AT ANY PLATFORM. The demo's page is markup, so it carries its
+   own margins — 52px on a desktop, 26px on a phone. Ours is a canvas: the
+   raster fills the page element, and padding insets the canvas inside a box
+   whose height is still the full page. The picture then sits smaller than the
+   slot it was measured for, and every mark drawn from that measurement lands
+   in the wrong place. Written at a specificity that beats the phone rule,
+   because that is the one that reintroduced it. */
+.rdr[data-plat] .page, .rdr .page { position: relative; padding: 0; overflow: visible; }
+/* And a minimum height only where there is no explicit one. A placeholder
+   with a measured height must keep it, or the spacers and the page slots
+   disagree and the pages overlap. */
+.rdr .page.ph { padding: 0; min-height: 0; }
 .rdr .rdr-canvas { display: block; width: 100%; height: 100%; border-radius: inherit; }
 .rdr .rdr-canvas:not([data-on]) { visibility: hidden; }
 
@@ -275,3 +285,26 @@
 .rdr .c, .rdr .tk, .rdr .row, .rdr .rgh, .rdr .rcard,
 .rdr .ch, .rdr .mean, .rdr .th .dot, .rdr .railtip { --k: var(--hl-y); }
 .rdr .note, .rdr .pin, .rdr .exc { --nk: var(--hl-y); --nb: #FBF6E6; }
+
+/* ── the controls the platform layer does not reach ────────────────────────
+   v5 takes `.t`, `.ic`, `.chest`, `.addb` and `.collapse` to 46px on a coarse
+   pointer, which is every control on the chrome. It stops at the popovers:
+   the properties header's own buttons are 26px, the chest's tabs are text, the
+   bar-position row is a 29px strip, and the coach's dismiss is a bare link.
+   Measured on an iPad, all of them under 30px on their shortest side.
+
+   Nothing here changes the desktop, where there is no thumb and 26px is not a
+   problem. It is the same rule the shipped sheet is already applying, applied
+   to the four places it did not reach. */
+.rdr[data-plat="tablet"] .props .hd .ic,
+.rdr[data-plat="phone"] .props .hd .ic,
+.rdr[data-plat="tablet"] .addsheet .hd .ic,
+.rdr[data-plat="phone"] .addsheet .hd .ic { width: 44px; height: 44px; }
+.rdr[data-plat="tablet"] .tabs button,
+.rdr[data-plat="phone"] .tabs button { min-width: 44px; min-height: 44px; padding: 0 6px 9px; }
+.rdr[data-plat="tablet"] .posrow button,
+.rdr[data-plat="phone"] .posrow button { padding: 13px 0; }
+.rdr[data-plat="tablet"] .coach button,
+.rdr[data-plat="phone"] .coach button { min-height: 44px; padding: 0 2px; }
+.rdr[data-plat="tablet"] .ptabs .pt,
+.rdr[data-plat="phone"] .ptabs .pt { width: 44px; height: 44px; }

@@ -253,10 +253,24 @@ export default function PaperReader({
      marking pointerdown hides it at once. Popovers hold it open with a COUNTER
      rather than a boolean, because two open at once and closing one would
      otherwise let the whole lot fade while the other is still up. */
+  /* Declared here rather than with the other refs, because `wake` below
+     writes to it and a ref used before its declaration is a ReferenceError
+     waiting for the first render that reaches it. */
+  const shellRef = useRef(null);
   const [chromeOn, setChromeOn] = useState(true);
   const holds = useRef(0);
   const idleT = useRef(0);
   const wake = useCallback(() => {
+    /* THE ATTRIBUTE FIRST, SYNCHRONOUSLY, AND THAT IS THE WHOLE POINT.
+
+       Hidden chrome is `pointer-events:none` — the shipped sheet's rule, and
+       the right one. But a reader who has been still moves the mouse and
+       clicks in one motion, and React has not re-rendered between the two: the
+       bar is still inert when the click lands, so the first click after a
+       pause is swallowed and the second one works. Writing the attribute here
+       means the CSS has already changed by the time the click arrives. The
+       state below still runs, and re-renders to the value already set. */
+    shellRef.current?.setAttribute("data-chrome", "on");
     setChromeOn(true);
     clearTimeout(idleT.current);
     if (holds.current > 0) return;
@@ -384,7 +398,11 @@ export default function PaperReader({
        Add sheet's footer is already saying it, so a full tray is a no-op
        here rather than a second message. Reading `tray` from the closure is
        safe: this only ever runs from a click, one add at a time. */
-    const { tray: next } = addTool(tray, id, TOOLS, cap);
+    /* (tray, id, cap) — v5's signature takes the tool table LAST and
+       optionally. Passed v4's order the cap arrived as the table and the table
+       as the cap, so `all.findIndex` threw on every add and nothing was ever
+       added to the bar. */
+    const { tray: next } = addTool(tray, id, cap);
     if (next === tray) return;
     setTray(next);
     saveTray(window.innerWidth, next);
@@ -415,7 +433,9 @@ export default function PaperReader({
      stays put — a press that becomes a drag is a drag. */
   const lp = useRef(0);
   const onDockPointerDown = useCallback((e) => {
-    if (!e.target.closest?.(".tool")) return;
+    /* `.t` is v5's tool button. This still said `.tool`, which is v4's, so
+       the long-press never armed and there was no way into edit mode at all. */
+    if (!e.target.closest?.(".t")) return;
     clearTimeout(lp.current);
     lp.current = setTimeout(() => { setEditing(true); setInspOpen(false); setAdding(false); }, 450);
   }, []);
@@ -490,7 +510,6 @@ export default function PaperReader({
     ? null
     : document.querySelector(".app") || document.body));
 
-  const shellRef = useRef(null);
   const scrollRef = useRef(null);
   const pageEls = useRef(new Map());
   const divsByPage = useRef(new Map());
@@ -1390,7 +1409,11 @@ export default function PaperReader({
       /* One letter per tool — but ONLY for tools on the tray. A key that
          silently switches to something the student took off is the tray not
          meaning anything. */
-      const byKey = shortcutFor(tray, TOOLS, e.key);
+      /* (tray, key) — the middle argument was v4's tool table, which
+         paperTray now takes as an optional last one. Passed positionally it
+         became the KEY, so no letter ever matched and every shortcut did
+         nothing. */
+      const byKey = shortcutFor(tray, e.key);
       if (byKey) { e.preventDefault(); setTool(byKey); return; }
       if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); turn(1); }
       if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); turn(-1); }
@@ -1707,6 +1730,20 @@ export default function PaperReader({
     };
   }, [hold]);
 
+  /* WHAT HOLDS THE CHROME OPEN. Every surface that is up because the reader
+     put it up: the properties popover, the tool chest, the panel, a menu, the
+     selection popover, an open note. The counter is what makes this safe to
+     write as one effect — two of them can be up at once, and with a boolean
+     the second to close would have released a hold the first still wanted. */
+  const openSurfaces = (inspOpen ? 1 : 0) + (adding ? 1 : 0) + (editing ? 1 : 0)
+    + (menu ? 1 : 0) + (sheet ? 1 : 0) + (rail && rail !== "none" ? 1 : 0)
+    + (picked ? 1 : 0) + (notes.some((n) => n.open) ? 1 : 0);
+  useEffect(() => {
+    if (!openSurfaces) { wake(); return undefined; }
+    hold(true);
+    return () => hold(false);
+  }, [openSurfaces, hold, wake]);
+
   /* ── the first-run coach ────────────────────────────────────────────────
      Three quiet hints at the three things that are not discoverable by
      looking. Dismissed by the button or after fourteen seconds, and the fact
@@ -1772,6 +1809,7 @@ export default function PaperReader({
          data-chrome={chromeOn ? "on" : "off"}
          data-edit={editing ? "1" : "0"}
          onPointerMove={wake}
+         onPointerDown={wake}
          onKeyDown={wake}>
 
       {/* ── the document ─────────────────────────────────────────────── */}

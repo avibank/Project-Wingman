@@ -19,8 +19,21 @@ const pageState = (page) => page.evaluate(() => {
     return {
       n: Number(p.dataset.page),
       onScreen,
-      ghost: p.classList.contains("is-placeholder"),
-      hasSheet: p.classList.contains("rdr-page"),
+      ghost: p.classList.contains("ph"),
+      /* The SHEET is what makes a page look like paper rather than a white
+         rectangle: v5 gives `.page` a white ground, a 3px radius and the one
+         shadow that is depth 1. Asked of the computed style rather than of the
+         class name, because the class is what I write and the shadow is what
+         the reader sees. */
+      hasSheet: (() => {
+        const cs = getComputedStyle(p);
+        /* A drawn page is a flat white ground; a placeholder is a gradient, so
+           its background-COLOUR is transparent and only background-image is
+           set. Either counts — the point is that the slot looks like paper
+           before there is a picture on it, which is the whole of §4.1. */
+        return cs.boxShadow !== "none"
+          && (cs.backgroundColor !== "rgba(0, 0, 0, 0)" || cs.backgroundImage !== "none");
+      })(),
       boxW: Math.round(box.width),
       drawn: !!c && c.width > 1 && c.hasAttribute("data-on"),
       fills: !!c && Math.abs(c.getBoundingClientRect().width - box.width) < 2,
@@ -34,7 +47,9 @@ group("Phase 1 · the renderer", () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
       const open = await page.evaluate(() => Math.round(document.querySelector(".stage").getBoundingClientRect().width));
-      await page.click('.ib[aria-label="Pages"]');
+      /* "Pages" is a TAB inside the panel in v5; the button on the top-right
+         opens and shuts the panel itself. */
+      await page.click('.acts .ic[aria-label="Panel"]');
       await page.waitForTimeout(400);
       const shut = await page.evaluate(() => Math.round(document.querySelector(".stage").getBoundingClientRect().width));
       expect(open).toBeAtLeast(600, "with the panel open");
@@ -119,7 +134,7 @@ group("Phase 1 · the renderer", () => {
         const s = document.querySelector(".stage");
         return { top: s.scrollTop, h: s.scrollHeight };
       });
-      await page.click('.ib[aria-label="Zoom in"]');
+      await page.click('.ic[aria-label="Zoom in"]');
       await page.waitForTimeout(700);
       const after = await page.evaluate(() => {
         const s = document.querySelector(".stage");
