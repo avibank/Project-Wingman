@@ -1,0 +1,125 @@
+<!-- ===========================================================================
+     WINGMAN — PAPERS READER
+     reader.html · the DOM. Build exactly this. The classes and the data-
+     attributes are the API the stylesheet and the script both rely on.
+
+     The root carries five attributes and every layout rule reads them:
+       data-look  dark | light
+       data-bar   left | right | bottom | top    where the tool bar is
+       data-rail  on | off                       is the bar showing
+       data-side  left | right                   the panel takes the other edge
+       data-pan   1 | 0                          is the panel showing
+
+     #stage is the only part you replace: the three <article class="sheetpg">
+     below are stand-ins for PDF.js pages.
+     =========================================================================== -->
+
+<div class="rdr" id="rdr" data-look="dark" data-bar="left" data-rail="on" data-side="right" data-pan="1">
+
+  <div class="logo"><span class="gl">W</span><span>Wingman</span></div>
+  <div class="stage" id="stage"></div>
+
+  <div class="isl" id="isl" data-msg="0">
+    <div class="head">
+      <div class="base" id="base">
+        <span class="dotw">
+          <span class="dot" id="dot" data-live="0" title="Class marks"></span>
+          <button class="bk" id="bk" aria-label="Back to the paper">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19.4 12H5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10.6 5.4L4 12l6.6 6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </span>
+        <span class="spacer"></span>
+        <div class="cnt" id="cnt"></div>
+        <span class="spacer"></span>
+        <button class="you" id="you" aria-label="You">CA</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div class="tray" id="tray"></div>
+  </div>
+  <div class="sizer" id="sizer"></div>
+
+  <div class="glass rail" id="rail"></div>
+  <div class="edge" id="edge"></div>
+  <div class="handle" id="handle"></div>
+
+  <div class="po" id="props"><div class="notch" id="notch1"></div><div class="glass pop inner" id="propsIn"></div></div>
+  <div class="po" id="chest" style="width:268px"><div class="notch" id="notch2"></div><div class="glass pop inner" id="chestIn"></div></div>
+  <div class="po" id="cgrid" style="width:250px"><div class="notch" id="notch4"></div><div class="glass pop inner" id="cgridIn"></div></div>
+
+  <button class="ptab" id="tab" aria-label="Open the panel">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14.6 5.4L8 12l6.6 6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <b id="tabn">3</b>
+  </button>
+
+  <aside class="pan" id="pan">
+    <div class="ph">
+      <div class="srch" id="srchw">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="10.6" cy="10.6" r="6.6" stroke="currentColor" stroke-width="1.9"/><path d="M15.6 15.6l4 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <input id="q" placeholder="Search the paper, a mark, or a name" autocomplete="off">
+        <button class="clr" id="clr" aria-label="Clear">&times;</button>
+      </div>
+      <div class="pseg" id="view">
+        <button class="on" data-v="marks">Marks<span id="cm"></span></button>
+        <button data-v="pages">Pages<span id="cp"></span></button>
+      </div>
+      <div id="filters"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <div class="pf" id="pf"></div>
+  </aside>
+
+
+  <div class="zone" data-z="left"></div><div class="zone" data-z="right"></div>
+  <div class="zone" data-z="bottom"></div><div class="zone" data-z="top"></div>
+
+  <div class="glass pop tip" id="tip"></div>
+
+  <div class="selp" id="selp" data-cols="0" data-del="0">
+    <div class="rowa">
+      <button class="swatch" id="selsw" aria-label="Change colour"><i></i></button>
+      <span class="vr"></span>
+      <button class="a" data-act="hl"><span class="cue hl"></span><span class="tx">Highlight</span></button>
+      <button class="a" data-act="ul"><span class="cue ul"></span><span class="tx">Underline</span></button>
+      <button class="a" data-act="ask"><span class="cue ak"></span><span class="tx">Ask</span></button>
+      <span class="vr del"></span>
+      <button class="a rm" data-rmv aria-label="Remove this mark"><span class="cue tr"></span></button>
+    </div>
+    <div class="cols" id="selcols"></div>
+    <span class="tail"></span>
+  </div>
+
+  <div class="backp" id="backp">
+    <b id="backl">Back to 0126</b>
+    <button class="act" id="backx" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <button class="demoBtn" id="demoBtn">Demo controls</button>
+  <div class="demo">
+    <h4>Fire a state<button style="float:right;color:var(--txt-3)" data-democlose>&times;</button></h4>
+    <div class="g" id="fire">
+      <button data-s="mark">Highlight made</button>
+      <button data-s="note">Note taken</button>
+      <button data-s="ask">Question asked</button>
+      <button data-s="revise">Marked to revise</button>
+      <button data-s="undo">Undo</button>
+      <button data-s="fresh">New class marks</button>
+      <button data-s="offline">Went offline</button>
+      <button data-s="rest">Back to rest</button>
+    </div>
+    <h4 style="margin-top:11px">The bar</h4>
+    <div class="g">
+      <button data-bar="left">Left</button><button data-bar="right">Right</button>
+      <button data-bar="bottom">Bottom</button><button data-bar="top">Top</button>
+    </div>
+    <div class="look">
+      <button class="on" data-hide="0">Bar always shown</button>
+      <button data-hide="1">Auto&#8209;hide</button>
+    </div>
+    <div class="look">
+      <button class="on" data-look="dark">Dark</button><button data-look="light">Light</button>
+    </div>
+    <p class="note">Long-press a tool to drag it. Tap the tool you are on for its
+      settings. Press the counter or the initials on the island.</p>
+  </div>
+</div>
