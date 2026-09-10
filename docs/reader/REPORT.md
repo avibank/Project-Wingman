@@ -67,8 +67,44 @@ reader could not recover from a zero-width start: opened in a pane reporting a
 is fired when that pane is later given its real size. It watches its own box
 with a ResizeObserver now.
 
-**Still v4's, and not yet moved:** the reader test suite. `npm run check` is
-green, including all 200 of `check:paper`.
+**Four bugs the test suite found once it spoke v5**, and every one of them was
+a signature that had changed under a call that had not:
+
+- The long-press that opens bar-edit mode tested `closest(".tool")` — v4's
+  class name — so it never armed, and there was **no way into edit mode at
+  all**.
+- `shortcutFor(tray, TOOLS, key)`: v5 takes the tool table last and optionally,
+  so `TOOLS` arrived as the key. No letter ever matched and **every keyboard
+  shortcut silently did nothing**.
+- `addTool(tray, id, TOOLS, cap)` the same way round — the cap arrived as the
+  table — so `all.findIndex` threw on every add and **nothing could be added to
+  the bar from the chest**.
+- Hidden chrome is `pointer-events:none`, which is the shipped sheet's rule and
+  the right one. But a reader who has been still moves the mouse and clicks in
+  one motion, and React has not re-rendered between the two: **the first click
+  after a pause was swallowed**. `wake` writes the attribute synchronously now,
+  so the CSS has already changed by the time the click lands.
+
+None of these would have shown up in a screenshot, and the first three are the
+same mistake three times: a rewrite that changes an argument order is a rewrite
+that needs its callers read, not just its compiler satisfied.
+
+The auto-hide's hold counter is also wired to every surface that can be up —
+properties, chest, panel, menu, mark card, an open note — rather than the two I
+had remembered. A counter and not a boolean, because two can be up at once and
+closing either one used to release a hold the other still wanted.
+
+**Where the tests now disagree with v4 on purpose**, they say so in the file
+rather than quietly changing a number: the chrome goes to zero instead of
+dimming to 12% (the LOGO is what never hides, which is what makes that safe);
+Master Caution is absent rather than a dead zero, because a destination chip
+with nothing behind it does nothing when you press it; the pen draws from the
+same five colours as everything else; the scrubber is the bottom edge of the
+screen rather than a 25px pill; and there is no "Just the paper" button,
+because the chrome hides itself.
+
+**Where it stands:** `npm run check` green, including all 200 of `check:paper`;
+the reader suite 67 of 67.
 
 ---
 

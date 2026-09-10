@@ -109,7 +109,12 @@ export const readerUrl = (uid = "student_one", staff = false, extra = "") =>
 export async function openReader(page, { uid = "student_one", staff = false, extra = "" } = {}) {
   await page.goto(readerUrl(uid, staff, extra), { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".rdr", { timeout: 25_000 });
-  await page.waitForSelector(".page:not(.ph) canvas[data-on]", { timeout: 25_000 });
+  /* 25s was enough when this suite took 150 seconds end to end. On a loaded
+     machine it takes 2000, every step is proportionally slower, and a wait for
+     a real pdf.js raster starts timing out — on a DIFFERENT test each run,
+     which is the signature of a budget rather than a bug. Raised so a slow
+     machine reports a slow pass instead of a random failure. */
+  await page.waitForSelector(".page:not(.ph) canvas[data-on]", { timeout: 90_000 });
   return page;
 }
 

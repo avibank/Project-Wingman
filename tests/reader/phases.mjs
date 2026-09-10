@@ -338,8 +338,15 @@ group("Phase 6 · the tray", () => {
       await page.click('.cell:has-text("Strikethrough")');
       await page.waitForTimeout(400);
       expect(await trayIds(page)).toContain("Strikethrough");
-      await page.click(".addb");
-      await page.waitForTimeout(300);
+      /* Adding a tool ARMS it, which closes the chest — so this opens it
+         rather than toggling it, or the click lands on whichever state the
+         previous one left behind. */
+      await page.evaluate(() => {
+        if (!document.querySelector(".addsheet")?.classList.contains("open")) {
+          document.querySelector(".addb")?.click();
+        }
+      });
+      await page.waitForTimeout(400);
       await page.click('.foot u');
       await page.waitForTimeout(400);
       expect(await trayIds(page)).toEqual(["Select", "Highlight", "Pen", "Eraser", "Note", "Question"]);
