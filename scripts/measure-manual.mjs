@@ -66,12 +66,12 @@ try {
   await page.goto(`${URL_BASE}/m/m1/paper/${encodeURIComponent(row.id)}?uid=student_one`,
     { waitUntil: "domcontentloaded" });
 
-  await page.waitForSelector(".rdr-page.is-placeholder", { timeout: 30_000 });
+  await page.waitForSelector(".page.ph", { timeout: 30_000 });
   const laidOut = Date.now() - t0;
-  const slots = await page.$$eval(".rdr-page, .rdr-gap", (n) => n.length);
-  const height = await page.evaluate(() => document.querySelector(".rdr-stack").getBoundingClientRect().height);
+  const slots = await page.$$eval(".page, .rdr-gap", (n) => n.length);
+  const height = await page.evaluate(() => document.querySelector(".stack").getBoundingClientRect().height);
 
-  await page.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 60_000 });
+  await page.waitForSelector(".page:not(.ph) canvas[data-on]", { timeout: 60_000 });
   const drawn = Date.now() - t0;
 
   /* Frame times while scrolling — the lag was 2626ms average and no amount of
@@ -90,7 +90,7 @@ try {
     return { avg: f.reduce((a, b) => a + b, 0) / f.length, worst: Math.max(...f), n: f.length };
   });
   const canvases = await page.$$eval("canvas", (n) => n.length);
-  const at = await page.$eval(".pgpill", (n) => n.textContent);
+  const at = await page.$eval(".scrub .read", (n) => n.firstChild.textContent);
 
   console.log(`page slots laid out    ${laidOut}ms   (${slots} slots, ${Math.round(height)}px of scroll)`);
   console.log(`first page drawn       ${drawn}ms`);

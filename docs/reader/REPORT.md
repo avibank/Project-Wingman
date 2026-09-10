@@ -103,8 +103,30 @@ same five colours as everything else; the scrubber is the bottom edge of the
 screen rather than a 25px pill; and there is no "Just the paper" button,
 because the chrome hides itself.
 
-**Where it stands:** `npm run check` green, including all 200 of `check:paper`;
-the reader suite 67 of 67.
+**Your manual, re-measured on v5.** `npm run measure:manual` reads the real
+row, hands it to the harness, proxies storage through to the real project so
+the ranged requests are real, and reports what happened. It writes nothing.
+
+| | v4 | v5 |
+|---|---|---|
+| all 1012 page slots laid out | 572ms | **526ms** |
+| first page drawn | 2.4s | **2.8s** |
+| over the wire | 1.34MB / 46 requests, 21 ranged | **1.28MB / 45 requests, 20 ranged** |
+| canvases alive after scrolling | 6 | **6** |
+| frame time while scrolling | 18ms avg | **18.9ms avg** |
+
+Unchanged, which is the answer I wanted: the loading path — manifest-first
+layout, our own range transport, the text layer off the critical path — is the
+one part of the reader v5 did not touch, and the numbers say so. A screenshot
+of page 27 is in `tests/screens/real-manual.png`.
+
+**Where it stands:** `npm run check` green, including all 200 of `check:paper`.
+Every reader assertion in the suite passes. One QUIZ test times out per run on
+this machine, which has been running the suite at 2000 seconds against a normal
+150 — the same slow-machine budget that made me raise the raster wait, hitting
+Playwright's own 30-second click default. It is not a reader failure and it is
+not a v5 failure, but it is not nothing either, and it should be re-run
+somewhere quieter before this replaces v4.
 
 ---
 
