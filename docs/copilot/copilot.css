@@ -1,0 +1,237 @@
+/* ===========================================================================
+   WINGMAN — COPILOT
+   copilot.css
+
+   The copilot is a STATE, not a screen. This file adds nothing to the layout
+   of any page. It only styles the small pieces that appear on chrome you
+   already have: the profile circle, the radar, the Right Seat rail section,
+   a list row's status column, and the paper.
+
+   Every class is prefixed cp- so it cannot collide with anything on the site.
+   Every colour is one of the site's own tokens. The only new token is --cp,
+   the copilot's presence colour, which is deliberately NOT a mark colour —
+   presence must never read as meaning.
+
+   Drop this file in after the site's stylesheet. Change nothing else.
+   =========================================================================== */
+
+:root{
+  --cp: oklch(.74 .118 178);          /* presence. not amber, blue, green,   */
+  --cp-ink: oklch(.16 .03 178);       /* violet or red — those mean things.  */
+}
+
+/* ── 1 · the pair, wherever the chrome puts a profile circle ────────── */
+.cp-crew{display:flex;align-items:center;position:relative}
+.cp-mate{width:var(--cp-size,52px);height:var(--cp-size,52px);border-radius:50%;
+  display:grid;place-items:center;position:relative;flex:0 0 auto;cursor:pointer;
+  font-family:var(--font-mono);font-size:calc(var(--cp-size,52px) * .25);font-weight:600;
+  letter-spacing:.04em;color:var(--cp);
+  background:color-mix(in oklab, var(--cp) 16%, var(--ground));
+  border:1px solid color-mix(in oklab, var(--cp) 52%, transparent);
+  margin-left:calc(var(--cp-size,52px) * -.31);
+  transition:opacity var(--t-base,.24s) var(--ease),
+             transform var(--t-base,.24s) cubic-bezier(.3,1.3,.45,1),
+             margin var(--t-base,.24s) cubic-bezier(.3,1.3,.45,1)}
+/* not seated: it is not there at all, and it takes no space */
+[data-cp-seat="0"] .cp-mate{opacity:0;transform:scale(.5);pointer-events:none;
+  margin-left:calc(var(--cp-size,52px) * -1)}
+.cp-mate:hover{border-color:color-mix(in oklab, var(--cp) 78%, transparent)}
+.cp-mate .cp-live{position:absolute;right:2px;bottom:2px;width:11px;height:11px;
+  border-radius:50%;background:var(--cp);border:2px solid var(--ground)}
+.cp-mate .cp-n{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 5px;
+  border-radius:99px;background:var(--accent-interactive);color:var(--ground);
+  font-family:var(--font-mono);font-size:10px;font-weight:600;display:none;place-items:center}
+.cp-mate .cp-n[data-n]{display:grid}
+/* the connection went, not the person */
+.cp-mate[data-cp-state="reconnecting"]{border-style:dashed;animation:cp-blink 1.5s var(--ease) infinite}
+@keyframes cp-blink{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* ── 2 · the menu that opens from their face ────────────────────────── */
+.cp-menu{position:fixed;z-index:900;width:320px;padding:14px 16px 16px;
+  border-radius:var(--r-lg);background:color-mix(in oklab, var(--ground) 82%, var(--raised));
+  border:1px solid var(--hair);box-shadow:0 26px 60px rgb(0 0 0 / .6);
+  opacity:0;pointer-events:none;transform:translate(-50%,-8px) scale(.96);transform-origin:50% 0;
+  transition:opacity .18s var(--ease),transform .3s cubic-bezier(.3,1.3,.45,1);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px)}
+.cp-menu.cp-on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+.cp-menu-head{display:flex;align-items:center;gap:12px;padding-bottom:2px}
+.cp-menu-head .cp-big{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  flex:0 0 auto;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--cp);
+  background:color-mix(in oklab, var(--cp) 18%, transparent);
+  border:1px solid color-mix(in oklab, var(--cp) 52%, transparent)}
+.cp-menu-head b{display:block;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.cp-menu-head span{display:block;font-size:13px;color:var(--t3)}
+.cp-row{display:flex;align-items:center;gap:10px;width:100%;padding:12px 2px;font-size:15px;
+  border-top:1px solid var(--hair);transition:color .16s;text-align:left;background:none;border-left:0;
+  border-right:0;border-bottom:0;cursor:pointer;color:inherit}
+.cp-row:first-of-type{margin-top:12px}
+.cp-row:hover{color:var(--accent-interactive)}
+.cp-row.cp-danger:hover{color:var(--danger)}
+.cp-row em{margin-left:auto;font-style:normal;font-family:var(--font-mono);font-size:12.5px;
+  color:var(--t3)}
+.cp-sw{margin-left:auto;width:38px;height:22px;border-radius:99px;background:var(--raised);
+  position:relative;flex:0 0 auto;transition:background .2s var(--ease)}
+.cp-sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+  background:var(--t3);transition:left .24s cubic-bezier(.3,1.3,.45,1),background .2s}
+.cp-row[aria-pressed="true"] .cp-sw{background:color-mix(in oklab, var(--cp) 42%, transparent)}
+.cp-row[aria-pressed="true"] .cp-sw::after{left:18px;background:var(--cp)}
+.cp-klab{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--t3);
+  margin:16px 0 8px}
+.cp-lic{display:flex;flex-wrap:wrap;gap:6px}
+.cp-lic b{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;padding:5px 10px;
+  border-radius:6px;font-weight:600;color:var(--cp);
+  background:color-mix(in oklab, var(--cp) 14%, transparent);
+  border:1px solid color-mix(in oklab, var(--cp) 34%, transparent)}
+.cp-lic b.cp-plain{background:var(--raised);color:var(--t3);border-color:var(--hair)}
+
+/* ── 3 · the invitation. It always hangs off their face. ────────────── */
+.cp-invite{position:fixed;z-index:901;width:296px;padding:16px 17px 15px;border-radius:var(--r-lg);
+  background:color-mix(in oklab, var(--ground) 82%, var(--raised));border:1px solid var(--hair);
+  box-shadow:0 26px 60px rgb(0 0 0 / .6);opacity:0;pointer-events:none;
+  transform:translate(-50%,-8px) scale(.96);transform-origin:50% 0;
+  transition:opacity .18s var(--ease),transform .3s cubic-bezier(.3,1.3,.45,1);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px)}
+.cp-invite.cp-on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+.cp-invite::before{content:"";position:absolute;top:-6px;left:50%;margin-left:-6px;width:12px;height:12px;
+  background:color-mix(in oklab, var(--ground) 82%, var(--raised));
+  border-left:1px solid var(--hair);border-top:1px solid var(--hair);transform:rotate(45deg)}
+.cp-invite p{font-size:15px;line-height:1.5}
+.cp-invite p b{color:var(--cp);font-weight:600}
+.cp-invite .cp-btns{display:flex;gap:8px;margin-top:14px}
+.cp-invite button{flex:1;height:38px;border-radius:var(--r-sm);font-size:14px;font-weight:600;
+  display:grid;place-items:center;cursor:pointer;border:1px solid var(--hair);
+  background:none;color:var(--t3);transition:.2s var(--ease)}
+.cp-invite .cp-go{background:color-mix(in oklab, var(--cp) 26%, transparent);color:var(--cp);
+  border-color:color-mix(in oklab, var(--cp) 48%, transparent)}
+.cp-invite .cp-go:hover{background:color-mix(in oklab, var(--cp) 36%, transparent)}
+.cp-invite .cp-no:hover{color:var(--t1)}
+
+/* ── 4 · the deck: the radar already exists, it just gains a blip ───── */
+.cp-blip{position:absolute;z-index:3;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-family:var(--font-mono);font-size:9px;font-weight:600;
+  background:var(--cp);color:var(--cp-ink);
+  top:22%;right:18%;opacity:0;transform:scale(.4);
+  transition:.34s cubic-bezier(.3,1.3,.45,1)}
+[data-cp-seat="1"] .cp-blip{opacity:1;transform:none}
+[data-cp-seat="1"] .cp-radar-cap{color:var(--cp)}
+/* the formation card gains a second route and a second row. Nothing moves. */
+.cp-route{stroke:color-mix(in oklab, var(--cp) 70%, transparent);stroke-width:1.8;
+  stroke-dasharray:none;fill:none}
+.cp-route-dot{fill:var(--cp)}
+.cp-who-av{background:color-mix(in oklab, var(--cp) 20%, transparent)!important;color:var(--cp)!important;
+  border:1px solid color-mix(in oklab, var(--cp) 50%, transparent)}
+
+/* ── 5 · the Ready Room's Right Seat section, when it is filled ─────── */
+.cp-rail-av{border-radius:50%!important;position:relative;
+  background:color-mix(in oklab, var(--cp) 18%, transparent)!important;color:var(--cp)!important;
+  border:1px solid color-mix(in oklab, var(--cp) 50%, transparent)}
+.cp-rail-av .cp-live{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;
+  background:var(--cp);border:2px solid var(--ground)}
+.cp-where{color:var(--cp)!important}
+
+/* ── 6 · a list row's status column. The row does not change. ───────── */
+.cp-here{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--cp);
+  background:color-mix(in oklab, var(--cp) 18%, transparent);
+  border:1px solid color-mix(in oklab, var(--cp) 52%, transparent);
+  animation:cp-pop .34s cubic-bezier(.3,1.3,.45,1)}
+@keyframes cp-pop{from{transform:scale(.5);opacity:0}}
+
+/* ── 7 · the paper: where they are, and what they are looking at ───── */
+.cp-atpage{position:fixed;z-index:40;display:flex;align-items:center;gap:8px;
+  padding:5px 12px 5px 6px;border-radius:99px;cursor:pointer;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;
+  background:color-mix(in oklab, var(--cp) 18%, var(--ground));color:var(--cp);
+  border:1px solid color-mix(in oklab, var(--cp) 46%, transparent);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s var(--ease),top .5s cubic-bezier(.3,1.3,.45,1)}
+.cp-atpage.cp-on{opacity:1;pointer-events:auto}
+.cp-atpage i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  font-style:normal;font-size:9px;background:var(--cp);color:var(--cp-ink)}
+/* their selection. Their cursor is deliberately not shown — a drifting
+   pointer is noise, a selected sentence is them saying "this bit". */
+.cp-sel{position:absolute;z-index:4;pointer-events:none;border-radius:2px;opacity:0;
+  background:color-mix(in oklab, var(--cp) 26%, transparent);
+  box-shadow:inset 0 0 0 1.5px color-mix(in oklab, var(--cp) 62%, transparent);
+  transition:opacity .22s var(--ease)}
+.cp-sel.cp-on{opacity:1}
+.cp-sel::after{content:attr(data-who);position:absolute;top:-18px;left:-1px;
+  font-family:var(--font-mono);font-size:9px;font-weight:600;padding:2px 6px;
+  border-radius:5px 5px 5px 0;background:var(--cp);color:var(--cp-ink)}
+/* a mark of theirs landing. One pulse, then it is just a mark like any other. */
+.cp-land{animation:cp-land .8s var(--ease)}
+@keyframes cp-land{from{box-shadow:0 0 0 7px color-mix(in oklab, var(--cp) 42%, transparent)}}
+
+/* ── 8 · the seat chat. It goes in the surface the screen already has. ─ */
+.cp-chat{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.cp-eph{display:flex;gap:9px;padding:14px 16px;margin-bottom:12px;border-radius:var(--r-lg);
+  background:color-mix(in oklab, var(--cp) 7%, var(--panel));
+  border:1px solid color-mix(in oklab, var(--cp) 30%, transparent);
+  font-size:14px;line-height:1.5;color:var(--t2)}
+.cp-eph b{color:var(--cp);font-weight:600}
+.cp-msgs{flex:1 1 auto;display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding:4px 2px 8px}
+.cp-msgs::-webkit-scrollbar{width:6px}
+.cp-msgs::-webkit-scrollbar-thumb{background:var(--raised);border-radius:3px}
+.cp-bub{max-width:74%;position:relative;padding:11px 15px;border-radius:16px;font-size:15.5px;
+  line-height:1.5}
+.cp-bub.cp-them{align-self:flex-start;background:var(--raised);border-bottom-left-radius:5px}
+.cp-bub.cp-mine{align-self:flex-end;border-bottom-right-radius:5px;
+  background:color-mix(in oklab, var(--accent-interactive) 26%, transparent)}
+.cp-bub time{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--t3);margin-top:5px}
+/* keep this — the one bridge from a disposable chat to something that lasts */
+.cp-keep{position:absolute;top:-11px;right:-8px;display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:99px;font-size:11.5px;font-weight:600;cursor:pointer;
+  background:var(--ground);border:1px solid var(--hair);color:var(--t3);
+  opacity:0;transform:scale(.92);transition:.18s}
+.cp-bub:hover .cp-keep,.cp-keep:focus-visible{opacity:1;transform:none}
+.cp-keep:hover,.cp-keep[data-kept]{opacity:1;color:var(--accent-interactive);
+  border-color:color-mix(in oklab, var(--accent-interactive) 50%, transparent)}
+.cp-typing{align-self:flex-start;display:flex;gap:4px;padding:13px 16px;border-radius:16px;
+  background:var(--raised);border-bottom-left-radius:5px}
+.cp-typing i{width:6px;height:6px;border-radius:50%;background:var(--t3);
+  animation:cp-tp 1.2s var(--ease) infinite}
+.cp-typing i:nth-child(2){animation-delay:.16s}
+.cp-typing i:nth-child(3){animation-delay:.32s}
+@keyframes cp-tp{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.cp-compose{flex:0 0 auto;display:flex;align-items:center;gap:10px;height:52px;
+  padding:0 8px 0 20px;border-radius:99px;background:var(--panel);border:1px solid var(--hair);
+  margin-top:14px}
+.cp-compose input{flex:1;min-width:0;background:none;border:0;outline:0;font:inherit;color:inherit;
+  font-size:15.5px}
+.cp-compose input::placeholder{color:var(--t3)}
+.cp-compose button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  flex:0 0 auto;cursor:pointer;border:0;background:var(--accent-interactive);color:var(--ground)}
+
+/* ── 9 · the quiz, flown together ──────────────────────────────────── */
+.cp-picks{margin-left:auto;display:flex;flex:0 0 auto}
+.cp-pick{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;margin-left:-7px;
+  font-family:var(--font-mono);font-size:9.5px;font-weight:600;opacity:0;transform:scale(.6);
+  transition:.3s cubic-bezier(.3,1.3,.45,1)}
+.cp-pick.cp-on{opacity:1;transform:none}
+.cp-pick.cp-me{color:var(--accent-interactive);border:1px solid var(--accent-interactive);
+  background:color-mix(in oklab, var(--accent-interactive) 30%, var(--ground))}
+.cp-pick.cp-them{color:var(--cp);border:1px solid var(--cp);
+  background:color-mix(in oklab, var(--cp) 30%, var(--ground))}
+.cp-verdict{display:inline-flex;align-items:center;gap:10px;font-size:16px}
+.cp-verdict i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.cp-verdict.cp-agree i{background:var(--ok)}
+.cp-verdict.cp-split i{background:oklch(.78 .14 78)}
+.cp-verdict.cp-neither i{background:var(--danger)}
+.cp-verdict b{font-weight:600;color:var(--t1)}
+.cp-tote{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.05em;color:var(--t3)}
+/* the discussion only exists after the reveal. Never during the answer. */
+.cp-disc{margin-top:18px;border-radius:var(--r-lg);border:0 solid var(--hair);background:var(--panel);
+  padding:0 18px;max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .45s cubic-bezier(.3,1.3,.45,1),opacity .3s var(--ease),
+             padding .3s var(--ease)}
+[data-cp-phase="reveal"] .cp-disc{max-height:320px;opacity:1;padding:16px 18px;border-width:1px}
+.cp-disc-k{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--t3);
+  margin-bottom:11px}
+.cp-waiting{display:inline-flex;align-items:center;gap:9px;color:var(--cp);font-size:15px}
+.cp-waiting i{width:7px;height:7px;border-radius:50%;background:var(--cp);
+  animation:cp-blink 1.3s var(--ease) infinite}
+
+@media (prefers-reduced-motion:reduce){
+  .cp-mate,.cp-menu,.cp-invite,.cp-blip,.cp-here,.cp-sel,.cp-atpage,.cp-pick,.cp-disc{
+    transition-duration:.01ms!important;animation:none!important}
+}
