@@ -682,6 +682,43 @@ group("v6 · undo and redo", () => {
   });
 });
 
+group("v6 · the panel never states a zero", () => {
+  /* THE LIVE SITE SHOWED "0 of 0 marks" UNDER "Yours would be the first".
+     Both halves of the panel stating the same absence, one of them by
+     counting it. No static search finds an interpolated zero — `${ms.length}
+     of ${WM.marks.length}` contains no literal — so this reads what the panel
+     actually rendered. The fixture seeds every store with marks, so the empty
+     is reached the way a student reaches it: by searching for something that
+     is not there. */
+  it("when nothing matches, it says so once and counts nothing", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await page.fill("#q", "zzzznothinghere");
+      await page.waitForSelector("#body .none", { timeout: 10_000 });
+      const said = await page.evaluate(() => ({
+        body: document.querySelector("#body").textContent.replace(/\s+/g, " ").trim(),
+        foot: document.querySelector("#pf").textContent.replace(/\s+/g, " ").trim(),
+      }));
+      expect(said.body).toContain("Nothing matches", said.body);
+      /* Every empty state names its next action inside the sentence. */
+      expect(said.body).toContain("Clear the filters", said.body);
+      expect(/\b0\b/.test(said.foot)).toBeFalsy(`the footer stated a zero: "${said.foot}"`);
+    });
+  });
+
+  it("and when everything matches, it does not count twice", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      const foot = await page.evaluate(
+        () => document.querySelector("#pf").textContent.replace(/\s+/g, " ").trim());
+      /* "3 of 3 marks" is a number said twice. With no filter on, the total
+         is the only number there is. */
+      expect(/(\d+) of \1 marks/.test(foot)).toBeFalsy(`counted twice: "${foot}"`);
+      expect(/\d/.test(foot)).toBeTruthy(`there are marks, so say how many: "${foot}"`);
+    });
+  });
+});
+
 group("v6 · the tools that mark words", () => {
   /* Arm a tool, drag across a run of the paper, and say what landed. */
   async function armAndSelect(page, tool) {

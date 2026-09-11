@@ -597,6 +597,21 @@ const NPAGES=ctx.total;`,
   },
   {
     part: 4,
+    why: "the footer read \"0 of 0 marks\" on a paper nobody has marked, and this app never states a zero",
+    find: `  PF.innerHTML=\`\${nw?\`<span class="nw"><i></i>\${nw} new since you looked</span>\`
+                   :\`<span>\${ms.length} of \${WM.marks.length} marks</span>\`}`,
+    replace: `  /* NEVER STATE ABSENCE OR A ZERO COUNT (CLAUDE.md, Voice). A fresh paper
+     showed "0 of 0 marks" under a body already saying "Yours would be the
+     first", and a filter matching nothing showed "0 of 12" under a body
+     already saying "Nothing matches" — a zero twice over, and redundant both
+     times. The count earns its place only when there is something to count. */
+  PF.innerHTML=\`\${nw?\`<span class="nw"><i></i>\${nw} new since you looked</span>\`
+                   :ms.length?\`<span>\${ms.length===WM.marks.length
+                       ?\`\${ms.length} mark\${ms.length===1?'':'s'}\`
+                       :\`\${ms.length} of \${WM.marks.length} marks\`}</span>\`:''}`,
+  },
+  {
+    part: 4,
     why: "a mark that lost its place is listed, which is the second half of a rule the first half already keeps",
     find: `  const by={};ms.forEach(m=>{(by[m.pg]=by[m.pg]||[]).push(m)});
   BODY.innerHTML=Object.keys(by).map(pg=>`,

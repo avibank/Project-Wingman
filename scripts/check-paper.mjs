@@ -335,8 +335,15 @@ console.log('\nR11 — empty reads "not yet", never "nothing"');
      marks". A checker that reads its own explanation is a checker that fails
      when somebody documents the rule properly. */
   const readerCode = reader.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
-  ok("R11", "no zero is ever stated",
-     !/\b0 (marks|notes|highlights)\b/.test(readerCode) && !/>No marks</.test(readerCode));
+  /* A LITERAL ZERO IS THE EASY HALF. The one that shipped was interpolated:
+     `${ms.length} of ${WM.marks.length} marks` reads "0 of 0 marks" on a paper
+     nobody has marked, and no string search for "0 marks" will ever find it.
+     So the count is required to be GUARDED — rendered only when there is
+     something to count — and the reader suite checks the rendered footer on a
+     real paper, which is the half that cannot be faked. */
+  ok("R11", "no zero is ever stated, literal or interpolated",
+     !/\b0 (marks|notes|highlights)\b/.test(readerCode) && !/>No marks</.test(readerCode)
+     && /:ms\.length\?`<span>/.test(read("src/components/paper/v6/part4.js")));
   ok("R11", "the orphan list is absent rather than empty",
      /const lost=ctx\.orphans\(\);/.test(reader) && /lost\.length\s*\n?\s*\?/.test(reader));
 }

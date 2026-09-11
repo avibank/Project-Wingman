@@ -13,6 +13,7 @@
  *   - a note is a mark with something written on it, and there was nowhere to write it
  *   - and the card is where it is written, in the thread markup the card already has
  *   - a paper nobody has marked is not the same empty as a filter that matches nothing
+ *   - the footer read "0 of 0 marks" on a paper nobody has marked, and this app never states a zero
  *   - a mark that lost its place is listed, which is the second half of a rule the first half already keeps
  *   - and they are listed even when nothing else matches, or they would hide behind an empty state
  *   - an instructor is a person with a staff badge, not an author id spelled 'tut'
@@ -154,8 +155,15 @@ function paintPages(){
 }
 function paintFoot(){
   const ms=shown(), nw=ms.filter(m=>m.fresh).length;
+  /* NEVER STATE ABSENCE OR A ZERO COUNT (CLAUDE.md, Voice). A fresh paper
+     showed "0 of 0 marks" under a body already saying "Yours would be the
+     first", and a filter matching nothing showed "0 of 12" under a body
+     already saying "Nothing matches" — a zero twice over, and redundant both
+     times. The count earns its place only when there is something to count. */
   PF.innerHTML=`${nw?`<span class="nw"><i></i>${nw} new since you looked</span>`
-                   :`<span>${ms.length} of ${WM.marks.length} marks</span>`}
+                   :ms.length?`<span>${ms.length===WM.marks.length
+                       ?`${ms.length} mark${ms.length===1?'':'s'}`
+                       :`${ms.length} of ${WM.marks.length} marks`}</span>`:''}
     <button class="x" data-close aria-label="Hide the panel">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9.4 5.4L16 12l-6.6 6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>`;
