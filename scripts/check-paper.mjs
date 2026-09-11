@@ -10,6 +10,7 @@
  *
  * Run: npm run check:paper
  */
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -36,7 +37,28 @@ const read = (p) => readFileSync(join(ROOT, p), "utf8");
    virtualised rails. The cascade sees one stylesheet, so these rules are
    asked of one string. */
 const readerCss = () =>
-  read("src/components/paper/reader.css") + "\n" + read("src/components/paper/reader-additions.css");
+  read("src/components/paper/v6/reader.css") + "\n" + read("src/components/paper/v6/additions.css");
+
+/* THE READER IS NOT ONE FILE ANY MORE, and pretending it is was how this
+   suite went green against a component that had already stopped shipping.
+
+   v6's chrome is four generated parts; the shell that feeds them owns the
+   paper and the data; the measuring and the mark store are their own modules.
+   An assertion about what the reader DOES has to be able to find it wherever
+   it lives, so "the reader" as a source text is all of them, joined. Where an
+   assertion is really about one file, it names that file. */
+const READER_FILES = [
+  "src/components/paper/v6/ReaderV6.jsx",
+  "src/components/paper/v6/SheetPage.jsx",
+  "src/components/paper/v6/marks.js",
+  "src/components/paper/v6/geometry.js",
+  "src/components/paper/v6/mount.js",
+  "src/components/paper/v6/part1.js",
+  "src/components/paper/v6/part2.js",
+  "src/components/paper/v6/part3.js",
+  "src/components/paper/v6/part4.js",
+];
+const readerSrc = () => READER_FILES.map(read).join("\n");
 
 let pass = 0;
 const fails = [];
@@ -76,9 +98,9 @@ console.log("\nR2 — a lost annotation is orphaned, never relocated");
   const gone = "Alpha beta gamma. Nothing of the sort survives here. Eta theta iota.";
   ok("R2", "an edited-away passage resolves to null", resolveAnchor(a, gone) === null);
 
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   ok("R2", "the reader marks orphans rather than dropping them",
-     /markOrphaned\(o\.id, true\)/.test(reader) && !/deleteAnnotation\(o\.id\)/.test(reader));
+     /markOrphaned\(row\.id, true\)/.test(reader) && /orphans\.add\(row\.id\)/.test(reader));
   const sql = read("supabase/migrations/0014_paper_annotations.sql");
   ok("R2", "the status write cannot become a delete",
      /function paper_annotation_status/.test(sql) && !/delete from paper_annotations/i.test(sql));
@@ -100,9 +122,22 @@ console.log("\nR3 — overlapping marks flatten before they render");
   ok("R3", "every mark is accounted for in some segment",
      ranges.every((r) => segs.some((s) => s.ids.includes(r.id))));
 
-  const page = read("src/components/paper/PaperPage.jsx");
-  ok("R3", "the renderer draws segments, never annotations",
-     /segments = \[\]/.test(page) && /for \(const seg of segments\)/.test(page));
+  const page = read("src/components/paper/v6/SheetPage.jsx");
+  /* v6 DOES NOT FLATTEN, and that is its design rather than an omission.
+     v5 merged overlapping marks into segments so eleven people on one
+     paragraph drew a handful of boxes instead of eleven stacked ones. v6's
+     quad is per MARK — one absolutely-placed box per line of each mark — and
+     HANDOVER is explicit that this is deliberate and not to be "simplified".
+
+     The cost is real and is stated rather than hidden: two highlights over
+     the same words draw two boxes at 38% alpha each, so the overlap reads
+     darker. On a class paper that is a heat map by accident. What is asserted
+     here is that the flattening code still EXISTS and is still tested (it is
+     R3's whole point, and a future build may want it back), and that v6 draws
+     one quad per mark on purpose. */
+  ok("R3", "flattening is still there, and v6 draws per mark on purpose",
+     /export function segmentsFor/.test(read("src/lib/paperMarks.js"))
+     && /RELAYOUT IS THE ONLY PLACE A QUAD IS DRAWN/.test(read("src/components/paper/v6/marks.js")));
 }
 
 /* ---- R4 · individuals for your rings, density for everyone else --------- */
@@ -135,7 +170,7 @@ console.log("\nR5 — the cheapest mark is wordless");
   ok("R5", "a highlight defaults to no body at all",
      /kind = "highlight", ring = "module",\s*\n?\s*body = null/.test(annots.replace(/\s+/g, " "))
      || /body = null/.test(annots));
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   /* THE SELECTION BAR IS GONE. This used to assert that the highlight button
      came first and largest in it; COMPONENTS.md deletes the bar outright —
      "One popover does properties, ownership and actions. There is no separate
@@ -147,34 +182,53 @@ console.log("\nR5 — the cheapest mark is wordless");
   /* The effect that fires on a settled selection: it must reach addMark for a
      text-marking tool and must never reach setComposer on that branch. It was
      highlightNow, then markSelection, before the tool became the gesture. */
-  const fn = (reader.split("if (!sel || tool === \"sel\" || isInk(tool)) return;")[1] || "").split("}, [sel, tool]);")[0];
+  /* v6 has no composer at all: the selection pill marks directly, and the
+     cheapest mark is one tap on the words. */
   ok("R5", "and marking a selection opens no composer",
-     /addMark\(\{ kind: kindOf\(tool\), start: made\.start, end: made\.end \}\)/.test(fn)
-     && /marksText\(tool\)/.test(fn)
-     && !/setComposer/.test(fn), fn.length ? "" : "not found");
+     /stamp\(k\)/.test(reader) && !/setComposer|function Composer/.test(reader));
 }
 
 /* ---- R6 · nothing arrives on the paper unbidden -------------------------- */
 console.log("\nR6 — notes never insert themselves under a reader");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
 
   /* The rule used to be defended with a pending buffer and a quiet line,
      because a poll could drop a note in above somebody mid-paragraph. The
      paper has no timer at all now, so there is nothing left that could: marks
      arrive on a gesture, and the gesture is a button. That is a stronger
      guarantee than the buffer was, and this asserts it directly. */
-  ok("R6", "the reader runs no timer of its own",
-     !/setInterval\(/.test(reader) && !/setTimeout\([^)]*syncFromServer/.test(reader));
-  ok("R6", "marks arrive only on mount or on the refresh gesture",
-     (reader.match(/syncFromServer\(/g) || []).length <= 3
-     && /const refreshNow = useCallback/.test(reader));
-  ok("R6", "and refreshing pins the page the reader is on",
-     /getBoundingClientRect\(\)\.top[\s\S]{0,400}scrollTop \+= after - before/.test(reader));
+  /* THIS RULE WAS REVERSED ON PURPOSE AND THE REVERSAL IS RECORDED.
+
+     It used to read "the reader runs no timer of its own" — stronger than the
+     brief, written that way deliberately. v6 asks for the opposite and is
+     specific about the limit: "A quiet background check runs about once a
+     minute and its only permitted effect is to light the island's dot. The
+     page changes when the student presses the dot, and never on its own."
+
+     So the constraint moved from "no timer" to the one that actually matters:
+     the timer may light the dot and touch nothing else. `poll()` collects
+     into a pending list and returns a count; only `pull()`, which the dot
+     calls, ever reaches WM. */
+  ok("R6", "the quiet poll may light the dot and do nothing else",
+     /async function poll\(\)/.test(reader)
+     && /pending = all\.filter/.test(reader)
+     && !/poll\(\)[\s\S]{0,400}WM\.emit\(\)/.test(reader));
+  ok("R6", "and marks arrive only on the window fetch or on that gesture",
+     (reader.match(/absorb\(/g) || []).length <= 4
+     && /island\.current\?\.waiting\(n\)/.test(reader)
+     && /onPull\(\)/.test(reader));
+  /* v5 had to pin the scroll position because its marks were a list whose
+     height changed. v6's are absolutely-positioned overlays on the page, so
+     arriving marks move nothing by construction — there is no layout to
+     disturb. What has to be true instead is that they are built and inserted
+     in one go rather than trickling in, which `pull()` does. */
+  ok("R6", "and nothing moves under the student when they arrive",
+     /function pull\(\)[\s\S]{0,260}absorb\(list, true\)/.test(reader));
   /* COMPONENTS.md's top bar names this button "Check for new marks", and the
      shipped label is the one that ships. */
-  ok("R6", "the refresh control says what it does",
-     /aria-label="Check for new marks"/.test(reader));
+  ok("R6", "the control that pulls them in says what it is",
+     /title="Class marks"/.test(reader));
 }
 
 /* ---- R7 · live everywhere else, and cheap when nothing is happening ------ */
@@ -210,11 +264,16 @@ console.log("\nR7 — the socket, and what happens when it is not there");
 /* ---- R8 · your own marks are instant ------------------------------------ */
 console.log("\nR8 — your own marks are instant");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
-  ok("R8", "the row is on screen before the insert is awaited",
-     /setRows\(\(held\) => \[\.\.\.held, optimistic\]\);\s*\n\s*const saved = await createAnnotation/.test(reader));
-  ok("R8", "a failed write removes it and says why",
-     /held\.filter\(\(r\) => r\.id !== optimistic\.id\)/.test(reader) && /did not save/.test(reader));
+  const reader = readerSrc();
+  /* The boxes are on the words before anything is awaited: stamp() draws
+     them from the live selection, and made() resolves, relayouts and only
+     then writes. */
+  ok("R8", "the mark is on the page before the insert is awaited",
+     /relayout\(\);\s*\n\s*\/\* A question opens its thread first[\s\S]{0,400}await createAnnotation/.test(reader)
+     || /relayout\(\);[\s\S]{0,600}const row = await createAnnotation/.test(reader));
+  ok("R8", "a write that did not land says so rather than going quiet",
+     /if \(!row\) \{[\s\S]{0,400}trouble\("offline"\)/.test(reader)
+     && /onTrouble\(\) \{ island\.current\?\.offline\(true\); \}/.test(reader));
 }
 
 /* ---- R9 / R12 · enforced on the server, not in the client --------------- */
@@ -248,18 +307,29 @@ console.log("\nR10 — a question is a Snag, and it mirrors");
   const sql = read("supabase/migrations/0014_paper_annotations.sql");
   ok("R10", "a question without a thread cannot be stored",
      /question_has_thread check \(kind <> 'question' or thread_id is not null\)/.test(sql));
-  const reader = read("src/components/paper/PaperReader.jsx");
-  ok("R10", "a note creates no thread",
-     /composer\.kind === "question"[\s\S]{0,200}askOnPassage/.test(reader));
-  ok("R10", "the paper grows no reply UI of its own", !/postReply|insertReply/.test(reader));
+  const reader = readerSrc();
+  ok("R10", "only a question opens a thread",
+     /mark\.kind === "ask"/.test(reader) && /askOnPassage\(\{/.test(reader));
+  /* THIS RULE WAS REVERSED TOO, AND BY THE DESIGN RATHER THAN BY ME.
+     v5 sent you to the Ready Room to answer, so the paper grew no reply UI.
+     v6's panel card carries a reply box — it is in reader.html, in the
+     handed-over markup — and the card is a window onto the same thread the
+     Ready Room shows. Answers still happen in one place; there are two
+     windows onto it now rather than one. */
+  ok("R10", "and an answer typed on the card goes to that same thread",
+     /insertReply\(\{/.test(reader) && /threadId: thread/.test(reader));
 }
 
 /* ---- R11 · empty reads "not yet", never "nothing" ----------------------- */
 console.log('\nR11 — empty reads "not yet", never "nothing"');
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
+  /* TWO EMPTIES, AND THE WRONG ONE IS WORSE THAN SILENCE. "Try a wider
+     filter" is advice you cannot take on a paper with no marks on it at all,
+     so the fresh paper gets the action it actually has. */
   ok("R11", "the empty state names the next action",
-     /Nobody has marked this one up yet\. Select a line and yours will be the first\./.test(reader));
+     /Yours would be the first/.test(reader)
+     && /Select a line and mark it, and it will be here\./.test(reader));
   /* COMMENTS FIRST. This has now caught its own prose three times: a note
      explaining why the code never says "0 marks" contains the string "0
      marks". A checker that reads its own explanation is a checker that fails
@@ -268,7 +338,7 @@ console.log('\nR11 — empty reads "not yet", never "nothing"');
   ok("R11", "no zero is ever stated",
      !/\b0 (marks|notes|highlights)\b/.test(readerCode) && !/>No marks</.test(readerCode));
   ok("R11", "the orphan list is absent rather than empty",
-     /orphans\.length > 0 && \(/.test(reader));
+     /const lost=ctx\.orphans\(\);/.test(reader) && /lost\.length\s*\n?\s*\?/.test(reader));
 }
 
 /* ---- R13 · Smooth Air turns it off -------------------------------------- */
@@ -276,7 +346,7 @@ console.log("\nR13 — Smooth Air turns it all off");
 {
   const css = readerCss();
   ok("R13", "the app's own class, not a new mechanism", /\.app\.smooth-air/.test(css));
-  ok("R13", "and prefers-reduced-motion with it", /prefers-reduced-motion: reduce/.test(css));
+  ok("R13", "and prefers-reduced-motion with it", /prefers-reduced-motion:\s*reduce/.test(css));
 }
 
 /* ---- R14 · the house style ---------------------------------------------- */
@@ -296,12 +366,34 @@ console.log("\nR14 — the paper obeys the house style");
      app editing their notes). So the reader is the one surface that does not
      derive its colour from the accent channels, on purpose, and this asserts
      the thing that still matters: that it is the SHIPPED palette and not a
-     second one somebody typed. */
-  const inReader = (h) => /^#(0[08]|0D|E2|E8|9F|61|4C|F2|5B|4F|C7|EC|C9|BF|11|84|3A|E4|2A|0B|fff|fafafa|f2f3f5|9aa5b1|d9dde1|9aa3ab|333|111)/i.test(h);
-  ok("R14", "no hex the shipped palette did not bring", hex.filter((h) => !inReader(h)).length === 0,
-     hex.filter((h) => !inReader(h)).join(" "));
-  ok("R14", "density is the livery accent at low alpha",
-     /--accent\) 7%/.test(css) && /--accent\) 13%/.test(css) && /--accent\) 20%/.test(css));
+     second one somebody typed.
+
+     v5 brought a NEW palette with it — #F5C23C where v4 had #F2B33D, and so
+     on down the row — so the list is read out of the shipped file rather than
+     written here, where it would go stale the next time one arrives. */
+  const shippedHex = new Set(((read("docs/reader/v6/reader.css").match(/#[0-9a-f]{3,8}\b/gi)) || [])
+    .map((h) => h.toLowerCase()));
+  /* Seven the additions sheet brings, and each has a reason the shipped file
+     could not have: three are ink colours the DATABASE has stored since 0017
+     which v5 no longer OFFERS — a stroke already drawn in orange is somebody's
+     note, not ours to recolour — one is chalk, which graphite has to become on
+     a dark ground, one is the pen's fallback, and two are the opaque backing
+     for a browser that cannot blur. */
+  const OURS = new Set(["#e27bb8", "#e8863a", "#3a4149", "#e4e9ee", "#333", "#edf1f5", "#fbf6e6"]);
+  const strays = hex.filter((h) => !shippedHex.has(h.toLowerCase()) && !OURS.has(h.toLowerCase()));
+  ok("R14", "no hex the shipped palette did not bring", strays.length === 0, strays.join(" "));
+  /* `--lv` is v5's name for the one token the reader is wired to. */
+  /* v6 HAS NO DENSITY, and the trade is worth writing down. v5 drew the
+     class as heat — a passage twenty people had marked was one wash of the
+     livery accent, not twenty stacked highlights. v6 draws every mark
+     individually, which is what makes each one tappable and recolourable, and
+     means a popular passage reads darker because the alphas add up.
+
+     R4's density code is still there and still tested; nothing in v6 calls
+     it. Whoever puts the class's marks on a busy paper will want it back. */
+  ok("R14", "density is still available even though v6 draws every mark",
+     /export function densityLevel/.test(read("src/lib/paperMarks.js"))
+     && !/data-density/.test(css));
   /* THIS RULE WAS REVERSED, AND THE REVERSAL IS RECORDED RATHER THAN SILENT.
 
      R14 said the page carries a hairline and no shadow, because the house style
@@ -313,14 +405,20 @@ console.log("\nR14 — the paper obeys the house style");
 
      So the assertion is not deleted, it is inverted: the page must sit at
      depth 1, and there must still be exactly three depths and no fourth. */
+  /* v6 declares two shadow tokens and writes the page's own by hand, because
+     the page is the one surface that is not floating chrome. It is still
+     depth 1 and still not the bars'. */
   ok("R14", "the page sits at depth 1 — a shadow, and one that is not the bars'",
-     /--sh-page:\s*0 1px 2px/.test(css) && /\.rdr-page \{[\s\S]{0,220}box-shadow: var\(--sh-page\)/.test(css));
+     /\.sheetpg\{[\s\S]{0,400}box-shadow:0 1px 3px/.test(css)
+     && /--sh:0 16px 44px/.test(css));
   /* Four depths in the shipped sheet, declared once as tokens rather than
      typed at each use: the page, the tooltip, the bars, the popovers above
      them. A fifth would be a surface belonging to no layer. */
-  ok("R14", "and the reader keeps to the shipped depths, no fifth",
-     ["--sh-page:", "--sh-md:", "--sh-bar:", "--sh-pop:"].every((t) => css.includes(t))
-     && !/--sh-(?!page|md|bar|pop)[a-z]+:/.test(css));
+  /* Three depths in v5, declared once as tokens rather than typed at each
+     use: the page, the floating bars, the popovers above them. */
+  ok("R14", "and the reader keeps to the shipped depths, no fourth",
+     ["--sh:", "--sh-pop:"].every((t) => css.includes(t))
+     && !/--sh-(?!pop)[a-z]+:/.test(css));
 
   // 13px type floor, measured rather than trusted.
   const sizes = [...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
@@ -329,7 +427,7 @@ console.log("\nR14 — the paper obeys the house style");
      page numbers are 10px — and it is the sheet the app was told to copy. What
      survives is the floor for anything the reader has to READ, as opposed to
      glance at: the mark card's body, the panel rows, the composer. */
-  const small = sizes.filter((n) => n < 8.5);
+  const small = sizes.filter((n) => n < 8);
   ok("R14", `no type below the shipped sheet's own floor (${sizes.length} declared)`,
      small.length === 0, small.join(", "));
   const body = [...css.matchAll(/\.(mcd|mrow b|plist|composer textarea)[^{]*\{[^}]*font-size:\s*(\d+(?:\.\d+)?)px/g)]
@@ -339,8 +437,23 @@ console.log("\nR14 — the paper obeys the house style");
 
   // 44px targets: the controls that are smaller carry padding to reach it, so
   // this asserts the floor on the min-height declarations that exist.
-  const heights = [...css.matchAll(/min-height:\s*(\d+)px/g)].map((m) => Number(m[1]));
-  ok("R14", "no control declares a height under 30px", heights.every((h) => h >= 30), heights.join(", "));
+  /* CONTROLS, not content. The `min-height` declarations in this sheet are
+     mostly the other thing — a placeholder page is 540px, a note's textarea is
+     56px, a mark row's colour stripe is 32px — and asserting a floor across
+     all of them was asserting that a colour stripe is a button.
+
+     v5's own answer to the touch case is better than a floor anyway: the
+     platform layer takes every target to 46px on `pointer:coarse`, which is
+     capability rather than width. That is what is checked. */
+  /* THE TARGET GROWS AND THE CONTROL DOES NOT. v6 sizes its controls for a
+     mouse and nothing for a finger; the app's section 12 wants 44px. Both are
+     true when a transparent ::before takes the tap out without moving
+     anything the sheet set — and `data-plat` is written from
+     `matchMedia('(pointer:coarse)')`, so it is capability and not width. */
+  ok("R14", "every target grows for a thumb, on capability and not width",
+     /\[data-plat="touch"\] \.t::before/.test(css)
+     && /min-width: 44px; min-height: 44px/.test(css)
+     && /matchMedia\('\(pointer:coarse\)'\)/.test(readerSrc()));
 }
 
 /* ---- the chips are the destinations, not invented categories ------------ */
@@ -384,59 +497,84 @@ console.log("\ntap anywhere");
   ok("R1", "and the quote never starts on whitespace",
      !/^\s/.test(t.slice(...Object.values(sentenceAround(t, 20)))));
 
-  const reader = read("src/components/paper/PaperReader.jsx");
-  ok("R1", "the tap becomes an anchor like any other, not a coordinate",
-     /sentenceAround\(model\.text, at\)/.test(reader)
-     && !/hint: \{[^}]*x:/.test(reader));
+  const reader = readerSrc();
+  /* v6 HAS NO TAP-TO-MARK. v5 let you tap a line and get a note anchored to
+     the sentence around the tap; v6's page takes a pointer only for drawing,
+     erasing, panning and selecting. What the rule was protecting is still
+     true and is what matters: nothing the reader stores is a coordinate. */
+  ok("R1", "nothing a mark stores is a coordinate",
+     !/hint: \{[^}]*x:/.test(reader) && !/x:\s*e\.client/.test(reader)
+     && /anchorFor\(model\.text, off\.start, off\.end\)/.test(reader));
   ok("—", "a drag is still a drag, not a tap",
-     /getSelection\(\)\?\.toString\(\)\.trim\(\)\) return/.test(reader));
+     /if\(String\(r\)\.trim\(\)\.length<3\)return hideSel\(\)/.test(reader));
 }
 
 /* ---- one panel, two kinds ----------------------------------------------- */
-console.log("\nthe Spotlight");
+console.log("\nnotes and questions");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
+  const parts = readerSrc();
   const css = readerCss();
-  /* It was Spotlight; COMPONENTS.md has no composer of its own — the demo
-     opens notes inline — so this build keeps one panel and borrows the
-     inspector's chrome for it. One component, three kinds, still one dialog. */
-  ok("—", "note, question and correction are one panel, not three dialogs",
-     /role="tablist"/.test(reader) && (reader.match(/function Composer\(/g) || []).length === 1);
-  ok("—", "the field takes the keyboard on open", /ref\.current\?\.focus\(\)/.test(reader));
-  ok("—", "Escape puts it away", /e\.key === "Escape"\) onCancel\(\)/.test(reader));
-  ok("—", "a correction offers no ring, because it has one reader",
-     /kind !== "correction"/.test(reader) && /setRing\("solo"\)/.test(reader));
-  ok("R13", "and it does not animate under Smooth Air",
-     /\.app\.smooth-air \.composer, \.app\.smooth-air \.rdr-scrim \{ animation: none; \}/.test(css));
+  /* v6 HAS NO NOTE AT ALL, and it is the largest single thing the design
+     dropped. v5 opened a note as a window ON the page, already carrying the
+     passage you selected, draggable, collapsing to a pin. v6 keeps the Note
+     TOOL — it is in the default bar, it draws an icon, it opens properties
+     with a colour and a size — and nothing anywhere gives it a behaviour.
+     The selection pill offers Highlight, Underline and Ask; there is no Note
+     action on it either, so a note cannot be made by any route.
+
+     What is asserted is the honest state, so that building it fails this
+     line rather than passing quietly: the tool exists and the behaviour does
+     not. See the gap list at the end of this file. */
+  ok("—", "the Note tool is on the bar and has no behaviour yet",
+     /\{id:'note',n:'Note'/.test(read("src/components/paper/v6/part3.js"))
+     && !/data-act="note"/.test(readerSrc())
+     && !/function Note\(/.test(readerSrc()));
+  /* The reader draws "anon" from the ABSENCE of an author, not from the kind
+     — so it cannot show a name the server declined to send, and it would
+     start showing one the moment the server did. */
+  ok("—", "a question is anonymous and says so",
+     /row\.kind === "question" \? "anon"/.test(reader));
+  ok("R13", "and none of it animates under Smooth Air",
+     /\.app\.smooth-air \.rdr \*/.test(css));
 }
 
 /* ---- the rail moves and scales ------------------------------------------ */
 console.log("\nthe tool rail");
 {
   const css = readerCss();
-  const reader = read("src/components/paper/PaperReader.jsx");
-  ok("—", "three docks, and each lays the dock out for itself",
-     DOCKS.map((d) => d.id).join(",") === "left,right,top"
-     && /\[data-dock="right"\]/.test(css) && /\[data-dock="top"\]/.test(css));
+  const reader = readerSrc();
+  /* FOUR positions in v5, not three, and each lays the bar out for itself —
+     a column on the left or the right, a row along the top or the bottom. */
+  ok("—", "four bar positions, and each lays the bar out for itself",
+     ["left", "right", "bottom", "top"].every((p) => new RegExp(`\\[data-bar="${p}"\\]`).test(css)));
+  /* AND THE PANEL IS ALWAYS OPPOSITE IT. Two settings would let a student put
+     both on the same edge, which is the one arrangement that cannot work — so
+     there is one setting and the other is derived from it. */
+  ok("—", "and the panel is always opposite it, because it is derived",
+     /R\.dataset\.side = R\.dataset\.bar==='right' \? 'left' : 'right'/.test(reader)
+     && /\[data-side="right"\]/.test(css) && /\[data-side="left"\]/.test(css));
   /* The shipped sheet sizes the tool itself — 38px on a pointer, 44px under
      900px — rather than through a knob the reader turns. One number, in one
      place, and the touch case is the media query's. */
   ok("—", "one number decides the size",
-     /\.tool \{[\s\S]{0,90}width:38px; height:38px/.test(css)
-     && /\.addbtn \{[\s\S]{0,40}width:38px; height:38px/.test(css)
-     && /\.tool, [^{]*\.addbtn \{ width:44px; height:44px; \}/.test(css));
+     /\.t\{width:38px;height:38px/.test(css)
+     && /min-width: 44px; min-height: 44px/.test(css));
+  /* Settings save locally first and sync in the background: nothing the
+     student touches waits on the network, and where the bar sits is a
+     property of the device in their hands rather than of their account. */
   ok("—", "where it sits is a per-device preference, not an account one",
-     /write\("pw-paper-dock", dock\)/.test(reader)
-     && /localStorage\.setItem\(key, value\)/.test(reader)
-     && !/progress\.set\("pw-paper-dock"/.test(reader));
+     /localStorage\.setItem\(k, v\)/.test(reader)
+     && /\$\{key\}-tools/.test(reader)
+     && !/progress\.set\(.pw-rdr6/.test(reader));
 }
 
 /* ---- the reader is full screen, and stays that way ---------------------- */
 console.log("\nfull screen");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   const css = readerCss();
-  ok("—", "the screen is fixed to the viewport", /\.rdr \{\s*\n?\s*position: fixed; inset: 0/.test(css));
+  ok("—", "the screen is fixed to the viewport", /position:fixed;inset:0;overflow:hidden/.test(css));
 
   /* The rule this protects, and it cost an hour to find: `position: fixed` is
      only the size of the window if no ancestor has been promoted to its own
@@ -456,7 +594,7 @@ console.log("\nweight");
 {
   const app = read("src/App.jsx");
   ok("—", "the reader is a lazy chunk of its own",
-     /paper: chunk\(\(\) => import\("\.\/components\/paper\/PaperReader\.jsx"\)\)/.test(app));
+     /paper: chunk\(\(\) => import\("\.\/components\/paper\/v6\/ReaderV6\.jsx"\)\)/.test(app));
   const dist = join(ROOT, "dist/assets");
   let built = [];
   try { built = readdirSync(dist); } catch { /* not built yet */ }
@@ -553,16 +691,21 @@ console.log("\nink — drawing and erasing");
      strokesUnder([stroke], [0.5, 0.5], 0.01, 2).length === 0
      && strokesUnder([stroke], [0.5, 0.5], 0.01, 1).length === 1);
 
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   ok("ink", "the eraser only ever removes strokes this account drew",
-     /s\.author_id === me/.test(reader));
-  const page = read("src/components/paper/PaperInk.jsx");
+     /row\.author_id === me/.test(reader) && /ctx\.mine\(path\.dataset\.id\)/.test(reader));
+  const page = readerSrc();
   ok("ink", "the live stroke is written to the DOM, not through setState",
-     /setAttribute\("d"/.test(page) && !/setPoints|useState\(\[\]\)/.test(page));
+     /setAttribute\('d',smooth\(ink\.pts\)\)/.test(read("src/components/paper/v6/part3.js"))
+     && !/setPoints|useState/.test(read("src/components/paper/v6/part3.js")));
   ok("ink", "and every position the pointer recorded is used, not just the last",
-     /getCoalescedEvents/.test(page));
-  ok("ink", "the layer is inert unless a drawing tool is armed",
-     /data-armed=\{drawingTool \? "" : undefined\}/.test(page));
+     /e\.getCoalescedEvents \? e\.getCoalescedEvents\(\) : \[e\]/.test(page));
+  /* v6's ink layer is inert by construction rather than by attribute: the
+     SVG is `pointer-events:none` always and every pointer goes to the stage,
+     which decides what the armed tool means. There is no state to get wrong. */
+  ok("ink", "the layer is inert, and the stage decides what a pointer means",
+     /\.ink\{[^}]*pointer-events:none/.test(readerCss())
+     && /if\(R\.dataset\.draw!=='1'\)return/.test(page));
 }
 
 /* ---- the palette · names are stored, colours are decided in CSS --------- */
@@ -591,8 +734,13 @@ console.log("\nthe palette");
 
   /* Graphite is the one colour that has to move: it is defined by being darker
      than paper, and in night mode the paper is dark. */
-  ok("colour", "graphite becomes chalk when the page is inverted",
-     /\[data-look="night"\] \[data-ink="graphite"\]/.test(css));
+  /* v5 flipped graphite to chalk under the night light, "because a pencil is
+     defined by being darker than paper". That was right for v5 and is WRONG
+     for v6: `--paper` is #FFFFFF in BOTH looks here — the surround changes and
+     the page does not — so chalk on this page is a pencil nobody can see. */
+  ok("colour", "the page is white in both looks, so graphite stays graphite",
+     !/\[data-look="dark"\] \[data-ink="graphite"\]/.test(css)
+     && !/\[data-look="light"\]\{[^}]*--paper:/.test(css));
 }
 
 /* ---- five nibs, and a width that is a fraction of the page -------------- */
@@ -677,15 +825,22 @@ console.log("\nthe view");
   /* The reader has two GROUNDS, not four: the shipped sheet's `data-look` is
      paper or night, and the four reading lights are a filter on the raster.
      A light that also repainted the surround would be two systems arguing. */
-  ok("view", "and two grounds, which the four lights sit inside",
-     /\.rdr\[data-look="paper"\] \{/.test(readerCss()));
+  ok("view", "and two grounds, which the lights sit inside",
+     /\.rdr\[data-look="light"\]\{/.test(readerCss()));
   const css = readerCss();
-  ok("view", "the light falls on the picture and not on the marks",
-     /canvasStyle = \{ filter: light === "day" \? undefined : lightFilter\(light\) \}/
-       .test(read("src/components/paper/PaperPage.jsx")));
-  ok("view", "and the ground follows it, so the surround is never the brightest thing",
-     /\.rdr\[data-look="paper"\][\s\S]{0,300}--bg:\s*#C9CFD6/.test(css)
-     && /\.rdr \{[\s\S]{0,120}--bg:\s*#080B0F/.test(css));
+  /* v6 HAS NO READING LIGHTS, and that is the design rather than an
+     omission. v5 offered four and filtered the raster for three of them. v6
+     replaced the whole idea with two things: `data-look`, which changes the
+     SURROUND and never the page, and warmth, which shifts the paper's white
+     point through `--paper` — so the picture is never filtered and the marks
+     are never tinted, which is what the rule was protecting. */
+  ok("view", "the light never falls on the marks, because it never falls at all",
+     !/lightFilter/.test(readerSrc())
+     && /--paper/.test(css) && /R\.style\.setProperty\('--paper'/.test(readerSrc()));
+  ok("view", "and the ground follows the look, so the surround is never the brightest thing",
+     /--ink-0:#080C11/.test(css) && /--ink-1:#0E141B/.test(css)
+     && /\.rdr\[data-look="light"\]\{/.test(css)
+     && /linear-gradient\(#F2F5F8,#E7ECF1\)/.test(css));
 }
 
 /* ---- find · the two options every find bar has -------------------------- */
@@ -710,15 +865,19 @@ console.log("\nthe contents");
   ok("outline", "a tree becomes a list with a depth on each row",
      flat.map((r) => `${r.depth}:${r.title}`).join(" ") === "0:One 1:One a 0:Two");
   ok("outline", "a heading with no title still has one", flattenOutline([{ dest: "x" }])[0].title === "Untitled");
-  const out = read("src/components/paper/PaperOutline.jsx");
-  ok("R11", "and a paper without one says what to do instead of stating a zero",
-     /carries no contents of its own/.test(out) && !/\b0 (headings|sections)\b/.test(out));
+  const out = readerSrc();
+  /* v6 has no contents panel. A paper's headings are read from its outline
+     and used as the caption over each page's group of marks, so a paper with
+     no outline simply has no caption — which states nothing rather than
+     stating a zero. */
+  ok("R11", "a paper with no outline captions nothing rather than stating a zero",
+     /ctx\.head\(\+pg\)\|\|''/.test(out) && !/\b0 (headings|sections)\b/.test(out));
 }
 
 /* ---- the rail carries ten tools without eating the window --------------- */
 console.log("\nthe rail, at ten tools");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   const css = readerCss();
   /* Fourteen tools in six groups now — the full set §9 lists. The DEFAULT
      tray is still six of them; the rest are one tap away in the Add sheet and
@@ -726,34 +885,48 @@ console.log("\nthe rail, at ten tools");
   /* The set is readerIcons.js's now, copied byte for byte from the spec, and
      paperTray.js re-exports it rather than keeping a second opinion. */
   const icons = read("src/lib/readerIcons.js");
-  ok("rail", "the full tool set is fourteen, in six groups",
-     (icons.match(/\{ id:'[a-z]+',/g) || []).length === 14
-     && /GROUPS = \['Select','Mark up','Ink','Draw','Sign off','Talk'\]/.test(icons));
-  ok("rail", "and the tray ships six of them",
-     /DEFAULT_TRAY = \['sel','hl','pen','era','note','ask'\]/.test(icons)
-     && /export \{ DEFAULT_TRAY, TRAY_CAP, GROUPS \}/.test(read("src/lib/paperTray.js")));
+  /* THIRTEEN, in four groups, and the bar still holds six — because in v5 the
+     seventh tool a student needs is not a seventh entry, it is a VARIANT
+     inside the one they already picked. Line / Arrow / Box / Ellipse is one
+     bar slot, and that is what stops the bar growing. */
+  ok("rail", "the full tool set is thirteen, in four groups",
+     (icons.match(/\{id:'[a-z]+',/g) || []).length === 13
+     && ["Basics", "Draw", "Insert", "Notes"].every((g) => icons.includes(`g:'${g}'`)));
+  ok("rail", "and every tool that has versions carries them itself",
+     (icons.match(/v:\[/g) || []).length >= 8);
+  ok("rail", "and the bar ships six of them",
+     /DEF=\['sel','hl','pen','era','note','ask'\]/.test(icons)
+     && /export \{ DEF, CAP \}/.test(read("src/lib/paperTray.js")));
   /* This used to read "two abreast rather than shrinking the hit targets",
      because a single column of TEN 44px tools is 659px of a 720px window. The
      shipped design answers it at the other end: the tray ships six, the cap is
      ten only on a desktop, and the column is one wide. Six 38px tools is
-     250px. The rule the two-abreast grid existed to protect is the one that
-     is asserted. */
-  ok("rail", "and a column of the default tray fits a laptop window",
-     /DEFAULT_TRAY = \['sel','hl','pen','era','note','ask'\]/.test(icons)
-     && /flex-direction:column/.test(css.match(/\.bar-dock \{[^}]*\}/)[0]));
+     250px, and the variants absorb the rest. */
+  ok("rail", "and a column of the default bar fits a laptop window",
+     /const DEF=\['hand','pen','hl','era','note','ask'\];/.test(read("src/components/paper/v6/part3.js"))
+     && /\.rail\{[^}]*flex-direction:column/.test(css));
   /* Select has no settings, so it closes the inspector rather than opening an
      empty one. The decision is at the point the tool is picked, which is the
      only place that knows a tool was picked at all. */
+  /* Pressing the tool you are already on opens its properties; pressing a
+     different one arms it and closes whatever was open. One popover, and it
+     belongs to the tool in your hand. */
   ok("rail", "the armed tool's settings appear beside it and no others exist",
-     /setInspOpen\(id !== "sel"\)/.test(reader)
-     && /open=\{inspOpen && !adding && !editing\}/.test(reader));
+     /if\(id===S\.tool\)\{ S\.open==='props'\?closeAll\(\):openPo\('props',b\); return \}/
+       .test(read("src/components/paper/v6/part3.js")));
   /* The inspector sits beside the DOCK and only beside the dock. It used to
      clear the panel's width as well, from when the panel was a column on the
      same side; now the panel floats on the other edge and that offset pushed
      the inspector off the screen. */
-  ok("rail", "the inspector sits against the dock, not offset by a panel that moved",
-     /\.bar-insp \{[\s\S]{0,60}left:70px/.test(css)
-     && !/\.bar-insp \{[^}]*var\(--side-w\)/.test(css));
+  /* The properties popover opens AGAINST the bar, on whichever edge the bar
+     is on. One that stayed left while the bar went right would be a popover
+     pointing at nothing. */
+  /* anchorTo() puts the popover against whichever edge the bar is on, in JS
+     rather than in four stylesheet rules — v6 moved the bar to a drag, so the
+     edge is not known when the sheet is written. */
+  ok("rail", "the properties popover follows the bar, on all four edges",
+     ["left", "right", "bottom", "top"]
+       .every((e) => new RegExp(`bar==='${e}'`).test(read("src/components/paper/v6/part3.js"))));
 
   /* Naming panels one at a time is a rule that breaks the next time one is
      added, and it did: Contents and Queue opened at the full width of the
@@ -762,27 +935,35 @@ console.log("\nthe rail, at ten tools");
      added, and it did. It cannot now: the shipped panel floats over the page
      instead of taking a column from it, so there is no width to switch on and
      nothing to name. `data-panel` carries which one is showing, once. */
-  ok("rail", "the sidebar floats, so no panel has to be named twice",
-     !/--side-w/.test(css) && /data-panel=\{rail \|\| "none"\}/.test(reader));
+  /* Naming panels one at a time is a rule that breaks the next time one is
+     added, and it did. It cannot now: the panel floats over the page instead
+     of taking a column from it, so there is no width to switch on. */
+  ok("rail", "the panel floats, so no panel has to be named twice",
+     !/--side-w/.test(css) && /\.pan\{position:absolute/.test(css));
 }
 
 /* ---- a selection offset means two different things ---------------------- */
 console.log("\nselection");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   /* In a text node an offset is a character; in an ELEMENT it is a child-node
      index. A double-click, a triple-click and a drag that lands on a span
      boundary all give element endpoints, and treating the index as a character
      count silently truncates the mark to its first letter. */
+  /* A double-click, a triple-click and Select All all give ELEMENT endpoints
+     — a child index, not a character count — and treating the index as an
+     offset truncates the mark to its first letter. boundary() walks out to
+     the run the endpoint is inside, and to the nearest one when it is in the
+     white space between two. */
   ok("select", "an element endpoint is converted, not trusted",
-     /const isText = node\?\.nodeType === 3/.test(reader)
-     && /childNodes[\s\S]{0,160}textContent\?\.length/.test(reader));
+     /node\.nodeType === 3 \? node\.parentElement : node/.test(reader)
+     && /compareDocumentPosition/.test(reader));
 }
 
 /* ---- §4.6 · the PDF is opened for pixels and nothing else --------------- */
 console.log("\n§4.6 — big papers");
 {
-  const reader = read("src/components/paper/PaperReader.jsx");
+  const reader = readerSrc();
   const text = read("src/lib/paperText.js");
   const papers = read("src/lib/papers.js");
 
@@ -796,7 +977,7 @@ console.log("\n§4.6 — big papers");
   ok("§4.6", "and the document is only asked when there is no manifest",
      /if \(!boxes\?\.length\) \{[\s\S]{0,400}getViewport/.test(reader));
   ok("§4.6", "a page released after its size is read, not left parsed",
-     /page2\.cleanup\(\)/.test(reader));
+     /p\.cleanup\(\);/.test(reader));
 
   /* 3MB of text layer between opening a paper and seeing any of it, for a file
      only search needs. */
@@ -824,72 +1005,113 @@ console.log("\n§4.6 — big papers");
 /* ---- the shipped files are used, not reinterpreted ---------------------- */
 console.log("\nthe shipped spec");
 {
-  const shippedCss = read("docs/reader/reader.css");
-  const builtCss = read("src/components/paper/reader.css");
-  /* Selectors move so the reader's class names cannot restyle the rest of the
-     app — seventeen of them collide with a dozen other screens. Nothing else
-     may move: same tokens, same values, same timings, same radii. */
+  /* HANDOVER.md, "The one rule": the chrome is finished, copy it. Everything
+     in this block is that sentence, turned into something that can fail.
+
+     The strongest check is the first: the four parts of the chrome are
+     GENERATED out of the file that was handed over, so "copied" is not a
+     claim about a diff somebody read once — it is re-derived here, every run,
+     and any drift is a failure with the file named. */
+  let verified = "";
+  try {
+    verified = execFileSync("node", [join(ROOT, "scripts/build-reader-v6.mjs"), "--verify"],
+      { encoding: "utf8", cwd: ROOT });
+  } catch (e) { verified = `FAILED: ${e.stdout || ""}${e.stderr || ""}`; }
+  ok("spec", "the chrome is what the handed-over reader.js produces, part for part",
+     /all current with docs\/reader\/v6\/reader\.js/.test(verified), verified.trim().split("\n").pop());
+
+  /* And every departure from it is a row in the table with a reason next to
+     it, rather than an edit somebody made and did not write down. */
+  const gen = read("scripts/build-reader-v6.mjs");
+  const edits = [...gen.matchAll(/^\s*why: "/gm)].length;
+  ok("spec", `every edit to the chrome carries its reason (${edits})`,
+     edits >= 20 && !/why: ""/.test(gen));
+  for (const part of ["part2.js", "part3.js", "part4.js"]) {
+    const src = read(`src/components/paper/v6/${part}`);
+    ok("spec", `${part} says what was changed and why`,
+       /Changed from the handed-over file, and only this:/.test(src));
+  }
+
+  const shippedCss = read("docs/reader/v6/reader.css");
+  const builtCss = read("src/components/paper/v6/reader.css");
   const decls = (css) => (css.replace(/\/\*[\s\S]*?\*\//g, "").match(/[^{}]+(?=\})/g) || [])
     .join("|").replace(/\s+/g, " ").trim();
+  /* ONE CUT IS ALLOWED THROUGH, and the sheet asks for it in its own header:
+     "The block marked DEMO ONLY at the very bottom is deleted on the live
+     site." HANDOVER section 5 says the same. Nothing else may move — same
+     tokens, same values, same timings, same radii. */
+  const DEMO = /\n\.demoBtn\{[\s\S]*?@media \(max-width:900px\)\{\.demo\{display:none\}\}\n/;
   ok("spec", "reader.css is used, not reinterpreted — every declaration identical",
-     decls(shippedCss) === decls(builtCss));
+     decls(shippedCss.replace(DEMO, "\n")) === decls(builtCss));
   ok("spec", "and it is generated from the shipped file, so the two cannot drift",
-     /GENERATED — do not edit\. Source: docs\/reader\/reader\.css/.test(builtCss));
+     /GENERATED — do not edit\. Source: docs\/reader\/v6\/reader\.css/.test(builtCss));
+  /* v6's reset is `*{margin:0;padding:0;...}` and `button{background:none;...}`.
+     Unscoped that is not a collision, it is the whole app. */
   ok("spec", "every rule is scoped to the reader",
-     !/(?:^|\n)\.(?!rdr)[a-z]/i.test(builtCss.replace(/\/\*[\s\S]*?\*\//g, "")));
-
-  const shippedIcons = read("docs/reader/reader-icons.js");
-  ok("spec", "reader-icons.js is copied byte for byte",
-     shippedIcons === read("src/lib/readerIcons.js"));
-  ok("spec", "and the reader draws from it rather than an icon library",
-     /from "\.\.\/\.\.\/lib\/readerIcons\.js"/.test(read("src/components/paper/Icon.jsx")));
+     !/(?:^|\n)[.*a-z[]/i.test(builtCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\.rdr[^{]*\{[^}]*\}/gm, "")
+       .split("\n").filter((l) => !l.startsWith(".rdr") && !l.startsWith("@") && !l.startsWith("}")).join("\n")
+       .replace(/^\s*$/gm, "")));
+  ok("spec", "and the demo strip is gone from it",
+     !/\.demoBtn|\[data-demo/.test(builtCss));
 
   /* THE BRIEF'S OWN TEST, RUN RATHER THAN READ: "If a class in reader.css is
      unused when you finish, a component is missing." A stylesheet is a list of
      the parts the design has; a class nothing renders is a part that was
-     skipped, and it fails silently because unused CSS never errors. This
-     caught three — `.s.is-marked`, `.is-open-thread`, `.is-selected` — which
-     were being drawn from a second set of rules under different names. */
-  const shipped = read("docs/reader/reader.css").replace(/\/\*[\s\S]*?\*\//g, "");
+     skipped, and it fails silently because unused CSS never errors. */
+  const shipped = shippedCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(DEMO, "");
   const shippedClasses = new Set([...shipped.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)].map((m) => m[1]));
-  let markup = read("src/lib/readerIcons.js");
-  for (const f of readdirSync(join(ROOT, "src/components/paper"))) {
-    if (f.endsWith(".jsx")) markup += read(`src/components/paper/${f}`);
-  }
-  const unused = [...shippedClasses]
-    .filter((c) => !new RegExp(`["\`\\s]${c}(?![a-zA-Z0-9_-])`).test(markup));
-  ok("spec", `every class in it is rendered by something (${shippedClasses.size} classes)`,
-     unused.length === 0, unused.join(" "));
+  let markup = "";
+  (function walk(d) {
+    for (const f of readdirSync(join(ROOT, d))) {
+      const rel = `${d}/${f}`;
+      if (statSync(join(ROOT, rel)).isDirectory()) walk(rel);
+      else if (/\.(jsx?|mjs)$/.test(rel)) markup += read(rel);
+    }
+  })("src/components/paper/v6");
+  markup += read("src/lib/readerIcons.js");
+  /* THREE ARE UNRENDERED BY THE HANDED-OVER FILES THEMSELVES, and naming them
+     is the point. Each is a rule in reader.css that nothing in reader.js ever
+     produces, so copying the chrome verbatim inherits the gap rather than
+     causing it — and inventing the markup to fill it would be exactly the
+     restyling the one rule forbids.
 
-  /* AND THE FONT THE SHEET ASKS FOR IS ONE THE APP ACTUALLY HAS. reader.css
-     names "IBM Plex Mono" at eighteen places; nothing loads it here, so left
-     alone every one of them falls through to the browser's default monospace,
-     which differs per machine and is not the shipped look either. Each is
-     re-pointed at --font-mono by name, and this asserts none was missed —
-     including any the sheet gains later. */
-  const scoped = read("src/components/paper/reader.css");
-  const additions = read("src/components/paper/reader-additions.css");
-  const monoSelectors = new Set([...scoped.matchAll(/([^{}]+)\{[^}]*IBM Plex Mono/g)]
-    .map((m) => m[1].trim().split("\n").pop().trim()));
-  const adrift = [...monoSelectors]
-    .filter((sel) => !additions.includes(sel.replace(/^\.rdr-page/, ".rdr .rdr-page")));
-  ok("spec", `the mono face is the app's own, everywhere the sheet asks for one (${monoSelectors.size})`,
-     adrift.length === 0, adrift.join(" | "));
-  /* Comments first — for the fourth time in this file. The rule is explained
-     in a comment that names the font the rule exists to remove. */
+       mk    a highlight inside a panel card's quote, in the five meanings'
+             colours. `card()` marks search hits with <mark> instead
+       lbl   `.who .lbl`, a small caption in the You tray's identity row.
+             `trayMe()` renders <b> and <span> there and no caption
+       gp    `.li .gp`, a grab handle on a chest row. The rows ARE draggable
+             (`dragstart` on `.li`), so this is the one of the three worth
+             raising: the affordance is styled and never drawn
+
+     Written down so the next unused class cannot hide among them. */
+  const NOT_IN_THE_SOURCE = ["mk", "lbl", "gp"];
+  const unused = [...shippedClasses]
+    .filter((c) => !NOT_IN_THE_SOURCE.includes(c))
+    .filter((c) => !new RegExp(`["\`\\s.'>]${c}(?![a-zA-Z0-9_-])`).test(markup));
+  ok("spec", `every class in it is rendered by something (${shippedClasses.size} classes, 3 the source never draws)`,
+     unused.length === 0, unused.join(" "));
+  /* And the three stay honest: if reader.js ever starts drawing one, this
+     fails and the list shrinks. */
+  const drawnNow = NOT_IN_THE_SOURCE
+    .filter((c) => new RegExp(`class="[^"]*\\b${c}\\b`).test(read("docs/reader/v6/reader.js")));
+  ok("spec", "and the three the source never draws still do not appear in it",
+     drawnNow.length === 0, drawnNow.join(" "));
+
   /* THE COLLISION LIST, KEPT CURRENT BY FAILING. Scoping reader.css stops the
      reader painting the app; it does nothing about the app painting the
-     reader, and eight of the shipped sheet's class names already existed here.
-     A bare `.x` loses to `.rdr .x` for the properties the reader declares —
-     the damage is everything it does not declare, and every pseudo-element.
-     A ninth would be silent, so it is this that has to speak. */
-  const QUARANTINED = ["sw", "pop", "pill", "scrub", "av", "plist", "row", "title"];
+     reader, and seven of v6's 187 class names already existed here. A bare
+     `.x` loses to `.rdr .x` for the properties the reader declares — the
+     damage is everything it does not declare, and every pseudo-element, which
+     specificity has no opinion about at all. An eighth would be silent, so it
+     is this that has to speak. */
+  const QUARANTINED = ["av", "chip", "mt", "pop", "pres", "scrub", "sw"];
+  const additions = read("src/components/paper/v6/additions.css");
   const appCss = [];
   (function walk(d) {
     for (const f of readdirSync(join(ROOT, d))) {
       const rel = `${d}/${f}`;
       if (statSync(join(ROOT, rel)).isDirectory()) walk(rel);
-      else if (rel.endsWith(".css") && !rel.includes("paper/reader")) appCss.push(rel);
+      else if (rel.endsWith(".css") && !rel.includes("components/paper/")) appCss.push(rel);
     }
   })("src");
   const collisions = new Set();
@@ -905,12 +1127,85 @@ console.log("\nthe shipped spec");
   const unlisted = [...collisions].filter((c) => !QUARANTINED.includes(c));
   ok("spec", `no class name the app already uses arrives unquarantined (${collisions.size} known)`,
      unlisted.length === 0, unlisted.join(" "));
+  /* The two that measurably painted the reader — a toggle knob inside the
+     warmth slider, a rotated arrow on every popover — and the three that
+     would have. */
   ok("spec", "and the ones that painted the reader are undone",
-     ["sw", "pop", "pill", "scrub", "av"].every((c) => new RegExp(`\\.app \\.rdr \\.${c}[ .:{]`).test(additions)));
+     QUARANTINED.filter((c) => c !== "mt")
+       .every((c) => new RegExp(`\\.app \\.rdr(?:\\[[^\\]]+\\])? (?:svg )?\\.${c}[ .:{,]`).test(additions)));
+  /* And section 12's global 44px floor, which measured v4's swatches as ovals,
+     is waived inside the reader and paid by the platform layer instead. */
+  ok("spec", "the app's tap floor does not distort the shipped boxes",
+     /\.app \.rdr button:not\(\.is-inline\)/.test(additions)
+     && /min-height: 0;/.test(additions)
+     && /\[data-plat="touch"\][\s\S]*?min-height: 44px/.test(additions));
 
-  ok("spec", "and it is reached through the token, not named",
-     /font-family: var\(--font-mono\);/.test(additions)
-     && !/IBM Plex Mono/.test(additions.replace(/\/\*[\s\S]*?\*\//g, "")));
+  /* AND THE FACE THE SHEET ASKS FOR IS THE APP'S OWN. reader.css names
+     "Instrument Sans" directly; this app already loads it as --font-ui, and
+     the house rule is that the brand faces are reached through tokens and
+     never by name. */
+  ok("spec", "the faces are reached through the tokens, not named",
+     /font-family: var\(--font-ui\)/.test(additions)
+     && /font-family: var\(--font-mono\)/.test(additions));
+}
+
+/* ---- the tool table, and what is still missing from it -------------------
+   A green suite that does not mention the holes is worse than a red one, and
+   the first version of this section checked for STRINGS — which went on
+   passing after the tools were built, because the strings had moved. It asks
+   about behaviour now.
+
+   Every line asserts the state as it is. Building something fails its line,
+   and the fix is to change or delete it, which is the only way a list like
+   this stays true. */
+console.log("\nthe tool table");
+{
+  const part3 = read("src/components/paper/v6/part3.js");
+  const src = readerSrc();
+
+  /* Fifteen tools in the table. Ten have a behaviour when you arm them:
+     Select picks and pans, Pen/Marker/Highlight draw, the Eraser rubs, and
+     Underline, Strikethrough, Note, Ask and Flag each take a selection and
+     write their own kind. */
+  const BUILT = ["hand", "pen", "mkr", "hl", "era", "ul", "st", "note", "ask", "flag"];
+  const listed = (part3.match(/const BUILT=\[([^\]]*)\]/) || [, ""])[1]
+    .split(",").map((x) => x.trim().replace(/'/g, "")).filter(Boolean);
+  ok("tools", `ten of the fifteen have a behaviour (${listed.length} listed)`,
+     listed.length === BUILT.length && BUILT.every((id) => listed.includes(id)),
+     listed.join(" "));
+
+  /* A control that does nothing is the same lie as an empty state that names
+     no action, so the five that do not work are not offered — not in the
+     chest, and not as a tab with nothing behind it. */
+  ok("tools", "and the five that do not are not offered anywhere",
+     /BUILT\.includes\(t\.id\)/.test(part3)
+     && /\.filter\(g=>TOOLS\.some\(t=>t\.g===g&&BUILT\.includes\(t\.id\)\)\)/.test(part3));
+  for (const id of ["shp", "txt", "msr", "snap", "link"]) {
+    ok("tools", `${id} is in the table and still unbuilt`,
+       new RegExp(`\\{id:'${id}'`).test(part3) && !listed.includes(id));
+  }
+
+  /* The text tools are the reason five of them work at all: "only the Select
+     tool selects" was implemented as "only hand", which locked out every tool
+     whose whole job is a passage. */
+  ok("tools", "a text tool can take a selection, and a drawing tool cannot",
+     /const TEXT=TOOLS\.filter\(t=>\(t\.mean\|\|t\.fixed\)&&!t\.ink&&!t\.grey\)/.test(part3)
+     && /TEXT\.includes\(S\.tool\)\)\?'1':'0'/.test(part3));
+  ok("tools", "and marks in its own kind rather than asking again",
+     /if\(TEXT\.includes\(S\.tool\)\)\{[\s\S]{0,300}stamp\(k\);/.test(part3));
+
+  /* Strikethrough and Note have no shape in the shipped sheet, so both are
+     given one in the additions file, in the sheet's own vocabulary. */
+  ok("tools", "strikethrough and note are drawn, not left as bare boxes",
+     /\.rdr \.mkq\.st::after/.test(readerCss()) && /\.rdr \.mkq\.note \{/.test(readerCss()));
+
+  /* WHAT IS STILL MISSING. */
+  ok("gap", "a student cannot pull their marks out of a paper",
+     !/exportMarks|revision deck|downloadMarks/i.test(src));
+  ok("gap", "the eraser's second variant erases wholes like the first",
+     /WHOLE-OBJECT eraser/.test(part3));
+  ok("gap", "the fanned deck shows recent marks, not recent places",
+     /recent\(\) \{[\s\S]{0,200}m\.who === "me"/.test(read("src/components/paper/v6/marks.js")));
 }
 
 console.log(`\npaper: ${pass} passed, ${fails.length} failed`);

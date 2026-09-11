@@ -67,10 +67,20 @@ export async function startHarness() {
 }
 
 /* ------------------------------------------------------------ the contexts - */
+/* THREE PLATFORMS, NOT THREE WIDTHS. v5 branches on what the pointer can do,
+   so the surfaces have to differ in capability and not only in size — a 1194px
+   window on a Mac is `desktop` and a 1194px iPad is `tablet`, and testing both
+   at 1194 with the same pointer would prove nothing. `isMobile` is what makes
+   WebKit answer `pointer:coarse` and drop `hover:hover`; `hasTouch` alone only
+   adds touch points, which is why the iPad surfaces carry both.
+
+   `expect` is the platform the reader should choose. A surface whose id says
+   iPad and whose reader says desktop is the bug this list exists to catch. */
 export const SURFACES = [
-  { id: "laptop", engine: "chromium", width: 1440, height: 900, touch: false },
-  { id: "ipad-landscape", engine: "webkit", width: 1194, height: 834, touch: true },
-  { id: "ipad-portrait", engine: "webkit", width: 834, height: 1194, touch: true },
+  { id: "laptop", engine: "chromium", width: 1440, height: 900, touch: false, mobile: false, expect: "desktop" },
+  { id: "ipad-landscape", engine: "webkit", width: 1194, height: 834, touch: true, mobile: true, expect: "tablet" },
+  { id: "ipad-portrait", engine: "webkit", width: 834, height: 1194, touch: true, mobile: true, expect: "tablet" },
+  { id: "phone", engine: "webkit", width: 390, height: 844, touch: true, mobile: true, expect: "phone" },
 ];
 
 export async function withPage(surface, fn, { uid = "student_one", staff = false } = {}) {
@@ -79,6 +89,7 @@ export async function withPage(surface, fn, { uid = "student_one", staff = false
   const ctx = await browser.newContext({
     viewport: { width: surface.width, height: surface.height },
     hasTouch: surface.touch,
+    isMobile: surface.engine === "webkit" ? !!surface.mobile : false,
     deviceScaleFactor: 2,
   });
   /* Each context gets its own fixture store, so one test's marks never leak
@@ -98,7 +109,12 @@ export const readerUrl = (uid = "student_one", staff = false, extra = "") =>
 export async function openReader(page, { uid = "student_one", staff = false, extra = "" } = {}) {
   await page.goto(readerUrl(uid, staff, extra), { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".rdr", { timeout: 25_000 });
-  await page.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 25_000 });
+  /* 25s was enough when this suite took 150 seconds end to end. On a loaded
+     machine it takes 2000, every step is proportionally slower, and a wait for
+     a real pdf.js raster starts timing out — on a DIFFERENT test each run,
+     which is the signature of a budget rather than a bug. Raised so a slow
+     machine reports a slow pass instead of a random failure. */
+  await page.waitForSelector(".page:not(.ph) canvas[data-on]", { timeout: 90_000 });
   return page;
 }
 

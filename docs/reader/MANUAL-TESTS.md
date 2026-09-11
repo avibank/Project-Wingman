@@ -11,6 +11,174 @@ deploy.
 
 ---
 
+## v6 — what is new, and what to try first (12 minutes)
+
+The reader was rebuilt again, to the four files you sent whose HANDOVER says
+"the chrome is finished, copy it." The sections below still describe v4 and
+v5, and the parts about the pen, the anchoring and save integrity still apply
+unchanged — the engine did not move. What is new is the chrome, and these are
+the things no automated test in this repo can settle.
+
+Everything in the automated list already passes: the marks land on their
+words, and they stay there through a resize, a zoom, a rotation and the panel
+opening and shutting. Twelve checks, `node tests/reader/only-v6.mjs`. So do
+not spend the twelve minutes on those; spend them on the ones below.
+
+**W1 · The island is one thing in every state.** Press the counter for the
+page tray, press your initials for the You tray, press Escape, then make a
+highlight so a message fires.
+→ The counter must sit on **the same pixel** through all of it. HANDOVER calls
+it the fixed point of the island: if it shifts when a message fires, a wing
+width is wrong. Nothing here centres the island differently to hide that, so
+what you see is what the sheet does.
+
+**W2 · Long-press a tool and move it.** Hold a tool on the bar until it lifts,
+drag it somewhere else in the bar. Then drag one onto the chest to remove it,
+and drag one out of the chest onto the bar. Then hold the grip at the top of
+the bar and move the whole bar to all four edges.
+→ The panel should swap to the opposite edge every time the bar moves. The
+tray, its order and the bar's edge should all still be there after a reload.
+
+**W3 · The fanned deck.** Press the counter, then hover the fan of cards under
+"Where you have been".
+→ The cards should spread. Holding one should show the line you marked. The
+five cards are **your own most recent marks on this paper**, so if you have
+made none, the fan is empty — that is correct, not broken.
+
+**W4 · The livery picker changes the app, not just the reader.** Press your
+initials, pick a different livery, then leave the reader.
+→ The whole site should be wearing it. There is one livery system and it is
+the app's; the reader's `--lv` is fed from it. A reader that changed colour
+while the Flight Deck did not would mean a second livery system had grown
+back.
+
+**W5 · Warmth is the paper's white point, not a film over it.** Press your
+initials and drag the warmth slider all the way up.
+→ The **paper** should go warm. The text should stay black and the highlights
+should stay their own colours. If the whole page including the marks goes
+amber, something is filtering the stack instead of shifting the ground.
+
+**W6 · Ask, and what other people see.** Select a passage and press **Ask**.
+→ It should post **anonymously**. Then check on the other device: the question
+should be there, and it must not say who wrote it. Anonymity is stripped
+server-side, so this is not something the other reader is politely hiding —
+confirm it by looking at the card, not at the CSS.
+
+**W7 · Red is private, end to end.** Mark something red on one device.
+→ It must not appear on the other, at all, in any filter. Red is written with
+the `solo` ring, so it is never sent; the panel's filter is a convenience on
+top of that, not the mechanism.
+
+**W8 · The Apple Pencil.** Draw with the pen and with the highlighter. Chisel
+should give a straight line, free-form should follow your hand. Erase both.
+→ Then **zoom to 220% and rotate the page**. The ink should be exactly where
+you left it, because strokes live in fractions of the page. This is the one
+that costs nothing to get right and is very obvious when it is wrong.
+
+**W9 · The quiet poll.** Leave the reader open on one device. On the other,
+make a few marks. Wait a minute.
+→ The dot on the island should light. **Nothing on the page may move** until
+you press it. Then it should say what arrived. If marks appear under your eyes
+without you asking, the poll is doing more than it is allowed to.
+
+**W11 · The tools that mark words.** Arm **Underline**, then drag across a
+sentence. Then **Note**, then **Ask**, then add **Strikethrough** from the
+chest and try that.
+→ Each should mark straight away in its own kind, with **no pill in between**:
+with a text tool in your hand the question is already answered. Select with
+the plain cursor instead and the pill should still appear, because there it is
+not. Tap the note's card to open it, write in it, and it should still say that
+after a reload.
+
+**W12 · The eraser.** Draw a few strokes, highlight a few lines, arm the
+**Eraser** and rub across them.
+→ Strokes and marks should come off as you touch them, and undo should put
+them back. Both variants erase whole things today; "Just where you rub" does
+not yet shorten a highlight, and that is written down rather than hidden.
+
+**W13 · Nothing on the bar is dead.** Open the chest and look through every
+tab.
+→ Shape, Text, Measure, Snapshot and Link are **not there**, because they do
+not work yet. Everything you can press does something. If you find a control
+that does nothing at all, that is the bug this list exists for.
+
+**W10 · Leaving.** Press the Wingman mark in the top-left corner.
+→ Back to the Library, and the rest of the app should behave normally: no dead
+clicks, no stuck cursor, nothing swallowing the first tap. Everything the
+chrome bound to the window is recorded and undone when the reader closes, and
+this is the check that it actually was.
+
+---
+
+## v5 — what is new, and what to try first (10 minutes)
+
+The reader was rebuilt again, to the three files you sent whose first line is
+"Supersedes v1–v4". Parts 1–8 below still describe v4 and most of them still
+apply — the marks, the pen, the quiz and the save integrity are unchanged. The
+list here is what is genuinely new, and each one is a thing no automated test
+in this repo can settle.
+
+**V1 · Platform, not width.** Open the reader on the iPad, then open it on the
+laptop and drag the window narrow — narrower than the iPad's 1194px.
+→ The **iPad** should have big targets, no tooltips, and a panel that opens on
+a tap. The **narrow laptop window** should keep its small targets and its
+tooltips, because it still has a mouse. If the laptop starts behaving like a
+tablet, the pointer test is not working.
+
+**V2 · The selection popover.** With no tool armed at all — the arrow, straight
+after opening — select any sentence.
+→ Five colours plus **Note**, **Ask** and **Copy** appear over the selection.
+This is the single most important thing in v5: it is what a reader who has
+never looked at the tool bar can do.
+
+**V3 · Note and Ask carry the passage.** From that popover, tap **Note**.
+→ A note opens **on the page**, with the sentence you selected already in it as
+a quoted excerpt with its page number. You should not have to paste anything.
+
+**V4 · Drag a mark into a note.** Make a couple of highlights. With the arrow,
+press on one and drag it onto the note.
+→ A small card follows your finger, the note lights up with a ring as you cross
+it, and releasing drops the passage in. This is the question-bank workflow:
+read, mark, drag the good ones in, and the note is the draft.
+
+**V5 · Notes collapse to pins.** Tap the chevron on a note.
+→ It becomes a coloured pill with its title. Drag it somewhere. Reopen it. On a
+phone it should be a **bottom sheet**, not a floating window — a draggable
+window on a 390px screen is a fight nobody wins.
+
+**V6 · Move the bar.** Tool chest → **Bar position** → Right.
+→ The tool bar moves to the right edge and the marks panel and tick rail move
+to the **left**. They are always opposite; there is no way to put them on the
+same side. Try Top and Bottom too.
+
+**V7 · Variants.** Arm Shape, then open its properties.
+→ Line / Arrow / Box / Ellipse across the top. This is how thirteen tools fit
+six slots: the seventh thing you need is inside the tool you already picked.
+Check the eraser has **Ink only** on by default — rubbing out a stroke must
+never eat a highlight.
+
+**V8 · The chrome gets out of the way.** Sit still for three seconds.
+→ Everything fades except the **logo**, which never hides. Move, and it comes
+back. Start drawing and it should go at once rather than fading.
+
+**V9 · The first-run coach.** Only on a device that has never opened it, or
+after clearing site data.
+→ Three quiet hints, staggered, then gone forever. If they come back on the
+second open, the flag is not being stored.
+
+**And the two the headless browsers still cannot answer:**
+
+**V10 · The glass.** Open the marks panel over the page. The page behind it
+should be a soft wash, not readable. Headless WebKit does not composite the
+blur, so the iPad screenshots here are unreliable and I cannot tell from this
+side whether Safari does the same.
+
+**V11 · The proportions.** Ten seconds of your eyes on the real device: the
+colour circles in a tool's properties are **circles**, the tool icons are
+**square**, and the bar is a slim column rather than a row of tall slabs.
+
+---
+
 ## Read this first — what could NOT be verified without you
 
 Everything in this section was built correctly by construction and is

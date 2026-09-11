@@ -28,7 +28,7 @@ try {
         headers: { "content-type": "application/json", "x-harness-store": `shot-${s.id}-${variant}` },
       });
       await page.goto(readerUrl(), { waitUntil: "domcontentloaded" });
-      await page.waitForSelector(".rdr-page:not(.is-placeholder) canvas[data-on]", { timeout: 25_000 });
+      await page.waitForSelector(".page canvas[data-on]", { timeout: 25_000 });
       await page.waitForTimeout(1200);
 
       /* Nudge the pointer first. A screenshot is not somebody sitting still,
@@ -36,61 +36,51 @@ try {
          every shot came out in the idle state, which is not what these are
          for. */
       const shot = async (name) => {
-        await page.mouse.move(420, 400);
-        await page.waitForTimeout(240);
+        /* WAKE THE CHROME FIRST. v5 hides it after 2800ms of stillness, and a
+           screenshot is not somebody sitting still — every shot came out in
+           the idle state, which is not what these are for. */
+        await page.evaluate(() => document.querySelector(".rdr")
+          ?.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: 400, clientY: 400 })));
+        await page.waitForTimeout(220);
         return page.screenshot({ path: `${SHOTS}/${s.id}-${variant}-${name}.png` });
       };
+      /* The coach owns the first fourteen seconds of a first open. Put it away
+         so the shots are of the reader rather than of three hint cards. */
+      await page.evaluate(() => { try { localStorage.setItem("pw-reader-coached", "1"); } catch {} });
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".page canvas[data-on]", { timeout: 25_000 });
+      await page.waitForTimeout(900);
       await shot("rest");
 
-      /* COMPONENTS.md names the surfaces to compare: dock, inspector, mark
-         card, marks panel, tick rail, bottom bar, marks-only view. One shot
-         each, in both lights, at all three sizes. */
+      /* The bar with a marking tool in hand, which also opens its properties. */
+      await page.evaluate(() => document.querySelector('.tools .t[data-tool="hl"]')?.click());
+      await page.waitForTimeout(600);
+      await shot("props");
 
-      // The dock with a marking tool in hand — which also opens its inspector.
-      await page.click('.tool[aria-label="Highlighter"]').catch(() => {});
-      await page.waitForTimeout(500);
-      await shot("tray");
-
-      // The Add sheet, over the dock.
-      await page.click(".addbtn").catch(() => {});
-      await page.waitForTimeout(500);
-      await shot("add-sheet");
+      /* The tool chest, over the bar. */
+      await page.evaluate(() => document.querySelector(".chest")?.click());
+      await page.waitForTimeout(600);
+      await shot("chest");
       await page.keyboard.press("Escape");
       await page.waitForTimeout(300);
 
-      // A mark card, opened on a mark that is already in the fixture.
+      /* The panel, opposite the bar — opened rather than toggled, because
+         whether it starts open depends on the platform and a toggle would
+         photograph whichever state it was not in. */
       await page.evaluate(() => {
-        const m = document.querySelector(".rdr-mark");
-        if (!m) return;
-        const b = m.getBoundingClientRect();
-        document.querySelector(".rdr-scroll").dispatchEvent(new MouseEvent("click", {
-          bubbles: true, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2,
-        }));
+        const btn = document.querySelector('.acts .ic[aria-label="Panel"]');
+        if (!document.querySelector(".panel")?.classList.contains("open")) btn?.click();
       });
-      await page.waitForTimeout(600);
-      await shot("mark-card");
-      await page.keyboard.press("Escape");
-      await page.waitForTimeout(300);
-
-      // The panel, opened rather than toggled — it starts open on a laptop.
-      await page.evaluate(() => {
-        const p = document.querySelector(".rdr");
-        if (p.dataset.panel === "none") document.querySelector('.ib[aria-label="Pages"]').click();
-      });
-      await page.waitForTimeout(600);
-      await page.click('.bar-panel .segs button:nth-child(1)').catch(() => {});   // Marks
       await page.waitForTimeout(500);
-      await shot("panel-marks");
+      await page.evaluate(() => document.querySelectorAll(".ptabs .pt")[0]?.click());
+      await page.waitForTimeout(600);
+      await shot("panel");
 
-      await page.click('.bar-panel .segs button:nth-child(2)').catch(() => {});   // Pages
-      await page.waitForTimeout(700);
-      await shot("panel-pages");
-
-      // Marks only — the whole screen becomes the list.
-      await page.click('.ib[aria-label="Marks only"]').catch(() => {});
+      /* Marks only — the whole screen becomes the list. */
+      await page.evaluate(() => document.querySelector('.acts .ic[aria-label="Marks only"]')?.click());
       await page.waitForTimeout(800);
       await shot("marks-only");
-      await page.click('.ib[aria-label="Back to the paper"]').catch(() => {});
+      await page.evaluate(() => document.querySelector('.revh .ic')?.click());
       await page.waitForTimeout(500);
 
       await ctx.close();

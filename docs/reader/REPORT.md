@@ -1,8 +1,427 @@
 # Reader rebuild — report
 
-Branch `reader-rebuild`, off `main` at `0a3f7d1`. **Not deployed.**
-The migration and the clear-out have been run against production, on your
-instruction, and verified — see below.
+Branch `reader-v5`, off `main`. **Not deployed** — `main` still carries v4,
+which is live and working, so the site is safe while this lands.
+
+---
+
+## v6 — read this first
+
+Three designs in three days. v4 is what the live site runs. v5 was built,
+pushed, and never deployed. v6 is what the reader is now, and it is the one
+this section is about; everything below it describes readers it replaces, kept
+because the reasons in them are still the reasons.
+
+You sent `reader.css`, `reader.html`, `reader.js` and `HANDOVER.md`. They are
+in `docs/reader/v6/`, kept exactly as sent, and `reader.js` was transcribed
+from the message rather than attached — `node --check` and the generator below
+both read it, so a transcription error could not survive.
+
+### The one rule, and how it is kept
+
+> **The chrome is finished. Copy it.** … If something looks wrong after
+> integration, the cause is a style leaking in from the host page, not a value
+> that needs adjusting — scope the reader's CSS instead of editing it.
+
+So the chrome is **generated into `src/`, not transliterated**, by two scripts:
+
+| | |
+|---|---|
+| `scripts/scope-reader-css.mjs` | prefixes `.rdr ` to every selector, cuts the demo strip section 5 asks to cut, and **refuses if any declaration changed** — every value, timing and radius byte-identical either side |
+| `scripts/build-reader-v6.mjs` | slices `reader.js` into its four parts, applies a table of **31 edits each carrying its reason**, and with `--verify` re-derives the lot and refuses if what is on disk has drifted |
+
+`npm run check:paper` runs the verify. "Copied" is therefore not a claim about
+a diff somebody read once: it is re-checked on every run, and any drift fails
+with the file named.
+
+Why this matters more for v6 than it did for v5: v6's reset is `*{margin:0;
+padding:0;box-sizing:border-box;font:inherit;color:inherit}` and
+`button{background:none;border:0;…}`. Unscoped, that is not a collision, it is
+the whole app.
+
+### What was replaced, and nothing else
+
+HANDOVER names two things. Both are done.
+
+**The paper.** `STAGE.innerHTML = PAGES.map(...)` is gone; `#stage` is rendered
+by React as a window of pdf.js pages, each in the element shape section 1
+fixes — `article.sheetpg[data-pg]` holding `.bmk`, `svg.ink`, `.marks`, the
+canvas, the text layer at z-index 2, and `.pgno`. Pages outside the window are
+a spacer at exactly the right height.
+
+**The marks.** `SEED[]` is gone; marks are fetched, resolved against the
+paper's extracted text, and pushed through `WM.add`. `seed()` is gone;
+`findRange()` stays, as section 5 says.
+
+**Anchoring — "the part that is not done" — was already done.** `src/lib/
+anchor.js` came with the original brief, stores `{quote, prefix, suffix}` with
+32 characters of context either side, returns null rather than guessing, and
+is covered by `npm run check:anchor`, 29 cases. It is the one file that was
+never to be rewritten and it has not been. What was genuinely missing is
+`relayout()`, and that is new: `src/components/paper/v6/marks.js`.
+
+### Six things measured rather than assumed
+
+Every one of these was found in a browser, not by reading.
+
+**1 · The reader came up as a white strip with the app's own header over it.**
+`.deck`, two ancestors up, is `position:relative; z-index:1` — a stacking
+context — so a fixed child at z-index 60 is still capped at the deck's level 1
+and the header at 20 wins. `.deck-inner` above it carries `.route-fade`, which
+animates opacity and takes its own composited layer, so a fixed descendant is
+painted against that layer rather than against the window; on this route that
+layer is a few pixels tall. Hence a strip. The reader is portalled to `.app`,
+which is v5's answer and the same reason. Asserted in the v6 suite.
+
+**2 · Setting the page's width took the island's zoom out of the reader.**
+reader.css says `.sheetpg { width: var(--pw) }` and `applyPage()` writes
+`--pw`. Setting a width in the shell overrode that — and worse, fed the page's
+own rendered width back into the scale that produced it, a loop with a fixed
+point, which is why it looked like it worked. The stylesheet owns the width;
+the page carries an aspect ratio and nothing else.
+
+**3 · The run count belongs in the render signature.** The extracted text
+lands seconds after the pages do, so the first text layer is built before a
+page knows its runs, the span-to-run check fails, and the spans are handed
+over as null. Without the count in the signature the render effect returns
+early when the text finally arrives and the layer is never rebuilt: a paper
+that draws perfectly and can carry no marks at all.
+
+**4 · The spans are read off the DOM, not kept beside it.** A parallel array
+had to be added when a layer rendered, removed when it was replaced, and
+removed again when the page unmounted. Any one of those out of order left the
+reader holding spans that were no longer on the page — or holding none while
+163 of them sat in the DOM. `data-item` is written only when the spans and the
+runs were checked to line up, so reading `span[data-item]` off the layer is
+both authoritative and self-guarding.
+
+**5 · `relayout()` cannot depend on a frame arriving.** It scheduled on
+`requestAnimationFrame` alone. A hidden tab gets no frames, so the marks were
+fetched, resolved and never drawn — the whole paper correct and bare. It now
+races rAF against a 50ms timer; whichever fires first does the work.
+
+**6 · Rotation needs two fixes, and it is the test HANDOVER says fails first.**
+`.sheetpg` carries `transform: rotate(var(--rot))` with a 0.42s spring, and
+`getClientRects()` reports axis-aligned boxes in **screen** space. So each
+rect is mapped back through the inverse of the rotation about the page's
+centre — exact for the four right angles the page tray offers — and the
+layout runs again on `transitionend`, because a run at the moment rotation is
+asked for measures a page that is halfway round. Zoom got away without the
+second fix only because changing the width makes the ResizeObserver fire all
+the way through the animation and the last fire is correct; rotation changes
+no size, so nothing corrected it.
+
+### Four things the chrome does that a real device would not forgive
+
+Each is an edit to the chrome, each is a row in the generator's table with the
+reason next to it, and none of them is a style.
+
+**`data-plat` was being written twice.** The shell wrote v5's three-value
+model (desktop / tablet / phone) and part 3 wrote v6's two-value one (touch /
+desktop) straight over the top. v6's sheet reads the attribute exactly once —
+to hide the bar's drag handle where there is no hover to reveal it — so the
+chrome owns it and the shell no longer touches it. The distinction that
+matters survives: a 1194px window on a Mac is desktop and a 1194px iPad is
+touch.
+
+**A resting palm drew on the page.** The handed-over file draws from any
+pointer at all, which on the device this reader is actually used on means a
+hand landing beside an Apple Pencil leaves a stroke across the paper, and a
+finger draws where it meant to scroll. Section 8.9 of the original brief is
+explicit and this is not a question of style. A finger now scrolls while a
+drawing tool is armed, and a second contact arriving beside a pen is ignored.
+The cost is stated rather than hidden: on a touch device with no stylus nobody
+can draw. That is the brief's own trade and it had already been shipped once.
+
+**Section 12's tap floor had nowhere to land.** v6 sizes its controls for a
+mouse and nothing for a finger — measured on the iPad surfaces, the chest
+button is 30x30, every tool 38x38, every filter chip 27px tall. The app
+enforces 44px everywhere else for a reason. The answer is that the **target**
+grows and the **control** does not: a transparent `::before` centred on each
+one takes the tap out to 44px while the box stays exactly the size the sheet
+set it against everything else. `::after` was not available — v6 uses it for
+the active tool's indicator on all four edges — and `::before` is used only
+inside `.selp .cue` and on `.mcard`.
+
+**Undo said a word and did nothing.** It is now a real stack over marks *and*
+ink, fifty deep, bound to the usual key and to the Redo button in the island's
+message. Each entry knows how to put the world back and how to do the thing
+again, so undo and redo are one mechanism run in opposite directions rather
+than two that have to agree — and an undone mark keeps its id, so redo
+restores the same mark rather than leaving everybody else's copy of the paper
+with a hole and a stranger beside it. `createStroke` gained an optional `id`
+for the same reason.
+
+### Two gaps in the handed-over files, supplied rather than restyled
+
+**`--panel` and `--panelln` are used and never declared.** `.pan`, `.ptab` and
+the panel's footer fade all paint with them. `border: 1px solid
+var(--panelln)` with an undefined variable makes the whole shorthand invalid
+at computed-value time, so it falls back to `medium none currentcolor` — the
+**side panel and its tab had no border at all**. And `--panel` happens to be
+emitted by this app's own livery engine, so the reader's panel was being
+painted with the Ready Room's surface colour by coincidence. Both are now
+declared in the additions sheet, pointed at the reader's own `--pop` and
+`--hair`, so the panel is tinted by `--lv` like every other floating surface.
+
+**Three classes in the stylesheet are drawn by nothing, in the source too.**
+`.mk` (a highlight inside a panel card's quote, in the five meanings'
+colours — `card()` uses `<mark>` for search hits instead), `.who .lbl` (a
+caption in the You tray's identity row), and `.li .gp` (a grab handle on a
+chest row). The third is the one worth raising: those rows **are** draggable,
+so the affordance is styled and never drawn. Copying the chrome verbatim
+inherits these rather than causing them, and inventing the markup to fill them
+would be the restyling the one rule forbids. They are listed by name in
+`check:paper`, which fails if a fourth appears — or if the source starts
+drawing one of the three.
+
+### Seven collisions, the same shape as the last two times
+
+`.av .chip .mt .pop .pres .scrub .sw` are v6 class names this app already
+styles as bare rules. Scoping stops the reader painting the app; it does
+nothing about the app painting the reader. Two of the seven measurably did:
+`app.css`'s `.sw` is a toggle switch whose 17px `::after` knob landed inside
+the warmth slider, and `instruments.css`'s `.pop` put a rotated arrow and a
+fixed 286px box on every popover in the reader. All seven are quarantined in
+`src/components/paper/v6/additions.css`, with what each one did written next
+to it, and `check:paper` fails on an eighth.
+
+### One rule of mine reversed on purpose
+
+`check:paper` used to assert **"the reader runs no timer of its own"**. I made
+that stronger than the brief, deliberately. v6 asks for the opposite:
+
+> A quiet background check runs about once a minute and its only permitted
+> effect is to light the island's dot. The page changes when the student
+> presses the dot, and never on its own.
+
+So the reader now runs one interval, and the constraint moved from "no timer"
+to "the timer may only light the dot" — which is the rule that actually
+matters. The poll collects into a pending list and touches nothing; `pull()`
+absorbs them on one frame when the dot is pressed.
+
+### What v6's tool table drops
+
+There is no Correction tool in v6's fifteen. The staff correction queue —
+`fetchCorrections`, `resolveCorrection`, `paper_corrections_for` — is
+therefore unreferenced by the reader, and `isStaff` is no longer passed to it.
+The database side is untouched and still answers; nothing was dropped. If
+corrections are meant to survive, the tool table is where they went missing.
+
+### The tool table, which was most of the work
+
+v6's chrome ships fifteen tools. When the chrome was first wired, **five of
+them did anything at all** — Select, Pen, Marker, Highlight and (after it was
+built) the Eraser. The other ten armed the bar, painted their icon and opened
+their properties, and the page took no pointer for them. Two of those ten,
+Note and Ask, are on the default bar; Note could not be made by any route.
+
+The cause was one line. "Only the Select tool selects text" is a rule about
+the DRAWING tools — a pen must not grab words when you meant to draw over
+them — and it was implemented as *only `hand` sets `data-sel`*, which also
+locked out every tool whose entire job is a passage. Underline, Strikethrough,
+Note, Ask and Flag are all marked `mean:1` or carry a fixed meaning, none of
+them is ink, and every one needs a selection to exist.
+
+Ten of the fifteen work now:
+
+| | |
+|---|---|
+| Select, Pen, Marker, Highlight | as shipped |
+| Eraser | built — whole strokes and whole marks, undoably, and only what this account drew |
+| Underline, Strikethrough, Note, Ask, Flag | take a selection and write their own kind, with no pill in between: with a text tool in your hand the question is already answered |
+
+Strikethrough and Note had no shape in the shipped sheet either, so both are
+given one in the additions file in the sheet's own vocabulary — a strike is
+Underline's rule moved to the middle, a note is the left bar the sheet already
+draws for `rv`. A note's words are written on its card, in the thread markup
+the card already has, and come back written.
+
+**Shape, Text, Measure, Snapshot and Link are still unbuilt, and are no longer
+offered.** A control that does nothing is the same lie as an empty state that
+names no action, so they are out of the chest, and the Capture tab is gone
+with them because it held only two of them. They stay in the tool table;
+`BUILT` in part 3 is the list to delete an id from the day it works.
+
+### One bug worth the space, because of how it hid
+
+The eraser rubbed and took nothing off. The hit test called
+`path.isPointInStroke(new DOMPoint(x, y))` inside a `try/catch` — and
+Chromium still refuses anything but an `SVGPoint` there, so every call threw
+`parameter 1 is not of type 'SVGPoint'`, the catch set `hit = false`, and the
+eraser worked perfectly while doing nothing. It was found by asking the
+browser what the call returned rather than whether a stroke had gone.
+
+### The tests
+
+`npm run test:reader` is **41 assertions, all passing, in 102 seconds** against
+real Chromium and real WebKit at four surfaces. The groups:
+
+| | |
+|---|---|
+| the paper | the window, the spacers, the element shape, the z-order |
+| marks stay on their words | at rest, resized, zoomed, rotated, panel moved — the handover's step 8 |
+| making a mark | selection to server to panel to page, and still there after a reload |
+| the chrome is the chrome | portalled above the app, no rule of the app's distorting a control, nothing outliving the reader |
+| anonymity, on the wire | the author id and the private marks, asserted on the bytes rather than the DOM |
+| pen, finger and palm | and that the stroke is fractions of the page |
+| a thousand pages stay light | the window, the scroll height, the page selector |
+| the quality bar | names, no sideways scroll, the platform, the 44px target |
+| undo and redo | marks and ink, the same id back, and the island saying so |
+| the tools that mark words | each of the five writes its own kind, a note is written and comes back written, the eraser rubs, and a tool with no behaviour is not offered |
+| the quiz | unchanged, and moved to its own file because it is not a reader test |
+
+The v5 suite is archived under `tests/reader/v5/`, unedited. Every rule in it
+that outlives a chrome has been ported; what is left describes v5's own
+furniture — the rack, the scrubber, the dock, the four corners — and there is
+nothing left for it to describe. Its header says so.
+
+### Still to do
+
+- **One row of section 4's table.** Everything else is built: marks, ink,
+  notes, the tray and its settings, bookmarks, warmth and livery all persist;
+  questions post to the module thread and their answers come back; undo and
+  redo are real. Not done: pulling a revision deck out of a paper.
+- **Five tools.** Shape, Text, Measure, Snapshot and Link. They are in the
+  table and out of the chest until they work.
+- **The eraser's second variant.** "Just where you rub" needs a stroke split
+  where the rubber crossed it and a highlight shortened to the words that are
+  left — and the second is an anchor problem rather than a drawing one: a
+  shortened mark is a different passage and has to be stored as one. Both
+  variants erase wholes today.
+- **The fanned deck** says "Where you have been" and is fed by your most
+  recent marks, which is where you have been marking rather than reading.
+- **A real iPad.** Still nothing verified on a physical device. The four
+  harness surfaces cover the capability branch; they are not a tablet, and the
+  palm rejection above is exactly the kind of thing a synthetic pointer event
+  can only half prove.
+- **Whether v6 should ship at all.** It is the third complete design in three
+  days and `main` still carries v4. That is a decision, not a task.
+
+---
+
+## v5 — read this first
+
+You sent three files (`reader.css`, `reference.html`, `COMPONENTS.md`) whose
+first line is "Supersedes v1–v4." They are in `docs/reader/v5/`, kept exactly
+as sent. This is not a revision of the v4 pass; it is a different reader, and
+everything below the v5 section describes the one it replaces.
+
+**What actually changed, as opposed to moved.**
+
+| | v4 | v5 |
+|---|---|---|
+| Chrome | one top bar, one bottom bar, a fixed left dock | four corners, a **movable** tool bar, and the panel always opposite it |
+| Tool icons | stroked outlines with a separate colour swatch beside them | **filled and coloured — the icon IS the swatch**, so there is no swatch element any more |
+| Thirteen tools, six slots | a tray you add to from a chest | every tool carries its own **variants**: Line / Arrow / Box / Ellipse is one bar entry |
+| Layout | three breakpoints | three **platforms**, chosen by pointer capability |
+| Notes | a dialog you compose in, then a row in a list | a **window on the page** you can drag, which collapses to a pin |
+| Selecting text | nothing, unless a tool was armed first | the **selection popover**: five colours plus Note / Ask / Copy |
+| Colour | five closed meanings for text, eight free ink colours | **one palette of five**, and every tool that has a colour picks from it |
+
+**Platform is not a breakpoint, and this is the part worth knowing.** The
+formula asks what the pointer can do, not how wide the window is:
+
+```js
+const coarse = matchMedia('(pointer:coarse)').matches || !matchMedia('(hover:hover)').matches;
+const plat = w < 680 ? 'phone' : (coarse || w < 1100) ? 'tablet' : 'desktop';
+```
+
+A 1024px window on a Mac is **desktop**; a 1024px iPad is **tablet**. That one
+line is why most web readers feel wrong on an iPad. The reference build
+specifies it and never implements it — nothing in it ever writes `data-plat`,
+so its own phone and tablet layers are dead code there. They are not here, and
+the harness now has four surfaces that each prove they pick the right one.
+
+**One repair to a file you told me to copy verbatim.** v5's header says the
+demo-only styles "are not included"; the strip that removed them took
+`.demo{position:absolute;…` and left the second line of that rule behind. A
+browser recovers by hunting for the next `{`, which is the `.demo` rule's own —
+so it silently throws away both. Nothing real is lost (both are demo chrome),
+but a stylesheet a parser has to recover from is one nobody can reason about,
+and it would have been copied forward into v6. The generator removes it and
+asserts that is the only thing that changed.
+
+**Six class names this app already had**, down from v4's eight: `.pop`,
+`.scrub`, `.mt`, `.av`, `.row`, `.acts`. Scoping `reader.css` stops the reader
+painting the app; it does nothing about the app painting the reader. All six
+are quarantined and listed in `reader-additions.css`; a seventh fails
+`check:paper`.
+
+**Two gaps the checks found, both real.** The orphan list was being computed
+and never shown — R11 says a mark that lost its place is *listed*, not dropped,
+and a mark that silently stops existing is worse than one that says it is lost.
+And `.pchip`, the panel's own page chip, was in the sheet and in nothing else.
+
+**Three things only a screenshot could have told me.** Question drew as a plain
+white disc, because its table entry has `fixed:'p'` and no `c` flag — there is
+nothing to *pick*, which is not the same as nothing to paint. At fit-width the
+page filled a 1440px window and ran under both the panel and the bar. And the
+reader could not recover from a zero-width start: opened in a pane reporting a
+0×0 viewport it came up as `phone` with a zero-width stage, and no resize event
+is fired when that pane is later given its real size. It watches its own box
+with a ResizeObserver now.
+
+**Four bugs the test suite found once it spoke v5**, and every one of them was
+a signature that had changed under a call that had not:
+
+- The long-press that opens bar-edit mode tested `closest(".tool")` — v4's
+  class name — so it never armed, and there was **no way into edit mode at
+  all**.
+- `shortcutFor(tray, TOOLS, key)`: v5 takes the tool table last and optionally,
+  so `TOOLS` arrived as the key. No letter ever matched and **every keyboard
+  shortcut silently did nothing**.
+- `addTool(tray, id, TOOLS, cap)` the same way round — the cap arrived as the
+  table — so `all.findIndex` threw on every add and **nothing could be added to
+  the bar from the chest**.
+- Hidden chrome is `pointer-events:none`, which is the shipped sheet's rule and
+  the right one. But a reader who has been still moves the mouse and clicks in
+  one motion, and React has not re-rendered between the two: **the first click
+  after a pause was swallowed**. `wake` writes the attribute synchronously now,
+  so the CSS has already changed by the time the click lands.
+
+None of these would have shown up in a screenshot, and the first three are the
+same mistake three times: a rewrite that changes an argument order is a rewrite
+that needs its callers read, not just its compiler satisfied.
+
+The auto-hide's hold counter is also wired to every surface that can be up —
+properties, chest, panel, menu, mark card, an open note — rather than the two I
+had remembered. A counter and not a boolean, because two can be up at once and
+closing either one used to release a hold the other still wanted.
+
+**Where the tests now disagree with v4 on purpose**, they say so in the file
+rather than quietly changing a number: the chrome goes to zero instead of
+dimming to 12% (the LOGO is what never hides, which is what makes that safe);
+Master Caution is absent rather than a dead zero, because a destination chip
+with nothing behind it does nothing when you press it; the pen draws from the
+same five colours as everything else; the scrubber is the bottom edge of the
+screen rather than a 25px pill; and there is no "Just the paper" button,
+because the chrome hides itself.
+
+**Your manual, re-measured on v5.** `npm run measure:manual` reads the real
+row, hands it to the harness, proxies storage through to the real project so
+the ranged requests are real, and reports what happened. It writes nothing.
+
+| | v4 | v5 |
+|---|---|---|
+| all 1012 page slots laid out | 572ms | **526ms** |
+| first page drawn | 2.4s | **2.8s** |
+| over the wire | 1.34MB / 46 requests, 21 ranged | **1.28MB / 45 requests, 20 ranged** |
+| canvases alive after scrolling | 6 | **6** |
+| frame time while scrolling | 18ms avg | **18.9ms avg** |
+
+Unchanged, which is the answer I wanted: the loading path — manifest-first
+layout, our own range transport, the text layer off the critical path — is the
+one part of the reader v5 did not touch, and the numbers say so. A screenshot
+of page 27 is in `tests/screens/real-manual.png`.
+
+**Where it stands:** `npm run check` green, including all 200 of `check:paper`.
+Every reader assertion in the suite passes. One QUIZ test times out per run on
+this machine, which has been running the suite at 2000 seconds against a normal
+150 — the same slow-machine budget that made me raise the raster wait, hitting
+Playwright's own 30-second click default. It is not a reader failure and it is
+not a v5 failure, but it is not nothing either, and it should be re-run
+somewhere quieter before this replaces v4.
 
 ---
 

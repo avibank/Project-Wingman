@@ -1,3 +1,20 @@
+/* ARCHIVED — this describes the v5 reader, which is not what is built.
+ *
+ * v6 replaced the chrome entirely: `.page` is `.sheetpg`, `.rdr-text` is
+ * `.textLayer`, the dock and the rack and the scrubber are gone, and the
+ * panel is one aside rather than four corners. Every selector below therefore
+ * misses, and each miss costs a 90-second timeout — which is why these are
+ * out of `tests/reader/index.mjs` rather than left failing.
+ *
+ * They are kept, unedited, for the reasons written in them. Several are about
+ * rules that outlive any chrome — no blank page, ranged loading, the pen and
+ * the palm, anonymity on the wire — and those have been PORTED to
+ * `tests/reader/v6.mjs` against v6's vocabulary. What is left here is the part
+ * that was about v5's furniture, and it is only worth reading if that
+ * furniture ever comes back.
+ *
+ * Run them with `node tests/reader/v5/index.mjs` if you need to.
+ */
 /* PHASE 1 — the renderer. Brief §4.
  *
  * The bar it has to clear, in the brief's own words: "Open the longest paper.
@@ -12,31 +29,46 @@ const laptop = SURFACES[0];
    Checking `data-on` alone would pass on a canvas that is present and empty,
    which is the exact failure being tested for. */
 const pageState = (page) => page.evaluate(() => {
-  const rows = [...document.querySelectorAll(".rdr-page")].map((p) => {
+  const rows = [...document.querySelectorAll(".page")].map((p) => {
     const c = p.querySelector("canvas");
     const box = p.getBoundingClientRect();
     const onScreen = box.bottom > 70 && box.top < innerHeight - 30 && box.width > 0;
     return {
       n: Number(p.dataset.page),
       onScreen,
-      ghost: p.classList.contains("is-placeholder"),
-      hasSheet: p.classList.contains("rdr-page"),
+      ghost: p.classList.contains("ph"),
+      /* The SHEET is what makes a page look like paper rather than a white
+         rectangle: v5 gives `.page` a white ground, a 3px radius and the one
+         shadow that is depth 1. Asked of the computed style rather than of the
+         class name, because the class is what I write and the shadow is what
+         the reader sees. */
+      hasSheet: (() => {
+        const cs = getComputedStyle(p);
+        /* A drawn page is a flat white ground; a placeholder is a gradient, so
+           its background-COLOUR is transparent and only background-image is
+           set. Either counts — the point is that the slot looks like paper
+           before there is a picture on it, which is the whole of §4.1. */
+        return cs.boxShadow !== "none"
+          && (cs.backgroundColor !== "rgba(0, 0, 0, 0)" || cs.backgroundImage !== "none");
+      })(),
       boxW: Math.round(box.width),
       drawn: !!c && c.width > 1 && c.hasAttribute("data-on"),
       fills: !!c && Math.abs(c.getBoundingClientRect().width - box.width) < 2,
     };
   });
-  return { rows, scrollTop: document.querySelector(".rdr-scroll").scrollTop };
+  return { rows, scrollTop: document.querySelector(".stage").scrollTop };
 });
 
 group("Phase 1 · the renderer", () => {
   it("the document keeps its width whether the panel is open or shut", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const open = await page.evaluate(() => Math.round(document.querySelector(".rdr-scroll").getBoundingClientRect().width));
-      await page.click('.ib[aria-label="Pages"]');
+      const open = await page.evaluate(() => Math.round(document.querySelector(".stage").getBoundingClientRect().width));
+      /* "Pages" is a TAB inside the panel in v5; the button on the top-right
+         opens and shuts the panel itself. */
+      await page.click('.acts .ic[aria-label="Panel"]');
       await page.waitForTimeout(400);
-      const shut = await page.evaluate(() => Math.round(document.querySelector(".rdr-scroll").getBoundingClientRect().width));
+      const shut = await page.evaluate(() => Math.round(document.querySelector(".stage").getBoundingClientRect().width));
       expect(open).toBeAtLeast(600, "with the panel open");
       expect(shut).toBeAtLeast(open, "with the panel shut the document should be WIDER, never zero");
     });
@@ -59,9 +91,9 @@ group("Phase 1 · the renderer", () => {
   it("the scroll height is right from the first frame, so the scrollbar never jumps", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const first = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollHeight);
+      const first = await page.evaluate(() => document.querySelector(".stage").scrollHeight);
       await page.waitForTimeout(2500);
-      const later = await page.evaluate(() => document.querySelector(".rdr-scroll").scrollHeight);
+      const later = await page.evaluate(() => document.querySelector(".stage").scrollHeight);
       expect(Math.abs(later - first)).toBeAtMost(4, "the height moved as pages resolved");
     });
   });
@@ -72,7 +104,7 @@ group("Phase 1 · the renderer", () => {
       const seen = [];
       for (let i = 0; i <= 10; i++) {
         await page.evaluate((f) => {
-          const s = document.querySelector(".rdr-scroll");
+          const s = document.querySelector(".stage");
           s.scrollTop = (s.scrollHeight - s.clientHeight) * f;
         }, i / 10);
         await page.waitForTimeout(700);
@@ -102,7 +134,7 @@ group("Phase 1 · the renderer", () => {
   it("the zoom control names the mode, not a percentage", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      expect(await page.locator(".zoom .v").textContent()).toContain("Fit width");
+      expect(await page.locator(".corner-z .v").textContent()).toContain("Fit width");
     });
   });
 
@@ -111,18 +143,18 @@ group("Phase 1 · the renderer", () => {
       await openReader(page);
       // Put a known page under a known screen position, then zoom in about it.
       await page.evaluate(() => {
-        const s = document.querySelector(".rdr-scroll");
+        const s = document.querySelector(".stage");
         s.scrollTop = s.scrollHeight * 0.12;
       });
       await page.waitForTimeout(600);
       const before = await page.evaluate(() => {
-        const s = document.querySelector(".rdr-scroll");
+        const s = document.querySelector(".stage");
         return { top: s.scrollTop, h: s.scrollHeight };
       });
-      await page.click('.ib[aria-label="Zoom in"]');
+      await page.click('.ic[aria-label="Zoom in"]');
       await page.waitForTimeout(700);
       const after = await page.evaluate(() => {
-        const s = document.querySelector(".rdr-scroll");
+        const s = document.querySelector(".stage");
         return { top: s.scrollTop, h: s.scrollHeight };
       });
       /* The same content should sit at the same fraction of the document. If
@@ -180,9 +212,9 @@ group("Phase 1 · the renderer", () => {
   it("pages are separated, numbered, and sit on their own sheet", async () => {
     await withPage(laptop, async (page) => {
       await openReader(page);
-      const gap = await page.evaluate(() => getComputedStyle(document.querySelector(".rdr-stack")).rowGap);
+      const gap = await page.evaluate(() => getComputedStyle(document.querySelector(".stack")).rowGap);
       expect(parseInt(gap, 10)).toBeAtLeast(20, "pages need a gutter between them");
-      const nums = await page.locator(".pg-num").count();
+      const nums = await page.locator(".pnum").count();
       expect(nums).toBeAtLeast(3, "pages do not carry their number in the gutter");
       await shot(page, "phase1-reader-at-rest");
     });
@@ -191,7 +223,7 @@ group("Phase 1 · the renderer", () => {
   it("nothing logs an error while a paper opens and scrolls", async () => {
     await withPage(laptop, async (page, { errors }) => {
       await openReader(page);
-      await page.evaluate(() => { const s = document.querySelector(".rdr-scroll"); s.scrollTop = s.scrollHeight * 0.5; });
+      await page.evaluate(() => { const s = document.querySelector(".stage"); s.scrollTop = s.scrollHeight * 0.5; });
       await page.waitForTimeout(1500);
       expect(errors.filter((e) => !/favicon|ResizeObserver loop/i.test(e))).toEqual([]);
     });
