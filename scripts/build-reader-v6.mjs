@@ -65,6 +65,13 @@ const EDITS = [
   /* ══ part 2 · the island ══════════════════════════════════════════ */
   {
     part: 2,
+    why: "P0-2 — the banner said work was saved when nothing had been queued. It now says what is true: how much is waiting, and on which device",
+    find: ` offline:()=>\`<span class="led w"></span><b>Offline</b><span class="mut">marks are saved here</span>\``,
+    replace: ` offline:()=>{const n=ctx.unsent?.()||0;return \`<span class="led w"></span><b>\${n?'Not saved yet':'Offline'}</b><span class="mut">\${n?\`\${n} waiting on this device\`:'your work is kept until you reconnect'}</span>\`},
+ saved  :()=>\`<span class="led" style="--k:var(--lv)"></span><b>Back online</b><span class="mut">\${ctx.justSent?.()||0} saved</span>\``,
+  },
+  {
+    part: 2,
     why: "the paper's name, length and first page come from the manifest, not from a constant",
     find: `const DOC='LTT B1-11', TOTAL=1012, FIRST=126;`,
     replace: `const DOC=ctx.doc, TOTAL=ctx.total, FIRST=ctx.first;`,
@@ -344,6 +351,16 @@ return {
   offline(v){v?flash('offline'):toRest()},
   repaint(){paintBookmarks();if(open)fillTray(open)},
 };`,
+  },
+  {
+    part: 2,
+    why: "P0-2 — the island can say the outbox drained, which is the other half of telling the truth about it",
+    find: `  offline(v){v?flash('offline'):toRest()},
+  repaint(){paintBookmarks();if(open)fillTray(open)},`,
+    replace: `  offline(v){v?flash('offline'):toRest()},
+  /* the outbox emptied. Said once, and only when something actually went up */
+  saved(n){if(n>0)flash('saved',2600)},
+  repaint(){paintBookmarks();if(open)fillTray(open)},`,
   },
 
   /* ══ part 3 · the tool bar ════════════════════════════════════════ */

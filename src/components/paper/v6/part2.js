@@ -6,6 +6,7 @@
  * and `npm run check:paper` refuses if this file and the source have drifted.
  *
  * Changed from the handed-over file, and only this:
+ *   - P0-2 — the banner said work was saved when nothing had been queued. It now says what is true: how much is waiting, and on which device
  *   - the paper's name, length and first page come from the manifest, not from a constant
  *   - where the student left off, and what they had set — read once at mount, written back through ctx
  *   - HANDOVER section 1 — the stand-in paper. React renders the stage from PDF.js in the same element shape
@@ -30,6 +31,7 @@
  *   - HANDOVER section 5 — the demo strip and the states it fires
  *   - HANDOVER section 5 — the demo strip's own controls
  *   - the island has to be told things from outside: a new page, a pull waiting, a message
+ *   - P0-2 — the island can say the outbox drained, which is the other half of telling the truth about it
  */
 
 export function mountIsland(ctx){
@@ -94,7 +96,8 @@ const S={
  askq   :()=>`<span class="led" style="--k:${K.p}"></span><b>Question posted</b><span class="mut">anonymously</span>`,
  undo   :()=>`<span class="mini" style="color:var(--txt-2)">${ico.undo}</span><b>Undid a highlight</b><button class="act" aria-label="Redo">${ico.redo}</button>`,
  fresh  :()=>`<span class="led" style="--k:var(--lv)"></span><b>7 new marks</b><button class="act" aria-label="Pull them in">${ico.dl}</button>`,
- offline:()=>`<span class="led w"></span><b>Offline</b><span class="mut">marks are saved here</span>`
+ offline:()=>{const n=ctx.unsent?.()||0;return `<span class="led w"></span><b>${n?'Not saved yet':'Offline'}</b><span class="mut">${n?`${n} waiting on this device`:'your work is kept until you reconnect'}</span>`},
+ saved  :()=>`<span class="led" style="--k:var(--lv)"></span><b>Back online</b><span class="mut">${ctx.justSent?.()||0} saved</span>`
 };
 const TONE={offline:'warn'};
 /* what each colour means when a mark lands */
@@ -357,6 +360,8 @@ return {
   undone(what,isRedo){MARKK='y';flash('undo',isRedo?1400:2600)},
   say(name,ms,k){if(k&&MEAN[k])MARKK=k;flash(name,ms)},
   offline(v){v?flash('offline'):toRest()},
+  /* the outbox emptied. Said once, and only when something actually went up */
+  saved(n){if(n>0)flash('saved',2600)},
   repaint(){paintBookmarks();if(open)fillTray(open)},
 };
 }

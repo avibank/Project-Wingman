@@ -1561,3 +1561,126 @@ group("v6 · taking your marks with you", () => {
     });
   });
 });
+
+/* ---------------------------------------------------------------------------
+   P0-2 — work that could not be saved is kept, and said so honestly.
+   Before the outbox, a mark made with no signal stayed in memory, the banner
+   said "marks are saved here", and it was gone on the next load. These are the
+   mechanism, not a patch: each one fails if any part of the queue regresses.
+   --------------------------------------------------------------------------- */
+group("v6 · nothing is lost when the network is not there", () => {
+  /* The backend unreachable while the app itself still loads — a student on a
+     cached page whose wifi has gone. Cutting the whole context offline would
+     stop the dev server serving the bundle, and a reader that never mounts
+     proves nothing about a reader that cannot save. */
+  const cut = (page, on) => page.route("**/rest/v1/**", (r) => (on ? r.abort() : r.continue()));
+
+  const markSomething = async (page) => {
+    await page.click('.t[data-t="hand"]');
+    await page.waitForTimeout(200);
+    await page.evaluate(() => {
+      const p = document.querySelector('.sheetpg[data-pg="2"]') || document.querySelector(".sheetpg");
+      const span = [...p.querySelectorAll(".textLayer span[data-item]")].find((x) => x.textContent.trim().length > 40);
+      const r = document.createRange();
+      r.setStart(span.firstChild, 0); r.setEnd(span.firstChild, 24);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      document.querySelector("#stage").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    });
+    await page.waitForSelector("#selp.on", { timeout: 5000 });
+    await page.click('#selp [data-act="hl"]');
+    await page.waitForTimeout(1000);
+    return page.evaluate(() => window.WM.marks[window.WM.marks.length - 1]?.tx);
+  };
+  const queue = (page) => page.evaluate(() => {
+    try { return JSON.parse(localStorage.getItem("wm.reader.outbox.v1") || "[]"); }
+    catch { return []; }
+  });
+
+  it("a mark that could not be saved is queued, not merely announced", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await cut(page, true);
+      const tx = await markSomething(page);
+      const q = await queue(page);
+      expect(tx).toBeTruthy("nothing was marked");
+      expect(q.length).toBe(1, `the outbox holds ${q.length}, not 1`);
+      expect(q[0].t).toBe("mark.add", q[0].t);
+      /* Rule 2: the id is minted before the queue, so every later edit or
+         delete lands on the row this insert will become. */
+      expect(!!q[0].args?.id).toBeTruthy("the queued write has no id of its own");
+      expect(q[0].args.anchor?.quote).toBeTruthy("the queued write carries no anchor");
+    });
+  });
+
+  it("and the banner counts it instead of calling it saved", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await cut(page, true);
+      await markSomething(page);
+      await page.waitForTimeout(600);
+      const said = await page.evaluate(() => (document.querySelector("#isl")?.textContent || "")
+        .replace(/\s+/g, " "));
+      expect(said).toContain("waiting on this device", said.slice(0, 90));
+      expect(said).notToContain("marks are saved here", said.slice(0, 90));
+    });
+  });
+
+  it("the work is still on the page after a reload with the backend still down", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await cut(page, true);
+      const tx = await markSomething(page);
+      await openV6(page);
+      await page.waitForTimeout(1500);
+      const back = await page.evaluate((t) => ({
+        inStore: window.WM.marks.some((m) => m.tx === t),
+        quads: document.querySelectorAll(".mkq").length,
+      }), tx);
+      expect(back.inStore).toBeTruthy("the mark did not come back");
+      expect(back.quads > 0).toBeTruthy("it came back but was not drawn");
+    });
+  });
+
+  it("and it goes up on its own when the network returns, then survives a reload", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await cut(page, true);
+      const tx = await markSomething(page);
+      await page.unroute("**/rest/v1/**");
+      await page.evaluate(() => window.dispatchEvent(new Event("online")));
+      await page.waitForTimeout(4000);
+      expect((await queue(page)).length).toBe(0, "the outbox did not drain");
+      await openV6(page);
+      await page.waitForTimeout(1200);
+      const survived = await page.evaluate((t) => window.WM.marks.some((m) => m.tx === t), tx);
+      expect(survived).toBeTruthy("it drained but did not survive the reload");
+    });
+  });
+
+  it("undoing an unsent mark cancels it rather than queueing a delete behind it", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await cut(page, true);
+      await markSomething(page);
+      expect((await queue(page)).length).toBe(1, "nothing was queued to undo");
+      await page.keyboard.press("Meta+z");
+      await page.waitForTimeout(900);
+      const after = await queue(page);
+      /* Two ops that annihilate annihilate here, where it is free — and where
+         a permanently stuck insert cannot trap the delete behind it. */
+      expect(after.length).toBe(0, `the outbox still holds ${after.map((o) => o.t).join(", ")}`);
+    });
+  });
+
+  it("a mark made with the network up queues nothing at all", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      const tx = await markSomething(page);
+      await page.waitForTimeout(1000);
+      expect((await queue(page)).length).toBe(0, "the happy path is queueing writes it did not need to");
+      await openV6(page);
+      expect(await page.evaluate((t) => window.WM.marks.some((m) => m.tx === t), tx))
+        .toBeTruthy("the control mark did not survive");
+    });
+  });
+});

@@ -43,16 +43,26 @@ function useProgressState() {
     let active = true;
     setLoaded(false);
     if (isSignedIn && user) {
+      /* progress_for, not a select. 0021 takes user_progress away from the
+         anon key entirely — it was handing every student's progress blob to
+         anyone who asked — and the function reads it as the owner. The select
+         stays as the fallback only until that migration has run; see the note
+         on rpcFirst in annotations.js. */
       supabase
-        .from("user_progress")
-        .select("data")
-        .eq("user_id", user.id)
-        .maybeSingle()
-        .then(({ data: row, error }) => {
+        .rpc("progress_for", { uid: user.id })
+        .then(async ({ data: row, error }) => {
+          if (error && error.code === "PGRST202") {
+            return supabase.from("user_progress").select("data")
+              .eq("user_id", user.id).maybeSingle()
+              .then(({ data: r, error: e }) => ({ data: r?.data || {}, error: e }));
+          }
+          return { data: row || {}, error };
+        })
+        .then(({ data: got, error }) => {
           if (!active) return;
           if (error) console.error(error);
-          setData(row?.data || {});
-          lastServer.current = row?.data || {};
+          setData(got || {});
+          lastServer.current = got || {};
           setLoaded(true);
         });
     } else {
@@ -156,8 +166,11 @@ function useProgressState() {
     if (!isSignedIn || !user?.id) return;
     if (timer.current) clearTimeout(timer.current);
     pending.current = {};
-    const { error } = await supabase.from("user_progress").delete().eq("user_id", user.id);
-    if (error) console.error(error);
+    const { error } = await supabase.rpc("progress_clear", { uid: user.id });
+    if (error && error.code === "PGRST202") {
+      const legacy = await supabase.from("user_progress").delete().eq("user_id", user.id);
+      if (legacy.error) console.error(legacy.error);
+    } else if (error) console.error(error);
     setData({});
   }, [isSignedIn, user?.id]);
 

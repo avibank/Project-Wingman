@@ -114,7 +114,78 @@ function inkFor(store, uid, paperId) {
     .map((k) => ({ ...k, author_name: k.author_id === uid ? "You" : nameOf(store, k.author_id), mine: k.author_id === uid }));
 }
 
+/* 0021 moved every write behind a function, because the tables themselves now
+   refuse the anon key. The harness models the half that matters here: the
+   author_id comes from `uid` and is NOT taken from the caller, and an update
+   or a delete only touches rows that uid wrote. A test that could still edit
+   somebody else's mark against this fixture would be testing nothing. */
+const uuid = () => (globalThis.crypto?.randomUUID
+  ? crypto.randomUUID()
+  : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  }));
+
+const EDITABLE = ["body", "colour", "ring", "kind", "style", "hint", "anonymous", "resolved_at"];
+
 const RPC = {
+  paper_mark_add: (s, b) => {
+    if (!b.uid || !b.p_paper || !b.p_anchor) return null;
+    const now = new Date().toISOString();
+    const row = {
+      id: b.p_id || uuid(), paper_id: b.p_paper, module_code: b.p_module,
+      paper_version: 1, author_id: b.uid,
+      kind: b.p_kind || "highlight", ring: b.p_ring || "module",
+      body: b.p_body ?? null, thread_id: b.p_thread_id ?? null,
+      colour: b.p_colour ?? null, anchor: b.p_anchor, hint: b.p_hint ?? null,
+      anonymous: b.p_anonymous ?? (b.p_kind === "question" || b.p_colour === "unsure"),
+      status: "ok", agree_count: 0, created_at: now, updated_at: now,
+    };
+    const at = s.paper_annotations.findIndex((a) => a.id === row.id);
+    if (at >= 0) s.paper_annotations[at] = row; else s.paper_annotations.push(row);
+    return row;
+  },
+  paper_mark_edit: (s, b) => {
+    const row = s.paper_annotations.find((a) => a.id === b.p_id && a.author_id === b.uid);
+    if (!row) return false;
+    for (const k of EDITABLE) if (b.p_patch && k in b.p_patch) row[k] = b.p_patch[k];
+    row.updated_at = new Date().toISOString();
+    return true;
+  },
+  paper_mark_delete: (s, b) => {
+    const at = s.paper_annotations.findIndex((a) => a.id === b.p_id && a.author_id === b.uid);
+    if (at < 0) return false;
+    s.paper_annotations.splice(at, 1);
+    return true;
+  },
+  paper_ink_add: (s, b) => {
+    if (!b.uid || !b.p_paper || !b.p_page || !b.p_points) return null;
+    const row = {
+      id: b.p_id || uuid(), paper_id: b.p_paper, module_code: b.p_module,
+      paper_version: 1, author_id: b.uid, page: b.p_page,
+      tool: b.p_tool || "pen", colour: b.p_colour || "graphite",
+      width: b.p_width ?? 0.0032, ring: b.p_ring || "solo", points: b.p_points,
+      created_at: new Date().toISOString(),
+    };
+    const at = s.paper_ink.findIndex((k) => k.id === row.id);
+    if (at >= 0) s.paper_ink[at] = row; else s.paper_ink.push(row);
+    return row;
+  },
+  paper_ink_delete: (s, b) => {
+    const ids = new Set(b.p_ids || []);
+    let n = 0;
+    for (let i = s.paper_ink.length - 1; i >= 0; i--) {
+      if (ids.has(s.paper_ink[i].id) && s.paper_ink[i].author_id === b.uid) { s.paper_ink.splice(i, 1); n++; }
+    }
+    return n;
+  },
+  progress_for: (s, b) => (s.user_progress.find((r) => r.user_id === b.uid)?.data || {}),
+  progress_clear: (s, b) => {
+    const at = s.user_progress.findIndex((r) => r.user_id === b.uid);
+    if (at >= 0) s.user_progress.splice(at, 1);
+    return true;
+  },
+
   paper_marks_for: (s, b) => marksFor(s, b.uid, b.p_paper, b.p_since),
   paper_annotations_for: (s, b) => marksFor(s, b.uid, b.p_paper, b.p_since),
   paper_ink_for: (s, b) => inkFor(s, b.uid, b.p_paper),

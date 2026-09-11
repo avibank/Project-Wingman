@@ -10,6 +10,7 @@ import { mountToolbar } from "./part3.js";
 import { mountPanel } from "./part4.js";
 import { capture } from "./mount.js";
 import { createMarkStore } from "./marks.js";
+import { whenBackOnline } from "./outbox.js";
 import SheetPage from "./SheetPage.jsx";
 import "./reader.css";
 import "./additions.css";
@@ -319,6 +320,11 @@ export default function ReaderV6({
       }),
       tally: () => ({ hl: counts.hl, bm: live2.current.bookmarks.length, rv: counts.rv }),
       recent: () => store.current?.recent() || [],
+      /* P0-2 — what the banner says instead of "marks are saved here". One is
+         how much of this student's work has not reached the server; the other
+         is how much went up the last time the outbox drained. */
+      unsent: () => store.current?.unsent() || 0,
+      justSent: () => store.current?.justSent() || 0,
       head: headOf,
       orphans: () => store.current?.orphans() || [],
       gridPages: () => {
@@ -404,6 +410,22 @@ export default function ReaderV6({
     });
     store.current.loadInk();
     store.current.loadThreads();
+    /* Try the outbox straight away — the commonest case is a student who made
+       marks on a dead connection, closed the tab, and has come back on a live
+       one — and then whenever the browser suggests the world has changed. */
+    const drain = async () => {
+      const out = await store.current?.drain();
+      if (!out) return;
+      if (out.sent > 0) {
+        island.current?.saved(out.sent);
+        panel.current?.repaint();
+      }
+      /* Only put the warning away once there is genuinely nothing left. */
+      if (!out.left) island.current?.offline(false);
+      else island.current?.offline(true);
+    };
+    drain();
+    const stopDraining = whenBackOnline(drain);
     setPage(ctx.page);
 
     /* Undo and redo. The chrome has the message and the Redo button; the key
@@ -430,6 +452,7 @@ export default function ReaderV6({
 
     return () => {
       window.removeEventListener("keydown", keys);
+      stopDraining();
       clearInterval(poll);
       panel2.off(); tools.off(); island2.off();
       delete window.islandSay; delete window.readerGoTo; delete window.WM;

@@ -18,6 +18,20 @@ import { newId } from "./lessonSurface.js";
 
 const fail = (e, f) => { if (e) console.error(e); return f; };
 
+/* A function that is not there yet is not an error to report. 0021 moves every
+   write behind an RPC and then takes the table away; between the deploy that
+   starts calling the RPC and the migration that creates it, PGRST202 is the
+   expected answer and the direct write is still the live one. Once 0021 has
+   run, the fallback CANNOT succeed — the grant is gone — and both this helper
+   and every `legacy` argument below are dead code to delete. */
+const MISSING_FUNCTION = "PGRST202";
+async function rpcFirst(name, args, legacy) {
+  const { data, error } = await supabase.rpc(name, args);
+  if (!error) return { data, ok: true };
+  if (error.code !== MISSING_FUNCTION) return { data: null, ok: false, error };
+  return legacy();
+}
+
 /* Rows come back snake_case from Postgres and stay that way here on purpose:
    they are passed straight to paperMarks.js, which reads author_id and
    updated_at, and one vocabulary through the whole feature beats two. */
@@ -57,26 +71,53 @@ export async function createAnnotation({
     hint,
   };
   if (id) row.id = id;
-  const { data, error } = await supabase.from("paper_annotations").insert(row).select().single();
-  if (error) return fail(error, null);
+  /* author_id is still in `row` for the fallback path only. The RPC ignores
+     anything the client says about who wrote this and uses its own uid, which
+     is the point of the move: a mark can no longer be posted in someone
+     else's name. */
+  const { data, ok, error } = await rpcFirst("paper_mark_add", {
+    uid: me, p_paper: paperId, p_module: moduleCode, p_kind: kind, p_ring: ring,
+    p_body: body || null, p_thread_id: threadId, p_colour: colour || null,
+    p_anchor: anchor, p_hint: hint, p_anonymous: null, p_id: id || null,
+  }, async () => {
+    const r = await supabase.from("paper_annotations").insert(row).select().single();
+    return { data: r.data, ok: !r.error, error: r.error };
+  });
+  if (!ok) return fail(error, null);
   return data;
 }
 
-export async function updateAnnotation(id, patch) {
+/* `me` is new and not optional in spirit: the server scopes the update to
+   `author_id = me`, so a patch aimed at somebody else's mark changes nothing
+   instead of quietly succeeding. Callers that have not been given the author
+   yet still work, on the pre-0021 path only. */
+export async function updateAnnotation(id, patch, me = null) {
   if (!id) return false;
-  const { error } = await supabase
-    .from("paper_annotations")
-    .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  return !fail(error, false) && !error;
+  const { ok, error } = await rpcFirst("paper_mark_edit", {
+    uid: me, p_id: id, p_patch: patch,
+  }, async () => {
+    const r = await supabase
+      .from("paper_annotations")
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    return { data: !r.error, ok: !r.error, error: r.error };
+  });
+  return !fail(error, false) && ok;
 }
 
-/* Only ever called for a mark this account wrote — the caller checks, because
-   the server cannot: it has no session to check against. */
-export async function deleteAnnotation(id) {
+/* The comment that used to sit here said the caller had to check ownership
+   "because the server cannot: it has no session to check against". After 0021
+   the server checks: paper_mark_delete deletes `where author_id = uid` and
+   returns false when that matches nothing. The caller should still pass `me`. */
+export async function deleteAnnotation(id, me = null) {
   if (!id) return false;
-  const { error } = await supabase.from("paper_annotations").delete().eq("id", id);
-  return !error;
+  const { data, ok, error } = await rpcFirst("paper_mark_delete", {
+    uid: me, p_id: id,
+  }, async () => {
+    const r = await supabase.from("paper_annotations").delete().eq("id", id);
+    return { data: !r.error, ok: !r.error, error: r.error };
+  });
+  return ok && data !== false && !error;
 }
 
 /* R2 — the one write that says a mark lost its place. A function rather than an
@@ -129,8 +170,8 @@ export async function fetchCorrections(me, moduleCode) {
   return data || [];
 }
 
-export async function resolveCorrection(id) {
-  return updateAnnotation(id, { resolved_at: new Date().toISOString() });
+export async function resolveCorrection(id, me = null) {
+  return updateAnnotation(id, { resolved_at: new Date().toISOString() }, me);
 }
 
 /* §10 — agreeing with somebody else's mark.

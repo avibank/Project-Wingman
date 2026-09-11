@@ -31,6 +31,9 @@ import { fetchDiscussion, insertReply } from "../../../lib/threads.js";
 import { fetchProfiles } from "../../../lib/squadron.js";
 import { fetchInk, createStroke, deleteStrokes } from "../../../lib/ink.js";
 import { rangeOver, offsetsOf, toLocal, spansIn } from "./geometry.js";
+import {
+  remember, flush as flushOutbox, waitingFor, unsent, newLocalId,
+} from "./outbox.js";
 
 /* v6's five colour keys, and the vocabulary either side of them. The join
    itself is readerIcons.js and is not restated here. */
@@ -84,6 +87,8 @@ export function createMarkStore({
   /* Everything the reader is holding, keyed by the server's id. `placed` is
      the resolved offsets; a row that would not resolve is orphaned and kept
      out of the page rather than guessed at. */
+  let lastSent = 0;                // how many the last drain got away
+  let draining = false;            // one replay at a time, or ops double up
   const rows = new Map();          // id -> the database row
   const placed = new Map();        // id -> { start, end }
   const orphans = new Set();
@@ -211,6 +216,19 @@ export function createMarkStore({
     if (fetched.has(key)) return;
     fetched.add(key);
     const all = await fetchAnnotations(me, paperId);
+    /* Work this device has not managed to send yet is drawn alongside what the
+       server returned, so reopening a paper on a dead connection shows the
+       marks rather than an empty page. They are shaped like rows because
+       everything downstream reads rows; the id is the one minted when the
+       write was queued, so when the outbox finally drains the row that
+       arrives IS this one. */
+    const mine = unsent(paperId);
+    const pendingRows = mine.marks.map((a) => ({
+      id: a.id, paper_id: a.paperId, module_code: a.moduleCode, author_id: me,
+      kind: a.kind, ring: a.ring, colour: a.colour, body: a.body,
+      thread_id: a.threadId || null, anchor: a.anchor, hint: null,
+      status: "ok", created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    })).filter((r) => !rows.has(r.id));
     const lo = model.pageStart[from - 1] ?? 0;
     const hi = model.pageStart[to] ?? model.text.length;
     /* A row's own quote is enough to decide whether it is worth resolving:
@@ -222,7 +240,10 @@ export function createMarkStore({
       const q = r.anchor?.quote;
       return !q || slice.includes(q.slice(0, 40));
     });
-    absorb(near, false);
+    absorb(near.concat(pendingRows.filter((r) => {
+      const q = r.anchor?.quote;
+      return !q || slice.includes(q.slice(0, 40));
+    })), false);
     relayout();
   }
 
@@ -232,7 +253,9 @@ export function createMarkStore({
   async function poll() {
     if (!paperId || !model) return 0;
     const all = await fetchAnnotations(me, paperId);
-    pending = all.filter((r) => !rows.has(r.id) && !pending.some((p) => p.id === r.id))
+    const queued = new Set(unsent(paperId).marks.map((a) => a.id));
+    pending = all.filter((r) => !rows.has(r.id) && !queued.has(r.id)
+        && !pending.some((p) => p.id === r.id))
       .concat(pending);
     return pending.length;
   }
@@ -413,10 +436,39 @@ export function createMarkStore({
       threadId,
     });
     if (!row) {
-      /* OFFLINE, AND SAID OUT LOUD. The mark stays on the page — losing what
-         somebody just marked is the worse failure of the two — but a mark
-         that only exists in this tab is not the same thing as a saved one,
-         and the student has to be told which they have. */
+      /* OFFLINE, AND KEPT. The mark stays on the page — losing what somebody
+         just marked is the worse failure of the two — and now it also goes
+         into the outbox with an id minted here, so the insert that eventually
+         goes up is THIS mark rather than a new one, and anything the student
+         does to it in the meantime lands on the same row.
+
+         This used to end at `trouble("offline")`, which said "marks are saved
+         here" and then lost them on reload. See P0-2. */
+      const localId = /^[0-9a-f-]{36}$/i.test(mark.id) ? mark.id : newLocalId();
+      const args = {
+        id: localId, paperId, moduleCode, me,
+        kind: KIND_TO_DB[mark.kind] || "highlight",
+        ring: ringFor(mark.k),
+        colour: MEANING_OF[mark.k],
+        anchor: anchorFor(model.text, off.start, off.end),
+        body: mark.kind === "ask" ? (mark.ask || null) : null,
+        threadId,
+      };
+      remember("mark.add", paperId, args);
+      const was = mark.id;
+      placed.set(localId, off); placed.delete(was);
+      mark.id = localId; mark.g = localId;
+      document.querySelectorAll(`.mkq[data-g="${was}"]`).forEach((q) => { q.dataset.g = localId; });
+      WM.emit();
+      onCounts?.(counts());
+      /* Undoable exactly like a saved one: the record it points at is the
+         queued op, and removing it takes the op out of the queue too. */
+      did({
+        what: mark.kind === "ask" ? "question" : "highlight",
+        undo: () => remove(localId),
+        redo: () => { remember("mark.add", paperId, args); restore({ ...args, id: localId, author_id: me,
+          kind: args.kind, ring: args.ring, colour: args.colour, anchor: args.anchor }, off, mark); },
+      });
       trouble("offline");
       return;
     }
@@ -449,7 +501,13 @@ export function createMarkStore({
     document.querySelectorAll(`.mkq[data-g="${id}"]`).forEach((q) => q.remove());
     placed.delete(id); rows.delete(id); orphans.delete(id);
     onCounts?.(counts());
-    if (row && row.author_id === me) await deleteAnnotation(id);
+    if (row && row.author_id === me) {
+      if (!(await deleteAnnotation(id, me))) remember("mark.del", paperId, { id, me });
+    } else if (!row) {
+      /* No row means it never reached the server — so what has to go is the
+         queued insert, not a row that does not exist. */
+      remember("mark.del", paperId, { id, me });
+    }
   }
 
   /* And putting one back where it was. The row keeps its id, so a mark undone
@@ -482,7 +540,7 @@ export function createMarkStore({
         redo: () => remove(row.id),
       });
     }
-    if (row && row.author_id === me) await deleteAnnotation(g);
+    if (row && row.author_id === me) await deleteAnnotation(g, me);
   }
 
   async function converted(g, kind, k) {
@@ -518,7 +576,7 @@ export function createMarkStore({
     }
     relayout();
     onCounts?.(counts());
-    await updateAnnotation(g, patch);
+    if (!(await updateAnnotation(g, patch, me))) remember("mark.edit", paperId, { id: g, patch, me });
   }
 
   /* An answer typed into a card. It goes to the thread the Ready Room shows,
@@ -564,7 +622,23 @@ export function createMarkStore({
       width, ring: "solo",
       points: pts.map(([x, y]) => [x / 1000, y / 1000]),
     });
-    if (!row) { trouble("offline"); return; }
+    if (!row) {
+      /* Same bargain as a mark: it stays on the page and it goes in the
+         outbox, with its id minted here so a redo is the same stroke. */
+      const localId = newLocalId();
+      remember("ink.add", paperId, {
+        id: localId, paperId, moduleCode, me, page: pg,
+        tool: (tool.id === "hl" || tool.id === "mkr") ? "marker" : "pen",
+        colour: INK_OF[S.colour[tool.id]] || "graphite",
+        width, ring: "solo",
+        points: pts.map(([x, y]) => [x / 1000, y / 1000]),
+      });
+      path.dataset.id = localId;
+      path.dataset.ink = INK_OF[S.colour[tool.id]] || "graphite";
+      path.removeAttribute("stroke");
+      trouble("offline");
+      return;
+    }
     path.dataset.id = row.id;
     /* The live stroke was drawn with the tool's own colour inline, which is
        the chrome's business. Once it is a record it is painted by its name
@@ -578,7 +652,7 @@ export function createMarkStore({
         path.remove();
         const i = inkRows.findIndex((x) => x.id === row.id);
         if (i >= 0) inkRows.splice(i, 1);
-        await deleteStrokes([row.id]);
+        await deleteStrokes([row.id], me);
       },
       /* Drawn again from the record rather than from the element, because the
          element may have been thrown away with its page by then. */
@@ -609,12 +683,15 @@ export function createMarkStore({
     if (!row || row.author_id !== me) return;
     did({
       what: "note",
-      undo: async () => { m.ask = was; WM.emit(); await updateAnnotation(id, { body: was || null }); },
-      redo: async () => { m.ask = text; WM.emit(); await updateAnnotation(id, { body: text || null }); },
+      undo: async () => { m.ask = was; WM.emit(); await updateAnnotation(id, { body: was || null }, me); },
+      redo: async () => { m.ask = text; WM.emit(); await updateAnnotation(id, { body: text || null }, me); },
     });
     row.body = text;
-    const saved = await updateAnnotation(id, { body: text || null });
-    if (!saved) trouble("offline");
+    const saved = await updateAnnotation(id, { body: text || null }, me);
+    if (!saved) {
+      remember("mark.edit", paperId, { id, patch: { body: text || null }, me });
+      trouble("offline");
+    }
   }
 
   /* The eraser took some strokes off. They come off the record too, and the
@@ -651,11 +728,11 @@ export function createMarkStore({
             if (i >= 0) inkRows.splice(i, 1);
           }
           for (const pg of new Set(gone.map((r) => r.page))) paintInk(pg);
-          await deleteStrokes(gone.map((r) => r.id));
+          await deleteStrokes(gone.map((r) => r.id), me);
         },
       });
     }
-    await deleteStrokes(ids);
+    await deleteStrokes(ids, me);
 
     /* "Just where you rub" leaves the runs the rubber missed, as strokes of
        their own — so one stroke can become two, which is what a rubber does
@@ -852,6 +929,39 @@ export function createMarkStore({
       };
     }).filter(Boolean),
     waiting: () => pending.length,
+    /* ── the outbox ──────────────────────────────────────────────────
+       How much of this student's work on THIS paper has not reached the
+       server. The island reads it, which is why the banner can now say a
+       number instead of a promise. */
+    unsent: () => waitingFor(paperId).length,
+    justSent: () => lastSent,
+    /* Replay, oldest first, stopping at the first refusal. Safe to call as
+       often as you like — an empty queue is a no-op and a stuck one stays
+       stuck rather than delivering a deletion before its insert. */
+    async drain() {
+      if (draining) return { sent: 0 };
+      draining = true;
+      try {
+        const out = await flushOutbox({
+          "mark.add": async (a) => {
+            const row = await createAnnotation(a);
+            if (row) { rows.set(row.id, row); onCounts?.(counts()); }
+            return row;
+          },
+          "mark.edit": (a) => updateAnnotation(a.id, a.patch, a.me),
+          "mark.del": (a) => deleteAnnotation(a.id, a.me),
+          "ink.add": async (a) => {
+            const row = await createStroke(a);
+            if (row) inkRows.push(row);
+            return row;
+          },
+          "ink.del": (a) => deleteStrokes(a.ids, a.me),
+        });
+        lastSent = out.sent;
+        if (out.sent > 0) { relayout(); onCounts?.(counts()); }
+        return out;
+      } finally { draining = false; }
+    },
     setRotation(v) { rot = v; relayout(); },
     /* A page arriving from React, or leaving. */
     page(pg, els) {

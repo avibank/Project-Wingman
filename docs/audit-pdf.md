@@ -226,6 +226,15 @@ and no `input` of any kind.
 ---
 ### P0-1 · Any student can read every other student's marks, notes and progress with the key from their own browser
 
+> **Fixed in code, waiting on the migration.** `0021_close_the_tables.sql`
+> takes `paper_annotations`, `paper_ink` and `user_progress` away from the
+> anon role entirely and moves every read and write behind SECURITY
+> DEFINER functions that set `author_id` themselves and scope every edit
+> and delete to `author_id = uid`. The client calls those functions now,
+> with a fallback to the old direct write so it works on both sides of the
+> migration. **The migration has not been run.** See *What changed* at the
+> foot of this document, including what this does not fix.
+
 **Reproduce.** Open wingman.institute in any browser. View source on
 `/assets/index-CYZYMxNW.js` and search for the Supabase anon key — it is in
 there twice. Then, from anywhere, with no login and no session:
@@ -422,6 +431,12 @@ them is a 30px unlabelled button. Reproduced twice.
 
 ---
 ### P0-2 · A mark made offline is lost, and the reader tells the student it is saved
+
+> **Fixed and verified.** A write that does not land now goes into a
+> durable outbox in `localStorage` and is replayed when the network comes
+> back. The banner no longer says "marks are saved here"; it says how
+> many changes are waiting, and on which device. Re-measured twice on
+> every case, plus six new tests in the reader suite.
 
 **Reproduce.** Open a paper. Go offline (aeroplane mode, or a dead campus
 wifi). Select a line and highlight it. Come back online. Reload.
@@ -1035,3 +1050,93 @@ scratchpad, so it changed nothing:
 
 **Nothing in the reader was modified during this audit.** The only file this
 work adds to the repository is the one you are reading.
+
+---
+
+## What changed after the audit
+
+The two P0s were fixed. Everything else on the list is untouched, and the
+verdict above still stands on the rest.
+
+### P0-2, offline work — fixed and verified
+
+`src/components/paper/v6/outbox.js` is a durable queue in `localStorage`. A
+mark, an edit, a deletion or an ink stroke that does not reach the server is
+remembered with everything needed to replay it, and replayed on `online`, on
+focus, on a visibility change, on a slow poll, and when the paper is next
+opened. Three rules it is built on, each of which is a way it could have gone
+wrong instead:
+
+- **Order is kept and never skipped.** Replays stop at the first failure, so a
+  deletion can never be delivered ahead of the insert it refers to.
+- **The id is minted before the queue, not after the server.** A mark made
+  offline, restyled offline and then flushed arrives as one row that was always
+  that row.
+- **Two ops that annihilate do so in the queue.** Undoing an unsent mark
+  cancels its insert instead of sending an insert and then a delete for a row
+  nobody ever saw — which also means a permanently stuck insert cannot trap a
+  delete behind it.
+
+Re-measured in a real browser, twice each:
+
+| | before | after |
+|---|---|---|
+| a mark made with the backend unreachable | lost on reload | **queued, drawn, survives** |
+| reload while still unreachable | gone | **still on the page, 1 quad, 1 queued** |
+| network returns | nothing ever sent | **queue drains to 0 on its own** |
+| the banner | "Offline · marks are saved here" | **"Not saved yet · 1 waiting on this device"** |
+| undo of an unsent mark | n/a | **cancels the pair, queue empties** |
+| the same mark made online | worked | **still works, queues nothing** |
+
+Six tests were added to `tests/reader/v6.mjs` under *nothing is lost when the
+network is not there*, and four assertions to `npm run check:paper`. The suite
+is 68 passed, 0 failed; `check:paper` is 216 passed, 0 failed.
+
+### P0-1, the leak — fixed in code, and the migration has not been run
+
+`supabase/migrations/0021_close_the_tables.sql`:
+
+1. The reading functions become SECURITY DEFINER with a pinned `search_path`,
+   by `ALTER` rather than by restating their bodies — a second copy of 0014's
+   and 0018's ring rules would be free to drift from them.
+2. New write functions — `paper_mark_add`, `paper_mark_edit`,
+   `paper_mark_delete`, `paper_ink_add`, `paper_ink_delete`, `progress_for`,
+   `progress_clear` — which set `author_id` from their own `uid` argument
+   instead of taking it from the client, and scope every update and delete to
+   `author_id = uid`.
+3. The three tables are revoked from `anon` and `authenticated` and left with
+   RLS on and no policy. A revoke rather than a `using (false)` policy on
+   purpose: a filtered-out policy returns `[]`, which reads like "there is no
+   data", where a revoke says "permission denied".
+4. The migration asserts its own result with `has_table_privilege` and raises
+   rather than reporting success on a hole it did not close.
+
+The seven client call sites now call those functions, with a fallback to the
+direct write for exactly one reason: between deploying this and running the
+migration, `PGRST202` is the expected answer and the old path is still the live
+one. After the revoke the fallback cannot succeed and is dead code to delete.
+
+**What it does not fix, said plainly.** The `uid` is still a parameter the
+caller chooses. After this migration an attacker must know a specific
+classmate's Clerk id and ask one paper at a time, instead of dumping the whole
+cohort in one request — and the place those Clerk ids were being handed out is
+exactly what closes. That is a large reduction and it is not airtight. Airtight
+needs an identity Postgres can verify: Clerk as a Supabase third-party auth
+provider, and policies on `auth.jwt()->>'sub'`. That is two dashboard changes
+plus a client change, in that order, and the steps are in the migration's
+footer. Every other table in the database is still open to the anon key.
+
+**To run it:**
+
+```bash
+npm run sql -- supabase/migrations/0021_close_the_tables.sql --yes
+```
+
+Then `npm run check:paper-db`, which gained a *stranger* section: it asserts
+that the public key cannot read any of the three tables directly, cannot insert
+into them, and that one account can neither delete nor edit another's mark.
+Those assertions **fail until 0021 has run**, which is the point of having
+them.
+
+`supabase/migrations/0020_reader_tools.sql` is independent of this and is still
+unrun.

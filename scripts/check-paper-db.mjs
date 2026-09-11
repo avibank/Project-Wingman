@@ -176,6 +176,54 @@ try {
   const row = (after.body || []).find((r) => r.id === h.id);
   ok("R2 · an orphaned mark is still there, marked", row && row.status === "orphaned",
      JSON.stringify(row?.status));
+  /* ---------------------------------------------------------------------
+     P0-1 — THE STRANGER. The key used here is the one compiled into the
+     public bundle; anybody can read it out of /assets/index-*.js. Before
+     0021 every table answered it directly, so one request returned the whole
+     cohort's marks with the authors' Clerk ids and the exact words they had
+     marked. These assertions are the mechanism that keeps that shut. They
+     FAIL until 0021 has been run, which is the point.
+     --------------------------------------------------------------------- */
+  console.log("\nthe stranger — what the public key can reach on its own");
+  for (const t of ["paper_annotations", "paper_ink", "user_progress"]) {
+    const got = await rest(`${t}?select=*&limit=5`);
+    ok(`${t} refuses a direct read`,
+       got.status === 401 || got.status === 403 || got.status === 404,
+       `HTTP ${got.status}, ${Array.isArray(got.body) ? got.body.length + " rows came back" : ""}`);
+  }
+  {
+    const wrote = await rest("paper_annotations", {
+      method: "POST",
+      body: JSON.stringify({ paper_id: PAPER, module_code: "M1", author_id: A,
+        kind: "highlight", ring: "solo", anchor: { quote: "x", prefix: "", suffix: "" } }),
+    });
+    ok("a direct insert is refused", wrote.status >= 400, `HTTP ${wrote.status}`);
+    if (wrote.status < 400 && wrote.body?.[0]?.id) made.push(wrote.body[0].id);
+  }
+  /* And the half that survives a forged uid: even asked as B, a delete aimed
+     at a mark A wrote must change nothing. */
+  {
+    const mine = await rpc("paper_mark_add", {
+      uid: A, p_paper: PAPER, p_module: "M1", p_kind: "highlight", p_ring: "solo",
+      p_anchor: createAnchor(TEXT, 0, 10),
+    });
+    const id = mine.body?.id || mine.body?.[0]?.id;
+    if (id) {
+      made.push(id);
+      const theirs = await rpc("paper_mark_delete", { uid: B, p_id: id });
+      const still = await rpc("paper_marks_for", { uid: A, p_paper: PAPER, p_since: null });
+      ok("one account cannot delete another's mark",
+         (still.body || []).some((r) => r.id === id),
+         `paper_mark_delete as B returned ${JSON.stringify(theirs.body)}`);
+      const edited = await rpc("paper_mark_edit", { uid: B, p_id: id, p_patch: { body: "not yours" } });
+      const after = await rpc("paper_marks_for", { uid: A, p_paper: PAPER, p_since: null });
+      ok("nor edit it",
+         !(after.body || []).some((r) => r.id === id && r.body === "not yours"),
+         `paper_mark_edit as B returned ${JSON.stringify(edited.body)}`);
+    } else {
+      ok("paper_mark_add exists (0021 has run)", false, JSON.stringify(mine.body).slice(0, 120));
+    }
+  }
 } finally {
   console.log("\ncleaning up");
   await rest(`paper_annotations?paper_id=eq.${PAPER}`, { method: "DELETE" });

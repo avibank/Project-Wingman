@@ -272,8 +272,24 @@ console.log("\nR8 — your own marks are instant");
      /relayout\(\);\s*\n\s*\/\* A question opens its thread first[\s\S]{0,400}await createAnnotation/.test(reader)
      || /relayout\(\);[\s\S]{0,600}const row = await createAnnotation/.test(reader));
   ok("R8", "a write that did not land says so rather than going quiet",
-     /if \(!row\) \{[\s\S]{0,400}trouble\("offline"\)/.test(reader)
+     /if \(!row\) \{[\s\S]{0,1800}trouble\("offline"\)/.test(reader)
      && /onTrouble\(\) \{ island\.current\?\.offline\(true\); \}/.test(reader));
+  /* P0-2 — and saying so is no longer the whole of it. A mark made with no
+     signal used to stay in memory, be announced as saved, and be gone on the
+     next load. Both halves are asserted: the write is REMEMBERED, and the
+     banner reads a real number rather than promising. */
+  ok("R8", "a write that did not land is kept, not just announced",
+     /if \(!row\) \{[\s\S]{0,1200}remember\("mark\.add"/.test(reader)
+     && /remember\("ink\.add"/.test(reader));
+  ok("R8", "and every later change to an unsent mark is kept with it",
+     /remember\("mark\.edit"/.test(reader) && /remember\("mark\.del"/.test(reader));
+  ok("R8", "the queue is replayed when the network comes back, oldest first",
+     /whenBackOnline/.test(reader) && /drain\(\)/.test(reader)
+     && /stopDraining\(\)/.test(reader));
+  ok("R8", "the banner counts what is waiting instead of saying it is saved",
+     /* the template itself, not the comments that explain why it changed */
+     !/<b>Offline<\/b><span class="mut">marks are saved here/.test(reader)
+     && /waiting on this device/.test(reader));
 }
 
 /* ---- R9 / R12 · enforced on the server, not in the client --------------- */
