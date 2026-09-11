@@ -373,10 +373,13 @@ export default function ReaderV6({
       onConverted(g, kind, k) { store.current?.converted(g, kind, k); },
       onRecoloured(g, k) { store.current?.recoloured(g, k); },
       onStroke(pgEl, path, pts, tool, S) { store.current?.stroke(pgEl, path, pts, tool, S); },
-      onErasedInk(ids) { store.current?.erasedInk(ids); },
+      onErasedInk(ids, split) { store.current?.erasedInk(ids, split); },
+      onSnapshot(pgEl, a, b) { store.current?.snapshot(pgEl, a, b); },
       mine: (id) => store.current?.mine(id) ?? false,
+      pointsOf: (id) => store.current?.pointsOf(id) || null,
       onAnswer(markId, text) { store.current?.answer(markId, text); },
       onNote(markId, text) { store.current?.note(markId, text); panel.current?.repaint(); },
+      onPlaced() { setTimeout(() => panel.current?.openNewest(), 60); },
     };
 
     /* Every listener the parts bind to window or document, every observer and

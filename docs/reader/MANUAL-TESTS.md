@@ -102,6 +102,36 @@ tab.
 not work yet. Everything you can press does something. If you find a control
 that does nothing at all, that is the bug this list exists for.
 
+**W14 · The figures.** Add **Shape** from the chest, drag one out, then change
+the variant and drag each of Line, Arrow, Box and Ellipse. Hold **Shift** while
+you drag.
+→ Shift should give a square, a circle, or a line that stays level. Reload:
+every figure should come back exactly as you drew it, because the points ARE
+the figure.
+
+**W15 · The tape measure.** Add **Measure**, drag across something you know the
+size of, then switch to Area and drag a box.
+→ The reading follows the pointer in millimetres and inches, and it is a length
+on the **printed sheet** — not on the aircraft. A drawing's scale is written on
+the drawing and nothing in the file states it. Let go and it leaves nothing
+behind; that is a tape measure, not an annotation.
+
+**W16 · Snapshot.** Add **Snapshot** and drag a box round a diagram.
+→ A PNG should be saved, cropped at the resolution the page was drawn at. Open
+it and check it is the region you chose and nothing else.
+
+**W17 · Text on the page.** Add **Text**, tap beside a paragraph, type into the
+card that opens.
+→ The words should appear **on the page** next to the passage — that is the
+difference between a text box and a note. Reload and they are still there, on
+the same words.
+
+**W18 · The rubber.** Draw a long line with the pen. Set the Eraser to **Just
+where you rub** and rub across the middle of it.
+→ One line should become two, with the middle gone. Set it back to **Whole
+mark** and rub again: the whole stroke should go. Undo should put back whatever
+you took.
+
 **W10 · Leaving.** Press the Wingman mark in the top-left corner.
 → Back to the Library, and the rest of the app should behave normally: no dead
 clicks, no stuck cursor, nothing swallowing the first tap. Everything the

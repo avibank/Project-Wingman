@@ -227,6 +227,11 @@ export default function SheetPage({
       ref={wrapRef}
       data-pg={pageNumber}
       data-real=""
+      /* The page's own size in PDF points, 72 to the inch. The tape measure
+         reads it off the element rather than being handed the model, because
+         it is measuring the page in front of it. */
+      data-ptw={size?.w || undefined}
+      data-pth={size?.h || undefined}
       data-bm={bookmarked ? "1" : "0"}
       style={size ? { aspectRatio: `${size.w} / ${size.h}` } : undefined}
     >

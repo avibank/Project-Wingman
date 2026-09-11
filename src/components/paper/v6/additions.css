@@ -98,6 +98,22 @@
 .rdr[data-over="1"] .sheetpg[data-real] { max-width: none; }
 .rdr[data-over="1"] .stage { overflow-x: auto; }
 
+/* ── the tape measure's readout ──────────────────────────────────────────
+   Measure is the one tool whose answer IS the tool. It follows the pointer
+   while you drag and goes when you let go, so it borrows the reader's own
+   floating-surface tokens rather than inventing a look: the same glass, the
+   same hairline, the same mono numerals every other figure in the app uses. */
+.rdr .tape {
+  position: fixed; z-index: 45; pointer-events: none;
+  transform: translate(12px, 12px);
+  padding: 5px 9px; border-radius: var(--r-xs);
+  background: var(--pop); border: 1px solid var(--hair);
+  box-shadow: var(--sh); color: var(--txt);
+  font-family: var(--font-mono); font-size: 11.5px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+}
+
 /* ── two mark kinds the shipped sheet styles nowhere ─────────────────────
    reader.css paints `.mkq` in four shapes: `hl` a wash, `ul` a rule under the
    words, `ask` a wash with a rule under it, and `rv` a wash with a bar down
@@ -113,6 +129,18 @@
   content: ""; position: absolute; left: 0; right: 0; top: 50%;
   height: 2px; margin-top: -1px; border-radius: 2px; background: var(--k);
 }
+/* A text box's words, hung off the end of the passage it belongs to. It is a
+   label rather than a box on the paper, so it never covers a word. */
+.rdr .mkq.lab {
+  pointer-events: none; white-space: nowrap; max-width: 240px; overflow: hidden;
+  text-overflow: ellipsis; padding: 1px 6px; border-radius: 3px;
+  background: color-mix(in srgb, var(--k) 88%, #fff);
+  /* The paper's own ink, so the label warms with the page rather than
+     staying cold on a warmed sheet. */
+  color: var(--pink); font-size: 10.5px; line-height: 1.5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+}
+
 .rdr .mkq.note {
   background: color-mix(in srgb, var(--k) 26%, transparent);
   box-shadow: inset 2px 0 0 var(--k);

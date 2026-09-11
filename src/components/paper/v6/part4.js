@@ -20,6 +20,7 @@
  *   - an answer typed into a card is posted to the module thread the Ready Room shows
  *   - a filter chip reading 0 is a zero count, and this app never states one
  *   - a note's card has to open, or the box you write it in is display:none
+ *   - a text box is written on its card too, and a fresh one should already be open
  *   - and Save writes it, where Send answers a question
  *   - the panel's scroll handler does its work on the next frame too
  *   - the panel repaints when marks arrive, and the rest of the reader needs to be able to ask
@@ -88,10 +89,11 @@ function card(m){
         ${m.kind==='ask'?`<span class="n">${(m.ans||[]).length} ${((m.ans||[]).length===1?'answer':'answers')}</span>`:''}
         ${m.kind==='ul'?`<span style="opacity:.7">underline</span>`:''}
         ${m.kind==='st'?`<span style="opacity:.7">struck out</span>`:''}
-        ${m.kind==='note'&&!m.ask?`<span style="opacity:.7">no words yet</span>`:''}
+        ${(m.kind==='note'||m.kind==='txt')&&!m.ask?`<span style="opacity:.7">no words yet</span>`:''}
+        ${m.kind==='txt'?`<span style="opacity:.7">on the page</span>`:''}
       </span>
     </div>
-    ${m.kind==='note'?`<div class="thr">
+    ${(m.kind==='note'||m.kind==='txt')?`<div class="thr">
       ${m.ask?`<div class="ans"><span class="tx">${hi(m.ask)}</span></div>`:''}
       <div class="reply"><input placeholder="${m.ask?'Change what it says':'Write the note'}"
         value="${esc(m.ask||'')}" data-stop data-note><button data-stop>Save</button></div>
@@ -205,7 +207,7 @@ BODY.addEventListener('click',e=>{
   const m=WM.marks.find(x=>x.id===c.dataset.m);if(!m)return;
   page=m.pg;
   window.readerGoTo&&window.readerGoTo(m.pg,m.g);
-  if(m.kind==='ask'||m.kind==='note'){open = open===m.id?null:m.id;paintList()}
+  if(m.kind==='ask'||m.kind==='note'||m.kind==='txt'){open = open===m.id?null:m.id;paintList()}
   m.fresh=false;paintFoot();
 });
 PF.addEventListener('click',e=>{if(e.target.closest('[data-close]'))R.dataset.pan='0'});
@@ -229,5 +231,11 @@ side();
 
 paint();
 /* what the rest of the reader can ask the panel to do */
-return {repaint:paint,page:()=>page};
+return {repaint:paint,page:()=>page,
+  /* A mark that has just been placed and wants typing into: open its card and
+     put the cursor in it, so the student is writing rather than hunting. */
+  openNewest(){const m=WM.marks[WM.marks.length-1];if(!m)return;
+    open=m.id;paintList();
+    const box=BODY.querySelector('[data-m="'+m.id+'"] .reply input');
+    if(box){box.focus();box.scrollIntoView({block:'nearest'})}}};
 }

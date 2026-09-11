@@ -1185,20 +1185,21 @@ console.log("\nthe tool table");
      Select picks and pans, Pen/Marker/Highlight draw, the Eraser rubs, and
      Underline, Strikethrough, Note, Ask and Flag each take a selection and
      write their own kind. */
-  const BUILT = ["hand", "pen", "mkr", "hl", "era", "ul", "st", "note", "ask", "flag"];
+  const BUILT = ["hand", "pen", "mkr", "hl", "era", "ul", "st", "note", "ask", "flag",
+                 "shp", "msr", "snap", "txt"];
   const listed = (part3.match(/const BUILT=\[([^\]]*)\]/) || [, ""])[1]
     .split(",").map((x) => x.trim().replace(/'/g, "")).filter(Boolean);
-  ok("tools", `ten of the fifteen have a behaviour (${listed.length} listed)`,
+  ok("tools", `fourteen of the fifteen have a behaviour (${listed.length} listed)`,
      listed.length === BUILT.length && BUILT.every((id) => listed.includes(id)),
      listed.join(" "));
 
   /* A control that does nothing is the same lie as an empty state that names
      no action, so the five that do not work are not offered — not in the
      chest, and not as a tab with nothing behind it. */
-  ok("tools", "and the five that do not are not offered anywhere",
+  ok("tools", "and the one that does not is not offered anywhere",
      /BUILT\.includes\(t\.id\)/.test(part3)
      && /\.filter\(g=>TOOLS\.some\(t=>t\.g===g&&BUILT\.includes\(t\.id\)\)\)/.test(part3));
-  for (const id of ["shp", "txt", "msr", "snap", "link"]) {
+  for (const id of ["link"]) {
     ok("tools", `${id} is in the table and still unbuilt`,
        new RegExp(`\\{id:'${id}'`).test(part3) && !listed.includes(id));
   }
@@ -1220,8 +1221,14 @@ console.log("\nthe tool table");
   /* WHAT IS STILL MISSING. */
   ok("gap", "a student cannot pull their marks out of a paper",
      !/exportMarks|revision deck|downloadMarks/i.test(src));
-  ok("gap", "the eraser's second variant erases wholes like the first",
-     /WHOLE-OBJECT eraser/.test(part3));
+  /* Link needs somewhere to keep a target. `kind` has room for it and nothing
+     else does: a URL is not an anchor and not a stroke. */
+  ok("gap", "Link has no target to keep, so it is not offered",
+     !/\{id:'link'[\s\S]{0,400}BUILT/.test(part3) && !listed.includes("link"));
+  /* A tape measure that could be kept would need paper_ink to be able to say
+     "this one is a measurement", and its tool CHECK is pen and marker. */
+  ok("gap", "a measurement cannot be kept, and is a tape measure rather than a mark",
+     /it is a tape measure, not an annotation|leaves nothing behind/i.test(part3 + src));
   ok("gap", "the fanned deck shows recent marks, not recent places",
      /recent\(\) \{[\s\S]{0,200}m\.who === "me"/.test(read("src/components/paper/v6/marks.js")));
 }

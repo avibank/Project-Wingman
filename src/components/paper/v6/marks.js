@@ -40,9 +40,12 @@ import { rangeOver, offsetsOf, toLocal, spansIn } from "./geometry.js";
    migration to store a word the colour already says. */
 const KIND_TO_DB = {
   hl: "highlight", ul: "underline", st: "strikethrough",
-  ask: "question", note: "note", flag: "highlight",
+  ask: "question", note: "note", txt: "text", flag: "highlight",
 };
-const KIND_FROM_DB = { highlight: "hl", underline: "ul", strikethrough: "st", question: "ask", note: "note", correction: "hl" };
+const KIND_FROM_DB = {
+  highlight: "hl", underline: "ul", strikethrough: "st",
+  question: "ask", note: "note", text: "txt", correction: "hl",
+};
 
 /* Red is private end to end. It is never sent to other students and never
    counted in class heat, and the way that is guaranteed is the ring it is
@@ -152,7 +155,8 @@ export function createMarkStore({
       tx: model.text.slice(at.start, at.end).replace(/\s+/g, " ").trim(),
       /* The card reads `ask` for the words on a mark, whatever kind it is —
          a question's question and a note's note are the same field. */
-      ask: (row.kind === "question" || row.kind === "note") ? (row.body || "") : undefined,
+      ask: (row.kind === "question" || row.kind === "note" || row.kind === "text")
+        ? (row.body || "") : undefined,
       ans: row.kind === "question" ? (replies.get(row.thread_id) || []) : undefined,
       fresh: !!fresh,
     };
@@ -293,6 +297,23 @@ export function createMarkStore({
           d.style.cssText = `left:${box.left}px;top:${box.top}px;`
             + `width:${box.width}px;height:${box.height}px;--k:${hex}`;
           layer.appendChild(d);
+        }
+        /* A TEXT BOX SHOWS ITS WORDS ON THE PAGE. That is the whole of the
+           difference between it and a note: a note is a pin you open, a text
+           box is a label you can read without opening anything. It hangs off
+           the end of the passage it is anchored to, so it travels with the
+           words rather than sitting where the paper used to be. */
+        if (m.kind === "txt" && m.ask) {
+          const last = layer.lastElementChild;
+          if (last) {
+            const lab = document.createElement("span");
+            lab.className = "mkq lab";
+            lab.dataset.g = m.g;
+            lab.textContent = m.ask;
+            lab.style.cssText = `left:${parseFloat(last.style.left) + parseFloat(last.style.width) + 6}px;`
+              + `top:${parseFloat(last.style.top) - 2}px;--k:${hex}`;
+            layer.appendChild(lab);
+          }
         }
         range.detach?.();
       }
@@ -527,14 +548,23 @@ export function createMarkStore({
   async function stroke(pgEl, path, pts, tool, S) {
     const pg = Number(pgEl.dataset.pg);
     const width = (S.size[tool.id] || 3) / 1000;
+    /* 0017 KNOWS TWO NIBS AND THE TOOL TABLE HAS SIX. The column's CHECK is
+       `tool in ('pen','marker')` and its comment says what they mean: pen
+       lays colour down solid, marker lays it down translucent the way a
+       highlighter does over words. So every tool is one or the other.
+
+       Passing the tool's own id — 'mkr', 'shp' — was a CHECK violation, which
+       comes back as a null row: the stroke stayed on the page, saved nothing,
+       and was gone on reload. Marker strokes have been doing that since the
+       tool was wired. */
     const row = await createStroke({
       paperId, moduleCode, me, page: pg,
-      tool: tool.id === "hl" ? "marker" : tool.id,
+      tool: (tool.id === "hl" || tool.id === "mkr") ? "marker" : "pen",
       colour: INK_OF[S.colour[tool.id]] || "graphite",
       width, ring: "solo",
       points: pts.map(([x, y]) => [x / 1000, y / 1000]),
     });
-    if (!row) return;
+    if (!row) { trouble("offline"); return; }
     path.dataset.id = row.id;
     /* The live stroke was drawn with the tool's own colour inline, which is
        the chrome's business. Once it is a record it is painted by its name
@@ -573,6 +603,9 @@ export function createMarkStore({
     const was = m.ask || "";
     m.ask = text;
     WM.emit();
+    /* A text box's words are drawn ON the page, so changing them is a layout
+       change as well as a data one. */
+    relayout();
     if (!row || row.author_id !== me) return;
     did({
       what: "note",
@@ -586,7 +619,13 @@ export function createMarkStore({
 
   /* The eraser took some strokes off. They come off the record too, and the
      removal is undoable the same way everything else is. */
-  async function erasedInk(ids) {
+  /* What a stroke is made of, so the rubber can keep the parts it missed. */
+  function pointsOf(id) {
+    const row = inkRows.find((r) => r.id === id);
+    return row ? row.points : null;
+  }
+
+  async function erasedInk(ids, split = []) {
     const gone = ids.map((id) => inkRows.find((r) => r.id === id)).filter(Boolean);
     for (const row of gone) {
       const i = inkRows.findIndex((x) => x.id === row.id);
@@ -617,6 +656,50 @@ export function createMarkStore({
       });
     }
     await deleteStrokes(ids);
+
+    /* "Just where you rub" leaves the runs the rubber missed, as strokes of
+       their own — so one stroke can become two, which is what a rubber does
+       to a line it crosses in the middle. They are written after the delete,
+       so a failure halfway leaves nothing duplicated. */
+    for (const piece of split) {
+      const was = gone.find((r) => r.id === piece.id);
+      if (!was) continue;
+      for (const run of piece.runs) {
+        const row = await createStroke({
+          paperId, moduleCode, me, page: was.page,
+          tool: was.tool, colour: was.colour, width: was.width, ring: was.ring,
+          points: run,
+        });
+        if (row) { inkRows.push(row); }
+      }
+      paintInk(was.page);
+    }
+  }
+
+  /* A SNAPSHOT IS A PICTURE OF THE PAGE, not a record on it. Nothing is
+     stored and nothing needs to be: the region is cropped out of the raster
+     the reader already drew, at the resolution it was drawn at, and handed to
+     the student as a file. */
+  function snapshot(pgEl, a, b) {
+    const canvas = pgEl.querySelector("canvas");
+    if (!canvas || !canvas.width) return;
+    const x0 = Math.min(a[0], b[0]) / 1000, x1 = Math.max(a[0], b[0]) / 1000;
+    const y0 = Math.min(a[1], b[1]) / 1000, y1 = Math.max(a[1], b[1]) / 1000;
+    const sx = Math.round(x0 * canvas.width), sy = Math.round(y0 * canvas.height);
+    const sw = Math.max(1, Math.round((x1 - x0) * canvas.width));
+    const sh = Math.max(1, Math.round((y1 - y0) * canvas.height));
+    const out = document.createElement("canvas");
+    out.width = sw; out.height = sh;
+    out.getContext("2d").drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+    out.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a2 = document.createElement("a");
+      a2.href = url;
+      a2.download = `${(paper?.title || "paper").replace(/[^\w-]+/g, "-").slice(0, 40)}-p${pgEl.dataset.pg}.png`;
+      document.body.appendChild(a2); a2.click(); a2.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }, "image/png");
   }
 
   /* ── undo and redo ─────────────────────────────────────────────────────
@@ -668,7 +751,7 @@ export function createMarkStore({
   /* ── what the shell tells us ───────────────────────────────────────── */
   const api = {
     loadWindow, loadInk, loadThreads, poll, pull, relayout,
-    made, dropped, converted, recoloured, stroke, answer, note, erasedInk,
+    made, dropped, converted, recoloured, stroke, answer, note, erasedInk, snapshot, pointsOf,
     /* Whether this account drew a stroke. The server cannot answer it — there
        is no session to check against — so the caller has to, and the eraser
        asks before it takes anything off. */

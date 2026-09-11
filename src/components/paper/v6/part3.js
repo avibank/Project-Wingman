@@ -21,10 +21,15 @@
  *   - an armed text tool marks the selection in its own kind, rather than opening the pill for it
  *   - and a tab with nothing behind it is the same lie one level up
  *   - the chest offers six tools that have no behaviour, and offering them is the same lie as a dead button
+ *   - Shape draws nothing, and a figure you drag out is the one thing a diagram needs
+ *   - and the root has to call them drawing tools, or the page takes no pointer for them
+ *   - a figure is a different gesture from a scribble and starts its own way
  *   - the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing
  *   - and the rubber keeps rubbing while the pointer is down
+ *   - and follows the pointer, holding Shift for a true square, circle or right angle
  *   - section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing
  *   - a 120Hz Pencil reports several positions per frame, and the handed-over loop keeps one
+ *   - Measure had no readout, and Snapshot no region — both are a drag and then an answer
  *   - a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in
  *   - the tray, its order, and every tool's colour, size and opacity persist per student
  *   - closing the same call
@@ -114,6 +119,70 @@ function paintRail(){
   mode();
 }
 const DRAWS=['pen','mkr','hl'];
+/* ── figures you drag out ──────────────────────────────────────────────
+   Line, Arrow, Box and Ellipse are one gesture: press, drag, release, and the
+   figure is rebuilt from the two corners on every move so what you watch is
+   exactly what lands.
+
+   THEY ARE STORED AS INK, because that is what they are: coordinates and
+   nothing else, with no sentence you could keep instead. And they are stored
+   as the POINTS OF THE FIGURE rather than as a name plus two corners — a box
+   is its four corners, an ellipse is forty-eight points around it — so a
+   figure comes back from the database without any field having to say what it
+   was. The same polyline draws it live and draws it on reload, which is why
+   the two cannot disagree. */
+const GEOM=['shp','msr'];
+const SHAPES=['line','arrow','box','ellipse'];
+const polyline=p=>p.map(([x,y],i)=>(i?'L':'M')+x+' '+y).join('');
+function figurePoints(kind,a,b){
+  const [x0,y0]=a,[x1,y1]=b;
+  if(kind==='box')return [[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
+  if(kind==='ellipse'){
+    const cx=(x0+x1)/2,cy=(y0+y1)/2,rx=(x1-x0)/2,ry=(y1-y0)/2,out=[];
+    for(let i=0;i<=48;i++){const t=i/48*Math.PI*2;
+      out.push([cx+Math.cos(t)*rx,cy+Math.sin(t)*ry])}
+    return out;
+  }
+  if(kind==='arrow'){
+    /* One continuous polyline — shaft, barb, back to the tip, other barb — so
+       the head survives being stored as points like everything else. */
+    const ang=Math.atan2(y1-y0,x1-x0);
+    const len=Math.max(8,Math.min(40,Math.hypot(x1-x0,y1-y0)*0.28)), w=0.42;
+    const b1=[x1-len*Math.cos(ang-w),y1-len*Math.sin(ang-w)];
+    const b2=[x1-len*Math.cos(ang+w),y1-len*Math.sin(ang+w)];
+    return [[x0,y0],[x1,y1],b1,[x1,y1],b2];
+  }
+  return [[x0,y0],[x1,y1]];
+}
+let geom=null;
+/* ── the tape measure ──────────────────────────────────────────────────
+   A DISTANCE IN THE PAGE'S OWN UNITS, which is the only honest one. A PDF
+   page is measured in points, 72 to the inch, and the reader knows the page's
+   size — so a drag across it is a real length on the printed sheet. What it
+   is NOT is a length on the aircraft: a drawing's scale is written on the
+   drawing and nothing in the file states it.
+
+   It leaves nothing behind, and that is deliberate rather than unfinished.
+   paper_ink stores a stroke's coordinates and has nowhere to put "this one is
+   a measurement" — so a kept measurement would come back as a plain line with
+   its number gone, which is worse than a tape measure that lets go. */
+const tape=document.createElement('div');
+tape.className='tape';tape.setAttribute('aria-live','polite');
+function sayMeasure(g){
+  const box=g.pg.getBoundingClientRect();
+  const w=+(g.pg.dataset.ptw||612), h=+(g.pg.dataset.pth||792);
+  const dx=(g.b[0]-g.a[0])/1000*w, dy=(g.b[1]-g.a[1])/1000*h;
+  const area=(S.variant.msr||0)===1;
+  const inches=area?Math.abs(dx*dy)/5184:Math.hypot(dx,dy)/72;
+  const mm=area?Math.abs(dx*dy)*0.1244:Math.hypot(dx,dy)*0.3528;
+  tape.textContent=area
+    ? mm.toFixed(0)+' mm² · '+inches.toFixed(2)+' in²'
+    : mm.toFixed(1)+' mm · '+inches.toFixed(2)+' in';
+  if(!tape.isConnected)R.appendChild(tape);
+  tape.style.left=(box.left+(g.b[0]/1000)*box.width)+'px';
+  tape.style.top =(box.top +(g.b[1]/1000)*box.height)+'px';
+}
+function clearMeasure(){tape.remove()}
 /* THE OTHER HALF OF THAT LIST, AND WITHOUT IT FIVE TOOLS DO NOTHING.
 
    "Only the Select tool selects text" is about the DRAWING tools — a pen must
@@ -127,15 +196,22 @@ const DRAWS=['pen','mkr','hl'];
    is a highlighter pen. Highlighting WORDS is the selection pill's action of
    the same name. Two jobs, one id, and the tool table is what separates
    them. */
-const TEXT=TOOLS.filter(t=>(t.mean||t.fixed)&&!t.ink&&!t.grey).map(t=>t.id);
-/* What each one writes. The pill's three actions are the same three verbs. */
-const KIND={ul:'ul',st:'st',note:'note',ask:'ask',flag:'hl'};
+const TEXT=TOOLS.filter(t=>(t.mean||t.fixed)&&!t.ink&&!t.grey).map(t=>t.id).concat('txt');
+/* What each one writes. The pill's three actions are the same three verbs.
+
+   TEXT IS FILED UNDER DRAW IN THE TOOL TABLE AND IS STORED AS A MARK, and
+   that is a deviation with a reason. A text box is words, and ink is the
+   table for coordinates — it has no column to put words in, on purpose, so
+   that a stroke cannot pretend to survive a reflow. An anchored annotation
+   can hold words and does survive one, so the label travels with the passage
+   it was written about instead of sitting where the paper used to be. */
+const KIND={ul:'ul',st:'st',note:'note',ask:'ask',flag:'hl',txt:'txt'};
 /* AND THE ONES THAT DO SOMETHING WHEN YOU PRESS THEM. Shape, Text, Measure,
    Snapshot and Link are in the table, draw their icons and open their
    properties, and have no behaviour behind any of it. A control that does
    nothing is the same lie as an empty state that names no action, so they are
    not offered until they work. Delete an id from here the day it does. */
-const BUILT=['hand','pen','mkr','hl','era','ul','st','note','ask','flag'];
+const BUILT=['hand','pen','mkr','hl','era','ul','st','note','ask','flag','shp','msr','snap','txt'];
 /* the pointer becomes the nib: a ring the size of the stroke, in its colour */
 function paintCursor(){
   const stg=document.getElementById('stage');
@@ -152,7 +228,7 @@ function mode(){
   R.dataset.tool=S.tool;
   R.dataset.grab=(S.tool==='hand'&&(S.variant.hand||0)===1)?'1':'0';
   R.dataset.sel =((S.tool==='hand'&&(S.variant.hand||0)===0)||TEXT.includes(S.tool))?'1':'0';
-  R.dataset.draw= DRAWS.includes(S.tool)?'1':'0';
+  R.dataset.draw= (DRAWS.includes(S.tool)||GEOM.includes(S.tool)||S.tool==='snap')?'1':'0';
   paintCursor();
   R.style.setProperty('--sel',colOf(T(S.tool)));
 }
@@ -731,6 +807,8 @@ function showSel(tapped){
     if(t.fixed)lastK=t.fixed; else if(S.colour[t.id])lastK=S.colour[t.id];
     const k=KIND[t.id]||'hl';
     stamp(k);
+    /* A text box arrives empty and wants typing into, so its card opens. */
+    if(k==='txt'&&ctx.onPlaced)ctx.onPlaced();
     window.islandSay&&window.islandSay(
       k==='ask'?'askq':k==='note'?'note':(lastK==='r'?'revise':'mark'),null,lastK);
     return;
@@ -765,7 +843,7 @@ function stamp(kind){
   });
   const made={id:gid,g:gid,pg:+pg.dataset.pg,k:kind==='ask'?'p':lastK,kind,
           who:'me',t:'just now',tx:String(savedRange).trim(),
-          ask:(kind==='ask'||kind==='note')?'':undefined,ans:kind==='ask'?[]:undefined};
+          ask:(kind==='ask'||kind==='note'||kind==='txt')?'':undefined,ans:kind==='ask'?[]:undefined};
   WM.add(made);
   ctx.onMade(made,savedRange,pg);
   getSelection().removeAllRanges();
@@ -805,7 +883,12 @@ STG.addEventListener('click',e=>{
        selection when a fresh press lands — so a tap after any earlier
        selection was read as the end of a drag and did nothing. */
     if(tapMoved)return;
-    const r=e.detail>=2?sentenceAt(e.clientX,e.clientY):wordAt(e.clientX,e.clientY);
+    /* "Anywhere" means you do not have to select first: one tap takes the
+       sentence you tapped and the tool attaches to that. "On a passage" is
+       the other variant and is the drag you already have. */
+    const anywhere=TEXT.includes(S.tool)&&(S.variant[S.tool]||0)===0;
+    const r=(anywhere||e.detail>=2)
+      ?sentenceAt(e.clientX,e.clientY):wordAt(e.clientX,e.clientY);
     if(!r){hideSel();return}
     const g=getSelection();g.removeAllRanges();g.addRange(r);
     /* Told that this came from a tap, so the three-character floor below does
@@ -895,12 +978,16 @@ function pt(e,pg){const r=pg.getBoundingClientRect();
    the handed-over file ever removes a stroke or a mark. DRAWS is pen, marker
    and highlighter, so with the eraser armed the page takes no pointer at all.
 
-   What is built here is a WHOLE-OBJECT eraser: what you touch comes off. What
-   is NOT built is the second variant, "Just where you rub" — splitting a
-   stroke where the rubber crossed it, and shortening a highlight to the words
-   that are left. The second is not a drawing problem, it is an anchor problem:
-   a shortened mark is a different passage and has to be re-stored as one. It
-   is named rather than faked, and both variants erase wholes today. */
+   Two variants, and they differ on INK only. "Whole mark" takes the stroke
+   you touch. "Just where you rub" takes the points the rubber passed over and
+   leaves the rest — so a stroke can become two strokes, or lose a tail, the
+   way a real rubber works.
+
+   MARKS ARE WHOLE-ONLY UNDER BOTH, and that is a rule rather than a gap:
+   shortening a highlight is not a drawing problem, it is an anchor problem. A
+   mark over half a passage is a different passage and has to be stored as
+   one, and a rubber is not a precise enough instrument to decide where a
+   quotation now ends. */
 let rubbing=null;
 function rub(e,pg){
   const box=pg.getBoundingClientRect();
@@ -915,6 +1002,8 @@ function rub(e,pg){
   const P=svg.createSVGPoint?svg.createSVGPoint():new DOMPoint();
   const at=(x,y)=>{P.x=x;P.y=y;return P};
   const gone=[];
+  const whole=(S.variant.era||0)===0;
+  const split=[];
   for(const path of [...svg.querySelectorAll('path')]){
     let hit=path.isPointInStroke(at(px,py));
     for(let a=0;a<8&&!hit;a++){
@@ -924,9 +1013,53 @@ function rub(e,pg){
        against, so the caller checks — and the page only ever carries this
        student's own strokes today, which makes this cheap insurance rather
        than a guess about the future. */
-    if(hit&&ctx.mine(path.dataset.id)){gone.push(path.dataset.id);path.remove()}
+    if(!hit||!ctx.mine(path.dataset.id))continue;
+    if(whole){gone.push(path.dataset.id);path.remove();continue}
+    /* Just where you rub: keep the parts of the stroke the rubber missed.
+
+       IT CUTS THE LINE, IT DOES NOT SIEVE THE POINTS. A stroke is stored as
+       the positions the pointer was sampled at, and a quick straight line can
+       be two of them thirty units apart. Asking "which stored points are
+       inside the rubber" then has two failure modes and both were seen: rub
+       between two points and nothing happens, and rub across a two-point line
+       and the whole line goes, because there was no third point left to keep.
+
+       So each segment is intersected with the rubber's circle, and the parts
+       outside it are kept — which is what a rubber does, at any sampling
+       rate. */
+    const pts=ctx.pointsOf(path.dataset.id);
+    if(!pts||pts.length<2){gone.push(path.dataset.id);path.remove();continue}
+    const cut=(a,b)=>{
+      const ax=a[0]*1000,ay=a[1]*1000,dx=b[0]*1000-ax,dy=b[1]*1000-ay;
+      const fx=ax-px,fy=ay-py;
+      const A=dx*dx+dy*dy,B=2*(fx*dx+fy*dy),C=fx*fx+fy*fy-r*r;
+      if(!A)return C<=0?[0,1]:null;
+      const disc=B*B-4*A*C; if(disc<0)return null;
+      const sq=Math.sqrt(disc),t0=(-B-sq)/(2*A),t1=(-B+sq)/(2*A);
+      if(t1<0||t0>1)return null;
+      return [Math.max(0,t0),Math.min(1,t1)];
+    };
+    const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+    const runs=[];let run=[];
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i],b=pts[i+1],c=cut(a,b);
+      if(!c){if(!run.length)run.push(a);run.push(b);continue}
+      const [t0,t1]=c;
+      if(t0>0){if(!run.length)run.push(a);run.push(lerp(a,b,t0))}
+      if(run.length>1)runs.push(run);
+      run=[];
+      /* The far side of the cut starts where the rubber let go AND CARRIES THE
+         SEGMENT'S END. Without that end point a two-point line rubbed in the
+         middle leaves a run of one point, which is not a stroke, and the far
+         half is thrown away — the whole line vanishes when half of it should
+         have stayed. */
+      if(t1<1){run.push(lerp(a,b,t1));run.push(b)}
+    }
+    if(run.length>1)runs.push(run);
+    gone.push(path.dataset.id);path.remove();
+    if(runs.length)split.push({id:path.dataset.id,runs});
   }
-  if(gone.length)ctx.onErasedInk(gone.filter(Boolean));
+  if(gone.length)ctx.onErasedInk(gone.filter(Boolean),split);
   /* And marks, hit-tested by hand for the same reason markAt exists: the text
      sits above them so they cannot be found with elementFromPoint. */
   const q=markAt(e.clientX,e.clientY);
@@ -961,6 +1094,21 @@ STG.addEventListener('pointerdown',e=>{
     pan={y:e.clientY,top:STG.scrollTop};STG.setPointerCapture(e.pointerId);return}
   const pg=pgAt(e); if(!pg)return;
   e.preventDefault();
+  if(GEOM.includes(S.tool)||S.tool==='snap'){
+    const t2=T(S.tool), p2=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const r2=pg.getBoundingClientRect();
+    p2.setAttribute('fill','none');
+    p2.setAttribute('stroke',S.tool==='snap'?'var(--lv)':colOf(t2));
+    p2.setAttribute('stroke-width',(S.size[t2.id]||2)/r2.width*1000);
+    p2.setAttribute('stroke-linejoin','round');
+    p2.setAttribute('stroke-linecap','round');
+    if(S.tool!=='snap')p2.setAttribute('stroke-opacity',(S.op[t2.id]||100)/100);
+    else p2.setAttribute('stroke-dasharray','12 8');
+    pg.querySelector('.ink').appendChild(p2);
+    geom={path:p2,pg,a:pt(e,pg),b:pt(e,pg),tool:S.tool};
+    STG.setPointerCapture(e.pointerId);
+    return;
+  }
   const t=T(S.tool), c=colOf(t), r=pg.getBoundingClientRect();
   const path=document.createElementNS('http://www.w3.org/2000/svg','path');
   const wide=t.id==='hl'?S.size[t.id]*1.9:S.size[t.id];
@@ -974,6 +1122,28 @@ STG.addEventListener('pointerdown',e=>{
   STG.setPointerCapture(e.pointerId);
 });
 STG.addEventListener('pointermove',e=>{
+  if(geom){
+    let b=pt(e,geom.pg);
+    /* Shift is the constraint every drawing tool has: a square rather than a
+       rectangle, a circle rather than an ellipse, a line that stays level. */
+    if(e.shiftKey){
+      const dx=b[0]-geom.a[0],dy=b[1]-geom.a[1];
+      if(geom.tool==='shp'&&(S.variant.shp||0)<2){
+        Math.abs(dx)>Math.abs(dy)?b=[b[0],geom.a[1]]:b=[geom.a[0],b[1]];
+      }else{
+        const m=Math.max(Math.abs(dx),Math.abs(dy));
+        b=[geom.a[0]+Math.sign(dx)*m,geom.a[1]+Math.sign(dy)*m];
+      }
+    }
+    geom.b=b;
+    const kind=geom.tool==='snap'?'box'
+      :geom.tool==='msr'?((S.variant.msr||0)===1?'box':'line')
+      :SHAPES[S.variant.shp||0];
+    geom.pts=figurePoints(kind,geom.a,geom.b);
+    geom.path.setAttribute('d',polyline(geom.pts));
+    if(geom.tool==='msr')sayMeasure(geom);
+    return;
+  }
   if(rubbing){rub(e,rubbing);return}
   if(pan){STG.scrollTop=pan.top-(e.clientY-pan.y);return}
   if(!ink)return;
@@ -995,6 +1165,16 @@ STG.addEventListener('pointermove',e=>{
 });
 addEventListener('pointerup',()=>{
   pan=null;rubbing=null;
+  /* A figure, a measurement and a snapshot each end their own way: the figure
+     is kept, the measurement is read and let go, the snapshot becomes a file. */
+  if(geom){
+    const g=geom;geom=null;
+    const far=Math.hypot(g.b[0]-g.a[0],g.b[1]-g.a[1])>6;
+    if(g.tool==='snap'){g.path.remove();if(far)ctx.onSnapshot(g.pg,g.a,g.b)}
+    else if(g.tool==='msr'){g.path.remove();clearMeasure()}
+    else if(far&&g.pts&&g.pts.length>1)ctx.onStroke(g.pg,g.path,g.pts,T(g.tool),S);
+    else g.path.remove();
+  }
   if(ink){
     if(ink.pts.length<2)ink.path.remove();
     else ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);

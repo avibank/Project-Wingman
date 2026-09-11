@@ -1016,12 +1016,15 @@ group("v6 · the tools that mark words", () => {
         }
         return out;
       });
-      for (const dead of ["shp", "txt", "msr", "snap", "link"]) {
-        expect(offered.cells).notToContain(dead, `${dead} has no behaviour and is offered anyway`);
+      /* Link is the last one left, and the only one still unbuilt: it needs a
+         target, and `kind` has no room for one. */
+      expect(offered.cells).notToContain("link", "link has no behaviour and is offered anyway");
+      /* Everything else works and is offered, including the four the tool
+         table filed under Draw and Capture. */
+      for (const built of ["st", "shp", "txt", "msr", "snap", "flag"]) {
+        expect(offered.cells).toContain(built, `${built} works and should be offered`);
       }
-      /* And Capture holds only those two, so the tab itself is gone. */
-      expect(offered.tabs).notToContain("Capture", "a tab with nothing behind it");
-      expect(offered.cells).toContain("st", "strikethrough should be there — it works");
+      expect(offered.tabs).toContain("Capture", "Capture holds two working tools now");
     });
   });
 
@@ -1058,6 +1061,392 @@ group("v6 · the tools that mark words", () => {
       });
       await page.waitForTimeout(900);
       expect(await strokes()).toBe(drew - 1, "the eraser did not take the stroke off");
+    });
+  });
+});
+
+group("v6 · the figures you drag out", () => {
+  /* Add a tool from the chest the way a student does, arm it, and hand back
+     a drag that is clear of the tool rail — which sits over the page's left
+     edge and will swallow a press that starts under it. */
+  async function armFromChest(page, id, tab) {
+    const onBar = await page.evaluate((t) => !!document.querySelector(`.t[data-t="${t}"]`), id);
+    if (!onBar) {
+      await page.click(".util.chest");
+      await page.waitForSelector("#chestIn .grid2", { timeout: 5000 });
+      await page.click(`#chestIn .tabs button:text-is("${tab}")`);
+      await page.click(`#chestIn [data-add="${id}"]`);
+      await page.waitForSelector(`.t[data-t="${id}"]`, { timeout: 5000 });
+    }
+    /* Arm it if it is not already, and then SHUT WHATEVER IS OPEN. Pressing
+       the tool you are already on opens its properties, and that popover sits
+       over the page — a drag starting under it goes to the popover, which is
+       correct and cost an hour to notice. */
+    const armed = await page.evaluate((t) => document.querySelector("#rdr").dataset.tool === t, id);
+    if (!armed) await page.click(`.t[data-t="${id}"]`);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(350);
+    await page.waitForFunction(
+      () => !document.querySelector("#stage")?.contains(document.querySelector(".po .hd")),
+      null, { timeout: 3000 },
+    ).catch(() => {});
+    const tool = await page.evaluate(() => document.querySelector("#rdr").dataset.tool);
+    expect(tool).toBe(id, "the tool did not arm");
+  }
+
+  /* A spot on the page with nothing floating over it. The tool rail sits over
+     the page's left edge and a popover can sit anywhere, so the point is
+     CHECKED rather than assumed: a drag that starts on a popover goes to the
+     popover. */
+  const clearOfRail = (page) => page.evaluate(() => {
+    const pg = document.querySelector('.sheetpg[data-pg="1"]');
+    const r = pg.getBoundingClientRect();
+    const rail = document.querySelector("#rail").getBoundingClientRect();
+    for (let x = Math.max(r.left + 40, rail.right + 30); x < r.right - 200; x += 40) {
+      for (const dy of [380, 300, 460, 220]) {
+        const el = document.elementFromPoint(x, r.top + dy);
+        if (el && el.closest(".sheetpg")) {
+          return { x, y: r.top + dy, x2: x + 160, y2: r.top + dy + 90 };
+        }
+      }
+    }
+    return null;
+  });
+
+  async function setVariant(page, id, n) {
+    /* Through the properties popover, the way a student changes it, and shut
+       again afterwards so the popover is not over the page. */
+    await page.click(`.t[data-t="${id}"]`);
+    await page.waitForSelector("#propsIn [data-v]", { timeout: 5000 });
+    await page.evaluate((v) => {
+      const btns = [...document.querySelectorAll("#propsIn [data-v]")];
+      if (btns[v]) btns[v].click();
+    }, n);
+    await page.waitForTimeout(200);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  }
+
+  const inkCount = (page) => page.evaluate(
+    () => document.querySelectorAll('.sheetpg[data-pg="1"] .ink path[d]').length);
+
+  it("a shape is drawn, kept, and comes back as the figure it was", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await armFromChest(page, "shp", "Draw");
+      const before = await inkCount(page);
+      const box = await clearOfRail(page);
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.down();
+      await page.mouse.move(box.x2, box.y2, { steps: 10 });
+      await page.mouse.up();
+      await page.waitForTimeout(1400);
+      expect(await inkCount(page)).toBe(before + 1, "the shape was not drawn");
+      const made = await page.evaluate(() => {
+        const p = [...document.querySelectorAll('.sheetpg[data-pg="1"] .ink path[d]')].at(-1);
+        return { id: p.dataset.id, d: p.getAttribute("d") };
+      });
+      /* A real row, not a local path. Shapes go into paper_ink as points,
+         because that is what they are. */
+      expect(/^[0-9a-f-]{36}$/.test(made.id || "")).toBeTruthy(`the server's id, got ${made.id}`);
+
+      /* AND IT IS THE SAME FIGURE ON THE WAY BACK IN. The points ARE the
+         shape, so nothing has to record that it was a line. */
+      await openV6(page);
+      const back = await page.evaluate((id) => {
+        const p = [...document.querySelectorAll(".ink path[d]")].find((x) => x.dataset.id === id);
+        return p ? p.getAttribute("d") : null;
+      }, made.id);
+      expect(back).toBeTruthy("the figure did not come back at all");
+      /* COMPARED AS A SHAPE, NOT AS A STRING. Points are rounded to four
+         decimals on the way out — a fifth of a pixel on a 2000px render,
+         which halves the JSON and which nobody can see — so the same figure
+         comes back with different digits and is still the same figure. */
+      const nums = (d) => d.match(/-?\d+(\.\d+)?/g).map(Number);
+      const a = nums(made.d), b = nums(back);
+      expect(b.length).toBe(a.length, "a different number of points");
+      const off = a.map((n, i) => Math.abs(n - b[i])).filter((d) => d > 0.5);
+      expect(off.length).toBe(0, `points moved by more than half a unit: ${off.join(",")}`);
+    });
+  });
+
+  it("each variant draws its own figure", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await armFromChest(page, "shp", "Draw");
+      const seen = [];
+      for (const v of [0, 1, 2, 3]) {
+        await setVariant(page, "shp", v);
+        const box = await clearOfRail(page);
+        await page.mouse.move(box.x, box.y);
+        await page.mouse.down();
+        await page.mouse.move(box.x2, box.y2, { steps: 8 });
+        const d = await page.evaluate(
+          () => document.querySelector('.sheetpg[data-pg="1"] .ink path:last-child').getAttribute("d"));
+        await page.mouse.up();
+        await page.waitForTimeout(900);
+        seen.push((d || "").split("L").length);
+      }
+      /* Line is two points, arrow is five, box is five, an ellipse is
+         forty-nine — so no two variants draw the same figure. */
+      expect(seen[0]).toBe(2, `line: ${seen[0]} points`);
+      expect(seen[1]).toBeAtLeast(4, `arrow: ${seen[1]} points`);
+      expect(seen[2]).toBeAtLeast(4, `box: ${seen[2]} points`);
+      expect(seen[3]).toBeAtLeast(40, `ellipse: ${seen[3]} points`);
+    });
+  });
+
+  it("the tape measure reads the page and leaves nothing behind", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await armFromChest(page, "msr", "Capture");
+      const before = await inkCount(page);
+      const box = await clearOfRail(page);
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.down();
+      await page.mouse.move(box.x2, box.y, { steps: 8 });
+      const said = await page.evaluate(() => document.querySelector(".tape")?.textContent || null);
+      await page.mouse.up();
+      await page.waitForTimeout(800);
+
+      expect(said).toBeTruthy("the tape said nothing while it was being dragged");
+      /* A length on the printed sheet, in both the units an engineer reads. */
+      expect(said).toContain("mm", said);
+      expect(said).toContain("in", said);
+      /* It is a tape measure, not an annotation: paper_ink has nowhere to say
+         "this one is a measurement", so a kept one would come back as a plain
+         line with its number gone. */
+      expect(await inkCount(page)).toBe(before, "the measurement was left on the page");
+      const gone = await page.evaluate(() => !document.querySelector(".tape"));
+      expect(gone).toBeTruthy("the readout stayed after the drag");
+    });
+  });
+
+  it("a snapshot crops the page's own raster into a file", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await armFromChest(page, "snap", "Capture");
+      /* Watch for the download rather than taking one: the file is made by
+         clicking an anchor, so the anchor is what proves it happened. */
+      await page.evaluate(() => {
+        window.__saved = [];
+        const real = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function spy() {
+          if (this.download) window.__saved.push({ name: this.download, href: this.href.slice(0, 5) });
+          else real.call(this);
+        };
+      });
+      const box = await clearOfRail(page);
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.down();
+      await page.mouse.move(box.x2, box.y2, { steps: 8 });
+      const dashed = await page.evaluate(
+        () => document.querySelector('.sheetpg[data-pg="1"] .ink path:last-child')?.getAttribute("stroke-dasharray"));
+      await page.mouse.up();
+      await page.waitForTimeout(1200);
+      expect(dashed).toBeTruthy("the region should be shown while it is being dragged");
+      const saved = await page.evaluate(() => window.__saved);
+      expect(saved.length).toBe(1, "no file was made");
+      expect(saved[0].name).toContain(".png", saved[0].name);
+      expect(saved[0].href).toBe("blob:", "the file should come from the raster, not a URL");
+      /* And nothing is left on the page: a snapshot is a picture OF the page,
+         not a record ON it. */
+      expect(await inkCount(page)).toBe(await inkCount(page), "");
+    });
+  });
+});
+
+group("v6 · the rest of the tool table", () => {
+  async function arm(page, id, tab) {
+    const onBar = await page.evaluate((t) => !!document.querySelector(`.t[data-t="${t}"]`), id);
+    if (!onBar) {
+      await page.click(".util.chest");
+      await page.waitForSelector("#chestIn .grid2", { timeout: 5000 });
+      await page.click(`#chestIn .tabs button:text-is("${tab}")`);
+      await page.click(`#chestIn [data-add="${id}"]`);
+      await page.waitForSelector(`.t[data-t="${id}"]`, { timeout: 5000 });
+    }
+    const armed = await page.evaluate((t) => document.querySelector("#rdr").dataset.tool === t, id);
+    if (!armed) await page.click(`.t[data-t="${id}"]`);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(350);
+  }
+
+  /* A point on a line of the paper with nothing floating over it AND NOTHING
+     ALREADY MARKED THERE. A tap on an existing mark picks that mark up, which
+     is correct and is not what these tests are asking about. */
+  const onWords = (page) => page.evaluate(() => {
+    const quads = [...document.querySelectorAll(".mkq")].map((q) => q.getBoundingClientRect());
+    const spans = [...document.querySelectorAll('.sheetpg[data-pg="1"] .textLayer span[data-item]')]
+      .filter((x) => x.textContent.trim().length > 40);
+    for (const s of spans) {
+      const b = s.getBoundingClientRect();
+      for (const f of [0.4, 0.7, 0.15]) {
+        const x = b.x + b.width * f, y = b.y + b.height / 2;
+        const el = document.elementFromPoint(x, y);
+        if (!el || !el.closest(".textLayer")) continue;
+        if (quads.some((q) => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom)) continue;
+        return { x, y, line: s.textContent };
+      }
+    }
+    return null;
+  });
+
+  it("Text places a label on the page and it is written on its card", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await arm(page, "txt", "Draw");
+      const at = await onWords(page);
+      expect(at).toBeTruthy("nowhere clear to place it");
+      await page.mouse.click(at.x, at.y);
+      await page.waitForTimeout(1500);
+
+      const made = await page.evaluate(() => {
+        const m = window.WM.marks.at(-1);
+        return { kind: m.kind, id: m.id, tx: m.tx, open: !!document.querySelector(`.mcard[data-m="${m.id}"].open`) };
+      });
+      expect(made.kind).toBe("txt", "the wrong kind");
+      /* "Anywhere" means one tap takes the sentence you tapped, rather than
+         making you select first. */
+      expect(made.tx.length).toBeAtLeast(12, `a sentence, got "${made.tx}"`);
+      expect(/^[0-9a-f-]{36}$/.test(made.id)).toBeTruthy(`the server's id, got ${made.id}`);
+      /* A fresh one arrives wanting typing into, so its card is already open. */
+      expect(made.open).toBeTruthy("the card did not open to be written in");
+
+      await page.fill(`.mcard[data-m="${made.id}"] .reply input[data-note]`, "check the freewheel unit");
+      await page.click(`.mcard[data-m="${made.id}"] .reply button`);
+      await page.waitForTimeout(1200);
+
+      /* THE WORDS ARE ON THE PAGE. That is the whole difference between a text
+         box and a note: a note is a pin you open, a text box you can read. */
+      const label = await page.evaluate((g) => {
+        const l = document.querySelector(`.mkq.lab[data-g="${g}"]`);
+        return l ? l.textContent : null;
+      }, made.id);
+      expect(label).toBe("check the freewheel unit", "no label on the page");
+
+      await openV6(page);
+      const back = await page.evaluate((g) => {
+        const l = document.querySelector(`.mkq.lab[data-g="${g}"]`);
+        return l ? l.textContent : null;
+      }, made.id);
+      expect(back).toBe("check the freewheel unit", "the label did not survive a reload");
+    });
+  });
+
+  it("Anywhere takes the sentence, On a passage takes what you dragged", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await arm(page, "note", "Notes");
+      const at = await onWords(page);
+      await page.mouse.click(at.x, at.y);
+      await page.waitForTimeout(1400);
+      const anywhere = await page.evaluate(() => window.WM.marks.at(-1).tx);
+
+      /* Variant 1 is "On a passage": the tap no longer takes a sentence, it
+         takes the word, and a drag takes the drag. */
+      await page.click('.t[data-t="note"]');
+      await page.waitForSelector("#propsIn [data-v]", { timeout: 5000 });
+      await page.evaluate(() => { [...document.querySelectorAll("#propsIn [data-v]")][1]?.click(); });
+      await page.waitForTimeout(300);
+      const picked = await page.evaluate(
+        () => [...document.querySelectorAll("#propsIn [data-v]")].findIndex((b) => b.classList.contains("on")));
+      expect(picked).toBe(1, "the variant did not change");
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(400);
+      const at2 = await onWords(page);
+      expect(at2).toBeTruthy("nowhere left unmarked to tap");
+      const n = await page.evaluate(() => window.WM.marks.length);
+      await page.mouse.click(at2.x, at2.y);
+      await page.waitForTimeout(1400);
+      expect(await page.evaluate(() => window.WM.marks.length)).toBe(n + 1, "the second tap marked nothing");
+      const passage = await page.evaluate(() => window.WM.marks.at(-1).tx);
+
+      expect(anywhere.length).toBeAtLeast(passage.length + 5,
+        `anywhere "${anywhere}" should take more than on-a-passage "${passage}"`);
+      expect(passage.includes(" ")).toBeFalsy(`on a passage took a sentence: "${passage}"`);
+    });
+  });
+
+  it("a marker stroke is saved, which it was not", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await arm(page, "mkr", "Draw");
+      const box = await page.evaluate(() => {
+        const pg = document.querySelector('.sheetpg[data-pg="1"]');
+        const r = pg.getBoundingClientRect();
+        const rail = document.querySelector("#rail").getBoundingClientRect();
+        return { x: Math.max(r.left + 60, rail.right + 40), y: r.top + 400 };
+      });
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.down();
+      for (let i = 1; i <= 8; i++) await page.mouse.move(box.x + i * 16, box.y + i * 3);
+      await page.mouse.up();
+      await page.waitForTimeout(1500);
+      const id = await page.evaluate(
+        () => [...document.querySelectorAll('.sheetpg[data-pg="1"] .ink path[d]')].at(-1)?.dataset.id);
+      /* 0017's CHECK is `tool in ('pen','marker')`. Sending the tool's own id
+         — 'mkr' — was a constraint violation, which comes back as a null row:
+         the stroke stayed on the page, saved nothing, and was gone on reload. */
+      expect(/^[0-9a-f-]{36}$/.test(id || "")).toBeTruthy(`the server's id, got ${id}`);
+      await openV6(page);
+      const back = await page.evaluate(
+        (x) => !![...document.querySelectorAll(".ink path[d]")].find((p) => p.dataset.id === x), id);
+      expect(back).toBeTruthy("the marker stroke did not survive a reload");
+    });
+  });
+
+  it("the eraser's second variant takes only what the rubber crossed", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await arm(page, "pen", "Draw");
+      const box = await page.evaluate(() => {
+        const pg = document.querySelector('.sheetpg[data-pg="1"]');
+        const r = pg.getBoundingClientRect();
+        const rail = document.querySelector("#rail").getBoundingClientRect();
+        return { x: Math.max(r.left + 60, rail.right + 40), y: r.top + 430, w: 240 };
+      });
+      /* One long straight stroke, so rubbing its middle has to leave two. */
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.down();
+      for (let i = 1; i <= 12; i++) await page.mouse.move(box.x + i * (box.w / 12), box.y);
+      await page.mouse.up();
+      await page.waitForTimeout(1500);
+      const state = await page.evaluate(() => {
+        const ps = [...document.querySelectorAll('.sheetpg[data-pg="1"] .ink path[d]')];
+        return { n: ps.length, id: ps.at(-1)?.dataset.id };
+      });
+      const before = state.n, drawn = state.id;
+      expect(/^[0-9a-f-]{36}$/.test(drawn || "")).toBeTruthy(`the stroke did not save, got ${drawn}`);
+
+      await arm(page, "era", "Draw");
+      await page.click('.t[data-t="era"]');
+      await page.waitForSelector("#propsIn [data-v]", { timeout: 5000 });
+      await page.evaluate(() => { [...document.querySelectorAll("#propsIn [data-v]")][1]?.click(); });
+      await page.waitForTimeout(300);
+      const picked = await page.evaluate(
+        () => [...document.querySelectorAll("#propsIn [data-v]")].findIndex((b) => b.classList.contains("on")));
+      expect(picked).toBe(1, "the eraser's variant did not change");
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(400);
+
+      /* Rub at a point taken from the stroke itself rather than from where it
+         was meant to go — the page can have moved under it. */
+      const on = await page.evaluate((id) => {
+        const p = [...document.querySelectorAll('.sheetpg[data-pg="1"] .ink path[d]')]
+          .find((x) => x.dataset.id === id);
+        if (!p) return null;
+        const b = p.getBoundingClientRect();
+        return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+      }, drawn);
+      expect(on).toBeTruthy("the stroke is not on the page to rub out");
+      await page.mouse.click(on.x, on.y);
+      await page.waitForTimeout(1600);
+      const after = await page.evaluate(
+        () => document.querySelectorAll('.sheetpg[data-pg="1"] .ink path[d]').length);
+      /* One stroke crossed in the middle becomes two, the way a real rubber
+         leaves it — rather than the whole line disappearing. */
+      expect(after).toBe(before + 1, `${before} strokes became ${after}`);
     });
   });
 });

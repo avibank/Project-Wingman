@@ -243,6 +243,52 @@ names no action, so they are out of the chest, and the Capture tab is gone
 with them because it held only two of them. They stay in the tool table;
 `BUILT` in part 3 is the list to delete an id from the day it works.
 
+### Fourteen of the fifteen tools
+
+Four more were built, and two variants that had never done anything.
+
+| | |
+|---|---|
+| **Shape** | Line, Arrow, Box and Ellipse. One gesture: press, drag, release, and the figure is rebuilt from the two corners on every move so what you watch is what lands. Shift gives a square, a circle, or a line that stays level |
+| **Text** | A label pinned to a passage. Tap, and its card opens ready to type; the words show on the page, which is the whole difference between a text box and a note |
+| **Measure** | A distance or an area in the page's own units, in millimetres and inches, following the pointer while you drag |
+| **Snapshot** | Drag a region and it becomes a PNG, cropped out of the raster the reader already drew, at the resolution it was drawn at |
+| **Anywhere / On a passage** | Note and Ask had two variants and behaved the same either way. "Anywhere" now takes the sentence you tapped, so you do not have to select first; "On a passage" takes the word or the drag |
+| **Just where you rub** | The eraser's second variant. It cuts the line where the rubber crosses it, so one stroke becomes two |
+
+**Shapes are stored as the points of the figure**, not as a name plus two
+corners — a box is its four corners, an ellipse forty-eight points around it —
+so a figure comes back from the database without any field having to say what
+it was, and the same polyline draws it live and on reload. That is why the two
+cannot disagree.
+
+**Text is filed under Draw in the tool table and is stored as a mark**, which
+is a deviation with a reason. A text box is words, and ink is the table for
+coordinates: it has no column to put words in, on purpose, so that a stroke
+cannot pretend to survive a reflow. An anchored annotation can hold words and
+does survive one, so the label travels with the passage it was written about.
+
+**Measure keeps nothing, and that is deliberate rather than unfinished.**
+`paper_ink` has nowhere to say "this one is a measurement", so a kept
+measurement would come back as a plain line with its number gone — worse than
+a tape measure that lets go. Migration 0020 gives it somewhere.
+
+### Two more live bugs, found while wiring the rest
+
+**A Marker stroke was never saved.** 0017's CHECK is `tool in ('pen','marker')`
+and the reader was sending the tool's own id — `mkr` — which is a constraint
+violation, which comes back as a null row. The stroke stayed on the page,
+saved nothing, and was gone on reload. It had been doing that since the tool
+was wired. Every tool is now one nib or the other, which is what the column
+means.
+
+**The rubber rubbed nothing out.** Twice, for two different reasons. It asked
+which stored points were inside it — so rubbing *between* two samples did
+nothing at all — and when it did catch a two-point line it took the whole
+thing, because there was no third point left to keep. It intersects each
+segment with its own circle now and keeps what is outside, which is what a
+rubber does at any sampling rate.
+
 ### The cursor, and eight things found by using it
 
 Driven by hand in a browser, as a student, rather than by a test that knew
@@ -332,7 +378,7 @@ browser what the call returned rather than whether a stroke had gone.
 
 ### The tests
 
-`npm run test:reader` is **52 assertions, all passing, in 117 seconds** against
+`npm run test:reader` is **60 assertions, all passing, in 156 seconds** against
 real Chromium and real WebKit at four surfaces. The groups:
 
 | | |
@@ -350,6 +396,8 @@ real Chromium and real WebKit at four surfaces. The groups:
 | the panel never states a zero | read off the rendered footer, because an interpolated zero is invisible to a search |
 | the cursor | tap, double tap, a drag that ends on a word, a drag that stays exact inside one, and a tap on nothing putting it away |
 | the island keeps up | the deck fills, the tallies count only what is there, the shut tray leaves the tab order, the counter answers Enter |
+| the figures you drag out | a shape is kept and comes back the same figure, each variant draws its own, the tape reads the page and lets go, a snapshot becomes a file |
+| the rest of the tool table | Text writes on the page, the two variants differ, a marker stroke survives a reload, the rubber cuts a line in two |
 | the quiz | unchanged, and moved to its own file because it is not a reader test |
 
 The v5 suite is archived under `tests/reader/v5/`, unedited. Every rule in it
@@ -363,13 +411,17 @@ nothing left for it to describe. Its header says so.
   notes, the tray and its settings, bookmarks, warmth and livery all persist;
   questions post to the module thread and their answers come back; undo and
   redo are real. Not done: pulling a revision deck out of a paper.
-- **Five tools.** Shape, Text, Measure, Snapshot and Link. They are in the
-  table and out of the chest until they work.
-- **The eraser's second variant.** "Just where you rub" needs a stroke split
-  where the rubber crossed it and a highlight shortened to the words that are
-  left — and the second is an anchor problem rather than a drawing one: a
-  shortened mark is a different passage and has to be stored as one. Both
-  variants erase wholes today.
+- **One tool.** Link, and its gap is a schema gap rather than a missing
+  afternoon: a link is a passage plus a target, and `kind` has no room for one.
+  Migration 0020 adds it.
+- **Migration 0020, written and not run**, per the standing instruction in
+  0018's header. It lets a measurement be kept, keeps the opacity a student
+  chose on a stroke, and makes room for Link. The reader works without it;
+  three tools are less than they could be until it runs.
+- **Shortening a mark with the rubber.** Ink splits now; a highlight does not.
+  That is a rule rather than a gap: a mark over half a passage is a different
+  passage and has to be stored as one, and a rubber is not precise enough to
+  decide where a quotation now ends.
 - **The fanned deck** says "Where you have been" and is fed by your most
   recent marks, which is where you have been marking rather than reading.
 - **A real iPad.** Still nothing verified on a physical device. The four
