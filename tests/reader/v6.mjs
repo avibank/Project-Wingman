@@ -281,23 +281,51 @@ group("v6 · the chrome is the chrome", () => {
 
   it("nothing the chrome bound outlives the reader", async () => {
     await withPage(laptop, async (page) => {
-      await openV6(page);
-      const gone = await page.evaluate(async () => {
-        document.querySelector(".rdr .logo").click();
-        await new Promise((r) => setTimeout(r, 900));
-        const errs = [];
-        window.addEventListener("error", (e) => errs.push(String(e.message)), { once: false });
-        /* Everything the parts listen for, fired at a page they no longer own.
-           A listener that survived would reach for elements that are gone. */
-        for (const type of ["pointerdown", "pointermove", "pointerup", "keydown", "resize", "click"]) {
-          window.dispatchEvent(new Event(type));
-        }
-        await new Promise((r) => setTimeout(r, 200));
-        return { rdr: document.querySelectorAll(".rdr").length, wm: typeof window.WM, errs };
+      /* COUNTED, NOT PROVOKED. The first version fired malformed events at the
+         window after leaving and asserted nothing threw — which tested the
+         whole APP's tolerance of a bogus Event rather than the reader's
+         teardown, and started failing the day an unrelated handler read
+         `e.key`. What matters is that every listener the chrome registered is
+         gone, so that is what is counted. */
+      await page.addInitScript(() => {
+        window.__live = new Map();
+        let n = 0;
+        const add = EventTarget.prototype.addEventListener;
+        const rm = EventTarget.prototype.removeEventListener;
+        const key = (el, t, f) => `${el === window ? "win" : el === document ? "doc"
+          : (el.id || el.tagName)}:${t}:${f.__id}`;
+        EventTarget.prototype.addEventListener = function (t, f, o) {
+          if (typeof f === "function") {
+            if (!f.__id) f.__id = ++n;
+            /* `__chrome` is stamped by capture() in mount.js and by nothing
+               else, which is what makes the reader's own listeners
+               identifiable at all. It is read here and nowhere in the app. */
+            window.__live.set(key(this, t, f), !!f.__chrome);
+          }
+          return add.call(this, t, f, o);
+        };
+        EventTarget.prototype.removeEventListener = function (t, f, o) {
+          if (typeof f === "function") window.__live.delete(key(this, t, f));
+          return rm.call(this, t, f, o);
+        };
       });
-      expect(gone.rdr).toBe(0, "the reader is gone");
-      expect(gone.wm).toBe("undefined", "and so is the list it hung on the window");
-      expect(gone.errs.length).toBe(0, `nothing threw: ${gone.errs.join(" · ")}`);
+      await openV6(page);
+      const ours = await page.evaluate(
+        () => [...window.__live.entries()].filter(([, mine]) => mine).map(([k]) => k));
+      expect(ours.length).toBeAtLeast(10, "the chrome should have bound a good many things");
+
+      await page.click(".rdr .logo");
+      await page.waitForTimeout(1500);
+      const after = await page.evaluate(() => ({
+        rdr: document.querySelectorAll(".rdr").length,
+        wm: typeof window.WM,
+        left: [...window.__live.entries()].filter(([, mine]) => mine).map(([k]) => k),
+      }));
+      expect(after.rdr).toBe(0, "the reader is gone");
+      expect(after.wm).toBe("undefined", "and so is the list it hung on the window");
+
+      const stillOurs = after.left;
+      expect(stillOurs).toEqual([], `the chrome left listeners behind: ${stillOurs.join(", ")}`);
     });
   });
 });
@@ -1447,6 +1475,89 @@ group("v6 · the rest of the tool table", () => {
       /* One stroke crossed in the middle becomes two, the way a real rubber
          leaves it — rather than the whole line disappearing. */
       expect(after).toBe(before + 1, `${before} strokes became ${after}`);
+    });
+  });
+});
+
+group("v6 · taking your marks with you", () => {
+  it("every row of the You tray answers a press", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await page.click("#you");
+      await page.waitForTimeout(600);
+      /* `.rdr` ITSELF CARRIES data-look, so `closest('[data-look]')` walked up
+         past the button, past the tray, past the island and found the ROOT —
+         matching for every press anywhere in an open tray. The Appearance
+         branch then ran on all of them and returned, so the livery picker,
+         the Ready Room row and all three tallies had never done anything. */
+      const worked = await page.evaluate(async () => {
+        const out = {};
+        const lv = [...document.querySelectorAll(".lvs")];
+        const was = getComputedStyle(document.querySelector("#rdr")).getPropertyValue("--lv").trim();
+        const other = lv.find((b) => !b.classList.contains("on"));
+        other.click();
+        await new Promise((r) => setTimeout(r, 400));
+        out.livery = getComputedStyle(document.querySelector("#rdr")).getPropertyValue("--lv").trim() !== was;
+        return out;
+      });
+      expect(worked.livery).toBeTruthy("the livery picker did nothing");
+    });
+  });
+
+  it("writes your own marks out, and leaves the class's behind", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      /* Make one of our own, so the file has something of ours in it. */
+      await page.click('.t[data-t="hand"]');
+      await page.waitForTimeout(250);
+      const at = await page.evaluate(() => {
+        const quads = [...document.querySelectorAll(".mkq")].map((q) => q.getBoundingClientRect());
+        const spans = [...document.querySelectorAll('.sheetpg[data-pg="1"] .textLayer span[data-item]')]
+          .filter((x) => x.textContent.trim().length > 40);
+        for (const s of spans) {
+          const b = s.getBoundingClientRect();
+          const x = b.x + b.width * 0.5, y = b.y + b.height / 2;
+          if (!document.elementFromPoint(x, y)?.closest(".textLayer")) continue;
+          if (quads.some((q) => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom)) continue;
+          return { x, y };
+        }
+        return null;
+      });
+      await page.mouse.click(at.x, at.y);
+      await page.waitForSelector("#selp.on", { timeout: 5000 });
+      await page.click('#selp [data-act="hl"]');
+      await page.waitForTimeout(1400);
+
+      await page.evaluate(() => {
+        window.__saved = [];
+        const real = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function spy() {
+          if (this.download) window.__saved.push(this.download); else real.call(this);
+        };
+      });
+      await page.click("#you");
+      await page.waitForSelector('[data-go="out"]', { timeout: 5000 });
+      await page.click('[data-go="out"]');
+      await page.waitForTimeout(800);
+
+      const out = await page.evaluate(() => ({
+        saved: window.__saved,
+        text: window.__marks.deckText(),
+        theirs: window.WM.marks.filter((m) => m.who !== "me" && m.kind !== "ask").map((m) => m.tx),
+        mine: window.WM.marks.filter((m) => m.who === "me").map((m) => m.tx),
+      }));
+
+      expect(out.saved.length).toBe(1, "no file was written");
+      expect(out.saved[0]).toContain(".md", out.saved[0]);
+      /* Markdown, because a format nobody can read is the same as no export. */
+      expect(out.text).toContain("# ", "it should open as a document");
+      expect(out.text).toContain("## Page 0001", out.text.slice(0, 120));
+      for (const m of out.mine) expect(out.text).toContain(m, `your own mark "${m}" is missing`);
+      /* THE CLASS'S MARKS ARE THE CLASS'S. An export that can be forwarded is
+         the last place somebody else's marks should turn up. */
+      for (const t of out.theirs) expect(out.text).notToContain(t, `somebody else's mark "${t}" was exported`);
+      /* And no zero stated, even here. */
+      expect(/\b0 marks\b/.test(out.text)).toBeFalsy(out.text.slice(0, 200));
     });
   });
 });

@@ -348,8 +348,10 @@ export default function ReaderV6({
       },
       onWarm(v) { write("pw-rdr6-warm", String(v)); },
       onGo(what) {
-        if (what === "rr") onOpenThread?.(null);
-        else onPlace?.(what);
+        if (what === "rr") { onOpenThread?.(null); return; }
+        /* Section 4's last row: a student can pull their marks out of a paper. */
+        if (what === "out") { store.current?.takeOut(); return; }
+        onPlace?.(what);
       },
       onPull() {
         const n = store.current?.pull() || 0;
@@ -392,7 +394,9 @@ export default function ReaderV6({
     panel.current = panel2.out;
 
     store.current = createMarkStore({
-      paper, moduleCode, me, model, WM, chrome: chrome.current, live: live.current,
+      paper, moduleCode, me, model, WM,
+      chrome: Object.assign(chrome.current, { head: headOf }),
+      live: live.current,
       people: people.current,
       onNames() { panel.current?.repaint(); },
       onTrouble() { island.current?.offline(true); },

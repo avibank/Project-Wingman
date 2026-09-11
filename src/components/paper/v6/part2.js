@@ -13,6 +13,7 @@
  *   - who the student is, and what they have actually done on this paper
  *   - the tallies are counted, not written down
  *   - the livery list is the app's five, and the app owns which one is current
+ *   - the root carries data-look, so the Appearance branch swallowed every other press in the tray
  *   - zoom, fit and rotation move every mark on the page — HANDOVER section 3 asks for exactly this call
  *   - warmth is a setting, and settings save locally first
  *   - pressing the dot is what pulls the waiting marks in — the poll may only light it
@@ -23,6 +24,7 @@
  *   - the fanned deck read the student's last five places once, at mount, when there were none
  *   - and the deck draws from the call
  *   - a tally of nothing is a zero count, and this app never states one
+ *   - a student could put marks into a paper and had no way to get them out
  *   - the Redo button in the undo message is a button, and in the demo it only dismissed the message
  *   - HANDOVER, Making it feel smooth: do no work in a scroll handler. Read, store, act on the next frame
  *   - HANDOVER section 5 — the demo strip and the states it fires
@@ -182,6 +184,7 @@ function trayMe(){return `
       : `<div class="lab" style="margin-top:12px">Mark a line and it lands here</div>`;
   })()}
   <button class="rr" data-go="rr"><span class="ic">${ico.rrm}</span><b>Ready Room</b><span class="ch">${ico.ch}</span></button>
+  ${ctx.tally().hl+ctx.tally().rv?`<button class="rr" data-go="out"><span class="ic">${ico.dl}</span><b>Take your marks with you</b><span class="ch">${ico.ch}</span></button>`:''}
   <div class="lab">Appearance</div>
   <div class="segs">
     <button class="${R.dataset.look==='dark'?'on':''}" data-look="dark">Dark</button>
@@ -253,10 +256,28 @@ ISL.addEventListener('click',e=>{
   if(open){
     if(e.target.closest('#bk')){ open==='me' ? openTray('page') : closeTray(); return }
     const c=e.target.closest('.card');if(c){goTo(+c.dataset.pg);closeTray();return}
-    const z=e.target.closest('[data-z]'),f=e.target.closest('[data-f]'),
-          r=e.target.closest('[data-r]'),bm=e.target.closest('[data-bmk]'),
-          k=e.target.closest('[data-look]'),v=e.target.closest('[data-lv]'),
-          go=e.target.closest('[data-go]');
+    /* SCOPED TO THE TRAY, and the reason is a bug that was live.
+
+       `.rdr` itself carries `data-look`, because that is how the stylesheet
+       knows whether it is dark or light — so `e.target.closest('[data-look]')`
+       walks up past the button, past the tray, past the island, and finds the
+       ROOT. It matched for every press anywhere in an open tray.
+
+       The branch it guards then ran on all of them: `R.dataset.look =
+       R.dataset.look`, a no-op, followed by a repaint and a return. Every
+       press listed after it was unreachable — the livery picker, the Ready
+       Room row and all three tallies had never done anything, and neither had
+       anything added below them. Zoom, fit, rotate and bookmark only worked
+       because they are checked first.
+
+       Scoping each lookup inside `#tray` is what the demo strip did for the
+       same reason, in the file's own words: "scope to buttons — the root
+       itself carries data-bar". */
+    const inTray=s=>e.target.closest('#tray '+s);
+    const z=inTray('[data-z]'),f=inTray('[data-f]'),
+          r=inTray('[data-r]'),bm=inTray('[data-bmk]'),
+          k=inTray('[data-look]'),v=inTray('[data-lv]'),
+          go=inTray('[data-go]');
     if(z){zoom=Math.min(220,Math.max(60,zoom+(+z.dataset.z)*10));fit=false;applyPage();fillTray('page');ctx.onView(zoom,fit,rot);return}
     if(f){zoom=100;fit=true;applyPage();fillTray('page');ctx.onView(zoom,fit,rot);return}
     if(r){rot=(rot+(+r.dataset.r)*90)%360;applyPage();ctx.onView(zoom,fit,rot);return}

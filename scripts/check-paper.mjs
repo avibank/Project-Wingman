@@ -1219,8 +1219,14 @@ console.log("\nthe tool table");
      /\.rdr \.mkq\.st::after/.test(readerCss()) && /\.rdr \.mkq\.note \{/.test(readerCss()));
 
   /* WHAT IS STILL MISSING. */
-  ok("gap", "a student cannot pull their marks out of a paper",
-     !/exportMarks|revision deck|downloadMarks/i.test(src));
+  /* Section 4's last row, built: a student can pull their marks out of a
+     paper. Markdown, because a format nobody can read is the same as no
+     export — and their OWN marks only, because the class's belong to the
+     class and a red one is private end to end, including from a file that
+     might be forwarded. */
+  ok("tools", "a student can take their marks out of a paper",
+     /function deckText\(\)/.test(src) && /text\/markdown/.test(src)
+     && /data-go="out"/.test(read("src/components/paper/v6/part2.js")));
   /* Link needs somewhere to keep a target. `kind` has room for it and nothing
      else does: a URL is not an anchor and not a stroke. */
   ok("gap", "Link has no target to keep, so it is not offered",

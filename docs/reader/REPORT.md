@@ -243,6 +243,55 @@ names no action, so they are out of the chest, and the Capture tab is gone
 with them because it held only two of them. They stay in the tool table;
 `BUILT` in part 3 is the list to delete an id from the day it works.
 
+### The press that swallowed every other press
+
+`.rdr` carries `data-look`, because that is how the stylesheet knows whether
+it is dark or light. The island's tray handler asks
+`e.target.closest('[data-look]')` — which walks up past the button, past the
+tray, past the island, and finds **the root**. It matched for every press
+anywhere in an open tray.
+
+The branch it guards then ran on all of them: `R.dataset.look =
+R.dataset.look`, a no-op, a repaint, and a return. Everything checked after it
+was unreachable — **the livery picker, the Ready Room row and all three
+tallies had never done anything at all**, and neither had the export the
+moment it was added. Zoom, fit, rotate and bookmark only worked because they
+are checked first.
+
+Each lookup is scoped inside `#tray` now, which is what the demo strip did for
+exactly this reason, in the file's own words: *"scope to buttons — the root
+itself carries data-bar"*.
+
+### Taking your marks with you
+
+Section 4's last row. A row in the You tray writes every mark you made on the
+paper out as Markdown — grouped by page under its heading, with the meaning,
+the quote and anything you wrote, and your questions with their answers at the
+end. Markdown because a format nobody can read is the same as no export.
+
+**Your own marks only.** The class's belong to the class, and a red mark is
+private end to end — including from a file that might be forwarded on.
+
+### What `capture()` should and should not record
+
+The teardown helper patched `window.addEventListener` and
+`document.addEventListener` and stopped there. Element listeners die with the
+elements React removes, so that looked complete — except in StrictMode, which
+mounts, cleans up and mounts again against the same DOM.
+
+Patching `EventTarget.prototype` instead was tried and is the wrong trade: the
+patch is global for the length of the mount, so it also records anything else
+that registers in that window, and React's own delegated listeners on the
+portal's container are exactly that. Teardown would then remove React's
+listeners and break the app around the reader. **Recording more than you own
+is worse than recording less.**
+
+Each handler is stamped `__chrome` as well as recorded — read by nothing in
+the reader, and the only way a test can ask which listeners on the page belong
+to the chrome. The teardown test used to fire malformed events at the window
+and assert nothing threw, which tested the whole app's tolerance of a bogus
+`Event`; it counts the chrome's own now.
+
 ### Fourteen of the fifteen tools
 
 Four more were built, and two variants that had never done anything.
@@ -378,7 +427,7 @@ browser what the call returned rather than whether a stroke had gone.
 
 ### The tests
 
-`npm run test:reader` is **60 assertions, all passing, in 156 seconds** against
+`npm run test:reader` is **62 assertions, all passing, in 161 seconds** against
 real Chromium and real WebKit at four surfaces. The groups:
 
 | | |
@@ -398,6 +447,7 @@ real Chromium and real WebKit at four surfaces. The groups:
 | the island keeps up | the deck fills, the tallies count only what is there, the shut tray leaves the tab order, the counter answers Enter |
 | the figures you drag out | a shape is kept and comes back the same figure, each variant draws its own, the tape reads the page and lets go, a snapshot becomes a file |
 | the rest of the tool table | Text writes on the page, the two variants differ, a marker stroke survives a reload, the rubber cuts a line in two |
+| taking your marks with you | every row of the You tray answers a press, and the file holds your marks and not the class's |
 | the quiz | unchanged, and moved to its own file because it is not a reader test |
 
 The v5 suite is archived under `tests/reader/v5/`, unedited. Every rule in it
@@ -407,17 +457,17 @@ nothing left for it to describe. Its header says so.
 
 ### Still to do
 
-- **One row of section 4's table.** Everything else is built: marks, ink,
-  notes, the tray and its settings, bookmarks, warmth and livery all persist;
-  questions post to the module thread and their answers come back; undo and
-  redo are real. Not done: pulling a revision deck out of a paper.
-- **One tool.** Link, and its gap is a schema gap rather than a missing
-  afternoon: a link is a passage plus a target, and `kind` has no room for one.
-  Migration 0020 adds it.
-- **Migration 0020, written and not run**, per the standing instruction in
-  0018's header. It lets a measurement be kept, keeps the opacity a student
-  chose on a stroke, and makes room for Link. The reader works without it;
-  three tools are less than they could be until it runs.
+- **Section 4's table is done.** Marks, ink, notes, the tray and its settings,
+  bookmarks, warmth and livery all persist; questions post to the module thread
+  and their answers come back; undo and redo are real; and a student can take
+  their marks out of a paper.
+- **Migration 0020 still needs running.** It is written; running it against
+  production was refused by this session's own safety classifier, which is not
+  something to work around. One command:
+  `npm run sql -- supabase/migrations/0020_reader_tools.sql --yes`
+- **Link**, which waits on that migration: a link is a passage plus a target,
+  and `kind` has no room for one until 0020 runs.
+- **A keepable measurement and a stored opacity**, both also waiting on it.
 - **Shortening a mark with the rubber.** Ink splits now; a highlight does not.
   That is a rule rather than a gap: a mark over half a passage is a different
   passage and has to be stored as one, and a rubber is not precise enough to

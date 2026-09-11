@@ -702,6 +702,80 @@ export function createMarkStore({
     }, "image/png");
   }
 
+  /* ── taking your marks with you ────────────────────────────────────────
+     HANDOVER section 4's last row: "A student can pull their marks out of a
+     paper — at minimum their revision deck."
+
+     MARKDOWN, because it opens in everything and pastes into anything — a
+     revision app, a document, a message to somebody on the course. A format
+     nobody can read is the same as no export.
+
+     Only this student's own marks. The class's belong to the class, and a red
+     mark is private end to end — including from an export that might be
+     forwarded. */
+  const MEANS = {
+    y: "Exam likely", b: "Definition", g: "Testable fact",
+    p: "Question", r: "To revise",
+  };
+  function deckText() {
+    const mine = WM.marks
+      .filter((m) => m.who === "me" || m.kind === "ask")
+      .sort((a, b) => a.pg - b.pg || a.tx.localeCompare(b.tx));
+    const when = new Date().toLocaleDateString(undefined,
+      { day: "numeric", month: "long", year: "numeric" });
+    const out = [`# ${paper?.title || "This paper"} — your marks`, ""];
+    const counted = mine.filter((m) => m.kind !== "ask");
+    out.push(`${counted.length} mark${counted.length === 1 ? "" : "s"} · taken ${when}`, "");
+
+    const by = new Map();
+    for (const m of mine) {
+      if (m.kind === "ask") continue;
+      const list = by.get(m.pg) || [];
+      list.push(m);
+      by.set(m.pg, list);
+    }
+    for (const [pg, list] of [...by].sort((a, b) => a[0] - b[0])) {
+      const head = head0(pg);
+      out.push(`## Page ${String(pg).padStart(4, "0")}${head ? ` — ${head}` : ""}`, "");
+      for (const m of list) {
+        const what = MEANS[m.k] || "Marked";
+        out.push(`- **${what}** — "${m.tx}"${m.ask ? ` — ${m.ask}` : ""}`);
+      }
+      out.push("");
+    }
+
+    /* Questions last, with their answers, because that is what they are for. */
+    const asked = mine.filter((m) => m.kind === "ask");
+    if (asked.length) {
+      out.push("## Questions on this paper", "");
+      for (const q of asked) {
+        out.push(`- "${q.tx}"${q.ask ? ` — ${q.ask}` : ""}`);
+        for (const a of q.ans || []) {
+          const who = (people[a.who] || {}).n || "Someone";
+          out.push(`    - ${who}: ${a.tx}`);
+        }
+      }
+      out.push("");
+    }
+    return out.join("\n");
+  }
+
+  function head0(pg) {
+    try { return chrome.head ? chrome.head(pg) : ""; } catch { return ""; }
+  }
+
+  function takeOut() {
+    const text = deckText();
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(paper?.title || "paper").replace(/[^\w-]+/g, "-").slice(0, 48)}-marks.md`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return text;
+  }
+
   /* ── undo and redo ─────────────────────────────────────────────────────
      Movement only ever happens because the student asked for it, so both of
      these say what they did — the island's message is the acknowledgement,
@@ -752,6 +826,7 @@ export function createMarkStore({
   const api = {
     loadWindow, loadInk, loadThreads, poll, pull, relayout,
     made, dropped, converted, recoloured, stroke, answer, note, erasedInk, snapshot, pointsOf,
+    takeOut, deckText,
     /* Whether this account drew a stroke. The server cannot answer it — there
        is no session to check against — so the caller has to, and the eraser
        asks before it takes anything off. */

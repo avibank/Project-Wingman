@@ -21,21 +21,42 @@
 export function capture(run) {
   const undo = [];
 
+  /* WINDOW AND DOCUMENT, AND DELIBERATELY NOT EVERY TARGET.
+   *
+   * These are the ones that can outlive the reader: an element listener dies
+   * with the element React removes, and needs no bookkeeping.
+   *
+   * Patching `EventTarget.prototype` instead does catch element listeners too,
+   * and was tried — it is the wrong trade. The patch is global for the length
+   * of the mount, so it also records anything ELSE that registers in that
+   * window, and React's own delegated listeners on the portal's container are
+   * exactly that. Teardown would then remove React's listeners and break the
+   * app around the reader. Recording more than you own is worse than
+   * recording less.
+   *
+   * Each handler is stamped as well as recorded. Nothing in the reader reads
+   * the mark; it is there so a test can ask which listeners on the page are
+   * the chrome's, which is otherwise unanswerable — the router, analytics,
+   * identity and React's delegation all live on the same targets. */
   const realWinAdd = window.addEventListener;
   const realDocAdd = document.addEventListener;
+  const mark = (f) => { if (typeof f === "function") { try { f.__chrome = true; } catch { /* frozen */ } } };
+  window.addEventListener = function (...a) {
+    mark(a[1]);
+    undo.push(() => window.removeEventListener(...a));
+    return realWinAdd.apply(window, a);
+  };
+  document.addEventListener = function (...a) {
+    mark(a[1]);
+    undo.push(() => document.removeEventListener(...a));
+    return realDocAdd.apply(document, a);
+  };
+
   const realMO = window.MutationObserver;
   const realRO = window.ResizeObserver;
   const realTimeout = window.setTimeout;
   const realInterval = window.setInterval;
 
-  window.addEventListener = function (...a) {
-    undo.push(() => window.removeEventListener(...a));
-    return realWinAdd.apply(window, a);
-  };
-  document.addEventListener = function (...a) {
-    undo.push(() => document.removeEventListener(...a));
-    return realDocAdd.apply(document, a);
-  };
   window.MutationObserver = class extends realMO {
     constructor(...a) { super(...a); undo.push(() => this.disconnect()); }
   };

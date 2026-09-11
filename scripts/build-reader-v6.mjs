@@ -121,6 +121,36 @@ const EDITS = [
   },
   {
     part: 2,
+    why: "the root carries data-look, so the Appearance branch swallowed every other press in the tray",
+    find: `    const z=e.target.closest('[data-z]'),f=e.target.closest('[data-f]'),
+          r=e.target.closest('[data-r]'),bm=e.target.closest('[data-bmk]'),
+          k=e.target.closest('[data-look]'),v=e.target.closest('[data-lv]'),
+          go=e.target.closest('[data-go]');`,
+    replace: `    /* SCOPED TO THE TRAY, and the reason is a bug that was live.
+
+       \`.rdr\` itself carries \`data-look\`, because that is how the stylesheet
+       knows whether it is dark or light — so \`e.target.closest('[data-look]')\`
+       walks up past the button, past the tray, past the island, and finds the
+       ROOT. It matched for every press anywhere in an open tray.
+
+       The branch it guards then ran on all of them: \`R.dataset.look =
+       R.dataset.look\`, a no-op, followed by a repaint and a return. Every
+       press listed after it was unreachable — the livery picker, the Ready
+       Room row and all three tallies had never done anything, and neither had
+       anything added below them. Zoom, fit, rotate and bookmark only worked
+       because they are checked first.
+
+       Scoping each lookup inside \`#tray\` is what the demo strip did for the
+       same reason, in the file's own words: "scope to buttons — the root
+       itself carries data-bar". */
+    const inTray=s=>e.target.closest('#tray '+s);
+    const z=inTray('[data-z]'),f=inTray('[data-f]'),
+          r=inTray('[data-r]'),bm=inTray('[data-bmk]'),
+          k=inTray('[data-look]'),v=inTray('[data-lv]'),
+          go=inTray('[data-go]');`,
+  },
+  {
+    part: 2,
     why: "zoom, fit and rotation move every mark on the page — HANDOVER section 3 asks for exactly this call",
     find: `    if(z){zoom=Math.min(220,Math.max(60,zoom+(+z.dataset.z)*10));fit=false;applyPage();fillTray('page');return}
     if(f){zoom=100;fit=true;applyPage();fillTray('page');return}
@@ -240,6 +270,13 @@ const RECENT=()=>ctx.recent();`,
       ? \`<div class="tally">\${tiles.join('')}</div>\`
       : \`<div class="lab" style="margin-top:12px">Mark a line and it lands here</div>\`;
   })()}`,
+  },
+  {
+    part: 2,
+    why: "a student could put marks into a paper and had no way to get them out",
+    find: `  <button class="rr" data-go="rr"><span class="ic">\${ico.rrm}</span><b>Ready Room</b><span class="ch">\${ico.ch}</span></button>`,
+    replace: `  <button class="rr" data-go="rr"><span class="ic">\${ico.rrm}</span><b>Ready Room</b><span class="ch">\${ico.ch}</span></button>
+  \${ctx.tally().hl+ctx.tally().rv?\`<button class="rr" data-go="out"><span class="ic">\${ico.dl}</span><b>Take your marks with you</b><span class="ch">\${ico.ch}</span></button>\`:''}`,
   },
   {
     part: 2,
