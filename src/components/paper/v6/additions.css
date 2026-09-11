@@ -65,6 +65,25 @@
   .rdr .sheetpg[data-real] .pgno { right: 6px; top: auto; bottom: 6px; color: var(--pink); }
 }
 
+/* ── two tokens the shipped sheet asks for and never declares ────────────
+   `.pan`, `.ptab` and the panel's footer fade all paint with `var(--panel)`
+   and `var(--panelln)`, and neither is defined anywhere in reader.css. The
+   consequences are not cosmetic and were measured rather than guessed:
+
+     --panelln  is used as `border: 1px solid var(--panelln)`. An undefined
+                variable makes the whole shorthand invalid at computed-value
+                time, so it falls back to `medium none currentcolor` — the
+                side panel and its tab have NO BORDER at all
+
+     --panel    is emitted by the app's own livery engine, so the reader's
+                panel was quietly being painted with the Ready Room's surface
+                colour. It looked deliberate and was a coincidence
+
+   Supplying a value the sheet asks for is not restyling it, and both are
+   pointed at the reader's own tokens rather than at new colours, so the panel
+   is tinted by `--lv` like every other floating surface here. */
+.rdr { --panel: var(--pop); --panelln: var(--hair); }
+
 /* ── quarantine: seven class names this app already had ──────────────────
    Scoping reader.css stops the reader painting the REST of the app. It does
    not stop the rest of the app painting the READER, and seven of v6's 187
@@ -124,25 +143,45 @@
    globally, because the 44px minimum had leaked in eleven places. The reader
    is inside `.app`, so it inherits that rule, and the rule fights the shipped
    sheet on every control it has: measured on v4, `.tool` came out 38x44 where
-   the sheet says 38x38, and every colour swatch drew as an oval.
-
-   The reader answers the touch case itself and answers it better than a width
-   can — `data-plat` is set from `pointer:coarse`, on capability. So inside
-   `.rdr` the shipped sheet owns the box, and section 12 is paid below. */
+   the sheet says 38x38, and every colour swatch drew as an oval. So inside
+   `.rdr` the shipped sheet owns the box. */
 .app .rdr button:not(.is-inline),
 .app .rdr [role="tab"],
 .app .rdr input:not([type="checkbox"]):not([type="radio"]),
 .app .rdr select,
 .app .rdr textarea { min-height: 0; }
 
-/* And here is section 12, paid on the platform that actually needs it. Every
-   control the student aims at with a finger, not a mouse. */
-.rdr[data-plat="tablet"] .t, .rdr[data-plat="phone"] .t,
-.rdr[data-plat="tablet"] .util, .rdr[data-plat="phone"] .util,
-.rdr[data-plat="tablet"] .selp .a, .rdr[data-plat="phone"] .selp .a,
-.rdr[data-plat="tablet"] .chip, .rdr[data-plat="phone"] .chip,
-.rdr[data-plat="tablet"] .pseg button, .rdr[data-plat="phone"] .pseg button {
-  min-height: 44px; min-width: 44px;
+/* And here is section 12, paid where it is actually needed and in the only
+   way that does not restyle anything.
+
+   v6's sheet reads `data-plat` exactly once — to hide the bar's drag handle
+   on touch, because there is no hover to reveal it — and sizes nothing for a
+   finger. Measured on the iPad surfaces, that leaves the chest button at
+   30x30, every tool at 38x38 and every filter chip at 27px tall. The app's
+   own rule exists because 44px is the guidance, and a 27px chip on an iPad is
+   a real miss, not a stylistic preference.
+
+   So the TARGET grows and the CONTROL does not. A transparent ::before
+   centred on each one takes the tap out to 44px while the box stays exactly
+   the size the sheet set it against everything else. `::after` was not
+   available — v6 uses it for the active tool's indicator on all four edges —
+   and `::before` is used only inside `.selp .cue` and on `.mcard`, neither of
+   which is in this list. */
+.rdr[data-plat="touch"] .t,
+.rdr[data-plat="touch"] .util,
+.rdr[data-plat="touch"] .chip,
+.rdr[data-plat="touch"] .pseg button,
+.rdr[data-plat="touch"] .selp .a,
+.rdr[data-plat="touch"] .selp .swatch { position: relative; }
+.rdr[data-plat="touch"] .t::before,
+.rdr[data-plat="touch"] .util::before,
+.rdr[data-plat="touch"] .chip::before,
+.rdr[data-plat="touch"] .pseg button::before,
+.rdr[data-plat="touch"] .selp .a::before,
+.rdr[data-plat="touch"] .selp .swatch::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px; min-height: 44px; width: 100%; height: 100%;
 }
 
 /* ── the faces, through the tokens ───────────────────────────────────────

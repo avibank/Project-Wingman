@@ -161,6 +161,13 @@ const EDITS = [
   },
   {
     part: 2,
+    why: "the Redo button in the undo message is a button, and in the demo it only dismissed the message",
+    find: `  if(cur==='fresh'){pending=false;DOT.dataset.live='0';ctx.onPull();return}`,
+    replace: `  if(cur==='fresh'){pending=false;DOT.dataset.live='0';ctx.onPull();return}
+  if(cur==='undo'&&e.target.closest('.act')){ctx.onRedo();return}`,
+  },
+  {
+    part: 2,
     why: "HANDOVER, Making it feel smooth: do no work in a scroll handler. Read, store, act on the next frame",
     find: `STAGE.addEventListener('scroll',()=>{
   let best=FIRST,bd=1e9;
@@ -210,6 +217,11 @@ return {
   waiting(n){pending=n>0;DOT.dataset.live=n>0?'1':'0';if(n>0)flash('fresh',3600)},
   /* they arrived. Say what came in */
   arrived(n){pending=false;DOT.dataset.live='0';flash('mark',1400)},
+  /* something was taken back, or put back. The message is the whole of the
+     acknowledgement: an undo on a page you are not looking at is otherwise
+     silent, and the student is left unsure whether the key did anything. */
+  undone(what,isRedo){MARKK='y';flash('undo',isRedo?1400:2600)},
+  say(name,ms,k){if(k&&MEAN[k])MARKK=k;flash(name,ms)},
   offline(v){v?flash('offline'):toRest()},
   repaint(){paintBookmarks();if(open)fillTray(open)},
 };`,
@@ -272,6 +284,28 @@ return {
     if(t&&!t.fixed&&!t.grey){S.colour[t.id]=lastK;paintRail();mode();ctx.onSettings(S)}
     if(picked)ctx.onRecoloured(picked[0].dataset.g,lastK);
     recolour();paintSel();return}`,
+  },
+  {
+    part: 3,
+    why: "section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing",
+    find: `  if(R.dataset.draw!=='1')return;
+  const pg=pgAt(e); if(!pg)return;`,
+    replace: `  if(R.dataset.draw!=='1')return;
+  /* THE HAND THAT HOLDS THE IPAD IS NOT A PEN. The handed-over file draws from
+     any pointer at all, which on the device this reader is actually used on
+     means a resting palm leaves a stroke across the page and a finger draws
+     where it meant to scroll. Section 8.9 of the original brief is explicit,
+     and it is not a question of style: a finger SCROLLS while a drawing tool
+     is armed, and a second contact arriving beside a pen is ignored.
+
+     The cost is stated rather than hidden: on a touch device with no stylus
+     nobody can draw. That is the brief's own trade and it was already shipped
+     once — the alternative is a reader that scribbles on itself every time
+     somebody rests their hand. */
+  if(e.isPrimary===false)return;
+  if(e.pointerType==='touch'){
+    pan={y:e.clientY,top:STG.scrollTop};STG.setPointerCapture(e.pointerId);return}
+  const pg=pgAt(e); if(!pg)return;`,
   },
   {
     part: 3,
@@ -352,6 +386,14 @@ const NPAGES=ctx.total;`,
     why: "the same lookup, for the heading over each page's group of marks",
     find: `    \`<div class="pgh"><b>\${pad(pg)}</b><span>\${HEADS[pg-FIRST]||''}</span><em>\${by[pg].length}</em></div>\``,
     replace: `    \`<div class="pgh"><b>\${pad(pg)}</b><span>\${ctx.head(+pg)||''}</span><em>\${by[pg].length}</em></div>\``,
+  },
+  {
+    part: 4,
+    why: "an instructor is a person with a staff badge, not an author id spelled 'tut'",
+    find: `        <span class="a \${a.who==='tut'?'tut':''}">\${PEOPLE[a.who]?PEOPLE[a.who].i:'??'}</span>
+        <span class="tx"><b>\${a.n}\${a.who==='tut'?'<em>answered</em>':''}</b>\${esc(a.tx)}</span></div>\`).join('')`,
+    replace: `        <span class="a \${PEOPLE[a.who]?.tut?'tut':''}">\${PEOPLE[a.who]?PEOPLE[a.who].i:'??'}</span>
+        <span class="tx"><b>\${(PEOPLE[a.who]||{}).n||a.n||'Someone'}\${PEOPLE[a.who]?.tut?'<em>answered</em>':''}</b>\${esc(a.tx)}</span></div>\`).join('')`,
   },
   {
     part: 4,

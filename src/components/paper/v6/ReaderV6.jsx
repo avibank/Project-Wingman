@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { loadPaper, releasePaper, paperText, warmWorker } from "../../../lib/paperText.js";
 import { setRasterFocus } from "../../../lib/rasterBudget.js";
 import { fileHref, storedText } from "../../../lib/papers.js";
-import { readPlatform, watchPlatform } from "../../../lib/readerPlatform.js";
 import { LIVERIES, deckVars, DEFAULT_LIVERY } from "../../../lib/liveryEngine.js";
 import { mountWM } from "./part1.js";
 import { mountIsland } from "./part2.js";
@@ -81,7 +80,6 @@ export default function ReaderV6({
   const [page, setPage] = useState(1);
   const [stageW, setStageW] = useState(0);
   const [measured, setMeasured] = useState(0);
-  const [plat, setPlat] = useState(() => readPlatform());
   const [bookmarks, setBookmarks] = useState(() => readJSON(`${key}-bm`, []));
 
   /* WHY THE READER IS PORTALLED, AND WHY TO `.app` RATHER THAN THE BODY.
@@ -108,6 +106,11 @@ export default function ReaderV6({
   /* Owned here rather than by the mark store, because the pages exist before
      the store does — see the note in marks.js. */
   const live = useRef({ pages: new Map() });
+  /* The panel looks names up in this on every paint, so it is one object that
+     is written into rather than a value that is passed. An id it has never
+     seen shows as "Someone" until the profile lands, which is a name arriving
+     late — never a name being wrong. */
+  const people = useRef({ anon: { n: "Anonymous", i: "?" } });
   const chrome = useRef({});
   const island = useRef(null);
   const panel = useRef(null);
@@ -175,8 +178,6 @@ export default function ReaderV6({
     })();
     return () => { live = false; releasePaper(url); };
   }, [url, paper]);
-
-  useEffect(() => watchPlatform(setPlat), []);
 
   /* ------------------------------------------------------------ the stage
      A ResizeObserver rather than a resize listener, because the reader can
@@ -296,10 +297,9 @@ export default function ReaderV6({
         sub: [me?.school, moduleCode && `Module ${moduleCode.replace(/^M/, "")}`, me?.licence]
           .filter(Boolean).join(" · "),
       },
-      people: {
+      people: Object.assign(people.current, {
         me: { n: "You", i: (me?.initials || "?").slice(0, 2).toUpperCase() },
-        anon: { n: "Anonymous", i: "?" },
-      },
+      }),
       tally: () => ({ hl: counts.hl, bm: bookmarks.length, rv: counts.rv }),
       recent: store.current?.recent() || [],
       head: headOf,
@@ -338,6 +338,11 @@ export default function ReaderV6({
         island.current?.arrived(n);
         panel.current?.repaint();
       },
+      async onRedo() {
+        const what = await store.current?.redo();
+        panel.current?.repaint();
+        if (what) island.current?.say("mark", 1200);
+      },
 
       /* Settings save locally first and sync in the background: nothing the
          student touches waits on the network. */
@@ -350,7 +355,7 @@ export default function ReaderV6({
       onConverted(g, kind, k) { store.current?.converted(g, kind, k); },
       onRecoloured(g, k) { store.current?.recoloured(g, k); },
       onStroke(pgEl, path, pts, tool, S) { store.current?.stroke(pgEl, path, pts, tool, S); },
-      onAnswer(markId, text) { onOpenThread?.(markId, text); },
+      onAnswer(markId, text) { store.current?.answer(markId, text); },
     };
 
     /* Every listener the parts bind to window or document, every observer and
@@ -364,10 +369,28 @@ export default function ReaderV6({
 
     store.current = createMarkStore({
       paper, moduleCode, me, model, WM, chrome: chrome.current, live: live.current,
+      people: people.current,
+      onNames() { panel.current?.repaint(); },
       onCounts(c) { counts = c; },
     });
     store.current.loadInk();
+    store.current.loadThreads();
     setPage(ctx.page);
+
+    /* Undo and redo. The chrome has the message and the Redo button; the key
+       that fires them belongs to the shell, because the chrome binds its own
+       keys to tools and Z is not one of them. */
+    const keys = async (e) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (!meta || e.key.toLowerCase() !== "z") return;
+      if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;   // they are typing
+      e.preventDefault();
+      const what = e.shiftKey ? await store.current?.redo() : await store.current?.undo();
+      panel.current?.repaint();
+      if (!what) return;
+      island.current?.undone(what, e.shiftKey);
+    };
+    window.addEventListener("keydown", keys);
 
     /* Check for new marks quietly, apply them loudly. The only thing this may
        do is light the dot. */
@@ -377,6 +400,7 @@ export default function ReaderV6({
     }, POLL_MS);
 
     return () => {
+      window.removeEventListener("keydown", keys);
       clearInterval(poll);
       panel2.off(); tools.off(); island2.off();
       delete window.islandSay; delete window.readerGoTo; delete window.WM;
@@ -390,6 +414,27 @@ export default function ReaderV6({
 
   /* The stage moved: re-lay every mark on the pages that are showing. */
   useEffect(() => { store.current?.relayout(); }, [pageW, rot, page]);
+
+  /* AND AGAIN WHEN THE PAGE HAS FINISHED MOVING. reader.css gives `.sheetpg`
+     a 0.42s spring on `transform` and a 0.34s ease on `width`, so the layout
+     above runs against a page that is halfway through turning: the rectangles
+     are measured at some angle between the old one and the new one, and the
+     marks settle sideways across the words.
+
+     Zoom got away with it, because changing the width makes the ResizeObserver
+     fire all the way through the animation and the last fire is the correct
+     one. Rotation changes no size at all, so there was nothing to correct it —
+     measured at 180 degrees with the quads still carrying the width and height
+     they were given at 90. */
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return undefined;
+    const settled = (e) => {
+      if (e.propertyName === "transform" || e.propertyName === "width") store.current?.relayout();
+    };
+    el.addEventListener("transitionend", settled);
+    return () => el.removeEventListener("transitionend", settled);
+  }, []);
 
   const onEls = useCallback((pg, els) => {
     if (els) live.current.pages.set(pg, els); else live.current.pages.delete(pg);
@@ -418,7 +463,6 @@ export default function ReaderV6({
       data-rail="on"
       data-side="right"
       data-pan="1"
-      data-plat={plat}
     >
       {/* The way back to the library. reader.html has this as a div, because
           the demo had nowhere to go; a button with the same class takes the

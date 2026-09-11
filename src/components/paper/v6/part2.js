@@ -16,6 +16,7 @@
  *   - zoom, fit and rotation move every mark on the page — HANDOVER section 3 asks for exactly this call
  *   - warmth is a setting, and settings save locally first
  *   - pressing the dot is what pulls the waiting marks in — the poll may only light it
+ *   - the Redo button in the undo message is a button, and in the demo it only dismissed the message
  *   - HANDOVER, Making it feel smooth: do no work in a scroll handler. Read, store, act on the next frame
  *   - HANDOVER section 5 — the demo strip and the states it fires
  *   - HANDOVER section 5 — the demo strip's own controls
@@ -247,6 +248,7 @@ ISL.addEventListener('click',e=>{
     return;
   }
   if(cur==='fresh'){pending=false;DOT.dataset.live='0';ctx.onPull();return}
+  if(cur==='undo'&&e.target.closest('.act')){ctx.onRedo();return}
   if(cur){toRest();return}
   openTray('page');
 });
@@ -291,6 +293,11 @@ return {
   waiting(n){pending=n>0;DOT.dataset.live=n>0?'1':'0';if(n>0)flash('fresh',3600)},
   /* they arrived. Say what came in */
   arrived(n){pending=false;DOT.dataset.live='0';flash('mark',1400)},
+  /* something was taken back, or put back. The message is the whole of the
+     acknowledgement: an undo on a page you are not looking at is otherwise
+     silent, and the student is left unsure whether the key did anything. */
+  undone(what,isRedo){MARKK='y';flash('undo',isRedo?1400:2600)},
+  say(name,ms,k){if(k&&MEAN[k])MARKK=k;flash(name,ms)},
   offline(v){v?flash('offline'):toRest()},
   repaint(){paintBookmarks();if(open)fillTray(open)},
 };

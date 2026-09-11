@@ -1,3 +1,20 @@
+/* ARCHIVED — this describes the v5 reader, which is not what is built.
+ *
+ * v6 replaced the chrome entirely: `.page` is `.sheetpg`, `.rdr-text` is
+ * `.textLayer`, the dock and the rack and the scrubber are gone, and the
+ * panel is one aside rather than four corners. Every selector below therefore
+ * misses, and each miss costs a 90-second timeout — which is why these are
+ * out of `tests/reader/index.mjs` rather than left failing.
+ *
+ * They are kept, unedited, for the reasons written in them. Several are about
+ * rules that outlive any chrome — no blank page, ranged loading, the pen and
+ * the palm, anonymity on the wire — and those have been PORTED to
+ * `tests/reader/v6.mjs` against v6's vocabulary. What is left here is the part
+ * that was about v5's furniture, and it is only worth reading if that
+ * furniture ever comes back.
+ *
+ * Run them with `node tests/reader/v5/index.mjs` if you need to.
+ */
 /* PHASE 1 — the renderer. Brief §4.
  *
  * The bar it has to clear, in the brief's own words: "Open the longest paper.

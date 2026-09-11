@@ -10,6 +10,7 @@
  *   - who wrote a mark is looked up, and a name that is not in the class is still a name
  *   - a page's heading comes from the paper's outline, and there are 1012 of them, not ten
  *   - the same lookup, for the heading over each page's group of marks
+ *   - an instructor is a person with a staff badge, not an author id spelled 'tut'
  *   - an answer typed into a card is posted to the module thread the Ready Room shows
  *   - the panel's scroll handler does its work on the next frame too
  *   - the panel repaints when marks arrive, and the rest of the reader needs to be able to ask
@@ -81,8 +82,8 @@ function card(m){
     </div>
     ${m.kind==='ask'?`<div class="thr">
       ${(m.ans||[]).map(a=>`<div class="ans">
-        <span class="a ${a.who==='tut'?'tut':''}">${PEOPLE[a.who]?PEOPLE[a.who].i:'??'}</span>
-        <span class="tx"><b>${a.n}${a.who==='tut'?'<em>answered</em>':''}</b>${esc(a.tx)}</span></div>`).join('')
+        <span class="a ${PEOPLE[a.who]?.tut?'tut':''}">${PEOPLE[a.who]?PEOPLE[a.who].i:'??'}</span>
+        <span class="tx"><b>${(PEOPLE[a.who]||{}).n||a.n||'Someone'}${PEOPLE[a.who]?.tut?'<em>answered</em>':''}</b>${esc(a.tx)}</span></div>`).join('')
       || `<div class="ans"><span class="tx" style="color:var(--txt-3)">No answers yet. Yours would be the first.</span></div>`}
       <div class="reply"><input placeholder="Answer this" data-stop><button data-stop>Send</button></div>
     </div>`:''}

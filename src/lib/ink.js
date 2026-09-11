@@ -25,10 +25,14 @@ export async function fetchInk(me, paperId) {
 
 export async function createStroke({
   paperId, moduleCode, me, page, tool = "pen", colour = "graphite",
-  width = 0.0032, ring = "solo", points = [],
+  width = 0.0032, ring = "solo", points = [], id = null,
 }) {
   if (!me || !paperId || !page || !points.length) return null;
   const { data, error } = await supabase.from("paper_ink").insert({
+    /* Named on the way in when the caller has one, so a stroke that was undone
+       and redone is the SAME stroke to everyone else rather than a new one
+       beside the hole the first left. Left out, redo is a second stroke. */
+    ...(id ? { id } : {}),
     paper_id: paperId, module_code: moduleCode, author_id: me,
     page, tool, colour, width, ring,
     // Rounded to four places on the way out: that is a fifth of a pixel on a

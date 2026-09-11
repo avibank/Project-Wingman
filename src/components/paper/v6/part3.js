@@ -12,6 +12,7 @@
  *   - removing a mark has to reach the database too
  *   - recolouring and converting a mark are edits to a stored record
  *   - the same, for a colour change
+ *   - section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing
  *   - a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in
  *   - the tray, its order, and every tool's colour, size and opacity persist per student
  *   - closing the same call
@@ -738,6 +739,20 @@ STG.addEventListener('pointerdown',e=>{
   if(R.dataset.grab==='1'){
     pan={y:e.clientY,top:STG.scrollTop};STG.setPointerCapture(e.pointerId);return}
   if(R.dataset.draw!=='1')return;
+  /* THE HAND THAT HOLDS THE IPAD IS NOT A PEN. The handed-over file draws from
+     any pointer at all, which on the device this reader is actually used on
+     means a resting palm leaves a stroke across the page and a finger draws
+     where it meant to scroll. Section 8.9 of the original brief is explicit,
+     and it is not a question of style: a finger SCROLLS while a drawing tool
+     is armed, and a second contact arriving beside a pen is ignored.
+
+     The cost is stated rather than hidden: on a touch device with no stylus
+     nobody can draw. That is the brief's own trade and it was already shipped
+     once — the alternative is a reader that scribbles on itself every time
+     somebody rests their hand. */
+  if(e.isPrimary===false)return;
+  if(e.pointerType==='touch'){
+    pan={y:e.clientY,top:STG.scrollTop};STG.setPointerCapture(e.pointerId);return}
   const pg=pgAt(e); if(!pg)return;
   e.preventDefault();
   const t=T(S.tool), c=colOf(t), r=pg.getBoundingClientRect();

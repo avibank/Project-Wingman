@@ -49,6 +49,30 @@ for (const f of files) {
   }
 }
 
+// And everything the SCRIPTS set. A custom property is as validly declared
+// from `style="--pk:#F5C23C"` or `el.style.setProperty("--lv", ...)` as it is
+// from a stylesheet, and the reader's chrome sets several that way — the
+// swatch colours, the livery accent, the paper's white point. Left out, this
+// check reads every one of them as undeclared and says so five times.
+(function walkJs(dir) {
+  for (const e of readdirSync(dir)) {
+    const p = join(dir, e);
+    if (statSync(p).isDirectory()) walkJs(p);
+    else if (/\.(jsx?|mjs)$/.test(p)) {
+      const src = readFileSync(p, "utf8");
+      for (const m of src.matchAll(/setProperty\(\s*["'`](--[a-zA-Z0-9-]+)/g)) {
+        declared.add(m[1]);
+        if (!source.has(m[1])) source.set(m[1], p);
+      }
+      /* Inline styles, in a template literal or a JSX string. */
+      for (const m of src.matchAll(/style=["'`][^"'`]*?(--[a-zA-Z0-9-]+)\s*:/g)) {
+        declared.add(m[1]);
+        if (!source.has(m[1])) source.set(m[1], p);
+      }
+    }
+  }
+})("src");
+
 // Everything they USE, minus anything that carries its own fallback — a
 // var(--x, something) is a deliberate "if this is missing, use that".
 const fails = [];

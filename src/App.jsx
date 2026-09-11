@@ -105,7 +105,7 @@ const ModuleHub = lazy(CHUNK.moduleHub);
 import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
 const ModuleScreen = lazy(CHUNK.module);
 const LessonPage = lazy(CHUNK.lesson);
-const PaperReader = lazy(CHUNK.paper);
+const ReaderV6 = lazy(CHUNK.paper);
 const AddPaper = lazy(CHUNK.addPaper);
 const QuizPage = lazy(CHUNK.quiz);
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
@@ -1454,11 +1454,10 @@ function AppInner() {
           }
           return (
             <main className="content content-taxi content--full">
-              <PaperReader
+              <ReaderV6
                 paper={paper}
                 moduleCode={activeModuleCode}
                 me={me}
-                isStaff={!!myProfile?.is_staff}
                 onBack={() => go(routePath.library(activeModuleCode))}
                 onPlace={(page) => progress.set("pw-paper-place", { paperId: paper.id, page })}
                 onOpenThread={() => go(routePath.ready(activeModuleCode))}

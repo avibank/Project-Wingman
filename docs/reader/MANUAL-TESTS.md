@@ -11,6 +11,84 @@ deploy.
 
 ---
 
+## v6 — what is new, and what to try first (12 minutes)
+
+The reader was rebuilt again, to the four files you sent whose HANDOVER says
+"the chrome is finished, copy it." The sections below still describe v4 and
+v5, and the parts about the pen, the anchoring and save integrity still apply
+unchanged — the engine did not move. What is new is the chrome, and these are
+the things no automated test in this repo can settle.
+
+Everything in the automated list already passes: the marks land on their
+words, and they stay there through a resize, a zoom, a rotation and the panel
+opening and shutting. Twelve checks, `node tests/reader/only-v6.mjs`. So do
+not spend the twelve minutes on those; spend them on the ones below.
+
+**W1 · The island is one thing in every state.** Press the counter for the
+page tray, press your initials for the You tray, press Escape, then make a
+highlight so a message fires.
+→ The counter must sit on **the same pixel** through all of it. HANDOVER calls
+it the fixed point of the island: if it shifts when a message fires, a wing
+width is wrong. Nothing here centres the island differently to hide that, so
+what you see is what the sheet does.
+
+**W2 · Long-press a tool and move it.** Hold a tool on the bar until it lifts,
+drag it somewhere else in the bar. Then drag one onto the chest to remove it,
+and drag one out of the chest onto the bar. Then hold the grip at the top of
+the bar and move the whole bar to all four edges.
+→ The panel should swap to the opposite edge every time the bar moves. The
+tray, its order and the bar's edge should all still be there after a reload.
+
+**W3 · The fanned deck.** Press the counter, then hover the fan of cards under
+"Where you have been".
+→ The cards should spread. Holding one should show the line you marked. The
+five cards are **your own most recent marks on this paper**, so if you have
+made none, the fan is empty — that is correct, not broken.
+
+**W4 · The livery picker changes the app, not just the reader.** Press your
+initials, pick a different livery, then leave the reader.
+→ The whole site should be wearing it. There is one livery system and it is
+the app's; the reader's `--lv` is fed from it. A reader that changed colour
+while the Flight Deck did not would mean a second livery system had grown
+back.
+
+**W5 · Warmth is the paper's white point, not a film over it.** Press your
+initials and drag the warmth slider all the way up.
+→ The **paper** should go warm. The text should stay black and the highlights
+should stay their own colours. If the whole page including the marks goes
+amber, something is filtering the stack instead of shifting the ground.
+
+**W6 · Ask, and what other people see.** Select a passage and press **Ask**.
+→ It should post **anonymously**. Then check on the other device: the question
+should be there, and it must not say who wrote it. Anonymity is stripped
+server-side, so this is not something the other reader is politely hiding —
+confirm it by looking at the card, not at the CSS.
+
+**W7 · Red is private, end to end.** Mark something red on one device.
+→ It must not appear on the other, at all, in any filter. Red is written with
+the `solo` ring, so it is never sent; the panel's filter is a convenience on
+top of that, not the mechanism.
+
+**W8 · The Apple Pencil.** Draw with the pen and with the highlighter. Chisel
+should give a straight line, free-form should follow your hand. Erase both.
+→ Then **zoom to 220% and rotate the page**. The ink should be exactly where
+you left it, because strokes live in fractions of the page. This is the one
+that costs nothing to get right and is very obvious when it is wrong.
+
+**W9 · The quiet poll.** Leave the reader open on one device. On the other,
+make a few marks. Wait a minute.
+→ The dot on the island should light. **Nothing on the page may move** until
+you press it. Then it should say what arrived. If marks appear under your eyes
+without you asking, the poll is doing more than it is allowed to.
+
+**W10 · Leaving.** Press the Wingman mark in the top-left corner.
+→ Back to the Library, and the rest of the app should behave normally: no dead
+clicks, no stuck cursor, nothing swallowing the first tap. Everything the
+chrome bound to the window is recorded and undone when the reader closes, and
+this is the check that it actually was.
+
+---
+
 ## v5 — what is new, and what to try first (10 minutes)
 
 The reader was rebuilt again, to the three files you sent whose first line is

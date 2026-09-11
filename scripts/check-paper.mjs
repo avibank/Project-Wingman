@@ -10,6 +10,7 @@
  *
  * Run: npm run check:paper
  */
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -498,7 +499,7 @@ console.log("\nweight");
 {
   const app = read("src/App.jsx");
   ok("—", "the reader is a lazy chunk of its own",
-     /paper: chunk\(\(\) => import\("\.\/components\/paper\/PaperReader\.jsx"\)\)/.test(app));
+     /paper: chunk\(\(\) => import\("\.\/components\/paper\/v6\/ReaderV6\.jsx"\)\)/.test(app));
   const dist = join(ROOT, "dist/assets");
   let built = [];
   try { built = readdirSync(dist); } catch { /* not built yet */ }
@@ -878,112 +879,113 @@ console.log("\n§4.6 — big papers");
 /* ---- the shipped files are used, not reinterpreted ---------------------- */
 console.log("\nthe shipped spec");
 {
-  const shippedCss = read("docs/reader/v5/reader.css");
-  const builtCss = read("src/components/paper/reader.css");
-  /* Selectors move so the reader's class names cannot restyle the rest of the
-     app — seventeen of them collide with a dozen other screens. Nothing else
-     may move: same tokens, same values, same timings, same radii. */
+  /* HANDOVER.md, "The one rule": the chrome is finished, copy it. Everything
+     in this block is that sentence, turned into something that can fail.
+
+     The strongest check is the first: the four parts of the chrome are
+     GENERATED out of the file that was handed over, so "copied" is not a
+     claim about a diff somebody read once — it is re-derived here, every run,
+     and any drift is a failure with the file named. */
+  let verified = "";
+  try {
+    verified = execFileSync("node", [join(ROOT, "scripts/build-reader-v6.mjs"), "--verify"],
+      { encoding: "utf8", cwd: ROOT });
+  } catch (e) { verified = `FAILED: ${e.stdout || ""}${e.stderr || ""}`; }
+  ok("spec", "the chrome is what the handed-over reader.js produces, part for part",
+     /all current with docs\/reader\/v6\/reader\.js/.test(verified), verified.trim().split("\n").pop());
+
+  /* And every departure from it is a row in the table with a reason next to
+     it, rather than an edit somebody made and did not write down. */
+  const gen = read("scripts/build-reader-v6.mjs");
+  const edits = [...gen.matchAll(/^\s*why: "/gm)].length;
+  ok("spec", `every edit to the chrome carries its reason (${edits})`,
+     edits >= 20 && !/why: ""/.test(gen));
+  for (const part of ["part2.js", "part3.js", "part4.js"]) {
+    const src = read(`src/components/paper/v6/${part}`);
+    ok("spec", `${part} says what was changed and why`,
+       /Changed from the handed-over file, and only this:/.test(src));
+  }
+
+  const shippedCss = read("docs/reader/v6/reader.css");
+  const builtCss = read("src/components/paper/v6/reader.css");
   const decls = (css) => (css.replace(/\/\*[\s\S]*?\*\//g, "").match(/[^{}]+(?=\})/g) || [])
     .join("|").replace(/\s+/g, " ").trim();
-  /* ONE REPAIR IS ALLOWED THROUGH, and it is named rather than tolerated.
-     v5's strip of its demo-only styles left the second line of the `.demo`
-     rule behind, which a parser recovers from by eating the next rule too. The
-     generator removes both; nothing else may move. */
-  const DEMO_ORPHAN = /\n\s*display:flex;align-items:center;gap:4px;padding:6px;font-size:11\.5px\}\n\.rdr\[data-bar="bottom"\] \.demo\{bottom:76px\}/;
+  /* ONE CUT IS ALLOWED THROUGH, and the sheet asks for it in its own header:
+     "The block marked DEMO ONLY at the very bottom is deleted on the live
+     site." HANDOVER section 5 says the same. Nothing else may move — same
+     tokens, same values, same timings, same radii. */
+  const DEMO = /\n\.demoBtn\{[\s\S]*?@media \(max-width:900px\)\{\.demo\{display:none\}\}\n/;
   ok("spec", "reader.css is used, not reinterpreted — every declaration identical",
-     decls(shippedCss.replace(DEMO_ORPHAN, "")) === decls(builtCss));
+     decls(shippedCss.replace(DEMO, "\n")) === decls(builtCss));
   ok("spec", "and it is generated from the shipped file, so the two cannot drift",
-     /GENERATED — do not edit\. Source: docs\/reader\/v5\/reader\.css/.test(builtCss));
+     /GENERATED — do not edit\. Source: docs\/reader\/v6\/reader\.css/.test(builtCss));
+  /* v6's reset is `*{margin:0;padding:0;...}` and `button{background:none;...}`.
+     Unscoped that is not a collision, it is the whole app. */
   ok("spec", "every rule is scoped to the reader",
-     !/(?:^|\n)\.(?!rdr)[a-z]/i.test(builtCss.replace(/\/\*[\s\S]*?\*\//g, "")));
-
-  /* v5 has no reader-icons.js of its own: COMPONENTS.md says "copy the icon()
-     function from the reference build verbatim", so the reference build IS the
-     source and the copy is checked against it directly. `icon`, the five
-     colours and the thirteen tools, byte for byte — the join to this
-     codebase's own vocabulary sits below them and is ours. */
-  const ref = read("docs/reader/v5/reference.html");
-  const mine = read("src/lib/readerIcons.js");
-  const verbatim = ["const COL=[", "function icon(id,c,s){", "const TOOLS=[",
-    "const DEF=['sel','hl','pen','era','note','ask'];", "const CAP=10;"];
-  const notCopied = verbatim.filter((bit) => !ref.includes(bit)
-    || !mine.includes(bit === "function icon(id,c,s){" ? `export ${bit}` : bit));
-  ok("spec", "the reference build's icon table is copied byte for byte",
-     notCopied.length === 0, notCopied.join(" | "));
-  /* And every one of the thirteen drawings with it, not just the table around
-     them: a `case` quietly redrawn is the one change this would otherwise
-     wave through. */
-  const icons = (src) => (src.match(/case '[a-z]+':\s*return g\(/g) || []).join("");
-  /* And every one of the thirteen drawings with it, not just the table around
-     them. Compared as the whole switch body: a `case` quietly redrawn is the
-     one change a table-shaped check would wave through. */
-  const body = (src) => {
-    const at = src.indexOf("switch(id){");
-    return at < 0 ? "" : src.slice(at, src.indexOf("\n  }\n  return '';", at));
-  };
-  ok("spec", "and so is every glyph in it",
-     body(ref).length > 2500 && body(ref) === body(mine),
-     `${body(ref).length} vs ${body(mine).length}`);
-  ok("spec", "and the reader draws from it rather than an icon library",
-     /from "\.\.\/\.\.\/lib\/readerIcons\.js"/.test(read("src/components/paper/Icon.jsx")));
+     !/(?:^|\n)[.*a-z[]/i.test(builtCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\.rdr[^{]*\{[^}]*\}/gm, "")
+       .split("\n").filter((l) => !l.startsWith(".rdr") && !l.startsWith("@") && !l.startsWith("}")).join("\n")
+       .replace(/^\s*$/gm, "")));
+  ok("spec", "and the demo strip is gone from it",
+     !/\.demoBtn|\[data-demo/.test(builtCss));
 
   /* THE BRIEF'S OWN TEST, RUN RATHER THAN READ: "If a class in reader.css is
      unused when you finish, a component is missing." A stylesheet is a list of
      the parts the design has; a class nothing renders is a part that was
-     skipped, and it fails silently because unused CSS never errors. This
-     caught three — `.s.is-marked`, `.is-open-thread`, `.is-selected` — which
-     were being drawn from a second set of rules under different names. */
-  const shipped = read("docs/reader/v5/reader.css").replace(/\/\*[\s\S]*?\*\//g, "");
+     skipped, and it fails silently because unused CSS never errors. */
+  const shipped = shippedCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(DEMO, "");
   const shippedClasses = new Set([...shipped.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)].map((m) => m[1]));
-  let markup = read("src/lib/readerIcons.js");
-  for (const f of readdirSync(join(ROOT, "src/components/paper"))) {
-    if (f.endsWith(".jsx")) markup += read(`src/components/paper/${f}`);
-  }
-  /* Eight are dead BY THE SPEC'S OWN WORD, and naming them is the point.
-     `demo`, `doch`, `rt` and `pfoot` are the mock document's chrome — v5's
-     header says the demo-only styles "are not included", and these four are
-     what the strip missed. `recent` and `rl` are the recents row, which
-     COMPONENTS.md v5 removes in as many words ("Removed. Five colours don't
-     need a recents row"). `sm` is its small swatch and goes with it. Rules for
-     components the design has deleted are not components this build is
-     missing — but the list has to be written down, or the next unused class
-     hides among them. */
-  const RETIRED = ["demo", "doch", "rt", "pfoot", "recent", "rl", "sm"];
-  const unused = [...shippedClasses]
-    .filter((c) => !RETIRED.includes(c))
-    .filter((c) => !new RegExp(`["\`\\s]${c}(?![a-zA-Z0-9_-])`).test(markup));
-  ok("spec", `every class in it is rendered by something (${shippedClasses.size} classes)`,
-     unused.length === 0, unused.join(" "));
+  let markup = "";
+  (function walk(d) {
+    for (const f of readdirSync(join(ROOT, d))) {
+      const rel = `${d}/${f}`;
+      if (statSync(join(ROOT, rel)).isDirectory()) walk(rel);
+      else if (/\.(jsx?|mjs)$/.test(rel)) markup += read(rel);
+    }
+  })("src/components/paper/v6");
+  markup += read("src/lib/readerIcons.js");
+  /* THREE ARE UNRENDERED BY THE HANDED-OVER FILES THEMSELVES, and naming them
+     is the point. Each is a rule in reader.css that nothing in reader.js ever
+     produces, so copying the chrome verbatim inherits the gap rather than
+     causing it — and inventing the markup to fill it would be exactly the
+     restyling the one rule forbids.
 
-  /* AND THE FONT THE SHEET ASKS FOR IS ONE THE APP ACTUALLY HAS. reader.css
-     names "IBM Plex Mono" at eighteen places; nothing loads it here, so left
-     alone every one of them falls through to the browser's default monospace,
-     which differs per machine and is not the shipped look either. Each is
-     re-pointed at --font-mono by name, and this asserts none was missed —
-     including any the sheet gains later. */
-  const scoped = read("src/components/paper/reader.css");
-  const additions = read("src/components/paper/reader-additions.css");
-  const monoSelectors = new Set([...scoped.matchAll(/([^{}]+)\{[^}]*IBM Plex Mono/g)]
-    .map((m) => m[1].trim().split("\n").pop().trim()));
-  const adrift = [...monoSelectors]
-    .filter((sel) => !additions.includes(sel.replace(/^\.rdr-page/, ".rdr .rdr-page")));
-  ok("spec", `the mono face is the app's own, everywhere the sheet asks for one (${monoSelectors.size})`,
-     adrift.length === 0, adrift.join(" | "));
-  /* Comments first — for the fourth time in this file. The rule is explained
-     in a comment that names the font the rule exists to remove. */
+       mk    a highlight inside a panel card's quote, in the five meanings'
+             colours. `card()` marks search hits with <mark> instead
+       lbl   `.who .lbl`, a small caption in the You tray's identity row.
+             `trayMe()` renders <b> and <span> there and no caption
+       gp    `.li .gp`, a grab handle on a chest row. The rows ARE draggable
+             (`dragstart` on `.li`), so this is the one of the three worth
+             raising: the affordance is styled and never drawn
+
+     Written down so the next unused class cannot hide among them. */
+  const NOT_IN_THE_SOURCE = ["mk", "lbl", "gp"];
+  const unused = [...shippedClasses]
+    .filter((c) => !NOT_IN_THE_SOURCE.includes(c))
+    .filter((c) => !new RegExp(`["\`\\s.'>]${c}(?![a-zA-Z0-9_-])`).test(markup));
+  ok("spec", `every class in it is rendered by something (${shippedClasses.size} classes, 3 the source never draws)`,
+     unused.length === 0, unused.join(" "));
+  /* And the three stay honest: if reader.js ever starts drawing one, this
+     fails and the list shrinks. */
+  const drawnNow = NOT_IN_THE_SOURCE
+    .filter((c) => new RegExp(`class="[^"]*\\b${c}\\b`).test(read("docs/reader/v6/reader.js")));
+  ok("spec", "and the three the source never draws still do not appear in it",
+     drawnNow.length === 0, drawnNow.join(" "));
+
   /* THE COLLISION LIST, KEPT CURRENT BY FAILING. Scoping reader.css stops the
      reader painting the app; it does nothing about the app painting the
-     reader, and eight of the shipped sheet's class names already existed here.
-     A bare `.x` loses to `.rdr .x` for the properties the reader declares —
-     the damage is everything it does not declare, and every pseudo-element.
-     A ninth would be silent, so it is this that has to speak. */
-  const QUARANTINED = ["pop", "scrub", "mt", "av", "row", "acts"];
+     reader, and seven of v6's 187 class names already existed here. A bare
+     `.x` loses to `.rdr .x` for the properties the reader declares — the
+     damage is everything it does not declare, and every pseudo-element, which
+     specificity has no opinion about at all. An eighth would be silent, so it
+     is this that has to speak. */
+  const QUARANTINED = ["av", "chip", "mt", "pop", "pres", "scrub", "sw"];
+  const additions = read("src/components/paper/v6/additions.css");
   const appCss = [];
   (function walk(d) {
     for (const f of readdirSync(join(ROOT, d))) {
       const rel = `${d}/${f}`;
       if (statSync(join(ROOT, rel)).isDirectory()) walk(rel);
-      else if (rel.endsWith(".css") && !rel.includes("paper/reader")) appCss.push(rel);
+      else if (rel.endsWith(".css") && !rel.includes("components/paper/")) appCss.push(rel);
     }
   })("src");
   const collisions = new Set();
@@ -999,12 +1001,26 @@ console.log("\nthe shipped spec");
   const unlisted = [...collisions].filter((c) => !QUARANTINED.includes(c));
   ok("spec", `no class name the app already uses arrives unquarantined (${collisions.size} known)`,
      unlisted.length === 0, unlisted.join(" "));
+  /* The two that measurably painted the reader — a toggle knob inside the
+     warmth slider, a rotated arrow on every popover — and the three that
+     would have. */
   ok("spec", "and the ones that painted the reader are undone",
-     ["pop", "scrub", "mt", "av", "acts"].every((c) => new RegExp(`\\.app \\.rdr(?:\\[[^\\]]+\\])? \\.${c}[ .:{]`).test(additions)));
+     QUARANTINED.filter((c) => c !== "mt")
+       .every((c) => new RegExp(`\\.app \\.rdr(?:\\[[^\\]]+\\])? (?:svg )?\\.${c}[ .:{,]`).test(additions)));
+  /* And section 12's global 44px floor, which measured v4's swatches as ovals,
+     is waived inside the reader and paid by the platform layer instead. */
+  ok("spec", "the app's tap floor does not distort the shipped boxes",
+     /\.app \.rdr button:not\(\.is-inline\)/.test(additions)
+     && /min-height: 0;/.test(additions)
+     && /\[data-plat="tablet"\][\s\S]*?min-height: 44px/.test(additions));
 
-  ok("spec", "and it is reached through the token, not named",
-     /font-family: var\(--font-mono\);/.test(additions)
-     && !/IBM Plex Mono/.test(additions.replace(/\/\*[\s\S]*?\*\//g, "")));
+  /* AND THE FACE THE SHEET ASKS FOR IS THE APP'S OWN. reader.css names
+     "Instrument Sans" directly; this app already loads it as --font-ui, and
+     the house rule is that the brand faces are reached through tokens and
+     never by name. */
+  ok("spec", "the faces are reached through the tokens, not named",
+     /font-family: var\(--font-ui\)/.test(additions)
+     && /font-family: var\(--font-mono\)/.test(additions));
 }
 
 console.log(`\npaper: ${pass} passed, ${fails.length} failed`);
