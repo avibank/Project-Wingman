@@ -77,7 +77,14 @@ for (const path of walk(SRC).filter((p) => /\.(js|jsx|css)$/.test(p))) {
 
   // A profile's livery column is gone from the database in 0013; reading one
   // back would silently be undefined rather than fail.
-  if (/\.livery\b/.test(code) && !rel.endsWith("liveryEngine.js")) {
+  //
+  // `ctx.livery` is exempt and is the opposite of the thing being caught: it
+  // is the APP's current accent being handed to the reader's chrome, which is
+  // how the reader ends up tinted by the one livery system rather than
+  // carrying a second one. CLAUDE.md: if you see the word livery it means the
+  // accent hue, and it means liveryEngine.js. This is that.
+  const rows = code.replace(/\bctx\.livery\b/g, "");
+  if (/\.livery\b/.test(rows) && !rel.endsWith("liveryEngine.js")) {
     fails.push(`${rel} reads .livery off a row.`);
   }
   // Only on Tail. App.jsx and Profile.jsx pass livery={shownLivery} around all

@@ -25,6 +25,7 @@ import { anchorFor } from "../../../lib/paperMarks.js";
 import { MEANING_OF, colourKey, INK_OF } from "../../../lib/readerIcons.js";
 import {
   fetchAnnotations, createAnnotation, updateAnnotation, deleteAnnotation, askOnPassage,
+  markOrphaned,
 } from "../../../lib/annotations.js";
 import { fetchDiscussion, insertReply } from "../../../lib/threads.js";
 import { fetchProfiles } from "../../../lib/squadron.js";
@@ -59,7 +60,17 @@ export function ago(iso) {
   return "just now";
 }
 
-export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live, people, onNames, onCounts }) {
+export function createMarkStore({
+  paper, moduleCode, me, model, WM, chrome, live, people, onNames, onCounts, onTrouble,
+}) {
+  /* Said once, not once per mark: a network that is down is down for all of
+     them, and five "offline" messages in a row is noise rather than news. */
+  let saidAt = 0;
+  const trouble = (kind) => {
+    if (Date.now() - saidAt < 30_000) return;
+    saidAt = Date.now();
+    onTrouble?.(kind);
+  };
   /* Everything the reader is holding, keyed by the server's id. `placed` is
      the resolved offsets; a row that would not resolve is orphaned and kept
      out of the page rather than guessed at. */
@@ -144,7 +155,14 @@ export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live
       if (rows.has(row.id)) continue;
       const at = row.anchor ? resolveAnchor(row.anchor, model.text) : null;
       rows.set(row.id, row);
-      if (!at) { orphans.add(row.id); continue; }
+      if (!at) {
+        /* Marked on the server as well as here. The status is part of the
+           record: the next reader to open this paper should not have to
+           re-discover that the passage is gone. */
+        orphans.add(row.id);
+        if (!row.orphaned) markOrphaned(row.id, true);
+        continue;
+      }
       placed.set(row.id, at);
       const m = toWM(row, fresh);
       if (m) { WM.marks.push(m); added += 1; }
@@ -364,7 +382,14 @@ export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live
       body: mark.kind === "ask" ? (mark.ask || null) : null,
       threadId,
     });
-    if (!row) return;                          // offline: it stays on the page
+    if (!row) {
+      /* OFFLINE, AND SAID OUT LOUD. The mark stays on the page — losing what
+         somebody just marked is the worse failure of the two — but a mark
+         that only exists in this tab is not the same thing as a saved one,
+         and the student has to be told which they have. */
+      trouble("offline");
+      return;
+    }
 
     /* The server's id replaces the local one everywhere at once, so the panel
        card, the quads and the row all agree. */
@@ -502,6 +527,11 @@ export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live
     });
     if (!row) return;
     path.dataset.id = row.id;
+    /* The live stroke was drawn with the tool's own colour inline, which is
+       the chrome's business. Once it is a record it is painted by its name
+       like every other stroke, so there is one place a colour comes from. */
+    path.dataset.ink = row.colour;
+    path.removeAttribute("stroke");
     inkRows.push(row);
     did({
       what: "stroke",
@@ -523,6 +553,41 @@ export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live
         });
       },
     });
+  }
+
+  /* The eraser took some strokes off. They come off the record too, and the
+     removal is undoable the same way everything else is. */
+  async function erasedInk(ids) {
+    const gone = ids.map((id) => inkRows.find((r) => r.id === id)).filter(Boolean);
+    for (const row of gone) {
+      const i = inkRows.findIndex((x) => x.id === row.id);
+      if (i >= 0) inkRows.splice(i, 1);
+    }
+    if (gone.length) {
+      did({
+        what: "stroke",
+        undo: async () => {
+          inkRows.push(...gone);
+          for (const pg of new Set(gone.map((r) => r.page))) paintInk(pg);
+          for (const row of gone) {
+            await createStroke({
+              paperId, moduleCode, me, page: row.page, id: row.id,
+              tool: row.tool, colour: row.colour, width: row.width, ring: row.ring,
+              points: row.points,
+            });
+          }
+        },
+        redo: async () => {
+          for (const row of gone) {
+            const i = inkRows.findIndex((x) => x.id === row.id);
+            if (i >= 0) inkRows.splice(i, 1);
+          }
+          for (const pg of new Set(gone.map((r) => r.page))) paintInk(pg);
+          await deleteStrokes(gone.map((r) => r.id));
+        },
+      });
+    }
+    await deleteStrokes(ids);
   }
 
   /* ── undo and redo ─────────────────────────────────────────────────────
@@ -558,7 +623,9 @@ export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live
     for (const s of inkRows) {
       if (s.page !== pg) continue;
       const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      p.setAttribute("stroke", `var(--ink-${s.colour}, #3A4149)`);
+      /* The stored NAME and nothing else. The stylesheet decides what it
+         looks like, so no colour string is built here. */
+      p.setAttribute("data-ink", s.colour);
       p.setAttribute("stroke-width", String((s.width || 0.003) * 1000));
       p.setAttribute("fill", "none");
       p.setAttribute("stroke-linecap", "round");
@@ -572,10 +639,31 @@ export function createMarkStore({ paper, moduleCode, me, model, WM, chrome, live
   /* ── what the shell tells us ───────────────────────────────────────── */
   const api = {
     loadWindow, loadInk, loadThreads, poll, pull, relayout,
-    made, dropped, converted, recoloured, stroke, answer,
+    made, dropped, converted, recoloured, stroke, answer, erasedInk,
+    /* Whether this account drew a stroke. The server cannot answer it — there
+       is no session to check against — so the caller has to, and the eraser
+       asks before it takes anything off. */
+    mine: (id) => {
+      if (!id) return true;               // a stroke still being drawn is ours
+      const row = inkRows.find((r) => r.id === id);
+      return !row || row.author_id === me;
+    },
     undo, redo, canUndo: () => past.length > 0, canRedo: () => future.length > 0,
     counts,
-    orphans: () => [...orphans].map((id) => rows.get(id)).filter(Boolean),
+    /* The shape the panel's card reads, because an orphan is still a mark —
+       it has words, a colour and an author, and the only thing it has lost is
+       where it sat. */
+    orphans: () => [...orphans].map((id) => {
+      const row = rows.get(id);
+      if (!row) return null;
+      return {
+        id, k: colourKey(row.colour || MEANING_OF.y),
+        kind: KIND_FROM_DB[row.kind] || "hl",
+        who: row.kind === "question" ? "anon" : (row.author_id === me ? "me" : row.author_id),
+        t: ago(row.updated_at || row.created_at),
+        tx: row.anchor?.quote || "",
+      };
+    }).filter(Boolean),
     waiting: () => pending.length,
     setRotation(v) { rot = v; relayout(); },
     /* A page arriving from React, or leaving. */

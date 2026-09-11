@@ -287,6 +287,69 @@ return {
   },
   {
     part: 3,
+    why: "the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing",
+    find: `STG.addEventListener('pointerdown',e=>{
+  if(R.dataset.grab==='1'){`,
+    replace: `/* THE FOURTH TOOL ON THE BAR DID NOTHING. The eraser is in DEF, it draws an
+   icon, it opens properties with a rub size and two variants — and nothing in
+   the handed-over file ever removes a stroke or a mark. DRAWS is pen, marker
+   and highlighter, so with the eraser armed the page takes no pointer at all.
+
+   What is built here is a WHOLE-OBJECT eraser: what you touch comes off. What
+   is NOT built is the second variant, "Just where you rub" — splitting a
+   stroke where the rubber crossed it, and shortening a highlight to the words
+   that are left. The second is not a drawing problem, it is an anchor problem:
+   a shortened mark is a different passage and has to be re-stored as one. It
+   is named rather than faked, and both variants erase wholes today. */
+let rubbing=null;
+function rub(e,pg){
+  const box=pg.getBoundingClientRect();
+  const [px,py]=pt(e,pg);
+  const r=Math.max(6,(S.size.era||10)/box.width*1000);
+  const svg=pg.querySelector('.ink');
+  const gone=[];
+  for(const path of [...svg.querySelectorAll('path')]){
+    let hit=false;
+    for(let a=0;a<8&&!hit;a++){
+      const x=px+Math.cos(a/8*6.283)*r, y=py+Math.sin(a/8*6.283)*r;
+      try{ hit=path.isPointInStroke(new DOMPoint(x,y)) }catch(err){ hit=false }
+    }
+    if(!hit){try{hit=path.isPointInStroke(new DOMPoint(px,py))}catch(err){}}
+    /* ONLY WHAT THIS ACCOUNT DREW. The server has no session to check
+       against, so the caller checks — and the page only ever carries this
+       student's own strokes today, which makes this cheap insurance rather
+       than a guess about the future. */
+    if(hit&&ctx.mine(path.dataset.id)){gone.push(path.dataset.id);path.remove()}
+  }
+  if(gone.length)ctx.onErasedInk(gone.filter(Boolean));
+  /* And marks, hit-tested by hand for the same reason markAt exists: the text
+     sits above them so they cannot be found with elementFromPoint. */
+  const q=markAt(e.clientX,e.clientY);
+  if(q){const g=q.dataset.g;
+    document.querySelectorAll(\`.mkq[data-g="\${g}"]\`).forEach(x=>x.remove());
+    WM.drop(g);ctx.onDropped(g);}
+}
+STG.addEventListener('pointerdown',e=>{
+  if(S.tool==='era'){
+    if(e.isPrimary===false)return;
+    const pg=pgAt(e); if(!pg)return;
+    e.preventDefault();
+    rubbing=pg;rub(e,pg);STG.setPointerCapture(e.pointerId);
+    return;
+  }
+  if(R.dataset.grab==='1'){`,
+  },
+  {
+    part: 3,
+    why: "and the rubber keeps rubbing while the pointer is down",
+    find: `STG.addEventListener('pointermove',e=>{
+  if(pan){STG.scrollTop=pan.top-(e.clientY-pan.y);return}`,
+    replace: `STG.addEventListener('pointermove',e=>{
+  if(rubbing){rub(e,rubbing);return}
+  if(pan){STG.scrollTop=pan.top-(e.clientY-pan.y);return}`,
+  },
+  {
+    part: 3,
     why: "section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing",
     find: `  if(R.dataset.draw!=='1')return;
   const pg=pgAt(e); if(!pg)return;`,
@@ -309,13 +372,47 @@ return {
   },
   {
     part: 3,
+    why: "a 120Hz Pencil reports several positions per frame, and the handed-over loop keeps one",
+    find: `STG.addEventListener('pointermove',e=>{
+  if(rubbing){rub(e,rubbing);return}
+  if(pan){STG.scrollTop=pan.top-(e.clientY-pan.y);return}
+  if(!ink)return;
+  const p=pt(e,ink.pg);
+  if(ink.straight){ink.pts=[ink.pts[0],p]}
+  else{const l=ink.pts[ink.pts.length-1];
+       if(Math.hypot(p[0]-l[0],p[1]-l[1])<2)return; ink.pts.push(p)}
+  ink.path.setAttribute('d',smooth(ink.pts));
+});`,
+    replace: `STG.addEventListener('pointermove',e=>{
+  if(rubbing){rub(e,rubbing);return}
+  if(pan){STG.scrollTop=pan.top-(e.clientY-pan.y);return}
+  if(!ink)return;
+  /* EVERY POSITION THE PENCIL RECORDED, NOT JUST THE LAST ONE. An Apple
+     Pencil samples faster than the display refreshes, and the browser hands
+     the extra samples over in getCoalescedEvents rather than firing a move
+     for each. Reading only the event itself throws them away, and a quick
+     stroke comes out as a polygon with visible corners — on the one device
+     this reader is for, drawn with the one instrument it is for. */
+  const moves = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for(const m of (moves.length?moves:[e])){
+    const p=pt(m,ink.pg);
+    if(ink.straight){ink.pts=[ink.pts[0],p];continue}
+    const l=ink.pts[ink.pts.length-1];
+    if(Math.hypot(p[0]-l[0],p[1]-l[1])<2)continue;
+    ink.pts.push(p);
+  }
+  ink.path.setAttribute('d',smooth(ink.pts));
+});`,
+  },
+  {
+    part: 3,
     why: "a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in",
     find: `addEventListener('pointerup',()=>{
   pan=null;
   if(ink){if(ink.pts.length<2)ink.path.remove();ink=null}
 });`,
     replace: `addEventListener('pointerup',()=>{
-  pan=null;
+  pan=null;rubbing=null;
   if(ink){
     if(ink.pts.length<2)ink.path.remove();
     else ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
@@ -386,6 +483,56 @@ const NPAGES=ctx.total;`,
     why: "the same lookup, for the heading over each page's group of marks",
     find: `    \`<div class="pgh"><b>\${pad(pg)}</b><span>\${HEADS[pg-FIRST]||''}</span><em>\${by[pg].length}</em></div>\``,
     replace: `    \`<div class="pgh"><b>\${pad(pg)}</b><span>\${ctx.head(+pg)||''}</span><em>\${by[pg].length}</em></div>\``,
+  },
+  {
+    part: 4,
+    why: "a paper nobody has marked is not the same empty as a filter that matches nothing",
+    find: `    BODY.innerHTML=\`<div class="none"><b>Nothing matches</b>
+      <p>\${term?\`Nothing on this paper says &ldquo;\${esc(term)}&rdquo;.\`:'Try a wider filter.'}</p>
+      <button data-clear>Clear the filters</button></div>\`;`,
+    replace: `    /* TWO EMPTIES, AND TELLING A STUDENT THE WRONG ONE IS WORSE THAN
+       SAYING NOTHING. "Try a wider filter" is advice you cannot take on a
+       paper that has no marks on it at all, and every empty state has to name
+       an action that exists (CLAUDE.md, Voice). So the fresh paper gets the
+       action it actually has, and no count is stated either way. */
+    const virgin = !WM.marks.length && !term && scope==='all' && !kinds.size;
+    BODY.innerHTML = virgin
+      ? \`<div class="none"><b>Yours would be the first</b>
+          <p>Select a line and mark it, and it will be here.</p></div>\`
+      : \`<div class="none"><b>Nothing matches</b>
+      <p>\${term?\`Nothing on this paper says &ldquo;\${esc(term)}&rdquo;.\`:'Try a wider filter.'}</p>
+      <button data-clear>Clear the filters</button></div>\`;`,
+  },
+  {
+    part: 4,
+    why: "a mark that lost its place is listed, which is the second half of a rule the first half already keeps",
+    find: `  const by={};ms.forEach(m=>{(by[m.pg]=by[m.pg]||[]).push(m)});
+  BODY.innerHTML=Object.keys(by).map(pg=>`,
+    replace: `  /* A LOST MARK IS ORPHANED, NEVER RELOCATED. resolveAnchor returns null
+     rather than guessing, and the brief's other half is that the reader lists
+     what lost its place — otherwise a mark simply vanishes and the student
+     who wrote it never learns the passage was edited.
+
+     They are drawn with the panel's own heading and card, above the pages,
+     because an orphan has no page to sit under. Tapping one goes nowhere,
+     which is correct: there is nowhere left to go. */
+  const lost=ctx.orphans();
+  const orphaned = lost.length
+    ? \`<div class="pgh"><b>&mdash;</b><span>these passages changed &mdash; mark them again</span><em>\${lost.length}</em></div>\`
+      + lost.map(o=>\`<div class="mcard" role="button" tabindex="0" style="--k:\${K[o.k]||K.y}">
+          <div class="qt">\${hi(o.tx)}</div>
+          <div class="mt"><span class="a">\${(PEOPLE[o.who]||{}).i||'??'}</span>
+            <b>\${(PEOPLE[o.who]||{}).n||'Someone'}</b><span class="dot">&middot;</span>
+            <span>\${o.t}</span></div></div>\`).join('')
+    : '';
+  const by={};ms.forEach(m=>{(by[m.pg]=by[m.pg]||[]).push(m)});
+  BODY.innerHTML=orphaned+Object.keys(by).map(pg=>`,
+  },
+  {
+    part: 4,
+    why: "and they are listed even when nothing else matches, or they would hide behind an empty state",
+    find: `  if(!ms.length){`,
+    replace: `  if(!ms.length&&!ctx.orphans().length){`,
   },
   {
     part: 4,

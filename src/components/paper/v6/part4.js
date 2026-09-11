@@ -10,6 +10,9 @@
  *   - who wrote a mark is looked up, and a name that is not in the class is still a name
  *   - a page's heading comes from the paper's outline, and there are 1012 of them, not ten
  *   - the same lookup, for the heading over each page's group of marks
+ *   - a paper nobody has marked is not the same empty as a filter that matches nothing
+ *   - a mark that lost its place is listed, which is the second half of a rule the first half already keeps
+ *   - and they are listed even when nothing else matches, or they would hide behind an empty state
  *   - an instructor is a person with a staff badge, not an author id spelled 'tut'
  *   - an answer typed into a card is posted to the module thread the Ready Room shows
  *   - the panel's scroll handler does its work on the next frame too
@@ -92,14 +95,40 @@ function card(m){
 function paintList(){
   const ms=shown().sort((a,b)=>a.pg-b.pg);
   $('#cm').textContent=ms.length;$('#cp').textContent=NPAGES;
-  if(!ms.length){
-    BODY.innerHTML=`<div class="none"><b>Nothing matches</b>
+  if(!ms.length&&!ctx.orphans().length){
+    /* TWO EMPTIES, AND TELLING A STUDENT THE WRONG ONE IS WORSE THAN
+       SAYING NOTHING. "Try a wider filter" is advice you cannot take on a
+       paper that has no marks on it at all, and every empty state has to name
+       an action that exists (CLAUDE.md, Voice). So the fresh paper gets the
+       action it actually has, and no count is stated either way. */
+    const virgin = !WM.marks.length && !term && scope==='all' && !kinds.size;
+    BODY.innerHTML = virgin
+      ? `<div class="none"><b>Yours would be the first</b>
+          <p>Select a line and mark it, and it will be here.</p></div>`
+      : `<div class="none"><b>Nothing matches</b>
       <p>${term?`Nothing on this paper says &ldquo;${esc(term)}&rdquo;.`:'Try a wider filter.'}</p>
       <button data-clear>Clear the filters</button></div>`;
     return;
   }
+  /* A LOST MARK IS ORPHANED, NEVER RELOCATED. resolveAnchor returns null
+     rather than guessing, and the brief's other half is that the reader lists
+     what lost its place — otherwise a mark simply vanishes and the student
+     who wrote it never learns the passage was edited.
+
+     They are drawn with the panel's own heading and card, above the pages,
+     because an orphan has no page to sit under. Tapping one goes nowhere,
+     which is correct: there is nowhere left to go. */
+  const lost=ctx.orphans();
+  const orphaned = lost.length
+    ? `<div class="pgh"><b>&mdash;</b><span>these passages changed &mdash; mark them again</span><em>${lost.length}</em></div>`
+      + lost.map(o=>`<div class="mcard" role="button" tabindex="0" style="--k:${K[o.k]||K.y}">
+          <div class="qt">${hi(o.tx)}</div>
+          <div class="mt"><span class="a">${(PEOPLE[o.who]||{}).i||'??'}</span>
+            <b>${(PEOPLE[o.who]||{}).n||'Someone'}</b><span class="dot">&middot;</span>
+            <span>${o.t}</span></div></div>`).join('')
+    : '';
   const by={};ms.forEach(m=>{(by[m.pg]=by[m.pg]||[]).push(m)});
-  BODY.innerHTML=Object.keys(by).map(pg=>
+  BODY.innerHTML=orphaned+Object.keys(by).map(pg=>
     `<div class="pgh"><b>${pad(pg)}</b><span>${ctx.head(+pg)||''}</span><em>${by[pg].length}</em></div>`
     + by[pg].map(card).join('')).join('');
 }

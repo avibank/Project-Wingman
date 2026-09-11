@@ -174,6 +174,14 @@ const collisions = doubleBare;
  * new is exactly what shipped three times without being noticed. */
 const AGREED = new Set([
   "app",        // App.jsx and app.css both declare the root shell; one component
+  /* `.rdr` is the reader's root and the same shape as `.app`: one component
+     whose stylesheet is deliberately two files. v6/reader.css is generated
+     verbatim from the handed-over sheet and may not be edited, so everything
+     that file does not know about — a real PDF page, the app painting the
+     reader, preferences the demo had no screen for — lives beside it in
+     v6/additions.css. Both are scoped under `.rdr`, so neither can reach a
+     single element outside the reader: the class IS the scope. */
+  "rdr",
   "llist", "profile",
   "admin", "btn-primary", "chip", "content--full", "pill",
 ]);

@@ -303,6 +303,7 @@ export default function ReaderV6({
       tally: () => ({ hl: counts.hl, bm: bookmarks.length, rv: counts.rv }),
       recent: store.current?.recent() || [],
       head: headOf,
+      orphans: () => store.current?.orphans() || [],
       gridPages: () => {
         const lo = Math.max(1, (island.current?.page?.() || 1) - GRID);
         const hi = Math.min(total, lo + GRID * 2);
@@ -355,6 +356,8 @@ export default function ReaderV6({
       onConverted(g, kind, k) { store.current?.converted(g, kind, k); },
       onRecoloured(g, k) { store.current?.recoloured(g, k); },
       onStroke(pgEl, path, pts, tool, S) { store.current?.stroke(pgEl, path, pts, tool, S); },
+      onErasedInk(ids) { store.current?.erasedInk(ids); },
+      mine: (id) => store.current?.mine(id) ?? false,
       onAnswer(markId, text) { store.current?.answer(markId, text); },
     };
 
@@ -371,6 +374,7 @@ export default function ReaderV6({
       paper, moduleCode, me, model, WM, chrome: chrome.current, live: live.current,
       people: people.current,
       onNames() { panel.current?.repaint(); },
+      onTrouble() { island.current?.offline(true); },
       onCounts(c) { counts = c; },
     });
     store.current.loadInk();

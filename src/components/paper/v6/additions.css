@@ -84,6 +84,38 @@
    is tinted by `--lv` like every other floating surface here. */
 .rdr { --panel: var(--pop); --panelln: var(--hair); }
 
+/* ── the ink palette, which is a third colour category ───────────────────
+   Module hue is wayfinding, `--presence` amber is presence and action, and
+   ink is what the reader put on the page themselves. It is the only fixed
+   colour in the reader and it is fixed on purpose: a livery change that
+   re-tinted somebody's yellow highlight would be the app editing their notes.
+
+   THE NAME IS IN THE DOM AND THE COLOUR IS IN HERE. A stroke carries
+   `data-ink="red"` and nothing else; what red looks like is a CSS decision,
+   so the palette can be re-tinted without a migration and without changing
+   what anybody's existing stroke means. No colour string is built in JS.
+
+   0017 stores EIGHT names and v6's palette offers FIVE, so three of these are
+   reachable only by a stroke drawn before v6 or by a tool that comes later —
+   and all eight have to be here, because a stroke comes back painted by its
+   stored name. Without them every loaded stroke fell through to the default
+   and a student's red pen came back grey.
+
+   v5 flipped graphite to chalk under the night light, "because a pencil is
+   defined by being darker than paper". That rule was right for v5 and is
+   WRONG for v6: `--paper` is #FFFFFF in both looks here — it is the surround
+   that changes, and warmth shifts the paper's white point rather than
+   darkening it — so chalk on this page would be a pencil nobody can see. */
+.rdr .ink path { stroke: var(--ink, #3A4149); }
+.rdr [data-ink="yellow"]   { --ink: #F5C23C; }
+.rdr [data-ink="blue"]     { --ink: #5BB4F0; }
+.rdr [data-ink="green"]    { --ink: #43C08A; }
+.rdr [data-ink="purple"]   { --ink: #B571E0; }
+.rdr [data-ink="red"]      { --ink: #EE6F82; }
+.rdr [data-ink="pink"]     { --ink: #E27BB8; }
+.rdr [data-ink="orange"]   { --ink: #E8863A; }
+.rdr [data-ink="graphite"] { --ink: #3A4149; }
+
 /* ── quarantine: seven class names this app already had ──────────────────
    Scoping reader.css stops the reader painting the REST of the app. It does
    not stop the rest of the app painting the READER, and seven of v6's 187

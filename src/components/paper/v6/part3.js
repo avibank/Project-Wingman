@@ -12,7 +12,10 @@
  *   - removing a mark has to reach the database too
  *   - recolouring and converting a mark are edits to a stored record
  *   - the same, for a colour change
+ *   - the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing
+ *   - and the rubber keeps rubbing while the pointer is down
  *   - section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing
+ *   - a 120Hz Pencil reports several positions per frame, and the handed-over loop keeps one
  *   - a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in
  *   - the tray, its order, and every tool's colour, size and opacity persist per student
  *   - closing the same call
@@ -735,7 +738,53 @@ let pan=null, ink=null;
 function pgAt(e){return document.elementFromPoint(e.clientX,e.clientY)?.closest('.sheetpg')}
 function pt(e,pg){const r=pg.getBoundingClientRect();
   return [(e.clientX-r.left)/r.width*1000,(e.clientY-r.top)/r.height*1000]}
+/* THE FOURTH TOOL ON THE BAR DID NOTHING. The eraser is in DEF, it draws an
+   icon, it opens properties with a rub size and two variants — and nothing in
+   the handed-over file ever removes a stroke or a mark. DRAWS is pen, marker
+   and highlighter, so with the eraser armed the page takes no pointer at all.
+
+   What is built here is a WHOLE-OBJECT eraser: what you touch comes off. What
+   is NOT built is the second variant, "Just where you rub" — splitting a
+   stroke where the rubber crossed it, and shortening a highlight to the words
+   that are left. The second is not a drawing problem, it is an anchor problem:
+   a shortened mark is a different passage and has to be re-stored as one. It
+   is named rather than faked, and both variants erase wholes today. */
+let rubbing=null;
+function rub(e,pg){
+  const box=pg.getBoundingClientRect();
+  const [px,py]=pt(e,pg);
+  const r=Math.max(6,(S.size.era||10)/box.width*1000);
+  const svg=pg.querySelector('.ink');
+  const gone=[];
+  for(const path of [...svg.querySelectorAll('path')]){
+    let hit=false;
+    for(let a=0;a<8&&!hit;a++){
+      const x=px+Math.cos(a/8*6.283)*r, y=py+Math.sin(a/8*6.283)*r;
+      try{ hit=path.isPointInStroke(new DOMPoint(x,y)) }catch(err){ hit=false }
+    }
+    if(!hit){try{hit=path.isPointInStroke(new DOMPoint(px,py))}catch(err){}}
+    /* ONLY WHAT THIS ACCOUNT DREW. The server has no session to check
+       against, so the caller checks — and the page only ever carries this
+       student's own strokes today, which makes this cheap insurance rather
+       than a guess about the future. */
+    if(hit&&ctx.mine(path.dataset.id)){gone.push(path.dataset.id);path.remove()}
+  }
+  if(gone.length)ctx.onErasedInk(gone.filter(Boolean));
+  /* And marks, hit-tested by hand for the same reason markAt exists: the text
+     sits above them so they cannot be found with elementFromPoint. */
+  const q=markAt(e.clientX,e.clientY);
+  if(q){const g=q.dataset.g;
+    document.querySelectorAll(`.mkq[data-g="${g}"]`).forEach(x=>x.remove());
+    WM.drop(g);ctx.onDropped(g);}
+}
 STG.addEventListener('pointerdown',e=>{
+  if(S.tool==='era'){
+    if(e.isPrimary===false)return;
+    const pg=pgAt(e); if(!pg)return;
+    e.preventDefault();
+    rubbing=pg;rub(e,pg);STG.setPointerCapture(e.pointerId);
+    return;
+  }
   if(R.dataset.grab==='1'){
     pan={y:e.clientY,top:STG.scrollTop};STG.setPointerCapture(e.pointerId);return}
   if(R.dataset.draw!=='1')return;
@@ -768,16 +817,27 @@ STG.addEventListener('pointerdown',e=>{
   STG.setPointerCapture(e.pointerId);
 });
 STG.addEventListener('pointermove',e=>{
+  if(rubbing){rub(e,rubbing);return}
   if(pan){STG.scrollTop=pan.top-(e.clientY-pan.y);return}
   if(!ink)return;
-  const p=pt(e,ink.pg);
-  if(ink.straight){ink.pts=[ink.pts[0],p]}
-  else{const l=ink.pts[ink.pts.length-1];
-       if(Math.hypot(p[0]-l[0],p[1]-l[1])<2)return; ink.pts.push(p)}
+  /* EVERY POSITION THE PENCIL RECORDED, NOT JUST THE LAST ONE. An Apple
+     Pencil samples faster than the display refreshes, and the browser hands
+     the extra samples over in getCoalescedEvents rather than firing a move
+     for each. Reading only the event itself throws them away, and a quick
+     stroke comes out as a polygon with visible corners — on the one device
+     this reader is for, drawn with the one instrument it is for. */
+  const moves = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for(const m of (moves.length?moves:[e])){
+    const p=pt(m,ink.pg);
+    if(ink.straight){ink.pts=[ink.pts[0],p];continue}
+    const l=ink.pts[ink.pts.length-1];
+    if(Math.hypot(p[0]-l[0],p[1]-l[1])<2)continue;
+    ink.pts.push(p);
+  }
   ink.path.setAttribute('d',smooth(ink.pts));
 });
 addEventListener('pointerup',()=>{
-  pan=null;
+  pan=null;rubbing=null;
   if(ink){
     if(ink.pts.length<2)ink.path.remove();
     else ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
