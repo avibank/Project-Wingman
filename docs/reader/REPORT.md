@@ -243,6 +243,19 @@ names no action, so they are out of the chest, and the Capture tab is gone
 with them because it held only two of them. They stay in the tool table;
 `BUILT` in part 3 is the list to delete an id from the day it works.
 
+### And one found on the live site, after the deploy
+
+The panel's footer read **"0 of 0 marks"** on a paper nobody has marked —
+underneath a body already saying "Yours would be the first". Both halves of
+the panel stating the same absence, one of them by counting it, against the
+house rule that never states absence or a zero count.
+
+No static search finds it: `${ms.length} of ${WM.marks.length} marks` contains
+no literal zero, and `check:paper`'s "no zero is ever stated" had been passing
+by grepping for one. The count is now rendered only when there is something to
+count, it does not say "3 of 3" when three is all there is, and the reader
+suite reads what the panel actually rendered rather than what the source says.
+
 ### One bug worth the space, because of how it hid
 
 The eraser rubbed and took nothing off. The hit test called
@@ -254,7 +267,7 @@ browser what the call returned rather than whether a stroke had gone.
 
 ### The tests
 
-`npm run test:reader` is **41 assertions, all passing, in 102 seconds** against
+`npm run test:reader` is **43 assertions, all passing, in 103 seconds** against
 real Chromium and real WebKit at four surfaces. The groups:
 
 | | |
@@ -269,6 +282,7 @@ real Chromium and real WebKit at four surfaces. The groups:
 | the quality bar | names, no sideways scroll, the platform, the 44px target |
 | undo and redo | marks and ink, the same id back, and the island saying so |
 | the tools that mark words | each of the five writes its own kind, a note is written and comes back written, the eraser rubs, and a tool with no behaviour is not offered |
+| the panel never states a zero | read off the rendered footer, because an interpolated zero is invisible to a search |
 | the quiz | unchanged, and moved to its own file because it is not a reader test |
 
 The v5 suite is archived under `tests/reader/v5/`, unedited. Every rule in it
