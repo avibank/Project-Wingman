@@ -84,6 +84,20 @@
    is tinted by `--lv` like every other floating surface here. */
 .rdr { --panel: var(--pop); --panelln: var(--hair); }
 
+/* ── zoom has to actually zoom ───────────────────────────────────────────
+   `.sheetpg { width: var(--pw); max-width: calc(100% - 210px) }`, and with the
+   panel open the stage is already 368px narrower — so on a 1024px window the
+   page is clamped to 446px and the island's zoom moves nothing at all while
+   the readout climbs to 220%. Measured, not guessed.
+
+   A reader that cannot zoom past the width of its own window is not a reader.
+   Past 100% the clamp comes off and the stage scrolls sideways, which is what
+   every desktop PDF reader does and what the horizontal room is for. At or
+   below 100% the clamp stays, so the page still fits without a sideways
+   scrollbar nobody asked for. */
+.rdr[data-over="1"] .sheetpg[data-real] { max-width: none; }
+.rdr[data-over="1"] .stage { overflow-x: auto; }
+
 /* ── two mark kinds the shipped sheet styles nowhere ─────────────────────
    reader.css paints `.mkq` in four shapes: `hl` a wash, `ul` a rule under the
    words, `ask` a wash with a rule under it, and `rv` a wash with a bar down

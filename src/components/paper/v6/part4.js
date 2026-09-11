@@ -18,6 +18,7 @@
  *   - and they are listed even when nothing else matches, or they would hide behind an empty state
  *   - an instructor is a person with a staff badge, not an author id spelled 'tut'
  *   - an answer typed into a card is posted to the module thread the Ready Room shows
+ *   - a filter chip reading 0 is a zero count, and this app never states one
  *   - a note's card has to open, or the box you write it in is display:none
  *   - and Save writes it, where Send answers a question
  *   - the panel's scroll handler does its work on the next frame too
@@ -71,7 +72,7 @@ function paintFilters(){
    </div>
    <div class="chips" style="margin-top:6px">${Object.keys(K).map(k=>
      `<button class="chip ${kinds.has(k)?'on':''}" data-kind="${k}" style="--k:${K[k]}">
-        <i></i>${MEAN[k]}<em>${n(k)}</em></button>`).join('')}
+        <i></i>${MEAN[k]}${n(k)?`<em>${n(k)}</em>`:''}</button>`).join('')}
    </div>`;
 }
 function card(m){

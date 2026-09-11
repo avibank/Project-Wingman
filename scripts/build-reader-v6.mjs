@@ -161,6 +161,88 @@ const EDITS = [
   },
   {
     part: 2,
+    why: "the way-back banner sat there until you dismissed it by hand, or forever",
+    find: `BACKP.addEventListener('click',e=>{`,
+    replace: `/* IT GOES WHEN YOU CARRY ON READING. "Back to 0126" is an offer, and an
+   offer that will not leave is a demand. Pressing anywhere else on the paper
+   is the student saying they did not want it — so it goes then, and it goes
+   on its own after long enough that nobody is watching it any more. */
+let backT=null;
+const dropBack=()=>{clearTimeout(backT);BACKP.classList.remove('on')};
+addEventListener('pointerdown',e=>{
+  if(!BACKP.classList.contains('on'))return;
+  if(e.target.closest('.backp')||e.target.closest('.isl'))return;
+  dropBack();
+},true);
+addEventListener('keydown',e=>{if(e.key==='Escape')dropBack()});
+BACKP.addEventListener('click',e=>{`,
+  },
+  {
+    part: 2,
+    why: "and it says so for a while rather than for ever",
+    find: `function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOTAL);BACKP.classList.add('on')}`,
+    replace: `function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOTAL);BACKP.classList.add('on');
+  clearTimeout(backT);backT=setTimeout(()=>BACKP.classList.remove('on'),12000)}`,
+  },
+  {
+    part: 2,
+    why: "the closed tray kept six buttons in the tab order behind a 36px island",
+    find: `function closeTray(){
+  open=null;ISL.removeAttribute('data-open');`,
+    replace: `function closeTray(){
+  open=null;ISL.removeAttribute('data-open');
+  /* Clipped is not gone. With the island back to 36px the tray's controls are
+     invisible and still focusable, so tabbing through the reader walks into
+     six buttons nobody can see. */
+  TRAY.inert=true;`,
+  },
+  {
+    part: 2,
+    why: "and hands them back when it opens",
+    find: `  open=kind;ISL.dataset.open=kind;`,
+    replace: `  open=kind;ISL.dataset.open=kind;TRAY.inert=false;`,
+  },
+  {
+    part: 2,
+    why: "the fanned deck read the student's last five places once, at mount, when there were none",
+    find: `const RECENT=ctx.recent||[];`,
+    replace: `/* ASKED EACH TIME IT IS DRAWN. Read once into a constant, this was whatever
+   the reader knew at mount — which is nothing, because the marks arrive after
+   it — so "Where you have been" was permanently empty however much you
+   marked. Same for the tallies below. */
+const RECENT=()=>ctx.recent();`,
+  },
+  {
+    part: 2,
+    why: "and the deck draws from the call",
+    find: `  return RECENT.map(([n,k,q],i)=>{`,
+    replace: `  return RECENT().map(([n,k,q],i)=>{`,
+  },
+  {
+    part: 2,
+    why: "a tally of nothing is a zero count, and this app never states one",
+    find: `  <div class="tally">
+    <button class="tal" data-go="hl" style="--k:\${K.y}"><b>\${ctx.tally().hl}</b><span>Highlights</span></button>
+    <button class="tal" data-go="bm" style="--k:var(--lv)"><b>\${ctx.tally().bm}</b><span>Bookmarks</span></button>
+    <button class="tal" data-go="rv" style="--k:\${K.r}"><b>\${ctx.tally().rv}</b><span>To revise</span><em>only you</em></button>
+  </div>`,
+    replace: `  \${(()=>{const t=ctx.tally();
+    const tiles=[
+      t.hl&&\`<button class="tal" data-go="hl" style="--k:\${K.y}"><b>\${t.hl}</b><span>Highlight\${t.hl===1?'':'s'}</span></button>\`,
+      t.bm&&\`<button class="tal" data-go="bm" style="--k:var(--lv)"><b>\${t.bm}</b><span>Bookmark\${t.bm===1?'':'s'}</span></button>\`,
+      t.rv&&\`<button class="tal" data-go="rv" style="--k:\${K.r}"><b>\${t.rv}</b><span>To revise</span><em>only you</em></button>\`,
+    ].filter(Boolean);
+    /* NEVER STATE ABSENCE OR A ZERO COUNT. Three tiles reading 0, 0, 0 is the
+       reader telling a student they have done nothing, three times. A tile
+       appears when it has something in it, and when none of them does the
+       space says what to do instead. */
+    return tiles.length
+      ? \`<div class="tally">\${tiles.join('')}</div>\`
+      : \`<div class="lab" style="margin-top:12px">Mark a line and it lands here</div>\`;
+  })()}`,
+  },
+  {
+    part: 2,
     why: "the Redo button in the undo message is a button, and in the demo it only dismissed the message",
     find: `  if(cur==='fresh'){pending=false;DOT.dataset.live='0';ctx.onPull();return}`,
     replace: `  if(cur==='fresh'){pending=false;DOT.dataset.live='0';ctx.onPull();return}
@@ -246,6 +328,139 @@ return {
   },
   {
     part: 3,
+    why: "a three-character floor is right for a stray drag and wrong for a deliberate tap",
+    find: `  if(String(r).trim().length<3)return hideSel();`,
+    replace: `  if(!tapped&&String(r).trim().length<3)return hideSel();`,
+  },
+  {
+    part: 3,
+    why: "the cursor is the most versatile tool and only did one of the three things a reader expects of it",
+    find: `function showSel(){`,
+    replace: `/* ── what a cursor is for ──────────────────────────────────────────────
+   A real reader gives you three gestures on the same tool and the handed-over
+   file has one. Drag selects, and that is all it does: a tap does nothing at
+   all, and a drag ends wherever the pointer happened to stop, mid-word.
+
+   So: TAP takes the word under you. TAP AGAIN takes the sentence. DRAG stays
+   exact inside a single word and snaps to whole words the moment it crosses
+   one — which is what Preview, Acrobat and Drawboard all do, and what makes a
+   drag feel accurate even though a finger is not.
+
+   The word test is deliberately generous: letters, digits, apostrophes and
+   hyphens, so "trace-based" and "rotor's" are each one word rather than two
+   and a half. */
+const WORDCH=/[\\p{L}\\p{N}'\\u2019-]/u;
+/* Where the press started, and whether it travelled far enough to be a drag.
+   Four pixels is about the wobble a finger leaves on a tap. */
+let tapAt=null, tapMoved=false;
+addEventListener('pointerdown',e=>{tapAt=[e.clientX,e.clientY];tapMoved=false},true);
+addEventListener('pointermove',e=>{
+  if(!tapAt)return;
+  if(Math.hypot(e.clientX-tapAt[0],e.clientY-tapAt[1])>4)tapMoved=true;
+},true);
+function caretAt(x,y){
+  if(document.caretRangeFromPoint)return document.caretRangeFromPoint(x,y);
+  if(document.caretPositionFromPoint){
+    const p=document.caretPositionFromPoint(x,y); if(!p)return null;
+    const r=document.createRange();r.setStart(p.offsetNode,p.offset);r.collapse(true);return r;
+  }
+  return null;
+}
+function growWord(node,from,to){
+  const t=node.nodeValue; let a=from,b=to;
+  while(a>0&&WORDCH.test(t[a-1]))a--;
+  while(b<t.length&&WORDCH.test(t[b]))b++;
+  return [a,b];
+}
+function wordAt(x,y){
+  const c=caretAt(x,y); if(!c)return null;
+  const node=c.startContainer; if(!node||node.nodeType!==3)return null;
+  if(!node.parentElement||!node.parentElement.closest('.textLayer'))return null;
+  const t=node.nodeValue,i=c.startOffset;
+  /* A tap in the gap between two words belongs to neither. */
+  if(!WORDCH.test(t[i]||'')&&!WORDCH.test(t[i-1]||''))return null;
+  const [a,b]=growWord(node,i,i);
+  if(b<=a)return null;
+  const r=document.createRange();r.setStart(node,a);r.setEnd(node,b);return r;
+}
+function sentenceAt(x,y){
+  const c=caretAt(x,y); if(!c)return null;
+  const node=c.startContainer; if(!node||node.nodeType!==3)return null;
+  if(!node.parentElement||!node.parentElement.closest('.textLayer'))return null;
+  const t=node.nodeValue; let a=c.startOffset,b=c.startOffset;
+  while(a>0&&!'.!?'.includes(t[a-1]))a--;
+  while(b<t.length&&!'.!?'.includes(t[b]))b++;
+  if(b<t.length)b++;
+  while(a<b&&/\\s/.test(t[a]))a++;
+  if(b<=a)return null;
+  const r=document.createRange();r.setStart(node,a);r.setEnd(node,b);return r;
+}
+/* Grow a dragged selection out to whole words — but only once it has already
+   crossed one. Inside a single word the student is being precise on purpose
+   and snapping would take that away. */
+function snapToWords(r){
+  if(!/\\s/.test(String(r)))return r;
+  const s=r.startContainer,e=r.endContainer;
+  if(s.nodeType===3){const [a]=growWord(s,r.startOffset,r.startOffset);r.setStart(s,a)}
+  if(e.nodeType===3){const [,b]=growWord(e,r.endOffset,r.endOffset);r.setEnd(e,b)}
+  return r;
+}
+function showSel(tapped){`,
+  },
+  {
+    part: 3,
+    why: "a tap on the words did nothing at all, which is the first thing anyone tries",
+    find: `STG.addEventListener('click',e=>{
+  if(R.dataset.sel!=='1')return;
+  const q=markAt(e.clientX,e.clientY); if(!q)return;`,
+    replace: `STG.addEventListener('click',e=>{
+  if(R.dataset.sel!=='1')return;
+  const q=markAt(e.clientX,e.clientY);
+  if(!q){
+    /* TAP TAKES THE WORD, TAP AGAIN TAKES THE SENTENCE. Nothing at all
+       happened here before, on the tool a reader spends most of its time
+       holding. A tap that lands on neither a word nor a mark clears what is
+       in hand, which is the other half of the same gesture. */
+    /* A DRAG IS TOLD FROM A TAP BY THE POINTER, not by what is selected.
+       Asking the selection was wrong twice over: the browser collapses it
+       somewhere between mousedown and click, and it still holds the PREVIOUS
+       selection when a fresh press lands — so a tap after any earlier
+       selection was read as the end of a drag and did nothing. */
+    if(tapMoved)return;
+    const r=e.detail>=2?sentenceAt(e.clientX,e.clientY):wordAt(e.clientX,e.clientY);
+    if(!r){hideSel();return}
+    const g=getSelection();g.removeAllRanges();g.addRange(r);
+    /* Told that this came from a tap, so the three-character floor below does
+       not throw away a deliberate press on a short word — "if", "on", "no" are
+       exactly the words a student underlines in a regulation. */
+    setTimeout(()=>showSel(true),0);
+    return;
+  }`,
+  },
+  {
+    part: 3,
+    why: "the pill and the back banner floated until something else happened to them",
+    find: `/* pressing the pill must not collapse the selection under it */`,
+    replace: `/* NOTHING FLOATS FOREVER. The pill stayed up through clicks anywhere on the
+   page, through scrolling, and through pressing Escape — the only things that
+   put it away were making a mark or starting another selection. A banner that
+   outlives what it is about is the reader talking over the paper.
+
+   Pointerdown rather than click, so it goes the instant you press somewhere
+   else rather than on the way back up; and the pill's own presses are
+   excluded, as are marks, which have their own handler. */
+addEventListener('pointerdown',e=>{
+  if(e.target.closest('#selp'))return;
+  if(!SELP.classList.contains('on'))return;
+  if(markAt(e.clientX,e.clientY))return;
+  hideSel();
+},true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&SELP.classList.contains('on')){
+  hideSel();try{getSelection().removeAllRanges()}catch(err){}}});
+/* pressing the pill must not collapse the selection under it */`,
+  },
+  {
+    part: 3,
     why: "a new mark has to reach the database, and it is stored as text offsets — never as the boxes drawn here",
     find: `  WM.add({id:gid,g:gid,pg:+pg.dataset.pg,k:kind==='ask'?'p':lastK,kind,
           who:'me',t:'just now',tx:String(savedRange).trim(),
@@ -324,7 +539,9 @@ const BUILT=['hand','pen','mkr','hl','era','ul','st','note','ask','flag'];`,
     why: "an armed text tool marks the selection in its own kind, rather than opening the pill for it",
     find: `  savedRange=r.cloneRange();
   paintSel();SELP.classList.add('on');place(r.getBoundingClientRect());`,
-    replace: `  savedRange=r.cloneRange();
+    replace: `  /* A DRAG ENDS ON A WORD, not wherever the pointer stopped. */
+  savedRange=snapToWords(r.cloneRange());
+  try{const g=getSelection();g.removeAllRanges();g.addRange(savedRange.cloneRange())}catch(err){}
   /* THE CHEAPEST MARK IS WORDLESS. With a text tool in your hand you have
      already said what you want; the pill would be a second press asking the
      same question. Select with the CURSOR and the pill appears, because there
@@ -664,6 +881,12 @@ const NPAGES=ctx.total;`,
   },
   {
     part: 4,
+    why: "a filter chip reading 0 is a zero count, and this app never states one",
+    find: `        <i></i>\${MEAN[k]}<em>\${n(k)}</em></button>\`).join('')}`,
+    replace: `        <i></i>\${MEAN[k]}\${n(k)?\`<em>\${n(k)}</em>\`:''}</button>\`).join('')}`,
+  },
+  {
+    part: 4,
     why: "a note's card has to open, or the box you write it in is display:none",
     find: `  if(m.kind==='ask'){open = open===m.id?null:m.id;paintList()}`,
     replace: `  if(m.kind==='ask'||m.kind==='note'){open = open===m.id?null:m.id;paintList()}`,
@@ -781,7 +1004,32 @@ const built = [];
   built.push({ file: "part4.js", text: moduleFor(4, "the panel", "mountPanel(ctx)", c.body, c.applied) });
 }
 
+/* A BACKSLASH THAT DID NOT SURVIVE IS SILENT, AND COST AN AFTERNOON.
+ * Every replacement below is a JS template literal, so `\s` in the source of THIS
+ * file emits `s` and the regex `/\s/` is generated as `/s/` — which matches the
+ * letter s and nothing else, and `/[\p{L}]/u` becomes `/[p{L}]/u`, a character
+ * class of the letters p, L and two braces. Both parse, both run, and both
+ * quietly do the wrong thing: tap-to-select found no word anywhere on the
+ * page and reported nothing at all.
+ *
+ * So the regexes the chrome depends on are named here and checked for. A
+ * fourth one added without a line in this list is the next afternoon. */
+const MUST_SURVIVE = [
+  ["part3.js", "/[" + "\\" + "p{L}" + "\\" + "p{N}'" + "\\" + "u2019-]/u"],
+  ["part3.js", "if(!/" + "\\" + "s/.test(String(r)))return r;"],
+  ["part3.js", "while(a<b&&/" + "\\" + "s/.test(t[a]))a++;"],
+];
+
 let bad = 0;
+for (const [file, needle] of MUST_SURVIVE) {
+  const made = built.find((b) => b.file === file);
+  if (!made || !made.text.includes(needle)) {
+    console.error(`REFUSING: ${file} lost an escape — expected to find ${JSON.stringify(needle)}`);
+    bad += 1;
+  }
+}
+if (bad) process.exit(1);
+
 for (const { file, text } of built) {
   const path = join(OUT, file);
   if (VERIFY) {

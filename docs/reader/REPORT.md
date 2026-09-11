@@ -243,6 +243,71 @@ names no action, so they are out of the chest, and the Capture tab is gone
 with them because it held only two of them. They stay in the tool table;
 `BUILT` in part 3 is the list to delete an id from the day it works.
 
+### The cursor, and eight things found by using it
+
+Driven by hand in a browser, as a student, rather than by a test that knew
+what it was looking for.
+
+**The cursor is the most versatile tool and did one of its three jobs.** Drag
+selected. A tap did nothing at all — the first thing anyone tries — and a drag
+ended wherever the pointer stopped, mid-word. Now: a tap takes the word under
+it, a second tap takes the sentence, and a drag stays exact inside one word
+and rounds out to whole words the moment it crosses one, which is what
+Preview, Acrobat and Drawboard all do. A tap on no words puts everything away.
+
+The three-character floor that stops a stray drag marking one letter is
+waived for a tap, because "if", "on" and "no" are exactly the words a student
+underlines in a regulation.
+
+**Telling a tap from a drag by the selection was wrong twice over.** The
+browser collapses the selection somewhere between mousedown and click, and it
+still holds the PREVIOUS selection when a fresh press lands — so a tap after
+any earlier selection was read as the end of a drag. It is told by the
+pointer now: four pixels of travel is a drag.
+
+**Nothing floats forever.** The selection pill stayed up through clicks
+anywhere on the page, through scrolling, and through Escape; the only things
+that put it away were making a mark or starting another selection. The way-back
+banner had a dismiss button and no other exit at all. Both go on a press
+somewhere else, on Escape, and the banner also after twelve seconds.
+
+**"Where you have been" was permanently empty.** The island's fanned deck read
+the student's last five places once, at mount, when there are none — the marks
+arrive after it. Same for the tallies, which is why the You tray said "0
+BOOKMARKS" straight after bookmarking a page. Both ask now, each time they are
+drawn.
+
+**Three tiles reading 0, 0, 0** is the reader telling a student they have done
+nothing, three times, and the filter chips said it five more. A tile appears
+when it has something in it; when none of them does, the space says what to do
+instead. Same for the chips.
+
+**Zoom did not zoom.** With the panel open the stage is already 368px
+narrower, and `max-width: calc(100% - 210px)` then clamps the page to 446px on
+a 1024px window — so the island's zoom moved nothing while the readout climbed
+to 220%. Past 100% the clamp comes off and the stage scrolls sideways, which
+is what the horizontal room is for. The shell also seeds its zoom from the
+same store the island reads, because after a reload the two disagreed.
+
+**Six invisible buttons in the tab order.** Closing the page tray takes the
+island back to 36px and clips its controls; clipped is not gone, and tabbing
+through the reader walked into all six. The tray is inert when it is shut.
+
+**The counter was a div.** It is the way into the page tray — HANDOVER: "Press
+the counter for the page" — with no role, no name and no way to reach it
+without a mouse. It says what it is and answers Enter now. Nothing about the
+DOM moved.
+
+### One bug that hid inside the generator
+
+Tap-to-select found no word anywhere, and the code was right. The generator
+writes each edit through a JS template literal, so `\s` in the edit emits `s`
+and `/\s/` is generated as `/s/` — which matches the letter s — while
+`/[\p{L}]/u` becomes a character class of the letters p and L and two braces.
+Both parse. Both run. Both quietly do the wrong thing. The regexes the chrome
+depends on are named in the generator now and it refuses to write a file that
+lost one.
+
 ### And one found on the live site, after the deploy
 
 The panel's footer read **"0 of 0 marks"** on a paper nobody has marked —
@@ -267,7 +332,7 @@ browser what the call returned rather than whether a stroke had gone.
 
 ### The tests
 
-`npm run test:reader` is **43 assertions, all passing, in 103 seconds** against
+`npm run test:reader` is **52 assertions, all passing, in 117 seconds** against
 real Chromium and real WebKit at four surfaces. The groups:
 
 | | |
@@ -283,6 +348,8 @@ real Chromium and real WebKit at four surfaces. The groups:
 | undo and redo | marks and ink, the same id back, and the island saying so |
 | the tools that mark words | each of the five writes its own kind, a note is written and comes back written, the eraser rubs, and a tool with no behaviour is not offered |
 | the panel never states a zero | read off the rendered footer, because an interpolated zero is invisible to a search |
+| the cursor | tap, double tap, a drag that ends on a word, a drag that stays exact inside one, and a tap on nothing putting it away |
+| the island keeps up | the deck fills, the tallies count only what is there, the shut tray leaves the tab order, the counter answers Enter |
 | the quiz | unchanged, and moved to its own file because it is not a reader test |
 
 The v5 suite is archived under `tests/reader/v5/`, unedited. Every rule in it

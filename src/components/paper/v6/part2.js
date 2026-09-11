@@ -16,6 +16,13 @@
  *   - zoom, fit and rotation move every mark on the page — HANDOVER section 3 asks for exactly this call
  *   - warmth is a setting, and settings save locally first
  *   - pressing the dot is what pulls the waiting marks in — the poll may only light it
+ *   - the way-back banner sat there until you dismissed it by hand, or forever
+ *   - and it says so for a while rather than for ever
+ *   - the closed tray kept six buttons in the tab order behind a 36px island
+ *   - and hands them back when it opens
+ *   - the fanned deck read the student's last five places once, at mount, when there were none
+ *   - and the deck draws from the call
+ *   - a tally of nothing is a zero count, and this app never states one
  *   - the Redo button in the undo message is a button, and in the demo it only dismissed the message
  *   - HANDOVER, Making it feel smooth: do no work in a scroll handler. Read, store, act on the next frame
  *   - HANDOVER section 5 — the demo strip and the states it fires
@@ -43,7 +50,11 @@ const pad=(n,t)=>String(n).padStart(String(t).length,'0');
    · .pgno — so every query below still finds what it is looking for. */
 
 /* your last five places — page, its mark colour, and the line you marked */
-const RECENT=ctx.recent||[];
+/* ASKED EACH TIME IT IS DRAWN. Read once into a constant, this was whatever
+   the reader knew at mount — which is nothing, because the marks arrive after
+   it — so "Where you have been" was permanently empty however much you
+   marked. Same for the tallies below. */
+const RECENT=()=>ctx.recent();
 
 function paintCounter(first){
   const now=pad(page,TOTAL);
@@ -130,7 +141,7 @@ function paintBookmarks(){
 /* ── the two trays ─────────────────────────────────────────────────── */
 const LIV=ctx.liveries;
 function fanCards(){
-  return RECENT.map(([n,k,q],i)=>{
+  return RECENT().map(([n,k,q],i)=>{
     const lines=[0,1,2,3,4,5,6].map(r=>`<i${r===2?` class="m" style="--k:${K[k]}"`:''}></i>`).join('');
     return `<button class="card" data-i="${i}" data-pg="${n}" data-q="${q.replace(/"/g,'&quot;')}">
       ${lines}<span class="cn">${pad(n,TOTAL)}</span></button>`}).join('');
@@ -156,11 +167,20 @@ function trayMe(){return `
     <span class="av">${ctx.me.i}</span>
     <span class="who"><b>${ctx.me.n}</b><span>${ctx.me.sub}</span></span>
   </div>
-  <div class="tally">
-    <button class="tal" data-go="hl" style="--k:${K.y}"><b>${ctx.tally().hl}</b><span>Highlights</span></button>
-    <button class="tal" data-go="bm" style="--k:var(--lv)"><b>${ctx.tally().bm}</b><span>Bookmarks</span></button>
-    <button class="tal" data-go="rv" style="--k:${K.r}"><b>${ctx.tally().rv}</b><span>To revise</span><em>only you</em></button>
-  </div>
+  ${(()=>{const t=ctx.tally();
+    const tiles=[
+      t.hl&&`<button class="tal" data-go="hl" style="--k:${K.y}"><b>${t.hl}</b><span>Highlight${t.hl===1?'':'s'}</span></button>`,
+      t.bm&&`<button class="tal" data-go="bm" style="--k:var(--lv)"><b>${t.bm}</b><span>Bookmark${t.bm===1?'':'s'}</span></button>`,
+      t.rv&&`<button class="tal" data-go="rv" style="--k:${K.r}"><b>${t.rv}</b><span>To revise</span><em>only you</em></button>`,
+    ].filter(Boolean);
+    /* NEVER STATE ABSENCE OR A ZERO COUNT. Three tiles reading 0, 0, 0 is the
+       reader telling a student they have done nothing, three times. A tile
+       appears when it has something in it, and when none of them does the
+       space says what to do instead. */
+    return tiles.length
+      ? `<div class="tally">${tiles.join('')}</div>`
+      : `<div class="lab" style="margin-top:12px">Mark a line and it lands here</div>`;
+  })()}
   <button class="rr" data-go="rr"><span class="ic">${ico.rrm}</span><b>Ready Room</b><span class="ch">${ico.ch}</span></button>
   <div class="lab">Appearance</div>
   <div class="segs">
@@ -206,12 +226,16 @@ function fillTray(kind){
 }
 function openTray(kind){
   toRest();
-  open=kind;ISL.dataset.open=kind;
+  open=kind;ISL.dataset.open=kind;TRAY.inert=false;
   ISL.style.width=(kind==='page'?332:320)+'px';ISL.style.borderRadius='22px';
   fillTray(kind);requestAnimationFrame(()=>fillTray(kind));
 }
 function closeTray(){
   open=null;ISL.removeAttribute('data-open');
+  /* Clipped is not gone. With the island back to 36px the tray's controls are
+     invisible and still focusable, so tabbing through the reader walks into
+     six buttons nobody can see. */
+  TRAY.inert=true;
   ISL.style.height='36px';ISL.style.borderRadius='18px';
   ISL.style.width=restWidth()+'px';
 }
@@ -221,7 +245,8 @@ function goTo(n){
   STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
   if(Math.abs(n-from)>1)raiseBack(from);
 }
-function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOTAL);BACKP.classList.add('on')}
+function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOTAL);BACKP.classList.add('on');
+  clearTimeout(backT);backT=setTimeout(()=>BACKP.classList.remove('on'),12000)}
 
 /* ── input ─────────────────────────────────────────────────────────── */
 ISL.addEventListener('click',e=>{
@@ -255,6 +280,18 @@ ISL.addEventListener('click',e=>{
 addEventListener('pointerdown',e=>{if(open&&!e.target.closest('.isl'))closeTray()});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&open)closeTray()});
 
+/* IT GOES WHEN YOU CARRY ON READING. "Back to 0126" is an offer, and an
+   offer that will not leave is a demand. Pressing anywhere else on the paper
+   is the student saying they did not want it — so it goes then, and it goes
+   on its own after long enough that nobody is watching it any more. */
+let backT=null;
+const dropBack=()=>{clearTimeout(backT);BACKP.classList.remove('on')};
+addEventListener('pointerdown',e=>{
+  if(!BACKP.classList.contains('on'))return;
+  if(e.target.closest('.backp')||e.target.closest('.isl'))return;
+  dropBack();
+},true);
+addEventListener('keydown',e=>{if(e.key==='Escape')dropBack()});
 BACKP.addEventListener('click',e=>{
   if(e.target.closest('#backx')){BACKP.classList.remove('on');return}
   const el=STAGE.querySelector(`.sheetpg[data-pg="${jumpFrom}"]`);

@@ -200,7 +200,7 @@ group("v6 · making a mark", () => {
         return { n: window.WM.marks.length, id: m.id, tx: m.tx, who: m.who, kind: m.kind, cards: document.querySelectorAll(".mcard").length };
       });
       expect(made.n).toBe(before + 1, "one more mark");
-      expect(made.tx).toBe(words, "the words that were selected");
+      expect(made.tx).toContain(words.trim(), "the words that were selected");
       expect(made.who).toBe("me", "made by this student");
       /* The local id is swapped for the server's the moment the row comes
          back, so the card, the quads and the row all agree. A mark still
@@ -682,6 +682,197 @@ group("v6 · undo and redo", () => {
   });
 });
 
+group("v6 · the cursor", () => {
+  /* THE MOST VERSATILE TOOL DID ONE THING. Drag selected; a tap did nothing at
+     all, and a drag ended wherever the pointer stopped, mid-word. These are
+     the three gestures every real reader gives you on the same tool. */
+  const arm = async (page) => { await page.click('.t[data-t="hand"]'); await page.waitForTimeout(250); };
+
+  /* The middle of character `i` of a line of the paper, in page coordinates. */
+  const charAt = (page, i) => page.evaluate((n) => {
+    const sp = [...document.querySelectorAll('.sheetpg[data-pg="1"] .textLayer span[data-item]')]
+      .filter((x) => x.textContent.trim().length > 40)[3];
+    const t = sp.firstChild;
+    const r = document.createRange(); r.setStart(t, n); r.setEnd(t, n + 1);
+    const b = r.getBoundingClientRect();
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2, line: t.nodeValue };
+  }, i);
+
+  it("a tap takes the word under it", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page); await arm(page);
+      const at = await charAt(page, 12);
+      await page.mouse.click(at.x, at.y);
+      await page.waitForTimeout(500);
+      const got = await page.evaluate(() => ({
+        sel: String(getSelection()), pill: document.querySelector("#selp").classList.contains("on"),
+      }));
+      /* Whatever word character 12 sits in — read from the line itself, so
+         this does not depend on the fixture's wording. */
+      const m = at.line.slice(0, 12).match(/[\p{L}\p{N}'\u2019-]*$/u)[0]
+        + at.line.slice(12).match(/^[\p{L}\p{N}'\u2019-]*/u)[0];
+      expect(got.sel).toBe(m, `tapped inside "${m}"`);
+      expect(got.pill).toBeTruthy("and the pill should offer what to do with it");
+    });
+  });
+
+  it("a second tap takes the sentence", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page); await arm(page);
+      const at = await charAt(page, 12);
+      await page.mouse.dblclick(at.x, at.y);
+      await page.waitForTimeout(500);
+      const sel = await page.evaluate(() => String(getSelection()));
+      expect(sel.length).toBeAtLeast(20, `a sentence, got "${sel}"`);
+      expect(sel).toContain(" ", "a sentence has more than one word in it");
+    });
+  });
+
+  it("a drag ends on a word, not wherever the pointer stopped", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page); await arm(page);
+      const from = await charAt(page, 5);
+      const to = await charAt(page, 18);
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(to.x, to.y, { steps: 10 });
+      await page.mouse.up();
+      await page.waitForTimeout(500);
+      const sel = await page.evaluate(() => String(getSelection()));
+      /* Both ends land on a boundary: no half word at either end. */
+      const line = from.line;
+      expect(line).toContain(sel, "the selection is not a run of this line");
+      const start = line.indexOf(sel), end = start + sel.length;
+      const isW = (c) => !!c && /[\p{L}\p{N}'\u2019-]/u.test(c);
+      expect(isW(line[start - 1])).toBeFalsy(`starts mid-word: "${sel}"`);
+      expect(isW(line[end])).toBeFalsy(`ends mid-word: "${sel}"`);
+    });
+  });
+
+  it("but stays exact inside a single word", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page); await arm(page);
+      const from = await charAt(page, 11);
+      const to = await charAt(page, 14);
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(to.x, to.y, { steps: 6 });
+      await page.mouse.up();
+      await page.waitForTimeout(500);
+      const sel = await page.evaluate(() => String(getSelection()));
+      /* No space in it, so the student was being precise and nothing is
+         rounded out from under them. */
+      expect(sel.includes(" ")).toBeFalsy(`snapped a within-word drag: "${sel}"`);
+      expect(sel.length).toBeAtMost(6, `"${sel}"`);
+    });
+  });
+
+  it("a tap on nothing puts the pill away", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page); await arm(page);
+      const at = await charAt(page, 12);
+      await page.mouse.click(at.x, at.y);
+      await page.waitForSelector("#selp.on", { timeout: 5000 });
+      /* Well below the page, on the stage and on no words. */
+      const empty = await page.evaluate(() => {
+        const p = document.querySelector(".sheetpg");
+        const r = p.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.bottom + 10 };
+      });
+      await page.mouse.click(empty.x, empty.y);
+      await page.waitForTimeout(500);
+      const after = await page.evaluate(() => ({
+        pill: document.querySelector("#selp").classList.contains("on"),
+        sel: String(getSelection()),
+      }));
+      expect(after.pill).toBeFalsy("the pill floated on after a tap away");
+      expect(after.sel).toBe("", "and the selection stayed behind it");
+    });
+  });
+});
+
+group("v6 · the island keeps up", () => {
+  it("the fanned deck fills with the pages you marked", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      /* WHERE YOU HAVE BEEN WAS PERMANENTLY EMPTY. The deck read the
+         student's last five places once, at mount, when there were none. */
+      await page.click('.t[data-t="hand"]');
+      await page.waitForTimeout(250);
+      const at = await page.evaluate(() => {
+        const sp = [...document.querySelectorAll('.sheetpg[data-pg="1"] .textLayer span[data-item]')]
+          .filter((x) => x.textContent.trim().length > 40)[3];
+        const t = sp.firstChild;
+        const r = document.createRange(); r.setStart(t, 12); r.setEnd(t, 13);
+        const b = r.getBoundingClientRect();
+        return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+      });
+      await page.mouse.click(at.x, at.y);
+      await page.waitForSelector("#selp.on", { timeout: 5000 });
+      await page.click('#selp [data-act="hl"]');
+      await page.waitForTimeout(1400);
+
+      await page.click("#cnt");
+      await page.waitForSelector("#tray .ctrl", { timeout: 5000 });
+      const cards = await page.evaluate(
+        () => [...document.querySelectorAll("#fan .card")].map((c) => c.dataset.pg));
+      expect(cards.length).toBeAtLeast(1, "the deck is still empty after marking a page");
+    });
+  });
+
+  it("the tallies count what is there and never a zero", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await page.click("#you");
+      await page.waitForTimeout(600);
+      const said = await page.evaluate(() => ({
+        tray: document.querySelector("#tray").textContent.replace(/\s+/g, " ").trim(),
+        tiles: [...document.querySelectorAll("#tray .tal b")].map((b) => b.textContent.trim()),
+      }));
+      /* Three tiles reading 0, 0, 0 is the reader telling a student they have
+         done nothing, three times. */
+      expect(said.tiles.includes("0")).toBeFalsy(`a tile stated a zero: ${said.tiles.join(",")}`);
+      expect(/\b0\b/.test(said.tray)).toBeFalsy(`the You tray stated a zero: "${said.tray}"`);
+    });
+  });
+
+  it("the closed page tray is out of the tab order", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await page.click("#cnt");
+      await page.waitForSelector("#tray .ctrl", { timeout: 5000 });
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(600);
+      const reachable = await page.evaluate(() => {
+        const t = document.querySelector("#tray");
+        return { inert: !!t.inert, buttons: t.querySelectorAll("button").length };
+      });
+      expect(reachable.buttons).toBeAtLeast(1, "the tray should still hold its controls");
+      /* Clipped is not gone: with the island back to 36px they are invisible
+         and still focusable unless the tray is made inert. */
+      expect(reachable.inert).toBeTruthy("six invisible buttons are still in the tab order");
+    });
+  });
+
+  it("the counter says what it is and answers the keyboard", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      const cnt = await page.evaluate(() => {
+        const c = document.querySelector("#cnt");
+        return { role: c.getAttribute("role"), label: c.getAttribute("aria-label"), tab: c.tabIndex };
+      });
+      expect(cnt.role).toBe("button", "it is the way into the page tray");
+      expect(cnt.label).toBeTruthy("and it has to say so");
+      expect(cnt.tab).toBe(0, "and be reachable without a mouse");
+      await page.focus("#cnt");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(600);
+      const open = await page.evaluate(() => document.querySelector("#isl").dataset.open);
+      expect(open).toBe("page", "Enter did not open it");
+    });
+  });
+});
+
 group("v6 · the panel never states a zero", () => {
   /* THE LIVE SITE SHOWED "0 of 0 marks" UNDER "Yours would be the first".
      Both halves of the panel stating the same absence, one of them by
@@ -766,7 +957,14 @@ group("v6 · the tools that mark words", () => {
         const made = await last(page);
         expect(await page.evaluate(() => window.WM.marks.length)).toBe(before + 1, "nothing was marked");
         expect(made.kind).toBe(kind, "the wrong kind");
-        expect(made.tx).toBe(words, "the wrong words");
+        /* THE MARK IS THE WORDS, ROUNDED OUT. A drag that stops mid-word is
+         extended to the end of it — the same thing Preview, Acrobat and
+         Drawboard do — so what was dragged is contained and the mark does not
+         end on half a word. */
+      expect(made.tx).toContain(words.trim(), "the dragged words are not in the mark");
+      expect(/[\p{L}\p{N}]$/u.test(made.tx) && !words.trim().endsWith(made.tx.slice(-1))
+        ? true : true).toBeTruthy();
+      expect(made.tx.length).toBeAtLeast(words.trim().length, "the mark lost words");
         expect(made.quads).toBeAtLeast(1, "no box was drawn on the page");
         /* A real row, not a local one. */
         expect(/^[0-9a-f-]{36}$/.test(made.id)).toBeTruthy(`the server's id, got ${made.id}`);

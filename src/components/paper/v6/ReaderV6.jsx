@@ -74,10 +74,17 @@ export default function ReaderV6({
   const [error, setError] = useState(null);
 
   /* What the island owns, mirrored here because the stage has to draw at it.
-     The island is the writer; these are a copy kept in step through ctx. */
-  const [zoom, setZoom] = useState(100);
-  const [rot, setRot] = useState(0);
-  const [page, setPage] = useState(1);
+     The island is the writer; these are a copy kept in step through ctx.
+
+     SEEDED FROM THE SAME STORE THE ISLAND READS. Starting them at 100 and 0
+     meant that after a reload the island restored 120% and the shell still
+     believed 100 — so the page was clamped to the width it has at 100% while
+     the readout said 120, and nothing corrected it until the student pressed
+     a zoom button. The two have to start from one place. */
+  const view0 = readJSON(`${key}-view`, {});
+  const [zoom, setZoom] = useState(view0.zoom || 100);
+  const [rot, setRot] = useState(view0.rot || 0);
+  const [page, setPage] = useState(() => Number(read(`${key}-page`, 1)) || 1);
   const [stageW, setStageW] = useState(0);
   const [measured, setMeasured] = useState(0);
   const [bookmarks, setBookmarks] = useState(() => readJSON(`${key}-bm`, []));
@@ -111,6 +118,16 @@ export default function ReaderV6({
      seen shows as "Someone" until the profile lands, which is a name arriving
      late — never a name being wrong. */
   const people = useRef({ anon: { n: "Anonymous", i: "?" } });
+  /* WHAT THE CHROME READS WHEN IT ASKS, NOT WHEN IT MOUNTED.
+     The context below is built once, in a layout effect that must not re-run —
+     rebuilding it would tear the whole reader down under the student. So
+     anything in it that closes over React state is frozen at mount, and at
+     mount the reader knows almost nothing: no marks, no bookmarks. That is why
+     "Where you have been" was permanently empty and the bookmark tally sat at
+     zero after bookmarking a page. Live values go through this ref, which is
+     written on every render. */
+  const live2 = useRef({ bookmarks: [] });
+  live2.current.bookmarks = bookmarks;
   const chrome = useRef({});
   const island = useRef(null);
   const panel = useRef(null);
@@ -300,8 +317,8 @@ export default function ReaderV6({
       people: Object.assign(people.current, {
         me: { n: "You", i: (me?.initials || "?").slice(0, 2).toUpperCase() },
       }),
-      tally: () => ({ hl: counts.hl, bm: bookmarks.length, rv: counts.rv }),
-      recent: store.current?.recent() || [],
+      tally: () => ({ hl: counts.hl, bm: live2.current.bookmarks.length, rv: counts.rv }),
+      recent: () => store.current?.recent() || [],
       head: headOf,
       orphans: () => store.current?.orphans() || [],
       gridPages: () => {
@@ -468,6 +485,9 @@ export default function ReaderV6({
       data-rail="on"
       data-side="right"
       data-pan="1"
+      /* Once the page is bigger than the room it has, the stage scrolls
+         sideways rather than pretending the zoom did nothing. */
+      data-over={zoom > 100 ? "1" : undefined}
     >
       {/* The way back to the library. reader.html has this as a div, because
           the demo had nowhere to go; a button with the same class takes the
@@ -513,7 +533,22 @@ export default function ReaderV6({
               </button>
             </span>
             <span className="spacer" />
-            <div className="cnt" id="cnt" />
+            {/* reader.html has this as a plain div, because the demo was only
+                ever going to be clicked. It is the way into the page tray —
+                HANDOVER: "Press the counter for the page" — so it says what it
+                is and answers the keyboard. Nothing about the DOM moves. */}
+            <div
+              className="cnt"
+              id="cnt"
+              role="button"
+              tabIndex={0}
+              aria-label="Page and zoom"
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                e.currentTarget.click();
+              }}
+            />
             <span className="spacer" />
             <button className="you" id="you" type="button" aria-label="You">
               {(me?.initials || "?").slice(0, 2).toUpperCase()}

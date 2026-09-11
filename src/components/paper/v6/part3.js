@@ -8,6 +8,10 @@
  * Changed from the handed-over file, and only this:
  *   - HANDOVER section 5 — SEED and seed(). findRange() stays: the anchoring fallback needs it
  *   - HANDOVER section 5 — seed() goes, and with it the load hook that ran it
+ *   - a three-character floor is right for a stray drag and wrong for a deliberate tap
+ *   - the cursor is the most versatile tool and only did one of the three things a reader expects of it
+ *   - a tap on the words did nothing at all, which is the first thing anyone tries
+ *   - the pill and the back banner floated until something else happened to them
  *   - a new mark has to reach the database, and it is stored as text offsets — never as the boxes drawn here
  *   - removing a mark has to reach the database too
  *   - recolouring and converting a mark are edits to a stored record
@@ -635,18 +639,89 @@ function place(box){
   SELP.style.left=Math.min(innerWidth-w/2-12,Math.max(w/2+12,box.left+box.width/2))+'px';
   SELP.style.top =Math.max(58,box.top-h-12)+'px';
 }
-function showSel(){
+/* ── what a cursor is for ──────────────────────────────────────────────
+   A real reader gives you three gestures on the same tool and the handed-over
+   file has one. Drag selects, and that is all it does: a tap does nothing at
+   all, and a drag ends wherever the pointer happened to stop, mid-word.
+
+   So: TAP takes the word under you. TAP AGAIN takes the sentence. DRAG stays
+   exact inside a single word and snaps to whole words the moment it crosses
+   one — which is what Preview, Acrobat and Drawboard all do, and what makes a
+   drag feel accurate even though a finger is not.
+
+   The word test is deliberately generous: letters, digits, apostrophes and
+   hyphens, so "trace-based" and "rotor's" are each one word rather than two
+   and a half. */
+const WORDCH=/[\p{L}\p{N}'\u2019-]/u;
+/* Where the press started, and whether it travelled far enough to be a drag.
+   Four pixels is about the wobble a finger leaves on a tap. */
+let tapAt=null, tapMoved=false;
+addEventListener('pointerdown',e=>{tapAt=[e.clientX,e.clientY];tapMoved=false},true);
+addEventListener('pointermove',e=>{
+  if(!tapAt)return;
+  if(Math.hypot(e.clientX-tapAt[0],e.clientY-tapAt[1])>4)tapMoved=true;
+},true);
+function caretAt(x,y){
+  if(document.caretRangeFromPoint)return document.caretRangeFromPoint(x,y);
+  if(document.caretPositionFromPoint){
+    const p=document.caretPositionFromPoint(x,y); if(!p)return null;
+    const r=document.createRange();r.setStart(p.offsetNode,p.offset);r.collapse(true);return r;
+  }
+  return null;
+}
+function growWord(node,from,to){
+  const t=node.nodeValue; let a=from,b=to;
+  while(a>0&&WORDCH.test(t[a-1]))a--;
+  while(b<t.length&&WORDCH.test(t[b]))b++;
+  return [a,b];
+}
+function wordAt(x,y){
+  const c=caretAt(x,y); if(!c)return null;
+  const node=c.startContainer; if(!node||node.nodeType!==3)return null;
+  if(!node.parentElement||!node.parentElement.closest('.textLayer'))return null;
+  const t=node.nodeValue,i=c.startOffset;
+  /* A tap in the gap between two words belongs to neither. */
+  if(!WORDCH.test(t[i]||'')&&!WORDCH.test(t[i-1]||''))return null;
+  const [a,b]=growWord(node,i,i);
+  if(b<=a)return null;
+  const r=document.createRange();r.setStart(node,a);r.setEnd(node,b);return r;
+}
+function sentenceAt(x,y){
+  const c=caretAt(x,y); if(!c)return null;
+  const node=c.startContainer; if(!node||node.nodeType!==3)return null;
+  if(!node.parentElement||!node.parentElement.closest('.textLayer'))return null;
+  const t=node.nodeValue; let a=c.startOffset,b=c.startOffset;
+  while(a>0&&!'.!?'.includes(t[a-1]))a--;
+  while(b<t.length&&!'.!?'.includes(t[b]))b++;
+  if(b<t.length)b++;
+  while(a<b&&/\s/.test(t[a]))a++;
+  if(b<=a)return null;
+  const r=document.createRange();r.setStart(node,a);r.setEnd(node,b);return r;
+}
+/* Grow a dragged selection out to whole words — but only once it has already
+   crossed one. Inside a single word the student is being precise on purpose
+   and snapping would take that away. */
+function snapToWords(r){
+  if(!/\s/.test(String(r)))return r;
+  const s=r.startContainer,e=r.endContainer;
+  if(s.nodeType===3){const [a]=growWord(s,r.startOffset,r.startOffset);r.setStart(s,a)}
+  if(e.nodeType===3){const [,b]=growWord(e,r.endOffset,r.endOffset);r.setEnd(e,b)}
+  return r;
+}
+function showSel(tapped){
   if(picked)return;                                  /* a mark is in hand */
   if(R.dataset.sel!=='1')return hideSel();           /* only the cursor selects */
   const sel=getSelection();
   if(!sel||sel.isCollapsed||!sel.rangeCount)return hideSel();
   const r=sel.getRangeAt(0);
-  if(String(r).trim().length<3)return hideSel();
+  if(!tapped&&String(r).trim().length<3)return hideSel();
   const host=(r.commonAncestorContainer.nodeType===1?r.commonAncestorContainer
              :r.commonAncestorContainer.parentElement);
   if(!host||!host.closest('.sheetpg'))return hideSel();
   if(picked){picked.forEach(q=>q.classList.remove('sel'));picked=null}
-  savedRange=r.cloneRange();
+  /* A DRAG ENDS ON A WORD, not wherever the pointer stopped. */
+  savedRange=snapToWords(r.cloneRange());
+  try{const g=getSelection();g.removeAllRanges();g.addRange(savedRange.cloneRange())}catch(err){}
   /* THE CHEAPEST MARK IS WORDLESS. With a text tool in your hand you have
      already said what you want; the pill would be a second press asking the
      same question. Select with the CURSOR and the pill appears, because there
@@ -718,7 +793,27 @@ function markAt(x,y){
 }
 STG.addEventListener('click',e=>{
   if(R.dataset.sel!=='1')return;
-  const q=markAt(e.clientX,e.clientY); if(!q)return;
+  const q=markAt(e.clientX,e.clientY);
+  if(!q){
+    /* TAP TAKES THE WORD, TAP AGAIN TAKES THE SENTENCE. Nothing at all
+       happened here before, on the tool a reader spends most of its time
+       holding. A tap that lands on neither a word nor a mark clears what is
+       in hand, which is the other half of the same gesture. */
+    /* A DRAG IS TOLD FROM A TAP BY THE POINTER, not by what is selected.
+       Asking the selection was wrong twice over: the browser collapses it
+       somewhere between mousedown and click, and it still holds the PREVIOUS
+       selection when a fresh press lands — so a tap after any earlier
+       selection was read as the end of a drag and did nothing. */
+    if(tapMoved)return;
+    const r=e.detail>=2?sentenceAt(e.clientX,e.clientY):wordAt(e.clientX,e.clientY);
+    if(!r){hideSel();return}
+    const g=getSelection();g.removeAllRanges();g.addRange(r);
+    /* Told that this came from a tap, so the three-character floor below does
+       not throw away a deliberate press on a short word — "if", "on", "no" are
+       exactly the words a student underlines in a regulation. */
+    setTimeout(()=>showSel(true),0);
+    return;
+  }
   const group=[...document.querySelectorAll(`.mkq[data-g="${q.dataset.g}"]`)];
   if(picked)picked.forEach(x=>x.classList.remove('sel'));
   picked=group; group.forEach(x=>x.classList.add('sel'));
@@ -739,6 +834,22 @@ function convert(kind){
   picked.forEach(q=>{q.className='mkq '+kind+' sel';q.dataset.kind=kind;
     if(kind==='ask'){q.dataset.k='p';q.style.setProperty('--k',col('p').hex)}});
 }
+/* NOTHING FLOATS FOREVER. The pill stayed up through clicks anywhere on the
+   page, through scrolling, and through pressing Escape — the only things that
+   put it away were making a mark or starting another selection. A banner that
+   outlives what it is about is the reader talking over the paper.
+
+   Pointerdown rather than click, so it goes the instant you press somewhere
+   else rather than on the way back up; and the pill's own presses are
+   excluded, as are marks, which have their own handler. */
+addEventListener('pointerdown',e=>{
+  if(e.target.closest('#selp'))return;
+  if(!SELP.classList.contains('on'))return;
+  if(markAt(e.clientX,e.clientY))return;
+  hideSel();
+},true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&SELP.classList.contains('on')){
+  hideSel();try{getSelection().removeAllRanges()}catch(err){}}});
 /* pressing the pill must not collapse the selection under it */
 SELP.addEventListener('pointerdown',e=>e.preventDefault());
 SELP.addEventListener('mousedown',e=>e.preventDefault());

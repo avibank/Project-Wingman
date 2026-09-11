@@ -512,8 +512,19 @@ console.log("\ntap anywhere");
   ok("R1", "nothing a mark stores is a coordinate",
      !/hint: \{[^}]*x:/.test(reader) && !/x:\s*e\.client/.test(reader)
      && /anchorFor\(model\.text, off\.start, off\.end\)/.test(reader));
+  /* A TAP AND A DRAG ARE TOLD APART BY THE POINTER, not by what is selected.
+     Asking the selection was wrong twice: the browser collapses it between
+     mousedown and click, and it still holds the PREVIOUS selection when a
+     fresh press lands — so a tap after any earlier selection was read as the
+     end of a drag and did nothing at all.
+
+     And the three-character floor is right for a stray drag and wrong for a
+     deliberate press on a short word: "if", "on" and "no" are exactly the
+     words a student underlines in a regulation. */
   ok("—", "a drag is still a drag, not a tap",
-     /if\(String\(r\)\.trim\(\)\.length<3\)return hideSel\(\)/.test(reader));
+     /if\(tapMoved\)return;/.test(reader)
+     && /Math\.hypot\(e\.clientX-tapAt\[0\],e\.clientY-tapAt\[1\]\)>4/.test(reader)
+     && /if\(!tapped&&String\(r\)\.trim\(\)\.length<3\)return hideSel\(\)/.test(reader));
 }
 
 /* ---- one panel, two kinds ----------------------------------------------- */
