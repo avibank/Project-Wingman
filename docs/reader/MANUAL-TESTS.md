@@ -81,6 +81,27 @@ make a few marks. Wait a minute.
 you press it. Then it should say what arrived. If marks appear under your eyes
 without you asking, the poll is doing more than it is allowed to.
 
+**W11 · The tools that mark words.** Arm **Underline**, then drag across a
+sentence. Then **Note**, then **Ask**, then add **Strikethrough** from the
+chest and try that.
+→ Each should mark straight away in its own kind, with **no pill in between**:
+with a text tool in your hand the question is already answered. Select with
+the plain cursor instead and the pill should still appear, because there it is
+not. Tap the note's card to open it, write in it, and it should still say that
+after a reload.
+
+**W12 · The eraser.** Draw a few strokes, highlight a few lines, arm the
+**Eraser** and rub across them.
+→ Strokes and marks should come off as you touch them, and undo should put
+them back. Both variants erase whole things today; "Just where you rub" does
+not yet shorten a highlight, and that is written down rather than hidden.
+
+**W13 · Nothing on the bar is dead.** Open the chest and look through every
+tab.
+→ Shape, Text, Measure, Snapshot and Link are **not there**, because they do
+not work yet. Everything you can press does something. If you find a control
+that does nothing at all, that is the bug this list exists for.
+
 **W10 · Leaving.** Press the Wingman mark in the top-left corner.
 → Back to the Library, and the rest of the app should behave normally: no dead
 clicks, no stuck cursor, nothing swallowing the first tap. Everything the

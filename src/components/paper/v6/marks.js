@@ -34,7 +34,14 @@ import { rangeOver, offsetsOf, toLocal, spansIn } from "./geometry.js";
 
 /* v6's five colour keys, and the vocabulary either side of them. The join
    itself is readerIcons.js and is not restated here. */
-const KIND_TO_DB = { hl: "highlight", ul: "underline", st: "strikethrough", ask: "question", note: "note" };
+/* v6's five quad kinds, and 0017's six stored ones. `flag` stamps as a
+   highlight because that is what a flag IS on the page — a red mark, private,
+   meaning "come back to this" — and giving it a kind of its own would be a
+   migration to store a word the colour already says. */
+const KIND_TO_DB = {
+  hl: "highlight", ul: "underline", st: "strikethrough",
+  ask: "question", note: "note", flag: "highlight",
+};
 const KIND_FROM_DB = { highlight: "hl", underline: "ul", strikethrough: "st", question: "ask", note: "note", correction: "hl" };
 
 /* Red is private end to end. It is never sent to other students and never
@@ -143,7 +150,9 @@ export function createMarkStore({
       who: row.kind === "question" ? "anon" : (row.author_id === me ? "me" : row.author_id),
       t: ago(row.updated_at || row.created_at),
       tx: model.text.slice(at.start, at.end).replace(/\s+/g, " ").trim(),
-      ask: row.kind === "question" ? (row.body || "") : undefined,
+      /* The card reads `ask` for the words on a mark, whatever kind it is —
+         a question's question and a note's note are the same field. */
+      ask: (row.kind === "question" || row.kind === "note") ? (row.body || "") : undefined,
       ans: row.kind === "question" ? (replies.get(row.thread_id) || []) : undefined,
       fresh: !!fresh,
     };
@@ -555,6 +564,26 @@ export function createMarkStore({
     });
   }
 
+  /* The words on a note. It is the mark's body, so it goes where a question's
+     body goes, and it is on the card before the network hears about it. */
+  async function note(id, text) {
+    const row = rows.get(id);
+    const m = WM.marks.find((x) => x.g === id);
+    if (!m) return;
+    const was = m.ask || "";
+    m.ask = text;
+    WM.emit();
+    if (!row || row.author_id !== me) return;
+    did({
+      what: "note",
+      undo: async () => { m.ask = was; WM.emit(); await updateAnnotation(id, { body: was || null }); },
+      redo: async () => { m.ask = text; WM.emit(); await updateAnnotation(id, { body: text || null }); },
+    });
+    row.body = text;
+    const saved = await updateAnnotation(id, { body: text || null });
+    if (!saved) trouble("offline");
+  }
+
   /* The eraser took some strokes off. They come off the record too, and the
      removal is undoable the same way everything else is. */
   async function erasedInk(ids) {
@@ -639,7 +668,7 @@ export function createMarkStore({
   /* ── what the shell tells us ───────────────────────────────────────── */
   const api = {
     loadWindow, loadInk, loadThreads, poll, pull, relayout,
-    made, dropped, converted, recoloured, stroke, answer, erasedInk,
+    made, dropped, converted, recoloured, stroke, answer, note, erasedInk,
     /* Whether this account drew a stroke. The server cannot answer it — there
        is no session to check against — so the caller has to, and the eraser
        asks before it takes anything off. */

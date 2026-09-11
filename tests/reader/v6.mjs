@@ -681,3 +681,148 @@ group("v6 · undo and redo", () => {
     });
   });
 });
+
+group("v6 · the tools that mark words", () => {
+  /* Arm a tool, drag across a run of the paper, and say what landed. */
+  async function armAndSelect(page, tool) {
+    /* ASK BEFORE CLICKING. Relying on a click to reject when the button is
+       not there costs Playwright's full default timeout per call — measured
+       at twenty-four minutes for one test. */
+    const onBar = await page.evaluate((id) => !!document.querySelector(`.t[data-t="${id}"]`), tool);
+    if (!onBar) {
+      /* Add it from the chest first, the way a student would. */
+      await page.click(".util.chest");
+      await page.waitForSelector("#chestIn .grid2", { timeout: 5000 });
+      const tab = { ul: "Basics", st: "Basics", flag: "Notes" }[tool];
+      await page.click(`#chestIn .tabs button:text-is("${tab}")`);
+      await page.click(`#chestIn [data-add="${tool}"]`);
+      await page.keyboard.press("Escape");
+      await page.waitForSelector(`.t[data-t="${tool}"]`, { timeout: 5000 });
+    }
+    await page.click(`.t[data-t="${tool}"]`);
+    await page.waitForTimeout(250);
+    return page.evaluate(() => {
+      const p = document.querySelector('.sheetpg[data-pg="2"]') || document.querySelector(".sheetpg");
+      const span = [...p.querySelectorAll(".textLayer span[data-item]")]
+        .filter((s) => s.textContent.trim().length > 40).at(-1);
+      const r = document.createRange();
+      r.setStart(span.firstChild, 0); r.setEnd(span.firstChild, 25);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      document.querySelector("#stage").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      return String(r);
+    });
+  }
+
+  const last = (page) => page.evaluate(() => {
+    const m = window.WM.marks.at(-1);
+    return { kind: m.kind, k: m.k, tx: m.tx, id: m.id, who: m.who,
+             quads: document.querySelectorAll(`.mkq[data-g="${m.g}"]`).length };
+  });
+
+  for (const [tool, kind] of [["note", "note"], ["ask", "ask"], ["ul", "ul"], ["st", "st"]]) {
+    it(`${tool} marks the selection without asking again`, async () => {
+      await withPage(laptop, async (page) => {
+        await openV6(page);
+        const before = await page.evaluate(() => window.WM.marks.length);
+        const words = await armAndSelect(page, tool);
+        await page.waitForTimeout(1400);
+        const made = await last(page);
+        expect(await page.evaluate(() => window.WM.marks.length)).toBe(before + 1, "nothing was marked");
+        expect(made.kind).toBe(kind, "the wrong kind");
+        expect(made.tx).toBe(words, "the wrong words");
+        expect(made.quads).toBeAtLeast(1, "no box was drawn on the page");
+        /* A real row, not a local one. */
+        expect(/^[0-9a-f-]{36}$/.test(made.id)).toBeTruthy(`the server's id, got ${made.id}`);
+        /* THE PILL DOES NOT APPEAR. With a text tool in your hand the question
+           is already answered; a pill would be a second press asking it
+           again. */
+        const pill = await page.evaluate(() => document.querySelector("#selp").classList.contains("on"));
+        expect(pill).toBeFalsy("the pill opened anyway");
+        allOn(await onTheWords(page), `a ${tool}`);
+      });
+    });
+  }
+
+  it("a note is written on its card and comes back written", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await armAndSelect(page, "note");
+      await page.waitForTimeout(1400);
+      const id = await page.evaluate(() => window.WM.marks.at(-1).id);
+      /* The card opens on a tap, and the box to write in is inside it — the
+         shipped sheet hides `.thr` until `.mcard.open`. */
+      await page.click(`.mcard[data-m="${id}"] .qt`);
+      await page.waitForSelector(`.mcard[data-m="${id}"].open`, { timeout: 5000 });
+      await page.fill(`.mcard[data-m="${id}"] .reply input[data-note]`, "the freewheel unit is the point");
+      await page.click(`.mcard[data-m="${id}"] .reply button`);
+      await page.waitForTimeout(1200);
+      /* On the card straight away. */
+      const said = await page.evaluate((m) => window.WM.marks.find((x) => x.id === m)?.ask, id);
+      expect(said).toBe("the freewheel unit is the point", "the words did not stick");
+
+      await openV6(page);
+      const back = await page.evaluate((m) => window.WM.marks.find((x) => x.id === m)?.ask, id);
+      expect(back).toBe("the freewheel unit is the point", "the words did not survive a reload");
+    });
+  });
+
+  it("a tool with no behaviour is not offered", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      await page.click(".util.chest");
+      await page.waitForSelector("#chestIn .grid2", { timeout: 5000 });
+      const offered = await page.evaluate(() => {
+        const out = { cells: [], tabs: [] };
+        for (const b of document.querySelectorAll("#chestIn .tabs button")) out.tabs.push(b.textContent.trim());
+        for (const t of out.tabs) {
+          const btn = [...document.querySelectorAll("#chestIn .tabs button")].find((b) => b.textContent.trim() === t);
+          btn.click();
+          for (const c of document.querySelectorAll("#chestIn [data-add]")) out.cells.push(c.dataset.add);
+        }
+        return out;
+      });
+      for (const dead of ["shp", "txt", "msr", "snap", "link"]) {
+        expect(offered.cells).notToContain(dead, `${dead} has no behaviour and is offered anyway`);
+      }
+      /* And Capture holds only those two, so the tab itself is gone. */
+      expect(offered.tabs).notToContain("Capture", "a tab with nothing behind it");
+      expect(offered.cells).toContain("st", "strikethrough should be there — it works");
+    });
+  });
+
+  it("the eraser takes a stroke and a mark off the page", async () => {
+    await withPage(laptop, async (page) => {
+      await openV6(page);
+      const strokes = () => page.evaluate(
+        () => [...document.querySelectorAll(".ink path")].filter((p) => p.getAttribute("d")).length);
+
+      await page.click('.t[data-t="pen"]');
+      await page.waitForTimeout(250);
+      await page.evaluate(() => {
+        const pg = document.querySelector(".sheetpg");
+        const r = pg.getBoundingClientRect();
+        const at = (x, y) => ({ pointerType: "mouse", pointerId: 11, isPrimary: true, pressure: 0.5,
+          clientX: x, clientY: y, bubbles: true });
+        pg.dispatchEvent(new PointerEvent("pointerdown", at(r.left + 100, r.top + 420)));
+        for (let i = 1; i <= 6; i++) pg.dispatchEvent(new PointerEvent("pointermove", at(r.left + 100 + i * 14, r.top + 420)));
+        window.dispatchEvent(new PointerEvent("pointerup", at(r.left + 184, r.top + 420)));
+      });
+      await page.waitForTimeout(1200);
+      const drew = await strokes();
+      expect(drew).toBeAtLeast(1, "nothing was drawn to erase");
+
+      await page.click('.t[data-t="era"]');
+      await page.waitForTimeout(250);
+      await page.evaluate(() => {
+        const pg = document.querySelector(".sheetpg");
+        const r = pg.getBoundingClientRect();
+        const at = (x, y) => ({ pointerType: "mouse", pointerId: 12, isPrimary: true,
+          clientX: x, clientY: y, bubbles: true });
+        pg.dispatchEvent(new PointerEvent("pointerdown", at(r.left + 140, r.top + 420)));
+        window.dispatchEvent(new PointerEvent("pointerup", at(r.left + 140, r.top + 420)));
+      });
+      await page.waitForTimeout(900);
+      expect(await strokes()).toBe(drew - 1, "the eraser did not take the stroke off");
+    });
+  });
+});

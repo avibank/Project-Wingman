@@ -1149,53 +1149,61 @@ console.log("\nthe shipped spec");
      && /font-family: var\(--font-mono\)/.test(additions));
 }
 
-/* ---- what v6 does not do yet --------------------------------------------
-   A green suite that does not mention the holes is worse than a red one. v6's
-   chrome ships fifteen tools; five of them have behaviour. The rest arm the
-   bar, paint their icon and open their properties, and the page takes no
-   pointer at all — which is the demo's own state, and HANDOVER section 4 says
-   so in as many words: "Everything the demo mimes needs a real implementation
-   behind it."
+/* ---- the tool table, and what is still missing from it -------------------
+   A green suite that does not mention the holes is worse than a red one, and
+   the first version of this section checked for STRINGS — which went on
+   passing after the tools were built, because the strings had moved. It asks
+   about behaviour now.
 
-   Each line below asserts that the gap is STILL a gap. Closing one fails this
-   file, and the fix is to delete its line — which is the only way a list like
+   Every line asserts the state as it is. Building something fails its line,
+   and the fix is to change or delete it, which is the only way a list like
    this stays true. */
-console.log("\nwhat v6 does not do yet");
+console.log("\nthe tool table");
 {
   const part3 = read("src/components/paper/v6/part3.js");
   const src = readerSrc();
 
-  /* The tools with a pointer behaviour, and the ones without. `hand` selects
-     and pans, pen/marker/highlighter draw, the eraser rubs. Underline and Ask
-     are reachable from the selection pill but do nothing when armed. */
-  const DEAD = ["ul", "st", "shp", "txt", "snap", "msr", "flag", "link", "note", "ask"];
-  const armed = DEAD.filter((id) => new RegExp(`S\\.tool==='${id}'`).test(part3));
-  ok("gap", `ten of the fifteen tools do nothing when armed (${DEAD.length} listed)`,
-     armed.length === 0, armed.join(" "));
-  ok("gap", "and two of them are on the default bar",
-     /const DEF=\['hand','pen','hl','era','note','ask'\];/.test(part3));
+  /* Fifteen tools in the table. Ten have a behaviour when you arm them:
+     Select picks and pans, Pen/Marker/Highlight draw, the Eraser rubs, and
+     Underline, Strikethrough, Note, Ask and Flag each take a selection and
+     write their own kind. */
+  const BUILT = ["hand", "pen", "mkr", "hl", "era", "ul", "st", "note", "ask", "flag"];
+  const listed = (part3.match(/const BUILT=\[([^\]]*)\]/) || [, ""])[1]
+    .split(",").map((x) => x.trim().replace(/'/g, "")).filter(Boolean);
+  ok("tools", `ten of the fifteen have a behaviour (${listed.length} listed)`,
+     listed.length === BUILT.length && BUILT.every((id) => listed.includes(id)),
+     listed.join(" "));
 
-  /* Underline and Ask work through the pill, so the selection route is whole
-     and it is the ARMED route that is missing. Strikethrough has neither. */
-  ok("gap", "strikethrough has a colour, a class and no way to make one",
-     /\.mkq\.st|\{id:'st',n:'Strikethrough'/.test(part3 + readerCss())
-     && !/data-act="st"/.test(src));
+  /* A control that does nothing is the same lie as an empty state that names
+     no action, so the five that do not work are not offered — not in the
+     chest, and not as a tab with nothing behind it. */
+  ok("tools", "and the five that do not are not offered anywhere",
+     /BUILT\.includes\(t\.id\)/.test(part3)
+     && /\.filter\(g=>TOOLS\.some\(t=>t\.g===g&&BUILT\.includes\(t\.id\)\)\)/.test(part3));
+  for (const id of ["shp", "txt", "msr", "snap", "link"]) {
+    ok("tools", `${id} is in the table and still unbuilt`,
+       new RegExp(`\\{id:'${id}'`).test(part3) && !listed.includes(id));
+  }
 
-  /* HANDOVER section 4's last row. A student can put marks into a paper and
-     cannot get them out. */
+  /* The text tools are the reason five of them work at all: "only the Select
+     tool selects" was implemented as "only hand", which locked out every tool
+     whose whole job is a passage. */
+  ok("tools", "a text tool can take a selection, and a drawing tool cannot",
+     /const TEXT=TOOLS\.filter\(t=>\(t\.mean\|\|t\.fixed\)&&!t\.ink&&!t\.grey\)/.test(part3)
+     && /TEXT\.includes\(S\.tool\)\)\?'1':'0'/.test(part3));
+  ok("tools", "and marks in its own kind rather than asking again",
+     /if\(TEXT\.includes\(S\.tool\)\)\{[\s\S]{0,300}stamp\(k\);/.test(part3));
+
+  /* Strikethrough and Note have no shape in the shipped sheet, so both are
+     given one in the additions file, in the sheet's own vocabulary. */
+  ok("tools", "strikethrough and note are drawn, not left as bare boxes",
+     /\.rdr \.mkq\.st::after/.test(readerCss()) && /\.rdr \.mkq\.note \{/.test(readerCss()));
+
+  /* WHAT IS STILL MISSING. */
   ok("gap", "a student cannot pull their marks out of a paper",
      !/exportMarks|revision deck|downloadMarks/i.test(src));
-
-  /* The eraser rubs whole objects. "Just where you rub" needs a stroke split
-     where the rubber crossed it and a highlight shortened to the words that
-     are left — and the second is an anchor problem, not a drawing one: a
-     shortened mark is a different passage and has to be stored as one. */
   ok("gap", "the eraser's second variant erases wholes like the first",
      /WHOLE-OBJECT eraser/.test(part3));
-
-  /* The fanned deck says "Where you have been" and is fed by the student's
-     most recent MARKS, which is where they have been marking rather than
-     where they have been reading. */
   ok("gap", "the fanned deck shows recent marks, not recent places",
      /recent\(\) \{[\s\S]{0,200}m\.who === "me"/.test(read("src/components/paper/v6/marks.js")));
 }

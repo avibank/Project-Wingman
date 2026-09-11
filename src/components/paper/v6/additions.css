@@ -84,6 +84,26 @@
    is tinted by `--lv` like every other floating surface here. */
 .rdr { --panel: var(--pop); --panelln: var(--hair); }
 
+/* ── two mark kinds the shipped sheet styles nowhere ─────────────────────
+   reader.css paints `.mkq` in four shapes: `hl` a wash, `ul` a rule under the
+   words, `ask` a wash with a rule under it, and `rv` a wash with a bar down
+   the left. The tool table has two more kinds with no shape at all —
+   Strikethrough, which is in Basics beside Underline, and Note, which is on
+   the default bar — so a mark made with either was drawn as an unstyled box.
+
+   Both are given the shipped sheet's own vocabulary rather than a new one: a
+   strike is `ul`'s rule moved to the middle, and a note is `rv`'s bar down
+   the left, which is the convention for a passage something is attached to. */
+.rdr .mkq.st { background: transparent; }
+.rdr .mkq.st::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: 2px; margin-top: -1px; border-radius: 2px; background: var(--k);
+}
+.rdr .mkq.note {
+  background: color-mix(in srgb, var(--k) 26%, transparent);
+  box-shadow: inset 2px 0 0 var(--k);
+}
+
 /* ── the ink palette, which is a third colour category ───────────────────
    Module hue is wayfinding, `--presence` amber is presence and action, and
    ink is what the reader put on the page themselves. It is the only fixed

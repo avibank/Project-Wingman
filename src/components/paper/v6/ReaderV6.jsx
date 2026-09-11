@@ -359,6 +359,7 @@ export default function ReaderV6({
       onErasedInk(ids) { store.current?.erasedInk(ids); },
       mine: (id) => store.current?.mine(id) ?? false,
       onAnswer(markId, text) { store.current?.answer(markId, text); },
+      onNote(markId, text) { store.current?.note(markId, text); panel.current?.repaint(); },
     };
 
     /* Every listener the parts bind to window or document, every observer and

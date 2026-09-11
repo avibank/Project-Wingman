@@ -10,11 +10,15 @@
  *   - who wrote a mark is looked up, and a name that is not in the class is still a name
  *   - a page's heading comes from the paper's outline, and there are 1012 of them, not ten
  *   - the same lookup, for the heading over each page's group of marks
+ *   - a note is a mark with something written on it, and there was nowhere to write it
+ *   - and the card is where it is written, in the thread markup the card already has
  *   - a paper nobody has marked is not the same empty as a filter that matches nothing
  *   - a mark that lost its place is listed, which is the second half of a rule the first half already keeps
  *   - and they are listed even when nothing else matches, or they would hide behind an empty state
  *   - an instructor is a person with a staff badge, not an author id spelled 'tut'
  *   - an answer typed into a card is posted to the module thread the Ready Room shows
+ *   - a note's card has to open, or the box you write it in is display:none
+ *   - and Save writes it, where Send answers a question
  *   - the panel's scroll handler does its work on the next frame too
  *   - the panel repaints when marks arrive, and the rest of the reader needs to be able to ask
  */
@@ -81,8 +85,15 @@ function card(m){
         ${m.fresh?`<span style="color:var(--lv);font-weight:600">new</span>`:''}
         ${m.kind==='ask'?`<span class="n">${(m.ans||[]).length} ${((m.ans||[]).length===1?'answer':'answers')}</span>`:''}
         ${m.kind==='ul'?`<span style="opacity:.7">underline</span>`:''}
+        ${m.kind==='st'?`<span style="opacity:.7">struck out</span>`:''}
+        ${m.kind==='note'&&!m.ask?`<span style="opacity:.7">no words yet</span>`:''}
       </span>
     </div>
+    ${m.kind==='note'?`<div class="thr">
+      ${m.ask?`<div class="ans"><span class="tx">${hi(m.ask)}</span></div>`:''}
+      <div class="reply"><input placeholder="${m.ask?'Change what it says':'Write the note'}"
+        value="${esc(m.ask||'')}" data-stop data-note><button data-stop>Save</button></div>
+    </div>`:''}
     ${m.kind==='ask'?`<div class="thr">
       ${(m.ans||[]).map(a=>`<div class="ans">
         <span class="a ${PEOPLE[a.who]?.tut?'tut':''}">${PEOPLE[a.who]?PEOPLE[a.who].i:'??'}</span>
@@ -172,7 +183,9 @@ BODY.addEventListener('click',e=>{
   const send=e.target.closest('.reply button');
   if(send){e.stopPropagation();
     const box=send.previousElementSibling, tx=box.value.trim();
-    if(tx){ctx.onAnswer(send.closest('[data-m]').dataset.m,tx);box.value=''}
+    const id=send.closest('[data-m]').dataset.m;
+    if(box.hasAttribute('data-note')){ctx.onNote(id,tx);return}
+    if(tx){ctx.onAnswer(id,tx);box.value=''}
     return}
   if(e.target.closest('[data-stop]')){e.stopPropagation();return}
   if(e.target.closest('[data-clear]')){scope='all';kinds.clear();Q.value='';term='';
@@ -183,7 +196,7 @@ BODY.addEventListener('click',e=>{
   const m=WM.marks.find(x=>x.id===c.dataset.m);if(!m)return;
   page=m.pg;
   window.readerGoTo&&window.readerGoTo(m.pg,m.g);
-  if(m.kind==='ask'){open = open===m.id?null:m.id;paintList()}
+  if(m.kind==='ask'||m.kind==='note'){open = open===m.id?null:m.id;paintList()}
   m.fresh=false;paintFoot();
 });
 PF.addEventListener('click',e=>{if(e.target.closest('[data-close]'))R.dataset.pan='0'});

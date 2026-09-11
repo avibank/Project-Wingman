@@ -12,6 +12,11 @@
  *   - removing a mark has to reach the database too
  *   - recolouring and converting a mark are edits to a stored record
  *   - the same, for a colour change
+ *   - the text-mark tools could not take a selection, so none of them could mark anything
+ *   - and the root has to say so, because the stylesheet and showSel both read it
+ *   - an armed text tool marks the selection in its own kind, rather than opening the pill for it
+ *   - and a tab with nothing behind it is the same lie one level up
+ *   - the chest offers six tools that have no behaviour, and offering them is the same lie as a dead button
  *   - the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing
  *   - and the rubber keeps rubbing while the pointer is down
  *   - section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing
@@ -105,6 +110,28 @@ function paintRail(){
   mode();
 }
 const DRAWS=['pen','mkr','hl'];
+/* THE OTHER HALF OF THAT LIST, AND WITHOUT IT FIVE TOOLS DO NOTHING.
+
+   "Only the Select tool selects text" is about the DRAWING tools — a pen must
+   not grab words when you meant to draw over them. It was implemented as
+   "only hand sets data-sel", which also locked out every tool whose whole job
+   is a passage: Underline, Strikethrough, Note, Ask and Flag are all marked
+   `mean:1` or carry a fixed meaning, none of them is ink, and every one of
+   them needs a selection to exist at all.
+
+   Highlight is deliberately not here: it carries `ink:1` as well, so armed it
+   is a highlighter pen. Highlighting WORDS is the selection pill's action of
+   the same name. Two jobs, one id, and the tool table is what separates
+   them. */
+const TEXT=TOOLS.filter(t=>(t.mean||t.fixed)&&!t.ink&&!t.grey).map(t=>t.id);
+/* What each one writes. The pill's three actions are the same three verbs. */
+const KIND={ul:'ul',st:'st',note:'note',ask:'ask',flag:'hl'};
+/* AND THE ONES THAT DO SOMETHING WHEN YOU PRESS THEM. Shape, Text, Measure,
+   Snapshot and Link are in the table, draw their icons and open their
+   properties, and have no behaviour behind any of it. A control that does
+   nothing is the same lie as an empty state that names no action, so they are
+   not offered until they work. Delete an id from here the day it does. */
+const BUILT=['hand','pen','mkr','hl','era','ul','st','note','ask','flag'];
 /* the pointer becomes the nib: a ring the size of the stroke, in its colour */
 function paintCursor(){
   const stg=document.getElementById('stage');
@@ -120,7 +147,7 @@ function paintCursor(){
 function mode(){
   R.dataset.tool=S.tool;
   R.dataset.grab=(S.tool==='hand'&&(S.variant.hand||0)===1)?'1':'0';
-  R.dataset.sel =(S.tool==='hand'&&(S.variant.hand||0)===0)?'1':'0';
+  R.dataset.sel =((S.tool==='hand'&&(S.variant.hand||0)===0)||TEXT.includes(S.tool))?'1':'0';
   R.dataset.draw= DRAWS.includes(S.tool)?'1':'0';
   paintCursor();
   R.style.setProperty('--sel',colOf(T(S.tool)));
@@ -191,9 +218,10 @@ function paintChest(){
        <button class="rm" data-rm="${id}" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>`}).join('')}</div>
    <div class="addwrap">
      <div class="lab2">Add a tool<span>${S.tray.length} of ${CAP}</span></div>
-     <div class="tabs">${['Basics','Draw','Capture','Notes'].map(g=>
+     <div class="tabs">${['Basics','Draw','Capture','Notes']
+       .filter(g=>TOOLS.some(t=>t.g===g&&BUILT.includes(t.id))).map(g=>
        `<button class="${g===S.gtab?'on':''}" data-g="${g}">${g}</button>`).join('')}</div>
-     <div class="grid2">${TOOLS.filter(t=>t.g===S.gtab).map(t=>
+     <div class="grid2">${TOOLS.filter(t=>t.g===S.gtab&&BUILT.includes(t.id)).map(t=>
        `<button class="cell ${S.tray.includes(t.id)?'have':''}" data-add="${t.id}">
          <span class="b">${icon(t.id==='hand'?'cur':t.id,colOf(t),19)}</span><span>${t.n}</span></button>`).join('')}</div>
    </div>
@@ -619,6 +647,19 @@ function showSel(){
   if(!host||!host.closest('.sheetpg'))return hideSel();
   if(picked){picked.forEach(q=>q.classList.remove('sel'));picked=null}
   savedRange=r.cloneRange();
+  /* THE CHEAPEST MARK IS WORDLESS. With a text tool in your hand you have
+     already said what you want; the pill would be a second press asking the
+     same question. Select with the CURSOR and the pill appears, because there
+     the question is still open. */
+  if(TEXT.includes(S.tool)){
+    const t=T(S.tool);
+    if(t.fixed)lastK=t.fixed; else if(S.colour[t.id])lastK=S.colour[t.id];
+    const k=KIND[t.id]||'hl';
+    stamp(k);
+    window.islandSay&&window.islandSay(
+      k==='ask'?'askq':k==='note'?'note':(lastK==='r'?'revise':'mark'),null,lastK);
+    return;
+  }
   paintSel();SELP.classList.add('on');place(r.getBoundingClientRect());
 }
 STG.addEventListener('mouseup',()=>setTimeout(showSel,0));
@@ -649,7 +690,7 @@ function stamp(kind){
   });
   const made={id:gid,g:gid,pg:+pg.dataset.pg,k:kind==='ask'?'p':lastK,kind,
           who:'me',t:'just now',tx:String(savedRange).trim(),
-          ask:kind==='ask'?'':undefined,ans:kind==='ask'?[]:undefined};
+          ask:(kind==='ask'||kind==='note')?'':undefined,ans:kind==='ask'?[]:undefined};
   WM.add(made);
   ctx.onMade(made,savedRange,pg);
   getSelection().removeAllRanges();
@@ -755,14 +796,19 @@ function rub(e,pg){
   const [px,py]=pt(e,pg);
   const r=Math.max(6,(S.size.era||10)/box.width*1000);
   const svg=pg.querySelector('.ink');
+  /* AN SVGPoint, NOT A DOMPoint. Chromium's isPointInStroke still refuses
+     anything else — "parameter 1 is not of type 'SVGPoint'" — and a DOMPoint
+     inside a try/catch fails silently, which is an eraser that rubs and
+     rubs and takes nothing off. Found by asking the browser what the call
+     returned rather than whether a stroke had gone. */
+  const P=svg.createSVGPoint?svg.createSVGPoint():new DOMPoint();
+  const at=(x,y)=>{P.x=x;P.y=y;return P};
   const gone=[];
   for(const path of [...svg.querySelectorAll('path')]){
-    let hit=false;
+    let hit=path.isPointInStroke(at(px,py));
     for(let a=0;a<8&&!hit;a++){
-      const x=px+Math.cos(a/8*6.283)*r, y=py+Math.sin(a/8*6.283)*r;
-      try{ hit=path.isPointInStroke(new DOMPoint(x,y)) }catch(err){ hit=false }
+      hit=path.isPointInStroke(at(px+Math.cos(a/8*6.283)*r,py+Math.sin(a/8*6.283)*r));
     }
-    if(!hit){try{hit=path.isPointInStroke(new DOMPoint(px,py))}catch(err){}}
     /* ONLY WHAT THIS ACCOUNT DREW. The server has no session to check
        against, so the caller checks — and the page only ever carries this
        student's own strokes today, which makes this cheap insurance rather

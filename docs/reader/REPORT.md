@@ -208,9 +208,53 @@ therefore unreferenced by the reader, and `isStaff` is no longer passed to it.
 The database side is untouched and still answers; nothing was dropped. If
 corrections are meant to survive, the tool table is where they went missing.
 
+### The tool table, which was most of the work
+
+v6's chrome ships fifteen tools. When the chrome was first wired, **five of
+them did anything at all** — Select, Pen, Marker, Highlight and (after it was
+built) the Eraser. The other ten armed the bar, painted their icon and opened
+their properties, and the page took no pointer for them. Two of those ten,
+Note and Ask, are on the default bar; Note could not be made by any route.
+
+The cause was one line. "Only the Select tool selects text" is a rule about
+the DRAWING tools — a pen must not grab words when you meant to draw over
+them — and it was implemented as *only `hand` sets `data-sel`*, which also
+locked out every tool whose entire job is a passage. Underline, Strikethrough,
+Note, Ask and Flag are all marked `mean:1` or carry a fixed meaning, none of
+them is ink, and every one needs a selection to exist.
+
+Ten of the fifteen work now:
+
+| | |
+|---|---|
+| Select, Pen, Marker, Highlight | as shipped |
+| Eraser | built — whole strokes and whole marks, undoably, and only what this account drew |
+| Underline, Strikethrough, Note, Ask, Flag | take a selection and write their own kind, with no pill in between: with a text tool in your hand the question is already answered |
+
+Strikethrough and Note had no shape in the shipped sheet either, so both are
+given one in the additions file in the sheet's own vocabulary — a strike is
+Underline's rule moved to the middle, a note is the left bar the sheet already
+draws for `rv`. A note's words are written on its card, in the thread markup
+the card already has, and come back written.
+
+**Shape, Text, Measure, Snapshot and Link are still unbuilt, and are no longer
+offered.** A control that does nothing is the same lie as an empty state that
+names no action, so they are out of the chest, and the Capture tab is gone
+with them because it held only two of them. They stay in the tool table;
+`BUILT` in part 3 is the list to delete an id from the day it works.
+
+### One bug worth the space, because of how it hid
+
+The eraser rubbed and took nothing off. The hit test called
+`path.isPointInStroke(new DOMPoint(x, y))` inside a `try/catch` — and
+Chromium still refuses anything but an `SVGPoint` there, so every call threw
+`parameter 1 is not of type 'SVGPoint'`, the catch set `hit = false`, and the
+eraser worked perfectly while doing nothing. It was found by asking the
+browser what the call returned rather than whether a stroke had gone.
+
 ### The tests
 
-`npm run test:reader` is **34 assertions, all passing, in 92 seconds** against
+`npm run test:reader` is **41 assertions, all passing, in 102 seconds** against
 real Chromium and real WebKit at four surfaces. The groups:
 
 | | |
@@ -224,6 +268,7 @@ real Chromium and real WebKit at four surfaces. The groups:
 | a thousand pages stay light | the window, the scroll height, the page selector |
 | the quality bar | names, no sideways scroll, the platform, the 44px target |
 | undo and redo | marks and ink, the same id back, and the island saying so |
+| the tools that mark words | each of the five writes its own kind, a note is written and comes back written, the eraser rubs, and a tool with no behaviour is not offered |
 | the quiz | unchanged, and moved to its own file because it is not a reader test |
 
 The v5 suite is archived under `tests/reader/v5/`, unedited. Every rule in it
@@ -233,12 +278,19 @@ nothing left for it to describe. Its header says so.
 
 ### Still to do
 
-- **Two rows of section 4's table.** Everything else is built: marks, ink, the
-  tray and its settings, bookmarks, warmth and livery all persist; questions
-  post to the module thread and their answers come back; undo and redo are
-  real. Not done: pulling a revision deck out of a paper, and the fanned deck
-  reads "where you have been" from your own marks rather than from where you
-  actually went.
+- **One row of section 4's table.** Everything else is built: marks, ink,
+  notes, the tray and its settings, bookmarks, warmth and livery all persist;
+  questions post to the module thread and their answers come back; undo and
+  redo are real. Not done: pulling a revision deck out of a paper.
+- **Five tools.** Shape, Text, Measure, Snapshot and Link. They are in the
+  table and out of the chest until they work.
+- **The eraser's second variant.** "Just where you rub" needs a stroke split
+  where the rubber crossed it and a highlight shortened to the words that are
+  left — and the second is an anchor problem rather than a drawing one: a
+  shortened mark is a different passage and has to be stored as one. Both
+  variants erase wholes today.
+- **The fanned deck** says "Where you have been" and is fed by your most
+  recent marks, which is where you have been marking rather than reading.
 - **A real iPad.** Still nothing verified on a physical device. The four
   harness surfaces cover the capability branch; they are not a tablet, and the
   palm rejection above is exactly the kind of thing a synthetic pointer event

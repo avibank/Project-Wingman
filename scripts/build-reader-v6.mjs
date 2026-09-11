@@ -252,7 +252,7 @@ return {
           ask:kind==='ask'?'':undefined,ans:kind==='ask'?[]:undefined});`,
     replace: `  const made={id:gid,g:gid,pg:+pg.dataset.pg,k:kind==='ask'?'p':lastK,kind,
           who:'me',t:'just now',tx:String(savedRange).trim(),
-          ask:kind==='ask'?'':undefined,ans:kind==='ask'?[]:undefined};
+          ask:(kind==='ask'||kind==='note')?'':undefined,ans:kind==='ask'?[]:undefined};
   WM.add(made);
   ctx.onMade(made,savedRange,pg);`,
   },
@@ -287,6 +287,74 @@ return {
   },
   {
     part: 3,
+    why: "the text-mark tools could not take a selection, so none of them could mark anything",
+    find: `const DRAWS=['pen','mkr','hl'];`,
+    replace: `const DRAWS=['pen','mkr','hl'];
+/* THE OTHER HALF OF THAT LIST, AND WITHOUT IT FIVE TOOLS DO NOTHING.
+
+   "Only the Select tool selects text" is about the DRAWING tools — a pen must
+   not grab words when you meant to draw over them. It was implemented as
+   "only hand sets data-sel", which also locked out every tool whose whole job
+   is a passage: Underline, Strikethrough, Note, Ask and Flag are all marked
+   \`mean:1\` or carry a fixed meaning, none of them is ink, and every one of
+   them needs a selection to exist at all.
+
+   Highlight is deliberately not here: it carries \`ink:1\` as well, so armed it
+   is a highlighter pen. Highlighting WORDS is the selection pill's action of
+   the same name. Two jobs, one id, and the tool table is what separates
+   them. */
+const TEXT=TOOLS.filter(t=>(t.mean||t.fixed)&&!t.ink&&!t.grey).map(t=>t.id);
+/* What each one writes. The pill's three actions are the same three verbs. */
+const KIND={ul:'ul',st:'st',note:'note',ask:'ask',flag:'hl'};
+/* AND THE ONES THAT DO SOMETHING WHEN YOU PRESS THEM. Shape, Text, Measure,
+   Snapshot and Link are in the table, draw their icons and open their
+   properties, and have no behaviour behind any of it. A control that does
+   nothing is the same lie as an empty state that names no action, so they are
+   not offered until they work. Delete an id from here the day it does. */
+const BUILT=['hand','pen','mkr','hl','era','ul','st','note','ask','flag'];`,
+  },
+  {
+    part: 3,
+    why: "and the root has to say so, because the stylesheet and showSel both read it",
+    find: `  R.dataset.sel =(S.tool==='hand'&&(S.variant.hand||0)===0)?'1':'0';`,
+    replace: `  R.dataset.sel =((S.tool==='hand'&&(S.variant.hand||0)===0)||TEXT.includes(S.tool))?'1':'0';`,
+  },
+  {
+    part: 3,
+    why: "an armed text tool marks the selection in its own kind, rather than opening the pill for it",
+    find: `  savedRange=r.cloneRange();
+  paintSel();SELP.classList.add('on');place(r.getBoundingClientRect());`,
+    replace: `  savedRange=r.cloneRange();
+  /* THE CHEAPEST MARK IS WORDLESS. With a text tool in your hand you have
+     already said what you want; the pill would be a second press asking the
+     same question. Select with the CURSOR and the pill appears, because there
+     the question is still open. */
+  if(TEXT.includes(S.tool)){
+    const t=T(S.tool);
+    if(t.fixed)lastK=t.fixed; else if(S.colour[t.id])lastK=S.colour[t.id];
+    const k=KIND[t.id]||'hl';
+    stamp(k);
+    window.islandSay&&window.islandSay(
+      k==='ask'?'askq':k==='note'?'note':(lastK==='r'?'revise':'mark'),null,lastK);
+    return;
+  }
+  paintSel();SELP.classList.add('on');place(r.getBoundingClientRect());`,
+  },
+  {
+    part: 3,
+    why: "and a tab with nothing behind it is the same lie one level up",
+    find: `     <div class="tabs">\${['Basics','Draw','Capture','Notes'].map(g=>`,
+    replace: `     <div class="tabs">\${['Basics','Draw','Capture','Notes']
+       .filter(g=>TOOLS.some(t=>t.g===g&&BUILT.includes(t.id))).map(g=>`,
+  },
+  {
+    part: 3,
+    why: "the chest offers six tools that have no behaviour, and offering them is the same lie as a dead button",
+    find: `     <div class="grid2">\${TOOLS.filter(t=>t.g===S.gtab).map(t=>`,
+    replace: `     <div class="grid2">\${TOOLS.filter(t=>t.g===S.gtab&&BUILT.includes(t.id)).map(t=>`,
+  },
+  {
+    part: 3,
     why: "the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing",
     find: `STG.addEventListener('pointerdown',e=>{
   if(R.dataset.grab==='1'){`,
@@ -307,14 +375,19 @@ function rub(e,pg){
   const [px,py]=pt(e,pg);
   const r=Math.max(6,(S.size.era||10)/box.width*1000);
   const svg=pg.querySelector('.ink');
+  /* AN SVGPoint, NOT A DOMPoint. Chromium's isPointInStroke still refuses
+     anything else — "parameter 1 is not of type 'SVGPoint'" — and a DOMPoint
+     inside a try/catch fails silently, which is an eraser that rubs and
+     rubs and takes nothing off. Found by asking the browser what the call
+     returned rather than whether a stroke had gone. */
+  const P=svg.createSVGPoint?svg.createSVGPoint():new DOMPoint();
+  const at=(x,y)=>{P.x=x;P.y=y;return P};
   const gone=[];
   for(const path of [...svg.querySelectorAll('path')]){
-    let hit=false;
+    let hit=path.isPointInStroke(at(px,py));
     for(let a=0;a<8&&!hit;a++){
-      const x=px+Math.cos(a/8*6.283)*r, y=py+Math.sin(a/8*6.283)*r;
-      try{ hit=path.isPointInStroke(new DOMPoint(x,y)) }catch(err){ hit=false }
+      hit=path.isPointInStroke(at(px+Math.cos(a/8*6.283)*r,py+Math.sin(a/8*6.283)*r));
     }
-    if(!hit){try{hit=path.isPointInStroke(new DOMPoint(px,py))}catch(err){}}
     /* ONLY WHAT THIS ACCOUNT DREW. The server has no session to check
        against, so the caller checks — and the page only ever carries this
        student's own strokes today, which makes this cheap insurance rather
@@ -486,6 +559,25 @@ const NPAGES=ctx.total;`,
   },
   {
     part: 4,
+    why: "a note is a mark with something written on it, and there was nowhere to write it",
+    find: `        \${m.kind==='ul'?\`<span style="opacity:.7">underline</span>\`:''}`,
+    replace: `        \${m.kind==='ul'?\`<span style="opacity:.7">underline</span>\`:''}
+        \${m.kind==='st'?\`<span style="opacity:.7">struck out</span>\`:''}
+        \${m.kind==='note'&&!m.ask?\`<span style="opacity:.7">no words yet</span>\`:''}`,
+  },
+  {
+    part: 4,
+    why: "and the card is where it is written, in the thread markup the card already has",
+    find: `    \${m.kind==='ask'?\`<div class="thr">`,
+    replace: `    \${m.kind==='note'?\`<div class="thr">
+      \${m.ask?\`<div class="ans"><span class="tx">\${hi(m.ask)}</span></div>\`:''}
+      <div class="reply"><input placeholder="\${m.ask?'Change what it says':'Write the note'}"
+        value="\${esc(m.ask||'')}" data-stop data-note><button data-stop>Save</button></div>
+    </div>\`:''}
+    \${m.kind==='ask'?\`<div class="thr">`,
+  },
+  {
+    part: 4,
     why: "a paper nobody has marked is not the same empty as a filter that matches nothing",
     find: `    BODY.innerHTML=\`<div class="none"><b>Nothing matches</b>
       <p>\${term?\`Nothing on this paper says &ldquo;\${esc(term)}&rdquo;.\`:'Try a wider filter.'}</p>
@@ -554,6 +646,28 @@ const NPAGES=ctx.total;`,
     if(tx){ctx.onAnswer(send.closest('[data-m]').dataset.m,tx);box.value=''}
     return}
   if(e.target.closest('[data-stop]')){e.stopPropagation();return}`,
+  },
+  {
+    part: 4,
+    why: "a note's card has to open, or the box you write it in is display:none",
+    find: `  if(m.kind==='ask'){open = open===m.id?null:m.id;paintList()}`,
+    replace: `  if(m.kind==='ask'||m.kind==='note'){open = open===m.id?null:m.id;paintList()}`,
+  },
+  {
+    part: 4,
+    why: "and Save writes it, where Send answers a question",
+    find: `  const send=e.target.closest('.reply button');
+  if(send){e.stopPropagation();
+    const box=send.previousElementSibling, tx=box.value.trim();
+    if(tx){ctx.onAnswer(send.closest('[data-m]').dataset.m,tx);box.value=''}
+    return}`,
+    replace: `  const send=e.target.closest('.reply button');
+  if(send){e.stopPropagation();
+    const box=send.previousElementSibling, tx=box.value.trim();
+    const id=send.closest('[data-m]').dataset.m;
+    if(box.hasAttribute('data-note')){ctx.onNote(id,tx);return}
+    if(tx){ctx.onAnswer(id,tx);box.value=''}
+    return}`,
   },
   {
     part: 4,
