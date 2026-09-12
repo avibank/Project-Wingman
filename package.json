@@ -60,7 +60,8 @@
     "reader:setup": "node --env-file=.env.local scripts/run-sql.mjs supabase/migrations/0018_reader_rebuild.sql --yes --force",
     "paper:linearize": "node scripts/linearize-paper.mjs",
     "reader:css": "node scripts/scope-reader-css.mjs",
-    "measure:manual": "node --env-file=.env.local scripts/measure-manual.mjs"
+    "measure:manual": "node --env-file=.env.local scripts/measure-manual.mjs",
+    "check:room": "node scripts/check-room.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",
