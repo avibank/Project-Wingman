@@ -168,7 +168,11 @@ try {
   });
 
   console.log("\norphaning");
-  await rpc("paper_annotation_status", { p_id: h.id, p_status: "orphaned" });
+  /* 0023 gave this a uid — it was the one paper function that authenticated
+     nothing, so anybody holding the anon key could mark anybody's mark
+     orphaned — and 0025 dropped the two-argument version. The author marks
+     their own. */
+  await rpc("paper_annotation_status", { uid: A, p_id: h.id, p_status: "orphaned" });
   const after = await rpc("paper_marks_for", { uid: A, p_paper: PAPER });
   const row = (after.body || []).find((r) => r.id === h.id);
   ok("R2 · an orphaned mark is still there, marked", row && row.status === "orphaned",
@@ -219,6 +223,47 @@ try {
          `paper_mark_edit as B returned ${JSON.stringify(edited.body)}`);
     } else {
       ok("paper_mark_add exists (0021 has run)", false, JSON.stringify(mine.body).slice(0, 120));
+    }
+  }
+  /* ---------------------------------------------------------------------
+     ONE FUNCTION PER NAME, asked the way the SHIPPED bundle asks.
+     0023 widened paper_ink_add with three defaulted arguments and left the old
+     signature standing, on the reasoning that a defaulted argument keeps an
+     older client working. It does — but only if there is one function to
+     choose. With two, PostgREST refuses:
+
+       300  Could not choose the best candidate function between …
+
+     and every pen and highlighter stroke on the live site stopped landing,
+     silently, the moment the migration ran. The same fault was in
+     paper_mark_edit. Neither was visible from the new branch, because the new
+     branch sends the wider call; it is only visible if you ask the question
+     the deployed code asks.
+
+     So that is what this does. A 300 here is an overload that should have been
+     dropped in the migration that superseded it.
+     --------------------------------------------------------------------- */
+  console.log("\none function per name, called the way the shipped bundle calls it");
+  const shipped = [
+    ["paper_ink_add", { uid: A, p_paper: PAPER, p_module: "M1", p_page: 1,
+      p_points: [[0.1, 0.1], [0.2, 0.2]], p_tool: "pen", p_colour: "blue",
+      p_width: 0.0032, p_ring: "solo", p_id: null }],
+    ["paper_mark_edit", { uid: A, p_id: "00000000-0000-0000-0000-000000000000", p_patch: { body: "x" } }],
+    ["paper_mark_add", { uid: A, p_paper: PAPER, p_module: "M1", p_kind: "highlight",
+      p_ring: "solo", p_anchor: createAnchor(TEXT, 0, 10) }],
+    ["paper_mark_delete", { uid: A, p_id: "00000000-0000-0000-0000-000000000000" }],
+    ["paper_marks_for", { uid: A, p_paper: PAPER, p_since: null }],
+    ["paper_ink_for", { uid: A, p_paper: PAPER }],
+    ["paper_annotation_status", { uid: A, p_id: "00000000-0000-0000-0000-000000000000", p_status: "ok" }],
+    ["progress_for", { uid: A }],
+  ];
+  for (const [fn, args] of shipped) {
+    const r = await rpc(fn, args);
+    ok(`${fn} resolves to exactly one function`, r.status !== 300,
+       `HTTP ${r.status} ${JSON.stringify(r.body).slice(0, 90)}`);
+    if (fn === "paper_mark_add" && r.body?.id) made.push(r.body.id);
+    if (fn === "paper_ink_add" && r.body?.id) {
+      await rpc("paper_ink_delete", { uid: A, p_ids: [r.body.id] });
     }
   }
 } finally {

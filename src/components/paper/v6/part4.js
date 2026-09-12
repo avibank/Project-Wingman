@@ -47,7 +47,8 @@ const R=$('#rdr'),BODY=$('#body'),FILT=$('#filters'),PF=$('#pf'),Q=$('#q'),STAGE
    the last page while the sheet's own corner padded to at least four, so page
    three of a twelve-page paper was "03" in the panel and "0003" on the page it
    points at. The island's pad now uses the wider rule and so does this. */
-const FIRST=ctx.first, pad=n=>String(n).padStart(Math.max(4,String(ctx.first+ctx.total-1).length),'0');
+/* the same rule as the island's, so the two never disagree about a page */
+const FIRST=ctx.first, pad=n=>String(n).padStart(String(ctx.first+ctx.total-1).length,'0');
 const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82'};
 const MEAN={y:'Exam likely',b:'Definition',g:'Testable fact',p:'Question',r:'To revise'};
 const PEOPLE=ctx.people;

@@ -68,7 +68,14 @@ let page=ctx.page||FIRST, zoom=ctx.zoom||100, fit=ctx.fit!==false, rot=ctx.rot||
    three of a twelve-page paper read "03" here and "0003" on the sheet a few
    inches below it: the same number, twice, in two formats. Both sides use the
    wider rule now, and this is the only formatter in this file. */
-const pad=(n,t)=>String(n).padStart(Math.max(4,String(t===undefined?TOTAL:t).length),'0');
+/* AS WIDE AS THE TOTAL, NOT A FIXED FOUR. The handed-over kit pads to the
+   width of the paper's own length — 01/14 on a fourteen-page paper, 0126/1012
+   on a thousand-page one — and the panel does the same, which is what "one
+   format" has to mean if the two are to agree. A minimum of four made a short
+   paper read 0001/0014 and, more to the point, made the counter wider than the
+   design draws it: the counter is the island's fixed point, and everything
+   either side of it is sized from it. */
+const pad=(n,t)=>String(n).padStart(String(t===undefined?TOTAL:t).length,'0');
 /* ANYTHING THE PAPER SAYS IS ESCAPED BEFORE IT BECOMES HTML. The fan card's
    caption is a passage lifted out of the PDF, and it was going into an
    attribute with only the quotes escaped and then into innerHTML with nothing
