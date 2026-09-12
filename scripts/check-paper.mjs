@@ -529,8 +529,20 @@ console.log("\ntap anywhere");
      the sentence around the tap; v6's page takes a pointer only for drawing,
      erasing, panning and selecting. What the rule was protecting is still
      true and is what matters: nothing the reader stores is a coordinate. */
+  /* WHERE A COORDINATE IS ALLOWED TO EXIST, AND WHERE IT IS NOT.
+     This used to forbid `x: e.clientX` anywhere in the reader, which is the
+     right instinct aimed at the wrong half. The chrome's whole job is pointer
+     coordinates — it draws with them, erases with them, and now tells a tap
+     from a drag by how far one travelled. The rule is about what a MARK
+     KEEPS, so it is asserted where records are built: marks.js, which is the
+     only file that calls createAnnotation and the outbox.
+
+     So: no coordinate may reach a stored record, the hint may not carry one,
+     and the anchor is still character offsets into the extracted text. */
+  const store = read("src/components/paper/v6/marks.js");
   ok("R1", "nothing a mark stores is a coordinate",
-     !/hint: \{[^}]*x:/.test(reader) && !/x:\s*e\.client/.test(reader)
+     !/hint: \{[^}]*x:/.test(reader)
+     && !/\bclientX\b/.test(store) && !/\bclientY\b/.test(store)
      && /anchorFor\(model\.text, off\.start, off\.end\)/.test(reader));
   /* A TAP AND A DRAG ARE TOLD APART BY THE POINTER, not by what is selected.
      Asking the selection was wrong twice: the browser collapses it between

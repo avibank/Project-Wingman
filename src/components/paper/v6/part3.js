@@ -823,13 +823,22 @@ function paintSel(){
 }
 function hideSel(){
   SELP.classList.remove('on');SELP.dataset.cols='0';SELP.dataset.del='0';
-  savedRange=null;
+  savedRange=null;pillY=null;
   if(picked){picked.forEach(q=>q.classList.remove('sel'));picked=null}
 }
-function place(box){
+/* THE PILL TRAVELS LEFT TO RIGHT AND NOWHERE ELSE.
+   It used to be placed from the whole selection's bounding box, so growing a
+   drag onto a second line moved it up a line, and onto a third moved it again
+   — the one thing under your hand jumping about while you are still dragging.
+   The vertical position is taken once, from the line the selection STARTED
+   on, and held for as long as that selection lasts; only x follows. Let go
+   and start again and it takes a new line. */
+let pillY=null;
+function place(box,fresh){
   const w=SELP.offsetWidth,h=SELP.offsetHeight;
   SELP.style.left=Math.min(innerWidth-w/2-12,Math.max(w/2+12,box.left+box.width/2))+'px';
-  SELP.style.top =Math.max(58,box.top-h-12)+'px';
+  if(fresh||pillY===null)pillY=Math.max(58,box.top-h-12);
+  SELP.style.top=pillY+'px';
 }
 /* ── what a cursor is for ──────────────────────────────────────────────
    A real reader gives you three gestures on the same tool and the handed-over
@@ -853,6 +862,19 @@ addEventListener('pointermove',e=>{
   if(!tapAt)return;
   if(Math.hypot(e.clientX-tapAt[0],e.clientY-tapAt[1])>4)tapMoved=true;
 },true);
+/* EASIER TO GRAB. A pdf.js line is nine pixels tall and the gap between two
+   of them is smaller than the pointer's own tip, so a caret asked for at the
+   exact pixel misses as often as it lands — which is what makes a reader feel
+   like it is refusing you. Miss, and it tries a little above and a little
+   below before giving up. The order matters: the line you are ON is tried
+   first, so a forgiving hit never steals a neighbour. */
+function caretNear(x,y){
+  const c=caretAt(x,y); if(inText(c))return c;
+  for(const dy of [2,-2,4,-4,6,-6]){ const t=caretAt(x,y+dy); if(inText(t))return t }
+  return null;
+}
+const inText=(c)=>!!c&&c.startContainer&&c.startContainer.nodeType===3
+  &&!!c.startContainer.parentElement&&!!c.startContainer.parentElement.closest('.textLayer');
 function caretAt(x,y){
   if(document.caretRangeFromPoint)return document.caretRangeFromPoint(x,y);
   if(document.caretPositionFromPoint){
@@ -868,7 +890,7 @@ function growWord(node,from,to){
   return [a,b];
 }
 function wordAt(x,y){
-  const c=caretAt(x,y); if(!c)return null;
+  const c=caretNear(x,y); if(!c)return null;
   const node=c.startContainer; if(!node||node.nodeType!==3)return null;
   if(!node.parentElement||!node.parentElement.closest('.textLayer'))return null;
   const t=node.nodeValue,i=c.startOffset;
@@ -879,7 +901,7 @@ function wordAt(x,y){
   const r=document.createRange();r.setStart(node,a);r.setEnd(node,b);return r;
 }
 function sentenceAt(x,y){
-  const c=caretAt(x,y); if(!c)return null;
+  const c=caretNear(x,y); if(!c)return null;
   const node=c.startContainer; if(!node||node.nodeType!==3)return null;
   if(!node.parentElement||!node.parentElement.closest('.textLayer'))return null;
   const t=node.nodeValue; let a=c.startOffset,b=c.startOffset;
@@ -900,6 +922,73 @@ function snapToWords(r){
   if(e.nodeType===3){const [,b]=growWord(e,r.endOffset,r.endOffset);r.setEnd(e,b)}
   return r;
 }
+/* ── the drag, driven rather than waited for ───────────────────────────
+   MEASURED, NOT ASSUMED: a mouse drag across a pdf.js text layer selects
+   nothing on almost every line. `selectstart` fires, nothing calls
+   preventDefault, nothing clears the selection, `caretRangeFromPoint` finds
+   the right character at both ends, and setting the same Range by hand
+   selects it perfectly — the browser simply does not extend a selection
+   between two absolutely-positioned, transform-scaled spans the way it does
+   inside ordinary flowing text. It worked on the title, which is one span
+   wide and tall, and failed on every body line beneath it.
+
+   So the reader stops waiting for it. Press, and the caret under the pointer
+   is the anchor; move, and the caret under the pointer is the focus; the
+   Range between them is built, ordered, snapped to whole words and set. That
+   is deterministic on every line, it is the same code on a laptop and on a
+   tablet, and it is what makes dragging feel like it grips.
+
+   It does not fight the native selection where that does work: setting the
+   same range twice costs nothing and looks like one. */
+let dragFrom=null;
+STG.addEventListener('pointerdown',e=>{
+  dragFrom=null;
+  if(R.dataset.sel!=='1')return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  if(picked)return;                              /* a mark is in hand */
+  if(e.target.closest('#selp'))return;           /* the pill is not the paper */
+  const c=caretNear(e.clientX,e.clientY);
+  if(!c)return;
+  dragFrom={n:c.startContainer,o:c.startOffset,x:e.clientX,y:e.clientY,drew:false};
+});
+STG.addEventListener('pointermove',e=>{
+  if(!dragFrom)return;
+  if(R.dataset.sel!=='1'){dragFrom=null;return}
+  /* A few pixels of travel is a tap with a shaky hand, not a drag. */
+  if(!dragFrom.drew&&Math.hypot(e.clientX-dragFrom.x,e.clientY-dragFrom.y)<4)return;
+  const c=caretNear(e.clientX,e.clientY);
+  if(!c)return;
+  const a=document.createRange();a.setStart(dragFrom.n,dragFrom.o);a.collapse(true);
+  const b=document.createRange();b.setStart(c.startContainer,c.startOffset);b.collapse(true);
+  let r;
+  try{
+    const back=a.compareBoundaryPoints(Range.START_TO_START,b)>0;
+    r=document.createRange();
+    r.setStart(back?c.startContainer:dragFrom.n, back?c.startOffset:dragFrom.o);
+    r.setEnd  (back?dragFrom.n:c.startContainer, back?dragFrom.o:c.startOffset);
+  }catch(err){return}                            /* two nodes with no order */
+  if(r.collapsed)return;
+  dragFrom.drew=true;
+  const sel=getSelection();
+  sel.removeAllRanges();
+  sel.addRange(snapToWords(r));
+  /* The pill follows while you are still dragging, so you can see what you
+     have. Fresh on the first frame of this drag, pinned after it. */
+  const box=r.getBoundingClientRect();
+  if(box.width||box.height){
+    const first=!dragFrom.pilled;                /* take the line once */
+    dragFrom.pilled=true;
+    paintSel();
+    SELP.classList.add('on');
+    place(box,first);
+  }
+  savedRange=r.cloneRange();
+});
+['pointerup','pointercancel'].forEach(n=>addEventListener(n,()=>{
+  if(dragFrom&&dragFrom.drew)setTimeout(()=>showSel(),0);
+  dragFrom=null;
+},true));
+
 function showSel(tapped){
   if(picked)return;                                  /* a mark is in hand */
   if(R.dataset.sel!=='1')return hideSel();           /* only the cursor selects */
