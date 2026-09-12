@@ -122,10 +122,14 @@ export async function deleteAnnotation(id, me = null) {
 
 /* R2 — the one write that says a mark lost its place. A function rather than an
    update, so "mark orphaned" cannot drift into "delete the row". */
-export async function markOrphaned(id, orphaned = true) {
-  if (!id) return false;
+/* WHO IS ASKING. paper_annotation_status was the one paper function with no
+   uid argument and no ownership check, and the reader called it on every load
+   for every orphan — so this was an unauthenticated write on other people's
+   rows, routinely. 0023 gives it a uid. */
+export async function markOrphaned(id, me, orphaned = true) {
+  if (!id || !me) return false;
   const { error } = await supabase.rpc("paper_annotation_status", {
-    p_id: id, p_status: orphaned ? "orphaned" : "ok",
+    uid: me, p_id: id, p_status: orphaned ? "orphaned" : "ok",
   });
   return !fail(error, false) && !error;
 }
@@ -178,9 +182,16 @@ export async function resolveCorrection(id, me = null) {
    A counter incremented where it lives rather than read-modify-written from the
    browser: two people pressing it in the same second must both count, and a
    client that reads 4 and writes 5 loses one of them. */
-export async function agreeWithMark(id) {
-  if (!id) return null;
-  const { data, error } = await supabase.rpc("agree_with_mark", { p_id: id });
+/* AGREEING IS A ROW, NOT A COUNTER. The 0018 version took an id and nothing
+   else and bumped a number, so it could not say whether YOU had agreed, could
+   not be taken back, and could be pressed a hundred times by one person. 0023
+   gives it a table with a primary key of (mark, user), and this returns the
+   new count so the card can show a number it did not have to guess. */
+export async function agreeWithMark(id, me, on = true) {
+  if (!id || !me) return null;
+  const { data, error } = await supabase.rpc("agree_with_mark", {
+    p_me: me, p_id: id, p_on: Boolean(on),
+  });
   if (error) return fail(error, null);
   return data;
 }

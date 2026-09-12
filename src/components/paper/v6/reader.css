@@ -1,11 +1,17 @@
-/* GENERATED — do not edit. Source: docs/reader/v6/reader.css
+/* THE READER'S STYLESHEET.
  *
- * Every selector scoped under .rdr so the reader's class names cannot restyle
- * the rest of the app. No class renamed, no value changed.
+ * HAND-OWNED. Scoped under .rdr so the reader's class names cannot restyle the
+ * rest of the app — check:paper asserts that, and asserts that every class
+ * declared here is rendered by something. It was generated from
+ * docs/reader/v6/reader.css, which is kept as the original.
+ *
+ * Changes to it are listed in scripts/check-paper.mjs as CSS_CHANGES, each
+ * with the reason, and the check fails on any change that is not on that list.
+ * So the layout cannot drift by accident, and a real fix does not need a build
+ * script to make it.
+ *
  * Cut on the way through, and only this:
- *   - the demo strip, which HANDOVER section 5 says to delete before shipping
- * See scripts/scope-reader-css.mjs for why, and run `npm run reader:css` to
- * regenerate.
+ *   the demo strip, which HANDOVER section 5 says to delete before shipping
  */
 /* ===========================================================================
    WINGMAN — PAPERS READER
@@ -268,7 +274,8 @@
 
 /* ── marks land exactly on the selection, one box per line ─────────── */
 .rdr .ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
-.rdr .ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rdr .ink path{fill:none;stroke-linejoin:round}
+.rdr .ink path:not([stroke-linecap]){stroke-linecap:round}
 .rdr .marks{position:absolute;inset:0;pointer-events:none;z-index:1}
 .rdr .mkq{pointer-events:none}
 .rdr .mkq.sel{outline:2px solid var(--lv);outline-offset:1px;border-radius:3px}

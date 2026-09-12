@@ -83,9 +83,16 @@ export const SURFACES = [
   { id: "phone", engine: "webkit", width: 390, height: 844, touch: true, mobile: true, expect: "phone" },
 ];
 
+/* A BROWSER THAT IS ALREADY ON THE MACHINE. Playwright pins the build it wants
+   and downloads it; a sandbox or a CI image often has a perfectly good
+   Chromium at a path of its own and no way to fetch another. PW_CHROMIUM_PATH
+   and PW_WEBKIT_PATH point at one. Unset — the normal case — nothing changes. */
+const EXE = { chromium: process.env.PW_CHROMIUM_PATH, webkit: process.env.PW_WEBKIT_PATH };
+
 export async function withPage(surface, fn, { uid = "student_one", staff = false } = {}) {
   const engine = surface.engine === "webkit" ? webkit : chromium;
-  const browser = await engine.launch();
+  const exe = EXE[surface.engine];
+  const browser = await engine.launch(exe ? { executablePath: exe } : {});
   const ctx = await browser.newContext({
     viewport: { width: surface.width, height: surface.height },
     hasTouch: surface.touch,

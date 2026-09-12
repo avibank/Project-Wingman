@@ -10,8 +10,8 @@
  *
  * Run: npm run check:paper
  */
-import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { flatten, createAnchor, resolveAnchor } from "../src/lib/anchor.js";
@@ -99,8 +99,12 @@ console.log("\nR2 — a lost annotation is orphaned, never relocated");
   ok("R2", "an edited-away passage resolves to null", resolveAnchor(a, gone) === null);
 
   const reader = readerSrc();
-  ok("R2", "the reader marks orphans rather than dropping them",
-     /markOrphaned\(row\.id, true\)/.test(reader) && /orphans\.add\(row\.id\)/.test(reader));
+  /* `me` is in the call now: paper_annotation_status was the one paper
+     function with no uid and no ownership check, and this is called on every
+     load for every orphan — so it was an unauthenticated write on other
+     people's rows, routinely. 0023 gives it a uid and this passes one. */
+  ok("R2", "the reader marks orphans rather than dropping them, and says who is asking",
+     /markOrphaned\(row\.id, me, true\)/.test(reader) && /orphans\.add\(row\.id\)/.test(reader));
   const sql = read("supabase/migrations/0014_paper_annotations.sql");
   ok("R2", "the status write cannot become a delete",
      /function paper_annotation_status/.test(sql) && !/delete from paper_annotations/i.test(sql));
@@ -1046,41 +1050,58 @@ console.log("\nthe shipped spec");
      GENERATED out of the file that was handed over, so "copied" is not a
      claim about a diff somebody read once — it is re-derived here, every run,
      and any drift is a failure with the file named. */
-  let verified = "";
-  try {
-    verified = execFileSync("node", [join(ROOT, "scripts/build-reader-v6.mjs"), "--verify"],
-      { encoding: "utf8", cwd: ROOT });
-  } catch (e) { verified = `FAILED: ${e.stdout || ""}${e.stderr || ""}`; }
-  ok("spec", "the chrome is what the handed-over reader.js produces, part for part",
-     /all current with docs\/reader\/v6\/reader\.js/.test(verified), verified.trim().split("\n").pop());
+  /* THE CHROME IS HAND-OWNED NOW, and this block is what keeps "the layout
+     does not change" enforceable without a generator.
 
-  /* And every departure from it is a row in the table with a reason next to
-     it, rather than an edit somebody made and did not write down. */
-  const gen = read("scripts/build-reader-v6.mjs");
-  const edits = [...gen.matchAll(/^\s*why: "/gm)].length;
-  ok("spec", `every edit to the chrome carries its reason (${edits})`,
-     edits >= 20 && !/why: ""/.test(gen));
-  for (const part of ["part2.js", "part3.js", "part4.js"]) {
-    const src = read(`src/components/paper/v6/${part}`);
-    ok("spec", `${part} says what was changed and why`,
-       /Changed from the handed-over file, and only this:/.test(src));
-  }
+     It used to re-derive part1-4.js and reader.css from docs/reader/v6/ on
+     every run and fail on any drift. That made the chrome uneditable: a
+     one-character copy fix cost a six-line diff in a build script, a
+     regenerated 1206-line file and a permanent changelog entry — and two
+     cascade bugs survived for months precisely because the generated code
+     could only set presentation attributes and additions.css could only add
+     rules, so neither could beat a reader.css rule.
 
+     What actually protected the design was never byte-identity. It was these:
+     every class the shipped stylesheet declares is still rendered by
+     something, every rule is still scoped, the demo strip is still gone, and
+     no declaration changed that is not on the list below WITH A REASON. Those
+     survive; the generator does not. */
   const shippedCss = read("docs/reader/v6/reader.css");
   const builtCss = read("src/components/paper/v6/reader.css");
-  const decls = (css) => (css.replace(/\/\*[\s\S]*?\*\//g, "").match(/[^{}]+(?=\})/g) || [])
-    .join("|").replace(/\s+/g, " ").trim();
-  /* ONE CUT IS ALLOWED THROUGH, and the sheet asks for it in its own header:
-     "The block marked DEMO ONLY at the very bottom is deleted on the live
-     site." HANDOVER section 5 says the same. Nothing else may move — same
-     tokens, same values, same timings, same radii. */
-  const DEMO = /\n\.demoBtn\{[\s\S]*?@media \(max-width:900px\)\{\.demo\{display:none\}\}\n/;
-  ok("spec", "reader.css is used, not reinterpreted — every declaration identical",
-     decls(shippedCss.replace(DEMO, "\n")) === decls(builtCss));
-  ok("spec", "and it is generated from the shipped file, so the two cannot drift",
-     /GENERATED — do not edit\. Source: docs\/reader\/v6\/reader\.css/.test(builtCss));
-  /* v6's reset is `*{margin:0;padding:0;...}` and `button{background:none;...}`.
-     Unscoped that is not a collision, it is the whole app. */
+
+  /* EVERY DELIBERATE DEPARTURE FROM THE SHIPPED SHEET, and nothing else may
+     differ. A declaration that changes without an entry here fails the run. */
+  const CSS_CHANGES = [
+    { drop: "fill:none;stroke-linecap:round;stroke-linejoin:round",
+      add: "fill:none;stroke-linejoin:round|stroke-linecap:round",
+      why: "Chisel and Free-form were the same stroke. The cap is the whole difference between them, and this rule beat the one the highlighter sets on the path, because an author rule always beats a presentation attribute. It now applies only to a path that has not asked for a cap of its own" },
+  ];
+  for (const c of CSS_CHANGES) {
+    ok("spec", `a changed declaration carries its reason — ${c.drop.slice(0, 40)}`,
+       Boolean(c.why && c.why.length > 40));
+  }
+
+  /* The design is the class list. If a class the shipped sheet declares stops
+     being declared here, a part of the reader has been dropped. */
+  const classesOf = (css) => new Set([...css.replace(/\/\*[\s\S]*?\*\//g, "")
+    .matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)].map((m) => m[1]));
+  const DEMO_RE = /\n\.demoBtn\{[\s\S]*?@media \(max-width:900px\)\{\.demo\{display:none\}\}\n/;
+  const shippedNames = classesOf(shippedCss.replace(DEMO_RE, "\n"));
+  const builtNames = classesOf(builtCss);
+  const dropped = [...shippedNames].filter((c) => !builtNames.has(c) && !/^demo/.test(c));
+  ok("spec", `the stylesheet still declares every class the design has (${shippedNames.size})`,
+     dropped.length === 0, dropped.join(" "));
+
+  /* And every part file still says what it changed and why — the history the
+     generated headers used to carry, kept by hand. */
+  for (const part of ["part2.js", "part3.js", "part4.js"]) {
+    const src = read(`src/components/paper/v6/${part}`);
+    ok("spec", `${part} carries its history`,
+       /kept as history|HAND-OWNED/.test(src));
+  }
+  ok("spec", "the generator is gone, so a fix to the chrome is an ordinary edit",
+     !existsSync(join(ROOT, "scripts/build-reader-v6.mjs")));
+
   ok("spec", "every rule is scoped to the reader",
      !/(?:^|\n)[.*a-z[]/i.test(builtCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\.rdr[^{]*\{[^}]*\}/gm, "")
        .split("\n").filter((l) => !l.startsWith(".rdr") && !l.startsWith("@") && !l.startsWith("}")).join("\n")
@@ -1088,11 +1109,22 @@ console.log("\nthe shipped spec");
   ok("spec", "and the demo strip is gone from it",
      !/\.demoBtn|\[data-demo/.test(builtCss));
 
+  /* EVERY OTHER DECLARATION IDENTICAL. The listed fixes are normalised out of
+     both sides first, so the sheet can be corrected but cannot drift. */
+  const decls = (css) => (css.replace(/\/\*[\s\S]*?\*\//g, "").match(/[^{}]+(?=\})/g) || [])
+    .join("|").replace(/\s+/g, " ").trim();
+  /* Both sides of each listed change are normalised away, so the sheet can be
+     corrected and still cannot drift anywhere that is not on the list. */
+  const normalise = (t) => CSS_CHANGES.reduce(
+    (acc, c) => acc.split(c.drop).join("~").split(c.add).join("~"), t);
+  ok("spec", "reader.css is used, not reinterpreted — identical bar the listed fixes",
+     normalise(decls(shippedCss.replace(DEMO_RE, "\n"))) === normalise(decls(builtCss)));
+
   /* THE BRIEF'S OWN TEST, RUN RATHER THAN READ: "If a class in reader.css is
      unused when you finish, a component is missing." A stylesheet is a list of
      the parts the design has; a class nothing renders is a part that was
      skipped, and it fails silently because unused CSS never errors. */
-  const shipped = shippedCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(DEMO, "");
+  const shipped = shippedCss.replace(/\/\*[\s\S]*?\*\//g, "").replace(DEMO_RE, "");
   const shippedClasses = new Set([...shipped.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)].map((m) => m[1]));
   let markup = "";
   (function walk(d) {
@@ -1118,7 +1150,16 @@ console.log("\nthe shipped spec");
              raising: the affordance is styled and never drawn
 
      Written down so the next unused class cannot hide among them. */
-  const NOT_IN_THE_SOURCE = ["mk", "lbl", "gp"];
+  /* TWO OF THE THREE ARE DRAWN NOW. `mk` marks a search hit inside a panel
+     card's quote — the panel searches the paper as well as the marks on it, so
+     there are hits to mark. `gp` is the grab handle on a chest row, and the
+     rows are genuinely draggable now rather than carrying a dead dragstart
+     against an element with no draggable attribute.
+
+     `lbl` is still undrawn: it is a small caption in the You tray's identity
+     row that the handed-over file never rendered. Written down so the next
+     unused class cannot hide behind it. */
+  const NOT_IN_THE_SOURCE = ["lbl"];
   const unused = [...shippedClasses]
     .filter((c) => !NOT_IN_THE_SOURCE.includes(c))
     .filter((c) => !new RegExp(`["\`\\s.'>]${c}(?![a-zA-Z0-9_-])`).test(markup));

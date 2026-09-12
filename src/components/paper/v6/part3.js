@@ -1,40 +1,62 @@
-/* GENERATED — do not edit. Source: docs/reader/v6/reader.js, part 3 (the tool bar).
+/* THE TOOL BAR — the rail, the inspector, the chest, the selection pill, and every stroke the student draws.
  *
- * The chrome is finished; this is it, copied. Every departure from the file
- * that was handed over is listed below with the reason. Regenerate with
- *   node scripts/build-reader-v6.mjs
- * and `npm run check:paper` refuses if this file and the source have drifted.
+ * HAND-OWNED. This file used to be generated: scripts/build-reader-v6.mjs cut
+ * it out of docs/reader/v6/reader.js and applied a table of byte-exact
+ * find/replace edits, and check:paper refused the build if a byte differed.
+ * That made the chrome uneditable — a one-character copy fix cost a six-line
+ * diff in a build script, a regenerated file and a permanent changelog entry —
+ * and it is why two cascade bugs lived here for as long as they did: the
+ * generated code could only set attributes and additions.css could only add
+ * rules, so neither could win an argument with reader.css.
  *
- * Changed from the handed-over file, and only this:
- *   - a single letter armed a tool even while the student was typing a note, so writing 'the' swapped tools three times and closed the box
- *   - HANDOVER section 5 — SEED and seed(). findRange() stays: the anchoring fallback needs it
- *   - HANDOVER section 5 — seed() goes, and with it the load hook that ran it
- *   - a three-character floor is right for a stray drag and wrong for a deliberate tap
- *   - the cursor is the most versatile tool and only did one of the three things a reader expects of it
- *   - a tap on the words did nothing at all, which is the first thing anyone tries
- *   - the pill and the back banner floated until something else happened to them
- *   - a new mark has to reach the database, and it is stored as text offsets — never as the boxes drawn here
- *   - removing a mark has to reach the database too
- *   - recolouring and converting a mark are edits to a stored record
- *   - the same, for a colour change
- *   - the text-mark tools could not take a selection, so none of them could mark anything
- *   - and the root has to say so, because the stylesheet and showSel both read it
- *   - an armed text tool marks the selection in its own kind, rather than opening the pill for it
- *   - and a tab with nothing behind it is the same lie one level up
- *   - the chest offers six tools that have no behaviour, and offering them is the same lie as a dead button
- *   - Shape draws nothing, and a figure you drag out is the one thing a diagram needs
- *   - and the root has to call them drawing tools, or the page takes no pointer for them
- *   - a figure is a different gesture from a scribble and starts its own way
- *   - the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing
- *   - and the rubber keeps rubbing while the pointer is down
- *   - and follows the pointer, holding Shift for a true square, circle or right angle
- *   - section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing
- *   - a 120Hz Pencil reports several positions per frame, and the handed-over loop keeps one
- *   - Measure had no readout, and Snapshot no region — both are a drag and then an answer
- *   - a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in
- *   - the tray, its order, and every tool's colour, size and opacity persist per student
- *   - closing the same call
- *   - the tool bar has to hand the rest of the reader the pieces the demo kept to itself
+ * The generator is gone. docs/reader/v6/ stays as the original hand-over, for
+ * reference. THE LAYOUT DOES NOT CHANGE: check:paper still asserts that every
+ * class the shipped stylesheet declares is rendered by something here, that
+ * every rule is scoped to .rdr, and that the demo strip stays deleted.
+ *
+ * What had already been changed from the handed-over file, kept as history:
+ *   HANDOVER section 5 — SEED and seed(). findRange() stays: the anchoring fallback needs it
+ *   HANDOVER section 5 — seed() goes, and with it the load hook that ran it
+ *   a three-character floor is right for a stray drag and wrong for a deliberate tap
+ *   the cursor is the most versatile tool and only did one of the three things a reader expects of it
+ *   a tap on the words did nothing at all, which is the first thing anyone tries
+ *   the pill and the back banner floated until something else happened to them
+ *   a new mark has to reach the database, and it is stored as text offsets — never as the boxes drawn here
+ *   removing a mark has to reach the database too
+ *   recolouring and converting a mark are edits to a stored record
+ *   the same, for a colour change
+ *   the text-mark tools could not take a selection, so none of them could mark anything
+ *   and the root has to say so, because the stylesheet and showSel both read it
+ *   an armed text tool marks the selection in its own kind, rather than opening the pill for it
+ *   and a tab with nothing behind it is the same lie one level up
+ *   the chest offers six tools that have no behaviour, and offering them is the same lie as a dead button
+ *   Shape draws nothing, and a figure you drag out is the one thing a diagram needs
+ *   and the root has to call them drawing tools, or the page takes no pointer for them
+ *   a figure is a different gesture from a scribble and starts its own way
+ *   the Eraser is on the default bar, has an icon, a size and two variants, and erases nothing
+ *   and the rubber keeps rubbing while the pointer is down
+ *   and follows the pointer, holding Shift for a true square, circle or right angle
+ *   section 8.9 of the brief — a finger scrolls and never draws, and a resting palm produces nothing
+ *   a 120Hz Pencil reports several positions per frame, and the handed-over loop keeps one
+ *   Measure had no readout, and Snapshot no region — both are a drag and then an answer
+ *   a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in
+ *   the tray, its order, and every tool's colour, size and opacity persist per student
+ *   closing the same call
+ *   the tool bar has to hand the rest of the reader the pieces the demo kept to itself
+ *
+ * And what this round changed, in the same form — each one is commented where
+ * it lands:
+ *   the bar wrote one of its twenty settings back, and the header above says it writes them all
+ *   the root never learned which edge the bar is on, so nothing else could either
+ *   a stroke's width, its opacity and its end have to travel to the store with it
+ *   a shortcut that fires while you are typing is not a shortcut
+ *   the reader opened with a tool that cannot select, and reset put you back there
+ *   "tap to load" loaded once and never again
+ *   recolouring a question wrote a colour onto a mark that has none, and lost it
+ *   a note and a question arrive empty and have to open the box you write them in
+ *   four dead controls: the demo's theme, the auto-hide nothing turns on, two tooltips, two unread stores
+ *   the chest's rows were listed, styled to be dragged, and not draggable
+ *   Select showed an I-beam, and the eraser showed the same pointer at every size
  */
 
 export function mountToolbar(ctx){
@@ -97,11 +119,48 @@ const GRID=['#EE6F82','#F0865E','#F5A93C','#F5C23C','#D6C93E','#8FC24A','#43C08A
             '#4FB8E0','#5BB4F0','#6E9BF2','#8C86EE','#B571E0','#D06BC8','#E86BA6','#EE6F82',
             '#C7CDD4','#9AA5B1','#71808E','#4C5A67','#2E3A45','#1B242D','#FFFFFF','#000000'];
 
+/* THE READER OPENED WITH A TOOL THAT CANNOT SELECT. The default was 'hl',
+   which carries ink:1 — so mode() set data-sel='0', the text layer took no
+   pointer, and the first thing anyone tries on a paper did nothing: no word
+   could be selected, the pill never appeared, and on a touch device every
+   finger was routed to pan, so nothing drew either. Select is the tool a
+   reader is holding when it opens. [data-reset] below says the same. */
 let S=ctx.settings({tool:'hand',tray:[...DEF],bar:'left',
   variant:{},colour:{pen:'b',hl:'y',mkr:'y',shp:'b',txt:'b',msr:'g',note:'y',ul:'y',st:'r',flag:'r'},
   size:{pen:3,hl:12,mkr:14,shp:2,txt:14,msr:2,era:10,ul:2,st:2,note:12,flag:2},
   op:{pen:100,hl:38,mkr:55,shp:100,txt:100,msr:100,era:100,ul:100,st:100,note:100,flag:100},
   recent:[], presets:{}, open:null, gtab:'Draw', straight:{}});
+/* ── THE BAR SAVED ALMOST NOTHING ───────────────────────────────────────
+   ctx.onSettings(S) was called from one place in the whole file — the
+   selection pill's colour swatch. Everything else mutated S and walked away:
+   the bar's order and its edge, adding and removing a tool, the armed tool,
+   variants, both colour pickers, size, opacity, straight lines, presets and
+   reset. A student set the pen to 5pt at 60%, moved the bar to the right
+   edge, added Underline and saved a preset — and reopened the paper to find
+   every one of them gone, while this file's own header promised that "the
+   tray, its order, and every tool's colour, size and opacity persist per
+   student". One helper, called from every site that touches S. */
+const save=()=>ctx.onSettings(S);
+/* A slider fires on every frame of a drag, and a write per frame is a write
+   per pixel. The value is live on the page immediately either way; only the
+   record waits for the student to stop moving. */
+let saveT=null;
+const saveSoon=()=>{clearTimeout(saveT);saveT=setTimeout(save,300)};
+/* ── AND THE ROOT NEVER LEARNED WHICH EDGE THE BAR IS ON ─────────────────
+   R.dataset.bar was written in exactly two places — a drop on a zone and the
+   chest's position buttons — and never at mount, while the shell renders
+   data-bar="left" statically. Harmless only for as long as S.bar never came
+   back as anything else; now that it persists, a student who moved the bar to
+   the right would have had CSS paint the rail on the left while anchorTo(),
+   the tooltips and the drag axis all computed for the right, popovers flying
+   off the far side of the screen — and part4's side() reads this attribute,
+   so the panel would have opened on the same edge as the bar. */
+R.dataset.bar=S.bar;
+/* S.open is which popover is showing, and it persists with the rest of S. A
+   paper closed with the inspector open would reopen with S.open==='props' and
+   nothing on screen, and the next press on the armed tool would close what was
+   already closed rather than open it. Nothing is open at mount. */
+S.open=null;
 const resolve=v=>(typeof v==='string'&&v[0]==='#')?v:col(v).hex;
 const colOf=t=>t.fixed?col(t.fixed).hex:(t.grey?GREY():resolve(S.colour[t.id]||'y'));
 const canCol=t=>!t.grey&&!t.fixed;
@@ -214,8 +273,25 @@ const KIND={ul:'ul',st:'st',note:'note',ask:'ask',flag:'hl',txt:'txt'};
    not offered until they work. Delete an id from here the day it does. */
 const BUILT=['hand','pen','mkr','hl','era','ul','st','note','ask','flag','shp','msr','snap','txt'];
 /* the pointer becomes the nib: a ring the size of the stroke, in its colour */
+/* AND THE TOOLS THAT ARE NOT A NIB HAD THE WRONG POINTER OR NONE. Select
+   showed an I-beam — the tool a reader holds most of the time looked like it
+   was there to copy text rather than to point at things, and the locked design
+   says an arrow for Cursor and a hand for Grab. The eraser showed the same
+   `cell` cursor at 1pt as at 32, so its rub size was a number in a popover and
+   nothing you could see until you had already taken something off. Snapshot
+   had no cursor at all. All of it is set from here, the way the nib already
+   was, because the stylesheet does not change. Grab is left to the sheet's own
+   grab/grabbing pair, which an inline cursor would freeze. */
 function paintCursor(){
   const stg=document.getElementById('stage');
+  if(S.tool==='hand'){stg.style.cursor=(S.variant.hand||0)===1?'':'default';return}
+  if(S.tool==='era'){
+    const w=Math.max(8,Math.min(64,(S.size.era||10)*2)),s=Math.ceil(w)+4,h=s/2;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">`+
+      `<circle cx="${h}" cy="${h}" r="${w/2}" fill="none" stroke="${GREY()}" stroke-width="1.5" opacity=".92"/>`+
+      `<circle cx="${h}" cy="${h}" r="${Math.max(1,w/2-1.4)}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/></svg>`;
+    stg.style.cursor=`url("data:image/svg+xml;base64,${btoa(svg)}") ${h} ${h}, cell`;return}
+  if(S.tool==='snap'){stg.style.cursor='crosshair';return}
   if(!DRAWS.includes(S.tool)){stg.style.cursor='';return}
   const t=T(S.tool), c=colOf(t), w=Math.max(6,Math.min(30,S.size[t.id]*(t.id==='hl'?1.6:2.2)));
   const s=Math.ceil(w)+6, h=s/2;
@@ -230,8 +306,6 @@ function mode(){
   R.dataset.grab=(S.tool==='hand'&&(S.variant.hand||0)===1)?'1':'0';
   R.dataset.sel =((S.tool==='hand'&&(S.variant.hand||0)===0)||TEXT.includes(S.tool))?'1':'0';
   R.dataset.draw= (DRAWS.includes(S.tool)||GEOM.includes(S.tool)||S.tool==='snap')?'1':'0';
-  R.dataset.var = String(S.variant[S.tool]||0);      /* the eraser and the note read this */
-  R.dataset.rub = String(S.size.era||10);
   paintCursor();
   R.style.setProperty('--sel',colOf(T(S.tool)));
 }
@@ -296,7 +370,8 @@ function paintChest(){
      <button class="x" data-close><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>
    <div class="hint" style="padding:11px 14px 2px;margin:0">Hold a tool on the bar and drag it to move it.</div>
    <div class="list" id="clist">${S.tray.map(id=>{const t=T(id);
-     return `<div class="li ${t.lock?'lock':''}" data-id="${id}">
+     return `<div class="li ${t.lock?'lock':''}" data-id="${id}" draggable="true">
+       <span class="gp" aria-hidden="true"><svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="2.6" cy="3" r="1.1"/><circle cx="7.4" cy="3" r="1.1"/><circle cx="2.6" cy="7" r="1.1"/><circle cx="7.4" cy="7" r="1.1"/><circle cx="2.6" cy="11" r="1.1"/><circle cx="7.4" cy="11" r="1.1"/></svg></span>
        ${icon(id==='hand'?((S.variant.hand||0)===1?'hand':'cur'):id,colOf(t),19)}<b>${t.n}</b>
        <button class="rm" data-rm="${id}" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>`}).join('')}</div>
    <div class="addwrap">
@@ -379,40 +454,22 @@ $('#rail').addEventListener('click',e=>{
   const b=e.target.closest('.t');if(!b||DR)return;
   const id=b.dataset.t;
   if(id===S.tool){ S.open==='props'?closeAll():openPo('props',b); return }
-  S.tool=id;closeAll();paintRail();
+  S.tool=id;closeAll();paintRail();save();   /* the tool in your hand is a setting */
   const nb=document.querySelector(`.t[data-t="${id}"]`);play(nb.querySelector('svg'));
 });
-/* ── the rail: shown by default; auto-hide is a mode you turn on ───── */
+/* ── the rail is shown, and there is no mode in which it is not ─────
+   AUTO-HIDE WAS A DEMO SWITCH THAT CAME ACROSS WITH THE CHROME. railOut()
+   returned unless `autoHide` was set, and the only thing that ever set it was
+   window.setBarAutoHide, which nothing in this repo calls — so the reader
+   could not leave the state railIn() puts it in, and a pointermove listener on
+   window was doing nearEdge() arithmetic on every mouse move to keep putting
+   it back. #handle's only handler was that same railIn.
+
+   The shell renders data-rail="on" and the sheet hides #handle under it, so
+   the element stays (the class check needs it) and nothing it did is missed.
+   The dead listeners, the dead global and nearEdge() are gone. */
 const touchOnly = matchMedia('(pointer:coarse)').matches || !matchMedia('(hover:hover)').matches;
 R.dataset.plat = touchOnly ? 'touch' : 'desktop';
-let outT=null, autoHide=false;
-window.setBarAutoHide=v=>{autoHide=v;railIn()};
-
-function railIn(){clearTimeout(outT);R.dataset.rail='on'}
-function railOut(){
-  if(touchOnly||!autoHide)return;
-  clearTimeout(outT);
-  outT=setTimeout(()=>{
-    if(S.open||DR)return;                       /* a popout or a drag holds it open */
-    R.dataset.rail='off';
-  },520);
-}
-
-/* distance from the bar's own edge — the only test that survives a fast mouse */
-function nearEdge(e){
-  const p=R.dataset.bar, w=innerWidth, h=innerHeight, Z=112;
-  return p==='left'   ? e.clientX < Z
-       : p==='right'  ? e.clientX > w-Z
-       : p==='bottom' ? e.clientY > h-Z
-       :                e.clientY < Z;
-}
-
-if(!touchOnly){
-  addEventListener('pointermove',e=>{ nearEdge(e) ? railIn() : railOut() },{passive:true});
-  $('#handle').addEventListener('click',railIn);
-  ['props','chest','cgrid'].forEach(id=>
-    document.getElementById(id).addEventListener('pointerenter',railIn));
-}
 
 
 /* ── long-press a tool, then drag it up or down to move it ─────────── */
@@ -491,7 +548,7 @@ addEventListener('pointermove',e=>{
   clearTimeout(mTimer);mTimer=null;
   if(MV){
     const z=document.querySelector('.zone.hot');
-    if(z){S.bar=z.dataset.z;R.dataset.bar=S.bar;paintRail();mode();reanchor()}
+    if(z){S.bar=z.dataset.z;R.dataset.bar=S.bar;paintRail();mode();reanchor();save()}
     $$('.zone').forEach(x=>x.classList.remove('hot'));
     R.dataset.move='0';MV=null;return;
   }
@@ -502,10 +559,14 @@ addEventListener('pointermove',e=>{
     DR.ghost.remove();
     S.tray=S.tray.filter(x=>x!==DR.id);
     if(S.tool===DR.id)S.tool=S.tray[1]||S.tray[0];
-    paintRail();if(S.open==='chest')paintChest();
+    paintRail();if(S.open==='chest')paintChest();save();
     DR=null;return;
   }
   DR.ghost.remove();
+  /* The order is written once, at the end of the drag, rather than in the
+     reorder above — that runs on every pointermove, and a write per frame is a
+     write per pixel of the drag. */
+  if(S.tray.indexOf(DR.id)!==DR.from)save();
   const b=document.querySelector(`.t[data-t="${DR.id}"]`);
   if(b){b.classList.remove('lift');b.animate(
     [{transform:'scale(1.14)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.32,.72,0,1)'})}
@@ -514,11 +575,18 @@ addEventListener('pointermove',e=>{
 
 
 /* ── pick a tool up in the chest and drop it on the bar ────────────── */
+/* THE ROW OF A TOOL YOU ALREADY HAVE CANNOT BE ADDED AGAIN. This picked up
+   `.li` rows too, and a `.li` is a tool that is on the bar — so CD.had was
+   always true for one and the drop below, guarded on !CD.had, could never do
+   anything with it. A row's drag is a REORDER and belongs to the native drag
+   handlers further down, which now have the draggable rows they always
+   assumed; leaving both on the same element also strands the ghost, because a
+   native drag suppresses the pointermove and pointerup that clean it up. */
 let CD=null, cTimer=null;
 document.getElementById('chest').addEventListener('pointerdown',e=>{
-  const src=e.target.closest('[data-add]')||e.target.closest('.li[data-id]');
+  const src=e.target.closest('[data-add]');
   if(!src)return;
-  const id=src.dataset.add||src.dataset.id;
+  const id=src.dataset.add;
   cTimer=setTimeout(()=>{
     const g=document.createElement('div');
     g.className='ghost-t';
@@ -545,24 +613,36 @@ addEventListener('pointermove',e=>{
   if(!CD)return;
   CD.ghost.remove(); $('#rail').style.boxShadow='';
   if(CD.over&&!CD.had&&S.tray.length<CAP){
-    S.tray.push(CD.id);S.tool=CD.id;paintRail();paintChest();
+    S.tray.push(CD.id);S.tool=CD.id;paintRail();paintChest();save();
     const nb=document.querySelector(`.t[data-t="${CD.id}"]`);nb&&play(nb.querySelector('svg'));
   }
   CD=null;
 }));
 
 /* long-press a preset to save */
-let lp,lpEl;
+/* "TAP TO LOAD" LOADED ONCE AND THEN NEVER AGAIN. The press cleared the
+   long-press TIMER on pointerup and never the element it had been armed on, so
+   lpEl stayed truthy for the rest of the session — and the load branch below
+   reads `if(pr&&!lpEl)`, so after the very first tap on a preset every later
+   tap fell straight through and the hint under them, "Tap to load. Hold to
+   save what you're using now", was half a lie.
+
+   What that guard was for is real, though: the hold has already saved by the
+   time the finger lifts, and the click that follows must not turn round and
+   load what was just saved over what you are using. So the flag says whether
+   the HOLD FIRED, not whether a press happened, and it is cleared by the next
+   press rather than never. */
+let lp,lpDone=false;
 document.addEventListener('pointerdown',e=>{
   const pr=e.target.closest('.pr');if(!pr)return;
-  lpEl=pr;lp=setTimeout(()=>{
+  lpDone=false;lp=setTimeout(()=>{
     const t=T(S.tool),i=+pr.dataset.pr;
     S.presets[t.id]=S.presets[t.id]||[null,null,null];
     S.presets[t.id][i]={k:S.colour[t.id]||'y',size:S.size[t.id],op:S.op[t.id]};
-    paintProps();paintRail();
+    paintProps();paintRail();save();
     const el=document.querySelector(`.pr[data-pr="${i}"]`);
     if(el){el.classList.add('saving');setTimeout(()=>el.classList.remove('saving'),520)}
-    lpEl=null;
+    lpDone=true;
   },520);
 });
 ['pointerup','pointercancel','pointerleave'].forEach(v=>
@@ -571,30 +651,32 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-close]')){closeAll();return}
 
-  /* demo theme */
-  const d=e.target.closest('#demo button');
-  if(d){R.dataset.look=d.dataset.look;$$('#demo button[data-look]').forEach(b=>b.classList.toggle('on',b===d));
-    paintRail();if(S.open)({props:paintProps,chest:paintChest,cgrid:paintGrid})[S.open]();return}
+  /* THE DEMO STRIP'S THEME SWITCH WAS STILL HERE. check:paper asserts the
+     strip is deleted and the shell does not render it, so this closest() ran
+     on every click anywhere in the document and could never match. There is
+     one livery system and it is the app's. */
 
   /* variant */
   const sg=e.target.closest('[data-straight]');
-  if(sg){const id=sg.dataset.straight;S.straight[id]=!S.straight[id];paintProps();return}
+  if(sg){const id=sg.dataset.straight;S.straight[id]=!S.straight[id];paintProps();save();return}
   const v=e.target.closest('[data-v]');
-  if(v){S.variant[S.tool]=+v.dataset.v;paintProps();reanchor();paintRail();mode();return}
+  if(v){S.variant[S.tool]=+v.dataset.v;paintProps();reanchor();paintRail();mode();save();return}
 
   /* colour from the five */
   const c=e.target.closest('.c[data-k]');
-  if(c){S.colour[S.tool]=c.dataset.k;paintProps();paintRail();return}
+  if(c){S.colour[S.tool]=c.dataset.k;paintProps();paintRail();save();return}
 
   /* colour from recents or the grid */
   const ch=e.target.closest('[data-hex]');
   if(ch){const hex=ch.dataset.hex;
     if(!COL.find(x=>x.hex===hex)){S.recent=[hex,...S.recent.filter(x=>x!==hex)].slice(0,6)}
+    /* THE RAW HEX GOES IN S.colour AND NOWHERE ELSE. `COL.custom=hex` hung a
+       property off the palette array that no reader anywhere ever looked at,
+       and S.colourHex was a second copy of the same value with no reader
+       either — resolve() takes a hex straight out of S.colour and always
+       has. Two dead stores on the path a student uses to pick a colour. */
     S.colour[S.tool]=hex;
-    /* store raw hex by faking a colour entry */
-    COL.custom=hex;
-    S.colourHex=S.colourHex||{};S.colourHex[S.tool]=hex;
-    paintProps();paintRail();
+    paintProps();paintRail();save();
     if(S.open==='cgrid'){const el=document.querySelector('.t.on');openPo('props',el)}
     return}
 
@@ -603,28 +685,31 @@ document.addEventListener('click',e=>{
 
   /* load a preset */
   const pr=e.target.closest('.pr');
-  if(pr&&!lpEl){const t=T(S.tool),p=(S.presets[t.id]||[])[+pr.dataset.pr];
-    if(p){S.colour[t.id]=p.k;S.size[t.id]=p.size;S.op[t.id]=p.op;paintProps();paintRail()}
+  if(pr&&!lpDone){const t=T(S.tool),p=(S.presets[t.id]||[])[+pr.dataset.pr];
+    if(p){S.colour[t.id]=p.k;S.size[t.id]=p.size;S.op[t.id]=p.op;paintProps();paintRail();paintCursor();save()}
     return}
 
   /* chest */
   const rm=e.target.closest('[data-rm]');
   if(rm){S.tray=S.tray.filter(x=>x!==rm.dataset.rm);
     if(S.tool===rm.dataset.rm)S.tool=S.tray[1]||S.tray[0];
-    paintRail();paintChest();reanchor();return}
+    paintRail();paintChest();reanchor();save();return}
   const pos=e.target.closest('[data-pos]');
-  if(pos){S.bar=pos.dataset.pos;R.dataset.bar=S.bar;paintChest();
+  if(pos){S.bar=pos.dataset.pos;R.dataset.bar=S.bar;paintChest();save();
     requestAnimationFrame(()=>reanchor());return}
-  if(e.target.closest('[data-reset]')){S.tray=[...DEF];S.tool='hl';paintRail();paintChest();return}
+  /* Reset put the student back in the state the reader used to open in — a
+     highlighter armed and no way to select a word. The default six, and the
+     tool that selects. */
+  if(e.target.closest('[data-reset]')){S.tray=[...DEF];S.tool='hand';paintRail();paintChest();save();return}
 
   /* add */
   const g=e.target.closest('[data-g]');
-  if(g){S.gtab=g.dataset.g;paintChest();reanchor();return}
+  if(g){S.gtab=g.dataset.g;paintChest();reanchor();save();return}
   const ad=e.target.closest('[data-add]');
   if(ad){const id=ad.dataset.add;
     if(S.tray.includes(id)||S.tray.length>=CAP)return;
     S.tray.push(id);S.tray.sort((a,b)=>TOOLS.findIndex(t=>t.id===a)-TOOLS.findIndex(t=>t.id===b));
-    S.tool=id;paintRail();paintChest();
+    S.tool=id;paintRail();paintChest();save();
     const nb=document.querySelector(`.t[data-t="${id}"]`);nb&&play(nb.querySelector('svg'));
     return}
 
@@ -633,23 +718,38 @@ document.addEventListener('click',e=>{
 });
 
 /* sliders */
+/* Size and opacity are the two settings a student changes most and the two
+   that were kept the shortest: until the next reload. They save like the rest
+   now, debounced, because a range input fires on every frame of the drag —
+   and the size slider repaints the pointer, so the nib ring and the rubber
+   circle are the size they are about to draw at. */
 document.addEventListener('input',e=>{
   if(e.target.id==='szr'){S.size[S.tool]=+e.target.value;
-    const l=$('#propsIn').querySelectorAll('.lab .v');if(l[0])l[0].textContent=e.target.value+' pt';drawPrev()}
+    const l=$('#propsIn').querySelectorAll('.lab .v');if(l[0])l[0].textContent=e.target.value+' pt';
+    drawPrev();paintCursor();saveSoon()}
   if(e.target.id==='opr'){S.op[S.tool]=+e.target.value;
-    const l=$('#propsIn').querySelectorAll('.lab .v');if(l[1])l[1].textContent=e.target.value+'%';drawPrev()}
+    const l=$('#propsIn').querySelectorAll('.lab .v');if(l[1])l[1].textContent=e.target.value+'%';
+    drawPrev();saveSoon()}
 });
 
 /* drag to reorder in the chest */
+/* THESE FIRED ON NOTHING. paintChest() rendered the rows without a draggable
+   attribute, so dragstart never happened and the locked design's "tools drag
+   from the chest onto the bar and back" was half built: the rows were listed
+   and could not be moved. The rows carry draggable and the grab handle the
+   sheet has always styled (.li .gp) now, and the order they end in is kept. */
 let dg=null;
 document.addEventListener('dragstart',e=>{const li=e.target.closest('.li');if(!li)return;
-  dg=li.dataset.id;li.classList.add('drag')});
+  dg=li.dataset.id;li.classList.add('drag');
+  /* A drag with nothing on the clipboard is cancelled before it starts in
+     Firefox, which is a drag that works on one browser and not the next. */
+  try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dg)}catch(err){}});
 document.addEventListener('dragover',e=>{if(dg)e.preventDefault()});
 document.addEventListener('drop',e=>{const li=e.target.closest('.li');if(!li||!dg)return;
   e.preventDefault();
   const from=S.tray.indexOf(dg),to=S.tray.indexOf(li.dataset.id);
   if(from<0||to<0||from===to){dg=null;return}
-  S.tray.splice(to,0,S.tray.splice(from,1)[0]);dg=null;paintRail();paintChest()});
+  S.tray.splice(to,0,S.tray.splice(from,1)[0]);dg=null;paintRail();paintChest();save()});
 document.addEventListener('dragend',()=>{dg=null;$$('.li').forEach(l=>l.classList.remove('drag'))});
 
 /* tooltips on the rail */
@@ -659,7 +759,9 @@ $('#rail').addEventListener('mouseover',e=>{
   clearTimeout(th);th=setTimeout(()=>{
     const t=T(b.dataset.t);
     tip.innerHTML=t?`${t.n}<kbd>${t.k}</kbd>`
-      :({chest:'Your bar',add:'Add a tool',hide:'Hide the tools'})[b.dataset.u];
+      /* paintRail renders exactly one .util, the chest. `add` and `hide` were
+         rows for two buttons the bar has not had since it was handed over. */
+      :({chest:'Your bar'})[b.dataset.u]||'';
     tip.classList.add('on');
     const r=b.getBoundingClientRect(),w=tip.offsetWidth;
     if(S.bar==='left'){tip.style.left=(r.right+12)+'px';tip.style.right=''}
@@ -669,20 +771,21 @@ $('#rail').addEventListener('mouseover',e=>{
   },380)});
 $('#rail').addEventListener('mouseout',()=>{clearTimeout(th);tip.classList.remove('on')});
 
+/* A SHORTCUT THAT FIRES WHILE YOU ARE TYPING IS NOT A SHORTCUT. The panel's
+   search box, every note box and every answer box are inside the reader, and
+   this matched a single letter against the tool table with no guard at all —
+   so typing "pen" into the search field armed Pen, then Eraser, then Note, and
+   left the rubber live over the page. The shell's undo handler has had the
+   same guard since it was written. Escape still works from inside a field, and
+   lets go of the field first, so a second Escape reaches the popovers. */
 addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeAll();return}
-  /* NOT WHILE SOMEBODY IS WRITING. Every tool has a one-letter shortcut and
-     nothing checked where the keystroke was going, so typing a note armed
-     Highlight on the h, Note on the n and Text on the t — and arming a tool
-     closes the composer, which meant the note box could not be typed into at
-     all. The same keystrokes reach the panel's answer box and the search
-     field. A modifier is still a shortcut; a bare letter in a text box is
-     text. */
-  const el=e.target;
-  if(el&&(/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||el.isContentEditable))return;
+  const el=e.target, typing=/^(INPUT|TEXTAREA|SELECT)$/.test((el&&el.tagName)||'')||!!(el&&el.isContentEditable);
+  if(e.key==='Escape'){if(typing&&el.blur)el.blur();closeAll();return}
+  if(typing)return;
+  /* And Cmd+S is Save, not Strikethrough. */
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const t=TOOLS.find(x=>x.k.toLowerCase()===e.key.toLowerCase());
-  if(t&&S.tray.includes(t.id)){S.tool=t.id;closeAll();paintRail();
+  if(t&&S.tray.includes(t.id)){S.tool=t.id;closeAll();paintRail();save();
     const nb=document.querySelector(`.t[data-t="${t.id}"]`);nb&&play(nb.querySelector('svg'))}
 });
 addEventListener('resize',reanchor);
@@ -820,8 +923,6 @@ function showSel(tapped){
     if(t.fixed)lastK=t.fixed; else if(S.colour[t.id])lastK=S.colour[t.id];
     const k=KIND[t.id]||'hl';
     stamp(k);
-    /* A text box arrives empty and wants typing into, so its card opens. */
-    if(k==='txt'&&ctx.onPlaced)ctx.onPlaced();
     window.islandSay&&window.islandSay(
       k==='ask'?'askq':k==='note'?'note':(lastK==='r'?'revise':'mark'),null,lastK);
     return;
@@ -859,6 +960,16 @@ function stamp(kind){
           ask:(kind==='ask'||kind==='note'||kind==='txt')?'':undefined,ans:kind==='ask'?[]:undefined};
   WM.add(made);
   ctx.onMade(made,savedRange,pg);
+  /* A MARK THAT IS A BOX FOR WORDS HAS TO OPEN THE BOX. Only a text box did.
+     stamp('ask') builds `ask:''`, so Ask posted a thread to the Ready Room
+     carrying the quoted passage and a blank line, while the island said
+     "Question posted · anonymously" — the student was never asked what the
+     question was. A Note was the same: "Note saved", and the only place to
+     write it was a card on the panel they had to go and find, which listed it
+     as "no words yet". All three open their card with the cursor in it now,
+     from here rather than from one of the two callers, so the pill's Ask and
+     an armed tool behave the same way. */
+  if((kind==='txt'||kind==='note'||kind==='ask')&&ctx.onPlaced)ctx.onPlaced();
   getSelection().removeAllRanges();
   hideSel();
 }
@@ -958,8 +1069,16 @@ SELP.addEventListener('click',e=>{
   const sk=e.target.closest('[data-sk]');
   if(sk){lastK=sk.dataset.sk;
     const t=T(S.tool);
-    if(t&&!t.fixed&&!t.grey){S.colour[t.id]=lastK;paintRail();mode();ctx.onSettings(S)}
-    if(picked)ctx.onRecoloured(picked[0].dataset.g,lastK);
+    if(t&&!t.fixed&&!t.grey){S.colour[t.id]=lastK;paintRail();mode();save()}
+    /* A QUESTION IS ALWAYS VIOLET AND ALWAYS ANONYMOUS, and recolour() below
+       has always known it — it skips the repaint for an `ask` quad. This line
+       did not, so the store wrote colour and ring from the pressed swatch
+       anyway: the row became colour='wrong', ring='solo', the panel hides red
+       marks that are not yours, an anonymous question has no author to match
+       — and the student's own question disappeared from the panel with no way
+       to get it back, while the quad on the page stayed violet and told them
+       nothing had happened. The swatch is not offered a question. */
+    if(picked&&picked[0].dataset.kind!=='ask')ctx.onRecoloured(picked[0].dataset.g,lastK);
     recolour();paintSel();return}
   if(e.target.closest('[data-rmv]')){
     if(picked){const g=picked[0].dataset.g;WM.drop(g);ctx.onDropped(g);
@@ -983,18 +1102,6 @@ document.getElementById('props').addEventListener('click',()=>setTimeout(()=>{sy
 
 /* ══ pen, marker and highlighter draw. They never touch the text. ════ */
 let pan=null, ink=null;
-/* the graphite grain the pencil draws through */
-(function(){
-  if(document.getElementById('wm-defs'))return;
-  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.id='wm-defs'; s.setAttribute('aria-hidden','true');
-  s.setAttribute('style','position:absolute;width:0;height:0;overflow:hidden');
-  s.innerHTML=`<defs><filter id="wm-graphite" x="-12%" y="-12%" width="124%" height="124%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7" result="n"/>
-    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
-  </filter></defs>`;
-  document.body.appendChild(s);
-})();
 function pgAt(e){return document.elementFromPoint(e.clientX,e.clientY)?.closest('.sheetpg')}
 function pt(e,pg){const r=pg.getBoundingClientRect();
   return [(e.clientX-r.left)/r.width*1000,(e.clientY-r.top)/r.height*1000]}
@@ -1014,25 +1121,6 @@ function pt(e,pg){const r=pg.getBoundingClientRect();
    one, and a rubber is not a precise enough instrument to decide where a
    quotation now ends. */
 let rubbing=null;
-/* YOU CAN SEE WHAT YOU ARE ABOUT TO TAKE OUT.
-   The eraser worked and rubbed blind: nothing on screen said how big the rub
-   was or what it covered, so it read as the tool missing rather than the tool
-   being small. This is the kit's rubber, brought to the eraser that actually
-   removes the record — a circle the size of the rub radius, following the
-   pointer, with the native cursor hidden under it. What you see is what goes.
-   It hides itself the moment the tool is anything else, so it cannot be left
-   sitting on the page after the eraser is put down. */
-const RUB=document.createElement('div');
-RUB.className='rubber'; RUB.hidden=true; R.appendChild(RUB);
-const rubPx=()=>Math.max(14,Math.min(90,(S.size.era||10)*2.2));
-const hideRub=()=>{RUB.hidden=true};
-STG.addEventListener('pointerleave',hideRub);
-STG.addEventListener('pointermove',e=>{
-  if(S.tool!=='era'){hideRub();return}
-  const d=rubPx();
-  RUB.hidden=false;
-  RUB.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX}px;top:${e.clientY}px`;
-},{passive:true});
 function rub(e,pg){
   const box=pg.getBoundingClientRect();
   const [px,py]=pt(e,pg);
@@ -1141,33 +1229,51 @@ STG.addEventListener('pointerdown',e=>{
   if(GEOM.includes(S.tool)||S.tool==='snap'){
     const t2=T(S.tool), p2=document.createElementNS('http://www.w3.org/2000/svg','path');
     const r2=pg.getBoundingClientRect();
+    /* The figure's width in the page's own units, computed once and kept, so
+       the same number is drawn with and handed over. See the pen below. */
+    const w2=(S.size[t2.id]||2)/r2.width*1000, o2=(S.op[t2.id]||100)/100;
     p2.setAttribute('fill','none');
+    /* The marquee names its own stroke, which is what makes it visible: the
+       stylesheet's ink colour is a fallback now (`:not([stroke])`) rather than
+       a rule that beat every attribute this file set. */
     p2.setAttribute('stroke',S.tool==='snap'?'var(--lv)':colOf(t2));
-    p2.setAttribute('stroke-width',(S.size[t2.id]||2)/r2.width*1000);
+    p2.setAttribute('stroke-width',w2);
     p2.setAttribute('stroke-linejoin','round');
     p2.setAttribute('stroke-linecap','round');
-    if(S.tool!=='snap')p2.setAttribute('stroke-opacity',(S.op[t2.id]||100)/100);
+    if(S.tool!=='snap')p2.setAttribute('stroke-opacity',o2);
     else p2.setAttribute('stroke-dasharray','12 8');
     pg.querySelector('.ink').appendChild(p2);
-    geom={path:p2,pg,a:pt(e,pg),b:pt(e,pg),tool:S.tool};
+    geom={path:p2,pg,a:pt(e,pg),b:pt(e,pg),tool:S.tool,w:w2,op:o2,cap:'round'};
     STG.setPointerCapture(e.pointerId);
     return;
   }
   const t=T(S.tool), c=colOf(t), r=pg.getBoundingClientRect();
   const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-  /* Pen is the second variant's opposite: a pencil lays down a narrower,
-     softer, grainy line. Same tool, genuinely different mark.          */
-  const pencil = t.id==='pen' && (S.variant.pen||0)===1;
-  let wide = t.id==='hl' ? S.size[t.id]*1.9 : S.size[t.id];
-  if(pencil) wide *= .72;
+  const wide=t.id==='hl'?S.size[t.id]*1.9:S.size[t.id];
+  /* THE INK IS THE TOOL'S COLOUR AGAIN. This line always set it; `.rdr .ink
+     path{stroke:…}` in the sheet overrode it, so every live stroke came out
+     graphite whatever the swatch said. The sheet's rule is a fallback now —
+     additions.css declares it as `:not([stroke])` — and this attribute wins.
+     THE WIDTH IS KEPT RATHER THAN RECOMPUTED, because it is the one number
+     that cannot be rebuilt later: `wide` is a real nib in screen pixels, and
+     dividing by the width the page is currently drawn at turns it into the
+     page's own 0-1000 units. */
+  const wvb=wide/r.width*1000, ovb=(S.op[t.id]||100)/100;
   path.setAttribute('stroke',c);
-  path.setAttribute('stroke-width',wide/r.width*1000);
-  path.setAttribute('stroke-opacity',((pencil?68:(S.op[t.id]||100)))/100);
-  if(pencil){path.setAttribute('filter','url(#wm-graphite)');path.dataset.pencil='1'}
+  path.setAttribute('stroke-width',wvb);
+  path.setAttribute('stroke-opacity',ovb);
+  /* AND CHISEL IS A DIFFERENT STROKE FROM FREE-FORM AGAIN. The cap was set
+     here and `.rdr .ink path{stroke-linecap:round}` took it straight back off,
+     so the two variants drew the same line and the copy in the inspector —
+     "Chisel lays a straight line. Free-form follows your hand." — described a
+     difference the student could not see. reader.css carries the default on
+     `:not([stroke-linecap])` now, so a named cap stands. */
   const chisel = t.id==='hl' && (S.variant.hl||0)===0;
-  if(t.id==='hl')path.setAttribute('stroke-linecap',chisel?'butt':'round');
+  const cap = chisel?'butt':'round';
+  if(t.id==='hl')path.setAttribute('stroke-linecap',cap);
   pg.querySelector('.ink').appendChild(path);
-  ink={path,pg,pts:[pt(e,pg)],straight: chisel || (t.id!=='hl' && !!S.straight[t.id])};
+  ink={path,pg,pts:[pt(e,pg)],straight: chisel || (t.id!=='hl' && !!S.straight[t.id]),
+       w:wvb,op:ovb,cap};
   STG.setPointerCapture(e.pointerId);
 });
 STG.addEventListener('pointermove',e=>{
@@ -1221,22 +1327,29 @@ addEventListener('pointerup',()=>{
     const far=Math.hypot(g.b[0]-g.a[0],g.b[1]-g.a[1])>6;
     if(g.tool==='snap'){g.path.remove();if(far)ctx.onSnapshot(g.pg,g.a,g.b)}
     else if(g.tool==='msr'){g.path.remove();clearMeasure()}
-    else if(far&&g.pts&&g.pts.length>1)ctx.onStroke(g.pg,g.path,g.pts,T(g.tool),S);
+    else if(far&&g.pts&&g.pts.length>1)
+      ctx.onStroke(g.pg,g.path,g.pts,T(g.tool),S,
+        {width:g.w,opacity:g.op,cap:g.cap,variant:S.variant[g.tool]||0});
     else g.path.remove();
   }
   if(ink){
     if(ink.pts.length<2)ink.path.remove();
-    else {
-      /* The kit stamps the stroke's own points onto the path, and the eraser
-         reads them back to cut it. Keep that, then save. */
-      ink.path.dataset.pts=JSON.stringify(ink.pts.map(p=>[Math.round(p[0]),Math.round(p[1])]));
-      ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
-    }
+    /* WHAT IT WAS DRAWN WITH TRAVELS WITH IT. The store was given the tool and
+       S and worked the rest out again, and got it wrong twice: it took the raw
+       slider number, which is neither the highlighter's 1.9x nib nor a page
+       unit, and it had nowhere to learn the opacity or the cap from. A 12pt
+       highlighter stroke drawn at 100% is about 32 units on the page and came
+       back as 12, solid, with round ends. These four are the numbers this
+       stroke is on the screen with right now:
+         width    the page's own 0-1000 units, nib and page width already in it
+         opacity  0-1, as stroke-opacity takes it
+         cap      'butt' for a chisel highlighter, 'round' for everything else
+         variant  which version of the tool drew it */
+    else ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S,
+      {width:ink.w,opacity:ink.op,cap:ink.cap,variant:S.variant[S.tool]||0});
     ink=null;
   }
 });
-/* the eraser needs to rebuild a cut stroke exactly the way it was drawn */
-window.readerSmooth=smooth;
 /* a light smoothing so a mouse-drawn line does not look like a saw */
 /* What the rest of the reader needs from the tool bar. relayout() in
    marks.js rebuilds the quads on a page from stored anchors, so it needs the
@@ -1244,6 +1357,10 @@ window.readerSmooth=smooth;
    under an open pill would leave the picked group holding elements that are no
    longer on the page. */
 ctx.expose({
+  /* findRange has no caller today: SEED and seed() were the two, and both are
+     gone. It stays because the anchoring fallback is the thing that needs it
+     the day a stored anchor cannot be resolved any other way, and finding a
+     quote in a page by hand is not a function worth writing twice. */
   findRange,                       /* HANDOVER section 5: keep this */
   col, resolve, COL,
   settings:()=>S,

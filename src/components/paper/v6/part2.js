@@ -1,38 +1,55 @@
-/* GENERATED — do not edit. Source: docs/reader/v6/reader.js, part 2 (the island).
+/* THE ISLAND — the top bar: the page counter, the trays, and the one line the reader is allowed to say.
  *
- * The chrome is finished; this is it, copied. Every departure from the file
- * that was handed over is listed below with the reason. Regenerate with
- *   node scripts/build-reader-v6.mjs
- * and `npm run check:paper` refuses if this file and the source have drifted.
+ * HAND-OWNED. This file used to be generated: scripts/build-reader-v6.mjs cut
+ * it out of docs/reader/v6/reader.js and applied a table of byte-exact
+ * find/replace edits, and check:paper refused the build if a byte differed.
+ * That made the chrome uneditable — a one-character copy fix cost a six-line
+ * diff in a build script, a regenerated file and a permanent changelog entry —
+ * and it is why two cascade bugs lived here for as long as they did: the
+ * generated code could only set attributes and additions.css could only add
+ * rules, so neither could win an argument with reader.css.
  *
- * Changed from the handed-over file, and only this:
- *   - P0-2 — the banner said work was saved when nothing had been queued. It now says what is true: how much is waiting, and on which device
- *   - the paper's name, length and first page come from the manifest, not from a constant
- *   - where the student left off, and what they had set — read once at mount, written back through ctx
- *   - HANDOVER section 1 — the stand-in paper. React renders the stage from PDF.js in the same element shape
- *   - the deck is where you have been AND what you have marked, and it has to survive a reload
- *   - who the student is, and what they have actually done on this paper
- *   - the tallies are counted, not written down
- *   - the livery list is the app's five, and the app owns which one is current
- *   - the root carries data-look, so the Appearance branch swallowed every other press in the tray
- *   - zoom, fit and rotation move every mark on the page — HANDOVER section 3 asks for exactly this call
- *   - warmth is a setting, and settings save locally first
- *   - pressing the dot is what pulls the waiting marks in — the poll may only light it
- *   - the way-back banner sat there until you dismissed it by hand, or forever
- *   - and it says so for a while rather than for ever
- *   - the closed tray kept six buttons in the tab order behind a 36px island
- *   - and hands them back when it opens
- *   - and the deck draws from the merge, each time it is drawn rather than once at mount
- *   - and the empty state asks the same question
- *   - a card in the deck has to reach a page that is not mounted, which is every page but five
- *   - a tally of nothing is a zero count, and this app never states one
- *   - a student could put marks into a paper and had no way to get them out
- *   - the Redo button in the undo message is a button, and in the demo it only dismissed the message
- *   - HANDOVER, Making it feel smooth: do no work in a scroll handler. Read, store, act on the next frame
- *   - HANDOVER section 5 — the demo strip and the states it fires
- *   - HANDOVER section 5 — the demo strip's own controls
- *   - the island has to be told things from outside: a new page, a pull waiting, a message
- *   - P0-2 — the island can say the outbox drained, which is the other half of telling the truth about it
+ * The generator is gone. docs/reader/v6/ stays as the original hand-over, for
+ * reference. THE LAYOUT DOES NOT CHANGE: check:paper still asserts that every
+ * class the shipped stylesheet declares is rendered by something here, that
+ * every rule is scoped to .rdr, and that the demo strip stays deleted.
+ *
+ * What had already been changed from the handed-over file, kept as history:
+ *   P0-2 — the banner said work was saved when nothing had been queued. It now says what is true: how much is waiting, and on which device
+ *   the paper's name, length and first page come from the manifest, not from a constant
+ *   where the student left off, and what they had set — read once at mount, written back through ctx
+ *   HANDOVER section 1 — the stand-in paper. React renders the stage from PDF.js in the same element shape
+ *   the last five places are the student's own most recent marks
+ *   who the student is, and what they have actually done on this paper
+ *   the tallies are counted, not written down
+ *   the livery list is the app's five, and the app owns which one is current
+ *   the root carries data-look, so the Appearance branch swallowed every other press in the tray
+ *   zoom, fit and rotation move every mark on the page — HANDOVER section 3 asks for exactly this call
+ *   warmth is a setting, and settings save locally first
+ *   pressing the dot is what pulls the waiting marks in — the poll may only light it
+ *   the way-back banner sat there until you dismissed it by hand, or forever
+ *   and it says so for a while rather than for ever
+ *   the closed tray kept six buttons in the tab order behind a 36px island
+ *   and hands them back when it opens
+ *   the fanned deck read the student's last five places once, at mount, when there were none
+ *   and the deck draws from the call
+ *   a tally of nothing is a zero count, and this app never states one
+ *   a student could put marks into a paper and had no way to get them out
+ *   the Redo button in the undo message is a button, and in the demo it only dismissed the message
+ *   HANDOVER, Making it feel smooth: do no work in a scroll handler. Read, store, act on the next frame
+ *   HANDOVER section 5 — the demo strip and the states it fires
+ *   HANDOVER section 5 — the demo strip's own controls
+ *   the island has to be told things from outside: a new page, a pull waiting, a message
+ *   P0-2 — the island can say the outbox drained, which is the other half of telling the truth about it
+ *   the waiting message counts what is waiting, instead of always seven
+ *   the undo message says what was undone, and says Redid when it is one
+ *   the quiet poll lights the dot and stops there, which is the whole of the rule
+ *   marks pulled in from the class are reported as marks from the class
+ *   Fit fits the page in the room, instead of meaning "100 %"
+ *   the reader opens in the livery the rest of the app is wearing
+ *   one page-number format, shared with the sheet's own corner
+ *   a passage is escaped before it is written into the caption
+ *   and "hold a card" is a hold on an iPad, not only a hover on a mouse
  */
 
 export function mountIsland(ctx){
@@ -41,12 +58,24 @@ const R=$('#rdr'),ISL=$('#isl'),CNT=$('#cnt'),DOT=$('#dot'),MSG=$('#msg'),
       TRAY=$('#tray'),SIZER=$('#sizer'),STAGE=$('#stage'),BACKP=$('#backp'),BACKL=$('#backl');
 
 const DOC=ctx.doc, TOTAL=ctx.total, FIRST=ctx.first;
-const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82',n:'#71808E'};
+const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82'};
 let page=ctx.page||FIRST, zoom=ctx.zoom||100, fit=ctx.fit!==false, rot=ctx.rot||0,
     warm=ctx.warm||0, livery=ctx.livery||'#4C8DF6',
-    cur=null, holdT=null, pending=false, open=null, jumpFrom=null,
+    cur=null, holdT=null, pending=false, open=null, jumpFrom=null, heldCard=false,
     bookmarks=new Set(ctx.bookmarks||[]);
-const pad=(n,t)=>String(n).padStart(String(t).length,'0');
+/* ONE PAGE-NUMBER FORMAT, NOT TWO. This padded to the width of the total
+   while the shell padded the sheet's own corner to at least four, so page
+   three of a twelve-page paper read "03" here and "0003" on the sheet a few
+   inches below it: the same number, twice, in two formats. Both sides use the
+   wider rule now, and this is the only formatter in this file. */
+const pad=(n,t)=>String(n).padStart(Math.max(4,String(t===undefined?TOTAL:t).length),'0');
+/* ANYTHING THE PAPER SAYS IS ESCAPED BEFORE IT BECOMES HTML. The fan card's
+   caption is a passage lifted out of the PDF, and it was going into an
+   attribute with only the quotes escaped and then into innerHTML with nothing
+   escaped — so a line reading "bolts & nuts < 8 mm" came out mangled, and a
+   line that happened to contain a tag came out as one. */
+const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const escA=t=>esc(t).replace(/"/g,'&quot;');
 
 /* ── the paper ─────────────────────────────────────────────────────── */
 /* HANDOVER section 1: the stand-in paper was here. The stage is rendered
@@ -54,43 +83,19 @@ const pad=(n,t)=>String(n).padStart(String(t).length,'0');
    article.sheetpg[data-pg] · .bmk · svg.ink · .marks · canvas · .textLayer
    · .pgno — so every query below still finds what it is looking for. */
 
-/* your last five places — recorded as you read, not a fixed list.
-   A place is a page you settled on: scroll past it and it does not count,
-   stop on it and it goes to the front of the deck.                      */
-const RECENT=[];
-/* THE KIT RECORDS WHERE YOU SETTLE, WHICH IS RIGHT AND IS NOT ENOUGH HERE.
-   RECENT starts empty on every load, so reopening a paper you have marked
-   fifty times showed an empty deck until you had scrolled somewhere new. The
-   store knows the pages you actually marked; they are merged in behind the
-   live ones, newest first, and the whole thing is still capped at five. */
-const DECK=()=>{
-  const out=RECENT.slice();
-  for(const [pg,k,tx] of ((ctx.recent&&ctx.recent())||[])){
-    if(!out.some(r=>r[0]===pg))out.push([pg,k,tx]);
-  }
-  return out.slice(0,5);
-};
-function noteOf(pg){
-  const m=[...WM.marks].reverse().find(x=>x.pg===pg);
-  if(m)return [m.k||'y', (m.ask||m.tx||'').trim()];
-  const h=document.querySelector(`.sheetpg[data-pg="${pg}"] h3`);
-  return ['n', h?h.textContent.replace(/\s+/g,' ').trim():'No marks on this page yet'];
-}
-function remember(pg){
-  const [k,q]=noteOf(pg);
-  const i=RECENT.findIndex(r=>r[0]===pg);
-  if(i===0){RECENT[0]=[pg,k,q];return}
-  if(i>0)RECENT.splice(i,1);
-  RECENT.unshift([pg,k,q]);
-  if(RECENT.length>5)RECENT.length=5;
-}
+/* your last five places — page, its mark colour, and the line you marked */
+/* ASKED EACH TIME IT IS DRAWN. Read once into a constant, this was whatever
+   the reader knew at mount — which is nothing, because the marks arrive after
+   it — so "Where you have been" was permanently empty however much you
+   marked. Same for the tallies below. */
+const RECENT=()=>ctx.recent();
 
 function paintCounter(first){
   const now=pad(page,TOTAL);
   const box=CNT.querySelector('.now');
   if(!box||first){
     CNT.innerHTML=`<span class="now">${[...now].map(d=>`<span class="d"><i>${d}</i></span>`).join('')}</span>`+
-                  `<span class="sl">/</span><span class="tot">${TOTAL}</span>`;
+                  `<span class="sl">/</span><span class="tot">${pad(TOTAL,TOTAL)}</span>`;
     return;
   }
   [...box.children].forEach((cell,i)=>{
@@ -119,8 +124,24 @@ const S={
  ask    :()=>`<span class="led" style="--k:${K.p}"></span><b>Question posted</b><span class="mut">anonymously</span>`,
  revise :()=>`<span class="led" style="--k:${K.r}"></span><b>Marked to revise</b><span class="eye">${ico.eye}only you</span>`,
  askq   :()=>`<span class="led" style="--k:${K.p}"></span><b>Question posted</b><span class="mut">anonymously</span>`,
- undo   :()=>`<span class="mini" style="color:var(--txt-2)">${ico.undo}</span><b>Undid a highlight</b><button class="act" aria-label="Redo">${ico.redo}</button>`,
- fresh  :()=>`<span class="led" style="--k:var(--lv)"></span><b>7 new marks</b><button class="act" aria-label="Pull them in">${ico.dl}</button>`,
+ /* IT SAID "Undid a highlight" WHATEVER YOU UNDID. undone() has always been
+    handed the word for the thing — a question, a colour change, a pen stroke —
+    and used it only to pick how long the message stayed up, so taking back a
+    question told the student they had taken back a highlight. It also never
+    said Redid, so the two halves of the same key were indistinguishable. */
+ undo   :()=>`<span class="mini" style="color:var(--txt-2)">${ico.undo}</span><b>${UNDO.redo?'Redid':'Undid'} ${UNDID[UNDO.what]||'a mark'}</b><button class="act" aria-label="Redo">${ico.redo}</button>`,
+ /* THE COUNT WAS THE LITERAL 7. waiting(n) is given the real number and threw
+    it away, so a paper with one new mark on it announced seven. */
+ fresh  :()=>`<span class="led" style="--k:var(--lv)"></span><b>${NEWN} new mark${NEWN===1?'':'s'}</b><button class="act" aria-label="Pull them in">${ico.dl}</button>`,
+ /* ARRIVING MARKS HAD NO MESSAGE OF THEIR OWN and borrowed `mark`, which is
+    the message for a mark the student has just made this second: it reads
+    MEAN[MARKK], the meaning of whichever colour they last used. Pulling in
+    eleven marks from the class therefore said "Definition · added to the
+    module glossary". This says what came in and who it came from, and when
+    nothing was waiting it names the thing to do rather than counting nothing. */
+ arrived:()=>NEWN>0
+   ? `<span class="led" style="--k:var(--lv)"></span><b>${NEWN} mark${NEWN===1?'':'s'} from the class</b><span class="mut">on the page now</span>`
+   : `<span class="led" style="--k:var(--lv)"></span><b>Up to date</b><span class="mut">carry on reading — the dot lights when the class marks something</span>`,
  offline:()=>{const n=ctx.unsent?.()||0;return `<span class="led w"></span><b>${n?'Not saved yet':'Offline'}</b><span class="mut">${n?`${n} waiting on this device`:'your work is kept until you reconnect'}</span>`},
  saved  :()=>`<span class="led" style="--k:var(--lv)"></span><b>Back online</b><span class="mut">${ctx.justSent?.()||0} saved</span>`
 };
@@ -132,6 +153,12 @@ const MEAN={y:['Exam likely','saved to revision'],
             p:['Question posted','anonymously'],
             r:['Marked to revise','only you']};
 let MARKK='y';
+/* what the last undo took back, and whether it was the redo half of the pair */
+const UNDO={what:'',redo:false};
+const UNDID={highlight:'a highlight',question:'a question',change:'a change',
+             colour:'a colour change',note:'a note',stroke:'a pen stroke'};
+/* how many marks the poll found, or the pull brought in */
+let NEWN=0;
 
 const restWidth=()=>12+22+14+CNT.offsetWidth+14+22+12;
 function toRest(){
@@ -164,6 +191,40 @@ function applyPage(){
   R.style.setProperty('--pw',Math.round(720*zoom/100)+'px');
   R.style.setProperty('--rot',rot+'deg');
 }
+/* THE READER OPENED IN DEFAULT BLUE WHATEVER LIVERY THE APP WAS WEARING.
+   `--lv` was set in exactly one place, the swatch handler, so it only ever
+   became true once the student opened the You tray and pressed a colour they
+   had already chosen. reader.css declares `--lv` on `.rdr` itself, so nothing
+   could inherit past it either — and the picker meanwhile drew the right
+   swatch as selected, which made the reader look like the one screen in the
+   app that had ignored the setting. It is applied at mount now. */
+function applyLivery(){R.style.setProperty('--lv',livery)}
+/* FIT MEANT "100 %", WHICH IS NOT A FIT. The branch set zoom=100 and stopped,
+   and applyPage turns that into a fixed 720px-wide page — so on a 13" iPad
+   held upright, Fit cut the bottom off every page, and the flag was written
+   to storage and read back at mount and never used for anything.
+
+   The page is laid out from its width: `--pw` is the width and the sheet is
+   `pageAspect` times as tall. A quarter turn swaps the two. So the zoom that
+   puts the whole page in the room is the smaller of the two that put its
+   height and its width there, clamped to the range the +/- buttons use. */
+function fitZoom(){
+  const r=(ctx.room&&ctx.room())||{w:STAGE.clientWidth-24,h:STAGE.clientHeight-74};
+  /* A VALUE OR A GETTER. The shell hands this over as a function, because the
+     aspect belongs to the page you are on and that changes; reading it as a
+     plain number made `aspect` a function, every arithmetic below NaN, and
+     the fit zoom NaN — which is a page with no width at all. */
+  const a=typeof ctx.pageAspect==='function'?ctx.pageAspect():ctx.pageAspect;
+  const aspect=Number.isFinite(a)&&a>0?a:1010/720;
+  const q=((rot%360)+360)%360, turned=q===90||q===270;
+  const tall=turned?1:aspect, wide=turned?aspect:1;
+  const byH=r.h>0?r.h/(720*tall)*100:100;
+  const byW=r.w>0?r.w/(720*wide)*100:100;
+  const z=Math.round(Math.min(220,Math.max(60,Math.min(byH,byW))));
+  /* Never NaN out of here. A zoom that is not a number is a page that is not
+     a size, and every mark on it loses its place. */
+  return Number.isFinite(z)?z:100;
+}
 function paintBookmarks(){
   $$('.sheetpg').forEach(el=>el.dataset.bm=bookmarks.has(+el.dataset.pg)?'1':'0');
 }
@@ -171,9 +232,9 @@ function paintBookmarks(){
 /* ── the two trays ─────────────────────────────────────────────────── */
 const LIV=ctx.liveries;
 function fanCards(){
-  return DECK().map(([n,k,q],i)=>{
+  return RECENT().map(([n,k,q],i)=>{
     const lines=[0,1,2,3,4,5,6].map(r=>`<i${r===2?` class="m" style="--k:${K[k]}"`:''}></i>`).join('');
-    return `<button class="card" data-i="${i}" data-pg="${n}" data-q="${q.replace(/"/g,'&quot;')}">
+    return `<button class="card" data-i="${i}" data-pg="${n}" data-q="${escA(q)}">
       ${lines}<span class="cn">${pad(n,TOTAL)}</span></button>`}).join('');
 }
 function trayPage(){return `
@@ -189,15 +250,21 @@ function trayPage(){return `
     <button class="${bookmarks.has(page)?'on':''}" data-bmk="1" aria-label="Bookmark this page">${ico.bm}</button>
   </div>
   <div class="lab">Where you have been<span class="v">last five</span></div>
-  <div class="fan" id="fan">${DECK().length?fanCards():'<span class="empty">Nowhere yet — read on.</span>'}</div>
+  <div class="fan" id="fan">${fanCards()}</div>
   <div class="cap" id="cap">Hold a card to see the line you marked.</div>`;
 }
-function trayMe(){return `
+function trayMe(){
+  /* COUNTED ONCE. The tray asked ctx.tally() three times while drawing
+     itself, and the three answers come from a live store: a mark landing
+     between two of them drew a tray whose tiles and whose Take-your-marks row
+     disagreed about what the student had done. */
+  const T=ctx.tally();
+  return `
   <div class="me">
-    <span class="av">${ctx.me.i}</span>
-    <span class="who"><b>${ctx.me.n}</b><span>${ctx.me.sub}</span></span>
+    <span class="av">${esc(ctx.me.i)}</span>
+    <span class="who"><b>${esc(ctx.me.n)}</b><span>${esc(ctx.me.sub)}</span></span>
   </div>
-  ${(()=>{const t=ctx.tally();
+  ${(()=>{const t=T;
     const tiles=[
       t.hl&&`<button class="tal" data-go="hl" style="--k:${K.y}"><b>${t.hl}</b><span>Highlight${t.hl===1?'':'s'}</span></button>`,
       t.bm&&`<button class="tal" data-go="bm" style="--k:var(--lv)"><b>${t.bm}</b><span>Bookmark${t.bm===1?'':'s'}</span></button>`,
@@ -212,7 +279,7 @@ function trayMe(){return `
       : `<div class="lab" style="margin-top:12px">Mark a line and it lands here</div>`;
   })()}
   <button class="rr" data-go="rr"><span class="ic">${ico.rrm}</span><b>Ready Room</b><span class="ch">${ico.ch}</span></button>
-  ${ctx.tally().hl+ctx.tally().rv?`<button class="rr" data-go="out"><span class="ic">${ico.dl}</span><b>Take your marks with you</b><span class="ch">${ico.ch}</span></button>`:''}
+  ${T.hl+T.rv?`<button class="rr" data-go="out"><span class="ic">${ico.dl}</span><b>Take your marks with you</b><span class="ch">${ico.ch}</span></button>`:''}
   <div class="lab">Appearance</div>
   <div class="segs">
     <button class="${R.dataset.look==='dark'?'on':''}" data-look="dark">Dark</button>
@@ -240,11 +307,38 @@ function fillTray(kind){
   TRAY.innerHTML = kind==='page'?trayPage():trayMe();
   if(kind==='page'){layoutFan(false);
     const fan=$('#fan'),cap=$('#cap');
+    const rest=()=>{cap.textContent='Hold a card to see the line you marked.'};
+    /* ESCAPED, not interpolated raw. This was innerHTML over a passage taken
+       straight out of the PDF — see esc() above for what that rendered. */
+    const show=c=>{cap.innerHTML=`<b>${pad(+c.dataset.pg,TOTAL)}</b> &nbsp;${esc(c.dataset.q)}`};
     fan.addEventListener('pointerenter',()=>layoutFan(true));
-    fan.addEventListener('pointerleave',()=>{layoutFan(false);
-      cap.textContent='Hold a card to see the line you marked.'});
-    $$('#fan .card').forEach(c=>c.addEventListener('pointerenter',()=>{
-      cap.innerHTML=`<b>${pad(+c.dataset.pg,TOTAL)}</b> &nbsp;${c.dataset.q}`}));
+    fan.addEventListener('pointerleave',()=>{layoutFan(false);rest()});
+    /* "HOLD A CARD" WAS A HOVER, ON A FILE WRITTEN FOR AN IPAD. The copy asks
+       the student to hold a card and the only listener was `pointerenter`, so
+       on touch and on pen the caption never appeared at all — the card was
+       simply tapped, the tray closed and the page moved. The hover stays for a
+       mouse, and a real hold is added for everything else: hold for 400ms and
+       the line appears, and the press that revealed it does not then also
+       count as the tap that jumps the page. */
+    $$('#fan .card').forEach(c=>c.addEventListener('pointerenter',e=>{
+      if(e.pointerType==='mouse'||e.pointerType===undefined)show(c)}));
+    let lpT=null,lpOn=false;
+    const drop=()=>{clearTimeout(lpT);lpT=null;lpOn=false};
+    fan.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse')return;
+      const c=e.target.closest('.card');if(!c)return;
+      lpOn=false;heldCard=false;layoutFan(true);
+      lpT=setTimeout(()=>{lpT=null;lpOn=true;heldCard=true;show(c)},400);
+    });
+    /* the mouse is on the hover path and nowhere near this one: letting a
+       mouse-up through here wipes the caption the hover had just written. */
+    fan.addEventListener('pointerup',e=>{
+      if(e.pointerType==='mouse')return;
+      if(!lpOn)rest();drop()});
+    fan.addEventListener('pointercancel',()=>{drop();rest()});
+    /* a long press on a touch screen otherwise raises the system menu over
+       the caption the long press was for */
+    fan.addEventListener('contextmenu',e=>{if(lpT||lpOn)e.preventDefault()});
   }else{
     const wr=$('#wr'),kn=$('#kn');
     const place=()=>{kn.style.left=(wr.value/100*100)+'%'};place();
@@ -262,7 +356,7 @@ function openTray(kind){
   fillTray(kind);requestAnimationFrame(()=>fillTray(kind));
 }
 function closeTray(){
-  open=null;ISL.removeAttribute('data-open');
+  open=null;heldCard=false;ISL.removeAttribute('data-open');
   /* Clipped is not gone. With the island back to 36px the tray's controls are
      invisible and still focusable, so tabbing through the reader walks into
      six buttons nobody can see. */
@@ -270,16 +364,11 @@ function closeTray(){
   ISL.style.height='36px';ISL.style.borderRadius='18px';
   ISL.style.width=restWidth()+'px';
 }
-/* THE DEMO HAS TEN PAGES IN THE DOM AND THIS HAS FIVE OUT OF A THOUSAND.
-   querySelector then scrollTo is right there and silently does nothing here:
-   every card in the deck, every cell in the page grid and the bookmark all
-   failed this way. The shell mounts the window around the page first and
-   lands on it when it exists. */
 function goTo(n){
+  const el=STAGE.querySelector(`.sheetpg[data-pg="${n}"]`);if(!el)return;
   const from=page;
+  STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
   if(Math.abs(n-from)>1)raiseBack(from);
-  page=n;paintCounter();
-  ctx.jump(n);
 }
 function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOTAL);BACKP.classList.add('on');
   clearTimeout(backT);backT=setTimeout(()=>BACKP.classList.remove('on'),12000)}
@@ -288,7 +377,9 @@ function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOT
 ISL.addEventListener('click',e=>{
   if(open){
     if(e.target.closest('#bk')){ open==='me' ? openTray('page') : closeTray(); return }
-    const c=e.target.closest('.card');if(c){goTo(+c.dataset.pg);closeTray();return}
+    /* a hold that revealed the caption is not also a tap that jumps the page */
+    const c=e.target.closest('.card');if(c){if(heldCard){heldCard=false;return}
+      goTo(+c.dataset.pg);closeTray();return}
     /* SCOPED TO THE TRAY, and the reason is a bug that was live.
 
        `.rdr` itself carries `data-look`, because that is how the stylesheet
@@ -312,12 +403,18 @@ ISL.addEventListener('click',e=>{
           k=inTray('[data-look]'),v=inTray('[data-lv]'),
           go=inTray('[data-go]');
     if(z){zoom=Math.min(220,Math.max(60,zoom+(+z.dataset.z)*10));fit=false;applyPage();fillTray('page');ctx.onView(zoom,fit,rot);return}
-    if(f){zoom=100;fit=true;applyPage();fillTray('page');ctx.onView(zoom,fit,rot);return}
-    if(r){rot=(rot+(+r.dataset.r)*90)%360;applyPage();ctx.onView(zoom,fit,rot);return}
+    /* was `zoom=100`, which is not a fit — see fitZoom() */
+    if(f){zoom=fitZoom();fit=true;applyPage();fillTray('page');ctx.onView(zoom,fit,rot);return}
+    /* a quarter turn swaps which side of the page has to fit, so a fit that
+       does not follow the rotation stops being one the moment you rotate. The
+       tray is redrawn with it because the readout above these buttons is the
+       zoom it just changed. */
+    if(r){rot=(rot+(+r.dataset.r)*90)%360;if(fit)zoom=fitZoom();
+          applyPage();fillTray('page');ctx.onView(zoom,fit,rot);return}
     if(bm){bookmarks.has(page)?bookmarks.delete(page):bookmarks.add(page);
            paintBookmarks();fillTray('page');ctx.onBookmark(page,bookmarks.has(page));return}
     if(k){R.dataset.look=k.dataset.look;fillTray('me');ctx.onLook(k.dataset.look);return}
-    if(v){livery=v.dataset.lv;R.style.setProperty('--lv',livery);fillTray('me');ctx.onLivery(livery);return}
+    if(v){livery=v.dataset.lv;applyLivery();fillTray('me');ctx.onLivery(livery);return}
     if(go){closeTray();ctx.onGo(go.dataset.go);return}
     return;
   }
@@ -352,7 +449,6 @@ BACKP.addEventListener('click',e=>{
   if(el)STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
   BACKP.classList.remove('on');
 });
-let settle;
 let scrollF=0;
 STAGE.addEventListener('scroll',()=>{
   if(scrollF)return;
@@ -362,13 +458,8 @@ STAGE.addEventListener('scroll',()=>{
     $$('.sheetpg').forEach(el=>{const d=Math.abs(el.offsetTop-74-STAGE.scrollTop);
       if(d<bd){bd=d;best=+el.dataset.pg}});
     if(best!==page){page=best;paintCounter();ctx.onPage(page)}
-    clearTimeout(settle);
-    /* settling on a page is what puts it in the deck — 700ms, so scrolling
-       past a page does not count as having been there */
-    settle=setTimeout(()=>{remember(page);if(open==='page')fillTray('page')},700);
   });
 },{passive:true});
-remember(FIRST);
 
 /* HANDOVER section 5: the demo's "fire a state" panel was here. */
 
@@ -377,7 +468,27 @@ window.islandSay=(name,ms,k)=>{if(k&&MEAN[k])MARKK=k;flash(name,ms)};
 
 /* HANDOVER section 5: the demo controls were here. Where the bar sits and
    which look is on are the student's settings now, not demo switches. */
-applyPage();applyWarm();paintBookmarks();paintCounter(true);toRest();
+/* THE VIEW THE STUDENT LEFT, ACTUALLY RESTORED. `fit` was persisted and read
+   back into a variable that nothing read, so a reader that was fitted when it
+   closed opened at whatever zoom happened to be stored beside it. */
+if(fit){
+  zoom=fitZoom();
+  /* AND THE SHELL IS TOLD. React sizes the spacers that stand in for pages it
+     has not rendered yet from its own copy of the zoom, so a fit applied here
+     and not reported left the spacers taller than the pages that replaced
+     them — the document got shorter as you scrolled and the scrollbar
+     jumped. Two owners of one number, told once. */
+  ctx.onView(zoom,fit,rot);
+}
+/* applyLivery is new here: see the note on it above for what its absence did. */
+applyPage();applyWarm();applyLivery();paintBookmarks();paintCounter(true);toRest();
+/* a fit is a relationship to the room, so it has to be redone when the room
+   changes — an iPad turned on its side, or the app's own chrome opening. */
+addEventListener('resize',()=>{
+  if(!fit)return;
+  const z=fitZoom();if(z===zoom)return;
+  zoom=z;applyPage();if(open==='page')fillTray('page');ctx.onView(zoom,fit,rot);
+});
 /* what the rest of the reader can ask the island to do */
 return {
   goTo,
@@ -386,14 +497,22 @@ return {
   bookmarks:()=>bookmarks,
   /* a page arriving from anywhere but the scroller — the panel, a deep link */
   setPage(n){if(n===page)return;page=n;paintCounter()},
-  /* the quiet poll found some. Light the dot and say so, and touch nothing else */
-  waiting(n){pending=n>0;DOT.dataset.live=n>0?'1':'0';if(n>0)flash('fresh',3600)},
-  /* they arrived. Say what came in */
-  arrived(n){pending=false;DOT.dataset.live='0';flash('mark',1400)},
+  /* THE QUIET POLL WAS NOT QUIET. This lit the dot and then flashed `fresh`,
+     which widens the island to 560px and takes the whole pill over for 3.6
+     seconds — on a sixty-second timer, unasked, while the student is reading.
+     marks.js:250 states the rule: the only thing the poll may do is light the
+     dot. The dot IS the notification; pressing it pulls the marks in and
+     arrived() below reports that, which is a confirmation the student caused.
+     The count is kept so the message says the right number if the dot is
+     pressed, or if the tool bar asks for it. */
+  waiting(n){NEWN=n;pending=n>0;DOT.dataset.live=n>0?'1':'0'},
+  /* they arrived. Say what came in, and from whom — this used to flash
+     `mark`, the message for a mark the student had just made themselves. */
+  arrived(n){NEWN=n;pending=false;DOT.dataset.live='0';flash('arrived',n>0?2600:1800)},
   /* something was taken back, or put back. The message is the whole of the
      acknowledgement: an undo on a page you are not looking at is otherwise
      silent, and the student is left unsure whether the key did anything. */
-  undone(what,isRedo){MARKK='y';flash('undo',isRedo?1400:2600)},
+  undone(what,isRedo){UNDO.what=what;UNDO.redo=!!isRedo;flash('undo',isRedo?1400:2600)},
   say(name,ms,k){if(k&&MEAN[k])MARKK=k;flash(name,ms)},
   offline(v){v?flash('offline'):toRest()},
   /* the outbox emptied. Said once, and only when something actually went up */

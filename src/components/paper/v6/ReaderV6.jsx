@@ -382,7 +382,14 @@ export default function ReaderV6({
       },
 
       /* ── what the chrome tells us ─────────────────────────────────── */
-      onPage(n) { setPage(n); write(`${key}-page`, String(n)); panel.current?.repaint(); },
+      onPage(n) {
+        setPage(n); write(`${key}-page`, String(n)); panel.current?.repaint();
+        /* THE RESUME PIN. onPlace was called from nowhere except the three You
+           tiles, which handed it "hl"/"bm"/"rv" — so the Flight Deck's Reopen
+           pill either carried a filter name as a page number or sat on page 1
+           for ever. It is told the page, which is what it is for. */
+        onPlace?.(n);
+      },
       onView(z, f, r) {
         setZoom(z); setRot(r);
         write(`${key}-view`, JSON.stringify({ zoom: z, fit: f, rot: r }));
@@ -401,15 +408,66 @@ export default function ReaderV6({
         if (picked) onLivery?.(picked.id);
       },
       onWarm(v) { write("pw-rdr6-warm", String(v)); },
+      /* THE THREE TILES IN THE YOU TRAY WENT NOWHERE. They fell through to
+         onPlace, which App implements as "remember where I am in this paper" —
+         so pressing "284 Highlights" wrote the string "hl" into the Flight
+         Deck's resume pin as a page number, and the pin has been carrying it
+         ever since. Each tile now opens the panel on the filter it names, and
+         onPlace is only ever given a page. */
       onGo(what) {
         if (what === "rr") { onOpenThread?.(null); return; }
         /* Section 4's last row: a student can pull their marks out of a paper. */
         if (what === "out") { store.current?.takeOut(); return; }
-        onPlace?.(what);
+        if (what === "hl" || what === "bm" || what === "rv") {
+          panel.current?.show?.(what);
+          return;
+        }
       },
+      /* What the island needs to fit a page rather than jump to 100%. */
+      pageAspect: () => {
+        const box = sizes[(island.current?.page?.() || 1) - 1];
+        return box && box.w ? box.h / box.w : 1010 / 720;
+      },
+      room: () => {
+        const el = document.querySelector("#stage");
+        return el
+          ? { w: el.clientWidth - CLEARS, h: el.clientHeight - 96 }
+          : { w: 720, h: 900 };
+      },
+      /* SEARCH THE PAPER, not only the marks on it. The panel's box says
+         "Search the paper, a mark, or a name" and searched one of the three,
+         so on a paper with no marks it reported that the paper does not
+         contain a word printed on page three. The text layer is already here;
+         it had simply never been offered. */
+      findInPaper(q) {
+        const query = String(q || "").trim();
+        if (!model || query.length < 2) return [];
+        const hay = model.text;
+        const low = hay.toLowerCase();
+        const needle = query.toLowerCase();
+        const out = [];
+        let at = low.indexOf(needle);
+        while (at !== -1 && out.length < 40) {
+          let pg = 1;
+          for (let i = 0; i < model.pageStart.length; i++) {
+            if (model.pageStart[i] <= at) pg = i + 1; else break;
+          }
+          out.push({
+            page: pg,
+            before: hay.slice(Math.max(0, at - 44), at).replace(/\s+/g, " "),
+            hit: hay.slice(at, at + query.length),
+            after: hay.slice(at + query.length, at + query.length + 44).replace(/\s+/g, " "),
+          });
+          at = low.indexOf(needle, at + query.length);
+        }
+        return out;
+      },
+      onAgree(markId, on) { store.current?.agree(markId, on); },
+      onDeleteMark(markId) { store.current?.deleteMark(markId); panel.current?.repaint(); },
       onPull() {
         const n = store.current?.pull() || 0;
         island.current?.arrived(n);
+        island.current?.repaint?.();
         panel.current?.repaint();
       },
       async onRedo() {
@@ -428,7 +486,7 @@ export default function ReaderV6({
       onDropped(g) { store.current?.dropped(g); },
       onConverted(g, kind, k) { store.current?.converted(g, kind, k); },
       onRecoloured(g, k) { store.current?.recoloured(g, k); },
-      onStroke(pgEl, path, pts, tool, S) { store.current?.stroke(pgEl, path, pts, tool, S); },
+      onStroke(pgEl, path, pts, tool, S, drawn) { store.current?.stroke(pgEl, path, pts, tool, S, drawn); },
       onErasedInk(ids, split) { store.current?.erasedInk(ids, split); },
       onSnapshot(pgEl, a, b) { store.current?.snapshot(pgEl, a, b); },
       /* A note or a question written in the composer and dropped on the page.
@@ -478,6 +536,12 @@ export default function ReaderV6({
       /* Only put the warning away once there is genuinely nothing left. */
       if (!out.left) island.current?.offline(false);
       else island.current?.offline(true);
+      /* AND A WRITE THE SERVER WILL NEVER TAKE IS SAID OUT LOUD. `stuck` was
+         returned by the outbox and ignored here, so a refused op counted
+         silently to eight while the island reported "waiting on this device"
+         for ever. It is set aside now, and this is where the student hears
+         about it. */
+      if (out.stuck) island.current?.say?.("offline", 2600);
     };
     drain();
     const stopDraining = whenBackOnline(drain);
@@ -661,7 +725,9 @@ export default function ReaderV6({
 
       <button className="ptab" id="tab" type="button" aria-label="Open the panel">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14.6 5.4L8 12l6.6 6.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        <b id="tabn">3</b>
+        {/* Filled by the panel. It used to carry a literal 3, which is what a
+            paper with nothing new on it showed until the text layer landed. */}
+        <b id="tabn" />
       </button>
 
       <aside className="pan" id="pan">

@@ -168,7 +168,12 @@
    WRONG for v6: `--paper` is #FFFFFF in both looks here — it is the surround
    that changes, and warmth shifts the paper's white point rather than
    darkening it — so chalk on this page would be a pencil nobody can see. */
-.rdr .ink path { stroke: var(--ink, #3A4149); }
+/* A FALLBACK, NOT AN OVERRIDE. This was `.rdr .ink path { stroke: … }`, an
+   author rule, and an author rule always beats the presentation attribute the
+   live stroke sets — so every stroke was drawn in graphite while you drew it
+   and only snapped to its real colour when the save came back. Offline it
+   never snapped at all. `:not([stroke])` hands the argument to the stroke. */
+.rdr .ink path:not([stroke]) { stroke: var(--ink, #3A4149); }
 .rdr [data-ink="yellow"]   { --ink: #F5C23C; }
 .rdr [data-ink="blue"]     { --ink: #5BB4F0; }
 .rdr [data-ink="green"]    { --ink: #43C08A; }
