@@ -32,29 +32,14 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 /* Each build's source, its destination, and the cuts made on the way — every
    cut named, with the reason, so "verbatim" means something checkable. */
 const BUILDS = [
-  {
-    v: "v5",
-    src: "docs/reader/v5/reader.css",
-    out: "src/components/paper/reader.css",
-    cuts: [{
-      /* A SYNTAX ERROR RATHER THAN A DESIGN OPINION. v5's header says the
-         demo-only styles "are not included", and the strip that removed them
-         took `.demo{position:absolute;...` and left the second line behind:
-
-           .toast.open{opacity:1;transform:translateX(-50%)}
-             display:flex;align-items:center;gap:4px;padding:6px;font-size:11.5px}
-           .rdr[data-bar="bottom"] .demo{bottom:76px}
-
-         A browser recovers by hunting for the next `{`, which is the `.demo`
-         rule's own — so it throws away BOTH. Nothing real is lost (both are
-         demo chrome), but a stylesheet a parser has to recover from is one
-         nobody can reason about, and it would be copied forward into every
-         future version. */
-      why: "the orphaned .demo declarations, which are a parse error",
-      find: /\n\s*display:flex;align-items:center;gap:4px;padding:6px;font-size:11\.5px\}\n\.rdr\[data-bar="bottom"\] \.demo\{bottom:76px\}/,
-      guard: /\n\s*display:flex;align-items:center;gap:4px;padding:6px/,
-    }],
-  },
+  /* v5 IS NOT GENERATED ANY MORE, and this note is here so it does not come
+     back a third time. The v5 reader was replaced by v6 and its scoped
+     stylesheet was deleted in b75188f — nothing imports it, and it uses --nk,
+     a variable nothing declares, so check:tokens fails the moment the file
+     exists. Running this script used to write it again, and a later `git add
+     -A` committed it: a deleted file resurrected by a generator that had not
+     been told. If v5 is ever needed, take it from docs/reader/v5/reader.css
+     and give --nk a home first. */
   {
     v: "v6",
     src: "docs/reader/v6/reader.css",
