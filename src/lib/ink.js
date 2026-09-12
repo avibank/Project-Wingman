@@ -35,9 +35,15 @@ export async function fetchInk(me, paperId) {
   return data || [];
 }
 
+/* A STROKE IS MORE THAN A LINE. opacity, cap and variant were all dropped on
+   the way out and invented on the way back — 0023 gives them columns, and
+   paper_ink_add takes them. A database that has not had 0023 run yet falls
+   through to the direct insert below, which simply writes the columns it has:
+   the three extra keys are stripped there rather than failing the write. */
 export async function createStroke({
   paperId, moduleCode, me, page, tool = "pen", colour = "graphite",
-  width = 0.0032, ring = "solo", points = [], id = null,
+  width = 0.0032, opacity = 1, cap = "round", variant = 0,
+  ring = "solo", points = [], id = null,
 }) {
   if (!me || !paperId || !page || !points.length) return null;
   // Rounded to four places on the way out: that is a fifth of a pixel on a
@@ -46,6 +52,7 @@ export async function createStroke({
   const { data, ok, error } = await rpcFirst("paper_ink_add", {
     uid: me, p_paper: paperId, p_module: moduleCode, p_page: page,
     p_points: pts, p_tool: tool, p_colour: colour, p_width: width, p_ring: ring,
+    p_opacity: opacity, p_cap: cap, p_variant: variant,
     /* Named on the way in when the caller has one, so a stroke that was undone
        and redone is the SAME stroke to everyone else rather than a new one
        beside the hole the first left. Left out, redo is a second stroke. */
@@ -54,7 +61,7 @@ export async function createStroke({
     const r = await supabase.from("paper_ink").insert({
       ...(id ? { id } : {}),
       paper_id: paperId, module_code: moduleCode, author_id: me,
-      page, tool, colour, width, ring, points: pts,
+      page, tool, colour, width, ring, points: pts, opacity, cap, variant,
     }).select().single();
     return { data: r.data, ok: !r.error, error: r.error };
   });

@@ -25,7 +25,7 @@ import { anchorFor } from "../../../lib/paperMarks.js";
 import { MEANING_OF, colourKey, INK_OF } from "../../../lib/readerIcons.js";
 import {
   fetchAnnotations, createAnnotation, updateAnnotation, deleteAnnotation, askOnPassage,
-  markOrphaned,
+  markOrphaned, agreeWithMark,
 } from "../../../lib/annotations.js";
 import { fetchDiscussion, insertReply } from "../../../lib/threads.js";
 import { fetchProfiles } from "../../../lib/squadron.js";
@@ -155,7 +155,21 @@ export function createMarkStore({
       pg,
       k: colourKey(row.colour || MEANING_OF.y),
       kind: KIND_FROM_DB[row.kind] || "hl",
-      who: row.kind === "question" ? "anon" : (row.author_id === me ? "me" : row.author_id),
+      /* YOUR OWN QUESTION IS YOURS. This read `row.kind === "question" ? "anon"`
+         first, so it threw your identity away on your own rows — although the
+         server already anonymises other people's (0018 nulls author_id for
+         somebody else's anonymous mark, and always returns yours with your id
+         on it). The cost was everywhere: your questions never reached the You
+         tallies, never appeared in "where you have been", were excluded from
+         the panel's Mine and included in its Class.
+
+         Two fields now, because they answer two different questions. `who` is
+         whose it is, and decides what you may do to it. `anon` is how it must
+         be shown, and is true for every question including your own. */
+      who: row.author_id === me ? "me" : (row.kind === "question" ? "anon" : row.author_id),
+      anon: row.kind === "question",
+      agree: Number(row.agree_count) || 0,
+      iAgree: Boolean(row.i_agree),
       t: ago(row.updated_at || row.created_at),
       tx: model.text.slice(at.start, at.end).replace(/\s+/g, " ").trim(),
       /* The card reads `ask` for the words on a mark, whatever kind it is —
@@ -178,7 +192,13 @@ export function createMarkStore({
            record: the next reader to open this paper should not have to
            re-discover that the passage is gone. */
         orphans.add(row.id);
-        if (!row.orphaned) markOrphaned(row.id, true);
+        /* `status`, not `orphaned` — paper_marks_for returns a column called
+           status and there has never been an `orphaned` one, so this guard was
+           always undefined and a write went out for every unresolvable mark,
+           every time the paper was opened. paper_annotation_status is also the
+           one paper RPC with no uid argument, so those were unauthenticated
+           writes on other people's rows. */
+        if (row.status !== "orphaned") markOrphaned(row.id, me, true);
         continue;
       }
       placed.set(row.id, at);
@@ -191,11 +211,15 @@ export function createMarkStore({
     return added;
   }
 
+  /* The three tiles in the You tray. A question is not a highlight, and now
+     that your own questions come back as yours they would have been counted
+     as one. */
   function counts() {
     let hl = 0, rv = 0;
     for (const m of WM.marks) {
       if (m.who !== "me") continue;
-      if (m.k === "r") rv += 1; else hl += 1;
+      if (m.k === "r") { rv += 1; continue; }
+      if (m.kind === "hl" || m.kind === "ul" || m.kind === "st") hl += 1;
     }
     return { hl, rv, orphans: orphans.size };
   }
@@ -210,12 +234,40 @@ export function createMarkStore({
      passage falls inside the window are resolved and drawn. What that saves
      is the expensive half — resolveAnchor over a 3MB string, and a Range and
      a set of boxes per mark. */
+  /* ONE FULL READ, THEN ONLY WHAT IS NEW. The cache key is the window, and
+     the window moves with every page turn — so every turn was a miss, and
+     every miss called paper_marks_for for the WHOLE paper and threw away all
+     but the rows near the window. On a paper with a term's worth of marks that
+     is the entire table, per page turn, for ever.
+
+     The rows are held here instead. The first call reads everything once; each
+     later call asks only for what has changed since, which is what p_since has
+     been for since 0018 and what this passed null to. */
+  let known = null;
+  let readAt = null;
+  async function rowsForPaper() {
+    if (known === null) {
+      known = await fetchAnnotations(me, paperId);
+      readAt = new Date().toISOString();
+      return known;
+    }
+    const since = readAt;
+    readAt = new Date().toISOString();
+    const fresh = await fetchAnnotations(me, paperId, since);
+    if (fresh.length) {
+      const byId = new Map(known.map((r) => [r.id, r]));
+      for (const r of fresh) byId.set(r.id, r);
+      known = [...byId.values()];
+    }
+    return known;
+  }
+
   async function loadWindow(from, to) {
     if (!paperId || !model) return;
     const key = `${from}-${to}`;
     if (fetched.has(key)) return;
     fetched.add(key);
-    const all = await fetchAnnotations(me, paperId);
+    const all = await rowsForPaper();
     /* Work this device has not managed to send yet is drawn alongside what the
        server returned, so reopening a paper on a dead connection shows the
        marks rather than an empty page. They are shaped like rows because
@@ -252,7 +304,7 @@ export function createMarkStore({
      the student's eyes. So it collects, and stops. */
   async function poll() {
     if (!paperId || !model) return 0;
-    const all = await fetchAnnotations(me, paperId);
+    const all = await rowsForPaper();
     const queued = new Set(unsent(paperId).marks.map((a) => a.id));
     pending = all.filter((r) => !rows.has(r.id) && !queued.has(r.id)
         && !pending.some((p) => p.id === r.id))
@@ -410,7 +462,16 @@ export function createMarkStore({
     const pg = Number(pgEl.dataset.pg);
     const spans = spansIn(pages.get(pg)?.text);
     const off = offsetsOf(range, spans, itemsFor(pg));
-    if (!off) { WM.drop(mark.g); return; }
+    if (!off) {
+      /* WM.drop filters the JS list and emits; it does not touch the DOM, and
+         nothing on this path triggers a relayout. So the quads the chrome had
+         just stamped stayed on the page: a highlight that looked made, saved
+         nothing, and vanished at the next zoom with no explanation. */
+      WM.drop(mark.g);
+      document.querySelectorAll(`.mkq[data-g="${mark.g}"]`).forEach((q) => q.remove());
+      trouble("lost");
+      return;
+    }
 
     placed.set(mark.id, off);
     mark.tx = model.text.slice(off.start, off.end).replace(/\s+/g, " ").trim();
@@ -540,12 +601,37 @@ export function createMarkStore({
         redo: () => remove(row.id),
       });
     }
-    if (row && row.author_id === me) await deleteAnnotation(g, me);
+    if (row && row.author_id === me) {
+      if (!(await deleteAnnotation(g, me))) remember("mark.del", paperId, { id: g, me });
+    } else if (!row) {
+      /* NO ROW MEANS IT NEVER REACHED THE SERVER, so what has to go is the
+         queued insert. remove() has always done this and dropped() — the path
+         the pill's bin and the eraser actually use — never did: mark something
+         offline, delete it, reconnect, and the queued add replayed and put it
+         back. outbox.js has a whole annihilation mechanism for exactly this
+         and this function never reached it. */
+      remember("mark.del", paperId, { id: g, me });
+    }
+  }
+
+  /* A MARK MADE OFFLINE HAS NO ROW, and both of these returned early on that,
+     so the page repainted, the island confirmed it, and nothing was stored or
+     queued. The queued insert is the record until it lands, so patching that
+     is patching the mark. */
+  function patchQueued(g, patch) {
+    const op = unsent(paperId).marks.find((a) => a.id === g);
+    if (!op) return false;
+    remember("mark.add", paperId, { ...op, ...patch });
+    return true;
   }
 
   async function converted(g, kind, k) {
     const row = rows.get(g);
-    if (!row || row.author_id !== me) return;
+    if (!row) {
+      patchQueued(g, { kind: KIND_TO_DB[kind] || "highlight", colour: MEANING_OF[k] });
+      return;
+    }
+    if (row.author_id !== me) return;
     const was = { kind: row.kind, colour: row.colour };
     const patch = { kind: KIND_TO_DB[kind] || "highlight", colour: MEANING_OF[k] };
     did({ what: "change", undo: () => repatch(g, was), redo: () => repatch(g, patch) });
@@ -554,7 +640,8 @@ export function createMarkStore({
 
   async function recoloured(g, k) {
     const row = rows.get(g);
-    if (!row || row.author_id !== me) return;
+    if (!row) { patchQueued(g, { colour: MEANING_OF[k], ring: ringFor(k) }); return; }
+    if (row.author_id !== me) return;
     const was = { colour: row.colour, ring: row.ring };
     const patch = { colour: MEANING_OF[k], ring: ringFor(k) };
     did({ what: "colour", undo: () => repatch(g, was), redo: () => repatch(g, patch) });
@@ -603,9 +690,26 @@ export function createMarkStore({
      goes to paper_ink, which has no anchor column to smuggle a position into.
      Points are already fractions of the unrotated page: the chrome draws into
      a 0-1000 viewBox, and the table wants 0-1. */
-  async function stroke(pgEl, path, pts, tool, S) {
+  async function stroke(pgEl, path, pts, tool, S, drawn = {}) {
     const pg = Number(pgEl.dataset.pg);
-    const width = (S.size[tool.id] || 3) / 1000;
+    /* WHAT WAS ACTUALLY DRAWN, handed over by the chrome, rather than the
+       slider number read back afterwards. `drawn.width` is in the page's own
+       0-1000 viewBox units with the highlighter's nib multiplier and the
+       page's drawn width already in it, so dividing by 1000 gives the fraction
+       of the page the table wants — and the stroke reloads at the thickness it
+       was drawn at, at any zoom. The fallback is the old arithmetic, for a
+       caller that has not been updated. */
+    const width = drawn.width != null
+      ? Math.max(0.0004, drawn.width / 1000)
+      : (S.size[tool.id] || 3) / 1000;
+    const opacity = drawn.opacity == null ? 1 : drawn.opacity;
+    const cap = drawn.cap || "round";
+    const variant = drawn.variant || 0;
+    /* The palette's name when the colour is one of the five, the hex itself
+       when it is one of the grid's twenty-four. INK_OF only knows the five and
+       returned undefined for everything else, which became "graphite". */
+    const picked = S.colour[tool.id];
+    const colour = INK_OF[picked] || (/^#/.test(String(picked)) ? String(picked) : "graphite");
     /* 0017 KNOWS TWO NIBS AND THE TOOL TABLE HAS SIX. The column's CHECK is
        `tool in ('pen','marker')` and its comment says what they mean: pen
        lays colour down solid, marker lays it down translucent the way a
@@ -617,9 +721,7 @@ export function createMarkStore({
        tool was wired. */
     const row = await createStroke({
       paperId, moduleCode, me, page: pg,
-      tool: (tool.id === "hl" || tool.id === "mkr") ? "marker" : "pen",
-      colour: INK_OF[S.colour[tool.id]] || "graphite",
-      width, ring: "solo",
+      tool: tool.id, colour, width, opacity, cap, variant, ring: "solo",
       points: pts.map(([x, y]) => [x / 1000, y / 1000]),
     });
     if (!row) {
@@ -628,23 +730,22 @@ export function createMarkStore({
       const localId = newLocalId();
       remember("ink.add", paperId, {
         id: localId, paperId, moduleCode, me, page: pg,
-        tool: (tool.id === "hl" || tool.id === "mkr") ? "marker" : "pen",
-        colour: INK_OF[S.colour[tool.id]] || "graphite",
-        width, ring: "solo",
+        tool: tool.id, colour, width, opacity, cap, variant, ring: "solo",
         points: pts.map(([x, y]) => [x / 1000, y / 1000]),
       });
       path.dataset.id = localId;
-      path.dataset.ink = INK_OF[S.colour[tool.id]] || "graphite";
-      path.removeAttribute("stroke");
+      /* The live stroke keeps the colour it was drawn in. It used to have its
+         stroke attribute stripped and a palette NAME put on it instead, so a
+         free colour turned grey the instant the save failed. */
+      if (!/^#/.test(colour)) { path.dataset.ink = colour; path.removeAttribute("stroke"); }
       trouble("offline");
       return;
     }
     path.dataset.id = row.id;
-    /* The live stroke was drawn with the tool's own colour inline, which is
-       the chrome's business. Once it is a record it is painted by its name
-       like every other stroke, so there is one place a colour comes from. */
-    path.dataset.ink = row.colour;
-    path.removeAttribute("stroke");
+    /* A named colour is painted by its name, so the stylesheet stays the one
+       owner of what a palette colour looks like. A free colour has no name to
+       be painted by and keeps the stroke it was drawn with. */
+    if (!/^#/.test(String(row.colour))) { path.dataset.ink = row.colour; path.removeAttribute("stroke"); }
     inkRows.push(row);
     did({
       what: "stroke",
@@ -888,10 +989,25 @@ export function createMarkStore({
       const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
       /* The stored NAME and nothing else. The stylesheet decides what it
          looks like, so no colour string is built here. */
-      p.setAttribute("data-ink", s.colour);
+      /* A NAME IF IT HAS ONE, THE COLOUR ITSELF IF IT DOES NOT. The palette's
+         eight names are a design decision the stylesheet owns; the free
+         colours the grid offers are not in it, and storing one as "graphite"
+         — which is what INK_OF did with any hex — turned olive into dark grey
+         the moment the save came back. */
+      if (/^#/.test(s.colour)) p.setAttribute("stroke", s.colour);
+      else p.setAttribute("data-ink", s.colour);
+      /* WIDTH IS A FRACTION OF THE PAGE, so it reloads at the thickness it was
+         drawn at whatever the zoom was. It used to store the raw slider number
+         and redraw it as viewBox units: a 12 pt highlighter stroke is about 32
+         viewBox units when it is drawn and came back as 12. */
       p.setAttribute("stroke-width", String((s.width || 0.003) * 1000));
       p.setAttribute("fill", "none");
-      p.setAttribute("stroke-linecap", "round");
+      /* Opacity and cap round-trip too. Both were dropped on the way out and
+         invented on the way back, so a marker at 55% and a highlighter at 38%
+         both returned fully opaque, covering the words they were drawn over,
+         and a chisel highlighter came back round-capped. */
+      p.setAttribute("stroke-opacity", String(s.opacity == null ? 1 : s.opacity));
+      p.setAttribute("stroke-linecap", s.cap || "round");
       p.setAttribute("stroke-linejoin", "round");
       p.setAttribute("d", s.points.map(([x, y], i) => `${i ? "L" : "M"}${x * 1000} ${y * 1000}`).join(""));
       p.dataset.id = s.id;
@@ -923,7 +1039,21 @@ export function createMarkStore({
       return {
         id, k: colourKey(row.colour || MEANING_OF.y),
         kind: KIND_FROM_DB[row.kind] || "hl",
-        who: row.kind === "question" ? "anon" : (row.author_id === me ? "me" : row.author_id),
+        /* YOUR OWN QUESTION IS YOURS. This read `row.kind === "question" ? "anon"`
+         first, so it threw your identity away on your own rows — although the
+         server already anonymises other people's (0018 nulls author_id for
+         somebody else's anonymous mark, and always returns yours with your id
+         on it). The cost was everywhere: your questions never reached the You
+         tallies, never appeared in "where you have been", were excluded from
+         the panel's Mine and included in its Class.
+
+         Two fields now, because they answer two different questions. `who` is
+         whose it is, and decides what you may do to it. `anon` is how it must
+         be shown, and is true for every question including your own. */
+      who: row.author_id === me ? "me" : (row.kind === "question" ? "anon" : row.author_id),
+      anon: row.kind === "question",
+      agree: Number(row.agree_count) || 0,
+      iAgree: Boolean(row.i_agree),
         t: ago(row.updated_at || row.created_at),
         tx: row.anchor?.quote || "",
       };
@@ -1046,6 +1176,30 @@ export function createMarkStore({
         return out;
       } finally { draining = false; }
     },
+    /* AGREEING WITH A MARK. `agree_with_mark` has existed since 0018, the
+       client wrapper since the same day, and neither was ever called — so the
+       count column was written by nothing and read by nothing. The panel's
+       card has the control now, so the store needs the verb. */
+    async agree(id, on) {
+      const m = WM.marks.find((x) => x.g === id);
+      if (m) {
+        m.iAgree = Boolean(on);
+        m.agree = Math.max(0, (m.agree || 0) + (on ? 1 : -1));
+        WM.emit();
+      }
+      const ok = await agreeWithMark(id, me, Boolean(on));
+      if (!ok && m) {
+        /* Put it back rather than leave a number nobody can trust. */
+        m.iAgree = !on;
+        m.agree = Math.max(0, (m.agree || 0) + (on ? -1 : 1));
+        WM.emit();
+        trouble("offline");
+      }
+      return ok;
+    },
+    /* A deletion from the panel is the same deletion as from the page, so it
+       goes through the same function and lands in the same undo history. */
+    deleteMark: (id) => dropped(id),
     setRotation(v) { rot = v; relayout(); },
     /* A page arriving from React, or leaving. */
     page(pg, els) {

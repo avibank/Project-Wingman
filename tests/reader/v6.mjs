@@ -1012,9 +1012,12 @@ group("v6 · the tools that mark words", () => {
       await armAndSelect(page, "note");
       await page.waitForTimeout(1400);
       const id = await page.evaluate(() => window.WM.marks.at(-1).id);
-      /* The card opens on a tap, and the box to write in is inside it — the
-         shipped sheet hides `.thr` until `.mcard.open`. */
-      await page.click(`.mcard[data-m="${id}"] .qt`);
+      /* THE CARD IS ALREADY OPEN. It used to need a tap on the quote, because
+         `onPlaced` fired for one mark kind only — so making a Note said "Note
+         saved" and left the student to go and find the box to write it in,
+         and the panel listed it as "no words yet". A note opens where it is
+         written now, which is what the locked design asks for; tapping the
+         quote here would close the card again. */
       await page.waitForSelector(`.mcard[data-m="${id}"].open`, { timeout: 5000 });
       await page.fill(`.mcard[data-m="${id}"] .reply input[data-note]`, "the freewheel unit is the point");
       await page.click(`.mcard[data-m="${id}"] .reply button`);

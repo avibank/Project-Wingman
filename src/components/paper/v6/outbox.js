@@ -150,6 +150,7 @@ export async function flush(handlers) {
   const list = read();
   if (!list.length) return { sent: 0, left: 0, stopped: false };
   let sent = 0;
+  let stuck = null;
   for (const op of list) {
     const fn = handlers[op.t];
     if (!fn) { forget(op.k); continue; }   // an op from an older build
@@ -158,16 +159,50 @@ export async function flush(handlers) {
     if (!ok) {
       /* Counted rather than retried forever. A write the server will never
          accept — a CHECK violation, a paper that has been deleted — would
-         otherwise block everything behind it for good. */
+         otherwise block everything behind it for good.
+
+         AND IT DID. The count was kept and reported and then the run returned
+         anyway, so the dead op stayed at the head of an ordered queue and
+         every later mark and stroke sat behind it for ever: one question whose
+         thread insert failed (`question_has_thread` refuses a question with a
+         null thread) was enough to stop this device saving anything again,
+         while the island said "N waiting on this device" indefinitely.
+
+         Eight tries is the end of it. The op is set aside — kept, not thrown
+         away, so it can be looked at — and the queue moves on. Ordering still
+         holds for everything the server has not refused. */
       const all = read();
       const mine = all.find((o) => o.k === op.k);
       if (mine) { mine.tries = (mine.tries || 0) + 1; write(all); }
-      return { sent, left: read().length, stopped: true, stuck: mine?.tries >= 8 ? op : null };
+      if ((mine?.tries || 0) >= 8) {
+        forget(op.k);
+        dead(op);
+        stuck = op;
+        continue;
+      }
+      return { sent, left: read().length, stopped: true, stuck: null };
     }
     forget(op.k);
     sent++;
   }
-  return { sent, left: read().length, stopped: false };
+  return { sent, left: read().length, stopped: false, stuck };
+}
+
+/* SET ASIDE, NOT LOST. An op the server has refused eight times is moved here
+   rather than deleted: the student's work is still on this device, and a
+   support conversation can see what would not go. Capped, because a dead
+   letter that grows for ever is a second bug. */
+const DEAD = "pw-rdr-outbox-dead";
+function dead(op) {
+  try {
+    const held = JSON.parse(localStorage.getItem(DEAD) || "[]");
+    held.push({ ...op, diedAt: Date.now() });
+    localStorage.setItem(DEAD, JSON.stringify(held.slice(-40)));
+  } catch { /* private mode — the op is gone either way */ }
+}
+
+export function deadLetters() {
+  try { return JSON.parse(localStorage.getItem(DEAD) || "[]"); } catch { return []; }
 }
 
 /* The three moments a browser tells you the world may have changed. Returns an

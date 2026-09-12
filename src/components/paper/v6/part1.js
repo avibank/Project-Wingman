@@ -1,9 +1,13 @@
-/* GENERATED — do not edit. Source: docs/reader/v6/reader.js, part 1 (WM, the shared list).
+/* THE SHARED MARK LIST — window.WM.
  *
- * The chrome is finished; this is it, copied. Every departure from the file
- * that was handed over is listed below with the reason. Regenerate with
- *   node scripts/build-reader-v6.mjs
- * and `npm run check:paper` refuses if this file and the source have drifted.
+ * Hand-owned since the reader stopped being generated. It used to be cut out
+ * of docs/reader/v6/reader.js by scripts/build-reader-v6.mjs, which is gone:
+ * the chrome that file handed over is now the source, not the output, and a
+ * fix here is an ordinary edit rather than a find/replace entry in a build
+ * script. docs/reader/v6/ is kept as the original, for reference only.
+ *
+ * WM is the one list every part of the reader draws from. The store owns the
+ * rows; this owns what is on the page right now.
  */
 
 export function mountWM(){
