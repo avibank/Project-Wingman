@@ -123,10 +123,24 @@ if (secret) {
 
 if (!haveTables) {
   haveTables = new Set();
+  /* A 401 ON ONE TABLE IS AN ANSWER, NOT A BROKEN KEY.
+     This used to treat any 401 as "the key does not match the project URL" and
+     exit, which was true for as long as every table answered the anon role.
+     0021 closed three of them on purpose — paper_annotations, paper_ink and
+     user_progress are reached through SECURITY DEFINER functions now, and
+     "permission denied for table" is exactly what they should say. The gate
+     was reporting the fix as a failure and stopping before it checked
+     anything else.
+
+     A closed table still proves the project is reachable and the table is
+     there, so it counts as present. A key that is genuinely wrong fails every
+     probe, and that is what is checked at the end. */
+  let closed = 0, reached = 0;
   const probe = async (t) => {
     try {
       const r = await fetch(`${base}/rest/v1/${t}?select=*&limit=0`, { headers: headers(key) });
-      if (r.status === 401) throw new Error("401 — the key does not match the project URL");
+      reached += 1;
+      if (r.status === 401 || r.status === 403) { closed += 1; haveTables.add(t); return; }
       if (r.ok) haveTables.add(t);
     } catch (e) {
       console.error(`could not reach ${base}: ${e.message}`);
@@ -134,6 +148,11 @@ if (!haveTables) {
     }
   };
   await Promise.all([...needTables.keys()].map(probe));
+  if (reached && closed === reached) {
+    console.error(`every table refused ${base}: the key does not match the project URL`);
+    process.exit(1);
+  }
+  if (closed) console.log(`  ${closed} table(s) closed to the anon key, as 0021 intends`);
 }
 
 // ----------------------------------------------------------------------- report
