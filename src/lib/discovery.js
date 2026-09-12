@@ -115,3 +115,49 @@ export function headcountLine(members, online) {
 export function activityLine(members, activeWeek) {
   return `${members} member${members === 1 ? "" : "s"} · ${activeWeek} active this week`;
 }
+
+/* ONE DOOR OUT AS WELL AS IN. Creating a squadron makes the row, puts the
+   maker in it as owner and mints the invite token in a single statement —
+   0022's create_squadron. Two calls from the client would leave an ownerless
+   room behind every time the second one failed, and discovery would then show
+   it to strangers.
+
+   Returns the new id, or null. Null covers the rate limit as well as a bad
+   name: five rooms a day is enough for a class and not enough to fill the
+   discovery screen with empties. */
+export async function createSquadron(me, { name, moduleCode, blurb, policy } = {}) {
+  if (!me || !name?.trim() || !moduleCode) return null;
+  const { data, error } = await supabase.rpc("create_squadron", {
+    p_me: me, p_name: name.trim(), p_module: moduleCode,
+    p_blurb: blurb?.trim() || null, p_policy: policy || "invite_only",
+  });
+  if (error) return fail(error, null);
+  return data || null;
+}
+
+export async function renameSquadron(me, squadronId, name, blurb) {
+  if (!me || !squadronId || !name?.trim()) return false;
+  const { data, error } = await supabase.rpc("rename_squadron", {
+    p_me: me, p_squadron: squadronId, p_name: name.trim(), p_blurb: blurb ?? null,
+  });
+  if (error) return fail(error, false);
+  return Boolean(data);
+}
+
+/* A fresh link, and the old one stops working the moment this returns. The
+   control behind "somebody shared it who shouldn't have". */
+export async function revokeInvite(me, squadronId) {
+  const { data, error } = await supabase.rpc("revoke_invite", { p_me: me, p_squadron: squadronId });
+  if (error) return fail(error, null);
+  return data || null;
+}
+
+/* The token out of a pasted link, whatever shape it arrives in: a full URL, a
+   bare path, or the eight characters on their own. Somebody pasting from a
+   group chat gets whatever their phone put on the clipboard. */
+export function tokenFromLink(text) {
+  const s = String(text || "").trim();
+  if (!s) return null;
+  const m = s.match(/(?:\/j\/|^)([A-Za-z0-9]{6,16})\/?$/);
+  return m ? m[1] : null;
+}

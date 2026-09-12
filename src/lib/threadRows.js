@@ -23,6 +23,11 @@ export const toThread = (r) => ({
 export const toReply = (r) => ({
   id: r.id, threadId: r.thread_id, body: r.body,
   authorId: r.author_id, createdAt: r.created_at,
+  // 0022. One level of nesting, and null is the normal case: an answer has no
+  // parent, a reply to an answer carries that answer's id. roomModel flattens
+  // anything deeper rather than trusting the column, so a bad row cannot grow
+  // a third level on screen.
+  parentId: r.parent_id ?? null,
 });
 
 /* ANCHORED OR NOT, NEVER HALF — 0008's CHECK constraint, mirrored here.
@@ -52,4 +57,5 @@ export const fromThread = (t) => ({
 export const fromReply = (r) => ({
   id: r.id, thread_id: r.threadId, body: r.body,
   author_id: r.authorId, created_at: r.createdAt,
+  parent_id: r.parentId ?? null,
 });

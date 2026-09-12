@@ -584,12 +584,32 @@ export function postModulePost(session, { moduleId, body, authorId = 'u_you', ti
 /* A reply belongs to the thread. No moment, no mark, wherever it was written.
    Written in People it appears under the video; written under the video it
    appears in People. Same row, two queries. */
-export function postReply(session, { threadId, body, authorId = 'u_you' }) {
+export function postReply(session, { threadId, body, authorId = 'u_you', parentId = null }) {
   const text = body.trim();
   if (!text) return session;
   return { ...session, replies: [...session.replies, {
-    id: `${threadId}.${newId('R')}`, threadId,
+    id: `${threadId}.${newId('R')}`, threadId, parentId: parentId || null,
     body: text, authorId, createdAt: new Date().toISOString() }] };
+}
+
+/* Removing your own. Nothing else in this file deletes what a person typed,
+   and that rule still holds for somebody ELSE's words — this is only ever
+   called for a row whose author is the caller, and the delete is scoped by
+   author_id in the table write as well, so a client that gets it wrong writes
+   nothing rather than removing a stranger's answer. */
+export function removeThread(session, threadId) {
+  return {
+    ...session,
+    threads: session.threads.filter((t) => t.id !== threadId),
+    replies: session.replies.filter((r) => r.threadId !== threadId),
+  };
+}
+
+export function removeReply(session, replyId) {
+  return {
+    ...session,
+    replies: session.replies.filter((r) => r.id !== replyId && r.parentId !== replyId),
+  };
 }
 
 /* A comment cannot be un-asked from this screen. It exists in People and

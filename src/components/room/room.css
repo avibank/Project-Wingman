@@ -46,7 +46,7 @@
 .app:has(.room) .deck-inner > .content--full{
   height: 100%; min-height: 0; display: flex; max-width: none; margin: 0; padding: 0; width: 100%;
 }
-.app:has(.room) .content--full > .room{ flex: 1 1 auto; min-height: 0; }
+.app:has(.room) .content--full > .room{ flex: 1 1 auto; min-height: 0; min-width: 0; }
 
 /* Full bleed: the room takes the app bar's height too. data-roomfull is
    stamped by App rather than inferred, so the header, the shell and the room
@@ -61,11 +61,21 @@
 }
 .app[data-roomfull="1"] .room{ border: 0; border-radius: 0; }
 
-/* ------------------------------------------------------------ §2 · SHELL */
+/* ------------------------------------------------------------ §2 · SHELL --
+   EVERY SELECTOR IN THIS FILE IS SCOPED UNDER .room, and that is not a style
+   preference. This stylesheet was written from a reference demo that used bare
+   names — .pane .rail .card .composer .pill .msg — and they went global and
+   collided with the module screen, the lesson composer and the Flight Deck
+   hero card. It only surfaced AFTER somebody visited the Ready Room, because
+   this chunk is lazy. `npm run check:collisions` exists because of it.
+   ========================================================================= */
 .room{
   display: grid;
   grid-template-columns: clamp(300px, 26vw, 420px) minmax(0, 1fr);
-  min-height: 0;
+  /* min-width as well as min-height. As a flex item the room's automatic
+     minimum is its content, so on a phone the widest bubble decided the
+     width of the whole screen and the transcript ran off the right edge. */
+  min-height: 0; min-width: 0;
   background: var(--ground);
   color: var(--t1);
 }
@@ -73,19 +83,45 @@
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-
+.room .vis-hidden{
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 .room .rail, .room .pane{ min-width: 0; min-height: 0; }
+
+/* ONE RESET FOR EVERY CONTROL IN THE ROOM. Without it a button falls back to
+   the user agent's buttonface border and the room's own surfaces show through
+   as pale boxes — which is exactly how the right-seat faces rendered as three
+   bordered tiles. Scoped, and weaker than any class rule below, so the
+   controls that DO want a border simply declare one. */
+.room button{
+  background: none; border: 0; color: inherit; font: inherit;
+  cursor: pointer; text-align: inherit;
+}
+.room .eyebrow{
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--t3); margin: 0;
+}
+.room .sp{ flex: 1; }
+
+/* One text button, used wherever a sentence has to carry an action rather than
+   sit above one. It is a link in everything but element. */
+.room .linky{
+  color: var(--active); font: inherit; font-weight: 500; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px;
+}
 
 /* ------------------------------------------------------------- §3 · RAIL */
 .room .rail{
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   background: var(--panel);
   border-right: 1px solid var(--edge-soft);
 }
 .room .rail:focus-visible{ outline: 2px solid var(--active); outline-offset: -2px; }
 
-.room .rail-top{ display: flex; align-items: center; gap: 10px; padding: 14px 16px 12px; }
+.room .rail-top{ display: flex; align-items: center; gap: 4px; padding: 14px 14px 10px; }
 .room .mark{ display: flex; align-items: baseline; gap: 8px; margin-right: auto; min-width: 0; }
 .room .mark > span{
   font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em;
@@ -99,10 +135,14 @@
 .room .icon-btn{
   width: 34px; height: 34px; min-height: 0; border-radius: 999px; display: grid;
   place-items: center; color: var(--t2); background: none; border: 0; cursor: pointer;
-  flex: 0 0 auto;
+  flex: 0 0 auto; position: relative; transition: background .16s var(--ease), color .16s var(--ease);
 }
 .room .icon-btn svg{ width: 18px; height: 18px; }
 .room .icon-btn:hover{ background: var(--raised); color: var(--t1); }
+.room .pip{
+  position: absolute; top: 6px; right: 7px; width: 7px; height: 7px;
+  border-radius: 999px; background: var(--active);
+}
 
 .room .search{
   margin: 0 14px 12px; display: flex; align-items: center; gap: 9px;
@@ -115,529 +155,773 @@
   background: none; border: 0; outline: none; width: 100%; min-width: 0;
   color: var(--t1); font: inherit; font-size: 14px;
 }
-/* --t2, not --t3: measured 4.05:1 on --raised in runway/night, under the
-   4.5 floor. A placeholder is the label of an empty field and has to be
-   readable, not merely present. */
-.room .search input::placeholder{ color: var(--t2); }
+.room .search input::placeholder{ color: var(--t3); }
 
 /* the right seat block */
-.room .rightseat{ padding: 2px 14px 14px; border-bottom: 1px solid var(--edge-soft); }
-.room .eyebrow{
-  display: flex; align-items: center; gap: 8px; margin: 0 0 9px 2px;
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--t3);
-}
-.room .eyebrow::after{ content: ""; flex: 1; height: 1px; background: var(--edge-soft); }
-.room .seat-row{ display: flex; gap: 8px; }
+.room .rightseat{ padding: 2px 14px 13px; border-bottom: 1px solid var(--edge-soft); }
+.room .rightseat .eyebrow{ margin: 0 0 9px 2px; }
+.room .seat-row{ display: flex; gap: 6px; }
 .room .seat{
-  flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column;
-  align-items: center; gap: 6px; padding: 9px 4px; border-radius: 12px;
-  background: var(--raised); border: 1px solid transparent; cursor: pointer; color: inherit;
+  flex: 1; display: grid; justify-items: center; gap: 5px; padding: 8px 4px 7px;
+  border-radius: 11px; min-height: 0; transition: background .16s var(--ease);
 }
-.room .seat:hover{ border-color: var(--active); }
+.room .seat:hover{ background: var(--raised); }
 .room .seat-name{
   font-size: 11.5px; color: var(--t2); max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .room .seat-none{ margin: 0; font-size: 12.5px; color: var(--t3); }
-.room .seat-av{ position: relative; display: block; flex: 0 0 auto; }
-.room .dot{
-  position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px;
-  border-radius: 999px; border: 2.5px solid var(--panel); background: var(--t3);
-}
-.room .dot.on{ background: var(--ok); }
 .room .seat-cta{
-  width: 100%; margin-top: 9px; min-height: 0; display: flex; align-items: center;
-  justify-content: center; gap: 8px; padding: 9px; border-radius: 999px;
-  border: 1px solid var(--active); background: transparent; color: var(--active);
-  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  width: 100%; margin-top: 9px; display: flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 9px; border-radius: 999px; border: 1px solid var(--edge);
+  color: var(--t1); background: none; cursor: pointer; font-size: 13px; font-weight: 500;
+  transition: background .16s var(--ease);
 }
+.room .seat-cta:hover{ background: var(--raised); }
 .room .seat-cta svg{ width: 15px; height: 15px; }
-.seat-cta:hover,
-.room .seat-cta[aria-current="true"]{ background: var(--active-fill); color: var(--on-fill); }
+.room .seat-cta.on{ background: var(--active-fill); border-color: transparent; color: var(--on-fill); }
 
-/* The rail runs to the bottom-left corner, which is where the report pill
-   floats, so its last row needs to be able to clear it. */
-.room .rail-scroll{ overflow-y: auto; overscroll-behavior: contain;
-  padding-bottom: calc(20px + var(--rpt-h)); min-height: 0; }
-.room .group-head{
-  display: flex; align-items: center; gap: 8px; margin: 0;
-  padding: 16px 16px 7px; font-family: var(--font-mono); font-size: 10px;
-  letter-spacing: .16em; text-transform: uppercase; color: var(--t3);
+/* THE LIVE SEAT, in the rail. One card rather than three faces: when the seat
+   is taken, who is in it is the only fact the rail has to carry. */
+.room .copilot{
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px;
+  align-items: center; padding: 9px 10px; border-radius: 12px; width: 100%;
+  text-align: left; cursor: pointer; min-height: 0;
+  background: color-mix(in oklch, var(--active) 14%, transparent);
+  border: 1px solid color-mix(in oklch, var(--active) 40%, transparent);
 }
-.room .group-head b{ font-weight: 400; }
-.room .group-head::after{ content: ""; flex: 1; height: 1px; background: var(--edge-soft); }
-.room .rail-none{ margin: 0; padding: 2px 16px 8px; font-size: 12.5px; color: var(--t3); }
+.room .copilot:hover{ background: color-mix(in oklch, var(--active) 20%, transparent); }
+.room .copilot-id{ min-width: 0; }
+.room .copilot-id b{ display: block; font-size: 13.5px; font-weight: 600; }
+.room .copilot-id > span{
+  display: block; font-size: 11.5px; color: var(--t2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.room .pulse{
+  width: 7px; height: 7px; border-radius: 999px; background: var(--ok);
+  animation: room-pulse 2.4s var(--ease) infinite;
+}
+@keyframes room-pulse{ 0%, 100%{ opacity: 1 } 50%{ opacity: .35 } }
 
-/* ONE ROW ANATOMY for squadrons and modules alike — this is what makes the
-   rail read as one list instead of a chat list stacked on a channel tree. */
+.room .rail-scroll{ overflow-y: auto; padding-bottom: 14px; }
+.room .group-head{
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 14px 16px 6px; margin: 0;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--t3);
+}
+.room .group-head .linky{
+  font-family: var(--font-ui); font-size: 11px; letter-spacing: 0; text-transform: none;
+}
+.room .rail-none{ margin: 0; padding: 14px 16px; font-size: 12.5px; color: var(--t2); }
+
+/* ONE ROW, TWO KINDS. A squadron and a module sit on the same grid, and that
+   is what makes the rail read as one list rather than two trees. */
 .room .row{
   width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-  column-gap: 12px; align-items: center; padding: 10px 16px; text-align: left;
-  position: relative; background: none; border: 0; cursor: pointer;
-  color: inherit; font: inherit; min-height: 0;
+  grid-template-areas: "av line meta" "av snip meta";
+  column-gap: 11px; align-items: center; padding: 9px 14px; text-align: left;
+  background: none; border: 0; color: inherit; cursor: pointer; min-height: 0;
+  position: relative; transition: background .14s var(--ease);
 }
 .room .row:hover{ background: var(--raised); }
-/* --t3 measures 4.05:1 on --raised in runway/night, so the quiet text lifts a
-   tier the moment the row's background does. Without this the snippet and the
-   time become less readable exactly when the row is being pointed at. */
-.row:hover .row-snip, .row:hover .row-time,
-.room .row[aria-current="true"] .row-snip, .room .row[aria-current="true"] .row-time{ color: var(--t2); }
 .room .row[aria-current="true"]{ background: var(--raised); }
 .room .row[aria-current="true"]::before{
-  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+  content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
   border-radius: 0 3px 3px 0; background: var(--active);
 }
-.room .row:focus-visible{ outline: 2px solid var(--active); outline-offset: -2px; }
-.room .row-line{ display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.room .row .av, .room .row .mod-icon{ grid-area: av; }
+.room .row-line{ grid-area: line; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .room .row-name{
-  font-size: 14.5px; font-weight: 500; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; min-width: 0;
+  font-size: 14px; font-weight: 500; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
 }
-.room .row-time{
-  margin-left: auto; font-family: var(--font-mono); font-size: 10.5px;
-  color: var(--t3); flex: 0 0 auto; font-variant-numeric: tabular-nums;
-}
+.room .row-time{ margin-left: auto; font-size: 11px; color: var(--t3); flex: 0 0 auto; }
 .room .row-snip{
-  grid-column: 2; font-size: 13px; color: var(--t3); margin-top: 1px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+  grid-area: snip; font-size: 12.5px; color: var(--t2); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.room .row-snip em{ font-style: normal; color: var(--t2); }
-.room .row-meta{ grid-column: 3; grid-row: 2; display: flex; justify-content: flex-end; }
+.room .row-snip em{ font-style: normal; color: var(--t3); }
+.room .row-meta{ grid-area: meta; display: grid; gap: 4px; justify-items: end; }
+.room .row-where{ font-size: 10.5px; color: var(--t3); }
 .room .badge{
-  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
-  background: var(--active-fill); color: var(--on-fill); font-size: 11px;
-  font-weight: 700; display: grid; place-items: center;
-  font-variant-numeric: tabular-nums;
+  min-width: 19px; height: 19px; padding: 0 6px; border-radius: 999px;
+  display: grid; place-items: center; background: var(--active-fill);
+  color: var(--on-fill); font-size: 11px; font-weight: 600;
 }
+.room .badge.quiet{ background: var(--raised); color: var(--t2); border: 1px solid var(--edge); }
+.room .mutedi{ width: 14px; height: 14px; color: var(--t3); }
 
+/* ------------------------------------------------------------ §3b · MARKS */
 .room .av{
-  width: 38px; height: 38px; min-height: 0; border-radius: 999px; display: grid;
-  place-items: center; font-weight: 600; font-size: 14px; flex: 0 0 auto;
-  color: var(--t1);
-  background: oklch(from var(--active) l c var(--av-h, h) / .22);
+  width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 13px; font-weight: 600; letter-spacing: .01em; flex: 0 0 auto;
+  background: oklch(.62 .115 var(--av-h, 250)); color: oklch(.14 0 0);
 }
-.room .av.sm{ width: 30px; height: 30px; font-size: 12px; }
-.room .av.lg{ width: 44px; height: 44px; font-size: 15px; }
-.room .av.sq{ border-radius: 11px; }
+.room .av.sm{ width: 28px; height: 28px; font-size: 11px; }
+.room .av.lg{ width: 46px; height: 46px; font-size: 15px; }
+.room .av.sq{ border-radius: 12px; font-family: var(--font-mono); font-size: 12px; }
+.room .avwrap{ position: relative; display: inline-grid; }
+.room .facebtn{ padding: 0; min-height: 0; background: none; border: 0; cursor: pointer; display: inline-grid; }
+.room .dot{
+  position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px;
+  border-radius: 999px; background: var(--ok); border: 2.5px solid var(--panel);
+}
+.room .dot.away{ background: var(--caution); }
 .room .mod-icon{
-  width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
-  background: var(--raised); flex: 0 0 auto; font-family: var(--font-mono);
-  font-size: 12px; font-weight: 600; color: var(--t2); letter-spacing: .02em;
+  width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--sunk); border: 1px solid var(--edge-soft); color: var(--t2);
+  font-family: var(--font-mono); font-size: 12px; font-weight: 500; flex: 0 0 auto;
 }
-.room .row[aria-current="true"] .mod-icon{ background: var(--active-fill); color: var(--on-fill); }
 
 /* ------------------------------------------------------------- §4 · PANE */
-.room .pane{ display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--ground); }
-.room .pane:focus-visible{ outline: 2px solid var(--active); outline-offset: -2px; }
-.room .pane-blank{ grid-row: 1 / -1; display: grid; place-items: center; color: var(--t3); }
-.room .pane-none{ margin: 22px 2px; font-size: 14px; color: var(--t3); }
-
+.room .pane{
+  /* A COLUMN, NOT A THREE-ROW GRID. It was grid-template-rows: auto 1fr auto,
+     which only holds while a screen has exactly three children. The chat has
+     five — header, pinned notice, transcript, reply preview, composer — so the
+     pinned notice took the 1fr row, the transcript took the `auto` one and the
+     composer fell into an implicit row off the bottom. Flex makes the
+     scrolling middle the only thing that grows, whatever chrome a screen adds
+     above or below it. */
+  position: relative; display: flex; flex-direction: column;
+  background: var(--ground); min-width: 0; min-height: 0;
+}
+.room .pane > *{ flex: 0 0 auto; }
+.room .pane > .scroll{ flex: 1 1 auto; }
+.room .pane:focus-visible{ outline: none; }
 .room .pane-head{
-  display: flex; align-items: center; gap: 12px; padding: 11px 20px;
-  border-bottom: 1px solid var(--edge-soft); background: var(--panel); min-height: 62px;
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  border-bottom: 1px solid var(--edge-soft); background: var(--panel);
 }
-.room .h-id{ min-width: 0; }
-/* One line, then an ellipsis. The head used to hold the fixed word "Thread",
-   so it could never overflow; now it holds a question, and a long one would
-   push the sub-line down and grow the header. */
-.room .h-title{ margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.2;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.room .h-sub{ margin: 1px 0 0; font-size: 12.5px; color: var(--t3); }
-.room .back{
-  display: none; width: 32px; height: 32px; min-height: 0; border-radius: 999px;
-  place-items: center; color: var(--t2); background: none; border: 0; cursor: pointer;
-  flex: 0 0 auto;
+.room .pane-head .back{ display: none; }
+.room .h-id{
+  min-width: 0; margin-right: auto; background: none; border: 0; padding: 0;
+  text-align: left; color: inherit; min-height: 0;
 }
-.room .back svg{ width: 19px; height: 19px; }
-.room .back:hover{ background: var(--raised); }
+.room button.h-id{ cursor: pointer; }
+.room .h-title{
+  margin: 0; font-size: 15.5px; font-weight: 600; letter-spacing: -.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.room button.h-id:hover .h-title{ text-decoration: underline; text-underline-offset: 3px; }
+.room .h-sub{
+  margin: 1px 0 0; font-size: 12px; color: var(--t2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.room .scroll{ overflow-y: auto; min-height: 0; min-width: 0; }
+.room .pane-none{
+  margin: 26px auto; max-width: 42ch; text-align: center; color: var(--t2);
+  font-size: 13.5px; display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.room .pane-none svg{ width: 16px; height: 16px; color: var(--t3); }
 
-.room .scroll{ overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
-
-/* --- §4a squadron = group chat --- */
-.room .transcript{
-  padding: 18px 20px 24px; display: flex; flex-direction: column; gap: 3px;
-  max-width: 1100px; margin: 0 auto; width: 100%;
+.room .pane-blank{
+  flex: 1 1 auto; display: grid; place-content: center; justify-items: center;
+  gap: 16px; text-align: center; padding: 40px 24px;
 }
+.room .blank-mark{
+  width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center;
+  background: var(--panel); border: 1px solid var(--edge-soft);
+}
+.room .blank-mark svg{ width: 30px; height: 30px; color: var(--active); }
+.room .pane-blank h2{ margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.015em; }
+.room .pane-blank p{ margin: 0; color: var(--t2); max-width: 38ch; }
+.room .blank-acts{ display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* --------------------------------------------------- §4a · SQUADRON CHAT */
+.room .transcript{ padding: 18px 22px 8px; display: flex; flex-direction: column; gap: 2px; }
 .room .daybreak{
-  align-self: center; margin: 10px 0 14px; padding: 4px 12px; border-radius: 999px;
-  background: var(--raised); color: var(--t2); font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  align-self: center; margin: 16px 0 10px; font-size: 11px; color: var(--t3);
+  background: var(--panel); border: 1px solid var(--edge-soft);
+  padding: 3px 11px; border-radius: 999px;
 }
-.room .msg{ display: flex; gap: 9px; align-items: flex-end; max-width: min(68ch, 74%); }
-.room .msg + .msg{ margin-top: 2px; }
-.room .msg.first{ margin-top: 12px; }
-.room .msg.out{ align-self: flex-end; flex-direction: row-reverse; }
-.room .msg .av{ visibility: hidden; }
-.room .msg.first .av{ visibility: visible; }
-.room .bubble{
-  background: var(--panel); border: 1px solid var(--edge-soft); border-radius: 14px;
-  padding: 8px 12px 7px; position: relative; min-width: 0;
+.room .newmark{
+  display: flex; align-items: center; gap: 10px; margin: 12px 0 6px;
+  color: var(--active); font-size: 11.5px; font-weight: 500;
 }
-.room .msg.out .bubble{
-  background: var(--active-fill); border-color: transparent; color: var(--on-fill);
+.room .newmark::before, .room .newmark::after{
+  content: ""; height: 1px; flex: 1;
+  background: color-mix(in oklch, var(--active) 45%, transparent);
 }
-.room .msg.first .bubble{ border-top-left-radius: 5px; }
-.room .msg.out.first .bubble{ border-top-left-radius: 14px; border-top-right-radius: 5px; }
-.room .bubble p{ margin: 0; font-size: 14.5px; overflow-wrap: anywhere; }
-.room .who{ font-size: 12px; font-weight: 600; color: var(--active); margin: 0 0 2px; }
-.room .msg.out .who{ color: inherit; }
-.room .stamp{
-  float: right; margin: 6px 0 -2px 10px; font-family: var(--font-mono);
-  font-size: 9.5px; color: var(--t3); font-variant-numeric: tabular-nums;
-}
-.room .msg.out .stamp{ color: inherit; opacity: .75; }
-/* The per-message controls stay out of the way until the row is touched;
-   they are never the thing the eye lands on in a transcript. */
-.room .msg-acts{ display: flex; gap: 2px; opacity: 0; }
-.room .msg:hover .msg-acts, .room .msg:focus-within .msg-acts{ opacity: 1; }
-.room .msg-acts .icon-btn{ width: 26px; height: 26px; }
-.room .msg-acts .icon-btn svg{ width: 13px; height: 13px; }
 
-.room .composer{ padding: 12px 20px 16px; background: var(--panel); border-top: 1px solid var(--edge-soft); }
-.room .composer{ display: flex; align-items: flex-end; gap: 9px; }
+.room .msg{
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 9px;
+  align-items: flex-end; position: relative; border-radius: 12px;
+  transition: background .4s var(--ease);
+}
+.room .msg + .msg.first{ margin-top: 10px; }
+.room .msg[data-lit="true"]{ background: color-mix(in oklch, var(--active) 18%, transparent); }
+.room .msg .facebtn{ visibility: hidden; }
+.room .msg.first .facebtn{ visibility: visible; }
+.room .msg.out{ grid-template-columns: minmax(0, 1fr); justify-items: end; }
+.room .bubble{
+  max-width: min(560px, 78%); padding: 7px 11px 5px; position: relative;
+  border-radius: 14px 14px 14px 4px; background: var(--raised);
+}
+.room .msg:not(.first) .bubble{ border-radius: 14px; }
+.room .msg.out .bubble{
+  border-radius: 14px 14px 4px 14px;
+  background: color-mix(in oklch, var(--active) 26%, var(--raised));
+}
+.room .msg.out:not(.first) .bubble{ border-radius: 14px; }
+.room .who{
+  margin: 0 0 2px; font-size: 12px; font-weight: 600;
+  color: oklch(.72 .105 var(--av-h, 250));
+}
+.room .bubble p.body{ margin: 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.room .bubble p.body.gone{ color: var(--t3); font-style: italic; }
+.room .stamp{
+  float: right; margin: 6px 0 0 10px; font-size: 10.5px; color: var(--t3);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.room .stamp em{ font-style: normal; }
+.room .stamp svg{ width: 14px; height: 14px; }
+.room .stamp .read{ color: var(--active); }
+.room .quote{
+  display: block; margin: 0 0 5px; padding: 5px 9px; width: 100%; text-align: left;
+  border: 0; border-left: 3px solid var(--active); border-radius: 5px; cursor: pointer;
+  background: color-mix(in oklch, var(--ground) 55%, transparent); min-height: 0;
+}
+.room .quote b{ display: block; font-size: 11.5px; color: var(--active); }
+.room .quote span{
+  display: block; font-size: 12.5px; color: var(--t2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.room .reacts{ display: flex; gap: 4px; margin: 4px 0 1px; flex-wrap: wrap; }
+.room .react{
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px;
+  border-radius: 999px; background: var(--panel); border: 1px solid var(--edge-soft);
+  font-size: 11.5px; color: var(--t2); cursor: pointer; min-height: 0;
+}
+.room .react.mine{ border-color: var(--active); color: var(--t1); }
+.room .msg-acts{
+  position: absolute; top: -13px; display: none; gap: 2px; padding: 2px; z-index: 3;
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 999px;
+}
+.room .msg .msg-acts{ right: 4px; }   /* top-right on both sides: on an
+     incoming bubble the left corner is where the sender's name sits, and the
+     pill covered it */
+.room .msg:hover .msg-acts, .room .msg:focus-within .msg-acts{ display: flex; }
+.room .msg-acts .icon-btn{ width: 28px; height: 28px; }
+.room .msg-acts svg{ width: 15px; height: 15px; }
+
+.room .typingrow{
+  display: flex; align-items: center; gap: 9px; padding: 4px 22px 10px;
+  color: var(--t3); font-size: 12.5px; margin: 0;
+}
+.room .tdots{ display: inline-flex; gap: 3px; }
+.room .tdots i{
+  width: 5px; height: 5px; border-radius: 999px; background: var(--t3);
+  animation: room-bounce 1.1s infinite;
+}
+.room .tdots i:nth-child(2){ animation-delay: .15s }
+.room .tdots i:nth-child(3){ animation-delay: .3s }
+@keyframes room-bounce{
+  0%, 60%, 100%{ transform: translateY(0); opacity: .5 }
+  30%{ transform: translateY(-3px); opacity: 1 }
+}
+
+.room .pinned{
+  display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+  background: var(--panel); border-bottom: 1px solid var(--edge-soft);
+  font-size: 12.5px; color: var(--t2);
+}
+.room .pinned > svg{ width: 15px; height: 15px; color: var(--caution); flex: 0 0 auto; }
+.room .pin-body{
+  min-width: 0; text-align: left; color: inherit; font: inherit; padding: 0;
+  cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: none; border: 0; min-height: 0;
+}
+.room .pin-body b{ color: var(--t1); font-weight: 500; }
+
+.room .jump{
+  position: absolute; right: 22px; bottom: 84px; z-index: 4;
+  display: flex; align-items: center; gap: 7px; padding: 7px 13px;
+  border-radius: 999px; background: var(--active-fill); color: var(--on-fill);
+  font-size: 12.5px; font-weight: 500; border: 0; cursor: pointer; min-height: 0;
+}
+.room .jump svg{ width: 15px; height: 15px; }
+
+.room .composer{
+  display: flex; align-items: flex-end; gap: 8px; padding: 12px 16px 14px;
+  border-top: 1px solid var(--edge-soft); background: var(--panel);
+}
+.room .replying{
+  display: flex; align-items: center; gap: 10px; margin: 10px 16px 0; padding: 7px 11px;
+  border-left: 3px solid var(--active); border-radius: 6px;
+  background: var(--raised); font-size: 12.5px;
+}
+.room .replying div{ min-width: 0; }
+.room .replying b{ display: block; color: var(--active); font-size: 11.5px; }
+.room .replying span{
+  display: block; color: var(--t2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.room .replying .icon-btn{ margin-left: auto; }
 .room .pill{
-  flex: 1 1 auto; min-width: 0; display: flex; align-items: flex-end;
-  background: var(--raised); border: 1px solid transparent; border-radius: 22px;
-  padding: 6px 14px;
+  flex: 1; display: flex; align-items: flex-end; gap: 6px; min-width: 0;
+  background: var(--raised); border: 1px solid transparent; border-radius: 20px;
+  padding: 4px 6px 4px 12px;
 }
 .room .pill:focus-within{ border-color: var(--active); }
 .room .pill textarea{
   flex: 1; min-width: 0; background: none; border: 0; outline: none; resize: none;
-  color: var(--t1); font: inherit; font-size: 14.5px; line-height: 1.4;
-  padding: 7px 0; max-height: 120px;
+  color: var(--t1); font: inherit; font-size: 14px; line-height: 1.45;
+  padding: 8px 0; max-height: 120px;
 }
-.room .pill textarea::placeholder{ color: var(--t2); }
+.room .pill textarea::placeholder{ color: var(--t3); }
 .room .send{
-  width: 42px; height: 42px; min-height: 0; flex: 0 0 auto; border-radius: 999px;
-  background: var(--active-fill); color: var(--on-fill); border: 0;
-  display: grid; place-items: center; cursor: pointer;
+  width: 40px; height: 40px; min-height: 0; border-radius: 999px; display: grid;
+  place-items: center; background: var(--active-fill); color: var(--on-fill);
+  border: 0; cursor: pointer; flex: 0 0 auto;
+  transition: transform .16s var(--ease), opacity .16s var(--ease);
 }
-.room .send svg{ width: 19px; height: 19px; }
-.room .send:disabled{ opacity: .45; cursor: default; }
+.room .send:disabled{ opacity: .35; cursor: default; }
+.room .send:not(:disabled):hover{ transform: scale(1.05); }
+.room .send svg{ width: 18px; height: 18px; }
 
-/* --- §4b module = question feed --- */
+/* ----------------------------------------------------- §4b · MODULE FEED */
 .room .feed{
-  padding: 16px 20px 28px; max-width: 860px; margin: 0 auto; width: 100%;
-  display: flex; flex-direction: column; gap: 10px;
+  max-width: 760px; margin: 0 auto; padding: 12px 18px 40px;
+  display: flex; flex-direction: column; gap: 9px;
 }
-.room .chips{
-  display: flex; gap: 6px; align-items: center; position: sticky; top: 0; z-index: 2;
-  padding: 2px 0 12px; background: linear-gradient(var(--ground) 72%, transparent);
+.room .sortrow{
+  display: flex; align-items: center; gap: 6px; position: sticky; top: 0; z-index: 2;
+  padding: 8px 0 10px; background: linear-gradient(var(--ground) 72%, transparent);
   flex-wrap: wrap;
 }
-.room .chips-sp{ margin-left: auto; }
 .room .chip{
-  padding: 6px 14px; min-height: 0; border-radius: 999px; border: 1px solid var(--edge);
-  background: none; color: var(--t2); font: inherit; font-size: 13px; cursor: pointer;
+  padding: 6px 13px; border-radius: 999px; border: 1px solid var(--edge);
+  background: none; color: var(--t2); cursor: pointer; min-height: 0;
+  font-size: 12.5px; font-weight: 500; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background .16s var(--ease), color .16s var(--ease);
 }
-.room .chip:hover{ border-color: var(--active); color: var(--t1); }
-.room .chip[aria-pressed="true"]{
-  background: var(--active-fill); border-color: var(--active-fill);
-  color: var(--on-fill); font-weight: 600;
+.room .chip svg{ width: 14px; height: 14px; }
+.room .chip:hover{ background: var(--raised); color: var(--t1); }
+.room .chip[aria-pressed="true"], .room .chip[aria-selected="true"]{
+  background: var(--t1); border-color: var(--t1); color: var(--ground);
 }
-.room .newpost{
-  display: flex; align-items: center; gap: 7px; padding: 6px 14px; min-height: 0;
-  border-radius: 999px; background: var(--raised); border: 0; color: var(--t1);
-  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+.room .primary{
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 7px 14px; border-radius: 999px; background: var(--active-fill);
+  color: var(--on-fill); border: 0; cursor: pointer; min-height: 0;
+  font-size: 13px; font-weight: 600; white-space: nowrap;
 }
-.room .newpost svg{ width: 14px; height: 14px; }
-.room .newpost:hover{ background: var(--sunk); }
+.room .primary:disabled{ opacity: .4; cursor: default; }
+.room .primary svg{ width: 15px; height: 15px; }
+.room .ghost{
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--edge);
+  background: none; color: var(--t1); cursor: pointer; min-height: 0;
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+}
+.room .ghost:hover{ background: var(--raised); }
+.room .ghost:disabled{ opacity: .4; cursor: default; }
+.room .ghost svg{ width: 15px; height: 15px; }
+.room .danger{
+  padding: 7px 14px; border-radius: 999px; background: none; cursor: pointer;
+  border: 1px solid color-mix(in oklch, var(--bad) 45%, transparent);
+  color: var(--bad); font-size: 13px; font-weight: 500; min-height: 0;
+}
+.room .danger:hover{ background: color-mix(in oklch, var(--bad) 12%, transparent); }
 
 .room .post{
-  width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--edge-soft);
-  border-radius: 14px; padding: 14px 16px; display: grid; gap: 7px; cursor: pointer;
-  color: inherit; font: inherit; min-height: 0;
+  display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px;
+  padding: 13px 14px; border-radius: 13px; background: var(--panel);
+  border: 1px solid var(--edge-soft); transition: border-color .16s var(--ease);
 }
-.room .post:hover{ border-color: var(--active); }
-.room .post:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
-.room .post-top{
-  display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--t3);
-  flex-wrap: wrap;
+.room .post:hover{ border-color: var(--edge); }
+.room .votes{ display: grid; justify-items: center; align-content: start; gap: 1px; }
+.room .votes button{
+  width: 30px; height: 26px; min-height: 0; border-radius: 7px; display: grid;
+  place-items: center; color: var(--t3); background: none; border: 0; cursor: pointer;
 }
-.room .who2{ color: var(--t2); font-weight: 500; }
+.room .votes button:hover{ background: var(--raised); color: var(--t1); }
+.room .votes button[aria-pressed="true"]{ color: var(--active); }
+.room .votes button.down[aria-pressed="true"]{ color: var(--caution); }
+.room .votes svg{ width: 19px; height: 19px; }
+.room .votes .n{ font-size: 12.5px; font-weight: 600; }
+.room .post-main{ min-width: 0; }
+.room .post-meta{
+  display: flex; align-items: center; gap: 6px; margin: 0;
+  font-size: 11.5px; color: var(--t3); flex-wrap: wrap;
+}
+.room .post-meta b{ color: var(--t2); font-weight: 500; }
 .room .post-title{
-  font-size: 16.5px; font-weight: 600; line-height: 1.3; color: var(--t1);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  display: block; margin: 4px 0 0; font-size: 16px; font-weight: 600;
+  letter-spacing: -.01em; text-wrap: balance; text-align: left;
+  background: none; border: 0; color: var(--t1); padding: 0; cursor: pointer; min-height: 0;
 }
+.room button.post-title:hover{ color: var(--active); }
 .room .post-ex{
-  font-size: 13.5px; color: var(--t2);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box; margin: 4px 0 0; font-size: 13.5px; color: var(--t2);
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.room .post-foot{
-  display: flex; align-items: center; gap: 14px; font-size: 12.5px; color: var(--t3);
-  margin-top: 2px; flex-wrap: wrap;
+.room .post-foot{ display: flex; align-items: center; gap: 2px; margin-top: 8px; flex-wrap: wrap; }
+.room .footbtn{
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px;
+  border-radius: 7px; font-size: 12.5px; color: var(--t2);
+  background: none; border: 0; cursor: pointer; min-height: 0;
 }
-.room .post-foot > span{ display: inline-flex; align-items: center; gap: 5px; }
-.room .post-foot svg{ width: 14px; height: 14px; }
-/* §4b — "say so plainly in the caution colour". The words carry it; the
-   colour corroborates. */
-/* THE CAUTION SENTENCE, still amber, still readable. --caution alone
-   measured 2.49:1 on --panel in skydrol/day — an amber mid-tone on a
-   near-white card. Mixed toward --t1 it darkens in Day and lightens in Night,
-   keeping the hue that carries the meaning while clearing the floor at 5.15.
-   The words say it too, so the colour corroborates rather than carries. */
-.room .post-waiting{ color: color-mix(in oklab, var(--caution) 60%, var(--t1)); }
-
+.room .footbtn:hover{ background: var(--raised); color: var(--t1); }
+.room .footbtn svg{ width: 15px; height: 15px; }
+.room .footbtn[aria-pressed="true"]{ color: var(--active); }
 .room .tag{
-  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em;
-  text-transform: uppercase; padding: 2.5px 7px; border-radius: 5px;
-  border: 1px solid var(--edge); color: var(--t3); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px;
+  border-radius: 999px; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: .06em; text-transform: uppercase;
+  border: 1px solid var(--edge); color: var(--t3); background: none;
 }
-.room .tag.lesson{
-  border-color: var(--active); color: var(--active); background: none;
-  min-height: 0; cursor: pointer; font: inherit; font-family: var(--font-mono);
-  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
-}
-.room .tag.solved{ border-color: var(--ok); color: var(--ok); }
-.room .tag.mine{ border-color: var(--edge); color: var(--t2); }
+.room button.tag{ cursor: pointer; min-height: 0; }
+.room .tag svg{ width: 11px; height: 11px; }
+.room .tag.solved{ border-color: color-mix(in oklch, var(--ok) 55%, transparent); color: var(--ok); }
+.room .tag.mine{ border-color: color-mix(in oklch, var(--active) 55%, transparent); color: var(--active); }
+.room .tag.lesson{ border-color: color-mix(in oklch, var(--caution) 50%, transparent); color: var(--caution); }
 
-/* --- §4c one thread --- */
+.room .ask{
+  display: grid; gap: 9px; padding: 14px; border-radius: 13px;
+  background: var(--panel); border: 1px solid var(--active);
+}
+.room .ask input, .room .ask textarea{
+  width: 100%; background: var(--raised); border: 1px solid transparent;
+  border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 14px;
+  color: var(--t1); outline: none; resize: vertical;
+}
+.room .ask input:focus, .room .ask textarea:focus{ border-color: var(--active); }
+.room .ask-acts{ display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.room .hint{ margin: 0; font-size: 11.5px; color: var(--t3); }
+.room .ask-acts .hint{ margin-right: auto; }
+
+/* ------------------------------------------------------- §4c · ONE THREAD */
 .room .thread{
-  padding: 18px 20px 28px; max-width: 800px; margin: 0 auto; width: 100%;
-  display: flex; flex-direction: column; gap: 14px;
+  max-width: 760px; margin: 0 auto; padding: 18px 18px 40px;
+  display: flex; flex-direction: column; gap: 12px;
 }
-.room .op{
-  background: var(--panel); border: 1px solid var(--edge-soft); border-radius: 14px;
-  padding: 18px 20px; display: grid; gap: 10px;
-}
-.room .op-title{ margin: 0; font-size: 22px; line-height: 1.22; font-weight: 600; letter-spacing: -.015em; }
-.room .op-body{ font-size: 14.5px; color: var(--t2); display: grid; gap: 9px; }
-.room .op-body p{ margin: 0; }
+.room .op{ display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; }
+.room .op-title{ margin: 5px 0 0; font-size: 21px; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+.room .op-body{ margin: 8px 0 0; font-size: 14.5px; }
+.room .op-body p{ margin: 0 0 9px; }
 .room .answers-head{
-  display: flex; align-items: center; gap: 10px; margin: 2px 0 0;
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--t3);
+  display: flex; align-items: center; gap: 9px; margin: 2px 0 0;
+  font-size: 13px; font-weight: 600; color: var(--t2);
 }
-.room .answers-head::after{ content: ""; flex: 1; height: 1px; background: var(--edge-soft); }
 .room .ans{
-  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 11px;
-  padding: 13px 15px; border-radius: 14px; background: var(--panel);
-  border: 1px solid var(--edge-soft); position: relative;
+  display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px;
+  padding: 12px 13px; border-radius: 13px; background: var(--panel);
+  border: 1px solid var(--edge-soft);
 }
-.room .ans.best{ border-color: var(--ok); }
-.room .ans.best::before{
-  content: ""; position: absolute; left: -1px; top: 12px; bottom: 12px; width: 3px;
-  border-radius: 3px; background: var(--ok);
+.room .ans.best{
+  border-color: color-mix(in oklch, var(--ok) 55%, transparent);
+  background: color-mix(in oklch, var(--ok) 7%, var(--panel));
 }
 .room .ans-main{ min-width: 0; }
 .room .ans-head{
-  display: flex; align-items: center; gap: 8px; margin: 0 0 4px;
-  font-size: 12.5px; color: var(--t3); flex-wrap: wrap;
+  display: flex; align-items: center; gap: 7px; margin: 0;
+  font-size: 11.5px; color: var(--t3); flex-wrap: wrap;
 }
-.room .ans-head b{ color: var(--t1); font-size: 13.5px; font-weight: 600; }
-.room .ans-body{ margin: 0; font-size: 14.5px; color: var(--t2); overflow-wrap: anywhere; }
-.room .ans-acts{ display: flex; gap: 14px; margin: 8px 0 0; font-size: 12.5px; }
-.room .ans-acts button{
-  display: inline-flex; gap: 5px; align-items: center; background: none; border: 0;
-  color: var(--t3); font: inherit; font-size: 12.5px; cursor: pointer;
-  border-radius: 5px; padding: 2px 4px; margin: -2px -4px; min-height: 0;
+.room .ans-head b{ color: var(--t1); font-size: 13px; font-weight: 600; }
+.room .ans-body{ margin: 5px 0 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.room .subreplies{
+  margin: 9px 0 0; padding-left: 13px; border-left: 2px solid var(--edge-soft);
+  display: grid; gap: 9px;
 }
-.room .ans-acts button svg{ width: 15px; height: 15px; }
-.room .ans-acts button:hover{ color: var(--active); }
-.room .ans-acts button[aria-pressed="true"]{ color: var(--active); }
+.room .sub{ font-size: 13.5px; }
+.room .sub .ans-head b{ font-size: 12.5px; }
+.room .sub p{ margin: 3px 0 0; color: var(--t2); white-space: pre-wrap; }
+.room .replybox{ display: flex; gap: 8px; margin-top: 9px; }
+.room .replybox input{
+  flex: 1; min-width: 0; background: var(--raised); border: 1px solid transparent;
+  border-radius: 999px; padding: 8px 13px; font: inherit; font-size: 13.5px;
+  color: var(--t1); outline: none;
+}
+.room .replybox input:focus{ border-color: var(--active); }
 
-/* --- §4d right seat --- */
-.room .match{ padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; display: grid; gap: 12px; }
-.room .match-intro h3{ margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.015em; }
-.room .match-intro p{ margin: 5px 0 0; font-size: 13.5px; color: var(--t3); max-width: 62ch; }
-.room .cards{ display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 10px; }
+/* -------------------------------------------------------- §4d · RIGHT SEAT */
+.room .seatpane{
+  max-width: 860px; margin: 0 auto; padding: 16px 18px 40px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.room .askcard{
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; flex-wrap: wrap;
+  border-radius: 13px; background: color-mix(in oklch, var(--active) 12%, var(--panel));
+  border: 1px solid color-mix(in oklch, var(--active) 45%, transparent);
+}
+.room .askcard-id{ margin-right: auto; min-width: 0; }
+.room .askcard-id b{ display: block; font-size: 14px; font-weight: 600; }
+.room .askcard-id span{ display: block; font-size: 12px; color: var(--t2); }
+
+.room .session{
+  border-radius: 13px; overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--active) 45%, transparent);
+  background: var(--panel);
+}
+.room .session-top{ display: flex; align-items: center; gap: 14px; padding: 15px 16px; flex-wrap: wrap; }
+.room .pair{ display: flex; align-items: center; }
+.room .pair .facebtn + .facebtn, .room .pair .avwrap + .facebtn{ margin-left: -12px; }
+.room .pair .av{ border: 2.5px solid var(--panel); }
+.room .session-id{ margin-right: auto; min-width: 0; }
+.room .session-id h3{ margin: 0; font-size: 16px; font-weight: 600; }
+.room .session-id p{ margin: 2px 0 0; font-size: 12.5px; color: var(--t2); }
+.room .hobbs{ text-align: right; }
+.room .hobbs b{ display: block; font-family: var(--font-mono); font-size: 17px; font-weight: 500; }
+.room .hobbs span{
+  display: block; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--t3);
+}
+.room .doing{
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  background: var(--edge-soft); border-top: 1px solid var(--edge-soft);
+}
+.room .doing > div{ background: var(--panel); padding: 11px 16px; }
+.room .doing .eyebrow{ margin-bottom: 4px; }
+.room .doing b{ font-size: 13.5px; font-weight: 500; }
+.room .doing small{ display: block; font-size: 12px; color: var(--t2); }
+.room .invitebar{
+  display: flex; align-items: center; gap: 11px; padding: 11px 16px; flex-wrap: wrap;
+  border-top: 1px solid var(--edge-soft); font-size: 13px;
+  background: color-mix(in oklch, var(--caution) 13%, var(--panel));
+}
+.room .invitebar > svg{ width: 16px; height: 16px; color: var(--caution); flex: 0 0 auto; }
+.room .invitebar.warn{ color: var(--t2); }
+.room .seg-tabs{
+  display: flex; gap: 6px; padding: 11px 16px; flex-wrap: wrap;
+  border-top: 1px solid var(--edge-soft); align-items: center;
+}
+.room .seatchat{ border-top: 1px solid var(--edge-soft); }
+.room .seatchat-note{ margin: 0; padding: 10px 16px 0; font-size: 12px; color: var(--t3); }
+.room .seatchat-list{ max-height: 280px; overflow-y: auto; padding: 10px 16px; display: grid; gap: 7px; }
+.room .seatmsg{
+  display: flex; align-items: baseline; gap: 10px; padding: 7px 11px;
+  border-radius: 11px; background: var(--raised); font-size: 13.5px;
+}
+.room .seatmsg.out{ background: color-mix(in oklch, var(--active) 20%, var(--raised)); }
+.room .seatmsg-b{ flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.room .seatmsg-m{ display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--t3); }
+.room .seatmsg-m .icon-btn{ width: 26px; height: 26px; }
+.room .seatmsg-m .icon-btn[aria-pressed="true"]{ color: var(--caution); }
+
+.room .sectionhead{ display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.room .sectionhead h3{ margin: 0; font-size: 15px; font-weight: 600; }
+.room .sectionhead p{ margin: 0; font-size: 12.5px; color: var(--t3); }
+.room .cards{
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 10px; margin-top: 11px;
+}
 .room .card{
-  background: var(--panel); border: 1px solid var(--edge-soft); border-radius: 14px;
-  padding: 14px; display: grid; gap: 11px;
+  padding: 13px; border-radius: 13px; background: var(--panel);
+  border: 1px solid var(--edge-soft); display: grid; gap: 9px; align-content: start;
 }
-.room .card:hover{ border-color: var(--active); }
-.room .card-top{ display: flex; gap: 11px; align-items: center; min-width: 0; }
-.room .card-n{ margin: 0; font-size: 14.5px; font-weight: 600; }
-.room .card-s{ margin: 0; font-size: 12px; color: var(--t3); }
-.room .card-now{ margin: 0; font-size: 12.5px; color: var(--t2); }
-.room .ask{
-  padding: 8px; min-height: 0; border-radius: 999px; border: 1px solid var(--active);
-  background: none; color: var(--active); font: inherit; font-size: 13px;
-  font-weight: 600; cursor: pointer;
+.room .card-top{ display: flex; align-items: center; gap: 10px; min-width: 0; }
+.room .card-n{ margin: 0; font-size: 14px; font-weight: 600; }
+.room .card-s{ margin: 1px 0 0; font-size: 11.5px; color: var(--t3); }
+.room .card-now{
+  margin: 0; font-size: 12.5px; color: var(--t2);
+  display: flex; align-items: center; gap: 6px;
 }
-.room .ask:hover{ background: var(--active-fill); color: var(--on-fill); }
+.room .card-now svg{ width: 14px; height: 14px; color: var(--t3); flex: 0 0 auto; }
 
-/* ------------------------------------------------------------- §2 · PHONE
-   Under 760px the rail is the whole screen; opening anything swaps to the
-   pane full-screen with a back arrow. The global topbar stays hidden either
-   way, which is why the rail carries the wordmark. */
-@media (max-width: 760px){
+/* --------------------------------------------------------- §5 · DISCOVER */
+.room .disc{
+  max-width: 780px; margin: 0 auto; padding: 12px 18px 40px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.room .sqcard{
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 13px;
+  align-items: center; padding: 13px; border-radius: 13px;
+  background: var(--panel); border: 1px solid var(--edge-soft);
+}
+.room .sqcard-main{ min-width: 0; }
+.room .sqcard h4{ margin: 0; font-size: 14.5px; font-weight: 600; }
+.room .sqcard .tags{ display: flex; gap: 5px; margin: 5px 0 0; flex-wrap: wrap; }
+.room .sqcard-blurb{ margin: 6px 0 0; font-size: 13px; color: var(--t2); }
+.room .known{
+  display: flex; align-items: center; gap: 7px; margin: 8px 0 0;
+  font-size: 12px; color: var(--t3); flex-wrap: wrap;
+}
+.room .faces{ display: flex; }
+.room .faces .av{ border: 2px solid var(--panel); }
+.room .faces .av + .av{ margin-left: -8px; }
+.room .linkbox{
+  display: flex; gap: 10px; align-items: center; padding: 13px; border-radius: 13px;
+  background: var(--panel); border: 1px solid var(--edge-soft); flex-wrap: wrap;
+}
+.room .linkbox input{
+  flex: 1; min-width: 140px; background: var(--raised); border: 1px solid transparent;
+  border-radius: 999px; padding: 9px 14px; font: inherit; font-size: 13.5px;
+  color: var(--t1); outline: none;
+}
+.room .linkbox input:focus{ border-color: var(--active); }
+.room .linkbox .grow{ flex: 1; min-width: 0; }
+.room .sq-name{ font-weight: 600; }
+.room .linkbox .meta{ font-size: 12px; color: var(--t2); }
+.room .rule{
+  display: flex; align-items: center; gap: 10px; margin: 12px 0 0;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--t3);
+}
+.room .rule::after{ content: ""; flex: 1; height: 1px; background: var(--edge-soft); }
+.room .invite-code{
+  display: block; margin-top: 6px; font-family: var(--font-mono); font-size: 12px;
+  color: var(--t2); background: var(--sunk); padding: 7px 11px; border-radius: 9px;
+  overflow-x: auto; white-space: nowrap;
+}
+.room .scope{
+  display: flex; gap: 9px; margin: 14px 0 0; font-size: 12.5px; color: var(--t3);
+}
+.room .scope svg{ width: 15px; height: 15px; flex: 0 0 auto; margin-top: 2px; }
+
+/* --------------------------------------------------- §6 · SHEETS AND MENUS */
+.room .veil{
+  position: fixed; inset: 0; background: oklch(0 0 0 / .5); opacity: 0;
+  pointer-events: none; transition: opacity .2s var(--ease); z-index: 40;
+}
+.room .veil[data-open="true"]{ opacity: 1; pointer-events: auto; }
+.room .drawer{
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100%); z-index: 41;
+  background: var(--panel); backdrop-filter: blur(18px); border-left: 1px solid var(--edge);
+  transform: translateX(100%); transition: transform .26s var(--ease);
+  display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
+}
+.room .drawer[data-open="true"]{ transform: none; }
+.room .dr-head{
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border-bottom: 1px solid var(--edge-soft);
+}
+.room .dr-body{ overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.room .who-box{ display: grid; justify-items: center; gap: 6px; text-align: center; }
+.room .who-box .nm{ font-size: 18px; font-weight: 600; }
+.room .who-box .sub{ font-size: 12.5px; color: var(--t3); margin: 0; }
+.room .pills{ display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 3px; }
+.room .pill2{ padding: 3px 10px; border-radius: 999px; background: var(--raised); font-size: 11.5px; color: var(--t2); }
+.room .shared{ display: grid; gap: 7px; padding: 12px; border-radius: 11px; background: var(--raised); }
+.room .k{ display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.room .k svg{ width: 15px; height: 15px; color: var(--t3); flex: 0 0 auto; }
+.room .acts{ display: grid; gap: 8px; }
+.room .acts button{
+  padding: 10px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: none; border: 0; color: var(--t1);
+}
+.room .acts button svg{ width: 15px; height: 15px; }
+.room .acts .fill{ background: var(--active-fill); color: var(--on-fill); }
+.room .acts .fill:disabled{ opacity: .45; cursor: default; }
+.room .acts .out{ border: 1px solid var(--edge); }
+.room .acts .out:hover{ background: var(--raised); }
+.room .acts .off{ border: 1px solid var(--edge-soft); color: var(--t3); cursor: default; }
+.room .safety{ display: flex; gap: 14px; justify-content: center; }
+.room .safety button{
+  font-size: 12.5px; color: var(--t3); background: none; border: 0;
+  cursor: pointer; min-height: 0;
+}
+.room .safety button:hover{ color: var(--bad); }
+.room .memberrow{
+  display: flex; align-items: center; gap: 11px; padding: 7px 0; width: 100%;
+  text-align: left; background: none; border: 0; color: inherit; cursor: pointer; min-height: 0;
+}
+.room .memberrow .nm{ font-size: 13.5px; font-weight: 500; }
+.room .memberrow .rl{
+  margin-left: auto; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--t3);
+}
+
+.room .modal{
+  position: fixed; inset: 0; z-index: 42; display: grid; place-items: center;
+  padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s var(--ease);
+}
+.room .modal[data-open="true"]{ opacity: 1; pointer-events: auto; }
+.room .sheet{
+  width: min(460px, 100%); background: var(--panel); backdrop-filter: blur(18px);
+  border: 1px solid var(--edge); border-radius: 18px; padding: 20px;
+  display: grid; gap: 13px; transform: translateY(8px) scale(.985);
+  transition: transform .22s var(--ease); max-height: 90dvh; overflow-y: auto;
+}
+.room .modal[data-open="true"] .sheet{ transform: none; }
+.room .sheet h3{ margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.room .field{ display: grid; gap: 5px; border: 0; padding: 0; margin: 0; }
+.room .field label, .room .field legend{ font-size: 12px; color: var(--t2); padding: 0; }
+.room .field input, .room .field select{
+  background: var(--raised); border: 1px solid transparent; border-radius: 10px;
+  padding: 10px 12px; font: inherit; font-size: 14px; color: var(--t1);
+  outline: none; width: 100%;
+}
+.room .field input:focus, .room .field select:focus{ border-color: var(--active); }
+.room .seg{ display: flex; gap: 6px; }
+.room .seg button{
+  flex: 1; padding: 8px; border-radius: 9px; border: 1px solid var(--edge);
+  background: none; color: var(--t2); cursor: pointer; font-size: 12.5px; min-height: 0;
+}
+.room .seg button[aria-pressed="true"]{
+  border-color: var(--active); color: var(--t1);
+  background: color-mix(in oklch, var(--active) 12%, transparent);
+}
+.room .sheet-acts{ display: flex; gap: 8px; justify-content: flex-end; margin-top: 3px; }
+
+.room .menu{
+  position: fixed; z-index: 43; min-width: 212px; padding: 5px; border-radius: 12px;
+  background: var(--panel); backdrop-filter: blur(18px); border: 1px solid var(--edge);
+}
+.room .menu button{
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px;
+  border-radius: 8px; font-size: 13.5px; text-align: left; background: none;
+  border: 0; color: var(--t1); cursor: pointer; min-height: 0;
+}
+.room .menu button:hover{ background: var(--raised); }
+.room .menu button svg{ width: 15px; height: 15px; color: var(--t3); flex: 0 0 auto; }
+.room .menu .sep{ height: 1px; margin: 4px 6px; background: var(--edge-soft); }
+.room .menu button.danger{
+  color: var(--bad); border: 0; border-radius: 8px; padding: 8px 10px; font-weight: 400;
+}
+.room .menu button.danger svg{ color: var(--bad); }
+
+.room .toast{
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px); z-index: 50;
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px;
+  background: var(--t1); color: var(--ground); font-size: 13px; font-weight: 500;
+  opacity: 0; pointer-events: none; transition: opacity .22s var(--ease), transform .22s var(--ease);
+  max-width: min(90vw, 520px);
+}
+.room .toast[data-open="true"]{ opacity: 1; transform: translate(-50%, 0); }
+.room .toast svg{ width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* ------------------------------------------------------- §7 · SMALL SCREENS
+   ONE COLUMN, and the pane covers the rail rather than squeezing beside it.
+   data-mobile is set by the component from whether anything is open, so the
+   back arrow and the list are never both hidden. */
+@media (max-width: 860px){
+  /* minmax(0, 1fr), never a bare 1fr: `1fr` is `minmax(auto, 1fr)`, so the
+     track's floor is its content and one long message made the pane wider than
+     the phone. Measured at 528px inside a 400px viewport. */
   .room{ grid-template-columns: minmax(0, 1fr); }
   .room .rail{ border-right: 0; }
   .room[data-mobile="pane"] .rail{ display: none; }
   .room[data-mobile="rail"] .pane{ display: none; }
-  .room .back{ display: grid; }
-  .room .msg{ max-width: 86%; }
-  .room .transcript, .room .feed, .room .thread, .room .match{ padding-left: 14px; padding-right: 14px; }
-  /* The controls on a bubble cannot be hovered on a touch screen, so they
-     are simply always there. */
-  .room .msg-acts{ opacity: 1; }
+  .room .pane-head .back{ display: grid; }
+  .room .doing{ grid-template-columns: 1fr; }
+  .room .transcript{ padding: 14px 12px 8px; }
+  .room .bubble{ max-width: 86%; }
+  .room .feed, .room .thread, .room .seatpane, .room .disc{
+    padding-left: 12px; padding-right: 12px;
+  }
+  .room .jump{ right: 12px; }
+  .room .drawer{ width: 100%; border-left: 0; }
+}
+
+/* TOUCH HAS NO HOVER, and the whole message menu hung off it — on a phone
+   there was no way to reply to a particular message, react, or report one.
+   On a coarse pointer the overflow button sits under the bubble permanently
+   and the two shortcuts fold into it. */
+@media (hover: none){
+  .room .msg-acts{
+    display: flex; position: static; background: none; border: 0; padding: 0;
+    justify-content: flex-end; margin-top: 2px;
+  }
+  .room .msg-acts .icon-btn:not(:last-child){ display: none; }
+  .room .msg.out .msg-acts{ justify-content: flex-end; }
 }
 
 @media (prefers-reduced-motion: reduce){
-  .room *, .room *::before, .room *::after{ transition: none !important; animation: none !important; }
+  .room .pulse, .room .tdots i{ animation: none; }
+  .room .drawer, .room .sheet, .room .toast, .room .msg{ transition: none; }
 }
-
-/* §5 — the ask form. A title field here and nowhere else: the lesson comment
-   box stays a single box, because a form in front of a casual remark is how
-   casual remarks stop happening. */
-.room .ask-form{
-  display: grid; gap: 8px; background: var(--panel);
-  border: 1px solid var(--active); border-radius: 14px; padding: 14px 16px;
-}
-.room .ask-l{ font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--t3); }
-.room .ask-t, .room .ask-b{
-  width: 100%; min-width: 0; background: var(--raised); border: 1px solid transparent;
-  border-radius: 9px; padding: 9px 11px; color: var(--t1); font: inherit;
-  min-height: 0; resize: vertical;
-}
-.room .ask-t{ font-size: 15px; font-weight: 600; }
-.room .ask-b{ font-size: 14px; line-height: 1.45; }
-.room .ask-t:focus, .room .ask-b:focus{ outline: none; border-color: var(--active); }
-.room .ask-t::placeholder, .room .ask-b::placeholder{ color: var(--t2); }
-.room .ask-acts{ display: flex; gap: 8px; justify-content: flex-end; }
-.room .ask-acts .newpost:disabled{ opacity: .45; cursor: default; }
-
-/* ==========================================================================
-   §5 · DISCOVERY — Find a squadron, and the profile sheet
-   Reuses the room's own tokens throughout: no new colours, no new radii. The
-   demo's shapes, expressed in the variables this app already has.
-   ========================================================================== */
-.room .wrap{ padding: 18px 20px 30px; max-width: 900px; margin: 0 auto; width: 100%;
-  display: flex; flex-direction: column; gap: 14px; }
-.room .lede{ display: grid; gap: 6px; }
-.room .lede h3{ margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -.015em; }
-.room .lede p{ margin: 0; font-size: 13.5px; color: var(--t3); max-width: 64ch; line-height: 1.5; }
-
-.room .filters{ display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.room .chip{ padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
-  font-size: 13px; color: var(--t2); background: none; cursor: pointer; transition: .14s; }
-.room .chip:hover{ border-color: var(--active); color: var(--t1); }
-.room .chip[aria-pressed="true"]{ background: var(--active); border-color: var(--active);
-  color: var(--ground); font-weight: 600; }
-.room .filters .spacer{ margin-left: auto; }
-.room .ghost{ display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
-  border-radius: 999px; background: var(--raised); color: var(--t1); border: 0;
-  font-size: 13px; font-weight: 500; cursor: pointer; }
-.room .ghost:hover{ background: var(--panel); }
-.room .ghost svg{ width: 14px; height: 14px; }
-
-/* A room card. The action is centred against the block rather than pinned to
-   its top, because the block's height is the blurb's and varies. */
-.room .sq{ background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
-  padding: 15px 17px; display: flex; gap: 14px; align-items: flex-start;
-  transition: border-color .15s; }
-.room .sq:hover{ border-color: var(--active); }
-.room .sq-main{ flex: 1; min-width: 0; display: grid; gap: 8px; }
-.room .sq h4{ margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }
-.room .sq-blurb{ margin: 0; font-size: 12.5px; color: var(--t3); line-height: 1.45; }
-.room .badge-sq{ width: 46px; height: 46px; border-radius: 13px; background: var(--raised);
-  display: grid; place-items: center; font-family: var(--font-mono); font-size: 12px;
-  font-weight: 600; color: var(--t2); flex: none; }
-.room .tags{ display: flex; gap: 6px; flex-wrap: wrap; }
-.room .tag{ font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em;
-  text-transform: uppercase; padding: 3px 7px; border-radius: 5px;
-  border: 1px solid var(--line); color: var(--t3); }
-.room .tag.hot{ border-color: var(--active); color: var(--active);
-  background: color-mix(in oklab, var(--active), transparent 88%); }
-.room .tag.full{ background: var(--raised); }
-.room .known{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  font-size: 12.5px; color: var(--t2); }
-.room .known .quiet{ color: var(--t3); }
-.room .faces{ display: flex; }
-.room .faces .av{ width: 24px; height: 24px; font-size: 10px;
-  border: 2px solid var(--panel); margin-left: -7px; }
-.room .faces .av:first-child{ margin-left: 0; }
-.room .sq .act{ flex: none; align-self: center; }
-.room .join{ padding: 9px 18px; border-radius: 999px; background: var(--active);
-  color: var(--ground); border: 0; font-size: 13.5px; font-weight: 600;
-  white-space: nowrap; cursor: pointer; transition: .15s; min-height: var(--tap); }
-.room .join:hover:not(:disabled){ filter: brightness(1.08); }
-.room .join.sec{ background: transparent; border: 1px solid var(--active); color: var(--active); }
-.room .join.off, .room .join:disabled{ background: var(--raised); color: var(--t3);
-  border-color: transparent; cursor: not-allowed; filter: none; }
-.room .join svg{ width: 14px; height: 14px; vertical-align: -2px; }
-
-.room .rule{ display: flex; align-items: center; gap: 10px; font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--t3);
-  margin: 8px 0 0; }
-.room .rule::after{ content: ""; flex: 1; height: 1px; background: var(--hair); }
-.room .linkbox{ background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
-  padding: 15px 17px; display: grid; gap: 11px; }
-.room .linkbox .row2{ display: flex; gap: 9px; align-items: center; }
-.room .linkbox .grow{ flex: 1; min-width: 0; }
-.room .sq-name{ font-size: 15px; font-weight: 600; }
-.room .meta{ font-size: 12.5px; color: var(--t3); }
-.room .note{ font-size: 12.5px; color: var(--t3); line-height: 1.45; }
-.room .linkfield{ flex: 1; min-width: 0; background: var(--raised); border: 1px solid var(--line);
-  border-radius: 9px; padding: 10px 12px; color: var(--t1); font: inherit; font-size: 13px; }
-.room .invite-code{ font-family: var(--font-mono); font-size: 12.5px; color: var(--t2);
-  background: var(--raised); border-radius: 9px; padding: 10px 12px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* The scope note under people results — plain words, where the results are. */
-.room .scope{ margin: 10px 16px 4px; padding: 9px 12px; border-radius: 9px;
-  background: var(--raised); border: 1px solid var(--line);
-  font-size: 12px; color: var(--t3); line-height: 1.4; }
-.room .scope b{ color: var(--t2); font-weight: 500; }
-
-/* -------------------------------------------------------- profile sheet --- */
-.veil{ position: fixed; inset: 0; background: oklch(0 0 0 / .45); z-index: 40;
-  opacity: 0; pointer-events: none; transition: opacity .18s; }
-.veil[data-open="true"]{ opacity: 1; pointer-events: auto; }
-.drawer{ position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%);
-  background: var(--panel); border-left: 1px solid var(--line); z-index: 41;
-  transform: translateX(100%); transition: transform .22s cubic-bezier(.4,0,.2,1);
-  display: grid; grid-template-rows: auto 1fr; }
-.drawer[data-open="true"]{ transform: none; }
-@media (prefers-reduced-motion: reduce){ .drawer{ transition: none; } }
-.app.smooth-air .drawer{ transition: none; }
-.dr-head{ display: flex; align-items: center; gap: 10px; padding: 12px 14px;
-  border-bottom: 1px solid var(--line); }
-.dr-head .h-title{ font-size: 14px; font-weight: 600; }
-.dr-body{ overflow-y: auto; padding: 20px 18px 26px; display: grid; gap: 16px; }
-.who-box{ display: grid; justify-items: center; text-align: center; gap: 7px; }
-.who-box .av{ width: 74px; height: 74px; font-size: 24px; }
-.who-box .nm{ font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
-.who-box .sub{ font-size: 13px; color: var(--t2); }
-.pills{ display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.pill2{ font-size: 12px; padding: 4px 11px; border-radius: 999px; background: var(--raised);
-  color: var(--t2); border: 1px solid var(--line); }
-.shared{ background: var(--raised); border-radius: 9px; padding: 11px 13px;
-  font-size: 13px; color: var(--t2); display: grid; gap: 7px; }
-.shared .k{ display: flex; align-items: center; gap: 8px; }
-.shared .k svg{ width: 15px; height: 15px; flex: none; }
-.acts{ display: grid; gap: 8px; }
-.acts .join{ width: 100%; padding: 11px; }
-.answered{ display: grid; gap: 8px; }
-.ansrow{ background: var(--raised); border: 0; border-radius: 9px; padding: 11px 13px;
-  display: grid; gap: 5px; text-align: left; width: 100%; cursor: pointer; }
-.ansrow:hover{ background: var(--panel); }
-.ansrow .q{ font-size: 13.5px; font-weight: 500; line-height: 1.35; color: var(--t1); }
-.ansrow .m{ font-size: 11.5px; color: var(--t3); display: flex; gap: 7px; align-items: center; }
-.tag.best{ border-color: var(--ok); color: var(--ok);
-  background: color-mix(in oklab, var(--ok), transparent 88%); }
-/* Quiet, at the bottom, and never the loudest thing on the sheet. */
-.safety{ display: flex; gap: 16px; justify-content: center; font-size: 12.5px;
-  color: var(--t3); padding-top: 2px; }
-.safety button{ background: none; border: 0; color: var(--t3); cursor: pointer;
-  min-height: var(--tap); }
-.safety button:hover{ color: var(--danger); }
-
-@media (max-width: 760px){
-  .drawer{ width: 100%; }
-  .room .sq{ flex-wrap: wrap; }
-  .room .sq .act, .room .sq .act .join{ width: 100%; }
-}
-
-/* §6 — the invite landing. One column, one decision, nothing else on screen. */
-.invite-land{ max-width: 460px; margin: 0 auto; padding: 48px 22px;
-  display: grid; gap: 12px; justify-items: start; }
-.invite-land .eyebrow{ margin: 0; }
-.invite-name{ margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
-.invite-blurb{ margin: 0; font-size: 14px; color: var(--t2); line-height: 1.5; }
-.invite-meta{ margin: 0; font-size: 12.5px; color: var(--t3); }
-.invite-quiet{ margin: 0; font-size: 13.5px; color: var(--t3); line-height: 1.5; }
-.invite-land .join{ margin-top: 6px; }

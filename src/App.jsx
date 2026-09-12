@@ -58,7 +58,6 @@ const chunk = (factory) => () => factory().catch((err) => {
 const CHUNK = {
   notFound: chunk(() => import("./components/NotFound.jsx")),
   chapters: chunk(() => import("./components/ChaptersPanel.jsx")),
-  readyOld: chunk(() => import("./components/ReadyRoom.jsx")),
   // §6 — its own chunk. An invite link is very often a cold first load on a
   // phone, so it should not drag the whole Ready Room down the wire to render
   // one room name and one button.
@@ -95,7 +94,6 @@ import { useDisplayName } from "./lib/identity.js";
 import { ChevronRight, Lock, Plane } from "lucide-react";
 const ChaptersPanel = lazy(CHUNK.chapters);
 import Home from "./components/Home.jsx";
-const ReadyRoom = lazy(CHUNK.readyOld);
 const InviteLanding = lazy(CHUNK.invite);
 const ModulesPage = lazy(CHUNK.modules);
 import RootNav from "./components/RootNav.jsx";
@@ -136,7 +134,7 @@ import { useHobbsMeter } from "./lib/hobbs.js";
 import { transitionKind, canTransition, settleDom, withTheme, withSetting,
          beginTransition, endTransition, nameLayers, clearNames, scopeOf } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
-import { postModulePost, postReply } from "./lib/lessonSurface.js";
+import { postModulePost, postReply, removeThread, removeReply } from "./lib/lessonSurface.js";
 import {
   RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
 } from "./lib/retention.js";
@@ -768,6 +766,12 @@ function AppInner() {
   const [squadrons, setSquadrons] = useState([]);
   const [roomMessages, setRoomMessages] = useState([]);
   const [rightSeat, setRightSeat] = useState([]);
+  /* The room writes things App does not — joining, leaving, muting, creating,
+     reactions, pins, read state — and then has to see them. A nonce rather
+     than a second copy of the loader: one code path turns rows into state, and
+     the room asks it to run again. */
+  const [roomNonce, setRoomNonce] = useState(0);
+  const refreshRoom = useCallback(() => setRoomNonce((n) => n + 1), []);
   useEffect(() => {
     if (!isSignedIn || !flags["social.readyroom"]) { setSquadrons([]); setRoomMessages([]); setRightSeat([]); return undefined; }
     let live = true;
@@ -803,7 +807,7 @@ function AppInner() {
       clearInterval(t);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, [isSignedIn, me, flags]);
+  }, [isSignedIn, me, flags, roomNonce]);
 
   // §4c — endorsements on answers. Fetched for the replies actually loaded,
   // keyed by a stable id string so the effect runs when the cast changes
@@ -1231,9 +1235,17 @@ function AppInner() {
             brand={<button type="button" className="brandmark" onClick={goHome}
                            aria-label="Go to Flight Deck">Wingman</button>}
             profile={<ProfileMenu onNavigate={goProfile} />}
-            seen={progress.get("pw-room-seen", {})}
-            onSeen={(id) => progress.set("pw-room-seen",
-              { ...progress.get("pw-room-seen", {}), [id]: Date.now() })}
+            saved={progress.get("pw-room-saved", {})}
+            onSave={(threadId) => {
+              // Saving a question is the same act as bookmarking a paper, so it
+              // lives in the same place rather than in a table of its own.
+              const held = progress.get("pw-room-saved", {});
+              const next = { ...held };
+              if (next[threadId]) delete next[threadId]; else next[threadId] = Date.now();
+              progress.set("pw-room-saved", next);
+            }}
+            onRefresh={() => refreshRoom()}
+            onOpenInvite={(token) => go(`/j/${token}`)}
             onOpenLessonAt={(t) => {
               // §5 — the round trip. The lesson opens at the moment, and it has
               // to leave a way back to the thread that sent you there.
@@ -1246,7 +1258,11 @@ function AppInner() {
             }}
             onPost={(ev) => {
               if (ev.kind === "reply") {
-                mutate((sx) => postReply(sx, { threadId: ev.threadId, body: ev.body, authorId: me }));
+                // parentId is how an answer to an answer stays one level deep
+                // (0022). Null for a top-level answer, which is most of them.
+                mutate((sx) => postReply(sx, {
+                  threadId: ev.threadId, body: ev.body, authorId: me, parentId: ev.parentId,
+                }));
                 return;
               }
               if (ev.kind === "thread") {
@@ -1256,11 +1272,39 @@ function AppInner() {
                 }));
                 return;
               }
+              if (ev.kind === "deleteThread") {
+                // Through mutate, so the row goes from the screen and the table
+                // in one place. diffWrite turns the absence into the delete.
+                mutate((sx) => removeThread(sx, ev.threadId));
+                return;
+              }
+              if (ev.kind === "deleteReply") {
+                mutate((sx) => removeReply(sx, ev.replyId));
+                return;
+              }
               if (ev.kind === "message") {
                 const sq = squadrons.find((x) => x.id === ev.squadronId);
+                /* OPTIMISTIC, and then reconciled. The chat used to be
+                   posted-then-shown: the composer cleared and nothing appeared
+                   until the round trip landed, which on a phone on campus wifi
+                   is a second of blank. The temporary row carries `pending` so
+                   the bubble can show a single tick instead of two, and it is
+                   replaced by the row the insert returns rather than joined by
+                   it. */
+                const temp = {
+                  id: `pending-${Date.now()}`, squadronId: ev.squadronId, body: ev.body,
+                  authorId: me, createdAt: new Date().toISOString(),
+                  replyTo: ev.replyTo || null, reactions: {}, pending: true,
+                };
+                setRoomMessages((ms) => [...ms, temp]);
                 postSquadronMessage({
-                  me, squadronId: ev.squadronId, moduleCode: sq?.moduleCode, body: ev.body,
-                }).then((row) => { if (row) setRoomMessages((ms) => [...ms, row]); });
+                  me, squadronId: ev.squadronId, moduleCode: sq?.moduleCode,
+                  body: ev.body, replyTo: ev.replyTo,
+                }).then((row) => {
+                  setRoomMessages((ms) => (row
+                    ? ms.map((m) => (m.id === temp.id ? row : m))
+                    : ms.filter((m) => m.id !== temp.id)));
+                });
               }
             }}
             onBlock={async (userId) => {
@@ -1369,14 +1413,6 @@ function AppInner() {
             token={route.token}
             onEnter={() => go(routePath.ready())}
             onFindInstead={() => go(routePath.ready())}
-          />
-        </main>
-      ) : route.name === "ready" && flags["social.readyroom"] ? (
-        <main className="content content-taxi">
-          <ReadyRoom
-            moduleCode={route.moduleCode}
-            onGoToChapter={(m, c, tab) => go(routePath.chapter(m, c, tab))}
-            onOpenChannel={(m) => go(routePath.ready(m))}
           />
         </main>
       ) : route.name === "redirect" ? (
