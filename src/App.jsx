@@ -1458,6 +1458,10 @@ function AppInner() {
                 paper={paper}
                 moduleCode={activeModuleCode}
                 me={me}
+                /* `me` is the author id every mark is written under. This is
+                   who that id belongs to, which is a different question and
+                   was being asked of the same string. */
+                identity={{ name: displayName, callsign: displayName }}
                 onBack={() => go(routePath.library(activeModuleCode))}
                 onPlace={(page) => progress.set("pw-paper-place", { paperId: paper.id, page })}
                 onOpenThread={() => go(routePath.ready(activeModuleCode))}

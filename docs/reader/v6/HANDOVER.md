@@ -251,3 +251,119 @@ Work through, on each:
 Empty the papers section of every module except Module 1. Module 1 stays as it is —
 it is the testing bed — but empty its papers too, and put the real Lufthansa Technical
 Training PDF there when it is supplied. No example papers anywhere.
+
+---
+
+## Fixes — the three dead tools
+
+Three of the six default tools were in the bar, had icons, had inspector
+panels and had keyboard shortcuts, but nothing was listening for them.
+Picking one did nothing at all. That is why the reader felt broken.
+
+**The reader also opened on the highlighter** (`S.tool` started at `'hl'`),
+so the first thing a student did — try to select a line — did nothing,
+and the first drag drew on the page. It now opens on **Select**.
+
+### What was added
+
+`reader.js` gained a fourth module at the end. It reads state off the root
+rather than reaching into the tool bar's closure, so it stays separable:
+
+| attribute | set by | read by |
+|---|---|---|
+| `data-tool` | the tool bar | eraser, note, ask |
+| `data-var` | the tool bar (**new**) | which variant of the active tool |
+| `data-rub` | the tool bar (**new**) | the eraser's rub radius |
+
+Two small edits inside module 3 publish those, and one more stores each
+stroke's points on the path as `data-pts` when the stroke is released.
+The eraser needs them: a cut stroke is rebuilt from its own points through
+the same `smooth()` the pen drew it with, so the two ends match the original
+exactly rather than being re-interpolated.
+
+**Eraser** — *Whole mark* removes an entire stroke, or an entire text mark,
+in one pass. *Just where you rub* keeps the runs of points the rubber never
+touched and re-emits one path per run, so a stroke can be cut in half.
+A text mark is always removed whole; half a highlight means nothing.
+Removing a mark calls `WM.drop(g)`, so the panel updates with it.
+
+**Note** and **Ask** — both drop a pin and open one composer under it.
+The pin is positioned in page percentages, like ink, so it survives resize
+and rotate. Saving files the note into `WM` with the same shape `stamp()`
+uses, so it appears in the marks browser like any other mark. A question is
+always violet and always `who:'anon'`; a note takes the last colour and is
+`who:'me'`. Escape or clicking away discards; the pin goes with it.
+Cmd/Ctrl-Enter saves.
+
+The *On a passage* variant uses the current selection when there is one and
+falls back to the click point when there isn't, rather than refusing.
+
+### New CSS
+
+`.pin`, `.ncomp`, `.nact`, `.nwho` at the end of `reader.css`, with a light
+mode block. Nothing existing was changed.
+
+### Verified in a browser
+
+Opens on Select · pen draws · strokes keep their points · eraser removes a
+whole stroke · eraser cuts a stroke in two · eraser removes a text mark ·
+note places a pin and composer · note saves and reaches the panel · ask
+posts as anonymous · discard removes the pin · island page tray · island You
+tray · rotate · light mode · panel search · scope chips · pages view ·
+tapping a mark reopens the pill · bar repositions. No console errors.
+
+---
+
+## Second pass — the four things that were still wrong
+
+**The pencil was a second pen.** `Pen` has two variants, `Pen` and `Pencil`,
+and the drawing code never read the variant — both drew an identical line.
+A pencil now lays down a narrower stroke at 68% opacity through a
+`feTurbulence` displacement filter (`#wm-graphite`, injected once into the
+body), so it has grain where the pen is solid. Same tool, genuinely
+different mark.
+
+**The eraser rubbed blind.** It erased where you pressed, but nothing showed
+you what it was about to take. There is now a `.rubber` circle under the
+pointer, sized to the rub radius from the inspector, and the native cursor
+is hidden over the stage while the eraser is up. The rub radius the eraser
+uses is the one the circle draws, so what you see is what goes.
+
+**The note was placed before it was written.** Now it is the other way
+round, which is how it should have been: picking Note or Ask opens a
+composer immediately — you do not have to guess that clicking somewhere
+opens it — you write, press **Save & place**, and the pin comes off the
+composer and rides the pointer. It dims when it is off a page and lights up
+with a "click the spot" tag when it is over one. Clicking drops it and files
+it into `WM`. Escape drops a carried pin; Escape in the composer closes it.
+Cmd/Ctrl-Enter saves.
+
+**The last-five deck was hardcoded.** `RECENT` was a fixed array of five
+made-up pages, so it never matched where you had actually been. It is a live
+list now: settle on a page for 700ms and it goes to the front of the deck,
+deduped, capped at five. Each card carries that page's most recent mark
+colour and text, or the page heading when there are no marks on it yet. An
+empty deck says so rather than rendering nothing.
+
+### Still open, and not in these files
+
+Three things on your list are not the kit's to fix:
+
+- **Resume from the deck** — I never saw the screenshot, so I have not
+  touched it.
+- **The bar and the island not staying put while the page zooms** — in the
+  kit they are fixed siblings of `#stage` and zoom only changes `--pw` on the
+  root, so they do not move. If they move on the live site, the reader has
+  been mounted inside the scrolling container rather than beside it.
+- **Knowing who is signed in** — the kit has no auth. It expects the host to
+  tell it; `who:'me'` is hardcoded in both `stamp()` and the note composer,
+  and both want the real user id.
+
+### Verified in a browser, second pass
+
+Pencil differs from pen in width, opacity and grain · the rubber follows the
+cursor and erases what it covers · picking Note opens the composer · saving
+hands you a pin to place · the pin knows when it is over a page · the note
+lands and reaches the panel · a question posts anonymously · escape drops a
+carried pin · the deck records the pages you actually settled on · a card
+takes you back to its page. No console errors.

@@ -48,16 +48,15 @@ const made = [];
 
 const mark = async (author, kind, ring, body) => {
   const anchor = createAnchor(TEXT, 24, 47);
-  const { status, body: rows } = await rest("paper_annotations", {
-    method: "POST",
-    headers: { Prefer: "return=representation" },
-    body: JSON.stringify({
-      paper_id: PAPER, module_code: "M1", author_id: author,
-      kind, ring, body: body ?? null, anchor,
-    }),
+  /* Through paper_mark_add, because 0021 took the table away from the anon
+     key — which is the point of 0021, and a test that still had a private
+     door would be testing a database nobody else can reach. */
+  const { status, body: row } = await rpc("paper_mark_add", {
+    uid: author, p_paper: PAPER, p_module: "M1",
+    p_kind: kind, p_ring: ring, p_body: body ?? null, p_anchor: anchor,
   });
   if (status >= 300) return { status, id: null };
-  const id = rows?.[0]?.id;
+  const id = row?.id || row?.[0]?.id;
   if (id) made.push(id);
   return { status, id };
 };
@@ -77,22 +76,18 @@ try {
   ok("—  · a correction saves", corr.status < 300);
 
   // R1, at the database rather than in review.
-  const bad = await rest("paper_annotations", {
-    method: "POST",
-    body: JSON.stringify({
-      paper_id: PAPER, module_code: "M1", author_id: A, kind: "highlight",
-      ring: "module", anchor: { quote: "x", page: 4, rect: [1, 2, 3, 4] },
-    }),
+  const bad = await rpc("paper_mark_add", {
+    uid: A, p_paper: PAPER, p_module: "M1", p_kind: "highlight", p_ring: "module",
+    p_anchor: { quote: "x", page: 4, rect: [1, 2, 3, 4] },
   });
+  /* The CHECK is on the table, so it fires inside the function too — which is
+     the thing worth proving, now that the function is the only way in. */
   ok("R1 · the database refuses an anchor carrying a position", bad.status >= 400, `status ${bad.status}`);
 
   // R10, at the database: a question with no thread cannot exist.
-  const noThread = await rest("paper_annotations", {
-    method: "POST",
-    body: JSON.stringify({
-      paper_id: PAPER, module_code: "M1", author_id: A, kind: "question",
-      ring: "module", anchor: createAnchor(TEXT, 0, 10),
-    }),
+  const noThread = await rpc("paper_mark_add", {
+    uid: A, p_paper: PAPER, p_module: "M1", p_kind: "question", p_ring: "module",
+    p_anchor: createAnchor(TEXT, 0, 10),
   });
   ok("R10 · a question without a thread is refused", noThread.status >= 400, `status ${noThread.status}`);
 
@@ -156,9 +151,11 @@ try {
        .some((r) => r.kind === "correction"));
 
   if (found) {
-    await rest(`paper_annotations?id=eq.${found.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ resolved_at: new Date().toISOString() }),
+    /* The author resolves it. paper_mark_edit scopes to author_id = uid, so
+       this only works because A wrote the correction — which is R9's rule
+       restated as a privilege rather than a convention. */
+    await rpc("paper_mark_edit", {
+      uid: A, p_id: found.id, p_patch: { resolved_at: new Date().toISOString() },
     });
     const after = await rpc("paper_corrections_for", { uid: B, p_module: "M1" });
     ok("R9 · resolving it takes it off the queue",
@@ -226,11 +223,19 @@ try {
   }
 } finally {
   console.log("\ncleaning up");
-  await rest(`paper_annotations?paper_id=eq.${PAPER}`, { method: "DELETE" });
+  /* Every row this script made, by its own id and its own author. The blanket
+     delete-by-paper it used to run is not available any more, and should not
+     be: that was the hole. */
+  for (const id of made) {
+    for (const who of [A, B]) {
+      const r = await rpc("paper_mark_delete", { uid: who, p_id: id });
+      if (r.body === true) break;
+    }
+  }
   await rest(`pilot_profiles?user_id=in.(${A},${B})`, { method: "DELETE" });
   await rest(`blocks?user_id=eq.${B}`, { method: "DELETE" });
-  const left = await rest(`paper_annotations?paper_id=eq.${PAPER}&select=id`);
-  console.log(`  ${made.length} rows written, ${(left.body || []).length} left behind`);
+  const left = (await rpc("paper_marks_for", { uid: A, p_paper: PAPER, p_since: null })).body || [];
+  console.log(`  ${made.length} rows written, ${left.length} left behind`);
 }
 
 console.log(`\npaper-db: ${pass} passed, ${fails.length} failed`);

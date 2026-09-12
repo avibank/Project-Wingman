@@ -8,6 +8,7 @@ import { mountWM } from "./part1.js";
 import { mountIsland } from "./part2.js";
 import { mountToolbar } from "./part3.js";
 import { mountPanel } from "./part4.js";
+import { mountNotes } from "./part5.js";
 import { capture } from "./mount.js";
 import { createMarkStore } from "./marks.js";
 import { whenBackOnline } from "./outbox.js";
@@ -62,9 +63,21 @@ const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private
 const readJSON = (k, f) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch { return f; } };
 
 export default function ReaderV6({
-  paper, moduleCode, me, onBack, onOpenThread, onOpenOriginal, onPlace,
+  paper, moduleCode, me, identity, onBack, onOpenThread, onOpenOriginal, onPlace,
   livery = DEFAULT_LIVERY, variant = "night", onLivery,
 }) {
+  /* WHO IS READING THIS.
+     `me` is the author id — a Clerk id string — and every mark, stroke and
+     note is written under it. It was also being read as though it were a
+     profile (`me.initials`, `me.name`, `me.school`), which a string does not
+     have, so the You tray said "?" and "You" to a student who was signed in
+     and had been for an hour. The two are separate things and are separate
+     arguments now: `me` identifies, `identity` describes. */
+  const author = typeof me === "string" ? me : (me?.id || me?.userId || null);
+  const who = (typeof me === "object" && me) ? { ...me, ...(identity || {}) } : (identity || {});
+  const initials = (who.initials
+    || (who.callsign || who.name || "").trim().split(/\s+/).map((w) => w[0]).join("")
+    || "?").slice(0, 2).toUpperCase();
   const url = paper ? fileHref(paper.file) : null;
   const key = `pw-rdr6-${paper?.id || "none"}`;
 
@@ -239,6 +252,39 @@ export default function ReaderV6({
 
   useEffect(() => { setRasterFocus(page); }, [page]);
 
+  /* GO TO A PAGE THAT IS NOT ON SCREEN.
+     The demo's goTo is `querySelector` then `scrollTo`, which is right when
+     all ten pages are in the DOM. Here five are, out of a thousand, so every
+     jump to anywhere else found nothing and did nothing: the deck's cards,
+     the panel's page grid and the bookmark all failed the same way.
+     Setting the page mounts the window around it; the element then exists a
+     frame or two later, and that is what we scroll to. The rAF walk is the
+     honest way to wait for a render — a fixed timeout is a guess that is too
+     long on a laptop and too short on an iPad. */
+  const jumpTo = useCallback((n, smooth = true) => {
+    const want = Math.max(1, Math.min(total || 1, Math.round(Number(n) || 1)));
+    setPage(want);
+    write(`${key}-page`, String(want));
+    let tries = 0;
+    const land = () => {
+      const st = stageRef.current;
+      if (!st) return;
+      const el = st.querySelector(`.sheetpg[data-pg="${want}"]`);
+      if (!el) { if (tries++ < 40) requestAnimationFrame(land); return; }
+      const top = st.scrollTop + el.getBoundingClientRect().top - st.getBoundingClientRect().top - 12;
+      st.scrollTo({ top: Math.max(0, top), behavior: smooth ? "smooth" : "auto" });
+      /* One more frame: the page may have been an empty box at the moment we
+         measured it and a real raster immediately after, which moves it. */
+      if (tries++ < 40) requestAnimationFrame(() => {
+        const again = st.querySelector(`.sheetpg[data-pg="${want}"]`);
+        if (!again) return;
+        const t2 = st.scrollTop + again.getBoundingClientRect().top - st.getBoundingClientRect().top - 12;
+        if (Math.abs(t2 - st.scrollTop) > 4) st.scrollTo({ top: Math.max(0, t2), behavior: "auto" });
+      });
+    };
+    requestAnimationFrame(land);
+  }, [total, key]);
+
   /* HANDOVER, Making it feel smooth: ask for the marks on the pages you are
      about to show, never for the document. */
   useEffect(() => {
@@ -310,16 +356,18 @@ export default function ReaderV6({
       liveries: LIVERIES.map((l) => accentOf(l.id, variant)),
       bookmarks,
       me: {
-        i: (me?.initials || me?.name || "?").slice(0, 2).toUpperCase(),
-        n: me?.name || "You",
-        sub: [me?.school, moduleCode && `Module ${moduleCode.replace(/^M/, "")}`, me?.licence]
+        i: initials,
+        n: who.callsign || who.name || "You",
+        sub: [who.school, moduleCode && `Module ${moduleCode.replace(/^M/, "")}`, who.licence]
           .filter(Boolean).join(" · "),
       },
       people: Object.assign(people.current, {
-        me: { n: "You", i: (me?.initials || "?").slice(0, 2).toUpperCase() },
+        me: { n: "You", i: initials },
       }),
       tally: () => ({ hl: counts.hl, bm: live2.current.bookmarks.length, rv: counts.rv }),
       recent: () => store.current?.recent() || [],
+      /* The chrome asks for a page; the shell knows how to mount it first. */
+      jump: (n) => jumpTo(n),
       /* P0-2 — what the banner says instead of "marks are saved here". One is
          how much of this student's work has not reached the server; the other
          is how much went up the last time the outbox drained. */
@@ -383,6 +431,9 @@ export default function ReaderV6({
       onStroke(pgEl, path, pts, tool, S) { store.current?.stroke(pgEl, path, pts, tool, S); },
       onErasedInk(ids, split) { store.current?.erasedInk(ids, split); },
       onSnapshot(pgEl, a, b) { store.current?.snapshot(pgEl, a, b); },
+      /* A note or a question written in the composer and dropped on the page.
+         The pin is already there; this is the record behind it. */
+      onPin(p) { store.current?.pin(p); },
       mine: (id) => store.current?.mine(id) ?? false,
       pointsOf: (id) => store.current?.pointsOf(id) || null,
       onAnswer(markId, text) { store.current?.answer(markId, text); },
@@ -396,11 +447,15 @@ export default function ReaderV6({
     const island2 = capture(() => mountIsland(ctx));
     const tools = capture(() => mountToolbar(ctx));
     const panel2 = capture(() => mountPanel(ctx));
+    /* The note and the question composer. It is a separate closure in the kit
+       and stays one here: it listens on the stage and on the root's data-tool,
+       and it hands what it collects to the store through ctx.onPin. */
+    const notes2 = capture(() => mountNotes(ctx));
     island.current = island2.out;
     panel.current = panel2.out;
 
     store.current = createMarkStore({
-      paper, moduleCode, me, model, WM,
+      paper, moduleCode, me: author, model, WM,
       chrome: Object.assign(chrome.current, { head: headOf }),
       live: live.current,
       people: people.current,
@@ -426,7 +481,13 @@ export default function ReaderV6({
     };
     drain();
     const stopDraining = whenBackOnline(drain);
+    /* COME BACK TO WHERE YOU WERE READING, not just to the memory of it.
+       This used to be `setPage(ctx.page)`, which mounted the window around
+       page 12 and left the stage scrolled to 0 — above every page in it. The
+       counter said 012/320 and the screen was empty, on every second visit to
+       every paper. Measured as P1-3. jumpTo does the other half. */
     setPage(ctx.page);
+    if (ctx.page > 1) jumpTo(ctx.page, false);
 
     /* Undo and redo. The chrome has the message and the Redo button; the key
        that fires them belongs to the shell, because the chrome binds its own
@@ -454,7 +515,7 @@ export default function ReaderV6({
       window.removeEventListener("keydown", keys);
       stopDraining();
       clearInterval(poll);
-      panel2.off(); tools.off(); island2.off();
+      notes2.off(); panel2.off(); tools.off(); island2.off();
       delete window.islandSay; delete window.readerGoTo; delete window.WM;
       island.current = null; panel.current = null; store.current = null;
     };
@@ -581,7 +642,7 @@ export default function ReaderV6({
             />
             <span className="spacer" />
             <button className="you" id="you" type="button" aria-label="You">
-              {(me?.initials || "?").slice(0, 2).toUpperCase()}
+              {initials}
             </button>
           </div>
           <div className="msg" id="msg" />

@@ -44,7 +44,17 @@ const lines = source.split("\n");
 function sliceAt(startNeedle, endNeedle, from) {
   const s = lines.findIndex((l, i) => i >= from && l === startNeedle);
   if (s < 0) throw new Error(`REFUSING: cannot find the start of a part: ${startNeedle}`);
-  const e = lines.findIndex((l, i) => i > s && l === endNeedle);
+  /* COUNT THE NESTING. This used to take the first `})();` after the opening
+     line, which is right until a part contains an IIFE of its own — and part 3
+     now does: the pencil's graphite filter is injected by one. The slice then
+     ended at the filter and silently dropped every line after it, including
+     the whole drawing surface, and the first edit that reached past it failed
+     with "no match" rather than "your slice is short". */
+  let depth = 1, e = -1;
+  for (let i = s + 1; i < lines.length; i++) {
+    if (lines[i] === startNeedle) { depth++; continue; }
+    if (lines[i] === endNeedle) { depth--; if (!depth) { e = i; break; } }
+  }
   if (e < 0) throw new Error(`REFUSING: cannot find the end of a part after line ${s}`);
   return { body: lines.slice(s + 1, e).join("\n"), end: e };
 }
@@ -57,6 +67,12 @@ const PART1 = lines.slice(one, oneEnd + 1).join("\n");
 const p2 = sliceAt("(function(){", "})();", lines.findIndex((l) => l.includes("2 · the island")));
 const p3 = sliceAt("(function(){", "})();", lines.findIndex((l) => l.includes("3 · the tool bar")));
 const p4 = sliceAt("(function(){", "})();", lines.findIndex((l) => l.includes("4 · the panel")));
+/* The kit's second section numbered 4 — the eraser, the note and the
+   question. It arrived after the panel and is sliced as part 5 here, because
+   two parts called 4 is the kit's numbering, not ours, and renumbering a file
+   we are told to copy verbatim is exactly the edit the handover forbids. */
+const p5 = sliceAt("(function(){", "})();",
+  lines.findIndex((l) => l.includes("4 · the eraser, the note and the question")));
 
 /* ── the edits ─────────────────────────────────────────────────────────
    Every one is asserted to match exactly once. An edit that stops matching
@@ -98,9 +114,21 @@ const EDITS = [
   },
   {
     part: 2,
-    why: "the last five places are the student's own most recent marks",
-    findLines: ["const RECENT=[", " [132,'r','Come back to this — the flare timing still is not sticking.']];"],
-    replace: `const RECENT=ctx.recent||[];`,
+    why: "the deck is where you have been AND what you have marked, and it has to survive a reload",
+    find: `const RECENT=[];`,
+    replace: `const RECENT=[];
+/* THE KIT RECORDS WHERE YOU SETTLE, WHICH IS RIGHT AND IS NOT ENOUGH HERE.
+   RECENT starts empty on every load, so reopening a paper you have marked
+   fifty times showed an empty deck until you had scrolled somewhere new. The
+   store knows the pages you actually marked; they are merged in behind the
+   live ones, newest first, and the whole thing is still capped at five. */
+const DECK=()=>{
+  const out=RECENT.slice();
+  for(const [pg,k,tx] of ((ctx.recent&&ctx.recent())||[])){
+    if(!out.some(r=>r[0]===pg))out.push([pg,k,tx]);
+  }
+  return out.slice(0,5);
+};`,
   },
   {
     part: 2,
@@ -241,19 +269,36 @@ BACKP.addEventListener('click',e=>{`,
   },
   {
     part: 2,
-    why: "the fanned deck read the student's last five places once, at mount, when there were none",
-    find: `const RECENT=ctx.recent||[];`,
-    replace: `/* ASKED EACH TIME IT IS DRAWN. Read once into a constant, this was whatever
-   the reader knew at mount — which is nothing, because the marks arrive after
-   it — so "Where you have been" was permanently empty however much you
-   marked. Same for the tallies below. */
-const RECENT=()=>ctx.recent();`,
+    why: "and the deck draws from the merge, each time it is drawn rather than once at mount",
+    find: `  return RECENT.map(([n,k,q],i)=>{`,
+    replace: `  return DECK().map(([n,k,q],i)=>{`,
   },
   {
     part: 2,
-    why: "and the deck draws from the call",
-    find: `  return RECENT.map(([n,k,q],i)=>{`,
-    replace: `  return RECENT().map(([n,k,q],i)=>{`,
+    why: "and the empty state asks the same question",
+    find: `  <div class="fan" id="fan">\${RECENT.length?fanCards():'<span class="empty">Nowhere yet — read on.</span>'}</div>`,
+    replace: `  <div class="fan" id="fan">\${DECK().length?fanCards():'<span class="empty">Nowhere yet — read on.</span>'}</div>`,
+  },
+  {
+    part: 2,
+    why: "a card in the deck has to reach a page that is not mounted, which is every page but five",
+    find: `function goTo(n){
+  const el=STAGE.querySelector(\`.sheetpg[data-pg="\${n}"]\`);if(!el)return;
+  const from=page;
+  STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
+  if(Math.abs(n-from)>1)raiseBack(from);
+}`,
+    replace: `/* THE DEMO HAS TEN PAGES IN THE DOM AND THIS HAS FIVE OUT OF A THOUSAND.
+   querySelector then scrollTo is right there and silently does nothing here:
+   every card in the deck, every cell in the page grid and the bookmark all
+   failed this way. The shell mounts the window around the page first and
+   lands on it when it exists. */
+function goTo(n){
+  const from=page;
+  if(Math.abs(n-from)>1)raiseBack(from);
+  page=n;paintCounter();
+  ctx.jump(n);
+}`,
   },
   {
     part: 2,
@@ -300,6 +345,8 @@ const RECENT=()=>ctx.recent();`,
   $$('.sheetpg').forEach(el=>{const d=Math.abs(el.offsetTop-74-STAGE.scrollTop);
     if(d<bd){bd=d;best=+el.dataset.pg}});
   if(best!==page){page=best;paintCounter()}
+  clearTimeout(settle);
+  settle=setTimeout(()=>{remember(page);if(open==='page')fillTray('page')},700);
 },{passive:true});`,
     replace: `let scrollF=0;
 STAGE.addEventListener('scroll',()=>{
@@ -310,6 +357,10 @@ STAGE.addEventListener('scroll',()=>{
     $$('.sheetpg').forEach(el=>{const d=Math.abs(el.offsetTop-74-STAGE.scrollTop);
       if(d<bd){bd=d;best=+el.dataset.pg}});
     if(best!==page){page=best;paintCounter();ctx.onPage(page)}
+    clearTimeout(settle);
+    /* settling on a page is what puts it in the deck — 700ms, so scrolling
+       past a page does not count as having been there */
+    settle=setTimeout(()=>{remember(page);if(open==='page')fillTray('page')},700);
   });
 },{passive:true});`,
   },
@@ -363,7 +414,96 @@ return {
   repaint(){paintBookmarks();if(open)fillTray(open)},`,
   },
 
+  /* ══ part 5 · the note, the question and the rubber ═══════════════ */
+  {
+    part: 5,
+    why: "the app already has an eraser that persists what it removes, and two erasers on one pointer erase twice",
+    findLines: ["/* ══ the eraser ═══════════════════════════════════════════════════════ */",
+                "addEventListener('pointerup',()=>{rubbing=false});"],
+    replace: `/* THE KIT'S ERASER IS NOT THE ONE THAT RUNS HERE. Part 3 already carries an
+   eraser that removes a stroke or a mark AND takes the record with it — it
+   writes the deletion to paper_ink and paper_annotations, and it is undoable.
+   The kit's erases the DOM and stops, so two of them on one pointer would
+   remove a stroke twice and save neither. What the kit had and part 3 did not
+   is the rubber you can see; that has been taken into part 3 instead, where
+   the erasing lives. */`,
+  },
+  {
+    part: 5,
+    why: "a note and a question are records, not DOM. The kit places the pin; the store keeps it",
+    find: `  (pg.querySelector('.marks')||pg).appendChild(pin);
+  WM.add({id:gid,g:gid,pg:+pg.dataset.pg,k:keyOf(kind),kind,
+          who:kind==='ask'?'anon':'me',t:'just now',tx,
+          ask:kind==='ask'?tx:undefined,ans:kind==='ask'?[]:undefined});
+  dropCarry();`,
+    replace: `  (pg.querySelector('.marks')||pg).appendChild(pin);
+  /* THE PIN IS ON THE PAGE BEFORE THE NETWORK HEARS ABOUT IT, which is the
+     same bargain every other mark makes here: losing what somebody just wrote
+     is the worse failure. The store gives it its real id when the row lands,
+     and the pin follows — so a note written, saved and reloaded is one note,
+     not two. Nothing about the position is stored: a pin is a fraction of its
+     page, like ink, and page and fraction are all the record carries. */
+  ctx.onPin({ gid, kind, tx, pg:+pg.dataset.pg, x:nx/10, y:ny/10, k:keyOf(kind), el:pin });
+  dropCarry();`,
+  },
+  {
+    part: 5,
+    why: "and the composer is where a question gets its wording, so it must not also open on every tool change",
+    find: `new MutationObserver(()=>{
+  const k=tool();
+  if(k==='note'||k==='ask'){ if(!carry&&(!comp||comp.dataset.kind!==k))openComposer(k) }
+  else { closeComposer(); dropCarry(); }
+  if(k!=='era')RUB.hidden=true;
+}).observe(R,{attributes:true,attributeFilter:['data-tool']});`,
+    replace: `new MutationObserver(()=>{
+  const k=tool();
+  if(k==='note'||k==='ask'){ if(!carry&&(!comp||comp.dataset.kind!==k))openComposer(k) }
+  else { closeComposer(); dropCarry(); }
+}).observe(R,{attributes:true,attributeFilter:['data-tool']});`,
+  },
+
+  {
+    part: 5,
+    why: "the reader's stylesheet is scoped to .rdr, and the composer was appended to document.body where none of it reaches",
+    find: `  document.body.appendChild(el); comp=el;`,
+    replace: `  /* INSIDE THE READER, NOT ON THE BODY. Every selector in reader.css is
+     prefixed with .rdr when it is scoped for the app, so a composer parented
+     to <body> got no width, no background and no z-index — it rendered behind
+     the stage, which then swallowed every click aimed at it. The kit can
+     append to the body because it owns the whole page; here it does not. */
+  R.appendChild(el); comp=el;`,
+  },
+  {
+    part: 5,
+    why: "and the pin that rides the pointer is the same story",
+    find: `  document.body.appendChild(el);
+  carry={el,kind,tx,hex}; R.dataset.carry='1';`,
+    replace: `  R.appendChild(el);
+  carry={el,kind,tx,hex}; R.dataset.carry='1';`,
+  },
+
   /* ══ part 3 · the tool bar ════════════════════════════════════════ */
+  {
+    part: 3,
+    why: "a single letter armed a tool even while the student was typing a note, so writing 'the' swapped tools three times and closed the box",
+    find: `addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeAll();return}
+  const t=TOOLS.find(x=>x.k.toLowerCase()===e.key.toLowerCase());`,
+    replace: `addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeAll();return}
+  /* NOT WHILE SOMEBODY IS WRITING. Every tool has a one-letter shortcut and
+     nothing checked where the keystroke was going, so typing a note armed
+     Highlight on the h, Note on the n and Text on the t — and arming a tool
+     closes the composer, which meant the note box could not be typed into at
+     all. The same keystrokes reach the panel's answer box and the search
+     field. A modifier is still a shortcut; a bare letter in a text box is
+     text. */
+  const el=e.target;
+  if(el&&(/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||el.isContentEditable))return;
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const t=TOOLS.find(x=>x.k.toLowerCase()===e.key.toLowerCase());`,
+  },
+
   {
     part: 3,
     why: "HANDOVER section 5 — SEED and seed(). findRange() stays: the anchoring fallback needs it",
@@ -734,6 +874,25 @@ let geom=null;`,
    one, and a rubber is not a precise enough instrument to decide where a
    quotation now ends. */
 let rubbing=null;
+/* YOU CAN SEE WHAT YOU ARE ABOUT TO TAKE OUT.
+   The eraser worked and rubbed blind: nothing on screen said how big the rub
+   was or what it covered, so it read as the tool missing rather than the tool
+   being small. This is the kit's rubber, brought to the eraser that actually
+   removes the record — a circle the size of the rub radius, following the
+   pointer, with the native cursor hidden under it. What you see is what goes.
+   It hides itself the moment the tool is anything else, so it cannot be left
+   sitting on the page after the eraser is put down. */
+const RUB=document.createElement('div');
+RUB.className='rubber'; RUB.hidden=true; R.appendChild(RUB);
+const rubPx=()=>Math.max(14,Math.min(90,(S.size.era||10)*2.2));
+const hideRub=()=>{RUB.hidden=true};
+STG.addEventListener('pointerleave',hideRub);
+STG.addEventListener('pointermove',e=>{
+  if(S.tool!=='era'){hideRub();return}
+  const d=rubPx();
+  RUB.hidden=false;
+  RUB.style.cssText=\`width:\${d}px;height:\${d}px;left:\${e.clientX}px;top:\${e.clientY}px\`;
+},{passive:true});
 function rub(e,pg){
   const box=pg.getBoundingClientRect();
   const [px,py]=pt(e,pg);
@@ -950,7 +1109,11 @@ function clearMeasure(){tape.remove()}`,
     why: "a finished stroke is a record in paper_ink, in the 0-1000 page fractions it is already drawn in",
     find: `addEventListener('pointerup',()=>{
   pan=null;
-  if(ink){if(ink.pts.length<2)ink.path.remove();ink=null}
+  if(ink){
+    if(ink.pts.length<2)ink.path.remove();
+    else ink.path.dataset.pts=JSON.stringify(ink.pts.map(p=>[Math.round(p[0]),Math.round(p[1])]));
+    ink=null;
+  }
 });`,
     replace: `addEventListener('pointerup',()=>{
   pan=null;rubbing=null;
@@ -966,7 +1129,12 @@ function clearMeasure(){tape.remove()}`,
   }
   if(ink){
     if(ink.pts.length<2)ink.path.remove();
-    else ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
+    else {
+      /* The kit stamps the stroke's own points onto the path, and the eraser
+         reads them back to cut it. Keep that, then save. */
+      ink.path.dataset.pts=JSON.stringify(ink.pts.map(p=>[Math.round(p[0]),Math.round(p[1])]));
+      ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
+    }
     ink=null;
   }
 });`,
@@ -974,8 +1142,8 @@ function clearMeasure(){tape.remove()}`,
   {
     part: 3,
     why: "the tray, its order, and every tool's colour, size and opacity persist per student",
-    find: `let S={tool:'hl',tray:[...DEF],bar:'left',`,
-    replace: `let S=ctx.settings({tool:'hl',tray:[...DEF],bar:'left',`,
+    find: `let S={tool:'hand',tray:[...DEF],bar:'left',`,
+    replace: `let S=ctx.settings({tool:'hand',tray:[...DEF],bar:'left',`,
   },
   {
     part: 3,
@@ -1276,6 +1444,9 @@ const built = [];
 
   const c = applyEdits(p4.body, 4);
   built.push({ file: "part4.js", text: moduleFor(4, "the panel", "mountPanel(ctx)", c.body, c.applied) });
+
+  const d = applyEdits(p5.body, 5);
+  built.push({ file: "part5.js", text: moduleFor(5, "the note and the question", "mountNotes(ctx)", d.body, d.applied) });
 }
 
 /* A BACKSLASH THAT DID NOT SURVIVE IS SILENT, AND COST AN AFTERNOON.

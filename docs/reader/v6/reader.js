@@ -49,7 +49,7 @@ const R=$('#rdr'),ISL=$('#isl'),CNT=$('#cnt'),DOT=$('#dot'),MSG=$('#msg'),
       TRAY=$('#tray'),SIZER=$('#sizer'),STAGE=$('#stage'),BACKP=$('#backp'),BACKL=$('#backl');
 
 const DOC='LTT B1-11', TOTAL=1012, FIRST=126;
-const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82'};
+const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82',n:'#71808E'};
 let page=FIRST, zoom=100, fit=true, rot=0, warm=0, livery='#4C8DF6',
     cur=null, holdT=null, pending=false, open=null, jumpFrom=null,
     bookmarks=new Set([129]);
@@ -102,13 +102,24 @@ STAGE.innerHTML=PAGES.map(([h,ps],i)=>`<article class="sheetpg" data-pg="${FIRST
   ${ps.map(p=>`<p>${p}</p>`).join('')}
   <span class="pgno">${pad(FIRST+i,TOTAL)}</span></article>`).join('');
 
-/* your last five places — page, its mark colour, and the line you marked */
-const RECENT=[
- [131,'g','The avoid areas are published in the flight manual.'],
- [129,'y','Delay in lowering the collective is the most common cause of decay.'],
- [134,'p','Does the drive shaft shear before or after the freewheel unit?'],
- [128,'b','Rotor RPM is the single most important parameter.'],
- [132,'r','Come back to this — the flare timing still is not sticking.']];
+/* your last five places — recorded as you read, not a fixed list.
+   A place is a page you settled on: scroll past it and it does not count,
+   stop on it and it goes to the front of the deck.                      */
+const RECENT=[];
+function noteOf(pg){
+  const m=[...WM.marks].reverse().find(x=>x.pg===pg);
+  if(m)return [m.k||'y', (m.ask||m.tx||'').trim()];
+  const h=document.querySelector(`.sheetpg[data-pg="${pg}"] h3`);
+  return ['n', h?h.textContent.replace(/\s+/g,' ').trim():'No marks on this page yet'];
+}
+function remember(pg){
+  const [k,q]=noteOf(pg);
+  const i=RECENT.findIndex(r=>r[0]===pg);
+  if(i===0){RECENT[0]=[pg,k,q];return}
+  if(i>0)RECENT.splice(i,1);
+  RECENT.unshift([pg,k,q]);
+  if(RECENT.length>5)RECENT.length=5;
+}
 
 function paintCounter(first){
   const now=pad(page,TOTAL);
@@ -213,7 +224,7 @@ function trayPage(){return `
     <button class="${bookmarks.has(page)?'on':''}" data-bmk="1" aria-label="Bookmark this page">${ico.bm}</button>
   </div>
   <div class="lab">Where you have been<span class="v">last five</span></div>
-  <div class="fan" id="fan">${fanCards()}</div>
+  <div class="fan" id="fan">${RECENT.length?fanCards():'<span class="empty">Nowhere yet — read on.</span>'}</div>
   <div class="cap" id="cap">Hold a card to see the line you marked.</div>`;
 }
 function trayMe(){return `
@@ -325,12 +336,16 @@ BACKP.addEventListener('click',e=>{
   if(el)STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
   BACKP.classList.remove('on');
 });
+let settle;
 STAGE.addEventListener('scroll',()=>{
   let best=FIRST,bd=1e9;
   $$('.sheetpg').forEach(el=>{const d=Math.abs(el.offsetTop-74-STAGE.scrollTop);
     if(d<bd){bd=d;best=+el.dataset.pg}});
   if(best!==page){page=best;paintCounter()}
+  clearTimeout(settle);
+  settle=setTimeout(()=>{remember(page);if(open==='page')fillTray('page')},700);
 },{passive:true});
+remember(FIRST);
 
 $('#fire').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -424,7 +439,7 @@ const GRID=['#EE6F82','#F0865E','#F5A93C','#F5C23C','#D6C93E','#8FC24A','#43C08A
             '#4FB8E0','#5BB4F0','#6E9BF2','#8C86EE','#B571E0','#D06BC8','#E86BA6','#EE6F82',
             '#C7CDD4','#9AA5B1','#71808E','#4C5A67','#2E3A45','#1B242D','#FFFFFF','#000000'];
 
-let S={tool:'hl',tray:[...DEF],bar:'left',
+let S={tool:'hand',tray:[...DEF],bar:'left',
   variant:{},colour:{pen:'b',hl:'y',mkr:'y',shp:'b',txt:'b',msr:'g',note:'y',ul:'y',st:'r',flag:'r'},
   size:{pen:3,hl:12,mkr:14,shp:2,txt:14,msr:2,era:10,ul:2,st:2,note:12,flag:2},
   op:{pen:100,hl:38,mkr:55,shp:100,txt:100,msr:100,era:100,ul:100,st:100,note:100,flag:100},
@@ -464,6 +479,8 @@ function mode(){
   R.dataset.grab=(S.tool==='hand'&&(S.variant.hand||0)===1)?'1':'0';
   R.dataset.sel =(S.tool==='hand'&&(S.variant.hand||0)===0)?'1':'0';
   R.dataset.draw= DRAWS.includes(S.tool)?'1':'0';
+  R.dataset.var = String(S.variant[S.tool]||0);      /* the eraser and the note read this */
+  R.dataset.rub = String(S.size.era||10);
   paintCursor();
   R.style.setProperty('--sel',colOf(T(S.tool)));
 }
@@ -1112,6 +1129,18 @@ document.getElementById('props').addEventListener('click',()=>setTimeout(()=>{sy
 
 /* ══ pen, marker and highlighter draw. They never touch the text. ════ */
 let pan=null, ink=null;
+/* the graphite grain the pencil draws through */
+(function(){
+  if(document.getElementById('wm-defs'))return;
+  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.id='wm-defs'; s.setAttribute('aria-hidden','true');
+  s.setAttribute('style','position:absolute;width:0;height:0;overflow:hidden');
+  s.innerHTML=`<defs><filter id="wm-graphite" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter></defs>`;
+  document.body.appendChild(s);
+})();
 function pgAt(e){return document.elementFromPoint(e.clientX,e.clientY)?.closest('.sheetpg')}
 function pt(e,pg){const r=pg.getBoundingClientRect();
   return [(e.clientX-r.left)/r.width*1000,(e.clientY-r.top)/r.height*1000]}
@@ -1123,10 +1152,15 @@ STG.addEventListener('pointerdown',e=>{
   e.preventDefault();
   const t=T(S.tool), c=colOf(t), r=pg.getBoundingClientRect();
   const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-  const wide=t.id==='hl'?S.size[t.id]*1.9:S.size[t.id];
+  /* Pen is the second variant's opposite: a pencil lays down a narrower,
+     softer, grainy line. Same tool, genuinely different mark.          */
+  const pencil = t.id==='pen' && (S.variant.pen||0)===1;
+  let wide = t.id==='hl' ? S.size[t.id]*1.9 : S.size[t.id];
+  if(pencil) wide *= .72;
   path.setAttribute('stroke',c);
   path.setAttribute('stroke-width',wide/r.width*1000);
-  path.setAttribute('stroke-opacity',(S.op[t.id]||100)/100);
+  path.setAttribute('stroke-opacity',((pencil?68:(S.op[t.id]||100)))/100);
+  if(pencil){path.setAttribute('filter','url(#wm-graphite)');path.dataset.pencil='1'}
   const chisel = t.id==='hl' && (S.variant.hl||0)===0;
   if(t.id==='hl')path.setAttribute('stroke-linecap',chisel?'butt':'round');
   pg.querySelector('.ink').appendChild(path);
@@ -1144,8 +1178,14 @@ STG.addEventListener('pointermove',e=>{
 });
 addEventListener('pointerup',()=>{
   pan=null;
-  if(ink){if(ink.pts.length<2)ink.path.remove();ink=null}
+  if(ink){
+    if(ink.pts.length<2)ink.path.remove();
+    else ink.path.dataset.pts=JSON.stringify(ink.pts.map(p=>[Math.round(p[0]),Math.round(p[1])]));
+    ink=null;
+  }
 });
+/* the eraser needs to rebuild a cut stroke exactly the way it was drawn */
+window.readerSmooth=smooth;
 /* a light smoothing so a mouse-drawn line does not look like a saw */
 function smooth(p){
   if(p.length<3)return `M${p[0][0]} ${p[0][1]}L${p[p.length-1][0]} ${p[p.length-1][1]}`;
@@ -1312,4 +1352,197 @@ new MutationObserver(side).observe(R,{attributes:true,attributeFilter:['data-bar
 side();
 
 paint();
+})();
+
+/* ─── 4 · the eraser, the note and the question ───────────────────────
+   These three were in the bar with icons, variants and shortcuts, and
+   nothing was listening for them. They work now, and two behaviours
+   changed after the first pass:
+
+     · The eraser carries a rubber under the pointer, sized to the rub
+       radius, so you can see what you are about to take out.
+     · A note is written FIRST and placed second. Picking the tool opens
+       a composer; when you save it, the pin comes off the composer and
+       rides the pointer until you click the spot it belongs to. You
+       write while the thought is fresh and anchor it once you know what
+       it says.
+   ─────────────────────────────────────────────────────────────────── */
+(function(){
+const $=s=>document.querySelector(s);
+const R=$('#rdr'), STG=$('#stage');
+const VIOLET='#B571E0';
+const tool=()=>R.dataset.tool, variant=()=>+(R.dataset.var||0);
+const pgAt=(x,y)=>document.elementFromPoint(x,y)?.closest('.sheetpg');
+const norm=(pg,x,y)=>{const r=pg.getBoundingClientRect();
+  return [(x-r.left)/r.width*1000,(y-r.top)/r.height*1000]};
+
+/* ══ the eraser ═══════════════════════════════════════════════════════ */
+let rubbing=false;
+const RUB=document.createElement('div');
+RUB.className='rubber'; RUB.hidden=true; document.body.appendChild(RUB);
+
+function rubSize(){return Math.max(14,Math.min(90,(+R.dataset.rub||10)*2.2))}
+function moveRub(x,y){
+  const d=rubSize();
+  RUB.style.cssText=`width:${d}px;height:${d}px;left:${x}px;top:${y}px`;
+}
+function markAt(x,y){
+  const pg=pgAt(x,y); if(!pg)return null;
+  const qs=[...pg.querySelectorAll('.mkq')];          /* marks sit under the text */
+  for(let i=qs.length-1;i>=0;i--){
+    const r=qs[i].getBoundingClientRect();
+    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return qs[i];
+  }
+  return null;
+}
+function dropMark(q){
+  const g=q.dataset.g;
+  document.querySelectorAll(`.mkq[data-g="${g}"]`).forEach(n=>n.remove());
+  WM.drop(g);
+}
+function ptsOf(p){try{const a=JSON.parse(p.dataset.pts||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
+
+function rubAt(x,y){
+  const pg=pgAt(x,y); if(!pg)return;
+  const whole = variant()===0;
+
+  const q=markAt(x,y);
+  if(q){dropMark(q); if(whole)return}          /* a text mark only ever goes whole */
+
+  const r=pg.getBoundingClientRect();
+  const [nx,ny]=norm(pg,x,y);
+  const rub=(rubSize()/2)/r.width*1000;
+  const layer=pg.querySelector('.ink'); if(!layer)return;
+
+  [...layer.querySelectorAll('path')].forEach(path=>{
+    const pts=ptsOf(path); if(!pts.length)return;
+    const hit=i=>Math.hypot(pts[i][0]-nx,pts[i][1]-ny)<=rub;
+    if(!pts.some((_,i)=>hit(i)))return;
+    if(whole){path.remove();return}
+
+    /* cut it: keep the runs of points the rubber never touched */
+    const runs=[]; let run=[];
+    pts.forEach((p,i)=>{ if(hit(i)){if(run.length>1)runs.push(run);run=[]} else run.push(p) });
+    if(run.length>1)runs.push(run);
+    const S=window.readerSmooth||(p=>`M${p[0][0]} ${p[0][1]}`+p.slice(1).map(z=>`L${z[0]} ${z[1]}`).join(''));
+    runs.forEach(rn=>{
+      const c=path.cloneNode(false);
+      c.setAttribute('d',S(rn)); c.dataset.pts=JSON.stringify(rn);
+      layer.appendChild(c);
+    });
+    path.remove();
+  });
+}
+STG.addEventListener('pointerenter',()=>{if(tool()==='era')RUB.hidden=false});
+STG.addEventListener('pointerleave',()=>{RUB.hidden=true});
+STG.addEventListener('pointerdown',e=>{
+  if(tool()!=='era')return;
+  rubbing=true; e.preventDefault();
+  try{STG.setPointerCapture(e.pointerId)}catch(err){}
+  rubAt(e.clientX,e.clientY);
+});
+STG.addEventListener('pointermove',e=>{
+  if(tool()==='era'){RUB.hidden=false;moveRub(e.clientX,e.clientY)}
+  if(rubbing)rubAt(e.clientX,e.clientY);
+});
+addEventListener('pointerup',()=>{rubbing=false});
+
+/* ══ the note and the question: write, then place ═════════════════════ */
+let comp=null;      /* the open composer */
+let carry=null;     /* the pin riding the pointer, waiting for its spot */
+
+const colourNow=k=>k==='ask'?VIOLET:((R.style.getPropertyValue('--sel')||'').trim()||'#F5C23C');
+const keyOf=k=>k==='ask'?'p':
+  ({'#f5c23c':'y','#5bb4f0':'b','#43c08a':'g','#b571e0':'p','#ee6f82':'r'}
+   [colourNow(k).toLowerCase()]||'y');
+const pinSVG=k=>k==='ask'
+  ? `<svg viewBox="0 0 24 24" fill="none"><path d="M9.6 9.1a2.5 2.5 0 114.2 2c-.9.8-1.7 1.3-1.7 2.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.4" fill="currentColor"/></svg>`
+  : `<svg viewBox="0 0 24 24" fill="none"><path d="M7 8.5h10M7 12.5h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+
+function closeComposer(){ if(comp){comp.remove();comp=null} }
+function dropCarry(){ if(carry){carry.el.remove();carry=null;R.dataset.carry='0'} }
+
+function openComposer(kind){
+  closeComposer(); dropCarry();
+  const hex=colourNow(kind);
+  const el=document.createElement('div');
+  el.className='ncomp'; el.dataset.kind=kind; el.style.setProperty('--k',hex);
+  el.innerHTML=`
+    <div class="nhd"><span class="nic">${pinSVG(kind)}</span>
+      <b>${kind==='ask'?'Ask the class':'Write a note'}</b>
+      <span class="nwho">${kind==='ask'?'Posted anonymously':'Only you'}</span>
+      <button class="nx" aria-label="Close">&times;</button></div>
+    <textarea rows="3" placeholder="${kind==='ask'
+      ?'What do you want to ask about this page?':'What do you want to remember?'}"></textarea>
+    <div class="nft"><span class="nhint">Save it, then drop it where it belongs</span>
+      <button class="nok">Save &amp; place</button></div>`;
+  document.body.appendChild(el); comp=el;
+  const ta=el.querySelector('textarea'); setTimeout(()=>ta.focus(),30);
+
+  const save=()=>{
+    const tx=ta.value.trim(); if(!tx){ta.focus();return}
+    closeComposer(); startCarry(kind,tx,hex);
+  };
+  el.addEventListener('click',ev=>{
+    if(ev.target.closest('.nx')){closeComposer();return}
+    if(ev.target.closest('.nok'))save();
+  });
+  ta.addEventListener('keydown',ev=>{
+    if(ev.key==='Escape'){ev.stopPropagation();closeComposer()}
+    if(ev.key==='Enter'&&(ev.metaKey||ev.ctrlKey))save();
+  });
+}
+
+function startCarry(kind,tx,hex){
+  const el=document.createElement('div');
+  el.className='pin carry '+kind;
+  el.style.setProperty('--k',hex);
+  el.innerHTML=pinSVG(kind)+`<span class="ctip">Click the spot</span>`;
+  document.body.appendChild(el);
+  carry={el,kind,tx,hex}; R.dataset.carry='1';
+}
+addEventListener('pointermove',e=>{
+  if(!carry)return;
+  carry.el.style.left=e.clientX+'px'; carry.el.style.top=e.clientY+'px';
+  const over=!!pgAt(e.clientX,e.clientY);
+  carry.el.dataset.ok=over?'1':'0';
+});
+function commit(x,y){
+  const pg=pgAt(x,y); if(!pg)return false;
+  const {kind,tx,hex}=carry;
+  const [nx,ny]=norm(pg,x,y);
+  const gid='n'+Date.now().toString(36);
+  const pin=document.createElement('button');
+  pin.className='pin '+kind; pin.dataset.kind=kind; pin.dataset.g=gid;
+  pin.title=tx;
+  pin.style.cssText=`left:${nx/10}%;top:${ny/10}%;--k:${hex}`;
+  pin.innerHTML=pinSVG(kind);
+  (pg.querySelector('.marks')||pg).appendChild(pin);
+  WM.add({id:gid,g:gid,pg:+pg.dataset.pg,k:keyOf(kind),kind,
+          who:kind==='ask'?'anon':'me',t:'just now',tx,
+          ask:kind==='ask'?tx:undefined,ans:kind==='ask'?[]:undefined});
+  dropCarry();
+  window.islandSay&&window.islandSay(kind==='ask'?'askq':'note',900);
+  return true;
+}
+STG.addEventListener('click',e=>{
+  if(carry){e.preventDefault();e.stopPropagation();commit(e.clientX,e.clientY);return}
+  const k=tool(); if(k!=='note'&&k!=='ask')return;
+  if(e.target.closest('.pin')||e.target.closest('.ncomp'))return;
+  openComposer(k);
+},true);
+addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(carry){dropCarry();return}
+  if(comp)closeComposer();
+});
+
+/* picking the tool is enough to start writing — you should not have to
+   guess that a click somewhere is what opens it */
+new MutationObserver(()=>{
+  const k=tool();
+  if(k==='note'||k==='ask'){ if(!carry&&(!comp||comp.dataset.kind!==k))openComposer(k) }
+  else { closeComposer(); dropCarry(); }
+  if(k!=='era')RUB.hidden=true;
+}).observe(R,{attributes:true,attributeFilter:['data-tool']});
 })();

@@ -756,3 +756,66 @@
 @keyframes f-ask{0%{transform:scale(.62);opacity:.2}42%{transform:scale(1.09);opacity:1}68%{transform:scale(.96)}86%{transform:scale(1.02)}100%{transform:scale(1)}}
 @keyframes f-qm{0%{opacity:0;transform:translateY(-6px) scale(.72)}52%{opacity:1;transform:translateY(1.4px) scale(1.08)}78%{transform:translateY(0) scale(.98)}100%{opacity:1;transform:none}}
 
+
+/* ── the rubber, the pins and the note composer ───────────────────────
+   The eraser carries a rubber so you can see what you are about to take
+   out. A note is written in the composer first and the pin rides the
+   pointer afterwards, so both a floating pin and a placed one exist. */
+.rdr .rubber{position:fixed;z-index:70;pointer-events:none;border-radius:50%;
+  transform:translate(-50%,-50%);
+  border:1.5px solid rgba(255,255,255,.75);
+  box-shadow:0 0 0 1px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.3);
+  background:rgba(255,255,255,.08)}
+.rdr [data-look="light"] .rubber{border-color:rgba(20,24,30,.7);background:rgba(20,24,30,.06)}
+.rdr [data-tool="era"] .stage,.rdr [data-tool="era"] .sheetpg{cursor:none}
+
+.rdr .pin{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;
+  display:grid;place-items:center;border:0;cursor:pointer;z-index:5;
+  background:var(--k);color:#15181d;
+  box-shadow:0 2px 8px rgba(0,0,0,.45), 0 0 0 2px color-mix(in oklab,var(--k) 30%,transparent);
+  transition:transform .16s cubic-bezier(.3,1.3,.45,1)}
+.rdr .pin:hover{transform:scale(1.12)}
+.rdr .pin svg{width:15px;height:15px}
+.rdr .pin.ask{color:#1a1320}
+
+/* the pin while it is still looking for its spot */
+.rdr .pin.carry{position:fixed;z-index:78;pointer-events:none;margin:0;
+  transform:translate(-50%,-50%) scale(1.08);opacity:.55}
+.rdr .pin.carry[data-ok="1"]{opacity:1;
+  box-shadow:0 4px 14px rgba(0,0,0,.5), 0 0 0 3px color-mix(in oklab,var(--k) 45%,transparent)}
+.rdr .pin.carry .ctip{position:absolute;left:50%;top:30px;transform:translateX(-50%);
+  white-space:nowrap;font-family:var(--mono,monospace);font-size:9.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:#fff;background:rgba(12,15,20,.9);padding:4px 9px;
+  border-radius:99px;opacity:0;transition:opacity .18s}
+.rdr .pin.carry[data-ok="1"] .ctip{opacity:1}
+
+/* the composer — a tab you write in before the pin exists */
+.rdr .ncomp{position:fixed;left:50%;top:96px;transform:translateX(-50%);width:min(420px,calc(100vw - 40px));
+  z-index:76;border-radius:14px;padding:12px 13px 11px;background:var(--pop,#1b1f26);
+  border:1px solid color-mix(in oklab,var(--k) 42%,transparent);
+  box-shadow:0 20px 56px rgba(0,0,0,.55);
+  animation:npop .24s cubic-bezier(.3,1.3,.45,1) both}
+@keyframes npop{from{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.97)}}
+.rdr .nhd{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.rdr .nhd .nic{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  background:var(--k);color:#15181d}
+.rdr .nhd .nic svg{width:15px;height:15px}
+.rdr .nhd b{font-size:14.5px;font-weight:600}
+.rdr .nwho{margin-left:auto;font-family:var(--mono,monospace);font-size:9.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--txt-3,#8a93a3)}
+.rdr .nhd .nx{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;background:transparent;
+  color:var(--txt-3,#8a93a3);font-size:18px;line-height:1;flex:0 0 auto}
+.rdr .nhd .nx:hover{background:rgba(255,255,255,.08);color:var(--txt-1,#eef1f5)}
+.rdr .ncomp textarea{width:100%;resize:none;border:0;outline:none;background:rgba(255,255,255,.045);
+  border-radius:9px;padding:10px 11px;color:var(--txt-1,#eef1f5);font:14.5px/1.55 inherit;
+  min-height:66px}
+.rdr .ncomp textarea::placeholder{color:var(--txt-3,#8a93a3)}
+.rdr .nft{display:flex;align-items:center;gap:10px;margin-top:9px}
+.rdr .nhint{flex:1 1 auto;font-size:11.5px;color:var(--txt-3,#8a93a3)}
+.rdr .nok{border:0;cursor:pointer;height:34px;padding:0 16px;border-radius:99px;
+  background:var(--k);color:#15181d;font-size:13.5px;font-weight:600;transition:.14s}
+.rdr .nok:hover{filter:brightness(1.09)}
+.rdr .fan .empty{font-size:12.5px;color:var(--txt-3,#8a93a3);padding:14px 2px;display:block}
+.rdr [data-look="light"] .ncomp{background:#fff;border-color:color-mix(in oklab,var(--k) 45%,transparent)}
+.rdr [data-look="light"] .ncomp textarea{color:#1b1f26;background:rgba(0,0,0,.04)}
+.rdr [data-look="light"] .nhd .nx:hover{background:rgba(0,0,0,.06);color:#1b1f26}

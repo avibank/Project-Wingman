@@ -929,6 +929,90 @@ export function createMarkStore({
       };
     }).filter(Boolean),
     waiting: () => pending.length,
+
+    /* ── a note or a question dropped on the page ────────────────────
+       The composer collects the words and the student clicks the spot. The
+       pin is already drawn; this is the record behind it.
+
+       IT IS STILL ANCHORED TO TEXT. A pin arrives as a point, and a point is
+       exactly what R1 refuses to store — a coordinate does not survive the
+       paper being re-extracted, and the CHECK on paper_annotations would
+       refuse it anyway. So the point is resolved to the nearest run of words
+       on that page at the moment it is dropped, and what is stored is those
+       words plus their context, like every other mark. The pin is then drawn
+       back at the start of that run, which is a few pixels from where it was
+       clicked and is the same few pixels after a reflow. */
+    async pin({ kind, tx, pg, x, y, el }) {
+      /* spansIn returns a SPARSE array indexed by the run number, so it has
+         holes wherever a run has not been drawn — walking it with for..of
+         hands you undefined, which is how the first version of this threw on
+         getBoundingClientRect and lost the note it was trying to save. */
+      const spans = spansIn(pages.get(pg)?.text);
+      const items = itemsFor(pg);
+      const pgEl = document.querySelector(`.sheetpg[data-pg="${pg}"]`);
+      let off = null;
+      if (pgEl && spans && spans.length) {
+        const box = pgEl.getBoundingClientRect();
+        const px = box.left + box.width * (x / 100);
+        const py = box.top + box.height * (y / 100);
+        /* the run whose box is nearest the drop point, by centre distance */
+        let best = null, bd = Infinity;
+        for (const sp of spans) {
+          if (!sp) continue;
+          const b = sp.getBoundingClientRect();
+          if (!b.width) continue;
+          const dx = Math.max(b.left - px, 0, px - b.right);
+          const dy = Math.max(b.top - py, 0, py - b.bottom);
+          const d = Math.hypot(dx, dy);
+          if (d < bd) { bd = d; best = sp; }
+        }
+        if (best) {
+          const r = document.createRange();
+          r.selectNodeContents(best);
+          off = offsetsOf(r, spans, items);
+        }
+      }
+      if (!off) {
+        /* No text on the page at all — a scan, or a figure page. The note is
+           worth keeping and there is nothing to anchor it to, so it is told
+           plainly rather than saved somewhere it cannot come back from. */
+        trouble("notext");
+        return;
+      }
+      const threadId = kind === "ask"
+        ? await askOnPassage({ moduleCode, me, quote: model.text.slice(off.start, off.end),
+          body: tx, paperTitle: paper?.title })
+        : null;
+      const args = {
+        paperId, moduleCode, me,
+        kind: kind === "ask" ? "question" : "note",
+        ring: kind === "ask" ? "module" : "solo",
+        colour: kind === "ask" ? MEANING_OF.p : MEANING_OF.y,
+        anchor: anchorFor(model.text, off.start, off.end),
+        body: tx, threadId,
+      };
+      const row = await createAnnotation(args);
+      if (!row) {
+        const localId = newLocalId();
+        remember("mark.add", paperId, { ...args, id: localId });
+        if (el) el.dataset.g = localId;
+        trouble("offline");
+        return;
+      }
+      if (el) el.dataset.g = row.id;
+      rows.set(row.id, row);
+      placed.set(row.id, off);
+      WM.marks.push({ id: row.id, g: row.id, pg, k: kind === "ask" ? "p" : "y",
+        kind, who: "me", t: "just now", tx, ask: kind === "ask" ? tx : undefined,
+        ans: kind === "ask" ? [] : undefined });
+      WM.emit();
+      onCounts?.(counts());
+      did({
+        what: kind === "ask" ? "question" : "note",
+        undo: () => { el?.remove(); return remove(row.id); },
+        redo: () => restore(row, off, { pg, k: kind === "ask" ? "p" : "y", kind, tx }),
+      });
+    },
     /* ── the outbox ──────────────────────────────────────────────────
        How much of this student's work on THIS paper has not reached the
        server. The island reads it, which is why the banner can now say a

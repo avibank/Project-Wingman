@@ -6,6 +6,7 @@
  * and `npm run check:paper` refuses if this file and the source have drifted.
  *
  * Changed from the handed-over file, and only this:
+ *   - a single letter armed a tool even while the student was typing a note, so writing 'the' swapped tools three times and closed the box
  *   - HANDOVER section 5 — SEED and seed(). findRange() stays: the anchoring fallback needs it
  *   - HANDOVER section 5 — seed() goes, and with it the load hook that ran it
  *   - a three-character floor is right for a stray drag and wrong for a deliberate tap
@@ -96,7 +97,7 @@ const GRID=['#EE6F82','#F0865E','#F5A93C','#F5C23C','#D6C93E','#8FC24A','#43C08A
             '#4FB8E0','#5BB4F0','#6E9BF2','#8C86EE','#B571E0','#D06BC8','#E86BA6','#EE6F82',
             '#C7CDD4','#9AA5B1','#71808E','#4C5A67','#2E3A45','#1B242D','#FFFFFF','#000000'];
 
-let S=ctx.settings({tool:'hl',tray:[...DEF],bar:'left',
+let S=ctx.settings({tool:'hand',tray:[...DEF],bar:'left',
   variant:{},colour:{pen:'b',hl:'y',mkr:'y',shp:'b',txt:'b',msr:'g',note:'y',ul:'y',st:'r',flag:'r'},
   size:{pen:3,hl:12,mkr:14,shp:2,txt:14,msr:2,era:10,ul:2,st:2,note:12,flag:2},
   op:{pen:100,hl:38,mkr:55,shp:100,txt:100,msr:100,era:100,ul:100,st:100,note:100,flag:100},
@@ -229,6 +230,8 @@ function mode(){
   R.dataset.grab=(S.tool==='hand'&&(S.variant.hand||0)===1)?'1':'0';
   R.dataset.sel =((S.tool==='hand'&&(S.variant.hand||0)===0)||TEXT.includes(S.tool))?'1':'0';
   R.dataset.draw= (DRAWS.includes(S.tool)||GEOM.includes(S.tool)||S.tool==='snap')?'1':'0';
+  R.dataset.var = String(S.variant[S.tool]||0);      /* the eraser and the note read this */
+  R.dataset.rub = String(S.size.era||10);
   paintCursor();
   R.style.setProperty('--sel',colOf(T(S.tool)));
 }
@@ -668,6 +671,16 @@ $('#rail').addEventListener('mouseout',()=>{clearTimeout(th);tip.classList.remov
 
 addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeAll();return}
+  /* NOT WHILE SOMEBODY IS WRITING. Every tool has a one-letter shortcut and
+     nothing checked where the keystroke was going, so typing a note armed
+     Highlight on the h, Note on the n and Text on the t — and arming a tool
+     closes the composer, which meant the note box could not be typed into at
+     all. The same keystrokes reach the panel's answer box and the search
+     field. A modifier is still a shortcut; a bare letter in a text box is
+     text. */
+  const el=e.target;
+  if(el&&(/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||el.isContentEditable))return;
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
   const t=TOOLS.find(x=>x.k.toLowerCase()===e.key.toLowerCase());
   if(t&&S.tray.includes(t.id)){S.tool=t.id;closeAll();paintRail();
     const nb=document.querySelector(`.t[data-t="${t.id}"]`);nb&&play(nb.querySelector('svg'))}
@@ -970,6 +983,18 @@ document.getElementById('props').addEventListener('click',()=>setTimeout(()=>{sy
 
 /* ══ pen, marker and highlighter draw. They never touch the text. ════ */
 let pan=null, ink=null;
+/* the graphite grain the pencil draws through */
+(function(){
+  if(document.getElementById('wm-defs'))return;
+  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.id='wm-defs'; s.setAttribute('aria-hidden','true');
+  s.setAttribute('style','position:absolute;width:0;height:0;overflow:hidden');
+  s.innerHTML=`<defs><filter id="wm-graphite" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter></defs>`;
+  document.body.appendChild(s);
+})();
 function pgAt(e){return document.elementFromPoint(e.clientX,e.clientY)?.closest('.sheetpg')}
 function pt(e,pg){const r=pg.getBoundingClientRect();
   return [(e.clientX-r.left)/r.width*1000,(e.clientY-r.top)/r.height*1000]}
@@ -989,6 +1014,25 @@ function pt(e,pg){const r=pg.getBoundingClientRect();
    one, and a rubber is not a precise enough instrument to decide where a
    quotation now ends. */
 let rubbing=null;
+/* YOU CAN SEE WHAT YOU ARE ABOUT TO TAKE OUT.
+   The eraser worked and rubbed blind: nothing on screen said how big the rub
+   was or what it covered, so it read as the tool missing rather than the tool
+   being small. This is the kit's rubber, brought to the eraser that actually
+   removes the record — a circle the size of the rub radius, following the
+   pointer, with the native cursor hidden under it. What you see is what goes.
+   It hides itself the moment the tool is anything else, so it cannot be left
+   sitting on the page after the eraser is put down. */
+const RUB=document.createElement('div');
+RUB.className='rubber'; RUB.hidden=true; R.appendChild(RUB);
+const rubPx=()=>Math.max(14,Math.min(90,(S.size.era||10)*2.2));
+const hideRub=()=>{RUB.hidden=true};
+STG.addEventListener('pointerleave',hideRub);
+STG.addEventListener('pointermove',e=>{
+  if(S.tool!=='era'){hideRub();return}
+  const d=rubPx();
+  RUB.hidden=false;
+  RUB.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX}px;top:${e.clientY}px`;
+},{passive:true});
 function rub(e,pg){
   const box=pg.getBoundingClientRect();
   const [px,py]=pt(e,pg);
@@ -1111,10 +1155,15 @@ STG.addEventListener('pointerdown',e=>{
   }
   const t=T(S.tool), c=colOf(t), r=pg.getBoundingClientRect();
   const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-  const wide=t.id==='hl'?S.size[t.id]*1.9:S.size[t.id];
+  /* Pen is the second variant's opposite: a pencil lays down a narrower,
+     softer, grainy line. Same tool, genuinely different mark.          */
+  const pencil = t.id==='pen' && (S.variant.pen||0)===1;
+  let wide = t.id==='hl' ? S.size[t.id]*1.9 : S.size[t.id];
+  if(pencil) wide *= .72;
   path.setAttribute('stroke',c);
   path.setAttribute('stroke-width',wide/r.width*1000);
-  path.setAttribute('stroke-opacity',(S.op[t.id]||100)/100);
+  path.setAttribute('stroke-opacity',((pencil?68:(S.op[t.id]||100)))/100);
+  if(pencil){path.setAttribute('filter','url(#wm-graphite)');path.dataset.pencil='1'}
   const chisel = t.id==='hl' && (S.variant.hl||0)===0;
   if(t.id==='hl')path.setAttribute('stroke-linecap',chisel?'butt':'round');
   pg.querySelector('.ink').appendChild(path);
@@ -1177,10 +1226,17 @@ addEventListener('pointerup',()=>{
   }
   if(ink){
     if(ink.pts.length<2)ink.path.remove();
-    else ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
+    else {
+      /* The kit stamps the stroke's own points onto the path, and the eraser
+         reads them back to cut it. Keep that, then save. */
+      ink.path.dataset.pts=JSON.stringify(ink.pts.map(p=>[Math.round(p[0]),Math.round(p[1])]));
+      ctx.onStroke(ink.pg,ink.path,ink.pts,T(S.tool),S);
+    }
     ink=null;
   }
 });
+/* the eraser needs to rebuild a cut stroke exactly the way it was drawn */
+window.readerSmooth=smooth;
 /* a light smoothing so a mouse-drawn line does not look like a saw */
 /* What the rest of the reader needs from the tool bar. relayout() in
    marks.js rebuilds the quads on a page from stored anchors, so it needs the

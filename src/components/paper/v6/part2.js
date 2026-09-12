@@ -10,7 +10,7 @@
  *   - the paper's name, length and first page come from the manifest, not from a constant
  *   - where the student left off, and what they had set — read once at mount, written back through ctx
  *   - HANDOVER section 1 — the stand-in paper. React renders the stage from PDF.js in the same element shape
- *   - the last five places are the student's own most recent marks
+ *   - the deck is where you have been AND what you have marked, and it has to survive a reload
  *   - who the student is, and what they have actually done on this paper
  *   - the tallies are counted, not written down
  *   - the livery list is the app's five, and the app owns which one is current
@@ -22,8 +22,9 @@
  *   - and it says so for a while rather than for ever
  *   - the closed tray kept six buttons in the tab order behind a 36px island
  *   - and hands them back when it opens
- *   - the fanned deck read the student's last five places once, at mount, when there were none
- *   - and the deck draws from the call
+ *   - and the deck draws from the merge, each time it is drawn rather than once at mount
+ *   - and the empty state asks the same question
+ *   - a card in the deck has to reach a page that is not mounted, which is every page but five
  *   - a tally of nothing is a zero count, and this app never states one
  *   - a student could put marks into a paper and had no way to get them out
  *   - the Redo button in the undo message is a button, and in the demo it only dismissed the message
@@ -40,7 +41,7 @@ const R=$('#rdr'),ISL=$('#isl'),CNT=$('#cnt'),DOT=$('#dot'),MSG=$('#msg'),
       TRAY=$('#tray'),SIZER=$('#sizer'),STAGE=$('#stage'),BACKP=$('#backp'),BACKL=$('#backl');
 
 const DOC=ctx.doc, TOTAL=ctx.total, FIRST=ctx.first;
-const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82'};
+const K={y:'#F5C23C',b:'#5BB4F0',g:'#43C08A',p:'#B571E0',r:'#EE6F82',n:'#71808E'};
 let page=ctx.page||FIRST, zoom=ctx.zoom||100, fit=ctx.fit!==false, rot=ctx.rot||0,
     warm=ctx.warm||0, livery=ctx.livery||'#4C8DF6',
     cur=null, holdT=null, pending=false, open=null, jumpFrom=null,
@@ -53,12 +54,36 @@ const pad=(n,t)=>String(n).padStart(String(t).length,'0');
    article.sheetpg[data-pg] · .bmk · svg.ink · .marks · canvas · .textLayer
    · .pgno — so every query below still finds what it is looking for. */
 
-/* your last five places — page, its mark colour, and the line you marked */
-/* ASKED EACH TIME IT IS DRAWN. Read once into a constant, this was whatever
-   the reader knew at mount — which is nothing, because the marks arrive after
-   it — so "Where you have been" was permanently empty however much you
-   marked. Same for the tallies below. */
-const RECENT=()=>ctx.recent();
+/* your last five places — recorded as you read, not a fixed list.
+   A place is a page you settled on: scroll past it and it does not count,
+   stop on it and it goes to the front of the deck.                      */
+const RECENT=[];
+/* THE KIT RECORDS WHERE YOU SETTLE, WHICH IS RIGHT AND IS NOT ENOUGH HERE.
+   RECENT starts empty on every load, so reopening a paper you have marked
+   fifty times showed an empty deck until you had scrolled somewhere new. The
+   store knows the pages you actually marked; they are merged in behind the
+   live ones, newest first, and the whole thing is still capped at five. */
+const DECK=()=>{
+  const out=RECENT.slice();
+  for(const [pg,k,tx] of ((ctx.recent&&ctx.recent())||[])){
+    if(!out.some(r=>r[0]===pg))out.push([pg,k,tx]);
+  }
+  return out.slice(0,5);
+};
+function noteOf(pg){
+  const m=[...WM.marks].reverse().find(x=>x.pg===pg);
+  if(m)return [m.k||'y', (m.ask||m.tx||'').trim()];
+  const h=document.querySelector(`.sheetpg[data-pg="${pg}"] h3`);
+  return ['n', h?h.textContent.replace(/\s+/g,' ').trim():'No marks on this page yet'];
+}
+function remember(pg){
+  const [k,q]=noteOf(pg);
+  const i=RECENT.findIndex(r=>r[0]===pg);
+  if(i===0){RECENT[0]=[pg,k,q];return}
+  if(i>0)RECENT.splice(i,1);
+  RECENT.unshift([pg,k,q]);
+  if(RECENT.length>5)RECENT.length=5;
+}
 
 function paintCounter(first){
   const now=pad(page,TOTAL);
@@ -146,7 +171,7 @@ function paintBookmarks(){
 /* ── the two trays ─────────────────────────────────────────────────── */
 const LIV=ctx.liveries;
 function fanCards(){
-  return RECENT().map(([n,k,q],i)=>{
+  return DECK().map(([n,k,q],i)=>{
     const lines=[0,1,2,3,4,5,6].map(r=>`<i${r===2?` class="m" style="--k:${K[k]}"`:''}></i>`).join('');
     return `<button class="card" data-i="${i}" data-pg="${n}" data-q="${q.replace(/"/g,'&quot;')}">
       ${lines}<span class="cn">${pad(n,TOTAL)}</span></button>`}).join('');
@@ -164,7 +189,7 @@ function trayPage(){return `
     <button class="${bookmarks.has(page)?'on':''}" data-bmk="1" aria-label="Bookmark this page">${ico.bm}</button>
   </div>
   <div class="lab">Where you have been<span class="v">last five</span></div>
-  <div class="fan" id="fan">${fanCards()}</div>
+  <div class="fan" id="fan">${DECK().length?fanCards():'<span class="empty">Nowhere yet — read on.</span>'}</div>
   <div class="cap" id="cap">Hold a card to see the line you marked.</div>`;
 }
 function trayMe(){return `
@@ -245,11 +270,16 @@ function closeTray(){
   ISL.style.height='36px';ISL.style.borderRadius='18px';
   ISL.style.width=restWidth()+'px';
 }
+/* THE DEMO HAS TEN PAGES IN THE DOM AND THIS HAS FIVE OUT OF A THOUSAND.
+   querySelector then scrollTo is right there and silently does nothing here:
+   every card in the deck, every cell in the page grid and the bookmark all
+   failed this way. The shell mounts the window around the page first and
+   lands on it when it exists. */
 function goTo(n){
-  const el=STAGE.querySelector(`.sheetpg[data-pg="${n}"]`);if(!el)return;
   const from=page;
-  STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
   if(Math.abs(n-from)>1)raiseBack(from);
+  page=n;paintCounter();
+  ctx.jump(n);
 }
 function raiseBack(from){jumpFrom=from;BACKL.textContent='Back to '+pad(from,TOTAL);BACKP.classList.add('on');
   clearTimeout(backT);backT=setTimeout(()=>BACKP.classList.remove('on'),12000)}
@@ -322,6 +352,7 @@ BACKP.addEventListener('click',e=>{
   if(el)STAGE.scrollTo({top:el.offsetTop-74,behavior:'smooth'});
   BACKP.classList.remove('on');
 });
+let settle;
 let scrollF=0;
 STAGE.addEventListener('scroll',()=>{
   if(scrollF)return;
@@ -331,8 +362,13 @@ STAGE.addEventListener('scroll',()=>{
     $$('.sheetpg').forEach(el=>{const d=Math.abs(el.offsetTop-74-STAGE.scrollTop);
       if(d<bd){bd=d;best=+el.dataset.pg}});
     if(best!==page){page=best;paintCounter();ctx.onPage(page)}
+    clearTimeout(settle);
+    /* settling on a page is what puts it in the deck — 700ms, so scrolling
+       past a page does not count as having been there */
+    settle=setTimeout(()=>{remember(page);if(open==='page')fillTray('page')},700);
   });
 },{passive:true});
+remember(FIRST);
 
 /* HANDOVER section 5: the demo's "fire a state" panel was here. */
 
