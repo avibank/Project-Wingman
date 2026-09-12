@@ -72,5 +72,62 @@ export function listen(tables, onChange, onStatus) {
 
 export const LIVE_TABLES = {
   discussion: ["lesson_threads", "lesson_replies"],
-  chat: ["comms_messages"],
+  chat: ["comms_messages", "comms_reactions"],
+  seat: ["seat_requests", "copilot_sessions", "seat_messages"],
 };
+
+/* =============================================================================
+   TYPING — the one thing that must NOT go through a table.
+
+   "X is typing" is true for about two seconds and is worthless the moment it
+   is stale. Writing it to Postgres would mean a row per keystroke burst, a
+   realtime event per row, and a tombstone to clean up — for a fact with a two
+   second shelf life. Realtime's broadcast channel is the right shape: it is
+   fire-and-forget, it never touches the database, and a dropped packet costs a
+   missing indicator rather than a wrong one.
+
+   The indicator EXPIRES ON THE RECEIVER, not on a stop signal. Somebody who
+   starts typing and then closes the tab never sends the stop, so a design that
+   waits for one shows them typing for ever.
+   ========================================================================= */
+export function typingChannel(room, me, onTyping) {
+  let channel = null;
+  let live = true;
+  const seen = new Map();
+  let timer = null;
+
+  const sweep = () => {
+    const cut = Date.now() - 4000;
+    let changed = false;
+    for (const [id, at] of seen) if (at < cut) { seen.delete(id); changed = true; }
+    if (changed && live) onTyping([...seen.keys()]);
+    if (!seen.size && timer) { clearInterval(timer); timer = null; }
+  };
+
+  getClient().then((client) => {
+    if (!client || !live) return;
+    if (client.connectionState() === "closed") client.connect();
+    channel = client.channel(`typing:${room}`, { config: { broadcast: { self: false } } });
+    channel.on("broadcast", { event: "typing" }, ({ payload }) => {
+      if (!live || !payload?.id || payload.id === me) return;
+      seen.set(payload.id, Date.now());
+      onTyping([...seen.keys()]);
+      if (!timer) timer = setInterval(sweep, 1000);
+    });
+    channel.subscribe();
+  });
+
+  return {
+    /* Called on a keystroke and throttled by the caller — one packet a second
+       is plenty for a two second indicator. */
+    ping() {
+      try { channel?.send({ type: "broadcast", event: "typing", payload: { id: me } }); }
+      catch { /* the socket is down; the indicator is the least of it */ }
+    },
+    stop() {
+      live = false;
+      if (timer) clearInterval(timer);
+      if (channel) { try { channel.unsubscribe(); } catch { /* already gone */ } }
+    },
+  };
+}

@@ -230,8 +230,12 @@ export function excerptOf(thread) {
    the feed lying about the one thing it exists to track. */
 export const isAnswered = (thread) => Boolean(thread?.bestReplyId);
 
+/* ANSWERS, not replies. A reply hanging off an answer is part of that answer's
+   conversation and counting it inflates the number the feed is judged on —
+   "3 answers" over two answers and one aside is the same small lie as calling
+   a question answered because somebody replied to it. */
 export const answerCount = (thread, replies = []) =>
-  replies.filter((r) => r.threadId === thread?.id).length;
+  replies.filter((r) => r.threadId === thread?.id && !r.parentId).length;
 
 /* §4b — the sticky chip row. Per module, and the filter lives only there. */
 export const FEED_FILTERS = [
@@ -257,15 +261,135 @@ export const waitingCount = (threads = []) => threads.filter((t) => !isAnswered(
 
 /* §4c — answers nest ONE level only. A reply can hang off an answer, but a
    reply to a reply goes flat under the same parent, because deep nesting
-   breaks on a phone. The schema is deliberately flat (0008 has no parent_id),
-   so nesting is derived: an answer is a top-level reply, and a reply that
-   opens by naming another answerer is hung under them.
+   breaks on a phone.
 
-   Until there is a parent_id column this returns every reply as a top-level
-   answer, which is the honest reading of flat data — inventing a hierarchy by
-   guessing at @-mentions would put words in people's mouths. */
+   0022 adds lesson_replies.parent_id, so this is now derived from the column
+   rather than from guesswork. It used to return every reply as a top-level
+   answer with `children: []` and say so honestly, because there was nothing to
+   nest by; the view's nesting code was decoration on flat data.
+
+   The one-level rule is enforced HERE as well as in the writer: a row whose
+   parent is itself a reply is re-pointed at that reply's parent, so a bad
+   insert cannot grow a third level on screen. */
 export function nestAnswers(replies = [], threadId) {
   const mine = replies.filter((r) => r.threadId === threadId)
     .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
-  return mine.map((r) => ({ ...r, children: [] }));
+  const byId = new Map(mine.map((r) => [r.id, r]));
+  const top = [];
+  const kids = new Map();
+  for (const r of mine) {
+    let parent = r.parentId ? byId.get(r.parentId) : null;
+    // A reply to a reply belongs to the answer both of them hang off.
+    while (parent && parent.parentId && byId.get(parent.parentId)) parent = byId.get(parent.parentId);
+    if (!parent || parent.id === r.id) { top.push(r); continue; }
+    if (!kids.has(parent.id)) kids.set(parent.id, []);
+    kids.get(parent.id).push(r);
+  }
+  return top.map((r) => ({ ...r, children: kids.get(r.id) || [] }));
+}
+
+/* ===================== §4b · HOW THE FEED IS ORDERED =====================
+   Four orders, and only four, because a sort menu with nine entries is a
+   preference nobody sets twice.
+
+   Hot is the one that needs explaining. It is score over age, with answers
+   counting several times a vote — a question with three answers is doing its
+   job better than one with three upvotes and none. The 0.55 exponent is what
+   keeps a good question from falling off the first screen in a day, which
+   matters in a study app where the same chapter comes round every term.
+   ========================================================================= */
+export const FEED_SORTS = [
+  { id: "hot", label: "Hot" },
+  { id: "new", label: "New" },
+  { id: "unanswered", label: "Unanswered" },
+  { id: "yours", label: "Yours" },
+];
+
+export function hotScore(thread, { answers = 0, votes = 0, at = Date.now() } = {}) {
+  const ageHours = Math.max(0, (at - (Date.parse(thread.createdAt) || at)) / 3600000);
+  return (votes + answers * 3) / Math.pow(ageHours + 2, 0.55);
+}
+
+export function sortFeed(threads = [], mode = "hot", { me, replies = [], votes = {} } = {}) {
+  const answersOf = (t) => replies.filter((r) => r.threadId === t.id).length;
+  const scoreOf = (t) => (votes[t.id]?.score || 0) + (votes[t.id]?.mine || 0);
+  if (mode === "new") {
+    return [...threads].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+  if (mode === "unanswered") {
+    return threads.filter((t) => !isAnswered(t))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+  if (mode === "yours") return threads.filter((t) => isMine(t, replies, me));
+  const now = Date.now();
+  return [...threads].sort((a, b) =>
+    hotScore(b, { answers: answersOf(b), votes: scoreOf(b), at: now })
+    - hotScore(a, { answers: answersOf(a), votes: scoreOf(a), at: now }));
+}
+
+/* ========================= §4a · TIME, IN A COLUMN =======================
+   A short, absolute time for a list row: the clock today, the weekday this
+   week, then the date. Relative time ("2 days ago") is right for a single item
+   and wrong for a column of them, where the eye wants to compare.
+
+   These lived inside the component. They are here because the rail, the
+   transcript, the feed and the right seat all print times and all have to
+   print them the same way.
+   ========================================================================= */
+export function when(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const d = new Date(t);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  }
+  const days = Math.round((now - d) / 86400000);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return d.toLocaleDateString(undefined, { weekday: "short" });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+export function dayLabel(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return "Today";
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return "Yesterday";
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long" });
+}
+
+/* §4a — consecutive messages from one sender collapse: the avatar and the name
+   appear only on the first of a run, a run breaks on a new day, and a day
+   break carries its own divider row. A deleted message breaks a run too — a
+   tombstone inside somebody's run reads as though they said it. */
+export function runs(messages = []) {
+  const out = [];
+  let lastBy = null, lastDay = null;
+  for (const m of messages) {
+    const day = new Date(m.createdAt).toDateString();
+    if (day !== lastDay) {
+      out.push({ divider: dayLabel(m.createdAt), id: `d-${day}` });
+      lastBy = null; lastDay = day;
+    }
+    out.push({ ...m, first: m.authorId !== lastBy || Boolean(m.deletedAt) });
+    lastBy = m.deletedAt ? null : m.authorId;
+  }
+  return out;
+}
+
+/* §8 — unread, from the server's last_read_at rather than a localStorage map.
+   Your own message is never unread to you, and a muted squadron still counts
+   its unread — muting silences the notification, not the number. */
+export function chatUnread(messages = [], squadronId, lastReadAt, me) {
+  const since = Date.parse(lastReadAt) || 0;
+  return messages.filter((m) => m.squadronId === squadronId && m.authorId !== me
+    && !m.deletedAt && (Date.parse(m.createdAt) || 0) > since).length;
+}
+
+/* The first message the reader has not seen, so the transcript can mark it.
+   Returns null when everything has been read, which is the ordinary state. */
+export function firstUnread(messages = [], lastReadAt, me) {
+  const since = Date.parse(lastReadAt) || 0;
+  return messages.find((m) => m.authorId !== me && (Date.parse(m.createdAt) || 0) > since) || null;
 }
