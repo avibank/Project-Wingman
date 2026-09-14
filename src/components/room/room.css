@@ -607,7 +607,12 @@
 }
 .room .ans.best{
   border-color: color-mix(in oklch, var(--ok) 55%, transparent);
-  background: color-mix(in oklch, var(--ok) 7%, var(--panel));
+  /* A green wash that stays green. Why it takes two declarations is on the
+     invite bar. */
+  background: color-mix(in oklab, var(--ok) 7%, var(--panel));
+}
+@supports (color: oklch(from red l c none)) {
+  .room .ans.best{ background: color-mix(in oklch, var(--ok) 7%, oklch(from var(--panel) l c none)); }
 }
 .room .ans-main{ min-width: 0; }
 .room .ans-head{
@@ -675,7 +680,16 @@
 .room .invitebar{
   display: flex; align-items: center; gap: 11px; padding: 11px 16px; flex-wrap: wrap;
   border-top: 1px solid var(--edge-soft); font-size: 13px;
-  background: color-mix(in oklch, var(--caution) 13%, var(--panel));
+  /* A CAUTION WASH THAT STAYS AMBER. Mixed in oklch the hue walked from amber
+     toward the panel's, so on Sky at night the bar came out violet. Mixed in
+     oklab it goes grey instead, because amber and a blue panel cancel out. So
+     the panel lends only its lightness and chroma, with its hue dropped, and
+     the wash keeps the caution hue whole. Browsers without relative colour
+     syntax keep the oklab mix below. */
+  background: color-mix(in oklab, var(--caution) 13%, var(--panel));
+}
+@supports (color: oklch(from red l c none)) {
+  .room .invitebar{ background: color-mix(in oklch, var(--caution) 13%, oklch(from var(--panel) l c none)); }
 }
 .room .invitebar > svg{ width: 16px; height: 16px; color: var(--caution); flex: 0 0 auto; }
 .room .invitebar.warn{ color: var(--t2); }
