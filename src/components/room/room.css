@@ -360,9 +360,14 @@
   border-radius: 14px 14px 14px 4px; background: var(--raised);
 }
 .room .msg:not(.first) .bubble{ border-radius: 14px; }
+/* Your own bubble is a shade of your livery's accent, in every livery and
+   finish. Mixed in oklab, not oklch: an oklch mix walks the hue wheel from the
+   accent to the surface, and under Manual the surface is paper at hue 85, so a
+   blue accent turned green on the way. Paper has almost no chroma, so in oklab
+   it barely moves the hue. */
 .room .msg.out .bubble{
   border-radius: 14px 14px 4px 14px;
-  background: color-mix(in oklch, var(--active) 26%, var(--raised));
+  background: color-mix(in oklab, var(--active) 26%, var(--raised));
 }
 .room .msg.out:not(.first) .bubble{ border-radius: 14px; }
 .room .who{
@@ -684,7 +689,9 @@
   display: flex; align-items: baseline; gap: 10px; padding: 7px 11px;
   border-radius: 11px; background: var(--raised); font-size: 13.5px;
 }
-.room .seatmsg.out{ background: color-mix(in oklch, var(--active) 20%, var(--raised)); }
+/* Your own message, as a shade of the accent — oklab for the reason given on
+   the chat bubble. */
+.room .seatmsg.out{ background: color-mix(in oklab, var(--active) 20%, var(--raised)); }
 .room .seatmsg-b{ flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .room .seatmsg-m{ display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--t3); }
 .room .seatmsg-m .icon-btn{ width: 26px; height: 26px; }
