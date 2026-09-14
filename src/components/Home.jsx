@@ -7,13 +7,15 @@ import { deckStateFrom } from "../lib/deckState.js";
 import { HOBBS_KEY, hobbsSeconds, hobbsClock } from "../lib/hobbs.js";
 import { PLACE_KEY, placeLine, placeVerb, placeList } from "../lib/lastPlace.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
-import { useSocialPrefs } from "../lib/social.js";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
-import { fetchPartnerSuggestions } from "../lib/partners.js";
-import { fetchMessages } from "../lib/comms.js";
+import { fetchFlightLog } from "../lib/partners.js";
+import { fetchSeat } from "../lib/rightSeat.js";
+import { fetchBlocks, fetchMutes } from "../lib/squadron.js";
+import { isFlySolo } from "../lib/flySolo.js";
+import { surfacesFor, makePeople, squadronFor, routePeopleFor, threadsFor, moduleFor } from "../lib/ground.js";
 import { moduleSegments, chapterCount, nextChapter, SEGMENT, segmentState } from "../lib/progressModel.js";
 import { deckVars, engineLivery, rng } from "../lib/liveryEngine.js";
-import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
+import { profileSVG, phaseName } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
 import { moduleAverage } from "../lib/attitude.js";
 import { useAttitude } from "../lib/useAttitude.js";
@@ -22,10 +24,12 @@ import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import PaperStrip from "./PaperStrip.jsx";
 import Gyro, { GyroCaption } from "./Gyro.jsx";
+import { BackOnTheGround } from "./ground/BackOnTheGround.jsx";
+import "./ground/ground.css";
 
 // The Flight Deck. Ported from the Step 1 reference rig — the colour and
 // lighting system, the hero card with the instrument strip inside it, the
-// module rail, and the crew band — with the bench chrome stripped out.
+// module rail, and Back on the ground — with the bench chrome stripped out.
 //
 // The rule this build enforces: social never touches the hero card or the
 // module cards. Its only foothold in the academic half is the radar, which was
@@ -53,15 +57,6 @@ function Cell({ className, open, onOpen, children, ...rest }) {
 const CHEV = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
   <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const initials = (name) =>
-  (name || "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase() || "··";
-
 
 function lastFlownPhrase(iso) {
   if (!iso) return "First flight from here.";
@@ -75,21 +70,8 @@ function lastFlownPhrase(iso) {
   return wk === 1 ? "Last flown a week ago." : `Last flown ${wk} weeks ago.`;
 }
 
-// Presence carries a chapter id; everything the deck shows is a chapter code.
-// Takes the chapter list rather than reaching for a module import, so it
-// resolves against whichever content the app is running on.
-const chapterCodeOf = (id, chapters) => {
-  if (!id) return null;
-  return chapters.find((c) => c.id === id)?.code || null;
-};
 
 
-function hhmm(iso) {
-  const d = new Date(iso);
-  return Number.isFinite(d.getTime())
-    ? `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
-    : "";
-}
 
 const DECK_CSS = `
 /* the deck owns the whole content column on this route. Specificity has to
@@ -134,14 +116,14 @@ const DECK_CSS = `
    pseudo-element, so it paints beneath the type, cannot wash out text and
    cannot intercept a pointer.
    These must stay AFTER the .card / .mod / .cel rules above: those use the
-   background shorthand, which resets background-image.
-   .crew is deliberately absent — it is a grid whose 1px gaps show its own
-   background through, so a background-image on it paints the gap lines. */
-.deck .card, .deck .mod, .deck .cel { background-image: var(--sheen-img, none); }
+   background shorthand, which resets background-image. The ground section's
+   cards come from an imported stylesheet, so the .deck prefix is what lets
+   the sheen reach them. */
+.deck .card, .deck .mod, .deck .cel, .deck .bog-card { background-image: var(--sheen-img, none); }
 
 /* The cast shadow. Nothing read --drop before this: these surfaces were flat
    with a border. Night sets it to none, so this is inert there. */
-.deck .card, .deck .mod, .deck .crew { box-shadow: var(--drop, none); }
+.deck .card, .deck .mod, .deck .bog-card { box-shadow: var(--drop, none); }
 
 .deck .cap { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--t2); text-align: center; }
@@ -200,7 +182,7 @@ const DECK_CSS = `
 .deck .radar.quiet .sweep { animation-duration: 11s; opacity: .5; }
 
 /* ------------------------------------------------------------- sections */
-.deck .sec { margin-top: 30px; }
+.deck .sec, .deck .bog { margin-top: 30px; }
 .deck .sechead { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 11px; }
 .deck .sechead h2 { font-size: 17px; font-weight: 600; letter-spacing: -.2px; margin: 0; color: var(--t1); }
 .deck .sechead .more { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .11em;
@@ -265,47 +247,6 @@ const DECK_CSS = `
 .deck .mod:hover .prof .reveal, .deck .mod:hover .prof .plane,
 .deck .mod:focus-visible .prof .reveal, .deck .mod:focus-visible .prof .plane { opacity: 1; }
 
-/* ------------------------------------------------------------ crew strip */
-.deck .crew { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
-  border-radius: 13px; border-top-color: var(--edge-hi); border-bottom-color: var(--edge-lo); overflow: hidden; }
-.deck .crew.n3 { grid-template-columns: minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.25fr); }
-.deck .crew.n2 { grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); }
-@media (max-width: 940px) { .deck .crew.n3, .deck .crew.n2 { grid-template-columns: minmax(0,1fr); } }
-.deck .cell { background: var(--panel); padding: 16px 17px; display: flex; flex-direction: column;
-  gap: 11px; min-height: 176px; }
-.deck .cellhead { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em;
-  text-transform: uppercase; color: var(--t3); }
-.deck .formsvg { display: block; width: 100%; height: 92px; margin-top: 2px; }
-.deck .formlist { display: flex; gap: 14px; flex-wrap: wrap; margin-top: auto; align-items: center; }
-.deck .fm { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.deck .fm .av { width: 22px; height: 22px; font-size: 8.5px; }
-.deck .fmname { font-size: 12px; font-weight: 600; }
-.deck .fmpos { font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--t3); }
-.deck .fmnote { font-size: 12.5px; color: var(--t2); }
-.deck .av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center;
-  font-family: var(--font-mono); font-size: 10.5px; color: var(--ground); background: var(--active-fill); }
-.deck .av.dim { background: var(--raised); color: var(--t2); box-shadow: inset 0 0 0 1px var(--line); }
-.deck .cop { display: flex; align-items: center; gap: 12px; }
-.deck .cop .av { width: 42px; height: 42px; font-size: 13px; }
-.deck .copname { font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
-.deck .copwhy { font-size: 12.5px; color: var(--t2); line-height: 1.4; }
-.deck .copmeta { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--t3); }
-.deck .fly { align-self: flex-start; margin-top: auto; background: var(--active-fill); color: var(--ground);
-  border: 0; border-radius: 999px; padding: 8px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
-.deck .freqhead { display: flex; align-items: baseline; gap: 8px; }
-.deck .freqcode { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .11em; color: var(--t3); }
-.deck .freqname { font-size: 13px; font-weight: 600; letter-spacing: -.1px; }
-.deck .msgs { display: flex; flex-direction: column; gap: 7px; flex: 1; }
-.deck .msg { font-size: 12.5px; line-height: 1.45; color: var(--t2); }
-.deck .msg b { color: var(--t1); font-weight: 600; }
-.deck .tick { font-family: var(--font-mono); font-size: 9px; color: var(--t3); letter-spacing: .06em; }
-.deck .compose { display: flex; align-items: center; gap: 9px; border: 1px solid var(--line);
-  border-radius: 999px; padding: 8px 14px; color: var(--t3); font-size: 12.5px; text-align: left;
-  cursor: pointer; background: color-mix(in oklab, var(--raised), transparent 40%); }
-.deck .compose span { flex: 1; }
-.deck .send { width: 19px; height: 19px; border-radius: 50%; background: var(--raised); flex: none; }
 
 /* everything animated here is decorative */
 @media (prefers-reduced-motion: reduce) {
@@ -318,7 +259,8 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, onOpenChannel, content }) {
+function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, onOpenChannel, content,
+  squadrons = [], squadronMessages = [], seatCandidates = [], threads = [], replies = [], people = [], onSquadronPost }) {
   // One content source for the whole app. When the seeded content is on, the
   // module screen reads ITS ids and this read data.js's — so a lesson finished
   // over there matched nothing over here and the ring, the checklist and the
@@ -330,17 +272,15 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const CHAPTERS = MODULES.flatMap((m) => chaptersForModule(m.code));
   const { user } = useUser();
   const progress = useUserProgress();
-  const { prefs } = useSocialPrefs();
   const { flags } = useFlags();
 
   const railRef = useRef(null);
   const wrapRef = useRef(null);
-  const formRef = useRef(null);
 
   const [contacts, setContacts] = useState([]);
-  const [crew, setCrew] = useState([]);
-  const [wingman, setWingman] = useState(undefined);   // undefined = still loading
-  const [msgs, setMsgs] = useState(undefined);
+  const [onModule, setOnModule] = useState([]);   // presence rows on the active module
+  const [seat, setSeat] = useState(null);          // the right seat you are in, if any
+  const [flights, setFlights] = useState([]);      // who you have flown with, and when
   const [greet, setGreet] = useState("");
   const [railOverflows, setRailOverflows] = useState(false);
   const [tick, setTick] = useState(0);
@@ -395,7 +335,6 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
     };
   });
   const started = moduleRows.filter((m) => m.pr > 0).length;
-  const activeRow = moduleRows.find((m) => m.code === active.code) || moduleRows[0];
   const progressKey = moduleRows.map((m) => m.code + m.pr.toFixed(4)).join("|");
 
   // The two halves of the instrument, on separate clocks. The rim carries the
@@ -454,45 +393,36 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
   useEffect(() => {
     let live = true;
-    fetchModulePresence(active.code, user?.id)
-      .then((rows) => {
+    // Fly solo is symmetric: you see nobody. Blocked and muted people stay off
+    // your route, as they stay out of the room.
+    if (isFlySolo()) { setOnModule([]); return undefined; }
+    Promise.all([
+      fetchModulePresence(active.code, user?.id),
+      user?.id ? fetchBlocks(user.id) : [],
+      user?.id ? fetchMutes(user.id) : [],
+    ])
+      .then(([rows, blocked, muted]) => {
         if (!live) return;
-        // Position, never pace: a crewmate's mark is the chapter they are on,
-        // which is what presence already carries.
+        const hidden = new Set([...(blocked || []), ...(muted || [])]);
+        // Position, never pace: a mark is the chapter somebody is on, which is
+        // what presence already carries, and nothing finer.
         const byUser = new Map();
-        (rows || []).forEach((p) => byUser.set(p.user_id, p));
-        setCrew([...byUser.values()].map((p) => {
-          const i = activeChapters.findIndex((c) => c.id === p.chapter_id);
-          return {
-            id: p.user_id,
-            ini: initials(p.display_name),
-            name: p.display_name || "Pilot",
-            code: i >= 0 ? activeChapters[i].code : "at the gate",
-            pr: i >= 0 ? chapterT(i, activeChapters.length) : 0.08,
-          };
-        }));
+        (rows || []).forEach((p) => { if (!hidden.has(p.user_id)) byUser.set(p.user_id, p); });
+        setOnModule([...byUser.values()]);
       })
       .catch(() => {});
     return () => { live = false; };
   }, [active.code, user?.id]);
 
+  // The seat you are in, and who you have flown with, while the right seat shows.
+  const wantSeat = surfacesFor(preset.band, roomOn).seat;
   useEffect(() => {
     let live = true;
-    if (!user?.id) { setWingman(null); return undefined; }
-    fetchPartnerSuggestions({ userId: user.id, moduleCode: active.code, course: prefs?.course })
-      .then((r) => live && setWingman(r?.suggestions?.[0] || null))
-      .catch(() => live && setWingman(null));
+    if (!wantSeat || !user?.id) { setSeat(null); setFlights([]); return undefined; }
+    fetchSeat(user.id).then((r) => { if (live) setSeat(r); }).catch(() => {});
+    fetchFlightLog(user.id).then((r) => { if (live) setFlights(r || []); }).catch(() => {});
     return () => { live = false; };
-  }, [user?.id, active.code, prefs?.course]);
-
-  useEffect(() => {
-    let live = true;
-    if (!preset.band.includes("freq")) { setMsgs(undefined); return undefined; }
-    fetchMessages({ moduleCode: active.code, userId: user?.id, limit: 12 })
-      .then((r) => live && setMsgs((r || []).slice(-3)))
-      .catch(() => live && setMsgs([]));
-    return () => { live = false; };
-  }, [active.code, user?.id, preset.band]);
+  }, [wantSeat, user?.id]);
 
   // Blips are seeded so they hold still between renders.
   const blips = useMemo(() => {
@@ -515,20 +445,11 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
       svg.setAttribute("preserveAspectRatio", "none");
       svg.innerHTML = profileSVG(W, H, row.pr, row.chapters, null, false, C);
     });
-    const fs = formRef.current;
-    if (fs) {
-      const W = Math.round(fs.clientWidth), H = Math.round(fs.clientHeight);
-      if (W && H) {
-        fs.setAttribute("viewBox", `0 0 ${W} ${H}`);
-        fs.setAttribute("preserveAspectRatio", "none");
-        fs.innerHTML = profileSVG(W, H, activeRow.pr, activeChapters.length, crew, true, C);
-      }
-    }
     const r = railRef.current;
     if (r) setRailOverflows(r.scrollWidth - r.clientWidth > 2);
     // moduleRows is read out of the closure, so the effect needs a signature of
     // it or a chapter completed in this session leaves every profile stale.
-  }, [C, crew, tick, progressKey, preset.band]);
+  }, [C, tick, progressKey]);
 
   useEffect(() => {
     // Coalesced to one bump per frame. tick is a dependency of the effect that
@@ -547,14 +468,13 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
     };
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(bump) : null;
     if (ro && wrapRef.current) ro.observe(wrapRef.current);
-    if (ro && formRef.current) ro.observe(formRef.current);
     window.addEventListener("resize", bump);
     return () => {
       cancelAnimationFrame(raf);
       ro?.disconnect();
       window.removeEventListener("resize", bump);
     };
-  }, [preset.band]);
+  }, []);
 
   // ------------------------------------------------------------------ render
   const heroStarted = nextState !== SEGMENT.EMPTY;
@@ -587,6 +507,23 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const contactCap = contactCount
     ? (roomOn ? `${contactCount} · Ready Room` : contactCount)
     : "The Ready Room finds you company.";
+
+  // ---------------------------------------------------- back on the ground
+  // The student's preset still decides what shows, as it did for the band, and
+  // every door in the section leads into the Ready Room. What the data becomes
+  // is in lib/ground.js, where check:ground holds its rules.
+  const surfaces = surfacesFor(preset.band, roomOn);
+  const me = user?.id || null;
+  const { person, nameOf } = makePeople({
+    moduleCode: active.code, chapters: activeChapters, people, presence: onModule,
+    seatCandidates, seat, flights,
+  });
+  const groundSquadron = squadronFor({ me, moduleCode: active.code, squadrons, messages: squadronMessages, person, nameOf });
+  const routePeople = routePeopleFor({ me, surfaces, squadron: groundSquadron, presence: onModule, seat, person });
+  const groundThreads = threadsFor({ me, moduleCode: active.code, threads, replies, nameOf });
+  const groundModule = moduleFor({
+    name: active.name, chapters: activeChapters, progress: { done: lessonDoneMap, pos: lessonPosMap }, next,
+  });
 
   return (
     <>
@@ -770,93 +707,23 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
           </div>
         </div>
 
-        {/* Everything social lives in this one band. */}
-        {preset.band.length > 0 && (
-          <div className="sec">
-            <div className="sechead">
-              <h2>Back on the ground</h2>
-              {roomOn && <button className="more" type="button" onClick={onOpenReady}>Ready Room ›</button>}
-            </div>
-            <div className={`crew n${preset.band.length}`}>
-              {preset.band.includes("form") && (
-                <div className="cell">
-                  <div className="cellhead">Formation · {active.name}</div>
-                  <svg className="formsvg" ref={formRef} aria-hidden="true" />
-                  <div className="formlist">
-                    <span className="fm">
-                      <span className="av">YOU</span>
-                      <span><span className="fmname">You</span> <span className="fmpos">{next?.code || active.code}</span></span>
-                    </span>
-                    {crew.map((p) => (
-                      <span className="fm" key={p.id}>
-                        <span className="av dim">{p.ini}</span>
-                        <span><span className="fmname">{p.name}</span> <span className="fmpos">{p.code}</span></span>
-                      </span>
-                    ))}
-                    {!crew.length && <span className="fmnote">First on this route. The Ready Room finds you company.</span>}
-                  </div>
-                </div>
-              )}
-
-              {preset.band.includes("wing") && (
-                <div className="cell">
-                  <div className="cellhead">Your wingman</div>
-                  {wingman ? (
-                    <>
-                      <div className="cop">
-                        <span className="av">{initials(wingman.displayName)}</span>
-                        <span>
-                          <span className="copname">{wingman.displayName || "Pilot"}</span>
-                          <div className="copwhy">{wingman.reason}</div>
-                        </span>
-                      </div>
-                      <div className="copmeta">{chapterCodeOf(wingman.chapterId, CHAPTERS) || "On frequency now"}</div>
-                      {roomOn && <button className="fly" type="button" onClick={onOpenReady}>Fly together &nbsp;›</button>}
-                    </>
-                  ) : (
-                    <>
-                      <div className="copwhy">
-                        {wingman === undefined
-                          ? "Looking for someone on your route."
-                          : "The Ready Room pairs you the moment there's someone on your route."}
-                      </div>
-                      {roomOn && <button className="fly" type="button" onClick={onOpenReady}>Open the Ready Room &nbsp;›</button>}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {preset.band.includes("freq") && (
-                <div className="cell">
-                  <div className="cellhead">Frequency</div>
-                  <div className="freqhead">
-                    <span className="freqcode">{active.code}</span>
-                    <span className="freqname">{active.name}</span>
-                  </div>
-                  <div className="msgs">
-                    {msgs && msgs.length ? (
-                      <>
-                        {msgs.map((m) => (
-                          <div className="msg" key={m.id}>
-                            <b>{m.author_username || m.author_real_name || "Pilot"}</b> {m.body}
-                          </div>
-                        ))}
-                        <div className="tick">QUIET SINCE {hhmm(msgs[msgs.length - 1].created_at)}</div>
-                      </>
-                    ) : (
-                      <div className="msg">Quiet frequency. Say the first thing and someone answers.</div>
-                    )}
-                  </div>
-                  {roomOn && (
-                    <button className="compose" type="button" onClick={() => onOpenChannel(active.code)}>
-                      <span>Message {active.code}…</span><i className="send" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Everything social lives in this one section. It draws its own heading
+            and Ready Room link, measures itself, and renders nothing with every
+            surface off. Faces open nothing yet: the profile is being designed. */}
+        <BackOnTheGround
+          module={groundModule}
+          surfaces={surfaces}
+          squadron={groundSquadron}
+          routePeople={routePeople}
+          threads={groundThreads}
+          onOpenPerson={() => {}}
+          onOpenThread={() => onOpenChannel(active.code)}
+          onOpenReadyRoom={onOpenReady}
+          onFindSquadron={() => onOpenChannel(active.code)}
+          onFindSeat={onOpenReady}
+          onAsk={() => onOpenChannel(active.code)}
+          onSend={(text) => { if (groundSquadron) onSquadronPost?.({ squadronId: groundSquadron.id, body: text }); }}
+        />
       </div>
 
       <style>{DECK_CSS}</style>

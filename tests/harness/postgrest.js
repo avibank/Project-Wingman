@@ -40,6 +40,8 @@ export function makeStore() {
        PRESENT: a 501 here is the harness failing, not the product, and it
        would drown the console assertion that catches real errors. */
     presence: [], comms_messages: [], reports: [], question_attempts: [],
+    /* The Flight Deck's right seat reads who you have flown with. */
+    copilot_participants: [],
     paper_reads: [], lesson_progress: [],
     /* Empty, but present — the state after 0018 has been run. The Library asks
        for it on every module view, and a 501 here is the harness missing a
@@ -221,6 +223,7 @@ const RPC = {
   delete_paper: () => true,
   my_modules: () => [],
   right_seat: () => [],
+  my_seat: () => [],
   presence_touch: () => null,
   suggest_code: () => "T3T",
   claim_code: (s, b) => b.want,

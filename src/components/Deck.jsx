@@ -178,9 +178,9 @@ const ROOM_CSS = `
 /* MANUAL — printed by day, microfiche by night */
 .app[data-paper="1"] { --rule: oklch(.58 .012 85 / .55); --hair: oklch(.58 .012 85 / .30); }
 .app[data-paper="1"][data-fiche="1"] { --rule: oklch(.62 .010 85 / .48); --hair: oklch(.62 .010 85 / .26); }
-.app[data-paper="1"] .card, .app[data-paper="1"] .mod, .app[data-paper="1"] .crew {
+.app[data-paper="1"] .card, .app[data-paper="1"] .mod, .app[data-paper="1"] .bog-card {
   border-radius: 3px; border-color: var(--rule); box-shadow: var(--paper-drop); }
-.app[data-paper="1"] .strip, .app[data-paper="1"] .crew { background: var(--hair); }
+.app[data-paper="1"] .strip { background: var(--hair); }
 .app[data-paper="1"] .frame { border-radius: 2px; border-color: var(--hair); background: transparent; }
 .app[data-paper="1"] .cap { letter-spacing: 1.7px; }
 .app[data-paper="1"] .cel .cap::before { content: ""; display: block; width: 16px; height: 1px;

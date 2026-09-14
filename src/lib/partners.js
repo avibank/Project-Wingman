@@ -167,10 +167,13 @@ export async function fetchFlightLog(userId) {
     (mine || []).map((r) => [r.session_id, r.left_at ? (new Date(r.left_at) - new Date(r.joined_at)) / 60000 : 0])
   );
 
+  // lastAt is the most recent session you shared, which is what the Flight
+  // Deck's right seat means by Recent.
   const byPartner = new Map();
   for (const row of others || []) {
-    const entry = byPartner.get(row.user_id) || { userId: row.user_id, displayName: row.display_name, sessions: 0, minutes: 0 };
+    const entry = byPartner.get(row.user_id) || { userId: row.user_id, displayName: row.display_name, sessions: 0, minutes: 0, lastAt: null };
     entry.sessions += 1;
+    if (row.joined_at && (!entry.lastAt || row.joined_at > entry.lastAt)) entry.lastAt = row.joined_at;
     entry.minutes += Math.round(durations[row.session_id] || 0);
     entry.displayName = entry.displayName || row.display_name;
     byPartner.set(row.user_id, entry);

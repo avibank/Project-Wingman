@@ -773,6 +773,24 @@ function AppInner() {
      the room asks it to run again. */
   const [roomNonce, setRoomNonce] = useState(0);
   const refreshRoom = useCallback(() => setRoomNonce((n) => n + 1), []);
+  /* A text message from the Flight Deck's squadron card, on the room's own
+     optimistic round trip: on screen at once, replaced by the row the insert
+     returns, and taken back out if it fails. */
+  const postToSquadron = useCallback(({ squadronId, body }) => {
+    const text = (body || "").trim();
+    if (!text || !me || !squadronId) return;
+    const sq = squadrons.find((x) => x.id === squadronId);
+    const temp = {
+      id: `pending-${Date.now()}`, squadronId, body: text, authorId: me,
+      createdAt: new Date().toISOString(), replyTo: null, reactions: {}, pending: true, attachments: [],
+    };
+    setRoomMessages((ms) => [...ms, temp]);
+    postSquadronMessage({ me, squadronId, moduleCode: sq?.moduleCode, body: text }).then((row) => {
+      setRoomMessages((ms) => (row
+        ? ms.map((m) => (m.id === temp.id ? row : m))
+        : ms.filter((m) => m.id !== temp.id)));
+    });
+  }, [me, squadrons]);
   useEffect(() => {
     if (!isSignedIn || !flags["social.readyroom"]) { setSquadrons([]); setRoomMessages([]); setRightSeat([]); return undefined; }
     let live = true;
@@ -1479,6 +1497,13 @@ function AppInner() {
             onResumePlace={resumePlace}
             onOpenReady={() => go(routePath.ready())}
             onOpenChannel={(code) => go(routePath.ready(code))}
+            squadrons={squadrons}
+            squadronMessages={roomMessages}
+            seatCandidates={rightSeat}
+            threads={session.threads}
+            replies={session.replies}
+            people={directory}
+            onSquadronPost={postToSquadron}
           />
         </main>
       ) : route.name === "paper" ? (

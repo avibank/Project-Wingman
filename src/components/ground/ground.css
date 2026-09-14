@@ -1,0 +1,251 @@
+/* Back on the ground — the social gateway at the foot of the Flight Deck.
+   Every class is prefixed bog- so nothing collides with the deck's own rules.
+   Colours come from the live tokens; nothing here is hard-coded to a livery. */
+
+.bog {
+  --k: 1;               /* the scale for anything outside .bog-cards, like the route's button */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.bog[hidden] { display: none; }
+
+.bog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.bog-stack { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bog-head h2 { margin: 0; font-size: 21px; letter-spacing: -.012em; font-weight: 600; }
+.bog-meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--t3); }
+.bog-more { font-family: inherit; font-size: 13px; color: var(--t2); background: none; border: 0;
+  padding: 0; cursor: pointer; white-space: nowrap; }
+.bog-more:hover { color: var(--t1); }
+.bog-more:focus-visible { outline: 2px solid var(--active); outline-offset: 3px; border-radius: 4px; }
+
+.bog-card { border-radius: 13px; border-top: 1px solid var(--edge-hi); border-bottom: 1px solid var(--edge-lo);
+  background: var(--panel); overflow: hidden; min-width: 0; display: flex; flex-direction: column; }
+
+/* ---------- the route ---------- */
+.bog-rhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 13px 16px 0; }
+.bog-rname { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--t2); }
+.bog-rsrc { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--t3); }
+
+.bog-route { position: relative; margin: 14px 14px 14px; height: 190px; }
+@container (max-width: 620px) { .bog-route { height: 140px; margin: 12px 12px 12px; } }
+.bog-route svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.bog-mark { position: absolute; transform: translate(-50%, calc(-100% - 9px));
+  display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bog-mark[data-you] { transform: translate(-50%, -50%); }
+.bog-mark[data-lift] { transform: translate(-50%, calc(-100% - 32px)); }
+@container (max-width: 620px) { .bog-mark[data-lift] { transform: translate(-50%, calc(-100% - 24px)); } }
+
+.bog-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--t1); background: var(--raised);
+  border: 1px solid var(--edge); cursor: pointer; padding: 0;
+  transition: transform 160ms var(--ease, cubic-bezier(.3,.7,.3,1)), border-color 160ms var(--ease, cubic-bezier(.3,.7,.3,1)); }
+.bog-av:hover { transform: scale(1.08); border-color: var(--active); }
+.bog-av:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+.bog-av[data-count] { background: var(--sunk); }
+.bog-av.bog-you { background: var(--active); color: var(--on-mark, var(--ground));
+  border-color: transparent; cursor: default; font-size: 8.5px; }
+.bog-mark[data-seat] .bog-av { border-color: var(--active);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--active) 18%, transparent); }
+.bog-who { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--t3); white-space: nowrap; }
+.bog-mark[data-you] .bog-who { color: var(--t2); }
+@container (max-width: 620px) { .bog-av { width: 26px; height: 26px; font-size: 9.5px; } }
+
+/* the stack that opens in place */
+.bog-fanpod { display: flex; gap: 7px; padding: 6px 9px; border-radius: 999px; position: relative;
+  background: var(--raised); border: 1px solid var(--edge);
+  box-shadow: 0 12px 26px oklch(0 0 0 / .55);
+  animation: bog-pop 200ms var(--ease, cubic-bezier(.3,.7,.3,1)) both; transform-origin: var(--caret, 50%) bottom; }
+.bog-fanpod::after { content: ""; position: absolute; left: var(--caret, 50%); bottom: -5px;
+  width: 9px; height: 9px; background: var(--raised);
+  border-right: 1px solid var(--edge); border-bottom: 1px solid var(--edge);
+  border-bottom-right-radius: 3px; transform: translateX(-50%) rotate(45deg); }
+.bog-podface { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--raised); border: 1px solid var(--edge); font-family: var(--font-mono);
+  font-size: 9.5px; color: var(--t1); cursor: pointer; padding: 0;
+  transition: transform 140ms var(--ease, cubic-bezier(.3,.7,.3,1)), border-color 140ms var(--ease, cubic-bezier(.3,.7,.3,1)); }
+.bog-podface:hover { transform: scale(1.1); border-color: var(--active); }
+.bog-podface:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+.bog-podface[data-seat] { border-color: var(--active);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--active) 20%, transparent); }
+
+@keyframes bog-pop { from { opacity: 0; transform: scale(.86) translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bog-fanpod, .bog-pop-in { animation: none; } }
+.app.smooth-air .bog-fanpod, .app.smooth-air .bog-pop-in { animation: none; }
+
+.bog-alone { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 0 16px 16px; flex-wrap: wrap; }
+.bog-alone p { margin: 0; font-size: 13px; color: var(--t3); }
+
+/* ---------- the cards ----------
+   One scale knob. --k0 comes from the card count, the container narrows it. */
+.bog-cards { --k: var(--k0, 1); display: grid; gap: 14px;
+  grid-template-columns: var(--tpl, repeat(var(--cols, 3), minmax(0, 1fr))); }
+@container (max-width: 940px) {
+  .bog-cards { --k: min(var(--k0, 1), 1.12); }
+  .bog-seat { width: calc(58px * var(--k)); }
+  .bog-seats { gap: calc(8px * var(--k)) calc(10px * var(--k)); }
+}
+@container (max-width: 620px) { .bog-cards { grid-template-columns: 1fr; --k: 1.04; } }
+
+.bog-ch { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap; padding: calc(15px * var(--k)) calc(17px * var(--k)) 0; }
+.bog-lbl { font-family: var(--font-mono); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--t2); font-size: calc(9.5px * min(var(--k), 1.3)); }
+.bog-aside { font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--t3); font-size: calc(9.5px * min(var(--k), 1.25)); }
+.bog-body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center;
+  gap: calc(10px * var(--k)); padding: calc(16px * var(--k)) calc(17px * var(--k)); }
+.bog-foot { padding: 0 calc(17px * var(--k)) calc(16px * var(--k)); color: var(--t3);
+  text-align: center; font-size: calc(12.5px * var(--k)); line-height: 1.5; }
+
+.bog-btn { font-family: inherit; font-weight: 500; color: var(--t1); background: var(--raised);
+  border: 1px solid var(--edge); border-radius: 999px; cursor: pointer;
+  font-size: calc(12.5px * var(--k)); padding: calc(7px * var(--k)) calc(17px * var(--k));
+  transition: background 160ms var(--ease, cubic-bezier(.3,.7,.3,1)); }
+.bog-btn:hover { background: var(--raised); filter: brightness(1.15); }
+.bog-btn:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+.bog-btn[data-primary] { background: var(--active); color: var(--on-mark, var(--ground));
+  border-color: transparent; font-weight: 600; }
+
+.bog-seg { display: flex; border: 1px solid var(--edge); border-radius: 999px; overflow: hidden; flex: 0 0 auto; }
+.bog-seg button { font-family: var(--font-mono); letter-spacing: .11em; text-transform: uppercase;
+  background: none; border: 0; color: var(--t3); cursor: pointer;
+  font-size: calc(8.5px * min(var(--k), 1.25));
+  padding: calc(4px * min(var(--k), 1.3)) calc(9px * min(var(--k), 1.3)); }
+.bog-seg button[aria-pressed="true"] { background: var(--raised); color: var(--t1); }
+.bog-seg button:focus-visible { outline: 2px solid var(--active); outline-offset: -2px; }
+
+/* right seat */
+.bog-seats { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+  gap: calc(8px * var(--k)) calc(16px * var(--k)); }
+.bog-seat { display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--k));
+  width: calc(72px * var(--k)); }
+.bog-face { border-radius: 50%; display: grid; place-items: center; background: var(--raised);
+  border: 1px solid var(--edge); font-family: var(--font-mono); color: var(--t1); cursor: pointer;
+  padding: 0; width: calc(46px * var(--k)); height: calc(46px * var(--k));
+  font-size: calc(13px * var(--k));
+  transition: transform 160ms var(--ease, cubic-bezier(.3,.7,.3,1)), border-color 160ms var(--ease, cubic-bezier(.3,.7,.3,1)); }
+.bog-face:hover { transform: scale(1.06); border-color: var(--active); }
+.bog-face:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+.bog-seat[data-seat] .bog-face { border-color: var(--active);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--active) 18%, transparent); }
+.bog-nm { color: var(--t2); text-align: center; line-height: 1.2;
+  font-size: calc(12px * var(--k)); overflow-wrap: anywhere; }
+.bog-why-sm { font-family: var(--font-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--t3); text-align: center; line-height: 1.3; font-size: calc(8px * min(var(--k), 1.3)); }
+.bog-add .bog-face { border: 1px dashed var(--edge); background: none; color: var(--t3);
+  font-size: calc(17px * var(--k)); font-weight: 400; }
+.bog-add .bog-face:hover { border-color: var(--active); color: var(--t1); }
+
+/* squadron */
+.bog-msgs { display: flex; flex-direction: column; gap: calc(11px * var(--k)); }
+.bog-msg { display: flex; gap: calc(10px * var(--k)); align-items: flex-start; }
+.bog-mini { border-radius: 50%; display: grid; place-items: center; background: var(--raised);
+  border: 1px solid var(--edge); font-family: var(--font-mono); flex: 0 0 auto; color: var(--t2);
+  width: calc(25px * var(--k)); height: calc(25px * var(--k)); font-size: calc(8.5px * var(--k)); }
+.bog-mbody { color: var(--t2); min-width: 0; line-height: 1.45; font-size: calc(13px * var(--k)); }
+.bog-mbody b { color: var(--t1); font-weight: 600; display: block; font-size: calc(12.5px * var(--k)); }
+.bog-msg[data-me] .bog-mini { background: var(--active); color: var(--on-mark, var(--ground));
+  border-color: transparent; }
+.bog-reply { display: flex; align-items: center; gap: calc(8px * var(--k));
+  margin: 0 calc(17px * var(--k)) calc(16px * var(--k)); border-radius: 999px;
+  background: var(--sunk); border: 1px solid var(--edge);
+  padding: calc(6px * var(--k)) calc(6px * var(--k)) calc(6px * var(--k)) calc(14px * var(--k)); }
+.bog-reply input { flex: 1 1 auto; min-width: 0; background: none; border: 0; color: var(--t1);
+  font-family: inherit; font-size: calc(13px * var(--k)); padding: calc(4px * var(--k)) 0; }
+.bog-reply input::placeholder { color: var(--t3); }
+.bog-reply input:focus { outline: none; }
+.bog-reply button { border-radius: 50%; border: 0; background: var(--active);
+  color: var(--on-mark, var(--ground)); cursor: pointer; display: grid; place-items: center;
+  flex: 0 0 auto; line-height: 1; width: calc(29px * var(--k)); height: calc(29px * var(--k));
+  font-size: calc(13px * var(--k)); }
+.bog-reply button:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+
+/* threads */
+.bog-thr { text-align: left; background: none; border: 0; cursor: pointer; width: 100%;
+  font-family: inherit; align-items: stretch; }
+.bog-title { color: var(--t1); line-height: 1.35; font-size: calc(15px * var(--k)); }
+.bog-ex { color: var(--t3); line-height: 1.5; font-size: calc(12.5px * var(--k)); }
+.bog-pills { display: flex; gap: calc(7px * var(--k)); flex-wrap: wrap; }
+.bog-pill { font-family: var(--font-mono); letter-spacing: .11em; text-transform: uppercase;
+  border-radius: 5px; border: 1px solid var(--edge); color: var(--t3);
+  font-size: calc(9px * min(var(--k), 1.25));
+  padding: calc(3px * min(var(--k), 1.3)) calc(8px * min(var(--k), 1.3)); }
+.bog-pill[data-on] { color: var(--lit); border-color: color-mix(in oklch, var(--active) 50%, transparent);
+  background: color-mix(in oklch, var(--active) 14%, transparent); }
+.bog-trow { display: flex; flex-direction: column; gap: calc(5px * var(--k));
+  padding: calc(10px * var(--k)) 0; border: 0; border-bottom: 1px solid var(--line);
+  background: none; cursor: pointer; text-align: left; width: 100%; font-family: inherit; }
+.bog-trow:last-child { border-bottom: 0; }
+.bog-trow .bog-t { color: var(--t1); line-height: 1.35; font-size: calc(13.5px * var(--k)); }
+.bog-trow .bog-m { font-family: var(--font-mono); letter-spacing: .11em; text-transform: uppercase;
+  color: var(--t3); font-size: calc(9px * min(var(--k), 1.25)); }
+.bog-trow:hover .bog-t { color: var(--lit); }
+
+/* the empty states */
+.bog-invite { display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: calc(11px * var(--k)); }
+.bog-motif { display: block; width: calc(40px * var(--k)); height: calc(40px * var(--k)); opacity: .9; }
+.bog-motif * { vector-effect: non-scaling-stroke; }
+.bog-lead { margin: 0; color: var(--t1); line-height: 1.4; max-width: 32ch;
+  font-size: calc(14.5px * var(--k)); }
+.bog-why { margin: 0; color: var(--t3); line-height: 1.5; max-width: 36ch;
+  font-size: calc(12.5px * var(--k)); }
+.bog-unread { display: inline-grid; place-items: center; min-width: 17px; height: 17px;
+  padding: 0 5px; border-radius: 999px; background: var(--active);
+  color: var(--on-mark, var(--ground)); font-family: var(--font-mono); font-size: 9.5px; }
+
+/* ---------- the popover ---------- */
+.bog-pop { position: fixed; z-index: 40; left: 0; top: 0; }
+.bog-pop-in { background: var(--raised); border: 1px solid var(--edge); border-radius: 16px;
+  box-shadow: 0 18px 42px oklch(0 0 0 / .55); padding: 7px; min-width: 214px; max-width: 290px;
+  max-height: min(340px, 70dvh); overflow: auto;
+  animation: bog-pop 190ms var(--ease, cubic-bezier(.3,.7,.3,1)) both; transform-origin: 50% bottom; }
+.bog-pophead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 7px 9px 8px; }
+.bog-pop-t { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--t2); }
+.bog-pop-c { font-family: var(--font-mono); font-size: 9.5px; color: var(--t3); }
+.bog-poprow { display: flex; align-items: center; gap: 10px; width: 100%; background: none;
+  border: 0; border-radius: 11px; padding: 7px 9px; cursor: pointer; text-align: left;
+  font-family: inherit; }
+.bog-poprow:hover { background: var(--panel); }
+.bog-poprow:focus-visible { outline: 2px solid var(--active); outline-offset: -2px; }
+.bog-poprow .bog-mini { width: 30px; height: 30px; font-size: 9.5px; }
+.bog-poprow[data-seat] .bog-mini { border-color: var(--active);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--active) 20%, transparent); }
+.bog-mt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bog-poprow .bog-t { font-size: 13.5px; color: var(--t1); line-height: 1.25; }
+.bog-poprow .bog-m { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--t3); }
+
+/* ---------- the tap floor ----------
+   The app holds every button to 44px (App.jsx, §12), which would stretch a
+   30px face into an oval and a pill into a slab. The small controls here opt
+   out with .is-inline and take the target back with an invisible overlay
+   centred on the control, the way app.css does for its icon buttons. */
+.bog-more, button.bog-av, .bog-btn, .bog-seg button, .bog-reply button { position: relative; }
+.bog-more::after, button.bog-av::after, .bog-btn::after, .bog-seg button::after, .bog-reply button::after {
+  content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: max(100%, var(--tap, 44px)); height: max(100%, var(--tap, 44px)); }
+/* The segments' targets reach past the pill, so the pill no longer clips its
+   children, and the pressed segment carries its own rounding instead. */
+.bog-seg { overflow: visible; }
+.bog-seg button { border-radius: 999px; }
+/* Faces in an opened stack sit 7px apart, so each target stops at the gap
+   rather than reaching over its neighbour. */
+.bog-podface { position: relative; }
+.bog-podface::after { content: ""; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%); width: calc(100% + 7px); height: var(--tap, 44px); }
+/* The composer is one pill and the field fills it. The floor on inputs would
+   make the pill 56px tall, so the pill carries the 44px instead. */
+.bog-reply { min-height: var(--tap, 44px); }
+.bog .bog-card .bog-reply input.bog-field { min-height: 0; align-self: stretch; }

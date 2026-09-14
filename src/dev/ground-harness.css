@@ -1,0 +1,17 @@
+/* harness chrome only — nothing here ships to the deck */
+.bogh { min-height: 100dvh; background: var(--ground); color: var(--t1); }
+.bogh-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 14px;
+  align-items: center; padding: 10px 16px; background: var(--sunk);
+  border-bottom: 1px solid var(--line); font-size: 13px; }
+.bogh-bar button { font: inherit; font-size: 12px; color: var(--t2); background: var(--raised);
+  border: 1px solid var(--edge); border-radius: 999px; padding: 4px 11px; cursor: pointer; }
+.bogh-bar button[aria-pressed="true"] { background: var(--active); color: var(--ground);
+  border-color: transparent; }
+.bogh-bar label { display: flex; align-items: center; gap: 8px; color: var(--t3); }
+.bogh-body { display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; align-items: flex-start; }
+.bogh-stage { max-width: 100%; padding: 16px; border: 1px dashed var(--line); border-radius: 14px; }
+
+/* The app's 44px tap floor (App.jsx §12), copied so the audit sees what the
+   deck will do to a small button. Harness only. */
+.bogh-stage button:not(.is-inline),
+.bogh-stage input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
