@@ -15,12 +15,13 @@ import { moduleSegments, chapterCount, nextChapter, SEGMENT, segmentState } from
 import { deckVars, engineLivery, rng } from "../lib/liveryEngine.js";
 import { profileSVG, phaseName, chapterT } from "../lib/flightProfile.js";
 import { pickGreeting } from "../lib/greeting.js";
-import { moduleAverage, chop } from "../lib/attitude.js";
-import { useAttitude, useTiltPermission } from "../lib/useAttitude.js";
+import { moduleAverage } from "../lib/attitude.js";
+import { useAttitude } from "../lib/useAttitude.js";
 import { DEFAULT_CHARACTER } from "../lib/voices.js";
 import { useFlags } from "../lib/flags.js";
 import { loadJSON, saveJSON } from "../lib/storage.js";
 import PaperStrip from "./PaperStrip.jsx";
+import Gyro, { GyroCaption } from "./Gyro.jsx";
 
 // The Flight Deck. Ported from the Step 1 reference rig — the colour and
 // lighting system, the hero card with the instrument strip inside it, the
@@ -148,14 +149,6 @@ const DECK_CSS = `
    real gunsight or a chart plotter puts under your hand; everywhere else on the
    deck the pointer stays what it was. */
 .deck .aiwrap { position: relative; display: inline-block; line-height: 0; }
-/* Sits over the instrument, not beside it: the thing you tap is the thing that
-   starts moving. Gone the moment permission is given. */
-.deck .aiask { position: absolute; inset: 0; border: 0; border-radius: 50%;
-  background: color-mix(in oklab, var(--ground), transparent 22%);
-  color: var(--t1); font-family: var(--font-mono); font-size: 9.5px;
-  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; text-align: center;
-  padding: 0 10px; line-height: 1.2; }
 /* THE DIAL IS CAPPED BY ITS CELL, and it never was. 112px is the size it
    wants, but the strip goes to five columns between 761px and roughly 900px,
    which leaves 106px of content in a cell -- so the instrument hung over the
@@ -169,9 +162,6 @@ const DECK_CSS = `
 .deck .aiwrap { max-width: 100%; }
 .deck .ai { width: calc(112px * var(--scale, 1)); max-width: 100%;
   height: auto; aspect-ratio: 1 / 1; display: block; cursor: crosshair; }
-.deck .ai-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
-@media (prefers-reduced-motion: reduce) { .deck .ai-rim { transition: none; } }
-.app.smooth-air .deck .ai-rim { transition: none; }
 .deck .ladder { font-family: var(--font-mono); font-size: calc(11px * var(--scale, 1)); line-height: 1.55; text-align: center;
   background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 5px 13px; color: var(--t3); }
 .deck .ladder b { display: block; font-size: calc(19px * var(--scale, 1)); font-weight: 500; color: var(--on); }
@@ -409,15 +399,14 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   const progressKey = moduleRows.map((m) => m.code + m.pr.toFixed(4)).join("|");
 
   // The two halves of the instrument, on separate clocks. The rim carries the
-  // score; the ball is live and never waits for it.
+  // average against your bar; the ball is live, and parks level until there is
+  // a first quiz for the rim to read.
   const { average, flown } = moduleAverage(activeChapters.map((c) => scores[c.id]));
   const still = reduceMotion;
   // The Manual finish draws the same instrument on a smaller, differently
   // centred dial, so the attitude is written for whichever one is mounted.
   const paperDial = finish === "manual";
-  const ballRef = useAttitude(still, paperDial ? { cx: 40, cy: 44, travel: 0.8 } : undefined);
-  // `still` so the prompt is not offered when motion is switched off.
-  const tilt = useTiltPermission(still);
+  const ballRef = useAttitude(still || average == null, paperDial ? { cx: 40, cy: 44, travel: 0.8 } : undefined);
 
   // Hobbs — hours on this module's airframe. Wall-clock time spent inside the
   // module, counted by the meter in lib/hobbs.js while a module is open, not
@@ -645,13 +634,16 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
               <PaperStrip
                 ballRef={ballRef}
                 ring={average}
+                bar={minimums}
+                flown={flown}
+                palette={C}
                 bag={bag > 0 ? bag : 0}
                 boxes={activeCount.full}
                 boxCount={activeSegments.length}
                 hobbs={hobbs ? `${hobbs.h}:${hobbs.m}` : "--:--"}
                 blips={contacts.length > 0}
                 caps={[
-                  average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`,
+                  <GyroCaption average={average} bar={minimums} />,
                   bag > 0 ? "Flight bag" : "A bookmark fills the bag.",
                   "Checklist",
                   hobbs ? "Hobbs" : "Your first hour",
@@ -662,57 +654,10 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             <>
             <div className="cel">
               <div className="aiwrap">
-                <svg className="ai" viewBox="0 0 120 120" role="img"
-                     aria-label={average == null ? "Attitude indicator, no quiz flown yet" : `Attitude indicator, ${average} percent across ${flown} ${flown === 1 ? "quiz" : "quizzes"}`}>
-                  <defs><clipPath id="pw-dial"><circle cx="60" cy="60" r="42" /></clipPath></defs>
-                  <g clipPath="url(#pw-dial)">
-                    {/* The ball. Its transform is written straight onto the node
-                        every frame — see useAttitude — so it never re-renders the
-                        deck and wants no CSS transition of its own. */}
-                    <g ref={ballRef} transform="rotate(0 60 60) translate(0 0)">
-                      <rect x="-70" y="-80" width="260" height="140" fill={surf[night ? 7 : 9]} />
-                      <rect x="-70" y="60" width="260" height="140" fill={surf[night ? 1 : 6]} />
-                      <rect x="-70" y="59" width="260" height="1.6" fill={C.lit} />
-                      <g stroke={surf[night ? 10 : 4]} strokeWidth="1.4">
-                        <line x1="52" y1="46" x2="68" y2="46" /><line x1="55" y1="52.5" x2="65" y2="52.5" />
-                        <line x1="55" y1="66.5" x2="65" y2="66.5" /><line x1="52" y1="73" x2="68" y2="73" />
-                      </g>
-                    </g>
-                  </g>
-                  <circle cx="60" cy="60" r="42" fill="none" strokeWidth="1" stroke={C.line} />
-                  <circle cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.line} />
-                  {average != null && (
-                    <circle className="ai-rim" cx="60" cy="60" r="49" fill="none" strokeWidth="3" stroke={C.active}
-                            strokeLinecap="round" transform="rotate(-90 60 60)"
-                            strokeDasharray={`${(2 * Math.PI * 49 * (average / 100)).toFixed(1)} ${(2 * Math.PI * 49).toFixed(1)}`} />
-                  )}
-                  <g fill={C.line}>
-                    <circle cx="21" cy="21" r="1.8" /><circle cx="99" cy="21" r="1.8" />
-                    <circle cx="21" cy="99" r="1.8" /><circle cx="99" cy="99" r="1.8" />
-                  </g>
-                  <g strokeWidth="5.2" strokeLinecap="round" fill="none" opacity=".85" stroke={surf[night ? 0 : 12]}>
-                    <line x1="38" y1="60" x2="52" y2="60" /><line x1="68" y1="60" x2="82" y2="60" />
-                  </g>
-                  <g strokeWidth="2.6" strokeLinecap="round" fill="none" stroke={surf[night ? 11 : 1]}>
-                    <line x1="38" y1="60" x2="52" y2="60" /><line x1="68" y1="60" x2="82" y2="60" />
-                  </g>
-                  <circle cx="60" cy="60" r="3.6" fill={surf[night ? 0 : 12]} opacity=".85" />
-                  <circle cx="60" cy="60" r="2.2" fill={surf[night ? 11 : 1]} />
-                  {average != null && (
-                    <text x="60" y="88" textAnchor="middle" fill={C.t1}
-                          fontFamily="Geist Mono, monospace" fontSize="13" fontWeight="500">{average}%</text>
-                  )}
-                </svg>
-                {/* iOS will not report attitude until it has been asked, and it
-                    will only ask from a real tap. So the instrument is the
-                    prompt: tap the thing you want to start moving. */}
-                {tilt.needed && (
-                  <button type="button" className="aiask" onClick={tilt.ask}>
-                    Tap for tilt
-                  </button>
-                )}
+                <Gyro average={average} flown={flown} bar={minimums}
+                      C={C} surf={surf} night={night} ballRef={ballRef} />
               </div>
-              <div className="cap">{average == null ? "First quiz fills the ring." : `${chop(average)} · ${average}%`}</div>
+              <div className="cap"><GyroCaption average={average} bar={minimums} /></div>
             </div>
 
             <div className="cel">

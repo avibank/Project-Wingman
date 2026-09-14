@@ -1,0 +1,43 @@
+/* =============================================================================
+   The gyro's states. Loaded by Gyro.jsx, so it arrives with the deck.
+   -----------------------------------------------------------------------------
+   Colours are presentation attributes from the livery's runtime palette, and
+   every rule here overrides one — which any author rule does without needing
+   specificity. Scoped under .deck, where both strips render.
+   ========================================================================= */
+
+/* Under the bar the rim takes the caution amber: the same colour as Master
+   Caution, because it is the same fact. On and over keep the attribute, which
+   is the livery's accent, and over adds the surplus one step brighter. */
+.deck .gy[data-state="under"] .gy-rim { stroke: var(--caution); }
+
+/* The rim travels when a score comes in. The notch does not animate, which is
+   right: it moves when you move your bar, and then it should simply be there. */
+.deck .gy-rim { transition: stroke-dasharray 600ms cubic-bezier(.16,.84,.34,1); }
+@media (prefers-reduced-motion: reduce) { .deck .gy-rim { transition: none; } }
+.app.smooth-air .deck .gy-rim { transition: none; }
+
+/* Before the first quiz there is no rim and no notch (GyroMarks draws nothing),
+   the horizon is parked level and the centre reads --. Dimmed as well, so the
+   state never rests on an absence alone. */
+.deck .gy[data-state="nodata"] { filter: saturate(.25); opacity: .62; }
+
+.deck .gy-read { font-family: var(--font-mono); }
+
+/* The caption. The percentage keeps .cap's --t2; the state phrase takes the
+   state's colour. The accent as words is --active-text, the accent tuned to
+   be read rather than filled. */
+.deck .gy-phrase[data-state="under"] { color: var(--caution); }
+/* Caution as words, in Day. The amber that lights a lamp measured 2.49:1 as
+   9.5px text on the day panel, so the phrase takes a step toward the text
+   colour, as the accent does with --active-text. The rim keeps the amber, and
+   Night's amber already reads at 8.8:1. */
+.app.theme-light .deck .gy-phrase[data-state="under"] { color: color-mix(in oklab, var(--caution) 50%, var(--t1)); }
+.deck .gy-phrase[data-state="on"],
+.deck .gy-phrase[data-state="over"] { color: var(--active-text); }
+
+/* Paper. A bright notch and a lit surplus are light, and paper has none, so
+   both are drawn in the sketch ink the rest of the Manual strip is drawn in. */
+.app[data-paper="1"] .deck .gy-notch,
+.app[data-paper="1"] .deck .gy-surplus,
+.app[data-paper="1"] .deck .gy-last { stroke: var(--sketch-ink); }

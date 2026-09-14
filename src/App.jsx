@@ -142,7 +142,7 @@ import Review from "./components/module/Review.jsx";
 import { listPapers, fileHref } from "./lib/papers.js";
 import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
-import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
+import { readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, deleteMessage, fetchRightSeat } from "./lib/roomData.js";
 import { toAttachment, attachToMessage } from "./lib/attachments.js";
@@ -1704,7 +1704,6 @@ function AppInner() {
             retention={progress.get(RETENTION_KEY, emptyRetention())}
             lastRecheck={progress.get("pw-last-recheck", null)}
             minimums={minimums}
-            onMinimums={(n) => progress.set(MINIMUMS_KEY, clampMinimums(n))}
             onInstrument={(what) => {
               if (what === "caution") go(routePath.review(activeModuleCode, "caution"));
               else go(routePath.review(activeModuleCode, "recheck"));

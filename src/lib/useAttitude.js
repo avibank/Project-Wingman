@@ -1,46 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  IDLE_MS, readTilt, settle, deadband, bankFromTilt, pitchFromTilt,
+  fromPointer, ease, ballTransform,
+} from "./tilt.js";
 
-// The ball. Live, always, on every page it appears on — it is never driven by
-// the quiz record and never waits for data. The rim is the half that carries
-// the score, and the two run on different clocks.
+// The ball. Live on every page it appears on and never driven by the quiz
+// record — the rim is the half that carries the score, and the two run on
+// different clocks. The arithmetic is in tilt.js, where check:gyro can reach
+// it; this file is the plumbing.
 //
-// Desktop follows the pointer anywhere in the viewport. Phone follows device
-// orientation, falling back to pointer where that is unavailable or refused.
+// Desktop follows the pointer, measured from the instrument. A phone follows
+// gravity. Before the first quiz the deck passes still, and the ball parks.
 
-export const BANK_RANGE = 22;
-export const PITCH_RANGE = 18;
-// A precision instrument reports an attitude; it does not ease toward one. At
-// .14 the ball took sixteen frames to close, at .34 six, and both still read as
-// something following you. At .55 it is there in three — about 50ms, which is
-// under the threshold where a delay is felt at all — with just enough smoothing
-// left to absorb pointer jitter and an unsteady hand.
-const EASE = 0.55;
-
-// Below this the ball is already where it is going. Without it the lerp
-// asymptotes forever and writes a new transform every frame for movement no
-// one can see — the instrument is never actually at rest.
-const SETTLED = 0.01;
-
-const clamp = (v, r) => Math.min(r, Math.max(-r, v));
-
-// Full deflection near the edges rather than in the corner: the pointer runs
-// -1..1 across the viewport and the range is applied straight to it.
-export const bankFromPointer = (x, vw) => clamp(-((x / vw) - 0.5) * 2 * BANK_RANGE, BANK_RANGE);
-export const pitchFromPointer = (y, vh) => clamp(((y / vh) - 0.5) * 2 * PITCH_RANGE, PITCH_RANGE);
-// Tilt is relative, not absolute. The old version assumed a 45-degree holding
-// angle and read beta against it, which is only true in portrait and only if
-// you happen to hold it that way — in landscape beta and gamma swap roles
-// entirely and the ball sat pinned at full deflection.
-//
-// Instead the first sample after the instrument starts, or after the device is
-// rotated, becomes level. Everything after is deviation from it. That is
-// correct in any orientation and at any holding angle, and needs nothing
-// hardcoded.
-export const bankFromTilt = (gamma, ref = 0) => clamp((gamma ?? 0) - ref, BANK_RANGE);
-export const pitchFromTilt = (beta, ref = 0) => clamp((beta ?? 0) - ref, PITCH_RANGE);
-
-// iOS gates orientation behind a user gesture. Called from the first tap
-// anywhere; harmless everywhere else.
+// iOS gates orientation behind a user gesture. It is asked from the Tilt control
+// in settings, beside the bar — never on load and never from the instrument.
 //
 // The grant has to be announced. A deviceorientation listener registered before
 // permission was granted does not start receiving events on iOS when it is —
@@ -67,8 +40,8 @@ export const orientationGranted = () => granted;
  *
  * AND IT HAS TO HONOUR STILLNESS, which it did not. useAttitude already stops
  * the ball for prefers-reduced-motion and for Smooth Air, but this hook knew
- * about neither — so on an iPhone with motion switched off the deck still
- * offered "Tap for tilt", asking permission to start something the app has
+ * about neither — so on an iPhone with motion switched off the app still
+ * offered the tilt prompt, asking permission to start something the app has
  * already agreed not to do. Tapping it would have granted a permission and
  * changed nothing on screen, which is the worst kind of control.
  *
@@ -122,13 +95,26 @@ export function askForOrientation() {
   }).catch(() => false);
 }
 
+// How far the screen is turned from the device's own upright, counter-clockwise,
+// in degrees. window.orientation is older iOS's spelling of the same number,
+// with -90 where the newer API says 270.
+function screenAngle() {
+  const a = Number(window.screen?.orientation?.angle ?? window.orientation ?? 0);
+  return Number.isFinite(a) ? ((a % 360) + 360) % 360 : 0;
+}
+
 /**
- * Writes the ball's transform straight onto the node, sixty times a second.
+ * Writes the ball's transform straight onto the node.
  *
  * Deliberately NOT React state. A lerp in state re-renders the whole deck every
  * frame — and the deck runs SVG layout effects that measure and repaint the
  * flight profiles, so at 60fps it locks the page up. The ball is an animation,
  * not application state, and nothing else needs to know where it is pointing.
+ *
+ * ONE LOOP, AND IT SLEEPS. It runs while the ball is travelling and stops when
+ * it arrives; the next input wakes it. An IntersectionObserver stops it while
+ * the instrument is scrolled out of view, and the two stillness switches keep
+ * it from starting at all.
  *
  * @returns a ref to put on the group inside the dial's clip path
  */
@@ -139,9 +125,7 @@ export function useAttitude(still, dial) {
   const cx = dial?.cx ?? 60, cy = dial?.cy ?? 60, travel = dial?.travel ?? 1.1;
 
   // Smooth Air is the person asking; this is the device asking. CSS gets the
-  // second one through a media query, but a rAF loop is not CSS: without this
-  // the ball kept easing sixty times a second for someone who had asked the
-  // whole system to stop moving.
+  // second one through a media query, but a rAF loop is not CSS.
   const [systemStill, setSystemStill] = useState(
     () => typeof window !== "undefined"
       && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
@@ -163,67 +147,106 @@ export function useAttitude(still, dial) {
     const el = node.current;
     if (!el) return undefined;
     if (still || systemStill) {
-      el.setAttribute("transform", `rotate(0 ${cx} ${cy}) translate(0 0)`);
+      el.setAttribute("transform", ballTransform(0, 0, cx, cy, travel));
       return undefined;
     }
 
+    const svg = el.ownerSVGElement || el;
     const target = { bank: 0, pitch: 0 };
     const current = { bank: 0, pitch: 0 };
 
-    // Level is wherever the device is when the first sample arrives, and again
-    // after a rotation. Nulled rather than zeroed so the next sample re-takes it.
-    let ref = null;
-    let tilting = false;
-
-    // A coarse pointer is a finger. Fingers scroll; they do not aim. The ball
-    // follows attitude on a touch device and nothing else, so it stays still
-    // under a scroll instead of chasing the thumb.
+    // A coarse pointer is a finger. Fingers scroll; they do not aim. Until iOS
+    // has been asked, a phone therefore holds the ball level.
     const coarse = window.matchMedia?.("(pointer: coarse)").matches;
 
+    let tilting = false;   // once the device reports attitude, the pointer stops being an input
+    let base = null;       // level: where held readings settle, and when it last moved
+    let held = 0;          // the last bank the glass could give, kept while it lies flat
+    let pointer = null;    // the newest pointer position, not yet read
+    let idle = 0;
+    let frame = 0;
+    let shown = true;      // on screen, as far as the observer has said
+    let written = el.getAttribute("transform") || "";
+
+    const tick = () => {
+      frame = 0;
+      if (pointer) {
+        // At most one layout read a frame, taken before this frame writes.
+        const r = svg.getBoundingClientRect();
+        const t = fromPointer(pointer.x, pointer.y, r.left + r.width / 2, r.top + r.height / 2,
+          window.innerWidth, window.innerHeight);
+        target.bank = t.bank;
+        target.pitch = t.pitch;
+        pointer = null;
+      }
+      current.bank = ease(current.bank, target.bank);
+      current.pitch = ease(current.pitch, target.pitch);
+      const next = ballTransform(current.bank, current.pitch, cx, cy, travel);
+      // Only touch the DOM when the value actually changed.
+      if (next !== written) { el.setAttribute("transform", next); written = next; }
+      // Arrived: nothing is scheduled until an input moves the target again.
+      if (shown && (current.bank !== target.bank || current.pitch !== target.pitch)) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    const wake = () => { if (!frame && shown) frame = requestAnimationFrame(tick); };
+
     const onPointer = (e) => {
-      // Once the device is reporting attitude the pointer stops being an input.
       if (tilting || coarse) return;
-      target.bank = bankFromPointer(e.clientX, window.innerWidth);
-      target.pitch = pitchFromPointer(e.clientY, window.innerHeight);
+      pointer = { x: e.clientX, y: e.clientY };
+      clearTimeout(idle);
+      idle = setTimeout(() => { target.bank = 0; target.pitch = 0; wake(); }, IDLE_MS);
+      wake();
     };
+
     const onTilt = (e) => {
-      if (e.gamma == null && e.beta == null) return;
+      if (e.beta == null && e.gamma == null) return;
       tilting = true;
-      if (!ref) ref = { gamma: e.gamma ?? 0, beta: e.beta ?? 0 };
-      target.bank = bankFromTilt(e.gamma, ref.gamma);
-      target.pitch = pitchFromTilt(e.beta, ref.beta);
+      clearTimeout(idle);
+      const now = performance.now();
+      const r = readTilt(e.beta, e.gamma, screenAngle(), held);
+      held = r.bank;
+      if (!base) {
+        base = { bank: r.bank, pitch: r.pitch, at: now };
+      } else {
+        const dt = now - base.at;
+        base = {
+          bank: settle(base.bank, r.bank, dt, { wraps: true }),
+          pitch: settle(base.pitch, r.pitch, dt),
+          at: now,
+        };
+      }
+      target.bank = deadband(target.bank, bankFromTilt(r.bank, base.bank));
+      target.pitch = deadband(target.pitch, pitchFromTilt(r.pitch, base.pitch));
+      wake();
     };
-    // beta and gamma swap meaning between portrait and landscape, so the old
-    // level is meaningless after a rotation. Take it again.
-    const onRotate = () => { ref = null; };
+
+    // A rotated screen is a different frame entirely, so level is taken again
+    // from the next sample rather than settled toward.
+    const onRotate = () => { base = null; };
+
+    const io = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver((entries) => {
+        shown = entries[entries.length - 1].isIntersecting;
+        if (!shown && frame) { cancelAnimationFrame(frame); frame = 0; }
+        if (shown) wake();
+      })
+      : null;
+    io?.observe(svg);
 
     window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("deviceorientation", onTilt);
     window.addEventListener("orientationchange", onRotate);
     window.screen?.orientation?.addEventListener?.("change", onRotate);
 
-    let frame = 0;
-    let lastWrite = "";
-    const tick = () => {
-      const db = target.bank - current.bank, dp = target.pitch - current.pitch;
-      // Snap the last hundredth rather than approach it forever.
-      current.bank = Math.abs(db) < SETTLED ? target.bank : current.bank + db * EASE;
-      current.pitch = Math.abs(dp) < SETTLED ? target.pitch : current.pitch + dp * EASE;
-      // 1 degree of pitch is about 1.1px of travel on a 42px dial.
-      const next = `rotate(${current.bank.toFixed(2)} ${cx} ${cy}) translate(0 ${(current.pitch * travel).toFixed(2)})`;
-      // Only touch the DOM when the value actually changed. At rest — which is
-      // most of the time on a desktop — this costs nothing.
-      if (next !== lastWrite) { el.setAttribute("transform", next); lastWrite = next; }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-
     return () => {
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("deviceorientation", onTilt);
       window.removeEventListener("orientationchange", onRotate);
       window.screen?.orientation?.removeEventListener?.("change", onRotate);
-      cancelAnimationFrame(frame);
+      io?.disconnect();
+      clearTimeout(idle);
+      if (frame) cancelAnimationFrame(frame);
     };
   }, [still, systemStill, tiltAllowed, cx, cy, travel]);
 

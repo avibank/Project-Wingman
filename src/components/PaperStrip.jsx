@@ -5,6 +5,10 @@
 // .ink is the livery's accent, so the drawing is in whatever ink the livery
 // supplies. .inkh is the hairline. Both are defined with the finish CSS.
 
+import { GyroMarks } from "./Gyro.jsx";
+import { gyroState, gyroLabel } from "../lib/attitude.js";
+import { DEFAULT_MINIMUMS } from "../lib/minimums.js";
+
 const MONO = "'Geist Mono', monospace";
 
 // Both switches, as everywhere else: the device asking and the person asking,
@@ -17,11 +21,15 @@ const PAPER_CSS = `
 .app.smooth-air .papersweep { animation: none; }
 `;
 
-function PaperStrip({ ring, bag, boxes, boxCount = 5, hobbs, blips, caps, ballRef }) {
+function PaperStrip({
+  ring, bar = DEFAULT_MINIMUMS, flown = 0, palette = {},
+  bag, boxes, boxCount = 5, hobbs, blips, caps, ballRef,
+}) {
   return (
     <>
       <div className="cel">
-        <svg width="86" height="86" viewBox="0 0 86 86" aria-hidden="true">
+        <svg width="86" height="86" viewBox="0 0 86 86" className="gy gy-paper" role="img"
+             data-state={gyroState(ring, bar)} aria-label={gyroLabel(ring, flown, bar)}>
           <defs>
             <clipPath id="pw-paper-dial"><circle cx="40" cy="44" r="30" /></clipPath>
           </defs>
@@ -36,9 +44,14 @@ function PaperStrip({ ring, bag, boxes, boxCount = 5, hobbs, blips, caps, ballRe
             </g>
           </g>
           <circle cx="40" cy="44" r="30" className="ink" />
+          {/* The lit gyro's marks at this dial's scale, just outside the drawn
+              circle: the rim is the average and the notch is the bar. */}
+          <GyroMarks average={ring} bar={bar} cx={40} cy={44} scale={35 / 49} palette={palette} />
           <path d="M22 44 h9 M49 44 h9 M40 39 v-4" className="ink" />
           <path d="M63 24 l9 -9 h9" className="inkh" /><text x="82" y="14" className="cn">1</text>
-          {ring ? <text x="40" y="70" textAnchor="middle" className="cn" style={{ fontSize: "9px" }}>{ring}%</text> : null}
+          <text x="40" y="70" textAnchor="middle" className="cn" style={{ fontSize: "9px" }}>
+            {ring === null || ring === undefined ? "--" : `${ring}%`}
+          </text>
           <circle cx="40" cy="44" r="2" className="inkf" />
         </svg>
         <div className="cap">{caps[0]}</div>

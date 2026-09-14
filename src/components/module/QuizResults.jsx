@@ -12,10 +12,10 @@ import { isBelow, readingWords, PASS_PCT } from "../../lib/minimums.js";
    The copy, in full, from the brief:
      4 of 8 · 25 under your bar · Average 61% → 63% · Re-check · Back to Module 1
 
-   This is the ONE place the dial animates (§3). The needle sweeps from the old
-   average to the new one, which is the only moment where the movement carries
-   information rather than decoration — and it is the reason the results dial
-   is 170px while the Library's is 58px.
+   This is the ONE place the dial appears, and it animates (§3). The needle
+   sweeps from the old average to the new one, which is the only moment where
+   the movement carries information rather than decoration — and it is the
+   reason the dial is drawn at 170px.
 
    A RETAKE MOVES NOTHING. Only the first attempt at a quiz is scored, so a
    retake has no new average to sweep to. Saying so is the honest thing and it

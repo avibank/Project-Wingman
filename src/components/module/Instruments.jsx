@@ -21,8 +21,8 @@ import {
    Accuracy, Calibration and MasterCaution used to be three pressable
    instruments under the module title, each with a popover. The final brief
    replaces all three: one signal (the lamp, on whichever chapter owns the
-   problem) and one dial (deviation from the user's minimums, in the Library
-   and on the results screen). Nothing floats above the list any more.
+   problem) and one dial (deviation from the user's bar, on the results
+   screen). Nothing floats above the list any more.
 
    Their popover went with them, and so did AccuracyPanel — the rebuilt
    Library's Quizzes section IS the quiz record it used to show, chapter by

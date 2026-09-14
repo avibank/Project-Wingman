@@ -17,10 +17,10 @@ import "./dial.css";
    own bar moves the requirement visibly off-centre; it can never hide it.
    That is the whole reason the scale is deviation and not percent.
 
-   TWO SIZES, TWO PLACES, AND NOWHERE ELSE (§3): 58px on the Library's Quizzes
-   header, 170px on the quiz results screen. The sweep animation exists only on
-   results, where the needle travelling from the old average to the new one is
-   the thing the screen is about.
+   ONE PLACE: the quiz results screen, at 170px, where the needle travelling
+   from the old average to the new one is the thing the screen is about. The
+   Library's 58px copy went when the bar moved into settings and the Flight
+   Deck's gyro started reading it.
 
    NO DATA: the needle parks OFF-SCALE below the left end and the whole dial
    dims. Hard left is a real reading — someone 25 under — so resting there

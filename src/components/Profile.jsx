@@ -15,6 +15,8 @@ import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.
 import { normaliseCode, isCode } from "../lib/code.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
+import { MIN_FLOOR, MIN_CEIL, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
+import { useTiltPermission } from "../lib/useAttitude.js";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
 //
@@ -267,6 +269,15 @@ const PROFILE_CSS = `
 .rowtext b { display: block; font-size: calc(14px * var(--scale, 1)); font-weight: 600; }
 .rowtext span { display: block; font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); margin-top: 2px; }
 
+/* Your bar: the slider and the number it is set to, as one control. */
+.barctl { display: flex; align-items: center; gap: 12px; flex: 0 1 280px; min-width: 0; }
+.barctl input { flex: 1 1 auto; min-width: 0; min-height: 44px; margin: 0; accent-color: var(--active); }
+.barctl output { flex: none; min-width: 4ch; text-align: right; color: var(--t1);
+  font-family: var(--font-mono); font-size: calc(14px * var(--scale, 1)); font-variant-numeric: tabular-nums; }
+.tiltbtn { flex: none; background: var(--raised); color: var(--t1); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 16px; font: inherit; font-weight: 600;
+  font-size: calc(12.5px * var(--scale, 1)); cursor: pointer; }
+
 .field { display: flex; flex-direction: column; gap: 6px; padding: 11px 0; }
 .field label { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); }
 .field input, .field textarea { background: var(--raised); border: 1px solid var(--line);
@@ -290,6 +301,7 @@ const PROFILE_CSS = `
    phone already uses -- so it is also the more familiar of the two. */
 @media (max-width: 620px) {
   .row { flex-wrap: wrap; row-gap: 10px; }
+  .profile .barctl { flex-basis: 100%; }
   /* EVERY segmented control, not the ones in a .row. Writing this per-context
      found the same overflow three times in three places -- the finish control
      hung 91px outside its card because it is sized by width: max-content and
@@ -509,6 +521,12 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const currentFinish = FINISHES.find((f) => f.id === (finish ?? null)) || FINISHES[0];
   const override = lightOverride(finish);
   const notices = progress.get("pw-notices", { answers: true, wingman: true, nudge: true });
+  // The bar: one key, one clamp, one default, read exactly as Master Caution and
+  // the gyro read it, so moving it here moves both.
+  const bar = readMinimums(progress);
+  // iOS reports tilt only after a tap asks, so the asking sits here beside the
+  // bar, and never happens on load.
+  const tilt = useTiltPermission(reduceMotion);
 
   const liveries = LIVERIES.filter((l) => (l.aurora ? flags["livery.aurora"] : true));
   const current = liveries.find((l) => l.id === engineLivery(livery)) || liveries[0];
@@ -838,11 +856,30 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           </div>
 
           <div className="block">
-            <span className="eyebrow">Instrument scale</span>
+            <span className="eyebrow">Instruments</span>
             <div className="row">
               <span className="rowtext"><b>Text size</b><span>Across chapters, discussion and the library</span></span>
               <Seg label="Instrument scale" value={fontSize} options={SCALES} onPick={onFontSize} />
             </div>
+            {/* Writes on every step, on purpose: the gyro and every lamp re-read it
+                as the thumb moves, which is what shows what the number does. */}
+            <div className="row">
+              <label className="rowtext" htmlFor="your-bar">
+                <b>Your bar</b><span>Below this, Master Caution lights up</span>
+              </label>
+              <span className="barctl">
+                <input id="your-bar" type="range" min={MIN_FLOOR} max={MIN_CEIL} step="1" value={bar}
+                       aria-valuetext={`${bar} per cent`}
+                       onChange={(e) => progress.set(MINIMUMS_KEY, clampMinimums(e.target.value))} />
+                <output htmlFor="your-bar">{bar}%</output>
+              </span>
+            </div>
+            {tilt.needed && (
+              <div className="row">
+                <span className="rowtext"><b>Tilt</b><span>Lets the gyro follow your phone</span></span>
+                <button type="button" className="tiltbtn" onClick={tilt.ask}>Allow tilt</button>
+              </div>
+            )}
           </div>
 
           <div className="block">

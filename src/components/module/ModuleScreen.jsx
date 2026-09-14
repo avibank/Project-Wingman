@@ -5,7 +5,7 @@ import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
 import { holdingCount } from "../../lib/retention.js";
-import { takenScores, averagePct, lastPct, faultChapters } from "../../lib/minimums.js";
+import { faultChapters } from "../../lib/minimums.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
@@ -32,7 +32,7 @@ export default function ModuleScreen({
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
   // fact and must be computed from the same number.
-  minimums, onMinimums,
+  minimums,
   // "6 days ago" on the Calibration row. It is its OWN progress key
   // (pw-last-recheck), written by the re-check flow when it finishes — NOT a
   // field on `retention`, which is what it looks like it should be. Reading it
@@ -62,12 +62,8 @@ export default function ModuleScreen({
     setOpen((s) => (s.has(id) ? new Set() : new Set([id])));
 
   // §8 — EVERYTHING DERIVES FROM TWO NUMBERS: the quiz scores, and the user's
-  // minimums. Computed once here and handed down, so the lamp on a chapter,
-  // the needle in the Library and the row actions cannot form separate
-  // opinions about the same fact.
-  const taken = takenScores(chapters, state?.quiz || {});
-  const avgPct = averagePct(taken);          // the needle
-  const lastQuizPct = lastPct(taken);        // the hollow marker
+  // bar. Computed once here and handed down, so the lamp on a chapter and the
+  // row actions cannot form separate opinions about the same fact.
   const faults = faultChapters(chapters, state?.quiz || {}, minimums);
 
   // §2.3 — one field, beside the tabs. It belongs to the screen rather than to
@@ -195,10 +191,6 @@ export default function ModuleScreen({
                       // holding; `due` is how much of it has come round.
                       warm={warm}
                       lastRecheck={lastRecheck}
-                      // §3 — the dial, on the Quizzes header. Two sizes, two
-                      // places; this is the small one.
-                      average={avgPct} lastQuiz={lastQuizPct}
-                      minimums={minimums} onMinimums={onMinimums}
                       faults={faults}
                       onStartCalibration={() => onInstrument?.("recheck")}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />

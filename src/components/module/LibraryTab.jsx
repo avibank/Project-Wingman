@@ -2,16 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { hits, terms } from "../../lib/moduleSearch.js";
 import { CautionMark } from "./Instruments.jsx";
-import Dial from "./Dial.jsx";
-import MinimumsPop from "./MinimumsPop.jsx";
 
 /* ============================================================================
    §5 — THE LIBRARY.
 
-   Two sections in one scroll, in this order: Quizzes, then Papers. The
-   Quizzes header carries the small accuracy dial (§3 — one of exactly two
-   places it appears), and Calibration is pinned above the chapter quizzes
-   with a rule beneath it.
+   Two sections in one scroll, in this order: Quizzes, then Papers.
+   Calibration is pinned above the chapter quizzes with a rule beneath it.
+   The Quizzes header is a heading and a count. It carried a small accuracy
+   dial until the bar moved into settings and the Flight Deck's gyro started
+   reading it; the dial is on the quiz results screen alone now.
 
    CALIBRATION AND RE-CHECK ARE DIFFERENT THINGS AND NEVER SHARE A WORD.
    Calibration is the answers you already got RIGHT, kept in currency — that
@@ -21,10 +20,8 @@ import MinimumsPop from "./MinimumsPop.jsx";
    not remediation and it must not look like it, because a student who reads
    it as remediation stops opening it.
 
-   The section headings are NOT buttons. The Quizzes header contains the dial,
-   which is itself a control, and a button inside a button is invalid nested
-   interactive content — the inner one becomes unreachable while still eating
-   the click. Nothing here collapses, so nothing needs to be a button.
+   The section headings are NOT buttons. Nothing here collapses, so nothing
+   needs to be a button.
    ========================================================================= */
 
 const CHIP_MAX = 12;
@@ -60,11 +57,9 @@ export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper, onAddPaper,
   query = "",
   readerPin = null, warm = 0, lastRecheck = null,
-  average = null, lastQuiz = null, minimums, onMinimums,
   faults = new Set(), onStartCalibration,
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
-  const [minOpen, setMinOpen] = useState(null);   // the dial's anchor element
 
   // §5 turned the Library's segmented control into one scroll, but the URL
   // still distinguishes /library from /library/quizzes. Rather than drop that
@@ -99,28 +94,7 @@ export default function LibraryTab({
               {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}, one per chapter
             </p>
           </div>
-
-          {/* §3 — the dial, at its small size, inside the card so it has a
-              housing and renders the same on every finish. The reading beside
-              it is the fewest words that work. */}
-          <div className="dialwrap">
-            <p className="dialread">
-              <b>{average === null ? "—" : `${average}%`}</b>
-              <span>bar {minimums}%</span>
-            </p>
-            <button type="button" className="dialbtn is-inline"
-                    aria-expanded={minOpen ? "true" : "false"}
-                    aria-label={`Your minimums, ${minimums} per cent. Change them.`}
-                    onClick={(e) => setMinOpen(minOpen ? null : e.currentTarget)}>
-              <Dial size={58} average={average} last={lastQuiz} minimums={minimums} />
-            </button>
-          </div>
         </div>
-
-        {minOpen && (
-          <MinimumsPop anchor={minOpen} value={minimums} onChange={onMinimums}
-                       onClose={() => { const el = minOpen; setMinOpen(null); el?.focus(); }} />
-        )}
 
         <div className="libwrap">
           {/* §5 — Calibration, pinned above the chapter quizzes with a rule
