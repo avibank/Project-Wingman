@@ -96,7 +96,7 @@ function Harness(){
             profile={<span className="av sm" style={{"--av-h":28}}>H</span>}
             onPost={()=>{}} onReport={()=>{}} onBlock={()=>{}} onVote={()=>{}}
             onBest={()=>{}} onOpenLessonAt={()=>{}} onSave={()=>{}}
-            onRefresh={()=>{}} onOpenInvite={()=>{}}
+            onRefresh={()=>{}} onOpenInvite={()=>{}} onOpenPaper={()=>{}}
           />
         </main>
       </div>

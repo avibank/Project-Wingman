@@ -229,12 +229,97 @@ try {
     ok("and pressing it again takes it back", Number(c2?.score ?? c2?.up ?? 0) === 0, JSON.stringify(c2));
   }
 
+  /* ---------------------------------------------------------------------
+     ATTACHMENTS — 0026. The storage half is asserted by REFUSAL only. Nothing in
+     this architecture may delete an object from the bucket, by design, so a
+     positive upload here would leave a file behind on every run. The function
+     is checked in full without uploading anything, because it tests a file
+     row's path prefix, not whether a blob exists at it.
+     --------------------------------------------------------------------- */
+  console.log("\nattachments");
+  made.marks = made.marks || [];
+  const probeMark = await rpc("paper_mark_add", {
+    uid: A, p_paper: `chk_room_paper_${stamp}`, p_module: "M1", p_kind: "highlight", p_ring: "solo",
+    p_anchor: { quote: "torque values for the tail rotor", prefix: "", suffix: "" },
+  });
+  const markId = probeMark.body?.id || probeMark.body?.[0]?.id;
+  if (markId) made.marks.push({ id: markId, by: A });
+  const mineA = await rpc("my_marks_in_module", { uid: A, p_module: "M1", p_limit: 60 });
+  const mineB = await rpc("my_marks_in_module", { uid: B, p_module: "M1", p_limit: 60 });
+  ok("the passage picker lists your own marks in the module",
+     Array.isArray(mineA.body) && mineA.body.some((m) => m.id === markId),
+     JSON.stringify(mineA.body).slice(0, 90));
+  ok("and never somebody else's",
+     Array.isArray(mineB.body) && !mineB.body.some((m) => m.id === markId),
+     JSON.stringify(mineB.body).slice(0, 90));
+
+  const good = [
+    { kind: "passage", paper_id: `chk_room_paper_${stamp}`, paper_title: "Probe paper",
+      quote: "torque values for the tail rotor", anchor: { quote: "torque values for the tail rotor", prefix: "", suffix: "" } },
+    { kind: "file", storage_path: `${sq}/${A}/probe.txt`, file_name: "probe.txt", mime_type: "text/plain", byte_size: 5 },
+  ];
+  const attached = await rpc("add_message_attachments", { p_me: A, p_message: mid, p_rows: good });
+  ok("the author can attach a passage and a file to their message",
+     Array.isArray(attached.body) && attached.body.length === 2, JSON.stringify(attached.body).slice(0, 90));
+
+  const notYours = await rpc("add_message_attachments", {
+    p_me: B, p_message: mid, p_rows: [{ kind: "passage", paper_id: "x", quote: "not yours" }],
+  });
+  ok("somebody else cannot attach anything to it",
+     Array.isArray(notYours.body) && notYours.body.length === 0, JSON.stringify(notYours.body).slice(0, 80));
+
+  const wrongFolder = await rpc("add_message_attachments", {
+    p_me: A, p_message: mid2,
+    p_rows: [{ kind: "file", storage_path: `${sq}/${B}/theirs.txt`, file_name: "theirs.txt" }],
+  });
+  ok("a file row pointing into another member's folder is refused",
+     Array.isArray(wrongFolder.body) && wrongFolder.body.length === 0, JSON.stringify(wrongFolder.body).slice(0, 80));
+
+  const withPage = await rpc("add_message_attachments", {
+    p_me: A, p_message: mid2,
+    p_rows: [{ kind: "passage", paper_id: "x", quote: "q", anchor: { quote: "q", page: 4 } }],
+  });
+  ok("a passage anchor carrying a position is refused (R1)", withPage.status >= 400, `HTTP ${withPage.status}`);
+
+  const tooMany = await rpc("add_message_attachments", {
+    p_me: A, p_message: mid2,
+    p_rows: Array.from({ length: 11 }, (_, i) => ({ kind: "passage", paper_id: "x", quote: `q${i}` })),
+  });
+  ok("no more than ten on one message", tooMany.status >= 400, `HTTP ${tooMany.status}`);
+
+  const embed = await rest(`comms_messages?id=eq.${mid}&select=id,attachments:message_attachments(kind,quote,storage_path)`);
+  ok("the attachments come back embedded in the message, one query",
+     (embed.body?.[0]?.attachments || []).length === 2, JSON.stringify(embed.body).slice(0, 90));
+
+  const direct = await rest("message_attachments", {
+    method: "POST",
+    body: JSON.stringify({ message_id: mid, kind: "passage", paper_id: "x", quote: "smuggled" }),
+  });
+  ok("message_attachments refuses a direct write", direct.status >= 400, `HTTP ${direct.status}`);
+
+  const sto = (path, body) => fetch(`${url}/storage/v1/object/chat-attachments/${path}`, {
+    method: "POST",
+    headers: { apikey: key, Authorization: `Bearer ${key}`, "content-type": "text/plain", "x-upsert": "false" },
+    body,
+  });
+  const strangerUp = await sto(`${sq}/chk_nobody_${stamp}/x.txt`, "x");
+  ok("storage refuses an upload into a folder under a non-member's id", strangerUp.status >= 400, `HTTP ${strangerUp.status}`);
+  const noSquad = await sto(`00000000-0000-0000-0000-000000000000/${A}/x.txt`, "x");
+  ok("and into a squadron the uploader is not in", noSquad.status >= 400, `HTTP ${noSquad.status}`);
+  const listed = await fetch(`${url}/storage/v1/object/list/chat-attachments`, {
+    method: "POST", headers: { ...H }, body: JSON.stringify({ prefix: "", limit: 100 }),
+  });
+  const listBody = await listed.json().catch(() => null);
+  ok("nothing can list the bucket", !Array.isArray(listBody) || listBody.length === 0,
+     `HTTP ${listed.status} ${JSON.stringify(listBody).slice(0, 60)}`);
+
   console.log("\nleaving");
   await rpc("leave_squadron", { p_me: B, p_squadron: sq });
   const stillIn = (await rest(`squadron_members?squadron_id=eq.${sq}&user_id=eq.${B}&select=user_id`)).body || [];
   ok("leaving takes you out of it", stillIn.length === 0, `${stillIn.length} rows`);
 } finally {
   console.log("\ncleaning up");
+  for (const mk of made.marks || []) await rpc("paper_mark_delete", { uid: mk.by, p_id: mk.id });
   for (const id of made.threads) await rest(`lesson_threads?id=eq.${id}`, { method: "DELETE" });
   await rest(`thread_votes?user_id=in.(${A},${B},${C})`, { method: "DELETE" });
   await rest(`seat_messages?user_id=in.(${A},${B},${C})`, { method: "DELETE" });

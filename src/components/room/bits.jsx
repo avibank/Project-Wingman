@@ -1,5 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Send, ArrowBigUp, ArrowBigDown } from "lucide-react";
+import AttachmentSheet from "./AttachmentSheet.jsx";
+import AttachmentTray from "./AttachmentTray.jsx";
+import { SendPlane, PlusIcon } from "./chatIcons.jsx";
 import { initials, hueFor } from "../../lib/familiar.js";
 
 /* ============================================================================
@@ -44,39 +47,75 @@ export function Face({ id, name, size = "", state = "off", onClick, label }) {
   );
 }
 
-/* §4a — one pill holding the growing textarea, with send outside it. Enter
-   sends, Shift+Enter newlines.
+/* §4a — the composer. One bar holding the attach button and a growing field,
+   with send outside it. Enter sends, Shift+Enter makes a new line, and the
+   field grows to five lines and then scrolls.
 
-   The textarea is UNCONTROLLED above the pill: the room keeps the draft so
-   that leaving a conversation abandons it, but every keystroke re-rendering
-   the whole transcript made typing lag on a long chat. It reports out on
-   change and re-seeds only when the conversation changes. */
-/* NO PAPERCLIP AND NO EMOJI BUTTON, and their absence is deliberate rather
-   than unfinished: there is no file store behind an attachment and no picker
-   behind a face, and a control that opens nothing is the exact fault this
-   rebuild exists to remove. Reactions are on the message, where they belong. */
-export function Composer({ value, onChange, onSend, placeholder, sending = false }) {
+   The draft is the room's, not this component's: the room keeps it so that
+   leaving a conversation abandons it. This reports every change out and is
+   re-seeded when the conversation changes.
+
+   ATTACHMENTS ARE OPT-IN PER PANE. The squadron chat passes `pending` and gets
+   the attach button, the sheet and the tray; a thread and the right seat pass
+   nothing and get the same bar without them. A pane that cannot send a photo
+   must not show a button that offers to — that is the fault the room rebuild
+   existed to remove, and it is still the rule.
+
+   There is still no emoji button. Reactions are on the message, where they
+   belong. */
+export function Composer({
+  value, onChange, onSend, placeholder, sending = false,
+  pending = null, onRemovePending = () => {}, onAttachFiles = () => {},
+  onAttachPassage = () => {}, marks = [], marksLoading = false, onWantMarks = () => {},
+}) {
   const ref = useRef(null);
+  const [sheet, setSheet] = useState(false);
+  const attaching = Array.isArray(pending);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    // The cap is the stylesheet max-height, read rather than repeated, so the
+    // two cannot disagree about where the fifth line ends.
+    const cap = parseFloat(getComputedStyle(el).maxHeight) || 105;
+    el.style.height = `${Math.min(el.scrollHeight, cap)}px`;
   }, [value]);
+  const canSend = Boolean((value.trim() || (attaching && pending.length > 0)) && !sending);
   return (
-    <div className="composer">
-      <div className="pill">
-        <textarea ref={ref} rows={1} value={value} placeholder={placeholder} aria-label={placeholder}
-                  onChange={(e) => onChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
-                  }} />
+    <>
+      {attaching && <AttachmentTray items={pending} onRemove={onRemovePending} />}
+      <div className="composer">
+        {attaching && (
+          <AttachmentSheet open={sheet} onClose={() => setSheet(false)}
+                           onPickFiles={onAttachFiles} onPickPassage={onAttachPassage}
+                           onWantMarks={onWantMarks} marks={marks} marksLoading={marksLoading} />
+        )}
+        <div className="bar">
+          {attaching && (
+            <button type="button" className="attach is-inline" aria-expanded={sheet}
+                    aria-label="Add an attachment" onClick={() => setSheet((o) => !o)}>
+              <PlusIcon />
+            </button>
+          )}
+          <div className="field">
+            <textarea ref={ref} rows={1} value={value} placeholder={placeholder} aria-label={placeholder}
+                      onChange={(e) => onChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (canSend) onSend(); }
+                      }}
+                      onPaste={(e) => {
+                        /* A screenshot pasted straight into the field becomes a photo. */
+                        if (!attaching) return;
+                        const files = Array.from(e.clipboardData?.files || []);
+                        if (files.length) { e.preventDefault(); onAttachFiles(files, "image"); }
+                      }} />
+          </div>
+        </div>
+        <button type="button" className="send" onClick={onSend} disabled={!canSend} aria-label="Send">
+          <SendPlane />
+        </button>
       </div>
-      <button type="button" className="send" onClick={onSend}
-              disabled={!value.trim() || sending} aria-label="Send">
-        <Send aria-hidden="true" />
-      </button>
-    </div>
+    </>
   );
 }
 

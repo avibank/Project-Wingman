@@ -4,7 +4,8 @@ import {
   Check, CheckCheck, ChevronDown,
 } from "lucide-react";
 import { Avatar, Face, Composer } from "./bits.jsx";
-import { when, runs, firstUnread, chatUnread } from "../../lib/roomModel.js";
+import { clock, runs, firstUnread, chatUnread } from "../../lib/roomModel.js";
+import MessageAttachments from "./MessageAttachments.jsx";
 import { hueFor } from "../../lib/familiar.js";
 
 /* ============================================================================
@@ -32,6 +33,8 @@ const NEAR_BOTTOM = 120;
 
 export default function SquadronChat({
   me, squadron, messages = [], draft, onDraft, onSend, sending,
+  pending = [], onRemovePending = () => {}, onAttachFiles = () => {}, onAttachPassage = () => {},
+  marks = [], marksLoading = false, onWantMarks = () => {}, onOpenPassage, onOpenImage,
   replyTo, onReplyTo, onReact, onMenu, onBack, onInfo, onProfile,
   onSearchHere, typing = [], who, onSeen, jumpTo,
 }) {
@@ -143,14 +146,20 @@ export default function SquadronChat({
                         <span>{parent.body || "Message removed"}</span>
                       </button>
                     )}
+                    {!m.deletedAt && m.attachments?.length > 0 && (
+                      <MessageAttachments attachments={m.attachments}
+                                          onOpenPassage={onOpenPassage} onOpenImage={onOpenImage} />
+                    )}
                     {m.deletedAt ? (
                       <p className="body gone">Message removed</p>
                     ) : (
+                      /* The body is rendered even when a message is only a photo:
+                         the stamp floats inside it, and needs somewhere to sit. */
                       <p className="body">
-                        {m.body}
+                        {m.body || ""}
                         <span className="stamp">
                           {m.editedAt && <em>edited</em>}
-                          {when(m.createdAt)}
+                          {clock(m.createdAt)}
                           {mine && (m.pending
                             ? <Check aria-label="Sending" />
                             : <CheckCheck className="read" aria-label="Sent" />)}
@@ -235,6 +244,9 @@ export default function SquadronChat({
       })()}
 
       <Composer value={draft} onChange={onDraft} onSend={onSend} sending={sending}
+                pending={pending} onRemovePending={onRemovePending}
+                onAttachFiles={onAttachFiles} onAttachPassage={onAttachPassage}
+                marks={marks} marksLoading={marksLoading} onWantMarks={onWantMarks}
                 placeholder={`Message ${squadron.name}`} />
     </>
   );

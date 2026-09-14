@@ -459,18 +459,6 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .room .replying .icon-btn{ margin-left: auto; }
-.room .pill{
-  flex: 1; display: flex; align-items: flex-end; gap: 6px; min-width: 0;
-  background: var(--raised); border: 1px solid transparent; border-radius: 20px;
-  padding: 4px 6px 4px 12px;
-}
-.room .pill:focus-within{ border-color: var(--active); }
-.room .pill textarea{
-  flex: 1; min-width: 0; background: none; border: 0; outline: none; resize: none;
-  color: var(--t1); font: inherit; font-size: 14px; line-height: 1.45;
-  padding: 8px 0; max-height: 120px;
-}
-.room .pill textarea::placeholder{ color: var(--t3); }
 .room .send{
   width: 40px; height: 40px; min-height: 0; border-radius: 999px; display: grid;
   place-items: center; background: var(--active-fill); color: var(--on-fill);

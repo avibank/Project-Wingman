@@ -350,6 +350,16 @@ export function when(iso) {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+/* A bubble's stamp is the clock time and nothing else. when() says "Yesterday"
+   for a message from yesterday, which is right on a rail row and wrong inside a
+   bubble that already sits under a divider reading Yesterday — the day belongs
+   to the divider, the time to the bubble. */
+export function clock(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  return new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
 export function dayLabel(iso) {
   const d = new Date(iso);
   const now = new Date();

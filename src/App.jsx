@@ -144,7 +144,8 @@ import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { MINIMUMS_KEY, clampMinimums, readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
-import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, fetchRightSeat } from "./lib/roomData.js";
+import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, deleteMessage, fetchRightSeat } from "./lib/roomData.js";
+import { toAttachment, attachToMessage } from "./lib/attachments.js";
 import { fetchProfiles, fetchProfile } from "./lib/squadron.js";
 import { reportContent, blockUser } from "./lib/squadron.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -1284,6 +1285,7 @@ function AppInner() {
               }
               if (ev.kind === "message") {
                 const sq = squadrons.find((x) => x.id === ev.squadronId);
+                const attaching = ev.pending || [];
                 /* OPTIMISTIC, and then reconciled. The chat used to be
                    posted-then-shown: the composer cleared and nothing appeared
                    until the round trip landed, which on a phone on campus wifi
@@ -1292,20 +1294,59 @@ function AppInner() {
                    replaced by the row the insert returns rather than joined by
                    it. */
                 const temp = {
-                  id: `pending-${Date.now()}`, squadronId: ev.squadronId, body: ev.body,
+                  id: `pending-${Date.now()}`, squadronId: ev.squadronId, body: ev.body || null,
                   authorId: me, createdAt: new Date().toISOString(),
                   replyTo: ev.replyTo || null, reactions: {}, pending: true,
+                  /* The photos are on screen at once, from the files still on this
+                     device, and swapped for the landed copies when the upload
+                     finishes. */
+                  attachments: attaching.map((a, i) => toAttachment({
+                    id: `pending-att-${i}`, kind: a.kind, localUrl: a.localUrl || null,
+                    file_name: a.file?.name, mime_type: a.file?.type, byte_size: a.file?.size,
+                    width: a.width, height: a.height, paper_id: a.paperId,
+                    paper_title: a.paperTitle, page: a.page, quote: a.quote, anchor: a.anchor,
+                  })),
                 };
                 setRoomMessages((ms) => [...ms, temp]);
                 postSquadronMessage({
                   me, squadronId: ev.squadronId, moduleCode: sq?.moduleCode,
-                  body: ev.body, replyTo: ev.replyTo,
-                }).then((row) => {
-                  setRoomMessages((ms) => (row
-                    ? ms.map((m) => (m.id === temp.id ? row : m))
-                    : ms.filter((m) => m.id !== temp.id)));
+                  body: ev.body, replyTo: ev.replyTo, hasAttachments: attaching.length > 0,
+                }).then(async (row) => {
+                  if (!row) {
+                    setRoomMessages((ms) => ms.filter((m) => m.id !== temp.id));
+                    if (attaching.length) ev.onFail?.("That didn't send. Try again.");
+                    return;
+                  }
+                  let landed = [];
+                  if (attaching.length) {
+                    try {
+                      landed = (await attachToMessage({
+                        me, squadronId: ev.squadronId, messageId: row.id, pending: attaching,
+                      })).map(toAttachment);
+                    } catch (err) {
+                      console.error(err);
+                      ev.onFail?.(err?.message || "An attachment didn't send. Try again.");
+                    }
+                    /* NOTHING LANDED AND THERE WAS NO TEXT: the row is an empty
+                       bubble that the transcript would hide on the next load
+                       anyway. Take it back out now rather than leave a message
+                       that says nothing in the database. */
+                    if (!landed.length && !(ev.body || "").trim()) {
+                      await deleteMessage(me, row.id);
+                      setRoomMessages((ms) => ms.filter((m) => m.id !== temp.id));
+                      return;
+                    }
+                    if (landed.length < attaching.length) {
+                      ev.onFail?.("Some of that didn't send. The rest did.");
+                    }
+                  }
+                  setRoomMessages((ms) => ms.map((m) => (m.id === temp.id ? { ...row, attachments: landed } : m)));
                 });
               }
+            }}
+            /* A passage quoted in chat opens the paper it came from, in the reader. */
+            onOpenPaper={(moduleCode, paperId) => {
+              if (paperId) go(routePath.paper(moduleCode || activeModuleCode, paperId));
             }}
             onBlock={async (userId) => {
               // §9 — blocking is symmetric and total. The Ban button called

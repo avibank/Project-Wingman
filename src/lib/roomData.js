@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient.js";
+import { toAttachment } from "./attachments.js";
 import { isFlySolo } from "./flySolo.js";
 import { fetchBlocks, fetchMutes } from "./squadron.js";
 import { fetchAllPresence } from "./presence.js";
@@ -48,6 +49,9 @@ const toMessage = (r) => ({
   pinnedBy: r.pinned_by || null,
   isSystem: Boolean(r.is_system),
   reactions: {},
+  /* Embedded in the same query as the message, one round trip for the whole
+     transcript rather than one per bubble. */
+  attachments: r.deleted_at ? [] : (r.attachments || []).map(toAttachment),
 });
 
 const MSG_COLS =
@@ -100,7 +104,7 @@ export async function fetchMySquadrons(me) {
   for (const m of recent || []) {
     if (!preview.has(m.squadron_id)) {
       preview.set(m.squadron_id, {
-        body: m.deleted_at ? "Message removed" : m.body,
+        body: m.deleted_at ? "Message removed" : (m.body || "Sent an attachment"),
         authorId: m.user_id, createdAt: m.created_at,
       });
     }
@@ -145,14 +149,16 @@ export async function fetchSquadronMessages(me, squadronIds = [], limit = 300) {
   if (isFlySolo() || !me || !squadronIds.length) return [];
   const { data, error } = await supabase
     .from("comms_messages")
-    .select(MSG_COLS)
+    .select(`${MSG_COLS}, attachments:message_attachments(*)`)
     .in("squadron_id", squadronIds)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) return fail(error, []);
   const hidden = await hiddenFor(me);
   const rows = (data || [])
-    .filter((r) => r.squadron_id && (r.body || r.deleted_at) && !hidden.has(r.user_id))
+    /* A message whose whole content is a photo has no body, and it is still a
+       message. This filter used to drop it. */
+    .filter((r) => r.squadron_id && (r.body || r.deleted_at || r.attachments?.length) && !hidden.has(r.user_id))
     .map(toMessage)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
@@ -177,9 +183,11 @@ export async function fetchReactions(messageIds = []) {
   return out;
 }
 
-export async function postSquadronMessage({ me, squadronId, moduleCode, body, replyTo }) {
+export async function postSquadronMessage({ me, squadronId, moduleCode, body, replyTo, hasAttachments = false }) {
   const text = (body || "").trim();
-  if (!text || !me || !squadronId) return null;
+  /* Text OR attachments. A photo sent on its own is the commonest attachment
+     of all, and refusing it here would lose it silently. */
+  if ((!text && !hasAttachments) || !me || !squadronId) return null;
   // No client-side id here, unlike a thread: comms_messages.id is a uuid with
   // a default, so the row takes the one Postgres makes and the insert returns
   // it. The room still shows the message immediately — the optimistic row it
@@ -189,7 +197,7 @@ export async function postSquadronMessage({ me, squadronId, moduleCode, body, re
     .from("comms_messages")
     .insert({
       squadron_id: squadronId, module_code: moduleCode || "", user_id: me,
-      body: text, reply_to: replyTo || null,
+      body: text || null, reply_to: replyTo || null,
     })
     .select(MSG_COLS).single();
   if (error) return fail(error, null);

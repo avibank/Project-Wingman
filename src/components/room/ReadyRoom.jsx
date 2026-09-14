@@ -34,7 +34,9 @@ import {
 import { typingChannel } from "../../lib/live.js";
 import { canTransition, beginTransition, endTransition, nameLayers, clearNames } from "../../lib/viewTransition.js";
 import "./room.css";
+import "./chat.css";
 
+import { fetchMyMarks, validateFile, readImageSize, MAX_PER_MESSAGE } from "../../lib/attachments.js";
 /* ============================================================================
    THE READY ROOM — a desktop-messaging layout with one important twist:
    SQUADRONS ARE GROUP CHATS, MODULES ARE QUESTION FEEDS.
@@ -73,7 +75,7 @@ export default function ReadyRoom({
   seatCandidates = [], votes = {}, saved = {},
   brand = null, profile = null,
   onPost, onReport, onBlock, onVote, onBest, onOpenLessonAt, onSave,
-  onRefresh, onOpenInvite, onPlace,
+  onRefresh, onOpenInvite, onPlace, onOpenPaper,
 }) {
   /* WHAT THE PANE IS SHOWING. One piece of state, not six booleans: the six
      states are mutually exclusive and a boolean each is how two of them end up
@@ -87,6 +89,12 @@ export default function ReadyRoom({
   const [replyTo, setReplyTo] = useState(null);
   const [jumpTo, setJumpTo] = useState(null);
   const [sending, setSending] = useState(false);
+  /* What is waiting to go with the next message, and the student's own marks for
+     the passage picker — null until the picker asks, so a chat that never
+     quotes a paper never spends the query. */
+  const [pending, setPending] = useState([]);
+  const [marks, setMarks] = useState(null);
+  const [marksLoading, setMarksLoading] = useState(false);
 
   const [discoverFilter, setDiscoverFilter] = useState("yours");
   const [rooms, setRooms] = useState([]);
@@ -269,17 +277,72 @@ export default function ReadyRoom({
   /* ---------------------------------------------------------------- writes */
   const send = async () => {
     const body = draft.trim();
-    if (!body || sending) return;
+    const attached = view?.kind === "squadron" ? pending : [];
+    /* Text OR attachments: a photo on its own is a message. */
+    if ((!body && !attached.length) || sending) return;
     setSending(true);
     if (view?.kind === "squadron") {
-      onPost?.({ kind: "message", squadronId: view.id, body, replyTo });
+      onPost?.({ kind: "message", squadronId: view.id, body, replyTo, pending: attached, onFail: say });
       setReplyTo(null);
+      setPending([]);
     } else if (view?.kind === "thread") {
       onPost?.({ kind: "reply", threadId: view.threadId, body });
     }
     setDraft("");
     setSending(false);
   };
+
+  /* ── attachments ──────────────────────────────────────────────────────
+     Files are checked here, before anything is spent: the type, the size, and
+     no more than ten on one message. A photo gets its pixel size read now so its
+     bubble can reserve the right space, and a local URL so it shows the moment
+     it is sent rather than after it uploads. */
+  const attachFiles = async (files, kind) => {
+    const next = [];
+    for (const file of Array.from(files)) {
+      if (pending.length + next.length >= MAX_PER_MESSAGE) {
+        say(`Up to ${MAX_PER_MESSAGE} attachments on one message.`);
+        break;
+      }
+      const problem = validateFile(file, kind);
+      if (problem) { say(problem); continue; }
+      const isImage = file.type.startsWith("image/");
+      const size = isImage ? await readImageSize(file) : {};
+      next.push({
+        id: `${file.name}-${file.lastModified}-${Math.random().toString(16).slice(2)}`,
+        kind: isImage ? "image" : "file", file, ...size,
+        localUrl: isImage ? URL.createObjectURL(file) : null,
+      });
+    }
+    if (next.length) setPending((p) => [...p, ...next]);
+  };
+  const attachPassage = (mark) => {
+    if (pending.length >= MAX_PER_MESSAGE) { say(`Up to ${MAX_PER_MESSAGE} attachments on one message.`); return; }
+    if (pending.some((p) => p.kind === "passage" && p.markId === mark.id)) return;
+    setPending((p) => [...p, {
+      id: `passage-${mark.id}`, markId: mark.id, kind: "passage",
+      paperId: mark.paperId, paperTitle: mark.paperTitle, page: mark.page,
+      quote: mark.quote, anchor: mark.anchor ?? null,
+    }]);
+  };
+  const removePending = (i) => setPending((p) => {
+    const gone = p[i];
+    if (gone?.localUrl) URL.revokeObjectURL(gone.localUrl);
+    return p.filter((_, n) => n !== i);
+  });
+  const wantMarks = async () => {
+    const sq = squadrons.find((x) => x.id === view?.id);
+    if (marks !== null || marksLoading || !sq?.moduleCode) return;
+    setMarksLoading(true);
+    setMarks(await fetchMyMarks(me, sq.moduleCode));
+    setMarksLoading(false);
+  };
+  /* A different conversation starts with nothing pending and asks for its own
+     module's marks. */
+  useEffect(() => {
+    setPending((p) => { p.forEach((x) => x.localUrl && URL.revokeObjectURL(x.localUrl)); return []; });
+    setMarks(null);
+  }, [view?.id]);
 
   const react = async (messageId, emoji) => {
     await toggleReaction(me, messageId, emoji);
@@ -465,6 +528,11 @@ export default function ReadyRoom({
             onProfile={(id) => setProfileOf(personOf(id))}
             onSearchHere={() => { setQuery(""); listRef.current?.querySelector("input")?.focus(); }}
             typing={typing} who={who} onSeen={seen} jumpTo={jumpTo}
+            pending={pending} onRemovePending={removePending}
+            onAttachFiles={attachFiles} onAttachPassage={attachPassage}
+            marks={marks || []} marksLoading={marksLoading} onWantMarks={wantMarks}
+            onOpenPassage={(a) => onOpenPaper(squadron?.moduleCode, a.paperId, a.anchor)}
+            onOpenImage={(url) => window.open(url, "_blank", "noopener")}
           />
         )}
 
