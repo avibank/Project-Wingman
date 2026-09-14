@@ -41,7 +41,7 @@ export function makeStore() {
        would drown the console assertion that catches real errors. */
     presence: [], comms_messages: [], reports: [], question_attempts: [],
     /* The Flight Deck's right seat reads who you have flown with. */
-    copilot_participants: [],
+    copilot_participants: [], message_attachments: [],
     paper_reads: [], lesson_progress: [],
     /* Empty, but present — the state after 0018 has been run. The Library asks
        for it on every module view, and a 501 here is the harness missing a
@@ -232,6 +232,25 @@ const RPC = {
   people_search: () => [],
 };
 
+/* The two embedded reads the Ready Room makes, resolved the way PostgREST would:
+   the squadron onto its membership row, and a message's attachments onto the
+   message. Anything else embedded is still left off. Copies, never the stored
+   rows, so a read cannot write into the store. */
+const EMBEDS = {
+  "squadron_members.squadrons": (row, store) => store.squadrons.find((x) => x.id === row.squadron_id) || null,
+  "comms_messages.message_attachments": (row, store) => store.message_attachments.filter((a) => a.message_id === row.id),
+};
+function embed(table, rows, url, store) {
+  const select = url.searchParams.get("select") || "";
+  const wanted = [...select.matchAll(/(?:(\w+):)?(\w+)(!inner)?\(/g)]
+    .map(([, alias, name, inner]) => ({ alias: alias || name, fn: EMBEDS[`${table}.${name}`], inner: Boolean(inner) }))
+    .filter((e) => e.fn);
+  if (!wanted.length) return rows;
+  return rows
+    .map((r) => { const out = { ...r }; for (const e of wanted) out[e.alias] = e.fn(r, store); return out; })
+    .filter((r) => wanted.every((e) => !e.inner || r[e.alias] != null));
+}
+
 /* PostgREST's filter syntax, only the operators the app actually sends. */
 function applyFilters(rows, url) {
   let out = rows;
@@ -245,6 +264,7 @@ function applyFilters(rows, url) {
       const set = val.replace(/^\(|\)$/g, "").split(",").map((v) => v.replace(/^"|"$/g, ""));
       out = out.filter((r) => set.includes(String(r[key])));
     } else if (op === "is") out = out.filter((r) => (val === "null" ? r[key] == null : true));
+    else if (op === "not" && rest[0] === "is") out = out.filter((r) => (rest[1] === "null" ? r[key] != null : true));
   }
   return out;
 }
@@ -310,7 +330,7 @@ export function postgrestMiddleware() {
     const table = url.pathname.slice("/rest/v1/".length).split("?")[0];
     if (!(table in store)) { console.warn(`[harness] no table "${table}"`); return send(501, { message: `harness: table ${table} not implemented` }); }
 
-    if (req.method === "GET") return send(200, applyFilters(store[table], url));
+    if (req.method === "GET") return send(200, embed(table, applyFilters(store[table], url), url, store));
 
     if (req.method === "POST") {
       const rows = (Array.isArray(body) ? body : [body]).map((r) => ({

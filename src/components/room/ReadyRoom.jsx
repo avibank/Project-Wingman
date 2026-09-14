@@ -76,6 +76,7 @@ export default function ReadyRoom({
   brand = null, profile = null,
   onPost, onReport, onBlock, onVote, onBest, onOpenLessonAt, onSave,
   onRefresh, onOpenInvite, onPlace, onOpenPaper,
+  intent = null, onIntentUsed,
 }) {
   /* WHAT THE PANE IS SHOWING. One piece of state, not six booleans: the six
      states are mutually exclusive and a boolean each is how two of them end up
@@ -174,6 +175,19 @@ export default function ReadyRoom({
     open(null, { goingBack: true });
     requestAnimationFrame(() => listRef.current?.focus());
   }, [view, open]);
+
+  /* A DOOR FROM THE FLIGHT DECK. Back on the ground sends somebody here for one
+     place — a thread, the ask composer, the right seat, Discover or a person's
+     profile — and the room opens straight to it, once, then hands it back. */
+  useEffect(() => {
+    if (!intent) return;
+    if (intent.kind === "thread") openNow({ kind: "thread", id: intent.moduleCode, threadId: intent.threadId });
+    else if (intent.kind === "ask") { openNow({ kind: "module", id: intent.moduleCode }); setAsking(intent.moduleCode); }
+    else if (intent.kind === "seat") openNow({ kind: "seat" });
+    else if (intent.kind === "discover") openNow({ kind: "discover" });
+    else if (intent.kind === "person" && intent.id) setProfileOf(personOf(intent.id));
+    onIntentUsed?.();
+  }, [intent]);
 
   const squadron = view?.kind === "squadron"
     ? squadronsWithPresence.find((s) => s.id === view.id) : null;

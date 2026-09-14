@@ -121,6 +121,10 @@ ok("every empty state names what fills it", !/No squadron yet|No questions here 
 ok("small controls keep a 44px target", /is-inline/.test(seatCard) && /width: max\(100%, var\(--tap, 44px\)\)/.test(css));
 ok("controls outside the cards still have a scale", /\.bog \{\n  --k: 1;/.test(css));
 ok("the harness cannot open on the live site", /if \(import\.meta\.env\.DEV && /.test(main));
+const room = read("src/components/room/ReadyRoom.jsx");
+ok("each door names its own place in the room",
+  ["person", "thread", "discover", "seat", "ask"].every((k) => new RegExp(`onOpenRoomAt\\?\\.\\(\\{ kind: "${k}"`).test(home)));
+ok("the room opens a door once and hands it back", /intent = null, onIntentUsed/.test(room) && /onIntentUsed\?\.\(\);/.test(room));
 
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

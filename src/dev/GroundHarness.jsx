@@ -23,7 +23,7 @@ const CATS = ["B1", "B2"];
 const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
 
 const person = (i, chapter, seat) => ({
-  id: `p${i}`, name: NAMES[i % NAMES.length], category: CATS[i % 2], chapter, seat: !!seat,
+  id: `p${i}`, name: NAMES[i % NAMES.length], category: i === 10 ? null : CATS[i % 2], chapter, seat: !!seat,
   flewAt: i % 3 === 1 ? daysAgo(i) : null,
 });
 
@@ -46,7 +46,7 @@ const MESSAGES = [
 ];
 
 export const LIVES = {
-  "day one":   { members: 0,  msgs: 0, threads: 0, seat: false, route: 2,  unread: 0 },
+  "day one":   { members: 0,  msgs: 0, threads: 0, seat: false, route: 0,  unread: 0 },
   quiet:       { members: 3,  msgs: 0, threads: 1, seat: false, route: 3,  unread: 0 },
   connected:   { members: 6,  msgs: 3, threads: 2, seat: true,  route: 7,  unread: 0 },
   hub:         { members: 11, msgs: 5, threads: 4, seat: true,  route: 11, unread: 2 },
@@ -58,6 +58,9 @@ export function buildState(life, chapters, youChapter) {
     person(i, 1 + (i % chapters), L.seat && i === 0));
   const routePeople = Array.from({ length: L.route }, (_, i) =>
     person(i, 1 + (i % chapters), L.seat && i === 0));
+  // Somebody in the squadron who is not studying right now: no chapter, so
+  // not on the route, and "not flying" in the right seat card.
+  if (life === "connected") { members.push(person(7, null)); routePeople.push(person(7, null)); }
   return {
     module: { name: "Module 1", chapters, youChapter: Math.min(chapters, youChapter) },
     squadron: L.members

@@ -55,6 +55,39 @@ async function audit(page) {
       if (stage.querySelectorAll(".bog > .bog-body, .bog > .bog-foot").length) {
         problems.push(`${where}: card part outside a card`);
       }
+
+      // A pill keeps its padding. A size variable that fails to resolve leaves
+      // bare text, which is how the empty route's button shipped once.
+      stage.querySelectorAll(".bog-btn").forEach((b) => {
+        if (parseFloat(getComputedStyle(b).paddingLeft) < 4) problems.push(`${where}: "${b.textContent.trim()}" lost its padding`);
+      });
+      // Round controls stay round under the app's 44px floor.
+      stage.querySelectorAll("button.bog-av, .bog-podface, .bog-face, .bog-reply button").forEach((b) => {
+        const r = b.getBoundingClientRect();
+        if (r.width && Math.abs(r.width - r.height) > 1) problems.push(`${where}: a round control is ${Math.round(r.width)}x${Math.round(r.height)}`);
+      });
+      // Motion keeps its duration, so an easing variable that is not defined
+      // cannot switch it off without anyone noticing.
+      stage.querySelectorAll("button.bog-av").forEach((b) => {
+        if (getComputedStyle(b).transitionDuration.split(",").every((d) => parseFloat(d) === 0)) problems.push(`${where}: a face lost its transition`);
+      });
+      // A position that works out to NaN never reaches the page: the browser
+      // throws "NaNpx" away and the marker lands wherever it falls. So look for
+      // the place that is missing, not for the NaN.
+      stage.querySelectorAll(".bog-mark").forEach((m) => {
+        if (!m.style.left || !m.style.top) problems.push(`${where}: a marker has no position`);
+      });
+      // A value that is not there prints as a word, or leaves its separator
+      // hanging. Every real person's licence category is null today. Read the
+      // text node by node: textContent runs a name straight into whatever
+      // follows it ("Jasemnull"), which leaves no word boundary to find.
+      const walk = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        if (/undefined|null|NaN/.test(n.data)) { problems.push(`${where}: undefined, null or NaN on screen`); break; }
+      }
+      stage.querySelectorAll(".bog-m").forEach((m) => {
+        if (/^\s*·|·\s*$/.test(m.textContent)) problems.push(`${where}: a separator with nothing on one side`);
+      });
     });
     return [...new Set(problems)];
   });
@@ -100,6 +133,16 @@ test("the squadron list pops and stays on screen", async ({ page }) => {
     expect(r.y, `pop off the top at ${w}`).toBeGreaterThanOrEqual(4);
     expect(r.x + r.width, `pop off the right at ${w}`).toBeLessThanOrEqual(vp.width - 4);
     expect(r.width, `pop too narrow at ${w}`).toBeGreaterThan(150);
+    const popText = await box.evaluate((el) => {
+      const out = [];
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) out.push(n.data);
+      return out;
+    });
+    expect(popText.filter((t) => /undefined|null|NaN/.test(t)), `pop text at ${w}`).toEqual([]);
+    for (const t of await box.locator(".bog-m").allTextContents()) {
+      expect(t, `a separator with nothing on one side in the pop at ${w}`).not.toMatch(/^\s*·|·\s*$/);
+    }
 
     // a scroll must move it, not dismiss it
     await page.mouse.wheel(0, 40);

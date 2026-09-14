@@ -791,6 +791,15 @@ function AppInner() {
         : ms.filter((m) => m.id !== temp.id)));
     });
   }, [me, squadrons]);
+  /* A door from the Flight Deck into one place in the Ready Room: a thread, the
+     ask composer, the right seat, Discover or a person. Handed to the room as
+     it opens and handed back once used. State rather than a URL, because it
+     is a gesture and not a link anybody keeps. */
+  const [roomIntent, setRoomIntent] = useState(null);
+  const openRoomAt = (intent) => {
+    setRoomIntent(intent);
+    go(routePath.ready(intent?.moduleCode));
+  };
   useEffect(() => {
     if (!isSignedIn || !flags["social.readyroom"]) { setSquadrons([]); setRoomMessages([]); setRightSeat([]); return undefined; }
     let live = true;
@@ -1234,6 +1243,8 @@ function AppInner() {
             squadrons={squadrons}
             messages={roomMessages}
             seatCandidates={rightSeat}
+            intent={roomIntent}
+            onIntentUsed={() => setRoomIntent(null)}
             votes={votes}
             onVote={async (replyId, on) => {
               await toggleReplyVote(replyId, me, on);
@@ -1496,7 +1507,6 @@ function AppInner() {
             onGoToChapter={goToChapter}
             onResumePlace={resumePlace}
             onOpenReady={() => go(routePath.ready())}
-            onOpenChannel={(code) => go(routePath.ready(code))}
             squadrons={squadrons}
             squadronMessages={roomMessages}
             seatCandidates={rightSeat}
@@ -1504,6 +1514,7 @@ function AppInner() {
             replies={session.replies}
             people={directory}
             onSquadronPost={postToSquadron}
+            onOpenRoomAt={openRoomAt}
           />
         </main>
       ) : route.name === "paper" ? (

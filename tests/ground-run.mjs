@@ -17,11 +17,19 @@ const WIDTHS = [1040, 820, 390];
 const CHAPTERS = [2, 5, 12];
 
 let failures = 0;
+// Grouped by kind, so a dozen instances of one bug cannot push a second bug
+// off the end of the list.
 const report = (name, problems) => {
   if (!problems.length) { console.log(`ok    ${name}`); return; }
   failures += 1;
-  console.log(`FAIL  ${name}`);
-  problems.slice(0, 12).forEach((p) => console.log(`        ${p}`));
+  console.log(`FAIL  ${name}  (${problems.length} problems)`);
+  const kinds = new Map();
+  for (const p of problems) {
+    const kind = p.replace(/^.*: /, "").replace(/"[^"]*"/g, '"…"').replace(/\d+x\d+/g, "WxH");
+    if (!kinds.has(kind)) kinds.set(kind, { count: 0, first: p });
+    kinds.get(kind).count += 1;
+  }
+  for (const [kind, { count, first }] of kinds) console.log(`        ${count} × ${kind}\n            e.g. ${first}`);
 };
 
 // The pack's audit, unchanged.
@@ -66,6 +74,39 @@ const audit = (page) => page.evaluate(() => {
     if (stage.querySelectorAll(".bog > .bog-body, .bog > .bog-foot").length) {
       problems.push(`${where}: card part outside a card`);
     }
+
+    // A pill keeps its padding. A size variable that fails to resolve leaves
+    // bare text, which is how the empty route's button shipped once.
+    stage.querySelectorAll(".bog-btn").forEach((b) => {
+      if (parseFloat(getComputedStyle(b).paddingLeft) < 4) problems.push(`${where}: "${b.textContent.trim()}" lost its padding`);
+    });
+    // Round controls stay round under the app's 44px floor.
+    stage.querySelectorAll("button.bog-av, .bog-podface, .bog-face, .bog-reply button").forEach((b) => {
+      const r = b.getBoundingClientRect();
+      if (r.width && Math.abs(r.width - r.height) > 1) problems.push(`${where}: a round control is ${Math.round(r.width)}x${Math.round(r.height)}`);
+    });
+    // Motion keeps its duration, so an easing variable that is not defined
+    // cannot switch it off without anyone noticing.
+    stage.querySelectorAll("button.bog-av").forEach((b) => {
+      if (getComputedStyle(b).transitionDuration.split(",").every((d) => parseFloat(d) === 0)) problems.push(`${where}: a face lost its transition`);
+    });
+    // A position that works out to NaN never reaches the page: the browser
+    // throws "NaNpx" away and the marker lands wherever it falls. So look for
+    // the place that is missing, not for the NaN.
+    stage.querySelectorAll(".bog-mark").forEach((m) => {
+      if (!m.style.left || !m.style.top) problems.push(`${where}: a marker has no position`);
+    });
+    // A value that is not there prints as a word, or leaves its separator
+    // hanging. Every real person's licence category is null today. Read the
+    // text node by node: textContent runs a name straight into whatever
+    // follows it ("Jasemnull"), which leaves no word boundary to find.
+    const walk = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (/undefined|null|NaN/.test(n.data)) { problems.push(`${where}: undefined, null or NaN on screen`); break; }
+    }
+    stage.querySelectorAll(".bog-m").forEach((m) => {
+      if (/^\s*·|·\s*$/.test(m.textContent)) problems.push(`${where}: a separator with nothing on one side`);
+    });
   });
   return [...new Set(problems)];
 });
@@ -117,6 +158,14 @@ try {
       if (r.y < 4) problems.push(`pop off the top at ${w}`);
       if (r.x + r.width > vp.width - 4) problems.push(`pop off the right at ${w}`);
       if (r.width <= 150) problems.push(`pop too narrow at ${w}`);
+      const popText = await box.evaluate((el) => {
+        const out = [];
+        const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) out.push(n.data);
+        return out;
+      });
+      if (popText.some((t) => /undefined|null|NaN/.test(t))) problems.push(`undefined, null or NaN in the pop at ${w}`);
+      if ((await box.locator(".bog-m").allTextContents()).some((t) => /^\s*·|·\s*$/.test(t))) problems.push(`a separator with nothing on one side in the pop at ${w}`);
       await page.mouse.wheel(0, 40);
       await page.waitForTimeout(150);
       if (!(await box.isVisible())) problems.push(`a scroll dismissed the pop at ${w}`);

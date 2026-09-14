@@ -259,8 +259,8 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, onOpenChannel, content,
-  squadrons = [], squadronMessages = [], seatCandidates = [], threads = [], replies = [], people = [], onSquadronPost }) {
+function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, content,
+  squadrons = [], squadronMessages = [], seatCandidates = [], threads = [], replies = [], people = [], onSquadronPost, onOpenRoomAt }) {
   // One content source for the whole app. When the seeded content is on, the
   // module screen reads ITS ids and this read data.js's — so a lesson finished
   // over there matched nothing over here and the ring, the checklist and the
@@ -709,19 +709,20 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
         {/* Everything social lives in this one section. It draws its own heading
             and Ready Room link, measures itself, and renders nothing with every
-            surface off. Faces open nothing yet: the profile is being designed. */}
+            surface off. Every door opens its own place in the Ready Room, and a face
+            opens that person's profile sheet there until the new profile lands. */}
         <BackOnTheGround
           module={groundModule}
           surfaces={surfaces}
           squadron={groundSquadron}
           routePeople={routePeople}
           threads={groundThreads}
-          onOpenPerson={() => {}}
-          onOpenThread={() => onOpenChannel(active.code)}
+          onOpenPerson={(p) => onOpenRoomAt?.({ kind: "person", id: p.id, moduleCode: active.code })}
+          onOpenThread={(t) => onOpenRoomAt?.({ kind: "thread", moduleCode: active.code, threadId: t.id })}
           onOpenReadyRoom={onOpenReady}
-          onFindSquadron={() => onOpenChannel(active.code)}
-          onFindSeat={onOpenReady}
-          onAsk={() => onOpenChannel(active.code)}
+          onFindSquadron={() => onOpenRoomAt?.({ kind: "discover" })}
+          onFindSeat={() => onOpenRoomAt?.({ kind: "seat" })}
+          onAsk={() => onOpenRoomAt?.({ kind: "ask", moduleCode: active.code })}
           onSend={(text) => { if (groundSquadron) onSquadronPost?.({ squadronId: groundSquadron.id, body: text }); }}
         />
       </div>
