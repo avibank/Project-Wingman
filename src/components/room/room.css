@@ -638,7 +638,8 @@
 }
 .room .askcard{
   display: flex; align-items: center; gap: 12px; padding: 12px 14px; flex-wrap: wrap;
-  border-radius: 13px; background: color-mix(in oklch, var(--active) 12%, var(--panel));
+  /* A shade of the accent, mixed in oklab for the reason given on the chat bubble. */
+  border-radius: 13px; background: color-mix(in oklab, var(--active) 12%, var(--panel));
   border: 1px solid color-mix(in oklch, var(--active) 45%, transparent);
 }
 .room .askcard-id{ margin-right: auto; min-width: 0; }
