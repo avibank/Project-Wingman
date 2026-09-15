@@ -142,12 +142,13 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
-**0027, read receipts, is written and has NOT been run against the live
-project.** It is additive: `comms_receipts`, `squadron_members.last_delivered_at`,
-`mark_squadrons_delivered`, `message_receipts`, and `mark_squadron_read`
-replaced with the same signature and return type, so the bundle deployed before
-it keeps working. The rebuilt Ready Room calls the two new functions; run 0027
-before that code reaches the live site.
+**0027, read receipts, has been run against the live project** (2026-09-15),
+verified by connecting rather than inferred: `comms_receipts` with its four
+columns, `squadron_members.last_delivered_at`, `mark_squadrons_delivered` and
+`message_receipts`, and `mark_squadron_read` now plpgsql with the same
+signature and return type, so the bundle deployed before it kept working.
+`comms_receipts` is in the realtime publication, and all three functions answer
+over the anon REST path. The backfill found two receipts to write.
 
 **0017 has been run against the live project.** It adds `paper_ink`,
 `paper_annotations.colour`, two more kinds (`underline`, `strikethrough`) and
