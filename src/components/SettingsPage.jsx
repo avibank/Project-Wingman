@@ -1,10 +1,8 @@
 import { ChevronLeft } from "lucide-react";
 import BlockedList from "./BlockedList.jsx";
-import { useIsAdmin } from "../lib/admin.js";
 import PilotSettings from "./PilotSettings.jsx";
 
 function SettingsPage({ onBack }) {
-  const isAdmin = useIsAdmin();
   return (
     <div className="settings-page">
       <button className="settings-back" onClick={onBack}>

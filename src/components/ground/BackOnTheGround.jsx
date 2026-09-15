@@ -121,7 +121,7 @@ export function BackOnTheGround({
   const headline = () => {
     const bits = [];
     if (!squadron && !seatHolder && !routePeople.length) {
-      return "Nobody here yet — that changes the moment you ask for someone";
+      return "Ask for someone and this fills up";
     }
     if (routePeople.length) bits.push(`${routePeople.length} on your route`);
     if (squadron?.unread) bits.push(`${squadron.unread} unread`);
