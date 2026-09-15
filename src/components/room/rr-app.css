@@ -16,6 +16,7 @@
          old room's, styled by room.css under `.room`
      5 · Smooth Air, which the demo had no switch for
      6 · contrast — text pairs that measured under 4.5:1 in some livery
+     7 · the report pill — kept clear of the rail's last row and the fields
    ========================================================================= */
 
 /* ---------------------------------------------------------------- 1 · fill
@@ -192,6 +193,20 @@
 .app:not(.theme-light) .rr .rr-draft span{ color: var(--t2); }
 .app:not(.theme-light) .rr .rr-msg[data-me="1"] .rr-bub .rr-mt{ color: color-mix(in oklab, var(--t2) 70%, var(--t1)); }
 .app:not(.theme-light) .rr .rr-rq span{ color: color-mix(in oklab, var(--t2) 50%, var(--t1)); }
+
+/* ---------------------------------------------------- 7 · the report pill
+   The app's "Something's wrong here" pill is fixed at the bottom-left, over
+   whatever sits there. The rail's scroller reserves its footprint (--rpt-h,
+   app.css), so the last row can be scrolled clear of it; the design's 14px
+   left it under the pill at full scroll. On a phone, while a conversation or a
+   question is open, the bottom edge is the message field or the answer box —
+   the pill covered the field at 430px — and a reserved gap under a docked
+   field would spend the screen's scarcest space, so the pill steps aside
+   there, as it does in the paper reader. On the rail it stays. */
+.rr .rr-rail-scroll{ padding-bottom: calc(var(--rpt-h, 56px) + 14px); }
+@media (max-width: 900px){
+  .app:has(.rr[data-view="list"], .rr[data-view="thread"]) .rpt{ display: none; }
+}
 
 /* ---------------------------------------------------------- 5 · Smooth Air */
 .app.smooth-air .rr[data-view] *{

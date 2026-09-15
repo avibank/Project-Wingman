@@ -71,6 +71,20 @@ const audit = (page, expect) => page.evaluate((expect) => {
   if (Math.abs(box.left) > 1 || Math.abs(box.top) > 1 || Math.abs(box.right - innerWidth) > 1 || Math.abs(box.bottom - innerHeight) > 1) {
     out.push(`the room does not fill the screen: ${Math.round(box.left)},${Math.round(box.top)} to ${Math.round(box.right)},${Math.round(box.bottom)}`);
   }
+  /* The app's fixed report pill never sits on a place you type. At 430px it
+     covered the chat's message field, and no other rule could see it. */
+  const rpt = document.querySelector(".rpt");
+  if (rpt && getComputedStyle(rpt).display !== "none") {
+    const p = rpt.getBoundingClientRect();
+    for (const sel of [".rr-composer", ".rr-abar"]) {
+      const hit = [...document.querySelectorAll(sel)].find((el) => {
+        if (!shown(el)) return false;
+        const r = el.getBoundingClientRect();
+        return p.left < r.right && p.right > r.left && p.top < r.bottom && p.bottom > r.top;
+      });
+      if (hit) out.push(`the report pill covers ${sel}`);
+    }
+  }
   const h1 = document.querySelector(".rr .room-h1");
   if (h1 && h1.getBoundingClientRect().height > 2) out.push("the page heading is visible");
   const w = innerWidth;

@@ -153,6 +153,9 @@ ok("the room's own rules never key off .rr, which the reader's tray also uses",
   !/:has\(\.rr\)/.test(fit) && /\.app\.smooth-air \.rr\[data-view\] \*/.test(fit));
 ok("and the reader undoes what the room's root would paint on its Ready Room row",
   /\.app \.rdr \.rr \{[^}]*flex-direction: row/.test(readFileSync("src/components/paper/v6/additions.css", "utf8")));
+ok("the report pill never covers the rail's last row or a phone's docked field",
+  /\.rr \.rr-rail-scroll\{ padding-bottom: calc\(var\(--rpt-h/.test(fit)
+  && /max-width: 900px\)\{\s*\.app:has\(\.rr\[data-view="list"\], \.rr\[data-view="thread"\]\) \.rpt\{ display: none; \}/.test(fit));
 const live = readFileSync("src/lib/live.js", "utf8");
 ok("receipts listen on their own list, never inside chat, which writes them", /receipts: \["comms_receipts"\]/.test(live) && !/chat: \[[^\]]*comms_receipts/.test(live));
 
