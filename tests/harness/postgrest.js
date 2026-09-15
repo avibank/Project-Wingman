@@ -47,6 +47,10 @@ export function makeStore() {
        for it on every module view, and a 501 here is the harness missing a
        table rather than the product failing. */
     papers: [],
+    /* The Ready Room's own tables, empty until a test seeds them. */
+    comms_reactions: [], comms_receipts: [], thread_votes: [], lesson_reply_votes: [],
+    copilot_sessions: [], seat_messages: [], seat_requests: [], squadron_invites: [],
+    user_prefs: [], wingman_streaks: [],
   };
 }
 
@@ -230,6 +234,146 @@ const RPC = {
   assign_squadron: () => null,
   squadron_roster: () => [],
   people_search: () => [],
+
+  /* ---- the Ready Room. The same rules as the SQL, kept small: 0022's votes
+     and chat, 0026's attachments, 0027's receipts. A recipient is a member who
+     had joined by the time a message was sent, not blocked either way and not
+     muting its author. */
+  thread_vote_counts: (s, b) => {
+    const ids = new Set(b.p_threads || []);
+    const out = new Map();
+    for (const v of s.thread_votes) {
+      if (!ids.has(v.thread_id)) continue;
+      const row = out.get(v.thread_id) || { thread_id: v.thread_id, score: 0, mine: 0 };
+      row.score += v.dir;
+      if (v.user_id === b.p_me) row.mine = v.dir;
+      out.set(v.thread_id, row);
+    }
+    return [...out.values()];
+  },
+  toggle_thread_vote: (s, b) => {
+    const at = s.thread_votes.findIndex((v) => v.thread_id === b.p_thread && v.user_id === b.p_me);
+    const was = at >= 0 ? s.thread_votes[at].dir : null;
+    if (at >= 0) s.thread_votes.splice(at, 1);
+    if (was === b.p_dir || ![-1, 1].includes(b.p_dir)) return 0;
+    s.thread_votes.push({ thread_id: b.p_thread, user_id: b.p_me, dir: b.p_dir, created_at: new Date().toISOString() });
+    return b.p_dir;
+  },
+  mark_squadrons_delivered: (s, b) => {
+    const now = new Date().toISOString();
+    let n = 0;
+    for (const sid of b.p_squadrons || []) {
+      const mine = s.squadron_members.find((m) => m.squadron_id === sid && m.user_id === b.p_me);
+      if (!mine) continue;
+      for (const m of s.comms_messages) {
+        if (m.squadron_id !== sid || m.user_id === b.p_me || m.deleted_at) continue;
+        if (mine.joined_at && m.created_at < mine.joined_at) continue;
+        if (s.comms_receipts.some((r) => r.message_id === m.id && r.user_id === b.p_me)) continue;
+        s.comms_receipts.push({ message_id: m.id, user_id: b.p_me, delivered_at: now, read_at: null });
+        n += 1;
+      }
+    }
+    return n;
+  },
+  mark_squadron_read: (s, b) => {
+    const mine = s.squadron_members.find((m) => m.squadron_id === b.p_squadron && m.user_id === b.p_me);
+    if (!mine) return null;
+    const now = new Date().toISOString();
+    for (const m of s.comms_messages) {
+      if (m.squadron_id !== b.p_squadron || m.user_id === b.p_me || m.deleted_at) continue;
+      if (mine.joined_at && m.created_at < mine.joined_at) continue;
+      const r = s.comms_receipts.find((x) => x.message_id === m.id && x.user_id === b.p_me);
+      if (r) { if (!r.read_at) r.read_at = now; } else {
+        s.comms_receipts.push({ message_id: m.id, user_id: b.p_me, delivered_at: now, read_at: now });
+      }
+    }
+    mine.last_read_at = now;
+    return now;
+  },
+  message_receipts: (s, b) => {
+    const ids = new Set(b.p_messages || []);
+    const blocked = (x, y) => s.blocks.some((k) => (k.user_id === x && k.blocked_id === y) || (k.user_id === y && k.blocked_id === x));
+    const out = [];
+    for (const m of s.comms_messages) {
+      if (!ids.has(m.id) || m.user_id !== b.p_me) continue;
+      for (const sm of s.squadron_members) {
+        if (sm.squadron_id !== m.squadron_id || sm.user_id === m.user_id) continue;
+        if (sm.joined_at && sm.joined_at > m.created_at) continue;
+        if (blocked(m.user_id, sm.user_id)) continue;
+        if (s.mutes.some((u) => u.user_id === sm.user_id && u.muted_id === m.user_id)) continue;
+        const r = s.comms_receipts.find((x) => x.message_id === m.id && x.user_id === sm.user_id);
+        out.push({ message_id: m.id, user_id: sm.user_id, delivered_at: r?.delivered_at || null, read_at: r?.read_at || null });
+      }
+    }
+    return out;
+  },
+  my_marks_in_module: (s, b) => s.paper_annotations
+    .filter((a) => a.author_id === b.uid && a.module_code === b.p_module && a.anchor?.quote)
+    .slice(0, b.p_limit || 60)
+    .map((a) => ({ id: a.id, paper_id: a.paper_id, paper_title: a.paper_id, quote: a.anchor.quote, anchor: a.anchor, kind: a.kind, colour: a.colour })),
+  toggle_message_reaction: (s, b) => {
+    const at = s.comms_reactions.findIndex((r) => r.message_id === b.p_message && r.user_id === b.p_me && r.emoji === b.p_emoji);
+    if (at >= 0) { s.comms_reactions.splice(at, 1); return false; }
+    s.comms_reactions.push({ message_id: b.p_message, user_id: b.p_me, emoji: b.p_emoji });
+    return true;
+  },
+  pin_message: (s, b) => {
+    const m = s.comms_messages.find((x) => x.id === b.p_message);
+    if (!m) return false;
+    for (const x of s.comms_messages) if (x.squadron_id === m.squadron_id) { x.pinned_at = null; x.pinned_by = null; }
+    if (b.p_on !== false) { m.pinned_at = new Date().toISOString(); m.pinned_by = b.p_me; }
+    return true;
+  },
+  edit_message: (s, b) => {
+    const m = s.comms_messages.find((x) => x.id === b.p_message && x.user_id === b.p_me && !x.deleted_at);
+    if (!m) return false;
+    m.body = b.p_body;
+    m.edited_at = new Date().toISOString();
+    return true;
+  },
+  delete_message: (s, b) => {
+    const m = s.comms_messages.find((x) => x.id === b.p_message && x.user_id === b.p_me);
+    if (!m) return false;
+    m.deleted_at = new Date().toISOString();
+    m.body = null;
+    return true;
+  },
+  set_squadron_muted: (s, b) => {
+    const mine = s.squadron_members.find((m) => m.squadron_id === b.p_squadron && m.user_id === b.p_me);
+    if (!mine) return false;
+    mine.muted = Boolean(b.p_muted);
+    return true;
+  },
+  leave_squadron: (s, b) => {
+    s.squadron_members = s.squadron_members.filter((m) => !(m.squadron_id === b.p_squadron && m.user_id === b.p_me));
+    return "left";
+  },
+  create_squadron: (s, b) => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    s.squadrons.push({ id, module_code: b.p_module, name: b.p_name, blurb: b.p_blurb, status: "active", owner_id: b.p_me,
+      join_policy: b.p_policy || "invite_only", invite_token: id.slice(0, 8), member_cap: 32, created_at: now });
+    s.squadron_members.push({ squadron_id: id, user_id: b.p_me, role: "owner", muted: false, joined_at: now, last_read_at: now, marking: "solid" });
+    return id;
+  },
+  add_message_attachments: (s, b) => {
+    const rows = (b.p_rows || []).map((r) => ({ id: crypto.randomUUID(), message_id: b.p_message, created_at: new Date().toISOString(), ...r }));
+    s.message_attachments.push(...rows);
+    return rows;
+  },
+  rename_squadron: () => true,
+  revoke_invite: () => null,
+  join_squadron: () => "missing",
+  discover_squadrons: () => [],
+  squadron_by_invite: () => null,
+  my_seat_requests: () => [],
+  request_right_seat: () => "asked",
+  cancel_right_seat: () => true,
+  answer_right_seat: () => null,
+  seat_heartbeat: () => null,
+  end_right_seat: () => true,
+  expire_right_seats: () => 0,
+  shared_completions: () => [],
 };
 
 /* The two embedded reads the Ready Room makes, resolved the way PostgREST would:
@@ -249,6 +393,34 @@ function embed(table, rows, url, store) {
   return rows
     .map((r) => { const out = { ...r }; for (const e of wanted) out[e.alias] = e.fn(r, store); return out; })
     .filter((r) => wanted.every((e) => !e.inner || r[e.alias] != null));
+}
+
+/* ORDER AND LIMIT, which this used to ignore. A read that asks for the newest
+   message per squadron got whichever row was inserted first, so the rail's
+   preview showed yesterday's line under today's time. */
+function shape(rows, url) {
+  let out = rows;
+  const order = url.searchParams.get("order");
+  if (order) {
+    const keys = order.split(",").map((k) => {
+      const [col, dir = "asc"] = k.split(".");
+      return { col, desc: dir === "desc" };
+    });
+    out = [...out].sort((a, b) => {
+      for (const { col, desc } of keys) {
+        const x = a[col];
+        const y = b[col];
+        if (x === y) continue;
+        if (x == null) return 1;
+        if (y == null) return -1;
+        return (x < y ? -1 : 1) * (desc ? -1 : 1);
+      }
+      return 0;
+    });
+  }
+  const limit = Number(url.searchParams.get("limit"));
+  if (Number.isFinite(limit) && limit > 0) out = out.slice(0, limit);
+  return out;
 }
 
 /* PostgREST's filter syntax, only the operators the app actually sends. */
@@ -330,22 +502,37 @@ export function postgrestMiddleware() {
     const table = url.pathname.slice("/rest/v1/".length).split("?")[0];
     if (!(table in store)) { console.warn(`[harness] no table "${table}"`); return send(501, { message: `harness: table ${table} not implemented` }); }
 
-    if (req.method === "GET") return send(200, embed(table, applyFilters(store[table], url), url, store));
+    if (req.method === "GET") return send(200, shape(embed(table, applyFilters(store[table], url), url, store), url));
 
     if (req.method === "POST") {
-      const rows = (Array.isArray(body) ? body : [body]).map((r) => ({
-        id: r.id || crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        status: "ok",
-        ...r,
-      }));
-      for (const r of rows) {
-        const at = store[table].findIndex((x) => x.id === r.id);
-        if (at >= 0) store[table][at] = { ...store[table][at], ...r };
-        else store[table].push(r);
+      /* AN UPSERT MERGES ON ITS on_conflict COLUMNS, as PostgREST does. Matching
+         on id alone gave every upsert without an id a row of its own: the
+         profile upsert on each page load left two rows for one person, the
+         next maybeSingle() failed with PGRST116 — 284 times in one matrix run —
+         and presence reached 148 rows for one student. */
+      const keys = (url.searchParams.get("on_conflict") || "").split(",").map((k) => k.trim()).filter(Boolean);
+      const ignore = /ignore-duplicates/.test(String(req.headers.prefer || ""));
+      const out = [];
+      for (const raw of Array.isArray(body) ? body : [body]) {
+        const at = keys.length
+          ? store[table].findIndex((x) => keys.every((k) => x[k] !== undefined && String(x[k]) === String(raw[k])))
+          : (raw.id ? store[table].findIndex((x) => x.id === raw.id) : -1);
+        if (at >= 0) {
+          if (!ignore) store[table][at] = { ...store[table][at], ...raw, updated_at: new Date().toISOString() };
+          out.push(store[table][at]);
+          continue;
+        }
+        const row = {
+          id: raw.id || crypto.randomUUID(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: "ok",
+          ...raw,
+        };
+        store[table].push(row);
+        out.push(row);
       }
-      return send(201, rows);
+      return send(201, out);
     }
 
     if (req.method === "PATCH") {

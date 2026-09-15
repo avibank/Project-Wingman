@@ -1,19 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import {
-  MessageSquare, Users, Compass, Radio, CornerUpLeft, Copy, Pin, Pencil, Trash2,
-  Flag, Link2, Check, Ban,
+  Users, Radio, CornerUpLeft, Copy, Pin, Pencil, Trash2, Flag, Link2, Check, Ban, SmilePlus,
 } from "lucide-react";
+import { presenceRail, PRESENCE_SHOWN, titleOf } from "../../lib/roomModel.js";
 import {
-  presenceRail, PRESENCE_SHOWN, titleOf, chatUnread,
-} from "../../lib/roomModel.js";
+  visibleThreads, keepSelection, moveSelection, receiptsFor, seatFaces, readLayout, layoutKey,
+} from "../../lib/rrModel.js";
 import { hueFor } from "../../lib/familiar.js";
 import { mmss } from "../module/lessonState.js";
-import Rail from "./Rail.jsx";
-import SquadronChat from "./SquadronChat.jsx";
-import ModuleFeed from "./ModuleFeed.jsx";
-import ThreadView from "./ThreadView.jsx";
-import RightSeatPane from "./RightSeatPane.jsx";
+import { path as routePath } from "../../lib/routes.js";
+import { listen, LIVE_TABLES, typingChannel } from "../../lib/live.js";
+import { fetchFlightLog } from "../../lib/partners.js";
+import Rail from "./rr/Rail.jsx";
+import Threads from "./rr/Threads.jsx";
+import Chat from "./rr/Chat.jsx";
+import Seats from "./rr/Seats.jsx";
+import SeenPanel from "./rr/SeenPanel.jsx";
 import Discover from "./Discover.jsx";
 import ProfileSheet from "./ProfileSheet.jsx";
 import SquadronSheet from "./SquadronSheet.jsx";
@@ -25,77 +27,70 @@ import {
 } from "../../lib/discovery.js";
 import {
   toggleReaction, pinMessage, editMessage, deleteMessage, markSquadronRead,
-  setSquadronMuted, leaveSquadron, fetchThreadVotes, voteThread,
+  setSquadronMuted, leaveSquadron, fetchThreadVotes, voteThread, fetchReceipts,
 } from "../../lib/roomData.js";
 import {
   fetchSeat, fetchSeatRequests, askRightSeat, cancelRightSeat, answerRightSeat,
   endRightSeat, fetchSeatMessages, postSeatMessage, keepSeatMessage, sweepSeats,
 } from "../../lib/rightSeat.js";
-import { typingChannel } from "../../lib/live.js";
-import { canTransition, beginTransition, endTransition, nameLayers, clearNames } from "../../lib/viewTransition.js";
-import "./room.css";
-import "./chat.css";
-
 import { fetchMyMarks, validateFile, readImageSize, MAX_PER_MESSAGE } from "../../lib/attachments.js";
+import "./room.css";
+import "./ready-room.css";
+import "./rr-app.css";
+
 /* ============================================================================
-   THE READY ROOM — a desktop-messaging layout with one important twist:
-   SQUADRONS ARE GROUP CHATS, MODULES ARE QUESTION FEEDS.
+   THE READY ROOM — the orchestrator, and nothing else.
+   -----------------------------------------------------------------------------
+   Two vocabularies behind one rail: SQUADRONS ARE GROUP CHATS, MODULES ARE
+   QUESTION FEEDS, and the right seat is exactly one person and state that
+   expires. The layout is the signed-off rebuild (ready-room.css, kept as sent,
+   and rr-app.css, which fits it to the app); every screen is its own file in
+   ./rr, and every rule they share is in lib/rrModel.js, where a node script
+   holds it.
 
-   That twist is the whole design. A squadron is people you know, talking; a
-   module is a body of questions that outlives whoever asked them. Those want
-   opposite shapes — a transcript you skim and forget, versus a feed you search
-   and answer — and the old room tried to be one thing for both.
-
-   The third screen is neither. The right seat is exactly one person and state
-   that expires, and it is a state rather than a place: it adds a face to
-   surfaces that already exist and never adds a nav item.
-
-   THIS FILE IS THE ORCHESTRATOR AND NOTHING ELSE. It owns which screen is
-   showing, the search, the menus and the sheets. Every screen is its own file
-   because the old single component was eight hundred lines with four screens
-   inside it, and a change to the chat could only be made by reading the feed.
+   ONE STATE OBJECT for what the pane shows — kind, id, thread, filter, asking,
+   sheet — because those are one decision, and a boolean each is how two of
+   them end up on screen together. `data-view` is the other half and only
+   matters on a narrow screen: the rail, the list, or the thread.
 
    WHAT IT WRITES ITSELF, and why. Reactions, pins, edits, deletes, mute, leave,
    create, read state, thread votes and the whole right seat are room-local:
-   nothing outside this screen reads them, and routing them through App would
-   be a prop each, in a component that already takes twenty. Threads, replies
-   and messages still go up through onPost, because App owns the session store
-   they live in and two writers to one list is how a list gets out of order.
-
-   TOKENS. Everything uses the app's real tokens — --ground --panel --raised
-   --sunk --edge --t1/2/3 --active --caution --ok. Nothing here invents one.
+   nothing outside this screen reads them. Threads, replies and messages still
+   go up through onPost, because App owns the store they live in and two writers
+   to one list is how a list gets out of order.
    ========================================================================= */
 
 const EMPTY_REQ = { in: [], out: [] };
+const narrow = () => typeof window !== "undefined" && window.innerWidth <= 900;
 
 export default function ReadyRoom({
-  me = "u_you", modules = [], activeModuleCode,
+  me = "u_you", modules = [], activeModuleCode, routeThreadId = null,
   threads = [], replies = [], people = [], presence = [],
   squadrons = [], messages = [], chapters = [],
-  seatCandidates = [], votes = {}, saved = {},
-  brand = null, profile = null,
-  onPost, onReport, onBlock, onVote, onBest, onOpenLessonAt, onSave,
+  votes = {}, saved = {},
+  onHome, onPost, onReport, onBlock, onVote, onBest, onOpenLessonAt, onSave,
   onRefresh, onOpenInvite, onPlace, onOpenPaper,
   intent = null, onIntentUsed,
 }) {
-  /* WHAT THE PANE IS SHOWING. One piece of state, not six booleans: the six
-     states are mutually exclusive and a boolean each is how two of them end up
-     on screen together. */
-  const [view, setView] = useState(null);
+  const firstModule = activeModuleCode || modules[0]?.code || modules[0]?.id || null;
+  const [st, setSt] = useState(() => ({
+    kind: "module", id: firstModule, thread: routeThreadId, filter: "all", asking: false, sheet: false,
+  }));
+  const [view, setView] = useState(() => (routeThreadId ? "thread" : narrow() ? "rail" : "list"));
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState({});
+  const [layout, setLayoutState] = useState(() => {
+    try { return readLayout(window.localStorage.getItem(layoutKey(me))); } catch { return { fw: null, wide: false }; }
+  });
+
   const [draft, setDraft] = useState("");
-  const [seatDraft, setSeatDraft] = useState("");
-  const [asking, setAsking] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [jumpTo, setJumpTo] = useState(null);
   const [sending, setSending] = useState(false);
-  /* What is waiting to go with the next message, and the student's own marks for
-     the passage picker — null until the picker asks, so a chat that never
-     quotes a paper never spends the query. */
   const [pending, setPending] = useState([]);
   const [marks, setMarks] = useState(null);
   const [marksLoading, setMarksLoading] = useState(false);
+  const [info, setInfo] = useState(null);
+  const [receipts, setReceipts] = useState({});
 
   const [discoverFilter, setDiscoverFilter] = useState("yours");
   const [rooms, setRooms] = useState([]);
@@ -107,17 +102,38 @@ export default function ReadyRoom({
   const [menu, setMenu] = useState(null);
   const [toast, setToast] = useState(null);
   const [threadVotes, setThreadVotes] = useState({});
+  const [pendingAsk, setPendingAsk] = useState(null);
 
+  const [flightLog, setFlightLog] = useState([]);
   const [seat, setSeat] = useState(null);
   const [seatReq, setSeatReq] = useState(EMPTY_REQ);
   const [seatMessages, setSeatMessages] = useState([]);
+  const [seatDraft, setSeatDraft] = useState("");
   const [seatInvite, setSeatInvite] = useState(null);
   const [typing, setTyping] = useState([]);
 
-  const paneRef = useRef(null);
-  const listRef = useRef(null);
+  const rootRef = useRef(null);
+  const searchRef = useRef(null);
   const typingRef = useRef(null);
   const lastPing = useRef(0);
+  const receiptSeq = useRef(0);
+
+  /* ------------------------------------------------------------ the layout */
+  const setLayout = useCallback((next) => {
+    setLayoutState(next);
+    try { window.localStorage.setItem(layoutKey(me), JSON.stringify(next)); } catch { /* storage off */ }
+  }, [me]);
+  useEffect(() => {
+    try { setLayoutState(readLayout(window.localStorage.getItem(layoutKey(me)))); } catch { /* storage off */ }
+  }, [me]);
+
+  /* Past 900px there is no rail-only view; one left over from a phone-width
+     window would show the list and the thread stacked in one column. */
+  useEffect(() => {
+    const fit = () => { if (!narrow()) setView((v) => (v === "rail" ? "list" : v)); };
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
 
   /* ---------------------------------------------------------------- names */
   const who = useCallback((id) => (id === me ? "You"
@@ -134,12 +150,14 @@ export default function ReadyRoom({
 
   const rail = useMemo(() => presenceRail(presence, PRESENCE_SHOWN), [presence]);
   const online = useMemo(() => new Set(rail.all.map((p) => p.user_id)), [rail]);
-
   const squadronsWithPresence = useMemo(() => squadrons.map((s) => ({
     ...s,
     online: (s.members || []).filter((id) => online.has(id)).length,
     roster: (s.roster || []).map((m) => ({ ...m, name: who(m.user_id), online: online.has(m.user_id) })),
   })), [squadrons, online, who]);
+  const mates = useMemo(
+    () => [...new Set(squadrons.flatMap((s) => s.members || []))].filter((id) => id !== me),
+    [squadrons, me]);
 
   const say = useCallback((message, icon = null) => {
     setToast({ message, icon });
@@ -147,56 +165,120 @@ export default function ReadyRoom({
     say._t = window.setTimeout(() => setToast(null), 2600);
   }, []);
 
-  /* ------------------------------------------------------------- the pane */
-  const openNow = useCallback((next) => {
-    setView(next);
-    setDraft(""); setReplyTo(null); setAsking(null); setJumpTo(next?.at || null);
-    requestAnimationFrame(() => paneRef.current?.focus());
-  }, []);
+  /* ---------------------------------------------------------- what is open */
+  const mod = st.kind === "module" ? modules.find((m) => (m.code || m.id) === st.id) || null : null;
+  const modCode = mod ? (mod.code || mod.id) : null;
+  const modThreads = useMemo(() => threads.filter((t) => t.moduleId === modCode), [threads, modCode]);
+  const list = useMemo(
+    () => visibleThreads(modThreads, { filter: st.filter, q: query, replies, me, who }),
+    [modThreads, st.filter, query, replies, me, who]);
+  const squadron = st.kind === "squad" ? squadronsWithPresence.find((s) => s.id === st.id) || null : null;
 
-  /* §4d — THE PANE MOVES, THE RAIL DOES NOT. A pane change is not a route
-     change, so go() never sees it and the transition layer would never fire.
-     The room starts its own: paneR going in, paneL coming back, and the rail is
-     named so it is pinned rather than travelling with the pane beside it. */
-  const open = useCallback((next, { goingBack = false } = {}) => {
-    if (canTransition() && (next || view)) {
-      const token = beginTransition(goingBack ? "paneL" : "paneR");
-      nameLayers("pane");
-      const vt = document.startViewTransition(() => flushSync(() => openNow(next)));
-      vt.ready?.catch(() => {});
-      vt.finished?.catch(() => {}).finally?.(() => { if (endTransition(token)) clearNames(); });
-      return;
-    }
-    openNow(next);
-  }, [view, openNow]);
+  const go = useCallback((next) => {
+    setInfo(null);
+    setMenu(null);
+    setDraft("");
+    setReplyTo(null);
+    setJumpTo(next.at || null);
+    if (next.thread && query) setQuery("");
+    setSt((s) => {
+      const base = { ...s, kind: next.kind, id: next.id ?? null, asking: false, sheet: false };
+      if (next.kind !== "module") return base;
+      if (next.thread) return { ...base, filter: "all", thread: next.thread };
+      const same = s.kind === "module" && s.id === next.id;
+      const vis = visibleThreads(threads.filter((t) => t.moduleId === next.id),
+        { filter: s.filter, q: query, replies, me, who });
+      return { ...base, thread: same ? keepSelection(vis, s.thread) : (vis[0]?.id ?? null) };
+    });
+    setView(next.kind === "module" && next.thread ? "thread" : "list");
+  }, [threads, query, replies, me, who]);
 
   const back = useCallback(() => {
-    if (view?.kind === "thread") { open({ kind: "module", id: view.id }, { goingBack: true }); return; }
-    open(null, { goingBack: true });
-    requestAnimationFrame(() => listRef.current?.focus());
-  }, [view, open]);
+    setInfo(null);
+    if (view === "thread" && window.innerWidth <= 1180) {
+      setSt((s) => ({ ...s, asking: false }));
+      setView("list");
+      return;
+    }
+    if (narrow()) setView("rail");
+  }, [view]);
+
+  const select = useCallback((id, { open = false } = {}) => {
+    setSt((s) => ({ ...s, asking: false, thread: id }));
+    if (open) setView("thread");
+  }, []);
+
+  const onFilter = (k) => setSt((s) => ({
+    ...s, filter: k,
+    thread: s.asking ? s.thread : keepSelection(
+      visibleThreads(modThreads, { filter: k, q: query, replies, me, who }), s.thread),
+  }));
+
+  const onQuery = (q) => {
+    setQuery(q);
+    if (st.kind === "module" && !st.asking) {
+      const vis = visibleThreads(modThreads, { filter: st.filter, q, replies, me, who });
+      setSt((s) => ({ ...s, thread: keepSelection(vis, s.thread) }));
+    }
+  };
+
+  const focusSearch = useCallback(() => {
+    if (narrow()) setView("rail");
+    window.setTimeout(() => searchRef.current?.focus(), 0);
+  }, []);
+
+  /* NO PANE IS EMPTY. A module with questions always has one selected, and a
+     question that has been deleted hands the selection to the top of the list.
+     A link's question is kept while the module's questions are still loading. */
+  useEffect(() => {
+    if (st.kind !== "module" || st.asking) return;
+    if (st.thread && modThreads.some((t) => t.id === st.thread)) return;
+    if (st.thread && !modThreads.length) return;
+    const next = list[0]?.id ?? null;
+    if (next !== st.thread) setSt((s) => ({ ...s, thread: next }));
+  }, [st.kind, st.asking, st.thread, modThreads, list]);
 
   /* A DOOR FROM THE FLIGHT DECK. Back on the ground sends somebody here for one
      place — a thread, the ask composer, the right seat, Discover or a person's
      profile — and the room opens straight to it, once, then hands it back. */
   useEffect(() => {
     if (!intent) return;
-    if (intent.kind === "thread") openNow({ kind: "thread", id: intent.moduleCode, threadId: intent.threadId });
-    else if (intent.kind === "ask") { openNow({ kind: "module", id: intent.moduleCode }); setAsking(intent.moduleCode); }
-    else if (intent.kind === "seat") openNow({ kind: "seat" });
-    else if (intent.kind === "discover") openNow({ kind: "discover" });
+    if (intent.kind === "thread") go({ kind: "module", id: intent.moduleCode, thread: intent.threadId });
+    else if (intent.kind === "ask") {
+      go({ kind: "module", id: intent.moduleCode });
+      setSt((s) => ({ ...s, asking: true, thread: null }));
+      setView("thread");
+    } else if (intent.kind === "seat") go({ kind: "seats" });
+    else if (intent.kind === "discover") go({ kind: "discover" });
     else if (intent.kind === "person" && intent.id) setProfileOf(personOf(intent.id));
     onIntentUsed?.();
   }, [intent]);
 
-  const squadron = view?.kind === "squadron"
-    ? squadronsWithPresence.find((s) => s.id === view.id) : null;
-  const mod = (view?.kind === "module" || view?.kind === "thread")
-    ? modules.find((m) => (m.code || m.id) === view.id) : null;
-  const modThreads = useMemo(
-    () => threads.filter((t) => t.moduleId === (mod?.code || mod?.id)),
-    [threads, mod]);
-  const thread = view?.kind === "thread" ? modThreads.find((t) => t.id === view.threadId) : null;
+  /* A shared link: /ready-room/<module>/<question> opens that question. */
+  useEffect(() => {
+    if (routeThreadId && activeModuleCode) go({ kind: "module", id: activeModuleCode, thread: routeThreadId });
+  }, [routeThreadId, activeModuleCode]);
+
+  /* --------------------------------------------------------------- asking */
+  const ask = () => { setSt((s) => ({ ...s, asking: true, thread: null })); setView("thread"); };
+  const cancelAsk = () => setSt((s) => ({ ...s, asking: false, thread: keepSelection(list, null) }));
+  const postQuestion = ({ title, body }) => {
+    onPost?.({ kind: "thread", moduleId: modCode, title, body });
+    setPendingAsk({ moduleId: modCode, title });
+    setSt((s) => ({ ...s, asking: false, filter: "all" }));
+    say("Posted");
+  };
+  /* Posting unshifts the question into the module and selects it. App makes
+     the row, so it is picked out by who asked it and what it says. */
+  useEffect(() => {
+    if (!pendingAsk) return;
+    const made = threads
+      .filter((t) => t.moduleId === pendingAsk.moduleId && t.authorId === me && (t.title || "").trim() === pendingAsk.title)
+      .sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0))[0];
+    if (!made) return;
+    setSt((s) => (s.kind === "module" && s.id === pendingAsk.moduleId ? { ...s, thread: made.id } : s));
+    setPendingAsk(null);
+  }, [threads, pendingAsk, me]);
 
   /* ------------------------------------------------------------- searches */
   /* PEOPLE SEARCH IS A ROUND TRIP, and has to be. The scope lives in the SQL
@@ -211,19 +293,15 @@ export default function ReadyRoom({
     return () => { live = false; clearTimeout(t); };
   }, [query, me]);
 
-  /* The rooms you could join. Re-read when the filter changes, guarded so a
-     slow answer for "yours" cannot land after a fast one for "all". */
   useEffect(() => {
-    if (view?.kind !== "discover" || !me) return undefined;
+    if (st.kind !== "discover" || !me) return undefined;
     let live = true;
     discoverSquadrons(me, discoverFilter).then((r) => { if (live) setRooms(r || []); });
     return () => { live = false; };
-  }, [view?.kind, discoverFilter, me]);
+  }, [st.kind, discoverFilter, me]);
 
-  /* Scores on the questions in the module you are looking at. Fetched per
-     module rather than for every thread in the app: the feed is the only place
-     they are read, and one round trip per module beats one for four hundred
-     rows nobody is looking at. */
+  /* Scores on the questions in the module you are looking at, one round trip
+     per module rather than one for every thread in the app. */
   useEffect(() => {
     const ids = modThreads.map((t) => t.id);
     if (!ids.length || !me) return undefined;
@@ -232,11 +310,47 @@ export default function ReadyRoom({
     return () => { live = false; };
   }, [modThreads, me]);
 
+  useEffect(() => {
+    if (!me) return undefined;
+    let live = true;
+    fetchFlightLog(me).then((r) => { if (live) setFlightLog(r || []); });
+    return () => { live = false; };
+  }, [me]);
+
+  /* -------------------------------------------------------------- receipts */
+  /* The ticks on MY messages in the chat that is open: read when it opens, when
+     a message of mine lands, when anyone's receipt changes, and on a slow clock
+     in case the socket is down. A sequence number stops a slow answer landing
+     on top of a newer one. */
+  const myIds = useMemo(() => (squadron
+    ? messages.filter((m) => m.squadronId === squadron.id && m.authorId === me && !m.deletedAt && !m.pending)
+      .map((m) => m.id).slice(-200).join(",")
+    : ""), [messages, squadron?.id, me]);
+  const loadReceipts = useCallback(async () => {
+    const ids = myIds ? myIds.split(",") : [];
+    const seq = ++receiptSeq.current;
+    const r = ids.length ? await fetchReceipts(me, ids) : {};
+    if (seq === receiptSeq.current) setReceipts(r);
+  }, [myIds, me]);
+  useEffect(() => {
+    if (!squadron) return undefined;
+    loadReceipts();
+    const stop = listen(LIVE_TABLES.receipts, () => loadReceipts());
+    const t = setInterval(() => { if (document.visibilityState === "visible") loadReceipts(); }, 20000);
+    return () => { stop(); clearInterval(t); };
+  }, [squadron?.id, loadReceipts]);
+
+  const openInfo = useCallback((message, anchor) => {
+    setInfo((cur) => (cur?.message.id === message.id ? null : { message, anchor }));
+  }, []);
+  const closeInfo = useCallback(() => setInfo(null), []);
+
   /* --------------------------------------------------------- the right seat */
   const loadSeat = useCallback(async () => {
     if (!me) return;
     const [s, r] = await Promise.all([fetchSeat(me), fetchSeatRequests(me)]);
-    setSeat(s); setSeatReq(r || EMPTY_REQ);
+    setSeat(s);
+    setSeatReq(r || EMPTY_REQ);
     setSeatMessages(s ? await fetchSeatMessages(s.sessionId) : []);
   }, [me]);
 
@@ -251,24 +365,25 @@ export default function ReadyRoom({
     return () => { live = false; clearInterval(t); };
   }, [me, loadSeat]);
 
-  /* The partner moved. A bubble, never a page change — §right seat is explicit
-     that nobody is ever followed. */
+  /* The partner moved. A bubble, never a page change — nobody is followed. */
   const lastPlace = useRef(null);
   useEffect(() => {
     if (!seat?.partnerPlace) return;
-    if (lastPlace.current && lastPlace.current !== seat.partnerPlace) {
-      setSeatInvite({ label: seat.partnerPlace });
-    }
+    if (lastPlace.current && lastPlace.current !== seat.partnerPlace) setSeatInvite({ label: seat.partnerPlace });
     lastPlace.current = seat.partnerPlace;
   }, [seat?.partnerPlace]);
 
+  const faces = useMemo(
+    () => seatFaces({ seatPartner: seat?.partnerId || null, flightLog, mates, online }),
+    [seat?.partnerId, flightLog, mates, online]);
+
   /* ------------------------------------------------------------- typing */
   useEffect(() => {
-    if (view?.kind !== "squadron" || !view.id || !me) { setTyping([]); return undefined; }
-    const ch = typingChannel(view.id, me, setTyping);
+    if (st.kind !== "squad" || !st.id || !me) { setTyping([]); return undefined; }
+    const ch = typingChannel(st.id, me, setTyping);
     typingRef.current = ch;
     return () => { ch.stop(); typingRef.current = null; setTyping([]); };
-  }, [view?.kind, view?.id, me]);
+  }, [st.kind, st.id, me]);
 
   const onDraft = (v) => {
     setDraft(v);
@@ -276,38 +391,34 @@ export default function ReadyRoom({
     if (v && now - lastPing.current > 900) { lastPing.current = now; typingRef.current?.ping(); }
   };
 
-  /* --------------------------------------------------------------- lessons */
-  const lessonOf = (lid) => {
-    for (const c of chapters) for (const l of (c.lessons || [])) if (l.id === lid) return { c, l };
-    return null;
-  };
-  const lessonTag = (t) => {
+  /* --------------------------------------------------------------- sources */
+  const sourceOf = useCallback((t) => {
     if (!t?.lessonId) return null;
-    const found = lessonOf(t.lessonId);
-    const at = t.t != null ? ` · ${mmss(t.t)}` : "";
-    return found ? `${found.l.title}${at}` : `A lesson${at}`;
-  };
+    let n = null;
+    let title = null;
+    for (const c of chapters) {
+      const i = (c.lessons || []).findIndex((l) => l.id === t.lessonId);
+      if (i >= 0) { n = i + 1; title = c.lessons[i].title || null; break; }
+    }
+    const short = n ? `Lesson ${n}` : "Lesson";
+    return { kind: "lesson", short, label: t.t != null ? `${short} · ${mmss(t.t)}` : short, title };
+  }, [chapters]);
 
   /* ---------------------------------------------------------------- writes */
   const send = async () => {
     const body = draft.trim();
-    const attached = view?.kind === "squadron" ? pending : [];
+    const attached = st.kind === "squad" ? pending : [];
     /* Text OR attachments: a photo on its own is a message. */
-    if ((!body && !attached.length) || sending) return;
+    if ((!body && !attached.length) || sending || st.kind !== "squad") return;
     setSending(true);
-    if (view?.kind === "squadron") {
-      onPost?.({ kind: "message", squadronId: view.id, body, replyTo, pending: attached, onFail: say });
-      setReplyTo(null);
-      setPending([]);
-    } else if (view?.kind === "thread") {
-      onPost?.({ kind: "reply", threadId: view.threadId, body });
-    }
+    onPost?.({ kind: "message", squadronId: st.id, body, replyTo, pending: attached, onFail: say });
+    setReplyTo(null);
+    setPending([]);
     setDraft("");
     setSending(false);
   };
 
-  /* ── attachments ──────────────────────────────────────────────────────
-     Files are checked here, before anything is spent: the type, the size, and
+  /* Files are checked here, before anything is spent: the type, the size, and
      no more than ten on one message. A photo gets its pixel size read now so its
      bubble can reserve the right space, and a local URL so it shows the moment
      it is sent rather than after it uploads. */
@@ -345,7 +456,7 @@ export default function ReadyRoom({
     return p.filter((_, n) => n !== i);
   });
   const wantMarks = async () => {
-    const sq = squadrons.find((x) => x.id === view?.id);
+    const sq = squadrons.find((x) => x.id === st.id);
     if (marks !== null || marksLoading || !sq?.moduleCode) return;
     setMarksLoading(true);
     setMarks(await fetchMyMarks(me, sq.moduleCode));
@@ -353,23 +464,32 @@ export default function ReadyRoom({
   };
   /* A different conversation starts with nothing pending and asks for its own
      module's marks. */
+  const chatId = st.kind === "squad" ? st.id : null;
   useEffect(() => {
     setPending((p) => { p.forEach((x) => x.localUrl && URL.revokeObjectURL(x.localUrl)); return []; });
     setMarks(null);
-  }, [view?.id]);
+  }, [chatId]);
+
+  const setSheet = useCallback((on) => setSt((s) => ({ ...s, sheet: on })), []);
 
   const react = async (messageId, emoji) => {
     await toggleReaction(me, messageId, emoji);
     onRefresh?.("chat");
   };
 
+  /* onRefresh is a new function on every App render, so it is read through a
+     ref. A callback that changed identity with it re-fired the chat's
+     mark-as-read effect after every refresh: eight calls for one open,
+     measured in the harness. */
+  const refreshRef = useRef(onRefresh);
+  refreshRef.current = onRefresh;
   const seen = useCallback(async (squadronId) => {
     await markSquadronRead(me, squadronId);
-    onRefresh?.("squadrons");
-  }, [me, onRefresh]);
+    refreshRef.current?.("squadrons");
+  }, [me]);
 
   const share = (t) => {
-    const url = `${window.location.origin}/ready-room/${String(t.moduleId).toLowerCase()}/${t.id}`;
+    const url = `${window.location.origin}${routePath.ready(t.moduleId, t.id)}`;
     navigator.clipboard?.writeText(url)
       .then(() => say("Link copied", <Link2 aria-hidden="true" />))
       .catch(() => say(url, <Link2 aria-hidden="true" />));
@@ -382,7 +502,15 @@ export default function ReadyRoom({
       .catch(() => say(url, <Copy aria-hidden="true" />));
   };
 
-  const ask = async (them) => {
+  const voteQuestion = async (id, dir) => {
+    const mine = await voteThread(me, id, dir);
+    setThreadVotes((v) => {
+      const was = v[id] || { score: 0, mine: 0 };
+      return { ...v, [id]: { score: was.score - was.mine + mine, mine } };
+    });
+  };
+
+  const askSeat = async (them) => {
     const outcome = await askRightSeat(me, them);
     setProfileOf(null);
     await loadSeat();
@@ -402,8 +530,8 @@ export default function ReadyRoom({
   /* ------------------------------------------------------------ the menus */
   const messageMenu = (m) => {
     const items = [
-      { id: "reply", icon: <CornerUpLeft aria-hidden="true" />, label: "Reply",
-        run: () => setReplyTo(m.id) },
+      { id: "reply", icon: <CornerUpLeft aria-hidden="true" />, label: "Reply", run: () => setReplyTo(m.id) },
+      { id: "react", icon: <SmilePlus aria-hidden="true" />, label: "React with 👍", run: () => react(m.id, "👍") },
       { id: "copy", icon: <Copy aria-hidden="true" />, label: "Copy text",
         run: () => { navigator.clipboard?.writeText(m.body || ""); say("Copied"); } },
       { id: "pin", icon: <Pin aria-hidden="true" />, label: "Pin in this squadron",
@@ -440,10 +568,9 @@ export default function ReadyRoom({
   };
 
   const onMenu = (anchor, payload) => {
-    if (payload?.jump) { setJumpTo(payload.jump); return; }
     if (!anchor) return;
     if (payload.message) { setMenu({ anchor, items: messageMenu(payload.message) }); return; }
-    if (payload.thread) {
+    if (payload.thread && !payload.answer) {
       setMenu({ anchor, items: [
         { id: "share", icon: <Link2 aria-hidden="true" />, label: "Copy link", run: () => share(payload.thread) },
         { id: "del", icon: <Trash2 aria-hidden="true" />, label: "Delete", danger: true,
@@ -466,265 +593,239 @@ export default function ReadyRoom({
     }
   };
 
-  const newMenu = (anchor) => setMenu({ anchor, items: [
-    { id: "q", icon: <MessageSquare aria-hidden="true" />, label: "Ask a question",
-      run: () => { const code = mod?.code || activeModuleCode || modules[0]?.code;
-                   if (!code) { say("Open a module first"); return; }
-                   open({ kind: "module", id: code }); setAsking(code); } },
-    { id: "s", icon: <Users aria-hidden="true" />, label: "Create a squadron",
-      run: () => setCreating(true) },
-    { id: "f", icon: <Compass aria-hidden="true" />, label: "Find a squadron",
-      run: () => open({ kind: "discover" }) },
-  ] });
-
-  /* Where I am, told to the right seat as the room moves. The rest of the app
-     calls the same thing through onPlace — this screen is simply one more
-     place a student can be. */
+  /* Where I am, told to the right seat as the room moves. */
   useEffect(() => {
     if (!seat) return;
-    const label = squadron ? squadron.name
-      : mod ? `${mod.code || mod.id} questions`
-      : thread ? titleOf(thread) : "The Ready Room";
-    onPlace?.(mod?.code || mod?.id || null, label);
-  }, [seat, squadron, mod, thread, onPlace]);
+    const t = st.kind === "module" ? modThreads.find((x) => x.id === st.thread) : null;
+    const label = squadron ? squadron.name : t ? titleOf(t) : mod ? `${modCode} questions` : "The Ready Room";
+    onPlace?.(modCode, label);
+  }, [seat, squadron, mod, st.thread, onPlace]);
 
-  const unreadTotal = squadrons.reduce(
-    (n, s) => n + (s.muted ? 0 : chatUnread(messages, s.id, s.lastReadAt, me)), 0);
+  /* ------------------------------------------------------------- the keys */
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        focusSearch();
+        return;
+      }
+      if (e.target.closest?.("input, textarea, select, [contenteditable='true']")) return;
+      if (e.defaultPrevented || e.altKey || e.metaKey || e.ctrlKey) return;
+      if (menu || profileOf || sheetOf || creating) return;
+      if (e.key === "Escape") {
+        if (info) { setInfo(null); return; }
+        if (st.sheet) { setSheet(false); return; }
+        if (st.asking) { cancelAsk(); return; }
+        if (view === "thread" && window.innerWidth <= 1180) setView("list");
+        else if (narrow()) setView("rail");
+        return;
+      }
+      if (st.kind !== "module" || !list.length) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const id = moveSelection(list, st.asking ? null : st.thread, e.key === "ArrowDown" ? 1 : -1);
+        setSt((s) => ({ ...s, asking: false, thread: id }));
+        return;
+      }
+      if (e.key === "Enter") {
+        if (!e.target.closest?.("button, a, [role='button']")) setView("thread");
+        return;
+      }
+      if (e.key === "f" || e.key === "F") setLayout({ ...layout, wide: !layout.wide });
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [info, st, list, layout, view, menu, profileOf, sheetOf, creating, setLayout, setSheet, focusSearch]);
+
+  const myPlace = squadron ? squadron.name : mod ? `${modCode} questions` : "The Ready Room";
 
   return (
-    <div className="room" data-mobile={view ? "pane" : "rail"}>
+    <div className="rr" ref={rootRef} data-view={view} data-wide={layout.wide ? "1" : undefined}
+         style={layout.fw ? { "--fw": layout.fw } : undefined}>
       <h1 className="room-h1">Ready Room</h1>
 
-      <Rail
-        me={me} query={query} onQuery={setQuery} brand={brand} profile={profile}
-        squadrons={squadronsWithPresence} modules={modules} threads={threads}
-        replies={replies} messages={messages} foundPeople={foundPeople}
-        seat={seat} seatFaces={rail.shown} view={view} onOpen={open}
-        onNew={newMenu} onProfile={(id, row) => setProfileOf(row
-          ? { user_id: row.user_id, callsign: row.display_name, module_code: row.module_code, hue: hueFor(row.user_id) }
-          : personOf(id))}
-        onNotifications={() => say(unreadTotal
-          ? `${unreadTotal} waiting for you`
-          : "Nothing waiting. The badge lights when there is.")}
-        unreadTotal={unreadTotal} who={who} listRef={listRef}
-      />
+      <div className="rr-app">
+        <Rail me={me} onHome={onHome} query={query} onQuery={onQuery} searchRef={searchRef}
+              squadrons={squadronsWithPresence} modules={modules} threads={threads} replies={replies}
+              messages={messages} foundPeople={foundPeople} faces={faces}
+              cur={{ kind: st.kind, id: st.id }} who={who} onOpen={go}
+              onSeeSeats={() => go({ kind: "seats" })} onFindSquadron={() => go({ kind: "discover" })}
+              onProfile={(id, row) => setProfileOf(row
+                ? { user_id: row.user_id, callsign: row.display_name, module_code: row.module_code, hue: hueFor(row.user_id) }
+                : personOf(id))} />
 
-      <main className="pane" ref={paneRef} tabIndex={-1} aria-label="Conversation">
-        {!view && (
-          <div className="pane-blank">
-            <div className="blank-mark"><Radio aria-hidden="true" /></div>
-            <h2>Ready Room</h2>
-            <p>
-              Squadrons on the left are chats. Modules are question feeds.
-              The right seat is one person, studying with you.
-            </p>
-            <div className="blank-acts">
-              {squadrons[0] && (
-                <button type="button" className="primary is-inline"
-                        onClick={() => open({ kind: "squadron", id: squadrons[0].id })}>
-                  <MessageSquare aria-hidden="true" /> Open {squadrons[0].name}
-                </button>
-              )}
-              <button type="button" className="ghost is-inline"
-                      onClick={() => open({ kind: "discover" })}>
-                <Compass aria-hidden="true" /> Find a squadron
-              </button>
+        <main className="rr-pane" aria-label="Conversation">
+          {st.kind === "module" && mod && (
+            <Threads me={me} mod={mod} all={modThreads} list={list} replies={replies}
+                     votes={threadVotes} saved={saved}
+                     filter={st.filter} onFilter={onFilter} query={query} onFocusSearch={focusSearch}
+                     threadId={st.asking ? null : st.thread} onSelect={select} onAsk={ask} onBack={back}
+                     rootRef={rootRef} layout={layout} onLayout={setLayout}
+                     who={who} source={sourceOf} onVote={voteQuestion} onSave={(id) => onSave?.(id)} onShare={share}
+                     detail={{
+                       asking: st.asking, onPostQuestion: postQuestion, onCancelAsk: cancelAsk, replyVotes: votes,
+                       onVoteReply: (id, on) => onVote?.(id, on),
+                       onSign: (tid, aid) => onBest?.(tid, aid),
+                       onAnswer: (ev) => onPost?.({ kind: "reply", ...ev }),
+                       onOpenSource: (t) => onOpenLessonAt?.(t),
+                       onProfile: (id) => setProfileOf(personOf(id)),
+                       onMenu,
+                     }} />
+          )}
+          {st.kind === "module" && !mod && <div className="rr-dempty">Pick a module from the list.</div>}
+
+          {st.kind === "squad" && squadron && (
+            <Chat me={me} squadron={squadron} messages={messages} receipts={receipts} typing={typing} who={who}
+                  draft={draft} onDraft={onDraft} onSend={send} sending={sending}
+                  replyTo={replyTo} onReplyTo={setReplyTo}
+                  pending={pending} onRemovePending={removePending}
+                  onAttachFiles={attachFiles} onAttachPassage={attachPassage}
+                  marks={marks || []} marksLoading={marksLoading} onWantMarks={wantMarks}
+                  sheet={st.sheet} onSheet={setSheet} onBack={back}
+                  onInfoSheet={() => setSheetOf(squadron)} onFocusSearch={focusSearch}
+                  onProfile={(id) => setProfileOf(personOf(id))} onMenu={onMenu} onReact={react}
+                  onSeen={seen} jumpTo={jumpTo} onMessageInfo={openInfo}
+                  onOpenPassage={(a) => onOpenPaper?.(squadron.moduleCode, a.paperId, a.anchor)}
+                  onOpenImage={(url) => window.open(url, "_blank", "noopener")} />
+          )}
+          {st.kind === "squad" && !squadron && <div className="rr-dempty">Pick a squadron from the list.</div>}
+
+          {st.kind === "seats" && (
+            <Seats me={me} seat={seat} requests={seatReq} mates={mates} flightLog={flightLog} online={online}
+                   squadrons={squadronsWithPresence} who={who} onBack={back} onAsk={askSeat}
+                   onCancelAsk={async (id) => { await cancelRightSeat(me, id); await loadSeat(); }}
+                   onAnswer={async (id, accept) => {
+                     await answerRightSeat(me, id, accept);
+                     await loadSeat();
+                     say(accept ? "You have a copilot." : "Declined.", accept ? <Check aria-hidden="true" /> : null);
+                   }}
+                   onEnd={async () => { await endRightSeat(me); await loadSeat(); say("Right seat cleared"); }}
+                   onProfile={(id) => setProfileOf(personOf(id))}
+                   session={{
+                     myPlace, invite: seatInvite,
+                     onDismissInvite: () => setSeatInvite(null),
+                     onFollowInvite: () => { setSeatInvite(null); say("Opening what they opened"); },
+                     messages: seatMessages, draft: seatDraft, onDraft: setSeatDraft,
+                     onSend: async () => {
+                       const body = seatDraft.trim();
+                       if (!body || !seat) return;
+                       const row = await postSeatMessage(me, seat.sessionId, body);
+                       if (row) setSeatMessages((m) => [...m, row]);
+                       setSeatDraft("");
+                     },
+                     onKeep: async (id, on) => {
+                       await keepSeatMessage(id, on);
+                       setSeatMessages((m) => m.map((x) => (x.id === id ? { ...x, kept: on } : x)));
+                       say(on ? "Kept — it survives the landing" : "No longer kept");
+                     },
+                   }} />
+          )}
+
+          {st.kind === "discover" && (
+            /* The old room's Discover, styled by room.css. `.room` here is a
+               box-less bridge (rr-app.css) so its rules still match. */
+            <div className="room">
+              <Discover
+                rooms={rooms} filter={discoverFilter} onFilter={setDiscoverFilter}
+                who={who} onBack={back}
+                onJoin={async (room) => {
+                  /* ONE DOOR. The function decides capacity, blocks and policy, and
+                     the card renders whichever word comes back. */
+                  const outcome = await joinSquadron(me, room.id);
+                  setRooms((rs) => rs.map((r) => (r.id === room.id
+                    ? { ...r, already_in: outcome === "joined", requested: outcome === "requested" }
+                    : r)));
+                  if (outcome === "joined") { onRefresh?.("squadrons"); say(`Joined ${room.name}`); }
+                  else if (outcome === "requested") say("Asked to join. They decide.");
+                  else say("That one isn't open right now.");
+                }}
+                onCreate={() => setCreating(true)}
+                onOpenLink={(link) => {
+                  const token = tokenFromLink(link);
+                  if (!token) { say("That doesn't look like a squadron link"); return; }
+                  onOpenInvite?.(token);
+                }}
+                mySquadrons={squadronsWithPresence}
+                onCopyInvite={copyInvite}
+              />
             </div>
-          </div>
-        )}
+          )}
+        </main>
+      </div>
 
-        {squadron && (
-          <SquadronChat
-            me={me} squadron={squadron} messages={messages}
-            draft={draft} onDraft={onDraft} onSend={send} sending={sending}
-            replyTo={replyTo} onReplyTo={setReplyTo} onReact={react} onMenu={onMenu}
-            onBack={back} onInfo={() => setSheetOf(squadron)}
-            onProfile={(id) => setProfileOf(personOf(id))}
-            onSearchHere={() => { setQuery(""); listRef.current?.querySelector("input")?.focus(); }}
-            typing={typing} who={who} onSeen={seen} jumpTo={jumpTo}
-            pending={pending} onRemovePending={removePending}
-            onAttachFiles={attachFiles} onAttachPassage={attachPassage}
-            marks={marks || []} marksLoading={marksLoading} onWantMarks={wantMarks}
-            onOpenPassage={(a) => onOpenPaper(squadron?.moduleCode, a.paperId, a.anchor)}
-            onOpenImage={(url) => window.open(url, "_blank", "noopener")}
-          />
-        )}
+      {info && (
+        <SeenPanel message={info.message} anchor={info.anchor} who={who} onClose={closeInfo}
+                   receipts={receiptsFor(receipts[info.message.id] || [])} />
+      )}
 
-        {mod && !thread && (
-          <ModuleFeed
-            me={me} mod={mod} threads={modThreads} replies={replies}
-            votes={threadVotes} saved={saved}
-            sort={sort[mod.code || mod.id] || "hot"}
-            onSort={(code, id) => setSort((s) => ({ ...s, [code]: id }))}
-            asking={asking} onAsking={setAsking}
-            onPost={(ev) => { onPost?.({ kind: "thread", ...ev }); setAsking(null); say("Posted"); }}
-            onOpenThread={(t) => open({ kind: "thread", id: t.moduleId, threadId: t.id })}
-            onVote={async (id, dir) => {
-              const mine = await voteThread(me, id, dir);
-              setThreadVotes((v) => {
-                const was = v[id] || { score: 0, mine: 0 };
-                return { ...v, [id]: { score: was.score - was.mine + mine, mine } };
-              });
-            }}
-            onSave={(id) => onSave?.(id)}
-            onShare={share} onBack={back}
-            onProfile={(id) => setProfileOf(personOf(id))}
-            onMenu={onMenu}
-            onSearchHere={() => { setQuery(""); listRef.current?.querySelector("input")?.focus(); }}
-            readers={rail.all.length} who={who} lessonTag={lessonTag}
-          />
-        )}
+      {/* The sheets, the menu and the toast are the old room's, through the same bridge. */}
+      <div className="room">
+        <ProfileSheet
+          open={Boolean(profileOf)} person={profileOf}
+          sharedSquadrons={profileOf
+            ? squadrons.filter((s) => (s.members || []).includes(profileOf.user_id)
+                && (s.members || []).includes(me)).map((s) => s.name)
+            : []}
+          presence={profileOf && online.has(profileOf.user_id) ? "on" : "off"}
+          seatState={profileOf ? seatState(profileOf.user_id) : "free"}
+          onClose={() => setProfileOf(null)}
+          onInvite={(p) => { setProfileOf(null); setCreating(true); say(`Make a room and send ${p.callsign} the link`); }}
+          onAskRightSeat={(p) => askSeat(p.user_id)}
+          onOpenChat={(p) => {
+            const s = squadrons.find((x) => (x.members || []).includes(p.user_id)
+              && (x.members || []).includes(me));
+            setProfileOf(null);
+            if (s) go({ kind: "squad", id: s.id });
+          }}
+          onReport={(p) => { setProfileOf(null); onReport?.({ kind: "person", id: p.user_id });
+                             say("Reported. Somebody reads every one.", <Flag aria-hidden="true" />); }}
+          onBlock={(p) => { setProfileOf(null); onBlock?.(p.user_id);
+                            say("Blocked — it cuts both ways", <Ban aria-hidden="true" />); }}
+        />
 
-        {thread && (
-          <ThreadView
-            me={me} thread={thread} mod={mod} replies={replies}
-            votes={threadVotes} replyVotes={votes} saved={Boolean(saved[thread.id])}
-            draft={draft} onDraft={setDraft} onSend={send} sending={sending}
-            onVote={async (id, dir) => {
-              const mine = await voteThread(me, id, dir);
-              setThreadVotes((v) => {
-                const was = v[id] || { score: 0, mine: 0 };
-                return { ...v, [id]: { score: was.score - was.mine + mine, mine } };
-              });
-            }}
-            onVoteReply={(id, on) => onVote?.(id, on)}
-            onBest={(tid, aid) => onBest?.(tid, aid)}
-            onSave={(id) => onSave?.(id)}
-            onShare={share}
-            onSubReply={(ev) => onPost?.({ kind: "reply", ...ev })}
-            onBack={back} onProfile={(id) => setProfileOf(personOf(id))}
-            onMenu={onMenu} onOpenLessonAt={(t) => onOpenLessonAt?.(t)}
-            who={who} lessonTag={lessonTag}
-          />
-        )}
+        <SquadronSheet
+          open={Boolean(sheetOf)} squadron={sheetOf} me={me} online={online}
+          onClose={() => setSheetOf(null)}
+          onCopyInvite={copyInvite}
+          onRevoke={async (s) => {
+            const token = await revokeInvite(me, s.id);
+            onRefresh?.("squadrons");
+            say(token ? "New link made. The old one is dead." : "Only the owner can do that.");
+          }}
+          onMute={async (s, muted) => {
+            await setSquadronMuted(me, s.id, muted);
+            setSheetOf((x) => (x ? { ...x, muted } : x));
+            onRefresh?.("squadrons");
+            say(muted ? "Muted. The count still counts." : "Notifications back on");
+          }}
+          onLeave={async (s) => {
+            const outcome = await leaveSquadron(me, s.id);
+            setSheetOf(null);
+            if (st.kind === "squad" && st.id === s.id) go({ kind: "module", id: firstModule });
+            onRefresh?.("squadrons");
+            say(outcome === "closed" ? "You were the last one out. The room closed." : `Left ${s.name}`);
+          }}
+          onProfile={(id) => { setSheetOf(null); setProfileOf(personOf(id)); }}
+        />
 
-        {view?.kind === "seat" && (
-          <RightSeatPane
-            me={me} seat={seat} requests={seatReq} candidates={seatCandidates}
-            squadrons={squadronsWithPresence}
-            seatMessages={seatMessages} seatDraft={seatDraft} onSeatDraft={setSeatDraft}
-            onSendSeat={async () => {
-              const body = seatDraft.trim();
-              if (!body || !seat) return;
-              const row = await postSeatMessage(me, seat.sessionId, body);
-              if (row) setSeatMessages((m) => [...m, row]);
-              setSeatDraft("");
-            }}
-            onKeep={async (id, on) => {
-              await keepSeatMessage(id, on);
-              setSeatMessages((m) => m.map((x) => (x.id === id ? { ...x, kept: on } : x)));
-              say(on ? "Kept — it survives the landing" : "No longer kept");
-            }}
-            myPlace={squadron ? squadron.name : mod ? `${mod.code || mod.id} questions` : "The Ready Room"}
-            invite={seatInvite}
-            onDismissInvite={() => setSeatInvite(null)}
-            onFollowInvite={() => { setSeatInvite(null); say("Opening what they opened"); }}
-            onAsk={ask}
-            onCancelAsk={async (id) => { await cancelRightSeat(me, id); await loadSeat(); }}
-            onAnswer={async (id, accept) => {
-              await answerRightSeat(me, id, accept);
-              await loadSeat();
-              say(accept ? "You have a copilot." : "Declined.", accept ? <Check aria-hidden="true" /> : null);
-            }}
-            onEnd={async () => { await endRightSeat(me); await loadSeat(); say("Right seat cleared"); }}
-            onBack={back} onProfile={(id) => setProfileOf(personOf(id))} who={who}
-          />
-        )}
+        <CreateSquadron
+          open={creating} modules={modules} defaultModule={activeModuleCode} busy={busy}
+          onClose={() => setCreating(false)}
+          onCreate={async (form) => {
+            setBusy(true);
+            const id = await createSquadron(me, form);
+            setBusy(false);
+            setCreating(false);
+            if (!id) { say("That didn't go through. Try a different name."); return; }
+            await onRefresh?.("squadrons");
+            go({ kind: "squad", id });
+            say("Created. Share the link to fill it.", <Users aria-hidden="true" />);
+          }}
+        />
 
-        {view?.kind === "discover" && (
-          <Discover
-            rooms={rooms} filter={discoverFilter} onFilter={setDiscoverFilter}
-            who={who} onBack={back}
-            onJoin={async (room) => {
-              /* ONE DOOR. The function decides capacity, blocks and policy, and
-                 the card renders whichever word comes back — it never decides
-                 for itself whether a room is full. */
-              const outcome = await joinSquadron(me, room.id);
-              setRooms((rs) => rs.map((r) => (r.id === room.id
-                ? { ...r, already_in: outcome === "joined", requested: outcome === "requested" }
-                : r)));
-              if (outcome === "joined") { onRefresh?.("squadrons"); say(`Joined ${room.name}`); }
-              else if (outcome === "requested") say("Asked to join. They decide.");
-              else say("That one isn't open right now.");
-            }}
-            onCreate={() => setCreating(true)}
-            onOpenLink={(link) => {
-              const token = tokenFromLink(link);
-              if (!token) { say("That doesn't look like a squadron link"); return; }
-              onOpenInvite?.(token);
-            }}
-            mySquadrons={squadronsWithPresence}
-            onCopyInvite={copyInvite}
-          />
-        )}
-      </main>
-
-      {/* One sheet, opened from any avatar on any surface here. */}
-      <ProfileSheet
-        open={Boolean(profileOf)} person={profileOf}
-        sharedSquadrons={profileOf
-          ? squadrons.filter((s) => (s.members || []).includes(profileOf.user_id)
-              && (s.members || []).includes(me)).map((s) => s.name)
-          : []}
-        presence={profileOf && online.has(profileOf.user_id) ? "on" : "off"}
-        seatState={profileOf ? seatState(profileOf.user_id) : "free"}
-        onClose={() => setProfileOf(null)}
-        onInvite={(p) => { setProfileOf(null); setCreating(true); say(`Make a room and send ${p.callsign} the link`); }}
-        onAskRightSeat={(p) => ask(p.user_id)}
-        onOpenChat={(p) => {
-          const s = squadrons.find((x) => (x.members || []).includes(p.user_id)
-            && (x.members || []).includes(me));
-          setProfileOf(null);
-          if (s) open({ kind: "squadron", id: s.id });
-        }}
-        onReport={(p) => { setProfileOf(null); onReport?.({ kind: "person", id: p.user_id });
-                           say("Reported. Somebody reads every one.", <Flag aria-hidden="true" />); }}
-        onBlock={(p) => { setProfileOf(null); onBlock?.(p.user_id);
-                          say("Blocked — it cuts both ways", <Ban aria-hidden="true" />); }}
-      />
-
-      <SquadronSheet
-        open={Boolean(sheetOf)} squadron={sheetOf} me={me} online={online}
-        onClose={() => setSheetOf(null)}
-        onCopyInvite={copyInvite}
-        onRevoke={async (s) => {
-          const token = await revokeInvite(me, s.id);
-          onRefresh?.("squadrons");
-          say(token ? "New link made. The old one is dead." : "Only the owner can do that.");
-        }}
-        onMute={async (s, muted) => {
-          await setSquadronMuted(me, s.id, muted);
-          setSheetOf((x) => (x ? { ...x, muted } : x));
-          onRefresh?.("squadrons");
-          say(muted ? "Muted. The count still counts." : "Notifications back on");
-        }}
-        onLeave={async (s) => {
-          const outcome = await leaveSquadron(me, s.id);
-          setSheetOf(null);
-          if (view?.kind === "squadron" && view.id === s.id) open(null, { goingBack: true });
-          onRefresh?.("squadrons");
-          say(outcome === "closed" ? "You were the last one out. The room closed." : `Left ${s.name}`);
-        }}
-        onProfile={(id) => { setSheetOf(null); setProfileOf(personOf(id)); }}
-      />
-
-      <CreateSquadron
-        open={creating} modules={modules} defaultModule={activeModuleCode} busy={busy}
-        onClose={() => setCreating(false)}
-        onCreate={async (form) => {
-          setBusy(true);
-          const id = await createSquadron(me, form);
-          setBusy(false);
-          setCreating(false);
-          if (!id) { say("That didn't go through. Try a different name."); return; }
-          await onRefresh?.("squadrons");
-          open({ kind: "squadron", id });
-          say("Created. Share the link to fill it.", <Users aria-hidden="true" />);
-        }}
-      />
-
-      {menu && <Menu anchor={menu.anchor} items={menu.items} onClose={() => setMenu(null)} />}
-      <Toast message={toast?.message} icon={toast?.icon} />
+        {menu && <Menu anchor={menu.anchor} items={menu.items} onClose={() => setMenu(null)} />}
+        <Toast message={toast?.message} icon={toast?.icon} />
+      </div>
     </div>
   );
 }

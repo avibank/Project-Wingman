@@ -114,10 +114,10 @@ export default function Discover({
 
           {!rooms.length && (
             <p className="pane-none">
-              Nothing open under this filter.{" "}
               <button type="button" className="is-inline linky" onClick={() => onFilter("all")}>
                 Show all
               </button>
+              {" "}to see every squadron that is open.
             </p>
           )}
 

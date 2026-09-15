@@ -1,22 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Send, ArrowBigUp, ArrowBigDown } from "lucide-react";
-import AttachmentSheet from "./AttachmentSheet.jsx";
-import AttachmentTray from "./AttachmentTray.jsx";
-import { SendPlane, PlusIcon } from "./chatIcons.jsx";
 import { initials, hueFor } from "../../lib/familiar.js";
 
 /* ============================================================================
-   THE ROOM'S SMALL PARTS.
+   THE OLD ROOM'S SMALL PARTS — still used by Discover, the profile and squadron
+   sheets, the menu and the toast, all styled by room.css through the bridge in
+   rr-app.css. The rebuilt screens keep their own parts in ./rr.
 
-   Everything here is used by three or more of the room's screens, which is the
-   only reason it is shared: a part lifted out before it has a second caller is
-   an abstraction with one implementation and two places to read.
-
-   EVERY CONTROL SMALLER THAN 44px CARRIES `is-inline`. The app enforces a
-   global 44px floor on `.app button:not(.is-inline)` (App.jsx §12) and that
-   floor would turn a 28px reaction chip into a circle. `is-inline` is the
-   deliberate opt-out and it restores the hit area with a pseudo-element, so
-   the control stays small and the target does not.
+   A control smaller than 44px carries `is-inline`, which opts it out of the
+   app's 44px floor (App.jsx §12); rr-app.css gives it back a 44px target.
    ========================================================================= */
 
 export function Avatar({ id, name, size = "", square = false }) {
@@ -31,112 +22,12 @@ export function Avatar({ id, name, size = "", square = false }) {
 /* A face with a presence dot. `state` is 'on' | 'away' | 'off' and 'off' draws
    no dot at all rather than a grey one — a grey dot is still a dot, and a row
    of them says "everyone is here, dimly". */
-export function Face({ id, name, size = "", state = "off", onClick, label }) {
-  const body = (
+export function Face({ id, name, size = "", state = "off" }) {
+  return (
     <span className="avwrap">
       <Avatar id={id} name={name} size={size} />
       {state !== "off" && <i className={`dot ${state}`} aria-hidden="true" />}
     </span>
-  );
-  if (!onClick) return body;
-  return (
-    <button type="button" className="facebtn is-inline" onClick={onClick}
-            aria-label={label || `Open ${name}'s profile`}>
-      {body}
-    </button>
-  );
-}
-
-/* §4a — the composer. One bar holding the attach button and a growing field,
-   with send outside it. Enter sends, Shift+Enter makes a new line, and the
-   field grows to five lines and then scrolls.
-
-   The draft is the room's, not this component's: the room keeps it so that
-   leaving a conversation abandons it. This reports every change out and is
-   re-seeded when the conversation changes.
-
-   ATTACHMENTS ARE OPT-IN PER PANE. The squadron chat passes `pending` and gets
-   the attach button, the sheet and the tray; a thread and the right seat pass
-   nothing and get the same bar without them. A pane that cannot send a photo
-   must not show a button that offers to — that is the fault the room rebuild
-   existed to remove, and it is still the rule.
-
-   There is still no emoji button. Reactions are on the message, where they
-   belong. */
-export function Composer({
-  value, onChange, onSend, placeholder, sending = false,
-  pending = null, onRemovePending = () => {}, onAttachFiles = () => {},
-  onAttachPassage = () => {}, marks = [], marksLoading = false, onWantMarks = () => {},
-}) {
-  const ref = useRef(null);
-  const [sheet, setSheet] = useState(false);
-  const attaching = Array.isArray(pending);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    // The cap is the stylesheet max-height, read rather than repeated, so the
-    // two cannot disagree about where the fifth line ends.
-    const cap = parseFloat(getComputedStyle(el).maxHeight) || 105;
-    el.style.height = `${Math.min(el.scrollHeight, cap)}px`;
-  }, [value]);
-  const canSend = Boolean((value.trim() || (attaching && pending.length > 0)) && !sending);
-  return (
-    <>
-      {attaching && <AttachmentTray items={pending} onRemove={onRemovePending} />}
-      <div className="composer">
-        {attaching && (
-          <AttachmentSheet open={sheet} onClose={() => setSheet(false)}
-                           onPickFiles={onAttachFiles} onPickPassage={onAttachPassage}
-                           onWantMarks={onWantMarks} marks={marks} marksLoading={marksLoading} />
-        )}
-        <div className="bar">
-          {attaching && (
-            <button type="button" className="attach is-inline" aria-expanded={sheet}
-                    aria-label="Add an attachment" onClick={() => setSheet((o) => !o)}>
-              <PlusIcon />
-            </button>
-          )}
-          <div className="field">
-            <textarea ref={ref} rows={1} value={value} placeholder={placeholder} aria-label={placeholder}
-                      onChange={(e) => onChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (canSend) onSend(); }
-                      }}
-                      onPaste={(e) => {
-                        /* A screenshot pasted straight into the field becomes a photo. */
-                        if (!attaching) return;
-                        const files = Array.from(e.clipboardData?.files || []);
-                        if (files.length) { e.preventDefault(); onAttachFiles(files, "image"); }
-                      }} />
-          </div>
-        </div>
-        <button type="button" className="send" onClick={onSend} disabled={!canSend} aria-label="Send">
-          <SendPlane />
-        </button>
-      </div>
-    </>
-  );
-}
-
-/* §4b — the vote column, on questions and on answers alike. The number is the
-   score INCLUDING your own vote, because a count that does not move when you
-   press it reads as a control that did nothing. */
-export function Votes({ score = 0, mine = 0, onVote, what = "this" }) {
-  return (
-    <div className="votes">
-      <button type="button" className="is-inline" aria-pressed={mine === 1}
-              onClick={() => onVote(mine === 1 ? 0 : 1)}
-              aria-label={`Useful. ${score} so far.`}>
-        <ArrowBigUp aria-hidden="true" />
-      </button>
-      <span className="n">{score}</span>
-      <button type="button" className="is-inline down" aria-pressed={mine === -1}
-              onClick={() => onVote(mine === -1 ? 0 : -1)}
-              aria-label={`Not useful, ${what}`}>
-        <ArrowBigDown aria-hidden="true" />
-      </button>
-    </div>
   );
 }
 

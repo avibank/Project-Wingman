@@ -237,6 +237,14 @@
    familiar.css says that v6 does not. */
 .app .rdr .av { overflow: visible; text-transform: none; }
 
+/* `.rr` — ready-room.css, the rebuilt Ready Room's root, which loads with the
+   room and stays once the room has been visited. v6's `.rr` is the Ready Room
+   row in the tray. It declares its own display, padding, border and
+   background, so those are safe; what leaks is the rest of the room's root:
+   a column direction that stacks the icon, the label and the chevron, a full
+   height, clipping, the room's colour and face, and its --r. */
+.app .rdr .rr { flex-direction: row; height: auto; overflow: visible; color: inherit; font-family: inherit; -webkit-font-smoothing: inherit; --r: inherit; }
+
 /* ── section 12's tap floor, and why the reader pays it differently ───────
    App.jsx enforces `min-height:44px` on `.app button:not(.is-inline)`,
    globally, because the 44px minimum had leaked in eleven places. The reader

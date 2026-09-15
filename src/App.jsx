@@ -144,7 +144,7 @@ import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
-import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, deleteMessage, fetchRightSeat } from "./lib/roomData.js";
+import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, deleteMessage, fetchRightSeat, markDelivered } from "./lib/roomData.js";
 import { toAttachment, attachToMessage } from "./lib/attachments.js";
 import { fetchProfiles, fetchProfile } from "./lib/squadron.js";
 import { reportContent, blockUser } from "./lib/squadron.js";
@@ -815,6 +815,8 @@ function AppInner() {
       ]);
       if (!live) return;
       setRoomMessages(msgs);
+      // 0027: everything this device now holds from other people has reached it.
+      if (msgs.some((m) => m.authorId !== me)) markDelivered(me, ids);
       setRightSeat(seat);
     };
     // Only the messages on the interval. Which squadrons you are in and who
@@ -822,7 +824,9 @@ function AppInner() {
     const messagesOnly = async () => {
       if (!ids.length) return;
       const msgs = await fetchSquadronMessages(me, ids);
-      if (live) setRoomMessages(msgs);
+      if (!live) return;
+      setRoomMessages(msgs);
+      if (msgs.some((m) => m.authorId !== me)) markDelivered(me, ids);
     };
     full();
     const stopLive = listen(LIVE_TABLES.chat, messagesOnly);
@@ -1235,6 +1239,7 @@ function AppInner() {
             me={me}
             modules={allModules(useTestContent)}
             activeModuleCode={activeModuleCode}
+            routeThreadId={route.threadId || null}
             chapters={chaptersFor(activeModuleCode, useTestContent)}
             threads={session.threads}
             replies={session.replies}
@@ -1242,7 +1247,6 @@ function AppInner() {
             presence={normalisePresence(presenceRows)}
             squadrons={squadrons}
             messages={roomMessages}
-            seatCandidates={rightSeat}
             intent={roomIntent}
             onIntentUsed={() => setRoomIntent(null)}
             votes={votes}
@@ -1262,9 +1266,7 @@ function AppInner() {
                   ? { ...t, bestReplyId: replyId } : t)),
               }));
             }}
-            brand={<button type="button" className="brandmark" onClick={goHome}
-                           aria-label="Go to Flight Deck">Wingman</button>}
-            profile={<ProfileMenu onNavigate={goProfile} />}
+            onHome={goHome}
             saved={progress.get("pw-room-saved", {})}
             onSave={(threadId) => {
               // Saving a question is the same act as bookmarking a paper, so it

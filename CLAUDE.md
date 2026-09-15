@@ -142,6 +142,13 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0027, read receipts, is written and has NOT been run against the live
+project.** It is additive: `comms_receipts`, `squadron_members.last_delivered_at`,
+`mark_squadrons_delivered`, `message_receipts`, and `mark_squadron_read`
+replaced with the same signature and return type, so the bundle deployed before
+it keeps working. The rebuilt Ready Room calls the two new functions; run 0027
+before that code reaches the live site.
+
 **0017 has been run against the live project.** It adds `paper_ink`,
 `paper_annotations.colour`, two more kinds (`underline`, `strikethrough`) and
 `paper_ink_for`. It is deliberately ADDITIVE — nothing is dropped. Widening
@@ -262,6 +269,52 @@ reader does can damage the paper. Module 1 only for now, behind
   column of ten is 659px of a 720px window. Do not shrink the buttons.
 - The test paper is fetched, not committed: `npm run paper:fetch`. `papersFor()`
   adds it to Module 1 under `import.meta.env.DEV` only.
+
+## The Ready Room
+
+Rebuilt on 2026-09-15 from a signed-off design (a port brief and a static
+demo, handed over outside the repo). Squadrons are group chats, modules are
+question feeds, and the right seat is one person and state that expires.
+
+- **`src/components/room/ready-room.css` is the design's stylesheet, kept as
+  sent**, with two changes marked where they are made: the light-mode selector
+  is the app's own `.app.theme-light`, and two stray lines left over from the
+  demo's keyboard hint are gone. A browser read those lines as the start of a
+  rule and swallowed the whole `@media (min-width:1660px)` block, so the
+  context column never appeared. `check:rr` holds both.
+- **`rr-app.css` fits it to the app**: the full-bleed fill, 44px hit areas for
+  the design's small controls (§12), the parts the demo drew with markup React
+  cannot use, the bridge to the old sheets, Smooth Air, and **contrast**.
+  Measured on the surface behind the words, and counting night and day apart,
+  21 text pairs came in under their floor in some livery: "Waiting" in day at 2.33, the time in
+  your own bubble at night at 2.82, white on the Runway accent in day at 4.22.
+  Each fix is an existing token (`--active-fill`, `--active-text`, `--lit`,
+  `--t2`) or a mix of two, and `check:rr` re-measures every one in all six
+  liveries and both variants.
+- **`rr` is also a class in the paper reader** — the Ready Room row in its
+  tray. The room's CSS loads lazily and stays, so its bare root rules turned
+  that row into a clipped 220px column once the room had been visited
+  (measured). It is quarantined in `check:paper` and undone in
+  `paper/v6/additions.css`, and the room's own rules key off `.rr-app`, never
+  `:has(.rr)`.
+- **Answers are endorse-only.** The design puts an up/down pill on every
+  answer, but 0010 made answers endorse-only on purpose ("an answer can be
+  endorsed, not buried"), so an answer's pill has no down arrow. Questions vote
+  both ways (0022).
+- **A feed row is not a `<button>`**: the demo nests Save and Share inside one.
+  **The chat's hover actions sit inside the bubble**: against the full-width row
+  the design's 66px offset put them at the window's edge and scrolled the
+  transcript sideways. Report, block, copy, pin, edit, delete and react are on a
+  right click, or a long press on a phone, which has no hover.
+- **Ticks tell the truth (0027).** One grey tick until everybody a message went
+  to has it, two grey until everybody has opened it, blue after that. A
+  recipient is a member who had joined when it was sent, not blocked either way
+  and not muting its author. App stamps delivery after each chat fetch;
+  `mark_squadron_read` stamps reading.
+- The rules are in `src/lib/rrModel.js`, held by `npm run check:rr`. To look at
+  it: `npm run harness`, then `node tests/harness/room-seed.mjs`. To test every
+  livery × night/day × 1920/1512/1024/430, and every control the brief lists:
+  `npm run test:rr`.
 
 ## Status
 

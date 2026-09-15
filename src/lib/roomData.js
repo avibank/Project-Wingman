@@ -77,7 +77,7 @@ export async function fetchMySquadrons(me) {
 
   const { data: mine, error: e1 } = await supabase
     .from("squadron_members")
-    .select("squadron_id, muted, last_read_at, role, squadrons!inner(id, module_code, name, blurb, status, study_time, owner_id, join_policy, invite_token, member_cap)")
+    .select("squadron_id, muted, last_read_at, role, squadrons!inner(id, module_code, name, blurb, status, study_time, owner_id, join_policy, invite_token, member_cap, created_at)")
     .eq("user_id", me);
   if (e1) return fail(e1, []);
 
@@ -128,6 +128,7 @@ export async function fetchMySquadrons(me) {
       joinPolicy: sq.join_policy,
       inviteToken: sq.invite_token,
       memberCap: sq.member_cap,
+      createdAt: sq.created_at || null,
       muted: Boolean(r.muted),
       lastReadAt: r.last_read_at,
       myRole: r.role,
@@ -239,6 +240,31 @@ export async function markSquadronRead(me, squadronId) {
   const { data, error } = await supabase.rpc("mark_squadron_read", { p_me: me, p_squadron: squadronId });
   if (error) return fail(error, null);
   return data || null;
+}
+
+/* 0027 — THIS DEVICE NOW HOLDS THE CHAT in these squadrons. Called after a
+   fetch rather than when a chat opens, because delivered means it reached the
+   phone, and the phone fetches in the background whether or not anybody is
+   looking. Opening it is mark_squadron_read's job. */
+export async function markDelivered(me, squadronIds = []) {
+  const ids = squadronIds.filter(Boolean);
+  if (isFlySolo() || !me || !ids.length) return 0;
+  const { data, error } = await supabase.rpc("mark_squadrons_delivered", { p_me: me, p_squadrons: ids });
+  if (error) return fail(error, 0);
+  return Number(data) || 0;
+}
+
+/* 0027 — who each of MY messages went to, and who has it and who has opened
+   it: { messageId: [{ user_id, delivered_at, read_at }] }. A message still on
+   its way up has no row to ask about yet, so its temporary id is not sent. */
+export async function fetchReceipts(me, messageIds = []) {
+  const ids = messageIds.filter((id) => id && !String(id).startsWith("pending-"));
+  if (isFlySolo() || !me || !ids.length) return {};
+  const { data, error } = await supabase.rpc("message_receipts", { p_me: me, p_messages: ids });
+  if (error) return fail(error, {});
+  const out = {};
+  for (const r of data || []) (out[r.message_id] || (out[r.message_id] = [])).push(r);
+  return out;
 }
 
 export async function setSquadronMuted(me, squadronId, muted) {

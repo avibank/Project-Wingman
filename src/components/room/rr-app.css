@@ -1,0 +1,199 @@
+/* =============================================================================
+   THE READY ROOM, FITTED TO THE APP.
+   -----------------------------------------------------------------------------
+   ready-room.css is the signed-off stylesheet and is kept as it was sent. This
+   file holds only what the app around it needs and a static demo could not
+   know about:
+
+     1 · the fill — the room takes the whole deck, as the old room did
+     2 · the tap floor — App.jsx gives every button, input and textarea 44px
+         (§12); a small control opts out with .is-inline and keeps a 44px
+         target through a pseudo-element, so it stays small and stays easy to hit
+     3 · parts the design has no markup for, drawn with its own tokens: the feed
+         row's open button, photos, pending attachments, replies under an
+         answer, reactions, the pinned line, the session while a seat is taken
+     4 · the bridge — Discover, the sheets, the menu and the toast are still the
+         old room's, styled by room.css under `.room`
+     5 · Smooth Air, which the demo had no switch for
+     6 · contrast — text pairs that measured under 4.5:1 in some livery
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- 1 · fill
+   Keyed to .rr-app, never to .rr. The paper reader has a button of its own
+   called `rr` — the Ready Room row in its tray — so `:has(.rr)` would rebuild
+   the deck under every open paper. */
+.app:has(.rr-app) .deck{
+  align-content: stretch;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+.app:has(.rr-app) .deck-inner{ height: 100%; min-height: 0; }
+.app:has(.rr-app) .deck-inner > .content,
+.app:has(.rr-app) .deck-inner > .content--full{
+  height: 100%; min-height: 0; display: flex; max-width: none; margin: 0; padding: 0; width: 100%;
+}
+.app:has(.rr-app) .content--full > .rr{ flex: 1 1 auto; min-height: 0; min-width: 0; }
+
+/* ----------------------------------------------------------- 2 · tap floor */
+/* The fields have their own heights in the design. */
+.app .rr .rr-search input:not([type="checkbox"]),
+.app .rr .rr-askform input:not([type="checkbox"]),
+.app .rr .rr-askform textarea,
+.app .rr .rr-abar textarea,
+.app .rr .rr-cfield textarea{ min-height: 0; }
+
+.rr .rr-chip.is-inline, .rr .rr-mini.is-inline, .rr .rr-tbtn.is-inline, .rr .rr-iconbtn.is-inline,
+.rr .rr-linkbtn.is-inline, .rr .rr-lnk.is-inline, .rr .rr-go.is-inline, .rr .rr-ghostbtn.is-inline,
+.rr .rr-qa button.is-inline, .rr .rr-sp-x.is-inline, .rr .rr-face.is-inline, .rr .rr-home.is-inline,
+.rr .rr-rq.is-inline, .rr .rr-react.is-inline, .rr .rr-vote i{ position: relative; }
+
+.rr .rr-chip.is-inline::after, .rr .rr-mini.is-inline::after, .rr .rr-tbtn.is-inline::after,
+.rr .rr-iconbtn.is-inline::after, .rr .rr-linkbtn.is-inline::after, .rr .rr-lnk.is-inline::after,
+.rr .rr-go.is-inline::after, .rr .rr-ghostbtn.is-inline::after, .rr .rr-qa button.is-inline::after,
+.rr .rr-sp-x.is-inline::after, .rr .rr-face.is-inline::after, .rr .rr-home.is-inline::after,
+.rr .rr-rq.is-inline::after, .rr .rr-react.is-inline::after, .rr .rr-ask.is-inline::after,
+.rr .rr-jump.is-inline::after{
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, var(--tap, 44px)); height: max(100%, var(--tap, 44px));
+  transform: translate(-50%, -50%);
+}
+/* The vote arrows sit two pixels apart, so their targets grow up and down only. */
+.rr .rr-vote i::after{
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: var(--tap, 44px); transform: translateY(-50%);
+}
+
+/* ------------------------------------------------------------ 3 · the parts */
+/* A face is the app's avatar recipe, keyed by the hue every surface uses for
+   that person; a module's tile is ink on the sunk surface. */
+.rr .rr-av{ background: oklch(.62 .115 var(--av-h, 250)); color: oklch(.14 0 0); }
+.rr .rr-av[data-mod="1"]{ background: var(--sunk); border: 1px solid var(--line); color: var(--t2); }
+/* The seat card styles every span inside it as a line of text, faces included. */
+.rr .rr-seatcard .rr-av{ display: grid; margin-top: 0; color: oklch(.14 0 0); }
+
+.rr .rr-face{ padding: 0; display: inline-grid; border-radius: 50%; align-self: start; }
+.rr .rr-home{ padding: 0; letter-spacing: inherit; }
+.rr .rr-stamp{ color: var(--ok); }
+
+/* The feed row: a button stretched under the row opens the question, and the
+   controls sit above it. */
+.rr .rr-frow .rr-fopen{ position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; border-radius: 0; }
+.rr .rr-frow .rr-fopen:focus-visible{ outline-offset: -2px; border-radius: 0; }
+.rr .rr-frow .rr-vote, .rr .rr-frow .rr-fact button{ z-index: 1; }
+.rr .rr-frow .rr-fact button{ position: relative; }
+
+/* Replies under an answer, one level only. */
+.rr .rr-sub{ margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--line); }
+.rr .rr-sub .rr-who{ gap: 7px; }
+
+/* The reply line above the answer box lines up with the box. */
+.rr .rr-abar .rr-draft{ max-width: 72ch; margin: 0 auto 9px; }
+@media (min-width: 1220px){ .rr[data-wide="1"] .rr-abar .rr-draft{ max-width: 76ch; } }
+
+/* The chat. */
+.rr .rr-chat > .rr-pin{ flex: 0 0 auto; margin: 10px clamp(14px, 4vw, 44px) 0; text-align: left; }
+.rr .rr-bub[data-gone="1"] .rr-body{ color: var(--t3); font-style: italic; }
+.rr .rr-msg[data-lit="1"] .rr-bub{ outline: 2px solid var(--active); outline-offset: 2px; }
+.rr .rr-msg:focus-within .rr-qa{ opacity: 1; }
+.rr .rr-mt em{ font-style: normal; opacity: .8; }
+.rr .rr-shot{
+  display: block; width: min(280px, 100%); padding: 0; margin: 1px 0 5px;
+  border-radius: 8px; overflow: hidden; background: var(--sunk);
+}
+.rr .rr-shot img{ display: block; width: 100%; height: 100%; object-fit: cover; }
+.rr button.rr-attach{ text-align: left; }
+.rr a.rr-attach{ color: inherit; text-decoration: none; }
+.rr .rr-reacts{ display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
+.rr .rr-react{
+  height: 22px; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--sunk); font-size: 12px; color: var(--t2);
+}
+.rr .rr-react[aria-pressed="true"]{ border-color: color-mix(in oklab, var(--active) 55%, var(--line)); color: var(--t1); }
+.rr .rr-pending{ display: grid; gap: 6px; margin-bottom: 9px; }
+.rr .rr-pending .rr-attach{ margin: 0; }
+.rr .rr-pending .rr-attach .rr-mid{ flex: 1; }
+.rr .rr-passages{ max-height: min(46vh, 320px); overflow-y: auto; padding: 0 2px 10px; }
+.rr .rr-passages .rr-sect{ padding: 4px 0 8px; }
+
+/* The right seat, while it is taken. */
+.rr .rr-seatwide{
+  grid-column: 1 / -1; display: grid; gap: 12px; align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.rr .rr-seatwide .rr-ctxcard{ margin: 0; }
+.rr .rr-ctxcard .rr-draft{ margin: 10px 0 0; }
+.rr .rr-ctxcard .rr-cin{ margin-top: 10px; }
+.rr .rr-ctxcard .rr-faces{ margin-bottom: 8px; }
+.rr .rr-seatlog{ max-height: 240px; overflow-y: auto; margin-top: 6px; }
+.rr .rr-oq[aria-pressed="true"]{ color: var(--t1); }
+.rr .rr-seatgrid .rr-dempty{ grid-column: 1 / -1; }
+.rr .rr-go:disabled{ opacity: .45; cursor: default; }
+
+/* The page's one heading, for screen readers. It lived in room.css, unscoped,
+   and went out with the old room's rules; without it the words "Ready Room"
+   sat in large type above the rail and pushed the room down the screen. */
+.rr .room-h1{
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* -------------------------------------------------------------- 4 · bridge */
+.rr .room{ display: contents; }
+
+/* ------------------------------------------------------------ 6 · contrast
+   MEASURED, NOT EYEBALLED: every text pair the stylesheet draws, in all six
+   liveries and both variants, against the surface actually behind it — the
+   same method as check:contrast, and held by check:rr. Counting night and day
+   apart, 21 pairs came in under their floor as sent; the worst were "Waiting" in day at 2.33, the time in
+   your own bubble at night at 2.82, and white on the Runway accent in day at
+   4.22. Each fix is the app's own token for the job, or a mix of two of them,
+   so no colour is new and every livery still follows:
+
+     --active-fill  behind white, in day. The app's pattern for a filled control.
+     --active-text  the accent read as words, in day, where --active is tuned
+                    to sit under white rather than to be read.
+     --lit          the accent read as words ON an accent tint, at night, where
+                    --active-text is --active and a tint pulls it under 4.
+     --t2           muted words on the raised surface and in bubbles at night.
+     mixes into --t1, the way the gyro's caution phrase is already written. */
+
+/* Day. */
+.app.theme-light .rr .rr-badge:not([data-mute="1"]),
+.app.theme-light .rr .rr-ask,
+.app.theme-light .rr .rr-send:not([data-idle="1"]){ background: var(--active-fill); }
+.app.theme-light .rr .rr-sect .rr-lnk,
+.app.theme-light .rr .rr-newline span,
+.app.theme-light .rr .rr-vote[data-v="1"] b,
+.app.theme-light .rr .rr-status[data-s="you"],
+.app.theme-light .rr .rr-draft b,
+.app.theme-light .rr .rr-rq b{ color: var(--active-text); }
+.app.theme-light .rr .rr-status[data-s="open"]{ color: color-mix(in oklab, var(--caution) 50%, var(--t1)); }
+.app.theme-light .rr .rr-msg[data-me="1"] .rr-rq span,
+.app.theme-light .rr .rr-draft span{ color: var(--t2); }
+
+/* Night. */
+.app:not(.theme-light) .rr .rr-status[data-s="you"],
+.app:not(.theme-light) .rr .rr-draft b,
+.app:not(.theme-light) .rr .rr-rq b{ color: var(--lit); }
+.app:not(.theme-light) .rr .rr-status[data-s="signed"]{ color: color-mix(in oklab, var(--ok) 70%, var(--t1)); }
+.app:not(.theme-light) .rr .rr-row[aria-current="true"] .rr-l2,
+.app:not(.theme-light) .rr .rr-row[aria-current="true"] .rr-tm,
+.app:not(.theme-light) .rr .rr-frow[aria-current="true"] .rr-fmeta,
+.app:not(.theme-light) .rr .rr-frow[aria-current="true"] .rr-fsnip,
+.app:not(.theme-light) .rr .rr-frow[aria-current="true"] .rr-t,
+.app:not(.theme-light) .rr .rr-seenpanel .rr-sp-lab:not([data-k="read"]),
+.app:not(.theme-light) .rr .rr-seenpanel .rr-sp-empty,
+.app:not(.theme-light) .rr .rr-seenpanel .rr-t,
+.app:not(.theme-light) .rr .rr-seenpanel .rr-micro,
+.app:not(.theme-light) .rr .rr-msg:not([data-me="1"]) .rr-bub .rr-mt,
+.app:not(.theme-light) .rr .rr-bub .rr-mt .rr-tick[data-s="deliv"],
+.app:not(.theme-light) .rr .rr-bub .rr-mt .rr-tick[data-s="sent"],
+.app:not(.theme-light) .rr .rr-bub .rr-attach .rr-mid span,
+.app:not(.theme-light) .rr .rr-draft span{ color: var(--t2); }
+.app:not(.theme-light) .rr .rr-msg[data-me="1"] .rr-bub .rr-mt{ color: color-mix(in oklab, var(--t2) 70%, var(--t1)); }
+.app:not(.theme-light) .rr .rr-rq span{ color: color-mix(in oklab, var(--t2) 50%, var(--t1)); }
+
+/* ---------------------------------------------------------- 5 · Smooth Air */
+.app.smooth-air .rr[data-view] *{
+  animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important;
+}

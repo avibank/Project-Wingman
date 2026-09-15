@@ -126,7 +126,6 @@ console.log("\nR3 — overlapping marks flatten before they render");
   ok("R3", "every mark is accounted for in some segment",
      ranges.every((r) => segs.some((s) => s.ids.includes(r.id))));
 
-  const page = read("src/components/paper/v6/SheetPage.jsx");
   /* v6 DOES NOT FLATTEN, and that is its design rather than an omission.
      v5 merged overlapping marks into segments so eleven people on one
      paragraph drew a handful of boxes instead of eleven stacked ones. v6's
@@ -563,7 +562,6 @@ console.log("\ntap anywhere");
 console.log("\nnotes and questions");
 {
   const reader = readerSrc();
-  const parts = readerSrc();
   const css = readerCss();
   /* v6 HAS NO NOTE AT ALL, and it is the largest single thing the design
      dropped. v5 opened a note as a window ON the page, already carrying the
@@ -927,7 +925,6 @@ console.log("\nthe contents");
 /* ---- the rail carries ten tools without eating the window --------------- */
 console.log("\nthe rail, at ten tools");
 {
-  const reader = readerSrc();
   const css = readerCss();
   /* Fourteen tools in six groups now — the full set §9 lists. The DEFAULT
      tray is still six of them; the rest are one tap away in the Add sheet and
@@ -1190,8 +1187,9 @@ console.log("\nthe shipped spec");
      `.x` loses to `.rdr .x` for the properties the reader declares — the
      damage is everything it does not declare, and every pseudo-element, which
      specificity has no opinion about at all. An eighth would be silent, so it
-     is this that has to speak. */
-  const QUARANTINED = ["av", "chip", "mt", "pop", "pres", "scrub", "sw"];
+     is this that has to speak — and it did: `rr`, the rebuilt Ready Room's
+     root, is also the name of the Ready Room row in the reader's tray. */
+  const QUARANTINED = ["av", "chip", "mt", "pop", "pres", "rr", "scrub", "sw"];
   const additions = read("src/components/paper/v6/additions.css");
   const appCss = [];
   (function walk(d) {

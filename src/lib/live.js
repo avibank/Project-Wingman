@@ -73,6 +73,10 @@ export function listen(tables, onChange, onStatus) {
 export const LIVE_TABLES = {
   discussion: ["lesson_threads", "lesson_replies"],
   chat: ["comms_messages", "comms_reactions"],
+  /* Its own list, and never inside `chat`: App's chat listener refetches the
+     messages and then marks them delivered, which writes receipts, which would
+     wake the same listener again. */
+  receipts: ["comms_receipts"],
   seat: ["seat_requests", "copilot_sessions", "seat_messages"],
 };
 

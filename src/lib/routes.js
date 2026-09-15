@@ -90,7 +90,12 @@ export function parseRoute(pathname) {
     return { name: "chapter", moduleCode, chapterId, tab };
   }
 
-  if (parts[0] === "ready-room") return { name: "ready", moduleCode: parts[1] ? parts[1].toUpperCase() : null };
+  // The third part is a question. The room's Share has always copied
+  // /ready-room/<module>/<thread>, and this dropped the thread, so a shared
+  // link opened the module and left the reader to find the question.
+  if (parts[0] === "ready-room") {
+    return { name: "ready", moduleCode: parts[1] ? parts[1].toUpperCase() : null, threadId: parts[1] && parts[2] ? parts[2] : null };
+  }
   if (parts[0] === "logbook") return { name: "logbook" };
   if (parts[0] === "saved") return { name: "saved" };
   if (parts[0] === "signin") return { name: "signin" };
@@ -119,7 +124,7 @@ export const path = {
   question: (m, c, n) => `/m/${String(m).toLowerCase()}/${c}/q/${n}`,
   quizResume: (m, c) => `/m/${String(m).toLowerCase()}/${c}/quiz/resume`,
   review: (m, flow) => `/m/${String(m).toLowerCase()}/${flow}`,
-  ready: (m) => (m ? `/ready-room/${String(m).toLowerCase()}` : "/ready-room"),
+  ready: (m, threadId) => (m ? `/ready-room/${String(m).toLowerCase()}${threadId ? `/${threadId}` : ""}` : "/ready-room"),
   logbook: () => "/logbook",
   saved: () => "/saved",
   settings: (page) => (page && page !== "index" ? `/settings/${page}` : "/settings"),

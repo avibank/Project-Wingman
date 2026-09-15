@@ -30,7 +30,9 @@ function serrated(cx, cy, r1, r2, teeth) {
 
 const EDGE = serrated(17, 17, 16.2, 14.7, 26);
 
-function Seal({ state }) {
+/* Exported for the Ready Room, whose signed-off answers carry this same seal:
+   one drawing of what a sign-off looks like, not two. */
+export function Seal({ state }) {
   const st = state === "stamped";
   const idle = state === "idle";
   return (
