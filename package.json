@@ -66,7 +66,8 @@
     "paper:linearize": "node scripts/linearize-paper.mjs",
     "reader:css": "node scripts/scope-reader-css.mjs",
     "measure:manual": "node --env-file=.env.local scripts/measure-manual.mjs",
-    "check:room": "node scripts/check-room.mjs"
+    "check:room": "node scripts/check-room.mjs",
+    "test:exam": "node tests/exam-run.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

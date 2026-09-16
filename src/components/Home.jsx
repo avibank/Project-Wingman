@@ -685,7 +685,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                           inside it is invalid and unreachable. */}
                       <span className="mcodeend">
                         {m.caution
-                          ? <CautionMark compact className="modlamp" />
+                          ? <CautionMark className="modlamp" />
                           : m.code === active.code
                             ? <span className="mcur">CURRENT</span>
                             : flags["module.interior"]

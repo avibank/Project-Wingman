@@ -69,7 +69,7 @@ export function parseRoute(pathname) {
     // can send a classmate the handout they are looking at rather than the
     // Library it is filed in.
     if (parts[2] === "paper" && parts[3]) return { name: "paper", moduleCode, paperId: parts[3] };
-    if (parts[2] === "recheck") return { name: "review", moduleCode, flow: "recheck" };
+
     if (parts[2] === "caution") return { name: "review", moduleCode, flow: "caution" };
     const chapterId = parts[2];
     // A lesson is its own page, and its address carries the question that was

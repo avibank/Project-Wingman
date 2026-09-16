@@ -1,24 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { hits, terms } from "../../lib/moduleSearch.js";
-import { CautionMark } from "./Instruments.jsx";
 
 /* ============================================================================
    §5 — THE LIBRARY.
 
    Two sections in one scroll, in this order: Quizzes, then Papers.
-   Calibration is pinned above the chapter quizzes with a rule beneath it.
    The Quizzes header is a heading and a count. It carried a small accuracy
    dial until the bar moved into settings and the Flight Deck's gyro started
-   reading it; the dial is on the quiz results screen alone now.
+   reading it; the dial is on the drill's results screen alone now.
 
-   CALIBRATION AND RE-CHECK ARE DIFFERENT THINGS AND NEVER SHARE A WORD.
-   Calibration is the answers you already got RIGHT, kept in currency — that
-   is `holding` in the retention store. Re-check is the ones you MISSED on a
-   specific quiz — that is `caution`. So there is no caution language on the
-   Calibration row, ever: no lamp, no "outstanding", no "to put right". It is
-   not remediation and it must not look like it, because a student who reads
-   it as remediation stops opening it.
+   CALIBRATION IS GONE, row and all. It was the answers you already got right,
+   kept in currency out of `holding`, pinned above the chapter quizzes — a
+   second exercise with its own vocabulary, its own sticker and its own date,
+   for a pile most students never looked at. The quizzes are the Library's
+   quizzes now, and nothing sits above them.
 
    The section headings are NOT buttons. Nothing here collapses, so nothing
    needs to be a button.
@@ -40,24 +36,10 @@ const QUIZ = (
   </svg>
 );
 
-/* "6 days ago", or nothing at all. Never "never" and never a zero — an empty
-   state names its next action instead, which here is the Start button beside
-   it. */
-function agoWords(iso) {
-  if (!iso) return null;
-  const then = Date.parse(iso);
-  if (!Number.isFinite(then)) return null;
-  const days = Math.floor((Date.now() - then) / 86400000);
-  if (days <= 0) return "today";
-  if (days === 1) return "yesterday";
-  return `${days} days ago`;
-}
-
 export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper, onAddPaper,
   query = "",
-  readerPin = null, warm = 0, lastRecheck = null,
-  faults = new Set(), onStartCalibration,
+  readerPin = null, faults = new Set(),
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
 
@@ -79,9 +61,6 @@ export default function LibraryTab({
     (p) => (!chapterFilter || p.chapterId === chapterFilter)
       && hits(`${p.title} ${p.chapterTitle || ""}`, query));
 
-  const warmWords = warm > 0
-    ? `${warm} question${warm === 1 ? "" : "s"} kept warm`
-    : "The ones you get right are kept here";
 
   return (
     <div className="libtab">
@@ -97,30 +76,6 @@ export default function LibraryTab({
         </div>
 
         <div className="libwrap">
-          {/* §5 — Calibration, pinned above the chapter quizzes with a rule
-              beneath it. Its leading mark is the sticker. */}
-          {!searching && (
-            <button type="button" className="item calrow" disabled={!warm}
-                    onClick={() => warm && onStartCalibration?.()}>
-              <span className="calsticker" aria-hidden="true">
-                <span className="calband">Calibration</span>
-                <span className="calval">{warm || "—"}</span>
-              </span>
-              <span className="imain">
-                <span className="iname">Calibration</span>
-                <span className="imeta">{warmWords}</span>
-              </span>
-              <span className="istat">
-                {agoWords(lastRecheck) && <span className="calwhen">{agoWords(lastRecheck)}</span>}
-                {/* §5's copy is `Start`, and only that. With nothing warm yet
-                    there is nothing to start, so the action stands down and
-                    the meta line beside it names what will fill the pile —
-                    an empty state that names its next action, not a dead
-                    primary button. */}
-                {warm > 0 && <span className="go">Start</span>}
-              </span>
-            </button>
-          )}
 
           {shownQuizzes.map((c) => {
             const s = state?.quiz?.[c.id];
@@ -139,9 +94,7 @@ export default function LibraryTab({
                   </span>
                 </span>
                 <span className="istat">
-                  {/* §2 — in the Library the QUIZ ROW owns the problem, because
-                      there is no chapter grouping here to own it instead. */}
-                  {lit && <CautionMark compact />}
+
                   {s
                     ? <span className="score">{s.correct} of {s.total}</span>
                     : <span className="go ghost">Take it</span>}
@@ -200,11 +153,11 @@ export default function LibraryTab({
 
         <div className="libwrap">
           {/* §5's own pattern, reused: the thing you are in the middle of is
-              pinned above the list, with a rule beneath it, exactly as
-              Calibration sits above the chapter quizzes. A paper you have open
-              is the same kind of fact as a pile of questions kept warm — it is
-              where you were, and it should not be somewhere you have to hunt
-              for it.
+              pinned above the list, with a rule beneath it. It is where you
+              were, and it should not be somewhere you have to hunt for. The
+              pattern came from the Calibration row, which was pinned above the
+              chapter quizzes until that whole exercise was removed; the paper
+              you have open is what still uses it.
 
               §10 — with nothing opened yet this names the next action inside
               the sentence rather than reporting an absence. */}

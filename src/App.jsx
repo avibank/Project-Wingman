@@ -136,7 +136,7 @@ import { transitionKind, canTransition, settleDom, withTheme, withSetting,
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply, removeThread, removeReply } from "./lib/lessonSurface.js";
 import {
-  RETENTION_KEY, emptyRetention, toHolding, toCaution, recheckSet,
+  RETENTION_KEY, emptyRetention, toHolding, toCaution,
 } from "./lib/retention.js";
 import Review from "./components/module/Review.jsx";
 import { listPapers, fileHref } from "./lib/papers.js";
@@ -1637,49 +1637,47 @@ function AppInner() {
           const all = chs.flatMap((c) =>
             (c.questions || []).map((q) => ({ ...q, chapterId: c.id })));
           const ret = progress.get(RETENTION_KEY, emptyRetention());
-          const set = route.flow === "recheck"
-            ? recheckSet(ret, all)
-            : all.filter((q) => q.id in (ret.caution || {}));
+          /* PUT RIGHT, and only that. The other flow through this route was
+             Calibration's re-check — the answers you already had right, come
+             round again — and Calibration is gone, row, route, set and date.
+             What is left is the caution pile: the ones you missed, until you
+             do not. */
+          const set = all.filter((q) => q.id in (ret.caution || {}));
           const back = () => go(routePath.module(activeModuleCode));
           return (
             <main className="content content-taxi content--full">
               {set.length === 0 ? (
                 <div className="quiz">
                   <div className="quiz-head">
-                    <span className="quiz-name">
-                      {route.flow === "recheck" ? "Re-check" : "Put right"}
-                    </span>
+                    <span className="quiz-name">Put right</span>
                     <button type="button" className="quiz-leave" onClick={back}>Close</button>
                   </div>
                   <div className="quiz-body">
                     <p className="q-rev-line">
-                      {route.flow === "recheck"
-                        ? "Nothing is due yet. Questions come back here once they have had time to fade."
-                        : "Nothing to put right. Anything you miss lands here until you do."}
+                      Anything you miss lands here until you put it right.
                     </p>
                   </div>
                 </div>
               ) : (
                 <Review
-                  // Remount per flow: the set is latched at mount, so moving
-                  // between the two flows must be a new sitting, not a reused one.
+                  // The set is latched at mount, so a fresh arrival is a fresh
+                  // sitting rather than a reused one.
                   key={route.flow}
-                  title={route.flow === "recheck" ? "Re-check" : "Put right"}
+                  title="Put right"
                   questions={set}
                   onLeave={back}
                   onOpenLesson={(lessonId) => {
                     const owner = chs.find((c) => (c.lessons || []).some((l) => l.id === lessonId));
                     if (owner) go(routePath.lesson(activeModuleCode, owner.id, lessonId));
                   }}
-                  onAnswer={(q, right) => recordAnswer(q.id, right, { fromCaution: route.flow === "caution" })}
+                  onAnswer={(q, right) => recordAnswer(q.id, right, { fromCaution: true })}
                   // The re-check and put-right flows share Review, so they
                   // share its results screen — which weighs the sitting
                   // against the user's bar. Omitted here, `minimums` was
                   // undefined and QuizResults fell back to the pass mark, so
                   // these two screens judged by a different standard than
                   // every other lamp in the app.
-                  minimums={minimums}
-                  onDone={() => progress.set("pw-last-recheck", new Date().toISOString())} />
+                  minimums={minimums} />
               )}
             </main>
           );
@@ -1692,12 +1690,10 @@ function AppInner() {
           return (
             <main className="content content-taxi content--full">
               <QuizPage
-                module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} state={moduleState}
-                autoStart={route.resume}
-                // §6 — the results screen weighs the sitting against the same
+                module={moduleByCode(activeModuleCode, useTestContent)} chapter={ch} state={moduleState}
+                // §6 — the result screen weighs the sitting against the same
                 // bar every other lamp in the app is weighed against.
                 minimums={minimums}
-                onRecheck={() => go(routePath.review(activeModuleCode, "caution"))}
                 onAnswers={(results) => recordAnswers(results)}
                 onScore={(chapterId, correct, total) => {
                   // Finishing clears the run: a finished quiz is a score, not
@@ -1716,14 +1712,6 @@ function AppInner() {
                   }
                 }}
                 onBack={() => go(routePath.module(activeModuleCode))}
-                onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
-                onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
-                onOpenLessonById={(lessonId) => {
-                  // The review links back by lessonId — a join, never a
-                  // semantic match on the question text.
-                  const owner = chs.find((c) => (c.lessons || []).some((l) => l.id === lessonId));
-                  if (owner) go(routePath.lesson(activeModuleCode, owner.id, lessonId));
-                }}
               />
             </main>
           );
@@ -1739,13 +1727,7 @@ function AppInner() {
             state={moduleState}
             tab={route.tab === "pdf" ? "library" : route.tab === "people" ? "people" : "route"}
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
-            retention={progress.get(RETENTION_KEY, emptyRetention())}
-            lastRecheck={progress.get("pw-last-recheck", null)}
             minimums={minimums}
-            onInstrument={(what) => {
-              if (what === "caution") go(routePath.review(activeModuleCode, "caution"));
-              else go(routePath.review(activeModuleCode, "recheck"));
-            }}
             onOpenPaper={(paper) => openPaper(paper)}
             readerPin={readerPin}
             code={myProfile?.code || null}

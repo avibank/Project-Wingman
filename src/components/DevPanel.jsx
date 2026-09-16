@@ -32,8 +32,9 @@ const ACCOUNT_KEYS = [
   // pw-scale and pw-name — so a reset silently left the real settings behind.
   // The real keys, verified against every progress.get/set in src.
   "pw-variant-pin", "pw-font-size", "pw-greet-name",
-  // Retention and its stamp: the re-check pile IS account progress.
-  "pw-retention", "pw-last-recheck",
+  // Retention: the caution pile IS account progress. The re-check stamp
+  // (pw-last-recheck) went with Calibration and nothing writes it now.
+  "pw-retention",
 ];
 
 const DEVP_CSS = `

@@ -12,7 +12,7 @@ import {
 } from "../src/lib/routeGeometry.js";
 import { densityBuckets, densityPath, DENSITY_MIN } from "../src/lib/lessonSurface.js";
 import { filterChapters, placeholderFor } from "../src/lib/moduleSearch.js";
-import { movedLine, toHolding, toCaution, cautionCount, holdingCount, recheckSet } from "../src/lib/retention.js";
+import { movedLine, toHolding, toCaution, cautionCount, holdingCount } from "../src/lib/retention.js";
 
 const fails = [];
 const ok = (cond, msg) => { if (!cond) fails.push(msg); };
@@ -114,8 +114,7 @@ ret = toHolding(ret, "q1", { fromCaution: true });
 check(cautionCount(ret) === 0 && holdingCount(ret) === 1, "put right did not leave caution");
 ret = toCaution(ret, "q1");
 check(cautionCount(ret) === 1 && holdingCount(ret) === 0, "missed on re-check did not leave holding");
-check(recheckSet(ret, [{ id: "q1", chapterId: "c" }]).length === 0,
-  "a question in caution was offered for re-checking");
+
 check(movedLine({ toCaution: 0, toHolding: 0 }) === "Nothing moved.", "the empty result screen reads wrong");
 
 // ----------------------------------------------------------- 5 · the copy

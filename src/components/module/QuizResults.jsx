@@ -1,5 +1,4 @@
 import Dial from "./Dial.jsx";
-import { CautionMark } from "./Instruments.jsx";
 import { isBelow, readingWords, PASS_PCT } from "../../lib/minimums.js";
 
 /* ============================================================================
@@ -27,7 +26,7 @@ import { isBelow, readingWords, PASS_PCT } from "../../lib/minimums.js";
 export default function QuizResults({
   title, right, total, minimums = PASS_PCT,
   averageBefore = null, averageAfter = null,
-  retake = false, moduleName, onRecheck, onLeave, movedNote = null,
+  retake = false, onLeave, movedNote = null,
   /* GOING THROUGH THE PAPER IS A SECOND SCREEN, not more of this one.
 
      The brief above says "nothing else", and it is right: hanging fourteen
@@ -52,7 +51,7 @@ export default function QuizResults({
       <div className="qr-body">
         {/* §2 — the lamp, above the score, when the sitting fell below the
             user's own bar. Not below the pass mark: their bar. */}
-        {below && <div className="qr-lamp"><CautionMark /></div>}
+
 
         <p className="qr-score">{right} of {total}</p>
 
@@ -95,11 +94,10 @@ export default function QuizResults({
       </div>
 
       <div className="qr-acts">
-        {below && onRecheck && (
-          <button type="button" className="q-btn" data-primary="" onClick={onRecheck}>
-            Re-check
-          </button>
-        )}
+        {/* Re-check stood here, and it was Calibration's door: the pile of
+            answers you already had right, come round again. That exercise is
+            gone, and the one flow that still runs through this screen — Put
+            right — is already the thing you are in. */}
         {onReview && (
           <button type="button" className="q-btn" data-primary={below ? undefined : ""}
                   onClick={onReview}>
@@ -107,7 +105,7 @@ export default function QuizResults({
           </button>
         )}
         <button type="button" className="q-btn" onClick={onLeave}>
-          {moduleName ? `Back to ${moduleName}` : "Back to the module"}
+          Back to the module
         </button>
       </div>
     </div>

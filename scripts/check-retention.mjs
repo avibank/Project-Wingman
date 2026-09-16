@@ -57,17 +57,7 @@ ok("boxes double", JSON.stringify(R.BOXES) === JSON.stringify([1, 2, 4, 8, 16]))
   ok("the miss count survives the round trip", (m.holding.q.missed || 0) > 0);
 }
 
-// interleaving: a re-check set mixes chapters rather than draining one
-let big = R.emptyRetention();
-const qs = [];
-for (const ch of ["A", "B", "C"]) for (let i = 0; i < 6; i++) {
-  const id = `${ch}${i}`; qs.push({ id, chapterId: ch, options: [1, 2, 3], correct: 0 });
-  big = R.toHolding(big, id);
-}
-const set = R.recheckSet(big, qs, { at: new Date(Date.now() + 40 * 86400000).toISOString(), size: 6 });
-const chapters = new Set(set.map((q) => q.chapterId));
-ok("a re-check set is mixed across chapters", chapters.size === 3, `${set.length} questions from ${chapters.size} chapters`);
-ok("set size is capped", set.length <= R.RECHECK_MAX && set.length >= 1, `${set.length}`);
+// The re-check set went with Calibration; the piles it drew from did not.
 
 // shuffling moves the correct index but keeps the right answer
 const q = { options: ["a", "b", "c"], correct: 2 };

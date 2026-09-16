@@ -3,7 +3,6 @@ import { Check } from "lucide-react";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
 import { thumbTile } from "../../lib/familiar.js";
 import { passAt } from "../../lib/quiz.js";
-import { CautionMark } from "./Instruments.jsx";
 import { posterFor } from "../../lib/shell.js";
 import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
 import "./familiar.css";
@@ -18,15 +17,21 @@ import "./familiar.css";
 //
 // One brightness for every title, and a bar under the picture for how far you
 // got. One channel, one job. THE TITLE NEVER DIMS.
-// §2.7 — the document mark a quiz carries in the same slot a lesson's
-// thumbnail occupies, at the same size, so the text column never shifts.
-const QuizMark = () => (
-  <span className="lead mark">
-    <svg width="17" height="17" viewBox="0 0 16 16" fill="none"
-         stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <rect x="2.6" y="1.8" width="10.8" height="12.4" rx="1.6" />
-      <path d="M5.4 5.6 H10.6 M5.4 8.2 H10.6 M5.4 10.8 H8.6" strokeLinecap="round" />
-    </svg>
+// §2.7 — what a quiz carries in the same slot a lesson's thumbnail occupies,
+// at the same size, so the text column never shifts. It was a document glyph;
+// the approved design makes it an answer sheet with the paper's length on it,
+// which says two things in the space the glyph said none.
+const QuizThumb = ({ count }) => (
+  <span className="lead quiz-thumb" aria-hidden="true">
+    <span className="quiz-thumb__sheet">
+      <span><i className="on" /><i /><i /></span>
+      <span><i /><i /><i className="on" /></span>
+      <span><i /><i className="on" /><i /></span>
+    </span>
+    {/* No invented number: a chapter with no questions yet shows the sheet
+        and nothing beside it, rather than a count of a paper that is not
+        written. */}
+    {count ? <span className="quiz-thumb__count"><b>{count}</b>Qs</span> : null}
   </span>
 );
 
@@ -127,9 +132,6 @@ export default function RouteTab({
   code,
   module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
   query = "",
-  // §2/§8 — which chapters are below the user's bar, computed once upstream.
-  // A Set rather than a list: this is asked per row inside a render loop.
-  faults = new Set(),
 }) {
   if (!chapters?.length) return <RouteSkeleton />;
   const lessonCount = countLessons(chapters);
@@ -157,23 +159,22 @@ export default function RouteTab({
                     {ch.lessons.length} lesson{ch.lessons.length === 1 ? "" : "s"} · 1 quiz
                   </span>
                 </span>
-                {/* §2 — THE ONLY STATUS SIGNAL ON THIS SCREEN, and it sits on
-                    the smallest thing that owns the problem. The chapter owns
-                    it because the chapter's quiz is what fell below the bar.
-                    It shows whether the chapter is open or collapsed — a lamp
-                    you have to expand a fold to find is not a signal — and the
-                    quiz row inside carries its score and a Re-check instead,
-                    never a second lamp for the same fact. */}
-                {/* ONE SLOT for the lamp and the status word. .chead is a
-                    THREE-COLUMN grid — minmax(0,1fr) auto 12px — so a fourth
-                    child does not get a column of its own: it takes the auto
-                    one, the status is crushed into the 12px chevron track, and
-                    the chevron wraps onto a second row on top of the title.
-                    Measured before this wrapper existed: "Done" rendered 12px
-                    wide. The phone breakpoint also places .cstate and .chv by
-                    grid-column, which only holds while the child count does. */}
+                {/* Master Caution used to share this slot with the status
+                    word, and it is gone from here: the lamp lights on one
+                    surface now, the module card in the launcher, and only when
+                    the module's average is under the bar. A chapter row says
+                    where you are, and the quiz row inside carries its own
+                    score.
+
+                    THE WRAPPER STAYS whatever it holds. .chead is a
+                    THREE-COLUMN grid — minmax(0,1fr) auto 12px — so a third
+                    child of its own would take the auto column, crush the
+                    status into the 12px chevron track, and wrap the chevron
+                    onto a second row on top of the title. Measured before this
+                    wrapper existed: "Done" rendered 12px wide. The phone
+                    breakpoint also places .cstate and .chv by grid-column,
+                    which only holds while the child count does. */}
                 <span className="cend">
-                  {faults.has(ch.id) && <CautionMark compact />}
                   {/* State in words, never a badge. */}
                   <span className={`cstate${st === "here" ? " here" : ""}`}>
                     {st === "done" ? "Done"
@@ -220,7 +221,7 @@ export default function RouteTab({
                     return (
                       <button type="button" className="item" data-state={state}
                               onClick={() => onOpenQuiz(ch)}>
-                        <QuizMark />
+                        <QuizThumb count={total} />
                         <span className="imain">
                           <span className="iname">{ch.title} quiz</span>
                           <span className="imeta">

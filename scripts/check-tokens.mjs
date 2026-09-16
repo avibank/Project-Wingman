@@ -69,6 +69,15 @@ for (const f of files) {
         declared.add(m[1]);
         if (!source.has(m[1])) source.set(m[1], p);
       }
+      /* AND IN A JSX STYLE OBJECT, which is how React takes one: the name has
+         to be quoted there, so it reads `style={{ "--i": k }}` rather than the
+         attribute string above. This was a blind spot until the exam screen
+         set a row's index that way and the check called a property the
+         component sets on every row undeclared. */
+      for (const m of src.matchAll(/["'`](--[a-zA-Z0-9-]+)["'`]\s*:/g)) {
+        declared.add(m[1]);
+        if (!source.has(m[1])) source.set(m[1], p);
+      }
     }
   }
 })("src");

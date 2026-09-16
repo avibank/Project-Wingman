@@ -4,10 +4,12 @@ import { LABELS } from "../../lib/quiz.js";
 import { shuffleOptions, movedLine } from "../../lib/retention.js";
 import "./quiz.css";
 
-// THE DRILL. Two uses now: the calibration re-check, and putting caution
-// questions right.
+// THE DRILL. One use now: putting caution questions right.
 //
-// It was three. The chapter quiz used to run through here as well, on the
+// It was two, and before that three. Calibration's re-check — the answers you
+// already had right, come round again — was removed whole with the approved
+// module screen, so the pile it drew from no longer has a door. The chapter
+// quiz used to run through here as well, on the
 // principle that one interaction learned once beats three that drift — and
 // that principle is still right about these two, which ARE the same exercise.
 //
@@ -30,7 +32,7 @@ import "./quiz.css";
    check:props is what noticed. */
 export default function Review({
   title, questions, isRetake = false,
-  onAnswer, onDone, onLeave, onOpenLesson, minimums,
+  onAnswer, onLeave, onOpenLesson, minimums,
 }) {
   // LATCHED AT MOUNT, deliberately. Read live, this flips the moment the first
   // attempt records its own score, and the result screen of a first sitting
@@ -77,7 +79,7 @@ export default function Review({
   };
 
   const advance = () => {
-    if (at + 1 >= set.length) { setFinished(true); onDone?.(tally); return; }
+    if (at + 1 >= set.length) { setFinished(true); return; }
     setAt(at + 1);
     setPicked(null);
   };

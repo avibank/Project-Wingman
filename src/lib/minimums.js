@@ -94,11 +94,19 @@ export function faultChapters(chapters = [], quiz = {}, mins = DEFAULT_MINIMUMS)
   return out;
 }
 
-/* §2 — the Flight Deck launcher. True when any chapter in the module is
-   below the bar, so the deck answers "which module needs you" from the same
-   fact the chapter header uses. */
+/* §2 — the Flight Deck launcher, and the only place this lamp still lights.
+   The approved module and exam screens took Master Caution off chapter rows,
+   quiz rows, the Library and the result screen: one lamp, on the card that
+   opens the module, or nothing at all.
+
+   It reads the module's AVERAGE against the bar. It used to be "any chapter
+   below the bar", which on a launcher card meant one weak chapter out of
+   twelve lit a module the student is well on top of — a lamp that lights when
+   nothing is wrong is a lamp you learn to look past. A module with nothing
+   taken yet has no average and does not light: an empty module is not a
+   fault. */
 export const moduleNeedsYou = (chapters, quiz, mins) =>
-  faultChapters(chapters, quiz, mins).size > 0;
+  isBelow(averagePct(takenScores(chapters, quiz)), mins);
 
 /* ------------------------------------------------------------- the dial */
 

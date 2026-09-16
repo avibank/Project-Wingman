@@ -34,28 +34,44 @@ export const LABELS = ['A', 'B', 'C'];
 export const PASS_MARK = 0.75;          // 75%
 export const SECONDS_PER_Q = 75;        // nominal, for the estimate only
 
-/* NO COUNTDOWN. A timer measures reaction speed, not knowledge, and it is
-   stressful — fine for a classroom game with a projector, wrong for someone
-   revising alone at midnight. Show the estimate on the start screen and then
-   leave them alone.
-
-   ELAPSED IS NOT A COUNTDOWN, and the difference is the whole argument. A
-   number counting down is a threat: it decides when you stop. A number counting
-   up is information you asked for — the real paper these students sit is timed
-   at 75 seconds a question, and somebody practising for it should be able to
-   see whether they are inside that without a stopwatch beside the laptop. It
-   never turns red, it never warns, and it never ends the sitting. */
 export const estimate = n => `about ${Math.max(1, Math.round(n * SECONDS_PER_Q / 60))} minutes`;
 
-export function elapsed(startedAt, now = Date.now()) {
-  const from = new Date(startedAt).getTime();
-  if (!Number.isFinite(from)) return "0:00";
-  const secs = Math.max(0, Math.floor((now - from) / 1000));
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  const mm = h ? String(m).padStart(2, "0") : String(m);
-  return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
+/* THE CLOCK, AND WHY IT COUNTS DOWN.
+
+   This file used to argue the opposite, at length: that a countdown is a
+   threat because it decides when you stop, and that elapsed time is
+   information you asked for. That was right for a revision tool and wrong for
+   what this screen became. The approved exam screen is a rehearsal for the
+   paper these students actually sit, and that paper is timed — so a student
+   who has never practised against a clock meets one for the first time in an
+   examination hall, which is the one place nobody should meet anything for the
+   first time. The allowance is this file's own nominal figure, 75 seconds a
+   question, so an eight-question chapter quiz is ten minutes.
+
+   IT IS NOT ELAPSED-SINCE-START, and that is the bug this replaced rather than
+   a detail. `elapsed(startedAt)` shipped, and startedAt is persisted with the
+   attempt — so a paper opened on Monday and returned to on Wednesday read
+   202:29:37. The time left belongs to the attempt and moves only while the
+   paper is on screen, which is also what makes leaving and coming back keep
+   it. */
+export const SECONDS_LOW = 60;               // the last minute, in --bad
+export const allowanceFor = (n) => Math.max(60, Math.round(n || 0) * SECONDS_PER_Q);
+
+export const clock = (secs) => {
+  const s = Math.max(0, Math.floor(Number(secs) || 0));
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+};
+
+/* A paper written before the clock existed carries no `left`, and so does one
+   whose stored number went missing. Both get the whole allowance, rather than
+   a paper that hands itself in the moment it opens. */
+export const timeLeft = (a) =>
+  Number.isFinite(a?.left) ? Math.max(0, a.left) : allowanceFor(a?.answers?.length || 0);
+
+/* One second off, never below zero, and a handed-in paper's clock is stopped. */
+export function tick(a, by = 1) {
+  if (!a || a.submittedAt) return a;
+  return { ...a, left: Math.max(0, timeLeft(a) - by) };
 }
 
 export const passAt = n => Math.ceil(n * PASS_MARK);   // 8 -> 6
@@ -86,6 +102,7 @@ export function newAttempt(quiz) {
     answers: new Array(quiz.questions.length).fill(null),  // null = unanswered
     flagged: new Array(quiz.questions.length).fill(false),
     at: 0,                       // which question is on screen
+    left: allowanceFor(quiz.questions.length),   // seconds, counted down
     submittedAt: null,
     startedAt: new Date().toISOString()
   };
@@ -261,28 +278,18 @@ export const resumeLine = a =>
 
 
 /* ============================================================================
-   5 · THE KEYBOARD
+   5 · THE KEYBOARD, AND WHY THERE IS NOT ONE ANY MORE
    ----------------------------------------------------------------------------
-   1/2/3 to answer, Enter to advance, F to flag. Free, and much faster for
-   revision on a laptop.
-   ========================================================================= */
+   1/2/3 to answer, Enter to advance, F to flag: free, and much faster for
+   revision on a laptop. The approved exam screen takes all three away, and
+   `quizKey` went with them. On a paper you cannot unsubmit, a shortcut that
+   answers a question is a shortcut that answers it by accident — and F is a
+   letter people type.
 
-/* Same guard as everywhere else: dead while anything is being typed into.
-   There is no text input on the quiz today, but there will be the day someone
-   adds a "report this question" box. */
-export function quizKey(e) {
-  const el = e.target;
-  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return null;
-  if (e.metaKey || e.ctrlKey || e.altKey) return null;
-  if (e.key === '1' || e.key === '2' || e.key === '3') return { type: 'answer', choice: +e.key - 1 };
-  switch (e.key) {
-    case 'Enter': return { type: 'next' };
-    case 'ArrowRight': return { type: 'next' };
-    case 'ArrowLeft': return { type: 'prev' };
-    case 'f': case 'F': return { type: 'flag' };
-    default: return null;
-  }
-}
+   What is left is what the browser gives any form and what a screen reader
+   expects: Tab to the control, Enter or Space to press it, and the arrow keys
+   inside the radio group. Nothing on this screen listens for a key itself.
+   ========================================================================= */
 
 
 /* ============================================================================
@@ -298,6 +305,15 @@ export function navigator(a, marks = null) {
     index: i,
     n: i + 1,
     state: i === a.at ? 'current' : v !== null ? 'answered' : 'blank',
+    /* ANSWERED IS A FACT, NOT A THIRD STATE, for the same reason flagged is
+       not a fourth one. `state` collapses the two: the question you are on
+       reads 'current' whether or not it has an answer, so a screen that paints
+       'answered' from it leaves the box you are standing on looking blank —
+       and the box you are standing on is the one you just answered. The
+       approved exam screen draws both marks at once, a filled box with a ring
+       around it, which is what a student needs to see. */
+    answered: v !== null,
+    current: i === a.at,
     flagged: a.flagged[i],
     /* After the paper is handed in the same row of squares becomes the map of
        the review, so it carries the mark as well. Before then `marks` is null
@@ -331,8 +347,9 @@ export function seedOf(attempt) {
 /* ============================================================================
    7 · WHAT WAS DELIBERATELY NOT TAKEN
    ----------------------------------------------------------------------------
-   · No countdown timer. Elapsed time only — see `elapsed` above for the
-     difference, which is not a quibble.
+   · No countdown timer — until the approved exam screen made this paper a
+     rehearsal for a timed one. Section 1 carries that argument, and what the
+     old elapsed clock read on a paper left open for two days.
    · No points, leaderboards, streaks, memes or sound. With eleven classmates
      who all know each other, a leaderboard is a ranking of your friends.
    · No four fixed answer colours. That is Kahoot's branding and it breaks the

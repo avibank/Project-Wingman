@@ -1,11 +1,14 @@
 // The question lifecycle, and it is the whole system. Keep it exact.
 //
 //   1 · answered wrong        -> caution, and it stays there until put right.
-//                                It is NOT eligible for re-checking while it
-//                                sits there.
-//   2 · right on first sight  -> holding, behind the calibration tag.
+//   2 · right on first sight  -> holding.
 //   3 · put right from caution -> leaves caution, joins holding.
-//   4 · missed during a re-check -> leaves holding, back to caution.
+//   4 · missed again          -> leaves holding, back to caution.
+//
+// Holding had a second job: it was the pile Calibration drew its re-check set
+// from. That exercise is gone and holding is now only the other side of the
+// ledger — a question is in exactly one pile, and caution is the one with a
+// screen.
 //
 // A question is never in both. The tag's count and the lamp's count must always
 // agree with that, so both are derived from one record rather than tracked
@@ -59,8 +62,9 @@ export function toHolding(state, questionId, { fromCaution = false } = {}) {
       [questionId]: {
         box,
         lastSeen: nowIso(),
-        // The miss count survives the question moving between piles: it is
-        // what recheckSet weights by, so losing it would flatten the ordering.
+        // The miss count survives the question moving between piles. Nothing
+        // reads it now that the re-check set is gone; it is kept because it is
+        // a fact about the question, and throwing it away is not reversible.
         missed: (prior?.missed ?? held?.missed ?? 0) + (fromCaution ? 1 : 0),
       },
     },
@@ -94,46 +98,13 @@ export function dueIds(state, at = nowIso()) {
 }
 export const dueCount = (state, at) => dueIds(state, at).length;
 
-/* The re-check set. Drawn from holding and MIXED ACROSS CHAPTERS, because the
-   interleaving is the point — five questions from one chapter is a re-read, five
-   from five chapters is a recall test.
-
-   Weighted by how overdue it is and by whether it has been missed before, so
-   the ones closest to fading come first. Five to ten; longer sets get skipped,
-   and a set that gets skipped teaches nothing. */
-export const RECHECK_MIN = 5, RECHECK_MAX = 10;
-export function recheckSet(state, questions, { at = nowIso(), size = RECHECK_MAX } = {}) {
-  const byId = new Map(questions.map((q) => [q.id, q]));
-  const scored = Object.entries(state?.holding || {})
-    .filter(([id]) => byId.has(id))
-    .map(([id, v]) => ({
-      id,
-      q: byId.get(id),
-      overdue: daysBetween(v.lastSeen, at) - boxDays(v.box),
-      missed: v.missed || 0,
-    }))
-    .filter((r) => r.overdue >= 0)
-    .sort((a, b) => (b.overdue + b.missed * 2) - (a.overdue + a.missed * 2));
-
-  // Interleave: take round-robin across chapters rather than the top N, which
-  // would otherwise come from whichever chapter was studied longest ago.
-  const byChapter = new Map();
-  for (const r of scored) {
-    const k = r.q.chapterId || r.q.lessonId || "—";
-    if (!byChapter.has(k)) byChapter.set(k, []);
-    byChapter.get(k).push(r);
-  }
-  const lanes = [...byChapter.values()];
-  const out = [];
-  for (let i = 0; out.length < Math.min(size, scored.length); i++) {
-    let moved = false;
-    for (const lane of lanes) {
-      if (i < lane.length && out.length < Math.min(size, scored.length)) { out.push(lane[i]); moved = true; }
-    }
-    if (!moved) break;
-  }
-  return out.map((r) => r.q);
-}
+/* THE RE-CHECK SET IS GONE, with Calibration. It drew from `holding` and
+   interleaved across chapters — five questions from one chapter is a re-read,
+   five from five is a recall test — and the only door to it was the Library's
+   Calibration row, which the approved module screen removed. The piles
+   themselves stay: `caution` is what Put right works from, and `holding` is
+   still where a right answer goes, so nothing about how an answer is recorded
+   changed. What went is the set builder and its two size constants. */
 
 /* Option order is shuffled on every sitting so position cannot be memorised —
    seeded per sitting so a re-render does not reshuffle under the student's

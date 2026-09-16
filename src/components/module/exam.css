@@ -1,0 +1,356 @@
+/* ============================================================================
+   The exam screen — the approved EASA-style paper, on this app's tokens.
+
+   PORTED, NOT REDESIGNED. `wingman-exam.css` came in signed off and every
+   size, radius, gap and duration here is its own. Three things were changed,
+   and only these three:
+
+   1 · The three `:root` blocks are gone. The design's token names are aliased
+       onto the live livery engine at the top of this file, so the screen
+       follows the student's livery, finish and light/dark rather than the
+       demo's hue variable. `--h` went with them.
+   2 · Every selector is scoped to `.exam-frame`. The design uses bare names —
+       `.btn`, `.option`, `.mark`, `.ans`, `.spacer`, `.result`, `.question` —
+       and four of those already paint other surfaces here (`.mark` on the
+       module screen, `.ans` and `.spacer` in the paper reader). A lazily
+       loaded stylesheet stays loaded after its route unmounts, so a bare rule
+       here would repaint the reader the moment somebody had sat a quiz. That
+       is not hypothetical: it is exactly what the Ready Room's `.rr` did.
+   3 · The global resets it shipped with (`*`, `body`, `button`, `:focus-visible`)
+       are dropped. This app already has all four, and `:focus-visible` already
+       uses the accent.
+
+   The layout switches on CONTAINER width, so the exam reads the room it is
+   given rather than the window: `.exam-frame` is the container and has to stay
+   wrapped around the screen.
+   ========================================================================= */
+
+.exam-frame {
+  container-type: inline-size;
+
+  /* The design's names, on this app's tokens. `--accent` is the accent as a
+     line or a small mark; `--accent-fill` is the accent under text, which is a
+     darker step in day because .560 fails AA on the higher-chroma liveries —
+     the engine's note on `--active-fill` has the argument. Anything filled
+     with it carries `--ground` as its text, which is this app's rule for every
+     filled control. */
+  --accent: var(--active);
+  /* A STEP AWAY FROM THE MIDDLE, and measuring is what asked for it. The
+     engine already darkens the day accent for fills, because .560 fails AA on
+     the higher-chroma liveries — but the Manual finish writes `--active-fill`
+     straight from the accent, and lands on L .56 exactly, which is the one
+     lightness where NEITHER black nor white text clears 4.5 (measured: 4.01 on
+     Beacon in day). Ten per cent of the text colour moves it off that point in
+     whichever direction the variant is going: lighter at night, darker in day.
+     Worst pair across six liveries, three finishes and both variants: 5.05. */
+  --accent-fill: color-mix(in oklab, var(--active-fill) 90%, var(--t1));
+  --accent-ink: var(--active-text);
+  /* Black or white, whichever the fill asks for — the app's own formula, read
+     off the stepped fill rather than the raw one so the two agree. The plain
+     `--ground` above it is what a browser without relative colour gets. */
+  --on-accent: var(--ground);
+  --accent-soft: color-mix(in oklab, var(--active) 16%, transparent);
+
+  /* THE ACCENT READ AS WORDS ON THE ACCENT'S OWN TINT is a third job again,
+     and measuring is what found it: the letter of the answer you have picked
+     sits on `--accent-soft`, and `--active-text` came in at 3.40 on Beacon at
+     night. `--lit` is the engine's brighter accent and clears it at 5.64. In
+     day the tint is lighter than the ink either way, so day keeps the ink. */
+  --accent-on-soft: var(--lit);
+
+  /* Stronger than `--line` and still neutral: a radio ring or an empty grid
+     cell has to be visible against the ground without becoming a second
+     accent. Derived, so it holds in every livery and both variants — at 40%
+     of the line it measured 2.67 against a Skydrol day ground, under the 3:1
+     a control needs, so the mix leans further on --t3. */
+  --line-strong: color-mix(in oklab, var(--line) 25%, var(--t3));
+
+  --shadow: var(--drop);
+  --radius: 13px;
+  --radius-sm: 8px;
+
+  /* THE ONE COLOUR THAT NEVER FOLLOWS THE LIVERY. A flag means "come back to
+     this" and it has to read as the same mark on Beacon red and on Gauge
+     amber, so it is fixed. `--bad` is the engine's and is used for the last
+     minute of the clock only. */
+  --flag: oklch(.68 .2 27);
+}
+.app.theme-light .exam-frame {
+  --accent-soft: color-mix(in oklab, var(--active) 12%, transparent);
+  --accent-on-soft: var(--active-text);
+  --flag: oklch(.58 .21 27);
+}
+
+@supports (color: oklch(from white l c h)) {
+  .exam-frame { --on-accent: oklch(from var(--accent-fill) clamp(0, (0.56 - l) * 1000, 1) 0 0); }
+}
+
+.exam-frame [hidden] { display: none !important; }
+
+/* The design ships its own; this app had none, and without it the radio
+   group's legend ("Choose one answer") prints under every question. */
+.exam-frame .sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0; padding: 0; margin: -1px;
+}
+
+/* ---------- Exam shell ---------- */
+.exam-frame .exam { max-width: 1080px; margin: 0 auto; display: grid; gap: 16px; }
+
+.exam-frame .exam-bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 16px; box-shadow: var(--shadow);
+}
+.exam-frame .exam-bar__title { display: grid; gap: 2px; margin-right: auto; min-width: 0; }
+.exam-frame .exam-bar__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); }
+.exam-frame .exam-bar__name { font-weight: 600; font-size: 16px; }
+.exam-frame .exam-timer {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+}
+.exam-frame .exam-timer__label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); }
+.exam-frame .exam-timer__value { font-size: 20px; font-weight: 500; color: var(--t1); }
+/* The last minute. `--bad` alone measured 4.45 against an Amber night panel,
+   a shade under the floor for text, so it takes a little of --t1 — the same
+   red, close enough to read as a warning and readable on every livery. */
+.exam-frame .exam-timer.is-low .exam-timer__value { color: color-mix(in oklab, var(--bad) 85%, var(--t1)); }
+
+.exam-frame .btn {
+  border: 1px solid var(--line-strong); background: var(--panel); color: var(--t1);
+  border-radius: 999px; padding: 9px 18px; font-weight: 600; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit; cursor: pointer;
+  transition: background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+}
+.exam-frame .btn:hover { background: var(--raised); }
+.exam-frame .btn:active { transform: scale(.97); }
+.exam-frame .btn:disabled { opacity: .4; cursor: default; transform: none; }
+.exam-frame .btn--primary { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.exam-frame .btn--primary:hover { background: var(--accent-fill); filter: brightness(1.06); }
+.exam-frame .btn--ghost { border-color: transparent; background: transparent; }
+.exam-frame .btn svg { width: 16px; height: 16px; flex: none; }
+
+.exam-frame .exam-body { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+
+/* ---------- Question ---------- */
+.exam-frame .question {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); display: grid;
+}
+.exam-frame .question__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 24px; border-bottom: 1px solid var(--line);
+}
+.exam-frame .question__num { font-family: var(--font-mono); font-size: 13px; letter-spacing: .04em; color: var(--t2); }
+.exam-frame .question__num b { color: var(--t1); font-weight: 600; }
+.exam-frame .question__flagged { color: var(--flag); display: inline-grid; place-items: center; }
+.exam-frame .question__flagged svg { width: 16px; height: 16px; fill: currentColor; }
+.exam-frame .question__flagged { animation: exam-flag-drop .35s var(--ease); }
+.exam-frame .question__main { padding: 28px 24px 24px; display: grid; gap: 22px; overflow: hidden; }
+.exam-frame .question__text { margin: 0; font-size: 21px; line-height: 1.4; font-weight: 500; text-wrap: balance; max-width: 60ch; }
+
+.exam-frame .options { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
+.exam-frame .option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--ground); cursor: pointer;
+  transition: border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease);
+}
+.exam-frame .option:hover { border-color: var(--line-strong); }
+.exam-frame .option:active { transform: scale(.992); }
+.exam-frame .option input { position: absolute; opacity: 0; pointer-events: none; }
+.exam-frame .option__radio {
+  width: 20px; height: 20px; border-radius: 50%; flex: none;
+  border: 2px solid var(--line-strong); display: grid; place-items: center;
+  transition: border-color .2s var(--ease);
+}
+.exam-frame .option__radio::after {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+  transform: scale(0); transition: transform .25s var(--ease);
+}
+.exam-frame .option__letter { font-family: var(--font-mono); font-weight: 600; font-size: 14px; color: var(--t2); width: 1.2em; }
+.exam-frame .option__text { font-size: 17px; line-height: 1.4; }
+.exam-frame .option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.exam-frame .option:has(input:checked) .option__radio { border-color: var(--accent); }
+.exam-frame .option:has(input:checked) .option__radio::after { transform: scale(1); }
+.exam-frame .option:has(input:checked) .option__letter { color: var(--accent-on-soft); }
+.exam-frame .option:has(input:focus-visible) { outline: 2px solid var(--active); outline-offset: 2px; }
+
+.exam-frame .question__foot {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 14px 24px; border-top: 1px solid var(--line);
+}
+.exam-frame .question__foot .spacer { flex: 1; }
+.exam-frame .btn--flag[aria-pressed="true"] { border-color: var(--flag); color: var(--flag); background: color-mix(in oklch, var(--flag) 12%, transparent); }
+.exam-frame .btn--flag[aria-pressed="true"] svg { fill: currentColor; }
+.exam-frame .btn--flag:focus-visible { outline-color: var(--flag); }
+
+/* ---------- Question navigator ---------- */
+.exam-frame .navigator {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px; display: grid; gap: 12px;
+  position: sticky; top: calc(16px + env(safe-area-inset-top, 0px));
+}
+.exam-frame .navigator__title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); margin: 0; display: flex; justify-content: space-between; }
+.exam-frame .navigator__title span { color: var(--t1); font-variant-numeric: tabular-nums; }
+.exam-frame .navigator__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+/* THE ONE CONTROL THAT OPTS OUT OF THE 44px FLOOR (App.jsx §12), and it is
+   `.is-inline` in the markup that does it. The approved design puts eight
+   cells across a phone: 37px wide at 360px, and a 44px hit area on each would
+   overlap its neighbours by seven pixels, which is a worse answer than a small
+   target — it would put a student on question 5 when they pressed 4. The cells
+   are the secondary way to move; Previous and Next are the primary one and
+   both clear the floor. */
+.exam-frame .qcell {
+  position: relative; aspect-ratio: 1; max-width: 100%; min-height: 0;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--panel);
+  font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; color: var(--t2);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  transition: background .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease), transform .2s var(--ease);
+}
+.exam-frame .qcell:hover { border-color: var(--t3); transform: translateY(-1px); }
+.exam-frame .qcell.is-answered { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.exam-frame .qcell.pop { animation: exam-pop .35s var(--ease); }
+.exam-frame .qcell.is-current { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--t1); }
+.exam-frame .qcell::after {                      /* red corner = flagged for review */
+  content: ""; position: absolute; top: -1px; right: -1px; width: 14px; height: 14px;
+  background: linear-gradient(225deg, var(--flag) 50%, transparent 50%);
+  border-top-right-radius: var(--radius-sm);
+  transform: scale(0); transform-origin: top right; transition: transform .3s var(--ease);
+}
+.exam-frame .qcell.is-flagged::after { transform: scale(1); }
+.exam-frame .qcell.is-answered.is-flagged::after { filter: drop-shadow(-1px 1px 0 var(--panel)); }
+
+@keyframes exam-pop { 40% { transform: scale(1.1); } }
+@keyframes exam-flag-drop { from { transform: translateY(-6px) rotate(-12deg); opacity: 0; } }
+@keyframes exam-rise { from { transform: translateY(10px); opacity: 0; } }
+
+/* ---------- The end-exam dialog ---------- */
+.exam-dialog {
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 0;
+  background: var(--panel); color: var(--t1); box-shadow: var(--shadow);
+  width: min(460px, calc(100vw - 32px));
+  font-family: var(--font-ui);
+}
+.exam-dialog[open] { animation: exam-dialog-in .3s var(--ease); }
+@keyframes exam-dialog-in { from { transform: translateY(8px) scale(.97); opacity: 0; } }
+.exam-dialog::backdrop { background: oklch(.1 .02 250 / .55); backdrop-filter: blur(3px); }
+.exam-dialog .dialog__body { padding: 24px; display: grid; gap: 14px; }
+.exam-dialog h2 { margin: 0; font-size: 20px; }
+.exam-dialog p { margin: 0; color: var(--t2); line-height: 1.5; }
+.exam-dialog .review-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.exam-dialog .review-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--raised); font-size: 14px; }
+.exam-dialog .review-list b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.exam-dialog .dialog__foot { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding: 14px 24px; border-top: 1px solid var(--line); }
+
+/* ---------- Result ---------- */
+.exam-frame .result { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.exam-frame .result { animation: exam-rise .45s var(--ease); }
+.exam-frame .result.is-pass { --state: var(--accent-fill); --state-ink: var(--accent-ink); }
+.exam-frame .result.is-notyet { --state: var(--t3); --state-ink: var(--t2); }
+
+.exam-frame .result__top { display: grid; gap: 10px; padding: 32px 24px 30px; }
+.exam-frame .result__big { font-size: 64px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+.exam-frame .result__head { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; text-wrap: balance; }
+.exam-frame .result__icon { width: 26px; height: 26px; flex: none; color: var(--state-ink); }
+.exam-frame .result__icon svg { width: 100%; height: 100%; display: block; }
+.exam-frame .result.is-in .result__icon { animation: exam-icon-in .5s .9s var(--ease) backwards; }
+@keyframes exam-icon-in { from { transform: scale(.4) rotate(-40deg); opacity: 0; } }
+
+.exam-frame .meter { position: relative; height: 12px; margin: 22px 0 30px; border-radius: 999px; background: var(--raised); box-shadow: inset 0 0 0 1px var(--line); }
+.exam-frame .meter__fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--state); width: 0; transition: width 1s var(--ease); }
+.exam-frame .meter__fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, transparent, oklch(1 0 0 / .35), transparent); background-size: 60% 100%; background-repeat: no-repeat; background-position: -60% 0; }
+.exam-frame .result.is-in .meter__fill::after { animation: exam-sheen 1.2s 1s var(--ease); }
+@keyframes exam-sheen { to { background-position: 160% 0; } }
+.exam-frame .mark { position: absolute; top: -6px; bottom: -6px; width: 2px; margin-left: -1px; border-radius: 2px; background: var(--t1); }
+.exam-frame .mark__icon { position: absolute; left: 50%; top: calc(100% + 4px); width: 16px; height: 16px; transform: translateX(-50%); color: var(--t2); }
+.exam-frame .mark__icon svg { width: 100%; height: 100%; display: block; }
+.exam-frame .mark--bar { background: var(--accent-ink); }
+.exam-frame .mark--bar .mark__icon { top: auto; bottom: calc(100% + 4px); color: var(--accent-ink); }
+.exam-frame .result.is-in .mark__icon { animation: exam-rise .4s 1s var(--ease) backwards; }
+
+.exam-frame .review { border-top: 1px solid var(--line); }
+.exam-frame .review summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; }
+.exam-frame .review summary::-webkit-details-marker { display: none; }
+.exam-frame .chev { width: 9px; height: 9px; border-right: 2px solid var(--t3); border-bottom: 2px solid var(--t3); transform: rotate(45deg) translateY(-2px); transition: transform .25s var(--ease); }
+.exam-frame .review[open] .chev { transform: rotate(225deg) translateY(-2px); }
+.exam-frame .result__list { list-style: none; margin: 0; padding: 4px 0 8px; }
+.exam-frame details .result__list { padding-top: 0; }
+.exam-frame .result__row { display: grid; grid-template-columns: 34px minmax(0, 1fr) 20px; gap: 12px; align-items: start; padding: 12px 24px; }
+.exam-frame .result.is-in .result__row { animation: exam-rise .4s var(--ease) backwards; animation-delay: calc(1.1s + var(--i) * 60ms); }
+/* THE ROWS INSIDE THE FOLD DO NOT RISE, and that is the fold's doing rather
+   than a taste call. A closed <details> skips its children's frames, so those
+   rows sit at the first keyframe — nothing, because the animation fills
+   `backwards` — and their animation only starts advancing once it opens.
+   Measured: with the design's delay the list was blank for the 1.1s the
+   result had already spent, and even with the delay zeroed Chromium took the
+   best part of a second to wake the subtree. The fold opening IS the motion;
+   a second one underneath it only costs the student a wait. */
+.exam-frame .result.is-in details .result__row { animation: none; }
+.exam-frame .result__row + .result__row { border-top: 1px solid var(--line); }
+.exam-frame .result__n { font-family: var(--font-mono); color: var(--t3); padding-top: 1px; }
+.exam-frame .result__q { line-height: 1.4; display: grid; gap: 6px; }
+.exam-frame .ans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.exam-frame .ans__l { font-family: var(--font-mono); font-weight: 600; }
+.exam-frame .ans--wrong { color: var(--t3); text-decoration-thickness: 1.5px; }
+.exam-frame .ans--blank { color: var(--t3); }
+.exam-frame .ans__arrow { width: 14px; height: 14px; color: var(--t3); }
+.exam-frame .ans__arrow svg { width: 100%; height: 100%; display: block; }
+.exam-frame .ans--right { font-weight: 600; color: var(--accent-ink); }
+.exam-frame .result__mark { width: 20px; height: 20px; display: block; }
+.exam-frame .result__mark svg { width: 100%; height: 100%; display: block; }
+.exam-frame .result__mark.is-right { color: var(--accent-ink); }
+.exam-frame .result__mark.is-wrong { color: var(--t3); }
+.exam-frame .result__foot { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid var(--line); }
+
+.exam-frame .exam-body.is-leaving { animation: exam-leave .3s var(--ease) forwards; }
+@keyframes exam-leave { to { opacity: 0; transform: scale(.98); } }
+
+/* The quiz row's thumbnail is NOT here. It belongs to the module screen's
+   lists, and this stylesheet is the exam's own lazy chunk — a row that only
+   gets its picture once a student has opened a quiz is a row that looks
+   broken until they do. It lives in module.css, with the rows. */
+
+/* ---------- Tablet & phone (sized by the space the exam gets) ---------- */
+@container (max-width: 900px) {
+  .exam-frame .exam-body { grid-template-columns: minmax(0, 1fr); }
+  .exam-frame .navigator { position: static; order: -1; padding: 12px; }
+  .exam-frame .navigator__grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .exam-frame .qcell { aspect-ratio: auto; height: 44px; }
+}
+
+@container (max-width: 560px) {
+  .exam-frame .exam-bar { padding: 10px 12px; gap: 10px; }
+  .exam-frame .exam-bar__name { font-size: 15px; }
+  .exam-frame .exam-timer__label { display: none; }
+  .exam-frame .exam-timer__value { font-size: 17px; }
+  .exam-frame .exam-bar .btn { padding: 7px 12px; }
+  .exam-frame .navigator { padding: 10px; gap: 8px; }
+  .exam-frame .navigator__grid { gap: 5px; }
+  .exam-frame .qcell { height: 38px; font-size: 13px; border-radius: 7px; }
+  .exam-frame .qcell::after { width: 10px; height: 10px; border-top-right-radius: 7px; }
+  .exam-frame .question__head, .exam-frame .question__foot { padding-inline: 14px; }
+  .exam-frame .question__main { padding: 20px 14px 16px; gap: 18px; }
+  .exam-frame .question__text { font-size: 18px; }
+  .exam-frame .option { padding: 13px 12px; gap: 12px; }
+  .exam-frame .option__text { font-size: 16px; }
+  .exam-frame .question__foot .btn { padding: 9px 14px; }
+  .exam-frame .btn .label-long { display: none; }
+  .exam-frame .result__top { padding: 24px 14px 22px; }
+  .exam-frame .result__big { font-size: 52px; }
+  .exam-frame .result__head { font-size: 18px; }
+  .exam-frame .result__row, .exam-frame .result__foot, .exam-frame .review summary { padding-inline: 14px; }
+  .exam-frame .result__row { grid-template-columns: 26px minmax(0, 1fr) 20px; }
+}
+
+/* Smooth Air is this app's name for the same preference, and it is a class
+   rather than a media query because a student can turn it on without changing
+   anything about their machine. Both have to stop the same motion. */
+@media (prefers-reduced-motion: reduce) {
+  .exam-frame *, .exam-frame *::before, .exam-frame *::after,
+  .exam-dialog, .exam-dialog::backdrop { transition: none !important; animation: none !important; }
+}
+.app.smooth-air .exam-frame *, .app.smooth-air .exam-frame *::before, .app.smooth-air .exam-frame *::after,
+.app.smooth-air .exam-dialog, .app.smooth-air .exam-dialog::backdrop { transition: none !important; animation: none !important; }

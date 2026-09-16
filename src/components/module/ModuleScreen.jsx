@@ -4,7 +4,6 @@ import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
-import { holdingCount } from "../../lib/retention.js";
 import { faultChapters } from "../../lib/minimums.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
@@ -33,12 +32,7 @@ export default function ModuleScreen({
   // values for the bar — the deck's lamp and this screen's lamp are the same
   // fact and must be computed from the same number.
   minimums,
-  // "6 days ago" on the Calibration row. It is its OWN progress key
-  // (pw-last-recheck), written by the re-check flow when it finishes — NOT a
-  // field on `retention`, which is what it looks like it should be. Reading it
-  // off retention returns undefined forever and the row silently loses its date.
-  lastRecheck = null,
-  retention, onInstrument,
+
   people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
   onOpenQuestion,
 }) {
@@ -97,14 +91,6 @@ export default function ModuleScreen({
     if (e.key === "End") move(btns.length - 1);
   };
 
-  // Calibration is the RIGHT answers kept in currency: `holding`. `due` is how
-  // many of those have come round. Neither is caution, and §5 forbids the two
-  // vocabularies ever meeting.
-  // §5 — Calibration counts the RIGHT answers kept in currency (`holding`).
-  // `dueCount` used to feed a separate "N to re-check" heading, which the
-  // rebuilt Library dropped: the row says what it holds and offers Start, and
-  // a second number for the same pile was the kind of restatement §7 cuts.
-  const warm = holdingCount(retention);
 
   return (
     <div className="mscreen">
@@ -176,23 +162,13 @@ export default function ModuleScreen({
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query} code={code}
-                    // §2 — the lamp, on the chapter whose quiz is below the
-                    // bar. Derived above and handed down so the Lessons tab,
-                    // the Library and the Flight Deck all light from one Set.
-                    faults={faults}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (
           <LibraryTab chapters={chapters} papers={papers} state={state}
                       sub={librarySub} query={query}
                       readerPin={readerPin} onAddPaper={onAddPaper}
-                      // §5 — Calibration is the right answers kept warm, and
-                      // it is NOT the caution pile. `warm` is everything in
-                      // holding; `due` is how much of it has come round.
-                      warm={warm}
-                      lastRecheck={lastRecheck}
                       faults={faults}
-                      onStartCalibration={() => onInstrument?.("recheck")}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "people" && (

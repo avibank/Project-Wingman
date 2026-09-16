@@ -130,7 +130,57 @@ merge them back together.
   Eight separate `recordAnswer` calls in one tick all read the same pre-render
   state, so seven were overwritten and one question of eight reached the
   caution pile — with the score and the review both perfectly correct.
-- Elapsed time, never a countdown. `npm run check:exam` is 76 assertions.
+- **The screen is a port, the model is not.** `Exam.jsx`, `exam.css` and the
+  quiz-row thumbnail come from an approved EASA-style design handed over
+  outside the repo (2026-09-16). Every size, radius and duration on that screen
+  is the design's; the token names it used are aliased onto this app's livery
+  engine at the top of `exam.css`, and every selector is scoped to
+  `.exam-frame` because the design's names — `.btn`, `.option`, `.mark`,
+  `.ans`, `.result` — already paint other surfaces here. The layout switches on
+  **container** width, so the wrapper has to stay.
+- **The clock counts DOWN now, and hands the paper in at zero.** This file used
+  to say "elapsed time, never a countdown", and `quiz.js` §1 carried the
+  argument: a countdown decides when you stop. The approved screen reverses it
+  on purpose — the paper these students sit is timed, and a student who has
+  never practised against a clock meets one for the first time in an
+  examination hall. The allowance is this file's own nominal figure, 75 seconds
+  a question. It is **not** elapsed-since-start: that was the live bug it
+  replaced, where a paper left open for two days read 202:29:37, because
+  `startedAt` is persisted with the attempt. The time left belongs to the
+  attempt and only moves while the paper is on screen.
+- **No keyboard shortcuts on the paper.** 1/2/3, F and the arrows are gone with
+  `quizKey`: on a paper you cannot unsubmit, a shortcut that answers a question
+  answers it by accident. Tab, Enter, Space and the radio group's own arrows
+  are what is left.
+- The result screen carries the review inside it — the missed questions with
+  the pick struck through and the right answer after it, and the ones you got
+  right folded away. The pass mark is **fixed at 75%** and decides pass or
+  not-yet; the student's own bar only changes the wording and adds a marker.
+- `npm run check:exam` is 141 assertions, including contrast for all six
+  liveries × three finishes × night and day. `npm run test:exam` drives the
+  screen in a real browser: 108 layouts, every control in the brief's table,
+  nine result cases against three different bars, and motion turned off.
+
+## Master Caution, and what happened to Calibration
+
+- **Master Caution lights in exactly one place**: the module card in the Flight
+  Deck launcher, and only when that module's **average** is below the student's
+  bar. Not chapter rows, not quiz rows, not the Library, not a result screen —
+  and nothing at all when the average is at or above the bar or there is no
+  data yet, rather than an unlit lamp. It reads the average because "any
+  chapter below the bar" lit a module a student was well on top of, and a lamp
+  that lights when nothing is wrong is a lamp you learn to look past. It keeps
+  its own fixed caution colour. `moduleNeedsYou` in `minimums.js` is the rule.
+- **Calibration is gone** (2026-09-16): the Library row, its sticker and date,
+  the `recheck` route, `recheckSet`, and the `pw-last-recheck` key. It was the
+  answers you already had right, come round again — a second exercise with its
+  own vocabulary, for a pile most students never opened. The piles themselves
+  are untouched: `caution` is what Put right works from and `holding` is still
+  where a right answer goes.
+- **"Put right" has no door on it today.** It was reached from the old result
+  screen's button and from nothing else, and the approved result screen has no
+  such button. The route, the drill and the caution pile all still work; one
+  button anywhere would put it back.
 
 ## Migrations
 
