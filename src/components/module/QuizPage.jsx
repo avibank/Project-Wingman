@@ -24,7 +24,7 @@ import "./lesson.css";
    is reached from, a retake that does not move the needle, and the place
    written on every question so the Flight Deck can offer to put you back. */
 export default function QuizPage({
-  minimums, module: mod, chapter, state, onBack, onScore, onAnswers, onRun,
+  minimums, module: mod, chapter, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
 }) {
   const run = state?.run?.[chapter.id] || null;
   const score = state?.quiz?.[chapter.id];
@@ -50,6 +50,10 @@ export default function QuizPage({
                arrives carrying subjects this reads as the subject. */
             eyebrow={[mod?.name, chapter.title].filter(Boolean).join(" · ")}
             questions={chapter.questions}
+            // The lessons, so going through the paper can name where a missed
+            // question came from rather than printing its id.
+            lessons={chapter.lessons || []}
+            onOpenLesson={onOpenLesson}
             // Where you were, so leaving halfway and coming back returns you to
             // the question rather than to the first one.
             resumeAt={run?.at || 0}

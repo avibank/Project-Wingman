@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   newAttempt, answer, flag, goTo, next as nextQ, prev as prevQ, submit,
-  score, navigator as navRow, seedOf, saveAttempt, loadAttempt, clearAttempt,
+  score, review, weakLessons, retakeWrong, scoreLine,
+  navigator as navRow, seedOf, saveAttempt, loadAttempt, clearAttempt,
   passAt, answeredCount, flagged, unanswered, tick, timeLeft, clock,
   SECONDS_LOW, LABELS,
 } from "../../lib/quiz.js";
 import { shuffleOptions } from "../../lib/retention.js";
 import { PASS_PCT } from "../../lib/minimums.js";
 import "./exam.css";
+/* Going through the paper is the drill's stylesheet, not the exam's: it is the
+   same screen the re-check and put-right flows draw, and the two should not
+   drift apart because one of them was ported. */
+import "./quiz.css";
 
 /* =============================================================================
    THE PAPER.
@@ -93,9 +98,15 @@ const IconOn = () => (
 );
 
 export default function Exam({
-  title, eyebrow, questions, quizId, resumeAt = 0,
-  minimums = PASS_PCT, onProgress, onAnswers, onDone,
+  title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
+  minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
 }) {
+  /* A lesson id is not a name. Without this, "where these came from" reads as
+     a row of ids, which is a worse answer than no list at all. */
+  const lessonName = useCallback(
+    (id2) => lessons.find((l) => l.id === id2)?.title || "That lesson",
+    [lessons],
+  );
   /* A SITTING IS A FIXED SET, latched at mount. A set derived from a list that
      changes underneath an index makes the paper skip questions and end early. */
   const [set] = useState(questions);
@@ -116,7 +127,7 @@ export default function Exam({
     }
     return newAttempt({ id, questions });
   });
-  const [phase, setPhase] = useState("paper");     // paper | done
+  const [phase, setPhase] = useState("paper");     // paper | done | review | retake
   const [leaving, setLeaving] = useState(false);
 
   const rootRef = useRef(null);
@@ -269,6 +280,146 @@ export default function Exam({
   };
 
   if (!q) return null;
+
+  /* ------------------------------------------------------- going through it
+     THE TEACHING MOMENT, AND IT IS ITS OWN SCREEN. The approved result screen
+     states the score and corrects every miss in a line — pick struck through,
+     arrow, right answer — and that is as much as it will hold without burying
+     the one number the student came for. The explanation, the lesson each miss
+     came from, and a paper of only the ones they missed are all a step further
+     in, behind one button on the result's footer.
+
+     Kept in the language the drill's screens still speak, because that is what
+     it shares a stylesheet with; the exam screen's own design stops at the
+     result. */
+  if (phase === "review") {
+    const s = score(attempt, quiz);
+    const wrong = review(attempt, quiz);
+    const weak = weakLessons(attempt, quiz);
+    const missed = new Set(s.wrong);
+
+    return (
+      <div className="quiz" ref={rootRef}>
+        <div className="quiz-head">
+          <span className="quiz-where">{title}</span>
+          <span className="quiz-name">Going through it</span>
+          <span className="quiz-count">{scoreLine(s)}</span>
+          <button type="button" className="quiz-leave" onClick={() => setPhase("done")}>Back</button>
+        </div>
+
+        <div className="quiz-body">
+          <div className="nav nav-inline" role="list" aria-label="Every question">
+            {navRow(attempt, s.marks).map((n) => (
+              <span key={n.index} className="nav-sq" role="listitem"
+                    data-mark={n.mark} data-flag={n.flagged ? "1" : undefined}>
+                {n.n}
+              </span>
+            ))}
+          </div>
+
+          {/* WHICH LESSONS TO GO BACK TO, before the questions themselves. A
+              student who missed three questions does not need three
+              explanations, they need the one lesson all three came from. The
+              join is on lessonId and never on resemblance. */}
+          {weak.length > 0 && onOpenLesson && (
+            <section className="q-weak">
+              <h3 className="q-n">Where these came from</h3>
+              {weak.map((w) => (
+                <button key={w.lessonId} type="button" className="q-weak-row"
+                        onClick={() => onOpenLesson(w.lessonId)}>
+                  <b>{lessonName(w.lessonId)}</b>
+                  <em>{w.missed} {w.missed === 1 ? "question" : "questions"} from here</em>
+                </button>
+              ))}
+            </section>
+          )}
+
+          {/* EVERY QUESTION, NOT ONLY THE MISSES. Showing the wrong ones alone
+              throws away the other half of what a student wants to know: which
+              of the ones they got right were actually guesses. */}
+          {!wrong.length ? (
+            <p className="q-rev-line">
+              Every one of them right. The next chapter is where this goes now.
+            </p>
+          ) : (
+            <div className="q-review">
+              {wrong.map((r) => (
+                <article className="q-rev" key={r.index} data-mark="wrong">
+                  <p className="q-rev-q"><b>{r.index + 1}.</b> {r.question}</p>
+                  <p className="q-rev-line">
+                    <span className="q-rev-yours">
+                      {r.chose === null ? "You left this one blank" : `You said ${r.choseLabel} — ${r.chose}`}
+                    </span>
+                  </p>
+                  <p className="q-rev-line q-rev-right">{r.correctLabel} — {r.correct}</p>
+                  {r.explain && <p className="q-rev-explain">{r.explain}</p>}
+                  {r.lessonId && onOpenLesson && (
+                    <button type="button" className="q-rev-lesson"
+                            onClick={() => onOpenLesson(r.lessonId)}>
+                      Back to the lesson this came from
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+
+          {s.right > 0 && (
+            <details className="q-got">
+              <summary>The {s.right} you got right</summary>
+              <div className="q-review">
+                {paper.map((q2, i) => (missed.has(i) ? null : (
+                  <article className="q-rev" key={q2.id || i} data-mark="right">
+                    <p className="q-rev-q"><b>{i + 1}.</b> {q2.question}</p>
+                    <p className="q-rev-line q-rev-right">
+                      {LABELS[attempt.answers[i]]} — {q2.options[attempt.answers[i]]}
+                    </p>
+                    {q2.explain && <p className="q-rev-explain">{q2.explain}</p>}
+                  </article>
+                )))}
+              </div>
+            </details>
+          )}
+        </div>
+
+        <div className="quiz-foot">
+          {/* Sit only the ones you missed, as their own paper. */}
+          {wrong.length > 0 && (
+            <button type="button" className="q-btn" onClick={() => setPhase("retake")}>
+              Just the {wrong.length} I missed
+            </button>
+          )}
+          <div className="q-move">
+            <button type="button" className="q-btn" data-primary="" onClick={() => setPhase("done")}>Done</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* Only the misses, as a separate sitting on a separate paper, so it cannot
+     overwrite the score of the one already sat: the first attempt is the
+     record and a drill is not a retake of it. It is handed no onDone and no
+     onAnswers for the same reason, and no way out of its own — the module's
+     back link is above it, where the way out always is. */
+  if (phase === "retake") {
+    const only = retakeWrong(attempt, quiz);
+    if (!only) { setPhase("review"); return null; }
+    return (
+      <div ref={rootRef}>
+        <Exam
+          key={`${id}.retake`}
+          quizId={`${id}.retake`}
+          title={`${title} — the ones you missed`}
+          eyebrow={eyebrow}
+          questions={only.quiz.questions}
+          lessons={lessons}
+          minimums={minimums}
+          onOpenLesson={onOpenLesson}
+        />
+      </div>
+    );
+  }
 
   const answered = answeredCount(attempt);
   const blanks = unanswered(attempt).length;
@@ -453,6 +604,13 @@ export default function Exam({
             )}
 
             <div className="result__foot">
+              {/* ONE STEP FURTHER IN. The rows above correct every miss in a
+                  line; this is where the explanation, the lesson it came from
+                  and a paper of only the misses live, so the score screen
+                  keeps its shape and the teaching still has somewhere to be. */}
+              <button className="btn" type="button" onClick={() => setPhase("review")}>
+                Go through the paper
+              </button>
               <button className={`btn ${result.passed ? "" : "btn--primary"}`} type="button" onClick={again}>
                 {result.passed ? "Retake" : "Try again"}
               </button>

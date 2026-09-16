@@ -18,7 +18,7 @@
    ========================================================================= */
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
-import { seedOf, allowanceFor } from "../src/lib/quiz.js";
+import { seedOf, allowanceFor, clock } from "../src/lib/quiz.js";
 import { shuffleOptions } from "../src/lib/retention.js";
 import { lightOverride } from "../src/lib/finishEngine.js";
 import { loadContent } from "../src/lib/contentLoader.js";
@@ -285,8 +285,22 @@ try {
       && (await page.locator(".result__head").textContent()).length > 4);
     expect("the clock goes with the paper", (await page.locator(".exam-timer").count()) === 0);
     expect("and so does End exam", (await page.locator(".exam-bar .btn").count()) === 0);
-    const foot = page.locator(".result__foot .btn");
+    const foot = page.locator(".result__foot .btn", { hasText: /Try again|Retake/ });
     expect("a paper under the pass mark offers Try again", (await foot.textContent()) === "Try again");
+
+    /* One step further in: the explanation, the lesson a miss came from, and a
+       paper of only the misses. It is a screen of its own behind one button,
+       so the result keeps the shape the design gave it. */
+    await page.locator(".result__foot .btn", { hasText: "Go through the paper" }).click();
+    await settle(400);
+    expect("Go through the paper opens it", (await page.locator(".quiz-name").textContent()) === "Going through it");
+    expect("it explains what was missed", (await page.locator(".q-rev-explain").count()) > 0);
+    expect("names the lesson each miss came from", (await page.locator(".q-weak-row").count()) > 0);
+    expect("and offers the way back to that lesson", (await page.locator(".q-rev-lesson").count()) > 0);
+    await page.locator(".quiz-head .quiz-leave").click();
+    await settle(300);
+    expect("Back returns to the result", (await page.locator(".result__big").count()) === 1);
+
     await foot.click();
     await settle(400);
     expect("Try again starts a fresh paper",
@@ -343,7 +357,8 @@ try {
     await settledResult(page, pct).catch(() => {});
     expect(`${at} counts up to ${pct}%`, (await page.locator(".result__big").textContent()) === `${pct}%`);
     expect(`${at} says "${c.says}"`, (await page.locator(".result__head").textContent()).includes(c.says));
-    expect(`${at} offers ${c.foot}`, (await page.locator(".result__foot .btn").textContent()) === c.foot);
+    expect(`${at} offers ${c.foot}, beside the way into the paper`,
+      (await page.locator(".result__foot .btn").allTextContents()).join("|") === `Go through the paper|${c.foot}`);
     expect(`${at} fills the line to ${pct}%`,
       Math.abs(await page.locator(".meter__fill").evaluate((el, w) => {
         const track = el.parentElement.getBoundingClientRect().width;
@@ -390,6 +405,24 @@ try {
     expect(`${at} leaves every missed row on screen when the animation is over`, faded === 0);
     if (c.right === CASES[0].right && c.bar === 75) {
       await page.screenshot({ path: `${SHOTS}/result-${c.right}-bar${c.bar}.png` });
+      /* A PAPER OF ONLY THE MISSES, and it is a drill rather than a second
+         sitting: its own quiz id, so it cannot write a score over the one
+         already recorded, and its own full clock. */
+      await page.locator(".result__foot .btn", { hasText: "Go through the paper" }).click();
+      await page.locator(".quiz-name").waitFor();
+      const misses = await page.locator('.q-rev[data-mark="wrong"]').count();
+      await page.locator(".quiz-foot .q-btn", { hasText: "Just the" }).click();
+      await page.locator(".exam-frame .question__text").waitFor({ timeout: 8000 });
+      await page.waitForTimeout(300);
+      expect(`just the ${misses} missed is a paper of exactly those`,
+        (await page.locator(".qcell").count()) === misses
+        && (await page.locator(".exam-bar__name").textContent()).includes("the ones you missed"));
+      /* Its own allowance, for its own length: three questions is three
+         questions' worth of clock, not the eight-question paper's. */
+      expect(`with a clock of its own length (${clock(allowanceFor(misses))})`,
+        (await page.locator(".exam-timer__value").textContent()) === clock(allowanceFor(misses)));
+      expect("and the module's back link still above it", (await page.locator(".up").count()) === 1);
+      await page.screenshot({ path: `${SHOTS}/review-and-retake.png` });
     }
     await page.close();
   }

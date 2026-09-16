@@ -152,11 +152,19 @@ merge them back together.
   `quizKey`: on a paper you cannot unsubmit, a shortcut that answers a question
   answers it by accident. Tab, Enter, Space and the radio group's own arrows
   are what is left.
-- The result screen carries the review inside it — the missed questions with
-  the pick struck through and the right answer after it, and the ones you got
-  right folded away. The pass mark is **fixed at 75%** and decides pass or
+- The result screen carries the correction inside it — the missed questions
+  with the pick struck through and the right answer after it, and the ones you
+  got right folded away. The pass mark is **fixed at 75%** and decides pass or
   not-yet; the student's own bar only changes the wording and adds a marker.
-- `npm run check:exam` is 141 assertions, including contrast for all six
+- **"Going through the paper" is one button further in**, and it is the drill's
+  screen rather than the exam's: the explanation for every question, the lesson
+  each miss came from (joined on `lessonId`, never on resemblance), and a paper
+  of only the misses. The port dropped it, because the approved result screen
+  lists no such control; it is back on request, as a screen of its own so the
+  score keeps the shape the design gave it. A retake of the misses has its own
+  quiz id and is handed no `onDone` — it is a drill, and must never write a
+  score over the sitting it came from.
+- `npm run check:exam` is 145 assertions, including contrast for all six
   liveries × three finishes × night and day. `npm run test:exam` drives the
   screen in a real browser: 108 layouts, every control in the brief's table,
   nine result cases against three different bars, and motion turned off.

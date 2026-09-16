@@ -409,9 +409,36 @@ console.log("\nthe approved screen");
      /aria-label=\{`\$\{result\.pct\}%\. Pass mark \$\{PASS_PCT\}%\. Your bar \$\{result\.bar\}%\.`\}/.test(exam)
      && /title="Pass mark"/.test(exam) && /title="Your bar"/.test(exam));
 
-  /* What the old result screen said and this one does not. */
-  ok("port", "no stamp, no x of N, no chips, no headings",
-     !/qr-stamp|scoreLine\(/.test(exam) && !/right of/.test(exam) && !/qr-move|qr-note/.test(exam));
+  /* What the old result screen said and this one does not — asked of the
+     result's own markup, because the screen behind it says several of these
+     things on purpose. */
+  const resultBlock = exam.split("{result && (")[1]?.split("</section>")[0] || "";
+  ok("port", "no stamp, no x of N, no chips and no headings on the result",
+     resultBlock.length > 400
+     && !/qr-stamp|scoreLine\(|qr-move|qr-note/.test(resultBlock)
+     && !/of \{result\.total\}|right of/.test(resultBlock));
+
+  /* GOING THROUGH THE PAPER IS ONE STEP FURTHER IN, not a thing the result
+     screen grew. The rows above it correct every miss in a line; the
+     explanation, the lesson a miss came from and a paper of only the misses
+     are behind a single button, so the score keeps the shape the design gave
+     it and the teaching still has somewhere to be. */
+  ok("port", "the result offers a way into the paper, and it is not the primary",
+     /<button className="btn" type="button" onClick=\{\(\) => setPhase\("review"\)\}>\s*\n\s*Go through the paper/.test(exam));
+  /* The explanation has to be on the MISSED question, which is the one the
+     student came back for — the same class also appears under the fold, so a
+     looser test passed while the misses had lost theirs. */
+  ok("port", "going through it explains what was missed, and joins back to the lesson by id",
+     /phase === "review"/.test(exam)
+     && /\{r\.explain && <p className="q-rev-explain">\{r\.explain\}<\/p>\}/.test(exam)
+     && /onOpenLesson\(r\.lessonId\)/.test(exam) && /weakLessons\(attempt, quiz\)/.test(exam));
+  ok("port", "and offers the misses as their own paper",
+     /Just the \{wrong\.length\} I missed/.test(exam) && /retakeWrong\(attempt, quiz\)/.test(exam));
+  /* A retake of the misses is a drill, not a second sitting of the paper: it
+     must not be able to write a score over the one already recorded. */
+  ok("port", "which cannot overwrite the score of the paper it came from",
+     /quizId=\{`\$\{id\}\.retake`\}/.test(exam)
+     && !/onDone=|onAnswers=|onProgress=/.test(exam.split('phase === "retake"')[1] || ""));
   ok("port", "and the quiz opens on the paper rather than on a cover",
      !/questions · pass mark/.test(page) && !/Back to question/.test(page)
      && !/nextAfterQuiz|nextLabel/.test(page));
