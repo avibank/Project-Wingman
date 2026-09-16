@@ -1,10 +1,12 @@
 /* =============================================================================
    THE RUNNER.
    -----------------------------------------------------------------------------
-   Playwright's own test runner hangs in this environment — no output at all,
-   for minutes, with browsers that launch fine and a dev server already
-   answering 200. The library underneath it works perfectly, so the suite drives
-   that directly and brings its own three-function runner.
+   Written when Playwright's own test runner hung in this environment — no
+   output at all, for minutes, with browsers that launched fine and a dev server
+   already answering 200. The cause was 1.49's test runner on Node 24, which
+   never got past loading an ESM test file; 1.63 fixed it (2026-09-15). The
+   suite still drives the library directly with its own three-function runner,
+   which is what it was built and proven on.
 
    What is kept, because it is what the brief actually asks for: real Chromium
    and real WebKit, real viewports at all three breakpoints, real PointerEvents

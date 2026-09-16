@@ -4,8 +4,7 @@
    The brief's check, run rather than eyeballed: six liveries × night and day
    × 1920 / 1512 / 1024 / 430, and at each the module, a squadron chat and the
    right seat — on a phone the rail, the list and the thread as well. Driven
-   through the Playwright library, which works here, where Playwright's own
-   runner does not.
+   through the Playwright library, like the harness's other runners.
 
      npm run harness, then:  npm run test:rr
      RR_SHOTS=all keeps a screenshot of every state rather than a sample.

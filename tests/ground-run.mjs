@@ -2,9 +2,9 @@
    The Back on the ground specs, driven through the Playwright library.
    -----------------------------------------------------------------------------
    tests/ground.spec.js is the pack's form of these four checks, for
-   `npx playwright test`. Playwright's own test runner hangs in this environment
-   with no output at all — tests/harness/run.mjs records the same thing — so
-   this runs the identical audits through the library, which works.
+   `npx playwright test`; this runs the identical audits through the Playwright
+   library. It was written while the test runner hung here — 1.49 never got
+   past loading an ESM spec on Node 24 — and 1.63 fixed that, so both work.
 
      npm run dev, then:  BOG_BASE=http://localhost:5173 npm run test:ground
    ========================================================================= */
