@@ -5,7 +5,7 @@ import { setRasterFocus } from "../../../lib/rasterBudget.js";
 import { fileHref, storedText } from "../../../lib/papers.js";
 import { LIVERIES, deckVars, DEFAULT_LIVERY } from "../../../lib/liveryEngine.js";
 import { mountWM } from "./part1.js";
-import { mountIsland } from "./part2.js";
+import { fitFor, mountIsland } from "./part2.js";
 import { mountToolbar } from "./part3.js";
 import { mountPanel } from "./part4.js";
 import { mountNotes } from "./part5.js";
@@ -42,17 +42,23 @@ import "./additions.css";
 export const warm = () => warmWorker();
 
 /* reader.css: `.sheetpg { width: var(--pw); max-width: calc(100% - 210px) }`,
-   and applyPage() writes `--pw: 720 * zoom/100`. Restated here because the
-   raster has to be sized before it is drawn — but only as a first guess: the
-   page's real width is measured once it is on screen and the measurement
-   wins, so a change to either value in the stylesheet corrects itself on the
-   next frame rather than drifting. */
+   and this file writes `--pw: 720 * zoom/100` onto the reader's root, from the
+   zoom the island reports. Restated here because the raster has to be sized
+   before it is drawn — but only as a first guess: the page's real width is
+   measured once it is on screen and the measurement wins, so a change to
+   either value in the stylesheet corrects itself on the next frame rather
+   than drifting. */
 const BASE_W = 720;
 const CLEARS = 210;
 const PAGE_GAP = 22;              // `.sheetpg { margin: 0 auto 22px }`
 const WINDOW = 2;                 // the page in view plus two either side
 const GRID = 40;                  // the page selector's reach, either way
 const POLL_MS = 60_000;
+
+/* The room a page has to fit inside, off the stage's own box. One definition,
+   read by the island through ctx.room() and by the opening fit below: a fit
+   worked out against two different rooms is two different fits. */
+const roomOf = (w, h) => ({ w: w - CLEARS, h: h - 96 });
 
 /* A livery's accent, through the app's own engine rather than a second table
    of colours. `--active` is the accent token every other screen paints with. */
@@ -100,7 +106,12 @@ export default function ReaderV6({
   const [rot, setRot] = useState(view0.rot || 0);
   const [page, setPage] = useState(() => Number(read(`${key}-page`, 1)) || 1);
   const [stageW, setStageW] = useState(0);
+  const [stageH, setStageH] = useState(0);
   const [measured, setMeasured] = useState(0);
+  /* Has the island said what it is showing yet? Until it has, the shell works
+     the fit out for itself — see `fitZ`. A ref, because nothing needs to
+     re-render when the answer changes: the view that arrives with it does. */
+  const told = useRef(false);
   const [bookmarks, setBookmarks] = useState(() => readJSON(`${key}-bm`, []));
 
   /* WHY THE READER IS PORTALLED, AND WHY TO `.app` RATHER THAN THE BODY.
@@ -218,22 +229,65 @@ export default function ReaderV6({
      it does not any more. */
   useEffect(() => {
     const el = stageRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    if (!el) return undefined;
+    /* READ IT HERE, NOT ONLY WHEN THE OBSERVER GETS ROUND TO IT. The paper's
+       own effect hands over the manifest's page sizes synchronously when they
+       are already in hand, so React can have pages on screen before the first
+       observer callback is delivered — and a page drawn before the stage has
+       been measured is a page drawn at a width nobody has worked out yet. It
+       cost a whole fit: 720px on screen, then the shrink. The observer is
+       still what catches every later change, including a pane that starts at
+       0x0 and is given its size afterwards. */
+    setStageW(el.clientWidth);
+    setStageH(el.clientHeight);
+    if (typeof ResizeObserver === "undefined") return undefined;
     const ro = new ResizeObserver(() => {
       setStageW(el.clientWidth);
-      const first = el.querySelector(".sheetpg");
-      if (first) setMeasured(first.getBoundingClientRect().width);
+      setStageH(el.clientHeight);
       store.current?.relayout();
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  /* AND THE PAGE, WHICH THAT OBSERVER NEVER SEES. A page changing width does
+     not resize the stage — the stage is the scroll box and it stays the size
+     of the window — so the page was only ever measured when the window moved.
+     One fire while the pages were still at the stylesheet's 720px latched that
+     number for good: the spacers went on holding 954px slots for pages that
+     had become 823, and the document lost 654px as you scrolled while the
+     scrollbar jumped under your hand (measured). Every zoom is that same case,
+     because the stage does not move for one either. Watch the page itself, and
+     the last fire of a width animation is the truth. */
+  useEffect(() => {
+    const el = stageRef.current?.querySelector(".sheetpg");
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(() => setMeasured(el.getBoundingClientRect().width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [page, sizes]);
+
+  /* THE OPENING FIT, BEFORE THERE IS AN ISLAND TO SAY IT. The chrome mounts on
+     [total, model], and `model` is the text sidecar that the pages deliberately
+     do not wait for — so the island applied the fit three hundred milliseconds
+     after the first pages were already on screen at the stylesheet's 720px,
+     and they shrank under the student while the document got shorter beneath
+     them (measured: drawn at 1.3s, still moving at 2.6s). This is the island's
+     own arithmetic, imported rather than copied, against the room the island
+     will measure. It stops the moment the island reports a view, and after
+     that the island is the only thing that decides a zoom. */
+  const fitZ = useMemo(() => {
+    if (view0.fit === false || !sizes.length || !stageW || !stageH) return null;
+    const box = sizes[page - 1] || sizes[0];
+    return fitFor(roomOf(stageW, stageH), box && box.w ? box.h / box.w : 0, rot);
+  }, [sizes, stageW, stageH, rot, page, view0.fit]);
+  const zoomNow = !told.current && fitZ ? fitZ : zoom;
+
   /* What the stylesheet is actually going to make a page, restated so the
      first raster is drawn at roughly the right size — and then replaced by the
      measurement, which is the authority. Change either value in reader.css and
      this corrects itself on the next frame rather than drifting. */
-  const guess = Math.max(240, Math.min(BASE_W * zoom / 100, (stageW || BASE_W + CLEARS) - CLEARS));
+  const guess = Math.max(240, Math.min(BASE_W * zoomNow / 100, (stageW || BASE_W + CLEARS) - CLEARS));
   const pageW = measured > 1 ? measured : guess;
   const scale = sizes[0] ? pageW / sizes[0].w : 1;
 
@@ -391,6 +445,7 @@ export default function ReaderV6({
         onPlace?.(n);
       },
       onView(z, f, r) {
+        told.current = true;
         setZoom(z); setRot(r);
         write(`${key}-view`, JSON.stringify({ zoom: z, fit: f, rot: r }));
         store.current?.setRotation(r);
@@ -430,9 +485,7 @@ export default function ReaderV6({
       },
       room: () => {
         const el = document.querySelector("#stage");
-        return el
-          ? { w: el.clientWidth - CLEARS, h: el.clientHeight - 96 }
-          : { w: 720, h: 900 };
+        return el ? roomOf(el.clientWidth, el.clientHeight) : { w: 720, h: 900 };
       },
       /* SEARCH THE PAPER, not only the marks on it. The panel's box says
          "Search the paper, a mark, or a name" and searched one of the three,
@@ -640,9 +693,13 @@ export default function ReaderV6({
       data-rail="on"
       data-side="right"
       data-pan="1"
+      /* THE WIDTH EVERY PAGE IS DRAWN AT. The island decides the zoom and
+         reports it through ctx.onView; this paints it. One writer of `--pw`,
+         so a page is never drawn at a width it is about to lose. */
+      style={{ "--pw": `${Math.round(BASE_W * zoomNow / 100)}px` }}
       /* Once the page is bigger than the room it has, the stage scrolls
          sideways rather than pretending the zoom did nothing. */
-      data-over={zoom > 100 ? "1" : undefined}
+      data-over={zoomNow > 100 ? "1" : undefined}
     >
       {/* The way back to the library. reader.html has this as a div, because
           the demo had nowhere to go; a button with the same class takes the

@@ -455,6 +455,58 @@ that outlives a chrome has been ported; what is left describes v5's own
 furniture — the rack, the scrubber, the dock, the four corners — and there is
 nothing left for it to describe. Its header says so.
 
+### Two bugs a newer browser stopped hiding
+
+Upgrading Playwright to 1.63 — for the runner hang in Deviation 2 — turned two
+reader tests red that had been green the week before: the page came out
+*narrower* after a zoom-in (691px, where it had been 720), and the document
+lost 654px of its length as you scrolled it (13489px, then 12835px). Nothing in
+the reader had changed. Checked out at the last commit the old browser had
+passed, on the new one, both failed the same way, so it was not the commits
+since either. Recorded frame by frame on the laptop surface:
+
+    1307  React draws pages 1-3 at the stylesheet's 720px
+    1637  the island mounts, works out the fit, writes --pw: 619px
+    1741  the pages start shrinking
+    2609  they stop, 1.3 seconds after the first page appeared
+
+The island is what decides a zoom, and it is not mounted until `model` — the
+paper's text sidecar — has loaded, which is the one thing the pages
+deliberately do not wait for. So a paper opened at 720px and then shrank to its
+fit width under the student, and while it shrank the document got shorter,
+because the spacers standing in for the pages off screen had been sized for the
+width that was going away. The old browser rastered slowly enough that all of
+it was over before the test looked.
+
+The second bug was underneath the first. The shell measured a page's width with
+a ResizeObserver on the **stage** — and the stage is the scroll box: it is the
+size of the window and does not move when a page changes width. So a page was
+measured only when the window moved. One fire while the pages were still at
+720px latched that number for good, and the spacers went on holding 954px slots
+for pages that had become 823. Every zoom is that same case.
+
+Both are fixed where they happen. The fit is arithmetic now — `fitFor`,
+exported from part2 — so the shell can work the opening fit out with the
+island's own function and paint `--pw` itself, while the island goes on
+deciding the zoom and reporting it: one writer of the width, and a page is
+never drawn at a width it is about to lose. The measurement watches a page
+instead of the stage.
+
+One more turn of the same screw, found by the suite rather than by reasoning:
+a fit cannot be worked out until the stage has been measured, and the stage was
+measured by a ResizeObserver whose first callback can arrive *after* React
+already has pages on screen — the manifest's page sizes are handed over
+synchronously when the paper is holding them. Run on its own, the zoom test
+passed; run in the full suite, with a warm manifest, it failed exactly as
+before. The stage is read at mount now, in the same pass that starts the
+observer, so the two cannot be ordered the wrong way round.
+
+Measured afterwards: the first page is drawn at 619px in the frame it appears,
+with no width animation at all, and the scroll height is 11656px at the first
+frame and 11656px after scrolling. The suite is 68 passing, 0 failing, where
+the upgrade found 65 and 3. `check:paper` holds all three rules, and each was
+proved by planting its bug.
+
 ### Still to do
 
 - **Section 4's table is done.** Marks, ink, notes, the tray and its settings,
@@ -896,6 +948,9 @@ real Pencil tap is still unverified** — see MANUAL-TESTS U3.
    *library* directly and brings a small runner (`tests/harness/run.mjs`). Real
    Chromium, real WebKit, real viewports, real pointer events, real network
    interception. Lost: the HTML report, retries, trace viewer.
+   *Later, 2026-09-15:* the cause was Playwright 1.49's test runner on Node 24,
+   which never got past loading an ESM test file. 1.63 fixes it; this suite
+   still drives the library.
 
 3. **Visibility keeps the existing four rings** (`solo · wingman · formation ·
    module`) rather than §5.1's three. They are already enforced in SQL and

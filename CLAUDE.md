@@ -265,6 +265,17 @@ reader does can damage the paper. Module 1 only for now, behind
   would be the app editing their notes. Eight names, stored as names; what a
   name looks like is a CSS decision. Graphite becomes chalk under the night
   light, because a pencil is defined by being darker than paper.
+- **The page's width has one writer.** The island decides a zoom and reports
+  it through `ctx.onView`; `ReaderV6` paints `--pw` and works the *opening*
+  fit out with the island's own `fitFor`, because the island is not mounted
+  until the paper's text sidecar has loaded and the pages are on screen well
+  before that. While both wrote it, every paper opened at the stylesheet's
+  720px and shrank to its fit 300ms later, with the document getting shorter
+  as it went — the spacers standing in for the pages off screen had been sized
+  for the width that was going away. The measurement that feeds those spacers
+  watches a **page**, not the stage: the stage is the scroll box and does not
+  move when a page changes width, so a single fire at the wrong moment used to
+  latch a width for good. `check:paper` holds both.
 - The rail carries ten tools **two abreast**. Every button in this app is at
   least 44px on its shortest side (§12, enforced globally in App.jsx), so one
   column of ten is 659px of a 720px window. Do not shrink the buttons.

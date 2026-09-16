@@ -889,6 +889,42 @@ console.log("\nthe view");
      /--ink-0:#080C11/.test(css) && /--ink-1:#0E141B/.test(css)
      && /\.rdr\[data-look="light"\]\{/.test(css)
      && /linear-gradient\(#F2F5F8,#E7ECF1\)/.test(css));
+
+  /* ONE WRITER OF `--pw`, AND A FIT WORKED OUT BEFORE THE FIRST PAGE IS DRAWN.
+     The island is not mounted until the paper's text sidecar has loaded, and
+     the pages are on screen well before that — so while the island wrote the
+     width too, the first pages were drawn at the stylesheet's 720px and shrank
+     to the fit three hundred milliseconds later, with the spacers still
+     holding slots for the width they had lost. Measured on the laptop surface:
+     13489px of document at the first frame and 12835px once it settled, and a
+     zoom-in that made the page narrower than it had been. The shell paints
+     `--pw` from the zoom the island reports, and works the opening fit out
+     with the island's own fitFor until there is an island to report one. */
+  const shell = read("src/components/paper/v6/ReaderV6.jsx");
+  ok("view", "a page is drawn at the width it keeps, not one it is about to lose",
+     !/setProperty\('--pw'/.test(read("src/components/paper/v6/part2.js"))
+     && /"--pw":/.test(shell) && /fitFor\(/.test(shell));
+
+  /* AND THE PAGE IS WHAT GETS MEASURED. The stage is the scroll box: it is the
+     size of the window and never moves when a page changes width, so an
+     observer on the stage alone measured a page once — at whatever width it
+     happened to have that moment — and every spacer kept that number through
+     every zoom afterwards. */
+  ok("view", "the width a spacer stands in for is measured off a page, not the stage",
+     /querySelector\("\.sheetpg"\)[\s\S]{0,300}new ResizeObserver/.test(shell)
+     && /setMeasured\(el\.getBoundingClientRect\(\)\.width\)/.test(shell));
+
+  /* AND THE STAGE IS MEASURED AT MOUNT, not only when its observer gets round
+     to it. The manifest's page sizes are handed over synchronously when the
+     paper already has them, so React can have pages on screen before the first
+     observer callback is delivered — and a page drawn before the stage has
+     been measured is drawn at a width nobody has worked out yet. Which is the
+     whole fit again: it came back in the full suite while passing on its own,
+     because a warm manifest arrives sooner. */
+  const stageSeed = shell.indexOf("setStageW(el.clientWidth)");
+  const stageRO = shell.indexOf("new ResizeObserver(() => {");
+  ok("view", "the stage is measured when the reader mounts, not only when its observer fires",
+     stageSeed > 0 && stageRO > 0 && stageSeed < stageRO);
 }
 
 /* ---- find · the two options every find bar has -------------------------- */

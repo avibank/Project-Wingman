@@ -52,6 +52,25 @@
  *   and "hold a card" is a hold on an iPad, not only a hover on a mouse
  */
 
+/* THE FIT, AS ARITHMETIC AND NOTHING ELSE, so the shell can ask for it too.
+   This island is not mounted until the paper's text sidecar has loaded, and
+   the pages are on screen well before that — so the shell works the opening
+   fit out with this function and draws the first page at it, rather than at
+   the stylesheet's 720px and then shrinking it under the student. Exported
+   rather than copied: two copies of this sum are two fits, and the one the
+   student got would be whichever ran last. */
+export function fitFor(room, aspect, rot){
+  const a=Number.isFinite(aspect)&&aspect>0?aspect:1010/720;
+  const q=((rot%360)+360)%360, turned=q===90||q===270;
+  const tall=turned?1:a, wide=turned?a:1;
+  const byH=room.h>0?room.h/(720*tall)*100:100;
+  const byW=room.w>0?room.w/(720*wide)*100:100;
+  const z=Math.round(Math.min(220,Math.max(60,Math.min(byH,byW))));
+  /* Never NaN out of here. A zoom that is not a number is a page that is not
+     a size, and every mark on it loses its place. */
+  return Number.isFinite(z)?z:100;
+}
+
 export function mountIsland(ctx){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const R=$('#rdr'),ISL=$('#isl'),CNT=$('#cnt'),DOT=$('#dot'),MSG=$('#msg'),
@@ -194,8 +213,17 @@ function applyWarm(){
   R.style.setProperty('--paper',mix('#FFFFFF','#F3DCAE',t));
   R.style.setProperty('--pink', mix('#262B32','#3A2E1C',t));
 }
+/* THE SHELL PAINTS THE WIDTH, THIS ISLAND DECIDES IT. `--pw` was written here
+   as well, and this island does not exist until the paper's text sidecar has
+   loaded — three hundred milliseconds after React had drawn the first pages at
+   the stylesheet's 720px, measured. They shrank under the student, and the
+   document got shorter while they did, because the spacers standing in for the
+   pages off screen had been sized for a width that was about to change. React
+   writes `--pw` from the zoom this island reports through ctx.onView, and
+   works the opening fit out with fitFor until there is an island to report
+   one. Rotation has no such race: nothing draws a page at an angle before
+   this runs. */
 function applyPage(){
-  R.style.setProperty('--pw',Math.round(720*zoom/100)+'px');
   R.style.setProperty('--rot',rot+'deg');
 }
 /* THE READER OPENED IN DEFAULT BLUE WHATEVER LIVERY THE APP WAS WEARING.
@@ -222,15 +250,7 @@ function fitZoom(){
      plain number made `aspect` a function, every arithmetic below NaN, and
      the fit zoom NaN — which is a page with no width at all. */
   const a=typeof ctx.pageAspect==='function'?ctx.pageAspect():ctx.pageAspect;
-  const aspect=Number.isFinite(a)&&a>0?a:1010/720;
-  const q=((rot%360)+360)%360, turned=q===90||q===270;
-  const tall=turned?1:aspect, wide=turned?aspect:1;
-  const byH=r.h>0?r.h/(720*tall)*100:100;
-  const byW=r.w>0?r.w/(720*wide)*100:100;
-  const z=Math.round(Math.min(220,Math.max(60,Math.min(byH,byW))));
-  /* Never NaN out of here. A zoom that is not a number is a page that is not
-     a size, and every mark on it loses its place. */
-  return Number.isFinite(z)?z:100;
+  return fitFor(r,a,rot);
 }
 function paintBookmarks(){
   $$('.sheetpg').forEach(el=>el.dataset.bm=bookmarks.has(+el.dataset.pg)?'1':'0');
