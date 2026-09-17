@@ -105,7 +105,7 @@ const audit = (page, expect) => page.evaluate((expect) => {
   const cell = q(".qcell");
   if (cell) {
     const h = Math.round(box(cell).height);
-    const want = mode === "phone" ? 38 : mode === "tablet" ? 44 : Math.round(box(cell).width);
+    const want = mode === "phone" ? 38 : mode === "tablet" ? 42 : Math.round(box(cell).width);
     if (Math.abs(h - want) > 1) out.push(`a grid cell is ${h}px tall, not ${want}px`);
     const perRow = [...document.querySelectorAll(".qcell")].filter((c) => Math.abs(box(c).top - box(cell).top) < 2).length;
     const wantRow = mode === "desktop" ? 4 : 8;
@@ -122,9 +122,50 @@ const audit = (page, expect) => page.evaluate((expect) => {
   }
 
   const cs = getComputedStyle(frame);
-  for (const t of ["--accent", "--accent-fill", "--accent-ink", "--accent-soft", "--accent-on-soft",
+  for (const t of ["--accent", "--accent-fill", "--accent-ink", "--accent-soft",
     "--on-accent", "--line-strong", "--flag", "--radius", "--radius-sm"]) {
     if (!cs.getPropertyValue(t).trim()) out.push(`${t} resolves to nothing`);
+  }
+
+  /* THE MATTE FINISH, WHICH IS THE WHOLE POINT OF THIS SCREEN'S LOOK. The
+     ground is flat and hue-traced, the scenery behind it is off whatever
+     finish the student wears, and the accent is capped. Colours are read as
+     painted rather than as declared: `oklch(from …)` only proves itself
+     resolved. */
+  if (document.documentElement.dataset.screen !== "exam") out.push("the screen is not flagged as the exam");
+  const scenery = document.querySelector(".deck-light");
+  if (scenery && getComputedStyle(scenery).display !== "none") out.push("the finish's scenery is showing behind the paper");
+  const paint = (el, prop) => getComputedStyle(el)[prop];
+  const L = (v) => { const m = /^(?:oklch|oklab)\(([\d.]+)/.exec(String(v)); return m ? +m[1] : null; };
+  const groundL = L(paint(document.body, "backgroundColor"));
+  const wantGround = expect.variant === "day" ? 0.968 : 0.165;
+  if (groundL === null || Math.abs(groundL - wantGround) > 0.02) {
+    out.push(`the ground is ${paint(document.body, "backgroundColor")}, not the matte ${wantGround}`);
+  }
+  if (/\/\s*0?\.\d+\)/.test(paint(q(".exam-bar"), "backgroundColor"))) out.push("the bar is still translucent glass");
+
+  /* The route line: two pixels along the bottom of the bar, and nothing like
+     the module screen's own `.route`, which is a padded row with a rule. */
+  const route = q(".exam-bar .route");
+  if (!route) out.push("the bar has no route line");
+  else {
+    const rb = box(route), bb = box(q(".exam-bar"));
+    if (Math.round(rb.height) !== 2) out.push(`the route line is ${Math.round(rb.height)}px tall, not 2px`);
+    if (Math.abs(rb.bottom - bb.bottom) > 2) out.push("the route line is not along the bottom of the bar");
+  }
+
+  /* An answered cell is the raised surface with an accent tick, never a block
+     of accent. */
+  /* An answered cell that is not also the one you are on: the current cell
+     keeps the panel and takes the accent outline instead, which is the
+     design. */
+  const done = document.querySelector(".qcell.is-answered:not(.is-current)");
+  if (done) {
+    const bg = paint(done, "backgroundColor");
+    const wantRaised = expect.variant === "day" ? 0.95 : 0.245;
+    if (L(bg) === null || Math.abs(L(bg) - wantRaised) > 0.02) out.push(`an answered cell is ${bg}, not the raised surface`);
+    const tick = getComputedStyle(done, "::before").backgroundColor;
+    if (!tick || tick === "rgba(0, 0, 0, 0)") out.push("an answered cell has no tick under its number");
   }
   /* THE FLAG NEVER FOLLOWS THE LIVERY. Same red on Beacon as on Sky. */
   const flag = cs.getPropertyValue("--flag").trim();
@@ -132,6 +173,25 @@ const audit = (page, expect) => page.evaluate((expect) => {
 
   const day = Boolean(q(".app")?.classList.contains("theme-light"));
   if (day !== (expect.variant === "day")) out.push(`the app is ${day ? "day" : "night"}, not ${expect.variant}`);
+
+  /* THE SCREEN'S OWN TYPE, NOT THE PAGE'S. `.mscreen .lbody p` is one element
+     more specific than `.exam-frame .question__text`, so while the paper sat
+     inside that wrapper every paragraph on it took the lesson page's body size
+     — the question at 17px where the design says 21, and the navigator's label
+     at 17px where it says 11. A token check cannot see this; a measurement
+     can. */
+  const type = [
+    [".question__text", mode === "phone" ? 18 : 21],
+    [".navigator__title", 11],
+    [".option__text", mode === "phone" ? 16 : 17],
+    [".exam-timer__value", mode === "phone" ? 17 : 20],
+  ];
+  for (const [sel, want] of type) {
+    const el = q(sel);
+    if (!el) { out.push(`${sel} is missing`); continue; }
+    const got = Math.round(parseFloat(getComputedStyle(el).fontSize));
+    if (got !== want) out.push(`${sel} is ${got}px, not ${want}px`);
+  }
 
   if (!q(".exam-bar__name")?.textContent.trim()) out.push("the exam bar has no quiz name");
   if (!q(".question__text")?.textContent.trim()) out.push("the question card is empty");
@@ -183,6 +243,11 @@ try {
         });
         await page.goto(QUIZ_URL);
         await page.locator(".exam-frame .question__text").waitFor({ timeout: 15000 });
+        /* One answer in and a step on, so every state the grid can be in is on
+           screen to be audited: answered, current, and the rest. */
+        await page.locator(".option").first().click();
+        await page.locator(".question__foot .btn--primary").click();
+        await page.waitForTimeout(250);
         /* A finish may overrule the light: Aurora is a night sky, so day is
            not day under it. The screen is asked for what the app will
            actually be wearing, not for what was pinned. */
@@ -307,6 +372,19 @@ try {
       (await page.locator(".navigator__title span").textContent()) === "0/8"
       && (await page.locator(".question__num b").textContent()) === "1"
       && (await page.locator(".exam-timer__value").textContent()) === "10:00");
+
+    /* AND THE SCREEN FLAG COMES OFF WITH THE QUIZ. It re-grounds the whole
+       document while the paper is open; left behind, every screen after it
+       would wear the exam's matte and lose its finish. */
+    expect("the exam flags the document while it is open",
+      (await page.evaluate(() => document.documentElement.dataset.screen)) === "exam");
+    await page.locator(".up").click();
+    await page.locator(".mscreen .tabs").first().waitFor({ timeout: 8000 });
+    await page.waitForTimeout(300);
+    expect("and takes the flag off on the way out",
+      (await page.evaluate(() => document.documentElement.dataset.screen)) === undefined);
+    expect("so the finish's scenery comes back",
+      (await page.evaluate(() => { const s = document.querySelector(".deck-light"); return !s || getComputedStyle(s).display !== "none"; })));
     await page.close();
   }
 

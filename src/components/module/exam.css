@@ -25,6 +25,11 @@
    wrapped around the screen.
    ========================================================================= */
 
+/* The page around the paper: the module screen's own gutter, and nothing else
+   — see the note in QuizPage.jsx for what the wrapper it replaced was doing to
+   the type. */
+.mscreen .qwrap { padding: 6px var(--pad) 0; min-width: 0; }
+
 .exam-frame {
   container-type: inline-size;
 
@@ -160,9 +165,16 @@
 .exam-frame .option:hover { border-color: var(--line-strong); }
 .exam-frame .option:active { transform: scale(.992); }
 .exam-frame .option input { position: absolute; opacity: 0; pointer-events: none; }
+/* THE ONE PLACE THIS SHEET LEANS ON THE MATTE FINISH RATHER THAN TAKING IT.
+   An unchosen radio is a control whose ring is the only thing identifying it,
+   and `--line-strong` alone measured 1.91 against a Runway day row — WCAG
+   wants 3 for a control's own edge. Thirty per cent of the way to `--t3`
+   makes it 3.39 and is still the same grey. Every other line on the screen is
+   the design's value untouched. */
 .exam-frame .option__radio {
   width: 20px; height: 20px; border-radius: 50%; flex: none;
-  border: 2px solid var(--line-strong); display: grid; place-items: center;
+  border: 2px solid color-mix(in oklab, var(--line-strong) 30%, var(--t3));
+  display: grid; place-items: center;
   transition: border-color .2s var(--ease);
 }
 .exam-frame .option__radio::after {
@@ -174,7 +186,11 @@
 .exam-frame .option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .exam-frame .option:has(input:checked) .option__radio { border-color: var(--accent); }
 .exam-frame .option:has(input:checked) .option__radio::after { transform: scale(1); }
-.exam-frame .option:has(input:checked) .option__letter { color: var(--accent-on-soft); }
+/* THE LETTER OF THE CHOSEN ANSWER IS NOT ACCENT. The matte finish puts the
+   livery on the outline and the dot and nowhere else in a row, so the letter
+   simply steps up to full text weight, and the tint it used to sit on is
+   transparent now. */
+.exam-frame .option:has(input:checked) .option__letter { color: var(--t1); }
 .exam-frame .option:has(input:focus-visible) { outline: 2px solid var(--active); outline-offset: 2px; }
 
 .exam-frame .question__foot {
@@ -211,7 +227,11 @@
   transition: background .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease), transform .2s var(--ease);
 }
 .exam-frame .qcell:hover { border-color: var(--t3); transform: translateY(-1px); }
-.exam-frame .qcell.is-answered { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+/* An answered cell is NOT a solid accent block any more: the matte finish
+   gives it the raised surface and a short accent tick under the number, so a
+   grid of answered questions reads as a page rather than as a wall of colour.
+   exam-matte.css owns how it looks; this keeps only what is structural. */
+.exam-frame .qcell.is-answered { color: var(--t1); }
 .exam-frame .qcell.pop { animation: exam-pop .35s var(--ease); }
 .exam-frame .qcell.is-current { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--t1); }
 .exam-frame .qcell::after {                      /* red corner = flagged for review */
@@ -314,11 +334,17 @@
    broken until they do. It lives in module.css, with the rows. */
 
 /* ---------- Tablet & phone (sized by the space the exam gets) ---------- */
-@container (max-width: 900px) {
+/* 860, not 900: exam-matte.css turns the navigator into a side column at 860
+   and up, and two breakpoints forty pixels apart would leave a band where one
+   sheet says one column and the other says two. */
+@container (max-width: 859px) {
   .exam-frame .exam-body { grid-template-columns: minmax(0, 1fr); }
   .exam-frame .navigator { position: static; order: -1; padding: 12px; }
   .exam-frame .navigator__grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-  .exam-frame .qcell { aspect-ratio: auto; height: 44px; }
+  /* 42, which is the matte finish's figure — exam-matte.css sets it at this
+     same breakpoint and would win anyway; two sheets holding two numbers for
+     one row of boxes is how they drift. */
+  .exam-frame .qcell { aspect-ratio: auto; height: 42px; }
 }
 
 @container (max-width: 560px) {

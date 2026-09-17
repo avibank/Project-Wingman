@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Wingman — Exam finish (matte)            import once, after the quiz CSS
+   Active when <html data-screen="exam"> (set by the quiz taker, see HANDOFF).
+   Every value mirrors reference-demo.html → .stage[data-look="matte"].
+   Livery hue is read from the live --active token, so all 6 liveries work.
+   ========================================================================== */
+
+/* ---- 1. Surfaces: matte greys with a trace of the livery hue ----------- */
+/* !important: the live tokens are written inline on <html> by the theme code */
+:root[data-screen="exam"] {
+  --ground:    oklch(from var(--active) .165 .006 h) !important;
+  --sunk:      oklch(from var(--active) .150 .006 h) !important;
+  --panel:     oklch(from var(--active) .205 .008 h) !important;
+  --raised:    oklch(from var(--active) .245 .010 h) !important;
+  --line:      oklch(from var(--active) .290 .010 h) !important;
+  --edge-soft: oklch(from var(--active) .290 .010 h) !important;
+  --t1:        oklch(from var(--active) .950 .004 h) !important;
+  --t2:        oklch(from var(--active) .780 .006 h) !important;
+  --t3:        oklch(from var(--active) .600 .008 h) !important;
+  --exam-opt:    oklch(from var(--active) .180 .007 h);
+  --exam-opt-on: oklch(from var(--active) .235 .010 h);
+  --exam-line-strong: oklch(from var(--active) .400 .012 h);
+}
+:root[data-screen="exam"][data-variant="day"] {
+  --ground:    oklch(from var(--active) .968 .004 h) !important;
+  --sunk:      oklch(from var(--active) .955 .005 h) !important;
+  --panel:     oklch(from var(--active) .995 .002 h) !important;
+  --raised:    oklch(from var(--active) .950 .006 h) !important;
+  --line:      oklch(from var(--active) .890 .007 h) !important;
+  --edge-soft: oklch(from var(--active) .890 .007 h) !important;
+  --t1:        oklch(from var(--active) .220 .008 h) !important;
+  --t2:        oklch(from var(--active) .400 .010 h) !important;
+  --t3:        oklch(from var(--active) .560 .010 h) !important;
+  --exam-opt:    oklch(from var(--active) .985 .003 h);
+  --exam-opt-on: oklch(from var(--active) .955 .008 h);
+  --exam-line-strong: oklch(from var(--active) .780 .010 h);
+}
+
+/* ---- 2. Finish scenery off (Aurora stars/bands, Manual ruled lines, glow) */
+:root[data-screen="exam"] {
+  --stars: none !important;
+  --grain: none !important;
+  --sheen-img: none !important;
+  --spill: transparent !important;
+  --drop: none !important;
+  background: var(--ground) !important;
+}
+:root[data-screen="exam"] body { background: var(--ground) !important; }
+/* HANDOFF, answered: `.deck-light` is the finish backdrop, all of it. Deck.jsx
+   renders it once behind everything and every scenery layer is inside it —
+   Aurora's two star fields and its cloud, Manual's ruled lines, the key and
+   fill gradients, the spill that lands on the panels, and the grain. One
+   element off is the whole scenery off, and nothing else in the app loses
+   anything, because the deck is not on this route. */
+:root[data-screen="exam"] .deck-light { display: none !important; }
+
+/* ---- 3. Exam tokens: accent capped so it never shouts ------------------ */
+:root[data-screen="exam"] .exam-frame {
+  --accent:      oklch(from var(--active) .74 min(c, .085) h);
+  --accent-fill: oklch(from var(--active) .74 min(c, .085) h);
+  --on-accent:   oklch(from var(--active) .17 .01 h);
+  --accent-soft: transparent;
+  --line-strong: var(--exam-line-strong);
+  --shadow: none;
+  --flag: oklch(.68 .21 27);
+  --flag-soft: oklch(.68 .21 27 / .10);
+}
+:root[data-screen="exam"][data-variant="day"] .exam-frame {
+  --accent:      oklch(from var(--active) .50 min(c, .10) h);
+  --accent-fill: oklch(from var(--active) .47 min(c, .10) h);
+  --on-accent:   oklch(.99 0 0);
+  --flag: oklch(.57 .22 27);
+  --flag-soft: oklch(.57 .22 27 / .08);
+}
+
+/* ---- 4. Components ----------------------------------------------------- */
+:root[data-screen="exam"] .exam-frame .exam-bar,
+:root[data-screen="exam"] .exam-frame .navigator,
+:root[data-screen="exam"] .exam-frame .question {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+:root[data-screen="exam"][data-variant="day"] .exam-frame :is(.exam-bar, .navigator, .question) {
+  box-shadow: 0 1px 0 oklch(from var(--active) .2 .01 h / .04);
+}
+
+/* top bar + route line (Wingman touch: fills as questions are answered) */
+:root[data-screen="exam"] .exam-frame .exam-bar { position: relative; overflow: hidden; }
+:root[data-screen="exam"] .exam-frame .exam-bar__eyebrow,
+:root[data-screen="exam"] .exam-frame .exam-timer__label,
+:root[data-screen="exam"] .exam-frame .navigator__title { color: var(--t3); }
+:root[data-screen="exam"] .exam-frame .exam-timer.is-low .exam-timer__value { color: var(--flag); }
+/* PORT NOTE — the only change made to this file, and it is a selector rather
+   than a value. `.route` is not a free class name in this app: the module
+   screen already has `.mscreen .route` (a flex row with 20px/26px padding and
+   a rule under it), and two more components declare a bare `.route`. The quiz
+   taker's own page root IS `.mscreen`, so the line came out 41px tall with a
+   border across the exam bar. These three rules take the same
+   `:root[data-screen="exam"]` prefix the rest of the file already uses, which
+   wins on specificity wherever it lands. Measured, not guessed. */
+:root[data-screen="exam"] .exam-frame .route { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 2px; padding: 0; border: 0; display: block; pointer-events: none; }
+:root[data-screen="exam"] .exam-frame .route::before {
+  content: ""; position: absolute; inset: 0; opacity: .6;
+  background: repeating-linear-gradient(90deg, var(--line-strong) 0 6px, transparent 6px 11px);
+}
+:root[data-screen="exam"] .exam-frame .route__fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--accent); transition: width .5s var(--ease);
+}
+
+/* buttons: Next/Finish is the only filled accent */
+:root[data-screen="exam"] .exam-frame .btn { background: transparent; box-shadow: none; }
+:root[data-screen="exam"] .exam-frame .btn:hover { background: var(--raised); }
+:root[data-screen="exam"] .exam-frame .btn:disabled { background: transparent; }
+:root[data-screen="exam"] .exam-frame .btn--primary {
+  background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent);
+}
+:root[data-screen="exam"] .exam-frame .btn--primary:hover { background: var(--accent-fill); filter: brightness(1.06); }
+:root[data-screen="exam"] .exam-frame .btn--flag { border-color: transparent; }
+:root[data-screen="exam"] .exam-frame .btn--flag[aria-pressed="true"] {
+  border-color: var(--flag); color: var(--flag); background: var(--flag-soft);
+}
+
+/* options: neutral rows; selected = accent outline + dot, no flood */
+:root[data-screen="exam"] .exam-frame .option { background: var(--exam-opt); border-color: var(--line); box-shadow: none; }
+:root[data-screen="exam"] .exam-frame .option:hover { border-color: var(--line-strong); }
+:root[data-screen="exam"] .exam-frame .option:has(input:checked) {
+  background: var(--exam-opt-on); border-color: var(--accent); box-shadow: none; color: inherit;
+}
+:root[data-screen="exam"] .exam-frame .option:has(input:checked) .option__radio { border-color: var(--accent); }
+:root[data-screen="exam"] .exam-frame .option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* question grid
+   HANDOFF, answered: the live component already writes exactly these three —
+   `qcell is-answered is-flagged is-current` — so there is nothing to rename.
+   The older rule that filled an answered cell with solid accent is gone from
+   exam.css; here it is the raised surface with an accent tick under it. */
+:root[data-screen="exam"] .exam-frame .qcell {
+  position: relative; overflow: hidden;
+  background: var(--panel); border-color: var(--line); color: var(--t3); box-shadow: none;
+}
+:root[data-screen="exam"] .exam-frame .qcell:hover { border-color: var(--line-strong); }
+:root[data-screen="exam"] .exam-frame .qcell.is-answered {
+  background: var(--raised); color: var(--t1); border-color: var(--line);
+}
+:root[data-screen="exam"] .exam-frame .qcell.is-answered::before {
+  content: ""; position: absolute; left: 50%; bottom: 6px;
+  width: 12px; height: 2px; margin-left: -6px; border-radius: 2px; background: var(--accent);
+}
+:root[data-screen="exam"] .exam-frame .qcell.is-current {
+  background: var(--panel); color: var(--t1);
+  border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent);
+}
+:root[data-screen="exam"] .exam-frame .qcell.is-flagged::after {
+  content: ""; position: absolute; top: 0; right: 0; width: 12px; height: 12px;
+  background: var(--flag); clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+/* layout: navigator becomes a side panel on wide screens */
+@container (min-width: 860px) {
+  :root[data-screen="exam"] .exam-frame .exam-body {
+    display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 14px; align-items: start;
+  }
+  :root[data-screen="exam"] .exam-frame .navigator { order: 2; position: sticky; top: 80px; }
+  :root[data-screen="exam"] .exam-frame .navigator .navigator__grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  :root[data-screen="exam"] .exam-frame .navigator .qcell { height: auto; aspect-ratio: 1; }
+}
+@container (max-width: 859px) {
+  :root[data-screen="exam"] .exam-frame .navigator__grid { grid-template-columns: repeat(8, 1fr); gap: 7px; }
+  :root[data-screen="exam"] .exam-frame .qcell { height: 42px; aspect-ratio: auto; }
+}
+@container (max-width: 560px) {
+  :root[data-screen="exam"] .exam-frame .navigator__grid { gap: 5px; }
+  :root[data-screen="exam"] .exam-frame .qcell { height: 38px; }
+  :root[data-screen="exam"] .exam-frame .btn--flag span { display: none; }
+}
+
+/* result screen */
+:root[data-screen="exam"] .exam-frame .result__icon {
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--accent); color: var(--accent);
+}
+:root[data-screen="exam"] .exam-frame .result__icon svg { width: 22px; height: 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-screen="exam"] .exam-frame .route__fill { transition: none; }
+}

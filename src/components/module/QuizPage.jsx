@@ -39,7 +39,15 @@ export default function QuizPage({
         </button>
       </div>
 
-      <div className="lbody" style={{ padding: "6px var(--pad) 0" }}>
+      {/* NOT `.lbody`, WHICH IS THE LESSON PAGE'S PROSE WRAPPER. It carries
+          `.mscreen .lbody p { font-size: 17px; color: var(--t2); max-width:
+          56ch }`, and that selector outranks the exam's own `.exam-frame
+          .question__text` by one element — so every paragraph inside the paper
+          took the page's body size: the question at 17px where the design says
+          21, and the navigator's QUESTIONS label at 17px where it says 11.
+          Found by measuring the live screen against the reference. The exam
+          brings its own typography and wants none of this. */}
+      <div className="qwrap">
         {chapter.questions?.length ? (
           <Exam
             key={chapter.id}

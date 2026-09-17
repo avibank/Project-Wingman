@@ -449,7 +449,7 @@ console.log("\nthe approved screen");
      narrow in a split pane and wide on a laptop. */
   ok("port", "the breakpoints are container queries, and the container is kept",
      /container-type: inline-size/.test(css)
-     && /@container \(max-width: 900px\)/.test(css) && /@container \(max-width: 560px\)/.test(css)
+     && /@container \(max-width: 859px\)/.test(css) && /@container \(max-width: 560px\)/.test(css)
      && /className="exam-frame"/.test(exam));
 
   /* Every colour on this screen is a token, so it follows the livery, the
@@ -475,6 +475,86 @@ console.log("\nthe approved screen");
   ok("port", "reduced motion stops the hand-written animations too",
      /smooth-air/.test(exam) && /prefers-reduced-motion/.test(exam)
      && /@media \(prefers-reduced-motion: reduce\)/.test(css) && /\.app\.smooth-air \.exam-frame/.test(css));
+}
+
+/* ---- the matte finish ---------------------------------------------------- */
+console.log("\nthe matte finish");
+{
+  const exam = read("src/components/module/Exam.jsx");
+  const matte = read("src/components/module/exam-matte.css");
+  const own = read("src/components/module/exam.css");
+  const page = read("src/components/module/QuizPage.jsx");
+
+  /* THE FLAG THAT TURNS IT ON. The matte sheet is keyed on the document
+     element, because the tokens it overrides are written there inline by the
+     theme layer, and a stylesheet !important is what beats an inline style. */
+  ok("matte", "the quiz taker flags the screen, and takes the flag off with it",
+     /root\.dataset\.screen = "exam";/.test(exam) && /delete root\.dataset\.screen;/.test(exam));
+  ok("matte", "and the sheet is loaded after the screen's own",
+     exam.indexOf('import "./exam-matte.css"') > exam.indexOf('import "./exam.css"'));
+
+  /* NOTHING BEHIND THE PANELS BUT FLAT GROUND. One element carries every
+     scenery layer — Aurora's stars and cloud, Manual's ruled paper, the key
+     and fill gradients, the spill and the grain — so one rule takes them all. */
+  ok("matte", "the finish's scenery is off on the quiz",
+     /:root\[data-screen="exam"\] \.deck-light \{ display: none !important; \}/.test(matte)
+     && /--stars: none !important/.test(matte) && /background: var\(--ground\) !important/.test(matte));
+
+  /* THE VALUES ARE THE DESIGN'S. Spot-checked rather than trusted: the two
+     grounds, the capped accent, and the fixed flag. */
+  for (const line of [
+    "--ground:    oklch(from var(--active) .165 .006 h) !important;",
+    "--ground:    oklch(from var(--active) .968 .004 h) !important;",
+    "--accent:      oklch(from var(--active) .74 min(c, .085) h);",
+    "--accent:      oklch(from var(--active) .50 min(c, .10) h);",
+    "--flag: oklch(.68 .21 27);",
+  ]) ok("matte", `kept as sent: ${line.trim().slice(0, 42)}…`, matte.includes(line));
+
+  /* `.route` IS NOT A FREE NAME HERE. The module screen has `.mscreen .route`
+     — a flex row with padding and a rule under it — and the quiz taker's page
+     root IS `.mscreen`, so the unscoped rules drew a 41px block across the
+     bar. Measured. The three rules take the file's own screen prefix. */
+  ok("matte", "the route line is scoped past the module screen's own .route",
+     !/^\.exam-frame \.route/m.test(matte)
+     && /:root\[data-screen="exam"\] \.exam-frame \.route \{/.test(matte));
+  ok("matte", "and the bar carries it, filled as far as the paper is answered",
+     /<span className="route" aria-hidden="true">/.test(exam)
+     && /width: `\$\{\(answeredCount\(attempt\) \/ total\) \* 100\}%`/.test(exam));
+
+  /* An answered cell is a raised surface with an accent tick, not a block of
+     colour: the livery shows on six things and this is one of them. */
+  ok("matte", "an answered cell is no longer a solid accent fill",
+     !/\.qcell\.is-answered \{ background: var\(--accent-fill\)/.test(own)
+     && /\.qcell\.is-answered::before/.test(matte) && /background: var\(--accent\);/.test(matte));
+  ok("matte", "and the chosen answer's letter is text, not accent",
+     /\.option:has\(input:checked\) \.option__letter \{ color: var\(--t1\); \}/.test(own));
+
+  /* A COMPONENT DECLARED INSIDE A COMPONENT IS A NEW TYPE ON EVERY RENDER, and
+     React throws the whole subtree away and rebuilds it each time. The review
+     row was written that way: the result screen renders about sixty times
+     while the percentage counts up, so every row was destroyed and recreated
+     sixty times over, its rise animation restarting with each one — the list
+     sat blank for seconds. Found by measuring: the rows the test was holding
+     had been detached from the document. */
+  const nested = exam.match(/^\s+(?:const|function)\s+[A-Z]\w*\s*[=(]/gm) || [];
+  ok("matte", "no component is declared inside another component", nested.length === 0, nested.join(" "));
+
+  /* The result's mark is the aeroplane in a ring, which is the finish's own. */
+  ok("matte", "the result wears the plane",
+     /const IconPlane/.test(exam) && /<IconPlane \/><\/span>\{headText\}/.test(exam)
+     && /\.result__icon \{[\s\S]{0,120}border: 1\.5px solid var\(--accent\)/.test(matte));
+
+  /* Both sheets have to agree about where the navigator moves, or there is a
+     band of widths where one says one column and the other says two. */
+  /* The paper does not sit in the lesson page's prose wrapper: `.mscreen
+     .lbody p` outranks the screen's own type rules by an element. */
+  ok("matte", "the paper is not wrapped in the lesson page's prose",
+     !/className="lbody"/.test(page) && /className="qwrap"/.test(page)
+     && /\.mscreen \.qwrap \{/.test(own));
+
+  ok("matte", "the two stylesheets break at the same width",
+     /@container \(min-width: 860px\)/.test(matte) && /@container \(max-width: 859px\)/.test(matte)
+     && /@container \(max-width: 859px\)/.test(own) && !/@container \(max-width: 900px\)/.test(own));
 }
 
 /* ---- Master Caution lights in one place, Calibration in none ------------- */
@@ -521,86 +601,94 @@ console.log("\nthe lamp, and what is gone");
 }
 
 /* ---- contrast, on the surface actually behind the words ------------------ */
-console.log("\ncontrast — six liveries, night and day");
+console.log("\ncontrast — the matte finish, six liveries × three finishes × night and day");
 {
-  /* The same method as check:contrast and check:rr: linear light, every
-     surface composited over its own ground, color-mix in OKLab premultiplied
-     exactly as CSS mixes it. The exam screen is the app's most text-dense
-     surface and it is the one a student sits under time pressure, so every
-     pair here is measured rather than eyeballed. */
+  /* THE EXAM SCREEN IS NOT PAINTED IN THE APP'S TOKENS ANY MORE, so measuring
+     those would prove nothing about it. `exam-matte.css` re-grounds the whole
+     document while the quiz is on screen: matte greys carrying a trace of the
+     livery's hue, an accent capped so it never shouts, and no scenery behind
+     the panels. Every surface below is built the way that file builds it —
+     `oklch(from var(--active) L C h)` — off whatever `--active` is under the
+     livery AND the finish, because Manual writes its own.
+
+     Method is check:contrast's: linear light, WCAG ratios, 4.5 for text and 3
+     for a control's edge or a mark. */
   const toLin = ([L, a, b]) => {
     const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
     const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-    const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
-    return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-      -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map((x) => Math.min(1, Math.max(0, x)));
+    const s2 = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+    return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s2,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s2,
+      -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s2].map((x) => Math.min(1, Math.max(0, x)));
   };
-  const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  const lum = (x) => 0.2126 * x[0] + 0.7152 * x[1] + 0.0722 * x[2];
   const ratio = (x, y) => { const a = lum(x), b = lum(y); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
-  const col = (L, C, H, A = 1) => { const h = (H * Math.PI) / 180; return { lab: [L, C * Math.cos(h), C * Math.sin(h)], a: A }; };
-  const CLEAR = { lab: [0, 0, 0], a: 0 };
+  const oklch = (L, C, H) => { const h = (H * Math.PI) / 180; return toLin([L, C * Math.cos(h), C * Math.sin(h)]); };
   const parse = (v) => {
-    const m = /oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)/.exec(String(v));
-    return m ? col(+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]) : null;
+    const m = /oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/.exec(String(v));
+    return m ? { L: +m[1], C: +m[2], H: +m[3] } : null;
   };
-  const mix = (x, p, y) => {
-    const a = x.a * p + y.a * (1 - p);
-    return a ? { lab: [0, 1, 2].map((i) => (x.lab[i] * x.a * p + y.lab[i] * y.a * (1 - p)) / a), a } : CLEAR;
-  };
-  const over = (fg, bg) => toLin(fg.lab).map((v, i) => bg[i] + (v - bg[i]) * fg.a);
   const worst = {};
   const need = (name, r, min) => { if (!worst[name] || r < worst[name].r) worst[name] = { r, min }; };
 
-  /* AND EVERY FINISH, because a finish is not only lighting. Manual rewrites
-     --ground, --panel, --raised, --line and all three accent tokens, so the
-     pairs below are a different measurement under it — checking the stock
-     livery alone would have proved a third of the screen. */
   for (const variant of ["night", "day"]) {
     for (const L of LIVERIES) {
       for (const finish of FINISHES.map((f) => f.id)) {
-      const { vars, C } = deckVars(L.id, variant);
-      const v = { ...vars, ...finishVars(L.id, variant, finish, C.active) };
-      const t = (k) => parse(v[k]);
-      const day = variant === "day";
-      const ground = toLin(t("--ground").lab);
-      const panel = over(t("--panel"), ground);
-      const raised = over(t("--raised"), ground);
-      const c = (x) => toLin(x.lab);
-      /* An option row is `--ground` inside the card, and the selected one is
-         the accent at 12% (day) or 16% (night) over that. */
-      const soft = over(mix(t("--active"), day ? 0.12 : 0.16, CLEAR), ground);
-      /* The ring on an unanswered radio and the border of an empty grid cell. */
-      const lineStrong = over(mix(t("--line"), 0.25, t("--t3")), ground);
-      const flag = parse(day ? "oklch(.58 .21 27)" : "oklch(.68 .2 27)");
-      const at = (what) => `${what}`;
+        const { vars, C } = deckVars(L.id, variant);
+        const v = { ...vars, ...finishVars(L.id, variant, finish, C.active) };
+        const active = parse(v["--active"]);
+        if (!active) continue;
+        const h = active.H;
+        const day = variant === "day";
+        /* exam-matte.css, rule for rule. */
+        const M = day
+          ? { ground: [.968, .004], sunk: [.955, .005], panel: [.995, .002], raised: [.950, .006],
+              line: [.890, .007], t1: [.220, .008], t2: [.400, .010], t3: [.560, .010],
+              opt: [.985, .003], optOn: [.955, .008], lineStrong: [.780, .010],
+              accent: [.50, Math.min(active.C, .10)], fill: [.47, Math.min(active.C, .10)], ink: [.99, 0] }
+          : { ground: [.165, .006], sunk: [.150, .006], panel: [.205, .008], raised: [.245, .010],
+              line: [.290, .010], t1: [.950, .004], t2: [.780, .006], t3: [.600, .008],
+              opt: [.180, .007], optOn: [.235, .010], lineStrong: [.400, .012],
+              accent: [.74, Math.min(active.C, .085)], fill: [.74, Math.min(active.C, .085)], ink: [.17, .01] };
+        const col = (k) => oklch(M[k][0], M[k][1], h);
+        const flag = day ? oklch(.57, .22, 27) : oklch(.68, .21, 27);
+        const labOf = ([Lv, Cv]) => { const rad = (h * Math.PI) / 180; return [Lv, Cv * Math.cos(rad), Cv * Math.sin(rad)]; };
+        const ringLab = labOf(M.lineStrong).map((x, i) => x * 0.3 + labOf(M.t3)[i] * 0.7);
+        /* The accent as WORDS on the result screen is still the engine's
+           --active-text: the matte caps the fill and the outline, not the ink. */
+        const inkWords = toLin([parse(v["--active-text"]).L,
+          parse(v["--active-text"]).C * Math.cos((parse(v["--active-text"]).H * Math.PI) / 180),
+          parse(v["--active-text"]).C * Math.sin((parse(v["--active-text"]).H * Math.PI) / 180)]);
 
-      need(at("the question, and an answer, on the card"), ratio(c(t("--t1")), panel), 4.5);
-      need(at("an answer on its row"), ratio(c(t("--t1")), ground), 4.5);
-      need(at("its letter"), ratio(c(t("--t2")), ground), 4.5);
-      need(at("the letter of the answer you picked"), ratio(c(day ? t("--active-text") : t("--lit")), soft), 4.5);
-      need(at("and the answer you picked"), ratio(c(t("--t1")), soft), 4.5);
-      need(at("the clock"), ratio(c(t("--t1")), panel), 4.5);
-      need(at("the clock in its last minute"), ratio(c(mix(t("--bad"), 0.85, t("--t1"))), panel), 4.5);
-      need(at("TIME LEFT, and the module line above the quiz"), ratio(c(t("--t3")), panel), 4.5);
-      need(at("a question number in the grid"), ratio(c(t("--t2")), panel), 4.5);
-      /* The fill takes a step off dead centre and the ink is black or white,
-         chosen from the stepped fill — see the note on --accent-fill. */
-      const fill = mix(t("--active-fill"), 0.9, t("--t1"));
-      const ink = fill.lab[0] >= 0.56 ? col(0, 0, 0) : col(1, 0, 0);
-      need(at("an answered question's number, on the accent"), ratio(c(ink), c(fill)), 4.5);
-      need(at("Next, on the accent"), ratio(c(ink), c(fill)), 4.5);
-      need(at("an empty cell's edge and a radio ring, 3:1 for a control"), ratio(lineStrong, ground), 3);
-      need(at("the score and the line under it"), ratio(c(t("--t1")), panel), 4.5);
-      need(at("the pass icon beside it, 3:1 for a mark"), ratio(c(t("--active-text")), panel), 3);
-      need(at("the not-yet icon, 3:1 for a mark"), ratio(c(t("--t2")), panel), 3);
-      need(at("what you should have answered"), ratio(c(t("--active-text")), panel), 4.5);
-      need(at("what you did answer, struck through"), ratio(c(t("--t3")), panel), 4.5);
-      need(at("the score line's fill against its track, 3:1"), ratio(c(t("--active-fill")), raised), 3);
-      need(at("a not-yet fill against its track, 3:1"), ratio(c(t("--t3")), raised), 3);
-      /* THE FLAG IS FIXED, so it is measured on every livery rather than on
-         one: it has to read as a mark on Beacon red and on Gauge amber. */
-      need(at("the review flag, 3:1 for a mark"), ratio(c(flag), panel), 3);
+        need("the question, and an answer, on the card", ratio(col("t1"), col("panel")), 4.5);
+        need("an answer on its row", ratio(col("t1"), col("opt")), 4.5);
+        need("its letter", ratio(col("t2"), col("opt")), 4.5);
+        need("the letter of the answer you picked", ratio(col("t1"), col("optOn")), 4.5);
+        need("the clock", ratio(col("t1"), col("panel")), 4.5);
+        need("the clock in its last minute", ratio(flag, col("panel")), 4.5);
+        need("TIME LEFT, and the module line above the quiz", ratio(col("t3"), col("panel")), 4.5);
+        need("a question number in the grid", ratio(col("t3"), col("panel")), 4.5);
+        need("an answered question's number", ratio(col("t1"), col("raised")), 4.5);
+        need("Next, on the accent", ratio(col("ink"), col("fill")), 4.5);
+        /* A radio ring is the whole of what identifies an unchosen answer, so
+           it carries the 3:1 a control's edge needs — see the note on
+           .option__radio. A grid cell's border does not: the number inside it
+           is legible at 4.5 and is what tells you the cell is there, which is
+           the distinction WCAG 1.4.11 draws. */
+        const ring = [0, 1, 2].map((i) => ringLab[i]);
+        need("a radio ring, 3:1 for a control", ratio(toLin(ring), col("opt")), 3);
+        need("the tick under an answered question, 3:1 for a mark", ratio(col("accent"), col("raised")), 3);
+        need("the outline on the question you are on, 3:1", ratio(col("accent"), col("panel")), 3);
+        /* The fill against the bar it runs along, not against the dashed
+           track it covers: two decorations measured against each other says
+           nothing about whether the line can be seen. */
+        need("the route line's fill on the bar, 3:1", ratio(col("accent"), col("panel")), 3);
+        need("the score and the line under it", ratio(col("t1"), col("panel")), 4.5);
+        need("the plane in its ring, 3:1 for a mark", ratio(col("accent"), col("panel")), 3);
+        need("what you should have answered", ratio(inkWords, col("panel")), 4.5);
+        need("what you did answer, struck through", ratio(col("t3"), col("panel")), 4.5);
+        need("the score line's fill against its track, 3:1", ratio(col("fill"), col("raised")), 3);
+        need("the review flag, 3:1 for a mark", ratio(flag, col("panel")), 3);
       }
     }
   }

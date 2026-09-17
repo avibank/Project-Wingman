@@ -9,6 +9,9 @@ import {
 import { shuffleOptions } from "../../lib/retention.js";
 import { PASS_PCT } from "../../lib/minimums.js";
 import "./exam.css";
+/* The matte finish, after the screen's own sheet because it overrides it. It
+   is keyed on <html data-screen="exam">, which the effect below sets. */
+import "./exam-matte.css";
 /* Going through the paper is the drill's stylesheet, not the exam's: it is the
    same screen the re-check and put-right flows draw, and the two should not
    drift apart because one of them was ported. */
@@ -59,9 +62,14 @@ const IconPass = () => (
     <circle cx="12" cy="12" r="10" /><path d="m7.5 12.3 3 3 6-6.3" />
   </svg>
 );
-const IconNotYet = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M20 12a8 8 0 1 1-2.35-5.66" /><path d="M20 4v4.5h-4.5" />
+/* THE RESULT'S MARK IS THE AEROPLANE, in an outlined circle in the accent —
+   the matte finish's own, and the same glyph whatever the score. The screen
+   before this one gave the tick to a pass and a retry arrow to a not-yet; the
+   matte handoff replaces both, and the verdict is still said in words on the
+   line beside it and drawn in the colour of the score line under it. */
+const IconPlane = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />
   </svg>
 );
 const IconBar = () => (
@@ -96,6 +104,41 @@ const IconBack = () => (
 const IconOn = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg>
 );
+
+/* ONE ROW OF THE REVIEW: the number, the question, what they picked struck
+   through, and what was right. A question with no answer shows a dash rather
+   than a sentence, because "you left this blank" is a sentence about them.
+
+   AT MODULE SCOPE, AND THAT IS NOT TIDINESS. Declared inside the component it
+   is a new component type on every render — and the result screen renders
+   about sixty times while the percentage counts up — so React threw every row
+   away and built it again each time. Each new row started the rise animation
+   over, so rows that should have arrived at 1.1s were still at nothing three
+   seconds later, and the list read as empty while it was working. Found by
+   measuring: the rows the test was holding were detached from the document. */
+function ReviewRow({ item, mine, n, k }) {
+  const right = mine === item.correct;
+  return (
+    <li className="result__row" style={{ "--i": k }}>
+      <span className="result__n">{String(n).padStart(2, "0")}</span>
+      <span className="result__q">
+        {item.question}
+        {!right && (
+          <span className="ans">
+            {mine === null
+              ? <span className="ans--blank">—</span>
+              : <s className="ans--wrong"><span className="ans__l">{LABELS[mine]}</span> {item.options[mine]}</s>}
+            <span className="ans__arrow" aria-label="correct answer"><IconArrow /></span>
+            <span className="ans--right"><span className="ans__l">{LABELS[item.correct]}</span> {item.options[item.correct]}</span>
+          </span>
+        )}
+      </span>
+      <span className={`result__mark ${right ? "is-right" : "is-wrong"}`} aria-label={right ? "Right" : "Missed"}>
+        {right ? <IconRight /> : <IconMissed />}
+      </span>
+    </li>
+  );
+}
 
 export default function Exam({
   title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
@@ -148,6 +191,19 @@ export default function Exam({
   /* Each phase starts at its own top: handing in from the bottom of question 8
      otherwise lands on the result screen already scrolled past the score. */
   useEffect(() => { rootRef.current?.scrollIntoView({ block: "start", behavior: "auto" }); }, [phase]);
+
+  /* THE EXAM IS ITS OWN LIGHT. A paper is read under a flat matte ground with
+     nothing moving behind it — no Aurora bands, no ruled Manual paper, no
+     gradient glow — so the exam's stylesheet re-grounds the whole document
+     while it is on screen, and takes the scenery off with it. The flag goes on
+     <html> rather than on this component because the tokens it overrides are
+     written there, inline, by the theme layer; it stays through the result and
+     comes off when the quiz does. */
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.screen = "exam";
+    return () => { delete root.dataset.screen; };
+  }, []);
 
   /* The option order is seeded from the ATTEMPT, never from the clock. An
      answer is stored as "the second option"; reseed on the way back in and the
@@ -428,48 +484,17 @@ export default function Exam({
   const last = at + 1 >= total;
 
   const headline = () => {
-    if (!result) return ["", null];
-    if (!result.passed) {
-      return [result.shortBy <= 1 ? "So close. Go again" : "Not yet. Keep at it", <IconNotYet key="i" />];
-    }
-    if (result.right === result.total) return ["Every one right", <IconPass key="i" />];
-    if (result.pct < result.bar) return ["Passed. Keep climbing to your bar", <IconPass key="i" />];
-    if (result.pct === result.bar) return ["Passed, right on your bar", <IconPass key="i" />];
-    return ["Passed, above your bar", <IconPass key="i" />];
-  };
-
-  /* One row of the review: the number, the question, what they picked struck
-     through, and what was right. A question with no answer shows a dash rather
-     than a sentence, because "you left this blank" is a sentence about them. */
-  const Row = ({ i, k }) => {
-    const item = paper[i];
-    const mine = attempt.answers[i];
-    const right = mine === item.correct;
-    return (
-      <li className="result__row" style={{ "--i": k }}>
-        <span className="result__n">{String(i + 1).padStart(2, "0")}</span>
-        <span className="result__q">
-          {item.question}
-          {!right && (
-            <span className="ans">
-              {mine === null
-                ? <span className="ans--blank">—</span>
-                : <s className="ans--wrong"><span className="ans__l">{LABELS[mine]}</span> {item.options[mine]}</s>}
-              <span className="ans__arrow" aria-label="correct answer"><IconArrow /></span>
-              <span className="ans--right"><span className="ans__l">{LABELS[item.correct]}</span> {item.options[item.correct]}</span>
-            </span>
-          )}
-        </span>
-        <span className={`result__mark ${right ? "is-right" : "is-wrong"}`} aria-label={right ? "Right" : "Missed"}>
-          {right ? <IconRight /> : <IconMissed />}
-        </span>
-      </li>
-    );
+    if (!result) return "";
+    if (!result.passed) return result.shortBy <= 1 ? "So close. Go again" : "Not yet. Keep at it";
+    if (result.right === result.total) return "Every one right";
+    if (result.pct < result.bar) return "Passed. Keep climbing to your bar";
+    if (result.pct === result.bar) return "Passed, right on your bar";
+    return "Passed, above your bar";
   };
 
   const missed = result ? paper.map((_, i) => i).filter((i) => !result.marks[i]) : [];
   const got = result ? paper.map((_, i) => i).filter((i) => result.marks[i]) : [];
-  const [headText, headIcon] = headline();
+  const headText = headline();
 
   return (
     <div className="exam-frame" ref={rootRef}>
@@ -490,6 +515,12 @@ export default function Exam({
           {phase === "paper" && (
             <button className="btn" type="button" onClick={() => dialogRef.current?.showModal()}>End exam</button>
           )}
+          {/* The route line: a dashed track along the bottom of the bar, filled
+              as far as the paper is answered. It repeats what the navigator's
+              count says, in the one place a student's eye already is. */}
+          <span className="route" aria-hidden="true">
+            <span className="route__fill" style={{ width: `${(answeredCount(attempt) / total) * 100}%` }} />
+          </span>
         </header>
 
         {phase === "paper" && (
@@ -563,7 +594,7 @@ export default function Exam({
             <div className="result__top">
               <span className="result__big">{shown}%</span>
               <h2 className="result__head">
-                <span className="result__icon" aria-hidden="true">{headIcon}</span>{headText}
+                <span className="result__icon" aria-hidden="true"><IconPlane /></span>{headText}
               </h2>
               {/* NO NUMBERS ON THE MARKERS. The line says the three figures
                   once, where a screen reader will read them and a tooltip will
@@ -584,7 +615,7 @@ export default function Exam({
 
             {missed.length > 0 && (
               <ol className="result__list review">
-                {missed.map((i, k) => <Row key={i} i={i} k={k} />)}
+                {missed.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={k} />)}
               </ol>
             )}
 
@@ -598,7 +629,7 @@ export default function Exam({
                     counts from the moment it opens, not from the moment the
                     result arrived. See exam.css. */}
                 <ol className="result__list">
-                  {got.map((i, k) => <Row key={i} i={i} k={k} />)}
+                  {got.map((i, k) => <ReviewRow key={i} item={paper[i]} mine={attempt.answers[i]} n={i + 1} k={k} />)}
                 </ol>
               </details>
             )}
