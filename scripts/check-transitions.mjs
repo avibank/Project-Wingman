@@ -119,32 +119,79 @@ for (const m of css.matchAll(/([^{}\n]*::view-transition[^{}\n]*)\{/g)) {
   }
 }
 
-/* NOTHING COMPOSITES ADDITIVELY.
+/* NOTHING COMPOSITES ADDITIVELY BY DEFAULT, AND NOTHING DIMMED EVER DOES.
  *
  * The user agent's own stylesheet sets mix-blend-mode: plus-lighter on these
  * pseudo-elements. That is the correct default for the plain cross-fade it
  * ships with — the two halves are the same picture, and summing them holds
- * coverage at one the whole way across — and it is wrong for everything this
- * layer does.
+ * coverage at one the whole way across — and it is wrong for a screen change.
  *
- * Both screens carry brightness(0.76) while they move: the outgoing one dims
- * as it recedes and the incoming one arrives dimmed and resolves. Summed, two
- * layers at 0.76 make 1.52, and that is the brightness spike — an addition,
- * not a colour.
+ * Both screens carry brightness() while they move: the outgoing one dims as it
+ * recedes and the incoming one arrives dimmed and resolves. Summed, two layers
+ * at 0.76 make 1.52, and that is the brightness spike — an addition, not a
+ * colour.
  *
- * The rule that prevents it has to be universal. Setting it per-layer is how
- * it went wrong: three rules named it and the other thirteen inherited the
- * additive default, which is the same as having no rule at all.
+ * So the universal rule is normal blending, and it has to be universal:
+ * setting it per-layer is how it went wrong, three rules named it and the
+ * other thirteen inherited the additive default.
+ *
+ * BUT A PAIR THAT IS NOT DIMMED WANTS THE ADDITION BACK, deliberately. A pane
+ * or a tab panel crossfades two different pictures with no filter on either,
+ * and under normal blending two layers at part opacity never cover the whole:
+ * at the midpoint both are faint and the room behind shows through — the dip
+ * on every tab and every pane. Old at 1 - e(t) and new at e(t), added, is
+ * exactly one at every instant. That only holds when BOTH halves fade on the
+ * same duration and the same curve, and it is only safe on a layer with no
+ * filter animating on it. Those are the two things asserted: plus-lighter is
+ * allowed on a named layer only if no filter keyframe runs on that name, and
+ * only if its fade-out and fade-in are the same clock.
  */
 if (!/::view-transition-old\(\*\)[\s\S]{0,80}mix-blend-mode:\s*normal/.test(css)) {
   fail.push("no universal mix-blend-mode: normal on the transition layers. The user agent "
-    + "defaults them to plus-lighter, which is additive, and both screens dim to 0.76 while "
-    + "they move — so they sum to 1.52 at the crossover and the page flashes");
+    + "defaults them to plus-lighter, which is additive, and both screens dim while they "
+    + "move — so they sum past one at the crossover and the page flashes");
 }
-for (const m of css.matchAll(/([^{}]*::view-transition[^{}]*)\{([^}]*)\}/g)) {
-  if (/plus-lighter/.test(m[2])) {
-    fail.push(`${m[1].trim().slice(0, 60)} composites with plus-lighter — additive, and both `
-      + "layers are dimmed while they move");
+{
+  const rules = [...css.matchAll(/([^{}]*::view-transition[^{}]*)\{([^}]*)\}/g)]
+    .map((m) => ({ sel: m[1].trim(), body: m[2] }));
+  const namesIn = (sel) => [...sel.matchAll(/::view-transition-(?:old|new|group|image-pair)\(([\w*-]+)\)/g)].map((m) => m[1]);
+  const filtered = new Set([...css.matchAll(/@keyframes\s+([\w-]+)\s*\{([\s\S]*?\})\s*\}/g)]
+    .filter((k) => /filter\s*:/.test(k[2])).map((k) => k[1]));
+  const additive = new Set();
+  const dimmed = new Set();
+  const fades = {};   // name -> { out: Set, in: Set }
+  for (const r of rules) {
+    const names = namesIn(r.sel);
+    if (/plus-lighter/.test(r.body)) names.forEach((n) => additive.add(n));
+    const anim = r.body.match(/animation\s*:([^;]*)/)?.[1] || "";
+    if ([...filtered].some((k) => new RegExp(`\\b${k}\\b`).test(anim))) names.forEach((n) => dimmed.add(n));
+    for (const part of anim.split(",")) {
+      // duration, curve and any delay: the whole clock, not just its length
+      const f = part.trim().match(/^(.+?)\s+both\s+(wgFadeOut|wgFadeIn)$/);
+      if (!f) continue;
+      for (const n of names) {
+        fades[n] ??= { out: new Set(), in: new Set() };
+        fades[n][f[2] === "wgFadeOut" ? "out" : "in"].add(f[1].replace(/\s+/g, " "));
+      }
+    }
+  }
+  for (const n of additive) {
+    if (n === "*" || n === "root") {
+      fail.push(`::view-transition-*(${n}) composites with plus-lighter. The universal rule is `
+        + "normal; only a named, undimmed pair on one clock may add");
+      continue;
+    }
+    if (dimmed.has(n)) {
+      fail.push(`${n} composites with plus-lighter and has a filter animating on it — two dimmed `
+        + "layers added together are brighter than either, which is the spike");
+    }
+    const f = fades[n];
+    const one = f && f.out.size === 1 && f.in.size === 1 && [...f.out][0] === [...f.in][0];
+    if (!one) {
+      fail.push(`${n} composites with plus-lighter but its halves do not fade on one clock `
+        + `(out: ${f ? [...f.out].join(" | ") : "none"}; in: ${f ? [...f.in].join(" | ") : "none"}). `
+        + "Added, two different fades overshoot one somewhere and the layer flashes");
+    }
   }
 }
 
@@ -206,11 +253,25 @@ for (const name of ["wg-rail"]) {
   }
 }
 
-/* And the chrome must stay out of it: naming the topbar or the rail would make
-   the furniture travel with the screen. */
-if (/view-transition-name:\s*wg-(topbar|brand|avatar)/.test(css)) {
-  fail.push("the chrome is named again — the topbar and the background belong to the root "
-    + "snapshot, which only crossfades, so nothing outside the screen appears to move");
+/* THE CHROME NEVER TRAVELS WITH THE SCREEN. The app bar is named now — the
+   Ready Room has none, so without a layer of its own it blinked out and back —
+   and a named bar present on both sides of a move must paint once and stand
+   still, exactly like the rail above. Only when it is alone in its group, on
+   the way into or out of the room, may it move. The brand and the avatar are
+   never named on their own. */
+{
+  const held = (side, want) => {
+    const m = css.match(new RegExp(`::view-transition-${side}\\(wg-topbar\\)\\s*\\{([^}]*)\\}`));
+    return m && want.test(m[1]);
+  };
+  if (!held("old", /display:\s*none/) || !held("new", /animation:\s*none/)) {
+    fail.push("the app bar is not held when it is on both sides of a move — without its old "
+      + "side dropped and its new side still, the furniture crossfades or travels with the screen");
+  }
+}
+if (/view-transition-name:\s*wg-(brand|avatar)/.test(css)) {
+  fail.push("a piece of the chrome is named on its own — the brand and the avatar belong to the "
+    + "app bar's layer, and named apart they would move against it");
 }
 
 console.log("transitions: two overlapping navigations, plus the geometry Mission Control rests on");

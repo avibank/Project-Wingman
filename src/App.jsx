@@ -3,7 +3,8 @@ import "./styles/fonts.css";
 import "./styles/app.css";
 import { useState, useRef, useEffect, lazy, Suspense, useMemo, useCallback } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
-import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import TransitionRouter, { popHandler } from "./components/TransitionRouter.jsx";
 import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
@@ -84,6 +85,55 @@ const CHUNK = {
   progress: chunk(() => import("./components/ProgressPage.jsx")),
   bookmarks: chunk(() => import("./components/BookmarksPage.jsx")),
 };
+/* WHICH CHUNKS EACH ROUTE RENDERS, exactly. A route missing from here, or
+   missing one of its chunks, is a route whose first visit loads its code
+   INSIDE the transition rather than before it. `chapter` is two screens: the
+   quiz tab is QuizPage and every other tab is ModuleHub, so it warms both.
+   `paper` was not here at all, so opening a paper fetched the reader — the
+   largest chunk this app has — behind a frozen snapshot. */
+const ROUTE_CHUNKS = {
+  module: [CHUNK.module],
+  chapter: [CHUNK.quiz, CHUNK.moduleHub],
+  lesson: [CHUNK.lesson],
+  paper: [CHUNK.paper],
+  review: [CHUNK.module],
+  ready: [CHUNK.roomShell],
+  modules: [CHUNK.modules],
+  profile: [CHUNK.profile],
+  settings: [CHUNK.settings],
+  logbook: [CHUNK.progress],
+  saved: [CHUNK.bookmarks],
+  notfound: [CHUNK.notFound],
+};
+const warmChunks = (name) => Promise.all((ROUTE_CHUNKS[name] || []).map((f) => f())).catch(() => {});
+
+/* WARM ON INTENT, NOT ON CLICK. A pointer coming to rest on a module card, a
+   focus landing on a lesson row, a thumb touching the Ready Room pill: each is
+   the best hint there is of the next navigation, and it arrives a few hundred
+   milliseconds before the click does. The chunk that click will need is
+   fetched then, so by the time the click lands it is a settled promise and the
+   transition starts at once rather than after a download. Each place is warmed
+   once; import() caches the rest. */
+const INTENT = [
+  [".mod[data-code], .tabs button", "module"],
+  [".kids .item[data-lesson], .next-title", "lesson"],
+  [".kids .item:not([data-lesson]), .libwrap .item", "chapter"],
+  ['section[aria-labelledby="lsec-papers"] .item', "paper"],
+  [".rrpill", "ready"],
+  ['.avbtn, [role="menuitem"]', "profile"],
+  ['[role="menuitem"]', "settings"],
+];
+const warmedOnIntent = new Set();
+function warmOnIntent(e) {
+  const el = e.target?.closest?.('button, a, [role="menuitem"]');
+  if (!el) return;
+  for (const [sel, name] of INTENT) {
+    if (warmedOnIntent.has(name) || !el.matches(sel)) continue;
+    warmedOnIntent.add(name);
+    warmChunks(name);
+  }
+}
+
 const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
 import { finishVars, ruledLayer } from "./lib/finishEngine.js";
@@ -132,7 +182,8 @@ import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { transitionKind, canTransition, settleDom, withTheme, withSetting,
-         beginTransition, endTransition, nameLayers, clearNames, scopeOf } from "./lib/viewTransition.js";
+         beginTransition, endTransition, nameLayers, clearNames, scopeOf,
+         screenFlag, markBackdrop } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply, removeThread, removeReply } from "./lib/lessonSurface.js";
 import {
@@ -159,9 +210,11 @@ export default function App() {
           restarts playback in every browser, and not restarting it is the
           whole point of the mini player. */}
       <SessionProvider>
-      <BrowserRouter>
+      {/* Not BrowserRouter: see TransitionRouter for the two things it does
+          differently, and why every screen change in the app depends on both. */}
+      <TransitionRouter>
         <AppInner />
-      </BrowserRouter>
+      </TransitionRouter>
       </SessionProvider>
       </UserProgressProvider>
     </ClerkProvider>
@@ -261,30 +314,25 @@ function AppInner() {
   // THE TRANSITION IS DRIVEN HERE, NOT BY THE ROUTER, and that is forced.
   // React Router 7 does take { viewTransition: true } on navigate — but only
   // under the DATA router (createBrowserRouter + RouterProvider). This app
-  // mounts the component <BrowserRouter>, where the option is accepted and
-  // silently ignored: verified by hooking document.startViewTransition and
-  // watching it never get called while the route changed underneath it.
+  // mounts a component router, where the option is accepted and silently
+  // ignored: verified by hooking document.startViewTransition and watching it
+  // never get called while the route changed underneath it.
   //
   // So the transition is started explicitly, and navigate() runs inside
   // flushSync so React has committed the new screen before the browser takes
   // its "after" snapshot. Without flushSync the update is still queued when
   // the snapshot is taken and both frames are the OLD page — an animation
-  // between a thing and itself.
+  // between a thing and itself. And flushSync only works because the router is
+  // <TransitionRouter>, not <BrowserRouter>: the stock one hands every location
+  // change to React.startTransition, which flushSync cannot hurry, so the
+  // after-snapshot was still the old page. See TransitionRouter.jsx.
   /* Which chunks a path needs, and a bounded wait for them.
      Keyed on the parsed route name so it cannot drift from the router. The
-     bound exists because a click must never feel dead: past it, the caller
-     drops the transition and navigates plainly, which is what the app did
-     before any of this existed. */
+     bound exists because a click must never feel dead: past it, go() stops
+     waiting and starts the transition anyway, and settleDom holds the
+     after-snapshot for whatever is still suspended. */
   const warmRoute = async (to) => {
-    const name = parseRoute(to).name;
-    const needed = ({
-      module: [CHUNK.module], chapter: [CHUNK.module, CHUNK.quiz],
-      lesson: [CHUNK.lesson], review: [CHUNK.module],
-      ready: [CHUNK.roomShell], modules: [CHUNK.modules],
-      profile: [CHUNK.profile], settings: [CHUNK.settings],
-      logbook: [CHUNK.progress], saved: [CHUNK.bookmarks],
-      notfound: [CHUNK.notFound],
-    })[name] || [];
+    const needed = ROUTE_CHUNKS[parseRoute(to).name] || [];
     if (!needed.length) return true;          // the deck is not split
     let timer;
     const timeout = new Promise((res) => { timer = setTimeout(() => res(false), 1400); });
@@ -296,8 +344,79 @@ function AppInner() {
     return ok;
   };
 
+  /* The intent listeners — see warmOnIntent. Delegated and passive, so they
+     cost one closest() per pointer arrival and nothing per control. */
+  useEffect(() => {
+    const opts = { capture: true, passive: true };
+    const types = ["pointerover", "focusin", "touchstart"];
+    for (const t of types) document.addEventListener(t, warmOnIntent, opts);
+    return () => { for (const t of types) document.removeEventListener(t, warmOnIntent, opts); };
+  }, []);
+
+  /* ONE TRANSITION PATH FOR EVERY NAVIGATION: a click comes through go() below,
+     and Back, Forward and a swipe come through the router's pop handler. They
+     used to be two different things — go() animated and the browser's own
+     buttons cut — which is why history.back() from a module to the deck
+     changed the page in a single frame.
+
+     The token, not the attribute: a navigation superseded before it settles
+     must not tear down the one that replaced it (see endTransition). Only the
+     layer this kind actually moves is named on the old side before the
+     snapshot. BOTH PROMISES ARE CAUGHT, because an interrupted transition — a
+     second navigation before the first settles — rejects `ready` and
+     `finished`, and interruption is normal here.
+
+     flushSync commits the new route inside the callback; that depends on the
+     router NOT deferring it into a React transition (see TransitionRouter.jsx).
+     settleDom then waits for a Suspense fallback to clear, the scroller
+     is reset against the new screen rather than the old one, and whatever just
+     mounted takes the same names before the after-snapshot. */
+  const runNavigation = (kind, commit, { resetScroll = () => {} } = {}) => {
+    if (!kind) {
+      clearNames();   // nothing will animate, so nothing should stay named
+      commit();
+      resetScroll();
+      return;
+    }
+    const token = beginTransition(kind);
+    const scope = scopeOf(kind);
+    nameLayers(scope);
+    const ground = screenFlag();
+    const vt = document.startViewTransition(async () => {
+      flushSync(commit);
+      await settleDom();
+      resetScroll();
+      nameLayers(scope);
+      markBackdrop(ground);
+    });
+    vt.ready?.catch(() => {});
+    vt.finished?.catch(() => {}).finally?.(() => { if (endTransition(token)) clearNames(); });
+  };
+
+  /* BACK AND FORWARD. The router hands every popstate here before it applies
+     it, and it goes through the same path as a click: the kind is worked out
+     from where it goes, the chunk it needs is already cached (it was on screen
+     a moment ago), and the scroller is left where the browser put it rather
+     than reset. A swipe the browser has already animated itself arrives with
+     hasUAVisualTransition, and animating it a second time would be a double
+     move, so that one is applied plainly. */
+  const routeNow = useRef(route);
+  routeNow.current = route;
+  /* Where a lesson sits in its chapter — see lessonOrder, defined once the
+     content is. A ref, so this handler, registered once, reads the current one. */
+  const lessonOrderRef = useRef(() => -1);
+  useEffect(() => {
+    popHandler.current = (location, apply, { uaAnimated = false } = {}) => {
+      const to = `${location.pathname}${location.search || ""}`;
+      const kind = !uaAnimated && canTransition() ? transitionKind(routeNow.current, to, { lessonOrder: lessonOrderRef.current }) : null;
+      runNavigation(kind, apply);
+    };
+    return () => { popHandler.current = null; };
+  }, []);
+
+  const navWait = useRef(0);
   const go = async (to, { keepScroll = false } = {}) => {
-    let kind = canTransition() ? transitionKind(route, to) : null;
+    let kind = canTransition() ? transitionKind(route, to, { lessonOrder: lessonOrderRef.current }) : null;
     const move = () => { navigate(to); };
 
     // WARM THE CHUNK FIRST, and this is the stutter.
@@ -330,8 +449,23 @@ function AppInner() {
 
          The await stays because it is still worth having: the page is live
          while the chunk arrives out here, and frozen behind a snapshot if it
-         arrives in there. */
-      await warmRoute(to);
+         arrives in there.
+
+         A WAIT LONGER THAN A BLINK IS SHOWN. The press itself already answered
+         (see "the press" in app.css); if the chunk is still on its way 120ms
+         later, html[data-nav-wait] draws a thin bar until it lands. Counted, so
+         a second click that overtakes the first cannot have its bar taken down
+         by the first one finishing. */
+      const waiting = ++navWait.current;
+      const hint = setTimeout(() => {
+        if (waiting === navWait.current) document.documentElement.dataset.navWait = "1";
+      }, 120);
+      try {
+        await warmRoute(to);
+      } finally {
+        clearTimeout(hint);
+        if (waiting === navWait.current) delete document.documentElement.dataset.navWait;
+      }
     }
 
     /* THE SCROLL RESET BELONGS TO THE NEW SCREEN, and it used to run against
@@ -349,49 +483,7 @@ function AppInner() {
       if (!keepScroll && deckRef.current) deckRef.current.scrollTop = 0;
     };
 
-    if (!kind) {
-      clearNames();   // nothing will animate, so nothing should stay named
-      move();
-      resetScroll();
-    } else {
-      // The token, not the attribute. See endTransition: a navigation that is
-      // superseded before it settles must not tear down the one that replaced
-      // it, which is the glitch when moving back and forth quickly.
-      const token = beginTransition(kind);
-      /* NAME THE OLD SIDE BEFORE THE SNAPSHOT IS TAKEN, and only the layer this
-         kind actually moves. A tab move names the panel so the frame can hold
-         still; everything else names the screen. Naming both would lift the
-         panel out of the screen and run it on a clock of its own. */
-      const scope = scopeOf(kind);
-      nameLayers(scope);
-      // BOTH PROMISES ARE CAUGHT, and they have to be. A transition that is
-      // interrupted — a second navigation before the first settles, a tab
-      // hidden mid-flight — rejects `ready` and `finished`, and an unhandled
-      // rejection is a real console error on a perfectly ordinary double tap.
-      // Seen once as "InvalidStateError: Transition was aborted because of
-      // invalid state" before this was added. Interruption is normal here, so
-      // it is swallowed rather than reported; the navigation itself already
-      // happened inside the callback and is unaffected.
-      const vt = document.startViewTransition(async () => {
-        flushSync(move);
-        // flushSync commits immediately when nothing suspends. When the route
-        // is code-split it DOES suspend — React.lazy suspends on its first
-        // render whatever the module cache holds — so the commit lands a frame
-        // or two later and this waits for it. Without the wait the browser
-        // photographs the old page as the "after" frame and animates it
-        // against itself.
-        await settleDom();
-        // The new screen exists now, so the scroller has its real content and
-        // resetting it means what it says. Before settleDom it would clamp
-        // against whatever was still mounted.
-        resetScroll();
-        // The new side is in the DOM now, so whatever just mounted takes the
-        // same names before the after-snapshot.
-        nameLayers(scope);
-      });
-      vt.ready?.catch(() => {});
-      vt.finished?.catch(() => {}).finally?.(() => { if (endTransition(token)) clearNames(); });
-    }
+    runNavigation(kind, move, { resetScroll });
   };
 
   const goSettings = (page) =>
@@ -483,6 +575,11 @@ function AppInner() {
     return () => { live = false; };
   }, [flags]);
   const useTestContent = testContent;
+  /* Where a lesson sits in its chapter, which is the direction a move between two
+     of them travels: a later lesson arrives from the right. */
+  const lessonOrder = (r) => (chaptersFor((r?.moduleCode) || activeModuleCode, useTestContent)
+    .find((c) => c.id === r?.chapterId)?.lessons || []).findIndex((l) => l.id === r?.lessonId);
+  lessonOrderRef.current = lessonOrder;
 
   // The seeded notes and threads are written into the account once and then
   // owned like anything else — otherwise deleting a seeded note would bring it
@@ -1761,7 +1858,11 @@ function AppInner() {
               : routePath.module(activeModuleCode))}
             onBack={() => go(routePath.home())}
             onOpenLesson={(ch, l) => go(routePath.lesson(activeModuleCode, ch.id, l.id))}
-            onOpenQuiz={(ch) => navigate(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
+            /* go(), not navigate(). A navigation that calls the router
+               directly skips the transition layer entirely, and this one was
+               the quiz row on the Lessons list — opening a quiz cut hard while
+               every other row on the same list moved. */
+            onOpenQuiz={(ch) => go(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
             onOpenQuestion={(target) => {
               // The one bridge from People back to the moment. A module post
               // has no moment, so watchAt() hands back null and there is
@@ -1807,7 +1908,7 @@ function AppInner() {
             initialChapterId={pendingChapterId}
             onInitialChapterConsumed={() => {}}
             chapterTab={route.tab && route.name === "chapter" ? route.tab : "brief"}
-            onChapterTab={(chapterId, t) => navigate(routePath.chapter(activeModuleCode, chapterId, t))}
+            onChapterTab={(chapterId, t) => go(routePath.chapter(activeModuleCode, chapterId, t))}
           />
         </main>
       )}

@@ -212,3 +212,40 @@
 .app.smooth-air .rr[data-view] *{
   animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important;
 }
+
+/* ============================================================== 8 · motion
+   Three moves that jumped. Each is motion only — the layouts are the design's —
+   and each stands down for Smooth Air and for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  /* FILL THE PANE / SHOW THE LIST. The feed column snapped to nothing and the
+     question column jumped a third of the screen wide: measured at 0.112 of
+     layout shift, the largest anywhere on the site. Both templates keep three
+     tracks, so the grid can interpolate between them — the feed closes like a
+     door rather than disappearing. Not while the splitter is being dragged:
+     the drag writes the width itself, frame by frame, and a transition on top
+     of it would make the handle trail the pointer. */
+  .rr .rr-tbody { transition: grid-template-columns var(--wg-settle) var(--wg-spring); }
+  .rr[data-drag="1"] .rr-tbody { transition: none; }
+  .rr .rr-feed { transition: opacity var(--wg-exit-fade) var(--wg-fade-out); }
+  .rr[data-wide="1"] .rr-ctx { transition: opacity var(--wg-enter-fade) var(--wg-fade-in), display var(--wg-enter-fade) allow-discrete; }
+  @starting-style { .rr[data-wide="1"] .rr-ctx { opacity: 0; } }
+
+  /* THE ATTACHMENT SHEET floats over the transcript instead of pushing it: it
+     used to take space in the layout, so opening it shoved every message up
+     and closing it dropped them again. It is kept mounted and hidden, so there
+     is something to animate on the way out too. */
+  .rr .rr-sheetwrap {
+    transition: opacity .16s var(--wg-fade-in), transform var(--wg-settle) var(--wg-spring),
+                display var(--wg-settle) allow-discrete;
+  }
+  @starting-style { .rr .rr-sheetwrap:not([hidden]) { opacity: 0; transform: translateY(8px); } }
+}
+.rr .rr-composer { position: relative; }
+.rr .rr-sheetwrap {
+  position: absolute; inset-inline: 0; bottom: 100%; z-index: 4;
+  padding: 10px clamp(12px, 3vw, 26px) 0;
+  background: var(--panel); border-top: 1px solid var(--line);
+}
+.rr .rr-sheetwrap[hidden] { display: none; opacity: 0; transform: translateY(8px); }
+.app.smooth-air .rr .rr-tbody, .app.smooth-air .rr .rr-feed, .app.smooth-air .rr .rr-ctx,
+.app.smooth-air .rr .rr-sheetwrap { transition: none !important; }

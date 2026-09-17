@@ -17,6 +17,7 @@ import { ERROR_GENERIC } from "../lib/copy.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
 import { MIN_FLOOR, MIN_CEIL, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
 import { useTiltPermission } from "../lib/useAttitude.js";
+import { useTabPill } from "../lib/tabMotion.js";
 
 // §6 — the profile. Three tabs: Licence · Preferences · Appearance.
 //
@@ -230,7 +231,10 @@ const PROFILE_CSS = `
      overflow-x: hidden ate it, so the tab was unreachable rather than merely
      tight. Scrolls instead, the same treatment .mscreen .tabs already has.
      Nothing changes at sizes where the row fits. */
-  overflow-x: auto; scrollbar-width: none; }
+  overflow-x: auto; scrollbar-width: none;
+  /* Every pill paints below every label: a pill sliding past a neighbouring
+     tab passes under its word, never over it. */
+  isolation: isolate; }
 .tabs::-webkit-scrollbar { display: none; }
 /* flex: 1 0 auto — grow to fill the row exactly as before wherever there is
    room, and never shrink below the label. A 0 0 auto would have stopped them
@@ -239,9 +243,16 @@ const PROFILE_CSS = `
    CSS comment ends the string.) */
 .tabs button { flex: 1 0 auto; background: none; border: 0; border-radius: 8px; padding: 10px 8px;
   color: var(--t2); font-size: calc(13px * var(--scale, 1)); font-weight: 600; cursor: pointer;
-  transition: background .16s, color .16s; }
-.tabs button[aria-selected="true"] { background: var(--raised); color: var(--t1);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--active), transparent 55%); }
+  position: relative; transition: color .16s; }
+.tabs button[aria-selected="true"] { color: var(--t1); }
+/* The selected tab's fill and edge, on an element of their own so they can
+   travel between tabs (useTabPill). Exactly the look the button used to paint
+   on itself. */
+.tabs button .tab-pill { display: none; }
+.tabs button[aria-selected="true"] .tab-pill { display: block; position: absolute; inset: 0; z-index: -1;
+  border-radius: 8px; background: var(--raised);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--active), transparent 55%);
+  transform-origin: left center; }
 
 .panel { display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
 .block { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
@@ -475,6 +486,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     if (next) setSwapH(next);
   }, [tab]);
   const tabsRef = useRef(null);
+  useTabPill(tabsRef, tab);
   const fileRef = useRef(null);
 
   const [holderName, setHolderName] = useState("");
@@ -574,6 +586,9 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           <button key={t.id} role="tab" id={`ptab-${t.id}`} aria-controls={`ppanel-${t.id}`}
                   aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
                   onClick={() => onNavigate(t.id)}>
+            {/* The selected look, drawn by its own element so it can slide to
+                the next tab — see useTabPill. Identical at rest. */}
+            <span className="tab-pill" aria-hidden="true" />
             {t.label}
           </button>
         ))}

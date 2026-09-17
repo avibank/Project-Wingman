@@ -795,8 +795,11 @@ export default function ReaderV6({
             <button className="clr" id="clr" type="button" aria-label="Clear">&times;</button>
           </div>
           <div className="pseg" id="view">
-            <button className="on" type="button" data-v="marks">Marks<span id="cm" /></button>
-            <button type="button" data-v="pages">Pages<span id="cp" /></button>
+            {/* The fill behind the chosen view is its own element so it can
+                slide to the other one (slidePill in tabMotion.js). An <i>,
+                because the sheet styles every span in these buttons as a count. */}
+            <button className="on" type="button" data-v="marks"><i className="tab-pill" aria-hidden="true" />Marks<span id="cm" /></button>
+            <button type="button" data-v="pages"><i className="tab-pill" aria-hidden="true" />Pages<span id="cp" /></button>
           </div>
           <div id="filters" />
         </div>

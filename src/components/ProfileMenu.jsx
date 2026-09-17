@@ -179,7 +179,22 @@ function ProfileMenu({ onNavigate }) {
           background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
           border-top-color: var(--edge-hi);
           box-shadow: 0 20px 44px var(--shadow-c); backdrop-filter: blur(14px); }
-        .menu[hidden] { display: none; }
+        /* IT OPENS AND IT CLOSES. The menu was the hidden attribute and nothing
+           else, so it appeared and vanished in one frame. It stays a hidden
+           attribute — the accessibility tree still sees one menu, open or not —
+           and the display change is let through a transition (allow-discrete)
+           so there is something to animate on the way out as well as in. It
+           grows from the avatar it hangs from. */
+        .menu { transform-origin: top right; }
+        .menu[hidden] { display: none; opacity: 0; transform: translateY(-4px) scale(.97); }
+        @media (prefers-reduced-motion: no-preference) {
+          .menu {
+            transition: opacity .14s var(--wg-fade-in), transform .22s var(--wg-spring),
+                        display .22s allow-discrete, overlay .22s allow-discrete;
+          }
+          @starting-style { .menu:not([hidden]) { opacity: 0; transform: translateY(-4px) scale(.97); } }
+        }
+        .app.smooth-air .menu { transition: none; }
         .menu button { display: flex; width: 100%; align-items: center; gap: 11px; background: none;
           border: 0; border-radius: 9px; padding: 6px 9px; color: var(--t1);
           font-size: calc(13.5px * var(--scale, 1)); cursor: pointer; text-align: left;

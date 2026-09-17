@@ -68,11 +68,30 @@ export function placeOf(route) {
 
    THE DECK IS NOT A PARENT OF A MODULE, it is the drawer the module was in, so
    opening one is its own kind rather than plain depth. */
-export function transitionKind(fromRoute, toPath) {
+export function transitionKind(fromRoute, toPath, { lessonOrder } = {}) {
   if (!toPath) return null;
   const a = placeOf(fromRoute);
   const to = parseRoute(toPath);
   const b = placeOf(to);
+
+  /* The same place is not a move. Everything past this line is one, and every
+     one of them returns a kind: a navigation that cannot be classified still
+     crossfades rather than cutting. */
+  const same = (x, y) => ["name", "moduleCode", "chapterId", "lessonId", "tab", "sub", "paperId", "page", "flow"]
+    .every((k) => (x?.[k] ?? null) === (y?.[k] ?? null));
+  if (same(fromRoute, to)) return null;
+
+  /* LESSON TO LESSON IN ONE CHAPTER is a panel move, in lesson order: the
+     player and the notes slide, and the chapter's own list beside them holds,
+     because it is the list you chose from. It used to return nothing at all —
+     same section, same depth, same module — so the player, the title, the
+     scrubber and the notes all snapped. */
+  if (fromRoute?.name === "lesson" && to.name === "lesson" && fromRoute.chapterId === to.chapterId) {
+    const i = lessonOrder?.(fromRoute);
+    const j = lessonOrder?.(to);
+    if (Number.isFinite(i) && Number.isFinite(j) && i >= 0 && j >= 0 && i !== j) return j > i ? "tabR" : "tabL";
+    return "swap";
+  }
 
   /* Tabs first: they are the same section at the same depth, so every test
      below would call them nothing at all and the panel would cut. The index
@@ -93,8 +112,10 @@ export function transitionKind(fromRoute, toPath) {
   if (a.sec === "module" && b.sec === "deck") return "morphBack";
   if (a.sec !== b.sec) return "swap";
 
-  // Same module, different chapter is sideways rather than deeper.
-  if (b.depth === a.depth) return a.id && b.id && a.id !== b.id ? "swap" : null;
+  /* Same section, same depth, somewhere else: sideways. This used to demand two
+     different module ids and return nothing otherwise, which is why Settings to
+     Licence — siblings in one section with no module id at all — cut hard. */
+  if (b.depth === a.depth) return "swap";
   return b.depth > a.depth ? "fwd" : "back";
 }
 
@@ -139,21 +160,45 @@ export const canTransition = () => supported() && !motionOff();
 let generation = 0;
 
 export function beginTransition(kind) {
-  document.documentElement.dataset.vt = kind;
+  const root = document.documentElement;
+  root.dataset.vt = kind;
+  // A flag a superseded transition raised belongs to that transition only.
+  delete root.dataset.vtBackdrop;
   return ++generation;
 }
 
 export function endTransition(token) {
   if (token !== generation) return false;
   delete document.documentElement.dataset.vt;
+  delete document.documentElement.dataset.vtBackdrop;
   return true;
+}
+
+/* DID THE BACKDROP CHANGE UNDER THIS NAVIGATION?
+ *
+ * The root — the ground colour and the scenery behind every screen — paints
+ * once on a navigation, because between two ordinary screens it is the same
+ * picture and a dissolve of a thing into itself only costs frames. One screen
+ * re-grounds the whole document: the exam puts <html data-screen="exam">, a
+ * flat matte ground with the scenery off. Walking into or out of it swapped
+ * the entire background in a single frame under a sliding screen.
+ *
+ * So the callback compares the screen flag either side of the commit and
+ * raises data-vt-backdrop when it moved; the stylesheet then holds the old
+ * root and dissolves the new one over it. Keyed on the flag rather than on a
+ * route name, so any screen that re-grounds the page later gets it for free. */
+export const screenFlag = () => document.documentElement.dataset.screen || "";
+export function markBackdrop(before) {
+  if (screenFlag() !== before) document.documentElement.dataset.vtBackdrop = "1";
 }
 
 /* WHICH LAYER GETS ITS OWN SNAPSHOT, AND WHY IT IS EXACTLY ONE.
  *
- * Mission Control moves three different things depending on what changed: a
- * whole screen, a tab panel inside a screen, or the Ready Room's pane beside
- * its rail. Each needs its own snapshot to move independently of the chrome.
+ * Mission Control moves a different thing depending on what changed: a whole
+ * screen (with the app bar beside it, which leaves only for the Ready Room), a
+ * tab panel inside a screen, the Ready Room's pane beside its rail, or, between
+ * two questions in one module, the question column alone. Each needs its own
+ * snapshot to move independently of the chrome.
  *
  * But only the one that is actually moving may be named. Naming a tab panel
  * during a whole-screen change lifts it OUT of the screen and animates it on a
@@ -165,11 +210,44 @@ export function endTransition(token) {
  * the previous navigation is not visible in any way until it silently aborts
  * the next one.
  */
-const CONTENT = [".deck-inner", ".content"];
-const PANELS = [".mcard > .pane", ".profile .panel-swap"];
-const PANE = [".room > .pane"];
-const RAIL = [".room > .rail"];
-const ALL = [...CONTENT, ...PANELS, ...PANE, ...RAIL];
+/* `.deck`, NOT `.deck-inner`. The inner element is keyed by route and sits
+   inside <Suspense>: it is replaced on every navigation and hidden whenever a
+   route suspends, so a name written on it can be lost between the moment it
+   is written and the moment the browser photographs the page. `.deck` is the
+   scroller around it, outside Suspense and never remounted, so the name
+   survives both. It is also the viewport rather than the whole page — a
+   snapshot the size of the screen instead of 1300px of it, and no size tween
+   between two pages of different heights. */
+const CONTENT = [".deck", ".content"];
+const PANELS = [".mcard > .pane", ".profile .panel-swap", ".mscreen.lesson .watch"];
+/* A lesson's own list sits inside .watch but does not travel with it, and the
+   video is drawn by an overlay outside the page entirely — it moves with the
+   panel under a name of its own, on the same keyframes, so the picture stays
+   in its frame. */
+const LESSON_LIST = [".mscreen.lesson .watch > .sd"];
+const PLAYER = [".player-layer"];
+const CARD = [".mscreen .mcard"];
+/* The app bar. It sits above the screen (z-index 20), so a receding screen
+   scaled past its own edge used to paint over it; named, it keeps its place in
+   the stack. And the Ready Room has none — it takes the whole window — so this
+   is also what lets the bar leave and come back rather than blink. */
+const TOPBAR = ["header.topbar"];
+/* THE READY ROOM'S OWN ELEMENTS. These said `.room > .pane` and `.room > .rail`
+   — the room before its rebuild — and in the live DOM `.room` holds only its
+   veil, modal and toast, so the pane layer named nothing and the room's panes
+   had never once moved. */
+const PANE = [".rr-app > .rr-pane"];
+const RAIL = [".rr-app > .rr-rail"];
+/* The question column alone, for moves between questions in one module: the
+   feed on its left is the thing you are choosing from and should hold still. */
+const DETAIL = [".rr-app .rr-detail"];
+const FEED = [".rr-app .rr-feed"];
+/* On screen at all. A narrow room shows one column at a time and hides the
+   others with display: none, and an element that is not rendered cannot be
+   photographed — naming it only guarantees an old side or a new side with
+   nothing on the other. */
+const shown = (el) => Boolean(el && el.getClientRects().length);
+const ALL = [...CONTENT, ...PANELS, ...PANE, ...RAIL, ...DETAIL, ...LESSON_LIST, ...PLAYER, ...CARD, ...TOPBAR];
 
 export function clearNames() {
   for (const sel of ALL) {
@@ -179,34 +257,98 @@ export function clearNames() {
 
 export function nameLayers(scope) {
   clearNames();
-  /* The screen itself, always — it is what recedes and arrives. First match
-     wins: .deck-inner is the page, .content is the fallback for a route that
-     does not use it. */
-  for (const sel of CONTENT) {
-    const el = document.querySelector(sel);
-    if (el) { el.style.viewTransitionName = "wg-content"; break; }
+  /* The screen, for a SCREEN change only. It used to be named for every kind,
+     and a tab or a pane move then ran the whole page through a crossfade of
+     its own on top of the panel's slide: the title and the tab strip blinked
+     while the panel moved, and the active pill could not travel because the
+     live page was hidden under a snapshot of itself. When only a panel moves,
+     everything else stays in the root, which is instant — and instant is what
+     "the frame holds still" means. */
+  if (scope === "screen") {
+    for (const sel of CONTENT) {
+      const el = document.querySelector(sel);
+      if (el) { el.style.viewTransitionName = "wg-content"; break; }
+    }
+    const bar = document.querySelector(TOPBAR[0]);
+    if (bar) bar.style.viewTransitionName = "wg-topbar";
   }
   if (scope === "tab") {
     for (const sel of PANELS) {
       const el = document.querySelector(sel);
       if (el) el.style.viewTransitionName = "wg-tabpanel";
     }
-  }
-  if (scope === "pane") {
-    for (const sel of PANE) {
-      const el = document.querySelector(sel);
-      if (el) el.style.viewTransitionName = "wg-pane";
+    /* The module screen's card: its height changes as a morph around the
+       panel rather than a jump. The selected tab's pill is deliberately NOT
+       named — as a layer of its own it painted over the tab labels; it slides
+       in the page instead (useTabPill), and the card's new picture is live, so
+       the slide shows through it. */
+    const card = document.querySelector(CARD[0]);
+    if (card) card.style.viewTransitionName = "wg-card";
+    const list = document.querySelector(LESSON_LIST[0]);
+    if (list) {
+      list.style.viewTransitionName = "wg-rail";
+      const player = document.querySelector(PLAYER[0]);
+      if (player) player.style.viewTransitionName = "wg-player";
     }
-    /* Pinned so it does not travel with the pane. The rail is furniture. */
-    for (const sel of RAIL) {
-      const el = document.querySelector(sel);
-      if (el) el.style.viewTransitionName = "wg-rail";
+  }
+  /* THE ROOM TAKES TURNS WHEN IT IS NARROW. Wide, the rail, the feed and a
+     question sit side by side and only the part that changed moves: the pane
+     beside a pinned rail, or the question beside a pinned feed. At 900px and
+     under the rail and the pane take turns on screen, and at 1180px and under
+     so do the feed and a question — so a move between them was the old column
+     vanishing and the new one arriving over nothing, a blink. There, whichever
+     column is on screen carries the name, on both sides of the move: the one
+     you left crossfades into the one you opened. Only one of them is ever
+     rendered at a time, so the name is never held twice. */
+  if (scope === "pane") {
+    const pane = document.querySelector(PANE[0]);
+    const rail = document.querySelector(RAIL[0]);
+    if (shown(pane) && shown(rail)) {
+      pane.style.viewTransitionName = "wg-pane";
+      /* Pinned so it does not travel with the pane. The rail is furniture. */
+      rail.style.viewTransitionName = "wg-rail";
+    } else {
+      const on = shown(pane) ? pane : shown(rail) ? rail : null;
+      if (on) on.style.viewTransitionName = "wg-pane";
+    }
+  }
+  if (scope === "detail") {
+    const detail = document.querySelector(DETAIL[0]);
+    if (shown(detail) && shown(document.querySelector(FEED[0]))) {
+      detail.style.viewTransitionName = "wg-detail";
+    } else {
+      const pane = document.querySelector(PANE[0]);
+      const rail = document.querySelector(RAIL[0]);
+      if (shown(pane)) pane.style.viewTransitionName = "wg-detail";
+      if (shown(rail)) rail.style.viewTransitionName = "wg-rail";
     }
   }
 }
 
-/* A tab move animates the panel; everything else animates the screen. */
-export const scopeOf = (kind) => (String(kind).startsWith("tab") ? "tab" : "screen");
+/* Which layer a kind moves. `pane` could never come back from this — it only
+   knew tab and screen — so the pane branch above was unreachable and the Ready
+   Room's rules were dead CSS. */
+export const scopeOf = (kind) => {
+  const k = String(kind);
+  return k.startsWith("tab") ? "tab" : k.startsWith("pane") ? "pane" : "screen";
+};
+
+/* A MOVE INSIDE THE READY ROOM, which is not a navigation: the address does not
+   change, the rail holds, and only the pane — or, between two questions in one
+   module, only the question column — travels. Direction is the caller's to
+   decide, because only the caller knows the order it moved through: down the
+   rail or deeper into a thread is `paneR`, up or back out is `paneL`. */
+export function paneTransition(kind, update, { scope = "pane" } = {}) {
+  if (!canTransition()) { update(); return; }
+  const token = beginTransition(kind);
+  nameLayers(scope);
+  const vt = document.startViewTransition(() => {
+    flushSync(update);
+    nameLayers(scope);
+  });
+  vt.ready?.catch(() => {});
+  vt.finished?.catch(() => {}).finally?.(() => { if (endTransition(token)) clearNames(); });
+}
 
 /* WAIT FOR REACT TO ACTUALLY COMMIT.
  *

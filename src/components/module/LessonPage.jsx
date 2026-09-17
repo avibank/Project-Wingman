@@ -18,6 +18,7 @@ import "./familiar.css";
 import { useUserProgress } from "../../lib/userProgress.jsx";
 import { FLY_SOLO_KEY } from "../../lib/flySolo.js";
 import NoteDeck from "./NoteDeck.jsx";
+import { useTabPill, useSwitchIn } from "../../lib/tabMotion.js";
 import SignOff from "./SignOff.jsx";
 import "./deck.css";
 
@@ -55,6 +56,8 @@ function seekable(text, onSeek) {
 //
 // The player is NOT rendered here. This page renders an empty sized slot and
 // the one player, which lives above the router, positions itself over it.
+const LESSON_TABS = ["notes", "comments"];
+
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [],
   bookmarks = [], onToggleSave,
@@ -101,6 +104,12 @@ export default function LessonPage({
   const hiddenCount = (chapter.lessons || [])
     .filter((l) => l.id !== lesson.id && l.id !== next?.lesson?.id).length;
   const tab = session.tab;
+  /* The rule under the selected tab travels to the other one, and what the
+     tab shows comes in from the side it sits on (tabMotion.js). */
+  const ltabsRef = useRef(null);
+  const ltabBodyRef = useRef(null);
+  useTabPill(ltabsRef, tab);
+  useSwitchIn(ltabBodyRef, tab, LESSON_TABS);
   // `me`, not the default. notesFor filters by author and defaults to the
   // historical "u_you"; new notes are stamped with the real id, so omitting it
   // here made every note vanish the instant it was saved.
@@ -342,13 +351,15 @@ export default function LessonPage({
             strip, and it was most of what pushed the panel down the page. The
             tab strip is the top of this card now. */}
 
-        <div className="ltabs" role="tablist" aria-label="Notes and comments">
+        <div className="ltabs" role="tablist" aria-label="Notes and comments" ref={ltabsRef}>
           <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
                   onClick={() => setTab("notes")}>
+            <span className="tab-pill" aria-hidden="true" />
             Notes {myNotes.length > 0 && <span className="ltab-n">{myNotes.length}</span>}
           </button>
           <button type="button" className="ltab" role="tab" aria-selected={tab === "comments"}
                   onClick={() => setTab("comments")}>
+            <span className="tab-pill" aria-hidden="true" />
             Comments {comments.length > 0 && <span className="ltab-n">{comments.length}</span>}
           </button>
 
@@ -410,6 +421,7 @@ export default function LessonPage({
           )}
         </div>
 
+        <div className="ltab-body" ref={ltabBodyRef}>
         {tab === "notes"
           ? <NoteDeck notes={myNotes} jumpTo={justSaved}
                       onSeek={requestSeek}
@@ -424,6 +436,7 @@ export default function LessonPage({
                          lesson={lesson}
                          people={people} onSeek={requestSeek} mutate={mutate}
                          pending={pending} postOptimistic={postOptimistic} me={me} />}
+        </div>
       </div>
 
       </div>

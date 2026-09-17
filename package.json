@@ -59,6 +59,7 @@
     "check:code": "node scripts/check-code.mjs",
     "check:exam": "node scripts/check-exam.mjs",
     "harness": "./node_modules/.bin/vite --config tests/harness/vite.config.js",
+    "harness:prod": "./node_modules/.bin/vite build --config tests/harness/vite.prod.config.js && ./node_modules/.bin/vite preview --config tests/harness/vite.prod.config.js",
     "test:reader": "node tests/reader/index.mjs",
     "test:reader:ui": "./node_modules/.bin/playwright test --ui",
     "test:reader:one": "node scripts/reader-tests.mjs --project=laptop",
@@ -67,7 +68,8 @@
     "reader:css": "node scripts/scope-reader-css.mjs",
     "measure:manual": "node --env-file=.env.local scripts/measure-manual.mjs",
     "check:room": "node scripts/check-room.mjs",
-    "test:exam": "node tests/exam-run.mjs"
+    "test:exam": "node tests/exam-run.mjs",
+    "test:vt": "node tests/vt-run.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

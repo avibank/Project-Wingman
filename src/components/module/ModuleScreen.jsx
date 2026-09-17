@@ -8,6 +8,7 @@ import { faultChapters } from "../../lib/minimums.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
+import { useTabPill } from "../../lib/tabMotion.js";
 import "./module.css";
 import "./manual.css";
 
@@ -80,6 +81,7 @@ export default function ModuleScreen({
   // is the only keyboard route into the Library. Mirrors walkTabs in
   // Profile.jsx so the two tablists behave identically.
   const tabsRef = useRef(null);
+  useTabPill(tabsRef, tab);
   const walkTabs = (e) => {
     const btns = [...(tabsRef.current?.querySelectorAll('[role="tab"]') || [])];
     const i = btns.indexOf(document.activeElement);
@@ -129,6 +131,11 @@ export default function ModuleScreen({
             <button key={t.id} type="button" role="tab" className="tab"
                     aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
                     onClick={() => onTab(t.id)}>
+              {/* The selected tab's background, as its own element, so it can
+                  travel to the next tab rather than blink out of one and into
+                  another — see useTabPill in tabMotion.js. It is what the
+                  selected tab always looked like; only who draws it moved. */}
+              <span className="tab-pill" aria-hidden="true" />
               {t.label}
             </button>
           ))}

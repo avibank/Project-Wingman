@@ -386,6 +386,72 @@ question feeds, and the right seat is one person and state that expires.
   livery × night/day × 1920/1512/1024/430, and every control the brief lists:
   `npm run test:rr`.
 
+## Screen changes and transitions
+
+Every navigation, tab, pane and popup moves on one motion system — the Mission
+Control tokens at the top of the view-transition block in `app.css`
+(`--wg-settle`, `--wg-spring`, `--wg-fade-in/out`, `--wg-panel-travel`,
+`--wg-pane-travel`). `src/lib/viewTransition.js` decides what kind of move a
+navigation is and names the layers that move; `src/lib/tabMotion.js` moves the
+things that are not navigations.
+
+- **The router is `TransitionRouter`, not `BrowserRouter`, and that is load-
+  bearing.** react-router 7 wraps every location change in
+  `React.startTransition`, which `flushSync` cannot hurry — so the browser
+  photographed the OLD page as the after-frame and the new one popped in once
+  the transition had finished. The component also hands Back, Forward and a
+  swipe to the same path as a click (`popHandler`), which is why the browser's
+  own buttons animate. Put `BrowserRouter` back and both break silently.
+- **One path for every navigation**: `go()` and the pop handler both call
+  `runNavigation` in `App.jsx`. A control that calls `navigate()` directly skips
+  the transition entirely — the quiz row and the chapter tabs both did.
+- **Exactly one thing is named per kind.** A screen change names `.deck`
+  (`wg-content`, never `.deck-inner`, which Suspense can hide between the name
+  and the snapshot) and the app bar (`wg-topbar`, which is what lets it leave
+  and return around the full-bleed Ready Room). A tab names only the panel,
+  plus the module card's height (`wg-card`) and a lesson's video (`wg-player`).
+  The room names its pane or, between questions, its detail column — and on a
+  room narrow enough to show one column at a time (≤900px rail/pane, ≤1180px
+  list/question), whichever column is on screen carries the name, so the one
+  you left crossfades into the one you opened. Naming more than moves lifts a
+  part out of its screen onto a clock of its own.
+- **plus-lighter only on an undimmed pair on one clock.** Screen changes blend
+  normally (both sides carry brightness(), and added they spike). A pane, a
+  detail column, a tab panel or the lesson video fades old at 1 − e(t) and new
+  at e(t) on the same duration and curve and adds them, which is the only
+  crossfade with no dip. `check:transitions` holds both halves of that rule.
+- **A tab's pill is NOT a view-transition layer.** Named, it painted over the
+  tab labels for the whole slide (measured). It slides in the page instead
+  (`useTabPill`), under every label, and shows through the live snapshot.
+  At rest it is pixel-identical to the old selected-tab look — diffed on all
+  five strips (module, Account, lesson, reader) in two liveries, night and day.
+- **The root paints once**, except when the backdrop really changes: the exam
+  sets `<html data-screen="exam">`, and a move into or out of it raises
+  `data-vt-backdrop` so the ground dissolves instead of cutting. The exam sets
+  that flag in a LAYOUT effect: the quiz commits after a Suspense retry, and a
+  passive effect from that commit ran after the page had been photographed —
+  on a production build only.
+- **Kinds are enumerated in the CSS**, never excluded with `:not()` — the
+  minifier strips qualifiers in front of a `::view-transition-*` pseudo-element.
+- Smooth Air and `prefers-reduced-motion` mean NO motion, not less:
+  `canTransition()` and `motionOff()` return early, and every CSS rule sits in
+  a `no-preference` block or has a `.smooth-air` override.
+- `npm run test:vt` walks the brief's own checklist against the harness and
+  fails a step unless each named area animates on both sides, the pill,
+  switch, popover, dialog or sheet that should move did, and nothing shifted.
+  `VT_VARIANT`, `VT_LIVERY`, `VT_WIDTH` pick the skin and size;
+  `VT_MOTION=smooth-air|reduce` inverts it — a step then passes only if
+  nothing animated. `VT_BROWSER=webkit` walks it in Safari's engine, which is
+  what most of these students' phones run: everything moves there except a
+  closing `<dialog>`, which needs `overlay` — Chromium's alone — so the
+  end-exam dialog and its backdrop cut on the way out in Safari and the walk
+  asks each engine for what it has. Frames are only meaningful on a production
+  build on a GPU:
+  `npm run harness:prod`, then `VT_BASE=http://127.0.0.1:5191 VT_GPU=1
+  VT_CPU=4 VT_FRAMES=1 npm run test:vt`. The headless shell rasterises in
+  software and the dev build of React does several times the work, and both
+  once made a smooth transition measure at 200ms a frame.
+
 ## Status
 
 `npm run build` succeeds. Nothing in this codebase has been verified against the live

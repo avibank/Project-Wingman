@@ -347,3 +347,32 @@
   border: 1px solid var(--hair); background: var(--fill); color: var(--txt);
   font-size: 12.5px;
 }
+
+/* ── the chosen view's fill ──────────────────────────────────────────────
+   Marks | Pages drew the chosen view's fill as the button's own background,
+   so switching views blinked it out of one button and into the other. It is
+   an element of its own now, the same fill in the same place, so it can slide
+   across (slidePill in tabMotion.js). Every fill sits under every label: the
+   segment isolates and the fill is at -1 inside it. */
+.rdr .pseg { isolation: isolate; }
+.rdr .pseg button { position: relative; }
+.rdr .pseg button.on { background: none; }
+.rdr .pseg button .tab-pill { display: none; }
+.rdr .pseg button.on .tab-pill {
+  display: block; position: absolute; inset: 0; z-index: -1;
+  border-radius: var(--r-xs); background: var(--fill-2); transform-origin: left center;
+}
+
+/* ── the list waits for its first paint ──────────────────────────────────
+   The panel's filters are painted when the paper's text arrives, and they
+   push the list and the footer down as they land — a layout shift on every
+   paper opened. Both are empty until that paint anyway, so they stay hidden
+   until part4 marks the root data-panel, and then fade in already in place.
+   Smooth Air's rule above takes the fade to nothing. */
+.rdr:not([data-panel]) .pan .body,
+.rdr:not([data-panel]) .pan .pf { visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .rdr[data-panel] .pan .body,
+  .rdr[data-panel] .pan .pf { animation: rdrListIn 160ms cubic-bezier(0, 0, .2, 1) both; }
+}
+@keyframes rdrListIn { from { opacity: 0; } }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Av, Vote, Status } from "./bits.jsx";
 import { Back, Search, Plus, Reply, Save, Share, Lesson, Paper } from "./icons.jsx";
 import Detail from "./Detail.jsx";
+import { useSwitchIn } from "../../../lib/tabMotion.js";
 import { when, titleOf, excerptOf, answerCount } from "../../../lib/roomModel.js";
 import {
   RR_FILTERS, STATUS_WORD, statusOf, chipCounts, waitingOnAnswer, moduleLine, dragTo,
@@ -68,6 +69,8 @@ export default function Threads({
   const bodyRef = useRef(null);
   const feedRef = useRef(null);
   const counts = chipCounts(all, { replies, me });
+  // A filter narrows the list in place: it fades in rather than cutting.
+  useSwitchIn(feedRef, filter);
 
   /* Keep the selected row in view when the keys move it. A click lands on a
      row that is already visible, where "nearest" does nothing. */

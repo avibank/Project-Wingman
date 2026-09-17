@@ -312,9 +312,15 @@ try {
     await page.locator(".rr-cin .rr-plus").click();
     await settle(200);
     expect("+ offers Photo, File and Paper passage", (await page.locator(".rr-sheet button").allTextContents()).join("|") === "PhotoFilePaper passage".replace(/(Photo)(File)(Paper passage)/, "$1|$2|$3"));
+    expect("and the sheet is open", (await page.locator(".rr-sheetwrap:not([hidden])").count()) === 1);
     await page.mouse.click(760, 160);
     await settle(200);
-    expect("a press outside closes the sheet", (await page.locator(".rr-sheet").count()) === 0);
+    /* The sheet stays mounted so it has something to animate on the way out:
+       closed is its wrapper hidden at once, and off the page once the fade
+       has run — not the element gone. */
+    expect("a press outside closes the sheet", (await page.locator(".rr-sheetwrap[hidden]").count()) === 1);
+    await settle(500);
+    expect("and it is off the page once it has faded", !(await page.locator(".rr-sheet").isVisible()));
 
     await page.locator('.rr-msg[data-me="1"]', { hasText: "caught me out" }).locator(".rr-mt").click();
     await settle(300);

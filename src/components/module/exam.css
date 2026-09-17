@@ -267,9 +267,33 @@
   width: min(460px, calc(100vw - 32px));
   font-family: var(--font-ui);
 }
-.exam-dialog[open] { animation: exam-dialog-in .3s var(--ease); }
-@keyframes exam-dialog-in { from { transform: translateY(8px) scale(.97); opacity: 0; } }
-.exam-dialog::backdrop { background: oklch(.1 .02 250 / .55); backdrop-filter: blur(3px); }
+/* IT CLOSES AS WELL AS OPENS. The design's rise-in was a keyframe on [open],
+   which only ever runs one way: Back to exam made the dialog, and its dimmed
+   backdrop, vanish in a frame. The same rise and the same backdrop are now a
+   transition — the dialog leaves the way it came, and the top layer holds it
+   (overlay, allow-discrete) until it has. */
+.exam-dialog:not([open]) { opacity: 0; transform: translateY(8px) scale(.97); }
+.exam-dialog {
+  transition: opacity .3s var(--ease), transform .3s var(--ease),
+              display .3s allow-discrete, overlay .3s allow-discrete;
+}
+@starting-style { .exam-dialog[open] { opacity: 0; transform: translateY(8px) scale(.97); } }
+/* The backdrop fades as a whole — its tint and its blur together — by its
+   OPACITY. Transitioning the blur radius instead would recompute a full-screen
+   blur on every frame of the fade; a fixed blur under a fading layer costs one.
+
+   SAFARI CUTS ON THE WAY OUT, and that is the graceful half of this. Keeping a
+   closing dialog on screen long enough to fade needs `overlay`, which is
+   Chromium's alone (measured in WebKit: transition-behavior and @starting-style
+   yes, overlay no) — so there the dialog and its backdrop appear dimmed and
+   correct, and vanish in one frame, exactly as they did before. */
+.exam-dialog::backdrop {
+  background-color: oklch(.1 .02 250 / .55); backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity .25s var(--ease), display .25s allow-discrete, overlay .25s allow-discrete;
+}
+.exam-dialog[open]::backdrop { opacity: 1; }
+@starting-style { .exam-dialog[open]::backdrop { opacity: 0; } }
 .exam-dialog .dialog__body { padding: 24px; display: grid; gap: 14px; }
 .exam-dialog h2 { margin: 0; font-size: 20px; }
 .exam-dialog p { margin: 0; color: var(--t2); line-height: 1.5; }

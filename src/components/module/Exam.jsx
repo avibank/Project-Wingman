@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   newAttempt, answer, flag, goTo, next as nextQ, prev as prevQ, submit,
   score, review, weakLessons, retakeWrong, scoreLine,
@@ -198,8 +198,16 @@ export default function Exam({
      while it is on screen, and takes the scenery off with it. The flag goes on
      <html> rather than on this component because the tokens it overrides are
      written there, inline, by the theme layer; it stays through the result and
-     comes off when the quiz does. */
-  useEffect(() => {
+     comes off when the quiz does.
+
+     A LAYOUT EFFECT, so the flag is on <html> in the same commit that puts the
+     exam on screen. The quiz is code-split: on the way in it commits after a
+     Suspense retry, and a passive effect from that commit ran after the
+     transition had already photographed the page — so the ground under the
+     exam was still the deck's, and the transition layer, which reads this
+     flag to decide whether to dissolve the backdrop (markBackdrop), never saw
+     it change. Measured on a production build; a dev build hid it. */
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.dataset.screen = "exam";
     return () => { delete root.dataset.screen; };

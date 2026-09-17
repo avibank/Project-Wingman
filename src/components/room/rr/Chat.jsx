@@ -332,41 +332,42 @@ export default function Chat({
         )}
 
         <div className="rr-composer">
-          {sheet && (
-            <div ref={sheetRef}>
-              <input ref={photoRef} type="file" accept="image/*" multiple hidden onChange={take("image")} />
-              <input ref={fileRef} type="file" multiple hidden onChange={take("file")}
-                     accept=".pdf,.docx,.pptx,.xlsx,.txt,.csv,image/*" />
-              {screen === "options" ? (
-                <div className="rr-sheet" role="group" aria-label="Add an attachment">
-                  <button type="button" onClick={() => photoRef.current?.click()}><span className="rr-ic"><Photo /></span>Photo</button>
-                  <button type="button" onClick={() => fileRef.current?.click()}><span className="rr-ic"><File /></span>File</button>
-                  <button type="button" onClick={() => { setScreen("passages"); onWantMarks(); }}>
-                    <span className="rr-ic"><Passage /></span>Paper passage
+          {/* Kept mounted and hidden rather than mounted on demand, so closing
+              it has something to animate — see the motion section of
+              rr-app.css. */}
+          <div ref={sheetRef} className="rr-sheetwrap" hidden={!sheet}>
+            <input ref={photoRef} type="file" accept="image/*" multiple hidden onChange={take("image")} />
+            <input ref={fileRef} type="file" multiple hidden onChange={take("file")}
+                   accept=".pdf,.docx,.pptx,.xlsx,.txt,.csv,image/*" />
+            {screen === "options" ? (
+              <div className="rr-sheet" role="group" aria-label="Add an attachment">
+                <button type="button" onClick={() => photoRef.current?.click()}><span className="rr-ic"><Photo /></span>Photo</button>
+                <button type="button" onClick={() => fileRef.current?.click()}><span className="rr-ic"><File /></span>File</button>
+                <button type="button" onClick={() => { setScreen("passages"); onWantMarks(); }}>
+                  <span className="rr-ic"><Passage /></span>Paper passage
+                </button>
+              </div>
+            ) : (
+              <div className="rr-passages" role="group" aria-label="Your marks in this module">
+                <div className="rr-sect">
+                  <button type="button" className="rr-lnk is-inline" onClick={() => setScreen("options")}>Back</button>
+                  <span className="rr-grow" />
+                  <span className="rr-micro">Your marks in this module</span>
+                </div>
+                {marksLoading && <div className="rr-ctxnames">Loading your marks…</div>}
+                {!marksLoading && !marks.length && (
+                  <div className="rr-ctxnames">Highlight a passage in a paper and it turns up here.</div>
+                )}
+                {marks.map((mk) => (
+                  <button type="button" className="rr-oq" key={mk.id}
+                          onClick={() => { onAttachPassage(mk); onSheet(false); }}>
+                    {mk.quote}
+                    <span className="rr-micro">{mk.paperTitle}{mk.page ? ` · p.${mk.page}` : ""}</span>
                   </button>
-                </div>
-              ) : (
-                <div className="rr-passages" role="group" aria-label="Your marks in this module">
-                  <div className="rr-sect">
-                    <button type="button" className="rr-lnk is-inline" onClick={() => setScreen("options")}>Back</button>
-                    <span className="rr-grow" />
-                    <span className="rr-micro">Your marks in this module</span>
-                  </div>
-                  {marksLoading && <div className="rr-ctxnames">Loading your marks…</div>}
-                  {!marksLoading && !marks.length && (
-                    <div className="rr-ctxnames">Highlight a passage in a paper and it turns up here.</div>
-                  )}
-                  {marks.map((mk) => (
-                    <button type="button" className="rr-oq" key={mk.id}
-                            onClick={() => { onAttachPassage(mk); onSheet(false); }}>
-                      {mk.quote}
-                      <span className="rr-micro">{mk.paperTitle}{mk.page ? ` · p.${mk.page}` : ""}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
 
           {pending.length > 0 && (
             <div className="rr-pending">

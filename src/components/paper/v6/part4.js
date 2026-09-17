@@ -40,6 +40,8 @@
  *   ownership is m.who and anonymity is m.anon, so your own question is yours and still shows as Anonymous
  */
 
+import { switchIn, slidePill } from "../../../lib/tabMotion.js";
+
 export function mountPanel(ctx){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const R=$('#rdr'),BODY=$('#body'),FILT=$('#filters'),PF=$('#pf'),Q=$('#q'),STAGE=$('#stage');
@@ -296,7 +298,13 @@ Q.addEventListener('input',()=>{
 $('#clr').addEventListener('click',()=>{Q.value='';term='';$('#srchw').classList.remove('has');paint();Q.focus()});
 $('#view').addEventListener('click',e=>{
   const b=e.target.closest('[data-v]');if(!b)return;
+  const was=view, wasOn=$('#view button.on');
   view=b.dataset.v;$$('#view button').forEach(x=>x.classList.toggle('on',x===b));paint();
+  /* MARKS AND PAGES ARE TWO TABS, and the body swapped between them in one
+     frame while the fill jumped from one button to the other. The fill now
+     slides across and the new view comes in from the side its button sits on,
+     with the same movement as every other tab in the app (tabMotion.js). */
+  if(was!==view){slidePill(b.querySelector('.tab-pill'),b,wasOn);switchIn(BODY,view==='pages'?'next':'prev')}
 });
 FILT.addEventListener('click',e=>{
   const sc=e.target.closest('[data-scope]'), kd=e.target.closest('[data-kind]');
@@ -376,6 +384,14 @@ new MutationObserver(side).observe(R,{attributes:true,attributeFilter:['data-bar
 side();
 
 paint();
+/* THE LIST IS SHOWN ONCE IT HAS SOMETHING IN IT. The panel's frame is in the
+   shell's markup from the start, but its filters are painted here, after the
+   paper's text has loaded, and they push the list and the footer down by the
+   rows of chips they wrap into: measured at 0.019 of layout shift every time
+   a paper opened, and 0.0002 with this. additions.css keeps the list and the
+   footer hidden until this attribute says the first paint is done, then fades
+   them in where they belong. Nothing is in them before it anyway. */
+R.dataset.panel='1';
 /* what the rest of the reader can ask the panel to do */
 return {repaint:paint,page:()=>page,
   /* THE THREE YOU TILES LAND HERE. They used to call ctx.onGo, which fell

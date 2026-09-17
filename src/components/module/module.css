@@ -66,9 +66,16 @@
   position: relative; top: 1px;
 }
 .mscreen .tab:hover{ color: var(--t1); }
-/* Connected to the surface below it; the others sit back. */
-.mscreen .tab[aria-selected="true"]{
-  background: var(--panel); border-color: var(--edge-soft); color: var(--t1);
+/* Connected to the surface below it; the others sit back. The panel colour and
+   the edge are drawn by .tab-pill rather than by the tab itself, so the pill
+   can slide between tabs during a tab change — identical at rest. */
+.mscreen .tabs{ isolation: isolate; }
+.mscreen .tab[aria-selected="true"]{ color: var(--t1); }
+.mscreen .tab .tab-pill{ display: none; }
+.mscreen .tab[aria-selected="true"] .tab-pill{
+  display: block; position: absolute; inset: -1px -1px 0; z-index: -1;
+  background: var(--panel); border: 1px solid var(--edge-soft); border-bottom: 0;
+  border-radius: 8px 8px 0 0; transform-origin: left center;
 }
 
 /* The search runs from the last tab to the far end of the strip, and is quiet:

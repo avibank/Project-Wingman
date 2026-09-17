@@ -222,6 +222,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    gated twice and independently: prefers-reduced-motion is the device asking,
    Smooth Air is the person asking, and either alone turns it off. Off, not
    faster — no fade, no slide, no easing. */
+/* THE FALLBACK, AND ONLY THE FALLBACK. .route-fade on a new screen and
+   .panel-in on a profile panel are what a browser without view transitions
+   gets. Wherever view transitions run, html[data-vt-on] stands both down (in
+   the Mission Control block below) — they would start inside the transition's
+   callback and be photographed mid-fade. */
 .route-fade { animation: pwRouteIn 160ms ease-out; }
 @keyframes pwRouteIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -261,9 +266,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
    The panels crossfade in one cell, so the track must follow the container. */
 .app .panel-swap { display: grid; grid-template-columns: minmax(0, 1fr); transition: height 180ms ease-out; }
 .app .panel-swap > * { grid-area: 1 / 1; }
-.panel-out { animation: pwPanelOut 120ms ease-out forwards; pointer-events: none; }
+/* .panel-out and its keyframes are gone: no component rendered that class, so
+   the rule only suggested an exit animation that never ran. .panel-in is the
+   no-view-transitions fallback — see .route-fade. */
 .panel-in { animation: pwPanelIn 180ms ease-out; }
-@keyframes pwPanelOut { from { opacity: 1; } to { opacity: 0; } }
 @keyframes pwPanelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* The knob and the track run together, so it reads as one movement. */
@@ -271,11 +277,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .app .sw::after { transition: transform 180ms cubic-bezier(.2,.8,.25,1), background 160ms ease; }
 
 @media (prefers-reduced-motion: reduce) {
-  .app .route-fade, .app .panel-out, .app .panel-in, .route-fade { animation: none; }
+  .app .route-fade, .app .panel-in, .route-fade { animation: none; }
   .app .panel-swap { transition: none; }
   .app .sw, .app .sw::after { transition: none; }
 }
-.app.smooth-air .route-fade, .app.smooth-air .panel-out, .app.smooth-air .panel-in { animation: none; }
+.app.smooth-air .route-fade, .app.smooth-air .panel-in { animation: none; }
 .app.smooth-air .panel-swap { transition: none; }
 .app.smooth-air .sw, .app.smooth-air .sw::after { transition: none; }
 
@@ -480,6 +486,16 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     --wg-enter-delay:   0ms;
   }
 
+  /* NO BLUR ON A PHONE OR A TABLET. A blur is the one part of a screen change
+     the compositor cannot do cheaply: it is a filter over a snapshot the size
+     of the viewport, recomputed every frame the radius changes, and it is the
+     first thing to drop frames on a slower GPU. The scale and the dim carry
+     the depth on their own; the blur only softens it. Width OR a touch-first
+     pointer, because a large tablet is wide and still a tablet. */
+  @media (max-width: 900px), (pointer: coarse) {
+    :root { --wg-blur: 0px; --wg-blur-in: 0px; }
+  }
+
   /* The app's own route and panel animations stand down. They start at the
      commit, which is INSIDE the transition callback and so before the
      after-snapshot — the browser would photograph a panel mid-fade and hold
@@ -487,8 +503,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      than data-vt so they are switched off once rather than restarted on the
      frame each transition ends. */
   html[data-vt-on] .route-fade { animation: none; }
-  html[data-vt-on] .app .panel-in,
-  html[data-vt-on] .app .panel-out { animation: none; }
+  html[data-vt-on] .app .panel-in { animation: none; }
   html[data-vt-on] .app .panel-swap { transition: none; }
 
   /* COMPOSITING, DECIDED ONCE FOR EVERY LAYER.
@@ -620,21 +635,114 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   }
 
   /* A TAB IS NOT A SCREEN CHANGE. The frame holds and only the panel moves, so
-     the whole page does not recede because somebody changed a filter. */
-  html[data-vt^="tab"]::view-transition-old(wg-content) { animation: 120ms var(--wg-fade-out) both wgFadeOut; }
-  html[data-vt^="tab"]::view-transition-new(wg-content) { animation: 120ms var(--wg-fade-in) both wgFadeIn; }
+     the whole page does not recede because somebody changed a filter — and the
+     screen is not even named for a tab (see nameLayers), which is why the
+     120ms fade that used to sit here, blinking the title and the tab strip on
+     top of the panel's slide, is gone rather than tuned. */
+
+  /* THE APP BAR. Between two screens that both have it, it is the same
+     picture: dropped on the old side and painted once on the new, so it holds
+     perfectly still while the screen under it moves. The Ready Room is the one
+     screen without it, and there the bar is alone in its group — leaving, it
+     lifts and fades; coming back, it settles down into place. */
+  @keyframes wgTopbarUp { to { transform: translateY(-100%); } }
+  @keyframes wgTopbarDown { from { transform: translateY(-100%); } }
+  ::view-transition-old(wg-topbar) { display: none; }
+  ::view-transition-new(wg-topbar) { animation: none; }
+  ::view-transition-old(wg-topbar):only-child {
+    display: block;
+    animation: var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut,
+               var(--wg-exit-fade) var(--wg-fade-out) both wgTopbarUp; }
+  ::view-transition-new(wg-topbar):only-child {
+    animation: var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn,
+               var(--wg-settle) var(--wg-spring) both wgTopbarDown; }
+
+  /* THE MODULE SCREEN'S CARD DURING A TAB CHANGE.
+     The same picture on both sides except for its height, so nothing fades:
+     the old image is dropped and the new one — live, so the tab pill's slide
+     shows through it — is clipped by a group whose height tweens on the settle
+     spring. The card grows or shrinks around the panel instead of snapping,
+     and because the image keeps its natural size inside the clip, the tab
+     labels in it are never stretched. */
+  ::view-transition-group(wg-card) {
+    animation-duration: var(--wg-settle); animation-timing-function: var(--wg-spring);
+    overflow: clip; border-radius: 12px; }
+  ::view-transition-old(wg-card) { display: none; }
+  ::view-transition-new(wg-card) { animation: none; block-size: auto; object-fit: none; object-position: top; }
+
+  /* The lesson's video travels WITH its panel: same keyframes, same clock. Two
+     named layers of one movement only come apart when they run different
+     animations, and these run the identical one.
+
+     AND THE PANEL'S TWO HALVES FADE ON ONE CLOCK, which is what stops the dip.
+     The outgoing panel used to leave on its own short, front-loaded fade while
+     the incoming one arrived on a longer, slower one; with normal blending two
+     layers at part opacity never cover the whole, so for a moment in the middle
+     both were faint and the card showed through the words — a blink on every
+     tab. Now old is 1 - e(t) and new is e(t) on the SAME duration and curve, and
+     plus-lighter adds them: wherever the two panels overlap, coverage is exactly
+     one at every instant. plus-lighter is only wrong where a layer is dimmed or
+     blurred as it moves (the screen change, which keeps normal blending);
+     nothing here is. The slide is untouched. */
+  ::view-transition-group(wg-player) { animation-duration: var(--wg-settle); animation-timing-function: var(--wg-spring); }
+  ::view-transition-old(wg-tabpanel), ::view-transition-new(wg-tabpanel),
+  ::view-transition-old(wg-player), ::view-transition-new(wg-player) { mix-blend-mode: plus-lighter; }
+  html[data-vt="tabR"]::view-transition-old(wg-player) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelOutL,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeOut; }
+  html[data-vt="tabR"]::view-transition-new(wg-player) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelInR,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
+  html[data-vt="tabL"]::view-transition-old(wg-player) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelOutR,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeOut; }
+  html[data-vt="tabL"]::view-transition-new(wg-player) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPanelInL,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
 
   html[data-vt="tabR"]::view-transition-old(wg-tabpanel) {
     animation: var(--wg-settle) var(--wg-spring) both wgPanelOutL,
-               var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut; }
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeOut; }
   html[data-vt="tabR"]::view-transition-new(wg-tabpanel) {
     animation: var(--wg-settle) var(--wg-spring) both wgPanelInR,
                var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
   html[data-vt="tabL"]::view-transition-old(wg-tabpanel) {
     animation: var(--wg-settle) var(--wg-spring) both wgPanelOutR,
-               var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut; }
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeOut; }
   html[data-vt="tabL"]::view-transition-new(wg-tabpanel) {
     animation: var(--wg-settle) var(--wg-spring) both wgPanelInL,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
+
+  /* THE READY ROOM'S PANE, and between two questions in one module only the
+     question column. The rail holds; the pane arrives from the side you moved
+     toward — down the rail or deeper into a thread from the right, back out
+     from the left.
+
+     A TRUE CROSSFADE, NOT A DIP. Two layers fading past each other with normal
+     blending never sum to full coverage — at the midpoint both are near half
+     and the room behind shows through, a blink on every move. So these two
+     run the SAME duration on the SAME curve in opposite directions, and blend
+     plus-lighter: old at 1 - e(t) and new at e(t) add to exactly 1 at every
+     instant. plus-lighter is only wrong where a layer is dimmed or blurred as
+     it moves, which is why the screen change keeps normal blending — nothing
+     here is. */
+  ::view-transition-group(wg-pane),
+  ::view-transition-group(wg-detail) {
+    animation-duration: var(--wg-settle);
+    animation-timing-function: var(--wg-spring);
+  }
+  ::view-transition-old(wg-pane), ::view-transition-new(wg-pane),
+  ::view-transition-old(wg-detail), ::view-transition-new(wg-detail) { mix-blend-mode: plus-lighter; }
+  html[data-vt^="pane"]::view-transition-old(wg-pane),
+  html[data-vt^="pane"]::view-transition-old(wg-detail) {
+    animation: var(--wg-enter-fade) var(--wg-fade-in) both wgFadeOut; }
+  html[data-vt="paneR"]::view-transition-new(wg-pane),
+  html[data-vt="paneR"]::view-transition-new(wg-detail) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPaneInR,
+               var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
+  html[data-vt="paneL"]::view-transition-new(wg-pane),
+  html[data-vt="paneL"]::view-transition-new(wg-detail) {
+    animation: var(--wg-settle) var(--wg-spring) both wgPaneInL,
                var(--wg-enter-fade) var(--wg-fade-in) both wgFadeIn; }
 
   /* THE BACKGROUND IS NOT NAMED, and taking the name off is what stops the
@@ -674,6 +782,17 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
      changes colour, so the spring would read as the page twitching under the
      swatch you just pressed. Dissolve only, and the old layer holds at full
      opacity underneath so the pair never thins or brightens. */
+  /* THE BACKDROP CHANGED — into or out of the exam's flat ground (see
+     markBackdrop). The one navigation where the two roots really are different
+     pictures, so this is the one where the root dissolves: the old ground held
+     at full opacity underneath and the new one fading in over it. Both roots
+     are opaque, so the pair sums to the whole picture at every instant; the
+     translucent app bar, which is what made a root dissolve flash, is its own
+     layer on a screen change and is not in either of them. After the kinds
+     above, so it wins over their display: none. */
+  html[data-vt-backdrop]::view-transition-old(root) { display: block; animation: none; }
+  html[data-vt-backdrop]::view-transition-new(root) { animation: 300ms var(--wg-fade-in) both wgFadeIn; }
+
   html[data-vt="theme"]::view-transition-old(root),
   html[data-vt="setting"]::view-transition-old(root) { animation: none; }
   html[data-vt="theme"]::view-transition-new(root) {
@@ -682,18 +801,67 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
     animation: 200ms var(--wg-fade-in) both wgFadeIn; }
 }
 
-/* THE PROFILE AND MODULE TABS no longer carry names of their own.
+/* THE TABS, AS THEY STAND. A tab change names exactly one thing that moves —
+   the panel (wg-tabpanel), plus the lesson's video beside it and the module
+   card's height (wg-card) — and nothing else. The screen is not named, so the
+   title and the strip hold perfectly still in the root. The selected tab's
+   pill or rule is not named either: as a layer it painted over the labels, so
+   it slides in the page instead (useTabPill in tabMotion.js) and shows through
+   the live picture. No scale anywhere in a tab change, so there are no holes
+   for one to open. */
 
-   They used to: the panel slid, the heading crossfaded and the selected tab was
-   one name across both states so its underline tweened between positions. Three
-   more names, three more holes, and the same scale(.988) exposing every one of
-   them — the tab switch was among the worst of the flicker precisely because it
-   had the most named parts in the smallest area.
 
-   The page dissolves as one picture now, so the panel and the heading change
-   with it and the underline cuts. A cut that is always clean beats a slide that
-   flickers, and if the slide is wanted back it needs the hole-free treatment
-   first: a scale at or above 1, or no scale at all. */
+/* ------------------------------------------------------------- the press */
+/* A PRESS IS ANSWERED IN THE FRAME IT HAPPENS. A navigation can wait on a code
+   chunk before anything moves, and a click that changes nothing for that long
+   reads as a click that missed. So the controls that take you somewhere answer
+   the press themselves, in CSS — :active, never a class set from a handler,
+   which is always at least a frame late:
+     a card, a pill or a back link sinks two percent;
+     a row, which spans its card, takes the accent's tint instead, because a
+     full-width row shrinking by two percent moves its edges a thumb's width.
+   Instant both ways, with no transition, so there is nothing here for Smooth
+   Air or reduced motion to stand down. */
+/* Each scoped to where the control lives: a bare class here would be a second
+   global owner of a name its own component already styles (check:collisions). */
+.app .deck .mod.house:active,
+.app .topbar .rrpill:active,
+.app .topbar .brandmark:active,
+.app .profile .back:active,
+.app .mscreen .back:active,
+.app .mscreen .up:active,
+.app .mscreen .next-title:active,
+.app .rr .rr-home:active {
+  transform: scale(.98);
+}
+.app .mscreen .item:active,
+.app .mscreen .sditem:active,
+.app [role="menu"] [role="menuitem"]:active,
+.app .rr .rr-frow:has(> .rr-fopen:active) {
+  background: color-mix(in oklab, var(--active) 10%, transparent);
+  /* On in the frame of the press — these rows ease their hover fill, and a
+     press that eases in is a press that lags. Letting go still eases out. */
+  transition-duration: 0s;
+}
+
+/* AND A WAIT IS SHOWN, THINLY. If the next screen's code is still arriving
+   120ms after the press (go() in App.jsx), a 2px bar in the accent runs along
+   the top of the window until it lands — not a skeleton, not a spinner, and on
+   a warm cache never seen at all. Still, not animated, when motion is off. */
+html[data-nav-wait] .app::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: 2px; z-index: 1000;
+  background: var(--active); transform-origin: 0 50%; pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-nav-wait] .app:not(.smooth-air):not(.reduce-motion)::before {
+    animation: wgNavWait 1100ms cubic-bezier(.2, .8, .2, 1) infinite;
+  }
+  @keyframes wgNavWait {
+    from { transform: scaleX(0); opacity: 1; }
+    70%  { transform: scaleX(.85); opacity: 1; }
+    to   { transform: scaleX(1); opacity: 0; }
+  }
+}
 
 
 /* --------------------------------------------------------- the tap floor */

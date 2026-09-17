@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { hits, terms } from "../../lib/moduleSearch.js";
+import { useSwitchIn } from "../../lib/tabMotion.js";
 
 /* ============================================================================
    §5 — THE LIBRARY.
@@ -49,6 +50,10 @@ export default function LibraryTab({
   // the quizzes still lands on the quizzes.
   const quizRef = useRef(null);
   const papersRef = useRef(null);
+  // A chapter chip narrows the papers in place: the list fades in rather than
+  // swapping in a single frame.
+  const papersListRef = useRef(null);
+  useSwitchIn(papersListRef, chapterFilter);
   useEffect(() => {
     const el = sub === "quizzes" ? quizRef.current : papersRef.current;
     if (!el || sub !== "quizzes") return;      // papers are already at the top
@@ -151,7 +156,7 @@ export default function LibraryTab({
           </div>
         )}
 
-        <div className="libwrap">
+        <div className="libwrap" ref={papersListRef}>
           {/* §5's own pattern, reused: the thing you are in the middle of is
               pinned above the list, with a rule beneath it. It is where you
               were, and it should not be somewhere you have to hunt for. The

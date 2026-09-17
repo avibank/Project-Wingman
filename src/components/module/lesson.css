@@ -502,18 +502,27 @@
 /* THE TOP OF THE CARD. Nothing sits above the tab strip any more -- the
    presence block that used to is gone -- so there is no margin here at all and
    Notes | Comments is the first thing in the panel. */
-.ltabs{ display: flex; gap: 26px; margin-top: 0; border-bottom: 1px solid var(--hair); }
+.ltabs{ display: flex; gap: 26px; margin-top: 0; border-bottom: 1px solid var(--hair); isolation: isolate; }
 /* A 26px gap is right where there is room for it. On a phone the three items
    are 214px of a 264px row, so the gaps decide whether Export fits at all. */
 @media (max-width: 767px){ .ltabs{ gap: 18px; } }
 .ltab{
+  position: relative;
   min-height: var(--tap); padding: 0 0 10px;
   background: none; border: 0; border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   font: inherit; font-size: var(--fs-md); color: var(--t3); cursor: pointer;
 }
 .ltab:hover{ color: var(--t2); }
-.ltab[aria-selected="true"]{ color: var(--t1); border-bottom-color: var(--active); }
+.ltab[aria-selected="true"]{ color: var(--t1); }
+/* The rule under the selected tab, drawn by its own element over the tab's
+   transparent bottom border so it can slide to the other tab (useTabPill).
+   The same 2px in the same place as the border it replaces. */
+.ltab .tab-pill{ display: none; }
+.ltab[aria-selected="true"] .tab-pill{
+  display: block; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px;
+  background: var(--active); transform-origin: left center;
+}
 .ltab-n{ font-size: var(--fs-sm); color: var(--t3); margin-inline-start: 6px; }
 
 

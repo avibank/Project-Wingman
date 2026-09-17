@@ -34,6 +34,7 @@ import {
   endRightSeat, fetchSeatMessages, postSeatMessage, keepSeatMessage, sweepSeats,
 } from "../../lib/rightSeat.js";
 import { fetchMyMarks, validateFile, readImageSize, MAX_PER_MESSAGE } from "../../lib/attachments.js";
+import { paneTransition } from "../../lib/viewTransition.js";
 import "./room.css";
 import "./ready-room.css";
 import "./rr-app.css";
@@ -262,6 +263,43 @@ export default function ReadyRoom({
   /* --------------------------------------------------------------- asking */
   const ask = () => { setSt((s) => ({ ...s, asking: true, thread: null })); setView("thread"); };
   const cancelAsk = () => setSt((s) => ({ ...s, asking: false, thread: keepSelection(list, null) }));
+
+  /* ------------------------------------------------------------ the motion
+     THE PANE MOVES THE WAY YOU MOVED. These wrap the four changes a person
+     makes with their own hand — the rail, a question, Ask and Cancel — in a
+     pane transition, and only those: the effects above call go and select
+     directly, so a room loading its data or honouring a link never animates.
+     Down the rail, or on to a later question, arrives from the right; up, or
+     back to an earlier one, from the left. A change between two questions in
+     one module moves only the question column, so the feed you chose from
+     holds still. */
+  const railRank = (c) => {
+    if (c.kind === "module") return modules.findIndex((m) => (m.code || m.id) === c.id);
+    if (c.kind === "squad") return 100 + squadronsWithPresence.findIndex((s) => s.id === c.id);
+    return c.kind === "seats" ? 1000 : 2000;
+  };
+  const openPane = (next) => {
+    const same = next.kind === st.kind && (next.id ?? null) === (st.id ?? null) && !next.thread;
+    if (same) { go(next); return; }
+    paneTransition(railRank(next) >= railRank(st) ? "paneR" : "paneL", () => go(next));
+  };
+  const selectThread = (id, opts) => {
+    if (id === st.thread && !st.asking) { select(id, opts); return; }
+    const from = list.findIndex((t) => t.id === st.thread);
+    const to = list.findIndex((t) => t.id === id);
+    paneTransition(to >= from ? "paneR" : "paneL", () => select(id, opts), { scope: "detail" });
+  };
+  const askPane = () => paneTransition("paneR", ask, { scope: "detail" });
+  const cancelAskPane = () => paneTransition("paneL", cancelAsk, { scope: "detail" });
+  /* BACK, on a room narrow enough to take turns: from a question to its list,
+     or from the list to the rail. It used to cut, which on a phone is every
+     second press in the room. */
+  const backPane = () => {
+    const toList = view === "thread" && window.innerWidth <= 1180;
+    const toRail = !toList && narrow() && view !== "rail";
+    if (!toList && !toRail) { back(); return; }
+    paneTransition("paneL", back, { scope: toList ? "detail" : "pane" });
+  };
   const postQuestion = ({ title, body }) => {
     onPost?.({ kind: "thread", moduleId: modCode, title, body });
     setPendingAsk({ moduleId: modCode, title });
@@ -616,8 +654,7 @@ export default function ReadyRoom({
         if (info) { setInfo(null); return; }
         if (st.sheet) { setSheet(false); return; }
         if (st.asking) { cancelAsk(); return; }
-        if (view === "thread" && window.innerWidth <= 1180) setView("list");
-        else if (narrow()) setView("rail");
+        backPane();
         return;
       }
       if (st.kind !== "module" || !list.length) return;
@@ -648,8 +685,8 @@ export default function ReadyRoom({
         <Rail me={me} onHome={onHome} query={query} onQuery={onQuery} searchRef={searchRef}
               squadrons={squadronsWithPresence} modules={modules} threads={threads} replies={replies}
               messages={messages} foundPeople={foundPeople} faces={faces}
-              cur={{ kind: st.kind, id: st.id }} who={who} onOpen={go}
-              onSeeSeats={() => go({ kind: "seats" })} onFindSquadron={() => go({ kind: "discover" })}
+              cur={{ kind: st.kind, id: st.id }} who={who} onOpen={openPane}
+              onSeeSeats={() => openPane({ kind: "seats" })} onFindSquadron={() => openPane({ kind: "discover" })}
               onProfile={(id, row) => setProfileOf(row
                 ? { user_id: row.user_id, callsign: row.display_name, module_code: row.module_code, hue: hueFor(row.user_id) }
                 : personOf(id))} />
@@ -659,11 +696,11 @@ export default function ReadyRoom({
             <Threads me={me} mod={mod} all={modThreads} list={list} replies={replies}
                      votes={threadVotes} saved={saved}
                      filter={st.filter} onFilter={onFilter} query={query} onFocusSearch={focusSearch}
-                     threadId={st.asking ? null : st.thread} onSelect={select} onAsk={ask} onBack={back}
+                     threadId={st.asking ? null : st.thread} onSelect={selectThread} onAsk={askPane} onBack={backPane}
                      rootRef={rootRef} layout={layout} onLayout={setLayout}
                      who={who} source={sourceOf} onVote={voteQuestion} onSave={(id) => onSave?.(id)} onShare={share}
                      detail={{
-                       asking: st.asking, onPostQuestion: postQuestion, onCancelAsk: cancelAsk, replyVotes: votes,
+                       asking: st.asking, onPostQuestion: postQuestion, onCancelAsk: cancelAskPane, replyVotes: votes,
                        onVoteReply: (id, on) => onVote?.(id, on),
                        onSign: (tid, aid) => onBest?.(tid, aid),
                        onAnswer: (ev) => onPost?.({ kind: "reply", ...ev }),
@@ -681,7 +718,7 @@ export default function ReadyRoom({
                   pending={pending} onRemovePending={removePending}
                   onAttachFiles={attachFiles} onAttachPassage={attachPassage}
                   marks={marks || []} marksLoading={marksLoading} onWantMarks={wantMarks}
-                  sheet={st.sheet} onSheet={setSheet} onBack={back}
+                  sheet={st.sheet} onSheet={setSheet} onBack={backPane}
                   onInfoSheet={() => setSheetOf(squadron)} onFocusSearch={focusSearch}
                   onProfile={(id) => setProfileOf(personOf(id))} onMenu={onMenu} onReact={react}
                   onSeen={seen} jumpTo={jumpTo} onMessageInfo={openInfo}
@@ -692,7 +729,7 @@ export default function ReadyRoom({
 
           {st.kind === "seats" && (
             <Seats me={me} seat={seat} requests={seatReq} mates={mates} flightLog={flightLog} online={online}
-                   squadrons={squadronsWithPresence} who={who} onBack={back} onAsk={askSeat}
+                   squadrons={squadronsWithPresence} who={who} onBack={backPane} onAsk={askSeat}
                    onCancelAsk={async (id) => { await cancelRightSeat(me, id); await loadSeat(); }}
                    onAnswer={async (id, accept) => {
                      await answerRightSeat(me, id, accept);
@@ -727,7 +764,7 @@ export default function ReadyRoom({
             <div className="room">
               <Discover
                 rooms={rooms} filter={discoverFilter} onFilter={setDiscoverFilter}
-                who={who} onBack={back}
+                who={who} onBack={backPane}
                 onJoin={async (room) => {
                   /* ONE DOOR. The function decides capacity, blocks and policy, and
                      the card renders whichever word comes back. */
