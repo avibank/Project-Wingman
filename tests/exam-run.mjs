@@ -114,11 +114,21 @@ const audit = (page, expect) => page.evaluate((expect) => {
   const label = q(".exam-timer__label");
   if (label && shown(label) !== (mode !== "phone")) out.push(`TIME LEFT is ${shown(label) ? "shown" : "hidden"} on ${mode}`);
 
-  /* §12's floor, and the one control that opts out of it on purpose. */
-  for (const b of document.querySelectorAll(".exam-frame button")) {
-    if (!shown(b) || b.classList.contains("qcell")) continue;
-    const r = box(b);
-    if (r.height < 43.5) out.push(`a ${b.className.split(" ")[0]} button is ${Math.round(r.height)}px tall`);
+  /* §12's floor, kept as a TARGET rather than as a size. The reference draws a
+     35px button; the app requires 44px of finger. Both: the button is the
+     design's height and carries a transparent 44px hit area centred on it. */
+  for (const b of document.querySelectorAll(".exam-frame .btn")) {
+    if (!shown(b)) continue;
+    const h = box(b).height;
+    /* The design's own range: 35 in a card's footer, 30 in the bar on a
+       phone. What this is really asking is that none of them has been pushed
+       back up to the 44px floor, which is the target's job, not the size's. */
+    if (h < 29 || h > 39) out.push(`a ${b.className.split(" ")[0]} button is ${Math.round(h)}px tall, outside the design's 30–37`);
+    const target = getComputedStyle(b, "::after").height;
+    if (target !== "44px") out.push(`that button's hit area is ${target}, not 44px`);
+  }
+  for (const b of document.querySelectorAll(".exam-frame button:not(.btn):not(.qcell)")) {
+    if (shown(b) && box(b).height < 43.5) out.push(`a ${b.className.split(" ")[0]} button is under the tap floor`);
   }
 
   const cs = getComputedStyle(frame);
@@ -180,11 +190,13 @@ const audit = (page, expect) => page.evaluate((expect) => {
      — the question at 17px where the design says 21, and the navigator's label
      at 17px where it says 11. A token check cannot see this; a measurement
      can. */
+  /* The reference demo's own figures, adopted wholesale. */
   const type = [
-    [".question__text", mode === "phone" ? 18 : 21],
+    [".question__text", mode === "phone" ? 18 : 20],
     [".navigator__title", 11],
-    [".option__text", mode === "phone" ? 16 : 17],
-    [".exam-timer__value", mode === "phone" ? 17 : 20],
+    [".option__text", 16],
+    [".exam-timer__value", mode === "phone" ? 17 : 19],
+    [".qcell", mode === "phone" ? 13 : 14],
   ];
   for (const [sel, want] of type) {
     const el = q(sel);

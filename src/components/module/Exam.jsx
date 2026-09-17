@@ -513,7 +513,7 @@ export default function Exam({
             </div>
           )}
           {phase === "paper" && (
-            <button className="btn" type="button" onClick={() => dialogRef.current?.showModal()}>End exam</button>
+            <button className="btn is-inline" type="button" onClick={() => dialogRef.current?.showModal()}>End exam</button>
           )}
           {/* The route line: a dashed track along the bottom of the bar, filled
               as far as the paper is answered. It repeats what the navigator's
@@ -554,17 +554,17 @@ export default function Exam({
               </div>
 
               <div className="question__foot">
-                <button className="btn" type="button" disabled={at === 0}
+                <button className="btn is-inline" type="button" disabled={at === 0}
                         onClick={() => put((a) => prevQ(a, total))}>
                   <IconBack /> Previous
                 </button>
-                <button className="btn btn--ghost btn--flag" type="button" aria-pressed={isFlagged}
+                <button className="btn btn--ghost btn--flag is-inline" type="button" aria-pressed={isFlagged}
                         onClick={() => put((a) => flag(a, a.at))}>
                   <IconFlagLine />
                   <span>Flag <span className="label-long">for review</span></span>
                 </button>
                 <span className="spacer" />
-                <button className="btn btn--primary" type="button"
+                <button className="btn btn--primary is-inline" type="button"
                         onClick={() => (last ? dialogRef.current?.showModal() : put((a) => nextQ(a, total)))}>
                   <span>{last ? "Review" : "Next"}</span>
                   <IconOn />
@@ -639,10 +639,10 @@ export default function Exam({
                   line; this is where the explanation, the lesson it came from
                   and a paper of only the misses live, so the score screen
                   keeps its shape and the teaching still has somewhere to be. */}
-              <button className="btn" type="button" onClick={() => setPhase("review")}>
+              <button className="btn is-inline" type="button" onClick={() => setPhase("review")}>
                 Go through the paper
               </button>
-              <button className={`btn ${result.passed ? "" : "btn--primary"}`} type="button" onClick={again}>
+              <button className={`btn is-inline ${result.passed ? "" : "btn--primary"}`} type="button" onClick={again}>
                 {result.passed ? "Retake" : "Try again"}
               </button>
             </div>
@@ -666,8 +666,8 @@ export default function Exam({
           </ul>
         </div>
         <div className="dialog__foot">
-          <button className="btn" type="button" onClick={() => dialogRef.current?.close()}>Back to exam</button>
-          <button className="btn btn--primary" type="button" onClick={handOver}>End and mark</button>
+          <button className="btn is-inline" type="button" onClick={() => dialogRef.current?.close()}>Back to exam</button>
+          <button className="btn btn--primary is-inline" type="button" onClick={handOver}>End and mark</button>
         </div>
       </dialog>
     </div>

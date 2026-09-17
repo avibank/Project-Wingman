@@ -105,17 +105,17 @@
 .exam-frame .exam-bar {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 12px 16px; box-shadow: var(--shadow);
+  padding: 12px 14px 12px 18px; box-shadow: var(--shadow);
 }
 .exam-frame .exam-bar__title { display: grid; gap: 2px; margin-right: auto; min-width: 0; }
-.exam-frame .exam-bar__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); }
+.exam-frame .exam-bar__eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--t3); }
 .exam-frame .exam-bar__name { font-weight: 600; font-size: 16px; }
 .exam-frame .exam-timer {
   display: flex; align-items: baseline; gap: 8px;
   font-family: var(--font-mono); font-variant-numeric: tabular-nums;
 }
-.exam-frame .exam-timer__label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); }
-.exam-frame .exam-timer__value { font-size: 20px; font-weight: 500; color: var(--t1); }
+.exam-frame .exam-timer__label { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--t3); }
+.exam-frame .exam-timer__value { font-size: 19px; font-weight: 500; color: var(--t1); }
 /* The last minute. `--bad` alone measured 4.45 against an Amber night panel,
    a shade under the floor for text, so it takes a little of --t1 — the same
    red, close enough to read as a warning and readable on every livery. */
@@ -123,10 +123,22 @@
 
 .exam-frame .btn {
   border: 1px solid var(--line-strong); background: var(--panel); color: var(--t1);
-  border-radius: 999px; padding: 9px 18px; font-weight: 600; font-size: 14px;
+  border-radius: 999px; padding: 9px 18px; font: 600 14px/1 var(--font-ui);
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: inherit; cursor: pointer;
+  cursor: pointer;
   transition: background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+}
+/* THE DESIGN'S BUTTON IS 35px AND §12's TARGET IS 44, so it is both: the size
+   the reference draws, and the finger the app insists on. `.is-inline` is this
+   app's documented way out of the floor, and the target comes back as a
+   transparent hit area centred on the button — `.hit` in foundations.css, the
+   same trick the Ready Room's small controls use. The gaps in these rows are
+   wider than the four pixels it adds above and below, so no two targets
+   overlap. */
+.exam-frame .btn { position: relative; }
+.exam-frame .btn::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 100%; height: var(--tap, 44px); transform: translate(-50%, -50%);
 }
 .exam-frame .btn:hover { background: var(--raised); }
 .exam-frame .btn:active { transform: scale(.97); }
@@ -145,15 +157,15 @@
 }
 .exam-frame .question__head {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 14px 24px; border-bottom: 1px solid var(--line);
+  padding: 13px 20px; border-bottom: 1px solid var(--line);
 }
 .exam-frame .question__num { font-family: var(--font-mono); font-size: 13px; letter-spacing: .04em; color: var(--t2); }
 .exam-frame .question__num b { color: var(--t1); font-weight: 600; }
 .exam-frame .question__flagged { color: var(--flag); display: inline-grid; place-items: center; }
 .exam-frame .question__flagged svg { width: 16px; height: 16px; fill: currentColor; }
 .exam-frame .question__flagged { animation: exam-flag-drop .35s var(--ease); }
-.exam-frame .question__main { padding: 28px 24px 24px; display: grid; gap: 22px; overflow: hidden; }
-.exam-frame .question__text { margin: 0; font-size: 21px; line-height: 1.4; font-weight: 500; text-wrap: balance; max-width: 60ch; }
+.exam-frame .question__main { padding: 26px 20px 22px; display: grid; gap: 22px; overflow: hidden; }
+.exam-frame .question__text { margin: 0; font-size: 20px; line-height: 1.4; font-weight: 500; text-wrap: balance; max-width: 60ch; }
 
 .exam-frame .options { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
 .exam-frame .option {
@@ -182,7 +194,7 @@
   transform: scale(0); transition: transform .25s var(--ease);
 }
 .exam-frame .option__letter { font-family: var(--font-mono); font-weight: 600; font-size: 14px; color: var(--t2); width: 1.2em; }
-.exam-frame .option__text { font-size: 17px; line-height: 1.4; }
+.exam-frame .option__text { font-size: 16px; line-height: 1.4; }
 .exam-frame .option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .exam-frame .option:has(input:checked) .option__radio { border-color: var(--accent); }
 .exam-frame .option:has(input:checked) .option__radio::after { transform: scale(1); }
@@ -195,7 +207,7 @@
 
 .exam-frame .question__foot {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 14px 24px; border-top: 1px solid var(--line);
+  padding: 14px 20px; border-top: 1px solid var(--line);
 }
 .exam-frame .question__foot .spacer { flex: 1; }
 .exam-frame .btn--flag[aria-pressed="true"] { border-color: var(--flag); color: var(--flag); background: color-mix(in oklch, var(--flag) 12%, transparent); }
@@ -205,10 +217,10 @@
 /* ---------- Question navigator ---------- */
 .exam-frame .navigator {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: var(--shadow); padding: 16px; display: grid; gap: 12px;
+  box-shadow: var(--shadow); padding: 14px; display: grid; gap: 12px;
   position: sticky; top: calc(16px + env(safe-area-inset-top, 0px));
 }
-.exam-frame .navigator__title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); margin: 0; display: flex; justify-content: space-between; }
+.exam-frame .navigator__title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--t3); margin: 0; display: flex; justify-content: space-between; }
 .exam-frame .navigator__title span { color: var(--t1); font-variant-numeric: tabular-nums; }
 .exam-frame .navigator__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
@@ -222,7 +234,8 @@
 .exam-frame .qcell {
   position: relative; aspect-ratio: 1; max-width: 100%; min-height: 0;
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--panel);
-  font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; color: var(--t2);
+  font-family: var(--font-mono); font-size: 14px; font-weight: 500; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--t2);
   display: grid; place-items: center; cursor: pointer; padding: 0;
   transition: background .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease), transform .2s var(--ease);
 }
@@ -360,7 +373,7 @@
   .exam-frame .question__head, .exam-frame .question__foot { padding-inline: 14px; }
   .exam-frame .question__main { padding: 20px 14px 16px; gap: 18px; }
   .exam-frame .question__text { font-size: 18px; }
-  .exam-frame .option { padding: 13px 12px; gap: 12px; }
+  .exam-frame .option { padding: 13px 12px; gap: 11px; }
   .exam-frame .option__text { font-size: 16px; }
   .exam-frame .question__foot .btn { padding: 9px 14px; }
   .exam-frame .btn .label-long { display: none; }

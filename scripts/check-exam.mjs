@@ -424,7 +424,7 @@ console.log("\nthe approved screen");
      are behind a single button, so the score keeps the shape the design gave
      it and the teaching still has somewhere to be. */
   ok("port", "the result offers a way into the paper, and it is not the primary",
-     /<button className="btn" type="button" onClick=\{\(\) => setPhase\("review"\)\}>\s*\n\s*Go through the paper/.test(exam));
+     /<button className="btn is-inline" type="button" onClick=\{\(\) => setPhase\("review"\)\}>\s*\n\s*Go through the paper/.test(exam));
   /* The explanation has to be on the MISSED question, which is the one the
      student came back for — the same class also appears under the fold, so a
      looser test passed while the misses had lost theirs. */
