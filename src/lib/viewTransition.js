@@ -247,7 +247,14 @@ const FEED = [".rr-app .rr-feed"];
    photographed — naming it only guarantees an old side or a new side with
    nothing on the other. */
 const shown = (el) => Boolean(el && el.getClientRects().length);
-const ALL = [...CONTENT, ...PANELS, ...PANE, ...RAIL, ...DETAIL, ...LESSON_LIST, ...PLAYER, ...CARD, ...TOPBAR];
+/* THE ONE OBJECT THAT IS ON BOTH SCREENS: a module's card in the Flight Deck's
+   launcher, and the heading it opens into inside the module. Exactly one of
+   the two is ever on screen, so they can share a name and the browser tweens
+   the box between them. */
+const MCARD_DECK = (code) => `.deck .mod[data-code="${code}"]`;
+const MCARD_HERO = ".mscreen .mhero";
+const ALL = [...CONTENT, ...PANELS, ...PANE, ...RAIL, ...DETAIL, ...LESSON_LIST, ...PLAYER, ...CARD, ...TOPBAR,
+  ".deck .mod[data-code]", MCARD_HERO];
 
 export function clearNames() {
   for (const sel of ALL) {
@@ -323,6 +330,22 @@ export function nameLayers(scope) {
       if (shown(rail)) rail.style.viewTransitionName = "wg-rail";
     }
   }
+}
+
+/* NAME THE CARD THAT OPENS. Called with the module the move is about — the one
+   being opened on the way in, the one being left on the way out — on both
+   sides of the transition, exactly like nameLayers. Whichever of the two
+   elements is on screen takes the name; if neither is (a module that is not on
+   the deck's rail, say), nothing is named and the screens simply dissolve,
+   which is the same movement without the card. */
+export function nameMorph(code) {
+  for (const el of document.querySelectorAll('.deck .mod[data-code]')) el.style.viewTransitionName = "";
+  const hero = document.querySelector(MCARD_HERO);
+  if (hero) hero.style.viewTransitionName = "";
+  if (!code) return;
+  const card = document.querySelector(MCARD_DECK(code));
+  if (card) card.style.viewTransitionName = "wg-mcard";
+  else if (hero) hero.style.viewTransitionName = "wg-mcard";
 }
 
 /* Which layer a kind moves. `pane` could never come back from this — it only

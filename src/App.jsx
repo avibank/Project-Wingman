@@ -123,6 +123,14 @@ const INTENT = [
   ['.avbtn, [role="menuitem"]', "profile"],
   ['[role="menuitem"]', "settings"],
 ];
+/* WHICH MODULE A MOVE IS ABOUT. Opening one, it is the module being opened;
+   coming back out, the one being left. It is the same card either way, which
+   is what lets it be one object across the two screens (nameMorph). */
+const morphOf = (kind, fromRoute, to) =>
+  kind === "morph" ? (parseRoute(to).moduleCode || null)
+    : kind === "morphBack" ? (fromRoute?.moduleCode || null)
+      : null;
+
 const warmedOnIntent = new Set();
 function warmOnIntent(e) {
   const el = e.target?.closest?.('button, a, [role="menuitem"]');
@@ -182,7 +190,7 @@ import "./components/module/housing.css";
 import PlayerLayer from "./components/module/PlayerLayer.jsx";
 import { useHobbsMeter } from "./lib/hobbs.js";
 import { transitionKind, canTransition, settleDom, withTheme, withSetting,
-         beginTransition, endTransition, nameLayers, clearNames, scopeOf,
+         beginTransition, endTransition, nameLayers, nameMorph, clearNames, scopeOf,
          screenFlag, markBackdrop } from "./lib/viewTransition.js";
 import { PLACE_KEY, placeTarget, pushPlace } from "./lib/lastPlace.js";
 import { postModulePost, postReply, removeThread, removeReply } from "./lib/lessonSurface.js";
@@ -371,22 +379,28 @@ function AppInner() {
      settleDom then waits for a Suspense fallback to clear, the scroller
      is reset against the new screen rather than the old one, and whatever just
      mounted takes the same names before the after-snapshot. */
-  const runNavigation = (kind, commit, { resetScroll = () => {} } = {}) => {
+  const runNavigation = (kind, commit, { placeScroll = () => {}, morph = null } = {}) => {
     if (!kind) {
       clearNames();   // nothing will animate, so nothing should stay named
       commit();
-      resetScroll();
+      placeScroll();
       return;
     }
     const token = beginTransition(kind);
     const scope = scopeOf(kind);
     nameLayers(scope);
+    /* The module this move is about, named on both sides so its card and the
+       heading it opens into are one object (see nameMorph). The scroller is
+       placed BEFORE the card is named on the new side: on the way back, the
+       card it has to land on may be below the fold of the deck. */
+    nameMorph(morph);
     const ground = screenFlag();
     const vt = document.startViewTransition(async () => {
       flushSync(commit);
       await settleDom();
-      resetScroll();
+      placeScroll();
       nameLayers(scope);
+      nameMorph(morph);
       markBackdrop(ground);
     });
     vt.ready?.catch(() => {});
@@ -402,21 +416,50 @@ function AppInner() {
      move, so that one is applied plainly. */
   const routeNow = useRef(route);
   routeNow.current = route;
+  /* WHERE EACH SCREEN WAS LEFT, and why it matters to more than the scrollbar.
+     Coming back to the Flight Deck from a module, the deck used to open at the
+     top — so the card the module shrinks back into could be below the fold,
+     and the movement ended somewhere off screen. The position is remembered
+     when a screen is left and put back INSIDE the transition callback, before
+     the card is named, so the after-snapshot is of the deck where the student
+     actually left it, with the card in the window. */
+  const pathNow = useRef("");
+  pathNow.current = location.pathname;
+  const scrollMemory = useRef({});
+  /* The screen, not the address: the harness and every shared link carry a
+     query, and a position filed under "/?uid=x" is not found again from "/". */
+  const scrollKey = (to) => String(to || "").split("?")[0] || "/";
+  const rememberScroll = (to) => {
+    if (deckRef.current) scrollMemory.current[scrollKey(to)] = deckRef.current.scrollTop || 0;
+  };
+  const restoreScroll = (to, morphCode) => {
+    const deck = deckRef.current;
+    if (!deck) return;
+    deck.scrollTop = scrollMemory.current[scrollKey(to)] || 0;
+    if (morphCode) document.querySelector(`.deck .mod[data-code="${morphCode}"]`)?.scrollIntoView({ block: "nearest" });
+  };
   /* Where a lesson sits in its chapter — see lessonOrder, defined once the
      content is. A ref, so this handler, registered once, reads the current one. */
   const lessonOrderRef = useRef(() => -1);
   useEffect(() => {
     popHandler.current = (location, apply, { uaAnimated = false } = {}) => {
       const to = `${location.pathname}${location.search || ""}`;
-      const kind = !uaAnimated && canTransition() ? transitionKind(routeNow.current, to, { lessonOrder: lessonOrderRef.current }) : null;
-      runNavigation(kind, apply);
+      /* The move is worked out whatever the motion setting, because where a
+         screen opens is not motion: Back returns you where you were with the
+         animation off as much as on. Only the transition is gated. */
+      const moveKind = transitionKind(routeNow.current, to, { lessonOrder: lessonOrderRef.current });
+      const kind = !uaAnimated && canTransition() ? moveKind : null;
+      const morph = morphOf(moveKind, routeNow.current, to);
+      rememberScroll(pathNow.current);
+      runNavigation(kind, apply, { placeScroll: () => restoreScroll(to, morph), morph });
     };
     return () => { popHandler.current = null; };
   }, []);
 
   const navWait = useRef(0);
   const go = async (to, { keepScroll = false } = {}) => {
-    let kind = canTransition() ? transitionKind(route, to, { lessonOrder: lessonOrderRef.current }) : null;
+    const moveKind = transitionKind(route, to, { lessonOrder: lessonOrderRef.current });
+    let kind = canTransition() ? moveKind : null;
     const move = () => { navigate(to); };
 
     // WARM THE CHUNK FIRST, and this is the stutter.
@@ -479,11 +522,18 @@ function AppInner() {
        which is most of them, moving back and forth.
        Inside the callback it applies to the new screen, before the after-
        snapshot, which is what "the new page starts at the top" should mean. */
-    const resetScroll = () => {
-      if (!keepScroll && deckRef.current) deckRef.current.scrollTop = 0;
+    const back = moveKind === "back" || moveKind === "morphBack";
+    const morph = morphOf(moveKind, route, to);
+    const placeScroll = () => {
+      if (keepScroll || !deckRef.current) return;
+      /* Going back is returning, not arriving: the screen comes back where it
+         was left rather than at the top. Everything else starts at the top. */
+      if (back) restoreScroll(to, morph);
+      else deckRef.current.scrollTop = 0;
     };
+    rememberScroll(pathNow.current);
 
-    runNavigation(kind, move, { resetScroll });
+    runNavigation(kind, move, { placeScroll, morph });
   };
 
   const goSettings = (page) =>

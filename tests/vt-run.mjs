@@ -221,7 +221,10 @@ async function main() {
 
   /* ---- Deck → Module → Library → Paper → Back → Back → Back ---- */
   await start("/", ".mod");
-  await step("Deck → Module", click('.mod[data-code="M1"]'), { names: ["wg-content"] });
+  /* The card the module opens out of is the heading it opens into: one name
+     across the two screens, old on the deck's card and new on the heading. */
+  await step("Deck → Module", click('.mod[data-code="M1"]'),
+    { names: ["wg-content", "wg-mcard"], also: ["::view-transition-group(wg-mcard)"] });
   await step("Lessons → Library", click(".tabs button", { hasText: "Library" }),
     { names: ["wg-tabpanel"], also: ["::view-transition-group(wg-card)"], moved: ["tab-pill"] });
   /* The test paper is added under import.meta.env.DEV only (papersFor), so a
@@ -244,7 +247,8 @@ async function main() {
     console.log("skip  Library chips, the paper and its Back   no paper in this build (the test paper is DEV-only)");
   }
   await step("Back → Lessons", () => page.goBack(), { names: ["wg-tabpanel"], moved: ["tab-pill"] });
-  await step("Back → Deck", () => page.goBack(), { names: ["wg-content"] });
+  await step("Back → Deck", () => page.goBack(),
+    { names: ["wg-content", "wg-mcard"], also: ["::view-transition-group(wg-mcard)"] });
 
   /* ---- Deck → Ready Room → … → Deck ---- */
   await start("/", ".rrpill");

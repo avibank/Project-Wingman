@@ -155,41 +155,63 @@ if (!/::view-transition-old\(\*\)[\s\S]{0,80}mix-blend-mode:\s*normal/.test(css)
   const rules = [...css.matchAll(/([^{}]*::view-transition[^{}]*)\{([^}]*)\}/g)]
     .map((m) => ({ sel: m[1].trim(), body: m[2] }));
   const namesIn = (sel) => [...sel.matchAll(/::view-transition-(?:old|new|group|image-pair)\(([\w*-]+)\)/g)].map((m) => m[1]);
+  /* WHICH KINDS A RULE SPEAKS FOR. A rule with no html[data-vt] qualifier
+     speaks for all of them, and `^=` speaks for a family — so "morph" and
+     "fwd" are different conversations, and a layer may add in one while it is
+     dimmed in the other. That is the whole reason this is per kind: the
+     screen change recedes behind a brightness and must never sum, and the
+     module morph carries no filter at all and must. */
+  const kindsOf = (sel) => {
+    const exact = [...sel.matchAll(/data-vt="([\w]+)"/g)].map((m) => m[1]);
+    const family = [...sel.matchAll(/data-vt\^="([\w]+)"/g)].map((m) => `${m[1]}*`);
+    const both = [...exact, ...family];
+    return both.length ? both : ["*"];
+  };
+  const overlaps = (a, b) =>
+    a === "*" || b === "*" || a === b
+    || (a.endsWith("*") && b.startsWith(a.slice(0, -1)))
+    || (b.endsWith("*") && a.startsWith(b.slice(0, -1)));
   const filtered = new Set([...css.matchAll(/@keyframes\s+([\w-]+)\s*\{([\s\S]*?\})\s*\}/g)]
     .filter((k) => /filter\s*:/.test(k[2])).map((k) => k[1]));
-  const additive = new Set();
-  const dimmed = new Set();
-  const fades = {};   // name -> { out: Set, in: Set }
+  const additive = [];      // { kind, name }
+  const dimmed = [];        // { kind, name }
+  const fades = [];         // { kind, name, dir, clock }
   for (const r of rules) {
     const names = namesIn(r.sel);
-    if (/plus-lighter/.test(r.body)) names.forEach((n) => additive.add(n));
+    const kinds = kindsOf(r.sel);
+    const pairs = kinds.flatMap((kind) => names.map((name) => ({ kind, name })));
+    if (/plus-lighter/.test(r.body)) additive.push(...pairs);
     const anim = r.body.match(/animation\s*:([^;]*)/)?.[1] || "";
-    if ([...filtered].some((k) => new RegExp(`\\b${k}\\b`).test(anim))) names.forEach((n) => dimmed.add(n));
+    if ([...filtered].some((k) => new RegExp(`\\b${k}\\b`).test(anim))) dimmed.push(...pairs);
     for (const part of anim.split(",")) {
       // duration, curve and any delay: the whole clock, not just its length
       const f = part.trim().match(/^(.+?)\s+both\s+(wgFadeOut|wgFadeIn)$/);
       if (!f) continue;
-      for (const n of names) {
-        fades[n] ??= { out: new Set(), in: new Set() };
-        fades[n][f[2] === "wgFadeOut" ? "out" : "in"].add(f[1].replace(/\s+/g, " "));
-      }
+      const clock = f[1].replace(/\s+/g, " ");
+      const dir = f[2] === "wgFadeOut" ? "out" : "in";
+      for (const pair of pairs) fades.push({ ...pair, dir, clock });
     }
   }
-  for (const n of additive) {
-    if (n === "*" || n === "root") {
-      fail.push(`::view-transition-*(${n}) composites with plus-lighter. The universal rule is `
+  const seen = new Set();
+  for (const { kind, name } of additive) {
+    const key = `${kind}|${name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (name === "*" || name === "root") {
+      fail.push(`::view-transition-*(${name}) composites with plus-lighter. The universal rule is `
         + "normal; only a named, undimmed pair on one clock may add");
       continue;
     }
-    if (dimmed.has(n)) {
-      fail.push(`${n} composites with plus-lighter and has a filter animating on it — two dimmed `
-        + "layers added together are brighter than either, which is the spike");
+    if (dimmed.some((d) => d.name === name && overlaps(kind, d.kind))) {
+      fail.push(`${name} composites with plus-lighter${kind === "*" ? "" : ` on ${kind}`} and has a filter `
+        + "animating on it — two dimmed layers added together are brighter than either, which is the spike");
     }
-    const f = fades[n];
-    const one = f && f.out.size === 1 && f.in.size === 1 && [...f.out][0] === [...f.in][0];
-    if (!one) {
-      fail.push(`${n} composites with plus-lighter but its halves do not fade on one clock `
-        + `(out: ${f ? [...f.out].join(" | ") : "none"}; in: ${f ? [...f.in].join(" | ") : "none"}). `
+    const mine = fades.filter((f) => f.name === name && overlaps(kind, f.kind));
+    const out = new Set(mine.filter((f) => f.dir === "out").map((f) => f.clock));
+    const into = new Set(mine.filter((f) => f.dir === "in").map((f) => f.clock));
+    if (!(out.size === 1 && into.size === 1 && [...out][0] === [...into][0])) {
+      fail.push(`${name} composites with plus-lighter${kind === "*" ? "" : ` on ${kind}`} but its halves do not `
+        + `fade on one clock (out: ${[...out].join(" | ") || "none"}; in: ${[...into].join(" | ") || "none"}). `
         + "Added, two different fades overshoot one somewhere and the layer flashes");
     }
   }

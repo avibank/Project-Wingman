@@ -666,12 +666,15 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
           </div>
           <div className={`railwrap ${railOverflows ? "more" : ""}`} ref={wrapRef}>
             <div className="rail" ref={railRef}>
-              {/* data-code stays: the deck reads it, and it is the module's
-                  identifier rather than anything to do with motion. The card
-                  used to be given a shared transition name here so it grew
-                  into the module heading; that whole mechanism is gone — see
-                  the transition layer in app.css for why a named element could
-                  not be made to stop flickering. */}
+              {/* data-code is the module's identifier, and the transition
+                  layer reads it: opening a module names THIS card and the
+                  heading it opens into with one name, so the browser carries
+                  the box between them (nameMorph in viewTransition.js). That
+                  mechanism was taken out once because a named element could
+                  not be made to stop flickering — what flickered was the hole
+                  a layer scaled below 1 left behind it, and nothing in the
+                  layer scales below 1 now. The name is set from there rather
+                  than written here, because only the move knows which card. */}
               {moduleRows.map((m) => (
                 <Cell className="mod house" data-press="" data-code={m.code} key={m.code} open={flags["module.interior"]}
                       onOpen={() => onEnterModule(m)}>

@@ -619,20 +619,91 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   /* Mission Control itself, on whole-screen changes only. */
   html[data-vt="fwd"]::view-transition-old(wg-content),
   html[data-vt="swap"]::view-transition-old(wg-content),
-  html[data-vt="morph"]::view-transition-old(wg-content),
-  html[data-vt="morphBack"]::view-transition-old(wg-content),
   html[data-vt="back"]::view-transition-old(wg-content) {
     animation: var(--wg-exit-settle) var(--wg-spring) both wgRecede,
                var(--wg-exit-fade) var(--wg-fade-out) both wgFadeOut;
   }
   html[data-vt="fwd"]::view-transition-new(wg-content),
   html[data-vt="swap"]::view-transition-new(wg-content),
-  html[data-vt="morph"]::view-transition-new(wg-content),
-  html[data-vt="morphBack"]::view-transition-new(wg-content),
   html[data-vt="back"]::view-transition-new(wg-content) {
     animation: var(--wg-settle) var(--wg-spring) both wgArrive,
                var(--wg-enter-fade) var(--wg-fade-in) var(--wg-enter-delay) both wgFadeIn;
   }
+
+  /* OPENING A MODULE IS NOT A PAGE LEAVING, IT IS A CARD OPENING — and the
+     ghost was the old page trying to be the movement.
+     The outgoing screen used to grow to 1.077 as it faded, and an enlarged,
+     half-transparent copy of the module hanging over the Flight Deck for two
+     tenths of a second is exactly what "a ghost from the previous screen"
+     means. Nothing about the old side moves now: it fades, briefly, and the
+     arriving screen carries the whole movement — it settles forward from a
+     three percent overshoot with no blur and no dim, and the module's own card
+     travels between the two screens above both of them (wg-mcard below), which
+     is what the eye actually follows.
+     THE TWO HALVES ADD. Same duration, same curve, opposite directions, and
+     plus-lighter: coverage is exactly one at every instant, so there is no dip
+     to read as a flash. It is only safe because nothing here is dimmed —
+     wgSettle carries a transform and nothing else, which is also why these two
+     kinds do not use wgArrive. */
+  @keyframes wgSettle { from { transform: scale(var(--wg-scale-in)); } to { transform: none; } }
+  html[data-vt="morph"], html[data-vt="morphBack"] {
+    --wg-scale-in: 1.030;
+    /* SHORT, because the two pages have nothing in common to dissolve
+       between — the card is what connects them, and it travels for the whole
+       settle. Long enough not to cut, short enough that the module is gone
+       before the eye has found it again. */
+    --wg-morph-fade: 120ms;
+  }
+  html[data-vt="morph"]::view-transition-old(wg-content),
+  html[data-vt="morphBack"]::view-transition-old(wg-content) {
+    animation: var(--wg-morph-fade) var(--wg-fade-in) both wgFadeOut;
+    mix-blend-mode: plus-lighter;
+  }
+  html[data-vt="morph"]::view-transition-new(wg-content),
+  html[data-vt="morphBack"]::view-transition-new(wg-content) {
+    animation: var(--wg-settle) var(--wg-spring) both wgSettle,
+               var(--wg-morph-fade) var(--wg-fade-in) both wgFadeIn;
+    mix-blend-mode: plus-lighter;
+  }
+
+  /* THE CARD IS THE SAME OBJECT ON BOTH SCREENS. On the Flight Deck it is the
+     module's card in the launcher; inside the module it is the heading the
+     card opened into. One name across the two states, so the browser tweens
+     the box — position, size, corner — and crossfades what is printed on it,
+     above both pages (z-index). The card is what the eye follows, and while it
+     is following the card it is not looking for the page that left.
+     This was tried before and taken out again "because a named element could
+     not be made to stop flickering". What flickered was the hole: a named
+     layer that scales below 1 shrinks away from the gap it left in the page
+     behind it, and there is nothing behind the gap. Nothing scales below 1
+     anywhere in this layer now (check:transitions asserts it), the root paints
+     once, and both sides of every screen change are captured — so the card can
+     come back. */
+  ::view-transition-group(wg-mcard) {
+    animation-duration: var(--wg-settle);
+    animation-timing-function: var(--wg-spring);
+    z-index: 2;
+  }
+  /* NEITHER PICTURE IS RESIZED WHILE THE BOX IS. Filling the travelling box
+     with each image magnified the heading to twice its size in the middle of
+     the flight and then shrank it back — the words ballooned. At their own
+     size inside a box that clips, the card's name and the page's heading stay
+     the size they really are and simply cross over each other as the box
+     becomes the other one's shape. */
+  ::view-transition-group(wg-mcard) { overflow: clip; }
+  ::view-transition-old(wg-mcard),
+  ::view-transition-new(wg-mcard) {
+    height: 100%; width: 100%; object-fit: none; object-position: left top;
+  }
+  /* AND THE CARD STAYS A SOLID OBJECT WHILE IT TRAVELS. Fading the two
+     pictures on different clocks left the thing in flight at nine tenths of a
+     cover for most of the way — a translucent panel sliding over the page,
+     which is the very thing this is meant to remove. One clock, added: the
+     card you press is the card that lands. */
+  ::view-transition-old(wg-mcard),
+  ::view-transition-new(wg-mcard) { mix-blend-mode: plus-lighter; }
+  ::view-transition-old(wg-mcard) { animation: var(--wg-morph-fade) var(--wg-fade-in) both wgFadeOut; }
+  ::view-transition-new(wg-mcard) { animation: var(--wg-morph-fade) var(--wg-fade-in) both wgFadeIn; }
 
   /* A TAB IS NOT A SCREEN CHANGE. The frame holds and only the panel moves, so
      the whole page does not recede because somebody changed a filter — and the
