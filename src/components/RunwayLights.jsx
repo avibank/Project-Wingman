@@ -209,6 +209,41 @@ function RunwayLights({ route }) {
         .runway-dot.is-lit.is-amber { background: #F2A93B; box-shadow: 0 0 5px rgba(242,169,59,0.8); }
         .runway-dot.is-lit.is-red   { background: #E5484D; box-shadow: 0 0 5px rgba(229,72,77,0.8); }
 
+        /* DAY. The lamps above are for a dark apron: a white lamp is #F4F6FB
+           with a white glow, which on a day ground is a white dot on a white
+           strip — the runway's first eight lights simply vanished. By day an
+           unlit lamp is an empty housing, a lit white one takes the accent,
+           and the glows become a tight ring rather than a halo, because a
+           bloom only reads against the dark. */
+        .theme-light .flight-progress {
+          --rw-housing: color-mix(in oklch, var(--t3) 55%, transparent);
+          --rw-white:   var(--accent);
+          --rw-amber:   oklch(.66 .16 62);
+          --rw-red:     oklch(.56 .2 27);
+        }
+        .theme-light .runway-dot,
+        .theme-light .runway-dot.is-unlit {
+          background: transparent;
+          box-shadow: inset 0 0 0 1px var(--rw-housing);
+        }
+        .theme-light .runway-dot.is-lit.is-white {
+          background: var(--rw-white);
+          box-shadow: 0 0 0 1.5px color-mix(in oklch, var(--rw-white) 22%, transparent);
+        }
+        .theme-light .runway-dot.is-lit.is-amber {
+          background: var(--rw-amber);
+          box-shadow: 0 0 0 1.5px color-mix(in oklch, var(--rw-amber) 25%, transparent);
+        }
+        .theme-light .runway-dot.is-lit.is-red {
+          background: var(--rw-red);
+          box-shadow: 0 0 0 1.5px color-mix(in oklch, var(--rw-red) 25%, transparent);
+        }
+        .theme-light .flight-progress .runway-trail {
+          filter: blur(1.5px);
+          opacity: .8;
+          background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--accent) 70%, transparent));
+        }
+
         /* The trail and the fill snap rather than ease. Not faster — off.
            Each switch is independent: the media query is the device asking and
            Smooth Air is the person asking, and either alone turns it off. */
