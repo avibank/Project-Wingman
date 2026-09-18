@@ -386,6 +386,32 @@ question feeds, and the right seat is one person and state that expires.
   livery × night/day × 1920/1512/1024/430, and every control the brief lists:
   `npm run test:rr`.
 
+## The Flight Deck's instrument strip
+
+Four instruments in one row — gyro, flight bag, hour meter, radar — inside
+`.deck .card`, with the gyro on a wider track because it is the widest dial.
+At 860px they go equal; at 600px the gyro takes the top row and the other three
+sit abreast under it, which is what keeps the Modules grid above the fold on a
+390x844 phone. The Manual finish draws the same four in `PaperStrip.jsx`.
+
+- **There is no checklist cell.** It drew one lamp per chapter flown — the same
+  fact the module card states in words and the route strip states again — and
+  it was the only instrument that could not survive a module with chapters in
+  the tens. `.lamps`, `.lamp` and `--legs` went with it (2026-09-18).
+- **The hour meter reads in tenths, on a drum**: `0013.9`, four zero-padded
+  integer digits, the point and the tenth in the accent. It was `13:59`, which
+  is a clock, and this is not one. `hobbsDrum` in `hobbs.js` floors
+  (`seconds / 360`) — an hour meter never reads time nobody has flown — and
+  wraps at 9999.9.
+- **It counts time inside that module and nothing else**: the module screen, a
+  lesson, a quiz or a paper in it (`MODULE_ROUTES` in App.jsx). Not the Flight
+  Deck, not the Ready Room, not another module. Per student per module, in
+  seconds, in `pw-hobbs` through `merge_progress`; flushed every 20s, on the
+  route change out and on `pagehide`.
+- **It stops on a hidden tab**, and that is a decision rather than an
+  oversight: a window left open on a module overnight would otherwise add eight
+  hours nobody flew. If that should change, it is one listener in `hobbs.js`.
+
 ## Screen changes and transitions
 
 Every navigation, tab, pane and popup moves on one motion system — the Mission

@@ -4,7 +4,7 @@ import { moduleNeedsYou, readMinimums } from "../lib/minimums.js";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
-import { HOBBS_KEY, hobbsSeconds, hobbsClock } from "../lib/hobbs.js";
+import { HOBBS_KEY, hobbsSeconds, hobbsDrum } from "../lib/hobbs.js";
 import { PLACE_KEY, placeLine, placeVerb, placeList } from "../lib/lastPlace.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
@@ -103,11 +103,23 @@ const DECK_CSS = `
 @media (max-width: 430px) { .deck .cardbody { padding: 18px; gap: 16px; }
   .deck .resume { width: 100%; text-align: center; } }
 
-.deck .strip { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 1px;
+/* FOUR INSTRUMENTS, ONE ROW. The gyro leads and is the widest of them at
+   112px, so it takes a wider track; at equal widths on a 1010px column it sat
+   stranded in the middle of its cell. Below 860px there is no spare width to
+   give it, so the four go equal, and on a phone the gyro takes the top row
+   with the other three abreast underneath — two rows instead of three, which
+   is what brings the Modules grid back above the fold on a 390x844 screen. */
+.deck .strip { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); }
-@media (max-width: 760px) { .deck .strip { grid-template-columns: 1fr 1fr; }
-  .deck .strip .cel:first-child { grid-column: 1/-1; } }
-@media (max-width: 430px) { .deck .strip { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .deck .strip { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .deck .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .deck .strip .cel:first-child { grid-column: 1 / -1; padding-block: 15px 11px; }
+  .deck .strip .cel:not(:first-child) { min-height: calc(120px * var(--scale, 1)); padding: 13px 7px 11px; }
+  .deck .hobbs { font-size: calc(15px * var(--scale, 1)); padding: 5px 7px; }
+  .deck .radar { width: calc(62px * var(--scale, 1)); height: calc(62px * var(--scale, 1)); }
+  .deck .cap { font-size: 8.5px; letter-spacing: .1em; }
+}
 .deck .cel { background: var(--panel); padding: 17px 10px 13px; display: flex; flex-direction: column;
   align-items: center; gap: 9px; min-height: calc(152px * var(--scale, 1)); justify-content: center; }
 /* Sheen. A broad gloss falling from the top edge plus one narrow diagonal
@@ -148,22 +160,30 @@ const DECK_CSS = `
   background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 5px 13px; color: var(--t3); }
 .deck .ladder b { display: block; font-size: calc(19px * var(--scale, 1)); font-weight: 500; color: var(--on); }
 .deck .bagglyph { width: calc(32px * var(--scale, 1)); height: calc(30px * var(--scale, 1)); color: var(--t3); }
-/* minmax(0, 1fr), not 1fr. A bare 1fr track is minmax(auto, 1fr), and auto as
-   a MINIMUM resolves to the item's min-content — which for a fixed-width item
-   is that width. So any width landing on a .lamp becomes a floor this track
-   set cannot go below, and the bars march out of the cel. That is exactly what
-   a stray width of 68px on .lamp did. The width is gone, but a track that must
-   fit should say it must fit.
+/* THE CHECKLIST CELL IS GONE, and with it .lamps, .lamp and --legs. It drew
+   one bar per chapter flown, which the module card already says in words
+   (CRUISE - 2 OF 3) and the route strip in "Back on the ground" says again;
+   it was also the only instrument here that could not survive a module with
+   chapters in the tens.
+
+   THE HOUR METER READS IN TENTHS, on a drum. 13:59 was a clock, and an hour
+   meter is not a clock: a real Hobbs counts tenths of an hour, never
+   backwards and never rounded up. The point and the tenth carry the accent,
+   the four integer digits stay quiet, and the tenth sits in a window it rolls
+   through — the inset shadow is what makes that window read as recessed.
    NO BACKTICKS IN HERE: this comment lives inside a JS template literal, so a
    backtick ends the string and the build dies. It has done, three times. */
-.deck .lamps { display: grid; grid-template-columns: repeat(var(--legs, 3), minmax(0, 1fr)); gap: 5px; width: calc(88px * var(--scale, 1)); }
-.deck .lamp { height: calc(17px * var(--scale, 1)); border-radius: 3px; background: var(--raised); border: 1px solid var(--line); }
-.deck .lamp.on { background: var(--on); border-color: transparent;
-  box-shadow: 0 0 var(--emit) color-mix(in oklab, var(--on), transparent 45%); }
 .deck .hobbs { font-family: var(--font-mono); font-size: calc(19px * var(--scale, 1)); letter-spacing: .09em; background: var(--raised);
   border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; color: var(--t2);
-  font-variant-numeric: tabular-nums; }
-.deck .hobbs i { font-style: normal; color: var(--on); }
+  font-variant-numeric: tabular-nums; display: flex; align-items: center;
+  box-shadow: inset 0 1px 3px oklch(0 0 0 / .18); }
+.deck .hb-dot { font-style: normal; color: var(--on); }
+.deck .hb-tenth { display: inline-block; overflow: hidden; height: 1.06em; width: .62em;
+  vertical-align: bottom; color: var(--on); }
+.deck .hb-col { display: block; transition: transform .55s var(--ease); }
+.deck .hb-col span { display: block; height: 1.06em; line-height: 1.06em; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .deck .hb-col { transition: none; } }
+.app.smooth-air .deck .hb-col { transition: none; }
 
 .deck .radarcel { cursor: pointer; border: 0; font-family: inherit; transition: background .18s; }
 .deck .radarcel:hover { background: var(--raised); }
@@ -314,8 +334,6 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
 
   const active = MODULES.find((m) => m.code === activeModuleCode) || MODULES[0];
   const activeChapters = chaptersForModule(active.code);
-  const activeSegments = moduleSegments(activeChapters, state);
-  const activeCount = chapterCount(activeSegments);
   const next = nextChapter(activeChapters, state);
   const nextState = next ? segmentState(next.id, state) : SEGMENT.EMPTY;
 
@@ -351,7 +369,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // module, counted by the meter in lib/hobbs.js while a module is open, not
   // inferred from how much video has played. Reading it off video position
   // showed nothing for an hour spent on the papers, which is most of the work.
-  const hobbs = hobbsClock(hobbsSeconds(progress.get(HOBBS_KEY, {}), active.code));
+  const hobbs = hobbsDrum(hobbsSeconds(progress.get(HOBBS_KEY, {}), active.code));
 
 
   // §5.3 — "If a feature behind a preset doesn't exist in the backend yet,
@@ -575,15 +593,12 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 flown={flown}
                 palette={C}
                 bag={bag > 0 ? bag : 0}
-                boxes={activeCount.full}
-                boxCount={activeSegments.length}
-                hobbs={hobbs ? `${hobbs.h}:${hobbs.m}` : "--:--"}
+                hobbs={`${hobbs.int}.${hobbs.tenth}`}
                 blips={contacts.length > 0}
                 caps={[
                   <GyroCaption average={average} bar={minimums} />,
                   bag > 0 ? "Flight bag" : "A bookmark fills the bag.",
-                  "Checklist",
-                  hobbs ? "Hobbs" : "Your first hour",
+                  hobbs.flown ? "Hobbs" : "Your first hour",
                   contactCap,
                 ]}
               />
@@ -614,21 +629,20 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             </div>
 
             <div className="cel">
-              <div className="lamps" style={{ "--legs": activeSegments.length }}>
-                {activeSegments.map((s) => (
-                  <i key={s.id} className={`lamp ${s.fill === SEGMENT.FULL ? "on" : ""}`} />
-                ))}
+              {/* A drum, read out as a number. The digits are scenery for a
+                  screen reader — the label is the value. */}
+              <div className="hobbs" aria-label={`Hobbs, ${hobbs.reads} hours in this module`}>
+                <span className="hb-int">{hobbs.int}</span><i className="hb-dot">.</i>
+                <span className="hb-tenth" aria-hidden="true">
+                  {/* The column is ten digits tall and shows one; the carry
+                      into the integer above lands in the same frame, because
+                      both come from the same render of the same number. */}
+                  <span className="hb-col" style={{ transform: `translateY(calc(-1.06em * ${hobbs.tenth}))` }}>
+                    {Array.from({ length: 10 }, (_, n) => <span key={n}>{n}</span>)}
+                  </span>
+                </span>
               </div>
-              <div className="cap">Checklist</div>
-            </div>
-
-            <div className="cel">
-              <div className="hobbs">
-                {hobbs
-                  ? <>{hobbs.h}<i>:{hobbs.m}</i></>
-                  : <>--<i>:--</i></>}
-              </div>
-              <div className="cap">{hobbs ? "Hobbs" : "Your first hour"}</div>
+              <div className="cap">{hobbs.flown ? "Hobbs" : "Your first hour"}</div>
             </div>
 
             {/* Social's only foothold in the academic half. */}

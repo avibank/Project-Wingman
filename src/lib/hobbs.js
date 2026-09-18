@@ -72,12 +72,26 @@ export function useHobbsMeter(moduleCode, progress) {
 // What the meter has counted for one module.
 export const hobbsSeconds = (store, moduleCode) => (store || {})[moduleCode] || 0;
 
-// Hours and minutes, not tenths of an hour. The dial used to read in the
-// aviation convention, so twenty minutes of work showed as 000.0 and the
-// instrument looked broken to the person who had just done the work. It only
-// stays blank below a minute, where there is genuinely nothing to show yet.
-export const hobbsClock = (seconds) => {
-  if (!seconds || seconds < 60) return null;
-  const mins = Math.floor(seconds / 60);
-  return { h: String(Math.floor(mins / 60)), m: String(mins % 60).padStart(2, "0") };
+// TENTHS OF AN HOUR, ON A DRUM — 0013.9 — because that is what an hour meter
+// reads and what the hours in a logbook are written in. It used to read h:mm,
+// which is a clock, and a clock is the one thing this must not be mistaken
+// for: the meter counts time flown in this module and nothing else.
+//
+// Always DOWN. 360 seconds is one tenth, and a meter that rounded up would
+// credit time nobody has flown. Four integer digits, zero-padded, and the
+// whole thing wraps at 9999.9 the way a real drum does — no student will see
+// it, and a number that silently stops counting would be worse.
+export const hobbsDrum = (seconds) => {
+  const tenths = Math.floor(Math.max(0, seconds || 0) / 360) % 100000;
+  const whole = Math.floor(tenths / 10);
+  const tenth = tenths % 10;
+  return {
+    int: String(whole).padStart(4, "0"),
+    tenth,
+    // What a screen reader says, and what the caption asks: has anything been
+    // flown yet at all? Below a tenth the drum reads 0000.0 and the cell says
+    // so in words instead.
+    reads: `${whole}.${tenth}`,
+    flown: tenths > 0,
+  };
 };

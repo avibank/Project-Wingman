@@ -1,6 +1,8 @@
-// The Manual finish's instrument strip: the same five instruments, drawn
+// The Manual finish's instrument strip: the same four instruments, drawn
 // rather than lit. Geometry ported verbatim from paperStrip(C) in the Livery
 // Engine II reference — every coordinate, radius and offset is the reference's.
+// The checklist's boxes went with the lit strip's lamps: one box per chapter
+// flown is the module card's sentence, drawn twice.
 //
 // .ink is the livery's accent, so the drawing is in whatever ink the livery
 // supplies. .inkh is the hairline. Both are defined with the finish CSS.
@@ -23,7 +25,7 @@ const PAPER_CSS = `
 
 function PaperStrip({
   ring, bar = DEFAULT_MINIMUMS, flown = 0, palette = {},
-  bag, boxes, boxCount = 5, hobbs, blips, caps, ballRef,
+  bag, hobbs, blips, caps, ballRef,
 }) {
   return (
     <>
@@ -73,38 +75,15 @@ function PaperStrip({
 
       <div className="cel">
         <svg width="96" height="86" viewBox="0 0 96 86" aria-hidden="true">
-          {/* One box per chapter in the module, however many it has — this was
-              five boxes regardless, so a four-chapter module drew a line that
-              could never be finished. A box is ticked when its chapter is
-              flown, and not before. */}
-          {(() => {
-            const per = Math.min(boxCount, 4);
-            const w = Math.floor((84 - 6 * (per - 1)) / per);
-            return Array.from({ length: boxCount }, (_, i) => {
-              const x = 6 + (i % per) * (w + 6), y = 32 + Math.floor(i / per) * 22;
-              return (
-                <g key={i}>
-                  <rect x={x} y={y} width={w} height="15" rx="1" className="inkh" />
-                  {i < boxes
-                    ? <path d={`M${x + w * 0.22} ${y + 8} l${w * 0.18} 4 l${w * 0.42} -9`} className="ink" />
-                    : null}
-                </g>
-              );
-            });
-          })()}
-        </svg>
-        <div className="cap">{caps[2]}</div>
-      </div>
-
-      <div className="cel">
-        <svg width="96" height="86" viewBox="0 0 96 86" aria-hidden="true">
           <path d="M14 58 h68" className="ink" />
           <path d="M14 58 v-5 M82 58 v-5" className="inkh" />
+          {/* 0013.9 is six characters where 13:59 was five, so the drawn
+              face reads a size down to stay inside its rule. */}
           <text x="48" y="52" textAnchor="middle"
-                style={{ fontFamily: MONO, fontSize: "19px", letterSpacing: "1.7px" }}
+                style={{ fontFamily: MONO, fontSize: "17px", letterSpacing: "1.2px" }}
                 fill="var(--t1)">{hobbs}</text>
         </svg>
-        <div className="cap">{caps[3]}</div>
+        <div className="cap">{caps[2]}</div>
       </div>
 
       <div className="cel">
@@ -127,7 +106,7 @@ function PaperStrip({
             </>
           ) : null}
         </svg>
-        <div className="cap">{caps[4]}</div>
+        <div className="cap">{caps[3]}</div>
       </div>
       <style>{PAPER_CSS}</style>
     </>
