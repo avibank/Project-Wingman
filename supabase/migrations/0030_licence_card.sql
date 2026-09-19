@@ -188,16 +188,33 @@ on conflict (id) do update
 -- replace it.
 drop policy if exists covers_upload on storage.objects;
 create policy covers_upload on storage.objects
-  for insert to anon, authenticated
+  for insert to public
   with check (
     bucket_id = 'covers'
     and array_length(storage.foldername(name), 1) = 1
     and name = (storage.foldername(name))[1] || '/cover.webp'
   );
 
+-- AND IT NEEDS A SELECT POLICY TO BE ABLE TO INSERT AT ALL, which is not
+-- obvious and cost an afternoon. An upload with `x-upsert: true` makes
+-- storage-api LOOK FIRST to see whether the object is already there; with no
+-- select policy that look returns nothing it is allowed to see, and the API
+-- reports the whole request as "new row violates row-level security policy" —
+-- an insert error for a select that was refused. 0026 left it out of
+-- chat-attachments on purpose ("nothing may list this bucket") and that is
+-- why chat attachments have never uploaded either; 0031 fixes that one.
+--
+-- Listing covers gives away nothing the bucket does not already give away:
+-- it is public, the path is <user>/cover.webp, and a user id is on screen
+-- wherever a person is.
+drop policy if exists covers_read on storage.objects;
+create policy covers_read on storage.objects
+  for select to public
+  using (bucket_id = 'covers');
+
 drop policy if exists covers_replace on storage.objects;
 create policy covers_replace on storage.objects
-  for update to anon, authenticated
+  for update to public
   using (bucket_id = 'covers')
   with check (
     bucket_id = 'covers'
@@ -209,4 +226,9 @@ declare n integer;
 begin
   select count(*) into n from storage.buckets where id = 'covers' and public;
   if n <> 1 then raise exception '0030: the covers bucket is missing or not public'; end if;
+  -- All three, and the select one especially: without it nothing uploads.
+  select count(*) into n from pg_policies
+   where schemaname = 'storage' and tablename = 'objects'
+     and policyname in ('covers_upload', 'covers_read', 'covers_replace');
+  if n <> 3 then raise exception '0030: the covers policies are incomplete (%)', n; end if;
 end $$;

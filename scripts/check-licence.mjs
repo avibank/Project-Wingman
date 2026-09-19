@@ -229,5 +229,26 @@ const inList = (name) => {
   ]) ok(`${what} is opened by something`, re.test(profile));
 }
 
+/* -------------------------------------------- nobody is signed in, either
+   The shape of every dead end this project has shipped: a page that renders
+   for somebody with no account, with controls that write against an id that
+   is not there. /bookmarks did it by rendering blank; the licence did it by
+   rendering an editable card whose every control wrote nowhere — and one of
+   them wrote somewhere worse. */
+{
+  const C = await import("../src/lib/coverImage.js");
+  const profile = read("src/components/Profile.jsx");
+  const noId = await C.uploadCover(null, new Blob(["x"]));
+  ok("an upload with no account is refused before it has a path",
+     noId.ok === false && /Sign in/.test(noId.message));
+  ok("and so is an empty blob",
+     (await C.uploadCover("u_1", null)).ok === false);
+  ok("the card is only editable when Clerk has decided AND there is somebody",
+     /const signedIn = Boolean\(isLoaded && user\?\.id\);/.test(profile)
+     && /edit=\{signedIn\}/.test(profile));
+  ok("signed out it says what to do, not what is missing",
+     /lic-signin/.test(profile) && !/not signed in|no account/i.test(profile));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

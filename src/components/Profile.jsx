@@ -490,7 +490,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                    finish, onFinish, ruled, onRuled,
                    fontSize, onFontSize, reduceMotion, onReduceMotion, dyslexiaFont, onDyslexiaFont,
                    grain, onGrain, variant }) {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const progress = useUserProgress();
   const { prefs, update: updatePrefs } = useSocialPrefs();
@@ -614,6 +614,9 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     days: progress.get(DAYS_KEY, null),
   });
   const myStamp = stampOf(card);
+  /* Clerk has finished deciding AND there is somebody. `isLoaded` matters:
+     without it the card flickers through read-only on every load. */
+  const signedIn = Boolean(isLoaded && user?.id);
 
   // §6.1 — on by default. Off is the unusual choice, so the copy says so.
   const byUsername = (prefs?.identity_display || "username") === "username";
@@ -713,7 +716,17 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             stats={myStats}
             stamp={myStamp}
             admin={isAdmin}
-            edit
+            /* SIGNED OUT, THE CARD IS READ-ONLY. It used to render in edit
+               mode for anybody who reached this address: a cover picker, a
+               phrase picker and a stamp creator, all of which write against
+               user.id and therefore wrote nowhere. One of them did worse than
+               nothing — the cover upload put an object at `undefined/cover.webp`,
+               a single slot shared by every signed-out visitor.
+
+               Read-only is the honest state: this is your licence as it
+               stands on this device, and the line under it says what to do
+               about it. */
+            edit={signedIn}
             onPickCover={() => setPicker("cover")}
             onPickPhoto={() => setPicker("photo")}
             onPickPhrase={() => setPicker("phrase")}
@@ -729,11 +742,13 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                 .catch(() => setSaveNote("That callsign is taken."));
             }}
             onBio={(v) => patchCard({ bio: v })}
-            action={(
+            action={signedIn ? (
               <button type="button" className="ghost" style={{ marginTop: 18 }}
                       onClick={() => setPicker("others")}>
                 See it as others do
               </button>
+            ) : (
+              <p className="lic-signin">Sign in to make this yours and put a stamp on it.</p>
             )}
           />
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />

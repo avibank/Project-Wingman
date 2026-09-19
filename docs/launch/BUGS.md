@@ -108,3 +108,55 @@ exactly the token's value, the same face as before.
 being byte-identical. Its two uses get `--mono` declared in `additions.css`
 instead, which is where that pack's adaptations live, and they were genuinely
 falling through to the platform mono rather than to Geist.
+
+## 16 · Chat attachments have never uploaded, and neither could a cover
+
+**Found:** 2026-09-19, building the licence card's cover upload.
+**Lived since:** 0026 shipped.
+
+A brand-new bucket with a correct INSERT policy answered every upload with
+
+```
+403  new row violates row-level security policy
+```
+
+The policy was right. The expression evaluated true against the exact row.
+Inserting the identical row as `anon` in SQL succeeded. Only the REST path
+refused, and only for two buckets — `covers` and `chat-attachments`. `papers`
+worked.
+
+The difference is a SELECT policy. Supabase's storage API uploads with
+`x-upsert: true`, which makes it **look first** to see whether the object is
+already there. With no select policy that look is refused, and the API reports
+the whole request as an INSERT failure — an error that names the wrong
+statement.
+
+0026 left the select policy out of `chat-attachments` deliberately: "No SELECT
+policy on purpose: nothing may list this bucket." Sound reasoning, unforeseen
+consequence — every attachment in the Ready Room has failed to upload since.
+
+Fixed in 0030 (covers) and 0031 (chat attachments), both with the trade written
+down: a select policy permits listing to anybody holding the publishable key,
+it cannot be narrowed to the viewer because `auth.uid()` is NULL on every
+request here, and what it gives away is a list of paths in a bucket that is
+already public.
+
+Verified afterwards over the anon REST path: covers 200 for
+`<user>/cover.webp` and 403 for `a/b/c.webp`, chat attachments 200 for a real
+`{squadron}/{member}/` path. Every probe object deleted.
+
+## 17 · The licence rendered in edit mode for somebody with no account
+
+Same shape as the blank `/bookmarks` (number 9): a page that renders for a
+signed-out visitor with controls that write against an id that is not there.
+A cover picker, a phrase picker and a stamp creator, all of which did nothing.
+
+One of them did worse than nothing. `uploadCover(undefined, blob)` put an
+object at **`undefined/cover.webp`** — one slot in the bucket, shared by every
+signed-out visitor, stored against nobody. It happened on the live site inside
+a minute of the feature existing, and was found by looking at the bucket rather
+than at the screen: the screen showed no error at all.
+
+The card is read-only when Clerk has decided and there is nobody, with a line
+saying what to do about it; `uploadCover` refuses without an id before it
+builds a path. `check:licence` holds both.

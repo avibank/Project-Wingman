@@ -79,6 +79,14 @@ export function renderCover(img, { z = 1, x = 0, y = 0 } = {}) {
    this file untestable outside a browser. It also keeps the upload path out
    of any chunk that only ever crops. */
 export async function uploadCover(userId, blob) {
+  /* NO ID, NO UPLOAD. Without this the path is the string "undefined" and the
+     object lands at `undefined/cover.webp` — one shared slot, overwritten by
+     whoever is signed out next, and stored against nobody. It happened on the
+     live site within a minute of the feature existing: the page rendered for
+     a signed-out visitor and every control on it did nothing except this one,
+     which did something worse. */
+  if (!userId) return { ok: false, message: 'Sign in to put a picture on your licence.' };
+  if (!blob || !blob.size) return { ok: false, message: 'That did not come out as an image. Try again.' };
   const { upload, publicUrl, isMissingBucket, storageConfigured } =
     await import('./storage.remote.js');
   if (!storageConfigured) return { ok: false, message: 'Uploads are off in this build.' };
