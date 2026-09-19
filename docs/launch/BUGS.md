@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|
 | 1 | high | Licence | "Use your initials" calls Clerk `setProfileImage({file:null})` and throws; avatar then falls back to Clerk's generated default from `img.clerk.com`. Fix: drop `user.imageUrl` and `setProfileImage` entirely, store photos in Supabase, render one Avatar component (photo, else initials on `avatar_colour`). | **fixed** | 0033 + `<Avatar>` |
 | 2 | high | Licence / Preferences / Appearance | Red "Something's snagged. Try again." banner renders above the content on every profile tab, on a normal load with all network calls returning 200. | open | |
-| 3 | high | Module | Crew tab does nothing — clicking it leaves you on Lessons. Needs wiring plus the explained empty state. | open | |
+| 3 | high | Module | Crew tab does nothing — clicking it leaves you on Lessons. Needs wiring plus the explained empty state. | **tab wired**; empty state next | `onTab` in App.jsx |
 | 4 | high | DB | `pilot_profiles` has no `photo_url`, `photo_zoom/x/y`, `avatar_colour`, `cover_key`, `cover_colour`, `phrase` or `bio` columns, so nothing the licence card edits can be saved. | **fixed** | 0030 + 0033 |
 | 5 | medium | Licence | Card is wider than its column and overflows the right edge instead of sitting centred under the tab strip. | open | |
 | 6 | medium | Licence | "Create your stamp" button overlaps the stamp artwork. | open | |

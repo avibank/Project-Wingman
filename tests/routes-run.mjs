@@ -104,6 +104,56 @@ const run = async () => {
     report(`${name}  ${path}`, problems);
     await page.close();
   }
+  /* ------------------------------------------------- every tab actually opens
+     A tab that changes nothing is a bug, not a placeholder — and it is the
+     one kind of dead control a static check keeps missing, because the button
+     IS bound to a handler. Crew shipped like that: the module screen's
+     onTab named library and people and defaulted everything else back to the
+     module, so pressing the third tab went to the first. The route was built
+     and verified; only the press could not reach it.
+
+     So each tab is pressed, and three things have to change: the address, the
+     selected tab, and what is on screen. */
+  for (const [where, path, sel] of [
+    ["the module screen", "/m/m1", ".mscreen [role=tab]"],
+    ["the lesson", "/m/m1/M1.01/lesson/M1.01.1", ".ltabs [role=tab]"],
+    ["the licence", "/account/licence", ".tabs [role=tab]"],
+  ]) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const problems = [];
+    await page.goto(BASE + path, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(sel, { timeout: 20000 }).catch(() => problems.push("no tabs at all"));
+    await page.waitForTimeout(1800);
+    const labels = await page.locator(sel).evaluateAll((els) => els.map((e) => e.textContent.trim()));
+    if (labels.length < 2) problems.push(`only ${labels.length} tab(s)`);
+    const seen = new Set();
+    for (const label of labels) {
+      const tab = page.locator(sel).filter({ hasText: label }).first();
+      const before = await page.evaluate(() => ({
+        url: location.pathname,
+        body: (document.querySelector(".deck")?.innerText || "").slice(0, 400),
+      }));
+      await tab.click();
+      await page.waitForTimeout(1400);
+      const after = await page.evaluate(() => ({
+        url: location.pathname,
+        body: (document.querySelector(".deck")?.innerText || "").slice(0, 400),
+        picked: [...document.querySelectorAll('[role="tab"]')]
+          .filter((e) => e.getAttribute("aria-selected") === "true")
+          .map((e) => e.textContent.trim()),
+      }));
+      if (!after.picked.includes(label)) problems.push(`"${label}" did not become the selected tab`);
+      /* Pressing the tab you are already on legitimately changes nothing. */
+      if (before.url !== after.url || before.body !== after.body) seen.add(after.url);
+      else if (!before.body.length) problems.push(`"${label}" showed nothing`);
+    }
+    if (seen.size < labels.length - 1) {
+      problems.push(`${labels.length} tabs reached ${seen.size} distinct screens`);
+    }
+    report(`${where}: every tab opens  (${labels.join(" · ")})`, problems);
+    await page.close();
+  }
+
   await browser.close();
   console.log(failures ? `\n${failures} FAILED` : "\nALL PASS");
   process.exitCode = failures ? 1 : 0;

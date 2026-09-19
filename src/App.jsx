@@ -2052,7 +2052,14 @@ function AppInner() {
               // inventing a number to look populated.
               moduleRow: { line: "Everyone working through this module.", facts: [] },
             }}
+            /* EVERY TAB IN MODULE_TABS HAS A LINE HERE. It had two, and a
+               default of "go to the module" — so Crew, the third tab, went to
+               Lessons: the URL did not change, the strip stayed where it was,
+               and pressing it looked like nothing happening. The route was
+               built and verified; only this could not reach it. A tab that
+               changes nothing is a bug, not a placeholder. */
             onTab={(t) => go(t === "library" ? routePath.library(activeModuleCode)
+              : t === "crew" ? routePath.crew(activeModuleCode)
               : t === "people" ? routePath.people(activeModuleCode)
               : routePath.module(activeModuleCode))}
             onBack={() => go(routePath.home())}
