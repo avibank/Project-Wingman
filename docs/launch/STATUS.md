@@ -26,7 +26,7 @@ Verified on www.wingman.institute, not inferred:
   · Preferences carries Fly solo, Go by callsign and Your bar at 75–100
   · signed out, the card is read-only and says what to do about it
 
-Six bugs found and fixed on the way, four of them months old:
+Ten bugs found and fixed on the way, five of them months old:
   12 · every lesson URL answered Vercel's 404 in production
   13 · initials unreadable on six of the thirty-six inks
   14 · the chapter quiz lit its correct answer with tokens that do not exist
@@ -34,21 +34,18 @@ Six bugs found and fixed on the way, four of them months old:
   16 · chat attachments have NEVER uploaded — a missing SELECT policy
   17 · the licence rendered in edit mode with no account, and put an object
        at `undefined/cover.webp`
+  18 · Fly solo did not hide you from search, or from a second device
+  19 · a wall of 120 stamps drew 132 ink filters, not 12
+  20 · the third tab hung 19px off a 375px screen
+  21 · "0 have finished it", and "0 signed off" once per chapter
+
+Three walks were added for the checklist's own boxes: `test:routes` (every
+address), `test:solo` (three students) and `test:crowded` (120 people and the
+longest name the fields take).
 
 ## Next step
-The launch handoff's six items are done. What is left is on
-QA-CHECKLIST.md, and the four unticked boxes are the honest list:
+Two of the four unticked boxes are closed, and closing them found nine more
+bugs (BUGS 18-21). What is left, and what each needs, is at the bottom of
+QA-CHECKLIST.md. The largest is a phone: nothing in this project has been
+opened on one, and it is the only item on that list nobody can simulate.
 
-  · Fly solo has no walk that turns it on and asserts the student is on no
-    surface at all. §6 asks for exactly that and it is the biggest gap.
-  · Nothing has been opened on a physical device.
-  · Nothing drives a hundred stamps onto a Crew wall or a long callsign onto
-    a licence.
-  · Only Bookmarks is measured side by side against its reference build.
-
-(Superseded) Item 3: the Crew tab. `PeopleTab.jsx` already exists and is already built — it
-sits in `HIDDEN_TABS` in `ModuleScreen.jsx`, so it is unreachable rather than
-missing. The work is to make it the third tab and take it to §2's shape: the
-summary line, one block per chapter with a wall of the stamps of everyone who
-finished it, "Answering questions", squadron mates ringed in teal, and no DMs
-anywhere.

@@ -29,11 +29,14 @@ at" and most of these were.
       blocked list, the logbook's empty line, the licence's three stats, which
       say "—" rather than 0).
 - [x] Loading and error states on every fetch, with retry — same check.
-- [ ] Long names, long titles, crowded chapter walls (100+ stamps) — NOT
-      COVERED. `test:bm` and `test:rr` measure overflow on their own screens
-      at four widths; nothing drives a hundred stamps onto a Crew wall or a
-      forty-character callsign onto a licence. The stamp cache and shared
-      filters exist for that case and have never met it.
+- [x] Long names, long titles, crowded chapter walls (100+ stamps) —
+      `npm run test:crowded` seeds 120 people with their own stamps across 12
+      accounts and a licence carrying the longest callsign, name and bio the
+      fields accept, at three widths. It asserts nothing overflows sideways or
+      is cut off, that the page arrives, and §8's own claim — that the filter
+      defs are shared. They were not: 132 definitions for 12 seeds (BUGS 19).
+      It also found the third tab hanging 19px off a 375px screen (BUGS 20)
+      and three zero counts on the Crew tab (BUGS 21).
 
 ## Rules
 - [x] Stamp can't be changed once issued (server enforced) — 0029's
@@ -47,12 +50,20 @@ at" and most of these were.
       and issuing is a SECURITY DEFINER function; `licence_card(viewer, user)`
       returns a fixed 21 columns and `check:licence` names the eight it must
       never include.
-- [ ] Fly solo actually hides them everywhere — PARTLY. `licence_card` refuses
-      a pilot who has it on, `crew.js` enforces it symmetrically, and the photo
-      is hidden wherever Clerk's is. There is no single check that walks every
-      surface — presence, the route strip, the radar, Crew, the room — with it
-      on and asserts the student is on none of them. That walk is the missing
-      piece and it is the one §6 asks for by name.
+- [x] Fly solo actually hides them everywhere — `npm run check:solo` holds
+      every reader in the seven libraries to the gate and names each function
+      as gated or not-about-people, so a new one fails the build until
+      somebody decides which. `npm run test:solo` drives it with THREE
+      students: one turns it on, one walks every surface and must not find
+      them, and a third stays visible the whole time — because "they are not
+      on the wall" is also what a broken query returns.
+
+      Writing it found three leaks and one delay (BUGS 18): search filtered on
+      `discoverable` rather than `invisible`, a second device kept writing
+      presence rows for somebody who had gone dark, formations were the one
+      ungated reader in the room, and the switch waited up to 45 seconds to
+      clear presence. 0032 fixes the server half and is run against the live
+      project; the search leak is proven there with two accounts.
 - [x] Crew shows chapter level only — never a lesson or a score — `crew.js`
       selects neither, and `check:doors` asserts the file's shape.
 
@@ -95,7 +106,20 @@ at" and most of these were.
 
 ## What is not on this list and should be
 - **A physical device.** Nothing in this project has been opened on a phone.
-  Every width above is an emulated viewport in a desktop browser.
-- **A second account.** Every check that needs two people —
-  `check:threads`, `check:discovery`, `check:paper-db` — creates its own and
-  cleans up, but no walk has two people on screen at once.
+  Every width above is an emulated viewport in a desktop browser. This is now
+  the largest single gap on the page.
+- ~~**A second account.**~~ `test:solo` runs three students in three browser
+  contexts against one store, and each of the three is load-bearing: one
+  hides, one looks, and one stays visible so that the looking means something.
+
+## What the four unticked boxes need
+1. **A phone.** Not simulatable. Somebody has to hold one.
+2. **The reference builds, measured.** `tests/r15-compare.mjs` does it for
+   Bookmarks at three widths; the module screen, the lesson page and the
+   licence were ported rule by rule with the effective CSS written out, which
+   is careful and is not the same as measuring.
+3. **Issuing a stamp through the studio, driven.** It is driven by hand and
+   asserted against the database; no walk presses Issue.
+4. **Signing off a lesson, driven.** It needs a video watched to the end and
+   the fixture's clips are remote, which is the same wall `test:lesson`
+   already reports and skips around.
