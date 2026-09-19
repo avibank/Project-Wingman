@@ -8,8 +8,11 @@
    · its tokens are named --hair, --accent, --copilot and --mono; this app's are
      --line, --active, --copilot and --font-mono. Same roles, this app's names,
      so the six liveries and three finishes carry it.
-   · everything is scoped under `.crew`. `.crew-stack`, `.crew-wall`, `.crew-av` and `.crew-more`
-     are ordinary words and two of them already exist elsewhere here.
+   · every class is prefixed `crew-`. The reference can call them .stack, .wall,
+     .av and .more because it is a standalone page; this tab renders inside
+     .mscreen, which already owns .mscreen .hrow — a grid whose first column is
+     38px — and at equal specificity source order decided. Every pill came out
+     38px wide with 78px of content spilling out. check:doors holds the prefix.
    ========================================================================= */
 
 .crew { display: block; }

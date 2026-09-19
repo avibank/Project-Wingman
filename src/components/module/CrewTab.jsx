@@ -14,15 +14,15 @@
    FOUR RULES IT KEEPS, each of them the reference's:
 
    · CHAPTER-LEVEL POSITION ONLY, never a lesson and never a score. crew.js
-     never asks for one, so there is nothing crew-here to leak.
+     never asks for one, so there is nothing here to leak.
    · SQUADRON MATES ARE NOT GROUPED. They get a thin teal ring and stay in
      place. Sorting them to the top would make this a friends list, which is
      the thing the heading says it is not.
    · NO DMs ANYWHERE. A face and a stamp both open the profile viewer; talking
      happens in squadron chat or a right seat, and neither is reachable from
-     crew-here except through that card.
+     here except through that card.
    · THE WALL IS NEVER EMPTY-LOOKING. With no stamps on it, it says "No stamps
-     yet. The first one crew-here could be yours." — §10's rule about naming the
+     yet. The first one here could be yours." — §10's rule about naming the
      next action rather than stating an absence.
    ========================================================================= */
 import { useEffect, useMemo, useState } from "react";
@@ -34,13 +34,13 @@ import "./crew.css";
 
 /* One face. `on` is a live presence dot; `mate` is the teal ring.
  *
- * A BUTTON ON ITS OWN, A SPAN INSIDE ONE. In a crew-stack the face IS the control —
- * tapping it opens the person. Inside an "Answering questions" crew-pill the crew-pill is
+ * A BUTTON ON ITS OWN, A SPAN INSIDE ONE. In a stack the face IS the control —
+ * tapping it opens the person. Inside an "Answering questions" pill the pill is
  * already the button, and a button inside a button is nested interactive
  * content: invalid HTML, which a browser fixes by splitting the nesting, and
  * the row lays out wrong. Instruments.jsx carries the same note about a lamp
  * inside a chapter header. The reference does it this way too — `face()` there
- * is a span, and the crew-stack's click is delegated. */
+ * is a span, and the stack's click is delegated. */
 function Face({ p, mate, onOpen, inert = false }) {
   const cls = `crew-av${p.on ? " is-on" : ""}${mate ? " crew-sqring" : ""}`;
   const style = { background: `oklch(.55 .09 ${hueFor(p.name)})` };
@@ -92,7 +92,7 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
     return (
       <div className="crew">
         <div className="crew-empty">
-          You are flying solo, so nobody crew-here can see you and you cannot see them.
+          You are flying solo, so nobody here can see you and you cannot see them.
           Turn it off in Preferences to meet the rest of {moduleName || "this module"}.
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
                   ))}
                 </>
               ) : (
-                <span className="crew-none">No stamps yet. The first one crew-here could be yours.</span>
+                <span className="crew-none">No stamps yet. The first one here could be yours.</span>
               )}
             </div>
           </div>

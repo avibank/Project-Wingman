@@ -57,7 +57,14 @@
   background: var(--sunk);
   border-bottom: 1px solid var(--edge-soft);
 }
-.mscreen .tabs{ display: flex; gap: 2px; padding: 0; }
+/* THE STRIP DOES NOT SHRINK BELOW ITS TABS. It was `flex: 0 1 auto` by
+   default, and adding a third tab was all it took: at 517px the strip wanted
+   291 and got 291, but the search beside it is `flex: 1 1 auto` with a 120px
+   floor, so the two together asked for more than the bar had and the tabs were
+   the ones that gave. Measured on the live site: Crew ran to x=377 inside a
+   container ending at 350, and the search started at 364 — the third tab was
+   sitting underneath it. The tabs are content, the search is the slack. */
+.mscreen .tabs{ display: flex; gap: 2px; padding: 0; flex: 0 0 auto; }
 .mscreen .tab{
   appearance: none; border: 1px solid transparent; border-bottom: 0;
   background: transparent; color: var(--t2); cursor: pointer;

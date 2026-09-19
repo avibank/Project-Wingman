@@ -17,6 +17,9 @@ student, not how hard it was to find.
 | 8 | **The Logbook's "saved" tile counted a key nothing writes** (`pw-bookmarks`), so it read 0 for every student. Its invitation also said "Star a question", and the control is a bookmark. | low — behind `page.logbook`, which is off | Made stale by the Bookmarks port. | `117958f` |
 | 9 | **`test:bm` left the student pinned to Manual in Day**, and every suite drives the same harness store — `test:exam` then failed on a ground it never set. | none for students; it wasted an afternoon | The walk changed skins and did not put them back. | `117958f` — restored in a `finally` |
 
+| 10 | **A third tab pushed the third tab under the search field.** `.mscreen .tabs` was `flex: 0 1 auto`; the search beside it is `flex: 1 1 auto` with a 120px floor, so the two together asked for more than the bar had and the tabs gave. Measured live: Crew ran to x=377 in a container ending at 350, search starting at 364. | medium — a tab you could see but not fully press | Adding Crew. Two tabs never asked for enough room to hit it. | `8786b00` + follow-up — the tabs are content, the search is the slack |
+| 11 | **"The first one crew-here could be yours."** A class rename ran over a word of copy, and it shipped. | low — one word, on a live screen | A regex rename that could not tell a class name from prose. | follow-up to `8786b00` |
+
 ## Open
 
 | # | What | Severity | Why it is still open |
