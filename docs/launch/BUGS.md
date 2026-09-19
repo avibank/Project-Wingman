@@ -27,3 +27,31 @@ student, not how hard it was to find.
 | A | **Nothing counts study days**, so `pw-streak` has no writer and the Logbook's streak tile can only ever read 0. | low | Behind `page.logbook`, which is off. Needs a day-counting rule nobody has written. |
 | B | **`ProgressPage` reads the global `CHAPTERS` array** directly, which CLAUDE.md calls "a bug waiting to surface" — it counts every chapter in the app rather than the ones in a module. | low | Same screen, same flag. |
 | C | **`saves` is readable by anyone holding the publishable key**, like every other table here. | medium, and architectural | `auth.jwt()` is NULL on every request; fixing it means a Clerk JWT template and an authenticated client across 65 call sites. `claude/backlog-bookmarks.md` item 10. |
+
+## 12 · Every lesson URL answered Vercel's 404 in production
+
+**Found:** 2026-09-19, trying to see item 4 on the live site.
+**Lived since:** whenever `vercel.json` was written. Months.
+
+`/m/m1/M1.01/lesson/M1.01.1` returned Vercel's own "This page doesn't
+exist", not the app. So did `/m/m1/M1.01` and `/library/M1.DEV`.
+
+The SPA rewrite excluded `.*\.[a-zA-Z0-9]+$` from the fallback — "any last
+segment with a dot in it", meaning it. Chapter ids are `M1.01`, lesson ids
+`M1.01.1` and papers `M1.DEV`, so the exclusion caught the app's own
+addresses and handed them to the static file server, which had no such file.
+
+A student who refreshed on a lesson, opened a saved bookmark, or followed a
+link somebody sent them got a 404 page with a Vercel logo on it. Clicking
+through from inside the app always worked, which is why nobody saw it: the
+router never asks the server.
+
+Neither the dev server nor the harness could show it — both serve index.html
+for everything, which is the whole point of them.
+
+**Fixed:** the exclusion is a list of real extensions now.
+`npm run check:rewrites` builds every address `routes.js` can produce from
+the real content ids and asserts the rewrite serves all 80 of them, that real
+files are still served as themselves, and that no redirect lands on an
+address the rewrite would refuse. Proven by reverting the config: 36 dotted
+addresses fail.

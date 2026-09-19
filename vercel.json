@@ -38,7 +38,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|fonts/|favicon|.*\\.[a-zA-Z0-9]+$).*)",
+      "source": "/((?!assets/|fonts/|favicon|.*\\.(?:html|js|mjs|css|map|json|txt|xml|webmanifest|ico|png|jpg|jpeg|gif|svg|webp|avif|bmp|woff|woff2|ttf|otf|eot|pdf|mp4|webm|ogg|mp3|wav|wasm|zip)$).*)",
       "destination": "/index.html"
     }
   ]
