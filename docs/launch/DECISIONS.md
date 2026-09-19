@@ -395,3 +395,110 @@ stated here rather than folded in silently.
     dashed underline, against a house rule that applies to every screen.
   · The rest is anti-aliasing. 0.23–0.29% of pixels, and the diff images in
     `tools/ref-diff-out/` are yellow rather than red.
+
+## Screen 3 — Preferences, and what was deleted rather than moved
+
+`npm run ref:diff preferences` measures **0.47% at 1280, 0.48% at 768, 0.73%
+at 390**. Every box on the tab is the reference's markup from
+`docs/launch/code/09-preferences.html`, and every box's geometry now matches
+the design to within a pixel.
+
+### 1 · Two blocks are gone, and they are not somewhere else
+
+The owner's words: both were cut in the design weeks ago and re-added by
+mistake. So this is a deletion, not a move, and nothing replaces either.
+
+  · **"Go by callsign"** is deleted. It wrote `identity_display`, which
+    notebook.js and discussion.js still read; they read its default, which is
+    the callsign — and §5 already settled that the callsign is the card's big
+    line and its only editable name. The column and its readers are untouched
+    (migrations are additive only); there is simply no longer a control that
+    changes it.
+  · **"Your pilot / What you'll hear about"** is deleted, and
+    `src/components/PilotSettings.jsx` with it. It held no setting — it was a
+    fixed list of the four things this app sends, written out as a statement.
+    Replies, answers, squadron messages and the right seat are on by default
+    and are not a choice, which is what the handoff says and what the list
+    itself said in four bullet points.
+
+### 2 · The greeter's order, and its words
+
+The reference's order is the choice row, then ONE description line for the
+selected greeter, then the field carrying that greeter's own placeholder.
+Live it ran name, description, name again — the greeter's name said twice with
+the control between them.
+
+The placeholders are the reference's too (`GREET` in `10-preferences.js`),
+which START-HERE §3 names as the source for this panel. The app's own were
+longer tellings of the same joke and are kept here in case the owner prefers
+them:
+
+  · Wingman — "Skip it. I'll keep talking until you look up, same as always."
+  · The Hermit — "Empty, leave it. Know who you are, I already do."
+
+The character blurbs stay this app's, from wingman-voices.md. Wingman's is
+word for word the reference's already; the Hermit's is longer here and is the
+one the voice pack writes.
+
+### 3 · The segmented strips are 47.7px, not §12's 54
+
+This is a real deviation from the house rule and it is the one that decided
+the diff. `.sega button` is 37.7px in the design; §12's global 44px floor made
+each strip 54 and pushed everything below it down, twice — 8.8% of the screen
+by itself.
+
+A segmented button cannot be given a 44px target without making the strip
+taller than the strip: the buttons tile it, so expanding one only overlaps its
+neighbour. There is no version of this where both hold.
+
+The reference build is the specification, so the reference wins, and the cost
+is stated: 37.7px a button, which clears WCAG 2.2 AA's 24px minimum target and
+is under this app's stricter 44. Appearance's identical-looking control is a
+different component (`Seg`) and stays at 44, so the two tabs differ by 6px —
+which is the price of not touching Appearance.
+
+**To reverse it**, delete `className="is-inline"` from the two `.sega` button
+maps in `Profile.jsx`. Nothing else depends on it.
+
+### 4 · The blocked list had no heading to give and no loading state
+
+It rendered `<h2>Blocked and muted</h2>` directly under a box already labelled
+BLOCKED AND MUTED. The heading is gone; the box's `.lab` says it once.
+
+It also returned `null` while it loaded, which left that box as a label over
+nothing — a panel that names itself and then stops, which reads as a screen
+that failed rather than one still asking. It holds the space with one quiet
+line now, in the same element the empty state uses, so nothing jumps when the
+answer arrives.
+
+The empty line is still this app's — "Block or mute anyone from their tail,
+and they'll be listed here to undo." The reference's own opens "Nobody yet",
+which CLAUDE.md's Voice rule forbids and `check:states` enforces.
+
+### 5 · Two tabs are not a flex column
+
+`.panel` is a flex column with a 16px gap and the reference's `.box` carries a
+16px bottom margin, so together they made every space on these two tabs 32.
+Turning the gap off is not enough: a flex item is a block formatting context,
+so the last box's margin could not collapse out of the panel either, which
+left 16px of screenshot below the last box that the reference does not have.
+`.panel.panel-ref` is `display: block`, and the margins are the whole of the
+spacing — which is how the reference's own `#t-pref` measures.
+
+### 6 · MOVED HERE is hidden on the reference pages
+
+The reference marks Fly solo and Your bar with a `.new` sticker reading MOVED
+HERE. That is the design telling the implementer they have changed tab — a
+note to a reader of the demo, not product copy, and putting it on a live
+screen would ship a label that means nothing to a student. `make-ref-pages.mjs`
+hides it the same way it hides the demo bar, so the two sides measure the same
+screen; it was worth 2px on the Your bar heading's line box.
+
+### 7 · The snap only ever worked at one width in three
+
+`snap()` corrected the reference element's fractional position by setting a
+padding on its ancestor — and where the correction was negative, the browser
+dropped the declaration silently. It rounded DOWN at 390, where the value
+happened to be positive, and did nothing at 1280 or 768. It always moves to
+the next whole pixel now. This is why Preferences read 1.12% with every
+element matching to 0.1px.

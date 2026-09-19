@@ -57,8 +57,12 @@ const ok = (name, cond, detail) => {
   ok("and clears presence immediately rather than on the next beat",
      /if \(on && user\?\.id\) clearPresence\(user\.id\)/.test(profile),
      "the beat is every 45s; nobody sees you cannot start a minute late");
+  /* `.lab` rather than `.eyebrow`: Preferences was rebuilt from the
+     reference's own markup (09-preferences.html) on 2026-09-19, and the box
+     gained a description line and a choice row above the switch, so the
+     window is wider than it was. Same rule, same box, same switch. */
   ok("the switch lives in Preferences, under How social (§6)",
-     /<span className="eyebrow">How social<\/span>[\s\S]{0,900}?id="fly-solo"/.test(profile));
+     /<p className="lab">How social<\/p>[\s\S]{0,2600}?id="fly-solo"/.test(profile));
 }
 
 /* ------------------------------------------------- outbound: you see nobody

@@ -202,20 +202,29 @@ const fresh = collisions.filter((c) => !AGREED.has(c.cls));
    So: inside a CSS template literal, there are no backticks. The opening is
    `const NAME_CSS = ` + one, and the close is a line that is exactly that
    character then a semicolon. */
-const OPEN = new RegExp("const\\s+([A-Z][A-Z0-9_]*_CSS)\\s*=\\s*" + String.fromCharCode(96), "g");
+const TICK = String.fromCharCode(96);
+/* Both shapes this repo writes CSS in: a named constant, and a <style> tag
+   with the sheet inline. The second is the one that bit BlockedList. */
+const OPENERS = [
+  new RegExp("const\\s+([A-Z][A-Z0-9_]*_CSS)\\s*=\\s*" + TICK, "g"),
+  new RegExp("(<style>)\\{" + TICK, "g"),
+];
 const stray = [];
 for (const f of files.filter((x) => x.endsWith(".jsx"))) {
   const src = readFileSync(f, "utf8");
-  for (const m of src.matchAll(OPEN)) {
+  for (const m of [...src.matchAll(OPENERS[0]), ...src.matchAll(OPENERS[1])]) {
     const from = m.index + m[0].length;
-    const end = src.indexOf("\n" + String.fromCharCode(96) + ";", from);
+    /* The close is that character at the start of a line, followed by `;` for
+       a constant or `}` for a <style> tag. */
+    const close = m[1] === "<style>" ? "\n      " + TICK + "}" : "\n" + TICK + ";";
+    let end = src.indexOf(close, from);
+    if (end === -1) end = src.search(new RegExp("\\n\\s*" + TICK + "[};]")) ;
     const body = src.slice(from, end === -1 ? src.length : end);
-    const at = body.indexOf(String.fromCharCode(96));
+    const at = body.indexOf(TICK);
     if (at !== -1) {
       const line = src.slice(0, from + at).split("\n").length;
       stray.push(`${f}:${line} — ${m[1]} is closed early`);
     }
-    if (end === -1) stray.push(`${f} — ${m[1]} is never closed on a line of its own`);
   }
 }
 

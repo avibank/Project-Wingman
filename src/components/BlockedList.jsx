@@ -44,11 +44,25 @@ function BlockedList() {
     setBusy(false);
   };
 
-  if (!loaded) return null;
+  /* NOT `return null` WHILE IT LOADS. That left the box it sits in as a
+     label over nothing — a panel that reads "BLOCKED AND MUTED" and then
+     stops, which looks like a screen that failed rather than one that is
+     still asking. One quiet line holds the space and says what is happening;
+     it is the same element the empty state uses, so nothing jumps when the
+     answer arrives. */
+  if (!loaded) {
+    return (
+      <section className="bl">
+        <p className="bl-quiet" aria-busy="true">Checking who you&rsquo;ve blocked or muted.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="bl">
-      <h2 className="bl-head">Blocked and muted</h2>
+      {/* NO HEADING OF ITS OWN. The box around it carries "Blocked and muted"
+          as its `.lab`, the way the reference's Preferences panel does
+          (09-preferences.html), and this said it again directly underneath. */}
       {!blocks.length && !mutes.length ? (
         // §10 — no zero, and no absence either (CLAUDE.md, Voice). It said
         // "Nobody yet", which is a count of nought with a word in front of
@@ -83,10 +97,12 @@ function BlockedList() {
       )}
       <TailStyles />
       <style>{`
-        .bl { margin: 28px 0 0; }
-        .bl-head { font-family: var(--font-ui); font-size: 17px; font-weight: 500;
-          color: var(--text-1); margin: 0 0 8px; }
-        .bl-quiet { font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0; max-width: 52ch; }
+        /* No top margin: it is the only thing in its box now. */
+        .bl { margin: 0; }
+        /* 1.55, not 1.5: this paragraph stands exactly where the reference's
+           own .pd does, and 0.05 of a line is 0.7px of a box that is
+           otherwise identical. */
+        .bl-quiet { font-size: 14px; line-height: 1.55; color: var(--text-2); margin: 0; max-width: 52ch; }
         .bl-kind { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); margin: 16px 0 8px; }
         .bl-list { list-style: none; margin: 0; padding: 0;
           display: grid; gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; }

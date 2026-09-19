@@ -89,7 +89,17 @@ const GUTTER = `
 </style>`;
 
 const BOOT = (body) => `
-<style>.demo{display:none!important}</style>${GUTTER}
+<style>
+  /* The demo bar is not part of any screen. */
+  .demo{display:none!important}
+  /* Neither is a MOVED HERE sticker. The .new class is the reference telling the
+     implementer that Fly solo and Your bar have changed tab — a note to a
+     reader of the demo, not product copy, and putting it on the live screen
+     would ship a label that means nothing to a student. Hidden rather than
+     ignored, so the two sides measure the same screen; it costs 2px on the
+     Your bar heading's line box, which is where it sat. */
+  .new{display:none!important}
+</style>${GUTTER}
 <script>
   /* DARK, EXPLICITLY. The reference follows prefers-color-scheme, and a
      headless browser reports light — while the app under test is pinned to
@@ -125,8 +135,11 @@ const BOOT = (body) => `
     const run = () => {
       page.style.paddingTop = base + 'px';
       const top = el.getBoundingClientRect().top;
-      const over = top - Math.round(top);
-      if (over) page.style.paddingTop = (base - over) + 'px';
+      const over = top - Math.floor(top);
+      /* Always DOWN to the next whole pixel, never up: a negative padding is
+         invalid and is dropped silently, which is how this ran for three
+         screens doing nothing at two widths out of three. */
+      if (over) page.style.paddingTop = (base + (1 - over)) + 'px';
     };
     /* After the webfonts land, because they move everything above it, and
        once more a beat later for anything the reference draws on a tick. */

@@ -124,3 +124,11 @@ export function demoProfile(card, { callsign, real_name } = {}) {
     photo_url: null,
   };
 }
+
+/* ------------------------------------------------------------- preferences
+   The two values the reference's Preferences panel is drawn with. Same reason
+   as everything above: a diff between different settings measures the
+   settings. `open` is the reference's selected social preset and 86 is where
+   its bar sits. */
+export const DEMO_PRESET = 'open';
+export const DEMO_BAR = 86;

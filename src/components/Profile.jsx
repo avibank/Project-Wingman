@@ -13,7 +13,6 @@ import { HOBBS_KEY, DAYS_KEY } from "../lib/hobbs.js";
 import { stampOf } from "../lib/stamp.js";
 import { ShieldCheck, X } from "lucide-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
-import { useSocialPrefs } from "../lib/social.js";
 import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap, col } from "../lib/liveryEngine.js";
 import { profileSVG } from "../lib/flightProfile.js";
 import { MODULES, CHAPTERS } from "../data.js";
@@ -23,10 +22,9 @@ import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
 import { clearPresence } from "../lib/presence.js";
 import BlockedList from "./BlockedList.jsx";
-import PilotSettings from "./PilotSettings.jsx";
 import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
-import { demoOn, demoProfile, DEMO_ME } from "../lib/demoFixture.js";
+import { demoOn, demoProfile, DEMO_ME, DEMO_PRESET, DEMO_BAR } from "../lib/demoFixture.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
 import { MIN_FLOOR, MIN_CEIL, PASS_PCT, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
 import { useTiltPermission } from "../lib/useAttitude.js";
@@ -59,11 +57,15 @@ const NOTICES = [
 ];
 
 // §7 — the label and hint belong to whoever is doing the greeting.
+/* THE REFERENCE'S OWN PLACEHOLDERS (`GREET` in docs/launch/code/
+   10-preferences.js), which START-HERE §3 names as the source for this panel.
+   They were longer here — "Skip it. I'll keep talking until you look up, same
+   as always." and "Empty, leave it. Know who you are, I already do." — and
+   both are kept in docs/launch/DECISIONS.md in case the owner prefers them:
+   they are the same joke, told at length. The label follows the greeter. */
 const CALL_COPY = {
-  wingman: { label: "What Wingman calls you",
-             hint: "Skip it. I'll keep talking until you look up, same as always." },
-  hermit:  { label: "What the Hermit calls you",
-             hint: "Empty, leave it. Know who you are, I already do." },
+  wingman: { label: "What Wingman calls you", hint: "Skip it. I'll talk anyway." },
+  hermit:  { label: "What the Hermit calls you", hint: "Skip it, you may. Talk anyway, I will." },
 };
 
 const SCALES = [{ id: "small", label: "Small" }, { id: "medium", label: "Medium" }, { id: "large", label: "Large" }];
@@ -277,6 +279,14 @@ const PROFILE_CSS = `
   transform-origin: left center; }
 
 .panel { display: flex; flex-direction: column; gap: 16px; }
+/* THE TWO TABS THE REFERENCE OWNS ARE NOT A FLEX COLUMN. Its boxes carry a
+   16px bottom margin of their own, and a flex gap on top of that made every
+   space on the tab 32. Turning the gap off is not enough: a flex item is a
+   block formatting context, so the LAST box's margin could not collapse out
+   of the panel either, which left 16px of the screenshot below the last box
+   that the reference does not have. Ordinary flow, and the margins are the
+   whole of the spacing — which is how the reference's own #t-pref measures. */
+.panel.panel-ref { display: block; }
 .block { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
   border-top-color: var(--edge-hi); padding: 18px 20px 20px; }
 .block > .eyebrow { display: block; margin-bottom: 14px; }
@@ -494,7 +504,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const progress = useUserProgress();
-  const { prefs, update: updatePrefs } = useSocialPrefs();
   const { flags } = useFlags();
   const isAdmin = user?.publicMetadata?.role === "admin";
 
@@ -649,26 +658,22 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
      without it the card flickers through read-only on every load. */
   const signedIn = Boolean(isLoaded && user?.id);
 
-  // §6.1 — on by default. Off is the unusual choice, so the copy says so.
-  const byUsername = (prefs?.identity_display || "username") === "username";
   const character = progress.get("pw-voice", DEFAULT_CHARACTER);
   const callCopy = CALL_COPY[character] || CALL_COPY.wingman;
 
-  const preset = progress.get("pw-social-preset", "crew");
+  const preset = demoOn() ? DEMO_PRESET : progress.get("pw-social-preset", "crew");
   const currentFinish = FINISHES.find((f) => f.id === (finish ?? null)) || FINISHES[0];
   const override = lightOverride(finish);
   const notices = progress.get("pw-notices", { answers: true, wingman: true, nudge: true });
   // The bar: one key, one clamp, one default, read exactly as Master Caution and
   // the gyro read it, so moving it here moves both.
-  const bar = readMinimums(progress);
+  const bar = demoOn() ? DEMO_BAR : readMinimums(progress);
   // iOS reports tilt only after a tap asks, so the asking sits here beside the
   // bar, and never happens on load.
   const tilt = useTiltPermission(reduceMotion);
 
   const liveries = LIVERIES.filter((l) => (l.aurora ? flags["livery.aurora"] : true));
   const current = liveries.find((l) => l.id === engineLivery(livery)) || liveries[0];
-
-  const setIdentity = (on) => updatePrefs({ identity_display: on ? "username" : "real" });
 
   const walkTabs = (e) => {
     const btns = [...(tabsRef.current?.querySelectorAll('[role="tab"]') || [])];
@@ -727,7 +732,13 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {/* ------------------------------------------------------------ LICENCE */}
       {tab === "licence" && (
-        <div className="panel panel-in ref-lic" key={tab} role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
+        <div className="panel panel-in panel-ref" key={tab} role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
+          {/* THE BOXES CARRY THEIR OWN SPACING. `.panel` is a flex column with
+              a 16px gap and the reference's `.box` has a 16px bottom margin,
+              so together they made 32 — every box on this tab sat twice as far
+              from the next as the design draws it. One ordinary block wrapper
+              inside the flex column, and the margins are the only spacing. */}
+          <div className="ref-lic">
           {/* THE HEADER THE CARD NEVER HAD. The reference's licence tab opens
               with a .boxh — "Your licence" on the left, "See it as others do"
               on the right — and the card sits in the .box under it. Live, the
@@ -838,6 +849,8 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             </p>
           )}
 
+          </div>
+
           {/* §5's three pickers and the read-only view. Each is a dialog over
               the card rather than a route: they are a choice about the thing
               behind them, and leaving the page to make one would lose sight
@@ -937,84 +950,106 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {/* -------------------------------------------------------- PREFERENCES */}
       {tab === "preferences" && (
-        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-preferences"
-             aria-labelledby="ptab-preferences" data-ref="preferences">
-          {flags["voice.characters"] && (
-            <div className="block">
-              <span className="eyebrow">Who greets you</span>
-              <div className="livname">{CHARACTERS.find((c) => c.id === character)?.name}</div>
-              <div className="livdesc">{CHARACTERS.find((c) => c.id === character)?.blurb}</div>
-              <Seg label="Voice" value={character}
-                   options={CHARACTERS.map((c) => ({ id: c.id, label: c.name }))}
-                   /* The name and the blurb above this control are rewritten
-                      by the pick, so in one frame they change under the eye
-                      that is still on the control. Dissolve instead. */
-                   onPick={(v) => withSetting(() => progress.set("pw-voice", v))} />
+        <div className="panel panel-in panel-ref" key={tab} role="tabpanel" id="ppanel-preferences"
+             aria-labelledby="ptab-preferences">
+          <div className="ref-lic" data-ref="preferences">
 
-              {/* The greeter's name for you belongs with the greeter, not on the
-                  licence: the licence is who you are, this is what you answer to.
-                  The label follows the selected character. */}
+          {/* WHO GREETS YOU, IN THE REFERENCE'S ORDER (09-preferences.html):
+              the choice row FIRST, then ONE description line for whichever
+              greeter is selected, then the field carrying that greeter's own
+              placeholder. Live it ran name, description, name again — the
+              greeter's name said twice with the control between the two.
+
+              The copy is this app's rather than the demo's: the blurbs and the
+              placeholders come from wingman-voices.md, which §6.2 makes the
+              source for anything either of them says. The structure is the
+              reference's. */}
+          {flags["voice.characters"] && (
+            <div className="box">
+              <p className="lab">Who greets you</p>
+              {/* THE STRIP IS THE DESIGN'S 47.7px, NOT §12's 54. A segmented
+                button cannot be given a 44px target without making the strip
+                taller than the strip: the buttons tile it, so expanding one
+                only overlaps its neighbour. Kept at the reference's height and
+                stated rather than smuggled — 37.7px a button, which clears
+                WCAG 2.2 AA's 24px minimum and is under this app's own 44px
+                floor. Appearance's identical-looking control is a different
+                component and stays at 44; docs/launch/DECISIONS.md says how to
+                reverse this in one line. */}
+            <div className="sega" role="group" aria-label="Who greets you">
+                {CHARACTERS.map((c) => (
+                  <button key={c.id} type="button" className="is-inline"
+                          aria-pressed={character === c.id}
+                          onClick={() => withSetting(() => progress.set("pw-voice", c.id))}>
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+              <p className="pd" style={{ marginTop: 12 }}>
+                {CHARACTERS.find((c) => c.id === character)?.blurb}
+              </p>
               {/* Empty by default, with the line inside the field rather than
                   under it: an empty box that explains itself, and nothing to
-                  clear before you type. It no longer derives from the first
-                  name on the licence — an empty field is a question, a
-                  pre-filled one is an answer nobody gave. */}
-              {/* Not capped at 340 like the licence fields: the line lives in the
-                  bar now, and at 340 it was cut off mid-sentence. */}
-              <div className="field">
-                <label htmlFor="f-call">{callCopy.label}</label>
-                <input id="f-call" value={greetName} placeholder={callCopy.hint}
-                       onChange={(e) => {
-                         const v = e.target.value;
-                         setGreetName(v);
-                         // Saved as you type, not on blur. Emptying the field is
-                         // the whole off switch for the name, and on blur it did
-                         // not take effect until focus happened to move — so it
-                         // looked as though it had kept using it. The provider
-                         // coalesces writes, so this is one patch either way.
-                         progress.set("pw-greet-name", v.trim());
-                       }} />
-              </div>
+                  clear before you type. It does not derive from the first name
+                  on the licence — an empty field is a question, a pre-filled
+                  one is an answer nobody gave. */}
+              <p className="pd" style={{ marginTop: 16, color: "var(--t2)" }} id="f-call-label">
+                {callCopy.label}
+              </p>
+              <input className="inp" id="f-call" aria-labelledby="f-call-label"
+                     value={greetName} placeholder={callCopy.hint}
+                     onChange={(e) => {
+                       const v = e.target.value;
+                       setGreetName(v);
+                       // Saved as you type, not on blur. Emptying the field is
+                       // the whole off switch for the name, and on blur it did
+                       // not take effect until focus happened to move — so it
+                       // looked as though it had kept using it. The provider
+                       // coalesces writes, so this is one patch either way.
+                       progress.set("pw-greet-name", v.trim());
+                     }} />
             </div>
           )}
 
-          <div className="block">
-            <span className="eyebrow">How social</span>
-            {/* §6 — FLY SOLO LIVES HERE NOW. It was on the licence, in the
-                identity block, which was the right argument when that block
-                was a list of who you are: it is part of who people see. §5
-                turned that block into the card itself, and a switch is not
-                something that goes on a licence — so it comes to the box
-                about being social, at the top of it, because it is the
-                setting that turns every other one in the box off.
-
-                An everyday option, not a privacy ceremony: no warning
-                styling, no confirmation, no red. */}
-            <Switch id="fly-solo" label="Fly solo"
-                    note="Nobody sees you and you see nobody. For the nights you'd rather just get on with it."
-                    on={flySolo} onChange={setFlySolo} />
-            {/* AND SO DOES "GO BY CALLSIGN", for the same reason and to the
-                same place. §5 settles what the CARD shows — the callsign is
-                its big line and its only editable name — which is a decision
-                about the card, not about how you are named in a thread. That
-                is what this switch has always chosen (identity_display, read
-                by notebook.js and discussion.js), so it is still a real
-                setting and it still needs a door. */}
-            <Switch id="go-by-callsign" label="Go by callsign"
-                    note="One of these gets said out loud when someone finds you. Pick the one you'd like hearing."
-                    on={byUsername} onChange={setIdentity} />
-            <div className="livdesc">{PRESETS.find((x) => x.id === preset)?.desc}</div>
-            <Seg label="Social preset" value={preset}
-                 options={PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])
-                   || (x.id === "open" && flags["social.crew"] && flags["social.frequency"]))}
-                 onPick={(v) => withSetting(() => progress.set("pw-social-preset", v))} />
-            {/* THE BLOCKED LIST LIVES HERE NOW. It was the other half of the
-                Settings page, and Settings has gone — Bookmarks took its place
-                in the menu. Blocking is a social setting and this is the box
-                about being social, so it needed no new home, only this one.
-                It is the ONLY way to unblock anybody, which is why it could not
-                simply be deleted with the page it was on. */}
-            <BlockedList />
+          {/* HOW SOCIAL — description, then the choice row, then Fly solo as
+              the reference's `.tog`. "Go by callsign" is NOT here and is not
+              anywhere: it was cut in the design, and re-adding it once was the
+              mistake this deletes. `identity_display` still has its default,
+              which is the callsign, and notebook.js and discussion.js still
+              read it; there is simply no longer a control that changes it.
+              See docs/launch/DECISIONS.md. */}
+          <div className="box">
+            <p className="lab">How social</p>
+            <p className="pd" style={{ margin: 0 }}>{PRESETS.find((x) => x.id === preset)?.desc}</p>
+            <div className="sega" role="group" aria-label="How social">
+              {PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])
+                || (x.id === "open" && flags["social.crew"] && flags["social.frequency"])).map((x) => (
+                <button key={x.id} type="button" className="is-inline"
+                        aria-pressed={preset === x.id}
+                        onClick={() => withSetting(() => progress.set("pw-social-preset", x.id))}>
+                  {x.label}
+                </button>
+              ))}
+            </div>
+            {/* §6 — FLY SOLO LIVES HERE. It was on the licence, in the identity
+                block, which was the right argument when that block was a list
+                of who you are: it is part of who people see. §5 turned that
+                block into the card itself, and a switch is not something that
+                goes on a licence — so it comes to the box about being social.
+                An everyday option, not a privacy ceremony: no warning styling,
+                no confirmation, no red. */}
+            <div className="tog">
+              <div>
+                <p className="ph">Fly solo</p>
+                <p className="pd">
+                  Nobody sees you and you see nobody. For the nights you&rsquo;d rather
+                  just get on with it.
+                </p>
+              </div>
+              <button type="button" className="sw2 is-inline" role="switch"
+                      id="fly-solo" aria-checked={flySolo} aria-label="Fly solo"
+                      onClick={() => setFlySolo(!flySolo)} />
+            </div>
           </div>
 
           {/* §6 — YOUR BAR, in its own box, in the reference's words. Never
@@ -1029,34 +1064,38 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               It writes on every step on purpose: the gyro and every lamp
               re-read it as the thumb moves, which is what shows what the
               number does. */}
-          <div className="block">
-            <span className="eyebrow">Your bar</span>
-            <label className="barhead" htmlFor="your-bar">
-              The score you&rsquo;re aiming for <b className="barbig">{bar}%</b>
+          <div className="box">
+            <p className="lab">Your bar</p>
+            <label className="ph" htmlFor="your-bar"
+                   style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+              The score you&rsquo;re aiming for <b className="barv">{bar}%</b>
             </label>
-            <p className="livdesc">
+            <p className="pd">
               If your average on a module falls below this, Master Caution lights up on
               that module&rsquo;s card, and nowhere else. It starts at the {PASS_PCT}% pass
               mark and can only go up from there. Nobody else can see it.
             </p>
-            <input id="your-bar" className="barrange" type="range"
+            <input id="your-bar" className="barr is-inline" type="range"
                    min={MIN_FLOOR} max={MIN_CEIL} step="1" value={bar}
-                   aria-valuetext={`${bar} per cent`}
+                   aria-label="Your bar" aria-valuetext={`${bar} per cent`}
+                   style={{ "--p": `${((bar - MIN_FLOOR) / (MIN_CEIL - MIN_FLOOR)) * 100}%` }}
                    onChange={(e) => progress.set(MINIMUMS_KEY, clampMinimums(e.target.value))} />
-            <div className="barends">
-              <span>{PASS_PCT}% · pass mark</span><span>{MIN_CEIL}%</span>
+            <div className="barl">
+              <span>{PASS_PCT}% &middot; pass mark</span><span>{MIN_CEIL}%</span>
             </div>
           </div>
 
-          {/* WHAT THE SETTINGS PAGE HELD. Three settings that had no other
-              door — when you study, what you are notified about, and the study
-              glow — plus the pilot row they sit in. The page is gone; these
-              are not. */}
-          <PilotSettings />
+          {/* BLOCKED AND MUTED is its own box in the reference, rather than the
+              foot of How social. It is the ONLY way to unblock anybody, which
+              is why it could not go with the Settings page it used to be on. */}
+          <div className="box">
+            <p className="lab">Blocked and muted</p>
+            <BlockedList />
+          </div>
 
           {flags["prefs.notices"] && (
-            <div className="block">
-              <span className="eyebrow">Notices</span>
+            <div className="box">
+              <p className="lab">Notices</p>
               {NOTICES.map((n) => (
                 <Switch key={n.id} id={`notice-${n.id}`} label={n.label} note={n.note}
                         on={notices[n.id] ?? n.on}
@@ -1064,6 +1103,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               ))}
             </div>
           )}
+          </div>
         </div>
       )}
 

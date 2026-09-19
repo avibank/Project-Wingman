@@ -132,8 +132,12 @@ ok("R10 the results dial stays, at 170, sweeping, with its dot",
    whose consequence is unstated is a number people set at random. The rule
    this assertion is really holding is unchanged: ONE place sets it, and it is
    this one. */
+/* The heading is the reference's `<p className="lab">Your bar</p>` now, not
+   this app's `.eyebrow` — Preferences was rebuilt from 09-preferences.html on
+   2026-09-19 and every box on it is the design's markup. The rule is the same
+   rule; only the element carrying the words changed. */
 ok("R11 the bar is set in settings",
-   /<span className="eyebrow">Your bar<\/span>/.test(profile)
+   /<p className="lab">Your bar<\/p>/.test(profile)
    && /The score you&rsquo;re aiming for/.test(profile)
    && /Master Caution lights up on/.test(profile)
    && /progress\.set\(MINIMUMS_KEY, clampMinimums\(/.test(profile));
