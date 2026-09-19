@@ -75,8 +75,13 @@
 .bm .bm-open-f:active .bm-cover{transform:scale(.98)}
 .bm .bm-fname{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600;font-size:clamp(1rem,1.4vw,1.1875rem);padding-top:2px}
 .bm .bm-fname .bm-count{font:500 .8125rem var(--bm-mono);color:var(--t3)}
-.bm .bm-empty-cover{position:absolute;inset:0;border:1.5px dashed var(--line);border-radius:var(--bm-r);display:grid;place-items:center;color:var(--t3)}
-.bm .bm-empty-cover svg{width:28px;height:28px;opacity:.7}
+.bm .bm-empty-cover{position:absolute;inset:0;border:1.5px dashed var(--line);border-radius:var(--bm-r);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(8px,3cqi,14px);padding:clamp(16px,7cqi,30px);transition:border-color .3s var(--bm-ease),background .3s var(--bm-ease)}
+.bm .bm-open-f:hover .bm-empty-cover{border-color:var(--bm-accent);background:var(--bm-accent-soft)}
+.bm .bm-eg-ico{display:block;width:clamp(26px,11cqi,44px);height:clamp(26px,11cqi,44px);color:var(--t3);transition:color .3s var(--bm-ease)}
+.bm .bm-open-f:hover .bm-eg-ico{color:var(--bm-accent)}
+.bm .bm-eg-hint{font-size:clamp(.8125rem,4.6cqi,1.0625rem);line-height:1.4;color:var(--t2);max-width:22ch}
+.bm .bm-eg-cta{display:inline-flex;align-items:center;gap:6px;font-size:clamp(.8125rem,4cqi,.9375rem);font-weight:600;color:var(--bm-accent)}
+.bm .bm-eg-cta svg{width:13px;height:13px}
 .bm .bm-fplay{position:absolute;z-index:4;right:clamp(10px,4cqi,18px);width:clamp(46px,5vw,56px);height:clamp(46px,5vw,56px);border-radius:50%;background:var(--bm-accent);color:var(--bm-on-accent);display:grid;place-items:center;box-shadow:0 6px 18px -6px oklch(0 0 0 / .55);transition:transform .25s var(--bm-ease),opacity .2s var(--bm-ease)}
 .bm .bm-fplay svg{width:16px;height:16px;margin-left:2px}
 .bm .bm-fplay:active{transform:scale(.94)}
@@ -279,6 +284,7 @@
 .bm .bm-bag .bg-lug,.bm .bm-bag .bg-handle{fill:none;stroke:var(--t3);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .5s var(--bm-ease)}
 .bm .bm-bag .bg-lug{stroke-width:2}
 .bm .bm-bag .bg-wall{fill:var(--bm-wall);stroke:var(--t3);stroke-width:2;stroke-linejoin:round;transition:stroke .5s var(--bm-ease)}
+.bm .bm-bag .bg-frontbase{fill:var(--ground)}
 .bm .bm-bag .bg-front{fill:var(--panel);stroke:var(--t3);stroke-width:2.2;stroke-linejoin:round;transition:stroke .5s var(--bm-ease),fill .6s var(--bm-ease)}
 .bm .bm-bag .bg-seam{fill:none;stroke:var(--t3);stroke-width:1.6;stroke-linecap:round;transition:stroke .5s var(--bm-ease)}
 .bm .bm-bag .bg-latch{fill:var(--t3);transform-box:fill-box;transform-origin:50% 0;transition:fill .5s var(--bm-ease),transform .35s var(--bm-spring)}
@@ -320,6 +326,26 @@
 @keyframes bm-duck{35%{transform:translateY(4px)}100%{transform:none}}
 @keyframes bm-heft{35%{transform:scale(1.04,.94)}70%{transform:scale(.99,1.02)}100%{transform:none}}
 @keyframes bm-spread{35%{transform:scale(1.12,1)}100%{transform:none}}
+
+
+/* ===== Solid surfaces =================================================
+   Wingman's --panel and --raised carry alpha (measured live: .78 and .87).
+   Anything that must hide what's behind it — a card in a stack, a menu, a
+   sheet — paints the ground first and the panel colour over it, so it stays
+   the app's colour and is fully opaque. Never hardcode a colour here.
+   ===================================================================== */
+.bm .bm-face,
+.bm .bm-slides,
+.bm .bm-list,
+.bm .bm-sheet,
+.bm .bm-switch-list,
+.bm .bm-x,
+.bm .bm-round,
+.bm .bm-btn.is-ghost{background-color:var(--ground);background-image:linear-gradient(var(--panel),var(--panel))}
+.bm .bm-face{background-image:linear-gradient(var(--raised),var(--raised))}
+.bm .bm-face.is-back{background-image:linear-gradient(var(--panel),var(--panel))}
+.bm .bm-empty-cover{background-color:transparent;background-image:none}
+.bm .bm-open-f:hover .bm-empty-cover{background-color:var(--bm-accent-soft)}
 
 /* ---------- Smooth Air + OS reduce-motion: everything above becomes still ---------- */
 @media (prefers-reduced-motion:reduce){

@@ -14,6 +14,27 @@ import TestPile from './TestPile';
 
 const ICONS = { question: <IconQuestion />, card: <IconCards />, video: <IconVideo />, page: <IconPage /> };
 
+/* WHERE AN EMPTY FOLDER SENDS YOU TO FILL IT, and each one goes to the screen
+   that kind is actually saved on rather than all four landing on the Library:
+
+     Questions   the chapter quiz — the bookmark sits beside the flag on it
+     Study cards the Library, where the card sets are listed one per quiz
+     Videos      the module's Lessons tab; the bookmark is in the player
+     Pages       the Library's papers, which is the only door to the reader
+
+   A quiz needs a chapter, so it takes the module's first one with questions in
+   it; with none, the Library is the honest fallback — it names what is there. */
+function emptyTarget(kind, moduleId) {
+  const m = moduleId === 'all' ? content.currentModuleId() : moduleId;
+  if (!m) return routes.flightDeck();
+  if (kind === 'question') {
+    const ch = (content.quizChapters(m) || [])[0];
+    return ch ? routes.quiz(m, ch) : routes.library(m);
+  }
+  if (kind === 'video') return routes.module(m);
+  return routes.library(m);
+}
+
 /** Keeps the chosen module in the URL (?m=) so folders, back links and refreshes agree.
  *  Written through the app's go() with replace, not the router's setSearchParams:
  *  one navigation path (see nav.jsx), and changing which module you are looking
@@ -58,15 +79,25 @@ export default function BookmarksPage() {
   if (!ready) return <section className={`bm bm-page${calmClass()}`} aria-busy="true" />;
 
   return (
-    <section className={`bm bm-page${total ? ' bm-wide bm-home' : ''}${calmClass()}`}>
+    // Empty and full use the same four-folder layout, so the screen never looks unfinished.
+    <section className={`bm bm-page bm-wide bm-home${calmClass()}`}>
       <BmLink className="bm-back" to={routes.flightDeck()}><IconLeft />Flight Deck</BmLink>
       <div className="bm-head"><div>
         <h1 className="bm-h1">Bookmarks</h1>
-        <div className="bm-sub">{total ? <><Rolling n={total} /> saved in</> : 'Nothing yet in'} <ModulePicker value={moduleId} onChange={setModule} /></div>
+        <div className="bm-sub">{total ? <><Rolling n={total} /> saved in</> : 'Not yet in'} <ModulePicker value={moduleId} onChange={setModule} /></div>
       </div></div>
 
       {!total ? (
-        <div className="bm-empty">Tap <span className="bm-mk"><IconBookmark /></span> on a quiz question, a study card, a lesson or a page, and it lands here.</div>
+        <div className="bm-folders">
+          {KINDS.map((kind, i) => (
+            <div className="bm-folder" style={{ '--i': i }} key={kind}>
+              <button type="button" className="bm-open-f" onClick={() => nav(emptyTarget(kind, moduleId))} aria-label={`${FOLDERS[kind].name}: ${FOLDERS[kind].hint} ${FOLDERS[kind].cta}`}>
+                <FolderCover items={[]} kind={kind} icon={ICONS[kind]} />
+                <div className="bm-fname">{FOLDERS[kind].name}</div>
+              </button>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="bm-folders">
           {KINDS.map((kind, i) => {

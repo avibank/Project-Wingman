@@ -45,7 +45,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .top-r{display:flex;gap:10px;align-items:center}
 .rr{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:8px 14px;font-size:14px}
 .rr b{background:var(--accent);color:var(--ground);font:600 11px var(--mono);border-radius:99px;padding:1px 7px}
-.me{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;background:oklch(.55 .07 45)}
+.me{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:600 14px var(--sans);letter-spacing:.02em;color:#fff;overflow:hidden;position:relative}
+.me.av{width:38px!important;height:38px!important;font-size:14px!important;border:0!important;border-radius:50%}
+.me.av img{position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:cover;transform:translate(-50%,-50%) translate(var(--x,0),var(--y,0)) scale(var(--z,1))}
 
 .col{max-width:680px;margin:0 auto;padding-bottom:120px}
 .back{display:inline-flex;align-items:center;gap:4px;color:var(--t2);font-size:14px;padding-block:18px 10px}
@@ -114,7 +116,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .catb{font:600 9.5px var(--mono);font-style:normal;letter-spacing:.08em;color:var(--accent);border:1px solid color-mix(in oklab,var(--accent) 50%,transparent);border-radius:99px;padding:0 6px;margin-left:4px;vertical-align:1px}
 .copt small{display:block;font-size:11.5px;color:var(--t3);margin-top:2px}
 .cvbtn:hover{background:oklch(0 0 0 / .45)}
-.av{background-color:color-mix(in oklab,var(--accent) 55%,oklch(.3 .03 255))!important;letter-spacing:.02em;font-size:30px!important}
+.av{letter-spacing:.02em;font-size:30px!important}
 .av.sm{width:64px;height:64px;font-size:22px!important;border:0}
 .av.up{background:var(--raised)!important;color:var(--t2);overflow:hidden}
 .av.up img{width:100%;height:100%;object-fit:cover}
@@ -205,7 +207,7 @@ button.tag:hover{background:color-mix(in oklab,var(--accent) 22%,transparent)}
 .stats{margin-top:24px;width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);border:0}
 .stats div{padding:4px 6px;border:0!important}
 .stats div+div{border-left:1px solid var(--hair)!important}
-.stats b{font:600 22px var(--mono)}
+.stats b{font:600 20px var(--mono);letter-spacing:-.03em;white-space:nowrap}
 .stats span{font-size:12px;color:var(--t3)}
 .sblock{margin-top:26px;padding:0;width:100%;display:grid;place-items:center;position:relative}
 .sblock::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--hair)}
@@ -323,6 +325,46 @@ button.tag:hover{background:radial-gradient(60% 140% at 50% 50%,color-mix(in okl
 .tag span{font-style:italic;font-size:15.5px;color:var(--t2);padding:4px 0}
 button.tag:hover span{color:var(--t1)}
 
+/* v11 preferences: bar + notifications */
+.barv{font:700 20px var(--mono);color:var(--accent);margin-left:auto}
+.barr{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;margin:16px 0 8px;background:linear-gradient(90deg,var(--accent) var(--p,72%),var(--raised) var(--p,72%))}
+.barr::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--ground);box-shadow:0 2px 6px oklch(0 0 0 / .35);cursor:pointer}
+.barr::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--ground);cursor:pointer}
+.barl{display:flex;justify-content:space-between;gap:12px;font:11px var(--mono);color:var(--t3)}
+.nlist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.nlist li{display:flex;align-items:center;gap:10px;font-size:14.5px}
+.nlist li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+
+/* v12 appearance + device preview */
+.livs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.livs button{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:color-mix(in oklab,var(--raised) 60%,transparent)}
+.livs button i{width:26px;height:26px;border-radius:50%}
+.livs button.on{box-shadow:inset 0 0 0 1.6px var(--accent);background:var(--accent-soft)}
+#devwrap{position:fixed;inset:0;z-index:80;background:oklch(0 0 0 / .62);display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px;backdrop-filter:blur(3px)}
+#devwrap iframe{flex:1;border:0;border-radius:22px;background:var(--ground);box-shadow:0 30px 80px oklch(0 0 0 / .5);max-width:100%}
+.devbar{display:flex;align-items:center;gap:14px;color:#fff;font:600 12px var(--mono);letter-spacing:.1em}
+.devbar button{font:inherit;letter-spacing:.06em;border:1px solid oklch(1 0 0 / .35);border-radius:99px;padding:5px 12px;color:#fff}
+@media (max-width:560px){
+  .col h1{font-size:28px}
+  .box{padding:16px}
+  .sega{flex-wrap:wrap}
+  .sega button{flex:1 1 auto;text-align:center}
+  .pd{font-size:13.5px}
+  .seg button{font-size:13px;padding:9px 4px}
+  .stats b{font-size:18px}
+  .stats span{font-size:11px}
+}
+
+/* v13 photo crop + profile colour */
+.av.ph{overflow:hidden;position:relative;background:var(--raised)}
+.av.ph img{position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:cover;transform:translate(-50%,-50%) translate(var(--x,0),var(--y,0)) scale(var(--z,1))}
+.crop{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:0 auto;border-radius:16px;overflow:hidden;background:var(--raised);touch-action:none;cursor:grab}
+.crop.grab{cursor:grabbing}
+.crop img{position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:cover;transform:translate(-50%,-50%) translate(var(--x,0),var(--y,0)) scale(var(--z,1));user-select:none;-webkit-user-drag:none}
+.cmask{position:absolute;inset:0;pointer-events:none;box-shadow:0 0 0 999px oklch(0 0 0 / .55) inset;border-radius:50%;outline:2px solid oklch(1 0 0 / .55);outline-offset:-2px}
+.crow2{display:flex;align-items:center;gap:12px;margin:16px auto 0;width:min(300px,78vw);color:var(--t3)}
+.crow2 .barr{flex:1;margin:0}
+
 /* creator */
 .maker{margin-top:16px;border-top:1px solid var(--hair);padding-top:18px;display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:22px}
 .maker[hidden]{display:none}
@@ -410,7 +452,7 @@ button.tag:hover span{color:var(--t1)}
     <span class="brand">Wingman</span>
     <div class="top-r">
       <span class="rr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg><span class="lbl">Ready Room</span><b>1</b></span>
-      <span class="me">h</span>
+      <span class="me" id="meAv"></span>
     </div>
   </header>
 
@@ -444,11 +486,10 @@ button.tag:hover span{color:var(--t1)}
     <section id="t-pref" hidden>
       <div class="box">
         <p class="lab">Who greets you</p>
-        <p class="ph" id="gName">Wingman</p>
-        <p class="pd" id="gDesc">A coworker on the same shift. Notices you're here, never what you scored.</p>
         <div class="sega" id="greet"><button aria-pressed="true" data-g="0">Wingman</button><button aria-pressed="false" data-g="1">The Hermit</button></div>
-        <p class="pd" style="margin-top:14px">What Wingman calls you</p>
-        <input class="inp" id="callMe" placeholder="Skip it. I'll keep talking until you look up, same as always.">
+        <p class="pd" id="gDesc" style="margin-top:12px">A coworker on the same shift. Notices you're here, never what you scored.</p>
+        <p class="pd" id="gLab" style="margin-top:16px;color:var(--t2)">What Wingman calls you</p>
+        <input class="inp" id="callMe" placeholder="Skip it. I'll talk anyway.">
       </div>
       <div class="box">
         <p class="lab">How social</p>
@@ -459,13 +500,23 @@ button.tag:hover span{color:var(--t1)}
           <button class="sw2" id="solo" role="switch" aria-checked="false" aria-label="Fly solo"></button>
         </div>
       </div>
+      <div class="box">
+        <p class="lab">Your bar<span class="new">MOVED HERE</span></p>
+        <p class="ph" style="display:flex;align-items:baseline;gap:10px">The score you're aiming for <b class="barv" id="barV">86%</b></p>
+        <p class="pd">If your average on a module falls below this, Master Caution lights up on that module's card, and nowhere else. It starts at the 75% pass mark and can only go up from there. Nobody else can see it.</p>
+        <input type="range" class="barr" id="bar" min="75" max="100" step="1" value="86" aria-label="Your bar">
+        <div class="barl"><span>75% · pass mark</span><span>100%</span></div>
+      </div>
     </section>
+
   </div>
 </div>
 
 <div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast"></div>
 <nav class="demo" aria-label="Demo controls">
+  <button id="dTab">Tablet</button>
+  <button id="dPhone">Phone</button>
   <button id="theme">Light / Dark</button>
   <button id="resetStamp">Reset stamp</button>
 </nav>
@@ -555,7 +606,7 @@ function layout(shape){
     return {fill:'M6.5 15.3a13.5 13.5 0 0 1 27 0V24.7a13.5 13.5 0 0 1-27 0Z',frame:'<rect x="12.9" y="13.6" width="14.2" height="12.8" rx="3.2" stroke-width=".85"/><rect x="13.7" y="14.4" width="12.6" height="11.2" rx="2.6" stroke-width=".3"/>',inner:'M13.3 14H26.7V26H13.3Z',band:'M8.9 15.3a11.1 11.1 0 0 1 22.2 0V24.7a11.1 11.1 0 0 1-22.2 0Z',
       top:`M${pa(15.3,Math.PI+g)}A${r} ${r} 0 0 1 ${pa(15.3,-g)}`,tl:L,bot:`M${pa(24.7,Math.PI-g)}A${r} ${r} 0 0 0 ${pa(24.7,g)}`,bl:L,stars:[[10.4,20],[29.6,20]],fz:[2.7,2.25],star:1,ring:{type:'rect',a:[12.9,13.6,27.1,26.4],b:[7.6,2.9,32.4,37.1]},clip:'M8.3 15.3a11.7 11.7 0 0 1 23.4 0V24.7a11.7 11.7 0 0 1-23.4 0Z'}}
   if(shape==='roundel'){const r=12.5,g=33*Math.PI/180,pt=a=>`${(20+r*Math.cos(a)).toFixed(2)} ${(20+r*Math.sin(a)).toFixed(2)}`,L=(r*(Math.PI-2*g)).toFixed(2);
-    return {fill:circ(16.2),frame:'<rect x="1.2" y="14.8" width="37.6" height="10.4" rx="1.2" stroke-width="1.3" fill="var(--ground)"/><rect x="2.3" y="15.9" width="35.4" height="8.2" rx=".6" stroke-width=".35"/>',inner:'M2.6 16.2H37.4V23.8H2.6Z',band:circ(15.8),
+    return {fill:circ(16.2),frame:'<rect x="1.2" y="14.8" width="37.6" height="10.4" rx="1.2" stroke-width="1.3"/><rect x="2.3" y="15.9" width="35.4" height="8.2" rx=".6" stroke-width=".35"/>',inner:'M2.6 16.2H37.4V23.8H2.6Z',band:circ(15.8),
       top:`M${pt(Math.PI+g)}A${r} ${r} 0 0 1 ${pt(-g)}`,tl:L,bot:`M${pt(Math.PI-g)}A${r} ${r} 0 0 0 ${pt(g)}`,bl:L,stars:[],fz:[3.1,2.3],ring:{type:'circle',ri:5.4,ro:16.6},bar:true,clip:circ(16.1)}}
   if(shape==='gauge'){const r=11.9,g=17*Math.PI/180,pt=a=>`${(20+r*Math.cos(a)).toFixed(2)} ${(20+r*Math.sin(a)).toFixed(2)}`,L=(r*(Math.PI-2*g)).toFixed(2);
     return {fill:circ(14.6),frame:'<circle cx="20" cy="20" r="8.7" stroke-width=".85"/><circle cx="20" cy="20" r="7.9" stroke-width=".3"/>',inner:circ(9),band:circ(14.2),
@@ -592,11 +643,16 @@ function inspStamp(on,size=40,rot=0,st=MYSTAMP){
   if(rim)o+=`<path id="rt${id}" d="${Ly.top}" stroke="none"/><path id="rb${id}" d="${Ly.bot}" stroke="none"/>`;
   const p=st.pattern||'none';
   if(p!=='none'){
-    const R0=Ly.ring,cx0=ccx,R=(Ly.bar&&rim)?{type:'rect',a:[cx0-1,19.5,cx0+1,20.5],b:[2.8,16.4,37.2,23.6]}:R0.type==='circle'?{type:'circle',ri:1.2,ro:rim?R0.ri-.9:R0.ro}:(p==='rays'?{type:'rect',a:[cx0-1,19,cx0+1,21],b:rim?[R0.a[0]+.8,R0.a[1]+.8,R0.a[2]-.8,R0.a[3]-.8]:R0.b}:(rim?{type:'rect',a:[R0.a[0]+2.2,R0.a[1]+2.2,R0.a[2]-2.2,R0.a[3]-2.2],b:[R0.a[0]+.8,R0.a[1]+.8,R0.a[2]-.8,R0.a[3]-.8]}:R0));
+    const R0=Ly.ring,cx0=ccx,sco=st.pscope||'both';
+    const R=R0.type==='circle'
+      ?(sco==='centre'?{type:'circle',ri:1.1,ro:R0.ri-.5}:sco==='rim'?{type:'circle',ri:R0.ri+.4,ro:R0.ro}:{type:'circle',ri:1.2,ro:R0.ro})
+      :(sco==='centre'?{type:'rect',a:[cx0-1,19,cx0+1,21],b:[R0.a[0]-.4,R0.a[1]-.4,R0.a[2]+.4,R0.a[3]+.4]}
+        :sco==='rim'?{type:'rect',a:[R0.a[0]+.5,R0.a[1]+.5,R0.a[2]-.5,R0.a[3]-.5],b:R0.b}
+        :{type:'rect',a:[cx0-1,19,cx0+1,21],b:R0.b});
     const halo=`<g fill="#000" stroke="#000" stroke-width="${rim?1.6:2.2}" stroke-linejoin="round">${T('')}${sym?`<g transform="translate(${ccx} ${cy}) scale(${(.62*big*sq).toFixed(2)}) translate(-20 -20)" stroke-width="3">${MARKS[sym]}</g>`:''}</g><g fill="none" stroke="#000" stroke-width="1.8">${Ly.frame}</g>`;
-    const pat=`<mask id="pm${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40"><rect width="40" height="40" fill="#fff"/>${halo}</mask><clipPath id="pk${id}"><path d="${Ly.clip||Ly.fill}"/></clipPath><g clip-path="url(#pk${id})"><g mask="url(#pm${id})" opacity="${(p==='checks'?.55:.75)*(rim?.7:1)}">${ringPattern(p,R)}</g></g>`;if(Ly.bar)barPat=pat;else o+=pat}
+    const pat=`<mask id="pm${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40"><rect width="40" height="40" fill="#fff"/>${halo}</mask><clipPath id="pk${id}"><path d="${Ly.clip||Ly.fill}"/></clipPath><g clip-path="url(#pk${id})"><g mask="url(#pm${id})" opacity="${(p==='checks'?.5:.7)*(rim?.75:1)}">${ringPattern(p,R)}</g></g>`;o+=pat}
   o+=sh.o();
-  o+=Ly.frame+barPat;
+  o+=Ly.frame;
   o+=`<g fill="currentColor" stroke="none">${T('')}</g>`;
   if(sym)o+=`<g transform="translate(${ccx} ${cy}) scale(${(.62*big*sq).toFixed(2)}) translate(-20 -20)" fill="currentColor" stroke="currentColor">${MARKS[sym]}</g>`;
   const style=on&&st.ink!==undefined?`style="color:${inkVal(st.ink)}"`:'';
@@ -609,7 +665,7 @@ function colourGrid(sel,attr){return `<div class="pal">${PALETTE.map((p,i)=>`<bu
 
 let draft=null, confirming=false;
 
-const LIVERIES={sky:{n:'Sky blue',h:254,c:.13},amber:{n:'Gauge amber',h:75,c:.13},tarmac:{n:'Tarmac grey',h:255,c:.02},beacon:{n:'Beacon red',h:25,c:.15},runway:{n:'Runway green',h:150,c:.12},skydrol:{n:'Skydrol violet',h:300,c:.13}};
+const LIVERIES={sky:{n:'Sky blue',h:254,c:.13,d:'The forty minutes between the climb and the descent.'},amber:{n:'Gauge amber',h:75,c:.13,d:'The glow of a panel at night.'},tarmac:{n:'Tarmac grey',h:255,c:.02,d:'Quiet, like the ramp at first light.'},beacon:{n:'Beacon red',h:25,c:.15,d:'The rotating light on the belly.'},runway:{n:'Runway green',h:150,c:.12,d:'Centreline lights on a wet night.'},skydrol:{n:'Skydrol violet',h:300,c:.13,d:'The colour of hydraulic fluid, and nothing else.'}};
 const lc=(L,l,cm=1,a=1)=>`oklch(${l} ${(L.c*cm).toFixed(3)} ${L.h}${a<1?' / '+a:''})`;
 const SETS={
  contour:{n:'Contours',svg:()=>{let o='';for(let i=0;i<10;i++){let d='';for(let x=0;x<=640;x+=16){const y=4+i*13+Math.sin(x/62+i*.7)*9+Math.cos(x/31+i)*3;d+=(x?'L':'M')+x+' '+y.toFixed(1)}o+=`<path d="${d}" stroke="oklch(1 0 0 / ${i%3?.15:.32})"/>`}return o}},
@@ -645,17 +701,19 @@ const SETS={
    return o}},
 };
 const PHRASES=["Torqued to spec. Emotionally too.","It's not a leak, it's a seep.","Could not duplicate."];
-const ME={name:'Hassan Alrefaei',callsign:'h.alrefaei',bio:'',phrase:PHRASES[0],cat:'B2 · Avionics',inst:'AU University',admin:true,photo:null,cover:'contour',coverColor:null,coverImg:null,livery:'sky',
-  stats:[['13.9','Hours flown'],['7','Lessons signed off'],['12','Days flown']]};
+const ME={name:'Hassan Alrefaei',callsign:'h.alrefaei',bio:'',phrase:PHRASES[0],cat:'B2 · Avionics',inst:'AU University',admin:true,photo:null,photoZ:1,photoX:0,photoY:0,cover:'contour',coverColor:null,coverImg:null,livery:'sky',
+  stats:[['13h 54m','Hours flown'],['7','Lessons signed off'],['12','Days flown']]};
 const initials=n=>n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-function setBg(c){c=c||PALETTE[1];return `linear-gradient(120deg,${col(c,.5)},oklch(.28 ${(c.c*.75).toFixed(3)} ${c.h}))`}
+function setBg(c){c=c||PALETTE[1];const l=c.l??.6;return `linear-gradient(135deg,${col(c,l)} 0%,${col(c,Math.max(.16,l-.26))} 100%)`}
+function avaBg(c){c=c||PALETTE[1];return col(c)}
+function avaFg(c){c=c||PALETTE[1];return (c.l??.6)>.7?'oklch(.2 .02 265)':'#fff'}
 function coverHTML(e){
   const img=ME.cover==='image'&&ME.coverImg;
   const bg=img?`background-image:url('${ME.coverImg}');background-size:cover;background-position:center`:`background:${setBg(ME.coverColor)}`;
   return `<div class="cover" style="${bg}">${img?'':`<svg viewBox="0 0 640 128" preserveAspectRatio="xMidYMid slice" fill="none">${SETS[ME.cover].svg()}</svg>`}
    ${e?`<button class="cvbtn" id="cvBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg>Cover</button>`:''}</div>`;
 }
-function avatarHTML(){return ME.photo?`<span class="av" style="background-image:url('${ME.photo}');background-size:cover;background-position:center"></span>`:`<span class="av">${initials(ME.name)}</span>`}
+function avatarHTML(){return ME.photo?`<span class="av ph"><img src="${ME.photo}" alt="" style="--z:${ME.photoZ};--x:${ME.photoX}%;--y:${ME.photoY}%"></span>`:`<span class="av" style="background:${avaBg(ME.coverColor)};color:${avaFg(ME.coverColor)}">${initials(ME.name)}</span>`}
 function stampBlock(e,slam){
   if(ISSUED)return `<div class="sblock"><span class="got ${slam?'slam':''}">${inspStamp(true,150,-6,MYSTAMP)}</span></div>`;
   if(e)return `<div class="sblock"><button class="ghost" id="mk" aria-label="Create your stamp">${inspStamp(false,150,0,DEFAULT_STAMP)}<b>Create your stamp</b></button></div>`;
@@ -675,26 +733,47 @@ function card(e,slam){
     ${e?'':`<button class="pill pri inv" disabled>Invite to squadron</button>`}
    </div></div>`;
 }
+function paintTop(){const el=$('#meAv');if(!el)return;el.innerHTML=ME.photo?`<img src="${ME.photo}" alt="" style="--z:${ME.photoZ};--x:${ME.photoX}%;--y:${ME.photoY}%">`:initials(ME.name);el.className='me av ph'+(ME.photo?'':' ini');el.style.background=ME.photo?'':avaBg(ME.coverColor);el.style.color=avaFg(ME.coverColor)}
 function paintCard(slam){
   $('#myCard').innerHTML=card(true,slam);
   $('#fCs').onchange=e=>{const v=e.target.value.trim();if(!v){e.target.value=ME.callsign;return}ME.callsign=v;toast('Callsign saved')};
   $('#fCs').oninput=e=>e.target.size=Math.max(6,e.target.value.length+1);
   $('#fBio').onchange=e=>{ME.bio=e.target.value.trim();toast('Saved')};
-  $('#photo').onclick=pickPhoto;$('#cvBtn').onclick=pickCover;$('#phr').onclick=pickPhrase;
+  $('#photo').onclick=pickPhoto;$('#cvBtn').onclick=pickCover;paintTop();$('#phr').onclick=pickPhrase;
   if($('#mk'))$('#mk').onclick=openMaker;
 }
 function pickPhrase(){
   openSheet(`<h3>Your phrase</h3><div class="plist">${PHRASES.map((p,i)=>`<button class="pp ${ME.phrase===p?'on':''}" data-ph="${i}">${p}</button>`).join('')}</div>`);
   $$('[data-ph]').forEach(b=>b.onclick=()=>{ME.phrase=PHRASES[+b.dataset.ph];closeV();paintCard();toast('Phrase set')});
 }
-function readFile(cb){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(f)};i.click()}
+function readFile(cb){const i=document.createElement('input');i.type='file';i.accept='image/png,image/jpeg,image/webp,image/heic';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(f)};i.click()}
 function openSheet(html){$('#sheet').innerHTML=`<div class="pick"><button class="x2" id="closeP" aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>${html}</div>`;$('#scrim').classList.add('open');$('#closeP').onclick=closeV}
 function pickPhoto(){
   openSheet(`<h3>Profile picture</h3><div class="pgrid">
-    <button class="popt ${!ME.photo?'on':''}" id="useIni"><span class="av sm">${initials(ME.name)}</span><span>Your initials</span></button>
-    <button class="popt ${ME.photo?'on':''}" id="upPh"><span class="av sm up">${ME.photo?`<img src="${ME.photo}" alt="">`:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V5M7 10l5-5 5 5M5 19h14"/></svg>'}</span><span>${ME.photo?'Change photo':'Upload a photo'}</span></button></div>`);
+    <button class="popt ${!ME.photo?'on':''}" id="useIni"><span class="av sm" style="background:${avaBg(ME.coverColor)};color:${avaFg(ME.coverColor)}">${initials(ME.name)}</span><span>Your initials</span></button>
+    <button class="popt ${ME.photo?'on':''}" id="upPh"><span class="av sm up ph">${ME.photo?`<img src="${ME.photo}" alt="" style="--z:${ME.photoZ};--x:${ME.photoX}%;--y:${ME.photoY}%">`:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V5M7 10l5-5 5 5M5 19h14"/></svg>'}</span><span>${ME.photo?'Change photo':'Upload a photo'}</span></button></div>`);
   $('#useIni').onclick=()=>{ME.photo=null;closeV();paintCard();toast('Using your initials')};
-  $('#upPh').onclick=()=>readFile(d=>{ME.photo=d;closeV();paintCard();toast('Photo updated')});
+  $('#upPh').onclick=()=>readFile(d=>openCrop(d));
+}
+function openCrop(src){
+  let z=1.2,x=0,y=0;
+  openSheet(`<h3>Position your photo</h3>
+   <div class="crop" id="crop"><img id="cimg" src="${src}" alt=""><span class="cmask"></span></div>
+   <div class="crow2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6"/></svg>
+     <input type="range" class="barr" id="czoom" min="100" max="300" value="120" aria-label="Zoom">
+     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/></svg></div>
+   <p class="snote" style="text-align:center;margin:10px 0 0">Drag the photo to move it</p>
+   <div class="pbtns" style="margin-top:16px"><button class="pill" id="cCancel">Cancel</button><button class="pill pri" id="cUse">Use photo</button></div>`);
+  const img=$('#cimg'),paint=()=>{img.style.setProperty('--z',z);img.style.setProperty('--x',x+'%');img.style.setProperty('--y',y+'%')};paint();
+  $('#czoom').oninput=e=>{z=+e.target.value/100;e.target.style.setProperty('--p',((e.target.value-100)/200*100)+'%');paint()};
+  $('#czoom').style.setProperty('--p','10%');
+  let drag=false,sx,sy,ox,oy;const st=$('#crop');
+  st.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sy=e.clientY;ox=x;oy=y;st.setPointerCapture(e.pointerId);st.classList.add('grab')});
+  st.addEventListener('pointermove',e=>{if(!drag)return;const r=st.getBoundingClientRect();const lim=(z-1)*50;
+    x=Math.max(-lim,Math.min(lim,ox+(e.clientX-sx)/r.width*100));y=Math.max(-lim,Math.min(lim,oy+(e.clientY-sy)/r.height*100));paint()});
+  st.addEventListener('pointerup',()=>{drag=false;st.classList.remove('grab')});
+  $('#cCancel').onclick=()=>{closeV();pickPhoto()};
+  $('#cUse').onclick=()=>{ME.photo=src;ME.photoZ=z;ME.photoX=x;ME.photoY=y;closeV();paintCard();toast('Photo updated')};
 }
 function pickCover(){
   const thumb=k=>`<span class="cthumb" style="background:${setBg(ME.coverColor)}"><svg viewBox="0 0 640 128" preserveAspectRatio="xMidYMid slice" fill="none">${SETS[k].svg()}</svg></span>`;
@@ -706,7 +785,7 @@ function pickCover(){
   $('#upCv').onclick=()=>{if(ME.coverImg&&ME.cover!=='image'){ME.cover='image';paintCard();pickCover();return}readFile(d=>{ME.coverImg=d;ME.cover='image';paintCard();pickCover()})};
 }
 let tab='shape';
-function openMaker(){draft={shape:'seal',code:'',sym:null,ring:'',rim:true,pattern:'none',ink:PALETTE[1],seed:7,cmode:'code'};confirming=false;tab='shape';paintStudio(true);$('#scrim').classList.add('open')}
+function openMaker(){draft={shape:'seal',code:'',sym:null,ring:'',rim:true,pattern:'none',pscope:'both',ink:PALETTE[1],seed:7,cmode:'code'};confirming=false;tab='shape';paintStudio(true);$('#scrim').classList.add('open')}
 const SYMN={plane:'Plane',wrench:'Spanner',prop:'Propeller'};
 function paintStudio(anim){
   const d=draft,L=LIVERIES[ME.livery];
@@ -718,7 +797,8 @@ function paintStudio(anim){
        :`<div class="srow">${SYMS.map(k=>`<button class="stile ${d.sym===k?'on':''}" data-sym="${k}" aria-label="${SYMN[k]}" title="${SYMN[k]}"><svg width="30" height="30" viewBox="9 9 22 22" fill="currentColor" stroke="currentColor">${MARKS[k]}</svg></button>`).join('')}</div>`}`;
   if(tab==='ring')body=`<div class="tgl"><span>Rim text</span><button class="sw2" id="rimT" role="switch" aria-checked="${d.rim!==false}" aria-label="Rim text"></button></div>
      ${d.rim!==false?`<input class="sin" id="sRing" maxlength="10" value="${d.ring}" placeholder="WINGMAN" autocomplete="off"><p class="snote" style="margin:0">Motto runs along the bottom</p>`:`<p class="snote" style="margin:0">Your pattern fills the ring</p>`}`;
-  if(tab==='pat')body=`<div class="srow">${Object.entries(PATTERNS).map(([k,n])=>`<button class="stile wide pt ${d.pattern===k?'on':''}" data-pat="${k}"><svg width="40" height="40" viewBox="3 3 34 34" fill="none" stroke="currentColor">${k==='none'?'':ringPattern(k,{type:'circle',ri:8,ro:15.5})}<circle cx="20" cy="20" r="7.6" stroke-width=".7"/><circle cx="20" cy="20" r="16" stroke-width=".9"/></svg><small>${n}</small></button>`).join('')}</div>`;
+  if(tab==='pat')body=`<div class="srow">${Object.entries(PATTERNS).map(([k,n])=>`<button class="stile wide pt ${d.pattern===k?'on':''}" data-pat="${k}"><svg width="40" height="40" viewBox="3 3 34 34" fill="none" stroke="currentColor">${k==='none'?'':ringPattern(k,{type:'circle',ri:8,ro:15.5})}<circle cx="20" cy="20" r="7.6" stroke-width=".7"/><circle cx="20" cy="20" r="16" stroke-width=".9"/></svg><small>${n}</small></button>`).join('')}</div>
+     ${d.pattern!=='none'?`<div class="seg2"><button class="${(d.pscope||'both')==='both'?'on':''}" data-scope="both">Both</button><button class="${d.pscope==='centre'?'on':''}" data-scope="centre">Centre</button><button class="${d.pscope==='rim'?'on':''}" data-scope="rim">Rim</button></div>`:''}`;
   if(tab==='ink')body=colourGrid(d.ink,'data-ink');
   $('#sheet').innerHTML=`<div class="studio" style="--accent:${lc(L,.68,1.1)};--accent-soft:${lc(L,.68,1.1,.14)}">
    <div class="shead"><h3>Your stamp</h3><button class="x2" id="closeS" aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -741,7 +821,7 @@ function paintStudio(anim){
   $$('[data-ink]').forEach(b=>b.onclick=()=>set('ink',PALETTE[+b.dataset.ink]));
   const redraw=()=>{$('.spaper .big').className='big';$('.spaper .big').innerHTML=inspStamp(true,196,-5,draft)};
   if($('#sCode')){$('#sCode').onfocus=()=>{if(draft.sym){draft.sym=null;draft.cmode='code';$$('.csym').forEach(b=>b.classList.remove('on'));$('#sCode').classList.add('on');redraw()}};$('#sCode').oninput=e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');draft.code=e.target.value;draft.sym=null;draft.cmode='code';redraw()}}
-  $('#shuffle').onclick=()=>{const pick=a=>a[Math.floor(Math.random()*a.length)];draft.shape=pick(Object.keys(SHAPES));draft.pattern=pick(Object.keys(PATTERNS));draft.ink=pick(PALETTE);draft.rim=Math.random()>.35;draft.seed=1+Math.floor(Math.random()*40);confirming=false;paintStudio(true)};
+  $('#shuffle').onclick=()=>{const pick=a=>a[Math.floor(Math.random()*a.length)];draft.shape=pick(Object.keys(SHAPES));draft.pattern=pick(Object.keys(PATTERNS));draft.pscope=pick(['both','centre','rim']);draft.ink=pick(PALETTE);draft.rim=Math.random()>.35;draft.seed=1+Math.floor(Math.random()*40);confirming=false;paintStudio(true)};
   if($('#sRing')){$('#sRing').oninput=e=>{e.target.value=e.target.value.replace(/[^A-Za-z0-9 ]/g,'');draft.ring=e.target.value;redraw()}}
   $('#closeS').onclick=closeV;
   if(confirming){$('#back2').onclick=()=>{confirming=false;paintStudio(false)};
@@ -756,17 +836,29 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeV()});
 
 /* tabs */
 $$('.seg button').forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==='app'){toast('Appearance stays as it is');return}
-  $$('.seg button').forEach(x=>x.setAttribute('aria-selected',x===b));$('#t-lic').hidden=t!=='lic';$('#t-pref').hidden=t!=='pref';$('#pageTitle').textContent=t==='lic'?'Licence':'Preferences'});
+  $$('.seg button').forEach(x=>x.setAttribute('aria-selected',x===b));$('#t-lic').hidden=t!=='lic';$('#t-pref').hidden=t!=='pref';
+  $('#pageTitle').textContent=t==='lic'?'Licence':'Preferences'});
 
 /* preferences */
-const GREET=[['Wingman',"A coworker on the same shift. Notices you're here, never what you scored."],['The Hermit','Says as little as possible. Still notices you showed up.']];
-$$('#greet button').forEach(b=>b.onclick=()=>{$$('#greet button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#gName').textContent=GREET[+b.dataset.g][0]});
+const GREET=[{n:'Wingman',d:"A coworker on the same shift. Notices you're here, never what you scored.",ph:"Skip it. I'll talk anyway."},
+ {n:'The Hermit',d:'Says as little as possible. Still notices you showed up.',ph:"Skip it, you may. Talk anyway, I will."}];
+let greeter=0;
+function paintGreet(){const g=GREET[greeter];$('#gDesc').textContent=g.d;$('#gLab').textContent=`What ${g.n} calls you`;$('#callMe').placeholder=g.ph}
+$$('#greet button').forEach(b=>b.onclick=()=>{greeter=+b.dataset.g;$$('#greet button').forEach(x=>x.setAttribute('aria-pressed',x===b));paintGreet()});
+$('#callMe').oninput=paintGreet;paintGreet();
 const SOC=['Nobody in your way. Study only.','Your squadron and right seat, nothing else.','Everything, including the module chat.'];
 $$('#social button').forEach(b=>b.onclick=()=>{$$('#social button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+$('#bar').oninput=e=>{const v=e.target.value;$('#barV').textContent=v+'%';e.target.style.setProperty('--p',((v-75)/25*100)+'%')};$('#bar').style.setProperty('--p','44%');
 $('#solo').onclick=e=>{const on=e.currentTarget.getAttribute('aria-checked')!=='true';e.currentTarget.setAttribute('aria-checked',on);toast(on?'Flying solo · nobody sees you':'Back on the radar')};
 
+/* device preview */
+if(location.hash==='#frame')document.querySelector('.demo').style.display='none';
+function device(w){document.getElementById('devwrap')?.remove();if(!w)return;
+  const d=document.createElement('div');d.id='devwrap';d.innerHTML=`<div class="devbar"><b>${w===390?'Phone · 390':'Tablet · 834'}</b><button id="devx">Close</button></div><iframe src="${location.pathname}#frame" style="width:${w}px"></iframe>`;
+  document.body.appendChild(d);d.querySelector('#devx').onclick=()=>device(0)}
+$('#dTab').onclick=()=>device(834);$('#dPhone').onclick=()=>device(390);
 $('#theme').onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'};
 $('#resetStamp').onclick=()=>{MYSTAMP={...DEFAULT_STAMP};ISSUED=null;$('#maker').hidden=true;paintCard();toast('Demo reset: no stamp issued')};
 let tt;function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2000)}
-paintCard();
+paintTop();paintCard();
 </script>

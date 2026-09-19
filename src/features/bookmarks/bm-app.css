@@ -105,6 +105,17 @@
 /* The height and the inset the tokens above feed. */
 .app .bm.bm-home{ height: calc(100dvh - var(--bm-topbar) - var(--bm-inset)); }
 
+/* ------------------------------------------------- 2b · the back of a card
+   R16'S OWN BLOCK CANNOT REACH IT, and specificity is why. The solid-surfaces
+   rule is `.bm .bm-face, …` at (0,2,0); the earlier `.bm .bm-face.is-back`
+   sets `background: var(--panel)` as a SHORTHAND at (0,3,0), which wins on
+   background-color. So the front of a card is opaque and the back is 0.78 —
+   turn a card over in a stack of eight and the ones underneath read through
+   it. Measured by test:bm, which is what asked the question.
+
+   Only the colour is set here; the panel tint over it is the pack's own. */
+.app .bm .bm-face.is-back{ background-color: var(--ground); }
+
 /* ----------------------------------------------------------- 3 · contrast
    Measured on the painted pixels, in all 30 skins. Neither is decoration:
    one says WHICH option this is and the other says which chapter the card

@@ -38,6 +38,7 @@ If something in this brief can't be done as written, stop and say so in the repo
   - A new save drops a sheet in and the case takes the weight.
 - **House-style exception, deliberate:** Bookmarks uses rounded cards and shadows (the Instagram look). Don't "fix" it back to hairlines.
 - **The end of a practice run or test is encouraging, with no scores or stats.**
+- **Empty is a designed state, not a blank page.** With nothing saved, Bookmarks still shows the same four folders filling the screen. Each empty cover carries its icon, one line saying how that folder gets filled, and a way in ("Take a quiz", "Open the card sets", "Find a lesson", "Open the paper"). A single folder that's empty while others have things behaves the same way. The subtitle reads "Not yet in Module 1", never "Nothing".
 
 ---
 
@@ -51,7 +52,7 @@ Answer each of these in `claude/bookmarks-survey.md` before writing code:
 4. **Lesson player:** where's the control bar with the note button? How do you read the current playback time? Can the lesson route start at a given second?
 5. **Paper reader:** which version is live? Where's the page counter? Can the reader route open at a given page?
 6. **Supabase + Clerk:** how do comments get an authenticated Supabase client? Does RLS use `auth.jwt()->>'sub'`?
-7. **Tokens:** confirm the live names (`--ground --panel --raised --line --t1 --t2 --t3 --active`). Is there an on-accent text token and a Master Caution colour token? Which selector marks Light lighting? How is Smooth Air exposed? How does Instrument scale work (root font-size or something else)?
+7. **Tokens:** confirm the live names and **whether any surface token carries alpha** (measured today: `--panel` .78, `--raised` .87 — see R16). Also confirm the names (`--ground --panel --raised --line --t1 --t2 --t3 --active`). Is there an on-accent text token and a Master Caution colour token? Which selector marks Light lighting? How is Smooth Air exposed? How does Instrument scale work (root font-size or something else)?
 8. **Flight Deck:** the hero strip's bag cell component, and where the hero decides which module it shows.
 9. **Profile menu** component, and the Settings route and page.
 10. **Toasts:** does the app already have a toast system?
@@ -160,7 +161,7 @@ Format: **Rule** = what must be true. **Mechanism** = the one place it's impleme
   - Study cards folder: flip, turn, unsave with Undo, "Browse all card sets in the Library".
   - Videos: thumbnail opens at the second, unsave with Undo.
   - Pages: Open, unsave with Undo.
-  - Empty folder lines: each named control exists. The Study cards one links to the Library.
+  - Empty folder covers: each one's way in goes to a screen where that kind can actually be saved (`emptyTarget` in `BookmarksPage.jsx`). Point them at the real quiz, card set, lesson and paper screens rather than leaving them all on the Library if better targets exist.
   - Card set page: back to Library, Test yourself, save and unsave each card, keyboard arrows and space.
   - Practice sheet and test pile: answer, Next or Finish, Go again, Done, "Unsave the ones I got", close on ✕ / Esc / backdrop.
   - Toasts: View and Undo go where they say.
@@ -189,6 +190,12 @@ Format: **Rule** = what must be true. **Mechanism** = the one place it's impleme
 - **Rule:** You can learn from the beta.
 - **Mechanism:** `content.track()` forwards to the app's analytics. The events are save_added, save_removed, practise_started, test_started, card_set_opened and bookmarks_opened.
 - **Check:** If there's no analytics yet, leave `track` empty and log it in the backlog. Don't block launch on it.
+
+### R16 · Surfaces that must hide things are solid
+- **Rule:** Anything that covers something else — a card in the stack, the front wall of the flight bag, a menu, a sheet, a folder cover — is fully opaque. You can never read the card underneath through the card on top.
+- **Why:** Measured on the live site, `--panel` is `oklch(.2075 .0263 256.13 / .78)` and `--raised` is `oklch(.2763 .0442 258.88 / .87)`. Both carry alpha. A background set straight from those tokens lets whatever is behind it show through.
+- **Mechanism:** The "Solid surfaces" block in `bookmarks.css` paints `--ground` first and the panel colour over it, so the colour still comes from the tokens and the result is opaque. The flight bag's front wall has a ground-coloured copy of its path (`bg-frontbase`) beneath it, because an SVG fill can't be layered the same way.
+- **Check:** Open a card set with 8 cards. No text from any card below may be visible through the top card — screenshot it. Open the flight bag when full: no sheet may show through the front wall. Open the module picker over a list, and the practice sheet over a page: nothing behind either one shows through.
 
 ### R15 · It must match the demo, measured side by side
 - **Rule:** The built screens look like `reference/wingman-bookmarks-demo.html`. Same layout, same spacing, same type sizes, same motion. This is the acceptance test for the whole job: if a screen doesn't match, it isn't done.
@@ -254,7 +261,7 @@ Copy it from this pack (`claude/backlog-bookmarks.md`) and add anything the surv
 ## 7 · Report back (`claude/bookmarks-report.md`)
 
 1. The survey answers.
-2. Each rule R1–R15 with its Check result. Paste measurements, not "looks fine".
+2. Each rule R1–R16 with its Check result. Paste measurements, not "looks fine".
 3. The R10 walk-through, ticked, with screenshots.
 4. The R15 side-by-side shots and the measured numbers.
 5. Anything you changed from this brief and why.

@@ -184,6 +184,7 @@ export const routes = {
   flightDeck: () => routePath.home(),
   bookmarks: () => "/bookmarks",
   folder: (kind) => `/bookmarks/${kind}`,                      // questions | cards | videos | pages
+  module: (moduleId) => routePath.module(moduleId),
   library: (moduleId) => routePath.library(moduleId),
   cardSet: (moduleId, chapter) => `${routePath.library(moduleId)}/cards/${chapter}`,
   quiz: (moduleId, chapter) => {

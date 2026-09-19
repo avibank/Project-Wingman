@@ -322,6 +322,24 @@ const audit = (page, expect) => page.evaluate((expect) => {
     }
   }
 
+  /* R16 · A SURFACE THAT COVERS SOMETHING IS OPAQUE. --panel is .78 alpha here
+     and --raised is .87, so a background set straight from either lets whatever
+     is behind it read through — the card under the card, the sheet under the
+     sheet. The fix paints --ground first and the panel colour over it, so the
+     colour still comes from the tokens; this is what proves it landed. */
+  for (const sel of [".bm-face", ".bm-list", ".bm-sheet", ".bm-switch-list", ".bm-slides"]) {
+    for (const el of document.querySelectorAll(sel)) {
+      if (!shown(el)) continue;
+      const a = rgba(getComputedStyle(el).backgroundColor)[3];
+      if (a < 0.999) { out.push(`${sel} is ${a.toFixed(2)} opaque, so what is behind it reads through`); break; }
+    }
+  }
+  /* The bag's front wall cannot be layered that way — an SVG fill is one
+     colour — so it carries a ground-coloured copy of its own path beneath it. */
+  if (document.querySelector(".bm-bag.is-full") && !document.querySelector(".bm-bag .bg-frontbase")) {
+    out.push("the flight bag's front wall has nothing solid under it");
+  }
+
   /* R12 · Smooth Air means NO motion, not less. */
   if (expect.calm) {
     const moving = [];
@@ -660,12 +678,37 @@ try {
     /* --- the empty folders name a control that exists --- */
     await fetch(`${BASE}/rest/v1/saves?user_id=eq.student_one`, { method: "DELETE" });
     await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
-    await page.locator(".bm-empty").waitFor({ timeout: 15000 });
-    expect(`${w}: an empty Bookmarks names the next action`,
-      /^Tap\s*on a quiz question, a study card, a lesson or a page, and it lands here\.$/
-        .test((await page.locator(".bm-empty").textContent()).replace(/\s+/g, " ").trim()),
-      (await page.locator(".bm-empty").textContent()).replace(/\s+/g, " ").trim()),
-    expect(`${w}: and states no zero`, !/\b0\b|nothing saved|no bookmarks/i.test(await page.locator(".bm-sub").textContent()));
+    await page.locator(".bm-empty-cover").first().waitFor({ timeout: 15000 });
+    /* EMPTY IS A DESIGNED STATE. The same four folders fill the screen, each
+       carrying its icon, one line saying how it gets filled, and a way in. */
+    expect(`${w}: an empty Bookmarks still shows all four folders`,
+      (await page.locator(".bm-folder").count()) === 4 && (await page.locator(".bm-empty-cover").count()) === 4);
+    for (const [name, hint, cta] of [
+      ["Questions", "Bookmark a question while you take a quiz.", "Take a quiz"],
+      ["Study cards", "Flip a chapter\u2019s cards and keep the ones worth another look.", "Open the card sets"],
+      ["Videos", "Bookmark a lesson at the moment that matters.", "Find a lesson"],
+      ["Pages", "Bookmark a page while you read the paper.", "Open the paper"],
+    ]) {
+      const cover = page.locator(".bm-folder", { hasText: name }).locator(".bm-empty-cover");
+      const said = (await cover.textContent().catch(() => "")).replace(/\s+/g, " ").trim();
+      expect(`${w}: the empty ${name} folder says how it gets filled`, said.includes(hint), said);
+      expect(`${w}: and offers "${cta}"`, said.includes(cta), said);
+    }
+    expect(`${w}: the subtitle reads "Not yet in", never "Nothing"`,
+      /Not yet in/.test(await page.locator(".bm-sub").textContent())
+      && !/Nothing/i.test(await page.locator(".bm-sub").textContent()));
+    /* And every way in lands on a screen where that kind can actually be saved. */
+    for (const [name, re] of [
+      ["Questions", /\/m\/m1\/[^/]+\/quiz$/],
+      ["Study cards", /\/m\/m1\/library$/],
+      ["Videos", /\/m\/m1$/],
+      ["Pages", /\/m\/m1\/library$/],
+    ]) {
+      await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+      await page.locator(".bm-empty-cover").first().waitFor({ timeout: 15000 });
+      await page.locator(".bm-open-f", { hasText: name }).click();
+      expect(`${w}: the empty ${name} folder's way in reaches a screen it can be saved on`, await lands(re), at());
+    }
     for (const slug of ["questions", "cards", "videos", "pages"]) {
       await page.goto(`${BASE}/bookmarks/${slug}?uid=student_one&m=M1`);
       await page.locator(".bm-empty").waitFor({ timeout: 15000 });
@@ -743,9 +786,13 @@ try {
     /* 3 · another student sees none of it. The scoping is the app's, so this is
        the check that the app actually applies it. */
     await page.goto(`${BASE}/bookmarks?uid=student_two`);
-    await page.locator(".bm-empty, .bm-folders").first().waitFor({ timeout: 15000 });
+    await page.locator(".bm-folders").first().waitFor({ timeout: 15000 });
+    /* The four folders are there — empty is a designed state now — so what
+       proves it is that every one of them is EMPTY, and the count is gone. */
     want("a different student sees none of the first one's saves",
-      (await page.locator(".bm-folders").count()) === 0 && (await page.locator(".bm-empty").count()) === 1);
+      (await page.locator(".bm-empty-cover").count()) === 4
+      && (await page.locator(".bm-fplay").count()) === 0
+      && /Not yet in/.test(await page.locator(".bm-sub").textContent()));
 
     /* 4 · a question the author deleted disappears QUIETLY, and takes its save
        with it — and, far more importantly, a save whose content has not loaded

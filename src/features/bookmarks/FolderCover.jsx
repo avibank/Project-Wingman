@@ -1,8 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { isCalm } from './motion';
+import { IconRight } from './icons';
+import { FOLDERS } from './useSaves';
 import { fmtTime } from './content';
 
 const DUR = 3200; // ms each item stays up
+
+/** A folder with nothing in it keeps its shape and says how it gets filled. Never a blank tile. */
+export function EmptyCover({ kind, icon }) {
+  const f = FOLDERS[kind];
+  return (
+    <div className="bm-cover">
+      <div className="bm-empty-cover">
+        <span className="bm-eg-ico">{icon}</span>
+        <span className="bm-eg-hint">{f.hint}</span>
+        <span className="bm-eg-cta">{f.cta} <IconRight /></span>
+      </div>
+    </div>
+  );
+}
 
 /** One slide's content. Only facts the app stores: the question, the page number, the lesson title. */
 function Face({ it }) {
@@ -54,7 +70,7 @@ export default function FolderCover({ items, kind, icon, offset = 0 }) {
     return () => { cancelAnimationFrame(raf); folder?.removeEventListener('mouseenter', on); folder?.removeEventListener('mouseleave', off); folder?.removeEventListener('focusin', on); folder?.removeEventListener('focusout', off); };
   }, [n, offset, list.map((x) => x.row.id).join()]);
 
-  if (!n) return (<div className="bm-cover"><div className="bm-empty-cover">{icon}</div></div>);
+  if (!n) return <EmptyCover kind={kind} icon={icon} />;
   return (
     <div ref={root} className={`bm-cover${kind === 'video' ? ' is-video' : ''}`}>
       <div className="bm-slides">

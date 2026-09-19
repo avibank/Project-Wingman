@@ -4,10 +4,14 @@ import { content, useContentVersion } from './content';
 
 export const KINDS = /** @type {const} */ (['question', 'card', 'video', 'page']);
 export const FOLDERS = {
-  question: { slug: 'questions', name: 'Questions', action: 'Practise these' },
-  card: { slug: 'cards', name: 'Study cards', action: 'Test yourself' },
-  video: { slug: 'videos', name: 'Videos', action: 'Resume' },
-  page: { slug: 'pages', name: 'Pages', action: 'Open newest page' },
+  question: { slug: 'questions', name: 'Questions', action: 'Practise these',
+    hint: 'Bookmark a question while you take a quiz.', cta: 'Take a quiz', where: 'on any question while you take a quiz' },
+  card: { slug: 'cards', name: 'Study cards', action: 'Test yourself',
+    hint: 'Flip a chapter\u2019s cards and keep the ones worth another look.', cta: 'Open the card sets', where: 'on any card in the Library\u2019s study card sets' },
+  video: { slug: 'videos', name: 'Videos', action: 'Resume',
+    hint: 'Bookmark a lesson at the moment that matters.', cta: 'Find a lesson', where: 'in the player while a lesson plays' },
+  page: { slug: 'pages', name: 'Pages', action: 'Open newest page',
+    hint: 'Bookmark a page while you read the paper.', cta: 'Open the paper', where: 'on any page in the paper reader' },
 };
 export const kindFromSlug = (slug) => KINDS.find((k) => FOLDERS[k].slug === slug) ?? null;
 

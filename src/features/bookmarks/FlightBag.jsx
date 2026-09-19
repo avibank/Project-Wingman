@@ -47,6 +47,8 @@ export default function FlightBag({ moduleId }) {
             <g className="bg-sh bg-s2"><rect x="25.5" y="14.5" width="13.5" height="21" rx="1.2" /><path className="bg-fold" d="M35.5 14.5h3.5v3.5z" /><path d="M28.3 18.7h7.8M28.3 21.5h7.8M28.3 24.3h5" /></g>
           </g>
           <g className="bg-drop"><rect x="26" y="9" width="12" height="20" rx="1.2" /></g>
+          {/* the front wall must hide the sheets: --panel carries alpha on the live site, so a ground-coloured copy sits under it */}
+          <path className="bg-frontbase" d="M12.5 27h39v19.5a4.5 4.5 0 0 1-4.5 4.5H17a4.5 4.5 0 0 1-4.5-4.5z" />
           <path className="bg-front" d="M12.5 27h39v19.5a4.5 4.5 0 0 1-4.5 4.5H17a4.5 4.5 0 0 1-4.5-4.5z" />
           <rect className="bg-lip" x="13.6" y="28.1" width="36.8" height="3.2" fill={`url(#${lip})`} />
           <path className="bg-seam" d="M12.5 38h39" />
