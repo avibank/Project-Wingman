@@ -39,7 +39,7 @@ export function makeStore() {
     /* Everything else the app touches while a paper is open. Empty, but
        PRESENT: a 501 here is the harness failing, not the product, and it
        would drown the console assertion that catches real errors. */
-    presence: [], comms_messages: [], reports: [], question_attempts: [],
+    presence: [], presence_visible: [], comms_messages: [], reports: [], question_attempts: [],
     /* The Flight Deck's right seat reads who you have flown with. */
     copilot_participants: [], message_attachments: [],
     paper_reads: [], lesson_progress: [],
@@ -594,6 +594,14 @@ export function postgrestMiddleware() {
     }
 
     const table = url.pathname.slice("/rest/v1/".length).split("?")[0];
+    /* 0032's view: presence minus anybody whose ACCOUNT says invisible. The
+       write side gates on a per-device mirror, so a row can outlive the
+       switch — a second device still beating, or a tab that was closed when
+       it went on. Derived here because this harness has no joins. */
+    if (table === "presence_visible") {
+      const hidden = new Set(store.pilot_profiles.filter((p) => p.invisible).map((p) => p.user_id));
+      store.presence_visible = store.presence.filter((r) => !hidden.has(r.user_id));
+    }
     if (!(table in store)) { console.warn(`[harness] no table "${table}"`); return send(501, { message: `harness: table ${table} not implemented` }); }
 
     if (req.method === "GET") return send(200, shape(embed(table, applyFilters(store[table], url), url, store), url));

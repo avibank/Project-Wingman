@@ -5,6 +5,15 @@ import { isFlySolo } from "./flySolo.js";
 // Presence via heartbeat rather than Realtime channels: one upsert on an
 // interval, and "who is here" is a query for rows seen recently. No project
 // level Realtime configuration required, and a dropped socket self-heals.
+//
+// THE WRITES GO TO `presence`; THE READS GO TO `presence_visible` (0032).
+// That is not tidiness. Fly solo gates the write and deletes the row, which
+// leaves nothing to read — per DEVICE. The gate is the localStorage mirror,
+// and `pilot_profiles.invisible` is the account: turn it on on a phone and a
+// laptop still open on a module keeps writing rows for somebody who asked to
+// disappear, every forty-five seconds. The view drops anybody whose ACCOUNT
+// says invisible, so a row written by a device that has not heard the news
+// reaches nobody. Both ends, because one end is per-device.
 
 export async function heartbeat({ userId, displayName, moduleCode, chapterId }) {
   if (!userId) return;
@@ -43,7 +52,7 @@ export async function fetchChapterPresence(chapterId, excludeUserId) {
   if (isFlySolo()) return [];
   if (!chapterId) return [];
   const { data, error } = await supabase
-    .from("presence")
+    .from("presence_visible")
     .select("*")
     .eq("chapter_id", chapterId)
     .gte("last_seen", sinceIso());
@@ -60,7 +69,7 @@ export async function fetchModulePresence(moduleCode, excludeUserId) {
   if (isFlySolo()) return [];
   if (!moduleCode) return [];
   const { data, error } = await supabase
-    .from("presence")
+    .from("presence_visible")
     .select("*")
     .eq("module_code", moduleCode)
     .gte("last_seen", sinceIso());
@@ -75,7 +84,7 @@ export async function fetchAllPresence(excludeUserId) {
   // Fly solo is symmetric: you see nobody. Gated here rather than in each
   // component, so no caller can forget and leak.
   if (isFlySolo()) return [];
-  const { data, error } = await supabase.from("presence").select("*").gte("last_seen", sinceIso());
+  const { data, error } = await supabase.from("presence_visible").select("*").gte("last_seen", sinceIso());
   if (error) {
     console.error(error);
     return [];

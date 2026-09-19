@@ -37,7 +37,7 @@ export async function fetchCrew(moduleCode, me, { chapterIds = [] } = {}) {
 
   const since = new Date(Date.now() - 1000 * 60 * 5).toISOString();
   const [presence, completions] = await Promise.all([
-    supabase.from("presence").select("user_id, chapter_id, display_name, last_seen")
+    supabase.from("presence_visible").select("user_id, chapter_id, display_name, last_seen")
       .eq("module_code", moduleCode).gte("last_seen", since)
       .then(({ data, error }) => fail(error, data || [])),
     supabase.from("chapter_completions").select("user_id, chapter_id")

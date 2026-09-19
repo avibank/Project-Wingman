@@ -173,6 +173,12 @@ export async function setNotify(userId, mode) {
 // §9.4.3 — formations. Ephemeral, so they are read live and never cached into a
 // list that might outlive them.
 export async function fetchFormations(moduleCode = null) {
+  /* Fly solo is symmetric: you see nobody. This one was missed — it lists
+     open formations across a module AND fetches the members of each, so
+     flying solo still showed other people's study sessions and who was in
+     them. Gated here rather than in each component, so no caller can forget
+     and leak. */
+  if (isFlySolo()) return [];
   let q = supabase.from("formations").select("*").is("ended_at", null);
   if (moduleCode) q = q.eq("module_code", moduleCode);
   const { data, error } = await q;

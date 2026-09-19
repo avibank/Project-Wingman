@@ -20,6 +20,7 @@ import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
 import { withSetting } from "../lib/viewTransition.js";
 import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
+import { clearPresence } from "../lib/presence.js";
 import BlockedList from "./BlockedList.jsx";
 import PilotSettings from "./PilotSettings.jsx";
 import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.js";
@@ -664,6 +665,12 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const setFlySolo = (on) => {
     progress.set(FLY_SOLO_KEY, on);
     mirrorFlySolo(on);
+    /* AND THE ROW GOES NOW, not on the next beat. The heartbeat clears
+       presence when it finds the switch on, and it runs every 45 seconds —
+       so turning it on and closing the tab left the student standing where
+       they were for the better part of a minute, to everybody else. "Nobody
+       sees you" cannot start a minute late. */
+    if (on && user?.id) clearPresence(user.id).catch(() => {});
     if (user?.id) saveProfile(user.id, { invisible: on }).catch(() => setSaveNote(ERROR_GENERIC));
   };
 

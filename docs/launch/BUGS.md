@@ -160,3 +160,45 @@ than at the screen: the screen showed no error at all.
 The card is read-only when Clerk has decided and there is nobody, with a line
 saying what to do about it; `uploadCover` refuses without an id before it
 builds a path. `check:licence` holds both.
+
+## 18 · Fly solo did not hide you from search, or from a second device
+
+**Found:** 2026-09-19, writing the walk §6 asks for by name.
+
+"Nobody sees you and you see nobody." Most of it held — presence gated at the
+write and the row deleted, Crew filtering `invisible`, the roster asking the
+server for visible rows, `licence_card` refusing a solo pilot. Three did not:
+
+**1 · Search.** `people_search` filters on `discoverable`, which is 0011's
+separate opt-out of being *suggested*. A student who had never touched that
+setting stayed findable by callsign while flying solo — type their name into
+Discover and there they were. The two settings are not the same thing:
+`discoverable` is "don't put me forward", Fly solo is "I am not here", and the
+second has to imply the first. Fixed in 0032, and proven against the live
+database with two accounts in each other's orbit: visible → one result,
+Fly solo on → none.
+
+**2 · A second device.** The heartbeat gates on the localStorage mirror, which
+is per device; `pilot_profiles.invisible` is the account. Turn Fly solo on on a
+phone and a laptop still open on a module carries on writing presence rows
+every forty-five seconds. Nobody sees you, except everybody. The same gap
+strands a row when the switch goes on with the tab already closed. 0032 adds
+`presence_visible` — presence minus anybody whose ACCOUNT says invisible — and
+the three readers use it. The writes still go to the table; only the reads
+moved.
+
+**3 · Formations.** `fetchFormations` was the one ungated reader in the Ready
+Room: it lists open study sessions across a module *and* fetches the members of
+each, so flying solo still showed other people's sessions and who was in them.
+
+**And one that was only slow:** turning the switch on did not clear presence,
+it waited for the next beat — up to 45 seconds during which everybody could
+still see where you were standing. "Nobody sees you" cannot start a minute
+late.
+
+`npm run check:solo` holds every reader to the gate and names every function in
+the seven libraries as either gated or not-about-people, so a new one fails the
+build until somebody decides which. `npm run test:solo` drives it with three
+students: one turns it on, one walks every surface and must not find them, and
+a third stays visible throughout — because "they are not on the wall" is also
+what a broken query returns.
