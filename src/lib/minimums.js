@@ -13,13 +13,30 @@ import { PASS_MARK } from "./quiz.js";
 
      PASS_PCT   the real pass mark. 75%. Fixed, external, not the user's to
                 move. It is what the syllabus requires.
-     minimums   the bar the user holds themselves to. Theirs to set, 40–95.
+     minimums   the bar the user holds themselves to. Theirs to set, but only
+                UPWARDS: the pass mark is the floor.
 
    Master Caution lights below MINIMUMS, not below the pass mark. Someone
    holding themselves to 85 wants to be told at 84 even though 84 passes.
-   Someone who has set 60 is told at 59 — and the dial still draws the real
-   pass mark at its true offset, so lowering your own bar moves the
-   requirement visibly off-centre and can never hide it.
+
+   THE FLOOR WAS 40, AND §6 OF THE LAUNCH HANDOFF MOVES IT TO THE PASS MARK.
+   This file used to argue the other way, and the argument is worth keeping
+   where it can be read: "Someone who has set 60 is told at 59 — and the dial
+   still draws the real pass mark at its true offset, so lowering your own bar
+   moves the requirement visibly off-centre and can never hide it."
+
+   What the handoff answers is that a bar under the pass mark is a lamp that
+   stays dark while you are failing the thing you are studying for. At 60, a
+   68% average lights nothing and 68% does not pass. The off-centre dial makes
+   that VISIBLE, which is not the same as making it safe, and the one number
+   on the screen a student is most likely to read as "I am fine" is the one
+   that has to mean it. So the range is the pass mark to 100, and the wording
+   in Preferences says so.
+
+   WHAT IT COSTS, stated rather than discovered later: passOffset is now
+   always <= 0, so the dial's pass tick sits dead centre or to one side only.
+   The drawing is unchanged and still correct; half of its range is simply no
+   longer reachable. Reverting is two numbers.
 
    PASS_PCT is derived from quiz.js rather than written again: the pass mark
    already had exactly one owner and it stays that way.
@@ -31,8 +48,8 @@ export const PASS_PCT = Math.round(PASS_MARK * 100);
 /* The range the slider offers. The floor is not 0: a bar you cannot fall
    below is not a bar, and a lamp that can never light is a dead instrument.
    The ceiling is not 100 for the same reason from the other end. */
-export const MIN_FLOOR = 40;
-export const MIN_CEIL = 95;
+export const MIN_FLOOR = PASS_PCT;      /* §6: "starts at the 75% pass mark" */
+export const MIN_CEIL = 100;            /* "and can only go up from there"   */
 export const DEFAULT_MINIMUMS = PASS_PCT;
 
 export const clampMinimums = (v) => {

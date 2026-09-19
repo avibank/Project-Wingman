@@ -24,7 +24,7 @@ import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.
 import { normaliseCode, isCode } from "../lib/code.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
-import { MIN_FLOOR, MIN_CEIL, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
+import { MIN_FLOOR, MIN_CEIL, PASS_PCT, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
 import { useTiltPermission } from "../lib/useAttitude.js";
 import { useTabPill } from "../lib/tabMotion.js";
 
@@ -934,7 +934,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             </label>
             <p className="livdesc">
               If your average on a module falls below this, Master Caution lights up on
-              that module&rsquo;s card, and nowhere else. It starts at the {MIN_FLOOR}% pass
+              that module&rsquo;s card, and nowhere else. It starts at the {PASS_PCT}% pass
               mark and can only go up from there. Nobody else can see it.
             </p>
             <input id="your-bar" className="barrange" type="range"
@@ -942,7 +942,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                    aria-valuetext={`${bar} per cent`}
                    onChange={(e) => progress.set(MINIMUMS_KEY, clampMinimums(e.target.value))} />
             <div className="barends">
-              <span>{MIN_FLOOR}% · pass mark</span><span>{MIN_CEIL}%</span>
+              <span>{PASS_PCT}% · pass mark</span><span>{MIN_CEIL}%</span>
             </div>
           </div>
 

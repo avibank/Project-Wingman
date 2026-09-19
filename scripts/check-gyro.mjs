@@ -56,8 +56,11 @@ ok("R18 on the bar, one quiz",
    A.gyroLabel(67, 1, 67) === "Attitude indicator, 67 per cent average across 1 quiz, on your bar of 67");
 ok("R18 with nothing flown", A.gyroLabel(null, 0, 67) === "Attitude indicator, no quiz flown yet");
 
-ok("R11 the bar is pw-minimums, 40 to 95, default 75",
-   M.MINIMUMS_KEY === "pw-minimums" && M.clampMinimums(20) === 40 && M.clampMinimums(99) === 95
+/* §6 of the launch handoff moved the floor to the pass mark: 75 to 100, not
+   40 to 95. The key and the default are unchanged, and the default now sits
+   ON the floor — see minimums.js for what that trades away. */
+ok("R11 the bar is pw-minimums, the pass mark to 100, default the pass mark",
+   M.MINIMUMS_KEY === "pw-minimums" && M.clampMinimums(20) === 75 && M.clampMinimums(120) === 100
    && M.DEFAULT_MINIMUMS === 75);
 
 console.log("\ngyro: the ball\n");

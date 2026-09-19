@@ -175,3 +175,32 @@ thread. `identity_display` is still read by notebook.js and discussion.js, so
 it still needed a door.
 
 **Fly solo moved with it**, as §6 asks.
+
+## Item 6 · the bar now starts at the pass mark, and that reverses an argument
+
+§6 asks for Your bar "with the new wording", and the reference's wording is
+"It starts at the 75% pass mark and can only go up from there", over a slider
+from 75 to 100. The app's was 40 to 95, and `minimums.js` carried a written
+argument for the wider range:
+
+> Someone who has set 60 is told at 59 — and the dial still draws the real
+> pass mark at its true offset, so lowering your own bar moves the requirement
+> visibly off-centre and can never hide it.
+
+Both cannot be true, so this is a reversal rather than a port, and it is
+recorded as one.
+
+**Why the handoff wins.** A bar under the pass mark is a lamp that stays dark
+while you are failing the thing you are studying for: at 60, a 68% average
+lights nothing, and 68% does not pass. Making that visible on a dial is not
+the same as making it safe, and the one number a student is most likely to
+read as "I am fine" has to mean it.
+
+**What it costs.** `passOffset` is now always ≤ 0, so the dial's pass tick
+sits dead centre or to one side only — half of a correct drawing is no longer
+reachable. Reverting is two numbers in `minimums.js`.
+
+**And one bug it caught.** The new copy interpolated `MIN_FLOOR` into the
+sentence "It starts at the {MIN_FLOOR}% pass mark", which read "the 40% pass
+mark" on the live site for about twenty minutes. The pass mark is `PASS_PCT`
+and always was; the two are only the same number now by design.

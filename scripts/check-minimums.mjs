@@ -24,8 +24,15 @@ console.log("minimums: the two numbers\n");
 /* ---------------------------------------------------------------- the pair */
 ok("the pass mark has one owner", M.PASS_PCT === Math.round(PASS_MARK * 100), `${M.PASS_PCT}`);
 ok("minimums default to the pass mark", M.DEFAULT_MINIMUMS === M.PASS_PCT);
-ok("the range is a real range", M.MIN_FLOOR < M.DEFAULT_MINIMUMS && M.DEFAULT_MINIMUMS < M.MIN_CEIL,
-   `${M.MIN_FLOOR}–${M.MIN_CEIL}`);
+/* §6 MOVED THE FLOOR TO THE PASS MARK, so the default now SITS ON it rather
+   than between the two ends. The rule that matters is unchanged and is stated
+   below: the bar can never be set under the mark you are being examined
+   against. */
+ok("the range starts at the pass mark and ends at a hundred",
+   M.MIN_FLOOR === M.PASS_PCT && M.MIN_CEIL === 100, `${M.MIN_FLOOR}–${M.MIN_CEIL}`);
+ok("and the default is the floor — you start held to the real mark",
+   M.DEFAULT_MINIMUMS === M.MIN_FLOOR);
+ok("the bar can only go up from there", M.MIN_CEIL > M.MIN_FLOOR);
 ok("a bar below the floor is refused", M.clampMinimums(0) === M.MIN_FLOOR);
 ok("a bar above the ceiling is refused", M.clampMinimums(100) === M.MIN_CEIL);
 ok("nonsense falls back to the default", M.clampMinimums("x") === M.DEFAULT_MINIMUMS
@@ -81,12 +88,15 @@ ok("and it says so in words", M.readingWords(null, 75) === "No quizzes taken yet
      M.readingWords(20, 75) === "55 under your bar");
 
   // THE REAL PASS MARK HOLDS ITS TRUE OFFSET. Brief §3, stated as a number.
-  ok("at a 60 bar the pass tick sits at +15", M.passOffset(60) === 15);
-  ok("at a 75 bar it sits dead centre", M.passOffset(75) === 0);
+  /* The drawing is unchanged; half its range is simply no longer reachable
+     now that the bar cannot go under the mark. Both halves are still checked,
+     because the function is still the function. */
+  ok("at a 60 bar the pass tick would sit at +15", M.passOffset(60) === 15);
+  ok("at the floor it sits dead centre", M.passOffset(M.MIN_FLOOR) === 0);
   ok("at a 90 bar it sits at -15", M.passOffset(90) === -15);
-  ok("lowering your bar can never hide the requirement",
-     M.passOffset(M.MIN_FLOOR) > 0 && !M.isPegged(M.passOffset(60)),
-     `floor offset ${M.passOffset(M.MIN_FLOOR)}`);
+  ok("and no bar a student can set hides the requirement",
+     M.passOffset(M.clampMinimums(0)) <= 0 && !M.isPegged(M.passOffset(M.MIN_CEIL)),
+     `floor offset ${M.passOffset(M.MIN_FLOOR)}, ceiling ${M.passOffset(M.MIN_CEIL)}`);
 }
 
 /* --------------------------------------------------------------- wording */
