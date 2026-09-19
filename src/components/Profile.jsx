@@ -862,7 +862,12 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                 <LicenceCard
                   profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
                   photo={photo} stats={myStats} stamp={myStamp} admin={isAdmin}
-                  action={<button type="button" className="lic-invite" disabled>Invite to squadron</button>}
+                  /* A PICTURE OF THE BUTTON, not a disabled one. This is
+                     what somebody else sees; you cannot invite yourself, so
+                     there is nothing here to press and nothing to explain
+                     why it will not work. A <span> rather than a disabled
+                     <button> keeps it out of the tab order as well. */
+                  action={<span className="lic-invite" data-preview="">Invite to squadron</span>}
                 />
               </div>
             </div>

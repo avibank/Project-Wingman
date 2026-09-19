@@ -300,3 +300,6 @@ input.lic-bio{ width: min(100%, 40ch); }
 .lic-crow{ display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--t2); }
 .lic-cnote{ margin: 8px 0 0; text-align: center; color: var(--t3); font-size: 14px; }
 .lic-cbtns{ display: flex; gap: 8px; margin-top: 16px; }
+/* In the preview it is a picture of the button, so it does not look pressable. */
+.lic-invite[data-preview]{ cursor: default; }
+.lic-invite[data-preview]:hover{ filter: none; }

@@ -2166,7 +2166,11 @@ function AppInner() {
                     setPilotSheet(null);
                     openRoomAt({ kind: "module", moduleCode: activeModuleCode });
                   }}
-                  onClose={() => setPilotSheet(null)} onChanged={() => {}} />
+                  onClose={() => setPilotSheet(null)}
+                  /* Blocking or muting somebody changes what the room may
+                     show, and this was an empty function — so the person you
+                     had just blocked stayed on screen until a reload. */
+                  onChanged={refreshRoom} />
     )}
     <StampFilters />
     <BookmarksToastHost />

@@ -29,3 +29,25 @@ Three honest options, none of them item 6's:
 
 Nothing is broken today. It is written down because a setting that can be read
 and not written is the shape that rots.
+
+## Five library files nothing imports any more
+
+Found in the closing sweep, by resolving every import in `src/` — static and
+dynamic — against every file:
+
+| file | what it was |
+|---|---|
+| `src/lib/readerChrome.js` | Reader **v5**'s chrome. v6 replaced it. |
+| `src/lib/readerPlatform.js` | v5's "platform is not a breakpoint" rules. |
+| `src/lib/backstop.js` | a timeout helper; `viewTransition.js` grew its own. |
+| `src/lib/meanings.js` | the v4/v5 reader's five closed mark meanings. |
+| `src/lib/paperView.js` | superseded, **but `check:paper` imports it.** |
+
+Not deleted, and that is the point of writing it down rather than doing it:
+`paperView.js`, `paperTray.js` and `routeGeometry.js` all look orphaned by the
+same scan and are not — a check imports each one, so they are rules held by
+tests rather than dead weight. Telling those apart takes reading each file,
+which is worth an hour on a quiet day and is not worth doing at the end of a
+long session on the way to a deploy.
+
+None of it ships: nothing imports them, so nothing bundles them.
