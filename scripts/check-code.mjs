@@ -102,8 +102,13 @@ console.log("\nwhere it shows");
   const row = read("src/components/module/RouteTab.jsx");
   ok("a finished lesson carries the pilot's drawn stamp",
      /<Stamp stamp=\{stamp\}/.test(row) && /size=\{46\}/.test(row));
+  /* The angle is the ANGLE THAT SIGN-OFF WAS MADE AT, stored beside the flag
+     when the button was pressed (signoff.js), because it is a fact about that
+     press rather than a function of anything. A derived one is the fallback,
+     for every lesson signed off before the key existed — drop it and those
+     stamps all snap square on the same render. */
   ok("and it sits at that sign-off's own angle rather than square",
-     /rot=\{stampTilt\(/.test(row));
+     /rot=\{tilts\?\.\[lesson\.id\] \?\? stampTilt\(/.test(row));
   ok("an account with no stamp of its own still gets one",
      /stamp \? "Your stamp" : "Finished"/.test(row)
      && /HOUSE_STAMP/.test(read("src/components/Stamp.jsx")));

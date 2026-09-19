@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Stamp from "../Stamp.jsx";
 
 // §3.3 — the sign-off stamp.
 //
@@ -58,7 +59,16 @@ export function Seal({ state }) {
  * @param onVoid   void it — asked for, never assumed
  * @param when     the date it was signed off, for the accessible name
  */
-export default function SignOff({ armed, stamped, onApply, onVoid, when }) {
+/* THE STAMP THAT GOES DOWN IS THE STUDENT'S OWN. §4 of the launch handoff
+   makes inspStamp the one renderer wherever a sign-off appears, and this is
+   the place a sign-off is MADE. Until somebody issues one of their own the
+   house seal stands in — which is the same drawing `Seal` used to make by
+   hand, so nothing looks different for an account with no stamp yet.
+
+   `Seal` stays, and is still exported: it is the ARMED and IDLE states — the
+   outline of a seal waiting to be pressed. A stamp only exists once it has
+   been pressed, and the angle it landed at comes with it (signoff.js). */
+export default function SignOff({ armed, stamped, onApply, onVoid, when, stamp = null, tilt = 0 }) {
   const state = stamped ? "stamped" : armed ? "armed" : "idle";
   const [pressing, setPressing] = useState(false);
   const t = useRef(null);
@@ -84,7 +94,11 @@ export default function SignOff({ armed, stamped, onApply, onVoid, when }) {
     <button type="button" className="stamp" data-s={state}
             disabled={state === "idle"} aria-label={label} title={label}
             onClick={press}>
-      <span className={`sc${pressing ? " press" : ""}`}><Seal state={state} /></span>
+      <span className={`sc${pressing ? " press" : ""}`}>
+        {stamped
+          ? <Stamp stamp={stamp} size={34} rot={tilt} />
+          : <Seal state={state} />}
+      </span>
     </button>
   );
 }

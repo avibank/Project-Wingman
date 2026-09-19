@@ -112,5 +112,38 @@ ok("no arrow on the Flight Deck", L.upFrom({ kind: "deck" }) === null);
       .filter((m) => m.kind === "note").length === 0);
 }
 
+/* ------------------------------------------------- the sign-off's own angle
+   §3 of the launch handoff: "Store a random rotation (±6°) per sign-off." It
+   is stored rather than derived because it is TRUE — it was chosen the moment
+   the stamp went down — and because a derived one moves if the seed is ever
+   regenerated. Its own key beside pw-lesson-done, never inside it: that map is
+   read as booleans in a dozen places, and widening a boolean into an object is
+   how each of those quietly starts reading {} as true. */
+{
+  const S = await import("../src/lib/signoff.js");
+  const spread = new Set();
+  for (let i = 0; i < 400; i++) spread.add(S.rollTilt());
+  ok("a sign-off's angle is within ±6°", [...spread].every((t) => t >= -6 && t <= 6));
+  ok("and it is not always the same angle", spread.size > 50, `${spread.size} distinct`);
+  ok("and it is to one decimal, like the reference's",
+     [...spread].every((t) => Math.round(t * 10) === t * 10));
+
+  let book = S.sign({}, "L1");
+  const first = S.tiltOf(book, "L1");
+  ok("signing stores the angle and the moment",
+     typeof first === "number" && !!S.signedAt(book, "L1"));
+  ok("an unsigned lesson has no angle", S.tiltOf(book, "L2") === null);
+  book = S.unsign(book, "L1");
+  ok("voiding forgets it, because pressing again is a new press",
+     S.tiltOf(book, "L1") === null && S.signedAt(book, "L1") === null);
+
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  ok("the flag and the angle are separate keys",
+     /progress\.set\(SIGNOFF_KEY/.test(app) && /progress\.set\("pw-lesson-done"/.test(app));
+  ok("the lesson page and the lesson row read the stored angle before deriving one",
+     /tiltOf\(progress\.get\(SIGNOFF_KEY/.test(app)
+     && /tilts=\{Object\.fromEntries/.test(app));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

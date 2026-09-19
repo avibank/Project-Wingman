@@ -61,6 +61,7 @@ const LESSON_TABS = ["notes", "comments"];
 
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [], chapterNo = null,
+  stamp = null, tilt = 0,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab,
@@ -242,6 +243,8 @@ export default function LessonPage({
           <SignOff
             armed={watchedToEnd}
             stamped={done}
+            stamp={stamp}
+            tilt={tilt}
             when={added || null}
             onApply={() => onMarkDone?.(lesson.id, true)}
             onVoid={() => {

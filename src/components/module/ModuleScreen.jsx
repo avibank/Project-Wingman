@@ -33,7 +33,7 @@ export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
   papers = [], librarySub = "papers", onOpenPaper,
   readerPin = null, onAddPaper,
-  stamp = null,
+  stamp = null, tilts = null,
   me = null, mates = new Set(), myDone = new Set(), onOpenPerson, onOpenThreads,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
@@ -177,7 +177,7 @@ export default function ModuleScreen({
       <div className="pane" role="tabpanel">
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
-                    open={open} onToggle={toggle} query={query} stamp={stamp}
+                    open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (

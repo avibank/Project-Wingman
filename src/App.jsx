@@ -186,7 +186,8 @@ import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initSaves, resetSaves, noStudent } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
-import { stampOf } from "./lib/stamp.js";
+import { stampOf, stampTilt } from "./lib/stamp.js";
+import { SIGNOFF_KEY, sign, unsign, tiltOf } from "./lib/signoff.js";
 import PilotSheet from "./components/PilotSheet.jsx";
 import { fetchSquadron, fetchRoster } from "./lib/squadron.js";
 import { fetchMyCompletions } from "./lib/partners.js";
@@ -1865,6 +1866,11 @@ function AppInner() {
                 /* The chapter's number, for the label a saved lesson carries in
                    its folder. The save itself points at the lesson's own id. */
                 chapterNo={chaptersFor(activeModuleCode, useTestContent).findIndex((c) => c.id === ch.id) + 1}
+                /* The stamp that goes down, and the angle it landed at — the
+                   stored one when there is a sign-off, so it is the same angle
+                   every time this page is opened. */
+                stamp={myStamp}
+                tilt={tiltOf(progress.get(SIGNOFF_KEY, {}), ls.id) ?? stampTilt(myStamp?.seed || 1, ls.id)}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
@@ -1875,6 +1881,12 @@ function AppInner() {
                 onComplete={(lessonId) => recordLessonDone(lessonId, ch.id)}
                 done={Boolean(moduleState.done[ls.id]) || (moduleState.pos[ls.id]?.pct ?? 0) >= 0.9}
                 onMarkDone={(lessonId, on) => {
+                  /* THE ANGLE IS CHOSEN HERE, once, and stored — §3 asks for a
+                     random ±6° per sign-off. Voiding forgets it, because a
+                     stamp pressed again is a new press and does not land in
+                     the same place. */
+                  const book = progress.get(SIGNOFF_KEY, {});
+                  progress.set(SIGNOFF_KEY, on ? sign(book, lessonId) : unsign(book, lessonId));
                   if (on) return recordLessonDone(lessonId, ch.id);
                   // Un-marking clears the flag but leaves the logbook alone:
                   // the entry says it was finished at a moment, and it was.
@@ -1995,6 +2007,9 @@ function AppInner() {
             onOpenPaper={(paper) => openPaper(paper)}
             readerPin={readerPin}
             stamp={myStamp}
+            /* The angle each lesson was signed off at, so the row and the
+               lesson page draw the same stamp the same way round. */
+            tilts={Object.fromEntries(Object.entries(progress.get(SIGNOFF_KEY, {})).map(([k, v]) => [k, v?.rot]))}
             /* CREW'S OWN DATA. `me` so crew.js can leave the student out of
                their own list, `mates` so a squadron mate gets the teal ring
                without being sorted to the top, and `myDone` so their own stamp

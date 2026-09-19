@@ -37,7 +37,7 @@ const QuizThumb = ({ count }) => (
   </span>
 );
 
-function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp }) {
+function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp, tilts }) {
 
   // A real frame from the lesson's own video, when one can be had. The row
   // paints with the generated tile immediately and the frame replaces it when
@@ -86,7 +86,7 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp }) {
             which is §4's rule and means a row is never blank. */}
         {done ? (
           <span className="imp" title={stamp ? "Your stamp" : "Finished"}>
-            <Stamp stamp={stamp} size={46} rot={stampTilt(stamp?.seed || 1, lesson.id)}
+            <Stamp stamp={stamp} size={46} rot={tilts?.[lesson.id] ?? stampTilt(stamp?.seed || 1, lesson.id)}
                    label={stamp ? `Signed off with your stamp` : "Finished"} />
           </span>
         ) : here ? <span className="go">Resume</span>
@@ -136,7 +136,7 @@ function RouteSkeleton({ rows = 4 }) {
 }
 
 export default function RouteTab({
-  stamp,
+  stamp, tilts,
   module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
   query = "",
 }) {
@@ -198,7 +198,7 @@ export default function RouteTab({
               <div className="kidswrap" id={`kids-${ch.id}`}>
                 <div className="kids">
                   {ch.lessons.map((l) => (
-                    <RouteRow stamp={stamp} key={l.id} lesson={l} chapter={ch}
+                    <RouteRow stamp={stamp} tilts={tilts} key={l.id} lesson={l} chapter={ch}
                               done={isDone(state, l.id)}
                               here={l.id === here?.lesson?.id}
                               pct={state?.pos?.[l.id]?.pct || 0}
