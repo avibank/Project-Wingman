@@ -33,7 +33,7 @@ export function makeStore() {
     lesson_threads: clone(THREADS),
     lesson_replies: [],
     user_progress: [],
-    blocks: [], mutes: [], wingmen: [],
+    blocks: [], mutes: [], wingmen: [], uploads: {},
     formation_members: [], squadron_members: [], squadrons: [],
     chapter_completions: [], quiz_attempts: [],
     /* Everything else the app touches while a paper is open. Empty, but
@@ -507,7 +507,8 @@ export function postgrestMiddleware() {
 
   return async (req, res, next) => {
     const url = new URL(req.url, "http://localhost");
-    if (!url.pathname.startsWith("/rest/v1/") && !url.pathname.startsWith("/harness/")) return next();
+    if (!url.pathname.startsWith("/rest/v1/") && !url.pathname.startsWith("/harness/")
+        && !url.pathname.startsWith("/storage/v1/object/")) return next();
 
     /* `.single()` in supabase-js asks for ONE OBJECT with an Accept header,
        and a real PostgREST answers with a bare object rather than an array of
@@ -535,14 +536,46 @@ export function postgrestMiddleware() {
     if (req.method === "OPTIONS") return send(200, {});
 
     let body = null;
+    /* The raw bytes as well as the parsed object: an upload's body is a WEBP,
+       not JSON, and the stream is drained exactly once here. Reading it again
+       further down attaches a listener to a finished stream, so `end` never
+       fires and the request hangs for ever — which is what the first version
+       of the storage branch below did. */
+    let raw = null;
     if (req.method !== "GET" && req.method !== "DELETE") {
       const chunks = [];
       for await (const c of req) chunks.push(c);
-      const text = Buffer.concat(chunks).toString("utf8");
+      raw = Buffer.concat(chunks);
+      const text = raw.toString("utf8");
       try { body = text ? JSON.parse(text) : null; } catch { body = null; }
     }
 
     const store = storeFor(req);
+
+    /* STORAGE, ENOUGH OF IT TO TEST AN UPLOAD. A POST or PUT to an object
+       path remembers the byte count; a GET of the public path answers a 1x1
+       so an <img> can load. That is the whole of what a screen needs to be
+       driven through pick -> crop -> upload -> the cover changing, with no
+       real bucket and nothing left in one afterwards.
+
+       It is NOT a proxy. HARNESS_STORAGE_ORIGIN sends this prefix to the real
+       project when a test wants the real manual, and vite.config.js decides
+       that, not this file — a stub that answered first would silently replace
+       the thing that walk exists to measure. */
+    if (url.pathname.startsWith("/storage/v1/object/")) {
+      const key = url.pathname.replace("/storage/v1/object/", "").replace(/^public\//, "");
+      if (req.method === "POST" || req.method === "PUT") {
+        store.uploads[key] = raw ? raw.length : 0;
+        return send(200, { Key: key });
+      }
+      if (req.method === "GET") {
+        if (!(key in store.uploads)) return send(404, { message: "Object not found" });
+        res.statusCode = 200;
+        res.setHeader("content-type", "image/gif");
+        res.setHeader("access-control-allow-origin", "*");
+        return res.end(Buffer.from("R0lGODlhAQABAAAAACw=", "base64"));
+      }
+    }
 
     /* A door for tests: reset, seed, or read the whole store. */
     if (url.pathname === "/harness/reset") { stores.set(req.headers["x-harness-store"] || "default", makeStore()); return send(200, { ok: true }); }

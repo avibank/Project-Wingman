@@ -15,14 +15,31 @@ import { join } from "node:path";
 import { deckVars, LIVERIES } from "../src/lib/liveryEngine.js";
 import { finishVars } from "../src/lib/finishEngine.js";
 
+/* STYLESHEETS, AND THE <style> BLOCKS INSIDE COMPONENTS — which is where the
+   gap was. This walked .css only, and about a third of this app's CSS is
+   written inside JSX template literals: App.jsx's global sheet, the profile's,
+   the old chapter quiz's. --mono-0, --mono-400, --mono-500, --mono-700 and
+   --mono-900 lived in one of those, had never been defined anywhere, and
+   carried no fallback — so the correct answer in that quiz had no background,
+   no border and no glow, and nothing could see it. A file this check skips is
+   a file the rule does not apply to. */
 const files = [];
 (function walk(dir) {
   for (const e of readdirSync(dir)) {
     const p = join(dir, e);
     if (statSync(p).isDirectory()) walk(p);
-    else if (p.endsWith(".css")) files.push(p);
+    else if (p.endsWith(".css") || p.endsWith(".jsx")) files.push(p);
   }
 })("src");
+/* A .jsx file's CSS is whatever sits inside a <style> block. Reading the whole
+   file would take every var() in the markup as well, which is legitimate —
+   an inline style may use any property — but those are already checked by
+   being in the same document. This looks only where a stylesheet is. */
+const cssOf = (f) => {
+  const text = readFileSync(f, "utf8");
+  if (!f.endsWith(".jsx")) return text;
+  return [...text.matchAll(/<style>\{`([\s\S]*?)`\}<\/style>/g)].map((m) => m[1]).join("\n");
+};
 
 // Everything the engines emit, in every livery x variant x finish.
 const emitted = new Set();
@@ -42,7 +59,7 @@ for (const L of LIVERIES) {
 const declared = new Set();
 const source = new Map();
 for (const f of files) {
-  const css = readFileSync(f, "utf8");
+  const css = cssOf(f);
   for (const m of css.matchAll(/(--[a-zA-Z0-9-]+)\s*:/g)) {
     declared.add(m[1]);
     if (!source.has(m[1])) source.set(m[1], f);
@@ -87,7 +104,7 @@ for (const f of files) {
 const fails = [];
 let uses = 0;
 for (const f of files) {
-  const css = readFileSync(f, "utf8");
+  const css = cssOf(f);
   for (const m of css.matchAll(/var\(\s*(--[a-zA-Z0-9-]+)\s*([,)])/g)) {
     const [, token, close] = m;
     if (close === ",") continue;                    // has a fallback

@@ -5,6 +5,8 @@ import CoverPicker from "./licence/CoverPicker.jsx";
 import PhrasePicker from "./licence/PhrasePicker.jsx";
 import StampCreator from "./licence/StampCreator.jsx";
 import PhotoPicker from "./licence/PhotoPicker.jsx";
+import CoverCrop from "./licence/CoverCrop.jsx";
+import { checkFile, uploadCover } from "../lib/coverImage.js";
 import { fetchCard, saveCard, syncStats, statsFrom } from "../lib/licence.js";
 import { HOBBS_KEY, DAYS_KEY } from "../lib/hobbs.js";
 import { stampOf, inkByName } from "../lib/stamp.js";
@@ -526,8 +528,26 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
      progress, which meant the one line written to be read by other people was
      the one line other people could not read. */
   const [card, setCard] = useState(null);
-  const [picker, setPicker] = useState(null);       // cover | phrase | stamp | others
+  const [picker, setPicker] = useState(null);       // cover | photo | crop | phrase | stamp | others
   const [statsWas, setStatsWas] = useState(null);
+  /* §5's cover upload: the file, once it has been read, and whether the crop
+     is busy sending. The object URL is revoked when the sheet closes — a
+     blob left in memory is a photo the tab keeps holding. */
+  const [cropSrc, setCropSrc] = useState(null);
+  const [cropBusy, setCropBusy] = useState(false);
+  const coverFileRef = useRef(null);
+  const closeCrop = () => {
+    setPicker(null);
+    setCropSrc((u) => { if (u) URL.revokeObjectURL(u); return null; });
+  };
+  const pickCoverFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const wrong = checkFile(file);
+    if (wrong) { setSaveNote(wrong); return; }
+    setCropSrc(URL.createObjectURL(file));
+    setPicker("crop");
+  };
 
   useEffect(() => {
     setHolderName(user?.fullName || "");
@@ -796,10 +816,26 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                          }}
                          onClose={() => setPicker(null)} />
           )}
+          {/* PNG, JPEG, WEBP and GIF only — coverImage.js says why, and says
+              it in words when somebody hands it a HEIC. */}
+          <input ref={coverFileRef} type="file" hidden
+                 accept="image/png,image/jpeg,image/webp,image/gif"
+                 onChange={pickCoverFile} />
+          {picker === "crop" && cropSrc && (
+            <CoverCrop src={cropSrc} busy={cropBusy} onCancel={closeCrop}
+                       onUse={async (blob) => {
+                         setCropBusy(true);
+                         const r = await uploadCover(user?.id, blob);
+                         setCropBusy(false);
+                         if (!r.ok) { setSaveNote(r.message); return; }
+                         await patchCard({ cover: "image", cover_image: r.url });
+                         closeCrop();
+                       }} />
+          )}
           {picker === "cover" && (
             <CoverPicker cover={card?.cover || "contour"} ink={card?.cover_ink}
                          onPick={patchCard}
-                         onUpload={() => setSaveNote("Uploading your own cover is coming — pick a design for now.")}
+                         onUpload={() => coverFileRef.current?.click()}
                          onClose={() => setPicker(null)} />
           )}
           {picker === "phrase" && (

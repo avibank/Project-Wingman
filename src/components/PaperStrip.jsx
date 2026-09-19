@@ -11,7 +11,11 @@ import { GyroMarks } from "./Gyro.jsx";
 import { gyroState, gyroLabel } from "../lib/attitude.js";
 import { DEFAULT_MINIMUMS } from "../lib/minimums.js";
 
-const MONO = "'Geist Mono', monospace";
+/* The token, not the face. CLAUDE.md: the brand faces are reached through
+   --font-ui and --font-mono and never named. It works as an inline style
+   because a custom property resolves the same in the style attribute as it
+   does in a stylesheet. */
+const MONO = "var(--font-mono)";
 
 // Both switches, as everywhere else: the device asking and the person asking,
 // and either alone stops it. The Smooth Air blanket rule covers this too, but

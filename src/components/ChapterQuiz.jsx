@@ -167,7 +167,7 @@ function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapte
             <button key={idx} className={`exam-opt exam-opt--${state} ${flashIdx === idx ? "is-flash" : ""}`} onClick={() => choose(idx)}>
               <span className="exam-opt-letter">{String.fromCharCode(65 + idx)}</span>
               <span>{opt}</span>
-              {state === "correct" && <CheckCircle2 size={16} color="var(--mono-0)" />}
+              {state === "correct" && <CheckCircle2 size={16} color="var(--ok)" />}
               {state === "wrong" && <XCircle size={16} color="var(--text-tertiary)" />}
             </button>
           );
@@ -245,11 +245,22 @@ function ChapterQuiz({ questions, chapterId, chapterCode, moduleCode, nextChapte
           transition: background 240ms ease-out, color 240ms ease-out, border-color 240ms ease-out; }
 
         /* Lit: up the ramp, a soft emission at the edge, marker filled solid.
-           Shown always, including when the user was wrong. */
-        .exam-opt--correct { background: var(--mono-700); border-color: var(--mono-500);
-          color: var(--mono-0); box-shadow: 0 0 0 1px var(--mono-500), 0 0 18px -4px var(--mono-400); }
-        .exam-opt--correct .exam-opt-letter { background: var(--mono-0); color: var(--mono-900);
-          border-color: var(--mono-0); }
+           Shown always, including when the user was wrong.
+
+           IT WAS LIT WITH A RAMP THAT DOES NOT EXIST. --mono-0, --mono-400,
+           --mono-500, --mono-700 and --mono-900 were a monochrome scale from
+           an earlier vocabulary; nothing has declared any of them for a long
+           time and none of the five carried a fallback, so the correct answer
+           had no background, no border and no glow — it looked exactly like
+           an option nobody had touched. check:tokens could not see it because
+           it read .css files and this stylesheet is a template literal.
+
+           Lit means --ok here, which is this app's one colour for right. */
+        .exam-opt--correct { background: color-mix(in oklab, var(--ok) 20%, transparent);
+          border-color: var(--ok); color: var(--t1);
+          box-shadow: 0 0 0 1px var(--ok), 0 0 18px -4px var(--ok); }
+        .exam-opt--correct .exam-opt-letter { background: var(--ok); color: var(--on-mark);
+          border-color: var(--ok); }
 
         /* Extinguished: down the ramp, receding toward the ground, marker
            hollow and struck. It is not scolding — it is simply not lit. */

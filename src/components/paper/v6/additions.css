@@ -15,6 +15,16 @@
    in here and is not.
    ========================================================================= */
 
+/* ── the mono face is the app's, reached the app's way ───────────────────
+   reader.css asks for `var(--mono, monospace)` twice. Nothing in this app
+   declares --mono — it is the demo's name for the token this app calls
+   --font-mono — so both sites fell through to the bare `monospace` fallback
+   and rendered in the platform's default mono rather than Geist. Declared
+   here rather than corrected there, because the shipped sheet is not edited
+   and check:paper holds it to that. Same trade bm-app.css makes for
+   --bm-mono. */
+.rdr { --mono: var(--font-mono); }
+
 /* ── the reader is a surface over the app ────────────────────────────────
    `.rdr` is `position:fixed;inset:0`, and it renders inside `.app` rather
    than into the body so the app's own preference classes — Smooth Air, the

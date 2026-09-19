@@ -196,7 +196,7 @@ const ROOM_CSS = `
 .app[data-paper="1"] .play { background: transparent; border: 1.4px solid var(--active); }
 .app[data-paper="1"] .play svg { color: var(--active); }
 .app[data-paper="1"] .rev { position: absolute; left: -1px; top: 14px; bottom: 14px; width: 2px; background: var(--active); }
-.app[data-paper="1"] .pref { position: absolute; right: 12px; bottom: 11px; font-family: "Geist Mono", ui-monospace, monospace;
+.app[data-paper="1"] .pref { position: absolute; right: 12px; bottom: 11px; font-family: var(--font-mono);
   font-size: 8.5px; letter-spacing: .9px; color: var(--t3); opacity: .75; }
 /* The scanlines sit on the shell, not the scroller: an absolutely positioned
    overlay inside a scroll container scrolls with the content. */
@@ -206,7 +206,7 @@ const ROOM_CSS = `
 .ink { stroke: var(--active); fill: none; stroke-width: 1.15; vector-effect: non-scaling-stroke; }
 .inkh { stroke: var(--hair); fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .inkf { fill: var(--active); stroke: none; }
-.cn { font-family: "Geist Mono", ui-monospace, monospace; font-size: 7px; fill: var(--t3); }
+.cn { font-family: var(--font-mono); font-size: 7px; fill: var(--t3); }
 
 /* Tooth. The standard grain layer is overlay-blended isotropic noise, which on
    a light ground reads as digital noise rather than as paper. This multiplies a

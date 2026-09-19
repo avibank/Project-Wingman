@@ -73,3 +73,38 @@ case is now 4.38:1 on Mocha, and every ink clears the large-text floor.
 
 `npm run check:licence` measures all thirty-six and fails if a fixed threshold
 comes back.
+
+## 14 · The correct answer in the chapter quiz was styled with tokens that do not exist
+
+**Found:** 2026-09-19, by widening `check:tokens`.
+
+`.exam-opt--correct` in `ChapterQuiz.jsx` lit the right answer with
+`--mono-700`, `--mono-500`, `--mono-0` and `--mono-400`, and its letter with
+`--mono-0` and `--mono-900`. None of the five has been declared anywhere for a
+long time — they were a monochrome ramp from an earlier vocabulary — and none
+of the six uses carried a fallback. So the correct answer had no background,
+no border and no glow: it looked exactly like an option nobody had touched.
+
+`check:tokens` could not see it because it walked `.css` files, and about a
+third of this app's CSS lives in `<style>{`…`}</style>` blocks inside JSX. It
+reads those now, and found exactly these eight uses and nothing else.
+
+Lit means `--ok` here, which is this app's one colour for right.
+
+## 15 · Twenty-five mono surfaces fell through to a fallback
+
+`var(--mono, 'Geist Mono', ui-monospace, monospace)` appeared 25 times across
+six stylesheets, and `--mono` is declared nowhere. It rendered correctly, by
+accident, because the fallback names the face — which is the thing CLAUDE.md
+says not to do: "the brand faces are reached through tokens, never named
+directly."
+
+All 25 are `var(--font-mono)` now, and four more in `module.css`, two in
+`Deck.jsx` and one in `PaperStrip.jsx` that named `"Geist Mono"` outright.
+Measured after: `.ptime`, `.sdnow` and the logbook's stamps all compute to
+exactly the token's value, the same face as before.
+
+`reader.css` is the exception and stays as shipped — `check:paper` holds it to
+being byte-identical. Its two uses get `--mono` declared in `additions.css`
+instead, which is where that pack's adaptations live, and they were genuinely
+falling through to the platform mono rather than to Geist.

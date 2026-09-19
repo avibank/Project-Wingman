@@ -53,7 +53,7 @@
 @media (max-width: 560px){ .mhero-title{ font-size: 29px; } }
 .mhero-code{
   display: block;
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   letter-spacing: .08em;
   color: var(--t3);
@@ -97,7 +97,7 @@
 }
 .route-here{ fill: var(--active); }
 .route-label{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: 15px;
   letter-spacing: .08em;
   fill: var(--t3);
@@ -264,7 +264,7 @@
 }
 .ipanel-name{ font-size: var(--fs-sm); color: var(--t1); }
 .ipanel-fig{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ok);
 }
 /* Under the pass mark is a fail, not a caution. --bad is the semantic for
@@ -272,7 +272,7 @@
    [data-under] attribute keeps the state readable without the colour (§1.4). */
 .ipanel-fig[data-under="1"]{ color: var(--bad); }
 .ipanel-mark{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); color: var(--t3);
 }
 .ipanel-foot, .ipanel-empty{

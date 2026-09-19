@@ -167,7 +167,7 @@
 .rthumb[data-tile]::after{
   content: attr(data-code);
   position: absolute; inset: auto 8px 10px 8px;
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: 11px;                     /* decoration, not reading matter */
   letter-spacing: .08em;
   color: oklch(1 0 0 / .48);
@@ -310,7 +310,7 @@
    taught everyone this — a time inside a comment is pressable. The behaviour
    already exists; looking like the thing people know is free. */
 .cmt-seek{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--active);

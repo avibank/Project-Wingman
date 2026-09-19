@@ -281,3 +281,22 @@ input.lic-bio{ width: min(100%, 40ch); }
 /* The viewer's actions under the card, inside the pilot sheet. */
 .ps-acts{ display: grid; gap: 8px; width: 100%; margin-top: 22px; }
 .ps-acts .lic-invite{ margin-top: 0; }
+
+/* The crop window: the cover's own shape, the image drawn to fill it and
+   moved by two custom properties, so the preview and the exported canvas
+   apply the same transform. */
+.lic-crop{
+  position: relative; width: 100%; overflow: hidden;
+  border-radius: 12px; background: var(--sunk);
+  cursor: grab; touch-action: none; user-select: none;
+}
+.lic-crop:active{ cursor: grabbing; }
+.lic-crop img{
+  position: absolute; left: 50%; top: 50%;
+  min-width: 100%; min-height: 100%;
+  transform: translate(-50%, -50%) translate(var(--cx, 0), var(--cy, 0)) scale(var(--cz, 1));
+  object-fit: cover; pointer-events: none;
+}
+.lic-crow{ display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--t2); }
+.lic-cnote{ margin: 8px 0 0; text-align: center; color: var(--t3); font-size: 14px; }
+.lic-cbtns{ display: flex; gap: 8px; margin-top: 16px; }

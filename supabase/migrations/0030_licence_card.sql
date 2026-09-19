@@ -157,3 +157,56 @@ as $$
         where (b.user_id = p_viewer and b.blocked_id = p_user)
            or (b.user_id = p_user   and b.blocked_id = p_viewer))
 $$;
+
+-- ================================================================ storage
+-- §5: "Image upload needs size and type limits, storage, and a crop that
+-- fills 640x128." The crop is the browser's (src/lib/coverImage.js); this is
+-- the other two, stated where they cannot be argued with.
+--
+-- PUBLIC, LIKE THE OTHER THREE. A licence card is opened by other people; a
+-- signed URL for a picture that every viewer is allowed to see is a round
+-- trip per view and an expiry to get wrong. The bucket is public and, like
+-- chat-attachments, has NO select policy — it can be read by path and not
+-- listed, so one person's cover cannot be used to enumerate everybody's.
+--
+-- 1MB and four types. What is uploaded is a 640x128 WEBP the browser rendered
+-- — about 40KB — so a megabyte is already ten times the room it needs, and
+-- anything larger did not come from this app.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('covers', 'covers', true, 1048576,
+        array['image/webp', 'image/png', 'image/jpeg', 'image/gif'])
+on conflict (id) do update
+  set public             = excluded.public,
+      file_size_limit    = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+-- ONE OBJECT PER PILOT, AT THEIR OWN ID. `{user}/cover.webp` and nothing
+-- else, so an upload cannot land under somebody else's folder and a second
+-- cover replaces the first rather than filling the bucket. Update is allowed
+-- for exactly that reason — the path is stable and the contents change.
+-- Delete is not: there is no screen that removes a cover, only ones that
+-- replace it.
+drop policy if exists covers_upload on storage.objects;
+create policy covers_upload on storage.objects
+  for insert to anon, authenticated
+  with check (
+    bucket_id = 'covers'
+    and array_length(storage.foldername(name), 1) = 1
+    and name = (storage.foldername(name))[1] || '/cover.webp'
+  );
+
+drop policy if exists covers_replace on storage.objects;
+create policy covers_replace on storage.objects
+  for update to anon, authenticated
+  using (bucket_id = 'covers')
+  with check (
+    bucket_id = 'covers'
+    and name = (storage.foldername(name))[1] || '/cover.webp'
+  );
+
+do $$
+declare n integer;
+begin
+  select count(*) into n from storage.buckets where id = 'covers' and public;
+  if n <> 1 then raise exception '0030: the covers bucket is missing or not public'; end if;
+end $$;

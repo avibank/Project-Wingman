@@ -33,7 +33,7 @@
    you how much of your life is gone; a count tells you what is left. */
 .quiz-count{
   margin-inline-start: auto;
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
   color: var(--t2);
@@ -58,7 +58,7 @@
 
 .q-n{
   display: block;
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   letter-spacing: .08em;
   color: var(--t3);
@@ -111,7 +111,7 @@
   width: 34px; height: 34px;
   border-radius: 9px;
   border: 1px solid var(--edge);
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--t2);
@@ -201,7 +201,7 @@
   background: none;
   border: 1px solid var(--edge);
   border-radius: 9px;
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
   color: var(--t3);
@@ -282,7 +282,7 @@
 /* A retake must be visible, or the needle looks broken when it refuses to move. */
 .q-retake{
   margin: 0 0 10px;
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); letter-spacing: .08em;
   /* Not the caution colour: §1.2 reserves it for Master Caution. A retake
      notice is information, not a thing that needs you. */
@@ -412,7 +412,7 @@
 .q-rev-yours{ color: var(--t3); }
 .q-rev-right{ color: var(--t1); font-weight: 500; }
 .q-rev-q b{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums; color: var(--t3); font-weight: 400;
   margin-inline-end: 6px;
 }

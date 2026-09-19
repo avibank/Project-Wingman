@@ -170,5 +170,64 @@ const inList = (name) => {
      under45.length <= 3, under45.join(" · ") || "none");
 }
 
+/* ------------------------------------------------------- the cover upload
+   §5: "Image upload needs size and type limits, storage, and a crop that
+   fills 640x128." All three, and the limits are the same numbers in the
+   browser and in the bucket. */
+{
+  const C = await import("../src/lib/coverImage.js");
+  ok("the crop is the cover's own size", C.COVER_W === 640 && C.COVER_H === 128);
+  ok("a missing file is refused with words", typeof C.checkFile(null) === "string");
+  ok("a HEIC is refused, and told what to do about it",
+     /HEIC/.test(C.checkFile({ type: "image/heic", size: 100 }) || ""));
+  ok("an SVG is refused — it is a script somebody else's browser runs",
+     Boolean(C.checkFile({ type: "image/svg+xml", size: 100 })));
+  ok("an oversized file is refused before it is decoded",
+     Boolean(C.checkFile({ type: "image/png", size: C.COVER_MAX_BYTES + 1 })));
+  ok("and a normal one is not", C.checkFile({ type: "image/jpeg", size: 400000 }) === null);
+
+  ok("there is no slack to pan at zoom 1", C.clampPan(0.9, 1) === 0 && C.clampPan(-0.9, 1) === 0);
+  ok("and half a window either way at zoom 2",
+     C.clampPan(9, 2) === 0.5 && C.clampPan(-9, 2) === -0.5);
+
+  /* The bucket, and that it agrees with the browser. A type the browser
+     sends and the bucket refuses is an upload that fails for no reason the
+     student can see. */
+  const bucket = /insert into storage\.buckets[\s\S]*?values \('covers'[\s\S]*?\)\non conflict/.exec(sql);
+  ok("the covers bucket is declared in the migration", Boolean(bucket));
+  ok("and it is public, like the other three", /'covers', 'covers', true/.test(sql));
+  const mimes = bucket ? [...bucket[0].matchAll(/'(image\/[a-z+]+)'/g)].map((m) => m[1]) : [];
+  ok("every type the browser will send, the bucket accepts",
+     C.COVER_TYPES.filter((t) => t !== "image/webp").every((t) => mimes.includes(t))
+     && mimes.includes("image/webp"), mimes.join(" "));
+  ok("one object per pilot, at their own id, and no other shape",
+     /name = \(storage\.foldername\(name\)\)\[1\] \|\| '\/cover\.webp'/.test(sql));
+  ok("a second cover replaces the first rather than filling the bucket",
+     /covers_replace on storage\.objects\n  for update/.test(sql));
+  ok("and nothing may delete one from the browser",
+     !/covers[a-z_]* on storage\.objects\n  for delete/.test(sql));
+  ok("the column only accepts a URL in this project's own public storage",
+     /cover_image ~ '\^https:\/\/\[a-z0-9-\]\+\\.supabase\\.co\/storage\/v1\/object\/public\//.test(sql));
+}
+
+/* ------------------------------------------------------------ no dead ends
+   The bookmarks brief's standard, applied here: "A folder, button or link
+   that leads nowhere is a launch blocker." Every control §5 puts on this
+   screen has to do its thing, not announce that it is coming. */
+{
+  const profile = read("src/components/Profile.jsx");
+  ok("Your image opens the file picker, it does not apologise",
+     /onUpload=\{\(\) => coverFileRef\.current\?\.click\(\)\}/.test(profile));
+  ok("and nothing on this screen says a feature is coming",
+     !/coming|not yet|soon/i.test(profile.replace(/\/\*[\s\S]*?\*\//g, "")));
+  for (const [what, re] of [
+    ["the cover picker", /setPicker\("cover"\)/],
+    ["the picture picker", /setPicker\("photo"\)/],
+    ["the phrase picker", /setPicker\("phrase"\)/],
+    ["the stamp creator", /setPicker\("stamp"\)/],
+    ["See it as others do", /setPicker\("others"\)/],
+  ]) ok(`${what} is opened by something`, re.test(profile));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

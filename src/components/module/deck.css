@@ -37,7 +37,7 @@
   border-radius: var(--house-radius, 14px);
 }
 .notedeck .card-t{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--active);
@@ -96,7 +96,7 @@
 }
 .notedeck .deck-dot[data-on="1"]::after{ background: var(--active); opacity: 1; }
 .notedeck .deck-count{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--t3);
   white-space: nowrap;
 }
@@ -119,7 +119,7 @@
 
 /* The timestamp is pre-filled and tappable to detach — nobody types one. */
 .chip{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--active);
@@ -171,7 +171,7 @@
 
 /* A timestamp written inside a comment is a link that seeks. */
 .tseek{
-  font-family: var(--mono, "Geist Mono", ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--active);
   background: none; border: 0; padding: 0;

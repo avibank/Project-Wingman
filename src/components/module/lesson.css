@@ -110,7 +110,7 @@
 .lesson-head{ padding-inline: var(--pad); margin: 0 0 2px; }
 .lesson-code{
   display: block;
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   letter-spacing: .06em;
   color: var(--t3);
@@ -212,7 +212,7 @@
 .pbtn[data-note][aria-pressed="true"]{ color: var(--active); }
 
 .ptime{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
   color: oklch(.92 0 0); padding-inline: 8px; flex: none;
 }
@@ -441,7 +441,7 @@
   padding: 0 6px;
   background: oklch(1 0 0 / .10);
   border: 0; border-radius: 7px;
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--active);
@@ -523,7 +523,7 @@
 @keyframes bin{ from{ opacity: 0; transform: translateX(10px) } }
 @media (prefers-reduced-motion: reduce){ .pbanner{ animation: none } }
 .pbanner-t{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
   color: oklch(1 0 0 / .66); flex: none;
 }
@@ -543,7 +543,7 @@
   padding-bottom: 12px; border-bottom: 1px solid oklch(1 0 0 / .16);
 }
 .pnote-t{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--active);
 }
 .pnote-body{
@@ -602,7 +602,7 @@
 .compose[data-vis="private"]{ border-inline-start-color: var(--line); }
 .compose[data-vis="public"] { border-inline-start-color: var(--active); }
 .compose-t{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
   color: var(--t3); padding-top: 9px; min-width: 4ch;
 }
@@ -645,7 +645,7 @@
   color: inherit; font: inherit;
 }
 .lt{
-  font-family: var(--mono, 'Geist Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
   color: var(--t3); padding-top: 3px;
 }
