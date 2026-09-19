@@ -9,6 +9,7 @@ import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
+import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH } from "./lib/demoFixture.js";
 /* A CHUNK THAT VANISHED UNDER YOU, and why this wrapper exists.
  *
  * Every route below is code-split and the built filenames carry a content
@@ -816,14 +817,19 @@ function AppInner() {
     // honoured once, so nobody's existing choice is thrown away — after that
     // the device copy is the only one written.
     setFontSize(loadJSON("pw-font-size", progress.get("pw-font-size", "medium")));
-    const storedLivery = progress.get("pw-livery", DEFAULT_LIVERY);
+    /* ?fixture=demo pins the one skin the reference and this app share.
+       The reference's dark values ARE Sky night, to the decimal, so a pixel
+       diff can only measure layout once both sides are wearing it. Dev only:
+       demoOn() is constantly false in a production build. */
+    const storedLivery = demoOn() ? DEMO_LIVERY : progress.get("pw-livery", DEFAULT_LIVERY);
     setLivery(engineLivery(storedLivery));
     // Aurora was a livery before it was a finish. Someone stored as aurora gets
     // sky plus the aurora finish, so the thing they picked still looks like the
     // thing they picked.
-    setFinish(progress.get("pw-finish", RETIRED_TO_FINISH[storedLivery] ?? null));
+    setFinish(demoOn() ? DEMO_FINISH
+      : progress.get("pw-finish", RETIRED_TO_FINISH[storedLivery] ?? null));
     setRuled(progress.get("pw-ruled", true));
-    setVariantPin(progress.get("pw-variant-pin", null));
+    setVariantPin(demoOn() ? DEMO_VARIANT : progress.get("pw-variant-pin", null));
     setGrain(progress.get("pw-grain", true));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
     setHydrated(true);
@@ -2058,6 +2064,12 @@ function AppInner() {
                and pressing it looked like nothing happening. The route was
                built and verified; only this could not reach it. A tab that
                changes nothing is a bug, not a placeholder. */
+            /* Crew's empty state offers two ways to fill it, and both open
+               the Ready Room at the place that does the thing rather than a
+               screen of their own: Discover is where a squadron is found, and
+               the module's own feed is where you would say where you are. */
+            onFindSquadron={() => openRoomAt({ kind: "discover", moduleCode: activeModuleCode })}
+            onInviteClass={() => openRoomAt({ kind: "ask", moduleCode: activeModuleCode })}
             onTab={(t) => go(t === "library" ? routePath.library(activeModuleCode)
               : t === "crew" ? routePath.crew(activeModuleCode)
               : t === "people" ? routePath.people(activeModuleCode)

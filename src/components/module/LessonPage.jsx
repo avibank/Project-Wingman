@@ -209,7 +209,7 @@ export default function LessonPage({
           around 800px down and the thing students came to write in lives below
           the fold. The areas are named, so the arrangement can be swapped
           again without touching the components. */}
-      <div className="watch" data-layout="b">
+      <div className="watch" data-layout="b" data-ref="lesson">
       <div className="pl">
         {/* An empty sized box. Never move the video node into it. */}
         <div className="player-slot" ref={slotRef} />

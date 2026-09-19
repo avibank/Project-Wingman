@@ -36,3 +36,7 @@ tests/artifacts/
 tests/report/
 tests/screens/
 tests/last-run.json
+
+# ref-diff's own output and its saved sign-in — screenshots and a session cookie.
+tools/ref-diff-out/
+tools/.auth.json

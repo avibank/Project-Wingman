@@ -60,7 +60,7 @@ export default function LicenceCard({
   const issued = Boolean(stamp);
 
   return (
-    <div className="lic-card">
+    <div className="lic-card" data-ref="licence-card">
       <Cover cover={cover} edit={edit} onPick={onPickCover} />
       {admin && (
         <span className="lic-adm"><ShieldCheck size={11} aria-hidden="true" /> ADMIN</span>

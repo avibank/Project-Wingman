@@ -31,6 +31,8 @@ import { stampTilt } from "../../lib/stamp.js";
 import { fetchCrew } from "../../lib/crew.js";
 import { initials, hueFor } from "../../lib/familiar.js";
 import "./crew.css";
+import "./ref-module.css";
+import CrewEmpty from "./CrewEmpty.jsx";
 
 /* One face. `on` is a live presence dot; `mate` is the teal ring.
  *
@@ -67,7 +69,8 @@ function Stack({ people, mates, onOpen, cap = 6 }) {
 }
 
 export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myStamp,
-                                  mates = new Set(), query = "", onOpenPerson, onOpenThreads, myDone = new Set() }) {
+                                  mates = new Set(), query = "", onOpenPerson, onOpenThreads,
+                                  myDone = new Set(), onFindSquadron, onInviteClass }) {
   const [crew, setCrew] = useState(null);
 
   useEffect(() => {
@@ -109,6 +112,20 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
         <div className="crew-empty">
           Nobody by that name on {moduleName}. Try a callsign, or clear the search to see everyone.
         </div>
+      </div>
+    );
+  }
+
+  /* NOBODY ELSE HERE YET, AND THAT IS ITS OWN SCREEN. It used to fall through
+     to the wall below and draw a chapter row per chapter with "No stamps yet"
+     in each — the absence said three times, and what Crew IS said nowhere.
+     §2: "An empty Crew tab would be bad; a dead one is worse." */
+  if (!crew.people.length) {
+    return (
+      <div className="crew ref-mod">
+        <CrewEmpty moduleName={moduleName}
+                   onFind={() => onFindSquadron?.()}
+                   onInvite={() => onInviteClass?.()} />
       </div>
     );
   }

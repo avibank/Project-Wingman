@@ -944,7 +944,8 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {/* -------------------------------------------------------- PREFERENCES */}
       {tab === "preferences" && (
-        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-preferences" aria-labelledby="ptab-preferences">
+        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-preferences"
+             aria-labelledby="ptab-preferences" data-ref="preferences">
           {flags["voice.characters"] && (
             <div className="block">
               <span className="eyebrow">Who greets you</span>

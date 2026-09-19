@@ -256,3 +256,28 @@ not "1 hours 0 minutes".
 Where it counts is unchanged and is what was asked for: inside a module —
 its screen, a chapter, a lesson, a quiz, a card set — and the paper reader.
 `MODULE_ROUTES` in App.jsx is that list, and `check:gyro` now holds it.
+
+## "Nobody else on Module 1 yet" — a heading is not the sentence
+
+`check:doors` §5 refuses any line that states an absence without naming the
+next action, and the Crew empty state's own title states one. The title is
+the reference build's, word for word (`crewEmpty()` in
+`docs/launch/code/14-crew-and-empty-state.js`), and START-HERE's first
+instruction is that the reference IS the specification — two earlier passes
+rebuilt these screens from a description instead and that is the defect being
+repaired.
+
+Decided alone, because the owner is away: the heading joins the rule's
+**named** exception list rather than the copy being rewritten. The reason the
+rule survives it is that the block satisfies §10 one element down — a
+paragraph saying what Crew is and why it helps, then **Find a squadron** and
+**Invite your class** as the two things to press, then a closing line that
+says what happens when somebody else arrives. The rule reads one run of text
+at a time and cannot see a button two elements away; that is a limit of the
+check, not a licence to write a dead end.
+
+It is narrow and was proved so by planting the bug: `"Nobody here yet."` added
+to the same file still fails. Only `Nobody else on <module> yet` passes.
+
+`check:states` needs nothing — its JSX scan stops at `{`, and the title
+carries `{moduleName}`.

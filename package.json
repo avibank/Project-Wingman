@@ -75,6 +75,9 @@
     "test:reader:one": "node scripts/reader-tests.mjs --project=laptop",
     "reader:setup": "node --env-file=.env.local scripts/run-sql.mjs supabase/migrations/0018_reader_rebuild.sql --yes --force",
     "paper:linearize": "node scripts/linearize-paper.mjs",
+    "ref:css": "node scripts/scope-ref-css.mjs",
+    "ref:pages": "node tools/make-ref-pages.mjs",
+    "ref:diff": "node tools/ref-diff.mjs",
     "reader:css": "node scripts/scope-reader-css.mjs",
     "measure:manual": "node --env-file=.env.local scripts/measure-manual.mjs",
     "check:room": "node scripts/check-room.mjs",
@@ -102,6 +105,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.11.0",
     "pg": "^8.23.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "vite": "^5.4.1"
   },
   "allowScripts": {

@@ -21,6 +21,7 @@
    ========================================================================= */
 import { supabase } from "./supabaseClient.js";
 import { isFlySolo } from "./flySolo.js";
+import { demoOn, demoCrew } from "./demoFixture.js";
 import { stampOf } from "./stamp.js";
 
 const fail = (e, f) => { if (e) console.error(e); return f; };
@@ -34,6 +35,10 @@ export async function fetchCrew(moduleCode, me, { chapterIds = [] } = {}) {
   if (!moduleCode) return { ...none, solo: false };
   /* Symmetric, and this is the half that runs on your own device. */
   if (isFlySolo()) return none;
+  /* ?fixture=demo — the reference build's own fourteen people, so a pixel
+     diff of this screen measures the layout rather than the content. Dev
+     only; demoOn() is constantly false in a production build. */
+  if (demoOn()) return demoCrew(chapterIds);
 
   const since = new Date(Date.now() - 1000 * 60 * 5).toISOString();
   const [presence, completions] = await Promise.all([

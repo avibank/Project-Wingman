@@ -31,6 +31,7 @@ export const HIDDEN_TABS = [{ id: "people", label: "People" }];
 
 export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
+  onFindSquadron, onInviteClass,
   papers = [], librarySub = "papers", onOpenPaper,
   readerPin = null, onAddPaper,
   stamp = null, tilts = null,
@@ -130,7 +131,9 @@ export default function ModuleScreen({
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
           the surface below, and the list lives inside the same border. */}
-      <div className="mcard">
+      {/* tools/ref-diff.mjs photographs this element and the same one on
+          the reference page. The attribute is the contract between them. */}
+      <div className="mcard" data-ref="module-panel">
       <div className="tabsbar">
         <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}
              ref={tabsRef} onKeyDown={walkTabs}>
@@ -191,7 +194,12 @@ export default function ModuleScreen({
           <CrewTab moduleCode={mod?.code || mod?.id} moduleName={mod?.name}
                    chapters={chapters} me={me} myStamp={stamp} mates={mates}
                    query={query} myDone={myDone}
-                   onOpenPerson={onOpenPerson} onOpenThreads={onOpenThreads} />
+                   onOpenPerson={onOpenPerson} onOpenThreads={onOpenThreads}
+                   /* The empty state's two ways out. Both open the Ready Room
+                      at the place that does the thing — Discover finds a
+                      squadron, and the module's own feed is where you would
+                      tell your class where you are. Neither is a new screen. */
+                   onFindSquadron={onFindSquadron} onInviteClass={onInviteClass} />
         )}
         {tab === "people" && (
           <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion}

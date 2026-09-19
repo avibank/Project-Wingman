@@ -199,6 +199,15 @@ for (const f of JSX) {
        launch handoff says to match. check:states carries the same exception;
        see docs/launch/DECISIONS.md. */
     if (line === "Nobody on it right now") continue;
+    /* AND ONE HEADING. "Nobody else on <module> yet" is the Crew empty state's
+       title, and a title is not the sentence — the next action is two buttons
+       directly under it, "Find a squadron" and "Invite your class", with the
+       paragraph between them saying what Crew is and why it helps. It is the
+       reference build's own copy word for word (crewEmpty() in
+       docs/launch/code/14-crew-and-empty-state.js), and START-HERE makes the
+       reference the specification. Rewriting it would be the third rebuild
+       from a description. See docs/launch/DECISIONS.md. */
+    if (/^Nobody else on .{0,40} yet$/.test(line)) continue;
     /* A next action is a verb the student can act on, in the same run of text —
        or an invitation to be the one who fills it, which is the same thing said
        the other way round ("The first one here could be yours"). */
