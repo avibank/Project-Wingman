@@ -18,7 +18,7 @@
    only student-supplied parts — the code and the rim text — go through
    cleanCode/cleanRim/escapeText on the way in. drawStamp is the only door.
    ========================================================================= */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { drawStamp, inkFilterMarkup, HOUSE_STAMP } from "../lib/stamp.js";
 
 /* ---------------------------------------------------------------- the cache */
@@ -37,26 +37,35 @@ function svgFor(st, on, size, rot) {
 }
 
 /* ------------------------------------------------------------- the filters
-   A set of seeds, gathered from whatever is on screen. Rendering a stamp adds
-   its seed; the provider draws one <filter> per seed into a single hidden svg.
-   Without a provider a stamp still draws — it carries its own filter — which
-   is what keeps <Stamp> usable in a screenshot test or a story. */
-const SeedCtx = createContext(null);
-
-export function StampDefs({ children }) {
-  const [seeds, setSeeds] = useState(() => new Set());
-  const api = useMemo(() => ({
-    seeds,
-    add: (s) => setSeeds((was) => (was.has(s) ? was : new Set(was).add(s))),
-  }), [seeds]);
+   A MODULE-LEVEL REGISTRY, NOT A PROVIDER. Every stamp on screen needs its
+   seed's filter in the document, and the obvious shape — a context provider
+   wrapping the app — means the one component that must appear on every screen
+   has to wrap the whole tree. The saves store solved the same problem the same
+   way: a small store, a subscription, and one component that renders what it
+   holds, mounted wherever is convenient. <StampFilters/> sits next to the
+   toast host. */
+const seeds = new Set();
+const listeners = new Set();
+export function useSeed(seed) {
+  useEffect(() => {
+    if (seeds.has(seed)) return;
+    seeds.add(seed);
+    listeners.forEach((f) => f());
+  }, [seed]);
+}
+/** One <filter> per seed on screen. A hundred stamps from one account share one. */
+export function StampFilters() {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const f = () => bump((n) => n + 1);
+    listeners.add(f);
+    return () => listeners.delete(f);
+  }, []);
   return (
-    <SeedCtx.Provider value={api}>
-      {children}
-      <svg width="0" height="0" aria-hidden="true" focusable="false"
-           style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
-        <defs dangerouslySetInnerHTML={{ __html: [...seeds].map(inkFilterMarkup).join("") }} />
-      </svg>
-    </SeedCtx.Provider>
+    <svg width="0" height="0" aria-hidden="true" focusable="false"
+         style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
+      <defs dangerouslySetInnerHTML={{ __html: [...seeds].map(inkFilterMarkup).join("") }} />
+    </svg>
   );
 }
 
@@ -69,17 +78,22 @@ export function StampDefs({ children }) {
  */
 export default function Stamp({ stamp, size = 40, rot = 0, on = true, label, className = "" }) {
   const st = stamp || HOUSE_STAMP;
-  const ctx = useContext(SeedCtx);
   const seed = st.seed || 1;
-  useEffect(() => { ctx?.add(seed); }, [ctx, seed]);
+  useSeed(seed);
 
-  /* Its own filter until the provider has caught up — a stamp must never draw
-     unfiltered for a frame, because the filter is most of what it looks like. */
-  const own = ctx?.seeds.has(seed) ? "" : `<svg width="0" height="0" style="position:absolute"><defs>${inkFilterMarkup(seed)}</defs></svg>`;
+  /* Its own filter alongside the shared one. A stamp must never draw unfiltered
+     for a frame — the filter is most of what it looks like — and the registry
+     above only catches up after an effect. Two identical <filter> elements with
+     the same id are harmless: the first wins, and this one is removed from the
+     markup as soon as the shared defs carry it. */
+  const own = seeds.has(seed) ? "" : `<svg width="0" height="0" style="position:absolute"><defs>${inkFilterMarkup(seed)}</defs></svg>`;
   const svg = svgFor(st, on, size, rot);
 
   return (
-    <span className={`stamp ${className}`} style={{ display: "inline-block", lineHeight: 0 }}
+    /* `insp-stamp`, not `stamp`: lesson.css already owns a bare `.stamp` — the
+       sign-off BUTTON — with a cursor, an opacity and a transition on it, and
+       a drawn stamp on that page would have inherited all three. */
+    <span className={`insp-stamp ${className}`} style={{ display: "inline-block", lineHeight: 0 }}
           role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : "true"}
           dangerouslySetInnerHTML={{ __html: own + svg }} />
   );

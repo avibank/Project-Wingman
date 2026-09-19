@@ -27,7 +27,7 @@ export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
   papers = [], librarySub = "papers", onOpenPaper,
   readerPin = null, onAddPaper,
-  code = null,
+  stamp = null,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
@@ -168,7 +168,7 @@ export default function ModuleScreen({
       <div className="pane" role="tabpanel">
         {tab === "route" && (
           <RouteTab module={mod} chapters={chapters} state={state} here={here}
-                    open={open} onToggle={toggle} query={query} code={code}
+                    open={open} onToggle={toggle} query={query} stamp={stamp}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (

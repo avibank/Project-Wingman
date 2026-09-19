@@ -186,6 +186,8 @@ import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initSaves, resetSaves, noStudent } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
+import { stampOf } from "./lib/stamp.js";
+import { StampFilters } from "./components/Stamp.jsx";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
@@ -1125,6 +1127,11 @@ function AppInner() {
     return () => { live = false; };
   }, [activeModuleCode, me]);
 
+  /* THE STUDENT'S OWN STAMP, from the profile the app already fetches. Null
+     until they issue one, which is what makes the house seal the fallback
+     everywhere rather than a special case anybody has to remember. */
+  const myStamp = useMemo(() => stampOf(myProfile), [myProfile]);
+
   const modulePapers = useMemo(
     () => [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers],
     [activeModuleCode, useTestContent, addedPapers],
@@ -1935,7 +1942,7 @@ function AppInner() {
             minimums={minimums}
             onOpenPaper={(paper) => openPaper(paper)}
             readerPin={readerPin}
-            code={myProfile?.code || null}
+            stamp={myStamp}
             onAddPaper={() => setAddingPaper(true)}
             /* One list, merged once, above. The Library must not know there
                are two sources. */
@@ -2052,6 +2059,9 @@ function AppInner() {
         to be undoable and a failure has to say so, and neither can wait for a
         screen. Mounted once here rather than per screen, so a toast raised on
         the way OUT of a page survives the navigation that raised it. */}
+    {/* One <filter> per ink seed on screen, shared. §8: "Crew walls with 100+
+        stamps stay smooth… share the filter defs." */}
+    <StampFilters />
     <BookmarksToastHost />
     </FirstFlightGate>
     </UsernameGate>

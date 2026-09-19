@@ -171,15 +171,18 @@
 .mscreen .chap.done .cname{color:var(--t1)}
 .mscreen .csub{display:block;font-size:15px;color:var(--t3);margin-top:6px}
 .mscreen .cstate{font-size:15px;color:var(--t3);white-space:nowrap}
-/* THE STAMP. Monospaced, spaced out and boxed, because it is a mark rather
-   than a word — the same three characters that sit on the licence. Tabular
-   figures so two stamps in a column line up. */
-.mscreen .stamp{
+/* THE STAMP IS DRAWN, NOT SPELLED. This was the pilot's three characters in a
+   bordered mono box — the same fact, said the plainest possible way, and "TST"
+   is what it read on the live site. §4 of the launch handoff makes inspStamp
+   THE renderer wherever a sign-off appears; the reference draws a lesson row's
+   at 46px, tilted by that sign-off's own angle (Stamp.jsx, stampTilt).
+
+   It takes the accent as its colour, so a stamp with no ink of its own — the
+   house seal, which is what everybody has until they issue one — is the
+   student's livery. A stamp WITH an ink carries it and ignores this. */
+.mscreen .imp{
   display:inline-flex;align-items:center;justify-content:center;
-  min-width:4.4ch;padding:3px 7px;border-radius:var(--r-chip);
-  background:var(--raised);border:1px solid var(--line);
-  color:var(--t2);font-family:var(--font-mono);font-size:13px;
-  letter-spacing:.12em;font-variant-numeric:tabular-nums;white-space:nowrap;
+  line-height:0;color:var(--active);
 }
 
 .mscreen .cstate.here{color:var(--active);font-weight:600}

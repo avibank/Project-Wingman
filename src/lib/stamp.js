@@ -255,10 +255,22 @@ export function stampOf(row) {
     ink: row.stamp_ink || null,
     seed: row.stamp_seed || 1,
     issuedAt: row.stamp_issued_at,
-    /* A sign-off is stamped at a slight angle, and the angle is the account's
-       rather than the moment's — the same hand pressing the same stamp. §3
-       asks for ±6°, and deriving it from the seed means it survives a reload
-       without another column. */
+    /* The account's own resting angle, for the places a stamp is shown as
+       ITSELF rather than as a sign-off — the licence, a profile. A sign-off
+       gets its own; see stampTilt. */
     tilt: ((row.stamp_seed || 1) * 37 % 121) / 10 - 6,
   };
+}
+
+/* THE ANGLE A PARTICULAR SIGN-OFF SITS AT. §3: "Store a random rotation (±6°)
+   per sign-off." Random once and stored is the shape that brief asks for, and
+   item 4 gives sign-offs a record to store it in. Until then it is derived
+   from the account's seed and the thing signed off, which is the property that
+   actually matters on screen: every stamp at a slightly different angle, and
+   the same one every time you come back. A tilt that re-randomised on each
+   render would read as the page shaking. */
+export function stampTilt(seed, key) {
+  let h = (seed || 1) >>> 0;
+  for (const ch of String(key || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return Math.round(((h % 121) / 10 - 6) * 10) / 10;
 }

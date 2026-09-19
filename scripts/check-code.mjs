@@ -93,11 +93,20 @@ console.log("\nwhere it shows");
   ok("the licence shows it", /codeblock/.test(profile) && /Your code/.test(profile));
   ok("an account from before this gets one on sight", /claimCode\(user\.id, await freeCode\(\)\)/.test(profile));
 
+  /* THE LESSON ROW DRAWS A STAMP NOW, NOT THE CODE. It used to put the three
+     characters in a bordered box — "TST" on the live site — and §4 of the
+     launch handoff makes inspStamp the one renderer wherever a sign-off
+     appears. The code is still what the stamp CENTRES on, so it has not left
+     the row; it is drawn rather than spelled. These two assertions are the
+     same two facts, against the design that replaced it. */
   const row = read("src/components/module/RouteTab.jsx");
-  ok("a finished lesson is stamped with it rather than ticked",
-     /className="stamp"/.test(row) && /code\s*\n?\s*\?\s*<span className="stamp"/.test(row));
-  ok("and an account with no code yet still gets a tick",
-     /: <span className="tick">/.test(row));
+  ok("a finished lesson carries the pilot's drawn stamp",
+     /<Stamp stamp=\{stamp\}/.test(row) && /size=\{46\}/.test(row));
+  ok("and it sits at that sign-off's own angle rather than square",
+     /rot=\{stampTilt\(/.test(row));
+  ok("an account with no stamp of its own still gets one",
+     /stamp \? "Your stamp" : "Finished"/.test(row)
+     && /HOUSE_STAMP/.test(read("src/components/Stamp.jsx")));
 }
 
 console.log(`\ncode: ${pass} passed, ${fails.length} failed`);

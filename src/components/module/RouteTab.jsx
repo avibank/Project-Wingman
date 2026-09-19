@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import Stamp from "../Stamp.jsx";
+import { stampTilt } from "../../lib/stamp.js";
 import { isDone, chapterState, timeLeft, durationWords } from "./lessonState.js";
 import { thumbTile } from "../../lib/familiar.js";
 import { passAt } from "../../lib/quiz.js";
@@ -35,7 +37,7 @@ const QuizThumb = ({ count }) => (
   </span>
 );
 
-function RouteRow({ lesson, chapter, done, here, pct, onOpen, code }) {
+function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp }) {
 
   // A real frame from the lesson's own video, when one can be had. The row
   // paints with the generated tile immediately and the frame replaces it when
@@ -74,14 +76,19 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen, code }) {
       </span>
       {/* The current row is the only lesson row with a button. */}
       <span className="istat">
-        {/* THE STAMP. A tick says "this is finished"; the code says who
-            finished it, which is the same fact with a name on it — and it is
-            the mark that goes on anything printed. An account with no code yet
-            keeps the tick, so nothing is ever blank here. */}
+        {/* THE STAMP, AND IT IS DRAWN NOW RATHER THAN SPELLED.
+            This was the pilot's three-character code in a bordered box — "TST"
+            on the live site — which is the same fact, said in the plainest
+            possible way. §4 makes inspStamp THE renderer for every place a
+            sign-off appears, and a lesson row is the first of them; the
+            reference draws it at 46px, tilted by that sign-off's own angle.
+            Until a student issues one of their own the house seal stands in,
+            which is §4's rule and means a row is never blank. */}
         {done ? (
-          code
-            ? <span className="stamp" title={`Finished — ${code}`}>{code}</span>
-            : <span className="tick"><Check aria-hidden="true" /> Done</span>
+          <span className="imp" title={stamp ? "Your stamp" : "Finished"}>
+            <Stamp stamp={stamp} size={46} rot={stampTilt(stamp?.seed || 1, lesson.id)}
+                   label={stamp ? `Signed off with your stamp` : "Finished"} />
+          </span>
         ) : here ? <span className="go">Resume</span>
           : null}
       </span>
@@ -129,7 +136,7 @@ function RouteSkeleton({ rows = 4 }) {
 }
 
 export default function RouteTab({
-  code,
+  stamp,
   module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
   query = "",
 }) {
@@ -191,7 +198,7 @@ export default function RouteTab({
               <div className="kidswrap" id={`kids-${ch.id}`}>
                 <div className="kids">
                   {ch.lessons.map((l) => (
-                    <RouteRow code={code} key={l.id} lesson={l} chapter={ch}
+                    <RouteRow stamp={stamp} key={l.id} lesson={l} chapter={ch}
                               done={isDone(state, l.id)}
                               here={l.id === here?.lesson?.id}
                               pct={state?.pos?.[l.id]?.pct || 0}
