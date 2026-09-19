@@ -289,6 +289,18 @@ const PROFILE_CSS = `
 .rowtext b { display: block; font-size: calc(14px * var(--scale, 1)); font-weight: 600; }
 .rowtext span { display: block; font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); margin-top: 2px; }
 
+/* §6 — Your bar, in its own box: a heading that carries the number, a
+   paragraph that says what it does, the slider, and its two ends labelled.
+   The old .barctl — a slider and an output squeezed onto a settings row — is
+   gone with the row. */
+.barhead { display: flex; align-items: baseline; gap: 10px; font-size: calc(15px * var(--scale, 1)); color: var(--t1); }
+.barbig { font-family: var(--font-mono); font-size: calc(20px * var(--scale, 1)); font-weight: 700;
+  color: var(--active-text); font-variant-numeric: tabular-nums; margin-left: auto; }
+.barrange { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 99px;
+  margin: 16px 0 8px; min-height: 44px; accent-color: var(--active); background: transparent; }
+.barends { display: flex; justify-content: space-between; gap: 12px;
+  font-family: var(--font-mono); font-size: calc(11px * var(--scale, 1)); color: var(--t3); }
+
 /* Your bar: the slider and the number it is set to, as one control. */
 .barctl { display: flex; align-items: center; gap: 12px; flex: 0 1 280px; min-width: 0; }
 .barctl input { flex: 1 1 auto; min-width: 0; min-height: 44px; margin: 0; accent-color: var(--active); }
@@ -475,7 +487,7 @@ const PROFILE_CSS = `
 function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPin, livery, onLivery,
                    finish, onFinish, ruled, onRuled,
                    fontSize, onFontSize, reduceMotion, onReduceMotion, dyslexiaFont, onDyslexiaFont,
-                   turbulence, onTurbulence, grain, onGrain, variant }) {
+                   grain, onGrain, variant }) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const progress = useUserProgress();
@@ -903,6 +915,37 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <BlockedList />
           </div>
 
+          {/* §6 — YOUR BAR, in its own box, in the reference's words. Never
+              called "minimums" on screen: that is the file's name for the
+              rule, not the student's name for the number.
+
+              It starts at the 75% pass mark and can only go up, and the
+              paragraph says what lighting up actually means — the module
+              card, and nowhere else. A number whose consequence is unstated
+              is a number people set at random.
+
+              It writes on every step on purpose: the gyro and every lamp
+              re-read it as the thumb moves, which is what shows what the
+              number does. */}
+          <div className="block">
+            <span className="eyebrow">Your bar</span>
+            <label className="barhead" htmlFor="your-bar">
+              The score you&rsquo;re aiming for <b className="barbig">{bar}%</b>
+            </label>
+            <p className="livdesc">
+              If your average on a module falls below this, Master Caution lights up on
+              that module&rsquo;s card, and nowhere else. It starts at the {MIN_FLOOR}% pass
+              mark and can only go up from there. Nobody else can see it.
+            </p>
+            <input id="your-bar" className="barrange" type="range"
+                   min={MIN_FLOOR} max={MIN_CEIL} step="1" value={bar}
+                   aria-valuetext={`${bar} per cent`}
+                   onChange={(e) => progress.set(MINIMUMS_KEY, clampMinimums(e.target.value))} />
+            <div className="barends">
+              <span>{MIN_FLOOR}% · pass mark</span><span>{MIN_CEIL}%</span>
+            </div>
+          </div>
+
           {/* WHAT THE SETTINGS PAGE HELD. Three settings that had no other
               door — when you study, what you are notified about, and the study
               glow — plus the pilot row they sit in. The page is gone; these
@@ -987,19 +1030,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               <span className="rowtext"><b>Text size</b><span>Across chapters, discussion and the library</span></span>
               <Seg label="Instrument scale" value={fontSize} options={SCALES} onPick={onFontSize} />
             </div>
-            {/* Writes on every step, on purpose: the gyro and every lamp re-read it
-                as the thumb moves, which is what shows what the number does. */}
-            <div className="row">
-              <label className="rowtext" htmlFor="your-bar">
-                <b>Your bar</b><span>Below this, Master Caution lights up</span>
-              </label>
-              <span className="barctl">
-                <input id="your-bar" type="range" min={MIN_FLOOR} max={MIN_CEIL} step="1" value={bar}
-                       aria-valuetext={`${bar} per cent`}
-                       onChange={(e) => progress.set(MINIMUMS_KEY, clampMinimums(e.target.value))} />
-                <output htmlFor="your-bar">{bar}%</output>
-              </span>
-            </div>
+            {/* YOUR BAR MOVED TO PREFERENCES (§6). It was here because Text
+                size is here and both are sliders, which is a reason about
+                controls rather than about meaning: what it sets is when
+                Master Caution lights, which is not an appearance. */}
             {tilt.needed && (
               <div className="row">
                 <span className="rowtext"><b>Tilt</b><span>Lets the gyro follow your phone</span></span>
@@ -1014,8 +1048,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                     on={reduceMotion} onChange={onReduceMotion} />
             <Switch id="plain-language" label="Plain Language" note="A clearer typeface for reading fatigue and dyslexia"
                     on={dyslexiaFont} onChange={onDyslexiaFont} />
-            <Switch id="turbulence" label="Turbulence" note="A small nudge when you move between pages"
-                    on={turbulence} onChange={onTurbulence} />
             {flags["appearance.grain"] && (
               <Switch id="grain" label="Grain" note="Fine noise over the light. Off is flatter but smoother."
                       on={grain} onChange={onGrain} />

@@ -12,8 +12,6 @@ import { useUserProgress } from "../lib/userProgress.jsx";
 import { useUser } from "@clerk/clerk-react";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
-import StudyGlow from "./StudyGlow.jsx";
-import { fetchProfile } from "../lib/squadron.js";
 
 const MAX_RECENT = 5;
 
@@ -23,10 +21,6 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
   // Slide-over state for the notebook / discussion entry points.
   const [panel, setPanel] = useState(null); // { kind: "notebook"|"threads", chapter }
   const [counts, setCounts] = useState({});
-  // §7.6 — the glow has a settings toggle. Default on; the body stays fully
-  // usable at 0% glow.
-  const [profile, setProfile] = useState(null);
-  const glowEnabled = profile ? profile.glow_enabled !== false : true;
   const progress = useUserProgress();
   const { user } = useUser();
   const { prefs: socialPrefs } = useSocialPrefs();
@@ -54,12 +48,8 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
 
   useEffect(() => { onReadingChange?.(reading && !!openId); }, [reading, openId, onReadingChange]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    let live = true;
-    fetchProfile(user.id).then((p) => live && setProfile(p)).catch(() => {});
-    return () => { live = false; };
-  }, [user?.id]);
+  /* The profile fetch that was here read ONE field — glow_enabled — and the
+     glow is gone (§6), so the round trip went with it. */
 
   useEffect(() => {
     if (!progress.loaded) return;
@@ -329,10 +319,13 @@ function ChaptersPanel({ onSignIn, activeModuleCode = "JT", initialChapterId = n
               )}
               {isOpen && readingChapter && (
                 <div className="chapter-body chapter-body-opening" id="reader-panel" role={readingChapter ? "tabpanel" : undefined} aria-labelledby={readingChapter ? `reader-tab-${chapterTab}` : undefined}>
-                  {/* §7.6 — the body's one social element, and it is lighting,
-                      not an element. At n = 0 it is 3%. */}
-                  <StudyGlow chapterId={ch.id} enabled={glowEnabled}
-                    onSayHi={() => setPanel({ kind: "threads", chapter: ch })} />
+                  {/* THE STUDY GLOW IS GONE (§6). §7.6 had this body warm
+                      when other people were reading the same chapter, at 3%
+                      when nobody was. It was the one thing on this page that
+                      changed because of somebody else and could not be seen
+                      changing, and its switch was one of three settings
+                      keeping a Settings page alive. Deleted with the switch
+                      rather than before it, so nothing is left stranded. */}
                   <div className="chapter-video">
                     {!ch.clip ? (
                       <div className="video-none">

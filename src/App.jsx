@@ -215,7 +215,6 @@ import {
 } from "./lib/retention.js";
 import Review from "./components/module/Review.jsx";
 import { listPapers, fileHref } from "./lib/papers.js";
-import { triggerHaptic } from "./lib/haptics.js";
 import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
@@ -794,7 +793,6 @@ function AppInner() {
   // pinned when the finish was chosen.
   const variant = finish === "aurora" ? "night" : (variantPin || autoVariant);
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
-  const [turbulence, setTurbulence] = useState(true);
   const [boarding, setBoarding] = useState(true);
   // onAnimationEnd was the only way out of a full-screen blocking overlay, and
   // a backgrounded tab never runs animations — so opening the app in a tab that
@@ -828,7 +826,6 @@ function AppInner() {
     setVariantPin(progress.get("pw-variant-pin", null));
     setGrain(progress.get("pw-grain", true));
     setDyslexiaFont(progress.get("pw-dyslexia-font", false));
-    setTurbulence(progress.get("pw-turbulence", true));
     setHydrated(true);
   }, [progress.loaded, progress.isSignedIn]);
   useEffect(() => {
@@ -869,10 +866,7 @@ function AppInner() {
     if (!hydrated) return;
     progress.set("pw-dyslexia-font", dyslexiaFont);
   }, [dyslexiaFont, hydrated]);
-  useEffect(() => {
-    if (!hydrated) return;
-    progress.set("pw-turbulence", turbulence);
-  }, [turbulence, hydrated]);
+
   useEffect(() => {
     // Detect whether localStorage actually works here (some private-browsing modes block it)
     try {
@@ -1359,12 +1353,14 @@ function AppInner() {
     appliedVars.current = written;
   }, [shownLivery, variant, grain, finish]);
 
+  /* TURBULENCE IS GONE (§6). It was a switch on the Appearance tab called "a
+     small nudge when you move between pages", and what it actually did by the
+     end was fire a haptic on two navigations and nothing else — the shake it
+     was named for had already been removed, leaving an empty `if
+     (!reduceMotion) {}` behind it. A setting whose whole effect is a vibration
+     on a phone, named after an animation that no longer exists, is a setting
+     that cannot be explained; deleted rather than renamed. */
   const switchTab = (nextTab) => {
-    if (turbulence) {
-      triggerHaptic();
-      if (!reduceMotion) {
-      }
-    }
     scrollPositions.current[tab] = deckRef.current?.scrollTop || 0;
     // Through go(), so the tab slide applies here as it does on the profile —
     // keepScroll because this restores each tab's own position below, and go()
@@ -1392,7 +1388,6 @@ function AppInner() {
     if (!moduleCode) return;
     const m = MODULES.find((x) => x.code === moduleCode);
     if (m && m.status && m.status !== "active") return;   // deliberately locked
-    if (turbulence) triggerHaptic();
     setPreferredModuleCode(moduleCode);
     go(targetTab === "pdf" ? routePath.library(moduleCode) : routePath.module(moduleCode));
   };
@@ -1729,8 +1724,6 @@ function AppInner() {
             onReduceMotion={setReduceMotion}
             dyslexiaFont={dyslexiaFont}
             onDyslexiaFont={(v) => withTheme(() => setDyslexiaFont(v))}
-            turbulence={turbulence}
-            onTurbulence={(v) => withSetting(() => setTurbulence(v))}
             grain={grain}
             onGrain={(v) => withSetting(() => setGrain(v))}
           />

@@ -19,7 +19,11 @@ const REASONS = [
   "Something else",
 ];
 
-function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged,
+/* `chapterId` used to be a third field on the report and no call site has ever
+   passed it — this sheet opens from the room, the crew and the route strip,
+   none of which is inside a chapter. It went rather than being passed as null
+   from four places. `channelId` still carries where the report came from. */
+function PilotSheet({ pilot, channelId, onClose, onChanged,
                      mates = false, onInvite, onSeat, onChat }) {
   const { user } = useUser();
   const [mode, setMode] = useState("menu");   // menu | report | confirm-block
@@ -153,7 +157,7 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged,
               onClick={() => run(
                 () => reportContent({
                   reporterId: user.id, targetType: "user", targetId: pilot.user_id,
-                  reason, chapterId, channelId,
+                  reason, channelId,
                 }),
                 "Sent. Someone will look at this."
               )}>

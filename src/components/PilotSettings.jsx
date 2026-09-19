@@ -1,145 +1,56 @@
-import { useEffect, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
-import { NOTIFY_MODES } from "../lib/readyRoom.js";
-import Tail, { TailStyles } from "./Tail.jsx";
-import Spooling from "./Spooling.jsx";
 
-// §8.3 makes hiding yourself mandatory and requires it in settings; §7.6
-// requires a toggle for the glow. Both flags were already honoured throughout
-// the app and neither could be set anywhere, so both were effectively stuck on.
-//
-// Fly solo is symmetric now — nobody sees you and you see nobody — so the old
-// "you still see everyone" framing no longer applies here.
-//
-// THIS IS ON THE PREFERENCES TAB NOW. It was the whole of the Settings page,
-// and Settings has gone — Bookmarks took its row in the profile menu. What it
-// holds is three settings with no other door: when you study (matching.js ranks
-// squadron suggestions by it), what you are notified about, and the study glow.
-// Deleting the page as the brief's §1 asked would have deleted all three, and
-// the blocked list beside them; so the page went and its contents moved.
+/* WHAT IS LEFT OF THIS PANEL, AND WHAT §6 TOOK OFF IT.
 
-const STUDY_TIMES = [
-  { id: "early", label: "Early" },
-  { id: "day", label: "Day" },
-  { id: "evening", label: "Evening" },
-  { id: "late", label: "Late" },
+   It used to be the whole of a Settings page and then three settings with no
+   other door. §6 deletes two of them outright and turns the third from a
+   choice into a statement:
+
+   · "When you usually study" is gone. It is asked once at signup, where it
+     does its only real work — assign_squadron matches on it — and a chip row
+     in Preferences invited people to change a thing whose only effect was
+     already behind them. The value is still set and still read; there is no
+     longer a second place to set it. See docs/launch/BACKLOG.md.
+   · "Study glow" is gone, and so is the glow: a chapter no longer warms
+     because somebody else is reading it. The toggle went with the feature
+     rather than before it, which is the order that leaves nothing stranded.
+   · NOTIFICATIONS ARE A FIXED LIST. Three chips offering "replies and your
+     teams", "that plus every chapter you opened", or "nothing" made the
+     middle one a trap — every chapter you have ever opened is a notification
+     a week — and the third a setting that silently turns off the only three
+     things this app ever sends. What it sends is short, and it is all things
+     a person actually did, so it is stated instead of chosen. §11 still
+     holds: never a streak warning, a countdown, or a nudge to come back.
+
+   The blocked list that sat beside them is on the Preferences tab itself, in
+   How social, which is where it belongs and where it already is. */
+
+/* Everything this app will ever send you. Not a choice; a promise. */
+const NOTICES = [
+  "A reply to something you wrote",
+  "An answer to a question you asked",
+  "Your squadron, when somebody speaks",
+  "Somebody taking the right seat beside you",
 ];
 
-function Toggle({ id, on, onChange, label, hint, busy }) {
-  return (
-    <div className="ps2-row">
-      <label className="ps2-row-text" htmlFor={id}>
-        <span className="ps2-row-label">{label}</span>
-        {hint && <span className="ps2-row-hint">{hint}</span>}
-      </label>
-      <button
-        id={id} role="switch" aria-checked={on} disabled={busy}
-        className={`ps2-switch ${on ? "is-on" : ""}`}
-        onClick={() => onChange(!on)}
-      >
-        <span className="ps2-knob" aria-hidden="true" />
-        {/* §13 — state is never carried by position or colour alone. */}
-        <span className="ps2-switch-state">{on ? "On" : "Off"}</span>
-      </button>
-    </div>
-  );
-}
-
 function PilotSettings() {
-  const { user, isSignedIn } = useUser();
-  const [profile, setProfile] = useState(null);
-  const [state, setState] = useState("loading");   // loading | ready | unavailable
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!isSignedIn || !user?.id) { setState("unavailable"); return; }
-    let live = true;
-    fetchProfileStatus(user.id)
-      .then(({ profile: p, failed }) => {
-        if (!live) return;
-        if (failed) { setState("unavailable"); return; }
-        setProfile(p || {});
-        setState("ready");
-      })
-      .catch(() => live && setState("unavailable"));
-    return () => { live = false; };
-  }, [isSignedIn, user?.id]);
-
-  // Optimistic, then reconciled: a toggle that lags reads as broken. On failure
-  // the value goes back rather than lying about having saved.
-  const patch = async (fields) => {
-    const prev = profile;
-    setProfile((p) => ({ ...p, ...fields }));
-    setBusy(true);
-    let saved = null;
-    try {
-      saved = await saveProfile(user.id, fields);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      // Without the finally, a rejected save leaves busy stuck true and every
-      // control on this panel disabled for the rest of the session.
-      setBusy(false);
-    }
-    if (!saved) setProfile(prev);
-  };
-
-  if (state === "loading") return <Spooling />;
-  if (state === "unavailable") return null;
-  const glowOn = profile?.glow_enabled !== false;
-
+  /* NO STATE, NO FETCH, NO LOADING. Everything this panel used to read from
+     pilot_profiles has gone — the study time to signup, the glow with the
+     feature, and the notification mode into a sentence — so what is left is a
+     statement of what the app sends. A spinner in front of a fixed list is a
+     spinner in front of nothing. */
   return (
     <section className="ps2">
       <h2 className="ps2-head">Your pilot</h2>
 
-      {/* THE CALLSIGN IS NOT HERE ANY MORE. It is on the Licence tab, in the
-          field that also claims it — Profile.jsx checks uniqueness on the
-          server and writes it to Clerk AND pilot_profiles, where this one only
-          ever wrote the profile row. Two fields for one name is how an account
-          ends up with a callsign in one place and not the other, which is
-          exactly the bug the licence field was written to fix. */}
-
       <div className="ps2-block">
-        <p className="ps2-row-label">When you usually study</p>
-        <div className="ps2-chips">
-          {STUDY_TIMES.map((t) => (
-            <button
-              key={t.id} disabled={busy} aria-pressed={profile?.study_time === t.id}
-              className={`ps2-chip ${profile?.study_time === t.id ? "is-on" : ""}`}
-              onClick={() => patch({ study_time: t.id })}
-            >{t.label}</button>
-          ))}
-        </div>
-        <p className="ps2-note">Used to put you with pilots who are awake when you are.</p>
+        <p className="ps2-row-label">What you&rsquo;ll hear about</p>
+        <ul className="ps2-nlist">
+          {NOTICES.map((n) => <li key={n}>{n}</li>)}
+        </ul>
+        {/* §11 — never a streak warning, a countdown, or a nudge to come back. */}
+        <p className="ps2-note">Only things a person actually did. Never a streak warning or a nudge to come back.</p>
       </div>
 
-      <div className="ps2-block">
-        <p className="ps2-row-label">Notifications</p>
-        <div className="ps2-chips">
-          {NOTIFY_MODES.map((m) => (
-            <button
-              key={m.id} disabled={busy}
-              aria-pressed={(profile?.notify || "default") === m.id}
-              className={`ps2-chip ${(profile?.notify || "default") === m.id ? "is-on" : ""}`}
-              onClick={() => patch({ notify: m.id })}
-            >{m.label}</button>
-          ))}
-        </div>
-        {/* §11 — never send a streak warning, a countdown, or a re-engagement nag. */}
-        <p className="ps2-note">Only for things a person actually did. Never a streak warning or a nudge to come back.</p>
-      </div>
-
-      <div className="ps2-list">
-        <Toggle
-          id="ps2-glow" on={glowOn} busy={busy}
-          onChange={(v) => patch({ glow_enabled: v })}
-          label="Study glow"
-          hint="Warms the chapter you're reading when others are on it. Off is a plain page."
-        />
-      </div>
-
-      <TailStyles />
       <style>{`
         .ps2 { margin: 28px 0 0; }
         .ps2-head { font-family: var(--font-ui); font-size: 17px; font-weight: 500;
@@ -148,35 +59,16 @@ function PilotSettings() {
         .ps2-row-label { display: block; font-size: 16px; color: var(--text-1); margin: 0 0 8px; }
         .ps2-row-hint { display: block; font-size: 14px; line-height: 1.45; color: var(--text-2); max-width: 46ch; }
         .ps2-note { font-size: 14px; color: var(--text-2); margin: 8px 0 0; }
+        /* The reference's .nlist: a dot, then the thing. Not chips — there is
+           nothing to choose. */
+        .ps2-nlist { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .ps2-nlist li { display: flex; align-items: center; gap: 10px; font-size: 14.5px; color: var(--text-1); }
+        .ps2-nlist li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--active); flex: none; }
 
         .ps2-callsign { display: flex; gap: 8px; }
         .ps2-input { flex: 1; min-height: 44px; padding: 0 12px; border: none; border-radius: 12px;
           background: var(--surface-2); color: var(--text-1); font-family: var(--font-ui); font-size: 16px; }
         .ps2-input:focus { outline: 2px solid var(--warm); outline-offset: -1px; }
-        .ps2-save { min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer;
-          background: var(--warm); color: var(--surface-0); font-size: 16px; font-weight: 500; }
-        .ps2-save:disabled { background: var(--surface-2); color: var(--text-3); cursor: default; }
-
-        .ps2-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-        .ps2-chip { min-height: 44px; padding: 8px 14px; text-align: left; max-width: 100%; border: none; border-radius: 999px; cursor: pointer;
-          background: var(--surface-1); color: var(--text-2); font-size: 14px; }
-        .ps2-chip.is-on { background: var(--warm); color: var(--surface-0); }
-
-        .ps2-list { display: grid; gap: 1px; background: var(--hairline);
-          border-radius: 12px; overflow: hidden; }
-        .ps2-row { display: flex; align-items: center; justify-content: space-between; gap: 16px;
-          padding: 12px 14px; background: var(--surface-1); min-height: 56px; }
-        .ps2-row-text { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
-        .ps2-switch { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
-          min-height: 44px; padding: 0 10px 0 4px; border: none; border-radius: 999px;
-          background: var(--surface-2); cursor: pointer; color: var(--text-2); font-size: 14px; }
-        .ps2-switch.is-on { background: color-mix(in oklab, var(--warm) 22%, var(--surface-2));
-          color: var(--text-1); }
-        .ps2-knob { width: 18px; height: 18px; border-radius: 50%; background: var(--text-3);
-          transition: transform 180ms cubic-bezier(0.2,0.8,0.2,1), background 180ms linear; }
-        .ps2-switch.is-on .ps2-knob { background: var(--warm); transform: translateX(4px); }
-        .ps2-switch-state { font-family: var(--font-ui); font-size: 12px; min-width: 22px; }
-        @media (prefers-reduced-motion: reduce) { .ps2-knob { transition: none; } }
       `}</style>
     </section>
   );

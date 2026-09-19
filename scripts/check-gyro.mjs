@@ -121,9 +121,21 @@ ok("R9  the Library header has no dial", !/Dial|MinimumsPop|dialwrap|dialbtn|dia
 ok("R9  and its CSS is gone", !/\.dialwrap|\.dialread|\.dialbtn|minpop/.test(mcss));
 ok("R10 the results dial stays, at 170, sweeping, with its dot",
    /<Dial size=\{170\}/.test(results) && /animate=\{moved\}/.test(results) && /last=\{pct\}/.test(results));
+/* §6 MOVED IT AND REWORDED IT. It was a row on the Appearance tab, labelled
+   "Your bar / Below this, Master Caution lights up" — a slider filed with the
+   text size because both are sliders, which is a reason about controls rather
+   than about meaning. It is its own box on Preferences now, and the sentence
+   under it says where the lamp lights and where it does not, because a number
+   whose consequence is unstated is a number people set at random. The rule
+   this assertion is really holding is unchanged: ONE place sets it, and it is
+   this one. */
 ok("R11 the bar is set in settings",
-   /<b>Your bar<\/b>/.test(profile) && /Below this, Master Caution lights up/.test(profile)
+   /<span className="eyebrow">Your bar<\/span>/.test(profile)
+   && /The score you&rsquo;re aiming for/.test(profile)
+   && /Master Caution lights up on/.test(profile)
    && /progress\.set\(MINIMUMS_KEY, clampMinimums\(/.test(profile));
+ok("R11 and it says where the lamp does NOT light",
+   /and nowhere else/.test(profile));
 ok("R11 and in no second place", !/onMinimums/.test(app) && !/onMinimums/.test(screen));
 ok("R11 never called minimums on screen", !/Your minimums/.test(profile + lib + home));
 ok("R12 the deck reads the bar on every render", /const minimums = readMinimums\(progress\);/.test(home));

@@ -50,8 +50,11 @@ function BlockedList() {
     <section className="bl">
       <h2 className="bl-head">Blocked and muted</h2>
       {!blocks.length && !mutes.length ? (
-        // §10 — no zero. This one is genuinely good news, so it says so.
-        <p className="bl-quiet">Nobody yet. Block or mute anyone from their tail, and they'll be listed here to undo.</p>
+        // §10 — no zero, and no absence either (CLAUDE.md, Voice). It said
+        // "Nobody yet", which is a count of nought with a word in front of
+        // it; it now says what the list is for and where the action lives,
+        // which is what somebody opening an empty one actually needs.
+        <p className="bl-quiet">Block or mute anyone from their tail, and they&rsquo;ll be listed here to undo.</p>
       ) : (
         <>
           {blocks.length > 0 && (
