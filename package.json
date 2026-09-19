@@ -76,7 +76,8 @@
     "check:room": "node scripts/check-room.mjs",
     "test:exam": "node tests/exam-run.mjs",
     "test:vt": "node tests/vt-run.mjs",
-    "test:bm": "node tests/bm-run.mjs"
+    "test:bm": "node tests/bm-run.mjs",
+    "test:lesson": "node tests/lesson-run.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

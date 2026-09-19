@@ -37,6 +37,14 @@ const over = (fg, bg) => {
   const f = lin(fg.L, fg.C, fg.H), b = lin(bg.L, bg.C, bg.H);
   return f.map((v, i) => b[i] + (v - b[i]) * fg.a);
 };
+/* THE SAME COMPOSITE, ONTO A COLOUR THAT IS ALREADY LINEAR RGB. Three
+   translucent layers — a tint on a panel on the ground — cannot be done with
+   `over` alone, and the shortcut of feeding a LUMINANCE back in as an L is
+   what made a pressed chip measure 1.97:1 when it is fine. */
+const overLin = (fg, bgLin) => {
+  const f = lin(fg.L, fg.C, fg.H);
+  return f.map((v, i) => bgLin[i] + (v - bgLin[i]) * fg.a);
+};
 
 // Every one of these is body-sized prose, so they all answer to 4.5.
 const SELECTORS = [
@@ -66,6 +74,14 @@ const SELECTORS = [
   { sel: ".opt-t", token: "--t2", note: "an option" },
   { sel: ".q-rev-explain", token: "--t2", note: "why that was the answer" },
   { sel: ".quiz-count", token: "--t3", note: "of 8" },
+  // §3's logbook. The list that replaced the notes carousel is all prose on
+  // the panel, and one of its lines is teal rather than a grey.
+  { sel: ".lg-body", token: "--t1", note: "the note or question itself" },
+  { sel: ".lg-who", token: "--t3", note: "whose it is and who can see it" },
+  { sel: ".lg-who (right seat)", token: "--copilot-text", note: "the right seat's row, in teal" },
+  { sel: ".nbar[ask] .nbar-handle", token: "--ask", note: "the moment on an open question" },
+  { sel: ".lg-chip", token: "--t2", note: "an unpressed filter" },
+  { sel: ".lg-empty", token: "--t3", note: "what to press to fill it" },
 ];
 const FLOOR = 4.5;
 
@@ -118,6 +134,61 @@ for (const L of LIVERIES) {
       if (r < FLOOR) fails.push(`${L.id}/${variant} ${sel} (${token}) over --raised: ${r.toFixed(2)}:1, under ${FLOOR}`);
     }
   }
+}
+
+/* §3's logbook, continued — TWO PAIRS THE MATRIX ABOVE CANNOT STATE.
+   · a PRESSED chip is --t1 on --active-fill, a third surface;
+   · a stamp is a GRAPHIC, so it answers to 3:1 rather than 4.5 — but it is
+     the whole of what a row's kind looks like, so it is measured rather than
+     waved through. --ask is fixed for the reason --over-video is: it is also
+     painted on the dark note bar over video. It is checked over the page here
+     because the logbook is on the page. */
+const GRAPHIC = 3;
+for (const L of LIVERIES) {
+  for (const variant of ["night", "day"]) {
+    for (const finish of [null, "aurora", "manual"]) {
+      const base = deckVars(L.id, variant).vars;
+      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"]) };
+      const where = `${L.id}/${variant}/${finish || "standard"}`;
+      const ground = parse(v["--ground"]);
+      const panel = parse(v["--panel"]);
+      if (!ground || !panel) continue;
+      const Yp = Y(over(panel, ground));
+
+      const groundLin = lin(ground.L, ground.C, ground.H);
+      const panelLin = overLin(panel, groundLin);
+      /* A pressed chip is --t1 over the accent at 14%, over the panel, over
+         the ground — three translucent layers, composited in order. */
+      const accent = parse(v["--active"]);
+      const t1 = parse(v["--t1"]);
+      if (accent && t1) {
+        const softLin = overLin({ ...accent, a: 0.14 }, panelLin);
+        const r = ratio(Y(overLin(t1, softLin)), Y(softLin));
+        rows.push({ where, sel: ".lg-chip[aria-pressed]", token: "--t1 on the accent at 14%", worst: r });
+        if (r < FLOOR) fails.push(`${where} .lg-chip pressed: ${r.toFixed(2)}:1, under ${FLOOR}`);
+      }
+      for (const [sel, tok] of [[".lg-st (note)", v["--active"]], [".lg-st (ask)", v["--ask"]],
+                                [".lg-st (right seat)", v["--copilot"]]]) {
+        const ink = parse(tok);
+        if (!ink) { fails.push(`${where} ${sel}: could not read the ink`); continue; }
+        const r = ratio(Y(overLin(ink, panelLin)), Y(panelLin));
+        rows.push({ where, sel, token: "graphic", worst: r });
+        if (r < GRAPHIC) fails.push(`${where} ${sel}: ${r.toFixed(2)}:1, under ${GRAPHIC}`);
+      }
+    }
+  }
+}
+
+/* The mark's tip. Fixed, over video, like the banner below it — and measured
+   the same way, against the worst case of a bright frame behind a translucent
+   slab. */
+{
+  const fg = parse("oklch(1 0 0)");
+  const slab = parse("oklch(.16 .02 255 / .96)");
+  const overWhite = over(slab, { L: 1, C: 0, H: 0, a: 1 });
+  const r = ratio(Y(lin(fg.L, fg.C, fg.H)), Y(overWhite));
+  rows.push({ where: "any (over a bright frame)", sel: ".scrub-tip", token: "fixed", worst: r });
+  if (r < FLOOR) fails.push(`.scrub-tip: ${r.toFixed(2)}:1, under ${FLOOR}`);
 }
 
 // The banner is the one pair that is not livery-driven: fixed white on a fixed

@@ -46,9 +46,10 @@ export default function SaveButton({ kind, moduleId, refId, chapter = null, page
       aria-pressed={!!saved} aria-label={saved ? `Remove from ${folder.name}` : `Save to ${folder.name}`} title={saved ? 'Remove bookmark' : 'Bookmark'}
       onClick={onClick}>
       <IconBookmark on={!!saved} />
-      {/* Words only where the surface asks for them — the lesson's title row
-          carries a labelled pill beside two other labelled pills, and an icon
-          on its own there would read as a fourth kind of thing. */}
+      {/* Words only where the surface asks for them. The lesson's title row
+          used to be one of those, beside two other labelled pills; §3 made it
+          a round icon button next to the sign-off stamp, so it passes no
+          label and this renders nothing. */}
       {label && <span>{saved ? label.on : label.off}</span>}
     </button>
   );

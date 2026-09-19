@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { ChevronLeft, ChevronDown,
-         MessageSquare, PenLine } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
@@ -9,15 +8,16 @@ import {
   initials, hueFor, ago, replyCountLabel, toggleReplies,
 } from "../../lib/familiar.js";
 import {
-  observeSlot, notesFor, commentsFor, repliesFor,
-  deleteNote, postReply, newId,
+  observeSlot, commentsFor, repliesFor,
+  deleteNote, removeThread, postReply, newId,
 } from "../../lib/lessonSurface.js";
+import { logEntries, filterLog } from "../../lib/lessonLog.js";
 import "./module.css";
 import "./lesson.css";
 import "./familiar.css";
 import { useUserProgress } from "../../lib/userProgress.jsx";
 import { FLY_SOLO_KEY } from "../../lib/flySolo.js";
-import NoteDeck from "./NoteDeck.jsx";
+import LogTab, { downloadLog } from "./LogTab.jsx";
 import SaveButton from "../../features/bookmarks/SaveButton.jsx";
 import { useTabPill, useSwitchIn } from "../../lib/tabMotion.js";
 import SignOff from "./SignOff.jsx";
@@ -57,11 +57,11 @@ function seekable(text, onSeek) {
 //
 // The player is NOT rendered here. This page renders an empty sized slot and
 // the one player, which lives above the router, positions itself over it.
-const LESSON_TABS = ["notes", "comments"];
+const LESSON_TABS = ["notes", "comments"];   // "notes" is the Logbook tab's id
 
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [], chapterNo = null,
-  stamp = null, tilt = 0,
+  stamp = null, tilt = 0, seat = null,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab,
@@ -85,6 +85,10 @@ export default function LessonPage({
       chapterTitle: chapter.title,
       chapterNo,
       moduleCode: mod.code || mod.id,
+      // Whoever is in the right seat right now. The player draws their marks
+      // teal and cannot know this on its own — the seat belongs to the
+      // account, not to the video.
+      seatId: seat?.partnerId || null,
       // One step ahead: the player prefetches this at halfway.
       next: nextAfterLesson(chapters, chapter.id, lesson.id, state)?.lesson || null,
       // Arriving from "Watch at 2:17" opens at that second instead of where
@@ -100,7 +104,7 @@ export default function LessonPage({
     dispatchPlayer({ type: "load", lessonId: lesson.id, moduleId: mod.code || mod.id, seconds: 0 });
     if (watch) clearWatch();
     return () => setStage(null);
-  }, [lesson.id]);
+  }, [lesson.id, seat?.partnerId]);
 
   const next = nextAfterLesson(chapters, chapter.id, lesson.id, state);
   const hiddenCount = (chapter.lessons || [])
@@ -115,23 +119,20 @@ export default function LessonPage({
   // `me`, not the default. notesFor filters by author and defaults to the
   // historical "u_you"; new notes are stamped with the real id, so omitting it
   // here made every note vanish the instant it was saved.
-  const myNotes = notesFor(session.notes, lesson.id, me);
   const comments = commentsFor(session.threads, lesson.id);
-  const at = session.player.seconds || 0;
 
-  // §3.5 — Export. Plain text in timestamp order, which is the order the list
-  // is already in, so what lands in the file is what was on screen.
-  const exportNotes = () => {
-    const rows = [...myNotes].sort((a, b) => a.t - b.t)
-      .map((n) => `[${mmss(n.t)}] ${n.body}`);
-    const blob = new Blob([`${lesson.title}\n\n${rows.join("\n")}\n`], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${lesson.title.replace(/[^\w -]/g, "")} — notes.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  /* §3 — THE LOGBOOK'S ROWS, and the same ones the player draws on its
+     progress bar. One derivation, two readers: a list that disagreed with the
+     bar directly above it would be two answers to one question. */
+  const seatName = seat
+    ? (people.find((p) => p.id === seat.partnerId)?.callsign || "Right seat")
+    : null;
+  const entries = logEntries(session.notes, session.threads, lesson.id, me,
+                             seat?.partnerId || null);
+  const [logFilter, setLogFilter] = useState("all");
+  /* A filter fixed on somebody who has left the seat would show an empty list
+     with no way back to it, because the chip that set it is gone. */
+  useEffect(() => { if (!seat && logFilter === "seat") setLogFilter("all"); }, [seat, logFilter]);
   // §3.3 — watching to the end ARMS the stamp; the person applies it. Same
   // threshold the completion rule already uses, read from the saved position
   // so it survives a reload rather than only arming inside one sitting.
@@ -144,25 +145,19 @@ export default function LessonPage({
     ? new Date(lesson.addedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })
     : null;
 
-  // ONE composer, in one position, serving both tabs. It does not move when the
-  // tab changes — only its placeholder does — and it carries a timestamp chip
-  // pre-filled with the playhead, so nobody has to type a timestamp.
+  /* THE COMPOSER IS THE COMMENTS TAB'S, and only the Comments tab's.
+     §3 makes writing a private note the player bar's job: press the stamp,
+     the video pauses, and the floating bar opens at the second you were on.
+     The shared field that used to serve both tabs is gone with it, and so is
+     the whole "one field, two drafts" problem it created — a note typed into
+     a public box one tab-switch from being posted. There is now no way to
+     write a note into anything public, because the two do not share a field.
+     The timestamp chip went the same way: a comment carries a moment when you
+     asked it FROM the player, which is what the diamond button does. */
   const composerRef = useRef(null);
-  /* ONE FIELD, TWO DESTINATIONS — AND TWO DRAFTS, which is the part that was
-     missing. The field is shared by design, but the TAB can change under it:
-     type a private note, switch to Comments, and your own words were sitting
-     in the public composer, under the line "Everyone on Module 1 sees this.",
-     one click from being published. A note is private by promise, so the
-     promise cannot survive a tab switch by accident.
-
-     Two drafts rather than clearing on switch: clearing would be safe and
-     would also throw away what someone had typed. This keeps both and shows
-     the one that belongs to where you are. */
-  const [noteDraft, setNoteDraft] = useState("");
   const [commentDraft, setCommentDraft] = useState("");
-  const draft = tab === "notes" ? noteDraft : commentDraft;
-  const setDraft = tab === "notes" ? setNoteDraft : setCommentDraft;
-  const [chip, setChip] = useState(null);
+  const draft = commentDraft;
+  const setDraft = setCommentDraft;
   // Same two conditions the app bar's avatar uses, so the composer can never
   // show a face the top of the screen is hiding.
   const { user: clerkUser } = useUser();
@@ -173,38 +168,21 @@ export default function LessonPage({
   // this is a starting position, not a live binding to the width.
   // What collapsing actually hides. The current row and the next one always
   // show, so a two-lesson chapter hides nothing and must not offer to.
+  /* §3 — "Below 860px … Up next becomes collapsible". Open above that width
+     where it is a column of its own, shut below it where it sits on top of
+     the Logbook. Read once at mount: a starting position, not a live binding
+     to the width. */
   const [listOpen, setListOpen] = useState(
-    () => typeof window === "undefined" || window.innerWidth > 560);
-  const [justSaved, setJustSaved] = useState(null);
-  const focusComposer = () => setTimeout(() => composerRef.current?.focus(), 0);
-
-  // One field, two destinations. The chip decides whether the moment travels
-  // with it; detached, a note has no second and a comment is not prefixed.
+    () => typeof window === "undefined" || window.innerWidth > 860);
   const submitDraft = () => {
     const text = draft.trim();
     if (!text) return;
-    // Only when "Mark this moment" put one there. Before, every comment was
-    // silently prefixed with the playhead time, which is not what a comment
-    // box does anywhere else.
-    const t = chip == null ? null : Math.floor(chip);
-    if (tab === "notes") {
-      const id = newId('N');
-      mutate((st) => ({ ...st, notes: [...st.notes, {
-        id, lessonId: lesson.id, t: t ?? 0, body: text,
-        authorId: me, createdAt: new Date().toISOString(),
-      }]}));
-      setJustSaved(id);
-    } else {
-      const id = newId('T');
-      // Posting with the chip attached prefixes the comment, so the moment
-      // becomes a link like any other timestamp written by hand.
-      const body = t === null ? text : `[${mmss(t)}] ${text}`;
-      postOptimistic(id, (st) => ({ ...st, threads: [...st.threads, {
-        id, moduleId: mod.code || mod.id, lessonId: lesson.id,
-        t: t ?? 0, body, authorId: me, createdAt: new Date().toISOString(),
-      }]}));
-    }
-    setDraft(""); setChip(null);
+    const id = newId('T');
+    postOptimistic(id, (st) => ({ ...st, threads: [...st.threads, {
+      id, moduleId: mod.code || mod.id, lessonId: lesson.id,
+      t: 0, body: text, authorId: me, createdAt: new Date().toISOString(),
+    }]}));
+    setDraft("");
   };
 
   return (
@@ -240,6 +218,14 @@ export default function LessonPage({
             boolean the 90%-watched rule writes: one flag, two writers. */}
         <div className="titlerow">
           <h1 className="lesson-name">{lesson.title}</h1>
+          {/* §3 — Save is a round icon button on the title's line, beside the
+              sign-off. It is the SAME control that was a pill below, and the
+              same one in the player bar: one <SaveButton kind="video">, one
+              saves store, so they cannot disagree about whether this lesson is
+              kept. */}
+          <SaveButton kind="video" className="titlerow-save" moduleId={mod.code || mod.id}
+                      refId={lesson.id} chapter={chapterNo}
+                      getAtSeconds={() => session.player.seconds || 0} />
           <SignOff
             armed={watchedToEnd}
             stamped={done}
@@ -260,26 +246,11 @@ export default function LessonPage({
             player, so it was a third statement of the same fact, and the
             watcher count was pushing the title away from the video it names. */}
 
-        <div className="lact">
-          {/* THE SAME CONTROL AS THE ONE IN THE PLAYER BAR, not a second one.
-              Both are <SaveButton kind="video">, both read the one saves store,
-              so they cannot disagree about whether this lesson is kept — which
-              a separate pw-bookmarks list on this row and a bookmark in the bar
-              certainly would. It saves the second the video is on, because that
-              is what a saved lesson opens at. */}
-          <SaveButton kind="video" className="pill" moduleId={mod.code || mod.id}
-                      refId={lesson.id} chapter={chapterNo}
-                      getAtSeconds={() => session.player.seconds || 0}
-                      label={{ on: "Saved", off: "Save" }} />
-          <button type="button" className="pill"
-                  onClick={() => { setTab("comments"); focusComposer(); }}>
-            <MessageSquare aria-hidden="true" /> Ask a question
-          </button>
-          <button type="button" className="pill"
-                  onClick={() => { setTab("notes"); setChip(Math.floor(at)); focusComposer(); }}>
-            <PenLine aria-hidden="true" /> Mark this moment
-          </button>
-        </div>
+        {/* THE THREE PILLS THAT SAT HERE ARE GONE, and each went somewhere
+            better rather than away: Save is on the title's line above, and
+            "Ask a question" and "Mark this moment" are the diamond and the
+            rectangle in the player's own bar — on the thing they act on,
+            rather than a scroll below the second they refer to. */}
       </div>
 
       <div className="sd sdcard" data-open={listOpen ? "true" : "false"}>
@@ -359,11 +330,11 @@ export default function LessonPage({
             strip, and it was most of what pushed the panel down the page. The
             tab strip is the top of this card now. */}
 
-        <div className="ltabs" role="tablist" aria-label="Notes and comments" ref={ltabsRef}>
+        <div className="ltabs" role="tablist" aria-label="Logbook and comments" ref={ltabsRef}>
           <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
                   onClick={() => setTab("notes")}>
             <span className="tab-pill" aria-hidden="true" />
-            Notes {myNotes.length > 0 && <span className="ltab-n">{myNotes.length}</span>}
+            Logbook {entries.length > 0 && <span className="ltab-n">{entries.length}</span>}
           </button>
           <button type="button" className="ltab" role="tab" aria-selected={tab === "comments"}
                   onClick={() => setTab("comments")}>
@@ -373,15 +344,17 @@ export default function LessonPage({
 
           {/* §3.3/§3.5 — Export lives in the notes header. There is no overflow
               menu: three items behind a menu is three items nobody finds. */}
-          {tab === "notes" && myNotes.length > 0 && (
-            <button type="button" className="ltab-act" onClick={() => exportNotes()}>
+          {tab === "notes" && entries.length > 0 && (
+            <button type="button" className="ltab-act"
+                    onClick={() => downloadLog(lesson.title, filterLog(entries, logFilter))}>
               Export
             </button>
           )}
         </div>
 
-        {/* ONE composer, one position. Only the placeholder changes. */}
-        <div className="composer" data-vis={tab === "notes" ? "private" : "public"}>
+        {/* Comments only — a note is written in the player's own bar. */}
+        {tab === "comments" && (
+        <div className="composer" data-vis="public">
           {/* YOUR ACCOUNT ICON, and the same one the app bar shows rather than a
               second idea of what you look like. Initials were wrong here: the
               module's people list does not contain you, so it fell through to
@@ -407,12 +380,8 @@ export default function LessonPage({
                     // is any text — so a screen reader reaching a half-typed
                     // note announced an unlabelled edit field. Says the same
                     // thing the placeholder does, and says it whatever is typed.
-                    aria-label={tab === "notes"
-                      ? "Write a note — only you see this"
-                      : "Ask the module a question about this moment"}
-                    placeholder={tab === "notes"
-                      ? "Write a note — only you see this"
-                      : `Ask the module…`}
+                    aria-label="Ask the module a question about this lesson"
+                    placeholder="Ask the module…"
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitDraft(); }
@@ -421,19 +390,26 @@ export default function LessonPage({
           {draft.trim() && (
             <div className="composer-acts">
               <button type="button" className="composer-act"
-                      onClick={() => { setDraft(""); setChip(null); }}>Cancel</button>
+                      onClick={() => setDraft("")}>Cancel</button>
               <button type="button" className="composer-act" data-primary="" onClick={submitDraft}>
-                {tab === "notes" ? "Save note" : "Post"}
+                Post
               </button>
             </div>
           )}
         </div>
+        )}
 
         <div className="ltab-body" ref={ltabBodyRef}>
         {tab === "notes"
-          ? <NoteDeck notes={myNotes} jumpTo={justSaved}
-                      onSeek={requestSeek}
-                      onDelete={(id) => mutate((st) => deleteNote(st, id))} />
+          ? <LogTab entries={entries} filter={logFilter} onFilter={setLogFilter}
+                    seat={seat ? { ...seat, name: seatName } : null}
+                    stamp={stamp}
+                    onSeek={requestSeek}
+                    /* A note is yours and private; a question is yours and
+                       public, and removing it takes the thread with it. Both
+                       are only ever offered on a row you wrote. */
+                    onDelete={(e) => mutate((st) => (e.kind === "ask"
+                      ? removeThread(st, e.id) : deleteNote(st, e.id)))} />
           : <CommentsTab comments={comments} replies={session.replies}
                          onReport={(l) => {
                            // The existing reporter already carries the route

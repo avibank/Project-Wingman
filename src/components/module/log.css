@@ -1,0 +1,120 @@
+/* =============================================================================
+   THE LOGBOOK'S LIST — §3, ported from
+   docs/launch/reference/01-module-lesson-crew.html (.chips, .log, .entry).
+   -----------------------------------------------------------------------------
+   Every class is prefixed lg-. The design's own names — .chip, .log, .entry,
+   .st, .del, .who, .empty — all paint something else in this app already, and
+   the Crew tab shipped 38px-wide pills to the live site by making exactly that
+   mistake once.
+
+   THE ROOT IS .lgbook, NOT .lg, AND THAT IS THE COLLISION ITSELF. `.lg` is the
+   module screen's leg marker — `.mscreen .lg{width:26px;height:5px}` — and the
+   lesson page's own root is `.mscreen.lesson`, so the whole logbook rendered
+   as a 26x5px pill. Measured in the browser, not reasoned about.
+
+   THREE ADAPTATIONS, each marked where it is made:
+   · §12's 44px hit target. The design's chip is 5px/11px and its bin is 32px
+     square; App.jsx gives every button min-height:44px globally, so the chip's
+     height and the bin's width are brought up to match rather than left to
+     disagree with the height the cascade has already set.
+   · Tokens, not the demo's raw values: --active-fill for a pressed chip,
+     --raised for a hovered row, --t2/--t3 for the two greys.
+   · The stamp's colour is the ROW's kind, not a colour passed in. That is what
+     lets one rule re-tint the lot when the livery changes and keeps --copilot
+     the single owner of teal.
+   ========================================================================= */
+
+.lg-chips{
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 12px 18px 4px;
+}
+/* THE DESIGN'S CHIP IS 5px/11px AND IT STAYS THAT SIZE. At the 44px the
+   global rule gives every button, a pill reading "All" is a circle — measured,
+   not guessed. It opts out with .is-inline and keeps a 44px target through a
+   pseudo-element, which is the same trade rr-app.css makes for the same
+   reason, so §12 is satisfied and the design is not redrawn. */
+.lg-chip{
+  position: relative;
+  display: inline-flex; align-items: center;
+  font-size: 12.5px; padding: 5px 11px; border-radius: 99px;
+  border: 1px solid var(--line); background: none;
+  color: var(--t2); cursor: pointer;
+}
+.app .lg-chip.is-inline{ min-height: 0; }
+.lg-chip.is-inline::after{
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, var(--tap, 44px)); height: max(100%, var(--tap, 44px));
+  transform: translate(-50%, -50%);
+}
+.lg-chip:hover{ color: var(--t1); }
+/* THE DESIGN'S --accent-soft IS A TINT, NOT A FILL. Ported as --active-fill
+   first, which is the token for a FILLED control and is paired with --ground
+   text everywhere else — --t1 on it measured 1.97:1 in Skydrol day. The demo's
+   value is the accent at 12–14% alpha, which is what this is; exam.css aliases
+   the same name onto the same mix for the same design. */
+.lg-chip[aria-pressed="true"]{
+  background: color-mix(in oklab, var(--active) 14%, transparent);
+  border-color: transparent; color: var(--t1);
+}
+.lg-dot{
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--copilot); margin-right: 6px;
+}
+
+.lg-list{ list-style: none; margin: 0; padding: 6px 8px 10px; }
+.lg-entry{
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 14px; align-items: center;
+  padding: 10px; border-radius: 10px;
+}
+.lg-entry:hover{ background: var(--raised); }
+
+/* The stamp, at the angle logStamp.js derives for this row. It is a button
+   because pressing it seeks the video, and it straightens on hover — which is
+   the demo's own affordance for "this is pressable", and the only motion on
+   the row. */
+.lg-st{
+  display: block; line-height: 0;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  min-height: 46px;
+  transform: rotate(var(--lg-tilt, 0deg));
+  color: var(--active);
+}
+.lg-svg{ display: block; line-height: 0; }
+.lg-svg text{ font-family: var(--font-mono); }
+@media (prefers-reduced-motion: no-preference){
+  .lg-st{ transition: transform var(--t-fast, .16s) var(--ease, ease-out); }
+}
+.lg-st:hover{ transform: rotate(0deg) scale(1.04); }
+.lg-entry[data-kind="ask"]  .lg-st{ color: var(--ask); }
+.lg-entry[data-kind="seat"] .lg-st{ color: var(--copilot); }
+
+.lg-main{ min-width: 0; }
+.lg-body{ margin: 0; font-size: 14.5px; line-height: 1.45; text-wrap: pretty; }
+.lg-who{ font-size: 12px; color: var(--t3); margin-top: 2px; }
+/* --copilot-text, not --copilot: the teal that rings a face is tuned as a
+   graphic and measures 3.12:1 as 12px prose in Day. Same hue, one step down,
+   and only in Day — the engine holds the pair. */
+.lg-entry[data-kind="seat"] .lg-who{ color: var(--copilot-text); }
+
+/* Revealed on hover, and ALWAYS present to a keyboard and to a touch screen —
+   a control that only a mouse can reach is a control half these students do
+   not have. It keeps its 44px whether it is visible or not, so the row does
+   not change width when it appears. */
+.lg-del{
+  width: 44px; min-width: 44px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 8px; background: none;
+  color: var(--t3); opacity: 0; cursor: pointer;
+}
+.lg-del svg{ width: 17px; height: 17px; }
+.lg-entry:hover .lg-del,
+.lg-del:focus-visible{ opacity: 1; }
+.lg-del:hover{ color: var(--t1); background: var(--line); }
+@media (hover: none){ .lg-del{ opacity: 1; } }
+
+/* Never a count, never an absence: the sentence names the next action. */
+.lg-empty{
+  margin: 0; padding: 26px 18px 30px;
+  color: var(--t3); font-size: 14px; text-align: center; text-wrap: pretty;
+}

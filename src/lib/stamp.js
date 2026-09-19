@@ -268,7 +268,12 @@ export function stampOf(row) {
    from the account's seed and the thing signed off, which is the property that
    actually matters on screen: every stamp at a slightly different angle, and
    the same one every time you come back. A tilt that re-randomised on each
-   render would read as the page shaking. */
+   render would read as the page shaking.
+
+   THAT RECORD NOW EXISTS — src/lib/signoff.js, under pw-signoff — so this is
+   the FALLBACK, for every lesson signed off before the key did. The logbook's
+   row stamps still derive theirs from here, and rightly: a row's angle is
+   decoration, not a record of anything somebody did. */
 export function stampTilt(seed, key) {
   let h = (seed || 1) >>> 0;
   for (const ch of String(key || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;

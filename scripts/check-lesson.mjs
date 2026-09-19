@@ -145,5 +145,105 @@ ok("no arrow on the Flight Deck", L.upFrom({ kind: "deck" }) === null);
      && /tilts=\{Object\.fromEntries/.test(app));
 }
 
+/* ------------------------------------------------------- §3 · the logbook
+   One list, three kinds, and the rule that a partner's NOTES are not in it —
+   notes are private by promise and there is no sharing surface, so the teal
+   rows are their public questions on this lesson and nothing else. */
+{
+  const LG = await import("../src/lib/lessonLog.js");
+  const me = "user_2abc", mate = "user_2xyz", stranger = "user_2zzz";
+  const notes = [
+    { id: "N1", lessonId: "L1", t: 30, body: "mine", authorId: me },
+    { id: "N2", lessonId: "L1", t: 90, body: "theirs", authorId: mate },
+    { id: "N3", lessonId: "L2", t: 10, body: "elsewhere", authorId: me },
+  ];
+  const threads = [
+    { id: "T1", lessonId: "L1", t: 60, body: "my question", authorId: me },
+    { id: "T2", lessonId: "L1", t: 20, body: "their question", authorId: mate },
+    { id: "T3", lessonId: "L1", t: 40, body: "a stranger's", authorId: stranger },
+    { id: "T4", lessonId: "L1", t: null, body: "a module post", authorId: me },
+  ];
+  const rows = LG.logEntries(notes, threads, "L1", me, mate);
+  ok("the logbook is in moment order", rows.map((r) => r.t).join() === "20,30,60");
+  ok("your note is a note and your question is an ask",
+     rows.find((r) => r.id === "N1").kind === "note"
+     && rows.find((r) => r.id === "T1").kind === "ask");
+  ok("the right seat's question is its own kind",
+     rows.find((r) => r.id === "T2").kind === "seat");
+  ok("a stranger's question is NOT in the logbook — it is a comment",
+     !rows.some((r) => r.id === "T3"));
+  ok("the right seat's NOTES are not in it, because notes are private",
+     !rows.some((r) => r.id === "N2"));
+  ok("a module post has no moment and no row", !rows.some((r) => r.id === "T4"));
+  ok("another lesson's rows stay there", !rows.some((r) => r.id === "N3"));
+  ok("with nobody in the seat their question is not shown either",
+     !LG.logEntries(notes, threads, "L1", me, null).some((r) => r.kind === "seat"));
+
+  ok("Mine is everything you wrote, note and question alike",
+     LG.filterLog(rows, "me").map((r) => r.id).join() === "N1,T1");
+  ok("and theirs is only theirs", LG.filterLog(rows, "seat").map((r) => r.id).join() === "T2");
+  ok("All is all of it", LG.filterLog(rows, "all").length === rows.length);
+
+  const txt = LG.exportText("Lesson 2", rows);
+  ok("the export names the lesson and carries every row",
+     txt.startsWith("Lesson 2") && rows.every((r) => txt.includes(r.body)));
+  ok("and spells out what a text file cannot draw",
+     /\(asked\)/.test(txt) && /\(right seat\)/.test(txt) && /\(note\)/.test(txt));
+  ok("the file is named after the lesson", LG.exportName("Lesson 2") === "Lesson 2 — logbook.txt");
+  ok("and a title of pure punctuation still makes a filename",
+     LG.exportName("///").endsWith("logbook.txt") && LG.exportName("///").length > 12);
+}
+
+/* ---------------------------------------------- §3 · what the bar's tick writes
+   A note is saved privately; a question is posted to the module's threads. An
+   empty question is not a question and is discarded rather than posted — an
+   empty NOTE still is one, because a bare pin is a timestamp. */
+{
+  const LG = await import("../src/lib/lessonLog.js");
+  const base = { ...L.initialSession, notes: [], threads: [], player: { ...L.initialSession.player } };
+  const withBar = (kind, body) => ({ ...base, bar: { lessonId: "L1", kind, t: 42, body, noteId: null, resumeOnClose: false } });
+
+  const noted = LG.commitBar(withBar("note", "remember this"), { authorId: "me", moduleId: "M1" });
+  ok("the tick on a note writes a note and nothing public",
+     noted.notes.length === 1 && noted.threads.length === 0 && noted.bar === null);
+  const pinned = LG.commitBar(withBar("note", "   "), { authorId: "me", moduleId: "M1" });
+  ok("an empty note is still a pin", pinned.notes.length === 1 && pinned.notes[0].body === "");
+
+  const asked = LG.commitBar(withBar("ask", "why?"), { authorId: "me", moduleId: "M1" });
+  ok("the tick on a question posts it to the module's threads",
+     asked.threads.length === 1 && asked.notes.length === 0
+     && asked.threads[0].moduleId === "M1" && asked.threads[0].lessonId === "L1"
+     && asked.threads[0].t === 42);
+  /* The refusal is postComment's — commitBar carries no guard of its own, so
+     this is the composed behaviour rather than a line of defence. Plant the
+     bug in postComment and it is this assertion that catches it. */
+  const empty = LG.commitBar(withBar("ask", "  "), { authorId: "me", moduleId: "M1" });
+  ok("an empty question is not posted, and the bar still closes",
+     empty.threads.length === 0 && empty.notes.length === 0 && empty.bar === null);
+  const resumed = LG.commitBar(
+    { ...base, bar: { lessonId: "L1", kind: "ask", t: 1, body: "  ", noteId: null, resumeOnClose: true } },
+    { authorId: "me", moduleId: "M1" });
+  ok("and the video goes back to playing if it was",
+     resumed.player.playing === true && resumed.bar === null);
+}
+
+/* ------------------------------------ §8 · what a cluster of marks draws
+   One shape per cluster, and it is the one you would otherwise not know was
+   there: the right seat's question, then your own, then your note — which is
+   in the list under the video either way. */
+{
+  const W = 1000, D = 100;                       // 1px a second, so px === t
+  const at = (t, kind, id) => ({ t, kind, id });
+  const kindOf = (items) => L.markClusters(items, D, W)[0].kind;
+  ok("a question on a noted second takes the mark",
+     kindOf([at(10, "note", "a"), at(10, "ask", "b")]) === "ask");
+  ok("whichever order they arrive in",
+     kindOf([at(10, "ask", "b"), at(10, "note", "a")]) === "ask");
+  ok("and the right seat's beats them both",
+     kindOf([at(10, "ask", "b"), at(10, "seat", "c"), at(10, "note", "a")]) === "seat");
+  ok("marks a finger apart do not merge",
+     L.markClusters([at(10, "note", "a"), at(40, "ask", "b")], D, W).length === 2);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

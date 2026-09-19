@@ -40,6 +40,11 @@
      brighter, which for a 2px mark over video is an improvement. */
   --over-video: oklch(1 0 0);
 
+  /* THE QUESTION'S VIOLET IS --ask, AND IT IS THE LIVERY ENGINE'S, not this
+     file's — beside --copilot, for the same reasons and with the same
+     night/day pair. A component may not invent a colour, and this one is
+     drawn in four places that have to agree. */
+
   /* ONE RADIUS FOR THE WHOLE LESSON COLUMN. The Flight Deck card is 13px and
      .player-slot was 14px, which nobody can see but is exactly how a family
      stops being one. It lives on :root rather than on .watch because the
@@ -252,30 +257,42 @@
 .scrub-fill{ position: absolute; inset: 0 auto 0 0; background: var(--active); }
 
 /* One mark per note and per thread. Never per reply. */
-.scrub-mark{
-  position: absolute; top: -3px; width: 2px; height: 10px;
-  transform: translateX(-1px); pointer-events: none;
-}
-/* §3.2 — note pinpoints take the ACCENT. Explicitly never amber or yellow:
-   amber belongs to Master Caution, and yellow on a scrubber reads as "ad
-   break" to anyone who has used YouTube.
+/* §3 — THREE MARKS, AND SHAPE CARRIES TWO OF THEM. A rectangle is a note, a
+   diamond is a question, and the right seat is the question shape in teal. The
+   form does the work first, because the three colours have to survive being
+   drawn over an arbitrary video frame, and a 7px dot is not enough surface to
+   read a hue off. The white hairline is what guarantees the edge against a
+   white frame — it is the demo's, and it is why these are legible at all.
 
-   §1.4 — but threads are already the accent, so colour cannot be what tells
-   them apart. FORM carries it: a note is a tick ABOVE the bar, a thread is a
-   dot BELOW it. Same hue, different object. */
-.scrub-mark[data-kind="thread"]{
+   They sit ON the bar, centred, rather than above and below it: the old split
+   — a tick above for a note, a dot below for a thread — was one hue saying two
+   things, and §3 gives each kind its own. */
+.scrub-mark{
+  position: absolute; top: 50%;
+  width: 8px; height: 6px; border-radius: 1px;
+  border: 1.5px solid var(--over-video);
   background: var(--active);
-  width: 5px; height: 5px; border-radius: 50%;
-  top: auto; bottom: -3px;
+  transform: translate(-50%, -50%); pointer-events: none;
 }
-/* Yours, and NOT the accent. The accent already means "public thread" two
-   lines up, and one colour cannot mean both without the bar saying nothing.
-   Named rather than inlined: this is the third fixed over-video value in the
-   file, and the value is unchanged. It stays fixed rather than livery-driven
-   for the same reason .pbanner-body and .rdur do — it sits over a video frame,
-   not over the page, so no livery token can be trusted to be visible on it. */
-.scrub-mark[data-kind="note"]  { background: var(--active); }
-.scrub-mark[data-many="1"]     { width: 4px; }
+/* The question, in violet — fixed, not livery-driven, for the same reason
+   .pbanner-body and --over-video are fixed: it is painted over video, so no
+   token that assumes the page's background can be trusted on it. */
+.scrub-mark[data-kind="ask"]{
+  width: 7px; height: 7px; border-radius: 1px;
+  background: var(--ask);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+/* The right seat. --copilot is teal's one owner in this app and it is the
+   same teal the Crew tab rings a partner's face with. */
+.scrub-mark[data-kind="seat"]{
+  width: 7px; height: 7px; border-radius: 1px;
+  background: var(--copilot);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+/* A cluster is wider, never a different shape: the shape says what it is. */
+.scrub-mark[data-many="1"]{ width: 12px; }
+.scrub-mark[data-kind="ask"][data-many="1"],
+.scrub-mark[data-kind="seat"][data-many="1"]{ width: 9px; height: 9px; }
 
 /* §3.1 — the comment-density silhouette. It sits directly on the track, drawn
    1:1 against its measured width, so a peak is over the second it describes.
@@ -335,6 +352,36 @@
   transform: translate(-50%, -50%);
   background: none; border: 0; padding: 0; cursor: pointer;
 }
+
+/* §3 — "Hovering shows the note." Over the bar, never under it: the bar is at
+   the bottom of the player and a tip below it would open off the frame.
+   pointer-events stay off so the tip cannot come between the finger and the
+   44px target it belongs to. */
+.scrub-tip{
+  position: absolute; bottom: calc(var(--tap) / 2 + 10px); left: 50%;
+  transform: translateX(-50%);
+  background: oklch(.16 .02 255 / .96);
+  border: 1px solid oklch(1 0 0 / .12);
+  border-radius: 10px; padding: 8px 10px;
+  width: max-content; max-width: 220px;
+  font-size: 12.5px; line-height: 1.35; text-align: left;
+  color: var(--over-video);
+  opacity: 0; pointer-events: none;
+}
+.scrub-tip small{
+  display: block; font-family: var(--font-mono); font-size: 10.5px;
+  opacity: .7; margin-bottom: 2px; letter-spacing: .04em;
+}
+@media (prefers-reduced-motion: no-preference){
+  .scrub-tip{ transition: opacity .15s; }
+}
+.scrub-hit:hover .scrub-tip,
+.scrub-hit:focus-visible .scrub-tip{ opacity: 1; }
+/* Touch has no hover, and a tip that only a mouse can reach is a tip half the
+   students never see — but it must not appear on the way past either. It is
+   the press that shows it there, and the press also seeks, which is the
+   behaviour the demo has. */
+@media (hover: none){ .scrub-tip{ display: none; } }
 
 /* -- the HUD -------------------------------------------------------------- */
 /* Volume and speed share one slab in the middle of the frame for about a
@@ -403,6 +450,19 @@
 }
 .nbar-handle:active{ cursor: grabbing; }
 .nbar-handle:focus-visible{ outline: 2px solid var(--active); outline-offset: 2px; }
+
+/* §3 — THE ASK BAR IS VIOLET, and it is violet from the first keystroke. It
+   is the same bar, the same drag, the same two round buttons; what changes is
+   that what you type will be read by the whole module instead of only by you,
+   and that difference has to be visible while you are typing rather than
+   announced afterwards. The colour is --ask, the same violet the diamond on
+   the progress bar will be a second later. */
+.nbar[data-kind="ask"]{ box-shadow: 0 6px 24px oklch(0 0 0 / .34), 0 0 0 1px var(--ask); }
+.nbar[data-kind="ask"] .nbar-handle{ color: var(--ask); }
+.nbar[data-kind="ask"] .nbar-handle:focus-visible{ outline-color: var(--ask); }
+.nbar[data-kind="ask"] .nbar-round[data-primary]{
+  background: var(--ask); border-color: var(--ask); color: oklch(.14 .02 295);
+}
 /* Arrow keys move it while the handle has focus. A control that can only be
    dragged cannot be used without a pointer — and this one holds the student's
    own writing. */
@@ -751,7 +811,7 @@
    lesson list, then the comments. The list stays ahead of the thread on a
    phone: it is how you leave this lesson, and burying it under a long
    conversation would hide the page's own navigation. */
-@media (max-width: 1000px){
+@media (max-width: 860px){
   .watch[data-layout="b"]{
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "player" "meta" "side" "panel";
@@ -791,7 +851,7 @@
    230px inside a 372px panel and wrapped one word per line. The grid owns the
    widths here; these columns just need their gutters. */
 .watch .mt, .watch .sd, .watch .pn{ min-width: 0; }
-@media (max-width: 1000px){
+@media (max-width: 860px){
   /* THE PADDING WAS APPLIED TWICE. .watch carries padding-inline: var(--pad)
      for the wide layout, and below 1000px each region takes its own so the
      player can go edge to edge between them. The container's was never
@@ -806,7 +866,22 @@
 
 /* §3.3 — the sign-off stamp. Right-aligned on the title's line, no words
    beside it: the state lives in the tooltip and the accessible name. */
-.mt .titlerow{ display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+/* §3 — THE TITLE, SAVE, AND THE SIGN-OFF, on one line in that order. The
+   title takes the space; the two controls are round and sit at its right. */
+.mt .titlerow{ display: flex; align-items: center; gap: 12px; }
+.mt .titlerow .lesson-name{ flex: 1; min-width: 0; }
+/* The demo's .icon-btn, under this app's own name. 44px rather than the
+   design's 38px, because §12 is enforced globally and a 38px circle inside a
+   44px button is a ring that does not match its own target. */
+.titlerow-save{
+  width: 44px; min-width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--line);
+  background: var(--panel); color: var(--t2);
+  padding: 0; cursor: pointer;
+}
+.titlerow-save:hover{ color: var(--t1); }
+.titlerow-save[aria-pressed="true"]{ color: var(--active); }
 .stamp{
   flex: 0 0 auto; appearance: none; background: none; border: 0;
   padding: 2px; cursor: pointer; color: var(--t2);
@@ -944,7 +1019,13 @@
 }
 .sdname{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sdnow{ flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--active-text); }
-@media (max-width: 560px){
+/* §3 — "Below 860px it stacks, and Up next becomes collapsible and sits above
+   the Logbook." 860, not 560: between those two widths the list is stacked
+   above the Logbook at full width, which is where it pushes the thing the
+   student came to write in down the page — the exact reason the toggle exists
+   at all. Above 860 it is a column of its own and collapsing it would only
+   leave a hole. */
+@media (max-width: 860px){
   /* Only offered where collapsing would actually hide something. */
   .sdhead[data-hides] .sdtoggle{ display: inline-flex; }
   /* Collapsed shows the next item and nothing else. */

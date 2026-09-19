@@ -230,7 +230,16 @@ const RPC = {
   delete_paper: () => true,
   my_modules: () => [],
   right_seat: () => [],
-  my_seat: () => [],
+  /* HARNESS_SEAT puts somebody in the right seat, the same way HARNESS_REAL_PAPER
+     puts the real manual in the Library: the seat is a live session and there
+     is no fixture shape for "right now". §3's logbook draws that person's
+     questions teal and names a filter after them, so a walk that cannot seat
+     anybody cannot test either. The value is the partner's id. */
+  my_seat: () => (process.env.HARNESS_SEAT
+    ? [{ session_id: "seat_harness", partner_id: process.env.HARNESS_SEAT,
+         partner_module: "M1", partner_place: null, partner_since: null,
+         started_at: new Date().toISOString(), last_active_at: new Date().toISOString() }]
+    : []),
   presence_touch: () => null,
   suggest_code: () => "T3T",
   claim_code: (s, b) => b.want,

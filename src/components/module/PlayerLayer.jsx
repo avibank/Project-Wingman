@@ -1,16 +1,18 @@
 import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import SaveButton from "../../features/bookmarks/SaveButton.jsx";
-import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, PenLine, X, RotateCcw, Check } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, X, RotateCcw, Check } from "lucide-react";
 import { resolveVideo } from "../../lib/videoHost.js";
 import { mmss } from "./lessonState.js";
 import { useSession } from "../../lib/session.jsx";
+import { logEntries, logMarks, commitBar } from "../../lib/lessonLog.js";
+import { StampIcon, AskIcon } from "./logIcons.jsx";
 import { path as routePath } from "../../lib/routes.js";
 import {
   BANNER_MS, SPEEDS, VOLUME_STEP, HUD_MS,
-  lessonMarks, markClusters, notesCrossed, bannerFrom, bannerLabel,
+  markClusters, notesCrossed, bannerFrom, bannerLabel,
   densityBuckets, densityPath, densityLabel, commentsFor,
-  openBar, closeBar, discardBar, editNote, expandBanner, dismissBanner,
+  openBar, discardBar, editNote, expandBanner, dismissBanner,
   notesFor, keyAction, hudLabel, barPosition, barFraction, nudgeBar, isPin,
 } from "../../lib/lessonSurface.js";
 import { shouldPrefetchNext } from "../../lib/familiar.js";
@@ -325,14 +327,21 @@ export default function PlayerLayer() {
     setSession((s) => ({ ...s, hud: { kind: "rate", value: r, shownAt: Date.now() } }));
   }, [setRate, setSession]);
 
-  const openNote = useCallback(() => {
+  /* `kind` is 'note' or 'ask'. Pressing the SAME one while its bar is open
+     re-stamps it; pressing the OTHER one switches what you are writing, which
+     is the only sensible reading of the press — you meant to ask, not to move
+     a note you had already started. It keeps what you have typed, because
+     throwing away somebody's sentence for pressing the wrong button first is
+     not a trade this app makes anywhere else. */
+  const openNote = useCallback((kind = "note") => {
     const el = ref.current;
     if (!lesson) return;
     // §3.4 — pressing Note while a bar is already open RE-STAMPS it rather
     // than opening a second one. Two capture bars over one video is a state
     // nobody can reason about, and the press plainly means "note this moment".
-    if (bar) { reStamp(); return; }
-    setSession((s) => openBar(s, { lessonId: lesson.id, seconds: el?.currentTime ?? 0 }));
+    if (bar && bar.kind === kind) { reStamp(); return; }
+    if (bar) { setSession((s) => ({ ...s, bar: { ...s.bar, kind } })); return; }
+    setSession((s) => openBar(s, { lessonId: lesson.id, seconds: el?.currentTime ?? 0, kind }));
   }, [lesson, setSession, bar, reStamp]);
 
   // ------------------------------------------------------------------ keymap
@@ -430,9 +439,19 @@ export default function PlayerLayer() {
   };
 
   // ------------------------------------------------------------------- marks
-  const marks = useMemo(
-    () => (lesson ? lessonMarks(session.notes, session.threads, lesson.id, me) : []),
-    [session.notes, session.threads, lesson, me]);
+  /* THE SAME ROWS THE LOGBOOK LISTS, so the bar above the list and the list
+     itself can never disagree about what is on this lesson. `seatId` is who is
+     in the right seat right now — the stage carries it because only the lesson
+     page knows it — and it is what turns one of their questions teal. */
+  const entries = useMemo(
+    () => (lesson ? logEntries(session.notes, session.threads, lesson.id, me, stage?.seatId || null) : []),
+    [session.notes, session.threads, lesson, me, stage?.seatId]);
+  const marks = useMemo(() => logMarks(entries), [entries]);
+  const bodyOf = useMemo(() => {
+    const m = new Map();
+    entries.forEach((e) => m.set(e.id, e.body));
+    return m;
+  }, [entries]);
 
   const [trackW, setTrackW] = useState(0);
   useLayoutEffect(() => {
@@ -605,7 +624,8 @@ export default function PlayerLayer() {
       {/* One line that grows, never a panel: the thing you are writing about is
           on screen and covering it is backwards. */}
       {bar && (
-        <div className="nbar" ref={barRef} style={barStyle} data-restamp={restamped ? "1" : undefined}>
+        <div className="nbar" ref={barRef} style={barStyle}
+             data-kind={bar.kind || "note"} data-restamp={restamped ? "1" : undefined}>
           {/* §3.4 — the whole bar drags, from a press anywhere on it. The chip
               is also the re-stamp: tapping it moves the note to the current
               second, with a brief flash so the change is seen rather than
@@ -613,25 +633,38 @@ export default function PlayerLayer() {
           <button type="button" className="nbar-handle" ref={handleRef}
                   onPointerDown={onHandleDown} onKeyDown={onHandleKey}
                   onClick={reStamp}
-                  aria-label={`Noted at ${mmss(bar.t)}. Press to re-stamp to the current time.`}>
-            {mmss(bar.t)}
+                  aria-label={`${bar.kind === "ask" ? "Asking at" : "Noted at"} ${mmss(bar.t)}. Press to re-stamp to the current time.`}>
+            {bar.kind === "ask" ? `\u25C6 ${mmss(bar.t)}` : mmss(bar.t)}
           </button>
           {/* Grows in HEIGHT as you type, never in width — widening reflows the
               text under the cursor. Past the maximum it scrolls inside. */}
           <textarea className="nbar-field" autoFocus rows={1} ref={fieldRef}
                     value={bar.body}
+                    aria-label={bar.kind === "ask"
+                      ? "Ask the module about this moment"
+                      : "Write a note about this moment — only you see this"}
+                    placeholder={bar.kind === "ask"
+                      ? "What don\u2019t you get here?"
+                      : "What\u2019s worth remembering?"}
                     onInput={growField}
                     onChange={(e) => setSession((s) => ({ ...s, bar: { ...s.bar, body: e.target.value } }))} />
           {/* The only two ways to finish. */}
           <div className="nbar-acts">
+            {/* commitBar, not closeBar: a note is saved privately, a question
+                is posted to the module's threads. One door, one rule, in
+                logbook.js — the component does not decide. */}
             <button type="button" className="nbar-round" data-primary=""
-                    onClick={() => mutate((s) => closeBar(s))} aria-label="Save this note">
+                    onClick={() => mutate((s) => commitBar(s, { authorId: me, moduleId: stage?.moduleCode }))}
+                    aria-label={bar.kind === "ask" ? "Ask the module" : "Save this note"}>
               <Check aria-hidden="true" />
             </button>
-            <button type="button" className="nbar-round" aria-label="Discard this note"
+            <button type="button" className="nbar-round"
+                    aria-label={bar.kind === "ask" ? "Discard this question" : "Discard this note"}
                     onClick={() => {
                       // Confirms only if there is something to lose.
-                      if (bar.body.trim() && !window.confirm("Discard this note?")) return;
+                      if (bar.body.trim()
+                          && !window.confirm(bar.kind === "ask"
+                            ? "Discard this question?" : "Discard this note?")) return;
                       setSession(discardBar);
                     }}>
               <X aria-hidden="true" />
@@ -664,11 +697,27 @@ export default function PlayerLayer() {
           ))}
           {clusters.map((c) => (
             <button key={`h-${c.items[0].id}`} type="button" className="scrub-hit"
+                    data-kind={c.kind}
                     style={{ left: `${c.pct}%` }}
                     aria-label={c.items.length > 1
                       ? `${c.items.length} marks at ${mmss(c.items[0].t)}`
                       : `Mark at ${mmss(c.items[0].t)}`}
-                    onClick={(e) => { e.stopPropagation(); seekTo(c.items[0].t / (dur || 1)); }} />
+                    onClick={(e) => { e.stopPropagation(); seekTo(c.items[0].t / (dur || 1)); }}>
+              {/* §3 — "Hovering shows the note." A mark you cannot read is a
+                  mark you have to press to find out about, which means seeking
+                  the video to find out what you wrote. The label line is the
+                  moment and whose it is; the body is what you actually wrote.
+                  aria-hidden because the button's own label already says it,
+                  and a screen reader should not hear it twice. */}
+              <span className="scrub-tip" aria-hidden="true">
+                <small>
+                  {mmss(c.items[0].t)}
+                  {c.kind === "seat" ? " · RIGHT SEAT" : c.kind === "ask" ? " · ASK" : ""}
+                  {c.items.length > 1 ? ` · ${c.items.length}` : ""}
+                </small>
+                {bodyOf.get(c.items[0].id) || "Pinned"}
+              </span>
+            </button>
           ))}
         </div>
 
@@ -688,11 +737,19 @@ export default function PlayerLayer() {
           </span>
           <span className="pspacer" />
 
-          {/* A pen over a page, and deliberately not the edit pencil used
-              elsewhere — people expect that one to rename something. */}
-          <button type="button" className="pbtn" data-note="" onClick={openNote}
-                  aria-pressed={Boolean(bar)} aria-label="Take a note here">
-            <PenLine aria-hidden="true" />
+          {/* §3 — STAMP A MOMENT AND ASK, in the bar, in that order. They used
+              to be two pills under the player, a scroll away from the second
+              they refer to; the design puts them on the thing they act on. The
+              icons are the marks they leave: a rectangle, and a diamond. */}
+          <button type="button" className="pbtn" data-note="" onClick={() => openNote("note")}
+                  aria-pressed={Boolean(bar) && bar.kind !== "ask"}
+                  aria-label="Stamp this moment" title="Stamp this moment">
+            <StampIcon />
+          </button>
+          <button type="button" className="pbtn" data-ask="" onClick={() => openNote("ask")}
+                  aria-pressed={Boolean(bar) && bar.kind === "ask"}
+                  aria-label="Ask about this moment" title="Ask about this moment">
+            <AskIcon />
           </button>
 
           {/* THE BOOKMARK, NEXT TO THE NOTE, AND IT IS THE OTHER HALF OF THE

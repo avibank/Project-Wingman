@@ -339,6 +339,31 @@ export function deckVars(liveryId, variant = "night") {
      (docs/launch/reference/01, `--copilot`); only the name is this app's,
      because a component may not invent a colour. */
   vars["--copilot"] = night ? "oklch(.780 .110 190)" : "oklch(.580 .130 190)";
+  /* THE RIGHT SEAT'S TEAL READ AS WORDS, which is a different job from the
+     teal as a ring or a mark — the same distinction --active/--active-text
+     already draws, and for the same measured reason. §3's logbook prints
+     "<name> · right seat" in teal at 12px; --copilot came in at 3.12:1 there
+     in Day across every livery, which clears the 3:1 a GRAPHIC answers to and
+     fails the 4.5:1 prose does. Night's value already clears it, so only Day
+     takes a step down: same hue, L .580 -> .460, measured at 4.96:1 in the
+     worst livery. */
+  vars["--copilot-text"] = night ? "oklch(.780 .110 190)" : "oklch(.460 .130 190)";
+  /* THE QUESTION'S VIOLET, and it is fixed for exactly the same reasons. §3
+     gives an Ask its own colour — the diamond on the scrubber, the note bar
+     while you type one, the stamp on its logbook row — and it is the one
+     colour on that screen that is neither the module's hue, the presence
+     amber, nor the ink palette. It is NOT --bad and NOT --caution: a question
+     is not a fault.
+
+     TWO VALUES, NOT THE REFERENCE'S ONE. The demo is dark only, so its
+     oklch(.72 .15 295) had never met a light panel: measured there it is a
+     2.45:1 graphic, under the 3:1 a shape has to hold. Night keeps the
+     reference's value exactly; day is the same hue taken down until it
+     passes, the way --copilot's pair already works. Over video the night
+     value is not what is drawn in day — the mark carries a 1.5px white
+     border for that, which is the design's own answer to an arbitrary
+     frame behind it. */
+  vars["--ask"] = night ? "oklch(.720 .150 295)" : "oklch(.500 .220 295)";
 
   /* §1.1/§1.2 — THE ONE FIXED COLOUR. It used to shift hue and lightness to
      dodge whichever livery was on, which is exactly what a signal may not do:

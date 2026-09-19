@@ -220,6 +220,7 @@ import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, deleteMessage, fetchRightSeat, markDelivered } from "./lib/roomData.js";
+import { fetchSeat } from "./lib/rightSeat.js";
 import { toAttachment, attachToMessage } from "./lib/attachments.js";
 import { fetchProfiles, fetchProfile } from "./lib/squadron.js";
 import { reportContent, blockUser } from "./lib/squadron.js";
@@ -952,6 +953,14 @@ function AppInner() {
   const [squadrons, setSquadrons] = useState([]);
   const [roomMessages, setRoomMessages] = useState([]);
   const [rightSeat, setRightSeat] = useState([]);
+  /* WHO IS IN THE SEAT, which is not the same list as who COULD be — that is
+     `rightSeat` above, the candidates the room offers. The lesson page needs
+     the person, because §3's logbook draws their questions on this lesson teal
+     and offers a filter named after them. Fetched here rather than on the
+     lesson so the answer does not change under a student between two lessons
+     of the same sitting; Home keeps its own copy because it loads before this
+     one exists. */
+  const [seat, setSeat] = useState(null);
   /* The room writes things App does not — joining, leaving, muting, creating,
      reactions, pins, read state — and then has to see them. A nonce rather
      than a second copy of the loader: one code path turns rows into state, and
@@ -986,7 +995,9 @@ function AppInner() {
     go(routePath.ready(intent?.moduleCode));
   };
   useEffect(() => {
-    if (!isSignedIn || !flags["social.readyroom"]) { setSquadrons([]); setRoomMessages([]); setRightSeat([]); return undefined; }
+    if (!isSignedIn || !flags["social.readyroom"]) {
+      setSquadrons([]); setRoomMessages([]); setRightSeat([]); setSeat(null); return undefined;
+    }
     let live = true;
     let ids = [];
     const full = async () => {
@@ -1004,6 +1015,7 @@ function AppInner() {
       if (msgs.some((m) => m.authorId !== me)) markDelivered(me, ids);
       setRightSeat(seat);
     };
+    fetchSeat(me).then((r) => { if (live) setSeat(r); }).catch(() => {});
     // Only the messages on the interval. Which squadrons you are in and who
     // could take the right seat do not change between two ticks of a chat.
     const messagesOnly = async () => {
@@ -1871,6 +1883,11 @@ function AppInner() {
                    every time this page is opened. */
                 stamp={myStamp}
                 tilt={tiltOf(progress.get(SIGNOFF_KEY, {}), ls.id) ?? stampTilt(myStamp?.seed || 1, ls.id)}
+                /* Who is in the right seat, so the logbook can name them and
+                   the progress bar can draw their questions teal. null when
+                   nobody is, which is the ordinary state — and the filter chip
+                   named after them does not exist then. */
+                seat={seat}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}

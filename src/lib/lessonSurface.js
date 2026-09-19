@@ -245,13 +245,20 @@ export const hudLabel = hud =>
    that writing makes you miss the next thing. A pin costs nothing in the
    moment and still says "something happened here" three weeks later. */
 
-export function openBar(session, { lessonId, seconds }) {
+/* `kind` is 'note' — private, yours — or 'ask', which is a question and
+   becomes the public thread object rather than a note. It is carried on the
+   bar rather than decided at save time because the bar LOOKS different for
+   the two (violet, and a different placeholder), and a field that changes
+   colour on submit is a field that lied while you typed in it. What each kind
+   writes is commitBar's job, in logbook.js. */
+export function openBar(session, { lessonId, seconds, kind = 'note' }) {
   if (session.bar) return session;
   return {
     ...session,
     player: { ...session.player, playing: false },       // pause on open
     bar: {
       lessonId,
+      kind,
       t: Math.floor(seconds),        // exact, because the video is stopped
       body: '',
       noteId: null,                  // null = new
@@ -270,7 +277,7 @@ export function editNote(session, noteId) {
     ...session,
     player: { ...session.player, playing: false, seconds: n.t },
     banner: null,
-    bar: { lessonId: n.lessonId, t: n.t, body: n.body, noteId: n.id,
+    bar: { lessonId: n.lessonId, kind: 'note', t: n.t, body: n.body, noteId: n.id,
            resumeOnClose: false }    // you came here to read, not to keep watching
   };
 }
@@ -490,6 +497,8 @@ export const HIT_PX = 44;
    44px target without overlapping, so merge first and give the cluster one
    target. Solving them separately is how you get a tap that opens the wrong
    note. */
+const RANK = { note: 0, thread: 1, ask: 1, seat: 2 };
+
 export function markClusters(items, durationS, barWidthPx) {
   if (!durationS || !barWidthPx) return [];
   const sorted = [...items].sort((a, b) => a.t - b.t);
@@ -499,7 +508,14 @@ export function markClusters(items, durationS, barWidthPx) {
     const last = out[out.length - 1];
     if (last && px - last.px < MARK_MIN_PX) {
       last.items.push(it);
-      if (it.kind === 'thread') last.kind = 'thread';   // the public one wins
+      /* THE PUBLIC ONE WINS, and with three kinds that needs an order rather
+         than a single test. seat beats ask beats note: a cluster can only draw
+         one shape, and the one to draw is the one you would otherwise not know
+         was there — somebody else's question first, then your own, then the
+         note you wrote and can already see in the list below. The old rule
+         named 'thread', which no kind is called any more, so without this an
+         ask landing on a note silently disappeared into it. */
+      if (RANK[it.kind] > RANK[last.kind]) last.kind = it.kind;
     } else {
       out.push({ px, pct: (it.t / durationS) * 100, kind: it.kind, items: [it] });
     }
@@ -507,6 +523,12 @@ export function markClusters(items, durationS, barWidthPx) {
   return out;
 }
 
+/* SUPERSEDED BY logEntries IN logbook.js, and deliberately left here as the
+   statement of the rule §8 gives: one mark per note, one per thread, never per
+   reply. What it cannot say is WHOSE — and the bar now draws a note, a
+   question and the right seat in three different colours — so the lesson page
+   reads logEntries, which keeps this rule and adds authorship. Nothing else
+   calls this; it is a definition, not a second derivation. */
 export function lessonMarks(notes, threads, lessonId, me = 'u_you') {
   return [
     ...notesFor(notes, lessonId, me).map(n => ({ t: n.t, kind: 'note', id: n.id })),
