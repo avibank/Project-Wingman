@@ -210,6 +210,7 @@ for (const f of JSX) {
 }
 ok("copy", `every empty line names its next action (${JSX.length} files)`, bare.length === 0, bare.join("; "));
 
+
 /* ------------------------------------------------------- 6 · a switch that switches
    A flag nothing reads is a control in the admin panel that does nothing — the
    same failure as a dead button, one screen further back. The five below are

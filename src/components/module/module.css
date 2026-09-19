@@ -708,6 +708,24 @@
   .mscreen .tabsearch-f{ width: 0; padding: 0; font-size: 0; }
   .mscreen .tabsearch-x{ display: none; }
 
+  /* AND THE THIRD TAB STILL DID NOT FIT. Measured on a 375px phone: the tabs
+     ran to 333, the collapsed magnifier started at 363 and ended at 394 — 19px
+     past the screen, 31px wide, and unusable. It is the same arithmetic the
+     note above the strip describes, one tab further on: three tabs at 15px of
+     padding a side is 318px of a 345px row, and the magnifier needs 39.
+
+     Two changes, and both are needed. The padding comes down to 11, which
+     gives the three tabs 294 and fits — and the bar is allowed to scroll, so
+     a longer word, a bigger text size or a fourth tab shortens the strip
+     rather than pushing something off the screen. A tab you can scroll to is
+     a tab; a tab past the right edge is not. */
+  .mscreen .tab{ padding-inline: 11px; }
+  .mscreen .tabsbar{ overflow-x: auto; scrollbar-width: none; }
+  .mscreen .tabsbar::-webkit-scrollbar{ display: none; }
+  /* The magnifier is the last thing in a scrolling row, so it must not be
+     squeezed by it. */
+  .mscreen .tabsearch{ flex: 0 0 auto; }
+
   /* Edge to edge, so the card's own padding is not spending 50px of a 390px
      screen on nothing. Full bleed off its own position, because the inset comes
      from two different ancestors and a fixed negative margin would drift. */

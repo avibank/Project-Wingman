@@ -123,7 +123,16 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
       <div className="crew-sum">
         <div>
           <b>{total} on {moduleName}</b>
-          <p>{onNow.length + 1} studying right now · {crew.finished} {crew.finished === 1 ? "has" : "have"} finished it</p>
+          {/* NEVER A ZERO COUNT (CLAUDE.md, Voice). "0 have finished it" is
+              the thing that rule exists to stop: a number whose only job is
+              to say nothing happened. On a module nobody has finished yet the
+              clause simply is not there, and the line says what IS true. */}
+          <p>
+            {onNow.length + 1} studying right now
+            {crew.finished > 0 && (
+              <> · {crew.finished} {crew.finished === 1 ? "has" : "have"} finished it</>
+            )}
+          </p>
         </div>
         <Stack people={onNow} mates={mates} onOpen={onOpenPerson} />
       </div>

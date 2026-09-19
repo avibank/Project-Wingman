@@ -202,3 +202,48 @@ build until somebody decides which. `npm run test:solo` drives it with three
 students: one turns it on, one walks every surface and must not find them, and
 a third stays visible throughout — because "they are not on the wall" is also
 what a broken query returns.
+
+## 19 · A wall of 120 stamps drew 132 filters, not 12
+
+**Found:** 2026-09-19, by driving the crowded state for the first time.
+
+§8: "Crew walls with 100+ stamps stay smooth. Cache the rendered SVG per user
+stamp and **share the filter defs**." `<StampFilters/>` shares them, one per
+seed — and every individual `<Stamp>` ALSO emitted its own, because the seed
+was registered in an **effect**. On the first commit `seeds.has(seed)` was
+false for all 120, each one wrote a `<filter>` into its own markup, and none of
+them ever re-rendered to drop it.
+
+Measured on a 120-person wall from 12 distinct accounts: **132 filter
+definitions**. Each is two `feTurbulence` passes, a displacement map, a blur
+and three composites.
+
+The seed is claimed during render now — a module-level `Set.add`, idempotent,
+touching no React state, so StrictMode's double render changes nothing. The
+notification stays in the effect, because that one does set state. Exactly one
+stamp per seed carries its own filter for the frame before the shared defs
+arrive: **12 for 120**, measured again afterwards.
+
+## 20 · The third tab did not fit on a phone
+
+The module screen's tab strip is Lessons · Library · Crew plus a search field.
+At 375px the tabs ran to x=333, the collapsed search magnifier started at 363
+and ended at **394 — nineteen pixels past the screen**, and 31px wide.
+
+It is the same arithmetic as the live bug in BUGS 10 ("a third tab needs
+room"), one width further down: three tabs at 15px of padding a side is 318px
+of a 345px row, and the magnifier needs 39.
+
+Two changes, both needed. The padding comes down to 11 below 560px, which fits.
+And the bar scrolls, so a longer word, a bigger text size or a fourth tab
+shortens the strip rather than pushing something off the screen — a tab you can
+scroll to is a tab; a tab past the right edge is not. Measured after:
+`document.scrollWidth` 375 in a 375px viewport, search ending at 370.
+
+## 21 · "0 have finished it"
+
+Crew's summary line on a module nobody has finished. A number whose only job is
+to say nothing happened, which is the thing CLAUDE.md's Voice rule exists to
+stop. The clause is absent now rather than nought. A check for the general case
+was attempted and is written up in BACKLOG.md — it needs an hour, not five
+minutes, and a half-reliable rule in the gate is worse than none.

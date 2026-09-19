@@ -46,12 +46,24 @@ function svgFor(st, on, size, rot) {
    toast host. */
 const seeds = new Set();
 const listeners = new Set();
+
+/* THE SEED IS REGISTERED DURING RENDER, NOT IN THE EFFECT, and that is what
+   makes the sharing real. It used to be added in an effect, so `seeds.has()`
+   below was false for EVERY stamp in the first commit — a hundred and twenty
+   of them each emitted its own <filter> and never re-rendered to drop it.
+   Measured on a 120-person Crew wall: 132 filter definitions for 12 distinct
+   seeds, which is §8's requirement ("share the filter defs") inverted.
+
+   Adding to a module-level Set during render is idempotent and touches no
+   React state, so a double render in StrictMode changes nothing. The
+   NOTIFICATION stays in the effect, because that one does set state. */
+function claimSeed(seed) {
+  if (seeds.has(seed)) return true;
+  seeds.add(seed);
+  return false;                     // first one in: it draws its own for now
+}
 export function useSeed(seed) {
-  useEffect(() => {
-    if (seeds.has(seed)) return;
-    seeds.add(seed);
-    listeners.forEach((f) => f());
-  }, [seed]);
+  useEffect(() => { listeners.forEach((f) => f()); }, [seed]);
 }
 /** One <filter> per seed on screen. A hundred stamps from one account share one. */
 export function StampFilters() {
@@ -79,14 +91,17 @@ export function StampFilters() {
 export default function Stamp({ stamp, size = 40, rot = 0, on = true, label, className = "" }) {
   const st = stamp || HOUSE_STAMP;
   const seed = st.seed || 1;
+  /* Claimed on the way past, before the markup below asks. */
+  const shared = claimSeed(seed);
   useSeed(seed);
 
-  /* Its own filter alongside the shared one. A stamp must never draw unfiltered
-     for a frame — the filter is most of what it looks like — and the registry
-     above only catches up after an effect. Two identical <filter> elements with
-     the same id are harmless: the first wins, and this one is removed from the
-     markup as soon as the shared defs carry it. */
-  const own = seeds.has(seed) ? "" : `<svg width="0" height="0" style="position:absolute"><defs>${inkFilterMarkup(seed)}</defs></svg>`;
+  /* THE FIRST STAMP OF A SEED CARRIES ITS OWN FILTER; every later one shares.
+     A stamp must never draw unfiltered for a frame — the filter is most of
+     what it looks like — and the shared defs only arrive after an effect. So
+     exactly one stamp per seed pays for that frame, rather than all of them:
+     on a wall of 120 from 12 accounts that is 12 spare definitions instead of
+     120. Two <filter> elements with the same id are harmless; the first wins. */
+  const own = shared ? "" : `<svg width="0" height="0" style="position:absolute"><defs>${inkFilterMarkup(seed)}</defs></svg>`;
   const svg = svgFor(st, on, size, rot);
 
   return (

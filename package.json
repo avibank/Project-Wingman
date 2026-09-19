@@ -82,7 +82,8 @@
     "test:bm": "node tests/bm-run.mjs",
     "test:lesson": "node tests/lesson-run.mjs",
     "test:routes": "node tests/routes-run.mjs",
-    "test:solo": "node tests/solo-run.mjs"
+    "test:solo": "node tests/solo-run.mjs",
+    "test:crowded": "node tests/crowded-run.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

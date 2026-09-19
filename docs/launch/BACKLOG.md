@@ -51,3 +51,30 @@ which is worth an hour on a quiet day and is not worth doing at the end of a
 long session on the way to a deploy.
 
 None of it ships: nothing imports them, so nothing bundles them.
+
+## A check for "0 have finished it"
+
+CLAUDE.md's Voice rule — "Never state absence or a zero count" — is easy to
+keep in an empty STATE and easy to lose in a sentence that is usually true.
+Crew's summary read **"31 studying right now · 0 have finished it"** on a
+module nobody had finished. Found on a phone, with 120 people on the wall;
+fixed by dropping the clause when the count is nought.
+
+A check for it was written and then taken back out, because a half-reliable
+rule in the gate is worse than none. What is known, so the next attempt starts
+here:
+
+- The naive pattern — any rendered number followed by a word — matches **45**
+  JSX props and catches nothing.
+- Restricting it to a TEXT node rather than a prop (`(?<![=\w])\{…\}`) brings
+  it to **16** and does catch the real bug.
+- Of those 16, most are template literals inside `aria-label` or `toast(...)`,
+  and one is a comment. The rule needs `strip()`ing of comments and an
+  exclusion for backticks before it is trustworthy.
+- Three of the remainder are genuine and need a human to say whether the count
+  can be nought: `{roster.length} member`, `{names.length} in the squadron`
+  (both ≥1 by construction — you are in it), and `{threads.length} open`
+  (which can be nought).
+
+An hour, not five minutes. Worth doing: this is the one Voice rule with no
+check behind it, and it is the one that shows a student a zero.
