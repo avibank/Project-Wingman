@@ -1,0 +1,26 @@
+/* The one face. Sized by the caller, because a licence draws it at 104 and a
+   comment draws it at 28, and everything else about it is the same. */
+.av2{
+  display: grid; place-items: center; overflow: hidden;
+  border-radius: 50%; flex: none; padding: 0; border: 0;
+  font-family: var(--font-ui); font-weight: 600; line-height: 1;
+  letter-spacing: .01em;
+}
+button.av2{ cursor: pointer; }
+.av2-img{
+  width: 100%; height: 100%; object-fit: cover;
+  /* The reference's transform, kept exactly: the stored zoom and offset are a
+     scale and a translate of a cover-fitted image, so a photo positioned on a
+     laptop is the same photo on a phone. */
+  transform: translate(var(--x, 0), var(--y, 0)) scale(var(--z, 1));
+}
+/* A face that has not arrived. It breathes, so it reads as "coming" rather
+   than as an empty ring — which is what an unfilled circle looks like next to
+   a name. Smooth Air and prefers-reduced-motion stop it; a still tint still
+   says the same thing. */
+.av2.is-loading{ background: var(--raised); }
+@media (prefers-reduced-motion: no-preference){
+  .av2.is-loading{ animation: av2-breathe 1.6s var(--ease, ease-in-out) infinite; }
+  @keyframes av2-breathe{ 0%,100%{ opacity: .45 } 50%{ opacity: .85 } }
+}
+.smooth-air .av2.is-loading{ animation: none; }

@@ -285,7 +285,8 @@ const RPC = {
     const take = ["user_id", "callsign", "real_name", "code", "bio", "phrase",
       "cover", "cover_ink", "cover_image", "is_staff", "hours_s", "lessons_signed",
       "days_flown", "stamp_shape", "stamp_code", "stamp_rim", "stamp_ring",
-      "stamp_pattern", "stamp_ink", "stamp_seed", "stamp_issued_at"];
+      "stamp_pattern", "stamp_ink", "stamp_seed", "stamp_issued_at",
+      "photo_url", "photo_zoom", "photo_x", "photo_y"];
     const out = {};
     for (const k of take) out[k] = row[k] ?? null;
     return [out];

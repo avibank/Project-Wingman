@@ -204,3 +204,31 @@ reachable. Reverting is two numbers in `minimums.js`.
 sentence "It starts at the {MIN_FLOOR}% pass mark", which read "the 40% pass
 mark" on the live site for about twenty minutes. The pass mark is `PASS_PCT`
 and always was; the two are only the same number now by design.
+
+## The avatar: one colour, not two
+
+START-HERE lists `avatar_colour` and `cover_colour` as separate columns. The
+reference does not have two — `avatarHTML()` draws the initials with
+`avaBg(ME.coverColor)`, the same colour the cover is tinted with, and the
+picker that sets it is the cover picker. One pick, two surfaces.
+
+So there is one column, `cover_ink` (0030), and `faceInk()` reads it. Adding
+`avatar_colour` with no control to set it would be a dead column, and the
+check START-HERE gives — "set a colour, reload, initials show in that exact
+colour in the card and the topbar" — is satisfied by the one.
+
+## What is uploaded: the cover bakes its crop, the face does not
+
+Both go through a crop, and they store different things, for a reason that is
+about the shapes rather than about consistency.
+
+A **cover** is a 5:1 band and there is nothing to re-decide later, so the
+browser renders the crop into a 640×128 canvas and uploads that: ~40KB, no
+EXIF, and the column holds a picture that is already the right shape.
+
+A **face** is a circle over a square, and the reference lets somebody
+re-centre it afterwards with a zoom and a drag that it *stores* rather than
+applies. So the upload is the photo cover-fitted into a 512×512 square, and
+`photo_zoom/x/y` are a transform on top of it (0033, avatar.css). Re-centring
+costs no upload, and the same three numbers draw the same face at 28px in a
+comment and 104px on the licence.

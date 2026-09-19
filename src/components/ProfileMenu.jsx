@@ -3,6 +3,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY } from "../lib/flySolo.js";
+import Avatar from "./Avatar.jsx";
 import { useSavesCount } from "../features/bookmarks/deck.js";
 
 // §6 / §7 — the avatar opens a menu, not the page. Ported from
@@ -69,7 +70,11 @@ export const initialsOf = (user) =>
 // off returns the photo. The separate "Use initials" switch this replaced has
 // been removed.
 
-function ProfileMenu({ onNavigate }) {
+/* `profile` is this account's pilot_profiles row, handed down from App. It
+   used to read Clerk's user.imageUrl here, which is never null — so the app
+   bar has always drawn Clerk's generated grey glyph and never this app's
+   initials, whatever colour anybody picked. See src/lib/avatar.js. */
+function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
   const { isSignedIn, user } = useUser();
   const saved = useSavesCount("all");
   const progress = useUserProgress();
@@ -113,8 +118,15 @@ function ProfileMenu({ onNavigate }) {
 
   const go = (page) => { setOpen(false); onNavigate(page); };
   const flySolo = progress.get(FLY_SOLO_KEY, false);
-  const photo = !flySolo && user?.imageUrl ? user.imageUrl : null;
   const label = user?.username || user?.fullName || "Pilot";
+  /* Fly solo hides your own face from everybody, and that includes the copy
+     of it you are looking at — otherwise the one place it is still shown is
+     the one place you would check. */
+  const face = flySolo ? null : profile;
+  /* THE SAME NAME THE CARD USES, so the same person is not "AR" on their
+     licence and "S" in the bar. The profile's is authoritative; Clerk's is
+     only the fallback for an account whose row has not arrived. */
+  const faceName = profile?.real_name || profile?.callsign || label;
 
   return (
     <span className="menuwrap" ref={wrapRef}>
@@ -127,16 +139,20 @@ function ProfileMenu({ onNavigate }) {
         aria-label="Account menu"
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
       >
-        <span className={`avbtn-face ${photo ? "has" : ""}`}
-              style={photo ? { backgroundImage: `url(${photo})` } : undefined}>
-          {photo ? null : (
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.7" />
-              <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.7"
-                    strokeLinecap="round" />
-            </svg>
+        {isSignedIn
+          ? <Avatar profile={face} name={faceName} size={32} loading={profileLoading} />
+          : (
+            /* Signed out there is nobody to draw, so it stays the glyph —
+               initials for an account that does not exist would be a face
+               invented out of nothing. */
+            <span className="avbtn-face">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.7"
+                      strokeLinecap="round" />
+              </svg>
+            </span>
           )}
-        </span>
       </button>
 
       <div className="menu" id="account-menu" role="menu" aria-label="Account"

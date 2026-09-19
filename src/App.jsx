@@ -1468,7 +1468,8 @@ function AppInner() {
             {/* §8 — the Ready Room takes the spot the streak pill held. One
                 number in the app bar, and it counts things addressed to you. */}
             <ReadyRoomPill count={roomBadge} onGo={() => go(routePath.ready())} />
-            <ProfileMenu onNavigate={goProfile} />
+            <ProfileMenu onNavigate={goProfile} profile={myProfile}
+                         profileLoading={Boolean(isSignedIn && me && !myProfile)} />
           </div>
         </header>
       )}
@@ -1881,6 +1882,9 @@ function AppInner() {
                    nobody is, which is the ordinary state — and the filter chip
                    named after them does not exist then. */
                 seat={seat}
+                /* The composer's face: this account's own profile row, so it
+                   is the same face the app bar and the licence draw. */
+                myFace={myProfile}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}

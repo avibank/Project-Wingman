@@ -18,10 +18,9 @@
    ========================================================================= */
 import { useMemo } from "react";
 import { Camera, Image as ImageIcon, ShieldCheck } from "lucide-react";
-import {
-  COVERS, coverGradient, avatarFill, avatarInk, initialsOf, coverOf,
-} from "../../lib/cover.js";
+import { COVERS, coverGradient, coverOf } from "../../lib/cover.js";
 import Stamp from "../Stamp.jsx";
+import Avatar from "../Avatar.jsx";
 import { stampOf, DEFAULT_STAMP } from "../../lib/stamp.js";
 import "./licence.css";
 
@@ -52,21 +51,16 @@ function Cover({ cover, edit, onPick }) {
 }
 
 export default function LicenceCard({
-  profile, photo = null, stats = [], stamp = null, edit = false, admin = false,
+  profile, stats = [], stamp = null, edit = false, admin = false, loading = false,
   onPickCover, onPickPhoto, onPickPhrase, onCallsign, onBio, onCreateStamp,
   action = null,
 }) {
   const cover = coverOf(profile);
   const name = profile?.callsign || profile?.real_name || "Pilot";
-  const ink = cover.ink;
-  const vars = {
-    "--lic-av-bg": avatarFill(ink),
-    "--lic-av-ink": avatarInk(ink),
-  };
   const issued = Boolean(stamp);
 
   return (
-    <div className="lic-card" style={vars}>
+    <div className="lic-card">
       <Cover cover={cover} edit={edit} onPick={onPickCover} />
       {admin && (
         <span className="lic-adm"><ShieldCheck size={11} aria-hidden="true" /> ADMIN</span>
@@ -74,9 +68,11 @@ export default function LicenceCard({
 
       <div className="lic-body">
         <div className="lic-avw">
-          <span className="lic-av">
-            {photo ? <img src={photo} alt="" /> : initialsOf(profile?.real_name || name)}
-          </span>
+          {/* THE ONE AVATAR. It used to read Clerk's user.imageUrl, which is
+              never null — so this always drew Clerk's generated grey glyph
+              and the colour picked below it painted nothing. */}
+          <Avatar className="lic-av" profile={profile} name={profile?.real_name || name}
+                  size={104} loading={loading} />
           {edit && (
             <button type="button" className="lic-cam" onClick={onPickPhoto}
                     aria-label="Your picture">

@@ -32,6 +32,13 @@ export async function fetchCard(viewer, userId) {
 
 /* -------------------------------------------------------------- the writes */
 
+/* Clamped here as well as in the CHECK: a value the server refuses is a save
+   that fails for a reason nobody can see. */
+const clampNum = (v, fallback, lo, hi) => {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : fallback;
+};
+
 const clean = (v, max) => {
   const t = String(v ?? '').replace(/[\n\r]+/g, ' ').trim().slice(0, max);
   return t || null;
@@ -51,6 +58,12 @@ export async function saveCard(userId, patch) {
   }
   if ('cover_ink' in patch) row.cover_ink = inkByName(patch.cover_ink)?.n || null;
   if ('cover_image' in patch) row.cover_image = patch.cover_image || null;
+  /* The face. null is a real value here — it is what "use your initials"
+     writes, and the only reason that choice can be made at all now. */
+  if ('photo_url' in patch) row.photo_url = patch.photo_url || null;
+  if ('photo_zoom' in patch) row.photo_zoom = clampNum(patch.photo_zoom, 100, 100, 400);
+  if ('photo_x' in patch) row.photo_x = clampNum(patch.photo_x, 0, -100, 100);
+  if ('photo_y' in patch) row.photo_y = clampNum(patch.photo_y, 0, -100, 100);
   if (!Object.keys(row).length) return { ok: true };
   const { error } = await supabase.from('pilot_profiles')
     .upsert({ user_id: userId, ...row }, { onConflict: 'user_id' });

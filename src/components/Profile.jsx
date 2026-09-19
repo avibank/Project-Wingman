@@ -6,10 +6,11 @@ import PhrasePicker from "./licence/PhrasePicker.jsx";
 import StampCreator from "./licence/StampCreator.jsx";
 import PhotoPicker from "./licence/PhotoPicker.jsx";
 import CoverCrop from "./licence/CoverCrop.jsx";
-import { checkFile, uploadCover } from "../lib/coverImage.js";
+import AvatarCrop from "./licence/AvatarCrop.jsx";
+import { checkFile, uploadCover, renderAvatar, uploadAvatar } from "../lib/coverImage.js";
 import { fetchCard, saveCard, syncStats, statsFrom } from "../lib/licence.js";
 import { HOBBS_KEY, DAYS_KEY } from "../lib/hobbs.js";
-import { stampOf, inkByName } from "../lib/stamp.js";
+import { stampOf } from "../lib/stamp.js";
 import { ShieldCheck, X } from "lucide-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
@@ -529,7 +530,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
      progress, which meant the one line written to be read by other people was
      the one line other people could not read. */
   const [card, setCard] = useState(null);
-  const [picker, setPicker] = useState(null);       // cover | photo | crop | phrase | stamp | others
+  const [picker, setPicker] = useState(null);       // cover | photo | photocrop | crop | phrase | stamp | others
   const [statsWas, setStatsWas] = useState(null);
   /* §5's cover upload: the file, once it has been read, and whether the crop
      is busy sending. The object URL is revoked when the sheet closes — a
@@ -541,6 +542,24 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     setPicker(null);
     setCropSrc((u) => { if (u) URL.revokeObjectURL(u); return null; });
   };
+  /* The face's file, read once and held as an object URL so the crop can
+     show it without a round trip. Revoked when the sheet closes — a blob left
+     in memory is a photo the tab keeps holding. */
+  const [photoSrc, setPhotoSrc] = useState(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const closePhotoCrop = () => {
+    setPicker(null);
+    setPhotoSrc((u) => { if (u) URL.revokeObjectURL(u); return null; });
+  };
+  const pickPhotoFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const wrong = checkFile(file);
+    if (wrong) { setSaveNote(wrong); return; }
+    setPhotoSrc(URL.createObjectURL(file));
+    setPicker("photocrop");
+  };
+
   const pickCoverFile = (e) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -591,7 +610,18 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
       const next = await syncStats(user.id, numbers, statsWas);
       if (!live) return;
       setStatsWas(next);
-      const row = await fetchCard(user.id, user.id);
+      let row = await fetchCard(user.id, user.id);
+      /* THE FULL NAME IS MIRRORED ONCE, HERE. Clerk holds it and Postgres
+         cannot query Clerk, so pilot_profiles.real_name is the copy every
+         other surface reads. It used to be written when the "Full name" field
+         was committed — §5 took that field off the card, so nothing wrote it
+         any more and an account carried a name on its licence and an initial
+         in the app bar. Same person, two faces. */
+      const clerkName = (user.fullName || "").trim();
+      if (live && clerkName && row && row.real_name !== clerkName) {
+        await saveProfile(user.id, { real_name: clerkName });
+        row = await fetchCard(user.id, user.id);
+      }
       if (live && row) setCard(row);
     })();
     return () => { live = false; };
@@ -650,15 +680,12 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     if (e.key === "End") go(btns.length - 1);
   };
 
-  const choosePhoto = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    try { await user.setProfileImage({ file }); setSaveNote("Photo updated."); }
-    catch { setSaveNote("That photo wouldn't upload. Try a smaller one."); }
-  };
-
+  /* THE PHOTO IS THIS APP'S NOW. `choosePhoto` used to hand the file to
+     Clerk's setProfileImage; the read below used to be Clerk's
+     `user.imageUrl`, which is never null, so the app's own initials were
+     unreachable and the colour picked on this very page painted nothing.
+     Both are gone. src/lib/avatar.js and 0033 carry the whole argument. */
   const flySolo = progress.get(FLY_SOLO_KEY, false);
-  const photo = !flySolo && user?.imageUrl ? user.imageUrl : null;
   // Both halves have to move together. The stored value drives this device,
   // the mirror lets the plain lib functions read it synchronously, and
   // pilot_profiles.invisible is the only half other people's queries can see.
@@ -719,7 +746,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               None of the three is gone; each is somewhere it makes sense. */}
           <LicenceCard
             profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
-            photo={photo}
             stats={myStats}
             stamp={myStamp}
             admin={isAdmin}
@@ -758,7 +784,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               <p className="lic-signin">Sign in to make this yours and put a stamp on it.</p>
             )}
           />
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
 
           <div className="block">
             {/* THE CODE, ON THE LICENCE, SET APART FROM THE NAMES.
@@ -826,17 +851,37 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               behind them, and leaving the page to make one would lose sight
               of what the choice is for. */}
           {picker === "photo" && (
-            <PhotoPicker photo={photo} name={holderName || username} ink={inkByName(card?.cover_ink)}
-                         onUpload={() => { setPicker(null); fileRef.current?.click(); }}
+            <PhotoPicker profile={card} name={holderName || username}
+                         onUpload={() => fileRef.current?.click()}
                          onInitials={() => {
+                           /* ONE WRITE, AND NOTHING THAT CAN THROW. It used
+                              to call Clerk's setProfileImage({file: null}),
+                              which does throw — and on the versions where it
+                              does not, Clerk simply goes back to serving its
+                              own generated default. */
                            setPicker(null);
-                           /* Clearing Clerk's image IS choosing initials —
-                              there is no second place a picture lives. */
-                           user?.setProfileImage({ file: null })
-                             .then(() => setSaveNote("Using your initials."))
-                             .catch(() => setSaveNote(ERROR_GENERIC));
+                           patchCard({ photo_url: null });
+                           setSaveNote("Using your initials.");
                          }}
                          onClose={() => setPicker(null)} />
+          )}
+          <input ref={fileRef} type="file" hidden
+                 accept="image/png,image/jpeg,image/webp,image/gif"
+                 onChange={pickPhotoFile} />
+          {picker === "photocrop" && photoSrc && (
+            <AvatarCrop src={photoSrc} busy={photoBusy} onCancel={closePhotoCrop}
+                        onUse={async (img, frame) => {
+                          setPhotoBusy(true);
+                          const blob = await renderAvatar(img);
+                          const r = await uploadAvatar(user?.id, blob);
+                          setPhotoBusy(false);
+                          if (!r.ok) { setSaveNote(r.message); return; }
+                          await patchCard({
+                            photo_url: r.url, photo_zoom: frame.zoom,
+                            photo_x: frame.x, photo_y: frame.y,
+                          });
+                          closePhotoCrop();
+                        }} />
           )}
           {/* PNG, JPEG, WEBP and GIF only — coverImage.js says why, and says
               it in words when somebody hands it a HEIC. */}
@@ -883,7 +928,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                 <h3>How others see you</h3>
                 <LicenceCard
                   profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
-                  photo={photo} stats={myStats} stamp={myStamp} admin={isAdmin}
+                  stats={myStats} stamp={myStamp} admin={isAdmin}
                   /* A PICTURE OF THE BUTTON, not a disabled one. This is
                      what somebody else sees; you cannot invite yourself, so
                      there is nothing here to press and nothing to explain

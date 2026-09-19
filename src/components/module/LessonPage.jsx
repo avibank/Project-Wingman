@@ -21,6 +21,7 @@ import LogTab, { downloadLog } from "./LogTab.jsx";
 import SaveButton from "../../features/bookmarks/SaveButton.jsx";
 import { useTabPill, useSwitchIn } from "../../lib/tabMotion.js";
 import SignOff from "./SignOff.jsx";
+import Avatar from "../Avatar.jsx";
 import "./deck.css";
 
 // A time inside a comment is pressable — [2:17] or a bare 2:17. YouTube taught
@@ -61,7 +62,7 @@ const LESSON_TABS = ["notes", "comments"];   // "notes" is the Logbook tab's id
 
 export default function LessonPage({
   module: mod, chapters, chapter, lesson, state, people = [], chapterNo = null,
-  stamp = null, tilt = 0, seat = null,
+  stamp = null, tilt = 0, seat = null, myFace = null,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab,
@@ -162,8 +163,10 @@ export default function LessonPage({
   // show a face the top of the screen is hiding.
   const { user: clerkUser } = useUser();
   const progress = useUserProgress();
-  const myPhoto = !progress.get(FLY_SOLO_KEY, false) && clerkUser?.imageUrl
-    ? clerkUser.imageUrl : null;
+  /* The composer's face is the same one everything else draws — it read
+     Clerk's user.imageUrl, which is never null, so it always showed Clerk's
+     grey glyph. src/lib/avatar.js says why. */
+  const faceProfile = progress.get(FLY_SOLO_KEY, false) ? null : myFace;
   // §4 — open on desktop and tablet, closed on a phone. Read once at mount:
   // this is a starting position, not a live binding to the width.
   // What collapsing actually hides. The current row and the next one always
@@ -364,16 +367,9 @@ export default function LessonPage({
               The timestamp control that used to sit here is gone: a comment
               posts plain unless "Mark this moment" set one, which is the only
               time a moment was ever meant to be attached. */}
-          <span className={`avbtn-face composer-av ${myPhoto ? "has" : ""}`} aria-hidden="true"
-                style={myPhoto ? { backgroundImage: `url(${myPhoto})` } : undefined}>
-            {myPhoto ? null : (
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.7" />
-                <path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" stroke="currentColor" strokeWidth="1.7"
-                      strokeLinecap="round" />
-              </svg>
-            )}
-          </span>
+          <Avatar className="composer-av" profile={faceProfile}
+                  name={myFace?.real_name || myFace?.callsign
+                        || clerkUser?.username || clerkUser?.fullName} size={34} />
           <textarea ref={composerRef} className="composer-field" rows={1} value={draft}
                     // A placeholder is not a label. It is only a fallback for
                     // the accessible name, and it disappears the moment there

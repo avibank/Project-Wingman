@@ -69,15 +69,9 @@
 @media (max-width: 560px){ .lic-body{ padding: 0 18px 22px; } }
 
 .lic-avw{ position: relative; width: 104px; height: 104px; }
-.lic-av{
-  width: 104px; height: 104px; border-radius: 50%;
-  display: grid; place-items: center; overflow: hidden;
-  border: 5px solid var(--panel);
-  background: var(--lic-av-bg, var(--active));
-  color: var(--lic-av-ink, var(--on-mark));
-  font-size: 34px; font-weight: 600; line-height: 1;
-}
-.lic-av img{ width: 100%; height: 100%; object-fit: cover; }
+/* The ring is the card's, the face inside it is <Avatar>'s. Sizing and the
+   photo transform live there (avatar.css) so every face in the app agrees. */
+.lic-av{ border: 5px solid var(--panel); box-sizing: content-box; margin: -5px; }
 /* The camera button on the photo. 44px (§12) rather than the design's 30,
    with the visible circle still the design's size. */
 .lic-cam{
@@ -306,3 +300,24 @@ input.lic-bio{ width: min(100%, 40ch); }
 
 /* Signed out, under a read-only card: what to do, never what is missing. */
 .lic-signin{ margin: 22px 0 0; color: var(--t2); font-size: 14.5px; text-align: center; }
+
+/* The face's crop window: a square with a circle cut out of the scrim, so
+   what is inside the ring is exactly what the avatar will show. */
+.lic-acrop{
+  position: relative; width: min(260px, 70vw); aspect-ratio: 1; margin: 0 auto;
+  overflow: hidden; border-radius: 14px; background: var(--sunk);
+  cursor: grab; touch-action: none; user-select: none;
+}
+.lic-acrop:active{ cursor: grabbing; }
+.lic-acrop img{
+  position: absolute; left: 50%; top: 50%;
+  min-width: 100%; min-height: 100%;
+  transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(var(--z, 1));
+  object-fit: cover; pointer-events: none;
+}
+.lic-acrop-mask{
+  position: absolute; inset: 0; pointer-events: none;
+  background: oklch(0 0 0 / .5);
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent 49.5%, #000 50%);
+  mask: radial-gradient(circle at 50% 50%, transparent 49.5%, #000 50%);
+}

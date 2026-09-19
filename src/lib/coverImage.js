@@ -102,3 +102,54 @@ export async function uploadCover(userId, blob) {
   }
   return { ok: true, url: `${publicUrl(COVER_BUCKET, path)}?v=${Date.now()}` };
 }
+
+/* =============================================================================
+   AND THE FACE. Same three requirements, a different shape.
+   -----------------------------------------------------------------------------
+   WHAT IS UPLOADED IS A SQUARE, AND THE POSITION IS THREE NUMBERS. The cover
+   bakes its crop in, because a cover is a band and there is nothing to
+   re-decide. An avatar is a circle over a square, and the reference lets
+   somebody re-centre it later with a zoom and a drag it stores rather than
+   applies — so the file is the photo cover-fitted into a square, and
+   photo_zoom/x/y are a transform on top of it (0033, avatar.css).
+
+   512 is twice the largest a face is ever drawn (104 on the licence, and 2x
+   for a retina screen is 208). Anything larger is bytes nobody can see.
+   ========================================================================= */
+export const AVATAR_PX = 512;
+
+export function renderAvatar(img) {
+  const c = document.createElement('canvas');
+  c.width = AVATAR_PX; c.height = AVATAR_PX;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  /* COVER, not contain: the square is always full, so panning inside it can
+     never reach an empty edge — which is the same reason panLimit exists. */
+  const fit = Math.max(AVATAR_PX / img.naturalWidth, AVATAR_PX / img.naturalHeight);
+  const w = img.naturalWidth * fit;
+  const h = img.naturalHeight * fit;
+  ctx.drawImage(img, (AVATAR_PX - w) / 2, (AVATAR_PX - h) / 2, w, h);
+  return new Promise((done) => c.toBlob((b) => done(b), 'image/webp', 0.88));
+}
+
+export async function uploadAvatar(userId, blob) {
+  /* Same guard as the cover's, and for the same reason: without it the path
+     is the string "undefined" and the object lands in one slot shared by
+     every signed-out visitor. */
+  if (!userId) return { ok: false, message: 'Sign in to put a picture on your licence.' };
+  if (!blob || !blob.size) return { ok: false, message: 'That did not come out as an image. Try again.' };
+  const { upload, publicUrl, isMissingBucket, storageConfigured } =
+    await import('./storage.remote.js');
+  if (!storageConfigured) return { ok: false, message: 'Uploads are off in this build.' };
+  const path = `${userId}/avatar.webp`;
+  const r = await upload('avatars', path, blob, { contentType: 'image/webp' });
+  if (!r.ok) {
+    return {
+      ok: false,
+      message: isMissingBucket(r.message)
+        ? 'Photos are not set up on this project yet.'
+        : 'That did not upload. Try again in a moment.',
+    };
+  }
+  return { ok: true, url: `${publicUrl('avatars', path)}?v=${Date.now()}` };
+}
