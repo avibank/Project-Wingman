@@ -247,6 +247,50 @@ const RPC = {
   squadron_roster: () => [],
   people_search: () => [],
 
+  /* 0029 — issuing a stamp. The two rules the SQL exists for, kept: it
+     refuses a second call, and the SEED IS THE SERVER'S. A harness that let
+     the client choose the seed would let a walk pass against a bug the real
+     function cannot have. */
+  issue_stamp: (s, b) => {
+    let row = s.pilot_profiles.find((p) => p.user_id === b.uid);
+    if (!row) { row = { user_id: b.uid }; s.pilot_profiles.push(row); }
+    if (row.stamp_issued_at) throw new Error("that stamp is already issued");
+    const code = String(b.p_code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+    if (!code) throw new Error("a stamp needs a code");
+    Object.assign(row, {
+      stamp_shape: b.p_shape,
+      stamp_code: code,
+      stamp_rim: b.p_rim !== false,
+      stamp_ring: String(b.p_ring || "").toUpperCase().replace(/[^A-Z0-9 .'-]/g, "").slice(0, 10) || null,
+      stamp_pattern: b.p_pattern || "none",
+      stamp_ink: b.p_ink || null,
+      stamp_seed: 1 + Math.floor(Math.random() * 999998),
+      stamp_issued_at: new Date().toISOString(),
+    });
+    return row;
+  },
+
+  /* 0030 — the licence card, read for anybody. The SQL's rule in one line:
+     your own card is always yours, somebody flying solo is on nobody's, and a
+     block cuts both ways. The column list is the boundary, so it is spelled
+     out here too rather than spreading the row. */
+  licence_card: (s, b) => {
+    const row = s.pilot_profiles.find((p) => p.user_id === b.p_user);
+    if (!row) return [];
+    if (row.user_id !== b.p_viewer && row.invisible) return [];
+    const blocked = (s.blocks || []).some((x) =>
+      (x.user_id === b.p_viewer && x.blocked_id === b.p_user)
+      || (x.user_id === b.p_user && x.blocked_id === b.p_viewer));
+    if (blocked) return [];
+    const take = ["user_id", "callsign", "real_name", "code", "bio", "phrase",
+      "cover", "cover_ink", "cover_image", "is_staff", "hours_s", "lessons_signed",
+      "days_flown", "stamp_shape", "stamp_code", "stamp_rim", "stamp_ring",
+      "stamp_pattern", "stamp_ink", "stamp_seed", "stamp_issued_at"];
+    const out = {};
+    for (const k of take) out[k] = row[k] ?? null;
+    return [out];
+  },
+
   /* ---- the Ready Room. The same rules as the SQL, kept small: 0022's votes
      and chat, 0026's attachments, 0027's receipts. A recipient is a member who
      had joined by the time a message was sent, not blocked either way and not
@@ -508,7 +552,12 @@ export function postgrestMiddleware() {
       const name = url.pathname.slice("/rest/v1/rpc/".length);
       const fn = RPC[name];
       if (!fn) { console.warn(`[harness] no RPC "${name}"`); return send(501, { message: `harness: rpc ${name} not implemented` }); }
-      return send(200, fn(store, body || {}));
+      /* A function that RAISES answers 400 with a message, as PostgREST does
+         for a raise in plpgsql — that is how issue_stamp refuses a second
+         call, and a harness that threw a 500 instead would let a screen pass
+         its "already issued" path against the wrong shape of failure. */
+      try { return send(200, fn(store, body || {})); }
+      catch (e) { return send(400, { message: String(e?.message || e), code: "P0001" }); }
     }
 
     const table = url.pathname.slice("/rest/v1/".length).split("?")[0];

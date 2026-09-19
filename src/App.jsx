@@ -220,7 +220,7 @@ import { badgeCount, normalisePresence } from "./lib/roomModel.js";
 import { readMinimums } from "./lib/minimums.js";
 import { fetchReplyVotes, toggleReplyVote, setBestReply } from "./lib/threads.js";
 import { fetchMySquadrons, fetchSquadronMessages, postSquadronMessage, deleteMessage, fetchRightSeat, markDelivered } from "./lib/roomData.js";
-import { fetchSeat } from "./lib/rightSeat.js";
+import { fetchSeat, askRightSeat } from "./lib/rightSeat.js";
 import { toAttachment, attachToMessage } from "./lib/attachments.js";
 import { fetchProfiles, fetchProfile } from "./lib/squadron.js";
 import { reportContent, blockUser } from "./lib/squadron.js";
@@ -2155,7 +2155,24 @@ function AppInner() {
     {/* One <filter> per ink seed on screen, shared. §8: "Crew walls with 100+
         stamps stay smooth… share the filter defs." */}
     {pilotSheet && (
+      /* §5 — the profile viewer. The sheet draws that person's licence card
+         and offers what you can actually do with them: ask for the right seat
+         and open the chat when you are already squadron mates, invite them
+         when you are not. Each action leaves for the Ready Room, which is
+         where every one of them lives — this dialog starts them, it does not
+         reimplement them. */
       <PilotSheet pilot={pilotSheet} channelId={activeModuleCode}
+                  mates={squadrons.some((sq) => (sq.members || []).includes(pilotSheet.user_id))}
+                  onInvite={(id) => { setPilotSheet(null); openRoomAt({ kind: "person", id }); }}
+                  onSeat={(id) => {
+                    setPilotSheet(null);
+                    if (me) askRightSeat(me, id).catch(() => {});
+                    openRoomAt({ kind: "seat" });
+                  }}
+                  onChat={() => {
+                    setPilotSheet(null);
+                    openRoomAt({ kind: "module", moduleCode: activeModuleCode });
+                  }}
                   onClose={() => setPilotSheet(null)} onChanged={() => {}} />
     )}
     <StampFilters />

@@ -55,3 +55,21 @@ the real content ids and asserts the rewrite serves all 80 of them, that real
 files are still served as themselves, and that no redirect lands on an
 address the rewrite would refuse. Proven by reverting the config: 36 dotted
 addresses fail.
+
+## 13 · Initials were unreadable on six of the thirty-six inks
+
+**Found:** 2026-09-19, by measuring rather than looking.
+
+The licence card's initials circle takes the cover's ink, and the reference
+chooses white or near-black by `l > .7`. Khaki sits at exactly .70, so it got
+white: **2.67:1**. Lavender 2.77, Nardo 3.36, Mauve 3.48, Emerald 3.87,
+Barbie 4.00 — all under the 4.5 prose floor, two of them under the 3:1 that
+large text answers to.
+
+A threshold is a guess at where the crossover is. It now picks whichever of
+the two reference colours has more contrast on that ink, which is the same
+answer on thirty of the thirty-six and a readable one on the other six. Worst
+case is now 4.38:1 on Mocha, and every ink clears the large-text floor.
+
+`npm run check:licence` measures all thirty-six and fails if a fixed threshold
+comes back.

@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
+import LicenceCard from "./licence/LicenceCard.jsx";
+import { fetchCard, statsOf } from "../lib/licence.js";
+import { stampOf } from "../lib/stamp.js";
 import { blockUser, muteUser, reportContent } from "../lib/squadron.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 import { ERROR_GENERIC } from "../lib/copy.js";
@@ -16,9 +19,27 @@ const REASONS = [
   "Something else",
 ];
 
-function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
+function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged,
+                     mates = false, onInvite, onSeat, onChat }) {
   const { user } = useUser();
   const [mode, setMode] = useState("menu");   // menu | report | confirm-block
+  /* §5 — "tapping any face or stamp anywhere opens this card for that person
+     in a dialog". It is the SAME component the owner edits on their licence,
+     with edit off, so what a stranger sees cannot drift from what its owner
+     was shown. The safety controls stay underneath: this sheet was the one
+     home for block, mute and report, and it still is.
+
+     Null while it loads, and null for good if 0030's function returns no row
+     — a pilot flying solo, or a block either way. The sheet then shows what
+     it always showed, which is the truthful thing: there is no card. */
+  const [card, setCard] = useState(null);
+  useEffect(() => {
+    let live = true;
+    setCard(null);
+    if (!user?.id || !pilot?.user_id) return undefined;
+    fetchCard(user.id, pilot.user_id).then((row) => { if (live) setCard(row); });
+    return () => { live = false; };
+  }, [user?.id, pilot?.user_id]);
   const [reason, setReason] = useState(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -37,10 +58,44 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
     <div className="ps" role="dialog" aria-label={`Options for ${name}`}>
       <button className="ps-scrim" onClick={onClose} aria-label="Close" />
       <div className="ps-sheet">
+        {card ? (
+          /* The card IS the head when there is one: a second name and face
+             above it would be the same person said twice. */
+          <LicenceCard
+            profile={card}
+            stats={statsOf(card)}
+            stamp={stampOf(card)}
+            admin={card.is_staff}
+            action={(
+              /* §5's actions, and which pair you get depends on whether you
+                 are already squadron mates. A control that cannot do anything
+                 is not drawn: no handler, no button. */
+              mates ? (
+                <div className="ps-acts">
+                  {onSeat && (
+                    <button type="button" className="lic-invite" onClick={() => onSeat(card.user_id)}>
+                      Invite to right seat
+                    </button>
+                  )}
+                  {onChat && (
+                    <button type="button" className="ps-row" onClick={() => onChat(card.user_id)}>
+                      Squadron chat
+                    </button>
+                  )}
+                </div>
+              ) : (onInvite ? (
+                <button type="button" className="lic-invite" onClick={() => onInvite(card.user_id)}>
+                  Invite to squadron
+                </button>
+              ) : null)
+            )}
+          />
+        ) : (
         <div className="ps-head">
           <Tail name={name} marking={pilot.marking} size={44} staff={pilot.is_staff} />
           <span className="ps-name">{name}</span>
         </div>
+        )}
 
         {done ? (
           <>

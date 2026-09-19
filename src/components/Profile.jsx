@@ -1,6 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUser, useClerk } from "@clerk/clerk-react";
-import { ShieldCheck } from "lucide-react";
+import LicenceCard from "./licence/LicenceCard.jsx";
+import CoverPicker from "./licence/CoverPicker.jsx";
+import PhrasePicker from "./licence/PhrasePicker.jsx";
+import StampCreator from "./licence/StampCreator.jsx";
+import PhotoPicker from "./licence/PhotoPicker.jsx";
+import { fetchCard, saveCard, syncStats, statsFrom } from "../lib/licence.js";
+import { HOBBS_KEY, DAYS_KEY } from "../lib/hobbs.js";
+import { stampOf, inkByName } from "../lib/stamp.js";
+import { ShieldCheck, X } from "lucide-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSocialPrefs } from "../lib/social.js";
 import { LIVERIES, deckVars, engineLivery, keyImg, fillImg, auroraImg, LIGHT, hueAt, LX, LS, wrap, col } from "../lib/liveryEngine.js";
@@ -9,7 +17,6 @@ import { MODULES, CHAPTERS } from "../data.js";
 import { CHARACTERS, DEFAULT_CHARACTER, VOICES } from "../lib/voices.js";
 import { withSetting } from "../lib/viewTransition.js";
 import { useFlags } from "../lib/flags.js";
-import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
 import BlockedList from "./BlockedList.jsx";
 import PilotSettings from "./PilotSettings.jsx";
@@ -492,7 +499,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const fileRef = useRef(null);
 
   const [holderName, setHolderName] = useState("");
-  const [bio, setBio] = useState("");
   const [username, setUsername] = useState("");
   const [greetName, setGreetName] = useState("");
   const [saveNote, setSaveNote] = useState(null);
@@ -501,12 +507,21 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const [savedCode, setSavedCode] = useState("");
   const [codeNote, setCodeNote] = useState(null);
 
+  /* §5 — THE CARD. The first box on this tab IS the licence card, and it is
+     the same component other people see; `edit` is the whole difference.
+     `card` is the profile row it draws, which is also where the bio and the
+     phrase live now — the bio used to be pw-bio in this account's private
+     progress, which meant the one line written to be read by other people was
+     the one line other people could not read. */
+  const [card, setCard] = useState(null);
+  const [picker, setPicker] = useState(null);       // cover | phrase | stamp | others
+  const [statsWas, setStatsWas] = useState(null);
+
   useEffect(() => {
     setHolderName(user?.fullName || "");
     setUsername(user?.username || "");
     // Empty unless they have set one. No longer seeded from the first name.
     setGreetName(progress.get("pw-greet-name", "") || "");
-    setBio(progress.get("pw-bio", "") || "");
   }, [user?.fullName, user?.username, user?.firstName, progress.loaded]);
 
   /* The code comes from the profile, not from Clerk — Clerk has never heard of
@@ -525,6 +540,48 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     });
     return () => { live = false; };
   }, [user?.id]);
+
+  /* The card's own row, read through 0030's function — the same one anybody
+     opening your card uses, so what you see in edit mode is what they see.
+     And the three stats are pushed on open: they are a projection of this
+     account's private progress, and this is the one moment anybody is about
+     to look at them. */
+  useEffect(() => {
+    let live = true;
+    if (!user?.id || !progress.loaded) return undefined;
+    const numbers = {
+      hobbs: progress.get(HOBBS_KEY, {}),
+      done: progress.get("pw-lesson-done", {}),
+      days: progress.get(DAYS_KEY, null),
+    };
+    (async () => {
+      const next = await syncStats(user.id, numbers, statsWas);
+      if (!live) return;
+      setStatsWas(next);
+      const row = await fetchCard(user.id, user.id);
+      if (live && row) setCard(row);
+    })();
+    return () => { live = false; };
+  }, [user?.id, progress.loaded]);
+
+  /* One writer for the card's fields, and it updates what is on screen from
+     what the server accepted rather than from what was asked for — a value
+     a CHECK refuses must not keep drawing. */
+  const patchCard = async (patch) => {
+    if (!user?.id) return;
+    setCard((c) => ({ ...(c || { user_id: user.id }), ...patch }));
+    const r = await saveCard(user.id, patch);
+    if (!r.ok) { setSaveNote("That didn't save. Try again in a moment."); }
+    const row = await fetchCard(user.id, user.id);
+    if (row) setCard(row);
+  };
+
+  const myStats = statsFrom({
+    hobbs: progress.get(HOBBS_KEY, {}),
+    done: progress.get("pw-lesson-done", {}),
+    days: progress.get(DAYS_KEY, null),
+  });
+  const myStamp = stampOf(card);
 
   // §6.1 — on by default. Off is the unusual choice, so the copy says so.
   const byUsername = (prefs?.identity_display || "username") === "username";
@@ -564,7 +621,6 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     catch { setSaveNote("That photo wouldn't upload. Try a smaller one."); }
   };
 
-  const initials = initialsOf(user);
   const flySolo = progress.get(FLY_SOLO_KEY, false);
   const photo = !flySolo && user?.imageUrl ? user.imageUrl : null;
   // Both halves have to move together. The stored value drives this device,
@@ -603,90 +659,54 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
       {/* ------------------------------------------------------------ LICENCE */}
       {tab === "licence" && (
         <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
-          <div className="block">
-            <span className="eyebrow">Holder</span>
-            <div className="idrow">
-              {/* The avatar is the control. The badge is decoration on it, not a
-                  second button — one target, one focus ring, on the circle. */}
-              <button className="bigav" type="button" aria-label="Change your photo"
-                      onClick={() => fileRef.current?.click()}
-                      style={photo ? { backgroundImage: `url(${photo})` } : undefined}>
-                {photo ? "" : <span className="bigav-initials">{initials || "··"}</span>}
-                <span className="bigav-badge" aria-hidden="true">
-                  <svg viewBox="0 0 20 20" fill="none">
-                    <path d="M3.5 6.5h3l1.2-1.8h4.6L13.5 6.5h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z"
-                          stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                    <circle cx="10" cy="11" r="2.9" stroke="currentColor" strokeWidth="1.5" />
-                  </svg>
-                </span>
+          {/* §5 — THE CARD IS THE FIRST BOX, and it is not a box: the same
+              component anybody else sees when they tap your face, in edit
+              mode. The fields that used to be listed here — the photo, the
+              callsign, the bio — are ON it now, where they are read, so
+              there is no form above a preview of the form.
+
+              WHAT MOVED OUT rather than away:
+              · Full name is the ACCOUNT'S and is changed where accounts are;
+                it shows on the card under the callsign and is not editable
+                here, which is what §5 asks for.
+              · "Go by callsign" went with it. The card's big line IS the
+                callsign now — §5: "always the big line and the only editable
+                name" — so a switch choosing between the two was choosing
+                something the design had already decided.
+              · Fly solo moved to Preferences (§6), into How social.
+              None of the three is gone; each is somewhere it makes sense. */}
+          <LicenceCard
+            profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
+            photo={photo}
+            stats={myStats}
+            stamp={myStamp}
+            admin={isAdmin}
+            edit
+            onPickCover={() => setPicker("cover")}
+            onPickPhoto={() => setPicker("photo")}
+            onPickPhrase={() => setPicker("phrase")}
+            onCreateStamp={() => setPicker("stamp")}
+            onCallsign={(v) => {
+              const next = v.trim();
+              if (!next || next === username) return;
+              setUsername(next);
+              /* Clerk owns uniqueness, so the mirror only happens after it
+                 accepts. A name that was taken must not be written anywhere. */
+              user?.update({ username: next })
+                .then(() => { if (user?.id) saveProfile(user.id, { callsign: next }); })
+                .catch(() => setSaveNote("That callsign is taken."));
+            }}
+            onBio={(v) => patchCard({ bio: v })}
+            action={(
+              <button type="button" className="ghost" style={{ marginTop: 18 }}
+                      onClick={() => setPicker("others")}>
+                See it as others do
               </button>
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
-              <span className="idtext">
-                <div className="idname">{user?.fullName || user?.username || "Pilot"}</div>
-                <div className="idmail">{user?.primaryEmailAddress?.emailAddress}</div>
-              </span>
-              {isAdmin && (
-                <span className="admin">
-                  <ShieldCheck size={10} /> Admin
-                </span>
-              )}
-            </div>
+            )}
+          />
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={choosePhoto} />
 
-            <Field id="f-first" label="Full name" hint="On your licence, and how people find you — unless you go by callsign below."
-                   value={holderName} onChange={setHolderName}
-                   onCommit={() => {
-                     const [first, ...rest] = holderName.trim().split(/\s+/);
-                     user?.update({ firstName: first || "", lastName: rest.join(" ") });
-                     /* ALSO TO THE PROFILE, because Clerk is not queryable from
-                        Postgres and people_search runs there. Whether it is
-                        ever MATCHED is the server's decision, not this one:
-                        turning on "Go by callsign" makes it unmatchable without
-                        this line knowing anything about it. */
-                     if (user?.id) saveProfile(user.id, { real_name: holderName.trim() || null });
-                   }} />
-
-            {/* An everyday option, not a privacy ceremony: no warning styling,
-                no confirmation, no red. It sits in the identity block because
-                it is part of who people see, not a setting filed elsewhere. */}
-            <Switch id="fly-solo" label="Fly solo"
-                    note="Nobody sees you and you see nobody. For the nights you'd rather just get on with it."
-                    on={flySolo} onChange={setFlySolo} />
-
-            <Field id="f-bio" label="A line about you"
-                   hint="Shows on your licence when someone opens it. Keep it short."
-                   value={bio} onChange={setBio}
-                   onCommit={() => progress.set("pw-bio", bio.trim() || null)} />
-
-            {/* AND TO THE PROFILE, for the same reason the full name goes
-                there — Clerk is not queryable from Postgres, and the callsign
-                is what the whole social layer reads: the room, the lesson
-                comments, the roster, people_search.
-
-                It went only to Clerk before, so setting a callsign here left
-                pilot_profiles.callsign NULL. The effect was that you had a
-                name in your own chrome and were "Someone" to everybody else,
-                and people_search — which matches on that column — could not
-                find you at all.
-
-                Order matters: Clerk owns uniqueness, so the mirror happens
-                only after it accepts. A name that was taken must not be
-                written anywhere. */}
-            <Field id="f-user" label="Callsign" hint="How everyone else sees you."
-                   value={username} onChange={setUsername}
-                   onCommit={() => {
-                     const next = username.trim();
-                     user?.update({ username: next })
-                       .then(() => { if (user?.id) saveProfile(user.id, { callsign: next || null }); })
-                       .catch(() => setSaveNote("That callsign is taken."));
-                   }} />
-
-            {/* Off shows your full name, on shows your callsign. Sits under the
-                callsign field rather than above it: you pick the name first,
-                then say whether to use it. */}
-            <Switch id="go-by-callsign" label="Go by callsign"
-                    note="One of these gets said out loud when someone finds you. Pick the one you'd like hearing."
-                    on={byUsername} onChange={setIdentity} />
-
+          <div className="block">
             {/* THE CODE, ON THE LICENCE, SET APART FROM THE NAMES.
 
                 It is not a third way of being called something — it is the mark
@@ -746,6 +766,59 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               {" "}— removes your logbook, your crew and everything you've flown. It can't be undone.
             </p>
           )}
+
+          {/* §5's three pickers and the read-only view. Each is a dialog over
+              the card rather than a route: they are a choice about the thing
+              behind them, and leaving the page to make one would lose sight
+              of what the choice is for. */}
+          {picker === "photo" && (
+            <PhotoPicker photo={photo} name={holderName || username} ink={inkByName(card?.cover_ink)}
+                         onUpload={() => { setPicker(null); fileRef.current?.click(); }}
+                         onInitials={() => {
+                           setPicker(null);
+                           /* Clearing Clerk's image IS choosing initials —
+                              there is no second place a picture lives. */
+                           user?.setProfileImage({ file: null })
+                             .then(() => setSaveNote("Using your initials."))
+                             .catch(() => setSaveNote(ERROR_GENERIC));
+                         }}
+                         onClose={() => setPicker(null)} />
+          )}
+          {picker === "cover" && (
+            <CoverPicker cover={card?.cover || "contour"} ink={card?.cover_ink}
+                         onPick={patchCard}
+                         onUpload={() => setSaveNote("Uploading your own cover is coming — pick a design for now.")}
+                         onClose={() => setPicker(null)} />
+          )}
+          {picker === "phrase" && (
+            <PhrasePicker phrase={card?.phrase}
+                          onPick={(v) => { patchCard({ phrase: v }); setPicker(null); }}
+                          onClose={() => setPicker(null)} />
+          )}
+          {picker === "stamp" && (
+            <StampCreator userId={user?.id}
+                          onIssued={(row) => { setCard(row); setPicker(null); }}
+                          onClose={() => setPicker(null)} />
+          )}
+          {/* §5 — "See it as others do: shows the card read-only." The SAME
+              component with edit off, which is the whole point of there being
+              one component: what this shows cannot drift from what they see. */}
+          {picker === "others" && (
+            <div className="lic-scrim" role="dialog" aria-label="How others see you"
+                 onClick={(e) => { if (e.target === e.currentTarget) setPicker(null); }}>
+              <div className="lic-sheet">
+                <button type="button" className="lic-x" onClick={() => setPicker(null)} aria-label="Close">
+                  <X size={15} aria-hidden="true" />
+                </button>
+                <h3>How others see you</h3>
+                <LicenceCard
+                  profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
+                  photo={photo} stats={myStats} stamp={myStamp} admin={isAdmin}
+                  action={<button type="button" className="lic-invite" disabled>Invite to squadron</button>}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -793,6 +866,29 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
           <div className="block">
             <span className="eyebrow">How social</span>
+            {/* §6 — FLY SOLO LIVES HERE NOW. It was on the licence, in the
+                identity block, which was the right argument when that block
+                was a list of who you are: it is part of who people see. §5
+                turned that block into the card itself, and a switch is not
+                something that goes on a licence — so it comes to the box
+                about being social, at the top of it, because it is the
+                setting that turns every other one in the box off.
+
+                An everyday option, not a privacy ceremony: no warning
+                styling, no confirmation, no red. */}
+            <Switch id="fly-solo" label="Fly solo"
+                    note="Nobody sees you and you see nobody. For the nights you'd rather just get on with it."
+                    on={flySolo} onChange={setFlySolo} />
+            {/* AND SO DOES "GO BY CALLSIGN", for the same reason and to the
+                same place. §5 settles what the CARD shows — the callsign is
+                its big line and its only editable name — which is a decision
+                about the card, not about how you are named in a thread. That
+                is what this switch has always chosen (identity_display, read
+                by notebook.js and discussion.js), so it is still a real
+                setting and it still needs a door. */}
+            <Switch id="go-by-callsign" label="Go by callsign"
+                    note="One of these gets said out loud when someone finds you. Pick the one you'd like hearing."
+                    on={byUsername} onChange={setIdentity} />
             <div className="livdesc">{PRESETS.find((x) => x.id === preset)?.desc}</div>
             <Seg label="Social preset" value={preset}
                  options={PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])

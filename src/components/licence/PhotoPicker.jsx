@@ -1,0 +1,40 @@
+/* §5: "Photo: initials by default, or an uploaded photo." Two choices, and
+   both have to be reachable — an upload button with no way back means the
+   first photo somebody picks is the one they are stuck with.
+
+   THE PHOTO IS CLERK'S, not this app's. It is the same picture the app bar
+   draws and the one Fly solo hides, so there is no second copy in Postgres
+   and no second idea of what somebody looks like. Choosing initials is
+   therefore clearing Clerk's image, not writing a flag. */
+import { X, Upload } from "lucide-react";
+import { initialsOf, avatarFill, avatarInk } from "../../lib/cover.js";
+import "./licence.css";
+
+export default function PhotoPicker({ photo, name, ink, onUpload, onInitials, onClose }) {
+  const swatch = { background: avatarFill(ink), color: avatarInk(ink) };
+  return (
+    <div className="lic-scrim" role="dialog" aria-label="Your picture"
+         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="lic-sheet">
+        <button type="button" className="lic-x" onClick={onClose} aria-label="Close">
+          <X size={15} aria-hidden="true" />
+        </button>
+        <h3>Your picture</h3>
+        <div className="lic-cgrid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          <button type="button" className={`lic-copt${photo ? "" : " is-on"}`}
+                  aria-pressed={!photo} onClick={onInitials}>
+            <span className="lic-psw" style={swatch}>{initialsOf(name)}</span>
+            <span>Your initials</span>
+          </button>
+          <button type="button" className={`lic-copt${photo ? " is-on" : ""}`}
+                  aria-pressed={Boolean(photo)} onClick={onUpload}>
+            <span className="lic-psw lic-psw-up">
+              {photo ? <img src={photo} alt="" /> : <Upload size={22} aria-hidden="true" />}
+            </span>
+            <span>{photo ? "Change photo" : "Upload a photo"}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

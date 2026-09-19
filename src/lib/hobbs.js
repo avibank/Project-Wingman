@@ -3,6 +3,24 @@ import { useEffect, useRef } from "react";
 export const HOBBS_KEY = "pw-hobbs";
 export const LAST_FLOWN_KEY = "pw-last-flown";
 
+/* DAYS FLOWN — §5's third stat on the licence card, and the only new thing it
+   needed stored. A COUNT AND THE LAST DAY, never a list: a set of every date
+   somebody ever studied grows without limit and is a thousand strings after
+   three years, and nothing in the app ever asks WHICH days, only how many.
+
+   It is written by the same writer as the meter and "last flown", because it
+   is the same event. A second writer somewhere else is how the deck once told
+   everyone this was their first flight. */
+export const DAYS_KEY = "pw-days";
+const today = (d = new Date()) => d.toISOString().slice(0, 10);
+export function bumpDay(store, now = new Date()) {
+  const day = today(now);
+  const had = store && typeof store === "object" ? store : { n: 0, last: null };
+  if (had.last === day) return had;
+  return { n: (had.n || 0) + 1, last: day };
+}
+export const daysFlown = (store) => (store && typeof store === "object" ? store.n || 0 : 0);
+
 // How often accumulated time is written down. Short enough that a closed lid
 // loses a rounding error rather than a session, long enough that the whole
 // tree is not re-rendering on a fast timer.
@@ -49,7 +67,11 @@ export function useHobbsMeter(moduleCode, progress) {
         // stamped by the same writer. It had only one, in the old chapters
         // panel, which the module screen replaced — so the deck told everyone
         // this was their first flight no matter how much they had flown.
-        p.set(LAST_FLOWN_KEY, new Date().toISOString());
+        const now = new Date();
+        p.set(LAST_FLOWN_KEY, now.toISOString());
+        // Same event, same writer: a day on which the meter ran is a day flown.
+        const days = bumpDay(p.get(DAYS_KEY, null), now);
+        if (days !== p.get(DAYS_KEY, null)) p.set(DAYS_KEY, days);
       }
       if (!document.hidden) start();
     };

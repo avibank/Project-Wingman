@@ -126,3 +126,52 @@ the right-seat partner's marks on the scrubber. Two places that must agree, so
 it is emitted from `liveryEngine.js` beside `--ok` and `--bad` rather than
 invented in a component. Hue 190 and the day/night pair are the reference's
 (`--copilot` in reference/01); only the name is this app's.
+
+## Item 5 · the licence card
+
+**The card is one component and the viewer is the same one.** §5 says so and
+it is worth naming the alternative: a read-only copy that looks the same
+today and drifts the first time either is touched. `LicenceCard` takes
+`edit`, and that is the whole difference between the licence tab, "See it as
+others do", and the dialog a stranger opens.
+
+**The photo stays Clerk's.** It is the account's picture, the same one the app
+bar draws and the one Fly solo hides. Choosing "Your initials" therefore
+clears Clerk's image rather than writing a flag — there is no second place a
+picture lives, so there is no second answer to what somebody looks like.
+
+**The three stats are a projection.** The truth is the account's own progress,
+which is private and has exactly one reader; the numbers on `pilot_profiles`
+are the copy other people are allowed to see, written by their owner when the
+licence is opened. Exactly what `callsign` and `real_name` already do. The
+worst a drift can do is show a stale number on somebody else's screen; the
+owner's own Flight Deck reads the truth.
+
+**Days flown is a count and a date, never a list.** A set of every day somebody
+studied is a thousand strings after three years, and nothing ever asks which
+days. It is written by the same writer as the hour meter, because it is the
+same event.
+
+**Pattern scope is not offered.** The reference's studio has Both / Centre /
+Rim, and `drawStamp` honours it. §4's data model is
+`{shape, code, rim, ring, pattern, ink, seed, issued_at}` and 0029 stores
+exactly those, so the choice would be lost on the next load. One column and
+one line would bring it back.
+
+**Symbols are not offered either**, and that is the reference's own decision:
+the newer build maps its Mark tab back to Shape on the first line, and §4 says
+"There are no symbols."
+
+**The initials' colour is measured, not thresholded.** The reference switches
+at `l > .7`, which puts white on Khaki at 2.67:1. It now picks whichever of
+the two reference colours actually has more contrast on that ink — the same
+two colours, a fact instead of a guess. On thirty of thirty-six it agrees with
+the threshold.
+
+**"Go by callsign" moved to Preferences rather than going away.** §5 settles
+what the CARD shows — the callsign is its big line and only editable name —
+which is a decision about the card, not about how somebody is named in a
+thread. `identity_display` is still read by notebook.js and discussion.js, so
+it still needed a door.
+
+**Fly solo moved with it**, as §6 asks.

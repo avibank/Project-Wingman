@@ -1,0 +1,283 @@
+/* =============================================================================
+   THE LICENCE CARD — §5, ported from
+   docs/launch/reference/02-licence-stamp-creator.html.
+   -----------------------------------------------------------------------------
+   That file is eleven layers of revisions stacked in one stylesheet (v3, v4,
+   v5 … v10), each overriding the one before. What is written here is the
+   EFFECTIVE result — the last rule for every property — because a port that
+   copied all eleven would carry ten dead ones and nobody could tell which
+   line was in force. Where a later layer reversed an earlier one, the margin
+   says so: the phrase is the clearest case, and it went from a pill with a
+   hatched edge to plain italic text.
+
+   EVERY CLASS IS PREFIXED lic-. The design's own names are .cover, .av,
+   .stats, .tag, .hn, .bio and .sblock; four of those already paint something
+   in this app and .av is the avatar every screen uses.
+
+   THE CARD KEEPS ITS OWNER'S COLOURS. --lic-ink is the cover's ink, set
+   inline from the profile, and it is what tints the cover, the initials and
+   the phrase — NOT the viewer's livery. §5: "The card keeps the owner's
+   colours, not the viewer's livery." Everything else on the card (the panel,
+   the text greys, the rules) is the viewer's, because that is the app around
+   it rather than the card itself.
+   ========================================================================= */
+
+.lic-card{
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ cover */
+.lic-cover{
+  height: 128px; position: relative; overflow: hidden;
+  background: var(--lic-cover-bg, linear-gradient(135deg, var(--active), var(--sunk)));
+}
+.lic-cover > svg{ position: absolute; inset: 0; width: 100%; height: 100%; }
+/* The face is a token, never named. The reference wrote Geist Mono into four
+   SVG attributes; src/lib/cover.js drops them and this puts it back. */
+.lic-cover text{ font-family: var(--font-mono); }
+.lic-cover[data-image]{ background-size: cover; background-position: center; }
+
+/* The one control on the cover, bottom right, only in edit mode. */
+.lic-cover-btn{
+  position: absolute; right: 12px; bottom: 12px;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border-radius: 99px; border: 0;
+  background: oklch(0 0 0 / .42); color: oklch(1 0 0);
+  backdrop-filter: blur(6px);
+  font-size: 13px; cursor: pointer;
+}
+.lic-cover-btn:hover{ background: oklch(0 0 0 / .56); }
+
+.lic-adm{
+  position: absolute; right: 12px; top: 12px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: 99px;
+  background: oklch(0 0 0 / .42); color: oklch(1 0 0);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em;
+}
+
+/* ------------------------------------------------------------------- body
+   v4 made it a centred column and every later layer kept it that way. */
+.lic-body{
+  padding: 0 28px 28px; margin-top: -52px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+@media (max-width: 560px){ .lic-body{ padding: 0 18px 22px; } }
+
+.lic-avw{ position: relative; width: 104px; height: 104px; }
+.lic-av{
+  width: 104px; height: 104px; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  border: 5px solid var(--panel);
+  background: var(--lic-av-bg, var(--active));
+  color: var(--lic-av-ink, var(--on-mark));
+  font-size: 34px; font-weight: 600; line-height: 1;
+}
+.lic-av img{ width: 100%; height: 100%; object-fit: cover; }
+/* The camera button on the photo. 44px (§12) rather than the design's 30,
+   with the visible circle still the design's size. */
+.lic-cam{
+  position: absolute; right: -4px; bottom: 0;
+  width: 44px; height: 44px; border: 0; background: none;
+  display: grid; place-items: center; cursor: pointer; color: var(--t1);
+}
+.lic-cam::before{
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 30px; height: 30px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--raised); box-shadow: 0 0 0 2px var(--panel);
+}
+.lic-cam svg{ position: relative; }
+
+/* THE CALLSIGN IS THE BIG LINE and the only editable name (§5). The full name
+   sits under it in mono, small, and is not editable here — it is the account's,
+   and it is changed where accounts are. */
+.lic-name{
+  margin: 14px 0 0; font-size: 26px; font-weight: 650;
+  letter-spacing: -.015em; line-height: 1.15; max-width: 100%;
+}
+.lic-real{
+  margin-top: 4px; font-family: var(--font-mono);
+  font-size: 12.5px; letter-spacing: .06em; color: var(--t3);
+}
+.lic-bio{
+  margin: 12px 0 0; max-width: 40ch;
+  font-size: 15px; color: var(--t2); text-wrap: pretty;
+}
+
+/* THE PHRASE IS PLAIN ITALIC TEXT — v10 reversed v4 and v6, which had drawn
+   it as a tinted pill with a hatched edge either side. §5 says it outright:
+   "no border or pill". The button is still a button because picking is what
+   it does; it just does not look like one until you point at it. */
+.lic-phrase{
+  margin-top: 18px; max-width: 440px;
+  background: none; border: 0; padding: 4px 0;
+  font-style: italic; font-size: 15.5px; color: var(--t2);
+  text-align: center; cursor: default;
+}
+button.lic-phrase{ cursor: pointer; }
+button.lic-phrase:hover{ color: var(--t1); }
+
+/* THREE STATS, NOT FOUR. v3 drew four in a bordered band; v4 made it three
+   and v5 took the dividers out. They are the three §5 names, and all three
+   fill themselves just by using the app. */
+.lic-stats{
+  margin-top: 24px; width: 100%; max-width: 440px;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+}
+.lic-stat{ padding: 4px 6px; display: flex; flex-direction: column; gap: 2px; text-align: center; }
+.lic-stat b{
+  font-family: var(--font-mono); font-size: 20px; font-weight: 600;
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.lic-stat span{ font-size: 12px; color: var(--t3); line-height: 1.25; }
+
+/* THE STAMP, ON A DASHED LINE. The line runs the width of the card and the
+   stamp sits on the panel over it, which is what makes it read as pressed
+   onto the document rather than placed beside it. */
+.lic-sblock{
+  margin-top: 26px; width: 100%;
+  display: grid; place-items: center; position: relative;
+}
+.lic-sblock::before{
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  border-top: 1px dashed var(--line);
+}
+.lic-sblock > *{
+  position: relative; background: var(--panel);
+  border-radius: 50%; padding: 6px;
+}
+.lic-ghost{
+  position: relative; line-height: 0; color: var(--t3);
+  border: 0; cursor: pointer; display: block;
+}
+.lic-ghost b{
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  line-height: 1; font-size: 13px; font-weight: 600; white-space: nowrap;
+  color: var(--on-mark); background: var(--active);
+  padding: 8px 14px; border-radius: 99px;
+}
+@media (prefers-reduced-motion: no-preference){
+  .lic-ghost svg{ transition: transform .25s var(--ease, ease-out); }
+  .lic-ghost:hover svg{ transform: scale(1.04); }
+}
+@media (max-width: 560px){
+  .lic-sblock svg{ width: 124px; height: 124px; }
+}
+
+/* The viewer's one action, full width (§5). */
+.lic-invite{
+  margin-top: 22px; width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 16px; font-size: 14.5px; font-weight: 600;
+  border: 0; border-radius: 99px;
+  background: var(--active); color: var(--on-mark); cursor: pointer;
+}
+.lic-invite:hover{ filter: brightness(1.08); }
+.lic-invite:disabled{ opacity: 1; cursor: default; filter: none; }
+
+/* The owner edits in place: the callsign and the bio are fields that look
+   like the text they replace until they are focused. */
+.lic-ed{
+  background: none; border: 0; border-bottom: 1px dashed var(--line);
+  color: inherit; font: inherit; text-align: center;
+  padding: 2px 4px; max-width: 100%;
+}
+.lic-ed:focus{ outline: none; border-bottom-color: var(--active); }
+.lic-ed::placeholder{ color: var(--t3); }
+input.lic-bio{ width: min(100%, 40ch); }
+
+/* =============================================================================
+   THE PICKERS — the reference's `.pick` sheet, its cover grid and its palette.
+   ========================================================================= */
+.lic-scrim{
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center; padding: 18px;
+  background: oklch(0 0 0 / .52);
+}
+@media (prefers-reduced-motion: no-preference){
+  .lic-scrim{ animation: lic-fade .18s ease-out; }
+  @keyframes lic-fade{ from{ opacity: 0 } }
+}
+.lic-sheet{
+  position: relative; width: min(520px, 100%); max-height: 86vh; overflow: auto;
+  background: var(--ground); border: 1px solid var(--line); border-radius: 22px;
+  padding: 18px;
+}
+.lic-sheet h3{ margin: 0 0 14px; font-size: 17px; padding-right: 44px; }
+.lic-x{
+  position: absolute; right: 10px; top: 10px;
+  width: 44px; height: 44px; border: 0; border-radius: 50%; background: none;
+  display: grid; place-items: center; color: var(--t2); cursor: pointer;
+}
+.lic-x:hover{ color: var(--t1); background: var(--raised); }
+
+/* Three across, two down — §5's 3x2 grid of five drawn covers and Your image. */
+.lic-cgrid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 600px){ .lic-cgrid{ grid-template-columns: 1fr 1fr; } }
+.lic-copt{
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px; border: 0; border-radius: 14px; cursor: pointer;
+  background: color-mix(in oklab, var(--raised) 60%, transparent);
+  font-size: 13.5px; color: var(--t2);
+}
+.lic-copt.is-on{
+  background: color-mix(in oklab, var(--active) 14%, transparent);
+  color: var(--t1); box-shadow: inset 0 0 0 1.5px var(--active);
+}
+.lic-cthumb{
+  width: 100%; aspect-ratio: 520/110; border-radius: 8px; overflow: hidden;
+  display: grid; place-items: center; color: var(--t2);
+}
+.lic-cthumb svg{ width: 100%; height: 100%; }
+.lic-cthumb.is-up{ background: var(--raised); }
+
+/* The thirty-six inks, thirteen across as the reference has them, wrapping to
+   six on a phone so a 44px target still fits. */
+.lic-pal{ display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-top: 16px; }
+@media (max-width: 600px){ .lic-pal{ grid-template-columns: repeat(6, 1fr); } }
+.lic-cc{
+  aspect-ratio: 1; min-height: 28px; border: 0; border-radius: 50%; padding: 0;
+  cursor: pointer; position: relative;
+}
+.lic-cc.is-inline{ min-height: 0; }
+.lic-cc.is-inline::after{
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, var(--tap, 44px)); height: max(100%, var(--tap, 44px));
+  transform: translate(-50%, -50%);
+}
+@media (prefers-reduced-motion: no-preference){
+  .lic-cc{ transition: transform .15s var(--ease, ease-out); }
+  .lic-cc:hover{ transform: scale(1.15); }
+}
+.lic-cc.is-on{ box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--t1); }
+
+/* The three phrases, one under the other, centred (v4). */
+.lic-plist{ display: flex; flex-direction: column; gap: 6px; }
+.lic-pp{
+  text-align: center; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: none; cursor: pointer;
+  font-size: 14.5px; font-style: italic; color: var(--t2);
+}
+.lic-pp:hover{ background: var(--raised); color: var(--t1); }
+.lic-pp.is-on{
+  border-color: var(--active); color: var(--t1);
+  background: color-mix(in oklab, var(--active) 14%, transparent);
+}
+
+/* The two choices in the picture picker, drawn at the size they are chosen
+   at rather than at the size they end up. */
+.lic-psw{
+  width: 56px; height: 56px; border-radius: 50%; overflow: hidden;
+  display: grid; place-items: center; font-weight: 600; font-size: 18px;
+}
+.lic-psw img{ width: 100%; height: 100%; object-fit: cover; }
+.lic-psw-up{ background: var(--raised); color: var(--t2); }
+
+/* The viewer's actions under the card, inside the pilot sheet. */
+.ps-acts{ display: grid; gap: 8px; width: 100%; margin-top: 22px; }
+.ps-acts .lic-invite{ margin-top: 0; }
