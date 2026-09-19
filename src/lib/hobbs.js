@@ -94,26 +94,41 @@ export function useHobbsMeter(moduleCode, progress) {
 // What the meter has counted for one module.
 export const hobbsSeconds = (store, moduleCode) => (store || {})[moduleCode] || 0;
 
-// TENTHS OF AN HOUR, ON A DRUM — 0013.9 — because that is what an hour meter
-// reads and what the hours in a logbook are written in. It used to read h:mm,
-// which is a clock, and a clock is the one thing this must not be mistaken
-// for: the meter counts time flown in this module and nothing else.
+// HOURS AND MINUTES. 13h 54m.
 //
-// Always DOWN. 360 seconds is one tenth, and a meter that rounded up would
-// credit time nobody has flown. Four integer digits, zero-padded, and the
-// whole thing wraps at 9999.9 the way a real drum does — no student will see
-// it, and a number that silently stops counting would be worse.
-export const hobbsDrum = (seconds) => {
-  const tenths = Math.floor(Math.max(0, seconds || 0) / 360) % 100000;
-  const whole = Math.floor(tenths / 10);
-  const tenth = tenths % 10;
+// THIS REVERSES A DECISION THIS FILE USED TO ARGUE FOR, and the old argument
+// is kept because it was not silly: it read in tenths on a drum — 0013.9 —
+// "because that is what an hour meter reads and what the hours in a logbook
+// are written in", and a clock face was the one thing it must not be mistaken
+// for. What the owner answered is that nobody outside a cockpit reads a
+// tenth: .9 of an hour is a number you have to convert before it means
+// anything, and this cell is read by somebody deciding whether they have done
+// enough today. So it says the thing it means.
+//
+// ALWAYS DOWN, which is the one rule that survives. A meter that rounded up
+// would credit time nobody has flown. Under a minute it has not started, and
+// the cell says so in words rather than showing 0m — no zero counts
+// (CLAUDE.md, Voice).
+export const hobbsClock = (seconds) => {
+  const s = Math.max(0, Math.floor(Number(seconds) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const flown = s >= 60;
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   return {
-    int: String(whole).padStart(4, "0"),
-    tenth,
-    // What a screen reader says, and what the caption asks: has anything been
-    // flown yet at all? Below a tenth the drum reads 0000.0 and the cell says
-    // so in words instead.
-    reads: `${whole}.${tenth}`,
-    flown: tenths > 0,
+    h,
+    m,
+    flown,
+    // What is drawn. Under an hour it is minutes alone — "0h 54m" spends its
+    // widest character saying nothing — and under a minute it is an em dash,
+    // because a meter reading 0m is a zero count (CLAUDE.md, Voice) and the
+    // caption beside it already says "Your first hour". Same dash the licence
+    // card's Hours flown uses, for the same reason.
+    reads: !flown ? '—' : h ? `${h}h ${m}m` : `${m}m`,
+    // What a screen reader hears: words, plurals that agree, and no trailing
+    // "0 minutes" on the hour.
+    spoken: !flown ? 'under a minute'
+      : h ? (m ? `${plural(h, 'hour')} ${plural(m, 'minute')}` : plural(h, 'hour'))
+      : plural(m, 'minute'),
   };
 };

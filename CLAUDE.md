@@ -414,11 +414,16 @@ sit abreast under it, which is what keeps the Modules grid above the fold on a
   and the only text is the number. It counts THIS module's saves and opens
   Bookmarks on it. `FlightBag` is the one part of that feature imported
   eagerly, because it is on the first screen.
-- **The hour meter reads in tenths, on a drum**: `0013.9`, four zero-padded
-  integer digits, the point and the tenth in the accent. It was `13:59`, which
-  is a clock, and this is not one. `hobbsDrum` in `hobbs.js` floors
-  (`seconds / 360`) — an hour meter never reads time nobody has flown — and
-  wraps at 9999.9.
+- **The hour meter reads hours and minutes**: `13h 54m`, the numbers lit and
+  the unit letters quiet. `hobbsClock` in `hobbs.js` floors — a meter never
+  reads time nobody has flown — shows minutes alone under an hour, and an em
+  dash under a minute, because `0m` is a zero count. This REVERSES what this
+  file used to say: it read `0013.9` on a tenths drum, "because that is what an
+  hour meter reads and what the hours in a logbook are written in", and a clock
+  face was the thing it must not be mistaken for. Nobody outside a cockpit
+  reads a tenth, and this cell is read by somebody deciding whether they have
+  done enough today. `check:gyro` holds the new shape and the one rule that
+  survived: always down, never up.
 - **It counts time inside that module and nothing else**: the module screen, a
   lesson, a quiz or a paper in it (`MODULE_ROUTES` in App.jsx). Not the Flight
   Deck, not the Ready Room, not another module. Per student per module, in

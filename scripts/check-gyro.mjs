@@ -150,5 +150,34 @@ ok("R17 and never started when still", /if \(still \|\| systemStill\)/.test(hook
 ok("R17 writes only on change", /if \(next !== written\)/.test(hook));
 ok("R19 the last-quiz dot is built and not wired on the deck", /gy-last/.test(gyro) && !/last=/.test(lit));
 
+/* -------------------------------------------------------------- the meter
+   IT READS HOURS AND MINUTES NOW, and that reverses what hobbs.js used to
+   argue: tenths on a drum, "because that is what an hour meter reads". What
+   the owner answered is that nobody outside a cockpit reads a tenth. The rule
+   that survives is that it only ever rounds DOWN — a meter that credited time
+   nobody had flown would be worse than one nobody could read. */
+{
+  const H = await import("../src/lib/hobbs.js");
+  ok("meter · it counts down to the minute, never up",
+     H.hobbsClock(119).reads === "1m" && H.hobbsClock(3599).reads === "59m");
+  ok("meter · an hour reads in hours and minutes", H.hobbsClock(3600 * 13 + 54 * 60).reads === "13h 54m");
+  ok("meter · under an hour it is minutes alone, never 0h",
+     !H.hobbsClock(60 * 54).reads.includes("h"));
+  ok("meter · under a minute it is a dash, never a zero count",
+     H.hobbsClock(0).reads === "—" && H.hobbsClock(59).reads === "—"
+     && H.hobbsClock(0).flown === false);
+  ok("meter · and what a screen reader hears agrees in number",
+     H.hobbsClock(60).spoken === "1 minute" && H.hobbsClock(3600).spoken === "1 hour"
+     && H.hobbsClock(7200).spoken === "2 hours");
+  ok("meter · there is no drum left to read", H.hobbsDrum === undefined);
+
+  const app = read("src/App.jsx");
+  /* WHERE IT COUNTS. The module and everything inside it, plus the paper
+     reader — and nothing else. The Flight Deck is not time in a module. */
+  ok("meter · it runs inside a module and the paper reader, and nowhere else",
+     /const MODULE_ROUTES = new Set\(\["module", "chapter", "lesson", "review", "paper", "cards"\]\)/.test(app)
+     && /useHobbsMeter\(view === "module" \? activeModuleCode : null, progress\)/.test(app));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
 process.exitCode = fails ? 1 : 0;

@@ -4,7 +4,7 @@ import { moduleNeedsYou, readMinimums } from "../lib/minimums.js";
 import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
-import { HOBBS_KEY, hobbsSeconds, hobbsDrum } from "../lib/hobbs.js";
+import { HOBBS_KEY, hobbsSeconds, hobbsClock } from "../lib/hobbs.js";
 import { FlightBag, useSavesCount } from "../features/bookmarks/deck.js";
 import { PLACE_KEY, placeLine, placeVerb, placeList } from "../lib/lastPlace.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
@@ -178,13 +178,12 @@ const DECK_CSS = `
   border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; color: var(--t2);
   font-variant-numeric: tabular-nums; display: flex; align-items: center;
   box-shadow: inset 0 1px 3px oklch(0 0 0 / .18); }
-.deck .hb-dot { font-style: normal; color: var(--on); }
-.deck .hb-tenth { display: inline-block; overflow: hidden; height: 1.06em; width: .62em;
-  vertical-align: bottom; color: var(--on); }
-.deck .hb-col { display: block; transition: transform .55s var(--ease); }
-.deck .hb-col span { display: block; height: 1.06em; line-height: 1.06em; text-align: center; }
-@media (prefers-reduced-motion: reduce) { .deck .hb-col { transition: none; } }
-.app.smooth-air .deck .hb-col { transition: none; }
+/* The numbers are lit, the units are not: h and m are labels, and a reading
+   of 13h 54m should scan as two numbers rather than four characters. */
+.deck .hb-n { color: var(--on); }
+.deck .hb-u { font-style: normal; font-size: .62em; margin: 0 .38em 0 .08em;
+  color: var(--t3); letter-spacing: 0; }
+.deck .hb-u:last-child { margin-right: 0; }
 
 .deck .radarcel { cursor: pointer; border: 0; font-family: inherit; transition: background .18s; }
 .deck .radarcel:hover { background: var(--raised); }
@@ -369,7 +368,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // module, counted by the meter in lib/hobbs.js while a module is open, not
   // inferred from how much video has played. Reading it off video position
   // showed nothing for an hour spent on the papers, which is most of the work.
-  const hobbs = hobbsDrum(hobbsSeconds(progress.get(HOBBS_KEY, {}), active.code));
+  const hobbs = hobbsClock(hobbsSeconds(progress.get(HOBBS_KEY, {}), active.code));
 
 
   // §5.3 — "If a feature behind a preset doesn't exist in the backend yet,
@@ -596,12 +595,12 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 flown={flown}
                 palette={C}
                 bag={bag > 0 ? bag : 0}
-                hobbs={`${hobbs.int}.${hobbs.tenth}`}
+                hobbs={hobbs.reads}
                 blips={contacts.length > 0}
                 caps={[
                   <GyroCaption average={average} bar={minimums} />,
                   bag > 0 ? "Flight bag" : "Bookmarks",
-                  hobbs.flown ? "Hobbs" : "Your first hour",
+                  hobbs.flown ? "On this module" : "Your first hour",
                   contactCap,
                 ]}
               />
@@ -631,20 +630,21 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             </div>
 
             <div className="cel">
-              {/* A drum, read out as a number. The digits are scenery for a
-                  screen reader — the label is the value. */}
-              <div className="hobbs" aria-label={`Hobbs, ${hobbs.reads} hours in this module`}>
-                <span className="hb-int">{hobbs.int}</span><i className="hb-dot">.</i>
-                <span className="hb-tenth" aria-hidden="true">
-                  {/* The column is ten digits tall and shows one; the carry
-                      into the integer above lands in the same frame, because
-                      both come from the same render of the same number. */}
-                  <span className="hb-col" style={{ transform: `translateY(calc(-1.06em * ${hobbs.tenth}))` }}>
-                    {Array.from({ length: 10 }, (_, n) => <span key={n}>{n}</span>)}
-                  </span>
-                </span>
+              {/* Hours and minutes. It was a tenths drum; hobbs.js carries
+                  the argument for why it is not any more. The unit letters
+                  are scenery for a screen reader — the label is the value. */}
+              <div className="hobbs" aria-label={`Time on this module, ${hobbs.spoken}`}>
+                {hobbs.flown ? (
+                  <>
+                    {hobbs.h > 0 && <>
+                      <span className="hb-n">{hobbs.h}</span><i className="hb-u">h</i>
+                    </>}
+                    <span className="hb-n">{String(hobbs.m).padStart(hobbs.h ? 2 : 1, "0")}</span>
+                    <i className="hb-u">m</i>
+                  </>
+                ) : <span className="hb-n">{hobbs.reads}</span>}
               </div>
-              <div className="cap">{hobbs.flown ? "Hobbs" : "Your first hour"}</div>
+              <div className="cap">{hobbs.flown ? "On this module" : "Your first hour"}</div>
             </div>
 
             {/* Social's only foothold in the academic half. */}

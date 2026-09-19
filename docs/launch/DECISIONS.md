@@ -232,3 +232,27 @@ applies. So the upload is the photo cover-fitted into a 512×512 square, and
 `photo_zoom/x/y` are a transform on top of it (0033, avatar.css). Re-centring
 costs no upload, and the same three numbers draw the same face at 28px in a
 comment and 104px on the licence.
+
+## The hour meter reads hours and minutes
+
+It read `0013.9` on a tenths drum, and `hobbs.js` argued for it: that is what
+an hour meter reads, and what the hours in a logbook are written in. A clock
+face was the one thing it must not be mistaken for.
+
+The owner reversed it, and the answer is short: nobody outside a cockpit reads
+a tenth. `.9` of an hour is a number you have to convert before it means
+anything, and this cell is read by somebody deciding whether they have done
+enough today.
+
+The old argument is kept in `hobbs.js` where it can be read. The one rule that
+survived is the one that mattered — it only ever rounds DOWN, because a meter
+that credited time nobody had flown would be worse than one nobody could read.
+
+Two things fell out of the change. Under a minute it shows an em dash rather
+than `0m`, which is the same zero-count rule the licence card's Hours flown
+already follows. And what a screen reader hears agrees in number: "1 hour",
+not "1 hours 0 minutes".
+
+Where it counts is unchanged and is what was asked for: inside a module —
+its screen, a chapter, a lesson, a quiz, a card set — and the paper reader.
+`MODULE_ROUTES` in App.jsx is that list, and `check:gyro` now holds it.
