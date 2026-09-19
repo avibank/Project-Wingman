@@ -1,0 +1,35 @@
+<!-- Lifted verbatim from reference/02-licence-stamp-creator.html (lines 486-514).
+   The Preferences panel exactly as it should be: Who greets you, How social with Fly solo,
+   Blocked and muted, Your bar. Note what is NOT here and must be deleted from live:
+   "Go by callsign", and the whole "Your pilot / What you will hear about" block.
+   Appearance is not in this file. Do not touch Appearance. -->
+
+    <section id="t-pref" hidden>
+      <div class="box">
+        <p class="lab">Who greets you</p>
+        <div class="sega" id="greet"><button aria-pressed="true" data-g="0">Wingman</button><button aria-pressed="false" data-g="1">The Hermit</button></div>
+        <p class="pd" id="gDesc" style="margin-top:12px">A coworker on the same shift. Notices you're here, never what you scored.</p>
+        <p class="pd" id="gLab" style="margin-top:16px;color:var(--t2)">What Wingman calls you</p>
+        <input class="inp" id="callMe" placeholder="Skip it. I'll talk anyway.">
+      </div>
+      <div class="box">
+        <p class="lab">How social</p>
+        <p class="pd" id="socDesc" style="margin:0">Everything, including the module chat.</p>
+        <div class="sega" id="social"><button aria-pressed="false" data-s="0">Quiet skies</button><button aria-pressed="false" data-s="1">My flight</button><button aria-pressed="true" data-s="2">Open frequency</button></div>
+        <div class="tog">
+          <div><p class="ph">Fly solo<span class="new">MOVED HERE</span></p><p class="pd">Nobody sees you and you see nobody. For the nights you'd rather just get on with it.</p></div>
+          <button class="sw2" id="solo" role="switch" aria-checked="false" aria-label="Fly solo"></button>
+        </div>
+      </div>
+      <div class="box">
+        <p class="lab">Your bar<span class="new">MOVED HERE</span></p>
+        <p class="ph" style="display:flex;align-items:baseline;gap:10px">The score you're aiming for <b class="barv" id="barV">86%</b></p>
+        <p class="pd">If your average on a module falls below this, Master Caution lights up on that module's card, and nowhere else. It starts at the 75% pass mark and can only go up from there. Nobody else can see it.</p>
+        <input type="range" class="barr" id="bar" min="75" max="100" step="1" value="86" aria-label="Your bar">
+        <div class="barl"><span>75% · pass mark</span><span>100%</span></div>
+      </div>
+      <div class="box">
+        <p class="lab">Blocked and muted</p>
+        <p class="pd" style="margin:0">Nobody yet. Block or mute anyone from their tail, and they'll be listed here to undo.</p>
+      </div>
+    </section>

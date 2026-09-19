@@ -1,5 +1,8 @@
 # Wingman: launch handoff for Claude Code
 
+> **Read `START-HERE.md` first.** The live site is a partial port: the screens were rebuilt from this description rather than copied from the reference builds, so the content is roughly right and the layout is not. START-HERE.md is the current order of work, with the live defects listed screen by screen and the avatar bug diagnosed. The reference builds in `docs/launch/reference/` are the specification — copy their structure and CSS, do not reinterpret them.
+
+
 You have the wingman.institute repo. **This single file is the complete handoff.** It holds the full spec (sections 1–9) and, in the appendices, the complete source of both signed-off reference builds. Save each appendix code block to the path shown and open it in a browser to see the exact target. Your job:
 
 1. Port every screen below into the live codebase, **exactly as built** in the reference files: layout, spacing, copy, drawings, animation and behaviour.
@@ -28,7 +31,7 @@ Both are single self-contained HTML files. Read their JS: the render functions a
 - **Liveries and themes:** anything drawn in "accent" follows the active livery. Check every screen in all 6 liveries × 3 finishes × light/dark.
 - **Motion:** respect Smooth Air and `prefers-reduced-motion`. The stamp press/slam animations and the chapter chevrons must switch off there.
 - **Layout:** desktop and tablet first, phone second. Every screen is checked at **1280 (desktop), 834 (tablet) and 390 (phone)**, with no sideways scroll. On phone, long descriptions must wrap cleanly inside their box and segmented controls wrap to two rows rather than overflowing. The reference build has Tablet and Phone buttons that open it at those widths.
-- **No dead ends.** Every page reached from anywhere must have a way onward and a way back, a real empty state instead of a blank panel, and no link that lands on nothing. This holds for everything built from now on, not only the screens here.
+- **No dead ends, and no dead controls.** Every tab, button and link does something visible when pressed. Every screen that can be empty has a real empty state saying what the thing is, why it's useful and what to do next — never a blank panel, never a tab that does nothing. This holds for everything built from now on, not only the screens here.
 - **Accessibility:** every control has a label and a visible focus state, and is keyboard reachable. Dialogs trap focus and close on Esc.
 
 ## 2. Module screen `/m/:module`
@@ -43,8 +46,14 @@ Both are single self-contained HTML files. Read their JS: the render functions a
   - Lesson rows show a thumbnail (with a thin progress line when part-watched), the title and a status line.
   - The right side of a lesson row shows the student's **stamp** when signed off, **Resume** when in progress, and nothing when not started.
   - Quiz rows use the live `quiz-thumb` markup, unchanged. They show "4 of 8" plus **Re-check** below the 75% pass mark.
-- **Library tab:**
+- **Library tab** — three sections in this order: **Quizzes**, **Study cards**, **Papers**. The chapter filter chips and the search field filter all three; a section with no matches is hidden rather than shown empty.
   - **Quizzes:** score plus Re-check, or Take it.
+  - **Study cards:** one row per chapter card set. This section is not optional — study cards are an existing first-class content type on the live site (`slug: "cards"`, action "Test yourself", hint "Flip a chapter's cards and keep the ones worth another look.") and the Library is where they live. Each row has:
+    - **Thumbnail:** three stacked cards (two rotated behind, one square in front on `--ground` with an accent-tinted border) with the card count in accent-coloured mono on the front card. It is drawn in CSS, not an image, and it replaces the doc-icon box used by Papers.
+    - **Title:** "Chapter N cards".
+    - **Status line:** "N kept for another look" when the student has kept any; otherwise "N cards · not started" for an untouched set, or the plain count once started with nothing kept.
+    - **Right side:** `done/total` and a **Test yourself** button.
+    - Keeping a card while studying sends it to **Bookmarks → Study cards**, which is the same list the bookmarks work already built.
   - **Papers:** chapter filter chips, **Add a paper**, a reading-progress bar and Resume. Paper rows use the doc-icon box.
 - **Crew tab (about the module, not your friends):**
   - **Summary:** how many people are on the module, how many are studying now and how many have finished it, plus the faces of people studying now.
@@ -52,6 +61,9 @@ Both are single self-contained HTML files. Read their JS: the render functions a
   - **"Answering questions":** the top answerers in this module's threads, with a button that opens those threads in the Ready Room.
   - **Squadron mates:** get a thin teal ring around their face. They are not grouped separately.
   - **Privacy:** chapter-level position only, never a lesson or a score.
+  - **The tab must actually open.** Clicking Crew switches the card's content, the same way Lessons and Library do. A tab that changes nothing is a bug, not a placeholder.
+  - **Empty state, which is never blank.** With nobody else on the module yet, Crew shows: a heading ("Nobody else on Module 1 yet"); two or three lines saying what Crew is and why it helps — the class for this module, who's on which chapter, whose stamp is on each chapter, how to find someone at the same point when you're stuck; a faint outline of what it will look like, one row per chapter reading "who has signed it off / who is on it right now / who is ahead of you" with placeholder faces; two buttons, **Find a squadron** and **Invite your class**; and a closing line saying that the moment someone else opens the module they appear here, and your own stamp shows on every chapter you sign off regardless. Press "Crew: empty" in the reference build's demo bar to see it.
+  - **A search with no match** shows a line plus a Clear search button, never a blank panel.
   - **No DMs anywhere.** Tapping a face or stamp opens the profile viewer (section 5). Talking only happens in squadron chat or a right-seat session.
 
 ## 3. Lesson page `/m/:module/:chapter/lesson/:lesson`
@@ -101,8 +113,11 @@ Use `inspStamp()` from `reference/02-…` as **the** stamp renderer across the w
 
 The first box on the Licence tab **is** the licence card. It's the same component other people see when they tap your face; the owner just sees it in edit mode.
 
+- **Card header row:** above the card, "YOUR LICENCE" on the left and a "See it as others do" button on the right.
 - **Cover:**
   - Contours (default), Panels, Runway, Flight path, Chart, or Your image, in a 3×2 grid.
+  - The **Cover** button sits in the **top-left corner of the cover**, not the right.
+  - **Every colour swatch shows its name underneath** — Midnight, Lapiz, Miami, Baby and so on, all 36. A grid of unlabelled circles is wrong.
   - The set designs are tinted with any of the 36 colours. The cover is that colour as a soft diagonal gradient, from the colour itself down to about 0.26 darker — the look we had before the flat version.
   - Image upload needs size and type limits, storage, and a crop that fills 640×128.
 - **Photo and profile colour:**
@@ -113,6 +128,7 @@ The first box on the Licence tab **is** the licence card. It's the same componen
   - **The corner avatar must stop showing the Google account picture.** Wherever a sign-in provider's image is being used today, replace it with this component. A student's face in Wingman is what they set in Wingman, nothing else.
   - Uploading: on a phone the picker offers Photos and Camera the way the phone normally does; tablet and desktop get the standard file picker. Cancelling leaves everything as it was, with no empty state and no stuck dialog.
   - **Positioning, like any social app:** after choosing a photo, a dialog shows it inside a round crop with a zoom slider, and the photo can be dragged to reposition. Panning is clamped so no empty edge can show. Save the zoom and offset with the photo and apply them everywhere the avatar appears, so it's framed the same in every place. Cancel goes back to the photo choice, not out of the flow.
+- **Everything on the card is centred** in one column: photo, callsign, name, bio, phrase, stats and stamp all share the same centre line. Nothing is left-aligned or offset.
 - **Callsign:** always the big line and the only editable name, with uniqueness checked on the server. The full name sits small underneath and isn't editable here.
 - **Bio:** one line, max 80 characters.
 - **Phrase:** plain italic text with **no border or pill**. It is picked from exactly **three** options:
@@ -135,30 +151,21 @@ The first box on the Licence tab **is** the licence card. It's the same componen
 
 ## 6. Preferences `/account/preferences` and Appearance
 
-**Preferences ends up with four boxes: Who greets you · How social · Your bar · Blocked and muted.**
+**This is the finished page, in this order, and nothing else is on it:**
 
-- **Who greets you, reworked:**
-  - The choice (Wingman / The Hermit) comes first, then the description of whoever is selected.
-  - The field below is labelled after the choice: "What Wingman calls you" or "What the Hermit calls you".
-  - No example line underneath. The box ends at the field.
-  - The descriptions stay as they are live: Wingman "A coworker on the same shift. Notices you're here, never what you scored." / The Hermit "Says as little as possible. Still notices you showed up."
-  - **The placeholder changes with the choice**, same length, each in their own voice:
-    - Wingman: "Skip it. I'll talk anyway."
-    - The Hermit: "Skip it, you may. Talk anyway, I will."
+1. **Who greets you** — the Wingman / The Hermit choice first, then the description of whoever is selected, then the field labelled after the choice ("What Wingman calls you" / "What the Hermit calls you"). Placeholders: Wingman "Skip it. I'll talk anyway.", The Hermit "Skip it, you may. Talk anyway, I will." Nothing under the field.
+2. **How social** — the description line, the three levels (Quiet skies / My flight / Open frequency), then **Fly solo** with its switch. Fly solo must really hide the student from Crew, the route strip, the radar and presence, and hide others from them.
+3. **Your bar** — "The score you're aiming for" with the value large beside it, the explanation, and a slider from **75 to 100** marked "75% · pass mark" and "100%". 75 is the floor. Accounts below 75 are raised by the migration.
+4. **Blocked and muted** — as live.
 
-- **How social:** keeps its three levels, plus **Fly solo**, moved here from the licence page. Fly solo must actually hide the student from Crew, the route strip, the radar and presence, and hide others from them.
-- **Your bar** moves here from Appearance → Instruments, with copy that says what it does:
-  - Heading: "The score you're aiming for", with the value shown large beside it.
-  - Body: "If your average on a module falls below this, Master Caution lights up on that module's card, and nowhere else. It starts at the 75% pass mark and can only go up from there. Nobody else can see it."
-  - **A slider from 75 to 100. 75% is the floor** — the bar can never be set below the pass mark. Marked "75% · pass mark" on the left and "100%" on the right.
-  - Existing accounts with a bar below 75 are raised to 75 by the migration.
-- **Blocked and muted:** unchanged.
-- **Delete entirely** (UI, stored values and any code that reads them):
-  - **Notifications settings.** No choice and no explanation on the page. Notifications are fixed: replies to your threads, answers to your questions, messages in your squadron, and your right seat. Nothing else is ever sent, and the page doesn't discuss it.
-  - **"When you usually study"** (Early / Day / Evening / Late) and any matching by study time.
-  - **Study glow.** Chapters render plain.
-  - **Turbulence**, in Appearance → Accessibility & Motion.
-- **Appearance stays exactly as it is on the live site**, with two exceptions, both of which are removals: Your bar (moved to Preferences) and Turbulence (deleted). Don't redesign or restyle anything else on that tab.
+**Delete from this page and from the code. None of these may appear anywhere on it:**
+- **"Go by callsign".** The callsign is the only name the student sets, and it always shows first.
+- **Notifications** — every control, every list and every explanation. The page never mentions notifications. What gets sent is fixed (replies, answers, squadron messages, right seat) and is not discussed in the UI.
+- **"Your pilot"**, and **"When you usually study"** with its Early / Day / Evening / Late choice and any matching by study time.
+- **Study glow.** Chapters render plain.
+- **Turbulence**, in Appearance → Accessibility & Motion.
+
+**Appearance stays exactly as it is on the live site**, minus two removals: Your bar (moved here) and Turbulence (deleted). Don't redesign or restyle anything else on that tab.
 
 ## 7. Out of scope: don't touch
 
@@ -457,6 +464,30 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .paper:hover{background:var(--raised)}
 .paper .pg{aspect-ratio:16/9;border-radius:7px;border:1px solid var(--line);background:var(--ground);display:grid;place-items:center;color:var(--t2)}
 
+/* crew empty state */
+.cempty{padding:22px 20px 24px}
+.ce-h h3{margin:0 0 6px;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.ce-h p{margin:0;color:var(--t2);font-size:14.5px;max-width:52ch;line-height:1.55}
+.ce-ghost{margin:18px 0;border:1px dashed var(--line);border-radius:14px;padding:6px 12px;opacity:.75}
+.ce-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 2px;border-top:1px solid var(--hair)}
+.ce-row:first-child{border-top:0}
+.ce-row b{display:block;font-size:14.5px;font-weight:600}
+.ce-row span{font-size:12.5px;color:var(--t3)}
+.ce-faces{display:flex}
+.ce-face{width:26px;height:26px;border-radius:50%;background:var(--raised);border:2px solid var(--ground);margin-left:-8px;animation:cepulse 2.4s var(--ease) infinite}
+@keyframes cepulse{0%,100%{opacity:.5}50%{opacity:1}}
+.ce-do{display:flex;gap:8px;flex-wrap:wrap}
+.ce-note{margin:16px 0 0;font-size:13px;color:var(--t3);max-width:56ch}
+
+.cards-thumb{position:relative;display:grid;place-items:center;background:transparent!important;border:0!important;overflow:visible}
+.cards-thumb i{position:absolute;width:56%;height:82%;border-radius:5px;background:var(--raised);border:1px solid var(--line)}
+.cards-thumb i:nth-child(1){transform:rotate(-11deg) translateX(-5px)}
+.cards-thumb i:nth-child(2){transform:rotate(6deg) translateX(4px)}
+.cards-thumb i:nth-child(3){transform:none;background:var(--ground);border-color:color-mix(in oklab,var(--accent) 60%,transparent)}
+.lrow .th.cards-thumb b{position:relative;z-index:2;height:auto;background:none;left:auto;bottom:auto;font:600 11px var(--mono);color:var(--accent)}
+.cards-thumb i:nth-child(1){transform:rotate(-13deg) translateX(-7px);background:color-mix(in oklab,var(--raised) 70%,var(--ground))}
+.cards-thumb i:nth-child(2){transform:rotate(7deg) translateX(6px)}
+
 /* profile sheet */
 .scrim{position:fixed;inset:0;z-index:50;background:oklch(0 0 0 / .45);display:grid;place-items:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
 .scrim.open{opacity:1;pointer-events:auto}
@@ -724,6 +755,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   <button data-go="lic" aria-pressed="false">Licence</button>
   <span class="sep"></span>
   <button id="theme" aria-label="Switch light or dark">Light / Dark</button>
+  <button id="crewEmpty" title="Demo only">Crew: empty</button>
   <button id="resetStamp" title="Demo only">Reset stamp</button>
 </nav>
 
@@ -930,16 +962,22 @@ $('#mt-lessons').addEventListener('click',e=>{
   const h=e.target.closest('.ch-h');if(h){const n=+h.dataset.ch;openCh.has(n)?openCh.delete(n):openCh.add(n);renderLessons();return}
   const r=e.target.closest('.lrow');if(r){if(r.dataset.open==='1')go('lesson');else toast('Demo: only Chapter 2 · Lesson 2 opens')}
 });
+const CARDSETS=[{c:1,n:24,done:24,kept:6,t:'numbers arithmetic'},{c:2,n:18,done:11,kept:3,t:'standard form powers'},{c:3,n:22,done:0,kept:0,t:'geometry graphs'}];
 const PAPERS=[{t:'B2 13d Instruments, Rotary Wing Aerodynamics, Autoflight and Equipment & Furnishings LTT (2)',ch:0,pages:1012,at:11},{t:'Numbers and arithmetic · class handout',ch:1,pages:42,at:42},{t:'Standard form worked examples',ch:2,pages:18,at:0}];
 let pch=0;
 function renderLibrary(){
   const q=$('#q').value.trim().toLowerCase();
   const quizzes=MOD.map(c=>({c:c.n,...c.items.find(i=>i.quiz)})).filter(z=>!q||('chapter '+z.c+' quiz').includes(q));
   const ps=PAPERS.filter(p=>(!pch||p.ch===pch)&&(!q||p.t.toLowerCase().includes(q)));
+  const sets=CARDSETS.filter(cs=>!q||(('chapter '+cs.c+' cards')+' '+cs.t).toLowerCase().includes(q));
   $('#mt-library').innerHTML=`<div class="libsplit"><div class="lsec"><div><h2>Quizzes</h2><p>3 quizzes, one per chapter</p></div></div>
    <div class="papers">${quizzes.map(z=>{const it=z;return `<button class="lrow">${`<span class="th quiz-thumb"><span class="quiz-thumb__sheet"><span><i class="on"></i><i></i><i></i></span><span><i></i><i></i><i class="on"></i></span><span><i></i><i class="on"></i><i></i></span></span><span class="quiz-thumb__count"><b>${it.q}</b>Qs</span></span>`}
      <span><div class="lt">Chapter ${z.c} quiz</div><div class="ls">${z.q} questions</div></span>
      <span class="rt">${z.score!=null?`<span class="sc">${z.score} of ${z.q}</span><span class="act-o">Re-check</span>`:'<span class="act-o">Take it</span>'}</span></button>`}).join('')||'<div class="empty">No quizzes match.</div>'}</div></div>
+   <div class="libsplit"><div class="lsec"><div><h2>Study cards</h2><p>Flip a chapter's cards and keep the ones worth another look</p></div></div>
+   <div class="papers">${sets.map(cs=>`<button class="lrow"><span class="th cards-thumb"><i></i><i></i><i></i><b>${cs.n}</b></span>
+     <span><div class="lt">Chapter ${cs.c} cards</div><div class="ls">${cs.kept?cs.kept+' kept for another look':cs.n+' cards · not started'}</div></span>
+     <span class="rt">${cs.kept?`<span class="sc">${cs.done}/${cs.n}</span><span class="act-o">Test yourself</span>`:'<span class="act-o">Test yourself</span>'}</span></button>`).join('')||'<div class="empty">No card sets match.</div>'}</div></div>
    <div class="lsec"><div><h2>Papers</h2><p>${PAPERS.length} documents for this module</p></div><button class="pill" data-addp>Add a paper</button></div>
    <div class="lchips">${[0,1,2,3].map(n=>`<button class="chip" data-pch="${n}" aria-pressed="${pch===n}">${n?'Chapter '+n:'All'}</button>`).join('')}</div>
    <ul class="papers">${ps.map(p=>`<li class="paper"><span class="pg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></span><span><div class="lt" style="font-weight:500">${p.t}</div><div style="font-size:12.5px;color:var(--t3)">PDF · ${p.pages} pages${p.at&&p.at<p.pages?' · you are on page '+p.at:p.at>=p.pages?' · read':''}</div>${p.at&&p.at<p.pages?`<div class="prog"><b style="width:${Math.max(2,p.at/p.pages*100)}%"></b></div>`:''}</span>${p.at&&p.at<p.pages?'<span class="resume">Resume</span>':'<span class="act-o">Open</span>'}</li>`).join('')||'<div class="empty">No papers here yet.</div>'}</ul>`;
@@ -948,7 +986,7 @@ $('#mt-library').addEventListener('click',e=>{const c=e.target.closest('[data-pc
 let MT='lessons';
 $$('.mtabs .tab').forEach(b=>b.onclick=()=>{MT=b.dataset.mt;$$('.mtabs .tab').forEach(x=>x.setAttribute('aria-selected',x===b));
   $('#mt-lessons').hidden=MT!=='lessons';$('#mt-library').hidden=MT!=='library';$('#crew').hidden=MT!=='crew';
-  $('#q').placeholder=MT==='crew'?'Find someone':MT==='library'?'Search papers':'Search lessons';$('#q').value='';renderLessons();renderLibrary();renderCrew()});
+  $('#q').placeholder=MT==='crew'?'Find someone':MT==='library'?'Search quizzes, cards and papers':'Search lessons';$('#q').value='';renderLessons();renderLibrary();renderCrew()});
 
 /* ---- crew ---- */
 const hues=[20,160,300,75,220,120,340,40,190,260,100,55,280,5];
@@ -979,7 +1017,18 @@ const MSG='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="c
 const SEAT='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v9a2 2 0 0 0 2 2h7l2 5M7 15l-2 5"/></svg>';
 const PLUS='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 const face=p=>`<span class="av ${p.on?'on':''} ${p.sq?'sqring':''}" data-p="${people.indexOf(p)}" title="${p.n}${p.sq?' · your squadron':''}" style="background:oklch(.55 .09 ${p.h})">${initials(p.n)}</span>`;
+function crewEmpty(){
+  const ghost=[['Chapter 1','who has signed it off'],['Chapter 2','who is on it right now'],['Chapter 3','who is ahead of you']];
+  return `<div class="cempty">
+    <div class="ce-h"><h3>Nobody else on Module 1 yet</h3>
+      <p>Crew is the class for this module: who's studying it, which chapter they're on, and whose stamp is on each chapter. It's how you find someone at the same point as you when you're stuck.</p></div>
+    <div class="ce-ghost" aria-hidden="true">${ghost.map(([c,t])=>`<div class="ce-row"><div><b>${c}</b><span>${t}</span></div><div class="ce-faces">${[0,1,2].map(i=>`<span class="ce-face" style="animation-delay:${i*.12}s"></span>`).join('')}</div></div>`).join('')}</div>
+    <div class="ce-do"><button class="pill pri" data-find="squad">Find a squadron</button><button class="pill" data-find="invite">Invite your class</button></div>
+    <p class="ce-note">The moment somebody else opens Module 1, they appear here. Your own stamp shows on every chapter you sign off, whether anyone else is here or not.</p>
+  </div>`;
+}
 function renderCrew(){
+  if(!people.length)return $('#crew').innerHTML=crewEmpty(),bindEmpty();
   const q=$('#q').value.trim().toLowerCase();
   const match=p=>!q||(p.n+' '+p.cs).toLowerCase().includes(q);
   const all=people.filter(match), now=all.filter(p=>p.on);
@@ -998,9 +1047,10 @@ function renderCrew(){
   if(helpers.length)h+=`<div class="helpers"><h3>Answering questions</h3><p class="cm">Most answers in Module 1 threads this month</p>
     <div class="hrow">${helpers.map(p=>`<button class="hp" data-p="${people.indexOf(p)}">${face(p)}<span>${p.n.split(' ')[0]}<small>${p.ans} answers</small></span></button>`).join('')}
     <button class="pill" data-threads>Open Module 1 threads</button></div></div>`;
-  $('#crew').innerHTML=all.length?h:`<div class="empty">Nobody by that name on Module 1.</div>`;
+  $('#crew').innerHTML=all.length?h:`<div class="empty">Nobody by that name on Module 1.<br><button class="pill" style="margin-top:12px" onclick="document.getElementById('q').value='';renderCrew()">Clear search</button></div>`;
 }
 $('#q').oninput=()=>MT==='crew'?renderCrew():MT==='library'?renderLibrary():renderLessons();
+function bindEmpty(){$$('[data-find]').forEach(b=>b.onclick=()=>toast(b.dataset.find==='squad'?'Opens Find a squadron in the Ready Room':'Opens your invite link'))}
 $('#crew').addEventListener('click',e=>{
   if(e.target.closest('[data-threads]')){toast('Opening Module 1 threads in the Ready Room');return}
   const r=e.target.closest('[data-p]');if(r)openProfile(people[+r.dataset.p]);
@@ -1095,6 +1145,7 @@ $('[data-rr]').onclick=()=>toast('Ready Room opens here');
 $('#theme').onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'};
 let tt;function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2200)}
 
+let PEOPLE_BACKUP=null;$('#crewEmpty').onclick=()=>{if(PEOPLE_BACKUP){people.push(...PEOPLE_BACKUP);PEOPLE_BACKUP=null;$('#crewEmpty').textContent='Crew: empty'}else{PEOPLE_BACKUP=people.splice(0,people.length);$('#crewEmpty').textContent='Crew: people'}MT='crew';$$('.mtabs .tab').forEach(x=>x.setAttribute('aria-selected',x.dataset.mt==='crew'));$('#mt-lessons').hidden=true;$('#mt-library').hidden=true;$('#crew').hidden=false;renderCrew()};
 $('#resetStamp').onclick=()=>{MYSTAMP={...DEFAULT_STAMP};ISSUED=null;renderLessons();renderCrew();if(!$('#v-lic').hidden)paintSlot(false);toast('Demo reset: no stamp issued')};
 renderLog();renderLessons();renderCrew();paint();go('mod');
 </script>
@@ -1615,6 +1666,10 @@ button.tag:hover span{color:var(--t1)}
         <p class="pd">If your average on a module falls below this, Master Caution lights up on that module's card, and nowhere else. It starts at the 75% pass mark and can only go up from there. Nobody else can see it.</p>
         <input type="range" class="barr" id="bar" min="75" max="100" step="1" value="86" aria-label="Your bar">
         <div class="barl"><span>75% · pass mark</span><span>100%</span></div>
+      </div>
+      <div class="box">
+        <p class="lab">Blocked and muted</p>
+        <p class="pd" style="margin:0">Nobody yet. Block or mute anyone from their tail, and they'll be listed here to undo.</p>
       </div>
     </section>
 

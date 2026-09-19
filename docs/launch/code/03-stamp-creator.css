@@ -1,0 +1,25 @@
+/* Lifted verbatim from reference/02-licence-stamp-creator.html (style lines 368-391). */
+
+/* creator */
+.maker{margin-top:16px;border-top:1px solid var(--hair);padding-top:18px;display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:22px}
+.maker[hidden]{display:none}
+.stpaper{border-radius:14px;background:var(--raised);display:grid;place-items:center;aspect-ratio:1;position:relative;overflow:hidden;align-self:start}
+.stpaper::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 23px,var(--hair) 23px 24px);opacity:.55}
+.stpaper .big{position:relative;line-height:0}
+.stpaper .big.go svg{animation:press .45s var(--ease)}
+.ctl{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ctl .lab{margin:0 0 7px}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opt{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;color:var(--t2);line-height:0}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.opt.txt{width:auto;padding:0 12px;font-size:13px;line-height:1}
+.opt.fnt{width:auto;padding:0 12px;line-height:1;font-size:16px;font-weight:700}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid var(--ground);box-shadow:0 0 0 1px var(--line)}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--t1)}
+.fields{display:grid;grid-template-columns:110px 1fr;gap:10px}
+.fields label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fields input{font:600 14px var(--mono);letter-spacing:.08em;text-transform:uppercase;background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:8px 11px;color:var(--t1);width:100%;min-width:0}
+.fields input:disabled{opacity:.4}
+.confirm{border:1px solid color-mix(in oklab,var(--accent) 45%,transparent);background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.confirm b{flex:1 1 200px;font-weight:500}
+.issue{display:flex;gap:10px;flex-wrap:wrap}
