@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { ChevronLeft, ChevronDown, Bookmark, BookmarkCheck,
+import { ChevronLeft, ChevronDown,
          MessageSquare, PenLine } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";
@@ -18,6 +18,7 @@ import "./familiar.css";
 import { useUserProgress } from "../../lib/userProgress.jsx";
 import { FLY_SOLO_KEY } from "../../lib/flySolo.js";
 import NoteDeck from "./NoteDeck.jsx";
+import SaveButton from "../../features/bookmarks/SaveButton.jsx";
 import { useTabPill, useSwitchIn } from "../../lib/tabMotion.js";
 import SignOff from "./SignOff.jsx";
 import "./deck.css";
@@ -59,8 +60,7 @@ function seekable(text, onSeek) {
 const LESSON_TABS = ["notes", "comments"];
 
 export default function LessonPage({
-  module: mod, chapters, chapter, lesson, state, people = [],
-  bookmarks = [], onToggleSave,
+  module: mod, chapters, chapter, lesson, state, people = [], chapterNo = null,
   onBack, onOpenLesson, onOpenQuiz, onSeekSaved, onComplete, onMarkDone, done,
 }) {
   const { session, mutate, dispatchPlayer, setStage, requestSeek, setTab,
@@ -82,6 +82,7 @@ export default function LessonPage({
       // The mini player needs these to route back to this lesson from any page.
       chapterId: chapter.id,
       chapterTitle: chapter.title,
+      chapterNo,
       moduleCode: mod.code || mod.id,
       // One step ahead: the player prefetches this at halfway.
       next: nextAfterLesson(chapters, chapter.id, lesson.id, state)?.lesson || null,
@@ -141,7 +142,6 @@ export default function LessonPage({
   const added = lesson.addedAt
     ? new Date(lesson.addedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })
     : null;
-  const saved = bookmarks.includes(lesson.id);
 
   // ONE composer, in one position, serving both tabs. It does not move when the
   // tab changes — only its placeholder does — and it carries a timestamp chip
@@ -258,11 +258,16 @@ export default function LessonPage({
             watcher count was pushing the title away from the video it names. */}
 
         <div className="lact">
-          <button type="button" className="pill" aria-pressed={saved}
-                  onClick={() => onToggleSave?.(lesson.id, !saved)}>
-            {saved ? <BookmarkCheck aria-hidden="true" /> : <Bookmark aria-hidden="true" />}
-            {saved ? "Saved" : "Save"}
-          </button>
+          {/* THE SAME CONTROL AS THE ONE IN THE PLAYER BAR, not a second one.
+              Both are <SaveButton kind="video">, both read the one saves store,
+              so they cannot disagree about whether this lesson is kept — which
+              a separate pw-bookmarks list on this row and a bookmark in the bar
+              certainly would. It saves the second the video is on, because that
+              is what a saved lesson opens at. */}
+          <SaveButton kind="video" className="pill" moduleId={mod.code || mod.id}
+                      refId={lesson.id} chapter={chapterNo}
+                      getAtSeconds={() => session.player.seconds || 0}
+                      label={{ on: "Saved", off: "Save" }} />
           <button type="button" className="pill"
                   onClick={() => { setTab("comments"); focusComposer(); }}>
             <MessageSquare aria-hidden="true" /> Ask a question

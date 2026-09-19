@@ -200,6 +200,15 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0028, saves, has been run against the live project** (2026-09-18), verified
+by connecting rather than inferred: the table with its nine columns, the three
+CHECK constraints, `saves_one_per_thing` (NULLS NOT DISTINCT; the project runs
+PostgreSQL 17.6) and four open policies. Driven over the anon REST path
+afterwards: an insert, a duplicate refused by name with 409, a scoped select,
+and an upsert on `(user_id, kind, ref_id, page)` moving a lesson's second
+rather than making a second row. Its header carries the argument for why it is
+not the SQL that came with the design.
+
 **0027, read receipts, has been run against the live project** (2026-09-15),
 verified by connecting rather than inferred: `comms_receipts` with its four
 columns, `squadron_members.last_delivered_at`, `mark_squadrons_delivered` and
@@ -398,6 +407,13 @@ sit abreast under it, which is what keeps the Modules grid above the fold on a
   fact the module card states in words and the route strip states again — and
   it was the only instrument that could not survive a module with chapters in
   the tens. `.lamps`, `.lamp` and `--legs` went with it (2026-09-18).
+- **The flight bag is the briefcase**, built in layers: back wall and handle,
+  three sheets inside, front wall with its seam and latches. Empty it is grey
+  with the latches shut and says nothing at all; filled it lights in the
+  livery, the latches spring, the sheets stand proud and riffle one at a time,
+  and the only text is the number. It counts THIS module's saves and opens
+  Bookmarks on it. `FlightBag` is the one part of that feature imported
+  eagerly, because it is on the first screen.
 - **The hour meter reads in tenths, on a drum**: `0013.9`, four zero-padded
   integer digits, the point and the tenth in the accent. It was `13:59`, which
   is a clock, and this is not one. `hobbsDrum` in `hobbs.js` floors
@@ -411,6 +427,83 @@ sit abreast under it, which is what keeps the Modules grid above the fold on a
 - **It stops on a hidden tab**, and that is a decision rather than an
   oversight: a window left open on a module overnight would otherwise add eight
   hours nobody flew. If that should change, it is one listener in `hobbs.js`.
+
+## Bookmarks, study cards and the flight bag
+
+Four folders, locked: **Questions · Study cards · Videos · Pages**, at
+`/bookmarks` and `/bookmarks/:folder`. Ported from a signed-off design (a pack
+of 31 files handed over outside the repo, 2026-09-18); `claude/brief-bookmarks.md`
+is the brief, `claude/bookmarks-survey.md` is what the repo turned out to be,
+and `claude/bookmarks-report.md` is what each rule measured.
+
+- **`saves` is one table and `savesStore.js` is its only writer** (migration
+  0028). The screen changes first and the server follows; if the server
+  refuses, the row goes back and the student is told, with Retry. Nothing is
+  ever shown as saved that is not saved. `npm run check:saves` drives the
+  store against a stand-in server — 16 assertions, no browser.
+- **The drop's SQL could not work here.** It defaulted `user_id` to
+  `auth.jwt() ->> 'sub'` and wrote four policies against the same claim; this
+  client sends the anon key as its own bearer, so that claim is NULL on every
+  request and every insert and select would have failed silently (0009's
+  header). 0028 mirrors the comments pattern instead, and its header states the
+  cost: anyone with the publishable key can read `saves`, as they can every
+  other table here.
+- **A saved question points at the question, never at "question 4 of quiz 1".**
+  `contentLoader.js` still falls back to a positional id so a runtime without
+  one renders; `npm run check:question-ids` is in **prebuild** and fails the
+  build if any question lacks a stable id, two share one, or an answer indexes
+  nothing.
+- **Three kinds of lookup, and the third is what stops the feature deleting
+  somebody's bookmarks.** `content.question/lesson/paper` answer with the thing,
+  with `null` when the author deleted it, or with `undefined` while nothing is
+  known yet. Only `null` prunes — and pruning DELETES from the server, so
+  answering "gone" while the content chunk was still in flight would empty a
+  student's list on a slow connection.
+- **A question saved from the quiz and the same question saved from its card
+  set are two rows**, deliberately: one is practised as a quiz and the other is
+  flipped as a card, so `kind` is part of what identifies a save.
+- **The reader's page bookmark was already there.** v6 has drawn "Bookmark this
+  page" since the rebuild, into a `Set` in localStorage. It now writes a `saves`
+  row beside it and the two are unioned at mount — the local list is what the
+  island repaints from on the same frame, the row is what survives the device.
+- **Settings is gone and Bookmarks has its row in the profile menu.** The page
+  was not empty, whatever the brief said: it held the callsign field (already
+  on the Licence tab, with the server-side uniqueness check), the blocked list
+  (the only way to unblock anybody) and three settings with no other door. The
+  blocked list is in Preferences under "How social" and `PilotSettings` is
+  below it; `/settings` and `/saved` both resolve to `/bookmarks`.
+- **The accent is three tokens on this surface, not one**: `--active` for a
+  mark, `--active-fill` for a fill, `--active-text` for the accent read as
+  words. Measured rather than argued — the module picker's own name came in at
+  3.96:1 on `--active` in Day. The Manual finish leaves `--active-fill` at the
+  accent's own lightness, so it alone takes `--active-text` as its fill.
+- `npm run test:bm` walks it: 6 liveries × 2 lightings × 3 finishes × 4 widths,
+  every control on the brief's R10 list on a desktop and a phone, Smooth Air,
+  and the launch sweep — offline, two tabs, a second student, a deleted
+  question and a keyboard-only pass. **Aurora has no Day**: `App.jsx` forces
+  night on it, so there are 30 real skins, not 36.
+
+## Every door leads somewhere
+
+`npm run check:doors` is nine assertions against the whole app, not a feature:
+no control bound to nothing, every path it can build resolving, every renamed
+path landing in one hop, every route name answered in App, no copy naming a
+screen this app no longer has, every empty line naming its next action, every
+flag gating something, and every progress key having both a reader and a
+writer. The last two carry a **named** list of the exceptions, so the five
+flags and six keys that are already one-sided are stated rather than silent and
+a sixth or seventh fails the build.
+
+- **It reads prose across newlines and across `{interpolations}`.** Cut at
+  either and half of every sentence in the app goes unread — which is exactly
+  how "you can undo it in Settings" outlived Settings by a commit.
+- **The reader's chrome binds by delegation**, not by `onClick`: one handler on
+  the island reads `id` and `data-act` off whatever was pressed. A button there
+  with an id is wired, and `check:paper` is what holds it.
+- The suites share one harness store, so a walk that changes a student's livery,
+  lighting or finish **puts it back in a `finally`**. `test:bm` did not, and
+  `test:exam` then failed on a Manual ground it had never asked for — which
+  reads as a bug in the exam rather than as the previous run's litter.
 
 ## Screen changes and transitions
 

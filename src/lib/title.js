@@ -38,8 +38,8 @@ export function titleForRoute(route) {
 
     /* THE APP'S OWN PAGES HAVE NAMES ALREADY. These are not invented copy and
        not content: each string is the label the page is reached by or headed
-       with -- Modules, Logbook and Ready Room are RootNav's own labels, Saved
-       is the bookmarks h1, and Wrong bay is what the 404 says. Every one of
+       with -- Modules, Logbook and Ready Room are RootNav's own labels, Bookmarks
+       is the screen's own h1, and Wrong bay is what the 404 says. Every one of
        these routes was falling through to the site title, so a tab, a
        bookmark and a history entry for the Ready Room were indistinguishable
        from the Flight Deck. */
@@ -49,15 +49,14 @@ export function titleForRoute(route) {
       return formatTitle("Logbook");
     case "ready":
       return formatTitle("Ready Room");
-    case "saved":
-      return formatTitle("Saved");
+    case "bookmarks":
+      return formatTitle("Bookmarks");
+    /* A card set is a page of its own, and its own name is the chapter's --
+       which this file has no access to, so the surface's name it is. */
+    case "cards":
+      return formatTitle("Study cards");
     case "notfound":
       return formatTitle("Wrong bay");
-    /* Settings was falling through with the rest, and it does not belong with
-       them: "Settings" is this app's own name for the page, the same kind of
-       fact as Modules and Ready Room, not content it has no access to. */
-    case "settings":
-      return formatTitle("Settings");
     /* The squadron's own name is not known until the token resolves, and this
        is often the first page a new student sees. The heading it renders is
        what the tab says. */

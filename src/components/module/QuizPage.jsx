@@ -24,7 +24,7 @@ import "./lesson.css";
    is reached from, a retake that does not move the needle, and the place
    written on every question so the Flight Deck can offer to put you back. */
 export default function QuizPage({
-  minimums, module: mod, chapter, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
+  minimums, module: mod, chapter, chapterNo = null, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
 }) {
   const run = state?.run?.[chapter.id] || null;
   const score = state?.quiz?.[chapter.id];
@@ -66,6 +66,11 @@ export default function QuizPage({
             // the question rather than to the first one.
             resumeAt={run?.at || 0}
             minimums={minimums}
+            /* WHERE A BOOKMARK ON THIS PAPER BELONGS. The save points at the
+               question by its own id; the module and the chapter number are
+               what the folder shows beside it and which module it files under. */
+            moduleCode={mod?.code || mod?.id || null}
+            chapterNo={chapterNo}
             /* REPORTS THE PLACE ON EVERY QUESTION. Without this nothing writes
                pw-quiz-run and the Flight Deck's Resume cannot point at a quiz.
                The TALLY does not travel with the place: an exam holds the

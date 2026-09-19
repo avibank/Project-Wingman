@@ -1,7 +1,7 @@
 import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
-import { useState, useRef, useEffect, lazy, Suspense, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, lazy, Suspense, useMemo, useCallback } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TransitionRouter, { popHandler } from "./components/TransitionRouter.jsx";
@@ -80,10 +80,12 @@ const CHUNK = {
   dev: chunk(() => import("./components/DevPanel.jsx")),
   pdf: chunk(() => import("./components/PdfPanel.jsx")),
   roomShell: chunk(() => import("./components/room/ReadyRoom.jsx")),
-  settings: chunk(() => import("./components/SettingsPage.jsx")),
   profile: chunk(() => import("./components/Profile.jsx")),
   progress: chunk(() => import("./components/ProgressPage.jsx")),
-  bookmarks: chunk(() => import("./components/BookmarksPage.jsx")),
+  /* Bookmarks and the card set come out of one chunk: they share the store,
+     the adapter, the study pad and the whole stylesheet, so splitting them
+     would download most of it twice. */
+  bookmarks: chunk(() => import("./features/bookmarks/screens.jsx")),
 };
 /* WHICH CHUNKS EACH ROUTE RENDERS, exactly. A route missing from here, or
    missing one of its chunks, is a route whose first visit loads its code
@@ -100,9 +102,9 @@ const ROUTE_CHUNKS = {
   ready: [CHUNK.roomShell],
   modules: [CHUNK.modules],
   profile: [CHUNK.profile],
-  settings: [CHUNK.settings],
   logbook: [CHUNK.progress],
-  saved: [CHUNK.bookmarks],
+  bookmarks: [CHUNK.bookmarks],
+  cards: [CHUNK.bookmarks],
   notfound: [CHUNK.notFound],
 };
 const warmChunks = (name) => Promise.all((ROUTE_CHUNKS[name] || []).map((f) => f())).catch(() => {});
@@ -172,10 +174,18 @@ const PdfPanel = lazy(CHUNK.pdf);
 import ProfileMenu from "./components/ProfileMenu.jsx";
 import ReadyRoomPill from "./components/ReadyRoomPill.jsx";
 const ReadyRoomShell = lazy(CHUNK.roomShell);
-const SettingsPage = lazy(CHUNK.settings);
 const Profile = lazy(CHUNK.profile);
 const ProgressPage = lazy(CHUNK.progress);
-const BookmarksPage = lazy(CHUNK.bookmarks);
+const BookmarksScreens = lazy(CHUNK.bookmarks);
+/* The bag sits in the Flight Deck's instrument strip, which is on the first
+   screen — so it is NOT lazy, and it is deliberately the only part of the
+   feature that is not. It is one SVG and a count. */
+import { FlightBag } from "./features/bookmarks/deck.js";
+import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
+import { provideNav } from "./features/bookmarks/nav.jsx";
+import { provideContent, providePapers } from "./features/bookmarks/content.js";
+import { initSaves, resetSaves } from "./features/bookmarks/savesStore.js";
+import { supabase } from "./lib/supabaseClient.js";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
@@ -276,8 +286,7 @@ function AppInner() {
     route.name === "notfound"
     || (route.name === "modules" && !flags["module.interior"])
     || (route.name === "ready" && !flags["social.readyroom"])
-    || (route.name === "logbook" && !flags["page.logbook"])
-    || (route.name === "saved" && !flags["page.bookmarks"]);
+    || (route.name === "logbook" && !flags["page.logbook"]);
 
   useDocumentTitle(titleForRoute(notFound ? { name: "notfound" } : route));
 
@@ -301,13 +310,13 @@ function AppInner() {
   // route to the Flight Deck: `view === "hub"` is tested before the paper
   // branch in the render, so the deck matched first and the reader never
   // mounted while the browser tab said "Paper".
-  const MODULE_ROUTES = new Set(["module", "chapter", "lesson", "review", "paper"]);
+  // A card set is a chapter's quiz, read as cards, inside the module's Library
+  // — so it is a module screen and the hour meter runs on it.
+  const MODULE_ROUTES = new Set(["module", "chapter", "lesson", "review", "paper", "cards"]);
   const view = MODULE_ROUTES.has(route.name) ? "module" : "hub";
   const settingsPage =
     route.name === "signin" ? "auth"
     : route.name === "logbook" && flags["page.logbook"] ? "progress"
-    : route.name === "saved" && flags["page.bookmarks"] ? "bookmarks"
-    : route.name === "settings" ? (route.page === "index" ? "about" : route.page)
     : null;
   const tab = route.tab === "pdf" ? "pdf" : "chapters";
   const pendingChapterId = route.chapterId || null;
@@ -457,10 +466,13 @@ function AppInner() {
   }, []);
 
   const navWait = useRef(0);
-  const go = async (to, { keepScroll = false } = {}) => {
+  /* `replace` is for a query the screen owns rather than a place: Bookmarks
+     writes the module it is showing into ?m=, and one history entry per glance
+     at a different module would make Back mean nothing. */
+  const go = async (to, { keepScroll = false, replace = false } = {}) => {
     const moveKind = transitionKind(route, to, { lessonOrder: lessonOrderRef.current });
     let kind = canTransition() ? moveKind : null;
-    const move = () => { navigate(to); };
+    const move = () => { navigate(to, { replace }); };
 
     // WARM THE CHUNK FIRST, and this is the stutter.
     //
@@ -539,11 +551,16 @@ function AppInner() {
   const goSettings = (page) =>
     go(page === "auth" ? routePath.signin()
       : page === "progress" ? routePath.logbook()
-      : page === "bookmarks" ? routePath.saved()
-      : routePath.settings(page));
+      : routePath.bookmarks());
   const goHome = () => go(routePath.home());
 
-  const [bookmarksMode, setBookmarksMode] = useState("list");
+  /* ------------------------------------------------------------- BOOKMARKS
+     The feature reads the app through three handles rather than reaching into
+     it: go() for every navigation (nav.jsx says why), the content adapter, and
+     the saves store. All three are fed from here so there is one owner. */
+  const goRef = useRef(go);
+  goRef.current = go;
+  useLayoutEffect(() => { provideNav((to, opts) => goRef.current(to, opts)); }, []);
   // The persisted "active module" is a preference the hero on Home reads.
   // Inside a module the URL wins.
   const [preferredModuleCode, setPreferredModuleCode] = useState(MODULES.find((m) => m.status === "active")?.code || MODULES[0].code);
@@ -708,6 +725,22 @@ function AppInner() {
   };
   const [reduceMotion, setReduceMotion] = useState(false);
 
+  /* WHAT BOOKMARKS KNOWS ABOUT CONTENT, and it is told rather than asking.
+     The seeded document is a lazy chunk, so there is a real window in which
+     the app is mounted and knows no questions — and a Bookmarks screen that
+     answered "gone" during that window would DELETE the student's saves
+     (see the three-state note in content.js). A layout effect, so a screen
+     mounting in the same commit reads the new value rather than the one
+     before it. */
+  useLayoutEffect(() => {
+    provideContent({
+      doc: useTestContent,
+      modules: allModules(useTestContent).map((m) => ({ id: m.code, name: m.name })),
+      currentModuleId: activeModuleCode,
+      smoothAir: reduceMotion,
+    });
+  }, [useTestContent, activeModuleCode, reduceMotion]);
+
   // The app got here, so whatever chunk failed last time was a stale deploy
   // rather than a broken build. Clearing the flag re-arms the one-shot reload
   // for the NEXT deploy; leaving it set would mean the next stale chunk went
@@ -855,7 +888,6 @@ function AppInner() {
   // The room renders its own copy of the profile menu, so what the menu does
   // has to live somewhere both can reach rather than being written out twice.
   const goProfile = (page) => {
-    setBookmarksMode("list");
     if (page === "licence" || page === "preferences" || page === "appearance") go(routePath.profile(page));
     else goSettings(page);
   };
@@ -988,6 +1020,16 @@ function AppInner() {
     };
   }, [isSignedIn, me, flags, roomNonce]);
 
+  /* THE SAVES LIST, loaded once per student and kept in one store.
+     Every module at once, because it is a short list and the module picker
+     switches between them without a fetch. resetSaves on the way out is not
+     tidiness: without it the next person to sign in on a shared college
+     machine would see the last one's bookmarks until their own arrived. */
+  useEffect(() => {
+    if (!isSignedIn || !me) { resetSaves(); return; }
+    initSaves({ getSupabase: async () => supabase, userId: me });
+  }, [isSignedIn, me]);
+
   // §4c — endorsements on answers. Fetched for the replies actually loaded,
   // keyed by a stable id string so the effect runs when the cast changes
   // rather than on every render.
@@ -1081,6 +1123,14 @@ function AppInner() {
     () => [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers],
     [activeModuleCode, useTestContent, addedPapers],
   );
+  /* Papers are listed one module at a time, from the database. The adapter is
+     told which module a list belongs to so that a save pointing at a paper in
+     a module nobody has opened reads as "not known yet" rather than "deleted"
+     — the difference between holding a bookmark and pruning it off the
+     server. See content.js. */
+  useEffect(() => {
+    if (!papersLoading) providePapers(activeModuleCode, modulePapers);
+  }, [activeModuleCode, modulePapers, papersLoading]);
   const lastPaper = useMemo(
     () => modulePapers.find((p) => p.id === paperPlace?.paperId) || null,
     [modulePapers, paperPlace],
@@ -1566,17 +1616,12 @@ function AppInner() {
         <main className="content content-taxi">
           <ProgressPage onBack={() => go(-1)} />
         </main>
-      ) : settingsPage === "bookmarks" ? (
+      ) : route.name === "bookmarks" || route.name === "cards" ? (
+        /* Bookmarks is content-width like every other hub screen; the folder
+           grid widens itself from inside (.bm-wide), because a full folder
+           needs the room and an empty one reads better narrow. */
         <main className="content content-taxi">
-          <BookmarksPage onBack={() => go(-1)} initialMode={bookmarksMode} />
-        </main>
-      ) : settingsPage ? (
-        <main className="content content-taxi">
-          {/* No page prop: /settings/:page is parsed by the router and mapped
-              here, but this screen has no sub-pages — the profile tabs moved to
-              /account/*. It was passed and ignored, which is the same shape as
-              the bug that hid the quiz's place-keeping. */}
-          <SettingsPage onBack={() => go(-1)} />
+          <BookmarksScreens route={route} />
         </main>
       ) : route.name === "profile" ? (
         <main className="content content-taxi content--profile">
@@ -1752,13 +1797,9 @@ function AppInner() {
               <LessonPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapters={chs} chapter={ch} lesson={ls}
                 state={moduleState} people={directory}
-                bookmarks={progress.get("pw-bookmarks", [])}
-                onToggleSave={(lessonId, on) => {
-                  const cur = progress.get("pw-bookmarks", []);
-                  progress.set("pw-bookmarks", on
-                    ? [...new Set([...cur, lessonId])]
-                    : cur.filter((x) => x !== lessonId));
-                }}
+                /* The chapter's number, for the label a saved lesson carries in
+                   its folder. The save itself points at the lesson's own id. */
+                chapterNo={chaptersFor(activeModuleCode, useTestContent).findIndex((c) => c.id === ch.id) + 1}
                 onBack={() => go(routePath.module(activeModuleCode))}
                 onOpenLesson={(c, l) => go(routePath.lesson(activeModuleCode, c.id, l.id))}
                 onOpenQuiz={(c) => go(routePath.chapter(activeModuleCode, c.id, "quiz"))}
@@ -1838,6 +1879,11 @@ function AppInner() {
             <main className="content content-taxi content--full">
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapter={ch} state={moduleState}
+                /* The chapter's NUMBER, which is its place in the module — the
+                   word "Chapter 3" — and what a saved question is labelled
+                   with. Nothing is saved against it: the save points at the
+                   question's own id. */
+                chapterNo={chaptersFor(activeModuleCode, useTestContent).findIndex((c) => c.id === ch.id) + 1}
                 // §6 — the result screen weighs the sitting against the same
                 // bar every other lamp in the app is weighed against.
                 minimums={minimums}
@@ -1957,6 +2003,7 @@ function AppInner() {
             onGoToChapter={goToChapter}
             initialChapterId={pendingChapterId}
             onInitialChapterConsumed={() => {}}
+            onOpenPaper={(paper) => paper?.id && go(routePath.paper(activeModuleCode, paper.id))}
             chapterTab={route.tab && route.name === "chapter" ? route.tab : "brief"}
             onChapterTab={(chapterId, t) => go(routePath.chapter(activeModuleCode, chapterId, t))}
           />
@@ -1995,6 +2042,11 @@ function AppInner() {
       }}
     />
     <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
+    {/* The app's one toast, and Bookmarks is what it was built for: a save has
+        to be undoable and a failure has to say so, and neither can wait for a
+        screen. Mounted once here rather than per screen, so a toast raised on
+        the way OUT of a page survives the navigation that raised it. */}
+    <BookmarksToastHost />
     </FirstFlightGate>
     </UsernameGate>
     {/* A child of .app, and fixed to the viewport from there — measured, not

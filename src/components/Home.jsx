@@ -5,6 +5,7 @@ import { useUser } from "@clerk/clerk-react";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
 import { HOBBS_KEY, hobbsSeconds, hobbsDrum } from "../lib/hobbs.js";
+import { FlightBag, useSavesCount } from "../features/bookmarks/deck.js";
 import { PLACE_KEY, placeLine, placeVerb, placeList } from "../lib/lastPlace.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { fetchAllPresence, fetchModulePresence } from "../lib/presence.js";
@@ -328,7 +329,6 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
     quiz: progress.get("pw-quiz-scores", {}),
     legacyCompleted: progress.get("pw-completed", []),
   });
-  const bookmarks = progress.get("pw-bookmarks", []);
   const lastFlown = progress.get("pw-last-flown", null);
   const state = { completed, viewed, answered };
 
@@ -518,7 +518,10 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
     if (place) return onResumePlace?.(place);
     if (next) onGoToChapter(active.code, next.id);
   };
-  const bag = bookmarks.length;
+  /* The bag's own count, from the saves store rather than the old flat
+     pw-bookmarks list: this is what the drawn Manual strip shows, and it has
+     to be the same number the lit instrument shows beside it. */
+  const bag = useSavesCount(active.code);
   const contactCount = contacts.length
     ? `${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`
     : null;
@@ -597,7 +600,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 blips={contacts.length > 0}
                 caps={[
                   <GyroCaption average={average} bar={minimums} />,
-                  bag > 0 ? "Flight bag" : "A bookmark fills the bag.",
+                  bag > 0 ? "Flight bag" : "Bookmarks",
                   hobbs.flown ? "Hobbs" : "Your first hour",
                   contactCap,
                 ]}
@@ -612,20 +615,19 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
               <div className="cap"><GyroCaption average={average} bar={minimums} /></div>
             </div>
 
+            {/* THE FLIGHT BAG, and it is the instrument rather than a caption.
+                It was a number ladder over a briefcase glyph with "A bookmark
+                fills the bag." under it — a cell that told you what to do
+                instead of showing you what you had. The case is drawn in
+                layers: back wall and handle, three sheets inside, front wall
+                with its seam and latches. Empty it is grey with the latches
+                shut and says nothing at all; filled it lights in the livery,
+                the latches spring, the sheets stand proud and riffle, and the
+                only text is the number. Tapping it opens Bookmarks on this
+                module. It is the one part of the feature that is not lazy,
+                because it is on the first screen. */}
             <div className="cel">
-              {bag > 0 ? (
-                <div className="ladder">
-                  {bag + 2}<br />{bag + 1}<b>{bag}</b>{bag - 1}<br />{bag > 1 ? bag - 2 : ""}
-                </div>
-              ) : (
-                <svg className="bagglyph" viewBox="0 0 32 30" fill="none" aria-hidden="true">
-                  <path d="M4 10h24v15a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V10Z"
-                        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                  <path d="M11 10V6a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v4" stroke="currentColor" strokeWidth="1.6" />
-                  <path d="M4 16h24" stroke="currentColor" strokeWidth="1.6" opacity=".5" />
-                </svg>
-              )}
-              <div className="cap">{bag > 0 ? "Flight bag" : "A bookmark fills the bag."}</div>
+              <FlightBag moduleId={active.code} />
             </div>
 
             <div className="cel">

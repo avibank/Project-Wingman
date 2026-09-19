@@ -3,8 +3,10 @@ import { useUser } from "@clerk/clerk-react";
 import { fetchBlocks, fetchMutes, unblockUser, unmuteUser, fetchProfiles } from "../lib/squadron.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 
-// §9 — the pilot sheet tells people they can undo a block in Settings, so this
-// has to exist for that sentence to be true.
+// §9 — the pilot sheet tells people they can undo a block in Preferences, so
+// this has to exist for that sentence to be true. It lived on the Settings page
+// until Bookmarks took that page's place in the profile menu; it is inside the
+// "How social" box now, which is where blocking belonged all along.
 
 function Row({ id, profile, action, onAct, busy }) {
   const name = profile?.callsign || "A pilot";

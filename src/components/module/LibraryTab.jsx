@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
 import { Check } from "lucide-react";
 import { hits, terms } from "../../lib/moduleSearch.js";
 import { useSwitchIn } from "../../lib/tabMotion.js";
@@ -40,6 +41,7 @@ const QUIZ = (
 export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper, onAddPaper,
   query = "",
+  moduleCode = null,
   readerPin = null, faults = new Set(),
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
@@ -114,6 +116,15 @@ export default function LibraryTab({
           )}
         </div>
       </section>
+
+      {/* -------------------------------------------------- STUDY CARDS ---
+          Between the two, because a card set IS a quiz — the same questions,
+          read the other way round — so it belongs beside the quiz it comes
+          from rather than beside the papers. It draws nothing when the module
+          has no quizzes, so there is never a heading over an empty list.
+          Search filters the other two sections; it does not filter this one,
+          which is one row per quiz and already the shortest list here. */}
+      <LibraryStudyCards moduleId={moduleCode} />
 
       {/* ------------------------------------------------------- PAPERS --- */}
       <section className="lsec" aria-labelledby="lsec-papers" ref={papersRef}>

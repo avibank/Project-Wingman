@@ -11,6 +11,8 @@ import { withSetting } from "../lib/viewTransition.js";
 import { useFlags } from "../lib/flags.js";
 import { initialsOf } from "./ProfileMenu.jsx";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
+import BlockedList from "./BlockedList.jsx";
+import PilotSettings from "./PilotSettings.jsx";
 import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.js";
 import { normaliseCode, isCode } from "../lib/code.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
@@ -796,7 +798,20 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                  options={PRESETS.filter((x) => (x.id === "quiet") || (x.id === "crew" && flags["social.crew"])
                    || (x.id === "open" && flags["social.crew"] && flags["social.frequency"]))}
                  onPick={(v) => withSetting(() => progress.set("pw-social-preset", v))} />
+            {/* THE BLOCKED LIST LIVES HERE NOW. It was the other half of the
+                Settings page, and Settings has gone — Bookmarks took its place
+                in the menu. Blocking is a social setting and this is the box
+                about being social, so it needed no new home, only this one.
+                It is the ONLY way to unblock anybody, which is why it could not
+                simply be deleted with the page it was on. */}
+            <BlockedList />
           </div>
+
+          {/* WHAT THE SETTINGS PAGE HELD. Three settings that had no other
+              door — when you study, what you are notified about, and the study
+              glow — plus the pilot row they sit in. The page is gone; these
+              are not. */}
+          <PilotSettings />
 
           {flags["prefs.notices"] && (
             <div className="block">

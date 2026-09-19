@@ -25,7 +25,11 @@ pnpm-debug.log*
 # Vercel
 .vercel
 .claude/launch.json
-public/papers/tracemonkey.pdf
+# The reference paper and its sidecars are FETCHED, not committed:
+# `npm run paper:fetch` puts them here and papersFor() only offers the paper
+# under DEV. The pdf alone was ignored, so the sidecar folder beside it sat as
+# a permanent untracked entry in every `git status`.
+public/papers/
 
 # Playwright
 tests/artifacts/

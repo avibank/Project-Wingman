@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "dev:host": "vite --host",
+    "prebuild": "node scripts/check-question-ids.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "check:content": "node scripts/check-content.mjs",
-    "check": "npm run lint && npm run check:jsx && npm run check:props && npm run check:states && npm run check:shapes && npm run check:tokens && npm run check:collisions && npm run check:one-livery && npm run check:anchor && npm run check:paper && npm run check:code && npm run check:exam && npm run check:transitions && npm run check:calm && npm run check:orbit && npm run check:lesson && npm run check:familiar && npm run check:retention && npm run check:minimums && npm run check:gyro && npm run check:ground && npm run check:rr && npm run check:content && npm run check:schema && npm run check:livery && npm run check:day && npm run check:contrast && npm run check:surfaces && npm run check:lesson-contrast && npm run check:settings && npm run check:responsive && npm run check:analytics && npm run check:logbook && npm run build && npm run check:placeholders && npm run check:bundle",
+    "check": "npm run lint && npm run check:jsx && npm run check:props && npm run check:states && npm run check:shapes && npm run check:tokens && npm run check:collisions && npm run check:one-livery && npm run check:anchor && npm run check:paper && npm run check:code && npm run check:exam && npm run check:saves && npm run check:doors && npm run check:question-ids && npm run check:transitions && npm run check:calm && npm run check:orbit && npm run check:lesson && npm run check:familiar && npm run check:retention && npm run check:minimums && npm run check:gyro && npm run check:ground && npm run check:rr && npm run check:content && npm run check:schema && npm run check:livery && npm run check:day && npm run check:contrast && npm run check:surfaces && npm run check:lesson-contrast && npm run check:settings && npm run check:responsive && npm run check:analytics && npm run check:logbook && npm run build && npm run check:placeholders && npm run check:bundle",
     "build:sql": "node scripts/build-migration-bundle.mjs && node scripts/build-setup-sql.mjs",
     "check:livery": "node scripts/check-livery.mjs",
     "check:backend": "node scripts/check-backend.mjs",
@@ -58,6 +59,9 @@
     "check:paper-db": "node --env-file=.env.local scripts/check-paper-db.mjs",
     "check:code": "node scripts/check-code.mjs",
     "check:exam": "node scripts/check-exam.mjs",
+    "check:saves": "node scripts/check-saves.mjs",
+    "check:doors": "node scripts/check-doors.mjs",
+    "check:question-ids": "node scripts/check-question-ids.mjs",
     "harness": "./node_modules/.bin/vite --config tests/harness/vite.config.js",
     "harness:prod": "./node_modules/.bin/vite build --config tests/harness/vite.prod.config.js && ./node_modules/.bin/vite preview --config tests/harness/vite.prod.config.js",
     "test:reader": "node tests/reader/index.mjs",
@@ -69,7 +73,8 @@
     "measure:manual": "node --env-file=.env.local scripts/measure-manual.mjs",
     "check:room": "node scripts/check-room.mjs",
     "test:exam": "node tests/exam-run.mjs",
-    "test:vt": "node tests/vt-run.mjs"
+    "test:vt": "node tests/vt-run.mjs",
+    "test:bm": "node tests/bm-run.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "5.61.9",

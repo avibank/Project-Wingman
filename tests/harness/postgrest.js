@@ -47,6 +47,9 @@ export function makeStore() {
        for it on every module view, and a 501 here is the harness missing a
        table rather than the product failing. */
     papers: [],
+    /* 0028. Bookmarks loads this on sign-in, so it is asked for on every page
+       load whether or not a test touches it. */
+    saves: [],
     /* The Ready Room's own tables, empty until a test seeds them. */
     comms_reactions: [], comms_receipts: [], thread_votes: [], lesson_reply_votes: [],
     copilot_sessions: [], seat_messages: [], seat_requests: [], squadron_invites: [],

@@ -93,7 +93,7 @@ function PickModule({ value, onPick, onNext }) {
    people-search matches on the callsign, so an account without one cannot be
    found by anybody, and the room renders "Someone" beside their messages.
    Skippable on purpose. A required field here would be a wall in front of the
-   product for somebody who has not decided yet, and Settings still has it. */
+   product for somebody who has not decided yet, and the Licence tab has it. */
 /* THE CODE SHARES THIS SCREEN RATHER THAN GETTING ITS OWN.
    It is required, and a required field is worth one screen — but not a fifth
    one. Both answers here are "what are you called": one in words, one in three

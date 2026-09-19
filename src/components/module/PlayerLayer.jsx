@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import SaveButton from "../../features/bookmarks/SaveButton.jsx";
 import { Play, Pause, Volume2, VolumeX, Volume1, Maximize, Minimize, PenLine, X, RotateCcw, Check } from "lucide-react";
 import { resolveVideo } from "../../lib/videoHost.js";
 import { mmss } from "./lessonState.js";
@@ -693,6 +694,22 @@ export default function PlayerLayer() {
                   aria-pressed={Boolean(bar)} aria-label="Take a note here">
             <PenLine aria-hidden="true" />
           </button>
+
+          {/* THE BOOKMARK, NEXT TO THE NOTE, AND IT IS THE OTHER HALF OF THE
+              SAME GESTURE. A note says something about this moment; a bookmark
+              says come back to it. Pressing it again at a DIFFERENT second
+              moves the saved moment rather than removing the lesson, because
+              the student is plainly marking a new one — pressing it again at
+              the same second is the one that unsaves (SaveButton holds that
+              rule). It reads the live element, not React state, so the second
+              it saves is the frame on screen rather than the last one that
+              caused a render. */}
+          {lesson?.id && stage?.moduleCode && (
+            <SaveButton kind="video" className="pbtn player-save"
+                        moduleId={stage.moduleCode} refId={lesson.id}
+                        chapter={stage.chapterNo ?? null}
+                        getAtSeconds={() => ref.current?.currentTime ?? 0} />
+          )}
 
           <div className="pvol">
             <button type="button" className="pbtn"

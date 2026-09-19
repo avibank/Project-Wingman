@@ -11,6 +11,13 @@ import Spooling from "./Spooling.jsx";
 //
 // Fly solo is symmetric now — nobody sees you and you see nobody — so the old
 // "you still see everyone" framing no longer applies here.
+//
+// THIS IS ON THE PREFERENCES TAB NOW. It was the whole of the Settings page,
+// and Settings has gone — Bookmarks took its row in the profile menu. What it
+// holds is three settings with no other door: when you study (matching.js ranks
+// squadron suggestions by it), what you are notified about, and the study glow.
+// Deleting the page as the brief's §1 asked would have deleted all three, and
+// the blocked list beside them; so the page went and its contents moved.
 
 const STUDY_TIMES = [
   { id: "early", label: "Early" },
@@ -44,7 +51,6 @@ function PilotSettings() {
   const [profile, setProfile] = useState(null);
   const [state, setState] = useState("loading");   // loading | ready | unavailable
   const [busy, setBusy] = useState(false);
-  const [callsign, setCallsign] = useState("");
 
   useEffect(() => {
     if (!isSignedIn || !user?.id) { setState("unavailable"); return; }
@@ -54,7 +60,6 @@ function PilotSettings() {
         if (!live) return;
         if (failed) { setState("unavailable"); return; }
         setProfile(p || {});
-        setCallsign(p?.callsign || "");
         setState("ready");
       })
       .catch(() => live && setState("unavailable"));
@@ -88,20 +93,12 @@ function PilotSettings() {
     <section className="ps2">
       <h2 className="ps2-head">Your pilot</h2>
 
-      <div className="ps2-block">
-        <label className="ps2-row-label" htmlFor="ps2-callsign">Callsign</label>
-        <div className="ps2-callsign">
-          <input
-            id="ps2-callsign" className="ps2-input" value={callsign} maxLength={24}
-            placeholder="What your squadron sees"
-            onChange={(e) => setCallsign(e.target.value)}
-          />
-          <button
-            className="ps2-save" disabled={busy || callsign.trim() === (profile?.callsign || "")}
-            onClick={() => patch({ callsign: callsign.trim() || null })}
-          >Save</button>
-        </div>
-      </div>
+      {/* THE CALLSIGN IS NOT HERE ANY MORE. It is on the Licence tab, in the
+          field that also claims it — Profile.jsx checks uniqueness on the
+          server and writes it to Clerk AND pilot_profiles, where this one only
+          ever wrote the profile row. Two fields for one name is how an account
+          ends up with a callsign in one place and not the other, which is
+          exactly the bug the licence field was written to fix. */}
 
       <div className="ps2-block">
         <p className="ps2-row-label">When you usually study</p>

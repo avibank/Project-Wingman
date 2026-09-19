@@ -2,7 +2,15 @@ import { useState } from "react";
 import { FileText, Search, SearchX } from "lucide-react";
 import { pdfsForModule } from "../data.js";
 
-function PdfPanel({ moduleCode = "JT", moduleName = "this module" }) {
+/* THE OLD HUB'S LIBRARY, behind `module.screen` being off — the live one is
+   `module/LibraryTab.jsx`. Its Open button was bound to nothing: it rendered,
+   took focus, hovered, and did nothing at all. It never fired in practice,
+   because `pdfsForModule()` returns an empty array and always has, so the list
+   only ever draws its empty state; but a control that cannot work is worse
+   than one that is not there, and the day this fallback is switched on is the
+   day somebody presses it. It opens the paper now, through the same handler
+   the live Library uses. */
+function PdfPanel({ moduleCode = "JT", moduleName = "this module", onOpenPaper }) {
   const [query, setQuery] = useState("");
   const docs = pdfsForModule(moduleCode);
   const filtered = docs.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
@@ -21,7 +29,7 @@ function PdfPanel({ moduleCode = "JT", moduleName = "this module" }) {
               <div className="pdf-title">{p.title}</div>
               <div className="pdf-sub">{p.pages} pages · {p.size}</div>
             </div>
-            <button className="pdf-open">Open</button>
+            <button className="pdf-open" type="button" onClick={() => onOpenPaper?.(p)}>Open</button>
           </div>
         ))}
         {filtered.length === 0 && (

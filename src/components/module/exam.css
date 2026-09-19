@@ -214,6 +214,25 @@
 .exam-frame .btn--flag[aria-pressed="true"] svg { fill: currentColor; }
 .exam-frame .btn--flag:focus-visible { outline-color: var(--flag); }
 
+/* THE BOOKMARK, BESIDE THE FLAG AND SHAPED LIKE IT. It is the ghost button the
+   design draws, carrying the feature's own icon — so the pair reads as two
+   things you can do to a question rather than as one control and a stray mark.
+   Lit it takes --active, which is the accent as a MARK: the flag has its own
+   fixed colour because a flag is a warning, and a bookmark is not. The icon is
+   sized here rather than by the feature's stylesheet, which is scoped to .bm
+   and deliberately cannot reach inside the paper. */
+/* No size of its own: it takes .btn's, so it sits on the flag's baseline and
+   the two read as a pair. Sized separately it was 40px against the flag's 36
+   and hung 2px below it. */
+.exam-frame .exam-save { width: auto; height: auto; }
+.exam-frame .exam-save svg { width: 17px; height: 17px; }
+.exam-frame .exam-save[aria-pressed="true"] { border-color: var(--active); color: var(--active); background: var(--accent-soft); }
+.exam-frame .exam-save:focus-visible { outline-color: var(--active); }
+.exam-frame .exam-save.is-pop svg { animation: exam-save-pop .34s cubic-bezier(.34,1.56,.64,1); }
+@media (prefers-reduced-motion: reduce) { .exam-frame .exam-save.is-pop svg { animation: none; } }
+.app.smooth-air .exam-frame .exam-save.is-pop svg { animation: none; }
+@keyframes exam-save-pop { 0% { transform: scale(1); } 45% { transform: scale(1.28); } 100% { transform: scale(1); } }
+
 /* ---------- Question navigator ---------- */
 .exam-frame .navigator {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);

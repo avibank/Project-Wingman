@@ -1,4 +1,4 @@
-// The four events, and nothing else.
+// The ten events, and nothing else.
 //
 // Without a compiler holding the union, this is what stops a fifth event
 // appearing by accident or a name being misspelled at a call site — a stray
@@ -10,10 +10,17 @@ import { EVENTS, track, installSink } from "../src/lib/analytics.js";
 const NAMES = Object.keys(EVENTS);
 const fails = [];
 
-if (NAMES.length !== 4) fails.push(`there are ${NAMES.length} events, not four`);
-for (const n of ["lesson_progress", "lesson_replay", "question_unanswered", "session_end"]) {
-  if (!NAMES.includes(n)) fails.push(`missing event ${n}`);
-}
+/* NAMED, NOT COUNTED. This asserted "there are four" and nothing more, so a
+   fifth event failed the check but a RENAMED one passed it — swap
+   question_unanswered for question_skipped and the count is still four. The
+   list is what the queries are written against, so the list is what is held. */
+const EXPECTED = [
+  "lesson_progress", "lesson_replay", "question_unanswered", "session_end",
+  "save_added", "save_removed", "practise_started", "test_started",
+  "card_set_opened", "bookmarks_opened",
+];
+for (const n of EXPECTED) if (!NAMES.includes(n)) fails.push(`missing event ${n}`);
+for (const n of NAMES) if (!EXPECTED.includes(n)) fails.push(`unexpected event ${n} — add it here deliberately or take it out`);
 
 // It must actually refuse an unknown name and an incomplete payload.
 installSink(() => {});

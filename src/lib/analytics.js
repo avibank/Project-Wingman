@@ -1,4 +1,4 @@
-// Four events. Not five, and not a free-text name.
+// A closed list of events. Not a free-text name.
 //
 // The union is the point: track() accepts only these, so a typo is a thrown
 // error at the call site rather than a silent event nobody ever queries. This
@@ -6,13 +6,29 @@
 // and by check:analytics rather than by a compiler — the guarantee is the
 // same, it just arrives when the line runs instead of when it is written.
 //
-// session_end is the valuable one. The page people leave from is the page
-// that is broken, and no amount of asking your classmates will tell you which.
+// This said "four events, not five" for as long as there were four. Six more
+// arrived with Bookmarks, which is the surface a beta has most to learn from —
+// what students keep, and whether they ever go back to it. The rule that
+// mattered was never the number; it was that the list is closed and named
+// here, so check:analytics names all ten rather than counting them.
+//
+// session_end is still the valuable one. The page people leave from is the
+// page that is broken, and no amount of asking your classmates will tell you
+// which.
 export const EVENTS = /** @type {const} */ ({
   lesson_progress: ["lessonId", "pct"],
   lesson_replay: ["lessonId", "fromPct", "toPct"],
   question_unanswered: ["questionId", "lessonId", "ageHours"],
   session_end: ["route", "seconds"],
+  // Bookmarks. `kind` is one of question | card | video | page, and `from`
+  // says which screen a run was started from, because "practise these" from a
+  // folder and from the home screen are different decisions.
+  save_added: ["kind", "moduleId"],
+  save_removed: ["kind"],
+  practise_started: ["from"],
+  test_started: ["from"],
+  card_set_opened: ["moduleId", "chapter"],
+  bookmarks_opened: ["moduleId"],
 });
 
 const NAMES = Object.keys(EVENTS);

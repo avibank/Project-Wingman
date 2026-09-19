@@ -1225,7 +1225,7 @@ console.log("\nthe shipped spec");
      specificity has no opinion about at all. An eighth would be silent, so it
      is this that has to speak — and it did: `rr`, the rebuilt Ready Room's
      root, is also the name of the Ready Room row in the reader's tray. */
-  const QUARANTINED = ["av", "chip", "mt", "pop", "pres", "rr", "scrub", "sw"];
+  const QUARANTINED = ["av", "bm", "chip", "mt", "pop", "pres", "rr", "scrub", "sw"];
   const additions = read("src/components/paper/v6/additions.css");
   const appCss = [];
   (function walk(d) {

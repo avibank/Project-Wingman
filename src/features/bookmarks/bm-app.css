@@ -1,0 +1,166 @@
+/* =====================================================================
+   BOOKMARKS, FITTED TO THIS APP.
+   ---------------------------------------------------------------------
+   `bookmarks.css` is the design's own stylesheet and is kept AS SENT, to
+   the byte. R15 of the brief is explicit about why: it is the very code
+   that produced the demo, so where the built screen and the demo differ
+   the cause is in the app around it, and the app is what gets fixed.
+   This file is that fix, and it is the same shape as `rr-app.css`, which
+   does the same job for the Ready Room.
+
+   Six things, each measured rather than guessed:
+
+   1 · THE COMPONENT IS THE PAGE. `.content` is the app's reading column —
+       max-width 780/1100, a 28px top margin, 22px of side padding — and
+       `.deck` centres it vertically when it is short. Inside it the demo's
+       1360px folder grid rendered at 1056, the page started 14px lower,
+       and an empty Bookmarks floated in the middle of the screen. The
+       component brings its own max-width (980, or 1600 when full) and its
+       own padding, so the wrapper gives up all three.
+   2 · The token mappings the pack asks for at the top of its own file:
+       an on-accent, a Master Caution, and the app's Light selector.
+   3 · Two colours that failed the 4.5:1 floor this app measures against.
+   4 · Two controls under the 44px floor §12 enforces globally.
+   5 · The Manual finish's fill, which that finish leaves at the accent's
+       own lightness.
+   6 · The app's fixed report pill, which sits in the bottom-left corner of
+       every screen and landed on a folder's name.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- 1 · fill
+   Keyed to .bm-page, so the bag on the Flight Deck — which is also `.bm` —
+   cannot rebuild the deck under the home screen. */
+.app:has(.bm-page) .deck-inner{ max-width: none; }
+.app:has(.bm-page) .deck-inner > .content,
+.app:has(.bm-page) .deck-inner > .content--full{
+  max-width: none; margin: 0; padding: 0; width: 100%;
+}
+/* Top-aligned, not centred: a short page (an empty Bookmarks) sat in the
+   middle of the screen while the demo puts it under the bar. */
+.app:has(.bm-page) .deck{ align-content: start; }
+
+/* ------------------------------------------------------------- 2 · tokens
+   The pack's own three lines, made against this app's names.
+
+   THE ACCENT IS THREE TOKENS HERE, not one, and they are not
+   interchangeable. --active is the accent as a MARK on a panel;
+   --active-fill is the darker step a FILLED control takes, because §3.4's
+   Day accent sits at lightness .560 and fails AA under --ground text on the
+   higher-chroma liveries; and --active-text is the accent READ AS WORDS,
+   which is a third job again.
+
+   --bm-on-accent is `--on-mark, var(--ground)`, which is what the app's own
+   filled primary button carries (ground.css, `.bog-btn[data-primary]`) and
+   measured 4.74:1 where the alternatives fell short. Two others were
+   measured and rejected: plain --ground read 4.40:1 on the Manual finish in
+   Day, and --on-fill read 4.32:1 there — its
+   `clamp(0, (0.56 - l) * 1000, 1)` lands exactly on the knife edge, because
+   Manual leaves --active-fill at the accent's own .560 rather than taking
+   Day's darker step, and picks black where white is better by 0.4.
+
+   --bm-miss is --bad, NOT --caution, and the pack's own line said "map to
+   the live Master Caution colour if it has a token". There is one, and it is
+   the wrong one twice over: CLAUDE.md says Master Caution lights in exactly
+   one place — the module card on the Flight Deck — and that a wrong answer
+   is never alarming. Inside .app, --bad resolves to the same blue-grey as
+   --calm, and that is what quiz.css already paints a wrong option with.
+
+   --bm-mono is --font-mono: the brand faces are reached through tokens,
+   never named, or the day the token moves this one quietly stops matching.
+
+   --bm-topbar is measured on the live shell rather than added up, and
+   --bm-inset is what sits between it and this page. */
+.app .bm{
+  --bm-fill: var(--active-fill);
+  --bm-accent-text: var(--active-text);
+  --bm-on-accent: var(--on-mark, var(--ground));
+  --bm-miss: var(--bad);
+  --bm-mono: var(--font-mono);
+  --bm-topbar: 70px;
+  /* WHAT SITS BELOW, and it is the app's own reservation rather than a number
+     of mine: 12px under the bar, plus `.deck`'s padding-bottom, which is
+     `max(chin, report pill)` and measures 56. Sized without it, the folder
+     grid ran down into the pill's corner and the pill sat on the first
+     folder's cover — a control you can mis-tap. */
+  --bm-inset: 68px;
+}
+/* Light lighting is `.app.theme-light`. None of the pack's three guesses
+   (`:root[data-theme="light"]`, `.light`, `[data-lighting="light"]`) is this
+   app's, so all three were dead and the bag never lit by day. */
+.app.theme-light .bm{
+  --bm-sheet: oklch(1 0 0);
+  --bm-wall: color-mix(in oklch, var(--panel) 88%, var(--t3));
+  --bm-shadow: 0 18px 50px oklch(.3 .03 255 / .18);
+  --bm-ground-shadow: .1;
+}
+/* THE MANUAL FINISH IN DAY IS THE ONE PLACE A FILL NEEDS ITS OWN STEP.
+   finishEngine.js sets `--active-fill: accent` on paper — no darker step —
+   and immediately below it darkens --active-text by .13 for Day with the
+   reason written out: "Paper is not the deck: the same accent that reads on
+   a lit ground is too pale on cream." A FILLED control wants the same
+   treatment and does not get it, so the primary button measured 4.23:1 on
+   Runway and 4.32:1 on Sky. It takes the ink the finish already computed. */
+.app.theme-light[data-paper] .bm{ --bm-fill: var(--active-text); }
+
+/* The height and the inset the tokens above feed. */
+.app .bm.bm-home{ height: calc(100dvh - var(--bm-topbar) - var(--bm-inset)); }
+
+/* ----------------------------------------------------------- 3 · contrast
+   Measured on the painted pixels, in all 30 skins. Neither is decoration:
+   one says WHICH option this is and the other says which chapter the card
+   came from, and --t3 is this app's tier for decorative labels. */
+.app .bm .bm-o b{ color: var(--t2); }               /* was --t3: 3.76:1 in Day */
+.app .bm .bm-face .bm-lbl{ color: var(--t2); }      /* was --t3: 4.37:1 at Night */
+/* Words drawn in the accent take the accent's text step. */
+.app .bm a.bm-link,
+.app .bm .bm-link,
+.app .bm .bm-switch-btn,
+.app .bm .bm-o.is-right b,
+.app .bm .bm-o .bm-w,
+.app .bm .bm-face .bm-answer,
+.app .bm .bm-ans.is-right b,
+.app .bm .bm-ans.is-right .bm-res{ color: var(--bm-accent-text); }
+/* And fills take the fill step. */
+.app .bm .bm-btn.is-primary,
+.app .bm .bm-fplay{ background: var(--bm-fill); }
+
+/* --------------------------------------------------------- 4 · the 44 floor
+   §12, and App.jsx already enforces it on `button:not(.is-inline)` — so the
+   module picker's 36px button is 44 here without a word from this file, and
+   the demo's is not. That is an app rule beating a design one, deliberately,
+   and it is the only place the two disagree on a size.
+
+   An <a> is not a button, so the floor does not reach `.bm-link`, and
+   min-height does nothing to an inline box either way: it measured 19px on
+   its shortest side. */
+.app .bm .bm-link{ display: inline-flex; align-items: center; min-height: 44px; }
+
+/* ------------------------------------------------------- 4b · under the bar
+   The demo's page opens 12px below its own bar. This app's bar is 70px where
+   the demo's is 72, so the GAP is matched rather than the absolute number —
+   the page should sit the same distance under the chrome, whatever the
+   chrome measures. On the page rather than on the deck: the deck's own top
+   spacing changes at its 640px breakpoint, and the gap measured 12 at 1440
+   and 6 at 390 when it was set there. */
+.app:has(.bm-page) .deck{ padding-top: 0; }
+.app .bm.bm-page{ margin-top: 12px; }
+
+/* ------------------------------------------------- 4c · one side padding
+   THE DECK'S 40px AND THE PAGE'S 40px WERE BOTH BEING PAID. The deck insets
+   every screen by 40 (16 on a phone) and `.bm-page` brings its own
+   `clamp(16px, 4vw, 40px)` — so the folder grid rendered 1280 wide against
+   the demo's 1360, and every cover was 20px narrow. The component's padding
+   is the one that survives, which puts the grid at x=40 by 1360, to the
+   pixel, at all three widths. */
+.app:has(.bm-page) .deck{ padding-inline: 0; }
+
+/* ------------------------------------------------------ 5 · the report pill
+   The app's "Something's wrong here" pill is fixed in the bottom-left corner of
+   every screen, 44px tall with a 12px inset, and `.deck` already reserves
+   `max(chin, pill)` for it — which --bm-inset above now pays. On a phone the
+   pill is wider than the reservation is tall and still reached the third
+   folder's NAME: measured at 390x844, the pill 788-832 against "Videos"
+   797-818. The extra room is phone-only for that reason. */
+@media (max-width: 700px){
+  .app .bm.bm-home{ padding-bottom: 40px; }
+}

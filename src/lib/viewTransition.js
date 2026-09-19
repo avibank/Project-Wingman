@@ -37,15 +37,16 @@ const PLACE = {
   home: ["deck", 0],
   modules: ["deck", 1],
   module: ["module", 1],
-  // A chapter, a lesson and a review all live INSIDE a module.
+  // A chapter, a lesson, a review and a card set all live INSIDE a module.
   chapter: ["module", 2],
   lesson: ["module", 2],
   review: ["module", 2],
+  cards: ["module", 2],
   ready: ["ready", 0],
   profile: ["account", 0],
-  settings: ["account", 0],
   logbook: ["logbook", 0],
-  saved: ["saved", 0],
+  // Bookmarks is one section with two depths: the folders, and inside a folder.
+  bookmarks: ["bookmarks", 0],
   signin: ["signin", 0],
   notfound: ["notfound", 0],
 };
@@ -54,6 +55,9 @@ const MODULE_TAB_ORDER = ["chapters", "pdf", "people"];
 
 export function placeOf(route) {
   const [sec, depth] = PLACE[route?.name] || ["other", 0];
+  // Opening a folder is a descent inside Bookmarks, so it arrives from in
+  // front and Back returns to the folders rather than crossfading with them.
+  if (route?.name === "bookmarks" && route.folder) return { sec, depth: 1, id: "" };
   return { sec, depth, id: route?.moduleCode || "" };
 }
 
@@ -77,7 +81,7 @@ export function transitionKind(fromRoute, toPath, { lessonOrder } = {}) {
   /* The same place is not a move. Everything past this line is one, and every
      one of them returns a kind: a navigation that cannot be classified still
      crossfades rather than cutting. */
-  const same = (x, y) => ["name", "moduleCode", "chapterId", "lessonId", "tab", "sub", "paperId", "page", "flow"]
+  const same = (x, y) => ["name", "moduleCode", "chapterId", "lessonId", "tab", "sub", "paperId", "page", "flow", "folder", "chapter"]
     .every((k) => (x?.[k] ?? null) === (y?.[k] ?? null));
   if (same(fromRoute, to)) return null;
 

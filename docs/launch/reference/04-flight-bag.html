@@ -1,0 +1,160 @@
+<title>Flight Bag Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+:root{--hue:253.95;--chroma:.1303;--ground:oklch(.17 .015 255);--panel:oklch(.21 .018 258);--raised:oklch(.25 .02 258);--line:oklch(.32 .02 258);
+  --t1:oklch(.96 .005 255);--t2:oklch(.8 .015 255);--t3:oklch(.62 .02 255);--accent:oklch(.7 var(--chroma) var(--hue));
+  --sheet:oklch(.95 .006 255);--wall:oklch(.17 .016 258);
+  --ease:cubic-bezier(.3,.7,.3,1);--spring:cubic-bezier(.34,1.56,.64,1);--sans:"Instrument Sans",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;color-scheme:dark}
+:root[data-theme="light"]{--ground:oklch(.97 .005 255);--panel:oklch(1 0 0);--raised:oklch(.955 .008 255);--line:oklch(.88 .01 255);
+  --t1:oklch(.22 .02 255);--t2:oklch(.4 .02 255);--t3:oklch(.55 .02 255);--accent:oklch(.52 var(--chroma) var(--hue));--sheet:oklch(1 0 0);--wall:oklch(.9 .01 255);--shadowo:.1;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--t1);font:15px/1.5 var(--sans);padding-block:28px 60px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+h1{font-size:clamp(28px,4vw,38px);letter-spacing:-.02em;margin:0 0 4px}
+.sub{color:var(--t3);margin:0 0 22px;max-width:60ch}
+.stage{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+@media (max-width:760px){.stage{grid-template-columns:1fr}}
+.big,.real{border:1px solid var(--line);border-radius:13px;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:360px;position:relative}
+.big .bag{width:230px;height:230px}
+.real{min-height:0}
+.real .strip{display:grid;grid-template-columns:repeat(2,1fr);width:100%;height:100%}
+.real .inst{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:180px;border-left:1px solid var(--line);cursor:pointer}
+.real .inst:first-child{border-left:0;color:var(--t3);font:13px var(--mono);letter-spacing:.1em}
+.real .bag{width:78px;height:78px}
+.cap{position:absolute;left:16px;top:12px;font:13px var(--mono);letter-spacing:.08em;color:var(--t3);text-transform:uppercase}
+.num{font:500 16px var(--mono);color:var(--t2);height:24px;overflow:hidden;min-width:3ch;text-align:center}
+.big .num{font-size:22px;height:32px}
+.num span{display:block}
+.num span.roll{animation:roll .45s var(--spring)}
+@keyframes roll{from{transform:translateY(100%);opacity:0}}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.ctl button{font:inherit;font-size:14px;height:42px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:var(--raised);color:var(--t1);cursor:pointer}
+.ctl button:hover{border-color:var(--accent)}
+.ctl button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ctl .sep{flex:1}
+.sw{width:22px;height:22px!important;padding:0!important;border-radius:50%!important}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ground),0 0 0 3.5px var(--t2)}
+.notes{margin-top:22px;color:var(--t2);max-width:66ch}
+.notes li{margin-bottom:6px}
+
+/* ===================== The flight bag ===================== */
+.bag{overflow:visible;display:block}
+.bag .shadow{fill:#000;opacity:var(--shadowo,.28);transform-box:fill-box;transform-origin:center;transition:transform .5s var(--spring),opacity .5s}
+.bag .lug,.bag .handle{fill:none;stroke:var(--t3);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .5s var(--ease)}
+.bag .lug{stroke-width:2}
+.bag .wall{fill:var(--wall);stroke:var(--t3);stroke-width:2;stroke-linejoin:round;transition:stroke .5s var(--ease)}
+.bag .front{fill:var(--panel);stroke:var(--t3);stroke-width:2.2;stroke-linejoin:round;transition:stroke .5s var(--ease),fill .6s var(--ease)}
+.bag .seam{fill:none;stroke:var(--t3);stroke-width:1.6;stroke-linecap:round;transition:stroke .5s var(--ease)}
+.bag .latch{fill:var(--t3);transform-box:fill-box;transform-origin:50% 0;transition:fill .5s var(--ease),transform .35s var(--spring)}
+.bag .lip{opacity:0;transition:opacity .5s}
+/* papers: three sheets of different size, standing inside between the walls */
+.bag .sh rect{fill:var(--sheet);stroke:oklch(from var(--t3) l c h / .45);stroke-width:.5}
+.bag .sh .fold{fill:oklch(from var(--t3) l c h / .28)}
+.bag .sh path{stroke:oklch(from var(--t3) l c h / .8);stroke-width:1;stroke-linecap:round}
+.bag .s1 rect{fill:color-mix(in srgb,var(--sheet) 82%,var(--t3))}
+.bag .s3 rect{fill:color-mix(in srgb,var(--sheet) 92%,var(--t3))}
+.bag .sh{transform-box:fill-box;transform-origin:50% 100%;transform:translateY(22px);transition:transform .75s var(--spring)}
+.bag .s2{transition-delay:.07s}.bag .s3{transition-delay:.14s}
+.bag .case{transform-box:view-box;transform-origin:32px 51px}
+.bag .drop{transform-box:fill-box;transform-origin:50% 100%;opacity:0}
+.bag .drop rect{fill:var(--sheet);stroke:oklch(from var(--t3) l c h / .45);stroke-width:.5}
+
+/* FILLED: lit, latches sprung, sheets standing proud of the opening */
+.bag.on .lug,.bag.on .handle,.bag.on .seam{stroke:var(--accent)}
+.bag.on .wall{stroke:var(--accent)}
+.bag.on .front{stroke:var(--accent);fill:color-mix(in srgb,var(--panel) 87%,var(--accent))}
+.bag.on .latch{fill:var(--accent);transform:rotate(-24deg) translateY(-.5px)}
+.bag.on .lip{opacity:1}
+.bag.on .s1{transform:translateY(2px) rotate(-6deg)}
+.bag.on .s2{transform:translateY(0) rotate(1.5deg)}
+.bag.on .s3{transform:translateY(3px) rotate(7deg)}
+/* the riffle: one sheet lifts clear, the neighbours give way, it settles back */
+.bag.on.live .s1{animation:lift1 7.5s var(--ease) infinite}
+.bag.on.live .s2{animation:lift2 7.5s var(--ease) infinite}
+.bag.on.live .s3{animation:lift3 7.5s var(--ease) infinite}
+@keyframes lift1{0%,8%{transform:translateY(2px) rotate(-6deg)}16%,24%{transform:translateY(-7px) rotate(-11deg)}32%{transform:translateY(3px) rotate(-5deg)}36%,100%{transform:translateY(2px) rotate(-6deg)}
+  45%,58%{transform:translateY(3px) rotate(-8deg)}}
+@keyframes lift2{0%,8%{transform:translateY(0) rotate(1.5deg)}16%,24%{transform:translateY(1px) rotate(3.5deg)}32%,41%{transform:translateY(0) rotate(1.5deg)}
+  49%,57%{transform:translateY(-9px) rotate(-.5deg)}65%{transform:translateY(1px) rotate(2deg)}69%,100%{transform:translateY(0) rotate(1.5deg)}}
+@keyframes lift3{0%,41%{transform:translateY(3px) rotate(7deg)}49%,57%{transform:translateY(4px) rotate(9deg)}65%,74%{transform:translateY(3px) rotate(7deg)}
+  82%,90%{transform:translateY(-6px) rotate(12deg)}97%{transform:translateY(4px) rotate(6deg)}100%{transform:translateY(3px) rotate(7deg)}}
+/* hover: everything lifts a touch, inviting a tap */
+.hov:hover .bag.on .sh{animation-play-state:paused}
+.hov:hover .bag.on .inside{transform:translateY(-3px)}
+.bag .inside{transition:transform .4s var(--spring)}
+
+/* A NEW SAVE: a sheet drops into the slot, the others duck, the case takes the weight */
+.bag.take .drop{animation:dropIn .7s var(--ease)}
+.bag.take .inside{animation:duck .6s var(--ease) .32s}
+.bag.take .case{animation:heft .55s var(--ease) .38s}
+.bag.take .shadow{animation:spread .55s var(--ease) .38s}
+@keyframes dropIn{0%{opacity:0;transform:translateY(-26px) rotate(-8deg)}20%{opacity:1}70%{opacity:1;transform:translateY(10px) rotate(0)}100%{opacity:0;transform:translateY(16px)}}
+@keyframes duck{35%{transform:translateY(4px)}100%{transform:none}}
+@keyframes heft{35%{transform:scale(1.04,.94)}70%{transform:scale(.99,1.02)}100%{transform:none}}
+@keyframes spread{35%{transform:scale(1.12,1)}100%{transform:none}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+
+<div class="wrap">
+  <h1>Flight bag</h1>
+  <p class="sub">Option B, worked through. Big view on the left, real size in the hero strip on the right. Tap either bag to switch between empty and filled.</p>
+  <div class="stage">
+    <div class="big hov" id="big" role="button" tabindex="0" aria-label="Switch empty or filled"><span class="cap">Close up</span></div>
+    <div class="real"><span class="cap">Real size</span><div class="strip"><div class="inst">HOBBS 0013.9</div><div class="inst hov" id="real" role="button" tabindex="0" aria-label="Switch empty or filled"></div></div></div>
+  </div>
+  <div class="ctl">
+    <button id="save" type="button">Save something</button><button id="fill" type="button">Fill</button><button id="empty" type="button">Empty</button>
+    <span class="sep"></span>
+    <button id="dk" type="button">Dark</button><button id="lt" type="button">Light</button>
+    <span id="liv" style="display:flex;gap:8px"></span>
+  </div>
+  <ul class="notes">
+    <li><b>Built in layers:</b> back wall and handle, then three sheets standing inside, then the front wall with its seam and latches. The papers are in the case, not on it.</li>
+    <li><b>Empty:</b> sheets sunk out of sight, latches shut, all grey. No text.</li>
+    <li><b>Filled:</b> lit in the livery, latches sprung open, sheets standing proud at different heights. Every few seconds one lifts clear while its neighbours shift, then it settles back.</li>
+    <li><b>New save:</b> a sheet drops into the slot, the others duck, the case takes the weight, and the number rolls.</li>
+  </ul>
+</div>
+
+<script>
+const SVG=`<svg class="bag" viewBox="0 0 64 64" aria-hidden="true">
+  <ellipse class="shadow" cx="32" cy="55" rx="18" ry="2.2"/>
+  <g class="case">
+    <path class="lug" d="M23.5 22.5v-2M40.5 22.5v-2"/>
+    <path class="handle" d="M23.5 20.5v-4.5a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4v4.5"/>
+    <path class="wall" d="M16.5 22h31a3.5 3.5 0 0 1 3.5 3.5V31H13v-5.5a3.5 3.5 0 0 1 3.5-3.5z"/>
+    <g class="inside" clip-path="url(#inClip)">
+      <g class="sh s1"><rect x="17.5" y="16" width="13" height="19.5" rx="1.2"/><path d="M20.3 20h7.4M20.3 22.8h5"/></g>
+      <g class="sh s3"><rect x="34" y="17" width="12.5" height="18.5" rx="1.2"/><path d="M36.8 21h7M36.8 23.8h4.5"/></g>
+      <g class="sh s2"><rect x="25.5" y="14.5" width="13.5" height="21" rx="1.2"/><path class="fold" d="M35.5 14.5h3.5v3.5z"/><path d="M28.3 18.7h7.8M28.3 21.5h7.8M28.3 24.3h5"/></g>
+    </g>
+    <g class="drop"><rect x="26" y="9" width="12" height="20" rx="1.2"/></g>
+    <path class="front" d="M12.5 27h39v19.5a4.5 4.5 0 0 1-4.5 4.5H17a4.5 4.5 0 0 1-4.5-4.5z"/>
+    <rect class="lip" x="13.6" y="28.1" width="36.8" height="3.2" fill="url(#lipG)"/>
+    <path class="seam" d="M12.5 38h39"/>
+    <rect class="latch" x="20" y="36.2" width="5" height="3.6" rx="1"/><rect class="latch" x="39" y="36.2" width="5" height="3.6" rx="1"/>
+  </g>
+  <defs><clipPath id="inClip"><rect x="10" y="-20" width="44" height="69"/></clipPath><linearGradient id="lipG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient></defs>
+</svg>`;
+const hosts=[document.getElementById('big'),document.getElementById('real')];
+hosts.forEach(h=>h.insertAdjacentHTML('beforeend',SVG+'<div class="num"><span></span></div>'));
+let n=0;
+function paint(prev,take){
+  hosts.forEach(h=>{const b=h.querySelector('.bag'),s=h.querySelector('.num span');
+    b.classList.toggle('on',n>0);
+    clearTimeout(b._t);b.classList.remove('live');if(n>0)b._t=setTimeout(()=>b.classList.add('live'),prev===0?900:0);
+    s.textContent=n||'';if(n&&prev&&n!==prev){s.classList.remove('roll');s.offsetWidth;s.classList.add('roll')}
+    if(take){b.classList.remove('take');b.getBoundingClientRect();b.classList.add('take')}});
+}
+const set=(v,take)=>{const p=n;n=v;paint(p,take)};
+hosts.forEach(h=>{h.onclick=()=>set(n?0:14);h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();set(n?0:14)}}});
+save.onclick=()=>set(n+1,n>0);fill.onclick=()=>set(14);empty.onclick=()=>set(0);
+dk.onclick=()=>document.documentElement.dataset.theme='dark';lt.onclick=()=>document.documentElement.dataset.theme='light';
+const LIV=[['Sky blue',253.95,.1303],['Caution amber',70,.14],['Tarmac grey',255,.025],['Beacon red',25,.16],['Runway green',150,.13],['Skydrol violet',300,.13]];
+liv.innerHTML=LIV.map((l,k)=>`<button class="sw" type="button" data-k="${k}" aria-label="${l[0]}" title="${l[0]}" aria-pressed="${k===0}" style="background:oklch(.68 ${l[2]} ${l[1]})"></button>`).join('');
+liv.onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const l=LIV[+b.dataset.k];
+  document.documentElement.style.setProperty('--hue',l[1]);document.documentElement.style.setProperty('--chroma',l[2]);
+  liv.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',s===b))};
+paint(0);setTimeout(()=>set(14),600);
+</script>

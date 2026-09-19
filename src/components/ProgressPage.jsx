@@ -6,6 +6,7 @@ import { missedTwice, weakestModule, dueForAnotherPass } from "../lib/logbook.js
 import { ChevronLeft } from "lucide-react";
 import { MODULES, CHAPTERS, chaptersForModule } from "../data.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
+import { useSavesCount } from "../features/bookmarks/deck.js";
 
 const DAY_MS = 86400000;
 
@@ -27,7 +28,11 @@ function Tile({ value, suffix = "", unit, invite }) {
 function ProgressPage({ onBack }) {
   const progress = useUserProgress();
   const [completed, setCompleted] = useState([]);
-  const [bookmarks, setBookmarks] = useState([]);
+  /* THE SAVED TILE READS THE SAVES STORE, not pw-bookmarks. That key held the
+     old Saved screen's flat list of question ids and nothing writes it any
+     more, so this tile counted 0 for every student and showed its invitation
+     instead — a stat that had quietly stopped being a stat. */
+  const saved = useSavesCount("all");
   const [scores, setScores] = useState({});
   const [streak, setStreak] = useState(0);
   const [longest, setLongest] = useState(0);
@@ -40,7 +45,6 @@ function ProgressPage({ onBack }) {
   useEffect(() => {
     if (!progress.loaded) return;
     setCompleted(progress.get("pw-completed", []));
-    setBookmarks(progress.get("pw-bookmarks", []));
     setScores(progress.get("pw-quiz-scores", {}));
     setStreak(progress.get("pw-streak", 0));
     setLongest(progress.get("pw-longest-streak", 0));
@@ -86,8 +90,11 @@ function ProgressPage({ onBack }) {
         <Tile value={streak}
           unit={`day streak${longest > streak ? ` · best ${longest}` : ""}`}
           invite="Study today to start a streak" />
-        <Tile value={bookmarks.length} unit="saved"
-          invite="Star a question during a quiz and it lands here" />
+        {/* "Star" was the old screen's verb and the old screen's icon. The
+            control is a bookmark, on four different surfaces now, and the
+            invitation has to name the one the student will actually meet. */}
+        <Tile value={saved} unit="saved"
+          invite="Bookmark a question, a card, a lesson or a page and it lands here" />
       </section>
 
       {(() => {

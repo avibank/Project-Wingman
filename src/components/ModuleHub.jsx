@@ -9,7 +9,7 @@ import Comms from "./Comms.jsx";
 
 
 // Everything a module owns lives here. Nothing module-specific sits in global nav.
-function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onInitialChapterConsumed, onGoToChapter, chapterTab, onChapterTab }) {
+function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onInitialChapterConsumed, onGoToChapter, chapterTab, onChapterTab, onOpenPaper }) {
   // §7.6 — the chapter body carries no tab bar and no module header. While
   // someone is reading, this page gets out of the way entirely.
   const [reading, setReading] = useState(false);
@@ -60,7 +60,7 @@ function ModuleHub({ moduleCode, tab, onTab, onSignIn, initialChapterId, onIniti
           />
         )}
 
-        {tab === "pdf" && <PdfPanel moduleCode={module.code} moduleName={module.name} />}
+        {tab === "pdf" && <PdfPanel moduleCode={module.code} moduleName={module.name} onOpenPaper={onOpenPaper} />}
 
         {tab === "comms" && (
           <Comms moduleCode={module.code} currentChapterId={initialChapterId || null} />

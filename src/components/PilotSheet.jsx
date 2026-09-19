@@ -73,7 +73,7 @@ function PilotSheet({ pilot, chapterId, channelId, onClose, onChanged }) {
           <>
             <p className="ps-note">
               Blocking is symmetric: {name} disappears from your presence, feed, Comms and
-              suggestions, and you disappear from theirs. You can undo it in Settings.
+              suggestions, and you disappear from theirs. You can undo it in Preferences.
             </p>
             <button className="ps-row ps-row--danger" disabled={busy}
               onClick={() => run(() => blockUser(user.id, pilot.user_id), `${name} is blocked.`)}>

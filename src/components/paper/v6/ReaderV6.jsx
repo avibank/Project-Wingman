@@ -12,6 +12,7 @@ import { mountNotes } from "./part5.js";
 import { capture } from "./mount.js";
 import { createMarkStore } from "./marks.js";
 import { whenBackOnline } from "./outbox.js";
+import { addSave, removeSave, findSave, getSnapshot } from "../../../features/bookmarks/savesStore.js";
 import SheetPage from "./SheetPage.jsx";
 import "./reader.css";
 import "./additions.css";
@@ -112,7 +113,20 @@ export default function ReaderV6({
      the fit out for itself — see `fitZ`. A ref, because nothing needs to
      re-render when the answer changes: the view that arrives with it does. */
   const told = useRef(false);
-  const [bookmarks, setBookmarks] = useState(() => readJSON(`${key}-bm`, []));
+  /* Seeded from this device, then UNIONED with what the account has saved. A
+     page bookmarked on a phone has to be bookmarked on the laptop too, and the
+     island only ever knew the local Set — so the two are merged once, at mount,
+     before the island is built (it reads ctx.bookmarks at construction). The
+     union rather than a replacement: a bookmark made offline is real and has
+     not reached the server yet, and dropping it would be the reader editing
+     somebody's work to agree with a fetch. */
+  const [bookmarks, setBookmarks] = useState(() => {
+    const here = readJSON(`${key}-bm`, []);
+    const there = paper?.id
+      ? getSnapshot().rows.filter((r) => r.kind === "page" && r.ref_id === paper.id).map((r) => r.page)
+      : [];
+    return [...new Set([...here, ...there])].filter((n) => n >= 1).sort((a, b) => a - b);
+  });
 
   /* WHY THE READER IS PORTALLED, AND WHY TO `.app` RATHER THAN THE BODY.
      Rendered where the route puts it, the reader came up as a WHITE STRIP
@@ -450,12 +464,30 @@ export default function ReaderV6({
         write(`${key}-view`, JSON.stringify({ zoom: z, fit: f, rot: r }));
         store.current?.setRotation(r);
       },
+      /* THE BOOKMARK ON A PAGE IS THE PAGES FOLDER, and it was already here:
+         the island has drawn "Bookmark this page" since the rebuild, into a
+         Set in this device's localStorage. So the save point did not need
+         adding, it needed connecting — a bookmark made on a phone was invisible
+         on a laptop, and the Bookmarks screen could not see any of them.
+
+         Both are written. The local list is what the island's own tray and the
+         page corners paint from, synchronously, at the speed the reader demands
+         (part2.js repaints on the same frame); the saves row is what survives
+         the device. If the server refuses, the store puts its own row back and
+         says so — and the local mark stays, which is the honest outcome: the
+         page IS bookmarked here, it just has not travelled yet. */
       onBookmark(pg, on) {
         setBookmarks((was) => {
           const next = on ? [...new Set([...was, pg])] : was.filter((x) => x !== pg);
           write(`${key}-bm`, JSON.stringify(next));
           return next;
         });
+        if (!paper?.id || !moduleCode) return;
+        if (on) addSave({ kind: "page", moduleId: moduleCode, refId: paper.id, page: pg });
+        else {
+          const row = findSave("page", paper.id, pg);
+          if (row) removeSave(row);
+        }
       },
       onLook(v) { write("pw-rdr6-look", v); },
       onLivery(v) {

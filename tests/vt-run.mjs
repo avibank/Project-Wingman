@@ -123,6 +123,22 @@ async function main() {
      in AFTER it. The other way round, the reset wiped them and every run was
      walked in the default skin with motion on, whatever it said it was. */
   await seedRoom(BASE).catch(() => {});
+  /* A few saves, so the Bookmarks steps have folders to open. seedRoom resets
+     the store, so this goes after it — the same order the room's own prefs do,
+     and for the same reason. */
+  await (async () => {
+    try {
+      const doc = await (await fetch(`${BASE}/src/content/test-content.json`)).json();
+      const qs = (doc.modules.find((m) => m.id === "M1")?.chapters?.[0]?.quiz?.questions || []).slice(0, 3);
+      for (const q of qs) {
+        await fetch(`${BASE}/rest/v1/saves?on_conflict=user_id,kind,ref_id,page`, {
+          method: "POST",
+          headers: { "content-type": "application/json", Prefer: "return=representation,resolution=merge-duplicates" },
+          body: JSON.stringify({ id: crypto.randomUUID(), user_id: "student_one", module_id: "M1", kind: "question", ref_id: q.id, chapter: 1 }),
+        });
+      }
+    } catch { /* the walk still runs; the Bookmarks steps will say so */ }
+  })();
   await fetch(`${BASE}/rest/v1/rpc/merge_progress`, {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ uid: "student_one", patch: { "pw-livery": LIVERY, "pw-variant-pin": VARIANT, "pw-finish": null, "pw-reduce-motion": MOTION === "smooth-air" } }),
@@ -328,12 +344,16 @@ async function main() {
   await step("Lesson → next in its list", click(".sdlist .sditem:not([aria-current])"), { names: ["wg-tabpanel", "wg-player"] });
   await step("Lesson → breadcrumb", click(".up"), { names: ["wg-content"] });
 
-  /* ---- Avatar → Settings → Licence → Preferences → Appearance ---- */
+  /* ---- Avatar → Bookmarks → Licence → Preferences → Appearance ----
+     Settings used to be the first stop here. It is gone: Bookmarks took its
+     row in the profile menu and /settings resolves to /bookmarks. */
   await start("/", ".avbtn");
   await step("Avatar: the menu opens", click(".avbtn"), { none: true, ran: ["menu:opacity"] });
-  await step("Menu → Settings", click('[role="menuitem"]', { hasText: "Settings" }), { names: ["wg-content"] });
+  await step("Menu → Bookmarks", click('[role="menuitem"]', { hasText: "Bookmarks" }), { names: ["wg-content"] });
+  await step("Bookmarks → a folder", click(".bm-open-f"), { names: ["wg-content"] });
+  await step("Folder → Bookmarks", click(".bm-back"), { names: ["wg-content"] });
   await step("Avatar: the menu opens again", click(".avbtn"), { none: true, ran: ["menu:opacity"] });
-  await step("Settings → Licence", click('[role="menuitem"]'), { names: ["wg-content"] });
+  await step("Bookmarks → Licence", click('[role="menuitem"]'), { names: ["wg-content"] });
   await step("Licence → Preferences", click('[role="tab"]', { hasText: "Preferences" }), { names: ["wg-tabpanel"], moved: ["tab-pill"] });
   await step("Preferences → Appearance", click('[role="tab"]', { hasText: "Appearance" }), { names: ["wg-tabpanel"], moved: ["tab-pill"] });
 

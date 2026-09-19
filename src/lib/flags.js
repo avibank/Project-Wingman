@@ -66,7 +66,12 @@ export const FLAGS = [
   // module screen did: `everyone`, not admin-only.
   { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", everyone: true },
   { id: "page.logbook", label: "Logbook", note: "The logbook page.", off: true },
-  { id: "page.bookmarks", label: "Saved", note: "Bookmarks and flashcards.", off: true },
+  /* `page.bookmarks` is gone. It gated the old Saved screen — a list of
+     question ids in pw-bookmarks, flipped as flashcards — and that screen has
+     been replaced by Bookmarks, which is reached from the profile menu and
+     from the Flight Deck's bag rather than from a flag. A toggle that gates
+     nothing is a control in the admin panel that does nothing, which is the
+     same failure as a dead button on a screen. check:doors is what noticed. */
   { id: "prefs.notices", label: "Notices", note: "The three notice switches in Preferences.", off: true },
   { id: "appearance.grain", label: "Grain switch", note: "The grain control in Appearance. The grain itself stays on.", off: true },
 ];

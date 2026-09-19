@@ -7,6 +7,10 @@ import {
   SECONDS_LOW, LABELS,
 } from "../../lib/quiz.js";
 import { shuffleOptions } from "../../lib/retention.js";
+import SaveButton from "../../features/bookmarks/SaveButton.jsx";
+import { addMany } from "../../features/bookmarks/savesStore.js";
+import { toast } from "../../features/bookmarks/toastBus.js";
+import { useGo } from "../../features/bookmarks/nav.jsx";
 import { PASS_PCT } from "../../lib/minimums.js";
 import "./exam.css";
 /* The matte finish, after the screen's own sheet because it overrides it. It
@@ -143,6 +147,7 @@ function ReviewRow({ item, mine, n, k }) {
 export default function Exam({
   title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
   minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
+  moduleCode = null, chapterNo = null,
 }) {
   /* A lesson id is not a name. Without this, "where these came from" reads as
      a row of ids, which is a worse answer than no list at all. */
@@ -153,6 +158,12 @@ export default function Exam({
   /* A SITTING IS A FIXED SET, latched at mount. A set derived from a list that
      changes underneath an index makes the paper skip questions and end early. */
   const [set] = useState(questions);
+  /* NOT `goTo`: that name is already the attempt's own — quiz.js exports
+     goTo(attempt, index, total), which is what the navigator's grid calls to
+     jump between questions. Shadowing it here pointed every one of those
+     squares at the router. */
+  const openBookmarks = useGo();
+  const [savingMissed, setSavingMissed] = useState(false);
   const id = quizId || `chapter:${questions[0]?.id || "quiz"}`;
 
   /* One attempt, restored if there is one to restore — answers, flags, the
@@ -502,6 +513,22 @@ export default function Exam({
 
   const missed = result ? paper.map((_, i) => i).filter((i) => !result.marks[i]) : [];
   const got = result ? paper.map((_, i) => i).filter((i) => result.marks[i]) : [];
+
+  /* SAVING THE MISSES IS ONE CALL, NOT ONE PER QUESTION. addMany fires them
+     together and raises a single toast for the lot — eight toasts stacking up
+     behind each other is the same failure shape as eight recordAnswer calls in
+     one tick (see the header): correct, and unusable. */
+  const saveMissed = async () => {
+    setSavingMissed(true);
+    const list = missed.map((i) => paper[i]).filter((x) => x?.id)
+      .map((x) => ({ kind: "question", moduleId: moduleCode, refId: x.id, chapter: chapterNo }));
+    const { saved } = await addMany(list);
+    setSavingMissed(false);
+    if (saved) {
+      toast(`${saved} question${saved === 1 ? "" : "s"} saved`,
+            { action: { label: "View", fn: () => openBookmarks(`/bookmarks/questions?m=${moduleCode}`) } });
+    }
+  };
   const headText = headline();
 
   return (
@@ -571,6 +598,18 @@ export default function Exam({
                   <IconFlagLine />
                   <span>Flag <span className="label-long">for review</span></span>
                 </button>
+                {/* THE BOOKMARK SITS NEXT TO THE FLAG BECAUSE THEY ARE NOT THE
+                    SAME THING, and side by side is the only way that reads.
+                    The flag means "come back to this before I hand the paper
+                    in" — it dies with the attempt. The bookmark means "keep
+                    this", and it outlives the paper, the score and the module.
+                    Nothing here is marked before hand-in (quiz.js §1), and a
+                    bookmark does not mark: it saves the question, not the
+                    answer to it. */}
+                {q.id && (
+                  <SaveButton kind="question" moduleId={moduleCode} refId={q.id}
+                              chapter={chapterNo} className="btn btn--ghost is-inline exam-save" />
+                )}
                 <span className="spacer" />
                 <button className="btn btn--primary is-inline" type="button"
                         onClick={() => (last ? dialogRef.current?.showModal() : put((a) => nextQ(a, total)))}>
@@ -643,6 +682,16 @@ export default function Exam({
             )}
 
             <div className="result__foot">
+              {/* KEEP THE ONES THAT SLIPPED, in one press. The rows above name
+                  every miss; this saves the lot of them into Bookmarks, where
+                  they can be practised as a sheet later. It is not here when
+                  nothing was missed — a control that would save nothing. */}
+              {missed.length > 0 && moduleCode && (
+                <button className="btn is-inline" type="button" disabled={savingMissed}
+                        onClick={saveMissed}>
+                  Save the ones I missed
+                </button>
+              )}
               {/* ONE STEP FURTHER IN. The rows above correct every miss in a
                   line; this is where the explanation, the lesson it came from
                   and a paper of only the misses live, so the score screen

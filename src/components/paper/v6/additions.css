@@ -221,6 +221,15 @@
    it does not want a rule across the top of it. */
 .app .rdr .pres { align-items: stretch; padding: 0; border-top: 0; font-size: inherit; }
 
+/* `.bm` — bookmarks.css, the Bookmarks feature's root: a block of custom
+   properties, `color: var(--t1)`, and three descendant rules including
+   `.bm *{box-sizing:border-box}`. In v6 `.bm` is the little ribbon on a page
+   cell in the grid — an 8x12 box with a background and no children — so none
+   of that reaches it today. It is undone anyway, for the reason `.scrub` is:
+   the ribbon is a div, and the day it gains a child or a colour is the day the
+   feature's root rule paints inside somebody's paper. */
+.app .rdr .bm { color: inherit; }
+
 /* `.scrub` — lesson.css, `height:4px` and a background: the lesson player's
    progress bar. In v6 `.scrub` is a path inside a drawn icon, and an SVG
    child ignores height, background and margin — so this one costs nothing

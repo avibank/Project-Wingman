@@ -9,9 +9,12 @@
 //   /m/:module/:chapter          chapter, brief
 //   /m/:module/:chapter/quiz
 //   /m/:module/:chapter/comments
+//   /m/:module/library/cards/:chapter   one chapter quiz, as study cards
 //   /ready-room                  ready room
 //   /ready-room/:module          ready room, filtered
-//   /logbook  /saved  /settings  /settings/:page  /signin
+//   /bookmarks                   everything this student saved
+//   /bookmarks/:folder           one folder of it
+//   /logbook  /signin
 //   /account/licence  /account/preferences  /account/appearance
 //                                the three profile tabs (§6)
 //   /admin                       the flag panel, admin only
@@ -26,11 +29,22 @@ export const CHAPTER_TABS = ["brief", "quiz", "comments"];
 export const PROFILE_TABS = ["licence", "preferences", "appearance"];
 
 // Renamed in the metadata pass. Nothing that used to work may 404.
+//
+// /saved and /settings are here for the bookmarks pass. The old Saved screen
+// became Bookmarks, and Settings was retired into the two tabs that already
+// held its contents — so both of their addresses resolve here rather than
+// 404ing somebody's bookmark or a link in a group chat.
 const LEGACY = {
   "/appearance": "/account/appearance",
   "/preferences": "/account/preferences",
   "/licence": "/account/licence",
+  "/saved": "/bookmarks",
+  "/settings": "/bookmarks",
 };
+
+// The four folders, and the only slugs /bookmarks/:folder accepts. Anything
+// else is somebody's typo and goes to Bookmarks rather than to a dead end.
+export const BOOKMARK_FOLDERS = ["questions", "cards", "videos", "pages"];
 
 const clean = (p) => (p || "/").split("?")[0].split("#")[0].replace(/\/+$/, "") || "/";
 
@@ -62,6 +76,13 @@ export function parseRoute(pathname) {
     // The Library's two halves are separate addresses: a student sharing the
     // quizzes record should not land on the papers.
     if (parts[2] === "library") {
+      // A card set is its own page, with its own back link to the Library it
+      // was filed in, so it is a route rather than a third sub-tab.
+      if (parts[3] === "cards") {
+        const chapter = Number(parts[4]);
+        return chapter >= 1 ? { name: "cards", moduleCode, chapter }
+                            : { name: "redirect", to: `/m/${moduleCode.toLowerCase()}/library` };
+      }
       return { name: "module", moduleCode, tab: "pdf", sub: parts[3] === "quizzes" ? "quizzes" : "papers" };
     }
     if (parts[2] === "people") return { name: "module", moduleCode, tab: "people" };
@@ -97,11 +118,21 @@ export function parseRoute(pathname) {
     return { name: "ready", moduleCode: parts[1] ? parts[1].toUpperCase() : null, threadId: parts[1] && parts[2] ? parts[2] : null };
   }
   if (parts[0] === "logbook") return { name: "logbook" };
-  if (parts[0] === "saved") return { name: "saved" };
   if (parts[0] === "signin") return { name: "signin" };
+  /* A folder nobody recognises is not a 404 — it is Bookmarks. The brief is
+     explicit that /bookmarks/<nonsense> lands on Bookmarks rather than a dead
+     end, and a redirect is how every other renamed path here does it. */
+  if (parts[0] === "bookmarks") {
+    if (!parts[1]) return { name: "bookmarks", folder: null };
+    return BOOKMARK_FOLDERS.includes(parts[1])
+      ? { name: "bookmarks", folder: parts[1] }
+      : { name: "redirect", to: "/bookmarks" };
+  }
   // The old profile screen is gone; the licence replaced it.
   if (parts[0] === "settings" && parts[1] === "profile") return { name: "redirect", to: "/account/licence" };
-  if (parts[0] === "settings") return { name: "settings", page: parts[1] || "index" };
+  // Settings itself is gone. /settings is in LEGACY above; a deeper one lands
+  // in the same place rather than on a page that no longer exists.
+  if (parts[0] === "settings") return { name: "redirect", to: "/bookmarks" };
   if (parts[0] === "modules") return { name: "modules" };
   // §6 — the profile's three tabs are real URLs, not a tab state. They sit
   // under /account now; settings should not sit at the root.
@@ -126,8 +157,8 @@ export const path = {
   review: (m, flow) => `/m/${String(m).toLowerCase()}/${flow}`,
   ready: (m, threadId) => (m ? `/ready-room/${String(m).toLowerCase()}${threadId ? `/${threadId}` : ""}` : "/ready-room"),
   logbook: () => "/logbook",
-  saved: () => "/saved",
-  settings: (page) => (page && page !== "index" ? `/settings/${page}` : "/settings"),
+  bookmarks: (folder) => "/bookmarks" + (BOOKMARK_FOLDERS.includes(folder) ? `/${folder}` : ""),
+  cards: (m, chapter) => `/m/${String(m).toLowerCase()}/library/cards/${chapter}`,
   signin: () => "/signin",
   invite: (token) => `/j/${token}`,
   profile: (tab) => `/account/${PROFILE_TABS.includes(tab) ? tab : "licence"}`,

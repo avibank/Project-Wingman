@@ -447,8 +447,12 @@ try {
     await settledResult(page, pct).catch(() => {});
     expect(`${at} counts up to ${pct}%`, (await page.locator(".result__big").textContent()) === `${pct}%`);
     expect(`${at} says "${c.says}"`, (await page.locator(".result__head").textContent()).includes(c.says));
+    /* KEEPING THE MISSES IS THE FIRST CONTROL WHEN THERE ARE ANY. It saves
+       every question this sitting got wrong into Bookmarks in one press, and it
+       is not drawn at all on a clean paper — a button that would save nothing. */
     expect(`${at} offers ${c.foot}, beside the way into the paper`,
-      (await page.locator(".result__foot .btn").allTextContents()).join("|") === `Go through the paper|${c.foot}`);
+      (await page.locator(".result__foot .btn").allTextContents()).join("|")
+        === (c.right < 8 ? `Save the ones I missed|Go through the paper|${c.foot}` : `Go through the paper|${c.foot}`));
     expect(`${at} fills the line to ${pct}%`,
       Math.abs(await page.locator(".meter__fill").evaluate((el, w) => {
         const track = el.parentElement.getBoundingClientRect().width;

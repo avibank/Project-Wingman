@@ -3,6 +3,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY } from "../lib/flySolo.js";
+import { useSavesCount } from "../features/bookmarks/deck.js";
 
 // §6 / §7 — the avatar opens a menu, not the page. Ported from
 // docs/reference/wingman-poc.html with three corrections you asked for:
@@ -17,6 +18,13 @@ import { FLY_SOLO_KEY } from "../lib/flySolo.js";
 // The account row IS the Licence link — there is no separate Licence row.
 
 const ICON = {
+  /* The same bookmark the feature draws everywhere else, at this menu's own
+     20x20. Outline, because the row is a door rather than a state. */
+  bookmark: (
+    <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M5.5 3.2h9v13.6l-4.5-3.3-4.5 3.3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  ),
   gear: (
     <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.5" />
@@ -63,6 +71,7 @@ export const initialsOf = (user) =>
 
 function ProfileMenu({ onNavigate }) {
   const { isSignedIn, user } = useUser();
+  const saved = useSavesCount("all");
   const progress = useUserProgress();
   const { isAdmin } = useFlags();
   const [open, setOpen] = useState(false);
@@ -147,15 +156,20 @@ function ProfileMenu({ onNavigate }) {
         <button role="menuitem" type="button" onClick={() => go("appearance")}>
           {ICON.look}<span className="mlabel">Appearance</span>
         </button>
-        {/* SETTINGS WAS UNREACHABLE. The page exists, renders and works — it
-            holds the callsign field and the blocked list — and nothing in the
-            app navigated to it, so the only way in was typing /settings. That
-            left every account without a callsign, which is what people-search
-            matches on, and left blocking with no way to undo it.
-            "index" rather than "settings": routePath.settings appends the page,
-            so the obvious argument produced /settings/settings. */}
-        <button role="menuitem" type="button" onClick={() => go("index")}>
-          {ICON.gear}<span className="mlabel">Settings</span>
+        {/* BOOKMARKS, WHERE SETTINGS WAS. Settings was a page with two things
+            on it — the callsign field and the blocked list — and it took a
+            pass just to give it a door at all. The callsign was already on the
+            Licence tab with the server-side uniqueness check, and the blocked
+            list has moved to Preferences, into the box about how you are
+            social; so the page held nothing of its own and is gone. /settings
+            still resolves, to here.
+
+            The count is what makes this row worth its place: a menu item that
+            says how much is behind it is a reason to open it. It is blank
+            rather than "0" when there is nothing — §10, never state a zero. */}
+        <button role="menuitem" type="button" onClick={() => go("bookmarks")}>
+          {ICON.bookmark}<span className="mlabel">Bookmarks</span>
+          {saved > 0 && <span className="mcount">{saved}</span>}
         </button>
 
         {/* No Sign out here. The Licence tab carries it, with "On this
@@ -203,6 +217,11 @@ function ProfileMenu({ onNavigate }) {
         .menu .mi { width: 16px; height: 16px; flex: none; color: var(--t2); }
         .menu .mlabel { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .menu .chev { color: var(--t3); font-size: 16px; line-height: 1; }
+        /* How much is behind the row. Tabular, like every other numeral here,
+           and --t3 because it is a quantity rather than a state — the row is
+           not lit by having things in it. */
+        .menu .mcount { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums;
+          color: var(--t3); flex: none; }
         .menu .sep { display: block; height: 1px; background: var(--line); margin: 4px 5px; }
         .admin { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--active);
           color: var(--active); border-radius: 999px; padding: 3px 9px; font-family: var(--font-mono);
