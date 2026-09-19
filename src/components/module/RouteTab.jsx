@@ -77,7 +77,8 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp, tilts }) {
       {/* The current row is the only lesson row with a button. */}
       <span className="istat">
         {/* THE STAMP, AND IT IS DRAWN NOW RATHER THAN SPELLED.
-            This was the pilot's three-character code in a bordered box — "TST"
+            This was the pilot's three-character code in a bordered box — the
+            same three letters on every row
             on the live site — which is the same fact, said in the plainest
             possible way. §4 makes inspStamp THE renderer for every place a
             sign-off appears, and a lesson row is the first of them; the

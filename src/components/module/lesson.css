@@ -650,12 +650,19 @@
   color: var(--t3); padding-top: 3px;
 }
 .lseek:hover .lt, .lseek:focus-visible .lt{ color: var(--active); }
-.lbody{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); min-width: 0; }
+/* SCOPED TO THE ROW IT BELONGS TO. `.lbody` was bare here, and the licence
+   card's body carries the same name in the reference build — so this file's
+   type scale reached across and set the card's body to 14px/1.62 where the
+   design says 15px/1.55, and the card came out 4px tall. check:collisions
+   calls that the shared-base shape and passes it, because the other side is
+   scoped; the shape is only correct when the two really do share a base, and
+   a logbook row and a licence do not. */
+.litem .lbody{ font-size: var(--fs-sm); line-height: var(--lh-body); color: var(--t2); min-width: 0; }
 .litem[data-kind="thread"] .lbody{ color: var(--t1); }
 
 /* A pin with no words. It still says something useful, so it reads as a phrase
    rather than an empty row — and the row is where you fill it in. */
-.lbody[data-pin="1"]{ color: var(--t3); font-style: italic; }
+.litem .lbody[data-pin="1"]{ color: var(--t3); font-style: italic; }
 
 .lwho{ display: block; font-size: var(--fs-xs); color: var(--t3); margin-top: 6px; }
 .lwho[data-state="answered"]{ color: var(--active-text, var(--active)); }

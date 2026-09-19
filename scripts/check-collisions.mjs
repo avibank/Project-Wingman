@@ -188,6 +188,37 @@ const AGREED = new Set([
 
 const fresh = collisions.filter((c) => !AGREED.has(c.cls));
 
+/* ---------------------------------------------------- and one thing about the
+   CSS-IN-JSX ITSELF, which cost an hour twice in one day.
+
+   PROFILE_CSS, DECK_CSS and ROOM_CSS are template literals. A backtick inside
+   one ENDS it, and what follows usually still parses: `...` + .col + `...`
+   reads as a property access on a string followed by a tagged template, so
+   the build succeeds, eslint is quiet, and the module throws at evaluation.
+   The symptom is a lazy route that renders nothing at all, for ever, with no
+   console error — every profile tab, in this case, from one pair of backticks
+   round ".col" in a comment.
+
+   So: inside a CSS template literal, there are no backticks. The opening is
+   `const NAME_CSS = ` + one, and the close is a line that is exactly that
+   character then a semicolon. */
+const OPEN = new RegExp("const\\s+([A-Z][A-Z0-9_]*_CSS)\\s*=\\s*" + String.fromCharCode(96), "g");
+const stray = [];
+for (const f of files.filter((x) => x.endsWith(".jsx"))) {
+  const src = readFileSync(f, "utf8");
+  for (const m of src.matchAll(OPEN)) {
+    const from = m.index + m[0].length;
+    const end = src.indexOf("\n" + String.fromCharCode(96) + ";", from);
+    const body = src.slice(from, end === -1 ? src.length : end);
+    const at = body.indexOf(String.fromCharCode(96));
+    if (at !== -1) {
+      const line = src.slice(0, from + at).split("\n").length;
+      stray.push(`${f}:${line} — ${m[1]} is closed early`);
+    }
+    if (end === -1) stray.push(`${f} — ${m[1]} is never closed on a line of its own`);
+  }
+}
+
 console.log(`collisions: ${bareOwners.size} classes carry a bare rule somewhere`);
 if (skipped.length) {
   console.log(`            ${skipped.length} stylesheet(s) skipped as unreachable: ${skipped.map((f) => f.split("/").pop()).join(", ")}`);
@@ -200,8 +231,11 @@ for (const c of fresh) {
 if (!fresh.length) {
   console.log("  ok    no class carries a bare rule in two different files");
 }
+for (const x of stray) console.log(`  STRAY BACKTICK  ${x}`);
+if (!stray.length) console.log("  ok    no CSS template literal is closed early by a backtick inside it");
 console.log(`  note  ${baseAndOverride.length} classes are bare in one file and scoped in another —`);
 console.log("        the shared-base shape, which is correct on purpose, and also");
 console.log("        where .lamp hid. Read it when a component looks nearly right.");
-console.log(fresh.length ? `\nCOLLISIONS: ${fresh.length}` : "\nMATCH");
-process.exitCode = fresh.length ? 1 : 0;
+const bad = fresh.length + stray.length;
+console.log(bad ? `\nFAILED: ${bad}` : "\nMATCH");
+process.exitCode = bad ? 1 : 0;

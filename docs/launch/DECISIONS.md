@@ -281,3 +281,117 @@ to the same file still fails. Only `Nobody else on <module> yet` passes.
 
 `check:states` needs nothing — its JSX scan stops at `{`, and the title
 carries `{moduleName}`.
+
+## Screen 2 — the licence card, and five calls made alone
+
+The card's markup is now the reference's, class for class, and the pasted
+sheet paints it. `npm run ref:diff licence` measures **0.23% at 1280, 0.29% at
+768, 0.28% at 390**. What follows is every place the two deliberately differ,
+and the measurement that decided it.
+
+### 1 · The 44px hit floor gives way on five controls
+
+§12 puts `min-height: 44px` under every button and input in the app, globally,
+in App.jsx. On this card it cost 43px of height: the callsign field went 33 to
+44, the bio 26 to 44, the phrase 32 to 44. The rule already names its own
+exception — "the rare control that genuinely sits inside a line of text" — and
+these are the definition of it. The callsign field IS the heading, the bio
+field IS the line of prose, the phrase button IS a line of italic text.
+
+The selector only implemented the exception for `button`. It covers `input`,
+`select` and `textarea` now, which is what the sentence beside it always said.
+
+Two more take it for a different reason, and this one is a real deviation
+rather than a clarification: the **Cover** pill and the **camera** on the
+avatar. The floor made the camera 30 wide and 44 tall — an oval where the
+design draws a circle — and the Cover pill 44 tall on a 128px banner. They are
+the design's 29 and 30 now. Both still clear WCAG 2.2 AA's 24px minimum target
+size; §12's 44 is the stricter house rule, and this screen is a later
+signed-off design. Everything else on the card keeps the floor.
+
+### 2 · The profile page is one 680px column
+
+Bug 5 says the card "should be the width of the tab strip above it, centred
+under it". It was a 1240px page with a 520px tab strip and a 760px panel, all
+flush left. Two of those three numbers had to go for the third to be true, so
+the page is the reference's `.col`: 680px, centred, no gutter of its own —
+`.content` already lays 22px and `.deck` 40 (16 on a phone).
+
+Appearance narrows with it. Its contents are untouched, and it was looked at
+at 1280 and 390 afterwards: the livery swatches, the specimen and the finish
+tabs all still fit.
+
+### 3 · The card carries no `--accent` of its own
+
+The reference tints each card from the pilot's own livery. This app has ONE
+livery system and the pilot one was deleted on 2026-09-04, columns and all
+(migration 0013). Setting it here would be re-adding it. The owner's chosen
+colour still reaches the card where the reference actually spends it — the
+cover gradient and the initials circle, both from `cover_ink`.
+
+### 4 · The code is seeded into the creator rather than asked for twice
+
+Bug 7 says delete the YOUR CODE box; the code is chosen inside the creator.
+Deleting it alone would have meant a pilot with a code typing it again from
+memory, so the creator opens on the one the account already holds. Verified in
+the browser: the field reads K4M on first open. `pilot_profiles.code` is still
+claimed on sight and is still unique; the stamp's own code is free-form, as it
+is in the reference, and the two can differ. Nothing displays the profile
+column any more, so nobody can see them differ.
+
+### 5 · Two things the scoped stylesheet had to put back
+
+`scripts/scope-ref-css.mjs` cuts the reference's global reset, because a
+scoped `*` is still every element on the screen. Two lines of it turned out to
+belong to the screen rather than the page, and both were found by measuring:
+
+  · **the type scale.** `15px/1.55` — without it these sheets inherit the
+    app's 14px/1.62 and every line box is a fraction taller. The bio ran 27px
+    against 26, the phrase 33 against 32, and the card finished 4px too tall.
+  · **the button reset.** `button{font:inherit;…;border:0;padding:0}` — the
+    reference's components set their own border and padding per class and
+    assume nothing underneath. Without it the app's button chrome showed
+    through: a 2px border round the Cover pill and 1px round the stamp ghost.
+
+Both are emitted scoped to the bundle's root class, so neither can reach
+anything that is not the reference's own screen.
+
+### 6 · `.lbody` was two components
+
+`lesson.css` styled `.lbody` from a bare selector — the logbook row's body —
+and the reference calls the licence card's body the same thing. So the lesson
+page's type scale reached across and set the card's body to 14px/1.62. It is
+`.litem .lbody` now. `check:collisions` had passed it as the "shared-base
+shape", which is only correct when the two really do share a base; a logbook
+row and a licence do not.
+
+### 7 · The reference pages are calibrated twice, and it is written down
+
+`tools/make-ref-pages.mjs` adds two things to the reference build that are not
+the design's, both so the diff measures the screen rather than the harness:
+
+  · **the app's page gutter** (62px, 38 at and below 640px). The reference is
+    a standalone file with 20px; the app has a chrome on every route. Without
+    this the app's column is 644 at 768 where the reference's is 680, and
+    ref-diff refuses any pair whose widths differ. Narrowing the app instead
+    would move every other screen to fit a demo file's margins.
+  · **a whole-pixel snap.** Playwright clips an element screenshot to its
+    bounding box; where that box starts on a fraction, every glyph inside
+    rasterises half a device pixel off. Measured on this card at 390: every
+    child matched the app to within 0.1px while the picture came out 3.69%
+    apart, because the reference put the card at y=306.55 and the app at
+    y=362.00. The correction is padding on an ancestor — a transform was
+    tried and promotes the card to its own layer, which resampled the cover's
+    contour drawing across the whole banner.
+
+The one thing this cannot catch is the page gutter itself, which is why it is
+stated here rather than folded in silently.
+
+### 8 · What is still not identical, and by how much
+
+  · The callsign field is 178px wide against the reference's 185. `size="11"`
+    on both; the app sets tabular numerals everywhere (CLAUDE.md), which
+    changes the "0" advance the browser sizes the field by. Seven pixels of a
+    dashed underline, against a house rule that applies to every screen.
+  · The rest is anti-aliasing. 0.23–0.29% of pixels, and the diff images in
+    `tools/ref-diff-out/` are yellow rather than red.

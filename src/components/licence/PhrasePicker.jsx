@@ -1,30 +1,25 @@
-/* §5's phrase picker. Exactly three, and that is the whole design: a free
-   line under somebody's name is a moderation surface, and these three are
-   jokes every AME has heard in a hangar. */
-import { X } from "lucide-react";
+/* pickPhrase() from docs/launch/code/07-card-and-avatar.js: `.plist` of `.pp`.
+   Exactly three, and that is the whole design — a free line under somebody's
+   name is a moderation surface, and these three are jokes every AME has heard
+   in a hangar. */
 import { PHRASES } from "../../lib/cover.js";
+import Sheet from "./Sheet.jsx";
 import "./licence.css";
+import "./ref-licence.css";
 
 export default function PhrasePicker({ phrase, onPick, onClose }) {
   return (
-    <div className="lic-scrim" role="dialog" aria-label="Your phrase"
-         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="lic-sheet">
-        <button type="button" className="lic-x" onClick={onClose} aria-label="Close">
-          <X size={15} aria-hidden="true" />
-        </button>
-        <h3>Your phrase</h3>
-        <div className="lic-plist">
-          {PHRASES.map((p) => (
-            <button key={p} type="button"
-                    className={`lic-pp${phrase === p ? " is-on" : ""}`}
-                    aria-pressed={phrase === p}
-                    onClick={() => onPick(phrase === p ? null : p)}>
-              {p}
-            </button>
-          ))}
-        </div>
+    <Sheet label="Your phrase" onClose={onClose}>
+      <h3>Your phrase</h3>
+      <div className="plist">
+        {PHRASES.map((p) => (
+          <button key={p} type="button" className={`pp${phrase === p ? " on" : ""}`}
+                  aria-pressed={phrase === p}
+                  onClick={() => onPick(phrase === p ? null : p)}>
+            {p}
+          </button>
+        ))}
       </div>
-    </div>
+    </Sheet>
   );
 }

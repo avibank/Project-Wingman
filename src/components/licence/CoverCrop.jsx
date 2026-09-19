@@ -6,9 +6,19 @@
    preview of a band. Panning is clamped so no edge of it is ever empty, which
    is the whole reason the crop exists rather than a "fit" that letterboxes. */
 import { useEffect, useRef, useState } from "react";
-import { X, ZoomIn } from "lucide-react";
 import { clampPan, renderCover, COVER_W, COVER_H } from "../../lib/coverImage.js";
+import Sheet from "./Sheet.jsx";
 import "./licence.css";
+import "./ref-licence.css";
+
+/* The reference's two glyphs: zoom out left of the slider, zoom in right. */
+const Mag = ({ plus }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path d={`m20 20-3.5-3.5M8 11h6${plus ? "M11 8v6" : ""}`} />
+  </svg>
+);
 
 export default function CoverCrop({ src, busy, onUse, onCancel }) {
   const imgRef = useRef(null);
@@ -55,36 +65,41 @@ export default function CoverCrop({ src, busy, onUse, onCancel }) {
     onUse(await renderCover(img, { z, ...pan }));
   };
 
+  /* The slider's filled half, painted the way the reference paints it. */
+  const p = `${((z * 100 - 100) / 200) * 100}%`;
+
   return (
-    <div className="lic-scrim" role="dialog" aria-label="Position your cover"
-         onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <div className="lic-sheet">
-        <button type="button" className="lic-x" onClick={onCancel} aria-label="Close">
-          <X size={15} aria-hidden="true" />
-        </button>
-        <h3>Position your cover</h3>
+    <Sheet label="Position your cover" onClose={onCancel}>
+      <h3>Position your cover</h3>
 
-        <div className="lic-crop" ref={boxRef} onPointerDown={onDown}
-             style={{ aspectRatio: `${COVER_W} / ${COVER_H}` }}>
-          <img ref={imgRef} src={src} alt="" draggable="false"
-               onLoad={() => setReady(true)}
-               style={{ "--cz": z, "--cx": `${pan.x * 100}%`, "--cy": `${pan.y * 100}%` }} />
-        </div>
-
-        <div className="lic-crow">
-          <ZoomIn size={16} aria-hidden="true" />
-          <input type="range" className="barrange" min="100" max="300" value={Math.round(z * 100)}
-                 aria-label="Zoom" onChange={(e) => setZ(Number(e.target.value) / 100)} />
-        </div>
-        <p className="lic-cnote">Drag the image to move it.</p>
-
-        <div className="lic-cbtns">
-          <button type="button" className="st-btn" onClick={onCancel}>Cancel</button>
-          <button type="button" className="st-btn is-pri" onClick={use} disabled={busy || !ready}>
-            {busy ? "Uploading…" : "Use this"}
-          </button>
-        </div>
+      {/* THE WINDOW IS THE COVER, so it is not the reference's square `.crop`:
+          a 640x128 band cropped in a circle would be a crop of something else.
+          The chrome around it — slider, note and buttons — is the reference's,
+          because that part IS the same choice. */}
+      <div className="lic-crop" ref={boxRef} onPointerDown={onDown}
+           style={{ aspectRatio: `${COVER_W} / ${COVER_H}` }}>
+        <img ref={imgRef} src={src} alt="" draggable="false"
+             onLoad={() => setReady(true)}
+             style={{ "--cz": z, "--cx": `${pan.x * 100}%`, "--cy": `${pan.y * 100}%` }} />
       </div>
-    </div>
+
+      <div className="crow2">
+        <Mag />
+        <input type="range" className="barr" min="100" max="300" value={Math.round(z * 100)}
+               aria-label="Zoom" style={{ "--p": p }}
+               onChange={(e) => setZ(Number(e.target.value) / 100)} />
+        <Mag plus />
+      </div>
+      <p className="snote" style={{ textAlign: "center", margin: "10px 0 0" }}>
+        Drag the image to move it
+      </p>
+
+      <div className="pbtns" style={{ marginTop: 16 }}>
+        <button type="button" className="pill" onClick={onCancel}>Cancel</button>
+        <button type="button" className="pill pri" onClick={use} disabled={busy || !ready}>
+          {busy ? "Uploading\u2026" : "Use this"}
+        </button>
+      </div>
+    </Sheet>
   );
 }

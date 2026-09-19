@@ -77,18 +77,18 @@ function PilotSheet({ pilot, channelId, onClose, onChanged,
               mates ? (
                 <div className="ps-acts">
                   {onSeat && (
-                    <button type="button" className="lic-invite" onClick={() => onSeat(card.user_id)}>
+                    <button type="button" className="pill pri inv" onClick={() => onSeat(card.user_id)}>
                       Invite to right seat
                     </button>
                   )}
                   {onChat && (
-                    <button type="button" className="ps-row" onClick={() => onChat(card.user_id)}>
+                    <button type="button" className="pill inv" onClick={() => onChat(card.user_id)}>
                       Squadron chat
                     </button>
                   )}
                 </div>
               ) : (onInvite ? (
-                <button type="button" className="lic-invite" onClick={() => onInvite(card.user_id)}>
+                <button type="button" className="pill pri inv" onClick={() => onInvite(card.user_id)}>
                   Invite to squadron
                 </button>
               ) : null)

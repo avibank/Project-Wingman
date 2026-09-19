@@ -79,12 +79,31 @@ ROOT{
   /* Faces are reached through tokens and never named (CLAUDE.md). */
   --sans: var(--font-ui);
   --mono: var(--font-mono);
+  /* THE ONE LINE PUT BACK FROM THE CUT RESET. The reference's own
+     body font -- 15px over a 1.55 line -- went with the global reset
+     above, because a scoped body selector paints
+     nothing — but the type scale is the screen's, not the page's. Without it
+     these sheets inherited the app's 14px/1.62 and every line box was a
+     fraction taller: measured on the licence card, the bio ran 27px against
+     26, the phrase 33 against 32, and the card finished 4px too tall. */
+  font: 15px/1.55 var(--font-ui);
   /* The reference's own literals for the ones it defines outright. */
   --r: 13px;
   --wrap: 1010px;
   --video: oklch(.16 .02 255);
   --glow: none;
 }
+/* AND THE BUTTON RESET, WHICH IS THE SCREEN'S AND NOT THE PAGE'S.
+   The cut above takes the whole global reset because a scoped * is still
+   every element on the screen. But the reference's button line is the one
+   part of it that belongs to these components: they set their own padding
+   and their own border per class and assume nothing underneath. Without it
+   the app's own button chrome showed through -- measured on the licence
+   card, a 2px border round the Cover pill and 1px round the stamp ghost,
+   which is 4px of width and 4px of height on two controls that the design
+   draws with no border at all. Scoped to the root class, it can only reach
+   buttons on this screen, which are the reference's own. */
+ROOT button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 `;
 
 function scopeOne(bundle) {
@@ -163,7 +182,7 @@ ${cut.map((c) => `     . ${c}`).join("\n")}
 `;
 
   writeFileSync(join(ROOT, bundle.out),
-    head + VARS.replace("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"));
+    head + VARS.replaceAll("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"));
   console.log(`wrote ${bundle.out}  (${text.split("\n").length} lines, ${cut.length} cuts)`);
 }
 

@@ -1,45 +1,45 @@
-/* §5: "Photo: initials by default, or an uploaded photo." Two choices, and
-   both have to be reachable — an upload button with no way back means the
-   first photo somebody picks is the one they are stuck with.
+/* pickPhoto() from docs/launch/code/08-photo-and-cover-pickers.js: `.pgrid` of
+   two `.popt`, each with the face at `.av.sm` above its label.
 
-   THE PHOTO IS CLERK'S, not this app's. It is the same picture the app bar
-   draws and the one Fly solo hides, so there is no second copy in Postgres
-   and no second idea of what somebody looks like. Choosing initials is
-   therefore clearing Clerk's image, not writing a flag. */
-import { X, Upload } from "lucide-react";
+   "Use your initials" is `photo_url = null` and nothing else. No Clerk call,
+   so nothing can throw — that is the whole of bug 1. The reference's own note
+   says the same thing in one line. */
 import Avatar from "../Avatar.jsx";
 import { faceOf } from "../../lib/avatar.js";
+import Sheet from "./Sheet.jsx";
 import "./licence.css";
+import "./ref-licence.css";
+
+const UploadIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <path d="M12 16V5M7 10l5-5 5 5M5 19h14" />
+  </svg>
+);
 
 export default function PhotoPicker({ profile, name, onUpload, onInitials, onClose }) {
-  /* The same face the card draws, at the size it is chosen at. `photo` is
-     read through faceOf so a Clerk URL that somehow reached the column is
-     treated as no photo here too. */
+  /* The same face the card draws, at the size it is chosen at. `photo` is read
+     through faceOf so a Clerk URL that somehow reached the column is treated
+     as no photo here too. */
   const photo = faceOf(profile, { name }).photo;
   return (
-    <div className="lic-scrim" role="dialog" aria-label="Your picture"
-         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="lic-sheet">
-        <button type="button" className="lic-x" onClick={onClose} aria-label="Close">
-          <X size={15} aria-hidden="true" />
+    <Sheet label="Profile picture" onClose={onClose}>
+      <h3>Profile picture</h3>
+      <div className="pgrid">
+        <button type="button" className={`popt${photo ? "" : " on"}`}
+                aria-pressed={!photo} onClick={onInitials}>
+          <Avatar className="av sm" profile={{ ...profile, photo_url: null }}
+                  name={name} size={64} />
+          <span>Your initials</span>
         </button>
-        <h3>Your picture</h3>
-        <div className="lic-cgrid" style={{ gridTemplateColumns: "1fr 1fr" }}>
-          <button type="button" className={`lic-copt${photo ? "" : " is-on"}`}
-                  aria-pressed={!photo} onClick={onInitials}>
-            <Avatar className="lic-psw" profile={{ ...profile, photo_url: null }} name={name} size={56} />
-            <span>Your initials</span>
-          </button>
-          <button type="button" className={`lic-copt${photo ? " is-on" : ""}`}
-                  aria-pressed={Boolean(photo)} onClick={onUpload}>
-            <span className="lic-psw lic-psw-up">
-              {photo ? <Avatar profile={profile} name={name} size={56} />
-                     : <Upload size={22} aria-hidden="true" />}
-            </span>
-            <span>{photo ? "Change photo" : "Upload a photo"}</span>
-          </button>
-        </div>
+        <button type="button" className={`popt${photo ? " on" : ""}`}
+                aria-pressed={Boolean(photo)} onClick={onUpload}>
+          <span className="av sm up ph">
+            {photo ? <Avatar profile={profile} name={name} size={64} /> : <UploadIcon />}
+          </span>
+          <span>{photo ? "Change photo" : "Upload a photo"}</span>
+        </button>
       </div>
-    </div>
+    </Sheet>
   );
 }

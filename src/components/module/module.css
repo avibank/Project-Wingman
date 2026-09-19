@@ -179,7 +179,7 @@
 .mscreen .csub{display:block;font-size:15px;color:var(--t3);margin-top:6px}
 .mscreen .cstate{font-size:15px;color:var(--t3);white-space:nowrap}
 /* THE STAMP IS DRAWN, NOT SPELLED. This was the pilot's three characters in a
-   bordered mono box — the same fact, said the plainest possible way, and "TST"
+   bordered mono box — the same fact, said the plainest possible way, and a code
    is what it read on the live site. §4 of the launch handoff makes inspStamp
    THE renderer wherever a sign-off appears; the reference draws a lesson row's
    at 46px, tilted by that sign-off's own angle (Stamp.jsx, stampTilt).

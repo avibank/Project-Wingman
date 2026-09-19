@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const p = await b.newPage();
+p.on('pageerror', e => console.log('PAGEERROR:', e.message.split('\n').slice(0,3).join(' | ')));
+p.on('console', m => { if (m.type()==='error') console.log('CONSOLE:', m.text().slice(0,400)); });
+p.on('response', r => { if (r.status() >= 400) console.log('HTTP', r.status(), r.url().slice(0,140)); });
+await p.goto(process.argv[2], { waitUntil: 'networkidle' });
+await p.waitForTimeout(1200);
+console.log('TEXT:', (await p.innerText('body')).slice(0,300).replace(/\n/g,' | '));
+await b.close();

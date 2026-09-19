@@ -84,3 +84,43 @@ export const demoSubtitle = (chapters = []) => {
   const lessons = chapters.reduce((n, c) => n + (c.lessons?.length || 0), 0);
   return `${lessons} lessons and ${chapters.length} quizzes`;
 };
+
+/* ---------------------------------------------------------------- the licence
+   `ME` from reference/02-licence-stamp-creator.html, the profile the reference
+   card is drawn from. The same reason as the Crew fixture above: a diff
+   between different content measures the content. Hassan is the owner's own
+   name and is in the reference build as sample data; nothing here reaches a
+   server, and `demoOn()` is false in every production build. */
+export const DEMO_ME = {
+  name: 'Hassan Alrefaei',
+  callsign: 'h.alrefaei',
+  bio: '',
+  phrase: 'Torqued to spec. Emotionally too.',
+  cover: 'contour',
+  cover_ink: null,
+  admin: true,
+  stats: [
+    { label: 'Hours flown', value: '13h 54m' },
+    { label: 'Lessons signed off', value: '7' },
+    { label: 'Days flown', value: '12' },
+  ],
+};
+
+/* The card's profile, with the reference's own values in front of whatever the
+   harness store holds. One place, so the licence card and "how others see you"
+   cannot disagree. Off the flag it is exactly the object that was written
+   inline before. */
+export function demoProfile(card, { callsign, real_name } = {}) {
+  const base = { ...(card || {}), callsign: callsign || card?.callsign, real_name: real_name || card?.real_name };
+  if (!demoOn()) return base;
+  return {
+    ...base,
+    callsign: DEMO_ME.callsign,
+    real_name: DEMO_ME.name,
+    bio: DEMO_ME.bio,
+    phrase: DEMO_ME.phrase,
+    cover: DEMO_ME.cover,
+    cover_ink: DEMO_ME.cover_ink,
+    photo_url: null,
+  };
+}

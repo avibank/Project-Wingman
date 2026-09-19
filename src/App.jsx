@@ -2232,12 +2232,21 @@ function AppInner() {
            than per component, because it had leaked in eleven places: the brand,
            the streak pill, the avatar, module tabs, search fields, the bookmark
            star, chips, and most of the profile form. Opt out with .is-inline for
-           the rare control that genuinely sits inside a line of text. */
+           the rare control that genuinely sits inside a line of text.
+
+           THE OPT-OUT NOW COVERS INPUTS TOO, which is what the sentence above
+           always said and the selector did not do. It cost 43px on the licence
+           card: the callsign field IS that card's heading and the bio field IS
+           its line of prose, and both were pushed from 33 and 26 to 44 against
+           a signed-off design. A text field sitting inside a line of text is
+           the same exception as a button sitting inside one. Every control
+           that is a target rather than a sentence — including that card's own
+           Cover button — still gets the floor. */
         .app button:not(.is-inline),
         .app [role="tab"],
-        .app input:not([type="checkbox"]):not([type="radio"]),
-        .app select,
-        .app textarea { min-height: 44px; }
+        .app input:not([type="checkbox"]):not([type="radio"]):not(.is-inline),
+        .app select:not(.is-inline),
+        .app textarea:not(.is-inline) { min-height: 44px; }
         *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         ::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
         ::-moz-selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }

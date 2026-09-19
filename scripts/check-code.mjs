@@ -5,7 +5,7 @@
  *
  * Run: npm run check:code
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import {
@@ -90,11 +90,38 @@ console.log("\nwhere it shows");
      /has just been taken/.test(ff));
 
   const profile = read("src/components/Profile.jsx");
-  ok("the licence shows it", /codeblock/.test(profile) && /Your code/.test(profile));
+  /* THE LICENCE NO LONGER SHOWS IT IN A BOX OF ITS OWN. This used to assert
+     that it did. §2 of the handoff: "The YOUR CODE box is still a separate
+     card. Delete it. The code is chosen inside the creator." So the assertion
+     is now the opposite one, plus the thing that makes deleting the box safe —
+     the creator opens on the code the account already has, rather than asking
+     a pilot to type it again from memory. */
+  ok("no box of its own on the licence", !/codeblock/.test(profile));
+  /* AND THE PLACEHOLDER IS GONE FROM THE CODEBASE. §2: "Grep the codebase for
+     the placeholder and remove every hit." It was three letters on every row on the
+     live site, and then it was three letters in the comments that explained
+     why it was not on the live site any more. The launch pack's own files and
+     the bug tracker are the handover and are left alone; what is asserted here
+     is everything this repo writes. */
+  {
+    /* Split so this file is not its own first hit. */
+    const PLACEHOLDER = new RegExp("\\bT" + "ST\\b");
+    const hits = [];
+    const walk = (d) => { for (const e of readdirSync(d, { withFileTypes: true })) {
+      const f = join(d, e.name);
+      if (e.isDirectory()) { if (!/node_modules|dist|ref-diff-out/.test(e.name)) walk(f); continue; }
+      if (!/\.(m?js|jsx|css|sql|md|json)$/.test(e.name)) continue;
+      if (PLACEHOLDER.test(readFileSync(f, "utf8"))) hits.push(f);
+    }};
+    for (const d of ["src", "scripts", "tests", "tools", "supabase"]) walk(d);
+    ok("and the placeholder is nowhere in the codebase", hits.length === 0, hits.join(", "));
+  }
+  ok("the creator is handed it", /<StampCreator userId=\{user\?\.id\} code=\{code\}/.test(profile));
+  ok("and opens on it", /code: cleanCode\(code\)/.test(read("src/components/licence/StampCreator.jsx")));
   ok("an account from before this gets one on sight", /claimCode\(user\.id, await freeCode\(\)\)/.test(profile));
 
   /* THE LESSON ROW DRAWS A STAMP NOW, NOT THE CODE. It used to put the three
-     characters in a bordered box — "TST" on the live site — and §4 of the
+     characters in a bordered box, the same three on every row — and §4 of the
      launch handoff makes inspStamp the one renderer wherever a sign-off
      appears. The code is still what the stamp CENTRES on, so it has not left
      the row; it is drawn rather than spelled. These two assertions are the

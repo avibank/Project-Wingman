@@ -28,6 +28,7 @@ import {
   SHAPE_IDS, PATTERNS, PATTERN_IDS, PALETTE, col, cleanCode, cleanRim, drawStamp,
 } from "../../lib/stamp.js";
 import { issueStamp } from "../../lib/squadron.js";
+import { useEscape } from "./Sheet.jsx";
 import "./licence.css";
 import "./studio.css";
 
@@ -41,9 +42,15 @@ const Tile = ({ st, size = 46 }) => (
         dangerouslySetInnerHTML={{ __html: drawStamp(st, { on: false, size, rot: 0 }) }} />
 );
 
-export default function StampCreator({ userId, onIssued, onClose }) {
+export default function StampCreator({ userId, code = "", onIssued, onClose }) {
+  useEscape(onClose);
+
+  /* THE CREATOR IS WHERE THE CODE IS CHOSEN (§2), so it opens on the one the
+     account already has rather than empty. The licence card used to carry a
+     separate YOUR CODE box above this; deleting it without seeding the field
+     would have meant a pilot with a code typing it again from memory. */
   const [draft, setDraft] = useState({
-    shape: "seal", code: "", rim: true, ring: "", pattern: "none",
+    shape: "seal", code: cleanCode(code), rim: true, ring: "", pattern: "none",
     ink: PALETTE[1].n, seed: 7,
   });
   const [tab, setTab] = useState("shape");

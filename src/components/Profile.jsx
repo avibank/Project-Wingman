@@ -25,8 +25,8 @@ import { clearPresence } from "../lib/presence.js";
 import BlockedList from "./BlockedList.jsx";
 import PilotSettings from "./PilotSettings.jsx";
 import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.js";
-import { normaliseCode, isCode } from "../lib/code.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
+import { demoOn, demoProfile, DEMO_ME } from "../lib/demoFixture.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
 import { MIN_FLOOR, MIN_CEIL, PASS_PCT, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
 import { useTiltPermission } from "../lib/useAttitude.js";
@@ -223,11 +223,20 @@ function Specimen({ liveryId, variant }) {
 }
 
 const PROFILE_CSS = `
-.profile { max-width: 1240px; margin: 0 auto; padding: 0 40px 80px; }
+/* ONE COLUMN, 680px, CENTRED — the reference's .col, which every one of its
+   three tabs sits in. It was a 1240px page with a 520px tab strip and a 760px
+   panel inside it, all flush left, which is bug 5: "the card is wider than its
+   column and runs off the right edge. It should be the width of the tab strip
+   above it, centred under it." Two of those three numbers had to go for the
+   third to be true. Appearance's own contents are untouched; it narrows with
+   the page, as it does in the reference. */
+.profile { max-width: 680px; margin: 0 auto; padding: 0 0 80px; }
 /* .content already lays a 22px gutter on every page, and .deck another 16
-   outside the zoom. The extra 16 here was a third layer: 38px a side of a
-   326px phone, so 23% of the screen was margin before any content. The bottom
-   padding stays -- that one is clearing the tab bar, not a gutter. */
+   outside the zoom. A third layer here was 38px a side of a 326px phone, so
+   23% of the screen was margin before any content — and on a desktop it was
+   the 20px that made this column 40px narrower than the reference's at every
+   width. There is none now, at any size. The bottom padding stays: that one
+   is clearing the tab bar, not a gutter. */
 @media (max-width: 640px) { .profile { padding: 0 0 96px; } }
 
 .phead { margin: 10px 0 16px; }
@@ -238,7 +247,7 @@ const PROFILE_CSS = `
   margin: 6px 0 0; color: var(--t1); }
 
 .tabs { display: flex; gap: 4px; background: color-mix(in oklab, var(--panel), transparent 20%);
-  border: 1px solid var(--line); border-radius: 11px; padding: 4px; margin-bottom: 20px; max-width: 520px;
+  border: 1px solid var(--line); border-radius: 11px; padding: 4px; margin-bottom: 20px;
   /* Three tabs at the Large text size come to 288px, which does not fit a
      375px phone: "Appearance" ran 17px past the edge and .deck's
      overflow-x: hidden ate it, so the tab was unreachable rather than merely
@@ -267,7 +276,7 @@ const PROFILE_CSS = `
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--active), transparent 55%);
   transform-origin: left center; }
 
-.panel { display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
+.panel { display: flex; flex-direction: column; gap: 16px; }
 .block { background: var(--panel); border: 1px solid var(--line); border-radius: 13px;
   border-top-color: var(--edge-hi); padding: 18px 20px 20px; }
 .block > .eyebrow { display: block; margin-bottom: 14px; }
@@ -400,16 +409,6 @@ const PROFILE_CSS = `
 /* The one centred block on this page, deliberately: name over description over
    swatches, narrowing to the specimen. Scoped rather than set on .livname and
    .livdesc, which the Preferences tab also uses and which stay left. */
-.codeblock { display: grid; gap: 6px; padding-top: 4px; }
-.codefield {
-  width: 6.5ch; padding: 10px 0; text-align: center;
-  background: var(--bg-raised); border: 1px solid var(--hairline); border-radius: 10px;
-  color: var(--text-primary); font-family: var(--font-mono); font-size: 24px;
-  letter-spacing: .16em; text-transform: uppercase;
-}
-.codefield:focus-visible { outline: 2px solid var(--accent-interactive); outline-offset: 1px; }
-.codenote { margin: 0; font-size: 13px; color: var(--text-3); }
-
 .block-livery .livname,
 .block-livery .livdesc { text-align: center; }
 .block-livery .livgrid { justify-content: center; gap: 10px; }
@@ -519,9 +518,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   const [greetName, setGreetName] = useState("");
   const [saveNote, setSaveNote] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /* The three-character code. It has no field of its own any more — §2 of the
+     handoff: "The code is chosen inside the creator" — but every account still
+     HAS one, claimed on sight, and the creator opens on it. */
   const [code, setCode] = useState("");
-  const [savedCode, setSavedCode] = useState("");
-  const [codeNote, setCodeNote] = useState(null);
 
   /* §5 — THE CARD. The first box on this tab IS the licence card, and it is
      the same component other people see; `edit` is the whole difference.
@@ -584,10 +584,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     if (!user?.id) return undefined;
     fetchProfile(user.id).then(async (row) => {
       if (!live) return;
-      if (row?.code) { setCode(row.code); setSavedCode(row.code); return; }
+      if (row?.code) { setCode(row.code); return; }
       for (let tries = 0; tries < 3 && live; tries++) {
         const got = await claimCode(user.id, await freeCode());
-        if (got) { if (live) { setCode(got); setSavedCode(got); } return; }
+        if (got) { if (live) setCode(got); return; }
       }
     });
     return () => { live = false; };
@@ -639,7 +639,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
     if (row) setCard(row);
   };
 
-  const myStats = statsFrom({
+  const myStats = demoOn() ? DEMO_ME.stats : statsFrom({
     hobbs: progress.get(HOBBS_KEY, {}),
     done: progress.get("pw-lesson-done", {}),
     days: progress.get(DAYS_KEY, null),
@@ -727,7 +727,27 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
 
       {/* ------------------------------------------------------------ LICENCE */}
       {tab === "licence" && (
-        <div className="panel panel-in" key={tab} role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
+        <div className="panel panel-in ref-lic" key={tab} role="tabpanel" id="ppanel-licence" aria-labelledby="ptab-licence">
+          {/* THE HEADER THE CARD NEVER HAD. The reference's licence tab opens
+              with a .boxh — "Your licence" on the left, "See it as others do"
+              on the right — and the card sits in the .box under it. Live, the
+              header was missing entirely and "See it as others do" was
+              stranded at the foot of the card, which is also what made the
+              card wider than its column: nothing was holding it in. */}
+          <div className="box">
+            <div className="boxh">
+              <p className="lab">Your licence</p>
+              {signedIn && (
+                <button type="button" className="pill" onClick={() => setPicker("others")}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       strokeWidth="1.8" aria-hidden="true">
+                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  See it as others do
+                </button>
+              )}
+            </div>
           {/* §5 — THE CARD IS THE FIRST BOX, and it is not a box: the same
               component anybody else sees when they tap your face, in edit
               mode. The fields that used to be listed here — the photo, the
@@ -745,10 +765,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               · Fly solo moved to Preferences (§6), into How social.
               None of the three is gone; each is somewhere it makes sense. */}
           <LicenceCard
-            profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
+            profile={demoProfile(card, { callsign: username, real_name: holderName })}
             stats={myStats}
             stamp={myStamp}
-            admin={isAdmin}
+            admin={isAdmin || demoOn()}
             /* SIGNED OUT, THE CARD IS READ-ONLY. It used to render in edit
                mode for anybody who reached this address: a cover picker, a
                phrase picker and a stamp creator, all of which write against
@@ -775,73 +795,45 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                 .catch(() => setSaveNote("That callsign is taken."));
             }}
             onBio={(v) => patchCard({ bio: v })}
-            action={signedIn ? (
-              <button type="button" className="ghost" style={{ marginTop: 18 }}
-                      onClick={() => setPicker("others")}>
-                See it as others do
-              </button>
-            ) : (
+            action={signedIn ? null : (
               <p className="lic-signin">Sign in to make this yours and put a stamp on it.</p>
             )}
           />
-
-          <div className="block">
-            {/* THE CODE, ON THE LICENCE, SET APART FROM THE NAMES.
-
-                It is not a third way of being called something — it is the mark
-                that gets stamped on a chapter when you finish it, and the thing
-                that goes on anything printed. So it is shown the way it will be
-                seen: large, monospaced, spaced out.
-
-                Unique, so it is committed through claim_code rather than saved
-                like a preference: the answer can be no. */}
-            <div className="codeblock">
-              <span className="eyebrow">Your code</span>
-              <input className="codefield" value={code} maxLength={3}
-                     aria-label="Your three character code"
-                     autoCapitalize="characters" autoComplete="off" spellCheck="false"
-                     onChange={(e) => { setCode(normaliseCode(e.target.value)); setCodeNote(null); }}
-                     onBlur={async () => {
-                       if (!user?.id || !isCode(code) || code === savedCode) return;
-                       const got = await claimCode(user.id, code);
-                       if (got) { setSavedCode(got); setCodeNote("Saved."); }
-                       else { setCode(savedCode); setCodeNote(`${code} is somebody else's.`); }
-                     }} />
-              <p className="codenote">
-                {codeNote || "Three characters, yours alone. Stamped on every chapter you finish."}
-              </p>
-            </div>
           </div>
 
-          <div className="block">
-            <span className="eyebrow">Account</span>
+          {/* The reference's Account box: .lab, then three .row s whose text is
+              a <div> of <b> over <span>. It was a <span class="rowtext">, and
+              the sheet's own `.row span{color:var(--t3)}` would have greyed
+              the bold line through it. */}
+          <div className="box">
+            <p className="lab">Account</p>
             <div className="row">
-              <span className="rowtext"><b>Email</b><span>{user?.primaryEmailAddress?.emailAddress}</span></span>
-              <button className="ghost" type="button" onClick={() => onNavigate("account")}>Change</button>
+              <div><b>Email</b><span>{user?.primaryEmailAddress?.emailAddress}</span></div>
+              <button className="pill" type="button" onClick={() => onNavigate("account")}>Change</button>
             </div>
             <div className="row">
-              <span className="rowtext"><b>Password</b><span>Managed by your sign-in provider</span></span>
-              <button className="ghost" type="button" onClick={() => onNavigate("account")}>Update</button>
+              <div><b>Password</b><span>Managed by your sign-in provider</span></div>
+              <button className="pill" type="button" onClick={() => onNavigate("account")}>Update</button>
             </div>
             <div className="row">
-              <span className="rowtext"><b>Sign out</b><span>On this device only</span></span>
-              <button className="ghost" type="button" onClick={() => signOut()}>Sign out</button>
+              <div><b>Sign out</b><span>On this device only</span></div>
+              <button className="pill" type="button" onClick={() => signOut()}>Sign out</button>
             </div>
           </div>
 
           {confirmDelete ? (
-            <p className="quietline">
+            <p className="del">
               This removes your logbook, your crew and everything you've flown, and it can't be undone.{" "}
               <button className="linkish" type="button"
                       onClick={() => user?.delete().catch(() => setSaveNote(ERROR_GENERIC))}>
-                Delete it all
+                <u>Delete it all</u>
               </button>
               {" · "}
               <button className="linkish" type="button" onClick={() => setConfirmDelete(false)}>Keep my account</button>
             </p>
           ) : (
-            <p className="quietline">
-              <button className="linkish" type="button" onClick={() => setConfirmDelete(true)}>Delete account</button>
+            <p className="del">
+              <button className="linkish" type="button" onClick={() => setConfirmDelete(true)}><u>Delete account</u></button>
               {" "}— removes your logbook, your crew and everything you've flown. It can't be undone.
             </p>
           )}
@@ -901,6 +893,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           )}
           {picker === "cover" && (
             <CoverPicker cover={card?.cover || "contour"} ink={card?.cover_ink}
+                         image={card?.cover_image}
                          onPick={patchCard}
                          onUpload={() => coverFileRef.current?.click()}
                          onClose={() => setPicker(null)} />
@@ -911,7 +904,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                           onClose={() => setPicker(null)} />
           )}
           {picker === "stamp" && (
-            <StampCreator userId={user?.id}
+            <StampCreator userId={user?.id} code={code}
                           onIssued={(row) => { setCard(row); setPicker(null); }}
                           onClose={() => setPicker(null)} />
           )}
@@ -927,8 +920,8 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                 </button>
                 <h3>How others see you</h3>
                 <LicenceCard
-                  profile={{ ...(card || {}), callsign: username || card?.callsign, real_name: holderName || card?.real_name }}
-                  stats={myStats} stamp={myStamp} admin={isAdmin}
+                  profile={demoProfile(card, { callsign: username, real_name: holderName })}
+                  stats={myStats} stamp={myStamp} admin={isAdmin || demoOn()}
                   /* A PICTURE OF THE BUTTON, not a disabled one. This is
                      what somebody else sees; you cannot invite yourself, so
                      there is nothing here to press and nothing to explain
