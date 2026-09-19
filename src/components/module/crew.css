@@ -1,0 +1,112 @@
+/* =============================================================================
+   CREW — the reference's own stylesheet for the tab, fitted to this app.
+   -----------------------------------------------------------------------------
+   Every size, weight and radius below is from
+   docs/launch/reference/01-module-lesson-crew.html. Two things changed, both
+   because the reference is a standalone page and this is not:
+
+   · its tokens are named --hair, --accent, --copilot and --mono; this app's are
+     --line, --active, --copilot and --font-mono. Same roles, this app's names,
+     so the six liveries and three finishes carry it.
+   · everything is scoped under `.crew`. `.crew-stack`, `.crew-wall`, `.crew-av` and `.crew-more`
+     are ordinary words and two of them already exist elsewhere here.
+   ========================================================================= */
+
+.crew { display: block; }
+.crew-wait { min-height: 220px; }
+.crew-empty { padding: 26px 20px 30px; color: var(--t3); font-size: 14px; text-wrap: pretty; }
+
+/* ---------------------------------------------------------------- summary */
+.crew .crew-sum {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.crew .crew-sum b { font-size: 22px; font-weight: 700; letter-spacing: -.015em; }
+.crew .crew-sum p { margin: 2px 0 0; font-size: 13px; color: var(--t3); }
+
+/* ------------------------------------------------------------------ faces
+   A stack overlaps, and the border is the GROUND rather than a colour, so the
+   overlap reads as depth on every livery and both lightings. */
+.crew .crew-stack { display: flex; align-items: center; }
+.crew .crew-av {
+  position: relative; width: 32px; height: 32px; min-height: 32px;
+  border-radius: 50%; display: grid; place-items: center; flex: none;
+  font-size: 12px; font-weight: 600; color: #fff; padding: 0; cursor: pointer;
+  border: 2.5px solid var(--ground);
+}
+.crew .crew-stack .crew-av { margin-left: -8px; }
+.crew .crew-stack .crew-av:first-child { margin-left: 0; }
+.crew .crew-av.is-on::after {
+  content: ""; position: absolute; right: -1px; bottom: -1px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ok); border: 2px solid var(--ground);
+}
+/* §2: "Squadron mates get a thin teal ring around their face. They are not
+   grouped separately." The ring is the whole of the difference. */
+.crew .crew-sqring { box-shadow: 0 0 0 2px var(--copilot); }
+.crew .crew-more { font: 600 11.5px var(--font-mono); color: var(--t2); margin-left: 8px; }
+
+/* ------------------------------------------------------- one chapter block */
+.crew .crew-ch { padding: 16px 20px 18px; border-bottom: 1px solid var(--line); }
+.crew .crew-ch:last-child { border-bottom: 0; }
+.crew .crew-chh { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.crew .crew-chh h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.crew .crew-chh .crew-cm { font-size: 12.5px; color: var(--t3); }
+.crew .crew-chh .crew-cm .crew-here { color: var(--active); font-weight: 600; }
+.crew .crew-onit { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--t3); }
+
+/* -------------------------------------------------------------- the wall
+   A dashed box with the word SIGNED OFF sitting in its corner, and the stamps
+   overlapping slightly so it reads as a wall rather than a row. */
+.crew .crew-wall {
+  margin-top: 12px; min-height: 56px; border: 1px dashed var(--line);
+  border-radius: 12px; padding: 26px 10px 8px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+  position: relative; color: var(--active);
+}
+.crew .crew-wall .crew-wl {
+  position: absolute; left: 12px; top: 8px;
+  font: 10px var(--font-mono); letter-spacing: .12em; color: var(--t3);
+}
+.crew .crew-wall button {
+  line-height: 0; margin: -3px -2px; border-radius: 50%; padding: 0;
+  min-height: 0; background: none; border: 0; cursor: pointer;
+  transition: transform .2s cubic-bezier(.3,.7,.3,1);
+}
+.crew .crew-wall button:hover { transform: scale(1.15); z-index: 1; }
+.crew .crew-wall button:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
+/* Your own stamp is the one drawn in ink rather than in the livery. */
+.crew .crew-wall button.crew-mine { color: var(--t1); }
+.crew .crew-wall .crew-none { font-size: 13px; color: var(--t3); padding: 10px 4px; }
+
+/* ------------------------------------------------------- answering questions */
+.crew .crew-helpers { padding: 16px 20px 18px; }
+.crew .crew-helpers h3 { margin: 0 0 2px; font-size: 18px; font-weight: 700; }
+.crew .crew-helpers p.crew-cm { margin: 0 0 10px; font-size: 12.5px; color: var(--t3); }
+.crew .crew-hrow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.crew .crew-hp {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px 8px 8px; border: 1px solid var(--line);
+  border-radius: 99px; background: var(--panel); cursor: pointer;
+  /* WRAP, DO NOT SQUASH. A flex item shrinks below its content by default, and
+     this row sits in a card narrower than the reference's page — measured, the
+     pills came out 38px wide with 78px of content inside them, faces spilling
+     over the names. .crew-hrow already wraps; this is what makes it. */
+  flex: none; max-width: 100%;
+}
+.crew .crew-hp:hover { border-color: var(--t3); }
+.crew .crew-hp .crew-av { width: 32px; height: 32px; margin: 0; cursor: inherit; }
+.crew .crew-hp span { font-size: 13.5px; text-align: left; }
+.crew .crew-hp small { display: block; font: 11px var(--font-mono); color: var(--t3); }
+.crew .crew-pill {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+  padding: 7px 12px; border-radius: 99px; border: 1px solid var(--line);
+  color: var(--t2); background: var(--panel); white-space: nowrap; cursor: pointer;
+  flex: none;
+}
+.crew .crew-pill:hover { color: var(--t1); border-color: var(--t3); }
+
+/* Smooth Air means no motion, not less. */
+@media (prefers-reduced-motion: reduce) { .crew .crew-wall button { transition: none; } }
+.app.smooth-air .crew .crew-wall button { transition: none; }

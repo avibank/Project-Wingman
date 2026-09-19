@@ -187,6 +187,9 @@ import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initSaves, resetSaves, noStudent } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
 import { stampOf } from "./lib/stamp.js";
+import PilotSheet from "./components/PilotSheet.jsx";
+import { fetchSquadron, fetchRoster } from "./lib/squadron.js";
+import { fetchMyCompletions } from "./lib/partners.js";
 import { StampFilters } from "./components/Stamp.jsx";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
@@ -1132,6 +1135,53 @@ function AppInner() {
      everywhere rather than a special case anybody has to remember. */
   const myStamp = useMemo(() => stampOf(myProfile), [myProfile]);
 
+  /* ---------------------------------------------------------------- CREW
+     Three things the Crew tab needs that nothing else here already had.
+
+     The MATES are for a ring, not for a grouping: §2 says a squadron mate
+     "gets a thin teal ring around their face. They are not grouped
+     separately", so this is a set of ids and nothing more.
+
+     MY OWN COMPLETIONS put my stamp on the walls I have signed off. The other
+     people's come from crew.js in one query; mine is the one row that query
+     leaves out, because it leaves ME out.
+
+     A FACE OR A STAMP OPENS THE PERSON. §2: "No DMs anywhere. Tapping a face
+     or stamp opens the profile viewer." That viewer is the licence card, which
+     is item 5; until it exists this opens the pilot sheet, which is this app's
+     current answer to "who is this" and carries report and block. */
+  const [squadronMates, setSquadronMates] = useState(() => new Set());
+  const [myCompleted, setMyCompleted] = useState(() => new Set());
+  const [pilotSheet, setPilotSheet] = useState(null);
+
+  useEffect(() => {
+    if (!me || !activeModuleCode) { setSquadronMates(new Set()); return undefined; }
+    let live = true;
+    (async () => {
+      const sq = await fetchSquadron(me, activeModuleCode);
+      if (!live || !sq?.id) { if (live) setSquadronMates(new Set()); return; }
+      const roster = await fetchRoster(me, sq.id);
+      if (live) setSquadronMates(new Set((roster || []).map((r) => r.user_id).filter(Boolean)));
+    })();
+    return () => { live = false; };
+  }, [me, activeModuleCode]);
+
+  useEffect(() => {
+    if (!me || !activeModuleCode) { setMyCompleted(new Set()); return undefined; }
+    let live = true;
+    fetchMyCompletions(me, activeModuleCode).then((rows) => {
+      if (live) setMyCompleted(new Set((rows || []).map((r) => r.chapter_id)));
+    });
+    return () => { live = false; };
+  }, [me, activeModuleCode]);
+
+  const openPilot = (p) => {
+    const id = typeof p === "string" ? p : (p?.userId || p?.user_id);
+    if (!id || id === me) return;
+    setPilotSheet({ user_id: id, callsign: p?.name || p?.callsign || null });
+  };
+
+
   const modulePapers = useMemo(
     () => [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers],
     [activeModuleCode, useTestContent, addedPapers],
@@ -1306,7 +1356,9 @@ function AppInner() {
     // Through go(), so the tab slide applies here as it does on the profile —
     // keepScroll because this restores each tab's own position below, and go()
     // would otherwise send both to the top.
-    go(nextTab === "pdf" ? routePath.library(activeModuleCode) : routePath.module(activeModuleCode),
+    go(nextTab === "pdf" || nextTab === "library" ? routePath.library(activeModuleCode)
+       : nextTab === "crew" ? routePath.crew(activeModuleCode)
+       : routePath.module(activeModuleCode),
        { keepScroll: true })
       // Chained rather than fired straight away: go() is async now, so a bare
       // requestAnimationFrame could restore the position before the new tab
@@ -1937,12 +1989,21 @@ function AppInner() {
             module={moduleByCode(activeModuleCode, useTestContent)}
             chapters={chaptersFor(activeModuleCode, useTestContent)}
             state={moduleState}
-            tab={route.tab === "pdf" ? "library" : route.tab === "people" ? "people" : "route"}
+            tab={route.tab === "pdf" ? "library" : route.tab === "crew" ? "crew" : route.tab === "people" ? "people" : "route"}
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}
             minimums={minimums}
             onOpenPaper={(paper) => openPaper(paper)}
             readerPin={readerPin}
             stamp={myStamp}
+            /* CREW'S OWN DATA. `me` so crew.js can leave the student out of
+               their own list, `mates` so a squadron mate gets the teal ring
+               without being sorted to the top, and `myDone` so their own stamp
+               goes on the walls of the chapters they have signed off. */
+            me={me}
+            mates={squadronMates}
+            myDone={myCompleted}
+            onOpenPerson={openPilot}
+            onOpenThreads={() => go(routePath.ready(activeModuleCode))}
             onAddPaper={() => setAddingPaper(true)}
             /* One list, merged once, above. The Library must not know there
                are two sources. */
@@ -2061,6 +2122,10 @@ function AppInner() {
         the way OUT of a page survives the navigation that raised it. */}
     {/* One <filter> per ink seed on screen, shared. §8: "Crew walls with 100+
         stamps stay smooth… share the filter defs." */}
+    {pilotSheet && (
+      <PilotSheet pilot={pilotSheet} channelId={activeModuleCode}
+                  onClose={() => setPilotSheet(null)} onChanged={() => {}} />
+    )}
     <StampFilters />
     <BookmarksToastHost />
     </FirstFlightGate>

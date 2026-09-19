@@ -192,8 +192,18 @@ for (const f of JSX) {
     // Not an empty state at all: a sentence that happens to begin "Nothing is…"
     if (!/\b(yet|none|empty|no one|nobody|nothing here)\b/i.test(line)) continue;
     if (/\bNothing (here )?is\b|\bNothing you did\b/i.test(line)) continue;
-    // A next action is a verb the student can act on, in the same run of text.
-    if (!/\b(tap|press|open|add|start|ask|try|pick|choose|save|search|invite|join|write|take|watch|read|browse|go|see|find|keep|use|make|check|turn|bookmark|block|mute|carry|carries)\b/i.test(line)) {
+    /* ONE LINE IS ALLOWED TO SAY NOBODY. "Nobody on it right now" is the Crew
+       tab's live counterpart to "On it now · [faces]" — a status line, not an
+       empty state — and the block it sits in names the action directly beneath
+       it on the wall. It is also the reference's own copy, which §1 of the
+       launch handoff says to match. check:states carries the same exception;
+       see docs/launch/DECISIONS.md. */
+    if (line === "Nobody on it right now") continue;
+    /* A next action is a verb the student can act on, in the same run of text —
+       or an invitation to be the one who fills it, which is the same thing said
+       the other way round ("The first one here could be yours"). */
+    if (/\byours\b/i.test(line)) continue;
+    if (!/\b(tap|press|open|add|start|ask|try|pick|choose|save|search|invite|join|write|take|watch|read|browse|go|see|find|keep|use|make|check|turn|bookmark|block|mute|carry|carries|clear)\b/i.test(line)) {
       bare.push(`${f}: "${line}"`);
     }
   }
@@ -245,6 +255,29 @@ const KNOWN_ORPHAN_KEYS = {
   const orphans = [...keys].filter(([k, e]) => (!e.get || !e.set) && !(k in KNOWN_ORPHAN_KEYS))
     .map(([k, e]) => `${k} is ${e.get ? "read, never written" : "written, never read"}`);
   ok("state", `every progress key has both a reader and a writer, or says why not (${keys.size})`, orphans.length === 0, orphans.join("; "));
+}
+
+/* ------------------------------------------- 8 · a screen inside a screen
+   THE CREW TAB LIVES INSIDE .mscreen, AND SO DOES THE MODULE SCREEN'S OWN CSS.
+   Both scoped, so check:collisions is happy; both at the same specificity, so
+   source order decides. `.mscreen .hrow` is a grid whose first column is 38px,
+   and the Crew tab's own `.hrow` inherited it — every "Answering questions"
+   pill came out 38px wide with 78px of content spilling out of it. Measured,
+   not guessed, and invisible in a diff.
+
+   So every class the Crew tab draws is prefixed. This is what keeps it that
+   way. `crew`, `is-on` and the stamp's own wrapper are the three that are
+   allowed through by name. */
+{
+  const css = readFileSync(new URL("../src/components/module/crew.css", import.meta.url), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const ALLOW = new Set(["crew", "is-on", "insp-stamp", "app", "smooth-air"]);
+  const loose = new Set();
+  for (const m of css.matchAll(/\.([a-zA-Z][\w-]*)/g)) {
+    if (!ALLOW.has(m[1]) && !m[1].startsWith("crew-")) loose.add(m[1]);
+  }
+  ok("scope", `every class the Crew tab draws is its own (${[...loose].length ? "" : "all prefixed"})`,
+     loose.size === 0, [...loose].join(" "));
 }
 
 console.log(`\ndoors: ${pass} passed, ${fails.length} failed`);

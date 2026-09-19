@@ -51,4 +51,7 @@ export const countLessons = (chapters) =>
    it reaches. It says what it searches. */
 export const placeholderFor = (tab, sub) =>
   tab === "library" ? (sub === "quizzes" ? "Search quizzes" : "Search papers")
+    /* Crew is a list of PEOPLE, so the field says so. The reference changes it
+       the same way: "Find someone". */
+    : tab === "crew" ? "Find someone"
     : "Search lessons and chapters";

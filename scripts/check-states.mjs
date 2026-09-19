@@ -102,6 +102,19 @@ const ABSENCE = [
 
    Both refusals cost coverage: a long absence-only sentence slips through. A
    rule that rewrites good copy is worse than one that misses a bad line. */
+/* ONE LINE IS ALLOWED TO SAY NOBODY, and it is named here rather than
+   exempted by a pattern. "Nobody on it right now" is the Crew tab's live
+   counterpart to "On it now · [faces]" — a STATUS line answering who is on this
+   chapter at this moment, not an empty state. The block it sits in already
+   names the next action directly beneath it, on the wall: "No stamps yet. The
+   first one here could be yours." Putting an invitation in both places would
+   say the same thing twice, two rows apart.
+
+   It is also the reference's own copy, and §1 of the launch handoff says to
+   match that exactly. See docs/launch/DECISIONS.md. Anything else that states
+   an absence still fails. */
+const SAID = ["Nobody on it right now"];
+
 const ABSENCE_TEXT = [
   /^Nothing (?:saved|here|to see)(?: yet)?[.!]?$/i,
   /^Nobody[^.!?]*$/i,
@@ -115,6 +128,7 @@ for (const f of all.filter((x) => x.startsWith("src/components/"))) {
   for (const m of t.matchAll(/"([^"\\]{2,120})"|'([^'\\]{2,120})'/g)) {
     const lit = m[1] ?? m[2];
     if (lit.length > 45) continue;               // a caption is short and stops
+    if (SAID.includes(lit)) continue;
     if (ABSENCE.some((re) => re.test(lit))) {
       fails.push(`${f}: "${lit}" states absence instead of naming what fills it`);
     }
@@ -126,6 +140,7 @@ for (const f of all.filter((x) => x.startsWith("src/components/"))) {
      literal scan walked past it. It is the same sentence either way. */
   for (const m of t.matchAll(/>\s*([A-Z][^<>{}\n]{2,80}?)\s*</g)) {
     const text = m[1].trim();
+    if (SAID.includes(text)) continue;
     if (ABSENCE_TEXT.some((re) => re.test(text))) {
       fails.push(`${f}: "${text}" states absence instead of naming what fills it`);
     }

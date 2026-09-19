@@ -51,7 +51,7 @@ const PLACE = {
   notfound: ["notfound", 0],
 };
 
-const MODULE_TAB_ORDER = ["chapters", "pdf", "people"];
+const MODULE_TAB_ORDER = ["chapters", "pdf", "crew", "people"];
 
 export function placeOf(route) {
   const [sec, depth] = PLACE[route?.name] || ["other", 0];

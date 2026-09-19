@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Search, X } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
+import CrewTab from "./CrewTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
 import { faultChapters } from "../../lib/minimums.js";
@@ -17,9 +18,14 @@ import "./manual.css";
 // §2.6 — Lessons and Library. People is hidden rather than deleted: it is
 // coming back in a different position, and the strip is built so a third entry
 // needs no relayout. Its component and data wiring are untouched.
+/* CREW IS THE THIRD TAB, after Lessons and Library, which is the order §2 of
+   the launch handoff gives. It is a new screen rather than a renamed one:
+   `people` was the question FEED — a thread list — and it keeps its own hidden
+   route, because the Ready Room is where questions live now. */
 export const MODULE_TABS = [
   { id: "route", label: "Lessons" },
   { id: "library", label: "Library" },
+  { id: "crew", label: "Crew" },
 ];
 export const HIDDEN_TABS = [{ id: "people", label: "People" }];
 
@@ -28,6 +34,7 @@ export default function ModuleScreen({
   papers = [], librarySub = "papers", onOpenPaper,
   readerPin = null, onAddPaper,
   stamp = null,
+  me = null, mates = new Set(), myDone = new Set(), onOpenPerson, onOpenThreads,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
@@ -70,7 +77,7 @@ export default function ModuleScreen({
   // empty tab is to arrive at one still holding a search.
   const [query, setQuery] = useState("");
   useEffect(() => { setQuery(""); }, [tab]);
-  const searchable = tab === "route" || tab === "library";
+  const searchable = tab === "route" || tab === "library" || tab === "crew";
   const searching = terms(query).length > 0;
   const fieldRef = useRef(null);
 
@@ -142,7 +149,9 @@ export default function ModuleScreen({
         </div>
 
         {/* People has no search: it is a handful of rows about other people,
-            and a field that filters nothing is worse than no field. */}
+            and a field that filters nothing is worse than no field. Crew DOES:
+            it can be forty faces and a wall of stamps, and the reference gives
+            it the same field with "Find someone" in it. */}
         {searchable && (
           <div className="tabsearch">
             <Search className="tabsearch-i" aria-hidden="true" />
@@ -177,6 +186,12 @@ export default function ModuleScreen({
                       readerPin={readerPin} onAddPaper={onAddPaper}
                       faults={faults}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
+        )}
+        {tab === "crew" && (
+          <CrewTab moduleCode={mod?.code || mod?.id} moduleName={mod?.name}
+                   chapters={chapters} me={me} myStamp={stamp} mates={mates}
+                   query={query} myDone={myDone}
+                   onOpenPerson={onOpenPerson} onOpenThreads={onOpenThreads} />
         )}
         {tab === "people" && (
           <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion}

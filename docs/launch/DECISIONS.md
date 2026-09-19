@@ -73,3 +73,56 @@ and renders one `<filter>` each; `Stamp` memoises the built string on everything
 that changes the drawing. A stamp still renders without the provider — it
 carries its own filter — so it works in a test or a screenshot with no app
 around it.
+
+---
+
+## "Nobody on it right now" is allowed to say nobody
+
+CLAUDE.md's voice section: *"Never state absence or a zero count. Every empty
+state names its next action inside the sentence."* The Crew tab has one line
+that breaks it, and it is the reference's own copy.
+
+It is a **status line**, not an empty state — the live counterpart to
+"On it now · [faces]", answering who is on this chapter at this moment. The
+block it sits in already names the action directly beneath it, on the wall:
+*"No stamps yet. The first one here could be yours."* An invitation in both
+places says the same thing twice, two rows apart.
+
+It is named in `check:states` and in `check:doors` rather than matched by a
+pattern, so anything *else* that states an absence still fails. Both were
+plant-proved.
+
+The search empty state did get the second half this app asks for: the
+reference's *"Nobody by that name on Module 1."* plus *"Try a callsign, or
+clear the search to see everyone."* — which is how the Library's own search
+answers.
+
+## The Crew tab's classes are prefixed, the reference's are not
+
+The reference is a standalone page, so it can call things `.hrow`, `.av`,
+`.wall`, `.stack` and `.pill`. This app cannot: the Crew tab renders inside
+`.mscreen`, and `module.css` already owns `.mscreen .hrow` — a grid whose first
+column is 38px. Same specificity, so source order decided, and every "Answering
+questions" pill rendered **38px wide with 78px of content spilling out of it**.
+
+`check:collisions` was happy: both rules are scoped. What catches it now is a
+rule in `check:doors` asserting every class `crew.css` draws is prefixed
+`crew-`, with three allowed by name. Layout, spacing and copy still match the
+reference to the pixel; only the class names differ.
+
+## A face is a button on its own and a span inside one
+
+The "Answering questions" pill is a button, and the face inside it was a button
+too — nested interactive content, which a browser fixes by splitting the
+nesting and which laid the row out wrong. `Instruments.jsx` carries the same
+note about a lamp inside a chapter header. `Face` takes an `inert` prop: the
+control in a stack, a span inside a pill. The reference does the same thing —
+its `face()` is a span and the stack's click is delegated.
+
+## `--copilot` is a livery-engine token now
+
+§2 wants a teal ring on a squadron mate's face and §3 wants the same teal for
+the right-seat partner's marks on the scrubber. Two places that must agree, so
+it is emitted from `liveryEngine.js` beside `--ok` and `--bad` rather than
+invented in a component. Hue 190 and the day/night pair are the reference's
+(`--copilot` in reference/01); only the name is this app's.

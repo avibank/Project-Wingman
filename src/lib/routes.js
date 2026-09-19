@@ -5,6 +5,7 @@
 //   /                            home
 //   /m/:module                   module (chapters)
 //   /m/:module/library           module library
+//   /m/:module/crew              module crew
 //   /m/:module/paper/:paper      one paper, in the reader
 //   /m/:module/:chapter          chapter, brief
 //   /m/:module/:chapter/quiz
@@ -85,6 +86,7 @@ export function parseRoute(pathname) {
       }
       return { name: "module", moduleCode, tab: "pdf", sub: parts[3] === "quizzes" ? "quizzes" : "papers" };
     }
+    if (parts[2] === "crew") return { name: "module", moduleCode, tab: "crew" };
     if (parts[2] === "people") return { name: "module", moduleCode, tab: "people" };
     // A paper is its own page, and its address carries the paper so a student
     // can send a classmate the handout they are looking at rather than the
@@ -148,6 +150,7 @@ export const path = {
   library: (m, sub) => `/m/${String(m).toLowerCase()}/library` + (sub === "quizzes" ? "/quizzes" : ""),
   lesson: (m, c, l, q) =>
     `/m/${String(m).toLowerCase()}/${c}/lesson/${l}` + (q ? `/q/${q}` : ""),
+  crew: (m) => `/m/${String(m).toLowerCase()}/crew`,
   people: (m) => `/m/${String(m).toLowerCase()}/people`,
   paper: (m, id) => `/m/${String(m).toLowerCase()}/paper/${id}`,
   chapter: (m, c, tab) =>

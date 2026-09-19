@@ -331,6 +331,14 @@ export function deckVars(liveryId, variant = "night") {
   vars["--ok"] = night ? "oklch(.660 .155 148)" : "oklch(.500 .150 148)";
   vars["--bad"] = night ? "oklch(.620 .180 25)" : "oklch(.500 .190 25)";
   vars["--on-mark"] = night ? "oklch(.14 0 0)" : "oklch(.99 0 0)";
+  /* THE RIGHT SEAT'S TEAL, and it is fixed for the same reason --ok and --bad
+     are: it means one thing — the person beside you — on every livery. The
+     launch handoff calls for it twice, in two places that must agree: the ring
+     round a squadron mate's face on the Crew tab, and the copilot's marks on
+     the lesson scrubber. Hue 190 and the day/night pair are the reference's
+     (docs/launch/reference/01, `--copilot`); only the name is this app's,
+     because a component may not invent a colour. */
+  vars["--copilot"] = night ? "oklch(.780 .110 190)" : "oklch(.580 .130 190)";
 
   /* §1.1/§1.2 — THE ONE FIXED COLOUR. It used to shift hue and lightness to
      dodge whichever livery was on, which is exactly what a signal may not do:
