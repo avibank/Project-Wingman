@@ -141,16 +141,28 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
         const onIt = hits.filter((p) => p.chapterId === ch.id);
         const done = hits.filter((p) => p.done.has(ch.id));
         const mineDone = myDone.has(ch.id);
+        const signedOff = done.length + (mineDone ? 1 : 0);
         const youAreHere = crew.here === ch.id;
         return (
           <div className="crew-ch" key={ch.id}>
             <div className="crew-chh">
               <div>
                 <h3>{ch.title || `Chapter ${i + 1}`}</h3>
-                <div className="crew-cm">
-                  {done.length + (mineDone ? 1 : 0)} signed off
-                  {youAreHere && <> · <span className="crew-here">you are here</span></>}
-                </div>
+                {/* NEVER A ZERO COUNT, here as well — and this one said it
+                    once per chapter. "0 signed off" under every heading on a
+                    module nobody has started is the same number saying the
+                    same nothing, five times down the page, above a wall that
+                    already says "No stamps yet. The first one here could be
+                    yours." The line is what IS true instead, and on a chapter
+                    with nobody on it and nobody through it there is no line
+                    at all — the wall below carries the invitation. */}
+                {(signedOff > 0 || youAreHere) && (
+                  <div className="crew-cm">
+                    {signedOff > 0 && <>{signedOff} signed off</>}
+                    {signedOff > 0 && youAreHere && " · "}
+                    {youAreHere && <span className="crew-here">you are here</span>}
+                  </div>
+                )}
               </div>
               <div className="crew-onit">
                 {onIt.length

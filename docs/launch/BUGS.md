@@ -240,9 +240,18 @@ shortens the strip rather than pushing something off the screen — a tab you ca
 scroll to is a tab; a tab past the right edge is not. Measured after:
 `document.scrollWidth` 375 in a 375px viewport, search ending at 370.
 
-## 21 · "0 have finished it"
+## 21 · "0 have finished it", and "0 signed off" five times under it
 
-Crew's summary line on a module nobody has finished. A number whose only job is
+Crew's summary line on a module nobody has finished — and, found on the
+deploy a minute later, the same number once per chapter heading. "0 signed
+off" repeated down the page above a wall that already said "No stamps yet.
+The first one here could be yours."
+
+A chapter with nobody through it and nobody on it has no line at all now; the
+wall below carries the invitation, which is what it is for. Measured on the
+screen afterwards: not one `0 <word>` anywhere on it.
+
+The original: A number whose only job is
 to say nothing happened, which is the thing CLAUDE.md's Voice rule exists to
 stop. The clause is absent now rather than nought. A check for the general case
 was attempted and is written up in BACKLOG.md — it needs an hour, not five
