@@ -184,7 +184,7 @@ import { FlightBag } from "./features/bookmarks/deck.js";
 import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
 import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
-import { initSaves, resetSaves } from "./features/bookmarks/savesStore.js";
+import { initSaves, resetSaves, noStudent } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
@@ -266,7 +266,7 @@ function AppInner() {
   // The one scroller on the page. Declared first because go() closes over it.
   const deckRef = useRef(null);
   const progress = useUserProgress();
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, isLoaded: clerkLoaded, user } = useUser();
   const { flags, isAdmin } = useFlags();
   // §2.2 — the URL is the navigation state. `view`, `settingsPage`, `tab` and
   // the pending chapter are all derived from it now, so back, deep links and
@@ -1026,9 +1026,15 @@ function AppInner() {
      tidiness: without it the next person to sign in on a shared college
      machine would see the last one's bookmarks until their own arrived. */
   useEffect(() => {
-    if (!isSignedIn || !me) { resetSaves(); return; }
+    if (!isSignedIn || !me) {
+      /* Clerk still deciding: hold, so a signed-in student does not see the
+         empty state flash. Clerk has decided and it is nobody: settle, or
+         every Bookmarks screen waits for a load that will never start. */
+      if (clerkLoaded) noStudent(); else resetSaves();
+      return;
+    }
     initSaves({ getSupabase: async () => supabase, userId: me });
-  }, [isSignedIn, me]);
+  }, [isSignedIn, clerkLoaded, me]);
 
   // §4c — endorsements on answers. Fetched for the replies actually loaded,
   // keyed by a stable id string so the effect runs when the cast changes

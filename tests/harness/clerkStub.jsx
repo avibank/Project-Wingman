@@ -5,6 +5,11 @@
  * the answer directly. `?uid=` picks who you are, which is what lets one test
  * assert what a SECOND student's browser receives — the anonymity test in
  * §15b.2 needs exactly that and cannot be written any other way.
+ *
+ * `?uid=none` is NOBODY, signed out, with Clerk finished deciding. It exists
+ * because a screen that waits on identity has two failure modes and they look
+ * identical from the outside: waiting for an answer, and never getting one.
+ * /bookmarks sat blank on the live site for exactly that reason.
  */
 import React from "react";
 
@@ -31,8 +36,12 @@ const user = {
   delete: async () => {},
 };
 
-export const useUser = () => ({ isSignedIn: true, isLoaded: true, user });
-export const useClerk = () => ({ signOut: async () => {}, openUserProfile: () => {}, user });
+const signedOut = id === "none";
+
+export const useUser = () => (signedOut
+  ? { isSignedIn: false, isLoaded: true, user: null }
+  : { isSignedIn: true, isLoaded: true, user });
+export const useClerk = () => ({ signOut: async () => {}, openUserProfile: () => {}, user: signedOut ? null : user });
 export const useReverification = (fn) => fn;
 export const ClerkProvider = ({ children }) => <>{children}</>;
 export const SignIn = () => <div>[SignIn]</div>;

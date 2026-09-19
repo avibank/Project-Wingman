@@ -810,6 +810,18 @@ try {
     want("a save whose question the author deleted is pruned quietly", left === 0, `${left} left`);
     want("and nothing on screen mentions it", !(await page.locator(".bm-list").textContent()).includes("q_deleted"));
 
+    /* 4b · SIGNED OUT IS A SCREEN, NOT A WAIT. Every Bookmarks screen holds on
+       the store being ready, and signed out initSaves never runs — so the page
+       rendered an empty aria-busy section for ever, and /bookmarks was blank on
+       the live site. There is nothing saved because there is nobody to have
+       saved it, and the designed empty state says so. */
+    await page.goto(`${BASE}/bookmarks?uid=none`);
+    await page.locator(".bm-folders").waitFor({ timeout: 15000 }).catch(() => {});
+    want("signed out, Bookmarks shows its four folders rather than waiting for ever",
+      (await page.locator(".bm-empty-cover").count()) === 4
+      && (await page.locator('.bm-page[aria-busy="true"]').count()) === 0,
+      `covers=${await page.locator(".bm-empty-cover").count()} busy=${await page.locator('.bm-page[aria-busy="true"]').count()}`);
+
     /* 5 · keyboard only. Every control reachable, focus visible, Esc closes. */
     await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
     await page.locator(".bm-folders .bm-folder").first().waitFor({ timeout: 15000 });

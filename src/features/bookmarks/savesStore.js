@@ -42,6 +42,19 @@ export async function initSaves({ getSupabase, userId }) {
 /** Call on sign-out so the next student never sees the last one's saves. */
 export function resetSaves() { getClient = null; state = { ready: false, userId: null, rows: [], error: null }; emit(); }
 
+/* NOBODY IS SIGNED IN, AND THAT IS SETTLED — which is not the same as "we have
+   not asked yet", and the difference was a blank screen. Every Bookmarks
+   screen holds on `ready`, and `ready` only became true when initSaves
+   finished; signed out it never ran, so /bookmarks rendered an empty
+   aria-busy section for ever. There is nothing saved, because there is nobody
+   to have saved it, and the screen can say so: this settles the store with no
+   rows and no student, and the designed empty state does the rest.
+
+   Call it only once Clerk has actually answered. Called while it is still
+   loading, a signed-in student sees the empty state flash before their own
+   saves arrive. */
+export function noStudent() { getClient = null; state = { ready: true, userId: null, rows: [], error: null }; emit(); }
+
 export const findSave = (kind, refId, page = null) => state.rows.find((r) => keyOf(r.kind, r.ref_id, r.page) === keyOf(kind, refId, page));
 export const isSaved = (kind, refId, page = null) => !!findSave(kind, refId, page);
 

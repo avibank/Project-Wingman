@@ -147,7 +147,22 @@ await fresh();
   ok("refused", "and says so", toasts.some((t) => /didn't remove/.test(t.message)));
 }
 
-/* 11 — R13, and it is the only way to be sure. The test double is a real file
+/* 11 — "nobody is signed in" is settled, not pending. Every Bookmarks screen
+   holds on `ready`; signed out, initSaves never runs, so the screen waited for
+   a load that would never start and /bookmarks was a blank page on the live
+   site. There is nothing saved because there is nobody to have saved it. */
+await fresh();
+{
+  const { noStudent } = await import("../src/features/bookmarks/savesStore.js");
+  await addSave({ kind: "question", moduleId: "m1", refId: "q1" });
+  noStudent();
+  const s = getSnapshot();
+  ok("signout", "with nobody signed in the list is ready and empty, not pending",
+     s.ready === true && s.rows.length === 0 && s.userId === null,
+     `ready=${s.ready} rows=${s.rows.length}`);
+}
+
+/* 12 — R13, and it is the only way to be sure. The test double is a real file
    in the feature's folder; if a live file ever imports it, it reaches the
    bundle and every student's browser downloads a fake server. Nothing but this
    script may name it. */
