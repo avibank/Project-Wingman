@@ -241,11 +241,30 @@ const ok = (name, cond, detail) => {
     "src/components/Profile.jsx",        // the switch itself
     "src/components/ProfileMenu.jsx",    // the same face in the menu
     "src/components/module/LessonPage.jsx", // and in the composer
+    /* A FIFTH SITE, AND IT DOES NOT READ THE KEY — IT PROTECTS IT.
+       The storage epoch sweeps every `pw-` key that is not a device
+       preference, so it has to be able to NAME the one key that must survive:
+       Fly solo is a safety decision, not a setting, and the SQL wipe keeps
+       `blocks` and `mutes` on exactly that reasoning. It imports FLY_SOLO_KEY
+       from flySolo.js rather than writing the string out, which is the rule
+       this assertion is really about.
+
+       The rule is unchanged in substance — nobody decides whether somebody is
+       flying solo except `isFlySolo()` — and that half is still asserted
+       above. What is widened is the list of files allowed to mention the key
+       at all, by one, with the reason. */
+    "src/lib/storage.js",
   ]);
   const rogue = files.filter((f) => !ALLOWED.has(f)
     && /FLY_SOLO_KEY|["']pw-invisible["']/.test(readFileSync(f, "utf8")));
   ok("only the switch and the four faces read the key directly",
      rogue.length === 0, rogue.join(" · "));
+  /* And the new one may name it, not act on it. */
+  const sweep = readFileSync("src/lib/storage.js", "utf8");
+  ok("the epoch names Fly solo's key to keep it, and never reads its value",
+     /import \{ FLY_SOLO_KEY \} from "\.\/flySolo\.js";/.test(sweep)
+     && /KEEP = new Set\(\[[\s\S]*?FLY_SOLO_KEY[\s\S]*?\]\)/.test(sweep)
+     && !/isFlySolo|getItem\(FLY_SOLO_KEY|JSON\.parse\([^)]*FLY_SOLO_KEY/.test(sweep));
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nALL PASS");
