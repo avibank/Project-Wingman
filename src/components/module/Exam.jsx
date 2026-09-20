@@ -152,7 +152,7 @@ function ReviewRow({ item, mine, n, k }) {
 export default function Exam({
   title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
   minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
-  moduleCode = null, chapterNo = null,
+  moduleCode = null, chapterNo = null, onLeave = null,
 }) {
   /* A lesson id is not a name. Without this, "where these came from" reads as
      a row of ids, which is a worse answer than no list at all. */
@@ -750,6 +750,26 @@ export default function Exam({
         </div>
         <div className="dialog__foot">
           <button className="btn is-inline" type="button" onClick={() => dialogRef.current?.close()}>Back to exam</button>
+          {/* THE THIRD CHOICE, AND IT IS WHAT LETS R4 AND THIS APP BOTH BE
+              RIGHT. R4 says a paper has no way out but End exam. This app
+              writes the attempt on every change and stops its clock the
+              moment the paper leaves the screen, so leaving and coming back
+              is a designed behaviour with its own section in check:exam —
+              and with the arrow simply deleted, the only escape from a quiz
+              opened by mistake would be handing in a blank paper and wearing
+              the nought.
+
+              So every exit now comes through this one dialog, which says what
+              is unanswered and what is flagged before any of them. What R4 is
+              really about — slipping out of an exam without noticing — is
+              closed, and nothing marks a paper the student did not mean to
+              hand in. Owner's decision to settle it, 2026-09-20. */}
+          {onLeave && (
+            <button className="btn is-inline" type="button"
+                    onClick={() => { dialogRef.current?.close(); onLeave(); }}>
+              Leave it for now
+            </button>
+          )}
           <button className="btn btn--primary is-inline" type="button" onClick={handOver}>End and mark</button>
         </div>
       </dialog>

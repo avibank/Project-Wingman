@@ -4,8 +4,11 @@
 stop. Don't approximate it." This is that list. Everything else in the pack is
 in and scoped (`npm run ref:css` → `src/components/module/exam-port.css`).
 
-Each of these reverses a decision already recorded in this repo. None is a
-matter of taste and none should be settled by me.
+Each of these reverses a decision already recorded in this repo.
+
+**All five are settled (2026-09-20.)** The owner took conflicts 1 and 3 and
+handed the rest back to be decided here. What each decision is, and what it
+cost, is under the heading it belongs to.
 
 ---
 
@@ -34,7 +37,7 @@ module, one account able to appear several times under different callsigns.
 **Not built.** The stylesheet's `.lb-*` and `.board*` rules are in and unused,
 so the day it is wanted the markup has somewhere to land.
 
-## 2 · "Go through the paper" (the check script)
+## 2 · "Go through the paper" — KEPT (decided here)
 
 **The brief:** `exam-port.check.js` fails if the result screen has a "Go
 through the paper" button.
@@ -45,9 +48,13 @@ back on request**, as a screen of its own so the score keeps the shape the
 design gave it." It is where the explanation for every question, the lesson
 each miss came from, and a paper of only the misses live.
 
-Removing the button removes the only door to all three. **Not removed.**
+Removing the button removes the only door to all three — three things deleted
+to satisfy a check about one. **Kept**, and now asserted, so that a later
+tidy-up cannot quietly satisfy the port check by taking the door out. That one
+line of `exam-port.check.js` is knowingly not satisfied and will keep printing
+FAIL; it is the only one.
 
-## 3 · The clock: 20 minutes flat (R5)
+## 3 · The clock: 20 minutes flat — TAKEN (owner)
 
 **The brief:** "The fixed exam clock is 20 minutes for any quiz up to 40
 questions."
@@ -56,12 +63,15 @@ questions."
 this file's own nominal figure, 75 seconds a question." A chapter quiz here is
 eight questions, so the allowance is 10 minutes; the brief would make it 20.
 
-This one is cheap to change — `allowanceFor` in `quiz.js`, one function, and
-`check:exam` asserts against it — but it doubles the time on every chapter
-quiz in the app, which is a teaching decision rather than a port. **Not
-changed.**
+**Taken.** `allowanceFor` is a flat twenty minutes for any quiz up to forty
+questions; past forty the per-question figure comes back so a long paper does
+not silently get a short one's allowance. `estimate` keeps the 75 seconds,
+because it answers a different question — "how long will this take me" on a
+row you have not opened — and every quiz reading "about 20 minutes" would say
+nothing at all. So the row and the paper are now two different promises, on
+purpose.
 
-## 4 · R1 taken literally (copy the stylesheet in unedited and import it)
+## 4 · R1 taken literally — THE SCOPED COPY STANDS (decided here)
 
 **What it does.** 128 of the sheet's rules are bare class names this app
 already renders elsewhere. Counted:
@@ -79,13 +89,22 @@ already renders elsewhere. Counted:
 chapter tick in the app into a circle — from the moment the exam chunk loads,
 and it stays after the student leaves, because a lazy chunk's CSS does.
 
-**What was done instead.** The delivered file is committed unedited at
+**Decided: the scoped copy stands.** R1's intent — these screens take their
+appearance from the pack and nobody writes new CSS for them — is met exactly.
+Its letter is not, and the reason is measured rather than argued: 128 bare
+class names, and `.mark` alone would turn every chapter tick in the app into a
+circle from the moment the exam chunk loads and keep doing it after the
+student leaves, because a lazy chunk's CSS stays. R1's own *check* asks that
+`git diff` shows the file added rather than edited and that the rules live in
+one file — both true.
+
+**What was done.** The delivered file is committed unedited at
 `docs/launch/code/17-exam-result-leaderboard.css`; `npm run ref:css` produces
 the scoped copy. `git diff` shows the file added, not edited, and the rules
 exist in exactly one place in `src/` — which is what R1's check actually
 tests. This is the same machinery the other four handed-over sheets use.
 
-## 5 · "No back arrow" (R4)
+## 5 · "No back arrow" — THE ARROW ASKS (decided here)
 
 **The brief:** "Once started, the exam screen has no way out but **End exam**
 ... No back arrow, no Ready Room, no profile, no links of any kind on the
@@ -109,5 +128,14 @@ paper is on screen (CLAUDE.md), and `check:exam` holds a "leaving and coming
 back" section asserting you return to the question you left with the clock
 where it was.
 
-So the arrow is a teaching decision rather than a port. **Not removed.**
+**Decided: the arrow stays, and it asks.** Deleting it would make handing in a
+blank paper the only escape from a mis-tapped quiz. Leaving it silent would
+leave the hole R4 is actually about. So it raises the same end-exam dialog the
+browser's Back raises, and that dialog now offers three honest choices —
+**Back to exam · Leave it for now · End and mark** — after saying what is
+unanswered and what is flagged.
+
+Every exit from an open paper goes through one door that tells the truth
+first, and nothing marks a paper the student did not mean to hand in. R4's
+concern is closed; its letter ("no back arrow") is not, and this is why.
 

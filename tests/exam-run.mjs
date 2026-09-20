@@ -237,7 +237,7 @@ const problems = [];
 const errors = [];
 const acts = [];
 let states = 0;
-const expect = (what, cond) => { if (!cond) acts.push(what); };
+const expect = (what, cond, detail = "") => { if (!cond) acts.push(detail ? `${what} — ${detail}` : what); };
 
 try {
   mkdirSync(SHOTS, { recursive: true });
@@ -390,7 +390,11 @@ try {
        would wear the exam's matte and lose its finish. */
     expect("the exam flags the document while it is open",
       (await page.evaluate(() => document.documentElement.dataset.screen)) === "exam");
+    /* LEAVING IS TWO STEPS NOW, EVERYWHERE. The arrow raises the end-exam
+       dialog rather than going on its own (R4, conflict 5), so every exit
+       from an open paper says what is unanswered first. */
     await page.locator(".up").click();
+    await page.locator("dialog[open] button", { hasText: /Leave it for now/i }).click({ timeout: 8000 });
     /* `.mtabs`, not `.tabs`. The module screen's strip was renamed when that
        screen was ported to its reference build; this line waited for a class
        that had stopped existing, so the walk timed out on its last step and
@@ -431,6 +435,11 @@ try {
     await page.locator(".mtabs button", { hasText: /Library/i }).first().click();
     await page.locator('section[aria-labelledby="lsec-quizzes"] .lrow').first().click({ timeout: 15000 });
     await page.locator(".question__text").waitFor({ timeout: 15000 });
+    /* The row clicked is whichever quiz the Library lists first, which is not
+       necessarily CHAPTER. Come back to THIS paper's address, not to the
+       constant — going back to a different chapter's quiz measures a paper
+       nobody opened and reads as the attempt having been lost. */
+    const thisPaper = BASE + await page.evaluate(() => location.pathname + location.search);
     const bar = () => page.evaluate(() => {
       const t = document.querySelector(".topbar");
       return {
@@ -450,7 +459,21 @@ try {
 
     /* Back asks rather than abandons. The pop has already happened by then, so
        what this proves is that the address came back and the dialog opened. */
+    /* One answer, so that "the paper is where it was left" measures something. */
+    /* THE LABEL, NOT THE INPUT. The radio is visually hidden and its box can
+       be nothing, so `click({force:true})` on it lands wherever that box is
+       and React's onChange never fires — the paper read 0/8 with an answer
+       apparently given. A student clicks the option; so does this. */
+    await page.locator(".options .option").first().click();
+    await page.waitForTimeout(400);
+    expect("the answer registered before anything else is tested",
+      (await page.locator(".navigator__title span").textContent()) === "1/8",
+      await page.locator(".navigator__title span").textContent());
+
     await page.goBack();
+    await page.waitForTimeout(600);
+    expect("and survives the Back", (await page.locator(".navigator__title span").textContent()) === "1/8",
+      await page.locator(".navigator__title span").textContent());
     await page.waitForTimeout(600);
     const stayed = (await page.evaluate(() => document.documentElement.dataset.screen)) === "exam";
     const asked = (await page.locator("dialog[open].exam-dialog").count()) === 1;
@@ -463,8 +486,35 @@ try {
       await page.locator("dialog button", { hasText: /Back to exam/i }).click();
       await page.waitForTimeout(300);
     } else {
-      await page.goto(QUIZ_URL);
+      await page.goto(thisPaper);
       await page.locator(".question__text").waitFor({ timeout: 15000 });
+    }
+
+    /* THE ARROW ASKS, AND LEAVING KEEPS THE PAPER. Conflict 5, decided: the
+       arrow stays because an attempt survives leaving and the clock stops
+       with it, but it goes through the same dialog everything else does. */
+    await page.locator(".up").click();
+    await page.waitForTimeout(500);
+    const askedByArrow = (await page.locator("dialog[open].exam-dialog").count()) === 1;
+    expect("the up arrow asks instead of leaving quietly", askedByArrow);
+    if (askedByArrow) {
+      const choices = await page.locator("dialog button").allInnerTexts();
+      expect("and offers three honest choices",
+        choices.join("|") === "Back to exam|Leave it for now|End and mark", choices.join("|"));
+      await page.locator("dialog button", { hasText: /Leave it for now/i }).click();
+      await page.waitForTimeout(1200);
+      expect("leaving puts the bar back and marks nothing",
+        (await page.evaluate(() => document.documentElement.dataset.screen)) === undefined);
+      await page.goto(thisPaper);
+      await page.locator(".question__text").waitFor({ timeout: 15000 });
+      const back = {
+        url: await page.evaluate(() => location.pathname),
+        nav: await page.locator(".navigator__title span").textContent(),
+        result: await page.locator(".result").count(),
+        clock: await page.locator(".exam-timer__value").textContent(),
+      };
+      expect("and the paper is where it was left, unmarked",
+        back.nav === "1/8" && back.result === 0, JSON.stringify(back));
     }
 
     /* The half that would be worse than the bug: a lock that never releases. */

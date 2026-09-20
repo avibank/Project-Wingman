@@ -699,3 +699,33 @@ That is a teaching decision, not an approximation, so it goes in
 `BRIEF-exam-conflicts.md` with the other four rather than being made here.
 What is closed is every exit a student takes *by accident* — which is what was
 actually wrong, and what the check was failing to notice.
+
+### 7 · The exam pack's five conflicts, settled
+
+The owner took two and handed three back (2026-09-20).
+
+| # | | |
+|---|---|---|
+| 1 | Leaderboard | **Build it as drawn** (owner) |
+| 2 | "Go through the paper" | **Kept** — it is the only door to the explanation for every question, the lesson each miss came from, and a paper of only the misses. Three things deleted to satisfy a check about one. |
+| 3 | 20-minute clock | **Taken** (owner). Flat, up to forty questions. |
+| 4 | R1 taken literally | **The scoped copy stands.** Its intent is met exactly; its letter is not, because 128 bare class names would repaint the app — `.mark` alone turns every chapter tick into a circle the moment the exam chunk loads. R1's own check (file added not edited, rules in one file) passes. |
+| 5 | No back arrow | **The arrow stays, and it asks.** |
+
+Conflict 5 is the one worth writing down, because both sides of it were right.
+R4 exists because you should not be able to slip out of an exam without
+noticing. This app's `saveAttempt`/`loadAttempt` and its paused clock exist
+because a student who opens a quiz to look at it should not be punished for
+it. Delete the arrow and the only exit from a mis-tap is a marked nought;
+leave it silent and R4's hole stays open.
+
+So every exit — the arrow, the browser's Back, and End exam — now raises one
+dialog that says what is unanswered and what is flagged, and offers three
+choices: **Back to exam · Leave it for now · End and mark**. Nothing marks a
+paper the student did not mean to hand in, and nothing leaves one without
+being asked.
+
+The cost is stated rather than hidden: `exam-port.check.js` will keep printing
+FAIL on its "no Go through the paper" line, and R4's letter about the arrow is
+not satisfied. Those two are the whole of what this port does not copy.
+

@@ -450,8 +450,21 @@ console.log("\nthe approved screen");
   ok("port", "and the quiz opens on the paper rather than on a cover",
      !/questions · pass mark/.test(page) && !/Back to question/.test(page)
      && !/nextAfterQuiz|nextLabel/.test(page));
+  /* ONE WAY OUT, AND IT NOW ASKS. This used to read `!/Leave/.test(exam)` —
+     the exam itself must offer no exit of its own. It offers exactly one now,
+     inside the end-exam dialog, and the arrow raises that same dialog rather
+     than leaving on its own (R4, conflict 5). So the rule is unchanged in
+     substance: there is one door out of an open paper and everything goes
+     through it. What is asserted is that the exam's own markup carries no
+     OTHER leave control outside the dialog. */
+  /* The CONTROL, not the word — `onLeave` is in the props list, which is
+     outside the dialog and always will be. What must not exist is a second
+     leave button anywhere on the paper. */
+  const leaveControls = [...exam.matchAll(/Leave it for now/g)].length;
   ok("port", "the way out is the module's own back link, and it is the only one",
-     /className="up"/.test(page) && !/Leave/.test(exam));
+     /className="up"/.test(page)
+     && leaveControls === 1
+     && exam.indexOf("Leave it for now") > exam.indexOf("<dialog"));
 
   /* THE LAYOUT READS THE ROOM IT IS GIVEN, not the window: the same exam is
      narrow in a split pane and wide on a laptop. */
@@ -757,6 +770,32 @@ console.log("\nR4 — the paper is locked");
     .filter((f) => /from "[^"]*examLock\.js"/.test(read(f)));
   ok("locked", `the lock has one home and two readers (${holders.length})`,
      holders.length === 2 && /export function lockExam/.test(lock) && /export function unlockExam/.test(lock));
+
+  /* THE ARROW ASKS, RATHER THAN BEING DELETED. R4 says no back arrow; this app
+     keeps the attempt and stops the clock when a paper leaves the screen, so
+     deleting it would make handing in a blank paper the only way out of a quiz
+     opened by mistake. Every exit comes through one dialog instead. */
+  const quizPage = read("src/components/module/QuizPage.jsx");
+  ok("locked", "the up arrow asks while a paper is open, and goes when it is not",
+     /onClick=\{\(\) => \(lock\.locked \? lock\.askEnd\?\.\(\) : onBack\(\)\)\}/.test(quizPage));
+  ok("locked", "and the dialog's third choice leaves without marking",
+     /onLeave=\{onBack\}/.test(quizPage)
+     && /onClick=\{\(\) => \{ dialogRef\.current\?\.close\(\); onLeave\(\); \}\}/.test(exam));
+  /* The button's OWN handler, not two hundred characters of whatever follows
+     it — which is what the first version of this line measured, and it read
+     the props list. */
+  const leaveBtn = exam.match(/onClick=\{\(\) => \{ dialogRef\.current\?\.close\(\); onLeave\(\); \}\}/);
+  ok("locked", "leaving is not handing in — its handler closes and goes, and marks nothing",
+     !!leaveBtn && !/handOver|submit\(/.test(leaveBtn[0]));
+
+  /* CONFLICT 2, DECIDED: the door stays. The pack's check fails a result
+     screen carrying this button, and removing it would delete the only way to
+     the explanation for every question, the lesson each miss came from, and a
+     paper of only the misses — three things, to satisfy a check about one.
+     Asserted so that a later tidy-up cannot quietly satisfy that check by
+     taking the door out. */
+  ok("locked", "\"Go through the paper\" is still the door to the drill",
+     /Go through the paper/.test(exam) && /onClick=\{\(\) => setPhase\("review"\)\}/.test(exam));
 
   /* R1's other half, finally true: the pack's sheet is imported, once. */
   const imports = ["src/components/module/Exam.jsx", "src/App.jsx", "src/components/module/QuizPage.jsx"]
