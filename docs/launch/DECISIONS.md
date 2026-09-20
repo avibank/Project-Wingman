@@ -604,3 +604,60 @@ is still the first thing the function does with a person's data;
     few pixels per row accumulate down a long column.
   · The rest is content the fixture does not pin — chapter statuses ("Part
     way" against "Done"), which are harness progress rather than layout.
+
+## Screen 5 — the lesson page, and the phone order the design does not have
+
+Ported 2026-09-20. `npm run ref:diff lesson` measures **12.85% at 1280, 23.75%
+at 768, 25.55% at 390**, and at 1280 every box matches the design: `.col` 734,
+`.player` 412.9, `aside` 300, all to the pixel. What is left is content the
+fixture cannot pin — the reference's player is a mock with a drawn equation
+where this app has a real `<video>`, its chapter has three lessons to this
+one's two, and its logbook holds different notes.
+
+### 1 · The page is in the ordinary column now
+
+The lesson route was `content--full`, out of the 1100px reading column so the
+player could be bigger. The reference draws it in the same column as every
+other screen, so that is where it is — and the player is what gives.
+
+### 2 · Three of this app's own rules were still reaching it
+
+  · **`.mscreen .lesson`** — an older two-column grid with a 330px rail, a 44px
+    gap and `var(--pad)` a side. It took 60px off the column: 674 against the
+    design's 734.
+  · **`.lesson`** as the page wrapper's own name, which is the grid's name in
+    the reference. The wrapper is `.lessonpage`.
+  · **`.watch`**'s named-area grid, which the markup no longer renders.
+
+### 3 · On a phone, Up next stays ahead of the thread
+
+This is the one place the port does not follow the design. The reference's
+phone rule stacks `.col` — player, title, logbook — and then the aside, which
+puts Up next underneath the whole conversation. Its demo has three lessons and
+two comments, where that costs nothing; a real chapter under a real thread
+buries the page's own navigation, and Up next is how you leave a lesson.
+
+`.col` stops being a box below 860 and its children become grid items in their
+own right, so the four can be ordered: player, title, up next, logbook.
+Nothing is re-styled, only re-ordered, and above 860 the reference's own
+two-column rule is untouched. `tests/lesson-run.mjs` asserts the order at 800
+and 390 — it always did; the assertion is why this was caught.
+
+### 4 · Two live defects found with the owner's own browser
+
+Neither showed in the harness, and both were found by pressing controls on
+wingman.institute rather than by reading:
+
+  · **The cover picker rendered inline at the foot of the page** — a bare close
+    button 1,600px down, with `position: static` on the scrim and the sheet,
+    so pressing Cover looked like nothing happening. The reference's picker
+    rules are `.ref-lic .scrim`, `.ref-lic .sheet`, `.ref-lic .pick`, and the
+    pickers mount beside the licence panel's boxes rather than inside them, so
+    every one of them missed. `Sheet.jsx` carries its own `.ref-lic` wrapper
+    now — a picker cannot lose its scope wherever it is mounted. (The first
+    attempt put both classes on ONE element, which is a descendant selector
+    matching nothing.)
+  · **The Crew tab was blank while it loaded** — `return <div aria-busy>` with
+    nothing in it, for the length of a real round trip. It is the empty state's
+    own ghost rows now: the same picture, claiming nothing, so it cannot be
+    wrong in the half second before the answer lands.

@@ -22,6 +22,34 @@ const GHOST = [
   ["Chapter 3", "who is ahead of you"],
 ];
 
+/* THE SHAPE IT WILL TAKE, DRAWN FAINT — and it is worth twice, so it is a
+   component. The empty state uses it to say what Crew will look like; the
+   panel uses it while the answer is still coming, because the alternative
+   was a div with nothing in it: the tab was blank for as long as the round
+   trip took, which on the live site reads as a tab that does not work. It
+   says nothing either way, so it cannot say the wrong thing in the half
+   second before the answer lands.
+
+   aria-hidden because it is a PICTURE of a list rather than a list — a screen
+   reader reading three chapters with no people in them would be describing
+   nothing. */
+export function CrewGhost() {
+  return (
+    <div className="ce-ghost" aria-hidden="true">
+      {GHOST.map(([chapter, what]) => (
+        <div className="ce-row" key={chapter}>
+          <div><b>{chapter}</b><span>{what}</span></div>
+          <div className="ce-faces">
+            {[0, 1, 2].map((n) => (
+              <span className="ce-face" key={n} style={{ animationDelay: `${n * 0.12}s` }} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CrewEmpty({ moduleName = "this module", onFind, onInvite }) {
   return (
     <div className="cempty">
@@ -34,21 +62,7 @@ export default function CrewEmpty({ moduleName = "this module", onFind, onInvite
         </p>
       </div>
 
-      {/* The shape it will take, drawn faint. aria-hidden because it is a
-          picture of a list rather than a list — a screen reader reading three
-          chapters with no people in them would be describing nothing. */}
-      <div className="ce-ghost" aria-hidden="true">
-        {GHOST.map(([chapter, what]) => (
-          <div className="ce-row" key={chapter}>
-            <div><b>{chapter}</b><span>{what}</span></div>
-            <div className="ce-faces">
-              {[0, 1, 2].map((n) => (
-                <span className="ce-face" key={n} style={{ animationDelay: `${n * 0.12}s` }} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <CrewGhost />
 
       <div className="ce-do">
         <button type="button" className="pill pri" onClick={onFind}>Find a squadron</button>

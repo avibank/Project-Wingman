@@ -14,6 +14,7 @@ import {
 import { logEntries, filterLog } from "../../lib/lessonLog.js";
 import "./module.css";
 import "./lesson.css";
+import "./ref-lesson.css";
 import "./familiar.css";
 import { useUserProgress } from "../../lib/userProgress.jsx";
 import { FLY_SOLO_KEY } from "../../lib/flySolo.js";
@@ -189,7 +190,9 @@ export default function LessonPage({
   };
 
   return (
-    <div className="mscreen lesson">
+    /* `.lessonpage`, not `.lesson` — `.lesson` is the reference's GRID inside
+       this wrapper, and lesson.css's own page rules had the same name. */
+    <div className="mscreen lessonpage ref-les">
       {/* Up, not history. Tap a question in People and land here: history-back
           returns you to People, up takes you to the module. Up is predictable,
           cannot loop, and doubles as the breadcrumb this page was missing —
@@ -209,17 +212,25 @@ export default function LessonPage({
           around 800px down and the thing students came to write in lives below
           the fold. The areas are named, so the arrangement can be swapped
           again without touching the components. */}
-      <div className="watch" data-layout="b" data-ref="lesson">
-      <div className="pl">
+      {/* THE REFERENCE'S OWN GRID: `minmax(0,1fr) 300px`, with the player, the
+          title and the logbook card stacked in `.col` and up next as an
+          `aside` beside them. It was a named-area grid of `.pl`, `.mt`, `.sd`
+          and `.pn` inside a full-width `main` — the same arrangement under
+          different names, 84px wider, and with none of the design's spacing.
+          The aside is still sticky (lesson.css), so the list stays with you
+          while the comments scroll past. */}
+      <div className="lesson" data-ref="lesson">
+      <div className="col">
+      <div className="player">
         {/* An empty sized box. Never move the video node into it. */}
         <div className="player-slot" ref={slotRef} />
       </div>
 
-      <div className="mt lesson-head">
+
+      <div className="title-row">
         {/* §3.3 — the title and the sign-off share a line, the stamp
             right-aligned with no words beside it. It writes the same one
             boolean the 90%-watched rule writes: one flag, two writers. */}
-        <div className="titlerow">
           <h1 className="lesson-name">{lesson.title}</h1>
           {/* THERE IS ONE BOOKMARK ON THIS PAGE, AND IT IS IN THE PLAYER BAR.
               A second one sat here beside the sign-off — the same control,
@@ -242,7 +253,6 @@ export default function LessonPage({
               }
             }}
           />
-        </div>
         {/* The chapter-and-watchers line that sat here is gone. The chapter is
             already named on the up-next rail and in the breadcrumb above the
             player, so it was a third statement of the same fact, and the
@@ -255,67 +265,8 @@ export default function LessonPage({
             rather than a scroll below the second they refer to. */}
       </div>
 
-      <div className="sd sdcard" data-open={listOpen ? "true" : "false"}>
 
-        {/* §4 — the video list. On a phone it is COLLAPSED by default showing
-            only the next item, because expanded it pushes the notes and
-            comments down and defeats the point of putting them beside the
-            video in the first place. The toggle only exists at that width. */}
-        <div className="sdhead" data-hides={hiddenCount > 0 ? "1" : undefined}>
-          <span className="sdtitle">{chapter.title}</span>
-          <button type="button" className="sdtoggle"
-                  aria-expanded={listOpen ? "true" : "false"}
-                  onClick={() => setListOpen((v) => !v)}>
-            {listOpen ? "Fewer" : `${hiddenCount} more`}
-            <ChevronLeft aria-hidden="true" />
-          </button>
-        </div>
-        <ul className="sdlist">
-          {(chapter.lessons || []).map((l) => {
-            const isHere = l.id === lesson.id;
-            const isNext = next?.lesson?.id === l.id;
-            return (
-              <li key={l.id}>
-                <button type="button" className="sditem"
-                        data-here={isHere ? "1" : undefined}
-                        data-next={isNext ? "1" : undefined}
-                        aria-current={isHere ? "true" : undefined}
-                        onClick={() => onOpenLesson(chapter, l)}>
-                  <span className="sdname">{l.title}</span>
-                  {isHere && <span className="sdnow">Playing</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-
-        {/* ONLY WHEN IT IS NOT ALREADY IN THE LIST ABOVE. The rail lists this
-            chapter's lessons, so when the next one is in this chapter this row
-            repeated a line the eye had just read — "Lesson 2" listed, then
-            "NEXT Lesson 2" underneath it. It earns its place when the next
-            thing is in a DIFFERENT chapter, which the list cannot show. */}
-        {(!next || next.chapter?.id !== chapter.id) && (
-        <div className="next-up">
-          {next ? (
-            <>
-              <span className="next-label">Next</span>
-              <a className="next-title" href="#next"
-                 onClick={(e) => {
-                   e.preventDefault();
-                   if (next.kind === "quiz") onOpenQuiz(next.chapter);
-                   else onOpenLesson(next.chapter, next.lesson);
-                 }}>{nextLabel(next)}</a>
-              <span className="next-meta">{nextWhere(next)}</span>
-            </>
-          ) : <span className="next-label">Last in this module</span>}
-        </div>
-        )}
-
-      </div>
-
-      {/* §3.1 — the panel: one column beside the video, sticky, so the tabs
-          stay put while the list under them scrolls. */}
-      <div className="pn">
+      <div className="card logcard">
         {/* Presence, and the face. WhatsApp's "last seen" and Netflix's
             "continue watching" — the most familiar signal that other humans
             exist in a piece of software, and the only one that works with zero
@@ -332,22 +283,22 @@ export default function LessonPage({
             strip, and it was most of what pushed the panel down the page. The
             tab strip is the top of this card now. */}
 
-        <div className="ltabs" role="tablist" aria-label="Logbook and comments" ref={ltabsRef}>
-          <button type="button" className="ltab" role="tab" aria-selected={tab === "notes"}
+        <div className="tabs" role="tablist" aria-label="Logbook and comments" ref={ltabsRef}>
+          <button type="button" className="tab" role="tab" aria-selected={tab === "notes"}
                   onClick={() => setTab("notes")}>
             <span className="tab-pill" aria-hidden="true" />
-            Logbook {entries.length > 0 && <span className="ltab-n">{entries.length}</span>}
+            Logbook {entries.length > 0 && <small>{entries.length}</small>}
           </button>
-          <button type="button" className="ltab" role="tab" aria-selected={tab === "comments"}
+          <button type="button" className="tab" role="tab" aria-selected={tab === "comments"}
                   onClick={() => setTab("comments")}>
             <span className="tab-pill" aria-hidden="true" />
-            Comments {comments.length > 0 && <span className="ltab-n">{comments.length}</span>}
+            Comments {comments.length > 0 && <small>{comments.length}</small>}
           </button>
 
           {/* §3.3/§3.5 — Export lives in the notes header. There is no overflow
               menu: three items behind a menu is three items nobody finds. */}
           {tab === "notes" && entries.length > 0 && (
-            <button type="button" className="ltab-act"
+            <button type="button" className="link"
                     onClick={() => downloadLog(lesson.title, filterLog(entries, logFilter))}>
               Export
             </button>
@@ -417,6 +368,66 @@ export default function LessonPage({
                          pending={pending} postOptimistic={postOptimistic} me={me} />}
         </div>
       </div>
+
+      </div>
+
+      <aside className="card next" data-open={listOpen ? "true" : "false"}>
+
+        {/* §4 — the video list. On a phone it is COLLAPSED by default showing
+            only the next item, because expanded it pushes the notes and
+            comments down and defeats the point of putting them beside the
+            video in the first place. The toggle only exists at that width. */}
+        <div className="next-h" data-hides={hiddenCount > 0 ? "1" : undefined}>
+          <b>{chapter.title}</b>
+          <button type="button" className="tog"
+                  aria-expanded={listOpen ? "true" : "false"}
+                  onClick={() => setListOpen((v) => !v)}>
+            {listOpen ? "Fewer" : `${hiddenCount} more`}
+            <ChevronLeft aria-hidden="true" />
+          </button>
+        </div>
+        <ol>
+          {(chapter.lessons || []).map((l) => {
+            const isHere = l.id === lesson.id;
+            const isNext = next?.lesson?.id === l.id;
+            return (
+              <li key={l.id}>
+                <button type="button" className="nx"
+                        data-here={isHere ? "1" : undefined}
+                        data-next={isNext ? "1" : undefined}
+                        aria-current={isHere ? "true" : undefined}
+                        onClick={() => onOpenLesson(chapter, l)}>
+                  <span className="t">{l.title}</span>
+                  {isHere && <span className="now">Playing</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+
+        {/* ONLY WHEN IT IS NOT ALREADY IN THE LIST ABOVE. The rail lists this
+            chapter's lessons, so when the next one is in this chapter this row
+            repeated a line the eye had just read — "Lesson 2" listed, then
+            "NEXT Lesson 2" underneath it. It earns its place when the next
+            thing is in a DIFFERENT chapter, which the list cannot show. */}
+        {(!next || next.chapter?.id !== chapter.id) && (
+        <div className="next-up">
+          {next ? (
+            <>
+              <span className="next-label">Next</span>
+              <a className="next-title" href="#next"
+                 onClick={(e) => {
+                   e.preventDefault();
+                   if (next.kind === "quiz") onOpenQuiz(next.chapter);
+                   else onOpenLesson(next.chapter, next.lesson);
+                 }}>{nextLabel(next)}</a>
+              <span className="next-meta">{nextWhere(next)}</span>
+            </>
+          ) : <span className="next-label">Last in this module</span>}
+        </div>
+        )}
+
+      </aside>
 
       </div>
     </div>

@@ -1870,9 +1870,15 @@ function AppInner() {
           const chs = chaptersFor(activeModuleCode, useTestContent);
           const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
           const ls = ch?.lessons.find((l) => l.id === route.lessonId) || ch?.lessons[0];
-          if (!ch || !ls) return <main className="content content-taxi content--full" />;
+          if (!ch || !ls) return <main className="content content-taxi" />;
+          /* THE LESSON PAGE IS IN THE ORDINARY COLUMN NOW. It was
+             `content--full`, which took it out of the 1100px reading column so
+             the player could be bigger; the reference draws it in the same
+             column as every other screen — 1056px of content, a
+             minmax(0,1fr) + 300px grid inside it — and the player is what
+             gives. See docs/launch/DECISIONS.md. */
           return (
-            <main className="content content-taxi content--full">
+            <main className="content content-taxi">
               {/* onComplete is the 90% half of the completion rule; the manual
                   half writes the same flag. One rule, because the lights, the
                   chapter state, the counts and the Flight Deck all read it. */}

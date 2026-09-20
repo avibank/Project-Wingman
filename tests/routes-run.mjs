@@ -116,7 +116,7 @@ const run = async () => {
      selected tab, and what is on screen. */
   for (const [where, path, sel] of [
     ["the module screen", "/m/m1", ".mscreen [role=tab]"],
-    ["the lesson", "/m/m1/M1.01/lesson/M1.01.1", ".ltabs [role=tab]"],
+    ["the lesson", "/m/m1/M1.01/lesson/M1.01.1", ".logcard [role=tab]"],
     ["the licence", "/account/licence", ".tabs [role=tab]"],
   ]) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });

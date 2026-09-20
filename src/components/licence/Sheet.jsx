@@ -16,6 +16,7 @@
    it off would leave a picker you could see and not press.
    ========================================================================= */
 import { useEffect } from "react";
+import "./ref-licence.css";
 
 /* Escape closes it. Every one of these is a choice about the card behind it,
    and a dialog you can only leave by aiming at a 32px corner is one a keyboard
@@ -34,6 +35,23 @@ export default function Sheet({ label, onClose, children }) {
   useEscape(onClose);
 
   return (
+    /* `.ref-lic` ON A WRAPPER ROUND THE SHEET, not on whatever happens to be
+       around it, and not on the scrim itself — these are DESCENDANT selectors
+       (`.ref-lic .scrim`), so the class has to be on an ancestor. Putting both
+       on one element was the first attempt and matched nothing.
+       The reference's picker rules are `.ref-lic .scrim`, `.ref-lic .sheet`,
+       `.ref-lic .pick`, `.ref-lic .pal` — every one of them needs that class
+       on an ancestor. The licence PANEL carries it, but a picker renders
+       beside the panel's boxes rather than inside them, so every rule missed:
+       `.scrim` and `.sheet` fell back to `position: static` and the whole
+       picker laid itself out inline at the foot of the page, 1,600px down,
+       as a bare close button with invisible content. Pressing Cover looked
+       like nothing happening.
+
+       Here it cannot be lost: a picker carries its own scope wherever it is
+       mounted. Seen on the live site, not in the harness — in the harness the
+       pickers happened to mount inside the panel. */
+    <div className="ref-lic">
     <div className="scrim open" role="dialog" aria-modal="true" aria-label={label}
          onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}>
       <div className="sheet">
@@ -47,6 +65,7 @@ export default function Sheet({ label, onClose, children }) {
           {children}
         </div>
       </div>
+    </div>
     </div>
   );
 }

@@ -31,7 +31,7 @@ import { stampTilt } from "../../lib/stamp.js";
 import { initials, hueFor } from "../../lib/familiar.js";
 import "./crew.css";
 import "./ref-module.css";
-import CrewEmpty from "./CrewEmpty.jsx";
+import CrewEmpty, { CrewGhost } from "./CrewEmpty.jsx";
 
 /* One face. `on` is a live presence dot; `mate` is the teal ring.
  *
@@ -82,7 +82,19 @@ export default function CrewTab({ crew = null, moduleName, chapters = [], me, my
     return q ? all.filter((p) => `${p.name} ${p.callsign || ""}`.toLowerCase().includes(q)) : all;
   }, [crew, query]);
 
-  if (!crew) return <div className="crew ref-mod crew-wait" aria-busy="true" />;
+  /* WAITING IS NOT NOTHING. This was an empty div with `aria-busy` on it —
+     invisible, no height — so for the length of a real round trip the Crew tab
+     was a blank panel. Seen on the live site rather than in the harness, where
+     the fixture answers instantly. The ghost rows are the same picture the
+     empty state draws and they claim nothing, so they cannot be wrong in the
+     half second before the answer arrives. */
+  if (!crew) {
+    return (
+      <div className="crew ref-mod" aria-busy="true">
+        <div className="cempty"><CrewGhost /></div>
+      </div>
+    );
+  }
 
   /* FLY SOLO IS SYMMETRIC, and this is what it looks like from the inside:
      the tab says so plainly rather than pretending the module is empty. */

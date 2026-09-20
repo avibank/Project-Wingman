@@ -84,7 +84,9 @@
      back arrow  →  lesson name  →  player  →  what comes next  →  Notes | Comments
    ========================================================================= */
 
-.lesson{ padding-block: 18px calc(64px + var(--mini-h, 0px)); }
+/* `.lessonpage`, because `.lesson` is the reference's grid inside it now and
+   a bare rule of that name reached straight through. */
+.lessonpage{ padding-block: 18px calc(64px + var(--mini-h, 0px)); }
 
 /* -- going back ----------------------------------------------------------- */
 /* The label is the destination, never the word "Back". A bare arrow makes you
@@ -1163,3 +1165,32 @@
 .watch .sditem{ padding: 8px 10px; gap: 12px; }
 .watch .sdname{ font-size: 13.5px; }
 .watch .sdlist{ gap: 1px; }
+
+/* =============================================================================
+   ON A PHONE, UP NEXT STAYS AHEAD OF THE THREAD.
+   -----------------------------------------------------------------------------
+   The reference's own phone rule is `.lesson{grid-template-columns:1fr}`, which
+   stacks `.col` — player, title, logbook — and then the aside, so Up next ends
+   up underneath the whole conversation. Its demo has three lessons and two
+   comments, where that costs nothing; a real chapter under a real thread buries
+   the page's own navigation, and Up next is how you leave a lesson.
+
+   `.col` stops being a box at that width and its children become grid items in
+   their own right, so the four can be ordered: player, title, up next, logbook.
+   Nothing is re-styled — only re-ordered — and above 860 the reference's own
+   two-column rule is untouched. tests/lesson-run.mjs asserts the order at 800
+   and 390.
+   ========================================================================= */
+@media (max-width: 860px){
+  /* `.mscreen.lessonpage` — ONE element carrying both classes, no space.
+     With a space it asks for a `.lessonpage` inside an `.mscreen` and matches
+     nothing, which is how this rule did nothing at all the first time. The
+     second class is there for weight: the reference's own `.ref-les .col` is
+     (0,2,0) and its sheet loads after this one, so at equal weight it wins on
+     source order and `.col` stayed a flex column. */
+  .mscreen.lessonpage .col{ display: contents; }
+  .mscreen.lessonpage .player{ order: 1; }
+  .mscreen.lessonpage .title-row{ order: 2; }
+  .mscreen.lessonpage .next{ order: 3; }
+  .mscreen.lessonpage .logcard{ order: 4; }
+}

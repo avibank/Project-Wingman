@@ -19,7 +19,7 @@
 | 15 | low | Module | Lesson thumbnails render as empty grey boxes. | **fixed** — the reference's `.th`: a lit 16/9 panel, hairlined, angled per lesson, with an accent bar for how far in you are. A real frame from the lesson's own video goes on top where CORS allows one. | screen 4 |
 | 16 | low | Licence | The three stats cluster to the left instead of spreading end to end. | **fixed** — the reference's three-column `.stats`, 440px wide and centred | screen 2 |
 
-| 17 | — | Lesson | **Not ported.** The lesson page is still this app's layout, not the reference's. Measured with the harness: 27.01% at 1280, 32.40% at 768, 37.28% at 390. See docs/launch/SESSION-REPORT.md for exactly what it needs and why it was left rather than half-done. | open | |
+| 17 | — | Lesson | **Not ported.** The lesson page is still this app's layout, not the reference's. | **fixed** — ported 2026-09-20: the reference's `.lesson` grid, `.col`, `.player`, `.title-row`, `.card.logcard` and `aside.card.next`, in the ordinary 1056px column. ref:diff 12.85% / 23.75% / 25.55%; the geometry matches at 1280 to the pixel and the rest is content the fixture cannot pin (a drawn board against a real video). | screen 5 |
 
 Severity: high = blocks use or loses data; medium = wrong behaviour with a workaround;
 low = cosmetic.

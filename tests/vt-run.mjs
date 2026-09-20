@@ -339,9 +339,9 @@ async function main() {
   await page.locator(".chead").first().click();
   await page.waitForTimeout(500);
   await step("Module → Lesson", click(".kids .item[data-lesson]"), { names: ["wg-content"] });
-  await step("Lesson: Notes → Comments", click(".ltab", { hasText: "Comments" }), { none: true, moved: ["tab-pill", "ltab-body"] });
-  await step("Lesson: Comments → Notes", click(".ltab", { hasText: "Notes" }), { none: true, moved: ["tab-pill", "ltab-body"] });
-  await step("Lesson → next in its list", click(".sdlist .sditem:not([aria-current])"), { names: ["wg-tabpanel", "wg-player"] });
+  await step("Lesson: Notes → Comments", click(".logcard .tab", { hasText: "Comments" }), { none: true, moved: ["tab-pill", "ltab-body"] });
+  await step("Lesson: Comments → Notes", click(".logcard .tab", { hasText: "Logbook" }), { none: true, moved: ["tab-pill", "ltab-body"] });
+  await step("Lesson → next in its list", click(".next .nx:not([aria-current])"), { names: ["wg-tabpanel", "wg-player"] });
   await step("Lesson → breadcrumb", click(".up"), { names: ["wg-content"] });
 
   /* ---- Avatar → Bookmarks → Licence → Preferences → Appearance ----

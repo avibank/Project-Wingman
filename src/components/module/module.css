@@ -202,7 +202,11 @@
 .mscreen .endnote{padding:34px var(--pad) 40px;font-size:14.5px;color:var(--t3);border-top:1px solid var(--hair)}
 
 /* — lesson — */
-.mscreen .lesson{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:44px;padding:6px var(--pad) 0}
+/* THE OLD TWO-COLUMN LESSON GRID IS GONE. `.lesson` is the reference's grid
+   now — `minmax(0,1fr) 300px`, gap 22, no padding of its own — and this one
+   was still reaching it: a 330px rail, a 44px gap and `var(--pad)` a side,
+   which took 60px off the column and left it 674 against the design's 734.
+   Nothing else rendered it. */
 .mscreen .scrub{display:flex;align-items:center;gap:16px;padding:16px 2px 0}
 .mscreen .track{position:relative;flex:1;height:4px;border-radius:999px;background:var(--line)}
 .mscreen .track i{position:absolute;left:0;top:0;bottom:0;background:var(--active);border-radius:999px}
@@ -373,7 +377,8 @@
 
   /* A lesson stacks: player, then what it covers, then the questions. Trying
      to fit two panes on a phone is where this design would actually break. */
-  .mscreen .lesson { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  /* The reference stacks it at 860 with its own rule; this one stacked at 767
+     with a different gap and fought it. */
 
   /* People is a drill-down on a phone, not a squeezed two-pane. The list is
      the page; opening a row is a page of its own. */

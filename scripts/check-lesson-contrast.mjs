@@ -53,7 +53,7 @@ const SELECTORS = [
   { sel: ".lwho", token: "--t3", note: "who asked, and whether it is waiting" },
   { sel: ".lwho[answered]", token: "--active-text", note: "answered, in the accent" },
   { sel: ".next-label", token: "--t3", note: "the word Next" },
-  { sel: ".ltab", token: "--t3", note: "the unselected tab" },
+  { sel: ".logcard .tab", token: "--t3", note: "the unselected tab" },
   { sel: ".compose-who", token: "--active-text", note: "who sees this — public compose" },
   // Added by the 29 August revision: the back arrow, on every screen but
   // the Flight Deck, and the note bar's own field.

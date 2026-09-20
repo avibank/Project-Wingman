@@ -94,7 +94,7 @@ const reset = async () => {
    minutes, and one short enough to be quick is a test that flakes. */
 const openLesson = async (page) => {
   await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-  await page.waitForSelector(".watch .lesson-name", { timeout: 20000 });
+  await page.waitForSelector(".lesson .lesson-name", { timeout: 20000 });
   await page.waitForSelector(".lgbook", { timeout: 20000 });
 };
 
@@ -148,14 +148,20 @@ const run = async () => {
     if (!(i("Stamp this moment") < i("Ask about this moment") && i("Ask about this moment") < i("Full screen"))) {
       problems.push(`bar order is ${order.filter(Boolean).join(" · ")}`);
     }
-    /* §3 — "the title, Save … and the sign-off stamp", on one line. */
-    const row = await page.locator(".titlerow").evaluate((el) => ({
+    /* §3 — the title and the sign-off stamp, on one line. `.title-row` is the
+       reference's name for it (12-lesson-page.css); it was `.titlerow`.
+
+       SAVE IS NOT ON THIS ROW ANY MORE. There were two bookmark buttons on the
+       lesson — one here beside the sign-off and one in the player's control
+       bar — and the design has one, in the bar, on the thing it acts on. So
+       what is asserted is that the row holds the title and the seal, and that
+       the bar holds the bookmark, which the order check above already walks. */
+    const row = await page.locator(".title-row").evaluate((el) => ({
       title: !!el.querySelector(".lesson-name"),
-      save: !!el.querySelector(".titlerow-save"),
       seal: !!el.querySelector(".signoff, .stamp, [class*=signoff]"),
       kids: [...el.children].map((c) => Math.round(c.getBoundingClientRect().top)),
     }));
-    if (!row.title || !row.save) problems.push("the title row is missing the title or Save");
+    if (!row.title || !row.seal) problems.push("the title row is missing the title or the sign-off");
     if (new Set(row.kids).size > 1 && Math.max(...row.kids) - Math.min(...row.kids) > 14) {
       problems.push(`the title row is not one line: tops ${row.kids.join(",")}`);
     }
@@ -217,7 +223,7 @@ const run = async () => {
        second than the note above — at the same one the two merge into a single
        mark, which is §8's rule and is tested on its own below. */
     if (live) await seekTo(page, 0.62);
-    const comments = await page.locator('[role="tab"]:has-text("Comments") .ltab-n').textContent().catch(() => "0");
+    const comments = await page.locator('[role="tab"]:has-text("Comments") small').textContent().catch(() => "0");
     await page.locator('[aria-label="Ask about this moment"]').click();
     await page.waitForSelector('.nbar[data-kind="ask"]');
     const violet = await page.locator(".nbar-handle").evaluate((el) => getComputedStyle(el).color);
@@ -238,7 +244,7 @@ const run = async () => {
       if (!shape.rot) problems.push("the Ask mark is not a diamond");
       if (!shape.bg.includes("295")) problems.push(`the Ask mark is ${shape.bg}, not violet`);
     }
-    const after2 = await page.locator('[role="tab"]:has-text("Comments") .ltab-n').textContent().catch(() => "0");
+    const after2 = await page.locator('[role="tab"]:has-text("Comments") small').textContent().catch(() => "0");
     if (Number(after2) !== Number(comments) + 1) problems.push(`the Ask did not reach the module's threads: ${comments} then ${after2}`);
 
     /* Hovering shows what the mark says. */
@@ -332,7 +338,7 @@ const run = async () => {
 
     /* Export produces a real file. */
     const dl = page.waitForEvent("download", { timeout: 5000 });
-    await page.locator(".ltab-act").click();
+    await page.locator(".logcard .link").click();
     const file = await dl.catch(() => null);
     if (!file) problems.push("Export downloaded nothing");
     else if (!/logbook\.txt$/.test(file.suggestedFilename())) {
@@ -382,15 +388,15 @@ const run = async () => {
       const r = el.getBoundingClientRect();
       return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) };
     });
-    const [side, panel, player] = await Promise.all([box(".watch .sd"), box(".watch .pn"), box(".watch .pl")]);
+    const [side, panel, player] = await Promise.all([box(".lesson .next"), box(".lesson .logcard"), box(".lesson .player")]);
     if (w >= 861) {
       /* Two columns: Up next beside the player, not under it. */
       if (side.x <= player.x + 10) problems.push(`${w}px: Up next is not a second column (x ${side.x} vs ${player.x})`);
       if (side.y > panel.y) problems.push(`${w}px: Up next starts below the Logbook`);
-      const collapses = await page.locator(".sdhead").evaluate((el) => {
+      const collapses = await page.locator(".next-h").evaluate((el) => {
         const had = el.getAttribute("data-hides");
         el.setAttribute("data-hides", "1");
-        const shown = getComputedStyle(el.querySelector(".sdtoggle")).display !== "none";
+        const shown = getComputedStyle(el.querySelector(".tog")).display !== "none";
         if (had === null) el.removeAttribute("data-hides"); else el.setAttribute("data-hides", had);
         return shown;
       });
@@ -405,10 +411,10 @@ const run = async () => {
          The rule under test is the BREAKPOINT, so the flag is set here and the
          toggle asked whether it appears. Marking it is what the page does when
          a chapter is longer than two. */
-      const collapses = await page.locator(".sdhead").evaluate((el) => {
+      const collapses = await page.locator(".next-h").evaluate((el) => {
         const had = el.getAttribute("data-hides");
         el.setAttribute("data-hides", "1");
-        const shown = getComputedStyle(el.querySelector(".sdtoggle")).display !== "none";
+        const shown = getComputedStyle(el.querySelector(".tog")).display !== "none";
         if (had === null) el.removeAttribute("data-hides"); else el.setAttribute("data-hides", had);
         return shown;
       });
@@ -417,7 +423,7 @@ const run = async () => {
     /* Nothing sideways, at any width. */
     const over = await page.evaluate(() => {
       const bad = [];
-      const root = document.querySelector(".watch");
+      const root = document.querySelector(".lesson");
       const rb = root.getBoundingClientRect();
       root.querySelectorAll("*").forEach((el) => {
         const r = el.getBoundingClientRect();
