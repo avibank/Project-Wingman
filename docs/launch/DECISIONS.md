@@ -729,3 +729,28 @@ The cost is stated rather than hidden: `exam-port.check.js` will keep printing
 FAIL on its "no Go through the paper" line, and R4's letter about the arrow is
 not satisfied. Those two are the whole of what this port does not copy.
 
+### 8 · Two places the licence card deliberately leaves the reference
+
+Both were asked for twice, and neither is recorded anywhere a diff would find
+it — so the licence's ref-diff went from **0.23%** to **8.05%** and reads as a
+regression. It is not one.
+
+* **"Create your stamp" is below the seal, not on it.** The reference draws
+  `.ghost b` absolutely positioned over the artwork (`.sblock` 162px); this
+  app stacks them (203px). The whole 82px of the diff at ×2 is that one box.
+* **The Cover button is top-right of the banner.** The reference's `.cvbtn`
+  sits `left:12px;top:12px`; ADMIN takes the left here instead.
+
+Both are commented where they are made, at the foot of `licence.css`. The
+reference is no longer the target for those two details, so the 1% bar does
+not apply to this screen without subtracting them first.
+
+### 9 · The Logbook is behind a flag, and the flag stays off
+
+`page.logbook` is off, and this pass did not turn it on. What changed under it
+is real — no streak tile, no fabricated fortnight, and chapter counts that
+come from what the app actually serves rather than data.js's skeleton — and it
+was measured by turning the flag on, looking, and turning it off again. The
+page still has no door in the app. That is deliberate and is not a defect; it
+is on the backlog rather than in it.
+

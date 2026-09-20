@@ -60,3 +60,24 @@ found by measuring rather than by reading, and every decision taken alone.
 `docs/launch/DECISIONS.md` carries the arguments; `docs/launch/BUGS.md` rows
 1-16 are closed and row 17 is the lesson page.
 
+---
+
+## 2026-09-20 — the pause, R4, and the exam pack settled
+
+| Item | Status |
+|---|---|
+| **The papers reader, paused** | **live** — one build-time boolean, `VITE_PAPERS_READER`. No file, row, table or column deleted; no migration. `docs/launch/PAUSE-READER.md` is the survey and the report. `check:paused` is 22 assertions in the gate. |
+| **R4 — the paper is locked** | **live** — the app bar drops the Ready Room pill and the profile menu over an open paper; the wordmark stops being a button; the browser's Back and the module's arrow both raise the end-exam dialog. `exam-port.check.js` had reported all three as PASS because it asks inside `.exam-page`, which did not exist. |
+| **A flat twenty-minute clock** | done, in this branch |
+| **No streaks** | done — the tile, the fortnight of dots derived from it, and both keys |
+| **The Logbook was counting the wrong app** | fixed — it read data.js's 20 skeleton chapters while the app serves 12, and its Debrief listed nothing at all for anybody |
+| **The leaderboard** | done — migration 0034 run and verified against the live project, `check:board-db` 20 assertions over the anon path |
+
+The exam pack's five conflicts are all settled: `BRIEF-exam-conflicts.md` says
+which way each went and why. Two things in that pack are knowingly not copied,
+and they are the only two — `exam-port.check.js`'s "no Go through the paper"
+line, and R4's letter about the back arrow.
+
+The reference diffs were re-measured the same day; the numbers, and the two
+screens whose numbers no longer mean what they did, are in SESSION-REPORT.md.
+
