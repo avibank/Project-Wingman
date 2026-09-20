@@ -175,14 +175,18 @@ merge them back together.
   with the pick struck through and the right answer after it, and the ones you
   got right folded away. The pass mark is **fixed at 75%** and decides pass or
   not-yet; the student's own bar only changes the wording and adds a marker.
-- **"Going through the paper" is one button further in**, and it is the drill's
-  screen rather than the exam's: the explanation for every question, the lesson
-  each miss came from (joined on `lessonId`, never on resemblance), and a paper
-  of only the misses. The port dropped it, because the approved result screen
-  lists no such control; it is back on request, as a screen of its own so the
-  score keeps the shape the design gave it. A retake of the misses has its own
-  quiz id and is handed no `onDone` — it is a drill, and must never write a
-  score over the sitting it came from.
+- **"Going through the paper" has no door on it** (2026-09-21). The screen is
+  the drill's rather than the exam's — the explanation for every question, the
+  lesson each miss came from (joined on `lessonId`, never on resemblance), and
+  a paper of only the misses, whose retake has its own quiz id and is handed no
+  `onDone` so it can never write a score over the sitting it came from. All of
+  that still works and is reached from nothing: the button stood on the result
+  screen and the owner asked for it out, which is also what
+  `exam-port.check.js` asks for. Same state as "Put right", and one button
+  anywhere puts either back. The cost is that no walk can reach it, so
+  `check:exam` holds it at the source instead. The result keeps the correction
+  itself — every miss with the pick struck through and the right answer after
+  it — which never depended on the door.
 - `npm run check:exam` is 145 assertions, including contrast for all six
   liveries × three finishes × night and day. `npm run test:exam` drives the
   screen in a real browser: 108 layouts, every control in the brief's table,

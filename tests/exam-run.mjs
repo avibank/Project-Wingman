@@ -365,17 +365,15 @@ try {
     const foot = page.locator(".result__foot .btn", { hasText: /Try again|Retake/ });
     expect("a paper under the pass mark offers Try again", (await foot.textContent()) === "Try again");
 
-    /* One step further in: the explanation, the lesson a miss came from, and a
-       paper of only the misses. It is a screen of its own behind one button,
-       so the result keeps the shape the design gave it. */
-    await page.locator(".result__foot .btn", { hasText: "Go through the paper" }).click();
-    await settle(400);
-    expect("Go through the paper opens it", (await page.locator(".quiz-name").textContent()) === "Going through it");
-    expect("it explains what was missed", (await page.locator(".q-rev-explain").count()) > 0);
-    expect("names the lesson each miss came from", (await page.locator(".q-weak-row").count()) > 0);
-    expect("and offers the way back to that lesson", (await page.locator(".q-rev-lesson").count()) > 0);
-    await page.locator(".quiz-head .quiz-leave").click();
-    await settle(300);
+    /* NOTHING GOES FURTHER IN. "Go through the paper" stood here and the owner
+       asked for it out (2026-09-21); exam-port.check.js asks for the same. The
+       screen it opened still exists and still works, and now has no door on
+       it — so no walk can reach it, and `check:exam` is what holds its
+       contents instead. That is the stated cost of a doorless screen, written
+       here rather than left to be noticed when it rots. */
+    expect("nothing on the result goes further into the paper",
+      !(await page.locator(".result__foot .btn").allTextContents()).some((t) => /go through/i.test(t)),
+      (await page.locator(".result__foot .btn").allTextContents()).join("|"));
     expect("Back returns to the result", (await page.locator(".result__big").count()) === 1);
 
     await foot.click();
@@ -581,9 +579,10 @@ try {
     /* KEEPING THE MISSES IS THE FIRST CONTROL WHEN THERE ARE ANY. It saves
        every question this sitting got wrong into Bookmarks in one press, and it
        is not drawn at all on a clean paper — a button that would save nothing. */
-    expect(`${at} offers ${c.foot}, beside the way into the paper`,
+    expect(`${at} offers ${c.foot}, and keeping the misses when there are any`,
       (await page.locator(".result__foot .btn").allTextContents()).join("|")
-        === (c.right < 8 ? `Save the ones I missed|Go through the paper|${c.foot}` : `Go through the paper|${c.foot}`));
+        === (c.right < 8 ? `Save the ones I missed|${c.foot}` : c.foot),
+      (await page.locator(".result__foot .btn").allTextContents()).join("|"));
     expect(`${at} fills the line to ${pct}%`,
       Math.abs(await page.locator(".meter__fill").evaluate((el, w) => {
         const track = el.parentElement.getBoundingClientRect().width;
@@ -630,24 +629,15 @@ try {
     expect(`${at} leaves every missed row on screen when the animation is over`, faded === 0);
     if (c.right === CASES[0].right && c.bar === 75) {
       await page.screenshot({ path: `${SHOTS}/result-${c.right}-bar${c.bar}.png` });
-      /* A PAPER OF ONLY THE MISSES, and it is a drill rather than a second
-         sitting: its own quiz id, so it cannot write a score over the one
-         already recorded, and its own full clock. */
-      await page.locator(".result__foot .btn", { hasText: "Go through the paper" }).click();
-      await page.locator(".quiz-name").waitFor();
-      const misses = await page.locator('.q-rev[data-mark="wrong"]').count();
-      await page.locator(".quiz-foot .q-btn", { hasText: "Just the" }).click();
-      await page.locator(".exam-frame .question__text").waitFor({ timeout: 8000 });
-      await page.waitForTimeout(300);
-      expect(`just the ${misses} missed is a paper of exactly those`,
-        (await page.locator(".qcell").count()) === misses
-        && (await page.locator(".exam-bar__name").textContent()).includes("the ones you missed"));
-      /* Its own allowance, for its own length: three questions is three
-         questions' worth of clock, not the eight-question paper's. */
-      expect(`with a clock of its own length (${clock(allowanceFor(misses))})`,
-        (await page.locator(".exam-timer__value").textContent()) === clock(allowanceFor(misses)));
-      expect("and the module's back link still above it", (await page.locator(".up").count()) === 1);
-      await page.screenshot({ path: `${SHOTS}/review-and-retake.png` });
+      /* THE MISSES DRILL WAS WALKED FROM HERE, through "Go through the paper".
+         With that control gone the drill has no door, so a browser cannot
+         reach it and this is not a step that can be written. Its rules are
+         held at the source instead — that it keeps its own quiz id so it
+         cannot write a score over the sitting it came from, that it is a
+         paper of only the misses, and that its clock is its own — in
+         `check:exam` under "the drill and the paper" and "the approved
+         screen". One button anywhere puts the walk back with it. */
+      expect("the module's back link is still above the result", (await page.locator(".up").count()) === 1);
     }
     await page.close();
   }

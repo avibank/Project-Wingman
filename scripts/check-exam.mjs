@@ -230,13 +230,20 @@ console.log("\nthe result");
   ok("result", "and a retake of the wrong ones is a real quiz",
      retakeWrong(a, QUIZ).quiz.questions.length === 2);
 
-  /* The results screen stays bare. Going through the paper is a door, not a
-     drawer hanging off the bottom of the score. */
-  const results = read("src/components/module/QuizResults.jsx");
-  ok("result", "the review is a second screen, not more of the score",
-     /onReview/.test(results) && /Go through the paper/.test(results));
-  ok("result", "and the drills, which mark as they go, get no such door",
-     /onReview = null/.test(results));
+  /* The results screen stays bare, and now it is bare of doors as well. Both
+     that ever stood here are gone: Re-check went with Calibration, and "Go
+     through the paper" was behind an `onReview` prop the only caller never
+     passed — so it had already stopped rendering before the owner asked for
+     it out of the exam's result screen (2026-09-21). */
+  /* CODE ONLY — the comment that explains the removal names both of them, so a
+     test that reads the prose fails on the explanation of the thing it checks.
+     Second time today; see the helper of the same name further down. */
+  const bare = (t) => t.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  const results = bare(read("src/components/module/QuizResults.jsx"));
+  ok("result", "the drill's own results screen offers nothing further in",
+     !/Go through the paper/.test(results) && !/onReview/.test(results));
+  ok("result", "and the way out of it is the module", /onClick=\{onLeave\}/.test(results)
+     && /Back to the module/.test(results));
 
   const nav = navRow({ ...a, at: 0 }, s.marks);
   ok("result", "afterwards the same squares carry the mark",
@@ -426,14 +433,22 @@ console.log("\nthe approved screen");
      && !/qr-stamp|scoreLine\(|qr-move|qr-note/.test(resultBlock)
      && !/of \{result\.total\}|right of/.test(resultBlock));
 
-  /* GOING THROUGH THE PAPER IS ONE STEP FURTHER IN, not a thing the result
-     screen grew. The rows above it correct every miss in a line; the
-     explanation, the lesson a miss came from and a paper of only the misses
-     are behind a single button, so the score keeps the shape the design gave
-     it and the teaching still has somewhere to be. */
-  ok("port", "the result offers a way into the paper, and it is not the primary",
-     /<button className="btn is-inline" type="button" onClick=\{\(\) => setPhase\("review"\)\}>\s*\n\s*Go through the paper/.test(exam));
-  /* The explanation has to be on the MISSED question, which is the one the
+  /* THE RESULT SCREEN HAS NO WAY INTO THE PAPER, and that reverses what this
+     line used to assert. The button stood on the result and the owner has
+     asked for it out (2026-09-21), which is also what exam-port.check.js has
+     been failing on: the approved result screen lists no such control.
+
+     The screen it opened is untouched below and still works. What the result
+     keeps is the correction itself — every miss with the pick struck through
+     and the right answer after it — which is the part a student reads on the
+     way past. */
+  ok("port", "the result screen offers no way further in",
+     !/Go through the paper/.test(exam) && !/setPhase\("review"\)/.test(resultBlock));
+  /* THE SCREEN IS KEPT, DOORLESS, and is asserted so that "nobody can reach
+     it" never becomes "somebody deleted it". Same state as "Put right"
+     (CLAUDE.md), and recorded the same way.
+
+     The explanation has to be on the MISSED question, which is the one the
      student came back for — the same class also appears under the fold, so a
      looser test passed while the misses had lost theirs. */
   ok("port", "going through it explains what was missed, and joins back to the lesson by id",
@@ -788,14 +803,16 @@ console.log("\nR4 — the paper is locked");
   ok("locked", "leaving is not handing in — its handler closes and goes, and marks nothing",
      !!leaveBtn && !/handOver|submit\(/.test(leaveBtn[0]));
 
-  /* CONFLICT 2, DECIDED: the door stays. The pack's check fails a result
-     screen carrying this button, and removing it would delete the only way to
-     the explanation for every question, the lesson each miss came from, and a
-     paper of only the misses — three things, to satisfy a check about one.
-     Asserted so that a later tidy-up cannot quietly satisfy that check by
-     taking the door out. */
-  ok("locked", "\"Go through the paper\" is still the door to the drill",
-     /Go through the paper/.test(exam) && /onClick=\{\(\) => setPhase\("review"\)\}/.test(exam));
+  /* CONFLICT 2, REVERSED BY THE OWNER (2026-09-21): the door is gone and the
+     room behind it is not. Asserted from both sides, because either half on
+     its own is a different mistake — a button that came back would fail the
+     pack's check again, and a deleted screen would take the explanations, the
+     lesson join and the misses drill with it. */
+  ok("locked", "nothing on the result goes further in",
+     !/Go through the paper/.test(exam));
+  ok("locked", "and the drill behind it is still there, with no door on it",
+     /if \(phase === "review"\) \{/.test(exam) && /if \(phase === "retake"\) \{/.test(exam)
+     && /retakeWrong\(attempt, quiz\)/.test(exam));
 
   /* R1's other half, finally true: the pack's sheet is imported, once. */
   const imports = ["src/components/module/Exam.jsx", "src/App.jsx", "src/components/module/QuizPage.jsx"]

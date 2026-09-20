@@ -745,13 +745,24 @@ export default function Exam({
                   Save the ones I missed
                 </button>
               )}
-              {/* ONE STEP FURTHER IN. The rows above correct every miss in a
-                  line; this is where the explanation, the lesson it came from
-                  and a paper of only the misses live, so the score screen
-                  keeps its shape and the teaching still has somewhere to be. */}
-              <button className="btn is-inline" type="button" onClick={() => setPhase("review")}>
-                Go through the paper
-              </button>
+              {/* "GO THROUGH THE PAPER" HAS NO DOOR ON IT. The button stood
+                  here and the owner has asked for it out (2026-09-21), which
+                  is also what exam-port.check.js asks for: the approved result
+                  screen lists no such control.
+
+                  The screen behind it is untouched and still works — the
+                  explanation for every question, the lesson each miss came
+                  from (joined on lessonId, never on resemblance), and a paper
+                  of only the misses. It is reached from nothing today. This is
+                  the same state "Put right" is in and is recorded the same
+                  way: one button anywhere puts it back, and the rows above
+                  still carry the correction for every miss in a line, which is
+                  the part a student reads on the way past.
+
+                  `phase === "review"` and `phase === "retake"` are kept
+                  deliberately rather than deleted. check:doors carries them by
+                  name in its list of what is one-sided, so a SECOND doorless
+                  screen still fails the build. */}
               <button className={`btn is-inline ${result.passed ? "" : "btn--primary"}`} type="button" onClick={again}>
                 {result.passed ? "Retake" : "Try again"}
               </button>

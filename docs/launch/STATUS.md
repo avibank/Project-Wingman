@@ -74,9 +74,19 @@ found by measuring rather than by reading, and every decision taken alone.
 | **The leaderboard** | done — migration 0034 run and verified against the live project, `check:board-db` 20 assertions over the anon path |
 
 The exam pack's five conflicts are all settled: `BRIEF-exam-conflicts.md` says
-which way each went and why. Two things in that pack are knowingly not copied,
-and they are the only two — `exam-port.check.js`'s "no Go through the paper"
-line, and R4's letter about the back arrow.
+which way each went and why. Conflict 2 was reversed by the owner the next day
+— "Go through the paper" is out, and `exam-port.check.js` now prints PASS on
+that line, verified by running it on a live result screen. **One thing in the
+pack is knowingly not copied: R4's letter about the back arrow.**
+
+What `exam-port.check.js` still fails on, and why, measured on a live result:
+
+| Line | Why |
+|---|---|
+| result carries the stamp, not a plane · stamp presses on arrival | **A real gap.** The result draws `.result__icon` where R7 wants the student's own stamp, pressed. Not done — it is a change to an approved screen, not a fix. |
+| leaderboard rows present · exactly one row marked as yours · stamps use personal ink | The board draws nothing until somebody else is on it (§10 — a board of one is a ranking of yourself). All three pass the moment a second person sits the paper. |
+| 13px type floor | The sizes it objects to — `.exam-bar__eyebrow` 10.5px, `.board__title` 11px, `.lb-row__acct` 11.5px — are **the pack's own stylesheet's**, and the 3.1px hits are the rim lettering inside a drawn stamp, which is artwork rather than type. |
+| no button under 36px tall | 34px is **the pack's own `.btn`**: `padding:9px 18px` on `font:600 14px/1`. |
 
 The reference diffs were re-measured the same day; the numbers, and the two
 screens whose numbers no longer mean what they did, are in SESSION-REPORT.md.
