@@ -53,15 +53,21 @@ export const FLAGS = [
   // refuses to render for anyone who is not an admin — two locks, because this
   // one writes progress and resets accounts.
   { id: "dev.panel", label: "Dev panel", note: "Set completion, position and scores; reset a module or the whole account. Developer only.", off: true },
-  // Placeholder content, so the screens can be exercised before there is any
-  // real content. Off means the app reads whatever data.js holds. Turning it
-  // off is one of the two steps that takes the test material out.
-  // On for everyone, deliberately. None of it is real — the questions are
-  // general knowledge, the papers say so on their first page and the videos
-  // are Blender's open movies — but a module with structure and nothing in it
-  // cannot be walked, and this can. check:ship is the gate that stops it
-  // reaching a launch.
-  { id: "content.test", label: "Test content", note: "Four modules of placeholder lessons, quizzes and papers. Not real content.", everyone: true },
+  /* Placeholder content — four modules of general-knowledge quizzes, Blender
+     open movies and invented threads. It was `everyone: true` so the screens
+     could be walked before there was anything to put in them.
+
+     OFF NOW, AND THIS IS THE FIRST OF THE TWO SWITCHES THAT EMPTY THE APP.
+     Beta opens with the owner's own material going in, and placeholder
+     content in front of a first cohort is worse than an empty shelf: it is
+     indistinguishable from the real thing until somebody reads it, and then
+     the whole product looks unfinished. Off means every screen reads
+     `src/data.js`, which is the second switch — four named modules and
+     nothing inside them.
+
+     `readOverrides` (localStorage["pw-flags"]) still turns it on for an admin
+     browser, which is how to walk a populated screen without shipping one. */
+  { id: "content.test", label: "Test content", note: "Four modules of placeholder lessons, quizzes and papers. Not real content.", off: true },
   // Had `off` — no approved design. There is one now, so it ships like the
   // module screen did: `everyone`, not admin-only.
   { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", everyone: true },

@@ -7,6 +7,7 @@ import { thumbTile } from "../../lib/familiar.js";
 import { passAt } from "../../lib/quiz.js";
 import { posterFor } from "../../lib/shell.js";
 import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
+import { LessonsWaiting } from "./ModuleWaiting.jsx";
 import "./familiar.css";
 
 // Netflix's episode list, and the reason it is worth more than the picture.
@@ -152,8 +153,23 @@ export default function RouteTab({
   stamp, tilts,
   chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
   query = "",
+  /* WAITING AND EMPTY ARE NOT THE SAME STATE, and this line is why the tab
+     was blank. It read `if (!chapters.length) return <RouteSkeleton />` —
+     which is right for the second before a content document arrives, and
+     wrong for a module that has nothing in it yet: the skeleton never
+     resolved, so the first thing anybody saw on opening a module was four
+     grey bars, forever. A loading picture that never loads is the clearest
+     possible way to look broken.
+
+     `pending` is true only while a content document is actually in flight.
+     With no document to wait for, the module says what it is waiting for
+     instead. */
+  pending = false,
+  moduleName = "This module",
 }) {
-  if (!chapters?.length) return <RouteSkeleton />;
+  if (!chapters?.length) {
+    return pending ? <RouteSkeleton /> : <LessonsWaiting moduleName={moduleName} />;
+  }
   const searching = terms(query).length > 0;
   // Searching overrides the fold. A result you cannot see is not a result, and
   // "one chapter open at a time" is a rule about browsing, not about finding.

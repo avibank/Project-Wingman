@@ -66,7 +66,9 @@ const EMPTY_REQ = { in: [], out: [] };
 const narrow = () => typeof window !== "undefined" && window.innerWidth <= 900;
 
 export default function ReadyRoom({
-  me = "u_you", modules = [], activeModuleCode, routeThreadId = null,
+  /* No placeholder identity. It defaulted to "u_you", which is a real string
+     that reached real queries whenever this mounted before App had an id. */
+  me = null, modules = [], activeModuleCode, routeThreadId = null,
   threads = [], replies = [], people = [], presence = [],
   squadrons = [], messages = [], chapters = [],
   votes = {}, saved = {},

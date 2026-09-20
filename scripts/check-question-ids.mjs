@@ -68,7 +68,34 @@ for (const q of allQuestions()) {
   }
 }
 
-if (!n) { console.error("check:question-ids found no questions at all, which means it is looking in the wrong place."); process.exit(1); }
+/* NO QUESTIONS IS TWO DIFFERENT FACTS, and telling them apart is what this
+   block is for. It used to be one: zero questions failed the build, on the
+   reasoning that a check finding nothing is usually a check pointing at the
+   wrong file. That was right while there was always content, and it stopped
+   being right the day the placeholder course was cleared out for the beta —
+   an empty course is the intended state, and it was failing every build.
+
+   So the guard now tests what it was actually worried about: whether the
+   documents it reads are THERE and readable. A document that parses and
+   holds no modules is a course waiting to be written, and the build carries
+   on and says so. A document that has gone missing, or that holds modules
+   with no questions in them, is the wrong-place failure the guard was for,
+   and that still stops the build. */
+const docsRead = DOCS.length;
+const chaptersSeen = DOCS.reduce(
+  (t, [, doc]) => t + (doc?.modules || []).reduce((c, m) => c + (m.chapters || []).length, 0), 0);
+if (!docsRead) {
+  console.error("check:question-ids read no content documents at all, which means it is looking in the wrong place.");
+  process.exit(1);
+}
+if (!n && chaptersSeen) {
+  console.error(`check:question-ids found ${chaptersSeen} chapters and not one question in them. Something is looking in the wrong place.`);
+  process.exit(1);
+}
+if (!n) {
+  console.log("check:question-ids: no questions yet — the course is empty and that is the shipping state. Nothing to check.");
+  process.exit(0);
+}
 if (problems.length) {
   console.error(`check:question-ids failed:\n  ${problems.join("\n  ")}`);
   process.exit(1);

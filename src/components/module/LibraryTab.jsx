@@ -5,6 +5,7 @@ import "./ref-module.css";
 import { hits, terms } from "../../lib/moduleSearch.js";
 import { papersOn } from "../../lib/flags.js";
 import { useSwitchIn } from "../../lib/tabMotion.js";
+import { QuizzesWaiting, PapersSlot } from "./ModuleWaiting.jsx";
 
 /* ============================================================================
    §5 — THE LIBRARY.
@@ -71,9 +72,19 @@ export default function LibraryTab({
       && hits(`${p.title} ${p.chapterTitle || ""}`, query));
 
 
+  /* NOTHING IN THE MODULE YET, which is what the beta opens on. The Quizzes
+     header said "0 quizzes, one per chapter" and then drew an empty list —
+     a zero count, which the app's own Voice rule forbids, over nothing. The
+     waiting state replaces the header and the list together; the Papers slot
+     below keeps its section, because a Library that is only quizzes reads as
+     a Library with a piece missing. Study cards draws nothing on its own
+     when there are no quizzes to make cards from. */
+  const bare = !chapters.length && !searching;
+
   return (
     <div className="libtab ref-mod">
       {/* ------------------------------------------------------ QUIZZES --- */}
+      {bare ? <QuizzesWaiting /> : (
       <section className="libsplit" aria-labelledby="lsec-quizzes" ref={quizRef}>
         <div className="lsec">
           <div>
@@ -121,6 +132,7 @@ export default function LibraryTab({
           )}
         </div>
       </section>
+      )}
 
       {/* -------------------------------------------------- STUDY CARDS ---
           Between the two, because a card set IS a quiz — the same questions,
@@ -132,10 +144,18 @@ export default function LibraryTab({
       <LibraryStudyCards moduleId={moduleCode} />
 
       {/* ------------------------------------------------------- PAPERS ---
-          Papers are paused. The whole section goes — not an empty state, not
-          a disabled row, not a line saying why. §18's rule about naming the
-          next action inside the sentence is about a section that is THERE
-          with nothing in it; this one is not there. */}
+          THE READER IS PAUSED; THE SHELF IS NOT.
+
+          This used to remove the section outright — no empty state, no
+          disabled row, no line saying why — on the reasoning that a section
+          which is not there cannot disappoint anybody. The owner's call
+          reverses that half of it: the pause is temporary and the Library
+          has two shelves, so the second one stays visible and says it is on
+          its way. What does NOT come back is anything that opens a file —
+          no reader chunk, no route, no uploader, no mark. PapersSlot is
+          markup and nothing else, and check:paused is updated to test for
+          exactly that rather than for the section's absence. */}
+      {!papersOn && <PapersSlot />}
       {papersOn && (
       <section aria-labelledby="lsec-papers" ref={papersRef}>
         <div className="lsec">

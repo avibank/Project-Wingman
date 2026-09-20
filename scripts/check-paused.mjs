@@ -126,8 +126,21 @@ console.log("\nno way in");
      && /addPaper: papersOn \? chunk/.test(app));
   ok("doors", "and nothing warms it",
      /if \(!papersOn\) return;\s+\/\/ paused: nothing to warm/.test(app));
-  ok("doors", "the Library's Papers section is not rendered",
-     /\{papersOn && \(\n\s*<section aria-labelledby="lsec-papers"/.test(read("src/components/module/LibraryTab.jsx")));
+  /* THE SHELF STAYS; NOTHING ON IT DOES.
+     This used to assert that the Papers section was not rendered at all. The
+     owner reversed that half: the Library has two shelves and the second one
+     staying visible is what stops the pause reading as a missing feature.
+     What must not come back is anything that can open, upload or mark a file,
+     so that is what is tested now — the real section still behind the switch,
+     the paused one made of markup and nothing else. */
+  const lib = read("src/components/module/LibraryTab.jsx");
+  const slot = read("src/components/module/ModuleWaiting.jsx");
+  ok("doors", "the Library's real Papers section is still behind the switch",
+     /\{papersOn && \(\n\s*<section aria-labelledby="lsec-papers"/.test(lib));
+  ok("doors", "and what shows in its place is a slot, drawn only while paused",
+     /\{!papersOn && <PapersSlot \/>\}/.test(lib));
+  ok("doors", "the slot cannot open, add or mark a paper",
+     !/onClick|onOpenPaper|onAddPaper|href=|paperIngest|uploadPaper|ReaderV6/.test(slot));
   ok("doors", "the search field does not offer to find one",
      /placeholderFor\(tab, papersOn\)/.test(read("src/components/module/ModuleScreen.jsx")));
   ok("doors", "the room's composer has no Paper passage option",

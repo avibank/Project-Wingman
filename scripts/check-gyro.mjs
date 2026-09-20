@@ -155,25 +155,44 @@ ok("R17 writes only on change", /if \(next !== written\)/.test(hook));
 ok("R19 the last-quiz dot is built and not wired on the deck", /gy-last/.test(gyro) && !/last=/.test(lit));
 
 /* -------------------------------------------------------------- the meter
-   IT READS HOURS AND MINUTES NOW, and that reverses what hobbs.js used to
-   argue: tenths on a drum, "because that is what an hour meter reads". What
-   the owner answered is that nobody outside a cockpit reads a tenth. The rule
-   that survives is that it only ever rounds DOWN — a meter that credited time
-   nobody had flown would be worse than one nobody could read. */
+   IT READS DIGITS NOW — h:mm — and that is the second reversal this block has
+   tracked. First it was tenths on a drum, "because that is what an hour meter
+   reads"; then hours and minutes with the unit letters printed, 13h 54m; now
+   13:54, because the letters were the only thing on the face that was not a
+   number and the caption under the cell already says what is being counted.
+   The rule that survives both is that it only ever rounds DOWN — a meter that
+   credited time nobody had flown would be worse than one nobody could read. */
 {
   const H = await import("../src/lib/hobbs.js");
   ok("meter · it counts down to the minute, never up",
-     H.hobbsClock(119).reads === "1m" && H.hobbsClock(3599).reads === "59m");
-  ok("meter · an hour reads in hours and minutes", H.hobbsClock(3600 * 13 + 54 * 60).reads === "13h 54m");
-  ok("meter · under an hour it is minutes alone, never 0h",
-     !H.hobbsClock(60 * 54).reads.includes("h"));
+     H.hobbsClock(119).reads === "0:01" && H.hobbsClock(3599).reads === "0:59");
+  ok("meter · an hour reads h:mm", H.hobbsClock(3600 * 13 + 54 * 60).reads === "13:54");
+  ok("meter · minutes are always two digits, so the face never changes width oddly",
+     H.hobbsClock(3600 + 5 * 60).reads === "1:05");
+  ok("meter · digits only — no unit letters anywhere on the face",
+     [0, 59, 60, 3599, 3600, 3600 * 13 + 54 * 60].every((s) => !/[a-z]/i.test(H.hobbsClock(s).reads)));
   ok("meter · under a minute it is a dash, never a zero count",
      H.hobbsClock(0).reads === "—" && H.hobbsClock(59).reads === "—"
      && H.hobbsClock(0).flown === false);
-  ok("meter · and what a screen reader hears agrees in number",
+  ok("meter · and what a screen reader hears is still words",
      H.hobbsClock(60).spoken === "1 minute" && H.hobbsClock(3600).spoken === "1 hour"
      && H.hobbsClock(7200).spoken === "2 hours");
   ok("meter · there is no drum left to read", H.hobbsDrum === undefined);
+
+  /* THE ACCRUAL BUG, AS A TEST. The teardown used to call the same `write`
+     the flush timer calls, and that function restarted the clock at the end.
+     The refs outlive the effect, so leaving a module parked a fresh start
+     time and the next module opened owed every second spent outside one —
+     the deck's meter read hours for an account that had studied for minutes.
+     Two things have to be true for that not to come back: the teardown must
+     null the clock, and restarting must belong to the timer's own callback
+     rather than to `write`. */
+  const src = read("src/lib/hobbs.js");
+  ok("meter · leaving a module stops the clock instead of restarting it",
+     /since\.current = null;\s*\n\s*owed\.current = 0;/.test(src));
+  ok("meter · and only the flush timer starts it again",
+     /const tick = \(\) => \{ write\(\); if \(!document\.hidden\) start\(\); \};/.test(src)
+     && /setInterval\(tick, FLUSH_MS\)/.test(src));
 
   const app = read("src/App.jsx");
   /* WHERE IT COUNTS. The module and everything inside it, plus the paper

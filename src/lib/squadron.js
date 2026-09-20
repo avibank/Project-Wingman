@@ -202,31 +202,86 @@ export function assignMarkings(roster) {
 // §9 — blocking is symmetric and total.
 export async function blockUser(userId, blockedId) {
   const { error } = await supabase.from("blocks").upsert({ user_id: userId, blocked_id: blockedId }, { onConflict: "user_id,blocked_id" });
+  clearSafetyCache(userId);
   return !fail(error, true);
 }
 export async function unblockUser(userId, blockedId) {
   const { error } = await supabase.from("blocks").delete().eq("user_id", userId).eq("blocked_id", blockedId);
+  clearSafetyCache(userId);
   return !fail(error, true);
 }
+/* =============================================================================
+   THE TWO SAFETY LISTS ARE READ BY EVERYTHING, SO THEY ARE READ ONCE.
+   -----------------------------------------------------------------------------
+   Blocks and mutes are a precondition for drawing almost anything social, so
+   seven modules ask for them — readyRoom.js, roomData.js, threads.js,
+   comms.js, crew.js, Home.jsx and BlockedList.jsx — and none of them knew
+   about the others. Measured on the live Ready Room: TWELVE identical
+   `blocks?user_id=eq.…` requests and twelve `mutes`, inside one load, on top
+   of forty other calls. That is most of the ten to sixteen seconds the room
+   spent showing "Spooling up." on a blank screen.
+
+   A TTL CACHE, NOT A REFACTOR. Every caller keeps its own `await
+   fetchBlocks(me)` exactly as written; what changes is that calls landing
+   inside the same few seconds share one request. In flight, callers join the
+   promise that is already running rather than starting another — which is
+   what collapses a page load's worth of duplicates to one.
+
+   THE TTL IS SHORT ON PURPOSE. Blocking somebody has to take effect now, not
+   in a minute, so the window is only wide enough to cover one screen
+   assembling itself. Every write below clears the cache outright, so the
+   list is re-read the moment it changes rather than waiting the window out.
+   ========================================================================= */
+const SAFETY_TTL = 8000;
+const safetyCache = new Map();          // key -> { at, value } | { promise }
+
+function cachedList(kind, userId, run) {
+  const key = `${kind}:${userId}`;
+  const hit = safetyCache.get(key);
+  const now = Date.now();
+  if (hit?.promise) return hit.promise;
+  if (hit && now - hit.at < SAFETY_TTL) return Promise.resolve(hit.value);
+  const promise = run()
+    .then((value) => { safetyCache.set(key, { at: Date.now(), value }); return value; })
+    .catch((e) => { safetyCache.delete(key); throw e; });
+  safetyCache.set(key, { promise });
+  return promise;
+}
+
+/* Called by every write that changes either list, so "I blocked them" is
+   never served a stale answer. Exported because BlockedList does its own
+   unblocking and has to invalidate what it changed. */
+export function clearSafetyCache(userId = null) {
+  if (!userId) return safetyCache.clear();
+  safetyCache.delete(`blocks:${userId}`);
+  safetyCache.delete(`mutes:${userId}`);
+}
+
 export async function fetchBlocks(userId) {
   if (!userId) return [];
-  const { data, error } = await supabase.from("blocks").select("blocked_id").eq("user_id", userId);
-  if (error) return fail(error, []);
-  return (data || []).map((r) => r.blocked_id);
+  return cachedList("blocks", userId, async () => {
+    const { data, error } = await supabase.from("blocks").select("blocked_id").eq("user_id", userId);
+    if (error) return fail(error, []);
+    return (data || []).map((r) => r.blocked_id);
+  });
 }
 export async function muteUser(userId, mutedId) {
   const { error } = await supabase.from("mutes").upsert({ user_id: userId, muted_id: mutedId }, { onConflict: "user_id,muted_id" });
+  clearSafetyCache(userId);
   return !fail(error, true);
 }
 export async function unmuteUser(userId, mutedId) {
   const { error } = await supabase.from("mutes").delete().eq("user_id", userId).eq("muted_id", mutedId);
+  clearSafetyCache(userId);
   return !fail(error, true);
 }
 export async function fetchMutes(userId) {
   if (!userId) return [];
-  const { data, error } = await supabase.from("mutes").select("muted_id").eq("user_id", userId);
-  if (error) return fail(error, []);
-  return (data || []).map((r) => r.muted_id);
+  return cachedList("mutes", userId, async () => {
+    const { data, error } = await supabase.from("mutes").select("muted_id").eq("user_id", userId);
+    if (error) return fail(error, []);
+    return (data || []).map((r) => r.muted_id);
+  });
 }
 export async function reportContent({ reporterId, targetType, targetId, reason, chapterId, channelId }) {
   const { error } = await supabase.from("reports").insert({

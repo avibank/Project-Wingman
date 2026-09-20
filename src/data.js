@@ -1,13 +1,36 @@
-// Course content — a neutral skeleton.
-//
-// Four modules, five chapters each, two lessons per chapter. No videos, no
-// questions, no authored prose: the design is not to be judged wearing
-// placeholder content that implies the product is further along than it is.
-//
-// The previous mock set — twenty aviation chapters with bodies, clips and a
-// 42-question bank — is in git history and nothing was removed from the
-// database. Progress rows keyed to the old chapter ids are orphaned, not
-// deleted.
+/* =============================================================================
+   COURSE CONTENT — FOUR EMPTY AIRFRAMES.
+   -----------------------------------------------------------------------------
+   Four modules, and nothing inside them. This is the shipping state for the
+   beta: the owner's own material goes in from here, and until it does every
+   screen has to read as a shelf waiting to be filled rather than a product
+   that was not finished.
+
+   WHY THE MODULES STAY AND THE CHAPTERS GO. A module is a container the
+   student recognises — the grid on the Flight Deck is the shape of the course
+   and it is true whether or not anything is in it yet. A chapter called
+   "Chapter 1" holding a lesson called "Lesson 1" is not a container, it is a
+   placeholder wearing the clothes of real content: it makes the module screen
+   look populated, it makes progress meters read "1 OF 3" against work nobody
+   did, and it is the first thing a tester would click and the first thing
+   that would disappoint them.
+
+   NOTHING WAS DELETED FROM THE DATABASE. Progress rows, completions and
+   quiz scores keyed to the old placeholder ids are orphaned, not removed —
+   supabase/wipe-demo-content.sql is the separate, deliberate pass that clears
+   them, and it is run by a person, not by a deploy.
+
+   WHAT EVERY SCREEN HAS TO DO WITH THIS, and what was checked before it
+   shipped: no screen may render a blank panel, and no empty state may say
+   only that something is absent. Each one names what lands there and how it
+   gets there. See the module screen's chapter list, the Library's two
+   sections, the Flight Deck's hero card and module cards, and the route
+   strip on Back on the ground.
+
+   ADDING THE FIRST REAL MODULE is a data change here (and, for lessons and
+   quizzes, a content document through src/lib/contentLoader.js) — not a code
+   change anywhere else.
+   ========================================================================= */
 
 const MODULES = [
   { code: "M1", name: "Module 1", status: "active", order: 1 },
@@ -16,187 +39,16 @@ const MODULES = [
   { code: "M4", name: "Module 4", status: "active", order: 4 },
 ];
 
+/* Empty, and the shape is kept so that every reader of it keeps working
+   unchanged the moment there is something to put in it.
+
+   WRITTEN OPEN-BRACKET, NEWLINE, CLOSE-BRACKET ON PURPOSE.
+   scripts/check-question-ids.mjs reads this file as TEXT: it slices from the
+   CHAPTERS declaration to the first line that closes an array and evals what
+   is between. Collapsed onto one line the slice finds no terminator and the
+   prebuild step dies with "CHAPTERS is not iterable". An empty array written
+   across two lines is the same value and a different file. */
 const CHAPTERS = [
-  {
-    id: "m1c1",
-    code: "M1.01",
-    title: "Chapter 1",
-    lessons: [
-      { id: "m1c1l1", code: "M1.01.1", title: "Lesson 1" },
-      { id: "m1c1l2", code: "M1.01.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m1c2",
-    code: "M1.02",
-    title: "Chapter 2",
-    lessons: [
-      { id: "m1c2l1", code: "M1.02.1", title: "Lesson 1" },
-      { id: "m1c2l2", code: "M1.02.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m1c3",
-    code: "M1.03",
-    title: "Chapter 3",
-    lessons: [
-      { id: "m1c3l1", code: "M1.03.1", title: "Lesson 1" },
-      { id: "m1c3l2", code: "M1.03.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m1c4",
-    code: "M1.04",
-    title: "Chapter 4",
-    lessons: [
-      { id: "m1c4l1", code: "M1.04.1", title: "Lesson 1" },
-      { id: "m1c4l2", code: "M1.04.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m1c5",
-    code: "M1.05",
-    title: "Chapter 5",
-    lessons: [
-      { id: "m1c5l1", code: "M1.05.1", title: "Lesson 1" },
-      { id: "m1c5l2", code: "M1.05.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m2c1",
-    code: "M2.01",
-    title: "Chapter 1",
-    lessons: [
-      { id: "m2c1l1", code: "M2.01.1", title: "Lesson 1" },
-      { id: "m2c1l2", code: "M2.01.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m2c2",
-    code: "M2.02",
-    title: "Chapter 2",
-    lessons: [
-      { id: "m2c2l1", code: "M2.02.1", title: "Lesson 1" },
-      { id: "m2c2l2", code: "M2.02.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m2c3",
-    code: "M2.03",
-    title: "Chapter 3",
-    lessons: [
-      { id: "m2c3l1", code: "M2.03.1", title: "Lesson 1" },
-      { id: "m2c3l2", code: "M2.03.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m2c4",
-    code: "M2.04",
-    title: "Chapter 4",
-    lessons: [
-      { id: "m2c4l1", code: "M2.04.1", title: "Lesson 1" },
-      { id: "m2c4l2", code: "M2.04.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m2c5",
-    code: "M2.05",
-    title: "Chapter 5",
-    lessons: [
-      { id: "m2c5l1", code: "M2.05.1", title: "Lesson 1" },
-      { id: "m2c5l2", code: "M2.05.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m3c1",
-    code: "M3.01",
-    title: "Chapter 1",
-    lessons: [
-      { id: "m3c1l1", code: "M3.01.1", title: "Lesson 1" },
-      { id: "m3c1l2", code: "M3.01.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m3c2",
-    code: "M3.02",
-    title: "Chapter 2",
-    lessons: [
-      { id: "m3c2l1", code: "M3.02.1", title: "Lesson 1" },
-      { id: "m3c2l2", code: "M3.02.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m3c3",
-    code: "M3.03",
-    title: "Chapter 3",
-    lessons: [
-      { id: "m3c3l1", code: "M3.03.1", title: "Lesson 1" },
-      { id: "m3c3l2", code: "M3.03.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m3c4",
-    code: "M3.04",
-    title: "Chapter 4",
-    lessons: [
-      { id: "m3c4l1", code: "M3.04.1", title: "Lesson 1" },
-      { id: "m3c4l2", code: "M3.04.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m3c5",
-    code: "M3.05",
-    title: "Chapter 5",
-    lessons: [
-      { id: "m3c5l1", code: "M3.05.1", title: "Lesson 1" },
-      { id: "m3c5l2", code: "M3.05.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m4c1",
-    code: "M4.01",
-    title: "Chapter 1",
-    lessons: [
-      { id: "m4c1l1", code: "M4.01.1", title: "Lesson 1" },
-      { id: "m4c1l2", code: "M4.01.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m4c2",
-    code: "M4.02",
-    title: "Chapter 2",
-    lessons: [
-      { id: "m4c2l1", code: "M4.02.1", title: "Lesson 1" },
-      { id: "m4c2l2", code: "M4.02.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m4c3",
-    code: "M4.03",
-    title: "Chapter 3",
-    lessons: [
-      { id: "m4c3l1", code: "M4.03.1", title: "Lesson 1" },
-      { id: "m4c3l2", code: "M4.03.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m4c4",
-    code: "M4.04",
-    title: "Chapter 4",
-    lessons: [
-      { id: "m4c4l1", code: "M4.04.1", title: "Lesson 1" },
-      { id: "m4c4l2", code: "M4.04.2", title: "Lesson 2" },
-    ],
-  },
-  {
-    id: "m4c5",
-    code: "M4.05",
-    title: "Chapter 5",
-    lessons: [
-      { id: "m4c5l1", code: "M4.05.1", title: "Lesson 1" },
-      { id: "m4c5l2", code: "M4.05.2", title: "Lesson 2" },
-    ],
-  },
 ];
 
 function chaptersForModule(moduleCode) {

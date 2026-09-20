@@ -41,9 +41,35 @@ ok("there is exactly one SPA rewrite", rw.length === 1 && rw[0].destination === 
 const re = new RegExp(`^${rw[0].source}$`);
 const served = (p) => re.test(p);
 
-/* Every address routes.js can build, from the real ids rather than invented
-   ones — the dots are the whole point. */
-const addresses = ["/", "/bookmarks", "/account", "/admin"];
+/* Every address routes.js can build.
+   ---------------------------------------------------------------------------
+   THE SHAPES ARE NAMED HERE RATHER THAN COUNTED OUT OF THE CONTENT DOCUMENT.
+   This file exists for one bug: a path whose LAST SEGMENT contains a dot —
+   `/m/m1/M1.01/lesson/M1.01.1` — looks like a request for a file, and without
+   the rewrite the host answers 404 on a refresh or a pasted link. The
+   addresses were derived entirely from src/content/test-content.json, so
+   emptying that document for the beta left nothing dotted to test and the
+   guard reported "0 of them" — the one bug it was written to catch would
+   have walked straight back in, quietly, on the day the app had no content.
+
+   So the canonical shapes are stated. The document's own addresses are still
+   added below when it has any, which keeps real ids covered as they arrive. */
+const SHAPES = [
+  routePath.module("M1"),
+  routePath.chapter("M1", "M1.01"),
+  routePath.chapter("M1", "M1.01", "quiz"),
+  routePath.quizResume("M1", "M1.01"),
+  routePath.lesson("M1", "M1.01", "M1.01.1"),
+  routePath.lesson("M1", "M1.01", "M1.01.1", "q_a1b2c3"),
+  routePath.library("M1"),
+  routePath.library("M1", "quizzes"),
+  routePath.cards("M1", 1),
+  routePath.crew("M1"),
+  routePath.ready("M1"),
+  routePath.bookmarks("questions"),
+  routePath.profile("licence"),
+];
+const addresses = ["/", "/bookmarks", "/account", "/admin", ...SHAPES];
 for (const m of doc.modules) {
   const code = m.id;
   addresses.push(routePath.module(code));

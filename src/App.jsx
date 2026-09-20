@@ -674,6 +674,38 @@ function AppInner() {
     return () => { live = false; };
   }, [flags]);
   const useTestContent = testContent;
+
+  /* AN ADDRESS THAT NO LONGER RESOLVES GOES UP ONE LEVEL, IT DOES NOT GO BLANK.
+
+     A lesson link is the most shared thing in the app — it gets pasted into
+     the class group chat and bookmarked — and it names a chapter and a lesson
+     that content can outlive: a chapter renumbered, a lesson withdrawn, or a
+     module emptied out, which is what happens the day placeholder content is
+     cleared and every saved link at once stops pointing at anything.
+
+     The lesson branch below handled that by returning an empty <main>: the
+     topbar, the background, and nothing else — no heading, no sentence, no
+     way out except the browser's own back button. Measured on three
+     viewports; it is the emptiest screen in the app.
+
+     The module is the right place to land. It exists, it is one level up from
+     what was asked for, and it has something to say whether or not it has
+     content in it yet. `replace`, so Back returns to wherever the link was
+     opened from rather than bouncing off the dead address again.
+
+     It waits while a content document is in flight, or it would redirect away
+     from a perfectly good lesson during the load that was about to supply
+     it. */
+  useEffect(() => {
+    if (route.name !== "lesson" && route.name !== "cards") return;
+    if (flags["content.test"] && !testContent) return;
+    const code = route.moduleCode || activeModuleCode;
+    const chs = chaptersFor(code, testContent);
+    const resolves = route.name === "lesson"
+      ? chs.some((c) => c.id === route.chapterId && (c.lessons || []).some((l) => l.id === route.lessonId))
+      : chs.length >= Number(route.chapter || 0);
+    if (!resolves) navigate(routePath.module(code), { replace: true });
+  }, [route, testContent, flags, activeModuleCode, navigate]);
   /* Where a lesson sits in its chapter, which is the direction a move between two
      of them travels: a later lesson arrives from the right. */
   const lessonOrder = (r) => (chaptersFor((r?.moduleCode) || activeModuleCode, useTestContent)
@@ -1922,7 +1954,21 @@ function AppInner() {
           const chs = chaptersFor(activeModuleCode, useTestContent);
           const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
           const ls = ch?.lessons.find((l) => l.id === route.lessonId) || ch?.lessons[0];
-          if (!ch || !ls) return <main className="content content-taxi" />;
+          /* A LESSON LINK THAT NO LONGER RESOLVES IS NOT A BLANK PAGE.
+
+             This returned `<main />` — an empty element, so the screen was the
+             topbar, the background and nothing else, with no heading, no
+             message and no way out but the browser's back button. It is
+             reachable by ordinary means: a lesson link pasted into the class
+             group chat, a bookmark, a chapter renumbered, or a module emptied
+             out — which is exactly what happens the day placeholder content is
+             cleared and everybody's saved links stop pointing at anything.
+
+             The module screen is the right landing, not the not-found page:
+             the MODULE still exists and still has something to say, and it is
+             one level up from what was asked for. So the address is corrected
+             to the module rather than left sitting on a lesson that is gone. */
+          if (!ch || !ls) return null;   // the effect above is already moving us
           /* THE LESSON PAGE IS IN THE ORDINARY COLUMN NOW. It was
              `content--full`, which took it out of the 1100px reading column so
              the player could be bigger; the reference draws it in the same
@@ -2087,6 +2133,10 @@ function AppInner() {
           <ModuleScreen
             module={moduleByCode(activeModuleCode, useTestContent)}
             chapters={chaptersFor(activeModuleCode, useTestContent)}
+            /* A module with nothing in it is not a module that is loading.
+               The only thing that is ever awaited here is the seeded content
+               document, and only while its flag is on. */
+            contentPending={!!flags["content.test"] && !testContent}
             state={moduleState}
             tab={route.tab === "pdf" ? "library" : route.tab === "crew" ? "crew" : route.tab === "people" ? "people" : "route"}
             librarySub={route.sub === "quizzes" ? "quizzes" : "papers"}

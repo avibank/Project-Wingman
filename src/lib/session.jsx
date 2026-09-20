@@ -77,8 +77,11 @@ function diffWrite(before, after, add, remove) {
    here is written to a shared table, so this cannot re-attribute anybody
    else's post. */
 const LEGACY_ME = "u_you";
-const mine = (rows, me) => (rows || []).map((r) => (
-  r.authorId === LEGACY_ME ? { ...r, authorId: me } : r));
+// Nothing is re-attributed until there is somebody to attribute it to: with
+// no id yet, the rows are handed back exactly as they are rather than being
+// stamped `authorId: null`, which would make every seeded row author-less.
+const mine = (rows, me) => (!me ? (rows || []) : (rows || []).map((r) => (
+  r.authorId === LEGACY_ME ? { ...r, authorId: me } : r)));
 
 const Ctx = createContext(null);
 
@@ -95,8 +98,17 @@ export function SessionProvider({ children }) {
   //
   // Signed out falls back to "u_you": the seeded demo is authored by it and
   // nothing signed out can write to the shared tables anyway.
-  const { user } = useUser();
-  const me = user?.id || "u_you";
+  //
+  // BUT NOT WHILE CLERK IS STILL ANSWERING. `user` is undefined for the first
+  // moments of every load, which is indistinguishable from signed out here —
+  // so the placeholder became the identity, and effects downstream sent it to
+  // the database. Four `blocks?user_id=eq.u_you` requests per Ready Room load
+  // were measured against production: harmless in that they match nothing,
+  // and wrong in that a made-up id is being asked about at all. Every
+  // consumer already guards on a falsy `me`, so nobody is the honest answer
+  // until Clerk gives a real one.
+  const { user, isLoaded } = useUser();
+  const me = !isLoaded ? null : (user?.id || LEGACY_ME);
   const progressRef = useRef(progress);
   progressRef.current = progress;
   const [session, setSession] = useState(() => ({ ...initialSession, barPos: readBarPos() }));

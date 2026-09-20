@@ -17,7 +17,13 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export function moduleSubtitle(chapters = []) {
   const quizzes = chapters.length;
-  if (!quizzes) return "";
+  /* A MODULE WITH NOTHING IN IT STILL GETS A LINE. It used to return "" — no
+     zero count, which is right — and the screen then drew an empty paragraph
+     under the title: a gap where every other module has a sentence, which
+     reads as a line that failed to load rather than as a module that has not
+     been filled. So it says what it is waiting for. Still no numbers, which
+     was the whole point of the rule. */
+  if (!quizzes) return "Waiting on its first chapter.";
   const lessons = chapters.reduce((n, c) => n + (c.lessons?.length || 0), 0);
   if (!lessons) return plural(quizzes, "quiz").replace("quizs", "quizzes");
   return `${plural(lessons, "lesson")} and ${quizzes} ${quizzes === 1 ? "quiz" : "quizzes"}`;

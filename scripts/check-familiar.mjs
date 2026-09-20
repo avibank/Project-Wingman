@@ -7,10 +7,64 @@
 //
 // Run: npm run check:familiar
 import * as F from "../src/lib/familiar.js";
-import { readFileSync } from "fs";
-const d = JSON.parse(readFileSync(new URL("../src/content/test-content.json", import.meta.url)));
-const { people, threads, replies, presence, modules } = d;
-const lessons = modules.flatMap(m => m.chapters.flatMap(c => c.lessons));
+
+/* ITS OWN FIXTURE, NOT THE SHIPPING CONTENT DOCUMENT.
+   ---------------------------------------------------------------------------
+   Every assertion below used to read src/content/test-content.json, which
+   made this a test OF THAT FILE as much as of familiar.js: emptying it for
+   the beta turned five passing checks into "0 of 0 — FAIL" with nothing
+   wrong in the code, and the failures pointed at the content rather than at
+   the rule that had supposedly broken.
+
+   The rules this file exists to defend are stated here instead. Where a
+   number used to be counted out of the seed ("still two of seven"), the
+   fixture is built so that the number follows from the rule.
+
+   Twenty-four lesson ids, because the tile check is about what a COLUMN of
+   them looks like: the bug it guards against was all of them landing on the
+   avatar palette's ten buckets and reading as four or five pictures repeated
+   down the list. */
+const lessons = Array.from({ length: 24 }, (_, i) => {
+  const ch = String(Math.floor(i / 2) + 1).padStart(2, "0");
+  const n = (i % 2) + 1;
+  return {
+    id: `M1.${ch}.${n}`,
+    durationS: 600,
+    // Every state the route row can draw: finished, part way, untouched.
+    watchedS: i < 6 ? 600 : i < 12 ? 240 : 0,
+  };
+});
+
+const people = [
+  { id: "u_ah", callsign: "Ali Hassan" },
+  { id: "u_ah2", callsign: "Amal Haddad" },   // same initials as above, on purpose
+  { id: "u_two", callsign: "Dana" },
+  { id: "u_three", callsign: "Saqer" },
+  { id: "u_four", callsign: "Bader" },
+];
+
+/* THE UNREAD RULE: a row is unread when somebody ELSE has been in it since
+   you last looked. Two here, and they are two because of the rule — T1 is
+   yours and was answered by somebody else, T2 is theirs and you answered it
+   and they came back. T3 is theirs with nobody else's news for you, T4 is
+   yours and nobody has replied, T5 belongs to another module. */
+const threads = [
+  { id: "T1", moduleId: "M1", lessonId: "M1.01.1", t: 12, body: "What sets the datum here?", authorId: "u_you", createdAt: "2026-08-01T09:00:00Z" },
+  { id: "T2", moduleId: "M1", lessonId: "M1.01.2", t: 30, body: "Why is the seal fitted this way round?", authorId: "u_two", createdAt: "2026-08-02T09:00:00Z" },
+  { id: "T3", moduleId: "M1", lessonId: "M1.02.1", t: 44, body: "Anyone got the torque figure?", authorId: "u_three", createdAt: "2026-08-03T09:00:00Z" },
+  { id: "T4", moduleId: "M1", lessonId: "M1.02.2", t: 8, body: "Still stuck on this one.", authorId: "u_you", createdAt: "2026-08-04T09:00:00Z" },
+  { id: "T5", moduleId: "M2", lessonId: "M2.01.1", t: 5, body: "Different module.", authorId: "u_two", createdAt: "2026-08-05T09:00:00Z" },
+];
+const replies = [
+  { id: "r1", threadId: "T1", authorId: "u_two", body: "Off the front face.", createdAt: "2026-08-10T09:00:00Z" },
+  { id: "r2", threadId: "T2", authorId: "u_you", body: "Chamfer goes inboard.", createdAt: "2026-08-11T09:00:00Z" },
+  { id: "r3", threadId: "T2", authorId: "u_two", body: "That was it, thanks.", createdAt: "2026-08-12T09:00:00Z" },
+  { id: "r4", threadId: "T3", authorId: "u_four", body: "It is in the manual.", createdAt: "2026-08-13T09:00:00Z" },
+];
+const presence = [
+  { userId: "u_two", lessonId: "M1.02.2", at: "2026-08-29T11:00:00Z" },
+  { userId: "u_three", lessonId: "M1.02.2", at: "2026-08-29T10:00:00Z" },
+];
 let fails = 0;
 const ok = (n, c, x) => { if (!c) fails++; console.log(`${c ? "ok  " : "FAIL"}  ${n}${x ? "  " + x : ""}`); };
 
