@@ -71,7 +71,7 @@ makes. Like check:stamp-db it is NOT in `npm run check`, because that suite
 must not need credentials. 16 more assertions in `check:exam` hold the client's
 half, each proved by planting its bug.
 
-## 2 · "Go through the paper" — KEPT (decided here)
+## 2 · "Go through the paper" — REMOVED (owner, 2026-09-21)
 
 **The brief:** `exam-port.check.js` fails if the result screen has a "Go
 through the paper" button.
@@ -82,11 +82,33 @@ back on request**, as a screen of its own so the score keeps the shape the
 design gave it." It is where the explanation for every question, the lesson
 each miss came from, and a paper of only the misses live.
 
-Removing the button removes the only door to all three — three things deleted
-to satisfy a check about one. **Kept**, and now asserted, so that a later
-tidy-up cannot quietly satisfy the port check by taking the door out. That one
-line of `exam-port.check.js` is knowingly not satisfied and will keep printing
-FAIL; it is the only one.
+Removing the button removes the only door to all three. It was kept on that
+argument and the owner has reversed it: **the button is out.**
+
+What went, and what did not:
+
+* The control on the result screen, and its twin in `QuizResults.jsx` — which
+  was already dead, behind an `onReview` prop the only caller never passed.
+  The phrase is gone from the app.
+* **The screen is not.** `phase === "review"` and `phase === "retake"` are
+  untouched and still work: the explanation for every question, the lesson
+  each miss came from (joined on `lessonId`, never on resemblance), and a
+  paper of only the misses with its own quiz id. It is reached from nothing.
+  This is the same state "Put right" is in (CLAUDE.md) and is recorded the
+  same way: one button anywhere puts it back.
+* **The result still carries the correction.** Every miss with the pick struck
+  through and the right answer after it, the right ones folded away. That is
+  the part a student reads on the way past, and it never depended on the door.
+
+The cost, stated rather than discovered later: **the drill loses its browser
+coverage**, because a walk cannot press its way into a screen with no door.
+`tests/exam-run.mjs` used to drive it, "Just the N I missed" and all. Its rules
+are held at the source instead — `check:exam`, under "the drill and the paper"
+and "the approved screen" — which is weaker, and is what a doorless screen
+costs.
+
+`exam-port.check.js` now prints **PASS** on its "no Go through the paper"
+line. Verified by running it on a live result screen, not inferred.
 
 ## 3 · The clock: 20 minutes flat — TAKEN (owner)
 

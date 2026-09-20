@@ -34,7 +34,6 @@ export default function QuizResults({
      came for. So the review is a door rather than a drawer, and the drill flows
      — which mark as they go and have nothing left to explain — simply pass no
      handler and get no door. */
-  onReview = null,
 }) {
   const pct = total > 0 ? Math.round((right / total) * 100) : null;
   const below = isBelow(pct, minimums);
@@ -94,16 +93,15 @@ export default function QuizResults({
       </div>
 
       <div className="qr-acts">
-        {/* Re-check stood here, and it was Calibration's door: the pile of
-            answers you already had right, come round again. That exercise is
-            gone, and the one flow that still runs through this screen — Put
-            right — is already the thing you are in. */}
-        {onReview && (
-          <button type="button" className="q-btn" data-primary={below ? undefined : ""}
-                  onClick={onReview}>
-            Go through the paper
-          </button>
-        )}
+        {/* TWO DOORS HAVE STOOD HERE AND NEITHER DOES NOW.
+            Re-check was Calibration's — the answers you already had right,
+            come round again — and that exercise is gone. "Go through the
+            paper" was the second, behind an `onReview` prop that the only
+            caller (Review.jsx) never passed, so it had already stopped
+            rendering; the owner asked for it out of the exam's result screen
+            on 2026-09-21 and it goes from here too rather than waiting to be
+            rediscovered and wired back. The flow that still runs through this
+            screen — Put right — IS the thing you are already in. */}
         <button type="button" className="q-btn" onClick={onLeave}>
           Back to the module
         </button>
