@@ -661,3 +661,41 @@ wingman.institute rather than by reading:
     nothing in it, for the length of a real round trip. It is the empty state's
     own ghost rows now: the same picture, claiming nothing, so it cannot be
     wrong in the half second before the answer lands.
+
+### 5 · `.exam-page` is taken as a scope, not as a layout
+
+`exam-port.check.js` asks its three R4 questions inside `.exam-page` —
+`$$('.exam-page a[href]')`, `!$('.exam-page .pill')`, `!$('.exam-page .avatar')`
+— and this app had no such element. An empty set satisfies all three, so all
+three answered PASS while the app bar sat fully drawn over an open paper with
+the Ready Room pill and the profile menu both clickable. **A check that can
+only pass is worse than no check**, so the element now exists.
+
+Its rule in the pack is `max-width:1100px;margin:0 auto;padding:18px 16px 72px`.
+That is **not** taken. CLAUDE.md records this screen as an approved port
+(2026-09-16) whose every size, radius and duration is that design's, and
+`check:exam` holds 108 layouts against it. So the class carries no `.examport`
+scope and the pack's page rule does not reach it: the element is the scope R4
+needs to be askable, and nothing else.
+
+### 6 · R4 is taken for the accidental exits, not for the deliberate one
+
+R4 says an exam has "no way out but End exam — no back arrow, no Ready Room,
+no profile, no links of any kind". Three of those four are now true, measured:
+the app bar drops the pill and the profile and says EXAM IN PROGRESS instead,
+the wordmark stops being a button, and the browser's own Back opens the
+end-exam dialog rather than abandoning the paper.
+
+**The back arrow stays.** `QuizPage` draws `← Module 1` above the paper, and
+removing it is not a port — it decides what happens to a student who opens a
+quiz to look at it. This app already answers that question differently and on
+purpose: an attempt is written to localStorage on every change, the clock
+belongs to the attempt and only moves while the paper is on screen, and
+`check:exam` has a whole "leaving and coming back" section asserting that you
+return to the question you left with the time you had. Remove the arrow and
+the only exit from a mis-tapped quiz is handing in a blank paper.
+
+That is a teaching decision, not an approximation, so it goes in
+`BRIEF-exam-conflicts.md` with the other four rather than being made here.
+What is closed is every exit a student takes *by accident* — which is what was
+actually wrong, and what the check was failing to notice.
