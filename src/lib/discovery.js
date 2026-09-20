@@ -85,8 +85,16 @@ export async function squadronByInvite(me, token) {
   return (data && data[0]) || null;
 }
 
+/* AN ABSOLUTE URL. This returned `wingman.institute/j/<token>` — no scheme —
+   and every caller stuck `https://` on the front by hand, which is a broken
+   link the moment one of them forgets. It also meant the invite could not be
+   handed to `navigator.share`, which requires a real URL. The origin is the
+   one the student is actually on, so an invite copied from a preview deploy
+   points at that preview rather than at production. */
 export function inviteUrl(token) {
-  return `wingman.institute/j/${token}`;
+  const origin = (typeof window !== "undefined" && window.location?.origin)
+    || "https://www.wingman.institute";
+  return `${origin}/j/${token}`;
 }
 
 /* Person-to-person. An invite is a request the other person accepts — it never

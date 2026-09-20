@@ -35,6 +35,7 @@ import {
 } from "../../lib/rightSeat.js";
 import { fetchMyMarks, validateFile, readImageSize, MAX_PER_MESSAGE } from "../../lib/attachments.js";
 import { papersOn } from "../../lib/flags.js";
+import { share as shareOut, shareSaid, MANUAL } from "../../lib/outside.js";
 import { paneTransition } from "../../lib/viewTransition.js";
 import "./room.css";
 import "./ready-room.css";
@@ -529,19 +530,34 @@ export default function ReadyRoom({
     refreshRef.current?.("squadrons");
   }, [me]);
 
-  const share = (t) => {
-    const url = `${window.location.origin}${routePath.ready(t.moduleId, t.id)}`;
-    navigator.clipboard?.writeText(url)
-      .then(() => say("Link copied", <Link2 aria-hidden="true" />))
-      .catch(() => say(url, <Link2 aria-hidden="true" />));
+  /* SHARING, THE WAY THE PLATFORM DOES IT. All four of these were
+     `navigator.clipboard?.writeText(url).then(...)`, and `navigator.clipboard`
+     is undefined on iOS Safari outside a secure context and in the in-app
+     browsers this class actually pastes from. The optional chain then makes
+     the whole expression `undefined`, `.then` throws a TypeError nothing
+     catches, and the toast never fires — so the control read as dead. Where it
+     did fire it claimed a copy that had not happened.
+
+     `share()` tries the phone's own sheet first, then an AWAITED clipboard,
+     and says nothing it did not observe. When neither is available the link
+     itself goes in the message, which is the fallback that cannot fail: it is
+     at least selectable by hand. */
+  const shareLink = async (url, icon, copied) => {
+    const r = await shareOut(url, "Wingman");
+    if (r === MANUAL) { say(url, icon); return; }
+    const said = r === "copied" ? copied : shareSaid(r);
+    if (said) say(said, icon);
   };
 
-  const copyInvite = (s) => {
-    const url = inviteUrl(s.inviteToken);
-    navigator.clipboard?.writeText(`https://${url}`)
-      .then(() => say("Invite link copied", <Copy aria-hidden="true" />))
-      .catch(() => say(url, <Copy aria-hidden="true" />));
-  };
+  const share = (t) =>
+    shareLink(`${window.location.origin}${routePath.ready(t.moduleId, t.id)}`,
+              <Link2 aria-hidden="true" />, "Link copied");
+
+  /* `inviteUrl` returns an absolute URL now, so nothing prefixes a scheme by
+     hand — this built `https://${url}` by concatenation, which is a broken
+     link the day that helper starts returning one. */
+  const copyInvite = (s) =>
+    shareLink(inviteUrl(s.inviteToken), <Copy aria-hidden="true" />, "Invite link copied");
 
   const voteQuestion = async (id, dir) => {
     const mine = await voteThread(me, id, dir);
@@ -574,7 +590,13 @@ export default function ReadyRoom({
       { id: "reply", icon: <CornerUpLeft aria-hidden="true" />, label: "Reply", run: () => setReplyTo(m.id) },
       { id: "react", icon: <SmilePlus aria-hidden="true" />, label: "React with 👍", run: () => react(m.id, "👍") },
       { id: "copy", icon: <Copy aria-hidden="true" />, label: "Copy text",
-        run: () => { navigator.clipboard?.writeText(m.body || ""); say("Copied"); } },
+        run: async () => {
+          /* Copying a MESSAGE, not a link: there is nothing to share-sheet, so
+             this is the clipboard or nothing — and it must not say "Copied"
+             before the clipboard has said so. */
+          const r = await shareOut(m.body || "");
+          say(r === "copied" ? "Copied" : (m.body || ""));
+        } },
       { id: "pin", icon: <Pin aria-hidden="true" />, label: "Pin in this squadron",
         run: async () => { await pinMessage(me, m.id, true); onRefresh?.("squadrons"); say("Pinned", <Pin aria-hidden="true" />); } },
       "-",
@@ -623,7 +645,10 @@ export default function ReadyRoom({
       const mine = payload.answer.authorId === me;
       setMenu({ anchor, items: [
         { id: "copy", icon: <Copy aria-hidden="true" />, label: "Copy text",
-          run: () => { navigator.clipboard?.writeText(payload.answer.body || ""); say("Copied"); } },
+          run: async () => {
+            const r = await shareOut(payload.answer.body || "");
+            say(r === "copied" ? "Copied" : (payload.answer.body || ""));
+          } },
         mine
           ? { id: "del", icon: <Trash2 aria-hidden="true" />, label: "Delete", danger: true,
               run: () => { onPost?.({ kind: "deleteReply", replyId: payload.answer.id }); say("Removed"); } }

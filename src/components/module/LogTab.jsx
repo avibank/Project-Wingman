@@ -24,6 +24,8 @@ import { LOG_FILTERS, filterLog, exportText, exportName } from "../../lib/lesson
 import { drawLogStamp, logTilt } from "../../lib/logStamp.js";
 import { useSeed } from "../Stamp.jsx";
 import { mmss } from "./lessonState.js";
+import { downloadBlob, downloadSaid } from "../../lib/outside.js";
+import { toast } from "../../features/bookmarks/toastBus.js";
 import "./log.css";
 
 /* One row's stamp. dangerouslySetInnerHTML for the same reason <Stamp> uses
@@ -106,12 +108,15 @@ export default function LogTab({
 
 /* §3 — "Export must work: produce a real download." What is written is what
    is on screen: the filter decides the list, and the list decides the file. */
-export function downloadLog(lessonTitle, entries) {
+export async function downloadLog(lessonTitle, entries) {
+  /* THROUGH THE ONE HELPER. This built its own anchor and revoked the object
+     URL on the line after `a.click()` — Safari and iOS frequently cancel the
+     download, because the URL is gone before the fetch has begun. The anchor
+     was also never appended to the document, which some browsers require.
+     `downloadBlob` does both, and on a phone offers the share sheet first,
+     which is how a file reaches the Files app on an iPhone. */
   const blob = new Blob([exportText(lessonTitle, entries)], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = exportName(lessonTitle);
-  a.click();
-  URL.revokeObjectURL(url);
+  const name = exportName(lessonTitle);
+  const said = downloadSaid(await downloadBlob(blob, name), name);
+  if (said) toast(said);
 }

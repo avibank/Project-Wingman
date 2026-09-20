@@ -89,6 +89,9 @@ const CHUNK = {
   pdf: chunk(() => import("./components/PdfPanel.jsx")),
   roomShell: chunk(() => import("./components/room/ReadyRoom.jsx")),
   profile: chunk(() => import("./components/Profile.jsx")),
+  /* Clerk's own account UI, behind the two buttons that were dead. Large, and
+     nobody who never presses them should pay for it. */
+  account: chunk(() => import("./components/AccountPortal.jsx")),
   progress: chunk(() => import("./components/ProgressPage.jsx")),
   /* Bookmarks and the card set come out of one chunk: they share the store,
      the adapter, the study pad and the whole stylesheet, so splitting them
@@ -110,6 +113,7 @@ const ROUTE_CHUNKS = {
   ready: [CHUNK.roomShell],
   modules: [CHUNK.modules],
   profile: [CHUNK.profile],
+  clerk: [CHUNK.account],
   logbook: [CHUNK.progress],
   bookmarks: [CHUNK.bookmarks],
   cards: [CHUNK.bookmarks],
@@ -182,6 +186,7 @@ import ProfileMenu from "./components/ProfileMenu.jsx";
 import ReadyRoomPill from "./components/ReadyRoomPill.jsx";
 const ReadyRoomShell = lazy(CHUNK.roomShell);
 const Profile = lazy(CHUNK.profile);
+const AccountPortal = lazy(CHUNK.account);
 const ProgressPage = lazy(CHUNK.progress);
 const BookmarksScreens = lazy(CHUNK.bookmarks);
 /* The bag sits in the Flight Deck's instrument strip, which is on the first
@@ -1791,11 +1796,21 @@ function AppInner() {
         <main className="content content-taxi">
           <BookmarksScreens route={route} />
         </main>
+      ) : route.name === "clerk" ? (
+        /* Clerk owns the email and password flows, including verification and
+           the case where a Google account has no password to change. */
+        <main className="content content-taxi content--profile">
+          <AccountPortal section={route.section} onBack={() => go(routePath.profile("licence"))} />
+        </main>
       ) : route.name === "profile" ? (
         <main className="content content-taxi content--profile">
           <Profile
             page={route.tab}
-            onNavigate={(t) => go(routePath.profile(t))}
+            /* "security" and "email" are Clerk's, not one of the three tabs —
+               `routePath.profile` would fall back to /account/licence, which
+               is what made both buttons dead. */
+            onNavigate={(t) => go(t === "security" || t === "email"
+              ? routePath.clerk(t) : routePath.profile(t))}
             onBack={() => go(routePath.home())}
             variant={variant}
             variantPin={variantPin}

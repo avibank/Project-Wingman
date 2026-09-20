@@ -7,6 +7,8 @@ import { initials, hueFor } from "../../../lib/familiar.js";
 import { clock, chatUnread } from "../../../lib/roomModel.js";
 import { chatRows, receiptsFor, tickFor } from "../../../lib/rrModel.js";
 import { formatBytes } from "../../../lib/attachments.js";
+import { downloadBlob, downloadSaid } from "../../../lib/outside.js";
+import { toast } from "../../../features/bookmarks/toastBus.js";
 
 /* ============================================================================
    A SQUADRON — its chat, WhatsApp-shaped.
@@ -74,8 +76,37 @@ function Attachment({ a, onOpenPassage, onOpenImage }) {
     );
   }
   const kind = (a.mimeType || "").split("/").pop()?.toUpperCase().slice(0, 4) || "FILE";
+  /* THE `download` ATTRIBUTE IS IGNORED CROSS-ORIGIN, and every attachment
+     here is served from Supabase storage — a different origin. So it never
+     downloaded anything: it opened the file in a tab, and on iOS in the SAME
+     tab, which takes the student out of the conversation they were in. The
+     control promised one thing and did another.
+
+     It fetches the file and hands the blob to `downloadBlob`, which appends
+     the anchor before clicking it, revokes after a delay rather than on the
+     next line, and on a phone offers the share sheet first — the only way a
+     file reaches the Files app on an iPhone. If the fetch is refused, the tab
+     is still the answer and the student is told that is what happened rather
+     than being left with a control that looked like it failed. */
+  const keep = async (e) => {
+    e.preventDefault();
+    if (!a.url) return;
+    try {
+      const res = await fetch(a.url);
+      if (!res.ok) throw new Error(String(res.status));
+      const said = downloadSaid(await downloadBlob(await res.blob(), a.fileName || "attachment"),
+                                a.fileName || "the file");
+      if (said) toast(said);
+    } catch {
+      window.open(a.url, "_blank", "noopener");
+      toast("It is open in a new tab — use your browser's Share button to save it.");
+    }
+  };
   return (
-    <a className="rr-attach" href={a.url || undefined} target="_blank" rel="noreferrer" download={a.fileName || undefined}>
+    /* Still a real anchor: the middle click, the cmd-click and the status bar
+       all keep working, and only the plain left click is taken over. */
+    <a className="rr-attach" href={a.url || undefined} target="_blank" rel="noreferrer"
+       onClick={(e) => { if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) keep(e); }}>
       <span className="rr-ic"><File /></span>
       <span className="rr-mid"><b>{a.fileName}</b><span>{formatBytes(a.byteSize)} · {kind}</span></span>
     </a>

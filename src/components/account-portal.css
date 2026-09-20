@@ -1,0 +1,14 @@
+/* Clerk's panel, wearing this app's clothes. Only the frame around it is ours;
+   the panel itself is skinned through the variables Clerk exposes, because
+   restyling somebody else's component by selector breaks on their next
+   release. */
+.acct { max-width: 760px; margin: 0 auto; padding: 8px 0 72px; }
+.acct-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: 0; padding: 8px 4px; margin: 0 0 10px -4px;
+  color: var(--t2); font: 600 13px/1 var(--font-ui); cursor: pointer;
+}
+.acct-back:hover { color: var(--t1); }
+.acct-title { margin: 0; font: 700 clamp(22px, 4vw, 27px)/1.15 var(--font-ui); color: var(--t1); }
+.acct-sub { margin: 6px 0 22px; font-size: 14px; color: var(--t2); max-width: 56ch; }
+.acct-frame { display: flex; justify-content: center; }

@@ -46,3 +46,14 @@ export const useReverification = (fn) => fn;
 export const ClerkProvider = ({ children }) => <>{children}</>;
 export const SignIn = () => <div>[SignIn]</div>;
 export const SignUp = () => <div>[SignUp]</div>;
+/* Clerk's account panel, stood in for. Without this the account route's chunk
+   fails to import in the harness and the screen renders nothing at all — which
+   is indistinguishable from the two buttons still being dead, and is how a
+   walk would have "proved" a fix that was fine. It carries the same landmarks
+   the real one does, so a walk can assert it arrived. */
+export const UserProfile = () => (
+  <div data-qa="clerk-user-profile" className="cl-stub">
+    <h2>Account</h2>
+    <p>Clerk&rsquo;s own account panel renders here: email, password, devices.</p>
+  </div>
+);
