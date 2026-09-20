@@ -15,15 +15,23 @@ export const isDone = (state, lessonId) =>
 // next is the one they skipped.
 export function currentLesson(chapters, state) {
   for (const ch of chapters) {
-    for (const l of ch.lessons) if (!isDone(state, l.id)) return { chapter: ch, lesson: l };
+    /* `ch.lessons || []` — a chapter is a quiz and a card set now, and its
+       lessons array can be empty or missing entirely. `for (const l of
+       undefined)` throws, and it throws inside a render. */
+    for (const l of ch.lessons || []) if (!isDone(state, l.id)) return { chapter: ch, lesson: l };
   }
   return null;
 }
 
 export function chapterState(ch, state, hereChapterId) {
-  const done = ch.lessons.filter((l) => isDone(state, l.id)).length;
+  const lessons = ch.lessons || [];
+  const done = lessons.filter((l) => isDone(state, l.id)).length;
   const quizTaken = state?.quiz?.[ch.id] != null;
-  if (done === ch.lessons.length && quizTaken) return "done";
+  /* A CHAPTER WITH NO LESSONS IS DONE WHEN ITS QUIZ IS SAT, which falls out of
+     `0 === 0` and is the right answer rather than a lucky one: the quiz is the
+     whole of that chapter. Worth stating, because the line reads as an
+     accident until you have thought about it. */
+  if (done === lessons.length && quizTaken) return "done";
   if (ch.id === hereChapterId) return "here";
   // "Started" is not "here". Returning "here" for anything part-done put YOU
   // ARE HERE on every chapter with a single watched lesson — two at once on

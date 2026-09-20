@@ -147,7 +147,10 @@ export default function ModuleScreen({
       <div className="ref-mod">
         <div className="mod">
         <h1>{mod.name}</h1>
-        <p className="sub">{moduleSubtitle(chapters)}</p>
+        {/* Papers count too: they hang off the module as well as off a
+            chapter, so a module can have something to open before it has a
+            chapter. */}
+        <p className="sub">{moduleSubtitle(chapters, papers)}</p>
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
           the surface below, and the list lives inside the same border. */}
@@ -221,6 +224,9 @@ export default function ModuleScreen({
                        whether a content document is still in flight, and this
                        screen is the only thing that can name the module. */
                     pending={contentPending} moduleName={mod?.name}
+                    /* One tab across, where the work actually is while the
+                       video is being made. */
+                    onLibrary={() => onTab("library")}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (

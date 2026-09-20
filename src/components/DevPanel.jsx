@@ -68,7 +68,7 @@ export default function DevPanel({ isAdmin, enabled, progress, modules, chapters
   const done = progress.get(KEYS.done, {});
   const pos = progress.get(KEYS.pos, {});
   const quiz = progress.get(KEYS.quiz, {});
-  const lessons = chapters.flatMap((c) => c.lessons.map((l) => ({ ...l, chapter: c })));
+  const lessons = chapters.flatMap((c) => (c.lessons || []).map((l) => ({ ...l, chapter: c })));
   const lesson = lessons.find((l) => l.id === lessonId) || lessons[0];
 
   // Marking done here writes the logbook entry too. A dev control that skips

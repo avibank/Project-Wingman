@@ -1953,7 +1953,11 @@ function AppInner() {
         (() => {
           const chs = chaptersFor(activeModuleCode, useTestContent);
           const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
-          const ls = ch?.lessons.find((l) => l.id === route.lessonId) || ch?.lessons[0];
+          /* `?.` ON `lessons` TOO. A chapter is a quiz and a card set now, and
+             its lessons array can be missing entirely — `undefined.find` throws
+             inside a render, which is a white screen rather than the redirect
+             below. */
+          const ls = ch?.lessons?.find((l) => l.id === route.lessonId) || ch?.lessons?.[0];
           /* A LESSON LINK THAT NO LONGER RESOLVES IS NOT A BLANK PAGE.
 
              This returned `<main />` — an empty element, so the screen was the

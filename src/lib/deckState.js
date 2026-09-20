@@ -26,7 +26,17 @@ export function deckStateFrom({ chapters = [], lessonDone = {}, lessonPos = {}, 
 
   for (const c of chapters) {
     const ls = c.lessons || [];
-    if (!ls.length) continue;
+    if (!ls.length) {
+      /* A CHAPTER WITH NO LESSONS IS FULL WHEN ITS QUIZ IS SAT.
+         This used to `continue` — skip it entirely — which was right while
+         every chapter had video and a lesson-less one meant "not loaded yet".
+         The beta opens with no video at all, so every chapter took that
+         branch and the route graphic could never fill: a student could sit
+         every quiz in the module and watch the bar stay empty. The quiz IS
+         the chapter here, so sitting it is finishing it. */
+      if (quiz[c.id] != null) completed.add(c.id);
+      continue;
+    }
     // A chapter is FULL when every lesson in it is done. Taking its quiz is
     // not required: a quiz you have not sat is a thing still to do, not a
     // lesson left unwatched, and the segments count lessons.

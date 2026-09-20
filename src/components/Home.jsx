@@ -610,7 +610,11 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                     ? "Pick up where you left off."
                     : (next?.lessons?.length
                       ? `${next.lessons.length} lesson${next.lessons.length === 1 ? "" : "s"} waiting.`
-                      : "Start the first lesson."))}
+                      /* NOT "Start the first lesson." A chapter with no video
+                         has no lesson to start, and the beta opens with none
+                         at all — so the sentence named an action the screen
+                         behind it cannot offer. It names the one it can. */
+                      : "Sit the first quiz."))}
               </div>
             </div>
             {/* A sibling of the text, not a child of it — that is what puts it

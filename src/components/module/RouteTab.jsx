@@ -7,7 +7,7 @@ import { thumbTile } from "../../lib/familiar.js";
 import { passAt } from "../../lib/quiz.js";
 import { posterFor } from "../../lib/shell.js";
 import { filterChapters, terms, countLessons } from "../../lib/moduleSearch.js";
-import { LessonsWaiting } from "./ModuleWaiting.jsx";
+import { LessonsWaiting, LessonsComing } from "./ModuleWaiting.jsx";
 import "./familiar.css";
 
 // Netflix's episode list, and the reason it is worth more than the picture.
@@ -166,9 +166,20 @@ export default function RouteTab({
      instead. */
   pending = false,
   moduleName = "This module",
+  onLibrary = null,
 }) {
   if (!chapters?.length) {
     return pending ? <RouteSkeleton /> : <LessonsWaiting moduleName={moduleName} />;
+  }
+  /* CHAPTERS, AND NO VIDEO IN ANY OF THEM. Two different absences: the one
+     above is "nothing has gone up yet", this is "the module is filling and
+     this tab is not where the work is". Showing the first once chapters exist
+     would say the module was empty while the Library beside it was full.
+
+     The beta opens exactly here and stays here for a while — there is no
+     video — so this is not a flicker between loads, it is the tab. */
+  if (!chapters.some((c) => c.lessons?.length)) {
+    return <LessonsComing onLibrary={onLibrary} />;
   }
   const searching = terms(query).length > 0;
   // Searching overrides the fold. A result you cannot see is not a result, and
@@ -190,8 +201,17 @@ export default function RouteTab({
                   <h2>{ch.title}</h2>
                   {/* §7 — the subline states the shape of the chapter and
                       nothing the rows below already say. */}
+                  {/* THE SHAPE OF THE CHAPTER, AND ONLY WHAT IS IN IT.
+                      This read "{n} lessons · 1 quiz" unconditionally, so a
+                      chapter with no video — which is every chapter the beta
+                      opens with — said "0 lessons · 1 quiz". A zero count,
+                      which §10 forbids, and one that names the tab a student
+                      cannot use yet. Lessons appear in the line when there
+                      are lessons. */}
                   <div className="cm">
-                    {ch.lessons.length} lesson{ch.lessons.length === 1 ? "" : "s"} · 1 quiz
+                    {ch.lessons?.length
+                      ? `${ch.lessons.length} lesson${ch.lessons.length === 1 ? "" : "s"} · 1 quiz`
+                      : "A quiz and a set of cards"}
                   </div>
                 </span>
                 {/* Master Caution used to share this slot with the status
@@ -228,7 +248,7 @@ export default function RouteTab({
               {/* Rendered whether open or not, so the fold has something to
                   animate between. */}
               <div className="ch-body" id={`kids-${ch.id}`}>
-                  {ch.lessons.map((l) => (
+                  {(ch.lessons || []).map((l) => (
                     <RouteRow stamp={stamp} tilts={tilts} key={l.id} lesson={l} chapter={ch}
                               done={isDone(state, l.id)}
                               here={l.id === here?.lesson?.id}

@@ -56,13 +56,14 @@ export function LessonsWaiting({ moduleName = "This module" }) {
       <div className="ce-h">
         <h3>{moduleName} starts here</h3>
         <p>
-          Chapters land in this list as they go up, each one carrying its lessons
-          and its quiz. Open one and it stays open while you work through it.
+          Chapters land in this list as they go up, each one carrying its quiz
+          and its set of cards. Open one and it stays open while you work
+          through it.
         </p>
       </div>
 
       <Ghost rows={[
-        ["Chapter 1", "its lessons, then its quiz"],
+        ["Chapter 1", "its quiz, and the same questions as cards"],
         ["Chapter 2", "opens when you get there"],
         ["Chapter 3", "and so on, to the end of the module"],
       ]} />
@@ -70,6 +71,62 @@ export function LessonsWaiting({ moduleName = "This module" }) {
       <p className="ce-note">
         Everything you finish is signed off on the row you finished it on, and the
         Flight Deck picks the module back up where you left it.
+      </p>
+    </div>
+  );
+}
+
+/* THE LESSONS TAB, WITH CHAPTERS IN THE MODULE AND NO VIDEO IN THEM.
+   ---------------------------------------------------------------------------
+   A DIFFERENT STATE FROM THE ONE ABOVE, and the difference is the whole point.
+   `LessonsWaiting` is "nothing has gone up yet" — it is about the module. This
+   is "the module is filling up and this particular tab is not where the work
+   is" — it is about the tab. Showing the first one once chapters exist would
+   say the module is empty while the Library next to it is full.
+
+   IT IS NOT TEMPORARY-SOUNDING WITHOUT BEING UNTRUE. Video is coming; it is
+   not here, and it will not be here for the beta. So the heading says what the
+   tab is FOR rather than apologising for what it has not got, and the sentence
+   sends the student one tab across rather than leaving them to work it out.
+
+   AND IT HAS A BUTTON, where `LessonsWaiting` deliberately has none. The rule
+   is the same one Crew's empty state follows: a control belongs in an empty
+   state when there is really somewhere to go. There is — the Library, with the
+   quizzes and the cards in it. A student who lands here must not have to find
+   their own way out.
+
+   THE TAB ITSELF IS NOT MARKED. No "coming soon" badge, no disabled state: the
+   tab opens and says this. A disabled tab tells a student they cannot press
+   something without telling them why, which is the same failure as a dead
+   control one step earlier. */
+export function LessonsComing({ onLibrary }) {
+  return (
+    <div className="cempty">
+      <div className="ce-h">
+        <h3>Lessons are filming</h3>
+        <p>
+          Every chapter will have its video here. They are not made yet — so
+          for now the work is one tab across, in the Library: a quiz for every
+          chapter and the same questions again as cards you can flip.
+        </p>
+      </div>
+
+      <Ghost rows={[
+        ["Chapter 1 · the briefing", "the video, when it is shot"],
+        ["Chapter 1 · the detail", "and the one that goes with it"],
+      ]} />
+
+      {onLibrary && (
+        <div className="ce-do">
+          <button type="button" className="pill pri" onClick={onLibrary}>
+            Open the Library
+          </button>
+        </div>
+      )}
+
+      <p className="ce-note">
+        Anything you sit in the Library counts towards the module either way —
+        the route fills on chapters, not on videos.
       </p>
     </div>
   );
@@ -124,14 +181,22 @@ export function PapersSlot() {
       </div>
 
       <div className="cempty">
+        {/* IT PROMISES WHAT THE VIEWER WILL ACTUALLY DO, AND NOTHING ELSE.
+            This said "read it, mark it, keep what matters" and "what you mark
+            on one stays with it" — which describes the annotation reader, and
+            that is paused. What is being built in its place opens a paper,
+            scrolls it, bookmarks a page and downloads it. Marking is not on
+            the list. An empty state that advertises a feature the product
+            will not ship is worse than no empty state: it is the only thing a
+            student has read about papers, and it would be wrong. */}
         <Ghost rows={[
-          ["Module handout", "read it, mark it, keep what matters"],
+          ["Module handout", "open it, keep your page, take it with you"],
           ["Chapter 1 notes", "filed under the chapter it belongs to"],
         ]} />
         <p className="ce-note">
           The shelf is here and the papers are on their way. When they land they
-          open in Wingman rather than in a download, so what you mark on one stays
-          with it.
+          open in Wingman, so the page you were on is still the page you were on
+          — and they come down to your device whenever you want them.
         </p>
       </div>
     </section>
