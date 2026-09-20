@@ -37,9 +37,23 @@ export function resolve(row) {
   if (row.kind === 'page') {
     const p = content.paper(row.ref_id);
     if (p === undefined) return undefined;
-    /* A page past the end of the paper is a page that no longer exists — the
-       paper was replaced with a shorter one. Gone, not unknown. */
-    return p && row.page >= 1 && row.page <= p.pageCount ? { row, kind: 'page', paper: p, page: row.page } : null;
+    if (!p) return null;
+    /* A PAPER WITH NO PAGE COUNT HAS NOT BEEN MEASURED, NOT SHORTENED, and
+       that difference decides whether a row is deleted from the server.
+       `content.paper` reports `pages || 0`, so a paper listed without a
+       length would make every page in it "past the end" — `null`, which
+       prunes. An unknown length cannot answer the question, so it does not:
+       hold the row and ask again.
+
+       This is a guard, not a fix for something observed: every paper the
+       repo lists today carries its length. It is here because the cost of
+       being wrong is a student's bookmarks, and because the same mistake one
+       field along is what the three-state comment above this function is
+       about. */
+    if (!p.pageCount) return undefined;
+    /* A page past the end of a paper we DO hold is a page that no longer
+       exists — the paper was replaced with a shorter one. Gone, not unknown. */
+    return row.page >= 1 && row.page <= p.pageCount ? { row, kind: 'page', paper: p, page: row.page } : null;
   }
   return null;
 }

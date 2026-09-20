@@ -475,8 +475,11 @@ and `claude/bookmarks-report.md` is what each rule measured.
   was not empty, whatever the brief said: it held the callsign field (already
   on the Licence tab, with the server-side uniqueness check), the blocked list
   (the only way to unblock anybody) and three settings with no other door. The
-  blocked list is in Preferences under "How social" and `PilotSettings` is
-  below it; `/settings` and `/saved` both resolve to `/bookmarks`.
+  blocked list is in Preferences, in its own box; `/settings` and `/saved`
+  both resolve to `/bookmarks`. `PilotSettings` sat below it and is **gone**
+  (2026-09-20): it held no setting, only a written-out list of the four things
+  this app sends, and the launch handoff cuts it — replies, answers, squadron
+  messages and the right seat are on by default and are not a choice.
 - **The accent is three tokens on this surface, not one**: `--active` for a
   mark, `--active-fill` for a fill, `--active-text` for the accent read as
   words. Measured rather than argued — the module picker's own name came in at

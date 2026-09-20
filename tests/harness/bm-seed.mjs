@@ -62,8 +62,13 @@ export async function seedBookmarks(BASE = process.env.HARNESS || "http://127.0.
     { module_id: "M1", kind: "video", ref_id: "M1.02.2", chapter: 2, at_seconds: 0 },
     { module_id: "M2", kind: "video", ref_id: "M2.02.2", chapter: 2, at_seconds: 260 },
   ];
-  const pages = [212, 57, 388, 402].map((page) => ({ module_id: "M1", kind: "page", ref_id: "M1.DEV", chapter: null, page }));
-  pages.push({ module_id: "M2", kind: "page", ref_id: "M2.DEV", chapter: null, page: 30 });
+  /* PAGES THAT EXIST. The demo's own four are 212, 57, 388 and 402, of a
+     paper with a thousand pages in it; the dev test paper here has fourteen,
+     and a page past the end of a paper is correctly treated as a page that no
+     longer exists — so seeding the demo's numbers deleted all four the first
+     time the Pages folder resolved them. That is the feature working. The
+     numbers are the paper's now. */
+  const pages = [1, 4, 9, 13].map((page) => ({ module_id: "M1", kind: "page", ref_id: "M1.DEV", chapter: null, page }));
 
   const rows = [...questionsM1, ...cardsM1, ...questionsM2, ...videos, ...pages].map(row);
   if (questionsM1.length !== 5 || cardsM1.length !== 6) {

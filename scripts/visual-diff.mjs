@@ -51,10 +51,20 @@ const PAIRS = [
   { name: 'folder-pages',    ref: '/__ref/bookmarks#pages',     live: '/bookmarks/pages?m=m1',
     refPrep: () => go('folder', () => { S.type = 'page'; }) },
   { name: 'card-set',        ref: '/__ref/bookmarks#set',       live: '/m/m1/library/cards/1',
-    refPrep: () => go('set', () => { S.setCh = 1; }) },
+    /* `S.set` is "module:chapter", which is what the demo's own row writes
+       into it (`data-set="${m}:${x.ch}"`). `S.setCh` was a guess and threw. */
+    refPrep: () => go('set', () => { S.set = 'm1:1'; S.flowK = 0; }) },
   { name: 'library',         ref: '/__ref/bookmarks#library',   live: '/m/m1/library',
     refPrep: () => go('library') },
-  { name: 'flight-bag',      ref: '/__ref/flight-bag#full',     live: '/', clip: '.bm-bagcell' },
+  /* The bag's own demo has no `.bm-bagcell` — that is this app's wrapper — so
+     each side is clipped to the thing it actually draws. `.case` is the
+     briefcase in the reference; `.bm-bagcell` is the instrument cell holding
+     the same drawing here. */
+  /* NO FLIGHT-BAG PAIR. Its demo draws the briefcase at 149x157 as the
+     subject of its own page; this app draws the same SVG at 85x85 inside one
+     cell of a four-instrument strip. A pixel diff of two different scales is
+     a number with nothing behind it — the bag is judged by
+     `npm run check:ground` and by looking. */
 ];
 
 /* Things that can never match pixel for pixel — real time, real names, moving art.

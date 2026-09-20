@@ -40,3 +40,6 @@ tests/last-run.json
 # ref-diff's own output and its saved sign-in — screenshots and a session cookie.
 tools/ref-diff-out/
 tools/.auth.json
+
+# visual-diff's output — screenshots, regenerated on every run.
+tools/diff/
