@@ -49,3 +49,14 @@ bugs (BUGS 18-21). What is left, and what each needs, is at the bottom of
 QA-CHECKLIST.md. The largest is a phone: nothing in this project has been
 opened on one, and it is the only item on that list nobody can simulate.
 
+---
+
+## The reference-build port (2026-09-19 / 20)
+
+Four of five screens ported, measured and deployed; the fifth is logged rather
+than half-done. `docs/launch/SESSION-REPORT.md` is the account of it —
+what is live, the diff percentage for each screen at each width, what was
+found by measuring rather than by reading, and every decision taken alone.
+`docs/launch/DECISIONS.md` carries the arguments; `docs/launch/BUGS.md` rows
+1-16 are closed and row 17 is the lesson page.
+

@@ -21,6 +21,33 @@ export default defineConfig({
       name: "harness-postgrest",
       configureServer(server) { server.middlewares.use(postgrestMiddleware()); },
     },
+    /* /m/:module/l:n -> that module's nth lesson, IN THE HARNESS ONLY.
+       ---------------------------------------------------------------------
+       tools/ref-diff.mjs was supplied with `/m/m1/l1` as the lesson screen's
+       address. This app's is `/m/m1/M1.01/lesson/M1.01.1` — the chapter and
+       the lesson both carry their ids, which is what made every lesson URL
+       answer Vercel's 404 in production once (BUGS #12) and is not going to
+       change for a measuring tool.
+
+       So the short address is resolved HERE rather than in the app: a
+       redirect in the test server, which never ships, instead of a product
+       route that exists for a diff. The app's router is untouched and
+       check:doors still sees one set of addresses. */
+    {
+      name: "harness-short-lesson",
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const m = /^\/m\/([^/?]+)\/l(\d+)(\?.*)?$/.exec(req.url || "");
+          if (!m) return next();
+          const [, mod, n, query = ""] = m;
+          const num = String(n).padStart(2, "0");
+          const code = mod.toUpperCase();
+          res.statusCode = 302;
+          res.setHeader("location", `/m/${mod}/${code}.${num}/lesson/${code}.${num}.1${query}`);
+          res.end();
+        });
+      },
+    },
   ],
   resolve: {
     alias: [{ find: /^@clerk\/clerk-react$/, replacement: `${HERE}clerkStub.jsx` }],
