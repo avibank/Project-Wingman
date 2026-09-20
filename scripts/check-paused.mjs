@@ -134,7 +134,14 @@ console.log("\nno way in");
      so that is what is tested now — the real section still behind the switch,
      the paused one made of markup and nothing else. */
   const lib = read("src/components/module/LibraryTab.jsx");
-  const slot = read("src/components/module/ModuleWaiting.jsx");
+  /* `PapersSlot` ITSELF, NOT THE FILE IT LIVES IN. This read the whole of
+     ModuleWaiting.jsx, which also holds the Lessons states — and one of those
+     now has a button to the Library, because with no video the Lessons tab is
+     a permanent waiting state and a student who lands on it must not have to
+     find their own way out. That `onClick` is nothing to do with papers. The
+     rule is about the papers slot: it may not open, add or mark a file. */
+  const waiting = read("src/components/module/ModuleWaiting.jsx");
+  const slot = (waiting.split("export function PapersSlot")[1] || "").split("\nexport ")[0];
   ok("doors", "the Library's real Papers section is still behind the switch",
      /\{papersOn && \(\n\s*<section aria-labelledby="lsec-papers"/.test(lib));
   ok("doors", "and what shows in its place is a slot, drawn only while paused",
