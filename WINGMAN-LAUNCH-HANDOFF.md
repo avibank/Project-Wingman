@@ -1,7 +1,13 @@
+<!-- stamp-changelog-20sep -->
+
+> **20 Sep 2026 — the stamp changed.** The rim text is now derived from each
+> shape's own outline and sits on a fitted true arc; `lace` is gone; Matcha was
+> re-matched to the reference photograph; the example code is WNG. Read
+> `docs/launch/CHANGELOG-STAMP.md` and take `docs/launch/code/05-stamp-engine.js`,
+> `15-stamp-creator.js` and `03-stamp-creator.css` as they now stand — the code
+> quoted further down this document predates that work.
+
 # Wingman: launch handoff for Claude Code
-
-> **Read `START-HERE.md` first.** The live site is a partial port: the screens were rebuilt from this description rather than copied from the reference builds, so the content is roughly right and the layout is not. START-HERE.md is the current order of work, with the live defects listed screen by screen and the avatar bug diagnosed. The reference builds in `docs/launch/reference/` are the specification — copy their structure and CSS, do not reinterpret them.
-
 
 You have the wingman.institute repo. **This single file is the complete handoff.** It holds the full spec (sections 1–9) and, in the appendices, the complete source of both signed-off reference builds. Save each appendix code block to the path shown and open it in a browser to see the exact target. Your job:
 
@@ -46,14 +52,8 @@ Both are single self-contained HTML files. Read their JS: the render functions a
   - Lesson rows show a thumbnail (with a thin progress line when part-watched), the title and a status line.
   - The right side of a lesson row shows the student's **stamp** when signed off, **Resume** when in progress, and nothing when not started.
   - Quiz rows use the live `quiz-thumb` markup, unchanged. They show "4 of 8" plus **Re-check** below the 75% pass mark.
-- **Library tab** — three sections in this order: **Quizzes**, **Study cards**, **Papers**. The chapter filter chips and the search field filter all three; a section with no matches is hidden rather than shown empty.
+- **Library tab:**
   - **Quizzes:** score plus Re-check, or Take it.
-  - **Study cards:** one row per chapter card set. This section is not optional — study cards are an existing first-class content type on the live site (`slug: "cards"`, action "Test yourself", hint "Flip a chapter's cards and keep the ones worth another look.") and the Library is where they live. Each row has:
-    - **Thumbnail:** three stacked cards (two rotated behind, one square in front on `--ground` with an accent-tinted border) with the card count in accent-coloured mono on the front card. It is drawn in CSS, not an image, and it replaces the doc-icon box used by Papers.
-    - **Title:** "Chapter N cards".
-    - **Status line:** "N kept for another look" when the student has kept any; otherwise "N cards · not started" for an untouched set, or the plain count once started with nothing kept.
-    - **Right side:** `done/total` and a **Test yourself** button.
-    - Keeping a card while studying sends it to **Bookmarks → Study cards**, which is the same list the bookmarks work already built.
   - **Papers:** chapter filter chips, **Add a paper**, a reading-progress bar and Resume. Paper rows use the doc-icon box.
 - **Crew tab (about the module, not your friends):**
   - **Summary:** how many people are on the module, how many are studying now and how many have finished it, plus the faces of people studying now.
@@ -478,15 +478,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 @keyframes cepulse{0%,100%{opacity:.5}50%{opacity:1}}
 .ce-do{display:flex;gap:8px;flex-wrap:wrap}
 .ce-note{margin:16px 0 0;font-size:13px;color:var(--t3);max-width:56ch}
-
-.cards-thumb{position:relative;display:grid;place-items:center;background:transparent!important;border:0!important;overflow:visible}
-.cards-thumb i{position:absolute;width:56%;height:82%;border-radius:5px;background:var(--raised);border:1px solid var(--line)}
-.cards-thumb i:nth-child(1){transform:rotate(-11deg) translateX(-5px)}
-.cards-thumb i:nth-child(2){transform:rotate(6deg) translateX(4px)}
-.cards-thumb i:nth-child(3){transform:none;background:var(--ground);border-color:color-mix(in oklab,var(--accent) 60%,transparent)}
-.lrow .th.cards-thumb b{position:relative;z-index:2;height:auto;background:none;left:auto;bottom:auto;font:600 11px var(--mono);color:var(--accent)}
-.cards-thumb i:nth-child(1){transform:rotate(-13deg) translateX(-7px);background:color-mix(in oklab,var(--raised) 70%,var(--ground))}
-.cards-thumb i:nth-child(2){transform:rotate(7deg) translateX(6px)}
 
 /* profile sheet */
 .scrim{position:fixed;inset:0;z-index:50;background:oklch(0 0 0 / .45);display:grid;place-items:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
@@ -962,22 +953,16 @@ $('#mt-lessons').addEventListener('click',e=>{
   const h=e.target.closest('.ch-h');if(h){const n=+h.dataset.ch;openCh.has(n)?openCh.delete(n):openCh.add(n);renderLessons();return}
   const r=e.target.closest('.lrow');if(r){if(r.dataset.open==='1')go('lesson');else toast('Demo: only Chapter 2 · Lesson 2 opens')}
 });
-const CARDSETS=[{c:1,n:24,done:24,kept:6,t:'numbers arithmetic'},{c:2,n:18,done:11,kept:3,t:'standard form powers'},{c:3,n:22,done:0,kept:0,t:'geometry graphs'}];
 const PAPERS=[{t:'B2 13d Instruments, Rotary Wing Aerodynamics, Autoflight and Equipment & Furnishings LTT (2)',ch:0,pages:1012,at:11},{t:'Numbers and arithmetic · class handout',ch:1,pages:42,at:42},{t:'Standard form worked examples',ch:2,pages:18,at:0}];
 let pch=0;
 function renderLibrary(){
   const q=$('#q').value.trim().toLowerCase();
   const quizzes=MOD.map(c=>({c:c.n,...c.items.find(i=>i.quiz)})).filter(z=>!q||('chapter '+z.c+' quiz').includes(q));
   const ps=PAPERS.filter(p=>(!pch||p.ch===pch)&&(!q||p.t.toLowerCase().includes(q)));
-  const sets=CARDSETS.filter(cs=>!q||(('chapter '+cs.c+' cards')+' '+cs.t).toLowerCase().includes(q));
   $('#mt-library').innerHTML=`<div class="libsplit"><div class="lsec"><div><h2>Quizzes</h2><p>3 quizzes, one per chapter</p></div></div>
    <div class="papers">${quizzes.map(z=>{const it=z;return `<button class="lrow">${`<span class="th quiz-thumb"><span class="quiz-thumb__sheet"><span><i class="on"></i><i></i><i></i></span><span><i></i><i></i><i class="on"></i></span><span><i></i><i class="on"></i><i></i></span></span><span class="quiz-thumb__count"><b>${it.q}</b>Qs</span></span>`}
      <span><div class="lt">Chapter ${z.c} quiz</div><div class="ls">${z.q} questions</div></span>
      <span class="rt">${z.score!=null?`<span class="sc">${z.score} of ${z.q}</span><span class="act-o">Re-check</span>`:'<span class="act-o">Take it</span>'}</span></button>`}).join('')||'<div class="empty">No quizzes match.</div>'}</div></div>
-   <div class="libsplit"><div class="lsec"><div><h2>Study cards</h2><p>Flip a chapter's cards and keep the ones worth another look</p></div></div>
-   <div class="papers">${sets.map(cs=>`<button class="lrow"><span class="th cards-thumb"><i></i><i></i><i></i><b>${cs.n}</b></span>
-     <span><div class="lt">Chapter ${cs.c} cards</div><div class="ls">${cs.kept?cs.kept+' kept for another look':cs.n+' cards · not started'}</div></span>
-     <span class="rt">${cs.kept?`<span class="sc">${cs.done}/${cs.n}</span><span class="act-o">Test yourself</span>`:'<span class="act-o">Test yourself</span>'}</span></button>`).join('')||'<div class="empty">No card sets match.</div>'}</div></div>
    <div class="lsec"><div><h2>Papers</h2><p>${PAPERS.length} documents for this module</p></div><button class="pill" data-addp>Add a paper</button></div>
    <div class="lchips">${[0,1,2,3].map(n=>`<button class="chip" data-pch="${n}" aria-pressed="${pch===n}">${n?'Chapter '+n:'All'}</button>`).join('')}</div>
    <ul class="papers">${ps.map(p=>`<li class="paper"><span class="pg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></span><span><div class="lt" style="font-weight:500">${p.t}</div><div style="font-size:12.5px;color:var(--t3)">PDF · ${p.pages} pages${p.at&&p.at<p.pages?' · you are on page '+p.at:p.at>=p.pages?' · read':''}</div>${p.at&&p.at<p.pages?`<div class="prog"><b style="width:${Math.max(2,p.at/p.pages*100)}%"></b></div>`:''}</span>${p.at&&p.at<p.pages?'<span class="resume">Resume</span>':'<span class="act-o">Open</span>'}</li>`).join('')||'<div class="empty">No papers here yet.</div>'}</ul>`;
@@ -986,7 +971,7 @@ $('#mt-library').addEventListener('click',e=>{const c=e.target.closest('[data-pc
 let MT='lessons';
 $$('.mtabs .tab').forEach(b=>b.onclick=()=>{MT=b.dataset.mt;$$('.mtabs .tab').forEach(x=>x.setAttribute('aria-selected',x===b));
   $('#mt-lessons').hidden=MT!=='lessons';$('#mt-library').hidden=MT!=='library';$('#crew').hidden=MT!=='crew';
-  $('#q').placeholder=MT==='crew'?'Find someone':MT==='library'?'Search quizzes, cards and papers':'Search lessons';$('#q').value='';renderLessons();renderLibrary();renderCrew()});
+  $('#q').placeholder=MT==='crew'?'Find someone':MT==='library'?'Search papers':'Search lessons';$('#q').value='';renderLessons();renderLibrary();renderCrew()});
 
 /* ---- crew ---- */
 const hues=[20,160,300,75,220,120,340,40,190,260,100,55,280,5];

@@ -145,7 +145,9 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
             never more than a glance away. */}
         <div className="st-crow">
           <input ref={codeRef} className={`st-code${draft.code ? " is-on" : ""}`} maxLength={3}
-                 value={draft.code} placeholder="H7A" autoComplete="off"
+                 /* WNG — the reference's own example, and what every
+                    screenshot in docs/launch/screens now shows. */
+                 value={draft.code} placeholder="WNG" autoComplete="off"
                  aria-label="Your code, up to 3 letters or numbers"
                  onChange={(e) => set({ code: cleanCode(e.target.value) })} />
         </div>
@@ -191,7 +193,12 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
 
           {tab === "pat" && (
             <>
-            <div className="st-row">
+            {/* THREE UP, THREE DOWN. Six patterns now that `lace` is gone, and
+                the reference lays them out in two rows of three (`.srow.pat3`)
+                rather than letting them wrap wherever they land — a pattern
+                tile is wide, and five across then one alone reads as a
+                mistake. */}
+            <div className="st-row is-three">
               {PATTERN_IDS.map((k) => (
                 <button key={k} type="button" aria-pressed={draft.pattern === k}
                         className={`st-tile is-wide${draft.pattern === k ? " is-on" : ""}`}

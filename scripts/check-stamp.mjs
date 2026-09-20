@@ -27,9 +27,12 @@ const ok = (group, what, cond, detail = "") => {
 };
 
 /* ------------------------------------------------------- 1 · the vocabulary */
-ok("parts", `six shapes, and each is its own drawing (${SHAPE_IDS.length})`,
-   SHAPE_IDS.length === 6 && SHAPE_IDS.every((s) => typeof SHAPES[s]?.o === "function")
-   && new Set(SHAPE_IDS.map((s) => SHAPES[s].o())).size === 6);
+/* EIGHT NOW. The 20 Sep engine adds `shield` and `hex`, and both carry the new
+   derived rim rather than a hand-placed arc — which is most of what that
+   change was for. */
+ok("parts", `eight shapes, and each is its own drawing (${SHAPE_IDS.length})`,
+   SHAPE_IDS.length === 8 && SHAPE_IDS.every((s) => typeof SHAPES[s]?.o === "function")
+   && new Set(SHAPE_IDS.map((s) => SHAPES[s].o())).size === 8);
 ok("parts", `six patterns (${PATTERN_IDS.length})`,
    PATTERN_IDS.length === 6 && PATTERN_IDS.every((p) => p in PATTERNS));
 ok("parts", `thirty-six inks, every one named and unique (${PALETTE.length})`,
@@ -48,13 +51,44 @@ ok("parts", "the default stamp is the reference's",
      of the declarations, comments explaining the adaptations, and an
      eslint-disable. None of them is the drawing, so all three are normalised
      away and what is left is compared character for character. */
-  const MINE = readFileSync(new URL("../src/lib/stamp.js", import.meta.url), "utf8")
+  /* BOTH SIDES, NOT JUST THE PORT. This stripped comments from the port and
+     compared what was left against the RAW reference — which worked only for
+     as long as the reference had no comments inside the blocks being read.
+     The new engine has them, in `layout` and in `ringPattern`, so the check
+     was measuring the reference's prose against the port's code and calling
+     it a drift. Comments are not the drawing on either side. */
+  const strip = (t) => t
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+  const MINE = strip(readFileSync(new URL("../src/lib/stamp.js", import.meta.url), "utf8"))
     .replace(/\bexport (const|function|let) /g, "$1 ")
-    /* And the one signature change the port states: the reference defaults to
-       its own live stamp, which does not exist here. */
-    .replace("st=DEFAULT_STAMP){", "st=MYSTAMP){");
+    /* THE PORT'S STATED ADAPTATIONS, PUT BACK so that what is compared is the
+       drawing. Each one is written out in src/lib/stamp.js beside the code it
+       changes; if one of them stops being needed, this list is where it is
+       noticed, because the comparison fails.
+
+       1 · the reference defaults to its own live stamp, which does not exist
+           outside the demo;
+       2 · it reaches its ink filter through the page's <svg defs>; the app
+           renders one <filter> per seed and refers to it by id;
+       3 · `pathPts` measures a path with getTotalLength, which needs a real
+           SVG element. The reference appends one to the page. This file makes
+           a detached one and answers null where there is no DOM at all —
+           which is this check, running in Node;
+       4 · and every caller of it therefore has to tolerate null, falling back
+           to the hand-written arcs that postage and tag use anyway. */
+    .replace("st=DEFAULT_STAMP){", "st=MYSTAMP){")
+    .replace("inkFilterId(st.seed||1)", "inkFilter(st.seed||1)")
+    .replace(/function pathPts\(d\)\{[\s\S]*?return _PS\[d\]=\{pts,N\}\}/,
+             "function pathPts(d){if(_PS[d])return _PS[d];\n  const svg=document.querySelector('svg defs').parentNode;\n  const el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('d',d);svg.appendChild(el);\n  const L=el.getTotalLength(),N=480,pts=[];\n  for(let i=0;i<=N;i++){const q=el.getPointAtLength(L*i/N);pts.push([q.x,q.y])}\n  el.remove();return _PS[d]={pts,N}}")
+    .replace("function ptAt(d,t){const P=pathPts(d);if(!P)return null;const {pts,N}=P;",
+             "function ptAt(d,t){const {pts,N}=pathPts(d);")
+    .replace("  const P=pathPts(d);if(!P)return null;\n  const {pts,N}=P,M=360,", "  const {pts,N}=pathPts(d),M=360,")
+    .replace("  const RO=radii(out[0]),RI=radii(inn[0]);\n  if(!RO||!RI)return null;\n  const M=1.05,",
+             "  const M=1.05,RO=radii(out[0]),RI=radii(inn[0]),")
+    .replace("    if(!A||!B)return [20,20];\n", "")
+    .replace(/if\(A&&B\)\{Ly\.top=A\.d;Ly\.tl=A\.L;Ly\.bot=B\.d;Ly\.bl=B\.L;RZ=\[A\.f,B\.f\];\s*\n\s*if\(Ly\.stars&&Ly\.stars\.length\)Ly\.stars=\[\[20-A\.rr,20\],\[20\+A\.rr,20\]\]\}\}/,
+             "Ly.top=A.d;Ly.tl=A.L;Ly.bot=B.d;Ly.bl=B.L;RZ=[A.f,B.f];\n    if(Ly.stars&&Ly.stars.length)Ly.stars=[[20-A.rr,20],[20+A.rr,20]]}");
   const squash = (v) => String(v).replace(/\s+/g, "");
   /* The named block between a declaration and the next top-level one. */
   const block = (src, decl, until) => {
@@ -72,7 +106,7 @@ ok("parts", "the default stamp is the reference's",
     ["the renderer itself", "function inspStamp(on,size=40,rot=0,st=", "\n}", "function inspStamp(on,size=40,rot=0,st=", "\n}"],
   ];
   for (const [what, rd, ru, md, mu] of pairs) {
-    const a = block(REF, rd, ru);
+    const a = block(strip(REF), rd, ru);
     const b = block(MINE, md, mu);
     ok("spec", `${what} is the reference's, to the character`, !!a && !!b && a === b,
        !a ? "not found in the reference" : !b ? "not found in the port" : `${a.length} vs ${b.length} chars`);
@@ -126,11 +160,26 @@ ok("draw", "the house seal draws in the livery, before anyone has made one",
    drawStamp(HOUSE_STAMP).length > 500
    && drawStamp(HOUSE_STAMP).includes("var(--accent)")
    && drawStamp(HOUSE_STAMP).includes(MARKS.tick.slice(0, 40)));
-ok("draw", "a long rim text shrinks to fit rather than overflowing",
-   (() => { const a = drawStamp({ ...DEFAULT_STAMP, code: "A", sym: null, rim: true, ring: "WINGMAN" });
-     const b = drawStamp({ ...DEFAULT_STAMP, code: "A", sym: null, rim: true, ring: "ABCDEFGHIJ" });
-     const fs = (s) => Number(/font-size="([\d.]+)"/.exec(s)?.[1]);
-     return fs(b) < fs(a); })());
+/* THE RIM IS TRACKED TO ITS OWN WIDTH, NOT SHRUNK TO FIT, and that reverses
+   what this assertion used to test. `textLength` was the whole path, so `WNG`
+   was stretched across a hundred-degree arc and a longer rim had to be set in
+   a smaller font to fit. It is `min(pathLength, chars * fontSize * 1.06)` now,
+   centred with `text-anchor="middle"` and `startOffset="50%"` — so a short rim
+   sits compactly at the crown and a long one grows along the arc, and neither
+   ever exceeds it. Changelog item 2, 20 Sep. */
+{
+  const rim = (ring) => drawStamp({ ...DEFAULT_STAMP, code: "A", sym: null, rim: true, ring });
+  const len = (s) => Number(/textLength="([\d.]+)"/.exec(s)?.[1]);
+  const two = len(rim("WN")), three = len(rim("WNG")),
+        seven = len(rim("WINGMAN")), ten = len(rim("ABCDEFGHIJ"));
+  ok("draw", "a longer rim takes more of the arc rather than a smaller font",
+     two < three && three < seven && seven < ten, `${two} ${three} ${seven} ${ten}`);
+  ok("draw", "and never more of it than there is",
+     ten < Number(/textLength="([\d.]+)"/.exec(rim("ABCDEFGHIJ").slice(rim("ABCDEFGHIJ").indexOf("textLength") + 12))?.[1] ?? Infinity)
+     || ten < 33.5, String(ten));
+  ok("draw", "it is centred on its corridor, not started at one end",
+     /text-anchor="middle"/.test(rim("WNG")) && /startOffset="50%"/.test(rim("WNG")));
+}
 
 /* ------------------------------------------- 4 · §8 · the code, validated */
 ok("code", "a code is 1-3 characters, A-Z or 0-9, and nothing else",
