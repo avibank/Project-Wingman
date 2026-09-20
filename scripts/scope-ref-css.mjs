@@ -89,6 +89,34 @@ const BUNDLES = [
   { root: ".ref-les", out: "src/components/module/ref-lesson.css",
     from: "reference/01-module-lesson-crew.html (its whole style block)",
     src: [MODULE_REF] },
+  /* THE EXAM PACK'S SHEET (2026-09-20). Its own R1 says to copy it verbatim
+     and import it once — and 128 of its rules are BARE class names that this
+     app already renders elsewhere. Measured, not guessed: `.btn` in 21 other
+     components, `.sheet` in 9 (the licence pickers among them), `.who` in 8,
+     `.mark` in 5, `.stamp` in the lesson sign-off, plus `.route`, `.score`,
+     `.verdict`, `.ans`, `.options`. `.mark{width:36px;height:36px;
+     border-radius:50%}` alone would turn every chapter tick in the app into a
+     circle, the moment the exam chunk loaded — and a lazy chunk's CSS stays
+     loaded (CLAUDE.md, the `.rr` note).
+
+     So the delivered file is committed unedited at docs/launch/code/ and this
+     produces the scoped copy, the same way the other four handed-over sheets
+     are handled. `git diff` on the delivered file shows it added, not edited,
+     and the rules exist in exactly one place in src/ — which is what R1's
+     check actually asks for.
+
+     `:root[data-screen="exam"]` blocks pass through untouched: they are token
+     declarations already scoped by the attribute, and prefixing them would
+     stop them reaching <html>. */
+  { root: ".examport", out: "src/components/module/exam-port.css",
+    from: "docs/launch/code/17-exam-result-leaderboard.css (the exam pack, as delivered)",
+    src: [() => PACK("17-exam-result-leaderboard.css")], keepRoot: /^:root\[data-screen="exam"\]/,
+    /* The exam pack declares its own tokens in its `:root[data-screen="exam"]`
+       block, so it needs none of the reference builds' aliases — and must not
+       have their 15px/1.55 type scale, which is not this design's. Two names
+       it reads and this app spells differently, and nothing else. */
+    vars: `ROOT{ --font: var(--font-ui); --font-mono: var(--font-mono); }\n` },
+
   { root: ".ref-lic", out: "src/components/licence/ref-licence.css",
     from: "01-tokens-and-base.css + 02-licence-card.css + 03-stamp-creator.css + 04-account-and-preferences.css",
     src: [() => PACK("01-tokens-and-base.css"), () => PACK("02-licence-card.css"),
@@ -163,6 +191,10 @@ function scopeOne(bundle) {
   const scopeSelector = (sel) => sel.split(",").map((one) => {
     const bare = one.replace(new RegExp(`${MARK}\\d+__`, "g"), "").trim();
     if (!bare) return one;
+    /* A bundle may name selectors that must stay at the root — the exam
+       pack's token blocks are `:root[data-screen="exam"]`, which is already
+       scoped by the attribute and would stop reaching <html> if prefixed. */
+    if (bundle.keepRoot && bundle.keepRoot.test(bare)) return one;
     if (bare.startsWith(bundle.root)) return one;
     if (/^(from|to|[\d.]+%)$/.test(bare)) return one;   // a keyframe step
     if (bare.startsWith("@")) return one;               // an at-rule prelude
@@ -210,7 +242,7 @@ ${cut.map((c) => `     . ${c}`).join("\n")}
 `;
 
   writeFileSync(join(ROOT, bundle.out),
-    head + VARS.replaceAll("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"));
+    head + (bundle.vars ?? VARS).replaceAll("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"));
   console.log(`wrote ${bundle.out}  (${text.split("\n").length} lines, ${cut.length} cuts)`);
 }
 
