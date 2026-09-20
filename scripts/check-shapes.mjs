@@ -133,9 +133,15 @@ for (const line of COPY) {
   }
   check(/[a-z]/.test(line) && line.trim().endsWith("."), `empty-state copy is not a sentence: "${line}"`);
 }
-check(placeholderFor("route") !== placeholderFor("library", "papers"), "the search placeholder does not change per tab");
-check(placeholderFor("library", "papers") !== placeholderFor("library", "quizzes"),
-  "the Library placeholder does not change per segment");
+/* THREE PLACEHOLDERS, ONE PER TAB, and the Library's is now one rather than
+   two. It used to say "Search quizzes" or "Search papers" depending which
+   half of the tab you arrived at — true of a Library with two sections, and a
+   lie about the third: the field searches quizzes, study cards AND papers.
+   The reference's own words (§4): "Search lessons", "Search quizzes, cards
+   and papers", "Find someone". */
+check(placeholderFor("route") !== placeholderFor("library"), "the search placeholder does not change per tab");
+check(placeholderFor("library") !== placeholderFor("crew"), "Crew and the Library share a placeholder");
+check(/cards/.test(placeholderFor("library")), "the Library placeholder does not mention the cards it searches");
 
 console.log(`shapes: ${checked} assertions across route geometry (${WIDTHS.length} widths x ${COUNTS.length} counts),`);
 console.log(`        fresh/mid/late at 4 and 40 chapters, an unwritten lesson, the question cycle and the copy`);

@@ -502,3 +502,105 @@ dropped the declaration silently. It rounded DOWN at 390, where the value
 happened to be positive, and did nothing at 1280 or 768. It always moves to
 the next whole pixel now. This is why Preferences read 1.12% with every
 element matching to 0.1px.
+
+## Screen 4 — the module screen, and the collisions it uncovered
+
+Measured with `npm run ref:diff`: **module 3.42% / 4.41% / 8.64%**, **library
+5.41% / 6.74% / 5.56%**, **crew 3.95% / 6.50% / 15.34%** at 1280 / 768 / 390.
+Not under the 1% bar. Every box that is the design's now measures the design's
+— the tab strip is exact, the chapter rows are exact, the Crew summary and all
+three chapter walls are exact — and what is left is named at the end of this
+entry rather than rounded off.
+
+### 1 · The pack was missing this screen's base stylesheet
+
+`01-tokens-and-base.css` is lifted from reference **02**, the licence file.
+`11-module-screen.css` is lines 161–313 of reference **01**, the module file.
+Everything reference 01 declares ABOVE line 161 was in neither: `.card`,
+`.tabs`, `.tab`, `.chip`, `.log`, `.entry` — the card the module screen IS and
+the tab strip along its top edge. Measured before it was noticed: the card had
+no border at all and the tabs were 44px of app chrome against the design's 52.
+
+`scope-ref-css.mjs` reads reference 01's whole style block for the module and
+lesson bundles now. Still not retyped — read off disk, cut the same way.
+
+### 2 · Four collisions, each of which had been invisible
+
+Taking the reference's class names turned four of this app's own bare rules
+into live bugs. `check:collisions` had passed all four as the "shared-base
+shape", which is only correct when the two sides really do share a base.
+
+  · **`.mscreen .mod`** — a Flight Deck tile styled inside `.mscreen`, where
+    nothing has drawn one in months. It gave the reference's `.mod` a 176px
+    minimum height, a housing border and 16px of padding round the screen.
+  · **`.mscreen .search`** and the whole `.mcard`/`.tabsbar`/`.tabs`/
+    `.tabsearch` strip — the app's own tab bar, now superseded. `.tab` and
+    `.search` still matched the new markup and sized it as the old.
+  · **`.mscreen .hrow`** — the hidden People tab's two-pane list, a grid. The
+    reference calls Crew's helper row `.hrow` too, a flex row of pills:
+    measured, one pill came out 38px wide and the next 790, with the row three
+    lines tall instead of one. The whole People block is scoped under `.hub`
+    now; nothing in it is changed except where it can reach.
+  · **`.mscreen .chap+.chap`** — a border-TOP against the reference's
+    border-BOTTOM, so every chapter after the first was a pixel taller and two
+    hairlines sat on one seam.
+
+### 3 · The tab pill became the underline
+
+The reference marks the selected tab with a 2px accent border along its bottom
+edge. This app slides that marker between tabs (CLAUDE.md). Both hold: the
+pill IS a 2px bar on the pixels the reference's border occupies, so at rest
+they are indistinguishable, and it still travels.
+
+**Absolute, and that part is load-bearing**: `.mtabs` is a flex row with a 6px
+gap, and in flow the pill counted as a flex item — every tab measured 6px
+wider than the design's ("Lessons" at 63.9 against 57.9).
+
+### 4 · Three things the app had that the design does not
+
+  · **`.pane { min-height: 560px; padding-top: 12px }`** is gone. Both were
+    this app's — 560 so switching tabs never made the page jump, 12 so the
+    first row cleared the strip — and together they were 128px of card the
+    design does not draw. The card sizes to its content now, like every other
+    card here. The cost is real and stated: switching from Lessons to a
+    shorter tab now changes the card's height, as it does in the reference.
+  · **The closing line** ("That is all of Module 1 — 6 lessons and 3 quizzes")
+    is gone except when searching. It is word for word the subtitle that bug
+    14 just put under the module's name at the top of the same screen.
+  · **The Library's per-segment placeholder** ("Search quizzes" or "Search
+    papers", depending which half you arrived at) is one placeholder now. That
+    was true of a Library with two sections; it has three, the field searches
+    all of them, and a placeholder naming one lies about the other two.
+
+### 5 · `done/total` on a study-card row is not drawn
+
+The reference's card-set row shows `done/total` beside **Test yourself**.
+Nothing in this app counts how many of a set's cards have been flipped — there
+is no key, no writer and no reader — so the row shows the total alone until
+something writes that count. Inventing a number a student would read as
+progress is worse than a row that does not claim it.
+
+### 6 · The fixture grew, and the Fly solo gate moved inside itself
+
+`?fixture=demo` now also supplies the reference's three papers, its answer
+counts (without them the "Answering questions" row does not render at all,
+which is correct behaviour and a 146px hole in a diff) and its people's REAL
+names rather than their callsigns — the reference draws initials from the real
+name and the first word of it on a helper pill.
+
+`fetchCrew`'s Fly solo gate is now `isFlySolo() && !demoOn()`. It was found the
+hard way: pressing Fly solo while testing Preferences emptied the Crew tab in
+every later measurement and took the count off the tab strip with it. The gate
+is still the first thing the function does with a person's data;
+`check:solo`'s window widened to 640 characters to read it.
+
+### 7 · What is still not identical
+
+  · **§12's 44px floor** on the "Open Module 1 threads" pill (36.1 in the
+    design) and on the tab strip's controls where the reference is shorter.
+    The search field and the segmented strips already take `.is-inline`; a
+    genuine isolated button keeps the floor.
+  · **The Library and Crew at 390** carry the most, because both stack and a
+    few pixels per row accumulate down a long column.
+  · The rest is content the fixture does not pin — chapter statuses ("Part
+    way" against "Done"), which are harness progress rather than layout.

@@ -23,8 +23,8 @@ import "./familiar.css";
 // at the same size, so the text column never shifts. It was a document glyph;
 // the approved design makes it an answer sheet with the paper's length on it,
 // which says two things in the space the glyph said none.
-const QuizThumb = ({ count }) => (
-  <span className="lead quiz-thumb" aria-hidden="true">
+export const QuizThumb = ({ count }) => (
+  <span className="th quiz-thumb" aria-hidden="true">
     <span className="quiz-thumb__sheet">
       <span><i className="on" /><i /><i /></span>
       <span><i /><i /><i className="on" /></span>
@@ -64,18 +64,30 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp, tilts }) {
        how the return trip found this row to name it, so the player could shrink
        back into its thumbnail; that mechanism is gone with the rest of the
        shared elements. */
-    <button type="button" className="item" data-state={state} data-lesson={lesson.id}
+    <button type="button" className={`lrow${here ? " cur" : ""}`} data-state={state} data-lesson={lesson.id}
             aria-current={here ? "true" : undefined}
             onClick={() => onOpen(chapter, lesson)}>
-      <span className="lead" style={thumbTile(lesson.id)}>
-        {poster && <img src={poster} alt="" width={58} height={34} loading="lazy" />}
+      {/* THE THUMBNAIL IS NEVER AN EMPTY GREY BOX (bug 15). The reference
+          draws `.th` as a lit panel — a radial gradient from a lifted corner,
+          hairlined, 16/9 — and a thin accent bar along the bottom for how far
+          in you are. Where a real frame can be pulled out of the lesson's own
+          video it goes on top; where it cannot, the drawn panel IS the
+          picture rather than a placeholder waiting for one. `thumbTile` gives
+          each lesson its own angle so a chapter of six is six panels rather
+          than six copies.
+
+          Capture returns null on CORS, a tainted canvas or a dead source, and
+          both are exactly 16/9, so nothing shifts either way. */}
+      <span className="th" style={thumbTile(lesson.id)}>
+        {poster && <img src={poster} alt="" loading="lazy" />}
+        {!done && pct > 0 && <b style={{ width: `${Math.min(100, Math.max(3, pct))}%` }} />}
       </span>
-      <span className="imain">
-        <span className="iname">{lesson.title}</span>
-        <span className="imeta">{meta}</span>
+      <span>
+        <div className="lt">{lesson.title}</div>
+        <div className="ls">{meta}</div>
       </span>
       {/* The current row is the only lesson row with a button. */}
-      <span className="istat">
+      <span className="rt">
         {/* THE STAMP, AND IT IS DRAWN NOW RATHER THAN SPELLED.
             This was the pilot's three-character code in a bordered box — the
             same three letters on every row
@@ -90,7 +102,7 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp, tilts }) {
             <Stamp stamp={stamp} size={46} rot={tilts?.[lesson.id] ?? stampTilt(stamp?.seed || 1, lesson.id)}
                    label={stamp ? `Signed off with your stamp` : "Finished"} />
           </span>
-        ) : here ? <span className="go">Resume</span>
+        ) : here ? <span className="resume">Resume</span>
           : null}
       </span>
     </button>
@@ -138,11 +150,10 @@ function RouteSkeleton({ rows = 4 }) {
 
 export default function RouteTab({
   stamp, tilts,
-  module: mod, chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
+  chapters, state, here, open, onToggle, onOpenLesson, onOpenQuiz,
   query = "",
 }) {
   if (!chapters?.length) return <RouteSkeleton />;
-  const lessonCount = countLessons(chapters);
   const searching = terms(query).length > 0;
   // Searching overrides the fold. A result you cannot see is not a result, and
   // "one chapter open at a time" is a rule about browsing, not about finding.
@@ -150,22 +161,22 @@ export default function RouteTab({
 
   return (
     <>
-      <div className="chaps">
+      <div>
         {shown.map((ch) => {
           const st = chapterState(ch, state, here?.chapter?.id);
           const isOpen = searching || open.has(ch.id);
           const score = state?.quiz?.[ch.id];
           return (
             <section key={ch.id} className={`chap${isOpen ? " open" : ""} ${st === "done" ? "done" : st === "here" ? "here" : ""}`}>
-              <button type="button" className="chead" aria-expanded={isOpen}
+              <button type="button" className="ch-h" aria-expanded={isOpen}
                       aria-controls={`kids-${ch.id}`} onClick={() => onToggle(ch.id)}>
                 <span>
-                  <span className="cname">{ch.title}</span>
+                  <h2>{ch.title}</h2>
                   {/* §7 — the subline states the shape of the chapter and
                       nothing the rows below already say. */}
-                  <span className="csub">
+                  <div className="cm">
                     {ch.lessons.length} lesson{ch.lessons.length === 1 ? "" : "s"} · 1 quiz
-                  </span>
+                  </div>
                 </span>
                 {/* Master Caution used to share this slot with the status
                     word, and it is gone from here: the lamp lights on one
@@ -182,22 +193,25 @@ export default function RouteTab({
                     wrapper existed: "Done" rendered 12px wide. The phone
                     breakpoint also places .cstate and .chv by grid-column,
                     which only holds while the child count does. */}
-                <span className="cend">
+                {/* The state and the chevron are ONE cell in the reference —
+                    `.cs2` — which is what lets the chevron sit hard against
+                    the words and rotate in place when the chapter opens. */}
+                <span className={`cs2${st === "here" ? " here" : ""}`}>
                   {/* State in words, never a badge. */}
-                  <span className={`cstate${st === "here" ? " here" : ""}`}>
-                    {st === "done" ? "Done"
-                      : st === "here" ? "You are here"
+                  {st === "done" ? "Done"
+                    : st === "here" ? "You are here"
                       : st === "started" ? "Part way"
-                      : "Not started"}
-                  </span>
+                        : "Not started"}
+                  <svg className="chev" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
                 </span>
-                <span className="chv" aria-hidden="true">›</span>
               </button>
 
               {/* Rendered whether open or not, so the fold has something to
                   animate between. */}
-              <div className="kidswrap" id={`kids-${ch.id}`}>
-                <div className="kids">
+              <div className="ch-body" id={`kids-${ch.id}`}>
                   {ch.lessons.map((l) => (
                     <RouteRow stamp={stamp} tilts={tilts} key={l.id} lesson={l} chapter={ch}
                               done={isDone(state, l.id)}
@@ -227,50 +241,50 @@ export default function RouteTab({
                     const failed = score != null && need != null && score.correct < need;
                     const state = score != null && !failed ? "done" : "todo";
                     return (
-                      <button type="button" className="item" data-state={state}
+                      <button type="button" className="lrow" data-state={state}
                               onClick={() => onOpenQuiz(ch)}>
                         <QuizThumb count={total} />
-                        <span className="imain">
-                          <span className="iname">{ch.title} quiz</span>
-                          <span className="imeta">
+                        <span>
+                          <div className="lt">{ch.title} quiz</div>
+                          <div className={`ls${failed ? " warn" : ""}`}>
                             {[
                               total ? `${total} question${total === 1 ? "" : "s"}` : null,
                               failed ? "below the pass mark" : null,
                             ].filter(Boolean).join(" · ")}
-                          </span>
+                          </div>
                         </span>
-                        <span className="istat">
+                        <span className="rt">
                           {score == null ? <span>Not taken</span> : (
                             <>
-                              <span className="score">
+                              <span className="sc">
                                 {!failed && <Check aria-hidden="true" />} {score.correct} of {total}
                               </span>
-                              {failed && <span className="go ghost">Re-check</span>}
+                              {failed && <span className="act-o">Re-check</span>}
                             </>
                           )}
                         </span>
                       </button>
                     );
                   })()}
-                </div>
               </div>
             </section>
           );
         })}
       </div>
 
-      {/* Searching replaces the closing line with what the search reached.
-          Never a count of nothing: the sentence names the way out. */}
-      {searching ? (
+      {/* ONLY WHEN SEARCHING. The closing line used to read "That is all of
+          Module 1 — 6 lessons and 3 quizzes" on every visit, which is word
+          for word the subtitle now sitting under the module's name at the top
+          of the same screen (bug 14 put it there). One screen, one sentence,
+          and the reference has no closing line at all.
+
+          The search result keeps its line: it says what the filter reached
+          and names the way out, which nothing else on the screen does. */}
+      {searching && (
         <p className="endnote">
           {shown.length
             ? `Showing ${countLessons(shown)} lesson${countLessons(shown) === 1 ? "" : "s"} across ${shown.length} chapter${shown.length === 1 ? "" : "s"}. Clear the search for the whole route.`
             : "Try a chapter name, a lesson title, or a code like M1.03."}
-        </p>
-      ) : (
-        <p className="endnote">
-          That is all of {mod.name} — {lessonCount} lesson{lessonCount === 1 ? "" : "s"} and{" "}
-          {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}.
         </p>
       )}
     </>

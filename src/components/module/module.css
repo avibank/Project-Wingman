@@ -39,97 +39,73 @@
    the surface below it, which is why it is drawn with its bottom border
    removed and pushed down a pixel to close the seam.
    ========================================================================= */
-/* NOT .card — deck.css already owns that class for a note card, and a bare
-   ".card" still supplies display:grid, a three-column template and height:150px
-   to anything that does not override them. The module card inherited all three
-   and laid its tab strip out beside its list. The .row collision earlier was
-   the same mistake; this one showed up only in a screenshot. */
-.mscreen .mcard{
-  margin-top: var(--gapY, 48px);
-  background: var(--panel);
-  border: 1px solid var(--edge-soft);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.mscreen .tabsbar{
-  display: flex; align-items: flex-end; gap: 0;
-  padding: 0 var(--card-pad);
-  background: var(--sunk);
-  border-bottom: 1px solid var(--edge-soft);
-}
-/* THE STRIP DOES NOT SHRINK BELOW ITS TABS. It was `flex: 0 1 auto` by
-   default, and adding a third tab was all it took: at 517px the strip wanted
-   291 and got 291, but the search beside it is `flex: 1 1 auto` with a 120px
-   floor, so the two together asked for more than the bar had and the tabs were
-   the ones that gave. Measured on the live site: Crew ran to x=377 inside a
-   container ending at 350, and the search started at 364 — the third tab was
-   sitting underneath it. The tabs are content, the search is the slack. */
-.mscreen .tabs{ display: flex; gap: 2px; padding: 0; flex: 0 0 auto; }
-.mscreen .tab{
-  appearance: none; border: 1px solid transparent; border-bottom: 0;
-  background: transparent; color: var(--t2); cursor: pointer;
-  font-family: var(--font-ui); font-weight: 500; font-size: 14.5px; line-height: 1;
-  padding: 13px 15px 12px; border-radius: 8px 8px 0 0;
-  position: relative; top: 1px;
-}
-.mscreen .tab:hover{ color: var(--t1); }
-/* Connected to the surface below it; the others sit back. The panel colour and
-   the edge are drawn by .tab-pill rather than by the tab itself, so the pill
-   can slide between tabs during a tab change — identical at rest. */
-.mscreen .tabs{ isolation: isolate; }
-.mscreen .tab[aria-selected="true"]{ color: var(--t1); }
-.mscreen .tab .tab-pill{ display: none; }
-.mscreen .tab[aria-selected="true"] .tab-pill{
-  display: block; position: absolute; inset: -1px -1px 0; z-index: -1;
-  background: var(--panel); border: 1px solid var(--edge-soft); border-bottom: 0;
-  border-radius: 8px 8px 0 0; transform-origin: left center;
-}
+/* =============================================================================
+   THE STRIP THAT USED TO BE HERE IS THE REFERENCE'S NOW.
+   -----------------------------------------------------------------------------
+   `.mcard`, `.tabsbar`, `.tabs`, `.tab`, `.tabsearch` and its three parts were
+   this app's module card and its tab strip. The screen was rebuilt on the
+   reference build's own markup on 2026-09-19 — `.card`, `.mtabs`, `.tab`,
+   `.search` — so all of it had become either dead or, worse, half-live:
+   `.mscreen .tab` and `.mscreen .search` still matched the new markup and
+   sized it as the old, which is how the tabs measured 44px against the
+   design's 52 and the field 68 against 39.7.
 
-/* The search runs from the last tab to the far end of the strip, and is quiet:
-   it must never out-shout the tabs. No border until hover. */
-.mscreen .tabsearch{
-  flex: 1 1 auto; min-width: 120px;
-  display: flex; align-items: center; gap: 8px;
-  margin: 0 0 9px 14px;
-  background: color-mix(in srgb, var(--panel) 55%, transparent);
-  border: 1px solid transparent; border-radius: 7px;
-  padding: 7px 11px;
-  overflow: hidden;
-}
-.mscreen .tabsearch:hover{ border-color: var(--edge-soft); background: var(--panel); }
-.mscreen .tabsearch:focus-within{ border-color: var(--active); background: var(--panel); }
-.mscreen .tabsearch-i{ flex: 0 0 auto; width: 15px; height: 15px; color: var(--t2); }
-.mscreen .tabsearch-f{
-  flex: 1 1 auto; min-width: 0;
-  background: none; border: 0; padding: 0;
-  color: var(--t1); font-family: inherit; font-size: 13px;
-}
-.mscreen .tabsearch-f::placeholder{ color: var(--t2); }
-.mscreen .tabsearch-f:focus-visible{ outline: none; }
-.mscreen .tabsearch-f::-webkit-search-cancel-button{ -webkit-appearance: none; appearance: none; }
-.mscreen .tabsearch-x{
-  flex: 0 0 auto; display: grid; place-items: center;
-  width: 22px; height: 22px; padding: 0;
-  background: none; border: 0; border-radius: 6px;
-  color: var(--t2); cursor: pointer;
-}
-.mscreen .tabsearch-x:hover{ color: var(--t1); }
-.mscreen .tabsearch-x svg{ width: 13px; height: 13px; }
+   Two of the notes that stood here are worth keeping, because both were real
+   bugs and both are settled by the reference rather than by this file:
 
-.mscreen .pane{min-height:560px;padding-top:12px}
+     · NOT `.card` — deck.css owns that class for a note card, and a bare
+       `.card` supplied a three-column grid and height:150px to anything that
+       did not override it. The reference's `.card` is `.ref-mod .card`, which
+       cannot be reached by a note card and cannot reach one.
+     · THE STRIP MUST NOT SHRINK BELOW ITS TABS. Adding a third tab was all it
+       took: the tabs were `flex: 0 1 auto` and the search `flex: 1 1 auto`,
+       and Crew ended up underneath the field. The reference's `.search` is
+       `flex:1 1 auto` and its `.tab` has no flex at all, so the tabs are
+       content and the field is the slack — the same rule, stated the other
+       way round.
+
+   THE PILL IS THE UNDERLINE NOW, and it is the only rule left here about the
+   strip. The reference marks the selected tab with a 2px accent border along
+   its bottom edge; this app slides that marker from one tab to the next
+   (CLAUDE.md, "A tab's pill is NOT a view-transition layer" — it moves in the
+   page, under every label). Both hold: the pill IS a 2px bar on the same
+   pixels the reference's border occupies, so at rest the two are
+   indistinguishable, and it travels on a tab change.
+
+   ABSOLUTE, and that part is load-bearing. `.mtabs` is a flex row with a 6px
+   gap and the pill is a real element inside each tab: in flow it counted as a
+   flex item, and every tab measured 6px wider than the design's — "Lessons"
+   at 63.9 against 57.9. Out of flow it costs nothing.
+   ========================================================================= */
+.mscreen .mtabs{ isolation: isolate; }
+.mscreen .mtabs .tab{ position: relative; }
+.mscreen .mtabs .tab .tab-pill{ display: none; }
+.mscreen .mtabs .tab[aria-selected="true"] .tab-pill{
+  display: block; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px;
+  background: var(--accent); transform-origin: left center; z-index: -1;
+}
+/* NO MINIMUM AND NO TOP PADDING. Both were this app's: 560px so switching
+   tabs never made the page jump, and 12px so the first row cleared the strip.
+   The reference's card has neither — its panels are exactly as tall as what
+   is in them and its first row sits against the strip's own hairline — and
+   with the module screen rebuilt on its markup the two were 128px of card
+   that the design does not draw. The card sizes to its content now, like
+   every other card in this app. See docs/launch/DECISIONS.md. */
+.mscreen .pane{}
 
 /* — flight deck — */
 .mscreen .sec{margin-top:28px;padding:0 var(--pad)}
 .mscreen .sech{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
 .mscreen .sech h2{font-size:18px;font-weight:600;letter-spacing:-.2px}
-.mscreen .mods{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-/* The same object as a Flight Deck card: the housing tokens, not a private
-   copy of them. It had its own 15px radius against housing's 14 and its own
-   --hair border against the deck's translucent --edge. */
-.mscreen .mod{background:var(--house-fill);border-radius:var(--house-radius);border:var(--house-line);
-  padding:16px 16px 18px;min-height:176px;display:flex;flex-direction:column;box-shadow:var(--drop);cursor:pointer;
-  text-align:left;font-family:inherit;color:inherit;transition:transform .15s ease;background-image:var(--sheen-img,none)}
-.mscreen .mod:hover{transform:translateY(-2px)}
+/* `.mscreen .mods` AND `.mscreen .mod` ARE GONE, and they were dead where
+   they stood. They styled a Flight Deck module tile inside `.mscreen`, which
+   is ModuleScreen, LessonPage and QuizPage — none of which draws one; the
+   Flight Deck's own tiles are drawn by Home's DECK_CSS and have never needed
+   these. What they DID do was paint the reference's `.mod` when the module
+   screen was rebuilt on its markup (2026-09-19): a 176px minimum height, a
+   housing border and 16px of padding round the whole screen, from a rule
+   nothing had rendered in months. The rest of the block below is untouched —
+   none of it collides with anything. */
 .mscreen .mcl{display:flex;align-items:center;justify-content:space-between}
 .mscreen .mcode{font-family:var(--font-mono);font-size:13px;letter-spacing:1.1px;color:var(--t3)}
 .mscreen .mcur{font-family:var(--font-mono);font-size:13px;letter-spacing:1px;background:var(--active);color:var(--ground);border-radius:3px;padding:2px 6px}
@@ -149,7 +125,10 @@
 .mscreen .chaps{display:flex;flex-direction:column}
 /* The chapter section spans the card; its header carries the inner padding. */
 .mscreen .chap{padding:0}
-.mscreen .chap+.chap{border-top:1px solid var(--edge-soft, var(--hair))}
+/* NO SECOND HAIRLINE. The reference's `.chap` carries a border-BOTTOM and
+   drops it on the last one; this added a border-TOP as well, so every chapter
+   after the first was a pixel taller than the design and two hairlines sat on
+   the same seam. */
 /* Three columns, not four: the Lights meter that used to sit between the name
    and the status is gone (§2.7 forbids it), and leaving its column in place
    left an empty track plus a 22px gap, which pushed the chapter status 29px
@@ -272,8 +251,10 @@
   color:var(--t1);font-family:inherit;font-size:var(--fs-sm);cursor:pointer;
 }
 .mscreen .fsel-f:focus-visible{outline:none;border-color:var(--active)}
-.mscreen .search{flex:1;min-width:200px;background:var(--raised);border:0;border-radius:10px;padding:12px 15px;color:var(--t1);font-family:inherit;font-size:15px}
-.mscreen .search::placeholder{color:var(--t3)}
+/* `.mscreen .search` WENT WITH THE STRIP. It was a filter field belonging to
+   a screen that no longer draws one, and it collided with the reference's own
+   `.search` — the module tab strip's field, which it sized at 12px/15px of
+   padding against the design's 7/14. Nothing renders it. */
 .mscreen .fchip{background:none;border:0;border-radius:999px;padding:8px 20px;font-family:inherit;
   font-size:15px;font-weight:600;color:var(--t3);cursor:pointer}
 .mscreen .fchip[aria-pressed="true"]{background:var(--panel);color:var(--t1)}
@@ -285,30 +266,37 @@
 .mscreen .libwrap{padding:0 var(--pad)}
 .mscreen .libwrap .row{padding-left:0;padding-right:0}
 
-/* — people — */
+/* — people —
+   SCOPED UNDER `.hub`, every one of them. This block is the hidden People
+   tab's two-pane list, and it claimed `.hrow`, `.hav`, `.hn`, `.hl`, `.hr`
+   and `.unread` from anywhere inside `.mscreen`. The reference build calls
+   its Crew helper row `.hrow` too — a flex row of pills — and this grid
+   reached it: measured, one pill came out 38px wide and the next 790, with
+   the row three lines tall instead of one. Nothing here is changed except
+   where it can reach. */
 .mscreen .hub{display:grid;grid-template-columns:352px minmax(0,1fr);min-height:560px;border-top:1px solid var(--line);
   border-bottom:1px solid var(--hair);border-top:1px solid var(--hair);margin-top:10px}
-.mscreen .hublist{border-right:1px solid var(--hair);display:flex;flex-direction:column}
-.mscreen .hubsearch{padding:16px 18px 11px}
-.mscreen .hubchips{display:flex;gap:7px;padding:0 18px 14px;flex-wrap:wrap}
-.mscreen .hubrows{flex:1;overflow:auto}
-.mscreen .hrow{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;
+.mscreen .hub .hublist{border-right:1px solid var(--hair);display:flex;flex-direction:column}
+.mscreen .hub .hubsearch{padding:16px 18px 11px}
+.mscreen .hub .hubchips{display:flex;gap:7px;padding:0 18px 14px;flex-wrap:wrap}
+.mscreen .hub .hubrows{flex:1;overflow:auto}
+.mscreen .hub .hrow{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;
   background:none;border:0;border-top:1px solid var(--hair);padding:15px 18px;font-family:inherit;color:inherit;cursor:pointer}
-.mscreen .hrow:hover{background:var(--raised)}
-.mscreen .hrow[aria-current="true"]{background:var(--raised)}
-.mscreen .hrow.pinned{border-top:0}
-.mscreen .hav{width:38px;height:38px;border-radius:999px;background:var(--raised);border:0;display:grid;place-items:center;
+.mscreen .hub .hrow:hover{background:var(--raised)}
+.mscreen .hub .hrow[aria-current="true"]{background:var(--raised)}
+.mscreen .hub .hrow.pinned{border-top:0}
+.mscreen .hub .hav{width:38px;height:38px;border-radius:999px;background:var(--raised);border:0;display:grid;place-items:center;
   font-family:var(--font-mono);font-size:13px;color:var(--t2)}
-.mscreen .hav.grp{border-radius:11px}
-.mscreen .hrow>span:nth-child(2){min-width:0;overflow:hidden}
-.mscreen .hn{display:block;font-size:15px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mscreen .hl{display:block;font-size:13px;color:var(--t3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mscreen .hr{display:flex;flex-direction:column;align-items:flex-end;gap:6px;white-space:nowrap}
-.mscreen .hpos{font-size:13px;color:var(--t3)}
-.mscreen .unread{min-width:19px;height:19px;border-radius:999px;background:var(--active);color:var(--ground);
+.mscreen .hub .hav.grp{border-radius:11px}
+.mscreen .hub .hrow>span:nth-child(2){min-width:0;overflow:hidden}
+.mscreen .hub .hn{display:block;font-size:15px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mscreen .hub .hl{display:block;font-size:13px;color:var(--t3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mscreen .hub .hr{display:flex;flex-direction:column;align-items:flex-end;gap:6px;white-space:nowrap}
+.mscreen .hub .hpos{font-size:13px;color:var(--t3)}
+.mscreen .hub .unread{min-width:19px;height:19px;border-radius:999px;background:var(--active);color:var(--ground);
   font-size:13px;font-weight:700;display:grid;place-items:center;padding:0 6px}
-.mscreen .hsug{border-top:1px solid var(--hair);padding:16px 18px;font-size:13.5px;color:var(--t3);line-height:1.55}
-.mscreen .hsug b{color:var(--t2);font-weight:600}
+.mscreen .hub .hsug{border-top:1px solid var(--hair);padding:16px 18px;font-size:13.5px;color:var(--t3);line-height:1.55}
+.mscreen .hub .hsug b{color:var(--t2);font-weight:600}
 .mscreen .hubd{display:flex;flex-direction:column}
 .mscreen .hubh{padding:20px 26px;border-bottom:1px solid var(--line)}
 .mscreen .hubh h3{font-size:19px;font-weight:600;letter-spacing:-.3px}
@@ -392,9 +380,12 @@
   .mscreen .hub { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .mscreen .hublist { border-right: 0; }
 
-  /* The tab strip scrolls rather than clipping "People" off the edge. */
-  .mscreen .tabs { overflow-x: auto; gap: 20px; scrollbar-width: none; }
-  .mscreen .tabs::-webkit-scrollbar { display: none; }
+  /* THE TAB STRIP SCROLLS rather than clipping the third tab off the edge.
+     The reference's own `.mtabs` is the strip now; this is the app keeping
+     the rule that a tab you cannot reach is worse than a tab that is tight,
+     which the reference has no reason to have thought about at 390px. */
+  .mscreen .mtabs { overflow-x: auto; scrollbar-width: none; }
+  .mscreen .mtabs::-webkit-scrollbar { display: none; }
 
 
 

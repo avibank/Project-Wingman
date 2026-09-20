@@ -55,6 +55,13 @@ const PEOPLE = [
   { n: 'Khaled Marafi', cs: 'FLAP', ch: 3, on: false },
 ];
 
+/* How many answers each of them has written in this module's threads, in the
+   reference's own order (`ANS` there). It is what fills the "Answering
+   questions" row at the foot of Crew — with every count at nought the row
+   does not render at all, which is correct behaviour and a 146px hole in a
+   diff. */
+const ANSWERS = [3, 0, 1, 5, 0, 0, 2, 0, 9, 0, 0, 14, 11, 0];
+
 /* Shaped the way fetchCrew answers, so the screen cannot tell the difference.
    `ch: 4` in the reference means "past the last chapter" — finished the
    module — which is where its "2 have finished it" comes from. */
@@ -62,11 +69,16 @@ export function demoCrew(chapterIds = []) {
   const idOf = (n) => chapterIds[n - 1] || `M1.0${n}`;
   const people = PEOPLE.map((p, i) => ({
     userId: `demo_${i}`,
-    name: p.cs || p.n,
+    /* The REAL name, not the callsign: the reference draws initials from it
+       on the wall and the first word of it on a helper pill ("Sara", not
+       "SPARROW"), and `fetchCrew` answers with `display_name` for the same
+       reason. The callsign is beside it for anything that wants it. */
+    name: p.n,
+    callsign: p.cs || null,
     on: p.on,
     chapterId: p.ch <= chapterIds.length ? idOf(p.ch) : null,
     done: new Set(chapterIds.slice(0, Math.max(0, p.ch - 1))),
-    answers: 0,
+    answers: ANSWERS[i] || 0,
     stamp: null,
   }));
   return {
@@ -132,3 +144,21 @@ export function demoProfile(card, { callsign, real_name } = {}) {
    its bar sits. */
 export const DEMO_PRESET = 'open';
 export const DEMO_BAR = 86;
+
+/* -------------------------------------------------------------- the Library
+   The reference's own three papers (`PAPERS` in
+   docs/launch/code/13-module-tabs-and-library.js). Same reason as everything
+   above: with one paper on one side and three on the other, a diff of the
+   Library measures the shelf rather than the row.
+
+   `chapterId` is left null on all three: the reference files them by chapter
+   number and this app files them by chapter id, and the chip row is what that
+   would change — not a row's layout. */
+export const DEMO_PAPERS = [
+  { id: 'demo-p1', title: 'B2 13d Instruments, Rotary Wing Aerodynamics, Autoflight and Equipment & Furnishings LTT (2)',
+    kind: 'PDF', pages: 1012, chapterId: null, status: 'ready' },
+  { id: 'demo-p2', title: 'Numbers and arithmetic · class handout',
+    kind: 'PDF', pages: 42, chapterId: null, status: 'ready' },
+  { id: 'demo-p3', title: 'Standard form worked examples',
+    kind: 'PDF', pages: 18, chapterId: null, status: 'ready' },
+];

@@ -38,7 +38,7 @@ export default function CrewEmpty({ moduleName = "this module", onFind, onInvite
           picture of a list rather than a list — a screen reader reading three
           chapters with no people in them would be describing nothing. */}
       <div className="ce-ghost" aria-hidden="true">
-        {GHOST.map(([chapter, what], i) => (
+        {GHOST.map(([chapter, what]) => (
           <div className="ce-row" key={chapter}>
             <div><b>{chapter}</b><span>{what}</span></div>
             <div className="ce-faces">

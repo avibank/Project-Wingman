@@ -148,8 +148,13 @@ const ok = (name, cond, detail) => {
     const src = read(f);
     for (const m of src.matchAll(/export async function (\w+)\(/g)) {
       const name = m[1];
-      const body = src.slice(m.index, m.index + 500);
+      const body = src.slice(m.index, m.index + 640);
       if (MUST_BE_GATED.has(name)) {
+        /* 640 rather than 500: fetchCrew's gate now carries the dev fixture in
+           the same expression (`isFlySolo() && !demoOn()`), and the paragraph
+           explaining why pushed the line past the old window. What is being
+           asserted has not moved — the gate is still the first thing the
+           function does with a person's data. */
         if (!/isFlySolo\(\)/.test(body)) ungated.push(`${f.split("/").pop()}:${name}`);
       } else if (!NOT_ABOUT_PEOPLE.has(name)) {
         unclassified.push(`${f.split("/").pop()}:${name}`);
@@ -169,7 +174,9 @@ const ok = (name, cond, detail) => {
   const shapes = read("src/lib/crew.js");
   ok("crew's gate returns the shape the screen renders, with solo said out loud",
      /const none = \{ people: \[\], onNow: 0, finished: 0, solo: true \}/.test(shapes)
-     && /if \(isFlySolo\(\)\) return none;/.test(shapes));
+     /* `&& !demoOn()` is the dev fixture, and it is IN the gate rather than in
+        front of it so that this assertion still reads one expression. */
+     && /if \(isFlySolo\(\) && !demoOn\(\)\) return none;/.test(shapes));
 }
 
 /* ------------------------------------------------ inbound: nobody sees you */

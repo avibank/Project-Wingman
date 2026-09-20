@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
-import { Check } from "lucide-react";
+import { QuizThumb } from "./RouteTab.jsx";
+import "./ref-module.css";
 import { hits, terms } from "../../lib/moduleSearch.js";
 import { useSwitchIn } from "../../lib/tabMotion.js";
 
@@ -70,42 +71,45 @@ export default function LibraryTab({
 
 
   return (
-    <div className="libtab">
+    <div className="libtab ref-mod">
       {/* ------------------------------------------------------ QUIZZES --- */}
-      <section className="lsec" aria-labelledby="lsec-quizzes" ref={quizRef}>
-        <div className="lsec-head">
-          <div className="lsec-id">
-            <h2 className="lsec-name" id="lsec-quizzes">Quizzes</h2>
-            <p className="lsec-sub">
+      <section className="libsplit" aria-labelledby="lsec-quizzes" ref={quizRef}>
+        <div className="lsec">
+          <div>
+            <h2 id="lsec-quizzes">Quizzes</h2>
+            <p>
               {chapters.length} quiz{chapters.length === 1 ? "" : "zes"}, one per chapter
             </p>
           </div>
         </div>
 
-        <div className="libwrap">
+        <div className="papers">
 
           {shownQuizzes.map((c) => {
             const s = state?.quiz?.[c.id];
             const lit = faults.has(c.id);
+            const total = s?.total ?? c.quizCount ?? null;
             return (
-              <button type="button" key={c.id} className="item" onClick={() => onOpenQuiz(c)}
+              <button type="button" key={c.id} className="lrow" onClick={() => onOpenQuiz(c)}
                       data-state={s && !lit ? "done" : undefined}>
-                <span className="lead mark">{s && !lit ? <Check aria-hidden="true" /> : QUIZ}</span>
-                <span className="imain">
+                {/* THE ANSWER SHEET, not a document glyph — the same thumbnail
+                    the quiz row inside a chapter carries, in the same slot, so
+                    a quiz looks like a quiz wherever this Library draws one. */}
+                <QuizThumb count={total} />
+                <span>
                   {/* §7 — the chapter name IS the row's own name here; the
                       meta says the shape of the quiz and nothing else. */}
-                  <span className="iname">{c.title} quiz</span>
-                  <span className="imeta">
-                    {s ? `${s.total} question${s.total === 1 ? "" : "s"}`
-                      : (c.quizCount ? `${c.quizCount} question${c.quizCount === 1 ? "" : "s"}` : "Not yet taken")}
-                  </span>
+                  <div className="lt">{c.title} quiz</div>
+                  <div className={`ls${lit ? " warn" : ""}`}>
+                    {[total ? `${total} question${total === 1 ? "" : "s"}` : "Not yet taken",
+                      lit ? "below the pass mark" : null].filter(Boolean).join(" · ")}
+                  </div>
                 </span>
-                <span className="istat">
-
+                <span className="rt">
                   {s
-                    ? <span className="score">{s.correct} of {s.total}</span>
-                    : <span className="go ghost">Take it</span>}
-                  {lit && <span className="go ghost">Re-check</span>}
+                    ? <span className="sc">{s.correct} of {s.total}</span>
+                    : <span className="act-o">Take it</span>}
+                  {lit && <span className="act-o">Re-check</span>}
                 </span>
               </button>
             );
@@ -127,23 +131,23 @@ export default function LibraryTab({
       <LibraryStudyCards moduleId={moduleCode} />
 
       {/* ------------------------------------------------------- PAPERS --- */}
-      <section className="lsec" aria-labelledby="lsec-papers" ref={papersRef}>
-        <div className="lsec-head">
-          <div className="lsec-id">
-            <h2 className="lsec-name" id="lsec-papers">Papers</h2>
-            <p className="lsec-sub">
+      <section aria-labelledby="lsec-papers" ref={papersRef}>
+        <div className="lsec">
+          <div>
+            <h2 id="lsec-papers">Papers</h2>
+            <p>
               {papers.length
                 ? `${papers.length} document${papers.length === 1 ? "" : "s"} for this module`
                 : "Add one and it opens in the reader"}
             </p>
           </div>
           {onAddPaper && papers.length > 0 && (
-            <button type="button" className="lsec-act" onClick={onAddPaper}>Add a paper</button>
+            <button type="button" className="pill" onClick={onAddPaper}>Add a paper</button>
           )}
         </div>
 
         {papers.length > 0 && (
-          <div className="filt">
+          <div className="lchips">
             {chapters.length > CHIP_MAX ? (
               <label className="fsel">
                 <span className="fsel-l">Chapter</span>
@@ -155,10 +159,10 @@ export default function LibraryTab({
               </label>
             ) : (
               <>
-                <button type="button" className="fchip" aria-pressed={!chapterFilter}
+                <button type="button" className="chip is-inline" aria-pressed={!chapterFilter}
                         onClick={() => setChapterFilter(null)}>All</button>
                 {chapters.map((c) => (
-                  <button type="button" key={c.id} className="fchip"
+                  <button type="button" key={c.id} className="chip is-inline"
                           aria-pressed={chapterFilter === c.id}
                           onClick={() => setChapterFilter(c.id)}>{c.title}</button>
                 ))}
@@ -167,7 +171,7 @@ export default function LibraryTab({
           </div>
         )}
 
-        <div className="libwrap" ref={papersListRef}>
+        <ul className="papers" ref={papersListRef}>
           {/* §5's own pattern, reused: the thing you are in the middle of is
               pinned above the list, with a rule beneath it. It is where you
               were, and it should not be somewhere you have to hunt for. The
@@ -190,51 +194,51 @@ export default function LibraryTab({
                rather than opening a viewer with nothing behind it. */
             const preparing = p.status === "pending";
             return (
-              <button type="button" key={p.id} className="item" data-here={here ? "" : undefined}
+              <li key={p.id}>
+              <button type="button" className="paper" data-here={here ? "" : undefined}
                       disabled={preparing}
                       onClick={() => onOpenPaper(p)}>
-                <span className="lead mark">{DOC}</span>
-                <span className="imain">
-                  <span className="iname">{p.title}</span>
-                  <span className="imeta">
+                <span className="pg">{DOC}</span>
+                <span>
+                  <div className="lt">{p.title}</div>
+                  <div className="ls">
                     {preparing
                       ? "Preparing — the text layer and thumbnails are being built"
                       : [p.kind || "PDF",
                          p.pages ? `${p.pages} page${p.pages === 1 ? "" : "s"}` : null,
                          here ? `you are on page ${readerPin.page}` : null]
                         .filter(Boolean).join(" · ")}
-                  </span>
+                  </div>
                   {/* The hairline, not a second row. */}
                   {through > 0 && (
-                    <span className="ihair" aria-hidden="true"><i style={{ width: `${through}%` }} /></span>
+                    <span className="prog" aria-hidden="true"><b style={{ width: `${through}%` }} /></span>
                   )}
                 </span>
-                <span className="istat">
-                  <span className={`go ${here ? "" : "ghost"}`}>
-                    {preparing ? "Preparing…" : here ? "Resume" : "Open"}
-                  </span>
+                <span className={here ? "resume" : "act-o"}>
+                  {preparing ? "Preparing…" : here ? "Resume" : "Open"}
                 </span>
               </button>
+              </li>
             );
           })}
           {/* §17b — the empty state names the next action inside the sentence
               and gives it a button. It never states an absence. */}
           {!shownPapers.length && (
             papers.length ? (
-              <p className="endnote">Try a paper title, a chapter name, or the All chip.</p>
+              <li><p className="endnote">Try a paper title, a chapter name, or the All chip.</p></li>
             ) : (
-              <div className="libempty">
+              <li className="libempty">
                 <p>
                   Add the first paper for this module and it opens in the reader —
                   highlight a line, leave a note, ask the module about it.
                 </p>
                 {onAddPaper && (
-                  <button type="button" className="go" onClick={onAddPaper}>Add a paper</button>
+                  <button type="button" className="pill pri" onClick={onAddPaper}>Add a paper</button>
                 )}
-              </div>
+              </li>
             )
           )}
-        </div>
+        </ul>
       </section>
     </div>
   );

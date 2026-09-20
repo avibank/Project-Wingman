@@ -25,10 +25,9 @@
      yet. The first one here could be yours." — §10's rule about naming the
      next action rather than stating an absence.
    ========================================================================= */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Stamp from "../Stamp.jsx";
 import { stampTilt } from "../../lib/stamp.js";
-import { fetchCrew } from "../../lib/crew.js";
 import { initials, hueFor } from "../../lib/familiar.js";
 import "./crew.css";
 import "./ref-module.css";
@@ -44,7 +43,7 @@ import CrewEmpty from "./CrewEmpty.jsx";
  * inside a chapter header. The reference does it this way too — `face()` there
  * is a span, and the stack's click is delegated. */
 function Face({ p, mate, onOpen, inert = false }) {
-  const cls = `crew-av${p.on ? " is-on" : ""}${mate ? " crew-sqring" : ""}`;
+  const cls = `av${p.on ? " on" : ""}${mate ? " sqring" : ""}`;
   const style = { background: `oklch(.55 .09 ${hueFor(p.name)})` };
   const title = `${p.name}${mate ? " · your squadron" : ""}`;
   if (inert) {
@@ -61,25 +60,21 @@ function Face({ p, mate, onOpen, inert = false }) {
 function Stack({ people, mates, onOpen, cap = 6 }) {
   const shown = people.slice(0, cap);
   return (
-    <span className="crew-stack">
+    <span className="stack">
       {shown.map((p) => <Face key={p.userId} p={p} mate={mates.has(p.userId)} onOpen={onOpen} />)}
-      {people.length > cap && <span className="crew-more">+{people.length - cap}</span>}
+      {people.length > cap && <span className="more">+{people.length - cap}</span>}
     </span>
   );
 }
 
-export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myStamp,
+/* `crew` COMES DOWN, it is not fetched here. The count is on the TAB in the
+   reference ("Crew 15"), which is one level above this panel, so the read is
+   in ModuleScreen and both sides take the same answer — see useCrew in
+   crew.js. Two fetches would be two round trips for one fact and two chances
+   for them to disagree. */
+export default function CrewTab({ crew = null, moduleName, chapters = [], me, myStamp,
                                   mates = new Set(), query = "", onOpenPerson, onOpenThreads,
                                   myDone = new Set(), onFindSquadron, onInviteClass }) {
-  const [crew, setCrew] = useState(null);
-
-  useEffect(() => {
-    let live = true;
-    setCrew(null);
-    fetchCrew(moduleCode, me, { chapterIds: chapters.map((c) => c.id) })
-      .then((c) => { if (live) setCrew(c); });
-    return () => { live = false; };
-  }, [moduleCode, me, chapters]);
 
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -87,13 +82,13 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
     return q ? all.filter((p) => `${p.name} ${p.callsign || ""}`.toLowerCase().includes(q)) : all;
   }, [crew, query]);
 
-  if (!crew) return <div className="crew-wait" aria-busy="true" />;
+  if (!crew) return <div className="crew ref-mod crew-wait" aria-busy="true" />;
 
   /* FLY SOLO IS SYMMETRIC, and this is what it looks like from the inside:
      the tab says so plainly rather than pretending the module is empty. */
   if (crew.solo) {
     return (
-      <div className="crew">
+      <div className="crew ref-mod">
         <div className="crew-empty">
           You are flying solo, so nobody here can see you and you cannot see them.
           Turn it off in Preferences to meet the rest of {moduleName || "this module"}.
@@ -108,7 +103,7 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
        answers the same way ("Try a paper title, a chapter name, or the All
        chip."). A name that matches nothing is usually a callsign. */
     return (
-      <div className="crew">
+      <div className="crew ref-mod">
         <div className="crew-empty">
           Nobody by that name on {moduleName}. Try a callsign, or clear the search to see everyone.
         </div>
@@ -136,8 +131,8 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
   const total = hits.length + 1;
 
   return (
-    <div className="crew">
-      <div className="crew-sum">
+    <div className="crew ref-mod">
+      <div className="csum">
         <div>
           <b>{total} on {moduleName}</b>
           {/* NEVER A ZERO COUNT (CLAUDE.md, Voice). "0 have finished it" is
@@ -161,8 +156,8 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
         const signedOff = done.length + (mineDone ? 1 : 0);
         const youAreHere = crew.here === ch.id;
         return (
-          <div className="crew-ch" key={ch.id}>
-            <div className="crew-chh">
+          <div className="cch" key={ch.id}>
+            <div className="cch-h">
               <div>
                 <h3>{ch.title || `Chapter ${i + 1}`}</h3>
                 {/* NEVER A ZERO COUNT, here as well — and this one said it
@@ -174,25 +169,25 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
                     with nobody on it and nobody through it there is no line
                     at all — the wall below carries the invitation. */}
                 {(signedOff > 0 || youAreHere) && (
-                  <div className="crew-cm">
+                  <div className="cm">
                     {signedOff > 0 && <>{signedOff} signed off</>}
                     {signedOff > 0 && youAreHere && " · "}
-                    {youAreHere && <span className="crew-here">you are here</span>}
+                    {youAreHere && <span className="here">you are here</span>}
                   </div>
                 )}
               </div>
-              <div className="crew-onit">
+              <div className="onit">
                 {onIt.length
                   ? <><span>On it now</span><Stack people={onIt} mates={mates} onOpen={onOpenPerson} cap={5} /></>
                   : <span>Nobody on it right now</span>}
               </div>
             </div>
-            <div className="crew-wall">
-              <span className="crew-wl">SIGNED OFF</span>
+            <div className="wall">
+              <span className="wl">SIGNED OFF</span>
               {done.length || mineDone ? (
                 <>
                   {mineDone && (
-                    <button type="button" className="crew-mine" title="Your stamp" onClick={() => onOpenPerson?.({ userId: me, name: "You", stamp: myStamp })}>
+                    <button type="button" className="mine" title="Your stamp" onClick={() => onOpenPerson?.({ userId: me, name: "You", stamp: myStamp })}>
                       <Stamp stamp={myStamp} size={44} rot={stampTilt(myStamp?.seed || 1, ch.id)} label="Your stamp" />
                     </button>
                   )}
@@ -203,7 +198,7 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
                   ))}
                 </>
               ) : (
-                <span className="crew-none">No stamps yet. The first one here could be yours.</span>
+                <span className="none">No stamps yet. The first one here could be yours.</span>
               )}
             </div>
           </div>
@@ -214,18 +209,18 @@ export default function CrewTab({ moduleCode, moduleName, chapters = [], me, myS
         const helpers = hits.filter((p) => p.answers > 0).sort((a, b) => b.answers - a.answers).slice(0, 4);
         if (!helpers.length) return null;
         return (
-          <div className="crew-helpers">
+          <div className="helpers">
             <h3>Answering questions</h3>
-            <p className="crew-cm">Most answers in {moduleName} threads</p>
-            <div className="crew-hrow">
+            <p className="cm">Most answers in {moduleName} threads this month</p>
+            <div className="hrow">
               {helpers.map((p) => (
-                <button type="button" className="crew-hp" key={p.userId} onClick={() => onOpenPerson?.(p)}
+                <button type="button" className="hp" key={p.userId} onClick={() => onOpenPerson?.(p)}
                         aria-label={`Open ${p.name}, ${p.answers} ${p.answers === 1 ? "answer" : "answers"}`}>
                   <Face p={p} mate={mates.has(p.userId)} inert />
                   <span>{p.name.split(" ")[0]}<small>{p.answers} {p.answers === 1 ? "answer" : "answers"}</small></span>
                 </button>
               ))}
-              <button type="button" className="crew-pill" onClick={() => onOpenThreads?.()}>
+              <button type="button" className="pill" onClick={() => onOpenThreads?.()}>
                 Open {moduleName} threads
               </button>
             </div>

@@ -49,9 +49,15 @@ export const countLessons = (chapters) =>
 
 /* The placeholder is per tab, because "Search" alone makes a student guess what
    it reaches. It says what it searches. */
-export const placeholderFor = (tab, sub) =>
-  tab === "library" ? (sub === "quizzes" ? "Search quizzes" : "Search papers")
-    /* Crew is a list of PEOPLE, so the field says so. The reference changes it
-       the same way: "Find someone". */
+/* THE REFERENCE'S OWN THREE, word for word (§4 of the handoff names them):
+   "Search lessons", "Search quizzes, cards and papers", "Find someone".
+
+   The Library's was split in two here — "Search quizzes" or "Search papers",
+   depending which half of the tab you arrived at. That was true of a Library
+   with two sections; it has three now, the field searches all of them, and a
+   placeholder naming one is a placeholder that lies about the other two. */
+export const placeholderFor = (tab) =>
+  tab === "library" ? "Search quizzes, cards and papers"
+    /* Crew is a list of PEOPLE, so the field says so. */
     : tab === "crew" ? "Find someone"
-    : "Search lessons and chapters";
+    : "Search lessons";

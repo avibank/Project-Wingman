@@ -6,11 +6,14 @@ import CrewTab from "./CrewTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
 import { faultChapters } from "../../lib/minimums.js";
+import { useCrew, crewCount } from "../../lib/crew.js";
+import { moduleSubtitle } from "../../lib/moduleLine.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
 import { useTabPill } from "../../lib/tabMotion.js";
 import "./module.css";
+import "./ref-module.css";
 import "./manual.css";
 
 // The three tabs live in the URL, so a student sharing a link to People lands
@@ -76,6 +79,12 @@ export default function ModuleScreen({
   // Cleared when the tab changes. Carrying a query across tabs shows somebody a
   // filtered list they did not ask to filter, and the commonest way to meet an
   // empty tab is to arrive at one still holding a search.
+  /* THE CREW READ LIVES HERE, not in the panel: "Crew 15" is on the TAB, so
+     the number has to exist one level above the thing that draws the people.
+     One fetch, both sides. */
+  const crew = useCrew(mod?.code || mod?.id, me, chapters.map((c) => c.id));
+  const crewTotal = crewCount(crew);
+
   const [query, setQuery] = useState("");
   useEffect(() => { setQuery(""); }, [tab]);
   const searchable = tab === "route" || tab === "library" || tab === "crew";
@@ -125,51 +134,69 @@ export default function ModuleScreen({
           statuses, the folder), not a second layout. Manual's sketch rules for
           the gauge and the tag stay in manual.css and cost nothing while
           nothing renders them, the same as before. */}
-      <div className="mhero">
-        <h1 className="mhero-title">{mod.name}</h1>
-      </div>
+      {/* THE TITLE AND THE LINE UNDER IT, which the live screen did not have
+          at all (bug 14). The reference's `.sub` reads "6 lessons and 3
+          quizzes" — what is in the module, said once, in the two units a
+          student counts in. It is derived rather than stored: every chapter
+          carries one quiz. */}
+      <div className="ref-mod">
+        <div className="mod">
+        <h1>{mod.name}</h1>
+        <p className="sub">{moduleSubtitle(chapters)}</p>
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
           the surface below, and the list lives inside the same border. */}
       {/* tools/ref-diff.mjs photographs this element and the same one on
           the reference page. The attribute is the contract between them. */}
-      <div className="mcard" data-ref="module-panel">
-      <div className="tabsbar">
-        <div className="tabs" role="tablist" aria-label={`${mod.name} sections`}
-             ref={tabsRef} onKeyDown={walkTabs}>
-          {MODULE_TABS.map((t) => (
-            <button key={t.id} type="button" role="tab" className="tab"
-                    aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
-                    onClick={() => onTab(t.id)}>
-              {/* The selected tab's background, as its own element, so it can
-                  travel to the next tab rather than blink out of one and into
-                  another — see useTabPill in tabMotion.js. It is what the
-                  selected tab always looked like; only who draws it moved. */}
-              <span className="tab-pill" aria-hidden="true" />
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="card" data-ref="module-panel">
+      {/* THE STRIP IS THE REFERENCE'S `.mtabs`: three tabs and then the field,
+          all in one flex row on the card's top edge. The field was a 120px box
+          with its own placeholder clipped — "Search lessons and chapt" — because
+          it sat in a wrapper the tabs could squeeze (bug 13). It is `flex:1 1
+          auto` now and takes whatever the tabs leave. */}
+      <div className="mtabs" role="tablist" aria-label={`${mod.name} sections`}
+           ref={tabsRef} onKeyDown={walkTabs}>
+        {MODULE_TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" className="tab"
+                  aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
+                  onClick={() => onTab(t.id)}>
+            {/* The selected tab's background, as its own element, so it can
+                travel to the next tab rather than blink out of one and into
+                another — see useTabPill in tabMotion.js. It is what the
+                selected tab always looked like; only who draws it moved. */}
+            <span className="tab-pill" aria-hidden="true" />
+            {t.label}
+            {/* THE COUNT, ON THE TAB (bug 14). Nothing at all until the answer
+                is in, and nothing when the answer is "only you": a badge
+                reading 1 beside your own name is a number nobody needs. */}
+            {t.id === "crew" && crewTotal > 1 && <small>{crewTotal}</small>}
+          </button>
+        ))}
 
         {/* People has no search: it is a handful of rows about other people,
             and a field that filters nothing is worse than no field. Crew DOES:
             it can be forty faces and a wall of stamps, and the reference gives
             it the same field with "Find someone" in it. */}
         {searchable && (
-          <div className="tabsearch">
-            <Search className="tabsearch-i" aria-hidden="true" />
-            <input ref={fieldRef} type="search" className="tabsearch-f" value={query}
-                   placeholder={placeholderFor(tab, librarySub)}
-                   aria-label={placeholderFor(tab, librarySub)}
+          <label className="search">
+            <Search size={15} aria-hidden="true" />
+            {/* `is-inline`: §12's 44px floor is on the INPUT, and the thing
+                a finger aims at here is the pill around it — 780px wide and
+                39.7 tall, which is the design's and clears WCAG 2.2 AA's 24px
+                target either way. With the floor on, the field alone made the
+                strip 77px against the design's 56.7. */}
+            <input ref={fieldRef} type="search" className="is-inline" value={query}
+                   placeholder={placeholderFor(tab)}
+                   aria-label={placeholderFor(tab)}
                    onChange={(e) => setQuery(e.target.value)}
                    onKeyDown={(e) => { if (e.key === "Escape" && query) { e.preventDefault(); setQuery(""); } }} />
             {searching && (
-              <button type="button" className="tabsearch-x" aria-label="Clear the search"
+              <button type="button" className="tabsearch-x is-inline" aria-label="Clear the search"
                       onClick={() => { setQuery(""); fieldRef.current?.focus(); }}>
-                <X aria-hidden="true" />
+                <X size={14} aria-hidden="true" />
               </button>
             )}
-          </div>
+          </label>
         )}
       </div>
 
@@ -179,7 +206,7 @@ export default function ModuleScreen({
           then nothing is. */}
       <div className="pane" role="tabpanel">
         {tab === "route" && (
-          <RouteTab module={mod} chapters={chapters} state={state} here={here}
+          <RouteTab chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
@@ -191,7 +218,7 @@ export default function ModuleScreen({
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "crew" && (
-          <CrewTab moduleCode={mod?.code || mod?.id} moduleName={mod?.name}
+          <CrewTab crew={crew} moduleName={mod?.name}
                    chapters={chapters} me={me} myStamp={stamp} mates={mates}
                    query={query} myDone={myDone}
                    onOpenPerson={onOpenPerson} onOpenThreads={onOpenThreads}
@@ -205,6 +232,8 @@ export default function ModuleScreen({
           <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion}
                      loading={!people.people?.length} />
         )}
+      </div>
+      </div>
       </div>
       </div>
     </div>

@@ -930,7 +930,11 @@ renderLog();renderLessons();renderCrew();paint();go('mod');
   .new{display:none!important}
 </style>
 <style>
-  .wrap{padding-inline:62px}
+  /* 1180 = the app's own .content cap (1100px including its 22px of padding)
+     plus this gutter, so the two content boxes are the same number at every
+     width: 1056 at 1280, 644 at 768, 314 at 390. The licence page is
+     unaffected -- its .col caps at 680 well inside both. */
+  .wrap{max-width:1180px;padding-inline:62px}
   @media (max-width:640px){.wrap{padding-inline:38px}}
 </style>
 <script>

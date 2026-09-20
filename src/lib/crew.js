@@ -19,6 +19,7 @@
    One round trip per source rather than one per person: presence, completions,
    profiles, and the answer counts. A module with forty people is four requests.
    ========================================================================= */
+import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient.js";
 import { isFlySolo } from "./flySolo.js";
 import { demoOn, demoCrew } from "./demoFixture.js";
@@ -33,11 +34,13 @@ const fail = (e, f) => { if (e) console.error(e); return f; };
 export async function fetchCrew(moduleCode, me, { chapterIds = [] } = {}) {
   const none = { people: [], onNow: 0, finished: 0, solo: true };
   if (!moduleCode) return { ...none, solo: false };
-  /* Symmetric, and this is the half that runs on your own device. */
-  if (isFlySolo()) return none;
-  /* ?fixture=demo — the reference build's own fourteen people, so a pixel
-     diff of this screen measures the layout rather than the content. Dev
-     only; demoOn() is constantly false in a production build. */
+  /* Symmetric, and this is the half that runs on your own device. The dev
+     fixture is named in the same breath rather than sitting in front of it:
+     ?fixture=demo hands back the reference build's own fourteen people so a
+     pixel diff measures layout, and a preference left on in the harness by an
+     earlier walk must not empty the tab underneath it. demoOn() is constantly
+     false in a production build. */
+  if (isFlySolo() && !demoOn()) return none;
   if (demoOn()) return demoCrew(chapterIds);
 
   const since = new Date(Date.now() - 1000 * 60 * 5).toISOString();
@@ -118,3 +121,35 @@ export async function fetchCrew(moduleCode, me, { chapterIds = [] } = {}) {
     solo: false,
   };
 }
+
+
+/* =============================================================================
+   THE TAB STRIP NEEDS THE COUNT, AND SO DOES THE TAB.
+   -----------------------------------------------------------------------------
+   "Crew 15" is on the tab itself in the reference, which means the number has
+   to exist one level above the panel that draws it. Fetching twice would be
+   two round trips for one fact and two chances for them to disagree, so the
+   read lives here and both sides take the same answer.
+
+   `null` while it is in flight, deliberately: the badge shows nothing rather
+   than a nought, and the panel keeps its own waiting state.
+   ========================================================================= */
+export function useCrew(moduleCode, me, chapterIds = []) {
+  const [crew, setCrew] = useState(null);
+  /* The ids, not the array: a fresh array of the same ids on every render of
+     the parent would restart the fetch on every render. */
+  const key = chapterIds.join(",");
+  useEffect(() => {
+    let live = true;
+    setCrew(null);
+    fetchCrew(moduleCode, me, { chapterIds: key ? key.split(",") : [] })
+      .then((c) => { if (live) setCrew(c); })
+      .catch(() => { if (live) setCrew({ people: [], onNow: 0, finished: 0, solo: false, here: null }); });
+    return () => { live = false; };
+  }, [moduleCode, me, key]);
+  return crew;
+}
+
+/* How many people are on this module, counting the student. `null` until the
+   answer is in, so a badge can tell "nobody yet" from "not asked yet". */
+export const crewCount = (crew) => (crew ? crew.people.length + 1 : null);

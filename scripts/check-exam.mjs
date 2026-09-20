@@ -593,8 +593,11 @@ console.log("\nthe lamp, and what is gone");
 
   /* §8 — a quiz row carries the paper, and its real length. */
   const route = read("src/components/module/RouteTab.jsx");
+  /* `.th`, not `.lead`: the module screen was rebuilt on the reference
+     build's own markup (2026-09-19) and the 62px slot a row's picture sits in
+     is called `.th` there. Same slot, same thumbnail, same rule. */
   ok("thumb", "a quiz row is an answer sheet with the question count on it",
-     /className="lead quiz-thumb"/.test(route) && /<b>\{count\}<\/b>Qs/.test(route)
+     /className="th quiz-thumb"/.test(route) && /<b>\{count\}<\/b>Qs/.test(route)
      && /<QuizThumb count=\{total\} \/>/.test(route));
   ok("thumb", "and it invents no number when the paper has none",
      /\{count \? <span className="quiz-thumb__count">/.test(route));

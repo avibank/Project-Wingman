@@ -9,7 +9,7 @@ import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
-import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH } from "./lib/demoFixture.js";
+import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH, DEMO_PAPERS } from "./lib/demoFixture.js";
 /* A CHUNK THAT VANISHED UNDER YOU, and why this wrapper exists.
  *
  * Every route below is code-split and the built filenames carry a content
@@ -1196,7 +1196,11 @@ function AppInner() {
 
 
   const modulePapers = useMemo(
-    () => [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers],
+    /* ?fixture=demo hands the Library the reference's own three papers, so a
+       pixel diff of that tab measures the rows rather than the shelf. Dev
+       only — demoOn() is constantly false in a production build. */
+    () => (demoOn() ? DEMO_PAPERS
+      : [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers]),
     [activeModuleCode, useTestContent, addedPapers],
   );
   /* Papers are listed one module at a time, from the database. The adapter is
