@@ -420,8 +420,12 @@
   transition: .16s;
 }
 .rdr .bmkface:hover{ background: color-mix(in srgb, var(--lv) 20%, transparent); }
-/* `--pg` is the page's own ground in this reader; the fill reads against it
-   the way the ribbon does. A literal hex here fails R14 — no colour the
-   shipped palette did not bring — and rightly. */
-.rdr .bmkface[aria-pressed="true"]{ background: var(--lv); color: var(--pg); }
+/* The fill reads against the page's own ground, the way the ribbon does. A
+   literal hex here fails R14 — no colour the shipped palette did not bring —
+   and rightly. That ground is `--paper`, declared on `.rdr` in reader.css;
+   `--pg` was a typo for it and nothing anywhere declared it, so `color`
+   resolved to invalid-at-computed-value-time and the pressed face inherited
+   whatever the tray's text was, ON the accent. check:tokens had been saying
+   so; this is the line it meant. */
+.rdr .bmkface[aria-pressed="true"]{ background: var(--lv); color: var(--paper); }
 .rdr .bmkface[aria-pressed="true"] path{ fill: currentColor; }

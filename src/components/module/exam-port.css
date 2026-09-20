@@ -201,7 +201,7 @@
 .examport .who .a{font-family:var(--font-mono);font-size:11.5px;color:var(--t3)}
 .examport .who .s{font-size:13px;color:var(--t2)}
 .examport .is-in .lb-row{animation:rowin .3s var(--ease) backwards;animation-delay:calc(var(--i)*50ms)}
-.examport .is-in .lb-row.is-you{animation:youin .5s var(--ease) backwards;animation-delay:calc(var(--n)*50ms + 170ms)}
+.examport .is-in .lb-row.is-you{animation:youin .5s var(--ease) backwards;animation-delay:calc(var(--n, 0)*50ms + 170ms)}
 @keyframes rowin{from{opacity:.001;transform:translateY(7px)}}
 @keyframes youin{from{opacity:.001;transform:translateY(22px) scale(.985)}}
 @media (prefers-reduced-motion:reduce){
