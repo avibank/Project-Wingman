@@ -139,6 +139,17 @@ export function parseRoute(pathname) {
   // §6 — the profile's three tabs are real URLs, not a tab state. They sit
   // under /account now; settings should not sit at the root.
   if (parts[0] === "account" && PROFILE_TABS.includes(parts[1])) return { name: "profile", tab: parts[1] };
+  /* CLERK'S OWN ACCOUNT UI, ON ITS OWN ADDRESS. Email and Password were two
+     dead buttons: both called onNavigate("account"), "account" is not one of
+     the three profile tabs, so `path.profile` fell back to /account/licence —
+     the page you were already on. Pressing either did nothing at all.
+
+     Clerk owns both flows, including verification and the case where a
+     Google-signed-in account has no password to change, so this is a route to
+     Clerk's component rather than anything built here. The optional segment is
+     which part of it to open on. */
+  if (parts[0] === "account" && parts[1] === "security") return { name: "clerk", section: "security" };
+  if (parts[0] === "account" && parts[1] === "email") return { name: "clerk", section: "email" };
 
   return { name: "notfound", pathname: clean(pathname) };
 }
@@ -165,4 +176,7 @@ export const path = {
   signin: () => "/signin",
   invite: (token) => `/j/${token}`,
   profile: (tab) => `/account/${PROFILE_TABS.includes(tab) ? tab : "licence"}`,
+  /* It survives a refresh like every other address here — vercel.json carries
+     it too, and check:rewrites holds that. */
+  clerk: (section) => `/account/${section === "security" ? "security" : "email"}`,
 };

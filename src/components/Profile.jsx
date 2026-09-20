@@ -497,6 +497,17 @@ const PROFILE_CSS = `
 .pcard-foot { font-size: calc(12.5px * var(--scale, 1)); color: var(--t2); margin: 0; line-height: 1.45; }
 `;
 
+/* WHICH PROVIDER, IN WORDS. Clerk names them `oauth_google`, `oauth_apple` and
+   so on; a student has never seen that string and should not start now. Falls
+   back to "your sign-in provider", which is the sentence that used to be shown
+   to everybody whether it was true of them or not. */
+function signInWith(user) {
+  const id = user?.externalAccounts?.[0]?.provider || "";
+  const name = String(id).replace(/^oauth_/, "").replace(/_/g, " ").trim();
+  if (!name) return null;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPin, livery, onLivery,
                    finish, onFinish, ruled, onRuled,
                    fontSize, onFontSize, reduceMotion, onReduceMotion, dyslexiaFont, onDyslexiaFont,
@@ -818,13 +829,36 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
               the bold line through it. */}
           <div className="box">
             <p className="lab">Account</p>
+            {/* BOTH OF THESE WERE DEAD. They called onNavigate("account"),
+                "account" is not one of the three profile tabs, and so
+                `path.profile` fell back to /account/licence — the page you
+                were already on. They reach Clerk's own account UI now, which
+                owns both flows including the verification mail. */}
             <div className="row">
               <div><b>Email</b><span>{user?.primaryEmailAddress?.emailAddress}</span></div>
-              <button className="pill" type="button" onClick={() => onNavigate("account")}>Change</button>
+              <button className="pill" type="button" onClick={() => onNavigate("email")}>Change</button>
             </div>
             <div className="row">
-              <div><b>Password</b><span>Managed by your sign-in provider</span></div>
-              <button className="pill" type="button" onClick={() => onNavigate("account")}>Update</button>
+              {/* AND THE PASSWORD ROW TELLS THE TRUTH. It said "Managed by
+                  your sign-in provider" to everybody, which is true of a
+                  Google account and false of an email-and-password one — and
+                  it sat next to a button offering to update the password it
+                  had just said was somebody else's. Clerk knows which it is;
+                  `passwordEnabled` is the answer. */}
+              <div>
+                <b>Password</b>
+                <span>{user?.passwordEnabled
+                  ? "Change it, and see where you are signed in"
+                  : signInWith(user)
+                    ? `You sign in with ${signInWith(user)}, so there is no password to change`
+                    /* The sentence that used to be shown to everybody. It is
+                       right here and only here: no password, and no provider
+                       we can name. */
+                    : "Managed by your sign-in provider"}</span>
+              </div>
+              <button className="pill" type="button" onClick={() => onNavigate("security")}>
+                {user?.passwordEnabled ? "Update" : "Sign-in and devices"}
+              </button>
             </div>
             <div className="row">
               <div><b>Sign out</b><span>On this device only</span></div>
@@ -870,8 +904,18 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                          }}
                          onClose={() => setPicker(null)} />
           )}
+          {/* `image/*`, NOT THE FOUR TYPES A CANVAS CAN DRAW.
+              HEIC is the iPhone camera's default, and naming the four greys
+              every photo a student has actually taken out of the Files app —
+              they see their own camera roll disabled, with no explanation and
+              nothing to press. The validation has not moved: `checkFile` still
+              refuses anything a canvas cannot draw, and it does it in words
+              ("A photo straight off an iPhone is usually HEIC — share it once
+              and it becomes a JPEG"), which is a sentence a student can act on
+              and a greyed-out file is not. Refuse after the pick, never
+              before it, and never silently. */}
           <input ref={fileRef} type="file" hidden
-                 accept="image/png,image/jpeg,image/webp,image/gif"
+                 accept="image/*"
                  onChange={pickPhotoFile} />
           {picker === "photocrop" && photoSrc && (
             <AvatarCrop src={photoSrc} busy={photoBusy} onCancel={closePhotoCrop}
@@ -888,10 +932,10 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                           closePhotoCrop();
                         }} />
           )}
-          {/* PNG, JPEG, WEBP and GIF only — coverImage.js says why, and says
-              it in words when somebody hands it a HEIC. */}
+          {/* Same as the avatar above: everything offered, `checkFile` refuses
+              what a canvas cannot draw, in words. */}
           <input ref={coverFileRef} type="file" hidden
-                 accept="image/png,image/jpeg,image/webp,image/gif"
+                 accept="image/*"
                  onChange={pickCoverFile} />
           {picker === "crop" && cropSrc && (
             <CoverCrop src={cropSrc} busy={cropBusy} onCancel={closeCrop}
