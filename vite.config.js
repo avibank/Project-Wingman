@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { rmSync } from "node:fs";
+import { refRoutes } from "./tools/vite-ref-routes.js";
 
 /* THE REFERENCE PAGES ARE DEV ONLY. public/__ref/ holds the two handed-over
    reference builds split one page per screen (tools/make-ref-pages.mjs), so
@@ -17,7 +18,10 @@ const noRefPagesInProduction = {
 };
 
 export default defineConfig({
-  plugins: [react(), noRefPagesInProduction],
+  /* refRoutes serves the two bookmarks demos at /__ref/bookmarks and
+     /__ref/flight-bag. `apply: "serve"` — they are never in a build, which is
+     the same rule noRefPagesInProduction enforces for the other four. */
+  plugins: [react(), refRoutes(), noRefPagesInProduction],
   build: {
     sourcemap: true,
   },

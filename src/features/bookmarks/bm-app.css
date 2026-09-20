@@ -175,3 +175,21 @@
 @media (max-width: 700px){
   .app .bm.bm-home{ padding-bottom: 40px; }
 }
+
+/* ------------------------------------------------------ 6 · the type scale
+   THE ONE LINE THE DESIGN'S OWN <body> CARRIED, put back where its rules can
+   see it. The demo sets `font: 15px/1.5 var(--sans)` on body and `.bm`'s
+   rules assume it; this app's base is 16px with the browser's own `normal`
+   line-height, so every line box inside the component came out different.
+
+   Measured on Bookmarks home at 1280 before it went in: a folder's name 23.0px
+   against the demo's 28.9, its cover 524.8 against 536.9, the grid 557.8
+   against 575.8. The font SIZES already matched — they are clamps — so it was
+   the leading alone, which is exactly the shape of a missing body rule.
+
+   It is not new CSS in the sense rule 5 forbids: the value is the design's,
+   from its own stylesheet, and it goes here rather than in bookmarks.css
+   because bookmarks.css is kept as sent and a scoped `body` selector paints
+   nothing. `scripts/scope-ref-css.mjs` restores the same line, for the same
+   reason, for the other reference builds. */
+.app .bm{ font: 15px/1.5 var(--font-ui); }

@@ -44,7 +44,9 @@ export function useModuleParam() {
   const go = useGo();
   useContentVersion();                                   // the fallback arrives with the content
   const sp = new URLSearchParams(loc.search);
-  const m = sp.get('m') || content.currentModuleId() || 'all';
+  /* Resolved rather than taken raw: "?m=m1" is this app's "M1". One place,
+     because every reader downstream compares it to `row.module_id`. */
+  const m = content.moduleId(sp.get('m')) || content.currentModuleId() || 'all';
   const set = (id) => { sp.set('m', id); go(`${loc.pathname}?${sp}`, { replace: true, keepScroll: true }); };
   return [m, set];
 }

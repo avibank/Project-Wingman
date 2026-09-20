@@ -4,6 +4,8 @@ import { letter } from './content';
 import { findSave, addSave, removeSave, restoreSave } from './savesStore';
 import { useSavesState } from './useSaves';
 import { toast } from './toastBus';
+import { useUserProgress } from '../../lib/userProgress.jsx';
+import { markSeen } from './cardsSeen';
 
 /** The two faces of a study card. Front: the question. Back: the right answer (and the author's explanation, only if the question has one). */
 export function CardFaces({ q }) {
@@ -22,6 +24,7 @@ export function CardFaces({ q }) {
  */
 export default function StudyPad({ questions, moduleId, mode }) {
   useSavesState();
+  const progress = useUserProgress();
   const [k, setK] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const pad = useRef(null);
@@ -35,6 +38,11 @@ export default function StudyPad({ questions, moduleId, mode }) {
   useEffect(() => { if (k > n - 1) setK(Math.max(0, n - 1)); }, [n, k]);
   const go = (d) => { const j = k + d; if (j < 0 || j >= n) return; setFlipped(false); setK(j); };
   const cur = questions[k];
+  /* TURNING A CARD OVER IS WHAT COUNTS IT. One place, so the pointer, the
+     keyboard and anything added later all record the same event — and it is
+     the card being FLIPPED, not the card being reached, because seeing the
+     answer is the exercise. `markSeen` writes nothing when it already knows. */
+  const flip = () => setFlipped((f) => { if (!f) markSeen(progress, questions[k]?.id); return !f; });
   if (!cur) return null;
   const saved = findSave('card', cur.id);
 
@@ -50,12 +58,12 @@ export default function StudyPad({ questions, moduleId, mode }) {
     if (!p0.current) return; const dx = e.clientX - p0.current.x, dy = e.clientY - p0.current.y; p0.current = null;
     if (Math.abs(dx) > 50 || dy < -50) go(dx > 0 && Math.abs(dx) > Math.abs(dy) ? -1 : 1);
     else if (dy > 50) go(-1);
-    else if (e.target.closest('.bm-pc')) setFlipped((f) => !f);
+    else if (e.target.closest('.bm-pc')) flip();
   };
   const keys = (e) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); go(1); }
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
-    else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setFlipped((f) => !f); }
+    else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
   };
 
   return (
@@ -63,7 +71,8 @@ export default function StudyPad({ questions, moduleId, mode }) {
       <div className="bm-pad-stage" onPointerDown={down} onPointerUp={up}>
         {questions.map((q, j) => {
           const d = j - k;
-          const style = { zIndex: 100 - j, transform: d <= 0 ? undefined : `translateY(${d * 20}px) scale(${1 - d * 0.03})` };
+          // translateZ keeps the 3D paint order matching the stack; without it a card behind can paint over the top one
+          const style = { zIndex: 100 - j, transform: d <= 0 ? undefined : `translateY(${d * 20}px) scale(${1 - d * 0.03}) translateZ(${-40 * d}px)` };
           return (
             <div key={q.id} className={`bm-pc${d < 0 ? ' is-gone' : ''}${d > 3 ? ' is-hidden' : ''}`} style={style} aria-hidden={d !== 0}>
               <div className={`bm-pc-in${d === 0 && flipped ? ' is-flipped' : ''}`}><CardFaces q={q} /></div>

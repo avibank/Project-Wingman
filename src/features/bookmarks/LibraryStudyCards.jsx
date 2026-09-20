@@ -16,11 +16,11 @@
      · done/total, and "Test yourself" — which is what the set is FOR. "Open"
        describes a door rather than the thing behind it.
 
-   ONE NUMBER IS NOT DRAWN, and it is stated rather than faked: nothing in this
-   app counts how many of a set's cards have been flipped, so there is no
-   `done` to put in front of the total. The reference shows `done/total` beside
-   the button; this shows the total alone until something writes that count.
-   See docs/launch/DECISIONS.md.
+   `done/total` IS DRAWN NOW, and it took a writer. Nothing in this app counted
+   a flipped card, so the row showed the total alone for a day; `cardsSeen.js`
+   records a card the moment its answer is turned over and this reads it. The
+   number is of the cards in the set, by question id, so a set that gains a
+   card does not renumber what has already been done.
    ========================================================================= */
 import './bookmarks.css';
 import './bm-app.css';
@@ -29,14 +29,21 @@ import { BmLink } from './nav';
 import { content, routes, plural, useContentVersion } from './content';
 import { useSavesState } from './useSaves';
 import { isSaved } from './savesStore';
+import { useUserProgress } from '../../lib/userProgress.jsx';
+import { seenCount } from './cardsSeen';
 
 export default function LibraryStudyCards({ moduleId }) {
   useSavesState();
   useContentVersion();
+  const progress = useUserProgress();
   const chapters = content.quizChapters(moduleId) ?? [];
   const sets = chapters.map((ch) => {
     const qs = content.quizQuestions(moduleId, ch) ?? [];
-    return { ch, n: qs.length, kept: qs.filter((q) => isSaved('card', q.id)).length };
+    return {
+      ch, n: qs.length,
+      kept: qs.filter((q) => isSaved('card', q.id)).length,
+      done: seenCount(progress, qs.map((q) => q.id)),
+    };
   }).filter((s) => s.n > 0);
   // No quizzes yet: the section does not appear, so there is nothing to click into.
   if (!sets.length) return null;
@@ -62,7 +69,13 @@ export default function LibraryStudyCards({ moduleId }) {
                 {s.kept ? `${s.kept} kept for another look` : `${plural(s.n, 'card')} · not started`}
               </div>
             </span>
-            <span className="rt"><span className="act-o">Test yourself</span></span>
+            <span className="rt">
+              {/* Nothing in front of the total until at least one has been
+                  turned over: "0/8" is a zero count, and the line beside it
+                  already says the set has not been started. */}
+              {s.done > 0 && <span className="sc">{s.done}/{s.n}</span>}
+              <span className="act-o">Test yourself</span>
+            </span>
           </BmLink>
         ))}
       </div>

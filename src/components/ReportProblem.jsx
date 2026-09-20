@@ -49,7 +49,12 @@ export default function ReportProblem({ route, extra = null }) {
 
   return (
     <>
-      <button type="button" className="rpt" onClick={send} aria-live="polite">
+      {/* `data-diff-ignore`: it is fixed to the corner of every screen, so a
+          visual diff against a design that does not have it reports the pill
+          as a difference on every page. scripts/visual-diff.mjs hides anything
+          carrying this attribute on BOTH sides, so what it changes is what the
+          comparison looks at, never what a student sees. */}
+      <button type="button" className="rpt" data-diff-ignore="" onClick={send} aria-live="polite">
         {sent ? "Thanks — noted where you were." : "Something's wrong here"}
       </button>
       <style>{`

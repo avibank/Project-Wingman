@@ -255,9 +255,13 @@
 .bm .bm-pile{position:relative;aspect-ratio:3/2;max-width:100%;perspective:1400px;touch-action:none;user-select:none;margin-bottom:22px}
 @media (max-width:600px){.bm .bm-pile{aspect-ratio:4/5}}
 .bm .bm-dc{position:absolute;inset:0;transition:transform .45s var(--bm-ease),opacity .4s}
-.bm .bm-dc[data-d="1"]{transform:translateY(12px) scale(.95);opacity:.75}
-.bm .bm-dc[data-d="2"]{transform:translateY(22px) scale(.9);opacity:.4}
-.bm .bm-dc[data-d="3"]{transform:translateY(22px) scale(.9);opacity:0}
+/* The cards sit in a 3D space (the pile has perspective and each card's inner face
+   uses preserve-3d). In a 3D context the browser paints by depth, not by z-index, so
+   a card behind can paint over the one in front. Pushing each one back in Z as well
+   keeps the order honest. Same reason for the pad's inline translateZ in StudyPad. */
+.bm .bm-dc[data-d="1"]{transform:translateY(12px) scale(.95) translateZ(-40px);opacity:.75}
+.bm .bm-dc[data-d="2"]{transform:translateY(22px) scale(.9) translateZ(-80px);opacity:.4}
+.bm .bm-dc[data-d="3"]{transform:translateY(22px) scale(.9) translateZ(-120px);opacity:0}
 .bm .bm-dc.is-drag{transition:none}
 .bm .bm-dc.is-fly{transition:transform .45s var(--bm-ease),opacity .45s}
 .bm .bm-deck-nav{display:flex;justify-content:center;align-items:center;gap:14px}

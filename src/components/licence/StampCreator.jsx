@@ -26,11 +26,13 @@ import { useRef, useState } from "react";
 import { X, Dices } from "lucide-react";
 import {
   SHAPE_IDS, PATTERNS, PATTERN_IDS, PALETTE, col, cleanCode, cleanRim, drawStamp,
+  ringPattern,
 } from "../../lib/stamp.js";
 import { issueStamp } from "../../lib/squadron.js";
 import { useEscape } from "./Sheet.jsx";
 import "./licence.css";
 import "./studio.css";
+import "./ref-licence.css";
 
 const TABS = [["shape", "Shape"], ["ring", "Rim"], ["pat", "Pattern"], ["ink", "Ink"]];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -41,6 +43,31 @@ const Tile = ({ st, size = 46 }) => (
   <span className="st-svg" aria-hidden="true"
         dangerouslySetInnerHTML={{ __html: drawStamp(st, { on: false, size, rot: 0 }) }} />
 );
+
+/* A PATTERN TILE IS THE PATTERN ALONE, not a whole stamp with the pattern
+   somewhere inside it. Drawn the way the reference draws it
+   (docs/launch/code/15-stamp-creator.js): the ring art between two plain
+   circles, at a scale where it can be seen.
+
+   It was `drawStamp` at 40px with the rim text and the seal's zigzag edge
+   around it, and all six came out as the same small ring — measured by
+   looking: None, Rays, Waves, Checks, Swirl and Guilloche were
+   indistinguishable, so the tab offered six choices and showed one. */
+const PatternTile = ({ id }) => (
+  <span className="st-svg" aria-hidden="true">
+    <svg width="40" height="40" viewBox="3 3 34 34" fill="none" stroke="currentColor"
+         dangerouslySetInnerHTML={{
+           __html: `${id === "none" ? "" : ringPattern(id, { type: "circle", ri: 8, ro: 15.5 })}`
+             + '<circle cx="20" cy="20" r="7.6" stroke-width=".7"/>'
+             + '<circle cx="20" cy="20" r="16" stroke-width=".9"/>',
+         }} />
+  </span>
+);
+
+/* Where a pattern is allowed to go. The drawing has always read
+   `st.pscope || 'both'` (stamp.js §pattern) — there was simply nothing that
+   could set it, so two of its three answers were unreachable. */
+const SCOPES = [["both", "Both"], ["centre", "Centre"], ["rim", "Rim"]];
 
 export default function StampCreator({ userId, code = "", onIssued, onClose }) {
   useEscape(onClose);
@@ -65,6 +92,10 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
   const shuffle = () => set({
     shape: pick(SHAPE_IDS),
     pattern: pick(PATTERN_IDS),
+    /* The scope too — the reference's dice rolls it, and a shuffle that
+       never moved the pattern off "both" would show two thirds of the
+       patterns' range and none of their placement. */
+    pscope: pick(["both", "centre", "rim"]),
     ink: pick(PALETTE).n,
     rim: Math.random() > 0.35,
     seed: 1 + Math.floor(Math.random() * 40),
@@ -159,27 +190,53 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
           )}
 
           {tab === "pat" && (
+            <>
             <div className="st-row">
               {PATTERN_IDS.map((k) => (
                 <button key={k} type="button" aria-pressed={draft.pattern === k}
                         className={`st-tile is-wide${draft.pattern === k ? " is-on" : ""}`}
                         onClick={() => set({ pattern: k })}>
-                  <Tile size={40} st={{ shape: draft.shape, code: "", ring: "", pattern: k, seed: draft.seed }} />
+                  <PatternTile id={k} />
                   <small>{PATTERNS[k]}</small>
                 </button>
               ))}
             </div>
+            {/* WHERE THE PATTERN GOES, and only once there is a pattern to
+                place. Both / Centre / Rim, as the reference has it. */}
+            {draft.pattern !== "none" && (
+              <div className="ref-lic">
+                <div className="seg2" role="group" aria-label="Where the pattern goes">
+                  {SCOPES.map(([k, n]) => (
+                    <button key={k} type="button" aria-pressed={(draft.pscope || "both") === k}
+                            className={(draft.pscope || "both") === k ? "on" : undefined}
+                            onClick={() => set({ pscope: k })}>{n}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            </>
           )}
 
+          {/* EVERY COLOUR IS NAMED, HERE TOO. The reference's ink tab is
+              `colourGrid(d.ink, 'data-ink')` — the same `.pal` the cover
+              picker draws, a swatch with its name under it. This was thirty-six
+              bare circles with the name only in a `title`, which is a colour
+              you can point at and never say; and it is the same thirty-six
+              names as the cover and the initials, so a pilot who cannot read
+              one here cannot match it there. */}
           {tab === "ink" && (
-            <div className="st-pal" role="group" aria-label="Ink">
-              {PALETTE.map((p) => (
-                <button key={p.n} type="button" title={p.n} aria-label={p.n}
-                        aria-pressed={draft.ink === p.n}
-                        className={`lic-cc is-inline${draft.ink === p.n ? " is-on" : ""}`}
-                        style={{ background: col(p) }}
-                        onClick={() => set({ ink: p.n })} />
-              ))}
+            <div className="ref-lic">
+              <div className="pal" role="group" aria-label="Ink">
+                {PALETTE.map((p) => (
+                  <button key={p.n} type="button" aria-label={p.n}
+                          aria-pressed={draft.ink === p.n}
+                          className={draft.ink === p.n ? "on" : undefined}
+                          onClick={() => set({ ink: p.n })}>
+                    <i style={{ background: col(p) }} />
+                    <span>{p.n}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -2405,19 +2405,24 @@ function AppInner() {
         .module-banner > div { position: relative; z-index: 1; }
         .module-banner h1 { font-family: var(--font-display); font-size: 28px; margin: 0 0 4px; color: var(--text); }
         .module-banner p { color: var(--muted); font-size: 12px; margin: 0; font-family: var(--font-ui); }
-        .tabbar { display: flex; gap: 4px; padding: 0 22px; border-bottom: 1px solid var(--border-soft); }
-        .tab { position: relative; display: flex; align-items: center; gap: 7px; background: transparent; border: none; color: var(--muted); font-size: 14px; font-weight: 500; padding: 12px 6px; margin-right: 22px; cursor: pointer; }
-        .tab.is-active { color: var(--text); font-weight: 600; }
-        .tab.is-active svg { color: var(--accent); }
-        .tab::after { content: ''; position: absolute; left: 50%; right: 50%; bottom: 0; height: 2px; background: var(--accent); transition: left 180ms ease, right 180ms ease; border-radius: 2px 2px 0 0; }
-        .tab.is-active::after { left: 0; right: 0; }
-        .tab.is-shaking { animation: turbulencePulse 0.22s ease; }
-        @keyframes turbulencePulse {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-2px); }
-          75% { transform: translateX(2px); }
-        }
-        .app.reduce-motion .tab.is-shaking { animation: none; }
+        /* THE .tabbar BLOCK IS GONE, and .tab is why it had to be. It was an
+           older tab strip — .tabbar, .tab, .tab.is-active, the sliding
+           ::after underline and a turbulence shake — declared GLOBALLY here,
+           and nothing has rendered .tabbar or is-active/is-shaking in
+           months. .tab is a different matter: it is the class the reference
+           build gives every tab on the module screen, and this rule reached
+           every one of them with a 22px right margin.
+
+           What that cost, measured at 390: the strip's three tabs took 241px
+           of a 312px row instead of 197, and the search field beside them —
+           the only thing in the row that can give — was left 22px wide with
+           4px of input in it, overflowing the strip's right edge by 7. The
+           tabs looked right, so it read as a broken search field rather than
+           as a margin nothing had asked for.
+
+           check:collisions passed it: the rule is bare here and scoped in
+           ref-module.css, which it calls the shared-base shape. A tab strip
+           from two designs is not a shared base. */
         .content { max-width: 780px; margin: 28px auto 0; padding: 0 22px; zoom: var(--font-scale, 1); }
         .content--full { max-width: none; padding: 0 22px; zoom: var(--font-scale, 1); }
         @media (min-width: 1024px) {

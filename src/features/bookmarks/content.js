@@ -104,6 +104,19 @@ export const content = {
   /** The module the Flight Deck hero card is showing, so the bag and Bookmarks agree. */
   currentModuleId() { return app.currentModuleId || app.modules[0]?.id || null; },
 
+  /* A MODULE ID OUT OF A URL, MATCHED HOW A PERSON WOULD WRITE IT.
+     This app's ids are "M1"; `/bookmarks?m=m1` is what a person types and what
+     the design's own demo links to, and it matched nothing — so the screen
+     said "nothing saved yet" to somebody with a folder full of bookmarks, in
+     silence, with the right rows loaded and filtered out one line later.
+     Unknown ids still fall through to null, so a nonsense one is still a
+     nonsense one. 'all' is not a module and passes straight back. */
+  moduleId(raw) {
+    if (!raw || raw === 'all') return raw || null;
+    const want = String(raw).toLowerCase();
+    return app.modules.find((m) => String(m.id).toLowerCase() === want)?.id ?? null;
+  },
+
   /** One question by its stable id. undefined while its module is unknown. */
   question(id) {
     if (!app.doc) return undefined;

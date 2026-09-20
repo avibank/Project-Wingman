@@ -380,12 +380,15 @@
   .mscreen .hub { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .mscreen .hublist { border-right: 0; }
 
-  /* THE TAB STRIP SCROLLS rather than clipping the third tab off the edge.
-     The reference's own `.mtabs` is the strip now; this is the app keeping
-     the rule that a tab you cannot reach is worse than a tab that is tight,
-     which the reference has no reason to have thought about at 390px. */
-  .mscreen .mtabs { overflow-x: auto; scrollbar-width: none; }
-  .mscreen .mtabs::-webkit-scrollbar { display: none; }
+  /* NO SCROLL ON THE STRIP. It was `overflow-x: auto`, kept from the old bar
+     so a fourth tab or a bigger text size could never push one off the edge —
+     and in a scrolling flex row the items size to their CONTENT, so the
+     search field, which is the only thing there that can give, gave
+     everything: 22px wide with 4px of input at 390.
+
+     The reference's own phone rules fit the row without help — tabs at 57.9,
+     49.6 and 57.9 in a 312px strip, leaving 68.6 for the field — so the strip
+     is ordinary flex again and the field gets what is left. */
 
 
 
@@ -693,29 +696,19 @@
    row and a card with edges. Only a phone does not.
    ========================================================================= */
 @media (max-width: 560px) {
-  /* Below its minimum the field collapses to a magnifier rather than wrapping
-     or clipping. */
-  .mscreen .tabsearch{ min-width: 0; flex: 0 0 auto; margin-left: 8px; padding: 7px; gap: 0; }
-  .mscreen .tabsearch-f{ width: 0; padding: 0; font-size: 0; }
-  .mscreen .tabsearch-x{ display: none; }
+  /* THE PHONE STRIP IS THE REFERENCE'S NOW, and what stood here has gone with
+     the markup it was written for. `.tabsearch` and `.tabsbar` are classes
+     this screen no longer renders — but `.mscreen .tab{padding-inline:11px}`
+     still matched, and it was the last live piece of the old strip: measured
+     at 390, it made each tab 79.9px against the design's 57.9, the three of
+     them took 262 of a 312px row, and the search field was left 22px wide
+     with 4px of input inside it. A field you cannot type in.
 
-  /* AND THE THIRD TAB STILL DID NOT FIT. Measured on a 375px phone: the tabs
-     ran to 333, the collapsed magnifier started at 363 and ended at 394 — 19px
-     past the screen, 31px wide, and unusable. It is the same arithmetic the
-     note above the strip describes, one tab further on: three tabs at 15px of
-     padding a side is 318px of a 345px row, and the magnifier needs 39.
-
-     Two changes, and both are needed. The padding comes down to 11, which
-     gives the three tabs 294 and fits — and the bar is allowed to scroll, so
-     a longer word, a bigger text size or a fourth tab shortens the strip
-     rather than pushing something off the screen. A tab you can scroll to is
-     a tab; a tab past the right edge is not. */
-  .mscreen .tab{ padding-inline: 11px; }
-  .mscreen .tabsbar{ overflow-x: auto; scrollbar-width: none; }
-  .mscreen .tabsbar::-webkit-scrollbar{ display: none; }
-  /* The magnifier is the last thing in a scrolling row, so it must not be
-     squeezed by it. */
-  .mscreen .tabsearch{ flex: 0 0 auto; }
+     The reference sizes the same row at 390 with no help: tabs at 57.9, 49.6
+     and 57.9, and 68.6px for the field. Its own phone rules — `.mtabs{gap:16px;
+     padding:0 12px}` and `.search{padding:6px 10px}` — are in ref-module.css
+     and are what does it. The scroll rule stays, moved to the class that
+     exists, because a tab past the right edge is still not a tab. */
 
   /* Edge to edge, so the card's own padding is not spending 50px of a 390px
      screen on nothing. Full bleed off its own position, because the inset comes

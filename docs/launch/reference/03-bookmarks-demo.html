@@ -536,6 +536,17 @@ main.wide{max-width:1600px;padding-bottom:84px}
 .bagn{font:500 15px var(--mono);color:var(--t2);min-height:22px}
 :root{--sheet:oklch(.95 .006 255);--wall:oklch(.17 .016 258)}
 :root[data-theme="light"]{--sheet:oklch(1 0 0);--wall:oklch(.9 .01 255);--shadowo:.1}
+
+/* ===== A folder with nothing in it: same shape, its own way in ===== */
+.empty-cover{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,3cqi,14px);padding:clamp(16px,7cqi,30px);text-align:center;transition:border-color .3s var(--ease),background .3s var(--ease)}
+.open-f:hover .empty-cover{border-color:var(--accent);background:var(--accent-soft)}
+.empty-cover .eg-ico{width:clamp(26px,11cqi,44px);height:clamp(26px,11cqi,44px);color:var(--t3);transition:color .3s var(--ease)}
+.open-f:hover .empty-cover .eg-ico{color:var(--accent)}
+.empty-cover .eg-hint{font-size:clamp(13px,4.6cqi,17px);line-height:1.4;color:var(--t2);max-width:22ch}
+.empty-cover .eg-cta{display:inline-flex;align-items:center;gap:6px;font-size:clamp(13px,4cqi,15px);font-weight:600;color:var(--accent)}
+.empty-cover .eg-cta svg{width:13px;height:13px}
+.folders .folder .fname .count:empty{display:none}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 </style>
 
@@ -627,10 +638,10 @@ let ITEMS=[
   {id:35,type:'page',m:'m2',ch:1,ago:20,pg:30}
 ];
 const TYPES=[
-  {id:'question',name:'Questions',icon:I.q,go:'Practise these'},
-  {id:'card',name:'Study cards',icon:I.cards,go:'Flip through'},
-  {id:'video',name:'Videos',icon:I.video,go:'Resume'},
-  {id:'page',name:'Pages',icon:I.page,go:'Open newest page'}
+  {id:'question',name:'Questions',icon:I.q,go:'Practise these',hint:'Bookmark a question while you take a quiz.',cta:'Take a quiz'},
+  {id:'card',name:'Study cards',icon:I.cards,go:'Flip through',hint:'Flip a chapter\u2019s cards and keep the ones worth another look.',cta:'Open the card sets'},
+  {id:'video',name:'Videos',icon:I.video,go:'Resume',hint:'Bookmark a lesson at the moment that matters.',cta:'Find a lesson'},
+  {id:'page',name:'Pages',icon:I.page,go:'Open newest page',hint:'Bookmark a page while you read the paper.',cta:'Open the paper'}
 ];
 const WHEN=[{id:'all',name:'All'},{id:'week',name:'This week',f:a=>a<7},{id:'last',name:'Last week',f:a=>a>=7&&a<14},{id:'earlier',name:'Earlier',f:a=>a>=14}];
 
@@ -663,7 +674,7 @@ function slideOf(i){
   return face(i);
 }
 function cover(t,l){
-  if(!l.length)return `<div class="cover"><div class="empty-cover">${t.icon}</div></div>`;
+  if(!l.length)return `<div class="cover"><div class="empty-cover"><span class="eg-ico">${t.icon}</span><span class="eg-hint">${t.hint}</span><span class="eg-cta">${t.cta} ${I.right}</span></div></div>`;
   const v=l.slice(0,5);
   return `<div class="cover ${t.id==='video'?'vid':''}" data-n="${v.length}"><div class="slides">
     ${v.length>1?`<div class="bars">${v.map(()=>'<i><b></b></i>').join('')}</div>`:''}
@@ -674,9 +685,11 @@ function cover(t,l){
 function vHome(){
   S.when='all';const all=inModule();
   const cls=S.anim||'';S.anim='';
-  if(!all.length)return `<section class="view ${cls}">${backTo('deck','Flight Deck')}
-    <div class="head"><div><h1>Bookmarks</h1><div class="sub pick">Nothing yet in ${switcher()}</div></div></div>
-    <div class="empty-line">Tap <span class="mk">${I.bm}</span> on any lesson, question, card or quiz and it lands here.</div></section>`;
+  if(!all.length)return `<section class="view home ${cls}">${backTo('deck','Flight Deck')}
+    <div class="head"><div><h1>Bookmarks</h1><div class="sub pick">Not yet in ${switcher()}</div></div></div>
+    <div class="folders">${TYPES.map((t,k)=>`<div class="folder" style="--i:${k}">
+      <button class="open-f" data-go="library" type="button">${cover(t,[])}<div class="fname">${t.name}<span class="count"></span></div></button>
+    </div>`).join('')}</div></section>`;
   return `<section class="view home ${cls}">${backTo('deck','Flight Deck')}
     <div class="head"><div><h1>Bookmarks</h1><div class="sub pick"><span data-count="total">${inView().length}</span> saved in ${switcher()}</div></div></div>
     <div class="folders">${TYPES.map((t,k)=>{const l=ofType(t.id);

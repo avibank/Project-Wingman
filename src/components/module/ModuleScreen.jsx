@@ -166,10 +166,14 @@ export default function ModuleScreen({
                 selected tab always looked like; only who draws it moved. */}
             <span className="tab-pill" aria-hidden="true" />
             {t.label}
-            {/* THE COUNT, ON THE TAB (bug 14). Nothing at all until the answer
-                is in, and nothing when the answer is "only you": a badge
-                reading 1 beside your own name is a number nobody needs. */}
-            {t.id === "crew" && crewTotal > 1 && <small>{crewTotal}</small>}
+            {/* THE COUNT, ON THE TAB (bug 14). Nothing until the answer is
+                in — a badge that flickers 1 and then 15 is worse than one
+                that arrives once — and the count itself after that, one being
+                a real answer: on a module you are the only one on, "Crew 1"
+                is the true number and the tab says so. It read `> 1` for a
+                day and the badge was missing on the live site for exactly
+                that reason. */}
+            {t.id === "crew" && crewTotal != null && <small>{crewTotal}</small>}
           </button>
         ))}
 

@@ -321,3 +321,27 @@ input.lic-bio{ width: min(100%, 40ch); }
   -webkit-mask: radial-gradient(circle at 50% 50%, transparent 49.5%, #000 50%);
   mask: radial-gradient(circle at 50% 50%, transparent 49.5%, #000 50%);
 }
+
+/* =============================================================================
+   TWO PLACES THE OWNER OVERRULED THE REFERENCE, on 2026-09-20, and both are
+   written down here rather than edited into the generated sheet — ref-licence.css
+   is produced by `npm run ref:css` and hand edits there vanish on the next run.
+
+   1 · COVER GOES TOP-RIGHT. The reference's own `.cvbtn` is `left:12px;top:12px`
+       — top-LEFT — and the ADMIN badge takes the right corner. The owner's
+       instruction is explicit and repeated ("Cover button is top-left of the
+       banner; it belongs top-right"), so the two SWAP: Cover to the right,
+       ADMIN to the left. They cannot both have the corner, and ADMIN shows for
+       staff only while Cover shows for everybody who owns the card.
+
+   2 · CREATE YOUR STAMP GOES BELOW THE ARTWORK. The reference centres the pill
+       ON the ghost seal (`.ghost b{position:absolute;left:50%;top:50%}`), which
+       is the "button overlaps the stamp" the handoff lists as a defect — the
+       design draws it that way on purpose and the owner has asked twice for it
+       not to be. Stamp above, button below, clear of it.
+   ========================================================================= */
+.ref-lic .lic .cvbtn{ left: auto; right: 12px; }
+.ref-lic .lic .adm{ right: auto; left: 12px; }
+
+.ref-lic .lic .ghost{ display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.ref-lic .lic .ghost b{ position: static; transform: none; }

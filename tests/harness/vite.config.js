@@ -8,6 +8,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
 import { postgrestMiddleware } from "./postgrest.js";
+import { refRoutes } from "../../tools/vite-ref-routes.js";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -17,6 +18,10 @@ export default defineConfig({
   publicDir: `${ROOT}/public`,
   plugins: [
     react(),
+    /* The bookmarks demos, at /__ref/bookmarks and /__ref/flight-bag. The
+       harness is where scripts/visual-diff.mjs runs, because the fixture data
+       it compares against lives here. */
+    refRoutes(),
     {
       name: "harness-postgrest",
       configureServer(server) { server.middlewares.use(postgrestMiddleware()); },

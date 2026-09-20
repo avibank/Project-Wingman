@@ -161,7 +161,7 @@ function layout(shape){
 function ringPt(R,t,d){if(R.type==='circle'){const a=t*Math.PI*2-Math.PI/2,r=R.ri+(R.ro-R.ri)*d;return [20+r*Math.cos(a),20+r*Math.sin(a)]}
   const per=(q,t)=>{const [x0,y0,x1,y1]=q,w=x1-x0,h=y1-y0,P=2*(w+h);let u=((t%1)+1)%1*P;if(u<w)return [x0+u,y0];u-=w;if(u<h)return [x1,y0+u];u-=h;if(u<w)return [x1-u,y1];u-=w;return [x0,y1-u]};
   const A=per(R.a,t),B=per(R.b,t);return [A[0]+(B[0]-A[0])*d,A[1]+(B[1]-A[1])*d]}
-function ringPattern(p,R){const f=v=>v.toFixed(2);let o='';
+export function ringPattern(p,R){const f=v=>v.toFixed(2);let o='';
   if(p==='rays'){const N=R.type==='circle'?48:56;for(let i=0;i<N;i++){const t=i/N,[x1,y1]=ringPt(R,t,R.ri<2?.18:.1),[x2,y2]=ringPt(R,t,i%2?.72:1.02);o+=`<path d="M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}" stroke-width="${i%2?.35:.55}" stroke-linecap="round"/>`}}
   if(p==='waves'){(R.ri<2?[.2,.34,.48,.62,.76,.9]:[.16,.38,.6,.82,1.02]).forEach((d0,k)=>{let d='';const S=240;for(let i=0;i<=S;i++){const t=i/S,[x,y]=ringPt(R,t,d0+(R.ri<2?.035:.1)*Math.sin(t*Math.PI*2*(R.type==='circle'?14:16)+k*1.4));d+=(i?'L':'M')+f(x)+' '+f(y)}o+=`<path d="${d}Z" stroke-width=".4"/>`})}
   if(p==='checks'){const N=R.type==='circle'?32:36,rows=R.ri<2?4:3;for(let row=0;row<rows;row++)for(let i=0;i<N;i++){if((i+row)%2)continue;const hh=(R.ri<2?.8:.96)/rows,d0=(R.ri<2?.1:.04)+row*hh,d1=d0+hh,t0=i/N,t1=(i+1)/N,S=3;let pts=[];
