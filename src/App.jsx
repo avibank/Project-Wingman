@@ -12,6 +12,7 @@ import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
 import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH, DEMO_PAPERS } from "./lib/demoFixture.js";
 /* The pause switch, up here because the CHUNK map below is built from it. */
 import { papersOn, useFlags } from "./lib/flags.js";
+import { examLock, useExamLock } from "./lib/examLock.js";
 /* A CHUNK THAT VANISHED UNDER YOU, and why this wrapper exists.
  *
  * Every route below is code-split and the built filenames carry a content
@@ -294,6 +295,10 @@ function AppInner() {
      sit: the tab has to agree with the page. /logbook was reporting "Logbook ·
      Wingman" while rendering "Wrong bay.", which is a worse bookmark than the
      bare site title it replaced. */
+  /* R4 — the bar is locked while a paper is open. One subscription, read here
+     so the header below and nothing else has to know where it came from. */
+  const examLocked = useExamLock().locked;
+
   const notFound =
     route.name === "notfound"
     || (route.name === "modules" && !flags["module.interior"])
@@ -468,6 +473,18 @@ function AppInner() {
   useEffect(() => {
     popHandler.current = (location, apply, { uaAnimated = false } = {}) => {
       const to = `${location.pathname}${location.search || ""}`;
+      /* R4 — BACK DOES NOT ABANDON A PAPER. Measured before this: one press of
+         the browser's own Back left an open, timed exam and there was no way
+         to say so afterwards. The pop has already happened by the time this
+         runs, so the exam's address is pushed straight back on and the paper's
+         own end-exam dialog is opened instead. Nothing navigates, so nothing
+         needs a transition. */
+      const lock = examLock();
+      if (lock.locked) {
+        window.history.pushState(null, "", pathNow.current);
+        lock.askEnd?.();
+        return;
+      }
       /* The move is worked out whatever the motion setting, because where a
          screen opens is not motion: Back returns you where you were with the
          animation off as much as on. Only the transition is gated. */
@@ -1489,6 +1506,18 @@ function AppInner() {
           the one axis it actually needs, and the Ready Room pill would be
           pointing at the room you are already standing in. */}
       {!roomFull && (
+        /* R4 — WITH A PAPER OPEN THE BAR IS A WORDMARK AND A SENTENCE. The pill
+           and the profile are not hidden, they are not rendered: a hidden
+           control is still tabbable-adjacent, still in a page search, and was
+           still one stray click out of a timed exam. The wordmark stops being
+           a button for the same reason. `examport` is here so the note takes
+           the pack's own `.locked-note` rule rather than a new one (R1). */
+        examLocked ? (
+          <header className="topbar examport" data-locked="1">
+            <span className="brandmark">Wingman</span>
+            <span className="locked-note">Exam in progress</span>
+          </header>
+        ) : (
         <header className="topbar">
           <button className="brandmark" onClick={goHome} aria-label="Go to Flight Deck">
             Wingman
@@ -1501,6 +1530,7 @@ function AppInner() {
                          profileLoading={Boolean(isSignedIn && me && !myProfile)} />
           </div>
         </header>
+        )
       )}
 
       {/* THE SCROLLER. tabindex and role because Chrome will not make an

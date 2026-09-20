@@ -84,3 +84,30 @@ and it stays after the student leaves, because a lazy chunk's CSS does.
 the scoped copy. `git diff` shows the file added, not edited, and the rules
 exist in exactly one place in `src/` — which is what R1's check actually
 tests. This is the same machinery the other four handed-over sheets use.
+
+## 5 · "No back arrow" (R4)
+
+**The brief:** "Once started, the exam screen has no way out but **End exam**
+... No back arrow, no Ready Room, no profile, no links of any kind on the
+page."
+
+**What is done.** Everything except the arrow, and it was all genuinely
+missing: the app bar was fully drawn over an open paper with the Ready Room
+pill and the profile menu both clickable, and the browser's own Back walked
+out of the exam and abandoned it. Both measured, both closed — the bar is now
+a wordmark and EXAM IN PROGRESS, and Back opens the paper's own end-exam
+dialog. `exam-port.check.js` had reported all three as PASS, because it asks
+them inside `.exam-page` and this app had no `.exam-page`; an empty set
+satisfies every one of them.
+
+**What it reverses.** `QuizPage` draws `← Module 1` above the paper. Removing
+it makes handing in a blank paper the only way out of a quiz opened by
+mistake — and this app already answers that question the other way, on
+purpose and under test: `saveAttempt`/`loadAttempt` persist the attempt on
+every change, the time left belongs to the attempt and only moves while the
+paper is on screen (CLAUDE.md), and `check:exam` holds a "leaving and coming
+back" section asserting you return to the question you left with the clock
+where it was.
+
+So the arrow is a teaching decision rather than a port. **Not removed.**
+

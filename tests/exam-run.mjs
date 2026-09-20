@@ -391,13 +391,94 @@ try {
     expect("the exam flags the document while it is open",
       (await page.evaluate(() => document.documentElement.dataset.screen)) === "exam");
     await page.locator(".up").click();
-    await page.locator(".mscreen .tabs").first().waitFor({ timeout: 8000 });
+    /* `.mtabs`, not `.tabs`. The module screen's strip was renamed when that
+       screen was ported to its reference build; this line waited for a class
+       that had stopped existing, so the walk timed out on its last step and
+       read as a fault in the exam. */
+    await page.locator(".mscreen .mtabs").first().waitFor({ timeout: 8000 });
     await page.waitForTimeout(300);
     expect("and takes the flag off on the way out",
       (await page.evaluate(() => document.documentElement.dataset.screen)) === undefined);
     expect("so the finish's scenery comes back",
       (await page.evaluate(() => { const s = document.querySelector(".deck-light"); return !s || getComputedStyle(s).display !== "none"; })));
     await page.close();
+  }
+
+  /* R4 — THE PAPER IS LOCKED, MEASURED RATHER THAN READ OFF THE SOURCE.
+     exam-port.check.js asks its three locked questions inside `.exam-page`,
+     and until that element existed all three asked an empty set and answered
+     PASS while the app bar sat fully drawn over an open paper with the Ready
+     Room pill and the profile menu both clickable. These are the same three
+     questions asked of a real browser. */
+  {
+    /* ITS OWN CONTEXT. The pages above share one, so by the time this runs a
+       paper has been sat and the Library's quiz row reads a score instead of
+       "Take it" — which is how a label-matched click turned into a 15-second
+       timeout that looked like a fault in the lock. The row is selected by
+       what it IS, not by what it currently says, and the context is fresh so
+       no earlier step's localStorage reaches it. */
+    const lockCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await lockCtx.newPage();
+    /* ARRIVE THE WAY A STUDENT DOES — by CLICKING from the module into the
+       quiz, not by loading the quiz's address. Two goto()s are two documents,
+       so the Back between them is a cross-document navigation that no script
+       can intercept; and a goBack() from a first page is about:blank. Either
+       way a Back test that starts on the quiz proves nothing. Clicking pushes
+       a history entry inside one document, which is the case that matters and
+       the only one a student produces. */
+    await page.goto(`${BASE}/m/m1?uid=student_one`);
+    await page.locator(".mscreen .mtabs").first().waitFor({ timeout: 15000 });
+    await page.locator(".mtabs button", { hasText: /Library/i }).first().click();
+    await page.locator('section[aria-labelledby="lsec-quizzes"] .lrow').first().click({ timeout: 15000 });
+    await page.locator(".question__text").waitFor({ timeout: 15000 });
+    const bar = () => page.evaluate(() => {
+      const t = document.querySelector(".topbar");
+      return {
+        text: (t?.innerText || "").replace(/\s+/g, " ").trim(),
+        pill: !!document.querySelector(".rrpill"),
+        profile: !!document.querySelector(".avbtn"),
+        links: document.querySelectorAll(".exam-page a[href]").length,
+        page: !!document.querySelector(".exam-page"),
+      };
+    });
+    const open = await bar();
+    expect("the exam has a page for the port check to ask in", open.page);
+    expect("no Ready Room pill over an open paper", !open.pill);
+    expect("no profile menu over an open paper", !open.profile);
+    expect("no links anywhere on the exam page", open.links === 0);
+    expect("and the bar says what is happening instead", /EXAM IN PROGRESS/i.test(open.text));
+
+    /* Back asks rather than abandons. The pop has already happened by then, so
+       what this proves is that the address came back and the dialog opened. */
+    await page.goBack();
+    await page.waitForTimeout(600);
+    const stayed = (await page.evaluate(() => document.documentElement.dataset.screen)) === "exam";
+    const asked = (await page.locator("dialog[open].exam-dialog").count()) === 1;
+    expect("browser Back stays on the paper", stayed);
+    expect("and opens the end-exam dialog instead of leaving", asked);
+    /* GUARDED, so that a Back which DOES abandon the paper fails by name here
+       rather than by a thirty-second timeout on the next click — a walk that
+       only crashes reads as a broken walk, not as a caught bug. */
+    if (asked) {
+      await page.locator("dialog button", { hasText: /Back to exam/i }).click();
+      await page.waitForTimeout(300);
+    } else {
+      await page.goto(QUIZ_URL);
+      await page.locator(".question__text").waitFor({ timeout: 15000 });
+    }
+
+    /* The half that would be worse than the bug: a lock that never releases. */
+    await page.locator("dialog").evaluate((d) => d.close()).catch(() => {});
+    await page.locator(".question__foot .btn--primary").click();
+    await page.waitForTimeout(200);
+    await page.locator("button", { hasText: /^End exam$/ }).first().click();
+    await page.waitForTimeout(300);
+    await page.locator("dialog button", { hasText: /End and mark/i }).click();
+    await page.locator(".result").waitFor({ timeout: 8000 });
+    const done = await bar();
+    expect("the result gives the bar back", done.pill && done.profile);
+    await page.close();
+    await lockCtx.close();
   }
 
   /* The clock runs out on its own, and the paper hands itself in. */

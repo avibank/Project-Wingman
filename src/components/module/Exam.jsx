@@ -10,6 +10,11 @@ import { shuffleOptions } from "../../lib/retention.js";
 import SaveButton from "../../features/bookmarks/SaveButton.jsx";
 import { addMany } from "../../features/bookmarks/savesStore.js";
 import { toast } from "../../features/bookmarks/toastBus.js";
+import { lockExam, unlockExam } from "../../lib/examLock.js";
+/* R1 — the pack's stylesheet, imported once, here, so it arrives with the exam
+   chunk rather than on every first paint. `.locked-note` in the app bar is the
+   one rule of it in use today; the rest waits for the markup. */
+import "./exam-port.css";
 import { useGo } from "../../features/bookmarks/nav.jsx";
 import { PASS_PCT } from "../../lib/minimums.js";
 import "./exam.css";
@@ -223,6 +228,20 @@ export default function Exam({
     root.dataset.screen = "exam";
     return () => { delete root.dataset.screen; };
   }, []);
+
+  /* R4 — WHILE A PAPER IS OPEN THERE IS NO WAY OUT BUT ENDING IT. The app bar
+     drops the Ready Room pill and the profile menu and says so instead, and
+     the browser's own Back opens this dialog rather than abandoning the paper.
+     Both are the app's, so they are told rather than asked: see examLock.js.
+
+     `paper` only. The result, the drill and the retake are all places a
+     student is free to leave. A layout effect for the same reason as the line
+     above it — the quiz commits after a Suspense retry. */
+  useLayoutEffect(() => {
+    if (phase !== "paper") { unlockExam(); return undefined; }
+    lockExam(() => { if (!dialogRef.current?.open) dialogRef.current?.showModal(); });
+    return unlockExam;
+  }, [phase]);
 
   /* The option order is seeded from the ATTEMPT, never from the clock. An
      answer is stored as "the second option"; reseed on the way back in and the
@@ -532,6 +551,13 @@ export default function Exam({
   const headText = headline();
 
   return (
+    /* `.exam-page` is the scope exam-port.check.js asks its three locked
+       questions in — a page with no links, no pill and no profile on it. Its
+       own layout rule in the pack (`max-width:1100px;padding:18px 16px 72px`)
+       is deliberately NOT taken: this screen's sizes are the approved
+       2026-09-16 design's, which is why the class carries no `.examport`
+       scope. See docs/launch/DECISIONS.md. */
+    <div className="exam-page">
     <div className="exam-frame" ref={rootRef}>
       <div className="exam">
         <header className="exam-bar">
@@ -727,6 +753,7 @@ export default function Exam({
           <button className="btn btn--primary is-inline" type="button" onClick={handOver}>End and mark</button>
         </div>
       </dialog>
+    </div>
     </div>
   );
 }

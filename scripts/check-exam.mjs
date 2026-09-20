@@ -700,5 +700,62 @@ console.log("\ncontrast — the matte finish, six liveries × three finishes × 
   }
 }
 
+/* ---- R4 · you can only leave an exam by ending it ------------------------ */
+console.log("\nR4 — the paper is locked");
+{
+  const app = read("src/App.jsx");
+  const exam = read("src/components/module/Exam.jsx");
+  const lock = read("src/lib/examLock.js");
+
+  /* WHY THIS SECTION EXISTS. exam-port.check.js asks its three locked
+     questions inside `.exam-page` — no links, no pill, no profile — and this
+     app had no `.exam-page`, so all three asked an empty set and all three
+     answered PASS. Measured on the live quiz instead: the app bar was fully
+     drawn over an open paper with the Ready Room pill and the profile menu
+     both clickable, and the browser's own Back walked out of the exam. These
+     assertions are what stops that coming back quietly. */
+
+  ok("locked", "the exam page has a scope for the port check to ask in",
+     /<div className="exam-page">/.test(exam));
+
+  /* The bar's locked branch renders a wordmark and a sentence. It has to be a
+     branch, not a hidden class: a hidden control is still in a page search and
+     was still one stray click out of a timed paper. */
+  const branch = app.match(/examLocked \? \([\s\S]*?\) : \(/);
+  ok("locked", "the app bar has a locked branch", !!branch);
+  if (branch) {
+    const b = branch[0];
+    ok("locked", "and it renders no Ready Room pill and no profile menu",
+       !/ReadyRoomPill|ProfileMenu/.test(b));
+    ok("locked", "and the wordmark is not a button in it",
+       /<span className="brandmark">/.test(b) && !/<button className="brandmark"/.test(b));
+    ok("locked", "and it says so, in the pack's own rule rather than a new one",
+       /className="locked-note"/.test(b) && /className="topbar examport"/.test(b));
+  }
+
+  ok("locked", "browser Back is answered before anything navigates",
+     /const lock = examLock\(\);\s*\n\s*if \(lock\.locked\) \{\s*\n\s*window\.history\.pushState\(null, "", pathNow\.current\);\s*\n\s*lock\.askEnd\?\.\(\);\s*\n\s*return;/.test(app));
+
+  /* The half that would be worse than the bug: a lock that never releases. */
+  ok("locked", "only the paper locks — the result, the drill and the retake do not",
+     /if \(phase !== "paper"\) \{ unlockExam\(\); return undefined; \}/.test(exam));
+  ok("locked", "and unmounting releases it",
+     /lockExam\([\s\S]{0,120}?\);\s*\n\s*return unlockExam;/.test(exam));
+  ok("locked", "it is set in a layout effect, like data-screen above it",
+     /useLayoutEffect\(\(\) => \{\s*\n\s*if \(phase !== "paper"\)/.test(exam));
+
+  /* One module holds it, so the bar and the pop handler cannot disagree. */
+  const holders = ["src/App.jsx", "src/components/module/Exam.jsx"]
+    .filter((f) => /from "[^"]*examLock\.js"/.test(read(f)));
+  ok("locked", `the lock has one home and two readers (${holders.length})`,
+     holders.length === 2 && /export function lockExam/.test(lock) && /export function unlockExam/.test(lock));
+
+  /* R1's other half, finally true: the pack's sheet is imported, once. */
+  const imports = ["src/components/module/Exam.jsx", "src/App.jsx", "src/components/module/QuizPage.jsx"]
+    .filter((f) => /import "\.?[./]*(components\/module\/)?exam-port\.css"/.test(read(f)));
+  ok("locked", "the pack's stylesheet is imported exactly once", imports.length === 1,
+     imports.join(" "));
+}
+
 console.log(`\nexam: ${pass} passed, ${fails.length} failed`);
 if (fails.length) process.exit(1);
