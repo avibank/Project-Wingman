@@ -794,6 +794,29 @@ export default function ReaderV6({
               }}
             />
             <span className="spacer" />
+            {/* THE BOOKMARK, ON THE FACE OF THE ISLAND. It has existed since
+                the rebuild — `data-bmk` in the page tray — and writes both the
+                local list and a `saves` row, so the save point was connected;
+                it was just a tap inside a tray nobody opens, which is why the
+                Pages folder stayed empty and its empty state pointed at a
+                reader with no visible control. One press now, always in view,
+                and it fills when this page is saved.
+
+                Bound by DELEGATION like the rest of the chrome (part2.js): the
+                id is the wiring, and check:paper holds that a button here with
+                an id does something. */}
+            {/* NOT `.bmk` — reader.css already owns that class for the page's
+                own corner ribbon (`position:absolute;top:0;right:34px`), and a
+                button on the face carrying it would be positioned as one.
+                reader.css is kept byte-identical (check:paper), so the face's
+                bookmark has its own name and additions.css dresses it. */}
+            <button className="bmkface" id="bmk" type="button"
+                    aria-label="Bookmark this page" aria-pressed="false">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" stroke="currentColor"
+                      strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+            </button>
             <button className="you" id="you" type="button" aria-label="You">
               {initials}
             </button>

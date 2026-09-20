@@ -254,6 +254,10 @@ function fitZoom(){
 }
 function paintBookmarks(){
   $$('.sheetpg').forEach(el=>el.dataset.bm=bookmarks.has(+el.dataset.pg)?'1':'0');
+  /* AND THE ONE ON THE ISLAND'S FACE. It is the same fact as the page's own
+     corner ribbon, so it is painted from the same place and cannot lag it. */
+  const b=$('#bmk');
+  if(b){const on=bookmarks.has(page);b.setAttribute('aria-pressed',on?'true':'false')}
 }
 
 /* ── the two trays ─────────────────────────────────────────────────── */
@@ -445,6 +449,12 @@ ISL.addEventListener('click',e=>{
     if(go){closeTray();ctx.onGo(go.dataset.go);return}
     return;
   }
+  /* The face's bookmark, doing exactly what the tray's does — one page, one
+     toggle, one call out. The tray is redrawn only if it happens to be open. */
+  if(e.target.closest('#bmk')){
+    bookmarks.has(page)?bookmarks.delete(page):bookmarks.add(page);
+    paintBookmarks();if(open==='page')fillTray('page');
+    ctx.onBookmark(page,bookmarks.has(page));return}
   if(e.target.closest('#you')){openTray('me');return}
   if(e.target.closest('#dot')){
     if(pending){pending=false;DOT.dataset.live='0';ctx.onPull()}
@@ -484,7 +494,9 @@ STAGE.addEventListener('scroll',()=>{
     let best=FIRST,bd=1e9;
     $$('.sheetpg').forEach(el=>{const d=Math.abs(el.offsetTop-74-STAGE.scrollTop);
       if(d<bd){bd=d;best=+el.dataset.pg}});
-    if(best!==page){page=best;paintCounter();ctx.onPage(page)}
+    /* paintBookmarks with it: the island's bookmark reads THIS page, so
+       scrolling from a saved page to an unsaved one has to unfill it. */
+    if(best!==page){page=best;paintCounter();paintBookmarks();ctx.onPage(page)}
   });
 },{passive:true});
 
@@ -523,7 +535,7 @@ return {
   view:()=>({zoom,fit,rot}),
   bookmarks:()=>bookmarks,
   /* a page arriving from anywhere but the scroller — the panel, a deep link */
-  setPage(n){if(n===page)return;page=n;paintCounter()},
+  setPage(n){if(n===page)return;page=n;paintCounter();paintBookmarks()},
   /* THE QUIET POLL WAS NOT QUIET. This lit the dot and then flashed `fresh`,
      which widens the island to 560px and takes the whole pill over for 3.6
      seconds — on a sixty-second timer, unasked, while the student is reading.

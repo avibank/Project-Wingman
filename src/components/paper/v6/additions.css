@@ -395,3 +395,33 @@
   .rdr[data-panel] .pan .pf { animation: rdrListIn 160ms cubic-bezier(0, 0, .2, 1) both; }
 }
 @keyframes rdrListIn { from { opacity: 0; } }
+
+/* ----------------------------------------------------- the face's bookmark
+   THE SAVE POINT THE PAGES FOLDER NEEDS. The reader has had a bookmark since
+   the rebuild — `data-bmk` in the page tray — and it writes both the local
+   list and a `saves` row, so it was connected. It was just a tap inside a
+   tray nobody opens, which is why the Pages folder stayed empty while its
+   empty state said "Bookmark a page while you read the paper" and sent people
+   to a reader with no visible control. One press now, always in view.
+
+   Sized and coloured like `.you`, its neighbour on the island's face, rather
+   than with a shape of its own: they are two buttons in the same 22px row and
+   a third look there would read as a third kind of thing. Filled when this
+   page is saved — the SAME fill the page's corner ribbon uses, because it is
+   the same fact.
+
+   NOT `.bmk`: reader.css owns that for the ribbon itself, and reader.css is
+   kept as sent. */
+.rdr .bmkface{
+  width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; cursor: pointer;
+  display: grid; place-items: center;
+  color: var(--lv); background: none;
+  border: 1.5px solid color-mix(in srgb, var(--lv) 48%, transparent);
+  transition: .16s;
+}
+.rdr .bmkface:hover{ background: color-mix(in srgb, var(--lv) 20%, transparent); }
+/* `--pg` is the page's own ground in this reader; the fill reads against it
+   the way the ribbon does. A literal hex here fails R14 — no colour the
+   shipped palette did not bring — and rightly. */
+.rdr .bmkface[aria-pressed="true"]{ background: var(--lv); color: var(--pg); }
+.rdr .bmkface[aria-pressed="true"] path{ fill: currentColor; }

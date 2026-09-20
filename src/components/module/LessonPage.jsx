@@ -221,14 +221,13 @@ export default function LessonPage({
             boolean the 90%-watched rule writes: one flag, two writers. */}
         <div className="titlerow">
           <h1 className="lesson-name">{lesson.title}</h1>
-          {/* §3 — Save is a round icon button on the title's line, beside the
-              sign-off. It is the SAME control that was a pill below, and the
-              same one in the player bar: one <SaveButton kind="video">, one
-              saves store, so they cannot disagree about whether this lesson is
-              kept. */}
-          <SaveButton kind="video" className="titlerow-save" moduleId={mod.code || mod.id}
-                      refId={lesson.id} chapter={chapterNo}
-                      getAtSeconds={() => session.player.seconds || 0} />
+          {/* THERE IS ONE BOOKMARK ON THIS PAGE, AND IT IS IN THE PLAYER BAR.
+              A second one sat here beside the sign-off — the same control,
+              the same saves store, so the two could never disagree, but a
+              student looking at two bookmark buttons on one screen has to
+              work out whether they do different things. The design has one,
+              in the control bar next to the note button, on the thing it
+              acts on and at the second it refers to. See PlayerLayer.jsx. */}
           <SignOff
             armed={watchedToEnd}
             stamped={done}

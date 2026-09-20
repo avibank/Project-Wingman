@@ -877,18 +877,10 @@
    title takes the space; the two controls are round and sit at its right. */
 .mt .titlerow{ display: flex; align-items: center; gap: 12px; }
 .mt .titlerow .lesson-name{ flex: 1; min-width: 0; }
-/* The demo's .icon-btn, under this app's own name. 44px rather than the
-   design's 38px, because §12 is enforced globally and a 38px circle inside a
-   44px button is a ring that does not match its own target. */
-.titlerow-save{
-  width: 44px; min-width: 44px; height: 44px;
-  display: grid; place-items: center;
-  border-radius: 50%; border: 1px solid var(--line);
-  background: var(--panel); color: var(--t2);
-  padding: 0; cursor: pointer;
-}
-.titlerow-save:hover{ color: var(--t1); }
-.titlerow-save[aria-pressed="true"]{ color: var(--active); }
+/* `.titlerow-save` WENT WITH THE SECOND BOOKMARK BUTTON. There is one on this
+   page and it is in the player's control bar, next to the note button, which
+   is where the design puts it and where the second it refers to actually is.
+   Nothing renders this class. */
 .stamp{
   flex: 0 0 auto; appearance: none; background: none; border: 0;
   padding: 2px; cursor: pointer; color: var(--t2);
