@@ -178,12 +178,10 @@ const DECK_CSS = `
   border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; color: var(--t2);
   font-variant-numeric: tabular-nums; display: flex; align-items: center;
   box-shadow: inset 0 1px 3px oklch(0 0 0 / .18); }
-/* The numbers are lit, the units are not: h and m are labels, and a reading
-   of 13h 54m should scan as two numbers rather than four characters. */
+/* One lit reading. The unit letters that used to sit between the numbers are
+   gone with the markup that drew them — the caption under the cell says what
+   is being counted, so the face is digits. */
 .deck .hb-n { color: var(--on); }
-.deck .hb-u { font-style: normal; font-size: .62em; margin: 0 .38em 0 .08em;
-  color: var(--t3); letter-spacing: 0; }
-.deck .hb-u:last-child { margin-right: 0; }
 
 .deck .radarcel { cursor: pointer; border: 0; font-family: inherit; transition: background .18s; }
 .deck .radarcel:hover { background: var(--raised); }
@@ -504,18 +502,55 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
   // is finished. A lesson watched to the end and a quiz three chapters ahead
   // of where you "should" be are both valid answers to "where was I", and
   // filtering them out is how Resume stopped meaning what it says.
-  const place = placeList(progress.get(PLACE_KEY, null))[0] || null;
-  const placeChapter = place?.chapterId
-    ? CHAPTERS.find((c) => c.id === place.chapterId) || null
-    : null;
+  /* A PLACE THAT NO LONGER EXISTS IS NOT A PLACE.
+
+     This record lives on the device and outlives the content it points at.
+     Two ordinary things make it stale: a chapter is renumbered or withdrawn,
+     and — the one that bit — the placeholder course was cleared out from
+     under every account that had walked it. The card went on reading
+     "Question 1 of 8. · Back to the quiz ›" for a quiz that had ceased to
+     exist, and pressing it navigated to a chapter id nothing could resolve.
+     That is the single most visible button on the product, and it was a dead
+     one for everybody who had used the app before the content changed.
+
+     So the record is checked against what is actually here before anything
+     is offered: the chapter has to exist, and a lesson place has to name a
+     lesson still inside it. Anything that fails falls through to `next`,
+     which is the same behaviour as a student who has never opened the module
+     — the right answer, because as far as the content is concerned they
+     haven't. Nothing is deleted: the entry stays in the list and starts
+     working again the moment its chapter comes back. */
+  const known = placeList(progress.get(PLACE_KEY, null));
+  const resolve = (p) => {
+    if (!p) return null;
+    const ch = p.chapterId ? CHAPTERS.find((c) => c.id === p.chapterId) || null : null;
+    if (p.chapterId && !ch) return null;
+    if (p.lessonId && !(ch?.lessons || []).some((l) => l.id === p.lessonId)) return null;
+    return { place: p, chapter: ch };
+  };
+  const resolved = known.map(resolve).find(Boolean) || null;
+  const place = resolved?.place || null;
+  const placeChapter = resolved?.chapter || null;
   const placeLesson = place?.lessonId
     ? (placeChapter?.lessons || []).find((l) => l.id === place.lessonId) || null
     : null;
   const resumeLine = placeLine(place, placeLesson, Boolean(place?.kind === "quiz" && quizRuns[place.chapterId]));
   const heroChapter = placeChapter || next;
+  /* THE HERO BUTTON HAS TO GO SOMEWHERE — all three of its states.
+
+     It had two: resume a place, or open the next unfinished chapter. With a
+     module that has no chapters yet there is no next, so the button rendered,
+     said "Start the briefing ›", and did nothing at all. That is the first
+     control on the first screen, and it was the one dead button the launch
+     rules name explicitly.
+
+     The third state opens the module itself, which is a real screen with a
+     real answer on it — it says what lands there and when. */
+  const bare = !CHAPTERS.length;
   const onResume = () => {
     if (place) return onResumePlace?.(place);
-    if (next) onGoToChapter(active.code, next.id);
+    if (next) return onGoToChapter(active.code, next.id);
+    onEnterModule?.(active);
   };
   /* The bag's own count, from the saves store rather than the old flat
      pw-bookmarks list: this is what the drawn Manual strip shows, and it has
@@ -569,7 +604,9 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                     action instead, which is what the empty-state rule asks
                     for anyway. */}
                 {resumeLine
-                  || (heroStarted
+                  || (bare
+                    ? "The first chapter goes in here."
+                    : heroStarted
                     ? "Pick up where you left off."
                     : (next?.lessons?.length
                       ? `${next.lessons.length} lesson${next.lessons.length === 1 ? "" : "s"} waiting.`
@@ -580,7 +617,9 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 beside the words rather than under them. */}
             {flags["module.interior"] && (
               <button className="resume" type="button" onClick={onResume}>
-                {resumeLine ? placeVerb(place) : heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
+                {resumeLine ? placeVerb(place)
+                  : bare ? `Open ${active.name}`
+                  : heroStarted ? "Resume" : "Start the briefing"} &nbsp;›
               </button>
             )}
           </div>
@@ -630,19 +669,14 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             </div>
 
             <div className="cel">
-              {/* Hours and minutes. It was a tenths drum; hobbs.js carries
-                  the argument for why it is not any more. The unit letters
-                  are scenery for a screen reader — the label is the value. */}
+              {/* DIGITS, AND NOTHING BUT. It was a tenths drum, then hours
+                  and minutes with unit letters on them; hobbs.js carries both
+                  arguments. The letters were the only part of the instrument
+                  that was not a number, and the caption underneath already
+                  says what is being counted — so the face is h:mm and the
+                  words live in the label a screen reader hears. */}
               <div className="hobbs" aria-label={`Time on this module, ${hobbs.spoken}`}>
-                {hobbs.flown ? (
-                  <>
-                    {hobbs.h > 0 && <>
-                      <span className="hb-n">{hobbs.h}</span><i className="hb-u">h</i>
-                    </>}
-                    <span className="hb-n">{String(hobbs.m).padStart(hobbs.h ? 2 : 1, "0")}</span>
-                    <i className="hb-u">m</i>
-                  </>
-                ) : <span className="hb-n">{hobbs.reads}</span>}
+                <span className="hb-n">{hobbs.reads}</span>
               </div>
               <div className="cap">{hobbs.flown ? "On this module" : "Your first hour"}</div>
             </div>

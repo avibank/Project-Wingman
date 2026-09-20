@@ -66,9 +66,40 @@ s = L.closeBar(s);
 const cleared = s.notes.find(n => n.id === before);
 ok("clearing turns it back into a pin, not deleted", cleared && cleared.body === "" && L.isPin(cleared));
 
-// --- badges, still 2 of 7 ---------------------------------------------------
-const b = L.badges(threads, replies, "M1", "u_you", {});
-ok("badges on a fresh account", b.length === 2, `${b.length} of ${L.orderThreads(threads,replies,"M1").length} — ${b.join(", ")}`);
+// --- badges -----------------------------------------------------------------
+/* ITS OWN FIXTURE, NOT THE SHIPPING CONTENT DOCUMENT.
+   This asserted "2 of 7" against the threads in src/content/test-content.json,
+   so it was really a test of that file: emptying it for the beta turned a
+   passing unit test into "0 of 0 — FAIL" with nothing wrong in the code. A
+   rule about who gets a badge should be stated in the test, not counted out
+   of whatever content happens to be checked in.
+
+   The rule, from badges() itself: a thread earns a badge when you are IN it —
+   you asked it or you answered it — and the last activity in it is somebody
+   else's and newer than the last time you looked. So the fixture below has
+   one of each case that must not count, and two that must. */
+const ME = "u_me";
+const bThreads = [
+  { id: "A", moduleId: "M1", lessonId: "L1", t: 5, body: "mine, answered by someone else", authorId: ME,  createdAt: "2026-01-01T00:00:00Z" },
+  { id: "B", moduleId: "M1", lessonId: "L1", t: 6, body: "theirs, I answered, they replied again", authorId: "u_them", createdAt: "2026-01-01T00:00:00Z" },
+  { id: "C", moduleId: "M1", lessonId: "L1", t: 7, body: "theirs, nothing to do with me", authorId: "u_them", createdAt: "2026-01-01T00:00:00Z" },
+  { id: "D", moduleId: "M1", lessonId: "L1", t: 8, body: "mine, only I have spoken in it", authorId: ME,  createdAt: "2026-01-01T00:00:00Z" },
+  { id: "E", moduleId: "M2", lessonId: "L9", t: 9, body: "another module entirely", authorId: ME,  createdAt: "2026-01-01T00:00:00Z" },
+];
+const bReplies = [
+  { id: "r1", threadId: "A", authorId: "u_them", body: "here you go", createdAt: "2026-02-01T00:00:00Z" },
+  { id: "r2", threadId: "B", authorId: ME,       body: "try this",    createdAt: "2026-02-01T00:00:00Z" },
+  { id: "r3", threadId: "B", authorId: "u_them", body: "that worked", createdAt: "2026-02-02T00:00:00Z" },
+  { id: "r4", threadId: "C", authorId: "u_two",  body: "not my business", createdAt: "2026-02-01T00:00:00Z" },
+  { id: "r5", threadId: "E", authorId: "u_them", body: "wrong module", createdAt: "2026-02-01T00:00:00Z" },
+];
+const b = L.badges(bThreads, bReplies, "M1", ME, {});
+ok("badges: only threads you are in, with somebody else's news in them",
+   b.length === 2 && b.includes("A") && b.includes("B"), `${b.length} — ${b.join(", ")}`);
+ok("badges: a thread you have already read drops off",
+   L.badges(bThreads, bReplies, "M1", ME, { A: "2026-03-01T00:00:00Z", B: "2026-03-01T00:00:00Z" }).length === 0);
+ok("badges: another module's thread never counts",
+   !L.badges(bThreads, bReplies, "M1", ME, {}).includes("E"));
 
 // --- close means stop, no closedByUser --------------------------------------
 let p = L.playerReducer({ ...L.initialSession.player, lessonId: "x", playing: true, seconds: 42 }, { type: "close" });

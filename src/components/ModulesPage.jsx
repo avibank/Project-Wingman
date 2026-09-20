@@ -34,9 +34,14 @@ function ModulesPage({ activeModuleCode, onOpenModule, onGoToChapter, onMakeActi
                     chapter, so this counted chapters and called them lessons
                     while the caption underneath counted the same segments and
                     called them chapters. One fact, two sentences, disagreeing.
-                    "0 of 5" is not an option either: nothing states a zero. */}
+                    "0 of 5" is not an option either: nothing states a zero —
+                    and neither is "0 chapters", which is what this said for a
+                    module that has not been filled yet. The zero-count rule
+                    applies to the total as much as to the progress. */}
                 <span className="mods-count">
-                  {full > 0 ? `${full} of ${total}` : `${total} chapters`}
+                  {full > 0 ? `${full} of ${total}`
+                    : total > 0 ? `${total} chapter${total === 1 ? "" : "s"}`
+                    : "Nothing in it yet"}
                 </span>
               </button>
               <SegmentedBar

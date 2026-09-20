@@ -249,6 +249,10 @@
 .ref-mod .ce-row b{display:block;font-size:14.5px;font-weight:600}
 .ref-mod .ce-row span{font-size:12.5px;color:var(--t3)}
 .ref-mod .ce-faces{display:flex}
+/* The rectangle a lesson, quiz or paper row ends in, where Crew's ghost
+   ends in faces. Same pulse, same weight, so the two empty states of one
+   screen breathe together. */
+.ref-mod .ce-blk{width:54px;height:26px;border-radius:7px;background:var(--raised);border:2px solid var(--ground);animation:cepulse 2.4s var(--ease) infinite}
 .ref-mod .ce-face{width:26px;height:26px;border-radius:50%;background:var(--raised);border:2px solid var(--ground);margin-left:-8px;animation:cepulse 2.4s var(--ease) infinite}
 @keyframes cepulse{0%,100%{opacity:.5}50%{opacity:1}}
 .ref-mod .ce-do{display:flex;gap:8px;flex-wrap:wrap}
@@ -383,8 +387,18 @@
 @media (max-width:560px){
   .ref-mod .acts .pill .lbl{display:none}
   .ref-mod .acts .pill{padding:8px}
-  .ref-mod .search{padding:6px 10px}
   .ref-mod .mtabs{gap:16px;padding:0 12px}
+  /* THE FIELD TAKES ITS OWN ROW ON A PHONE, AND THIS IS THE THIRD GO AT IT.
+     Three tabs and a field in one flex row is a desktop shape. Squeezed to
+     390px the field was 68px wide; at 360, with the Crew count badge on the
+     tab beside it, it was FIVE pixels — a search box rendering the letter "S"
+     and nothing else, which is what it is doing on the live site now. Making
+     it narrower still, or hiding the placeholder, is measuring the wrong
+     thing: there is no room on that line, so it does not go on that line.
+     Wrapped, it is the width of the card, which is the one width that is
+     always enough. */
+  .ref-mod .mtabs{flex-wrap:wrap;row-gap:0}
+  .ref-mod .mtabs .search{order:2;flex:1 0 100%;margin-left:0;margin-block:0 10px;padding:9px 12px}
   .ref-mod .tabs{padding:0 12px}
   .ref-mod .rr .lbl{display:none}
   .ref-mod .demo{font-size:12px}.ref-mod .demo button{padding:7px 10px}

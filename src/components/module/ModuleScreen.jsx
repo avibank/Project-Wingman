@@ -48,6 +48,10 @@ export default function ModuleScreen({
 
   people = { wingman: null, groups: [], questions: [], moduleRow: { line: "", facts: [] } },
   onOpenQuestion,
+  /* True only while a content document is actually being fetched. False means
+     this module really has nothing in it, which is a state with its own
+     screen rather than a skeleton that never resolves. */
+  contentPending = false,
 }) {
   const here = currentLesson(chapters, state);
 
@@ -213,6 +217,10 @@ export default function ModuleScreen({
         {tab === "route" && (
           <RouteTab chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
+                    /* Waiting and empty, told apart one level up: App knows
+                       whether a content document is still in flight, and this
+                       screen is the only thing that can name the module. */
+                    pending={contentPending} moduleName={mod?.name}
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (

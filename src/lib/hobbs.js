@@ -53,6 +53,19 @@ export function useHobbsMeter(moduleCode, progress) {
       owed.current += (Date.now() - since.current) / 1000;
       since.current = null;
     };
+    /* WRITE DOWN WHAT IS OWED, AND DO NOT TOUCH THE CLOCK.
+
+       This used to restart the clock itself at the end, which is right for the
+       flush timer and WRONG for the teardown that runs when the module is
+       left: the refs outlive the effect, so leaving a module parked a fresh
+       `since` on the way out and nothing cleared it. The next time a module
+       opened, the first flush added every second since the student had LEFT
+       the last one — time on the Flight Deck, in the Ready Room, in
+       Bookmarks, on a signed-out tab. That is the meter reading hours for an
+       account that has studied for minutes.
+
+       So restarting is the caller's decision. `tick` does it because it is
+       still inside the module; the teardown does not, because it is not. */
     const write = () => {
       collect();
       const secs = Math.floor(owed.current);
@@ -73,17 +86,24 @@ export function useHobbsMeter(moduleCode, progress) {
         const days = bumpDay(p.get(DAYS_KEY, null), now);
         if (days !== p.get(DAYS_KEY, null)) p.set(DAYS_KEY, days);
       }
-      if (!document.hidden) start();
     };
+    // The flush that happens while the module is still open: write, then keep
+    // counting.
+    const tick = () => { write(); if (!document.hidden) start(); };
     const onVisibility = () => { if (document.hidden) collect(); else start(); };
 
     if (!document.hidden) start();
-    const timer = setInterval(write, FLUSH_MS);
+    const timer = setInterval(tick, FLUSH_MS);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pagehide", write);
 
     return () => {
+      // The module is being left. Bank what is owed, then stop the clock dead
+      // and drop the sub-second remainder, so nothing from outside a module —
+      // and nothing belonging to this module — can land on the next one.
       write();
+      since.current = null;
+      owed.current = 0;
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", write);
@@ -94,16 +114,22 @@ export function useHobbsMeter(moduleCode, progress) {
 // What the meter has counted for one module.
 export const hobbsSeconds = (store, moduleCode) => (store || {})[moduleCode] || 0;
 
-// HOURS AND MINUTES. 13h 54m.
+// HOURS AND MINUTES, AS DIGITS ONLY. 13:54.
 //
-// THIS REVERSES A DECISION THIS FILE USED TO ARGUE FOR, and the old argument
-// is kept because it was not silly: it read in tenths on a drum — 0013.9 —
-// "because that is what an hour meter reads and what the hours in a logbook
-// are written in", and a clock face was the one thing it must not be mistaken
-// for. What the owner answered is that nobody outside a cockpit reads a
-// tenth: .9 of an hour is a number you have to convert before it means
-// anything, and this cell is read by somebody deciding whether they have done
-// enough today. So it says the thing it means.
+// Two reversals live in this comment, and both are the owner's.
+//
+// FIRST, it read in tenths on a drum — 0013.9 — "because that is what an hour
+// meter reads and what the hours in a logbook are written in". That went
+// because nobody outside a cockpit reads a tenth: .9 of an hour is a number
+// you have to convert before it means anything, and this cell is read by
+// somebody deciding whether they have done enough today.
+//
+// SECOND, it printed its own unit letters — 13h 54m. Those are gone too: the
+// cell is a meter, the caption under it already says what is being measured,
+// and the letters were the only thing on the instrument that was not a
+// number. So it is h:mm, minutes always two digits, the way every other
+// counter a student has ever read is written. `spoken` still carries words,
+// because a screen reader hearing "13 colon 54" learns nothing.
 //
 // ALWAYS DOWN, which is the one rule that survives. A meter that rounded up
 // would credit time nobody has flown. Under a minute it has not started, and
@@ -119,12 +145,13 @@ export const hobbsClock = (seconds) => {
     h,
     m,
     flown,
-    // What is drawn. Under an hour it is minutes alone — "0h 54m" spends its
-    // widest character saying nothing — and under a minute it is an em dash,
-    // because a meter reading 0m is a zero count (CLAUDE.md, Voice) and the
-    // caption beside it already says "Your first hour". Same dash the licence
-    // card's Hours flown uses, for the same reason.
-    reads: !flown ? '—' : h ? `${h}h ${m}m` : `${m}m`,
+    // What is drawn: digits and one colon, nothing else. Under an hour it
+    // still reads 0:54 rather than dropping to bare minutes — a meter that
+    // changes shape at an hour is two instruments — and under a minute it is
+    // an em dash, because a meter reading 0:00 is a zero count (CLAUDE.md,
+    // Voice) and the caption beside it already says "Your first hour". Same
+    // dash the licence card's Hours flown uses, for the same reason.
+    reads: !flown ? '—' : `${h}:${String(m).padStart(2, '0')}`,
     // What a screen reader hears: words, plurals that agree, and no trailing
     // "0 minutes" on the hour.
     spoken: !flown ? 'under a minute'
