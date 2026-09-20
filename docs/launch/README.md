@@ -21,3 +21,7 @@ Everything for the design port, unzipped straight into the repo.
 **Start with `START-HERE.md` at the repo root.** It is the current instruction: the live site is a partial port that was rebuilt from the description instead of copied from the reference builds. It lists, screen by screen, exactly what is wrong on live right now and what to copy from where. `BUGS.md` has the same list as tracked rows, and `code/` has the CSS and JS extracted from the reference builds, split by screen and ready to paste.
 
 The reference builds are the frozen design spec. Don't edit them.
+
+## Latest change
+
+`CHANGELOG-STAMP.md` — the rim-text engine, the pattern list, Matcha and the WNG example code (20 Sep 2026). Read it before touching `code/05-stamp-engine.js`.

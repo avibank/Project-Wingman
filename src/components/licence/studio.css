@@ -87,6 +87,12 @@
   justify-content: center; gap: 12px;
 }
 .st-row{ display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+/* The pattern row, three up and three down — `.srow.pat3` in the reference's
+   own stylesheet. Six wide tiles wrapping at five and then one is the layout
+   that made `lace` look deliberate. */
+.st-row.is-three{ display: grid; grid-template-columns: repeat(3, 1fr); justify-items: stretch; }
+.st-row.is-three .st-tile{ width: auto; }
+@media (max-width: 460px){ .st-row.is-three{ grid-template-columns: repeat(3, 1fr); } }
 .st-tile{
   width: 60px; height: 60px; border: 0; border-radius: 14px; cursor: pointer;
   display: grid; place-items: center; color: var(--t2); line-height: 0;
