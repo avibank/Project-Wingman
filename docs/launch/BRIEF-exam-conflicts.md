@@ -12,7 +12,7 @@ cost, is under the heading it belongs to.
 
 ---
 
-## 1 · The leaderboard (R5, R6)
+## 1 · The leaderboard — BUILT (owner)
 
 **The brief:** a board of runs ranked by score then time, everyone on the
 module, one account able to appear several times under different callsigns.
@@ -34,8 +34,42 @@ module, one account able to appear several times under different callsigns.
 * per-run callsigns, which is a new idea — a callsign is currently one per
   account, unique, claimed through `claim_code`.
 
-**Not built.** The stylesheet's `.lb-*` and `.board*` rules are in and unused,
-so the day it is wanted the markup has somewhere to land.
+**Built, as drawn** (owner, 2026-09-20). Migration **0034**, run against the
+live project and verified by connecting: `quiz_runs` with four CHECK
+constraints, three functions, two indexes and an open policy.
+
+What it took, and what each thing answers:
+
+* **A run is a row, opened when the paper opens.** `started_at` has to be the
+  server's, so `start_quiz_run` stamps it and `finish_quiz_run` stamps
+  `submitted_at`. Neither is ever sent. Coming back to a paper returns the run
+  already open, so resuming does not restart the clock, and a run with no
+  `submitted_at` is not on the board — which is R5's own last test.
+* **The time is the wall clock, and that is a decision with a cost.** This
+  app's paper is resumable and its countdown stops when the paper leaves the
+  screen, so the two numbers differ. The wall clock is stored because it is the
+  only one a browser cannot invent, which is what R5 exists for. The cost is
+  bounded by the ordering: rank is score first and time only splits ties.
+* **The callsign is snapshotted per run, the stamp is not.** R6 wants one
+  account appearing several times under different callsigns; a callsign here is
+  one per account, so the run keeps the one it was handed in under. The stamp
+  stays the account's current one, because R7 says a stamp is identity and
+  changing your ink changes it everywhere at once. A row reads `[CODE] Callsign`.
+* **Fly solo outranks a leaderboard.** 0032 is explicit that Fly solo means "I
+  am not here", and a board is the loudest place to be somewhere. You are
+  always on your own board, for the same reason 0032 keeps you on your own
+  roster: a board that leaves you off cannot tell you where you came.
+* **It draws nothing until somebody else is on it.** A board of one is a
+  ranking of yourself, and §10 forbids naming an absence.
+
+`npm run check:board-db` drives R5's own test list against the real database as
+six different accounts — equal scores split by time, a faster but lower score
+below, an unfinished attempt never appearing, one account as two rows, a second
+hand-in changing nothing, a score bigger than the paper clamped, fly solo, and
+the stamp arriving with the row — 20 assertions, and it deletes every row it
+makes. Like check:stamp-db it is NOT in `npm run check`, because that suite
+must not need credentials. 16 more assertions in `check:exam` hold the client's
+half, each proved by planting its bug.
 
 ## 2 · "Go through the paper" — KEPT (decided here)
 
