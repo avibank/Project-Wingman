@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+/* global window */
+/* `refPrep` bodies are stringified and run INSIDE the reference demo's page,
+   where `go`, `S`, `ITEMS` and `render` are that demo's own globals. They are
+   declared here so eslint reads them as the page's rather than this file's. */
+/* global go, S, render */
 /* =====================================================================
    Wingman · visual diff — makes "it matches" a number instead of an argument.
    Loads the reference demo and the built screen in the SAME browser, at the
@@ -41,7 +46,7 @@ const only = process.argv[2];
 const PAIRS = [
   { name: 'bookmarks-home',  ref: '/__ref/bookmarks#home',      live: '/bookmarks?m=m1' },
   { name: 'bookmarks-empty', ref: '/__ref/bookmarks#empty',     live: '/bookmarks?m=m3',
-    refPrep: () => { ITEMS = []; render(); } },
+    refPrep: () => { window.ITEMS = []; render(); } },
   { name: 'folder-questions',ref: '/__ref/bookmarks#questions', live: '/bookmarks/questions?m=m1',
     refPrep: () => go('folder', () => { S.type = 'question'; }) },
   { name: 'folder-cards',    ref: '/__ref/bookmarks#cards',     live: '/bookmarks/cards?m=m1',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './bookmarks.css';
 import './bm-app.css';
 import { BmLink, useGo } from './nav';
@@ -41,7 +41,12 @@ export default function FolderPage({ slug }) {
   const { byKind, ready } = useModuleSaves(moduleId);
   const [open, setOpen] = useState(null);
   const [sheet, setSheet] = useState(null);
-  if (!kind) return null;                                               // unreachable: parseRoute redirects an unknown folder
+  /* An unknown slug never reaches here — parseRoute redirects it. `pages` is
+     the one that CAN: routes.js is pure and cannot read the pause switch, so
+     /bookmarks/pages still parses while Pages is not a folder. It lands where
+     every other unrecognised folder lands, rather than on a blank panel. */
+  useEffect(() => { if (!kind) nav(routes.bookmarks()); }, [kind, nav]);
+  if (!kind) return null;
   const f = FOLDERS[kind];
   const items = byKind[kind];
   const modName = moduleId === 'all' ? 'All modules' : content.modules().find((m) => m.id === moduleId)?.name ?? '';

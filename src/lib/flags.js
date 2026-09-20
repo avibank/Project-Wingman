@@ -87,6 +87,34 @@ const BY_ID = Object.fromEntries(FLAGS.map((f) => [f.id, f]));
 // left in and is deliberately not advertised. It is for turning the dev panel
 // or the seeded content on while working, not a feature.
 
+/* ===========================================================================
+   PAPERS, PAUSED — the one switch.
+   ---------------------------------------------------------------------------
+   The reader is paused, not cancelled. Every line of its code and every row of
+   its data stays where it is; what this turns off is every way IN and every
+   place its work shows up. Set VITE_PAPERS_READER=true and redeploy and it all
+   comes back, marks and all.
+
+   WHY IT IS NOT `library.reader`. That flag answers a different question — it
+   chooses whether a paper opens in the reader or in a browser tab — so turning
+   it off leaves the Library full of papers that open as PDFs. Pausing means
+   there are no papers, which is a question nothing in this file was asking.
+
+   WHY AN ENV VAR RATHER THAN A ROW IN FLAGS. The rest of this list is resolved
+   per user, at render, inside a hook. This one has to be readable by modules
+   that are not components — lastPlace.js, attachments.js, useSaves.js — and it
+   has to be the same answer for everybody, so it is a build-time constant.
+   Vite folds it, which is also what keeps the reader's chunk out of the build.
+
+   DEFAULT OFF, EVERYWHERE, INCLUDING LOCAL AND CI. A missing variable reads
+   false on purpose: nothing should quietly depend on it being on.
+
+   Nothing else in the app reads VITE_PAPERS_READER. Every other file imports
+   this value. */
+export const papersOn = import.meta.env.VITE_PAPERS_READER === "true";
+
+const READER_FLAGS = new Set(["library.reader", "reader.v2"]);
+
 const KEY = "pw-flags";
 
 // tokens.global and home.v2 are `everyone` because the surfaces they were
@@ -96,6 +124,9 @@ const KEY = "pw-flags";
 // so the set is complete and so they get deleted with the others. The rest
 // have a real off state and are admin-only.
 export function flagDefault(id, isAdmin) {
+  // Both reader flags are downstream of the one switch, so that "papers are
+  // paused" is one answer rather than three that can disagree.
+  if (!papersOn && READER_FLAGS.has(id)) return false;
   // `off` is a surface with no approved design: off for everyone, admin
   // included, until there is one. `everyone` is the opposite.
   if (BY_ID[id]?.off === true) return false;
@@ -136,7 +167,11 @@ export function resolveFlags(isAdmin, overrides = {}) {
     //
     // Overrides still work in the other direction, which is the only direction
     // that is useful now: turning a hidden surface ON while working.
-    const canOverride = overridden && isAdmin && !f.locked && !(f.everyone && !overrides[f.id]);
+    const canOverride = overridden && isAdmin && !f.locked && !(f.everyone && !overrides[f.id])
+      /* ...and it cannot turn the reader back on. The switch is the switch: an
+         admin browser holding a stale `library.reader: true` must not be the
+         one account that still sees papers. */
+      && !(!papersOn && READER_FLAGS.has(f.id));
 
     out[f.id] = canOverride ? !!overrides[f.id] : flagDefault(f.id, isAdmin);
   }

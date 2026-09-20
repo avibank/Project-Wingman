@@ -343,9 +343,12 @@ export default function Chat({
               <div className="rr-sheet" role="group" aria-label="Add an attachment">
                 <button type="button" onClick={() => photoRef.current?.click()}><span className="rr-ic"><Photo /></span>Photo</button>
                 <button type="button" onClick={() => fileRef.current?.click()}><span className="rr-ic"><File /></span>File</button>
-                <button type="button" onClick={() => { setScreen("passages"); onWantMarks(); }}>
-                  <span className="rr-ic"><Passage /></span>Paper passage
-                </button>
+                {/* Only when the room is handed a way to attach one. */}
+                {onAttachPassage && (
+                  <button type="button" onClick={() => { setScreen("passages"); onWantMarks(); }}>
+                    <span className="rr-ic"><Passage /></span>Paper passage
+                  </button>
+                )}
               </div>
             ) : (
               <div className="rr-passages" role="group" aria-label="Your marks in this module">

@@ -9,6 +9,7 @@ import { faultChapters } from "../../lib/minimums.js";
 import { useCrew, crewCount } from "../../lib/crew.js";
 import { moduleSubtitle } from "../../lib/moduleLine.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
+import { papersOn } from "../../lib/flags.js";
 import "./instruments.css";
 import { currentLesson } from "./lessonState.js";
 import { useTabPill } from "../../lib/tabMotion.js";
@@ -190,8 +191,8 @@ export default function ModuleScreen({
                 target either way. With the floor on, the field alone made the
                 strip 77px against the design's 56.7. */}
             <input ref={fieldRef} type="search" className="is-inline" value={query}
-                   placeholder={placeholderFor(tab)}
-                   aria-label={placeholderFor(tab)}
+                   placeholder={placeholderFor(tab, papersOn)}
+                   aria-label={placeholderFor(tab, papersOn)}
                    onChange={(e) => setQuery(e.target.value)}
                    onKeyDown={(e) => { if (e.key === "Escape" && query) { e.preventDefault(); setQuery(""); } }} />
             {searching && (

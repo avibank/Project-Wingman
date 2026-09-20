@@ -56,8 +56,13 @@ export const countLessons = (chapters) =>
    depending which half of the tab you arrived at. That was true of a Library
    with two sections; it has three now, the field searches all of them, and a
    placeholder naming one is a placeholder that lies about the other two. */
-export const placeholderFor = (tab) =>
-  tab === "library" ? "Search quizzes, cards and papers"
+/* `papers` is the pause switch, passed in rather than read here: this module is
+   pure and `check:shapes` imports it in Node, where flags.js — React, Clerk and
+   import.meta.env — cannot be loaded. With papers paused the Library has two
+   sections, and a field offering to search something that is not on the screen
+   is the same lie one section along. */
+export const placeholderFor = (tab, papers = true) =>
+  tab === "library" ? (papers ? "Search quizzes, cards and papers" : "Search quizzes and cards")
     /* Crew is a list of PEOPLE, so the field says so. */
     : tab === "crew" ? "Find someone"
     : "Search lessons";

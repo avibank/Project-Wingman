@@ -3,6 +3,7 @@ import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
 import { QuizThumb } from "./RouteTab.jsx";
 import "./ref-module.css";
 import { hits, terms } from "../../lib/moduleSearch.js";
+import { papersOn } from "../../lib/flags.js";
 import { useSwitchIn } from "../../lib/tabMotion.js";
 
 /* ============================================================================
@@ -130,7 +131,12 @@ export default function LibraryTab({
           which is one row per quiz and already the shortest list here. */}
       <LibraryStudyCards moduleId={moduleCode} />
 
-      {/* ------------------------------------------------------- PAPERS --- */}
+      {/* ------------------------------------------------------- PAPERS ---
+          Papers are paused. The whole section goes — not an empty state, not
+          a disabled row, not a line saying why. §18's rule about naming the
+          next action inside the sentence is about a section that is THERE
+          with nothing in it; this one is not there. */}
+      {papersOn && (
       <section aria-labelledby="lsec-papers" ref={papersRef}>
         <div className="lsec">
           <div>
@@ -240,6 +246,7 @@ export default function LibraryTab({
           )}
         </ul>
       </section>
+      )}
     </div>
   );
 }

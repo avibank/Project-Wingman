@@ -641,8 +641,12 @@ console.log("\nfull screen");
 console.log("\nweight");
 {
   const app = read("src/App.jsx");
+  /* Still a lazy chunk, and now behind the pause switch as well. The switch is
+     a build-time constant, so with papers off Rollup folds the ternary and the
+     import goes with it — which is how the reader's chunk, pdf.js and its
+     worker stop being built at all. check:paused holds that half. */
   ok("—", "the reader is a lazy chunk of its own",
-     /paper: chunk\(\(\) => import\("\.\/components\/paper\/v6\/ReaderV6\.jsx"\)\)/.test(app));
+     /paper: papersOn \? chunk\(\(\) => import\("\.\/components\/paper\/v6\/ReaderV6\.jsx"\)\) : null/.test(app));
   const dist = join(ROOT, "dist/assets");
   let built = [];
   try { built = readdirSync(dist); } catch { /* not built yet */ }

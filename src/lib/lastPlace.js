@@ -1,3 +1,5 @@
+import { papersOn } from "./flags.js";
+
 export const PLACE_KEY = "pw-last-place";
 
 // Where you actually were, rather than which chapter contains it.
@@ -71,8 +73,19 @@ const sameSpot = (a, b) =>
 
 // Stored oldest-last. Reading tolerates the single-object shape this used to
 // have, so an account written by the previous build still resumes.
-export const placeList = (stored) =>
+const storedPlaces = (stored) =>
   Array.isArray(stored) ? stored : stored ? [stored] : [];
 
+/* WHAT THE FLIGHT DECK MAY OFFER. Papers are paused, so "Reopen the paper" is
+   not a thing to offer — Resume falls through to the lesson or quiz underneath
+   it, which is what it did before anybody opened a paper.
+   
+   READ-ONLY. `pushPlace` below writes back the UNFILTERED list on purpose: a
+   student who was last in a paper keeps that record, and turning papers back
+   on offers it again. Filtering here and writing there would quietly erase it
+   the next time they opened a lesson. */
+export const placeList = (stored) =>
+  storedPlaces(stored).filter((p) => papersOn || p?.kind !== "paper");
+
 export const pushPlace = (stored, place) =>
-  [place, ...placeList(stored).filter((p) => !sameSpot(p, place))].slice(0, DEPTH);
+  [place, ...storedPlaces(stored).filter((p) => !sameSpot(p, place))].slice(0, DEPTH);
