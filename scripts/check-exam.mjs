@@ -53,12 +53,20 @@ console.log("\nthe shape");
   ok("shape", "the pass mark is 75%", PASS_MARK === 0.75);
   ok("shape", "8 questions needs 6", passAt(8) === 6);
   ok("shape", "and it rounds up rather than down", passAt(5) === 4 && passAt(7) === 6);
-  /* The allowance IS the estimate, made real. Both are 75 seconds a question,
-     so the cover's old "about 10 minutes" and the clock on the paper can never
-     be two different promises about the same eight questions. */
-  ok("shape", "the allowance is the estimate made real",
-     allowanceFor(8) === 600 && /10 minutes/.test(estimate(8)));
-  ok("shape", "and a paper is never given less than a minute", allowanceFor(0) === 60);
+  /* THE CLOCK IS A FLAT TWENTY MINUTES (R5), which reverses what this pair
+     used to assert — that the allowance WAS the estimate, both 75 seconds a
+     question, so the row's "about 10 minutes" and the paper's clock could
+     never be two promises about the same eight questions. They are two
+     promises now, deliberately: the row answers "how long will this take me"
+     and the paper answers "how long have I got", and on a short quiz those
+     are different numbers. Owner's decision, 2026-09-20. */
+  ok("shape", "the clock is a flat twenty minutes", allowanceFor(8) === 1200 && allowanceFor(1) === 1200);
+  ok("shape", "up to forty questions, and only up to forty",
+     allowanceFor(40) === 1200 && allowanceFor(41) === 41 * 75);
+  ok("shape", "an empty paper still gets the sitting, not a minute", allowanceFor(0) === 1200);
+  /* The estimate keeps the per-question figure, because a row reading "about
+     20 minutes" for every quiz in the module says nothing at all. */
+  ok("shape", "the row's estimate is still per question", /10 minutes/.test(estimate(8)));
 }
 
 /* ---- an attempt ---------------------------------------------------------- */

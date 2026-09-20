@@ -383,7 +383,7 @@ try {
     expect("Try again starts a fresh paper",
       (await page.locator(".navigator__title span").textContent()) === "0/8"
       && (await page.locator(".question__num b").textContent()) === "1"
-      && (await page.locator(".exam-timer__value").textContent()) === "10:00");
+      && (await page.locator(".exam-timer__value").textContent()) === "20:00");
 
     /* AND THE SCREEN FLAG COMES OFF WITH THE QUIZ. It re-grounds the whole
        document while the paper is open; left behind, every screen after it

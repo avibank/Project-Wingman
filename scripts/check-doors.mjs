@@ -249,8 +249,6 @@ const KNOWN_ORPHAN_KEYS = {
   "pw-last-tab": "written for a restore that was never built",
   "pw-room-return": "written for a return-to-thread that was never built",
   "pw-room-seen": "read as a fallback; squadron_members.last_read_at replaced it (roomData.js)",
-  "pw-streak": "the Logbook's streak tile, behind page.logbook and off; nothing counts days yet",
-  "pw-longest-streak": "the same tile's best-ever half",
 };
 {
   const keys = new Map();

@@ -4,11 +4,9 @@ import { fetchMyAttempts } from "../lib/quizStats.js";
 import { fetchMyCompletions } from "../lib/partners.js";
 import { missedTwice, weakestModule, dueForAnotherPass } from "../lib/logbook.js";
 import { ChevronLeft } from "lucide-react";
-import { MODULES, CHAPTERS, chaptersForModule } from "../data.js";
+import { allModules, chaptersFor, loadTestContent, testContentSync } from "./module/moduleContent.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useSavesCount } from "../features/bookmarks/deck.js";
-
-const DAY_MS = 86400000;
 
 // The canonical detail view. Every stat tile elsewhere is a summary that links
 // here, so this page carries the breakdown rather than restating one number.
@@ -34,9 +32,22 @@ function ProgressPage({ onBack }) {
      instead — a stat that had quietly stopped being a stat. */
   const saved = useSavesCount("all");
   const [scores, setScores] = useState({});
-  const [streak, setStreak] = useState(0);
-  const [longest, setLongest] = useState(0);
   const [lastVisit, setLastVisit] = useState(null);
+  /* EVERY CHAPTER IN THE APP, FROM WHAT THE APP IS ACTUALLY SERVING. This page
+     read data.js's global `CHAPTERS` array — twenty chapters of skeleton —
+     while `content.test` is on for everyone and the app shows twelve. So the
+     tile read "of 20 chapters" against a total of twelve, and the Debrief
+     looked every score up by id in an array the fixture's ids are not in and
+     therefore listed nothing at all. CLAUDE.md calls reading the global array
+     "a bug waiting to surface"; this is where it surfaced. */
+  const [content, setContent] = useState(() => testContentSync());
+  useEffect(() => {
+    if (content) return undefined;
+    let live = true;
+    loadTestContent().then((c) => { if (live) setContent(c); });
+    return () => { live = false; };
+  }, [content]);
+  const chapters = allModules(content).flatMap((m) => chaptersFor(m.code, content));
   // §9.5 — the analysis Home is not allowed to carry.
   const { user } = useUser();
   const [attempts, setAttempts] = useState([]);
@@ -46,8 +57,6 @@ function ProgressPage({ onBack }) {
     if (!progress.loaded) return;
     setCompleted(progress.get("pw-completed", []));
     setScores(progress.get("pw-quiz-scores", {}));
-    setStreak(progress.get("pw-streak", 0));
-    setLongest(progress.get("pw-longest-streak", 0));
     setLastVisit(progress.get("pw-last-visit", null));
   }, [progress.loaded, progress.isSignedIn]);
 
@@ -64,15 +73,6 @@ function ProgressPage({ onBack }) {
   const scoreValues = Object.values(scores);
   const accuracy = scoreValues.length ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length) : null;
 
-  // A trailing fortnight, derived from the streak we already track. Only the
-  // days we can actually account for are filled — nothing is invented.
-  const today = new Date();
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(today.getTime() - (13 - i) * DAY_MS);
-    const withinStreak = streak > 0 && (13 - i) < streak;
-    return { key: d.toISOString().slice(0, 10), label: d.toLocaleDateString(undefined, { weekday: "narrow" }), active: withinStreak };
-  });
-
   return (
     <div className="prog">
       <button className="prog-back" onClick={onBack}><ChevronLeft size={16} /> Back</button>
@@ -83,13 +83,17 @@ function ProgressPage({ onBack }) {
           nothing to report drops the numeral entirely and gives the whole cell
           to the sentence that says what to do next. */}
       <section className="prog-summary">
-        <Tile value={done.size} unit={`of ${CHAPTERS.length} chapters`}
-          invite={`${CHAPTERS.length} chapters ahead of you`} />
+        <Tile value={done.size} unit={`of ${chapters.length} chapters`}
+          invite={`${chapters.length} chapters ahead of you`} />
         <Tile value={accuracy === null ? 0 : accuracy} suffix="%" unit="quiz accuracy"
           invite="Take a quiz to set your accuracy" />
-        <Tile value={streak}
-          unit={`day streak${longest > streak ? ` · best ${longest}` : ""}`}
-          invite="Study today to start a streak" />
+        {/* THERE IS NO STREAK TILE. This app does not use streaks — the
+            decision is the owner's, 2026-09-20, and it is the same one
+            familiar.js already argued for: a streak works by making you
+            afraid to lose something, and these are students with eleven
+            classmates, not an audience. `pw-streak` and `pw-longest-streak`
+            had no writer either, so the tile could only ever read nothing and
+            offer to start a streak nothing would have counted. */}
         {/* "Star" was the old screen's verb and the old screen's icon. The
             control is a bookmark, on four different surfaces now, and the
             invitation has to name the one the student will actually meet. */}
@@ -98,7 +102,7 @@ function ProgressPage({ onBack }) {
       </section>
 
       {(() => {
-        const chapterOf = (id) => CHAPTERS.find((c) => c.id === id);
+        const chapterOf = (id) => chapters.find((c) => c.id === id);
         const moduleOf = (id) => chapterOf(id)?.code.split(".")[0] || null;
         const weak = weakestModule(scores, moduleOf);
         const twice = missedTwice(attempts);
@@ -141,8 +145,8 @@ function ProgressPage({ onBack }) {
       <section className="prog-block">
         <h2 className="prog-h2">By module</h2>
         <ul className="prog-modules">
-          {MODULES.map((m) => {
-            const chs = chaptersForModule(m.code);
+          {allModules(content).map((m) => {
+            const chs = chaptersFor(m.code, content);
             const n = chs.filter((c) => done.has(c.id)).length;
             const pct = chs.length ? Math.round((n / chs.length) * 100) : 0;
             return (
@@ -159,22 +163,20 @@ function ProgressPage({ onBack }) {
         </ul>
       </section>
 
-      <section className="prog-block">
-        <h2 className="prog-h2">Last two weeks</h2>
-        <div className="prog-cal">
-          {days.map((d) => <span key={d.key} className={`prog-day ${d.active ? "is-on" : ""}`} title={d.key} />)}
-        </div>
-        <p className="prog-note">
-          {lastVisit ? `Last studied ${lastVisit}.` : "Open a chapter and it starts filling in."}
-        </p>
-      </section>
+      {/* The fortnight of dots went with the streak: every one of them was
+          drawn from it, so with nothing counting days the grid was fourteen
+          empty cells stating an absence. The date itself is a real fact from
+          a real key and stays, as the sentence it always was. */}
+      <p className="prog-note prog-note--lead">
+        {lastVisit ? `Last studied ${lastVisit}.` : "Open a chapter and it starts filling in."}
+      </p>
 
       {Object.keys(scores).length > 0 && (
         <section className="prog-block">
           <h2 className="prog-h2">Debrief</h2>
           <ul className="prog-scores">
             {Object.entries(scores).map(([id, s]) => {
-              const ch = CHAPTERS.find((c) => c.id === id);
+              const ch = chapters.find((c) => c.id === id);
               if (!ch) return null;
               return (
                 <li key={id}>
@@ -221,10 +223,8 @@ function ProgressPage({ onBack }) {
         .prog-fill { height: 100%; border-radius: var(--r-pill);
           background: linear-gradient(90deg, color-mix(in oklab, var(--accent), transparent 55%), var(--accent));
           transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
-        .prog-cal { display: flex; gap: 5px; margin-bottom: 9px; }
-        .prog-day { width: 22px; height: 22px; border-radius: 6px; background: var(--well); border: 1px solid var(--border-soft); }
-        .prog-day.is-on { background: color-mix(in srgb, var(--accent) 55%, transparent); border-color: transparent; }
         .prog-note { font-size: 12px; color: var(--muted); margin: 0; }
+        .prog-note--lead { margin: -8px 0 22px; }
         .prog-scores li { display: flex; align-items: center; gap: 10px; padding: 9px 0;
           border-bottom: 1px solid var(--border-soft); font-size: 14px; }
         .prog-scores li:last-child { border-bottom: none; }
