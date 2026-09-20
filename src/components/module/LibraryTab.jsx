@@ -3,7 +3,14 @@ import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
 import { QuizThumb } from "./RouteTab.jsx";
 import "./ref-module.css";
 import { hits, terms } from "../../lib/moduleSearch.js";
-import { papersOn } from "../../lib/flags.js";
+import { papersOn, flagDefault } from "../../lib/flags.js";
+
+/* THE SHELF IS REAL AGAIN. The section was removed with the reader, came back
+   as a slot made of markup while papers were paused, and is a list once more
+   now that a paper opens in the viewer. The slot stays in the file: with BOTH
+   switches off there is still a Library with two shelves and one of them on
+   its way, which is what stops the pause reading as a missing feature. */
+const shelfOn = papersOn || flagDefault("paper.viewer", false);
 import { useSwitchIn } from "../../lib/tabMotion.js";
 import { QuizzesWaiting, PapersSlot } from "./ModuleWaiting.jsx";
 
@@ -155,8 +162,8 @@ export default function LibraryTab({
           no reader chunk, no route, no uploader, no mark. PapersSlot is
           markup and nothing else, and check:paused is updated to test for
           exactly that rather than for the section's absence. */}
-      {!papersOn && <PapersSlot />}
-      {papersOn && (
+      {!shelfOn && <PapersSlot />}
+      {shelfOn && (
       <section aria-labelledby="lsec-papers" ref={papersRef}>
         <div className="lsec">
           <div>
