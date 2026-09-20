@@ -11,6 +11,8 @@ import SaveButton from "../../features/bookmarks/SaveButton.jsx";
 import { addMany } from "../../features/bookmarks/savesStore.js";
 import { toast } from "../../features/bookmarks/toastBus.js";
 import { lockExam, unlockExam } from "../../lib/examLock.js";
+import Leaderboard from "./Leaderboard.jsx";
+import { startRun, finishRun, fetchBoard } from "../../lib/board.js";
 /* R1 — the pack's stylesheet, imported once, here, so it arrives with the exam
    chunk rather than on every first paint. `.locked-note` in the app bar is the
    one rule of it in use today; the rest waits for the markup. */
@@ -152,7 +154,7 @@ function ReviewRow({ item, mine, n, k }) {
 export default function Exam({
   title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
   minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
-  moduleCode = null, chapterNo = null,
+  moduleCode = null, chapterNo = null, chapterId = null, onLeave = null, me = null, onOpenPilot = null,
 }) {
   /* A lesson id is not a name. Without this, "where these came from" reads as
      a row of ids, which is a worse answer than no list at all. */
@@ -276,6 +278,23 @@ export default function Exam({
 
   /* ------------------------------------------------------------- hand it in */
   const handedRef = useRef(false);
+  /* R5 — THE RUN IS OPENED WHEN THE PAPER IS, because `started_at` has to be
+     the server's and not a number this browser sends. Coming back to a paper
+     returns the run already open, so resuming never restarts the clock, and a
+     run with no `submitted_at` never reaches the board. Fire and forget: a
+     paper must be sittable with the network down, and a sitting the server
+     never heard the start of simply has no row on the board. */
+  const runRef = useRef(null);
+  const [board, setBoard] = useState(null);
+  useEffect(() => {
+    if (!me || !id || !total) return undefined;
+    let live = true;
+    startRun({ me, moduleCode, chapterId, quizId: id, total })
+      .then((runId) => { if (live) runRef.current = runId; })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [me, id, total, moduleCode, chapterId]);
+
   const handOver = useCallback(() => {
     if (handedRef.current) return;
     handedRef.current = true;
@@ -290,10 +309,18 @@ export default function Exam({
     onAnswers?.(paper.map((question, i) => [question.id, s.marks[i]]));
     onDone?.({ right: s.right, toCaution: s.total - s.right, toHolding: s.right });
     clearAttempt(id);
+    /* The time and the name are decided there, not here — then the board is
+       asked for, once, with the sitting already on it. */
+    if (me && runRef.current) {
+      finishRun({ me, runId: runRef.current, score: s.right })
+        .then(() => fetchBoard({ me, quizId: id }))
+        .then((b) => setBoard(b))
+        .catch(() => {});
+    }
     if (calm()) { setPhase("done"); return; }
     setLeaving(true);
     setTimeout(() => { setLeaving(false); setPhase("done"); }, 280);
-  }, [attempt, quiz, paper, put, onAnswers, onDone, id, calm]);
+  }, [attempt, quiz, paper, put, onAnswers, onDone, id, calm, me]);
 
   /* The clock. One second at a time, only while the paper is open, and the
      paper hands itself in at zero exactly as if End and mark had been
@@ -731,6 +758,17 @@ export default function Exam({
             </div>
           </section>
         )}
+
+        {/* R6 — THE BOARD, UNDER THE RESULT. It lists RUNS, not people: one
+            account can be on it twice, under the callsign each sitting was
+            handed in under, against one code. It draws nothing until there is
+            somebody else on it (Leaderboard.jsx), so the first person to sit a
+            paper is not shown a ranking of themselves. */}
+        {phase === "done" && board && (
+          <Leaderboard title={`${title} · everyone on the module`}
+                       runs={board.runs} boardSize={board.total} total={total}
+                       onShowWho={onOpenPilot} />
+        )}
       </div>
 
       {/* THE LAST THING BETWEEN A STUDENT AND A SCORE THEY CANNOT TAKE BACK, so
@@ -750,6 +788,26 @@ export default function Exam({
         </div>
         <div className="dialog__foot">
           <button className="btn is-inline" type="button" onClick={() => dialogRef.current?.close()}>Back to exam</button>
+          {/* THE THIRD CHOICE, AND IT IS WHAT LETS R4 AND THIS APP BOTH BE
+              RIGHT. R4 says a paper has no way out but End exam. This app
+              writes the attempt on every change and stops its clock the
+              moment the paper leaves the screen, so leaving and coming back
+              is a designed behaviour with its own section in check:exam —
+              and with the arrow simply deleted, the only escape from a quiz
+              opened by mistake would be handing in a blank paper and wearing
+              the nought.
+
+              So every exit now comes through this one dialog, which says what
+              is unanswered and what is flagged before any of them. What R4 is
+              really about — slipping out of an exam without noticing — is
+              closed, and nothing marks a paper the student did not mean to
+              hand in. Owner's decision to settle it, 2026-09-20. */}
+          {onLeave && (
+            <button className="btn is-inline" type="button"
+                    onClick={() => { dialogRef.current?.close(); onLeave(); }}>
+              Leave it for now
+            </button>
+          )}
           <button className="btn btn--primary is-inline" type="button" onClick={handOver}>End and mark</button>
         </div>
       </dialog>

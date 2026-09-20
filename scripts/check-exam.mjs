@@ -53,12 +53,20 @@ console.log("\nthe shape");
   ok("shape", "the pass mark is 75%", PASS_MARK === 0.75);
   ok("shape", "8 questions needs 6", passAt(8) === 6);
   ok("shape", "and it rounds up rather than down", passAt(5) === 4 && passAt(7) === 6);
-  /* The allowance IS the estimate, made real. Both are 75 seconds a question,
-     so the cover's old "about 10 minutes" and the clock on the paper can never
-     be two different promises about the same eight questions. */
-  ok("shape", "the allowance is the estimate made real",
-     allowanceFor(8) === 600 && /10 minutes/.test(estimate(8)));
-  ok("shape", "and a paper is never given less than a minute", allowanceFor(0) === 60);
+  /* THE CLOCK IS A FLAT TWENTY MINUTES (R5), which reverses what this pair
+     used to assert — that the allowance WAS the estimate, both 75 seconds a
+     question, so the row's "about 10 minutes" and the paper's clock could
+     never be two promises about the same eight questions. They are two
+     promises now, deliberately: the row answers "how long will this take me"
+     and the paper answers "how long have I got", and on a short quiz those
+     are different numbers. Owner's decision, 2026-09-20. */
+  ok("shape", "the clock is a flat twenty minutes", allowanceFor(8) === 1200 && allowanceFor(1) === 1200);
+  ok("shape", "up to forty questions, and only up to forty",
+     allowanceFor(40) === 1200 && allowanceFor(41) === 41 * 75);
+  ok("shape", "an empty paper still gets the sitting, not a minute", allowanceFor(0) === 1200);
+  /* The estimate keeps the per-question figure, because a row reading "about
+     20 minutes" for every quiz in the module says nothing at all. */
+  ok("shape", "the row's estimate is still per question", /10 minutes/.test(estimate(8)));
 }
 
 /* ---- an attempt ---------------------------------------------------------- */
@@ -442,8 +450,21 @@ console.log("\nthe approved screen");
   ok("port", "and the quiz opens on the paper rather than on a cover",
      !/questions · pass mark/.test(page) && !/Back to question/.test(page)
      && !/nextAfterQuiz|nextLabel/.test(page));
+  /* ONE WAY OUT, AND IT NOW ASKS. This used to read `!/Leave/.test(exam)` —
+     the exam itself must offer no exit of its own. It offers exactly one now,
+     inside the end-exam dialog, and the arrow raises that same dialog rather
+     than leaving on its own (R4, conflict 5). So the rule is unchanged in
+     substance: there is one door out of an open paper and everything goes
+     through it. What is asserted is that the exam's own markup carries no
+     OTHER leave control outside the dialog. */
+  /* The CONTROL, not the word — `onLeave` is in the props list, which is
+     outside the dialog and always will be. What must not exist is a second
+     leave button anywhere on the paper. */
+  const leaveControls = [...exam.matchAll(/Leave it for now/g)].length;
   ok("port", "the way out is the module's own back link, and it is the only one",
-     /className="up"/.test(page) && !/Leave/.test(exam));
+     /className="up"/.test(page)
+     && leaveControls === 1
+     && exam.indexOf("Leave it for now") > exam.indexOf("<dialog"));
 
   /* THE LAYOUT READS THE ROOM IT IS GIVEN, not the window: the same exam is
      narrow in a split pane and wide on a laptop. */
@@ -750,11 +771,108 @@ console.log("\nR4 — the paper is locked");
   ok("locked", `the lock has one home and two readers (${holders.length})`,
      holders.length === 2 && /export function lockExam/.test(lock) && /export function unlockExam/.test(lock));
 
+  /* THE ARROW ASKS, RATHER THAN BEING DELETED. R4 says no back arrow; this app
+     keeps the attempt and stops the clock when a paper leaves the screen, so
+     deleting it would make handing in a blank paper the only way out of a quiz
+     opened by mistake. Every exit comes through one dialog instead. */
+  const quizPage = read("src/components/module/QuizPage.jsx");
+  ok("locked", "the up arrow asks while a paper is open, and goes when it is not",
+     /onClick=\{\(\) => \(lock\.locked \? lock\.askEnd\?\.\(\) : onBack\(\)\)\}/.test(quizPage));
+  ok("locked", "and the dialog's third choice leaves without marking",
+     /onLeave=\{onBack\}/.test(quizPage)
+     && /onClick=\{\(\) => \{ dialogRef\.current\?\.close\(\); onLeave\(\); \}\}/.test(exam));
+  /* The button's OWN handler, not two hundred characters of whatever follows
+     it — which is what the first version of this line measured, and it read
+     the props list. */
+  const leaveBtn = exam.match(/onClick=\{\(\) => \{ dialogRef\.current\?\.close\(\); onLeave\(\); \}\}/);
+  ok("locked", "leaving is not handing in — its handler closes and goes, and marks nothing",
+     !!leaveBtn && !/handOver|submit\(/.test(leaveBtn[0]));
+
+  /* CONFLICT 2, DECIDED: the door stays. The pack's check fails a result
+     screen carrying this button, and removing it would delete the only way to
+     the explanation for every question, the lesson each miss came from, and a
+     paper of only the misses — three things, to satisfy a check about one.
+     Asserted so that a later tidy-up cannot quietly satisfy that check by
+     taking the door out. */
+  ok("locked", "\"Go through the paper\" is still the door to the drill",
+     /Go through the paper/.test(exam) && /onClick=\{\(\) => setPhase\("review"\)\}/.test(exam));
+
   /* R1's other half, finally true: the pack's sheet is imported, once. */
   const imports = ["src/components/module/Exam.jsx", "src/App.jsx", "src/components/module/QuizPage.jsx"]
     .filter((f) => /import "\.?[./]*(components\/module\/)?exam-port\.css"/.test(read(f)));
   ok("locked", "the pack's stylesheet is imported exactly once", imports.length === 1,
      imports.join(" "));
+}
+
+/* ---- R5, R6, R7 · the board -------------------------------------------- */
+console.log("\nthe board");
+{
+  const lb = read("src/components/module/Leaderboard.jsx");
+  const board = read("src/lib/board.js");
+  const exam = read("src/components/module/Exam.jsx");
+  const sql = read("supabase/migrations/0034_quiz_runs_and_the_board.sql");
+
+  /* R5 — "The client only formats." The rank, the seconds, the place and the
+     size of the board all arrive decided; a sort or a subtraction of two
+     timestamps in either of these files is the client deciding. */
+  /* CODE ONLY. Both files ARGUE about submittedAt − startedAt in their
+     headers — that is the rule being explained — so a test that reads the
+     prose fails on the explanation of the thing it is checking. */
+  const code = (t) => t.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  ok("board", "the client does not rank, and does not work out a time",
+     !/\.sort\(/.test(code(board)) && !/\.sort\(/.test(code(lb))
+     && !/submitted_at|startedAt|Date\.parse|getTime\(\)/.test(code(board) + code(lb)));
+  ok("board", "the rank drawn is the server's, not the row's place in the array",
+     /className="lb-row__rank">\{r\.rank\}/.test(lb));
+  ok("board", "and the place counts the whole board, not the page of it",
+     /runs_total/.test(board) && /boardSize \|\| runs\.length/.test(lb));
+
+  /* R5 — the two stamps are the server's. A browser that could send either
+     could send a faster paper than it sat. */
+  ok("board", "both ends of the time are stamped by the database",
+     /started_at\s+timestamptz\s+not null default now\(\)/.test(sql)
+     && /set submitted_at = now\(\)/.test(sql)
+     && !/p_started|p_submitted|p_seconds/.test(sql));
+  /* The filter has to be in the BOARD's own where-clause. Asserting the words
+     anywhere in the file passed while they were only on the index. */
+  const visibleCte = (sql.split("with visible as (")[1] || "").split("),")[0];
+  ok("board", "an unfinished run cannot reach it",
+     /r\.submitted_at is not null/.test(visibleCte)
+     && /quiz_runs_finished_together/.test(sql));
+  ok("board", "and coming back to a paper is the same run",
+     /where user_id = uid and quiz_id = p_quiz and submitted_at is null/.test(sql));
+
+  /* R6 — the board lists RUNS. One account, several rows, one code. */
+  ok("board", "a row reads [account] callsign",
+     /className="lb-row__acct">\[\{r\.account\}\]/.test(lb)
+     && /className="lb-row__call">\{r\.callsign\}/.test(lb));
+  ok("board", "the callsign is the run's, snapshotted when it was handed in",
+     /callsign\s+=\s+\(select p\.callsign from pilot_profiles/.test(sql));
+
+  /* R7 — one stamp renderer, and this is not a second one. */
+  ok("board", "every row's stamp is the app's one renderer, through stampOf",
+     /import Stamp from "\.\.\/Stamp\.jsx"/.test(lb)
+     && /stampOf\(r\.profile\)/.test(lb)
+     && !/feTurbulence|stampSvg/.test(lb));
+
+  /* Fly solo outranks a leaderboard, and 0032 says why. */
+  ok("board", "somebody flying solo is not on anybody else's board",
+     /not coalesce\(p\.invisible, false\)/.test(sql));
+  ok("board", "but is on their own, or it could not tell them where they came",
+     /r\.user_id = uid\s+-- always on your own board/.test(sql));
+
+  /* §10 — a board of one is a ranking of yourself, which is worse than none. */
+  ok("board", "it draws nothing until somebody else is on it",
+     /if \(runs\.length < 2\) return null;/.test(lb));
+
+  /* The pack's rules paint it, so it has to be inside their scope. */
+  ok("board", "and it is inside the pack's scope, or nothing paints it",
+     /<div className="examport">/.test(lb));
+
+  /* The run is opened when the paper is, not when it is handed in. */
+  ok("board", "the run is opened with the paper", /startRun\(\{ me, moduleCode, chapterId, quizId: id, total \}\)/.test(exam));
+  ok("board", "and finished, then read, in that order",
+     exam.indexOf("finishRun(") < exam.indexOf("fetchBoard(") && /\.then\(\(\) => fetchBoard/.test(exam));
 }
 
 console.log(`\nexam: ${pass} passed, ${fails.length} failed`);

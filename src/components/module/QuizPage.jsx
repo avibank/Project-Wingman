@@ -1,5 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 import Exam from "./Exam.jsx";
+import { useExamLock } from "../../lib/examLock.js";
 import { upFrom } from "../../lib/lessonSurface.js";
 import "./module.css";
 import "./lesson.css";
@@ -25,16 +26,27 @@ import "./lesson.css";
    written on every question so the Flight Deck can offer to put you back. */
 export default function QuizPage({
   minimums, module: mod, chapter, chapterNo = null, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
+  me = null, onOpenPilot = null,
 }) {
   const run = state?.run?.[chapter.id] || null;
   const score = state?.quiz?.[chapter.id];
   const up = upFrom({ kind: "quiz", moduleId: mod?.code || mod?.id, moduleName: mod?.name })?.label;
+  /* R4 — NOTHING LEAVES AN OPEN PAPER WITHOUT BEING ASKED. The arrow stays,
+     because an attempt survives leaving and the clock stops with it, and
+     deleting the arrow would make handing in a blank paper the only way out
+     of a quiz opened by mistake. What it does not do any more is go quietly:
+     while a paper is open it raises the same end-exam dialog the browser's
+     Back raises, which says what is unanswered and what is flagged and offers
+     the three honest choices. Once the paper is marked it is an ordinary Up
+     again. */
+  const lock = useExamLock();
 
   return (
     <div className="mscreen">
       <div className="hdr">
         {/* Up, to the module — not history. */}
-        <button type="button" className="up" onClick={onBack}>
+        <button type="button" className="up"
+                onClick={() => (lock.locked ? lock.askEnd?.() : onBack())}>
           <ChevronLeft aria-hidden="true" /> {up}
         </button>
       </div>
@@ -78,6 +90,15 @@ export default function QuizPage({
                is computed from them at hand-in, so there is nothing to lose. */
             onProgress={(at) => onRun?.(chapter.id, { at, total: chapter.questions.length })}
             onAnswers={onAnswers}
+            /* The dialog's third choice: out, with the attempt kept and
+               nothing marked. Same destination as the arrow used to reach
+               directly. */
+            onLeave={onBack}
+            /* R5/R6 — who the sitting belongs to, and which paper it is. The
+               board is the only thing here that needs an identity. */
+            me={me}
+            chapterId={chapter.id}
+            onOpenPilot={onOpenPilot}
             onDone={(t) => {
               // FIRST ATTEMPT ONLY counts. A retake is a fresh sitting and must
               // not move the needle, so it is not recorded as a score.

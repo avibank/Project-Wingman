@@ -699,3 +699,58 @@ That is a teaching decision, not an approximation, so it goes in
 `BRIEF-exam-conflicts.md` with the other four rather than being made here.
 What is closed is every exit a student takes *by accident* — which is what was
 actually wrong, and what the check was failing to notice.
+
+### 7 · The exam pack's five conflicts, settled
+
+The owner took two and handed three back (2026-09-20).
+
+| # | | |
+|---|---|---|
+| 1 | Leaderboard | **Build it as drawn** (owner) |
+| 2 | "Go through the paper" | **Kept** — it is the only door to the explanation for every question, the lesson each miss came from, and a paper of only the misses. Three things deleted to satisfy a check about one. |
+| 3 | 20-minute clock | **Taken** (owner). Flat, up to forty questions. |
+| 4 | R1 taken literally | **The scoped copy stands.** Its intent is met exactly; its letter is not, because 128 bare class names would repaint the app — `.mark` alone turns every chapter tick into a circle the moment the exam chunk loads. R1's own check (file added not edited, rules in one file) passes. |
+| 5 | No back arrow | **The arrow stays, and it asks.** |
+
+Conflict 5 is the one worth writing down, because both sides of it were right.
+R4 exists because you should not be able to slip out of an exam without
+noticing. This app's `saveAttempt`/`loadAttempt` and its paused clock exist
+because a student who opens a quiz to look at it should not be punished for
+it. Delete the arrow and the only exit from a mis-tap is a marked nought;
+leave it silent and R4's hole stays open.
+
+So every exit — the arrow, the browser's Back, and End exam — now raises one
+dialog that says what is unanswered and what is flagged, and offers three
+choices: **Back to exam · Leave it for now · End and mark**. Nothing marks a
+paper the student did not mean to hand in, and nothing leaves one without
+being asked.
+
+The cost is stated rather than hidden: `exam-port.check.js` will keep printing
+FAIL on its "no Go through the paper" line, and R4's letter about the arrow is
+not satisfied. Those two are the whole of what this port does not copy.
+
+### 8 · Two places the licence card deliberately leaves the reference
+
+Both were asked for twice, and neither is recorded anywhere a diff would find
+it — so the licence's ref-diff went from **0.23%** to **8.05%** and reads as a
+regression. It is not one.
+
+* **"Create your stamp" is below the seal, not on it.** The reference draws
+  `.ghost b` absolutely positioned over the artwork (`.sblock` 162px); this
+  app stacks them (203px). The whole 82px of the diff at ×2 is that one box.
+* **The Cover button is top-right of the banner.** The reference's `.cvbtn`
+  sits `left:12px;top:12px`; ADMIN takes the left here instead.
+
+Both are commented where they are made, at the foot of `licence.css`. The
+reference is no longer the target for those two details, so the 1% bar does
+not apply to this screen without subtracting them first.
+
+### 9 · The Logbook is behind a flag, and the flag stays off
+
+`page.logbook` is off, and this pass did not turn it on. What changed under it
+is real — no streak tile, no fabricated fortnight, and chapter counts that
+come from what the app actually serves rather than data.js's skeleton — and it
+was measured by turning the flag on, looking, and turning it off again. The
+page still has no door in the app. That is deliberate and is not a defect; it
+is on the backlog rather than in it.
+

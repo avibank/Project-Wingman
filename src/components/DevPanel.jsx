@@ -23,7 +23,6 @@ const KEYS = {
 const ACCOUNT_KEYS = [
   ...Object.values(KEYS),
   "pw-completed", "pw-livery", "pw-finish", "pw-ruled", "pw-notices",
-  "pw-streak",
   // The user's own bar. A reset has to put it back to the default, or the
   // next "first visit" starts with somebody else's standard and lamps that
   // light for no visible reason.

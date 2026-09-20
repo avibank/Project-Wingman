@@ -138,7 +138,26 @@ merge them back together.
   `.exam-frame` because the design's names — `.btn`, `.option`, `.mark`,
   `.ans`, `.result` — already paint other surfaces here. The layout switches on
   **container** width, so the wrapper has to stay.
-- **The clock counts DOWN now, and hands the paper in at zero.** This file used
+- **The exam is locked while a paper is open, and every exit asks.** The app
+  bar drops the Ready Room pill and the profile menu and reads EXAM IN
+  PROGRESS; the wordmark stops being a button; the browser's Back and the
+  module's back arrow both raise the end-exam dialog rather than leaving.
+  That dialog offers three choices — Back to exam · Leave it for now · End and
+  mark — so nothing marks a paper the student did not mean to hand in and
+  nothing leaves one without being asked. `src/lib/examLock.js` is the one
+  place that knows. R4's letter says "no back arrow"; the arrow stays because
+  an attempt survives leaving and the clock stops with it, and deleting it
+  would make a blank paper the only escape from a mis-tap.
+- **The leaderboard is under the result, and it lists RUNS.** Migration 0034,
+  `src/lib/board.js` and `Leaderboard.jsx`. The rank, the seconds and the
+  place are all the server's — the client only formats, which `check:exam`
+  asserts by refusing a `.sort(` or a `Date.parse` in either file. It draws
+  nothing until somebody else is on it.
+- **The clock is a FLAT TWENTY MINUTES** for any quiz up to forty questions
+  (owner, 2026-09-20), which reverses the 75-seconds-a-question figure below.
+  `estimate` keeps the 75 seconds, because a row reading "about 20 minutes"
+  for every quiz would say nothing.
+- **The clock counts DOWN, and hands the paper in at zero.** This file used
   to say "elapsed time, never a countdown", and `quiz.js` §1 carried the
   argument: a countdown decides when you stop. The approved screen reverses it
   on purpose — the paper these students sit is timed, and a student who has
@@ -199,6 +218,15 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
+
+**0034, quiz runs and the board, has been run against the live project**
+(2026-09-20), verified by connecting rather than inferred: `quiz_runs` with its
+eleven columns, four CHECK constraints, two indexes and an open policy, and
+`start_quiz_run` / `finish_quiz_run` / `quiz_leaderboard` all in `pg_proc`.
+Driven over the anon REST path afterwards by `npm run check:board-db`, 20
+assertions as six accounts, every row deleted after. It is additive: nothing is
+migrated out of `pw-quiz-scores`, which the Library row and the gyro keep
+reading. Its header carries the argument for the wall clock and its cost.
 
 **0028, saves, has been run against the live project** (2026-09-18), verified
 by connecting rather than inferred: the table with its nine columns, the three

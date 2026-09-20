@@ -2038,6 +2038,11 @@ function AppInner() {
             <main className="content content-taxi content--full">
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapter={ch} state={moduleState}
+                me={me}
+                /* §2 — a face or a stamp opens the person, which on the board
+                   means the pilot sheet this app already carries rather than
+                   the pack's own popover. */
+                onOpenPilot={openPilot}
                 /* The chapter's NUMBER, which is its place in the module — the
                    word "Chapter 3" — and what a saved question is labelled
                    with. Nothing is saved against it: the save points at the

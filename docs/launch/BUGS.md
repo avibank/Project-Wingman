@@ -58,8 +58,8 @@ student, not how hard it was to find.
 
 | # | What | Severity | Why it is still open |
 |---|---|---|---|
-| A | **Nothing counts study days**, so `pw-streak` has no writer and the Logbook's streak tile can only ever read 0. | low | Behind `page.logbook`, which is off. Needs a day-counting rule nobody has written. |
-| B | **`ProgressPage` reads the global `CHAPTERS` array** directly, which CLAUDE.md calls "a bug waiting to surface" — it counts every chapter in the app rather than the ones in a module. | low | Same screen, same flag. |
+| A | ~~**Nothing counts study days**, so `pw-streak` has no writer and the Logbook's streak tile can only ever read 0.~~ | **closed** | **This app does not use streaks** (owner, 2026-09-20), which is the same conclusion `familiar.js` already argued for. The tile, the fortnight of dots drawn from it, `pw-streak` and `pw-longest-streak` are gone; `pw-last-visit` stays as the sentence it always was. |
+| B | ~~**`ProgressPage` reads the global `CHAPTERS` array** directly, which CLAUDE.md calls "a bug waiting to surface".~~ | **closed** | It surfaced, and it was worse than the note suggested: `content.test` is on for everyone, so the page counted data.js's **20** skeleton chapters while the app serves **12**, and the Debrief looked every score up by id in an array the fixture's ids are not in — so it listed nothing at all, for anybody. Reads `allModules`/`chaptersFor` now. Measured with the flag on: "12 chapters ahead of you", 0/3 per module. |
 | C | **`saves` is readable by anyone holding the publishable key**, like every other table here. | medium, and architectural | `auth.jwt()` is NULL on every request; fixing it means a Clerk JWT template and an authenticated client across 65 call sites. `claude/backlog-bookmarks.md` item 10. |
 
 ## 12 · Every lesson URL answered Vercel's 404 in production

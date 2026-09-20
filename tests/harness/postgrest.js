@@ -35,7 +35,7 @@ export function makeStore() {
     user_progress: [],
     blocks: [], mutes: [], wingmen: [], uploads: {},
     formation_members: [], squadron_members: [], squadrons: [],
-    chapter_completions: [], quiz_attempts: [],
+    chapter_completions: [], quiz_attempts: [], quiz_runs: [],
     /* Everything else the app touches while a paper is open. Empty, but
        PRESENT: a 501 here is the harness failing, not the product, and it
        would drown the console assertion that catches real errors. */
@@ -137,7 +137,68 @@ const uuid = () => (globalThis.crypto?.randomUUID
 
 const EDITABLE = ["body", "colour", "ring", "kind", "style", "hint", "anonymous", "resolved_at"];
 
+/* ---------------------------------------------------------------- 0034
+   THE BOARD. Mirrors the SQL rather than approximating it, because the walk
+   that drives the result screen is the only place the ordering is seen by an
+   eye: score descending, then time ascending, then the earlier hand-in — and
+   the SECONDS are the wall clock between two stamps this file writes, never a
+   countdown the page sent. An unfinished run has no submitted_at and is not on
+   the board. Somebody flying solo is on their own board and nobody else's. */
 const RPC = {
+  start_quiz_run: (s, b) => {
+    if (!b.uid || !b.p_quiz || !(b.p_total > 0)) return null;
+    const open = s.quiz_runs.find((r) => r.user_id === b.uid && r.quiz_id === b.p_quiz && !r.submitted_at);
+    if (open) return open.id;
+    const row = {
+      id: uuid(), user_id: b.uid, module_code: b.p_module || null,
+      chapter_id: b.p_chapter || null, quiz_id: b.p_quiz, total: b.p_total,
+      score: null, callsign: null, code: null,
+      started_at: new Date().toISOString(), submitted_at: null,
+    };
+    s.quiz_runs.push(row);
+    return row.id;
+  },
+
+  finish_quiz_run: (s, b) => {
+    const row = s.quiz_runs.find((r) => r.id === b.p_run && r.user_id === b.uid);
+    if (!row) return null;
+    if (row.submitted_at) return row;                 // idempotent, like the SQL
+    const p = s.pilot_profiles.find((x) => x.user_id === b.uid) || {};
+    row.submitted_at = new Date().toISOString();
+    row.score = Math.max(0, Math.min(Number(b.p_score) || 0, row.total));
+    row.callsign = p.callsign ?? null;
+    row.code = p.code ?? null;
+    return row;
+  },
+
+  quiz_leaderboard: (s, b) => {
+    const blocked = (a, c) => s.blocks.some((x) =>
+      (x.user_id === a && x.blocked_id === c) || (x.user_id === c && x.blocked_id === a));
+    const visible = s.quiz_runs.filter((r) => {
+      if (r.quiz_id !== b.p_quiz || !r.submitted_at) return false;
+      if (r.user_id === b.uid) return true;           // always on your own board
+      const p = s.pilot_profiles.find((x) => x.user_id === r.user_id) || {};
+      return !p.invisible && !blocked(b.uid, r.user_id);
+    });
+    const secs = (r) => Math.max(0, Math.floor((Date.parse(r.submitted_at) - Date.parse(r.started_at)) / 1000));
+    const sorted = [...visible].sort((x, y) =>
+      y.score - x.score || secs(x) - secs(y) || String(x.submitted_at).localeCompare(String(y.submitted_at)));
+    return sorted.slice(0, Math.max(1, Math.min(b.p_limit || 50, 200))).map((r, i) => {
+      const p = s.pilot_profiles.find((x) => x.user_id === r.user_id) || {};
+      return {
+        rank: i + 1, run_id: r.id, user_id: r.user_id,
+        callsign: (r.callsign || "").trim() || "Someone",
+        code: (r.code || "").trim() || "---",
+        score: r.score, total: r.total, seconds: secs(r),
+        is_you: r.user_id === b.uid, runs_total: sorted.length,
+        stamp_shape: p.stamp_shape ?? null, stamp_code: p.stamp_code ?? null,
+        stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,
+        stamp_pattern: p.stamp_pattern ?? null, stamp_ink: p.stamp_ink ?? null,
+        stamp_seed: p.stamp_seed ?? null, stamp_issued_at: p.stamp_issued_at ?? null,
+      };
+    });
+  },
+
   paper_mark_add: (s, b) => {
     if (!b.uid || !b.p_paper || !b.p_anchor) return null;
     const now = new Date().toISOString();

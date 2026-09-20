@@ -77,11 +77,14 @@ at" and most of these were.
 - [x] Reduced motion (Smooth Air) turns the stamp animations off —
       `check:transitions` and `test:vt` with `VT_MOTION=smooth-air`, which
       passes a step only if nothing animated.
-- [ ] Matches the reference builds side by side — DONE FOR BOOKMARKS ONLY.
-      `tests/r15-compare.mjs` measures that pack against its demo at three
-      widths; there is no equivalent for the module screen, the lesson page or
-      the licence. Those were ported rule by rule with the effective CSS
-      written out, which is not the same as measuring.
+- [x] Matches the reference builds side by side — **measured for all six
+      screens**, not only Bookmarks. `tools/ref-diff.mjs` photographs each
+      reference page and the live screen at 1280/768/390 and diffs them;
+      `public/__ref/` is generated from the reference files by
+      `tools/make-ref-pages.mjs`, so it cannot drift from them. The numbers,
+      and the two screens whose numbers no longer mean what they did, are in
+      SESSION-REPORT.md. `tests/r15-compare.mjs` still covers Bookmarks
+      against its own demo.
 
 ## Health
 - [x] Console clean — `test:routes` fails a route on any console error that is
@@ -112,14 +115,10 @@ at" and most of these were.
   contexts against one store, and each of the three is load-bearing: one
   hides, one looks, and one stays visible so that the looking means something.
 
-## What the four unticked boxes need
+## What the three unticked boxes need
 1. **A phone.** Not simulatable. Somebody has to hold one.
-2. **The reference builds, measured.** `tests/r15-compare.mjs` does it for
-   Bookmarks at three widths; the module screen, the lesson page and the
-   licence were ported rule by rule with the effective CSS written out, which
-   is careful and is not the same as measuring.
-3. **Issuing a stamp through the studio, driven.** It is driven by hand and
+2. **Issuing a stamp through the studio, driven.** It is driven by hand and
    asserted against the database; no walk presses Issue.
-4. **Signing off a lesson, driven.** It needs a video watched to the end and
+3. **Signing off a lesson, driven.** It needs a video watched to the end and
    the fixture's clips are remote, which is the same wall `test:lesson`
    already reports and skips around.

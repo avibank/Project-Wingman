@@ -39,12 +39,38 @@ at 1280, 768 and 390 and diffs them with pixelmatch. The bar is 1%.
 
 | Screen | 1280 | 768 | 390 | |
 |---|---|---|---|---|
-| licence | **0.23%** | **0.28%** | **0.28%** | passes |
+| licence | **0.23%** | **0.28%** | **0.28%** | passed |
 | preferences | **0.47%** | **0.48%** | **0.73%** | passes |
 | module | 3.42% | 4.41% | 8.64% | |
 | library | 5.41% | 6.74% | 5.56% | |
 | crew | 3.95% | 6.50% | 15.34% | |
-| lesson | 27.01% | 32.40% | 37.28% | not ported |
+| lesson | 27.01% | 32.40% | 37.28% | ported after this was written |
+
+**Re-measured 2026-09-20**, after the lesson page was ported, the owner's two
+changes to the licence card, and the papers reader being paused:
+
+| Screen | 1280 | 768 | 390 | |
+|---|---|---|---|---|
+| preferences | **0.47%** | **0.48%** | **0.73%** | passes |
+| module | 3.33% | 4.26% | 8.22% | |
+| crew | 3.86% | 6.38% | 15.23% | |
+| lesson | 14.19% | 23.76% | 25.54% | ported; roughly halved |
+| licence | 8.05% | 8.11% | 9.47% | **two owner-requested divergences** |
+| library | 34.44% | 36.61% | 44.08% | **papers are paused** |
+
+The two that moved are not drift, and the number no longer means what it did
+on either:
+
+* **Licence.** The whole 82px is `.sblock`: 162px in the reference, 203px
+  live. The reference draws "Create your stamp" ON TOP of the seal and the
+  owner asked twice for stamp above, button below, clear of it. The Cover
+  button is the same story the other way — the reference puts it top-left and
+  the owner asked for top-right. Both are commented where they are made, in
+  `licence.css`. **The reference is no longer the target for those two
+  details**, so the bar does not apply to this screen without subtracting them.
+* **Library.** The papers reader is paused (`docs/launch/PAUSE-READER.md`), so
+  the live Library has two sections where the reference has three. That number
+  means nothing until `VITE_PAPERS_READER=true`.
 
 Where a screen is over the bar, the cause is named rather than rounded off —
 §"What is left" below, and `docs/launch/DECISIONS.md` for the argument behind
@@ -216,8 +242,9 @@ that change what a student sees:
 
 Under the bar, in the order it would be sensible to do it:
 
-1. **The lesson page** — above.
-2. **Crew at 390** (15.34%) carries the most of the four ported screens,
+1. ~~**The lesson page**~~ — ported (`a8b9b6c`), 27/32/37% → 14/24/26%. Still
+   over the bar; the remainder is the container width argued below.
+2. **Crew at 390** (15.23%) carries the most of the four ported screens,
    because a long stacked column accumulates a few pixels a row.
 3. **§12 against the reference** on the remaining pills — the reference's
    `.pill` is 36.1px and the app's floor makes it 44. One decision, applied in

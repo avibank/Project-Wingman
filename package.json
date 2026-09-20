@@ -61,6 +61,7 @@
     "paper:fetch": "node scripts/fetch-paper.mjs",
     "check:paper": "node scripts/check-paper.mjs",
     "check:paused": "node scripts/check-paused.mjs",
+    "check:board-db": "node --env-file=.env.local scripts/check-board-db.mjs",
     "check:paper-db": "node --env-file=.env.local scripts/check-paper-db.mjs",
     "check:code": "node scripts/check-code.mjs",
     "check:exam": "node scripts/check-exam.mjs",
