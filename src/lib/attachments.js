@@ -25,6 +25,7 @@
    ========================================================================= */
 
 import { supabase, configured } from "./supabaseClient.js";
+import { papersOn } from "./flags.js";
 
 export const BUCKET = "chat-attachments";
 export const MAX_BYTES = 25 * 1024 * 1024;
@@ -146,6 +147,9 @@ export async function attachToMessage({ me, squadronId, messageId, pending = [] 
 /* The student's own marks in a module, shaped for the passage picker. */
 const TONE = { unsure: "v", question: "v", critical: "a" };
 export async function fetchMyMarks(me, moduleCode) {
+  /* Papers are paused, so there is nothing to pick from and the picker is not
+     shown. The query is not made rather than made and thrown away. */
+  if (!papersOn) return [];
   if (!me || !moduleCode) return [];
   const { data, error } = await supabase.rpc("my_marks_in_module", {
     uid: me, p_module: moduleCode, p_limit: 60,
@@ -181,3 +185,12 @@ export const toAttachment = (a) => ({
   quote: a.quote || null,
   anchor: a.anchor || null,
 });
+
+/* WHAT A BUBBLE IS ALLOWED TO DRAW. A passage is a quote from a paper — the
+   paper's title, its page and the words — so with papers paused it is reader
+   work showing up somewhere else, and it goes. The ROW is untouched: it stays
+   in comms_attachments, and turning papers back on draws it again. This is the
+   one read path for stored attachments (roomData.js), so filtering here covers
+   the transcript, the reply preview and the pinned copy at once. */
+export const visibleAttachments = (rows) =>
+  (rows || []).filter((a) => papersOn || a.kind !== "passage").map(toAttachment);

@@ -34,6 +34,7 @@ import {
   endRightSeat, fetchSeatMessages, postSeatMessage, keepSeatMessage, sweepSeats,
 } from "../../lib/rightSeat.js";
 import { fetchMyMarks, validateFile, readImageSize, MAX_PER_MESSAGE } from "../../lib/attachments.js";
+import { papersOn } from "../../lib/flags.js";
 import { paneTransition } from "../../lib/viewTransition.js";
 import "./room.css";
 import "./ready-room.css";
@@ -716,7 +717,9 @@ export default function ReadyRoom({
                   draft={draft} onDraft={onDraft} onSend={send} sending={sending}
                   replyTo={replyTo} onReplyTo={setReplyTo}
                   pending={pending} onRemovePending={removePending}
-                  onAttachFiles={attachFiles} onAttachPassage={attachPassage}
+                  /* Paused: no Paper passage option in the sheet. Withheld
+                     rather than hidden — the button is not rendered at all. */
+                  onAttachFiles={attachFiles} onAttachPassage={papersOn ? attachPassage : null}
                   marks={marks || []} marksLoading={marksLoading} onWantMarks={wantMarks}
                   sheet={st.sheet} onSheet={setSheet} onBack={backPane}
                   onInfoSheet={() => setSheetOf(squadron)} onFocusSearch={focusSearch}

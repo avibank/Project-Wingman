@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { toAttachment } from "./attachments.js";
+import { visibleAttachments } from "./attachments.js";
 import { isFlySolo } from "./flySolo.js";
 import { fetchBlocks, fetchMutes } from "./squadron.js";
 import { fetchAllPresence } from "./presence.js";
@@ -51,7 +51,7 @@ const toMessage = (r) => ({
   reactions: {},
   /* Embedded in the same query as the message, one round trip for the whole
      transcript rather than one per bubble. */
-  attachments: r.deleted_at ? [] : (r.attachments || []).map(toAttachment),
+  attachments: r.deleted_at ? [] : visibleAttachments(r.attachments),
 });
 
 const MSG_COLS =

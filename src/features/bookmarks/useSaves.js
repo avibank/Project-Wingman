@@ -1,8 +1,23 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { subscribe, getSnapshot, pruneMissing } from './savesStore';
 import { content, useContentVersion } from './content';
+import { papersOn } from '../../lib/flags.js';
 
-export const KINDS = /** @type {const} */ (['question', 'card', 'video', 'page']);
+/* PAGES IS THE READER'S FOLDER, AND PAPERS ARE PAUSED.
+ *
+ * `KINDS` is what every screen here iterates: the folder cards, the grouping,
+ * the totals. Taking `page` out of it is what makes the fourth folder absent
+ * rather than empty — and it has to be absent, because every word on it names
+ * the reader.
+ *
+ * WHAT IS NOT DONE, DELIBERATELY: the rows. A `page` save stays in `saves`
+ * exactly as it is. It is skipped on the way in (below), never resolved and
+ * never pruned — pruning DELETES from the server, and a pause that quietly
+ * emptied somebody's bookmarks would not be a pause. Turn the variable back
+ * on and the folder comes back with everything in it.
+ */
+const ALL_KINDS = /** @type {const} */ (['question', 'card', 'video', 'page']);
+export const KINDS = ALL_KINDS.filter((k) => papersOn || k !== 'page');
 export const FOLDERS = {
   question: { slug: 'questions', name: 'Questions', action: 'Practise these',
     hint: 'Bookmark a question while you take a quiz.', cta: 'Take a quiz', where: 'on any question while you take a quiz' },
@@ -66,6 +81,8 @@ export function useModuleSaves(moduleId) {
     const byKind = { question: [], card: [], video: [], page: [] }; const missing = []; let waiting = 0;
     for (const row of s.rows) {
       if (moduleId !== 'all' && row.module_id !== moduleId) continue;
+      /* Paused: held, not resolved, not counted and above all not pruned. */
+      if (!papersOn && row.kind === 'page') continue;
       const it = resolve(row);
       if (it) byKind[row.kind].push(it);
       else if (it === null) missing.push(row);
@@ -84,5 +101,8 @@ export function useModuleSaves(moduleId) {
     Manual strip's drawn bag both read this, so they cannot disagree. */
 export function useSavesCount(moduleId) {
   const s = useSavesState();
-  return s.rows.reduce((n, r) => n + (moduleId === 'all' || r.module_id === moduleId ? 1 : 0), 0);
+  /* The bag counts what the bag can open. A page bookmark is still saved; it
+     is not one of the things this module's Bookmarks will show today. */
+  return s.rows.reduce((n, r) => n
+    + ((moduleId === 'all' || r.module_id === moduleId) && (papersOn || r.kind !== 'page') ? 1 : 0), 0);
 }

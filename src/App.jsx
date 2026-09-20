@@ -10,6 +10,8 @@ import { parseRoute, path as routePath } from "./lib/routes.js";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
 import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH, DEMO_PAPERS } from "./lib/demoFixture.js";
+/* The pause switch, up here because the CHUNK map below is built from it. */
+import { papersOn, useFlags } from "./lib/flags.js";
 /* A CHUNK THAT VANISHED UNDER YOU, and why this wrapper exists.
  *
  * Every route below is code-split and the built filenames carry a content
@@ -71,12 +73,16 @@ const CHUNK = {
   // Its own chunk, and it matters more here than anywhere else: pdf.js is the
   // largest thing this app has ever depended on, and nobody who never opens a
   // paper should pay a byte of it. check:bundle is the gate that says so.
-  paper: chunk(() => import("./components/paper/v6/ReaderV6.jsx")),
+  /* PAUSED. `papersOn` is a build-time constant, so with papers off this
+     folds to null and the import() goes with it — the reader's chunk and
+     pdf.js are not built, not prefetched and not fetched. Turning the
+     variable on puts the line back exactly as it was. */
+  paper: papersOn ? chunk(() => import("./components/paper/v6/ReaderV6.jsx")) : null,
   /* Adding a paper runs the whole ingest — pdf.js, the text layer, thumbnail
      rendering — so it is lazy for the same reason the reader is: nobody who is
      not adding a paper should pay a byte of it. check:bundle caught this as a
      428KB regression on first paint when it was a static import. */
-  addPaper: chunk(() => import("./components/module/AddPaper.jsx")),
+  addPaper: papersOn ? chunk(() => import("./components/module/AddPaper.jsx")) : null,
   quiz: chunk(() => import("./components/module/QuizPage.jsx")),
   dev: chunk(() => import("./components/DevPanel.jsx")),
   pdf: chunk(() => import("./components/PdfPanel.jsx")),
@@ -98,7 +104,7 @@ const ROUTE_CHUNKS = {
   module: [CHUNK.module],
   chapter: [CHUNK.quiz, CHUNK.moduleHub],
   lesson: [CHUNK.lesson],
-  paper: [CHUNK.paper],
+  ...(papersOn ? { paper: [CHUNK.paper] } : {}),
   review: [CHUNK.module],
   ready: [CHUNK.roomShell],
   modules: [CHUNK.modules],
@@ -148,7 +154,6 @@ function warmOnIntent(e) {
 const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
 import { finishVars, ruledLayer } from "./lib/finishEngine.js";
-import { useFlags } from "./lib/flags.js";
 import { fetchAllPresence, heartbeat } from "./lib/presence.js";
 import { listen, LIVE_TABLES } from "./lib/live.js";
 import { useDisplayName } from "./lib/identity.js";
@@ -164,8 +169,8 @@ const ModuleHub = lazy(CHUNK.moduleHub);
 import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
 const ModuleScreen = lazy(CHUNK.module);
 const LessonPage = lazy(CHUNK.lesson);
-const ReaderV6 = lazy(CHUNK.paper);
-const AddPaper = lazy(CHUNK.addPaper);
+const ReaderV6 = papersOn ? lazy(CHUNK.paper) : null;
+const AddPaper = papersOn ? lazy(CHUNK.addPaper) : null;
 const QuizPage = lazy(CHUNK.quiz);
 import { moduleByCode, chaptersFor, papersFor, allModules, loadTestContent } from "./components/module/moduleContent.js";
 const DevPanel = lazy(CHUNK.dev);
@@ -293,7 +298,10 @@ function AppInner() {
     route.name === "notfound"
     || (route.name === "modules" && !flags["module.interior"])
     || (route.name === "ready" && !flags["social.readyroom"])
-    || (route.name === "logbook" && !flags["page.logbook"]);
+    || (route.name === "logbook" && !flags["page.logbook"])
+    /* Papers are paused: a paper's address is an ordinary bad URL, decided
+       here — above the title and before anything is fetched or imported. */
+    || (route.name === "paper" && !papersOn);
 
   useDocumentTitle(titleForRoute(notFound ? { name: "notfound" } : route));
 
@@ -1106,6 +1114,7 @@ function AppInner() {
      Fire-and-forget on purpose. If it fails, the ordinary lazy import runs
      again at render and the only cost is the time this was meant to save. */
   useEffect(() => {
+    if (!papersOn) return;                       // paused: nothing to warm
     if (route.name !== "paper" && route.tab !== "library") return;
     CHUNK.paper()
       .then((m) => m?.warm?.())
@@ -1130,7 +1139,8 @@ function AppInner() {
     () => progress.get(`pw-papers:${activeModuleCode}`, []) || []);
   const [papersLoading, setPapersLoading] = useState(true);
   useEffect(() => {
-    if (!activeModuleCode || !me) { setPapersLoading(false); return undefined; }
+    /* Paused: the query is not made at all, rather than made and ignored. */
+    if (!papersOn || !activeModuleCode || !me) { setPapersLoading(false); return undefined; }
     let live = true;
     setAddedPapers(progress.get(`pw-papers:${activeModuleCode}`, []) || []);
     setPapersLoading(true);
@@ -1199,8 +1209,9 @@ function AppInner() {
     /* ?fixture=demo hands the Library the reference's own three papers, so a
        pixel diff of that tab measures the rows rather than the shelf. Dev
        only — demoOn() is constantly false in a production build. */
-    () => (demoOn() ? DEMO_PAPERS
-      : [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers]),
+    () => (!papersOn ? []
+      : demoOn() ? DEMO_PAPERS
+        : [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers]),
     [activeModuleCode, useTestContent, addedPapers],
   );
   /* Papers are listed one module at a time, from the database. The adapter is
@@ -1209,6 +1220,14 @@ function AppInner() {
      — the difference between holding a bookmark and pruning it off the
      server. See content.js. */
   useEffect(() => {
+    /* PAUSED MEANS "NOT KNOWN", NEVER "NONE", and the difference is a
+       student's bookmarks. `content.paper()` answers `undefined` until a
+       module's papers have been listed, and `null` — the answer that PRUNES,
+       which DELETES the row from the server — only once a list has come back
+       without it. Handing it an empty list here would be that second answer
+       about every page anybody ever bookmarked. So nothing is provided, and
+       the Pages folder is hidden at read time instead (useSaves.js). */
+    if (!papersOn) return;
     if (!papersLoading) providePapers(activeModuleCode, modulePapers);
   }, [activeModuleCode, modulePapers, papersLoading]);
   const lastPaper = useMemo(
@@ -1656,10 +1675,13 @@ function AppInner() {
                 });
               }
             }}
-            /* A passage quoted in chat opens the paper it came from, in the reader. */
-            onOpenPaper={(moduleCode, paperId) => {
+            /* A passage quoted in chat opens the paper it came from, in the
+               reader. Paused: no passage renders, so nothing can call this —
+               it is withheld as well, so a passage that slipped through would
+               be inert rather than a link to a 404. */
+            onOpenPaper={papersOn ? ((moduleCode, paperId) => {
               if (paperId) go(routePath.paper(moduleCode || activeModuleCode, paperId));
-            }}
+            }) : null}
             onBlock={async (userId) => {
               // §9 — blocking is symmetric and total. The Ban button called
               // onBlock?.() and nobody supplied it, so it was a safety control
@@ -2107,7 +2129,7 @@ function AppInner() {
           {/* Adding a paper is a sheet over the Library rather than a route:
               it is one action on one screen, and it has to be able to fail
               back to exactly where it was started. */}
-          {addingPaper && (
+          {papersOn && addingPaper && (
             <div className="sheet-scrim" onClick={(e) => { if (e.target === e.currentTarget) setAddingPaper(false); }}>
               <Suspense fallback={<div className="addpaper"><p>Getting the tools…</p></div>}>
               <AddPaper
