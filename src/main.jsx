@@ -2,6 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
+import { sweepStorage } from "./lib/storage.js";
+
+/* BEFORE ANYTHING READS STORAGE. The epoch sweep takes the old course's state
+   off a tester's device — see storage.js. It has to run here rather than in an
+   effect: flags.js reads `pw-flags` and UserProgressProvider reads its keys
+   while the first render is still being built, so a sweep in a component would
+   clear them one frame too late and the first paint would be the old app. */
+sweepStorage();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
