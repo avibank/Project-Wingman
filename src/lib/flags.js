@@ -47,6 +47,13 @@ export const FLAGS = [
      night before two people study on it: turning it off puts the previous
      reader back with one click and no deploy. Delete it once a week has passed
      without anybody reaching for it. */
+  /* THE VIEWER IS NOT THE READER, and they are two switches on purpose.
+     `VITE_PAPERS_READER` pauses the annotation reader — the tools, the marks,
+     the ink, the island's rail. What this gates is a different thing entirely:
+     a paper that opens to be scrolled, bookmarked and downloaded, and cannot
+     mark anything. Turning the reader back on must not be the price of having
+     papers at all, and shipping the viewer must not bring the editor with it. */
+  { id: "paper.viewer", label: "Papers", note: "Papers open in Wingman: scroll, bookmark a page, download. Not the marking reader.", everyone: true },
   { id: "reader.v2", label: "Reader rebuild", note: "The rebuilt papers reader — floating chrome, a tray you build, marks as objects. Off is the previous reader.", everyone: true },
   // The one switch that takes the dev panel out. Off for everyone including
   // admins until it is turned on deliberately, and the panel additionally

@@ -1,7 +1,7 @@
 import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
-import { useState, useRef, useEffect, useLayoutEffect, lazy, Suspense, useMemo, useCallback } from "react";
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ClerkProvider, useUser } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TransitionRouter, { popHandler } from "./components/TransitionRouter.jsx";
@@ -89,6 +89,10 @@ const CHUNK = {
   pdf: chunk(() => import("./components/PdfPanel.jsx")),
   roomShell: chunk(() => import("./components/room/ReadyRoom.jsx")),
   profile: chunk(() => import("./components/Profile.jsx")),
+  /* THE VIEWER, and it is not the reader. Its own chunk, because pdf.js is
+     the largest thing this app depends on and nobody who never opens a paper
+     should pay a byte of it — the same reason the reader had one. */
+  viewer: chunk(() => import("./components/paper/viewer/PaperViewer.jsx")),
   /* Clerk's own account UI, behind the two buttons that were dead. Large, and
      nobody who never presses them should pay for it. */
   account: chunk(() => import("./components/AccountPortal.jsx")),
@@ -108,7 +112,7 @@ const ROUTE_CHUNKS = {
   module: [CHUNK.module],
   chapter: [CHUNK.quiz, CHUNK.moduleHub],
   lesson: [CHUNK.lesson],
-  ...(papersOn ? { paper: [CHUNK.paper] } : {}),
+  paper: [CHUNK.viewer, ...(papersOn ? [CHUNK.paper] : [])],
   review: [CHUNK.module],
   ready: [CHUNK.roomShell],
   modules: [CHUNK.modules],
@@ -187,6 +191,7 @@ import ReadyRoomPill from "./components/ReadyRoomPill.jsx";
 const ReadyRoomShell = lazy(CHUNK.roomShell);
 const Profile = lazy(CHUNK.profile);
 const AccountPortal = lazy(CHUNK.account);
+const PaperViewer = lazy(CHUNK.viewer);
 const ProgressPage = lazy(CHUNK.progress);
 const BookmarksScreens = lazy(CHUNK.bookmarks);
 /* The bag sits in the Flight Deck's instrument strip, which is on the first
@@ -196,7 +201,9 @@ import { FlightBag } from "./features/bookmarks/deck.js";
 import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
 import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
-import { initSaves, resetSaves, noStudent } from "./features/bookmarks/savesStore.js";
+import { initials } from "./lib/familiar.js";
+import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
+         subscribe as subscribeSaves, getSnapshot as savesSnapshot } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
 import { stampOf, stampTilt } from "./lib/stamp.js";
 import { SIGNOFF_KEY, sign, unsign, tiltOf } from "./lib/signoff.js";
@@ -311,7 +318,9 @@ function AppInner() {
     || (route.name === "logbook" && !flags["page.logbook"])
     /* Papers are paused: a paper's address is an ordinary bad URL, decided
        here — above the title and before anything is fetched or imported. */
-    || (route.name === "paper" && !papersOn);
+    /* Papers are reachable while EITHER answers yes. The viewer is the one
+       that is on; the paused reader is the one that is not. */
+    || (route.name === "paper" && !papersOn && !flags["paper.viewer"]);
 
   useDocumentTitle(titleForRoute(notFound ? { name: "notfound" } : route));
 
@@ -773,7 +782,9 @@ function AppInner() {
   const resumePlace = (place) => {
     const target = placeTarget(place, routePath);
     if (!target) return;
-    if (target.file) window.open(`/${target.file.replace(/^\//, "")}`, "_blank", "noopener");
+    /* The same hand-built path as openPaper had, with the same fault: a
+       Supabase url came out as `/https://…`. */
+    if (target.file) window.open(fileHref(target.file), "_blank", "noopener");
     else go(target.href);
   };
 
@@ -1149,10 +1160,19 @@ function AppInner() {
     return () => { live = false; };
   }, [isSignedIn, me]);
 
-  /* ------------------------------------------------------ the paper reader
-     Module 1 only for now, and behind a flag on top of that. Everything else
-     keeps opening the file in a tab, which is what it did before this existed
-     — a module without the reader must not lose its papers. */
+  /* ------------------------------------------------------------ the papers
+     TWO ANSWERS, NOT ONE. `paper.viewer` is the thing students get: a paper
+     that opens to be scrolled, bookmarked and downloaded. `library.reader` is
+     the paused annotation reader — the tools, the marks, the ink — and it is
+     off, and turning it on must not be the price of having papers at all.
+
+     `activeModuleCode === "M1"` used to be on this line and it was a dev
+     condition that shipped: papers opened in the app on Module 1 and in a
+     browser tab everywhere else, so the same control did two different things
+     depending which module you were in. */
+  const viewerOn = flags["paper.viewer"];
+  /* The one route that takes the whole screen besides the Ready Room. */
+  const paperFull = route.name === "paper" && viewerOn;
   const readerOn = flags["library.reader"] && activeModuleCode === "M1";
   const [addingPaper, setAddingPaper] = useState(false);
 
@@ -1168,7 +1188,7 @@ function AppInner() {
      Fire-and-forget on purpose. If it fails, the ordinary lazy import runs
      again at render and the only cost is the time this was meant to save. */
   useEffect(() => {
-    if (!papersOn) return;                       // paused: nothing to warm
+    if (!papersOn) return;                       // the READER is paused; nothing of it to warm
     if (route.name !== "paper" && route.tab !== "library") return;
     CHUNK.paper()
       .then((m) => m?.warm?.())
@@ -1194,7 +1214,10 @@ function AppInner() {
   const [papersLoading, setPapersLoading] = useState(true);
   useEffect(() => {
     /* Paused: the query is not made at all, rather than made and ignored. */
-    if (!papersOn || !activeModuleCode || !me) { setPapersLoading(false); return undefined; }
+    /* THE LIST FOLLOWS WHATEVER CAN OPEN ONE. It followed the paused reader,
+       which is why a paper was "not in this module" the moment the viewer
+       arrived: the query was never made. */
+    if ((!papersOn && !viewerOn) || !activeModuleCode || !me) { setPapersLoading(false); return undefined; }
     let live = true;
     setAddedPapers(progress.get(`pw-papers:${activeModuleCode}`, []) || []);
     setPapersLoading(true);
@@ -1263,10 +1286,10 @@ function AppInner() {
     /* ?fixture=demo hands the Library the reference's own three papers, so a
        pixel diff of that tab measures the rows rather than the shelf. Dev
        only — demoOn() is constantly false in a production build. */
-    () => (!papersOn ? []
+    () => (!papersOn && !viewerOn ? []
       : demoOn() ? DEMO_PAPERS
         : [...(papersFor(activeModuleCode, useTestContent) || []), ...addedPapers]),
-    [activeModuleCode, useTestContent, addedPapers],
+    [activeModuleCode, useTestContent, addedPapers, viewerOn],
   );
   /* Papers are listed one module at a time, from the database. The adapter is
      told which module a list belongs to so that a save pointing at a paper in
@@ -1281,13 +1304,46 @@ function AppInner() {
        without it. Handing it an empty list here would be that second answer
        about every page anybody ever bookmarked. So nothing is provided, and
        the Pages folder is hidden at read time instead (useSaves.js). */
-    if (!papersOn) return;
+    /* "NOT KNOWN" AND "NONE" ARE DIFFERENT ANSWERS, and the difference is a
+       student's bookmarks: `content.paper()` answers `null` once a module's
+       papers have been listed without one, and `null` PRUNES, which DELETES
+       the row from the server. Providing an empty list while nothing can open
+       a paper would be that second answer about every page anybody ever
+       saved. With the viewer on, the list is real and may be provided. */
+    if (!papersOn && !viewerOn) return;
     if (!papersLoading) providePapers(activeModuleCode, modulePapers);
   }, [activeModuleCode, modulePapers, papersLoading]);
   const lastPaper = useMemo(
     () => modulePapers.find((p) => p.id === paperPlace?.paperId) || null,
     [modulePapers, paperPlace],
   );
+
+  /* ------------------------------------------------ a page, bookmarked
+     THE SAVE IS THE ONE THE REST OF THE APP ALREADY USES. `saves` has held
+     `kind='page'` with a page column since migration 0028, `savesStore` is its
+     only writer, and the Pages folder in Bookmarks reads the same rows — so
+     the viewer writes nothing of its own and a page saved here turns up there
+     with no second path to keep in step.
+
+     OPTIMISTIC AND INSTANT, because `addSave` changes the screen first and
+     lets the server follow; a bookmark that waits on the network reads as
+     broken, and the island's message is the acknowledgement. */
+  const savesVersion = useSyncExternalStore(subscribeSaves, savesSnapshot, savesSnapshot);
+  const savedPagesFor = useCallback((paperId) => {
+    const set = new Set();
+    for (const r of savesVersion.rows || []) {
+      if (r.kind === "page" && r.ref_id === paperId && r.page) set.add(r.page);
+    }
+    return set;
+  }, [savesVersion]);
+  const togglePageSave = useCallback((paper, pg, on) => {
+    if (!paper?.id || !pg) return;
+    if (on) addSave({ kind: "page", moduleId: activeModuleCode, refId: paper.id, page: pg });
+    else {
+      const row = findSave("page", paper.id, pg);
+      if (row) removeSave(row);
+    }
+  }, [activeModuleCode]);
 
   const readerPin = readerOn
     ? { paper: lastPaper, page: paperPlace?.page || 1, pages: lastPaper?.pages || null }
@@ -1302,10 +1358,18 @@ function AppInner() {
       ...progress.get("pw-paper-opened", {}), [paper.id]: true,
     });
     recordPlace({ kind: "paper", paperId: paper.id, title: paper.title, file: paper.file });
-    if (flags["library.reader"] && activeModuleCode === "M1") {
+    /* `activeModuleCode === "M1"` USED TO BE HERE, and it was a dev condition
+       that shipped: papers opened in the app on Module 1 and fell through to a
+       browser tab on every other module, so the same control did two different
+       things depending which module you happened to be in. */
+    if (viewerOn || flags["library.reader"]) {
       go(routePath.paper(activeModuleCode, paper.id));
     } else {
-      window.open(`/${String(paper.file).replace(/^\//, "")}`, "_blank", "noopener");
+      /* `fileHref`, NOT A PATH BUILT BY HAND. This was
+         `/${paper.file.replace(/^\//, "")}` — and a paper stored in Supabase
+         carries an ABSOLUTE url, so that produced `/https://…` and opened a
+         404 on this origin. fileHref already tells the two apart. */
+      window.open(fileHref(paper.file), "_blank", "noopener");
     }
   }, [progress, flags, activeModuleCode]);
 
@@ -1494,6 +1558,11 @@ function AppInner() {
       data-aur={finish === "aurora" && variant !== "day" ? "1" : undefined}
       data-paper={finish === "manual" ? "1" : undefined}
       data-roomfull={roomFull ? "1" : undefined}
+      /* THE VIEWER OWNS THE SCREEN TOO. `.deck` is the scroller, so a paper
+         that simply grows inside it never scrolls itself and the island —
+         positioned against the viewer's own box — scrolls out of sight on the
+         first flick. Stamped here rather than inferred, like the room's. */
+      data-paperfull={paperFull ? "1" : undefined}
       data-fiche={finish === "manual" && variant !== "day" ? "1" : undefined}
       // Tooth in Day whatever the finish. The Day brief excluded Manual, but
       // paper wants fibre more than anything else here does, and the
@@ -1922,6 +1991,25 @@ function AppInner() {
                     Back to the Library
                   </button>
                 </div>
+              </main>
+            );
+          }
+          /* THE VIEWER, NOT THE READER. `paper.viewer` and the paused
+             `library.reader` are two independent answers, and this is the one
+             students get: scroll, bookmark a page, download. It cannot mark
+             anything and imports nothing from the paused reader. */
+          if (flags["paper.viewer"] && !readerOn) {
+            return (
+              <main className="content content-taxi content--full">
+                <PaperViewer
+                  paper={paper}
+                  initials={initials(displayName)}
+                  startPage={Number(new URLSearchParams(window.location.search).get("page")) || 1}
+                  savedPages={savedPagesFor(paper.id)}
+                  onToggleSave={(pg, on) => togglePageSave(paper, pg, on)}
+                  onPlace={(pg) => progress.set("pw-paper-place", { paperId: paper.id, page: pg })}
+                  onBack={() => go(routePath.library(activeModuleCode))}
+                />
               </main>
             );
           }

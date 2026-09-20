@@ -1,7 +1,19 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { subscribe, getSnapshot, pruneMissing } from './savesStore';
 import { content, useContentVersion } from './content';
-import { papersOn } from '../../lib/flags.js';
+import { papersOn, flagDefault } from '../../lib/flags.js';
+
+/* PAGES IS A FOLDER AGAIN, and the reason is that a page saved in the viewer
+   has somewhere to go. It was hidden while papers were paused — the folder's
+   every word named a reader nobody could reach — and the rows stayed in
+   `saves` untouched the whole time, which is what makes turning it back on a
+   one-line change rather than a restore.
+
+   THE VIEWER, NOT THE READER. `paper.viewer` is what students have;
+   `VITE_PAPERS_READER` still pauses the annotation reader and is still off.
+   `flagDefault` rather than the hook, because this module is not a component
+   and the folder list is the same for everybody. */
+const pagesOn = papersOn || flagDefault('paper.viewer', false);
 
 /* PAGES IS THE READER'S FOLDER, AND PAPERS ARE PAUSED.
  *
@@ -17,7 +29,7 @@ import { papersOn } from '../../lib/flags.js';
  * on and the folder comes back with everything in it.
  */
 const ALL_KINDS = /** @type {const} */ (['question', 'card', 'video', 'page']);
-export const KINDS = ALL_KINDS.filter((k) => papersOn || k !== 'page');
+export const KINDS = ALL_KINDS.filter((k) => pagesOn || k !== 'page');
 export const FOLDERS = {
   question: { slug: 'questions', name: 'Questions', action: 'Practise these',
     hint: 'Bookmark a question while you take a quiz.', cta: 'Take a quiz', where: 'on any question while you take a quiz' },
@@ -81,8 +93,9 @@ export function useModuleSaves(moduleId) {
     const byKind = { question: [], card: [], video: [], page: [] }; const missing = []; let waiting = 0;
     for (const row of s.rows) {
       if (moduleId !== 'all' && row.module_id !== moduleId) continue;
-      /* Paused: held, not resolved, not counted and above all not pruned. */
-      if (!papersOn && row.kind === 'page') continue;
+      /* Held, not resolved, not counted and above all not PRUNED, while there
+         is nowhere for a page to go. Pruning DELETES from the server. */
+      if (!pagesOn && row.kind === 'page') continue;
       const it = resolve(row);
       if (it) byKind[row.kind].push(it);
       else if (it === null) missing.push(row);
@@ -104,5 +117,5 @@ export function useSavesCount(moduleId) {
   /* The bag counts what the bag can open. A page bookmark is still saved; it
      is not one of the things this module's Bookmarks will show today. */
   return s.rows.reduce((n, r) => n
-    + ((moduleId === 'all' || r.module_id === moduleId) && (papersOn || r.kind !== 'page') ? 1 : 0), 0);
+    + ((moduleId === 'all' || r.module_id === moduleId) && (pagesOn || r.kind !== 'page') ? 1 : 0), 0);
 }

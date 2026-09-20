@@ -1,0 +1,200 @@
+/* =============================================================================
+   THE ISLAND, FOR THE VIEWER.
+   -----------------------------------------------------------------------------
+   THE CHROME *IS* THE ISLAND. There is no tool bar, no bottom scrubber, no side
+   panel, no floating buttons: a page, and one pill above it. That is the
+   owner's instruction and it is the whole design of this screen.
+
+   LIFTED FROM `paper/v6/reader.css`, NOT IMPORTED FROM IT. The annotation
+   reader is paused and not one line of it is in the build; taking a stylesheet
+   out of it at runtime would put it back. So the island's rules are copied
+   here, byte for byte apart from the root class — `.rdr` becomes `.pvw` —
+   which is also what keeps the two from ever painting each other.
+
+   THE TOKENS COME FIRST because the block below is written against the
+   reader's vocabulary (`--isl`, `--lv`, `--txt-2`, `--spring`) and this app
+   speaks its own. They are aliased once, here, exactly as exam.css does it,
+   so nothing in the lifted block had to be edited to fit.
+
+   WHAT IS NOT HERE, because there is nothing to draw it for: the class-marks
+   dot, the rail, the chest, the props popovers, the marks panel. Their rules
+   went with them rather than sitting unused — a stylesheet that paints things
+   the markup cannot produce is a map of a building that was never built.
+   ========================================================================= */
+.pvw{
+  --isl: color-mix(in srgb, var(--active) 12%, var(--ground));
+  --isln: color-mix(in srgb, var(--active) 24%, var(--line));
+  --sh: 0 10px 34px rgb(0 0 0 / .34);
+  --lv: var(--active);
+  --txt: var(--t1);
+  --txt-2: var(--t2);
+  --txt-3: var(--t3);
+  --fill: var(--raised);
+  --hair: var(--line);
+  --hair-2: var(--line);
+  --warn: var(--caution);
+  --k: var(--active);
+  --ease: cubic-bezier(.3,.7,.3,1);
+  --spring: cubic-bezier(.22,1,.36,1);
+  --r-xs: 9px;
+}
+.app.theme-light .pvw{
+  --isl: color-mix(in srgb, var(--active) 8%, #fff);
+  --sh: 0 10px 30px rgb(16 26 38 / .16);
+}
+
+/* THE VIEWER OWNS THE SCREEN, and it has to.
+   `.deck` is the app's scroller (CLAUDE.md), so a surface that just grows
+   inside it never scrolls itself — and the island is positioned against its
+   own box, so on a fourteen-page paper it sat at the top of a 15,210px column
+   and scrolled out of sight on the first flick. The chrome IS the island;
+   chrome that leaves is not chrome. Measured before this rule existed: stage
+   clientHeight 15210, scrollHeight 15210, scrolls: false.
+
+   `data-paperfull` is stamped by App rather than inferred, the same way the
+   Ready Room's `data-roomfull` is, so the shell and the viewer cannot
+   disagree about which route is in front of you. */
+.app[data-paperfull="1"]{ height: 100dvh; overflow: hidden; }
+.app[data-paperfull="1"] .deck{ padding: 0; margin-top: 0; overflow: hidden; overscroll-behavior: contain; }
+.app[data-paperfull="1"] .deck-inner{ max-width: none; gap: 0; mask-image: none; height: 100%; min-height: 0; }
+.app[data-paperfull="1"] .content--full{ height: 100%; min-height: 0; padding: 0; }
+
+/* The stage the island floats over. The page NEVER narrows for chrome — the
+   panels float, which is a locked decision: a document that reflows when a
+   tray opens is a document you lose your place in. */
+.pvw{ position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.pvw .stage{ flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
+  background: var(--ground); padding: 62px 0 40px; scroll-behavior: auto; }
+
+/* One page. A canvas at the paper's own aspect, with a spacer standing in for
+   every page not yet drawn — that is what keeps a 300-page manual from
+   allocating 300 canvases on a phone. */
+.pvw .sheet{ width: var(--pw, 720px); max-width: calc(100% - 32px); margin: 0 auto 18px;
+  background: #fff; border-radius: 3px; position: relative;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .3), 0 14px 36px rgb(0 0 0 / .26); }
+.app.theme-light .pvw .sheet{ box-shadow: 0 1px 3px rgb(18 30 44 / .14), 0 14px 36px rgb(18 30 44 / .13); }
+.pvw .sheet canvas{ display: block; width: 100%; height: auto; border-radius: 3px; }
+/* The corner ribbon on a saved page. */
+.pvw .sheet[data-bm="1"]::after{ content: ""; position: absolute; top: 0; right: 34px;
+  width: 16px; height: 24px; background: var(--lv);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); }
+.pvw .warmth{ position: absolute; inset: 0; pointer-events: none; border-radius: 3px;
+  background: #FFB25E; mix-blend-mode: multiply; opacity: calc(var(--warm, 0) * .13); }
+
+/* ── the island ────────────────────────────────────────────────────── */
+.pvw .isl{position:absolute;top:15px;left:50%;z-index:50;
+  height:36px;border-radius:18px;overflow:hidden;
+  background:var(--isl);border:1px solid var(--isln);box-shadow:var(--sh);
+  transform:translateX(-50%);
+  transition:width .46s var(--spring),height .42s var(--spring),
+             border-radius .4s var(--ease),border-color .3s var(--ease),
+             background .3s var(--ease);
+  -webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6)}
+.pvw .isl[data-tone="warn"]{border-color:color-mix(in srgb,var(--warn) 58%,transparent);
+  background:color-mix(in srgb,var(--warn) 15%,#0B1016)}
+.rdr[data-look="light"] .isl[data-tone="warn"]{background:color-mix(in srgb,var(--warn) 16%,#fff)}
+
+.pvw .head{position:relative;height:36px}
+.pvw .base{position:absolute;inset:0;display:flex;align-items:center;padding:0 12px;
+  transition:opacity .18s var(--ease),transform .3s var(--ease)}
+.pvw .isl[data-msg="1"] .base{opacity:0;transform:translateY(-7px) scale(.94);pointer-events:none}
+.pvw .dotw{width:22px;position:relative;display:flex;align-items:center;flex:0 0 auto}
+.pvw .dot{transition:opacity .2s var(--ease),background .3s var(--ease)}
+.pvw .isl[data-open] .dot{opacity:0;pointer-events:none}
+.pvw .bk{position:absolute;left:-4px;top:50%;margin-top:-11px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;color:var(--txt-2);opacity:0;transform:scale(.66);
+  pointer-events:none;transition:opacity .22s var(--ease),transform .3s var(--spring),color .16s}
+.pvw .isl[data-open] .bk{opacity:1;transform:none;pointer-events:auto;transition-delay:.1s}
+.pvw .bk:hover{color:var(--txt);background:var(--fill)}
+.pvw .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;cursor:pointer;
+  background:var(--txt-3);transition:.3s var(--ease)}
+.pvw .dot[data-live="1"]{background:var(--lv);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--lv) 22%,transparent);animation:blip 2.2s var(--ease) infinite}
+.pvw .you{width:22px;height:22px;border-radius:50%;flex:0 0 auto;cursor:pointer;
+  display:grid;place-items:center;font-size:10px;font-weight:700;letter-spacing:.02em;
+  color:var(--lv);background:color-mix(in srgb,var(--lv) 20%,transparent);
+  border:1.5px solid color-mix(in srgb,var(--lv) 48%,transparent);transition:.16s}
+.pvw .you:hover{background:color-mix(in srgb,var(--lv) 30%,transparent)}
+.pvw .spacer{flex:1 1 0}
+
+.pvw .cnt{flex:0 0 auto;display:flex;align-items:center;font-weight:600;font-size:12.5px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;cursor:pointer;padding:0 4px}
+.pvw .cnt .now{display:flex}
+.pvw .cnt .sl{color:var(--txt-3);margin:0 3px;font-weight:500}
+.pvw .cnt .tot{color:var(--txt-2);font-weight:500}
+.pvw .d{display:block;width:.62em;height:16px;overflow:hidden;text-align:center}
+.pvw .d i{display:block;font-style:normal;line-height:16px}
+.pvw .d.roll i{animation:roll .34s var(--ease)}
+@keyframes roll{0%{transform:translateY(-16px);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* the message face */
+.pvw .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:0 15px;white-space:nowrap;font-size:12.5px;
+  opacity:0;transform:translateY(7px) scale(.94);pointer-events:none;
+  transition:opacity .2s var(--ease),transform .3s var(--ease)}
+.pvw .isl[data-msg="1"] .msg{opacity:1;transform:none;pointer-events:auto;transition-delay:.09s}
+.pvw .msg b{font-weight:600}
+.pvw .msg .mut{color:var(--txt-2)}
+.pvw .led{width:7px;height:7px;border-radius:50%;background:var(--k);flex:0 0 auto;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--k) 24%,transparent)}
+.pvw .led.w{background:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 24%,transparent);
+  animation:blip 1.5s var(--ease) infinite}
+.pvw .mini{display:grid;place-items:center;flex:0 0 auto}
+.pvw .act{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  border:1px solid var(--hair);color:var(--txt-2);transition:.16s}
+.pvw .act:hover{background:var(--fill);color:var(--txt);border-color:color-mix(in srgb,var(--lv) 42%,transparent)}
+.pvw .eye{display:inline-flex;align-items:center;gap:5px;color:var(--txt-3);font-size:11.5px}
+
+/* ── the tray ──────────────────────────────────────────────────────── */
+.pvw .tray{opacity:0;pointer-events:none;transition:opacity .22s var(--ease);padding:0 12px 12px}
+.pvw .isl[data-open] .tray{opacity:1;pointer-events:auto;transition-delay:.14s}
+.pvw .lab{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-3);
+  font-weight:600;margin:13px 0 7px;display:flex;align-items:center}
+.pvw .lab .v{margin-left:auto;letter-spacing:0;text-transform:none;font-size:11px;
+  color:var(--txt-2);font-weight:500}
+
+/* page: one row of controls */
+.pvw .ctrl{display:flex;align-items:center;gap:5px;margin-top:2px}
+.pvw .ctrl button{height:32px;width:32px;border-radius:var(--r-xs);border:1px solid var(--hair-2);
+  background:var(--fill);display:grid;place-items:center;color:var(--txt-2);transition:.16s;flex:0 0 auto}
+.pvw .ctrl button:hover{color:var(--txt);border-color:color-mix(in srgb,var(--lv) 42%,transparent)}
+.pvw .ctrl .rd{flex:1;text-align:center;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.pvw .ctrl .wide{width:auto;padding:0 11px;font-size:11.5px}
+.pvw .ctrl .wide.on,.pvw .ctrl button.on{background:color-mix(in srgb,var(--lv) 16%,transparent);
+  color:var(--lv);border-color:transparent}
+.pvw .ctrl .gap{width:1px;height:20px;background:var(--hair-2);flex:0 0 auto;margin:0 2px}
+
+
+/* THE FACE, AS THE OWNER DREW IT:
+       [ bookmark ]  ←spacer→  [ 0126/1012 ]  ←spacer→  [ you ]
+   The bookmark moved to the far LEFT, opposite the profile — it used to sit
+   beside it on the right. The counter stays the fixed point in the middle,
+   because everything either side is sized from it. */
+.pvw .bmkface{ width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
+  display: grid; place-items: center; color: var(--lv); background: none;
+  border: 1.5px solid color-mix(in srgb, var(--lv) 48%, transparent); transition: .16s; }
+.pvw .bmkface:hover{ background: color-mix(in srgb, var(--lv) 20%, transparent); }
+.pvw .bmkface[aria-pressed="true"]{ background: var(--lv); color: var(--paper, #fff); }
+.pvw .bmkface[aria-pressed="true"] path{ fill: currentColor; }
+
+/* The You panel. Appearance, and the way out — nothing else. No stats, no
+   Ready Room: those belong to the reader, which is paused. */
+.pvw .youpanel{ display: grid; gap: 4px; }
+.pvw .yrow{ display: flex; align-items: center; gap: 9px; width: 100%;
+  height: 38px; padding: 0 10px; border-radius: var(--r-xs);
+  color: var(--txt-2); font-size: 12.5px; background: none; border: 0;
+  cursor: pointer; text-align: left; transition: .16s; }
+.pvw .yrow:hover{ background: var(--fill); color: var(--txt); }
+.pvw .yrow .yr-ic{ display: grid; place-items: center; flex: 0 0 auto; }
+
+/* §12 — every control at least 44px on its shortest side, without changing
+   what any of them look like. */
+.pvw .isl button{ position: relative; }
+.pvw .isl button::after{ content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+
+/* Smooth Air and prefers-reduced-motion mean NO motion, not less. */
+.app.smooth-air .pvw *, .app.reduce-motion .pvw *{ transition: none !important; animation: none !important; }
+@media (prefers-reduced-motion: reduce){ .pvw *{ transition: none !important; animation: none !important; } }
