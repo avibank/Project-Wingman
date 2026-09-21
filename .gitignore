@@ -43,3 +43,4 @@ tools/.auth.json
 
 # visual-diff's output — screenshots, regenerated on every run.
 tools/diff/
+tools/qa/
