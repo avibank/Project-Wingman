@@ -33,21 +33,51 @@ const ROOM_CSS = `
      liveries depend on. */
   contain: paint; }
 
+/* THE LAMPS ARE TWO ELEMENTS EACH, and that is the whole of the lag fix.
+ *
+ * The key, the fill and the spill used to be one box each (the key and fill
+ * were ::before and ::after) carrying the blur AND the drift animation. A
+ * filter on a box that is composited for its own animation is applied by the
+ * compositor, at draw time, on every frame: three blurs of 82-111px over
+ * surfaces about 4.4x the viewport, sixty times a second, whether or not
+ * anything had changed — and the rig is behind every route, so every screen
+ * paid it. Measured in the production harness (npm run harness:prod, night,
+ * 1440x900): 9-11 render passes a frame on every route, and 3.4-3.8 frames a
+ * second wherever the browser composites in software. With the rig hidden, 60.
+ * Split as below: 4-7 passes a frame, and 20-33 frames a second in software.
+ *
+ * So the MOVEMENT and the LIGHT are separate boxes. The outer .lamp carries
+ * everything that happens at composite time — the drift, the blend mode — and
+ * the inner <i> carries everything that belongs to the picture — the
+ * gradient, the blur, the saturation, the mask and the intensity. The inner
+ * box has no reason to be a layer of its own, so its blur is rasterised into
+ * the lamp's tiles ONCE, and each frame only moves a finished texture.
+ *
+ * It is the same picture: CSS applies filter, then mask, then opacity, then
+ * the blend, and that is still the order — the first three on the inner box,
+ * the blend on the outer one, which is the group the inner box is drawn into.
+ * The inner box fills the outer exactly, so the gradient, the mask stops and
+ * the transform origin are measured against the same rectangle as before.
+ *
+ * Tree order is kept for the stacking: key first, the two star fields, then
+ * the fill — where ::after used to sit relative to them at z-index 0.
+ */
 /* Light ADDS, it does not veil: screen, never a translucent overlay. */
-.deck-light::before, .deck-light::after {
-  content: ""; position: absolute; inset: -55%; pointer-events: none; z-index: 0;
-  filter: blur(var(--soft)) saturate(1.28);
-}
+.deck-light .lamp { position: absolute; inset: -55%; pointer-events: none; z-index: 0; }
+.deck-light .lamp > i { position: absolute; inset: 0; display: block; }
+.deck-light .lamp.key > i { filter: blur(var(--soft)) saturate(1.28); }
 /* Night screens both layers onto a dark ground. Day screens the key — a warm
    bloom of unshaded ground in the sun corner — and MULTIPLIES the fill, which
    settles livery-tinted shade into the opposite one. Screen is additive: on a
    near-white ground it does nothing at all, which is why lightening the Night
    gradients never worked. Everything else about the rig is unchanged. */
-.deck-light::before { mix-blend-mode: var(--blend, screen); }
-.deck-light::after  { mix-blend-mode: var(--blend2, var(--blend, screen)); }
-.deck-light::before { background: var(--key-img); opacity: var(--key-int); animation: pwdrift 26s ease-in-out infinite; }
-.deck-light::after { background: var(--fill-img); opacity: var(--fill-int);
-  filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); animation: pwdrift-far 41s ease-in-out infinite reverse; }
+.deck-light .lamp.key { mix-blend-mode: var(--blend, screen); }
+.deck-light .lamp.fill { mix-blend-mode: var(--blend2, var(--blend, screen)); }
+.deck-light .lamp.key { animation: pwdrift 26s ease-in-out infinite; }
+.deck-light .lamp.key > i { background: var(--key-img); opacity: var(--key-int); }
+.deck-light .lamp.fill { animation: pwdrift-far 41s ease-in-out infinite reverse; }
+.deck-light .lamp.fill > i { background: var(--fill-img); opacity: var(--fill-int);
+  filter: blur(calc(var(--soft) * 1.35)) saturate(1.2); }
 /* Parallax, and the whole of the depth cue. Under a real curtain wall the near
    curtains sweep past while the far ones barely move. These two layers already
    drifted at different rates in opposite directions, but at identical
@@ -69,8 +99,8 @@ const ROOM_CSS = `
    already animating. It does NOT reintroduce a filter — see the warning above
    about the SVG warp that measured 0.1fps here. Measured before it was kept.
    Toggle it off with data-flat="1" on .app to A/B. */
-.app[data-aur="1"] .deck-light::before,
-.app[data-aur="1"] .deck-light::after { transform-origin: 50% 0%; }
+.app[data-aur="1"] .deck-light .lamp.key,
+.app[data-aur="1"] .deck-light .lamp.fill { transform-origin: 50% 0%; }
 
 /* Respect the hero card. The curtains are drawn tall because that is what makes
    them curtains, but their tails were reaching most of the way down the deck
@@ -82,19 +112,18 @@ const ROOM_CSS = `
    Full strength to about a fifth of the way down, gone by about half, which
    puts the fade across the hero card rather than below it.
 
-   Masking is composited, so this costs nothing per frame, and it leaves the
-   starfield alone — the sky stays full of stars where the light has stopped. */
-.app[data-aur="1"] .deck-light::before,
-.app[data-aur="1"] .deck-light::after,
-.app[data-aur="1"] .deck-light .spill {
+   The mask is on the inner box, with the blur, so it is rasterised with the
+   picture and moves with the lamp; it leaves the starfield alone — the sky
+   stays full of stars where the light has stopped. */
+.app[data-aur="1"] .deck-light .lamp > i {
   -webkit-mask-image: linear-gradient(to bottom,
     #000 0 33.8%, rgba(0,0,0,.70) 40%, rgba(0,0,0,.24) 44.5%, transparent 48.1%);
   mask-image: linear-gradient(to bottom,
     #000 0 33.8%, rgba(0,0,0,.70) 40%, rgba(0,0,0,.24) 44.5%, transparent 48.1%);
 }
-.app[data-aur="1"]:not([data-flat="1"]) .deck-light::before {
+.app[data-aur="1"]:not([data-flat="1"]) .deck-light .lamp.key {
   animation-name: pwdrift-tilt; }
-.app[data-aur="1"]:not([data-flat="1"]) .deck-light::after {
+.app[data-aur="1"]:not([data-flat="1"]) .deck-light .lamp.fill {
   animation-name: pwdrift-tilt-far; }
 @keyframes pwdrift-tilt {
   0%, 100% { transform: perspective(1100px) rotateX(31deg) scale(1.08) translate3d(0,0,0); }
@@ -120,7 +149,8 @@ const ROOM_CSS = `
    without. That is the flicker, and on a phone it is worse.
    DO NOT REINSTATE the url() filter here. Aurora still reads as aurora: the
    curtain is its gradient and the stars are their own layer. */
-.deck-light.aur::before { filter: blur(30px) saturate(1.24); animation: pwdrift 34s ease-in-out infinite; }
+.deck-light.aur .lamp.key { animation: pwdrift 34s ease-in-out infinite; }
+.deck-light.aur .lamp.key > i { filter: blur(30px) saturate(1.24); }
 /* Translate only. scale() changes the rasterised size of a surface that is
    blurred by 82px and screen-blended, so every frame repainted it instead of
    compositing a layer that already existed. The drift is unchanged. */
@@ -130,9 +160,9 @@ const ROOM_CSS = `
   67% { transform: translate3d(-4%,4%,0); }
 }
 /* the same light again, over the top — the part that lands ON the panels */
-.deck-light .spill { position: absolute; inset: -55%; z-index: 2; pointer-events: none;
-  background: var(--key-img); filter: blur(calc(var(--soft) * 1.2)) saturate(1.22);
-  mix-blend-mode: screen; opacity: var(--spill); animation: pwdrift 26s ease-in-out infinite; }
+.deck-light .lamp.spill { z-index: 2; mix-blend-mode: screen; animation: pwdrift 26s ease-in-out infinite; }
+.deck-light .lamp.spill > i { background: var(--key-img); filter: blur(calc(var(--soft) * 1.2)) saturate(1.22);
+  opacity: var(--spill); }
 /* behind the panels but ABOVE the lights, so they show through the curtains */
 .deck-light .stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--stars, 0);
   background-image: var(--star-img, none); background-repeat: repeat;
@@ -165,8 +195,8 @@ const ROOM_CSS = `
 /* Pulled back from the reference's 1.70/1.30 and 1.62/1.34. At those the whole
    display burned evenly, so nothing in it read as brighter than anything else;
    the glow belongs to the few bands that keep a hot core, not to the sky. */
-.app[data-aur="1"] .deck-light::before { filter: blur(var(--soft)) saturate(1.42) brightness(1.10); }
-.app[data-aur="1"] .deck-light::after { filter: blur(calc(var(--soft)*1.15)) saturate(1.36) brightness(1.12); }
+.app[data-aur="1"] .deck-light .lamp.key > i { filter: blur(var(--soft)) saturate(1.42) brightness(1.10); }
+.app[data-aur="1"] .deck-light .lamp.fill > i { filter: blur(calc(var(--soft)*1.15)) saturate(1.36) brightness(1.12); }
 
 /* overcast layer, used by Tarmac's aurora only */
 .a-cloud { position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: multiply;
@@ -303,11 +333,13 @@ function Deck({ aurora, rules }) {
 
   return (
     <div className={`deck-light ${aurora ? "aur" : ""}`} style={stars} aria-hidden="true">
+      <div className="lamp key"><i /></div>
       <div className="stars" />
       <div className="stars-b" />
+      <div className="lamp fill"><i /></div>
       <div className="a-cloud" />
       <div className="rules" style={rules || undefined} />
-      <div className="spill" />
+      <div className="lamp spill"><i /></div>
       <div className="grain" />
       <style>{ROOM_CSS}</style>
     </div>
