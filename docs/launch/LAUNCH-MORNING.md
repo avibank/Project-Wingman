@@ -35,24 +35,43 @@ If any of these misbehave, the fix is small and the cause is written down —
 `lib/outside.js` for the share and the download, `coverImage.js` for the photo,
 `paper/viewer/` for the paper.
 
-## 2 · The three Clerk accounts
+## 2 · The three accounts: the sign-ins are yours to delete
 
-There are **three** `pilot_profiles` rows. I could not tell a classmate from a
-test account — reading the names is blocked in this session as PII — so all
-three were left alone, which is what the brief says to do in that case.
+**Everything they left in the database is gone**, deleted on 2026-09-21 at your
+word and verified by connecting: every text and JSON column of all 100 tables
+in every schema was searched for the three ids, and none turned up. That was
+3 profiles (and their stamps), 3 `enrollments`, 11 ink strokes, 3 marks, a
+comment, a report, a presence row and a preferences row.
 
-If you want the rosters clean:
+What is left is **the sign-ins themselves**, and they cannot be deleted from
+here: there is no `CLERK_SECRET_KEY` in `.env.local`. Clerk dashboard → Users,
+and delete the three. Their ids are not written here, because that would leave
+a trace in the repo. They are in `backups/accounts-2026-09-21/IDS.txt`, on
+this machine only.
 
-1. Look at them: Clerk dashboard, or `select user_id, callsign, real_name,
-   is_staff from pilot_profiles order by callsign;`
-2. **Delete the sign-in first, the profile row second.** That way round leaves
-   an orphaned row rather than an account with no profile.
-3. **A profile row carries that account's STAMP, and migration 0029 issues a
-   stamp once and refuses to issue a second.** Delete a real student's row and
-   their stamp is gone permanently. There is no undo.
-
-The optional block at the bottom of `supabase/wipe-demo-content.sql` does the
-second step; read the paragraph above it before you run it.
+- [ ] **Delete them before you sign in to wingman.institute again.** The
+      profile rows went first, which is the opposite of the order the brief
+      asked for, so a sign-in that still exists now has no profile. Sign in
+      with one and First Flight will build it a new one, and that new row
+      is a trace again.
+- [ ] **The first of the three is almost certainly yours.** It is the
+      oldest and the only staff account. Whether it also held the admin role
+      could not be checked without the Clerk key. Sign up again afterwards
+      and you arrive as a student. Getting staff back is two
+      writes, both of them one line: `publicMetadata.role = "admin"` on the
+      new user in the Clerk dashboard, and `update pilot_profiles set
+      is_staff = true where user_id = '<new id>';`
+- [ ] **The M1 paper stayed.** *B2 13d Instruments, Rotary Wing
+      Aerodynamics…* is course material, not a person, so it is still on
+      every M1 student's shelf. Only your id was taken off it, and it now
+      reads as added by "Someone". Nobody owns it, so nobody can delete it
+      from the app. To take it back: `update papers set owner_id = '<new id>',
+      uploaded_by = '<new id>' where id =
+      'M1-B2-13D-INSTRUMENTS-ROTARY-WING-AERODYNAMICS-A';`
+- [ ] **A backup exists, and it is personal data.** Every deleted row is in
+      `backups/accounts-2026-09-21/rows.json`, on this machine only. Git
+      ignores it. It is the only way back for a stamp. Delete the folder once
+      you are sure.
 
 ## 3 · Put the content in
 
