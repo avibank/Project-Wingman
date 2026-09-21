@@ -48,11 +48,10 @@ const user = {
 
 const signedOut = id === "none";
 
-/* THE WALKTHROUGH OPENS FOR A SIGNED-OUT FIRST VISIT (src/demo/mode.js), and
-   every fresh browser context is a first visit. So the harness counts it as
-   seen, or every suite that loads a signed-out page would load the demo
-   instead. `?walkthrough=1` is a first visit, which is how the demo itself is
-   walked. */
+/* THE WALKTHROUGH OPENS FOR EVERY SIGNED-OUT VISIT (src/demo/mode.js), and
+   every fresh tab is a visit. So the harness counts it as seen, or every
+   suite that loads a signed-out page would load the demo instead.
+   `?walkthrough=1` is a visit, which is how the demo itself is walked. */
 const walking = (() => {
   try {
     if (q.has("walkthrough")) sessionStorage.setItem("harness-walkthrough", "1");
@@ -60,7 +59,7 @@ const walking = (() => {
   } catch { return q.has("walkthrough"); }
 })();
 if (!walking) {
-  try { if (!localStorage.getItem("pw-walkthrough-seen-2")) localStorage.setItem("pw-walkthrough-seen-2", "harness"); } catch { /* storage refused */ }
+  try { if (!sessionStorage.getItem("pw-walkthrough-visit")) sessionStorage.setItem("pw-walkthrough-visit", "harness"); } catch { /* storage refused */ }
 }
 
 export const useUser = () => (signedOut

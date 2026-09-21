@@ -491,15 +491,17 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     change only once the light has closed, without the app's own view
     transition (`go(to, { still: true })`), and every screen it visits is
     warmed while the first step is read.
-  - **It opens by itself only for a visitor who is NOT signed in**, the first
-    time they arrive, on ANY page but sign-in, an invite link and Clerk's
-    account screens (`walkthroughSeen`, remembered on the device). It once waited for `/`, and a visitor who arrived anywhere else
-    never saw it. Skip takes them back to the page they arrived on.
-  - **Seen is written when it ENDS** (finished or skipped), in the REAL
-    localStorage (`markWalkthroughSeen`; the demo's is a copy), under a
-    versioned key, `pw-walkthrough-seen-2`. It used to be written on the way
-    in under an unversioned key, and a device an earlier build had marked
-    could never be shown it again. **`?tour` on any address opens it for
+  - **It opens by itself for every visit by somebody who is NOT signed in**,
+    on ANY page but sign-in, an invite link and Clerk's account screens. It
+    once waited for `/`, and a visitor who arrived anywhere else never saw
+    it. Skip takes them back to the page they arrived on.
+  - **Seen lasts one visit, and a visit is a tab** (`pw-walkthrough-visit` in
+    sessionStorage, which survives the demo's reloads). It is written when
+    the walkthrough ENDS, finished or skipped. It used to be remembered on
+    the device for good, and twice the owner, on a device that had once
+    skipped it, reported that it did not trigger at all. A returning student
+    stays signed in and never meets it; a visitor with no account meets it
+    each time, one tap from gone. **`?tour` on any address opens it for
     anybody**: a visitor as "You", a signed-in student as themselves. A signed-in student only gets it by asking:
     Replay, at the foot of the Licence. A visitor is "You" inside it: every
     Clerk hook comes through `src/lib/clerk.js`, which signs a demo guest in
