@@ -69,7 +69,7 @@ export default function LibraryStudyCards({ moduleId }) {
               <i /><i /><i /><b>{s.n}</b>
             </span>
             <span>
-              <div className="lt">Chapter {s.ch} cards</div>
+              <div className="lt">{content.chapterTitle(moduleId, s.ch)} cards</div>
               <div className="ls">
                 {s.kept ? `${s.kept} kept for another look` : `${plural(s.n, 'card')} · not started`}
               </div>

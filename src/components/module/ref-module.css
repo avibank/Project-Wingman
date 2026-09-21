@@ -207,6 +207,9 @@
 .ref-mod .ch-body{display:none;padding:0 14px 14px}
 .ref-mod .chap.open .ch-body{display:block}
 .ref-mod .lrow{width:100%;display:grid;grid-template-columns:62px 1fr auto;gap:14px;align-items:center;padding:8px 12px;border-radius:12px;text-align:left;border:1px solid transparent}
+/* The study-card row is a link (BmLink), not a button, so it drew in link
+   blue with an underline once a module had cards (2026-09-21). */
+.ref-mod a.lrow{color:inherit;text-decoration:none}
 .ref-mod .lrow:hover{background:var(--raised)}
 .ref-mod .lrow.cur{background:var(--accent-soft);border-color:color-mix(in oklab,var(--accent) 45%,transparent)}
 .ref-mod .lrow .th{aspect-ratio:16/9;border-radius:7px;background:radial-gradient(90% 90% at 30% 20%,oklch(.3 .05 250),oklch(.15 .02 255));border:1px solid var(--hair);position:relative;overflow:hidden}
