@@ -22,6 +22,14 @@ const HOW = {
   page: 'on any page in the paper reader',
 };
 
+/* ...and the door to that place, for the empty folder. */
+const EMPTY_GO = {
+  question: { label: 'Open the quizzes', to: (m) => routes.quizzes(m) },
+  card: { label: 'Open the card sets', to: (m) => routes.library(m) },
+  video: { label: 'Find a lesson', to: (m) => routes.module(m) },
+  page: { label: 'Open the papers', to: (m) => routes.library(m) },
+};
+
 function Unsave({ row, name }) {
   return (
     <button type="button" className="bm-save" aria-label={`Remove from ${name}`} title="Remove bookmark"
@@ -70,7 +78,10 @@ export default function FolderPage({ slug }) {
       {!items.length && (
         <div className="bm-empty">
           No {f.name.toLowerCase()} saved yet. Tap <span className="bm-mk"><IconBookmark /></span> {HOW[kind]} to keep it here.
-          {kind === 'card' && <> <BmLink className="bm-link" to={routes.library(libModule)}>Open the card sets</BmLink></>}
+          {/* EVERY FOLDER POINTS AT WHERE ITS SAVES COME FROM, not only the
+              cards one. Each sentence names a place, and a place you are told
+              about and cannot press is a dead end (owner, 2026-09-21). */}
+          {' '}<BmLink className="bm-link" to={EMPTY_GO[kind].to(libModule)}>{EMPTY_GO[kind].label}</BmLink>
         </div>
       )}
 

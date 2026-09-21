@@ -249,3 +249,9 @@
 .rr .rr-sheetwrap[hidden] { display: none; opacity: 0; transform: translateY(8px); }
 .app.smooth-air .rr .rr-tbody, .app.smooth-air .rr .rr-feed, .app.smooth-air .rr .rr-ctx,
 .app.smooth-air .rr .rr-sheetwrap { transition: none !important; }
+
+/* The module name at the head of a feed opens the module. Drawn exactly as the
+   design draws the name, until it is pointed at. */
+.rr-app .rr-tt-go { all: unset; display: block; cursor: pointer; border-radius: 4px; }
+.rr-app .rr-tt-go:hover b { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); }
+.rr-app .rr-tt-go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

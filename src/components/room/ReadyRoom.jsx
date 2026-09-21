@@ -74,7 +74,7 @@ export default function ReadyRoom({
   squadrons = [], messages = [], chapters = [],
   votes = {}, saved = {},
   onHome, onPost, onReport, onBlock, onVote, onBest, onOpenLessonAt, onSave,
-  onRefresh, onOpenInvite, onPlace, onOpenPaper,
+  onRefresh, onOpenInvite, onPlace, onOpenPaper, onOpenModule,
   intent = null, onIntentUsed,
 }) {
   const firstModule = activeModuleCode || modules[0]?.code || modules[0]?.id || null;
@@ -725,6 +725,7 @@ export default function ReadyRoom({
                      votes={threadVotes} saved={saved}
                      filter={st.filter} onFilter={onFilter} query={query} onFocusSearch={focusSearch}
                      threadId={st.asking ? null : st.thread} onSelect={selectThread} onAsk={askPane} onBack={backPane}
+                     onOpenModule={onOpenModule}
                      rootRef={rootRef} layout={layout} onLayout={setLayout}
                      who={who} source={sourceOf} onVote={voteQuestion} onSave={(id) => onSave?.(id)} onShare={share}
                      detail={{

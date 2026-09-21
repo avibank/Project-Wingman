@@ -891,3 +891,12 @@
 .paper-state h1 { margin: 0; font-size: 22px; font-weight: 500; color: var(--t1); }
 .paper-state p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--t2); }
 .paper-state .nextgo { margin-top: 6px; }
+
+/* The line under a module's name opens the Library, and looks exactly as it did
+   until it is pointed at. */
+.ref-mod .sub-go {
+  all: unset; cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit;
+  border-radius: 4px;
+}
+.ref-mod .sub-go:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); }
+.ref-mod .sub-go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

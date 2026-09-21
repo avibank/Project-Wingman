@@ -62,7 +62,7 @@ function FeedRow({ t, me, current, replies, vote, saved, who, source, onOpen, on
 export default function Threads({
   me, mod, all = [], list = [], replies = [], votes = {}, saved = {},
   filter = "all", onFilter, query = "", onFocusSearch,
-  threadId = null, onSelect, onAsk, onBack,
+  threadId = null, onSelect, onAsk, onBack, onOpenModule,
   rootRef, layout = { fw: null, wide: false }, onLayout,
   who, source, onVote, onSave, onShare, detail,
 }) {
@@ -121,7 +121,12 @@ export default function Threads({
       <div className="rr-phead">
         <button type="button" className="rr-iconbtn rr-backbtn is-inline" onClick={onBack} aria-label="Back"><Back /></button>
         <div className="rr-tt">
-          <b>{mod.name}</b>
+          {/* The module the feed is about, and the way to it: the questions are
+              here, the chapters they are about are there. */}
+          {onOpenModule
+            ? <button type="button" className="rr-tt-go is-inline" onClick={() => onOpenModule(mod.code || mod.id)}
+                      title={`Open ${mod.name}`}><b>{mod.name}</b></button>
+            : <b>{mod.name}</b>}
           <span>{moduleLine(all.length, waitingOnAnswer(all, replies))}</span>
         </div>
         <span style={{ flex: 1 }} />
