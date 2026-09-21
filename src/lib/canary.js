@@ -75,14 +75,20 @@ function show(d) {
   const close = document.createElement("button");
   close.textContent = "Close";
   close.setAttribute("style", "all:initial;display:block;margin:0 0 12px;padding:10px 16px;background:#e8edf2;color:#0b1526;font:600 14px system-ui;border-radius:8px");
-  close.onclick = () => box.remove();
+  close.onclick = () => { box.remove(); try { window.sessionStorage.removeItem("pw-diag"); } catch { /* nothing to clear */ } };
   box.append(close, document.createTextNode(`${d.ok ? "STYLED" : "NOT STYLED"} — sent to Wingman\n\n${JSON.stringify(d, null, 1)}`));
   document.body.append(box);
 }
 
 export function watchLayout() {
   if (typeof window === "undefined") return;
-  const asked = new URLSearchParams(window.location.search).has("diag");
+  /* Asked for in the address, or earlier in this tab: the app may replace
+     the address, or reload, before three seconds are up. */
+  let asked = new URLSearchParams(window.location.search).has("diag");
+  try {
+    if (asked) window.sessionStorage.setItem("pw-diag", "1");
+    else asked = window.sessionStorage.getItem("pw-diag") === "1";
+  } catch { /* the address is all there is, then */ }
   setTimeout(() => {
     let d;
     try { d = diagnose(); } catch (e) { d = { ok: false, error: String(e).slice(0, 200) }; }
