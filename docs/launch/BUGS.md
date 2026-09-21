@@ -21,3 +21,15 @@
 
 Severity: high = blocks use or loses data; medium = wrong behaviour with a workaround;
 low = cosmetic.
+
+## Found by the 21 Sep sweeps, and closed
+
+| # | What | How it was found |
+|---|---|---|
+| S1 | **`nextAfterQuiz` dead-ended at every chapter boundary.** With no video in any chapter — which is every chapter the beta opens with — a student who finished a quiz was told there was nothing further in the module, with the next chapter's quiz sitting right there. | reading Part 3 against `nextUp.js` |
+| S2 | **The route graphic could never fill.** `deckState` skipped every chapter without lessons, so sitting every quiz in a module left the bar empty. | the same pass |
+| S3 | **The Logbook counted a different app.** It read data.js's 20 skeleton chapters while the app serves 12, and its Debrief looked scores up in an array the fixture's ids are not in — so it listed nothing at all, for anybody. | turning the flag on and looking |
+| S4 | **`/m/m1/M1.01/quiz` rendered a literally empty `<main>`** — the same fault the patch fixed for lessons, on the second most shareable address in the app. | the route sweep: any screen under 120 characters of text |
+| S5 | **"Add a paper" was a dead control** — it rendered whenever its prop was passed and its sheet was gated on the paused reader's switch, so it did nothing, silently, with no error. | the click sweep |
+| S6 | **The tour's card fell off the bottom** on three of twelve steps, and its Next button's label was invisible — `--active-text` on `--active-fill` is the same colour twice. | walking the tour and measuring it |
+

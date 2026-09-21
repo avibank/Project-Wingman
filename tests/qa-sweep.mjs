@@ -85,7 +85,15 @@ const overflows = () => {
   for (const el of document.querySelectorAll("body *")) {
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
-    if (r.right > W + 1 && getComputedStyle(el).position !== "fixed") {
+    /* THE DOCUMENT SCROLLING IS THE FAULT, not an element sticking out.
+       The first version flagged anything whose right edge passed the window
+       and reported 105 of 105 loads — every one of them the Flight Deck's
+       `div.spill`, an absolutely-positioned decoration that is SUPPOSED to
+       run off the edge and is clipped by its parent. A test that fires on
+       every screen is measuring itself. What matters to a thumb is whether
+       the page can be dragged sideways, which is one number. */
+    const cs0 = getComputedStyle(el);
+    if (r.right > W + 1 && cs0.position === "static" && document.documentElement.scrollWidth > W) {
       out.push(`${el.tagName.toLowerCase()}.${String(el.className).slice(0, 30)} right=${Math.round(r.right)}`);
     }
     /* Text cut off inside a box that hides it. */
@@ -115,7 +123,7 @@ const overflows = () => {
     const pw = parseFloat(a.width) || 0, ph = parseFloat(a.height) || 0;
     return Math.max(r.width, pw) < 24 || Math.max(r.height, ph) < 24;
   }).map((el) => `${String(el.className).slice(0, 26)} ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`);
-  return { out, small };
+  return { out, small, docScrolls: document.documentElement.scrollWidth > W };
 };
 
 const ZERO = /\b0 (quizzes|lessons|chapters|papers|saved|people|questions|answers|cards|marks)\b/gi;
@@ -140,7 +148,7 @@ for (const w of WIDTHS) {
     const o = await page.evaluate(overflows).catch(() => ({ out: [], small: [] }));
     const zeroes = (s?.text.match(ZERO) || []);
     report.routes.push({ w, route: r, landed: s?.url, len: s?.text.length ?? 0,
-      blank: (s?.text.length ?? 0) < BLANK, overflow: o.out.length, errs, bad, zeroes });
+      blank: (s?.text.length ?? 0) < BLANK, overflow: o.docScrolls ? (o.out.length || 1) : 0, errs, bad, zeroes });
     if (zeroes.length) report.zeroes.push({ w, route: r, zeroes });
     if (w === 1440) await page.screenshot({ path: `${SHOTS}/${r.replace(/\W+/g, "_") || "home"}.png` }).catch(() => {});
     if (w !== 1440) report.responsive.push({ w, route: r, outside: o.out.slice(0, 4), small: [...new Set(o.small)].slice(0, 4) });
