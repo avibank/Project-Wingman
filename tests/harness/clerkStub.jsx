@@ -6,6 +6,10 @@
  * assert what a SECOND student's browser receives — the anonymity test in
  * §15b.2 needs exactly that and cannot be written any other way.
  *
+ * `?username=none` is a student who has not chosen a username yet — the path
+ * First Flight takes a new account down. `update` keeps what it is given, so
+ * a screen that sets one can be followed onto the next.
+ *
  * `?uid=none` is NOBODY, signed out, with Clerk finished deciding. It exists
  * because a screen that waits on identity has two failure modes and they look
  * identical from the outside: waiting for an answer, and never getting one.
@@ -26,12 +30,12 @@ const NAMES = {
 const user = {
   id,
   fullName: NAMES[id] || "Test Pilot",
-  username: id,
+  username: q.get("username") === "none" ? null : id,
   primaryEmailAddress: { emailAddress: `${id}@example.test` },
   imageUrl: "",
   unsafeMetadata: {},
   publicMetadata: staff ? { role: "admin" } : {},
-  update: async () => {},
+  update: async (patch) => Object.assign(user, patch),
   setProfileImage: async () => {},
   delete: async () => {},
 };

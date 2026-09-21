@@ -245,10 +245,11 @@ import { fetchSeat, askRightSeat } from "./lib/rightSeat.js";
 import { toAttachment, attachToMessage } from "./lib/attachments.js";
 import { fetchProfiles, fetchProfile } from "./lib/squadron.js";
 import { reportContent, blockUser } from "./lib/squadron.js";
+import { CLERK_WORDS } from "./lib/clerkWords.js";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 export default function App() {
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} localization={CLERK_WORDS}>
       <UserProgressProvider>
       {/* Session sits above the router on purpose. The one <video> is mounted
           by PlayerLayer inside it, as a sibling of the routed content, so
@@ -1612,8 +1613,12 @@ function AppInner() {
         "--scale": fontSize === "small" ? 0.9 : fontSize === "large" ? 1.15 : 1,
       }}
     >
-    <UsernameGate>
+    {/* FIRST FLIGHT BEFORE THE USERNAME. A new student meets one screen that
+        asks for their callsign (which is their Clerk username) and their code.
+        The username gate is behind it now, for an older account that has a
+        profile and no username, which First Flight never sees. */}
     <FirstFlightGate>
+    <UsernameGate>
     <Deck aurora={finish === "aurora" && variant !== "day"}
             rules={finish === "manual" && ruled
               ? ruledLayer(deckVars(shownLivery, variant).C.active, variant === "day") : null} />
@@ -1890,7 +1895,7 @@ function AppInner() {
         </main>
       ) : settingsPage === "auth" ? (
         <main className="content content-taxi">
-          <AuthPage onBack={() => go(-1)} />
+          <AuthPage />
         </main>
       ) : settingsPage === "progress" ? (
         <main className="content content-taxi">
@@ -2499,8 +2504,8 @@ function AppInner() {
     )}
     <StampFilters />
     <BookmarksToastHost />
-    </FirstFlightGate>
     </UsernameGate>
+    </FirstFlightGate>
     {/* A child of .app, and fixed to the viewport from there — measured, not
         assumed: the chin's bottom edge sits exactly at window.innerHeight.
         What would break that is an ancestor with transform, filter,

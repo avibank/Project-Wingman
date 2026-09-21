@@ -188,8 +188,15 @@ const ok = (name, cond, detail) => {
      /select\([^)]*invisible/.test(crew));
 
   const squad = read("src/lib/squadron.js");
+  /* The one roster this file read was First Flight's list of recent pilots,
+     and it went with the old sign-up (2026-09-21). What has to stay true is
+     the rule, not the function: every read of profiles here either names
+     whose row it wants or asks for visible rows only, so a list of people
+     added later cannot leak somebody flying solo. */
+  const profileReads = squad.split('.from("pilot_profiles")').slice(1).map((r) => r.slice(0, 240));
   ok("the roster asks the server for visible rows only",
-     /\.eq\("invisible", false\)/.test(squad));
+     profileReads.length > 0
+     && profileReads.every((r) => /\.(eq|in)\("user_id"|\.upsert\(\{ user_id|\.eq\("invisible", false\)/.test(r)));
 
   const presence = read("src/lib/presence.js");
   ok("presence is gated at the WRITE, so there is nothing to read",

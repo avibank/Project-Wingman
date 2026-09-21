@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
 import FirstFlight from "./FirstFlight.jsx";
@@ -43,7 +43,9 @@ function FirstFlightGate({ children }) {
   }, [isLoaded, isSignedIn, user?.id]);
 
   if (state === "checking") return <Spooling />;
-  if (state === "onboarding") return <FirstFlight onDone={() => setState("through")} />;
+  /* A transition for the same reason as UsernameGate's: this is the render
+     that swaps First Flight for the whole app, whose screens are lazy. */
+  if (state === "onboarding") return <FirstFlight onDone={() => startTransition(() => setState("through"))} />;
   return children;
 }
 
