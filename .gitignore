@@ -47,3 +47,6 @@ tools/qa/
 
 # Rows of deleted accounts: personal data, kept locally until the owner removes them.
 backups/accounts-*/
+
+# Local agent worktrees.
+.claude/worktrees/

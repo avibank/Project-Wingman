@@ -27,12 +27,16 @@ const ok = (group, what, cond, detail = "") => {
 };
 
 /* ------------------------------------------------------- 1 · the vocabulary */
-/* EIGHT NOW. The 20 Sep engine adds `shield` and `hex`, and both carry the new
-   derived rim rather than a hand-placed arc — which is most of what that
-   change was for. */
-ok("parts", `eight shapes, and each is its own drawing (${SHAPE_IDS.length})`,
-   SHAPE_IDS.length === 8 && SHAPE_IDS.every((s) => typeof SHAPES[s]?.o === "function")
-   && new Set(SHAPE_IDS.map((s) => SHAPES[s].o())).size === 8);
+/* The 20 Sep engine added `shield` and `hex`, both carrying the derived rim
+   rather than a hand-placed arc. On 21 Sep the owner took both out of the
+   creator, and they stay in the renderer. */
+/* SIX OFFERED (owner, 2026-09-21: the shield and the hex, which read as a bolt
+   head, went). Both are still DRAWN, so a stamp issued in either renders. */
+ok("parts", `six shapes offered, and each is its own drawing (${SHAPE_IDS.length})`,
+   SHAPE_IDS.length === 6 && SHAPE_IDS.every((s) => typeof SHAPES[s]?.o === "function")
+   && new Set(SHAPE_IDS.map((s) => SHAPES[s].o())).size === 6
+   && !SHAPE_IDS.includes("shield") && !SHAPE_IDS.includes("hex"));
+ok("parts", "and the two retired shapes still draw", typeof SHAPES.shield?.o === "function" && typeof SHAPES.hex?.o === "function");
 ok("parts", `six patterns (${PATTERN_IDS.length})`,
    PATTERN_IDS.length === 6 && PATTERN_IDS.every((p) => p in PATTERNS));
 ok("parts", `thirty-six inks, every one named and unique (${PALETTE.length})`,

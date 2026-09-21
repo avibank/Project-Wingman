@@ -1,0 +1,70 @@
+/* =============================================================================
+   THE GUIDE. A light, a card, and the app underneath still drawing.
+   ========================================================================= */
+
+/* Not pressable underneath while the guide is up. The guide is the one child
+   of .app that still answers. */
+.app[data-demo="1"] > :not(.dg) { pointer-events: none !important; user-select: none; }
+
+.dg { position: fixed; inset: 0; z-index: 950; pointer-events: none; }
+
+/* THE LIGHT IS ONE BOX WITH AN ENORMOUS SHADOW, moved by transform. */
+.dg-light {
+  position: fixed; left: 0; top: 0; border-radius: 14px; pointer-events: none;
+  box-shadow: 0 0 0 200vmax rgb(4 8 14 / .62), 0 0 0 2px var(--active) inset;
+  transition: transform .55s cubic-bezier(.22,1,.36,1), width .55s cubic-bezier(.22,1,.36,1), height .55s cubic-bezier(.22,1,.36,1);
+  will-change: transform;
+}
+.dg-dim { position: fixed; inset: 0; background: rgb(4 8 14 / .62); animation: dg-fade .35s ease both; }
+@keyframes dg-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.dg-card {
+  position: fixed; left: 0; top: 0; width: min(420px, calc(100vw - 32px)); box-sizing: border-box;
+  pointer-events: auto; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  padding: 16px 18px 14px; border-radius: 18px;
+  background: var(--ground); color: var(--t1); border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgb(0 0 0 / .35);
+  transition: transform .55s cubic-bezier(.22,1,.36,1);
+  will-change: transform;
+}
+.dg-card[data-dragging="1"] { transition: none; }
+.dg-card.is-sheet {
+  width: 100vw; border-radius: 20px 20px 0 0; border-bottom: 0;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  max-height: 58vh; overflow-y: auto;
+}
+
+.dg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dg-kicker { font: 500 11.5px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--t3); font-variant-numeric: tabular-nums; }
+.dg-leave { background: none; border: 0; padding: 6px 2px; cursor: pointer; font: 500 13px var(--font-ui); color: var(--t2); position: relative; }
+.dg-leave::after { content: ""; position: absolute; inset: -10px -6px; }
+.dg-leave:hover { color: var(--t1); }
+.dg-bar { height: 3px; margin: 10px 0 14px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.dg-bar i { display: block; height: 100%; background: var(--active); transform-origin: left; transition: transform .55s cubic-bezier(.22,1,.36,1); }
+
+.dg-body { animation: dg-in-r .45s cubic-bezier(.22,1,.36,1) both; }
+.dg-body.from-left { animation-name: dg-in-l; }
+@keyframes dg-in-r { from { opacity: 0; transform: translate3d(18px,0,0); } to { opacity: 1; transform: none; } }
+@keyframes dg-in-l { from { opacity: 0; transform: translate3d(-18px,0,0); } to { opacity: 1; transform: none; } }
+.dg-title { margin: 0 0 10px; font: 600 20px/1.25 var(--font-ui); letter-spacing: -.01em; color: var(--t1); }
+.dg-p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--t2); }
+.dg-wwh { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; margin: 0; }
+.dg-wwh dt { font: 600 11px/1.9 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--active-text); }
+.dg-wwh dd { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--t2); }
+
+.dg-acts { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 14px; }
+.dg-back { justify-self: start; background: none; border: 0; padding: 0 10px; cursor: pointer; font: 500 14px var(--font-ui); color: var(--t2); }
+.dg-back:disabled { visibility: hidden; }
+.dg-count { font: 500 12px var(--font-mono); color: var(--t3); font-variant-numeric: tabular-nums; }
+.dg-next {
+  justify-self: end; padding: 0 20px; border: 0; border-radius: 999px; cursor: pointer;
+  font: 600 14.5px var(--font-ui); background: var(--active-fill); color: var(--ground);
+  transition: transform .18s cubic-bezier(.22,1,.36,1), filter .18s;
+}
+.dg-next:hover { filter: brightness(1.06); }
+.dg-next:active { transform: scale(.97); }
+.app[data-paper="1"] .dg-next { background: transparent; color: var(--active); border: 1.5px solid var(--active); border-radius: 2px; }
+
+/* No motion, not less. */
+.app.smooth-air .dg, .app.smooth-air .dg * { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .dg, .dg * { animation: none !important; transition: none !important; } }

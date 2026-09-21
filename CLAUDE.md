@@ -455,24 +455,31 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   callsign, and heals the callsign for older accounts. It never holds anybody.
   The squadron of livery tails, the module picker and "When do you usually
   study?" are gone, and so is the study-time placement they fed.
-- **The walkthrough opens by itself** for a signed-in student who has not seen
-  it, on the Flight Deck only (`pw-tour` in progress). It is **twelve slides
-  you swipe through** (`features/tour/`), each with a drawing in the app's
-  tokens (`Scenes.jsx`), written for somebody who has never heard of Wingman.
-  It REPLACED a spotlight over the live app, which was slow because every
-  step was a route change, a lazy chunk and a hunt for a selector.
-  - **The app under it is hidden once it has faded in** (`data-tour` on
-    `.app`). Covered, it still repainted: the harness drew 4 frames a second
-    behind the layer and 60 with the app hidden. Do not remove that line.
-  - **`touch-action: pan-y` is on each slide**, not only the viewport: the
-    slide is a scroller, touch-action counts only up to the nearest scroller,
-    and without it the browser took every horizontal swipe.
-  - **A flick is measured over the last 100ms**, not between two events.
-  - The harness treats a uid starting `new` as a brand-new student. Every
-    other fixture student has already seen it, or every suite that loads the
-    Flight Deck would load the walkthrough instead.
-- **It ends at the licence.** Finishing or skipping it takes a student with no
-  stamp to `/account/licence` with the stamp creator open (`lib/licenceAsk.js`).
+- **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides. The
+  owner: walk the real site tab by tab, as a separate state with a class
+  already in it, explaining what, why and how, plainly. 28 steps: the Flight
+  Deck, a module (Lessons, Library, an exam, cards, Crew), the Ready Room,
+  the profile. It starts by itself for a signed-in student with no `pw-tour`,
+  on the Flight Deck only, and is replayed from the foot of the Licence (not
+  the menu).
+  - **It is a separate state.** `enterDemo` sets a sessionStorage flag and
+    reloads; the whole app then boots against an in-memory database seeded
+    with a class (`seed.js`) and a course (`content.json`). Every request goes
+    to `backend.js` through the ONE client (`fetch` option in
+    `supabaseClient.js`); `localStorage` is a copy in memory (`boot.js`,
+    imported first in `main.jsx`); the live socket stays shut. Nothing in the
+    demo can write to the real account, and the app underneath the guide is
+    not pressable. `pw-tour` is written and confirmed on the server BEFORE the
+    reload, or the demo would start again every visit.
+  - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
+    emulation both use. The harness serves it over HTTP; the demo runs it in
+    the tab. Change it in one place.
+  - **Walked and measured**: every step lights its target at 1440 and 390, the
+    card never leaves the window, and "Create my licence" lands on the real
+    Licence with the creator open.
+- **It ends at the licence.** Finishing it, or leaving a first run, takes a
+  student with no stamp to `/account/licence` with the stamp creator open
+  (`lib/licenceAsk.js`, which survives the reload out of the demo).
 - **The code is the stamp, and they are issued together** (migration 0035,
   `issue_licence`). The code is chosen in the stamp creator, it is exactly three
   letters or numbers, and it is claimed only when the stamp is issued, in the
@@ -486,6 +493,25 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   save. The app's screens are lazy, and an urgent reveal suspended with no
   boundary above it and took the whole app down (measured with
   `?username=none`).
+
+## Off for launch, and Manual
+
+- **Papers are off** (`paper.viewer` is `everyone: false`): nothing in the
+  Library, the subtitle, Bookmarks or the paper address. The demo says a
+  reader for module-wide shared PDFs is coming.
+- **Aurora is off** (`OFFERED_FINISHES` in `finishEngine.js`, and
+  `livery.aurora`): not offered, and a stored Aurora reads as Standard. The
+  renderers stay.
+- **Six stamp shapes**, not eight: shield and hex (the bolt head) are no
+  longer offered, and still draw for any stamp issued in them.
+- **Manual is drawn, not lit, everywhere** (`manual-stencil.css`): a fill
+  becomes a 1.5px stroke of the same colour in the top bar, the Ready Room and
+  Bookmarks, as it already was on the Flight Deck.
+- **The lighting behind every screen is blurred once, not every frame**
+  (`Deck.jsx`): each light layer is an outer element that drifts and an inner
+  one that carries the blur. With both on one element the browser re-blurred
+  three layers sixty times a second; software-composited idle went from about
+  4 fps to 20-33 on every route, identical at rest.
 
 ## The Flight Deck's instrument strip
 

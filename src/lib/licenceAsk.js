@@ -6,15 +6,24 @@
    App cannot open it directly. It leaves this note on the way out, and the
    licence reads it once when it mounts.
 
-   A module variable rather than storage, on purpose: the note is meant for
-   the very next licence screen in this tab, and never for one after a reload.
+   It is kept in sessionStorage as well as in memory, because the demo ends
+   with a reload into the real account: the note has to outlive exactly one
+   page load in this tab, and it is read once and cleared.
    ========================================================================= */
+const KEY = "pw-licence-ask";
 let asked = false;
 
-export const askForLicence = () => { asked = true; };
+export const askForLicence = () => {
+  asked = true;
+  try { window.sessionStorage.setItem(KEY, "1"); } catch { /* memory is enough */ }
+};
 
 export const takeLicenceAsk = () => {
-  const was = asked;
+  let was = asked;
   asked = false;
+  try {
+    if (window.sessionStorage.getItem(KEY) === "1") was = true;
+    window.sessionStorage.removeItem(KEY);
+  } catch { /* memory only */ }
   return was;
 };

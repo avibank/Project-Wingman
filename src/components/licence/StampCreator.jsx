@@ -210,7 +210,7 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
               <div className="st-tgl">
                 <span id="rimlab">Rim text</span>
                 <button type="button" role="switch" aria-checked={draft.rim !== false}
-                        aria-labelledby="rimlab" className="st-sw"
+                        aria-labelledby="rimlab" className="st-sw is-inline"
                         onClick={() => set({ rim: draft.rim === false })} />
               </div>
               {draft.rim !== false ? (

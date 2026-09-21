@@ -125,6 +125,10 @@
   width: 46px; height: 28px; border: 0; border-radius: 99px; cursor: pointer;
   background: var(--raised); position: relative; flex: none;
 }
+/* THE SWITCH IS 28px TALL and opts out of the app's 44px floor, which had
+   stretched it to 46x44: a lopsided circle with the knob in its top corner.
+   The 44px it owes a thumb is this invisible layer instead. */
+.st-sw::before{ content: ""; position: absolute; inset: -8px -4px; }
 .st-sw::after{
   content: ""; position: absolute; left: 3px; top: 3px;
   width: 22px; height: 22px; border-radius: 50%; background: var(--t3);

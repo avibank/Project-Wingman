@@ -26,7 +26,7 @@ import { saveProfile, fetchProfile } from "../lib/squadron.js";
 import { takeLicenceAsk } from "../lib/licenceAsk.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 import { demoOn, demoProfile, DEMO_ME, DEMO_PRESET, DEMO_BAR } from "../lib/demoFixture.js";
-import { FINISHES, lightOverride } from "../lib/finishEngine.js";
+import { OFFERED_FINISHES as FINISHES, lightOverride } from "../lib/finishEngine.js";
 import { MIN_FLOOR, MIN_CEIL, PASS_PCT, MINIMUMS_KEY, clampMinimums, readMinimums } from "../lib/minimums.js";
 import { useTiltPermission } from "../lib/useAttitude.js";
 import { useTabPill } from "../lib/tabMotion.js";
@@ -865,6 +865,13 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
             <div className="row">
               <div><b>Sign out</b><span>On this device only</span></div>
               <button className="pill" type="button" onClick={() => signOut()}>Sign out</button>
+            </div>
+            {/* THE WAY BACK INTO THE DEMO lives here, at the foot of the profile
+                (owner, 2026-09-21), not in the menu. It plays once on its own;
+                this is for the student who skipped it, or wants it again. */}
+            <div className="row">
+              <div><b>The walkthrough</b><span>Every screen, step by step, with a class already in it</span></div>
+              <button className="pill" type="button" onClick={() => onNavigate("tour")}>Replay</button>
             </div>
           </div>
 

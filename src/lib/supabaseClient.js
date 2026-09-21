@@ -1,4 +1,5 @@
 import { PostgrestClient } from "@supabase/postgrest-js";
+import { demoMode } from "../demo/mode.js";
 
 // PostgREST directly, not the full supabase-js client.
 //
@@ -38,9 +39,17 @@ if (!configured && typeof console !== "undefined") {
   );
 }
 
+/* IN THE DEMO, EVERY REQUEST IS ANSWERED IN THIS TAB (src/demo/backend.js),
+   from a copy of the database with a class already in it. It is the one
+   client every read and write in the app goes through, so this one option is
+   the whole of why nothing in the demo can reach the real project. The
+   backend is its own chunk, loaded on the first request. */
+const demoFetch = (input, init) => import("../demo/backend.js").then((m) => m.demoFetch(input, init));
+
 export const supabase = new PostgrestClient(
   configured ? `${url}/rest/v1` : "/rest/v1",
-  configured
-    ? { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } }
-    : {},
+  {
+    ...(configured ? { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } } : {}),
+    ...(demoMode ? { fetch: demoFetch } : {}),
+  },
 );

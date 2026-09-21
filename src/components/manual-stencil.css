@@ -1,0 +1,56 @@
+/* =============================================================================
+   MANUAL IS DRAWN, NOT LIT — everywhere, not only on the Flight Deck.
+   -----------------------------------------------------------------------------
+   The Manual finish is the stencilled drawing: its instruments are outlines on
+   ruled paper, its caution lamp is hatched, and its Resume is a 1.5px outline
+   with square corners. The owner (2026-09-21): "match how the icons are
+   stencilled". The Ready Room, the top bar and Bookmarks still painted solid
+   discs and filled buttons in Manual, so they read as a different app laid
+   over the paper.
+
+   Every rule below does the same one thing, in Manual only: a fill becomes a
+   stroke of the same colour, and the words take the colour the fill had. The
+   shapes stay where they are; round things stay round; a button's corners go
+   square the way Resume's do. Nothing outside `[data-paper="1"]` changes.
+   ========================================================================= */
+
+/* The top bar: your initials and the Ready Room's count. */
+.app[data-paper="1"] .avbtn-face.has {
+  background: transparent; color: var(--active); box-shadow: inset 0 0 0 1.5px var(--active);
+}
+.app[data-paper="1"] .rrpill-n {
+  background: transparent; color: var(--active); box-shadow: inset 0 0 0 1.5px var(--active);
+}
+
+/* The Ready Room: faces, squadron badges, counts, the pressed chip, Ask and
+   Post. A face keeps its own hue, as a ring and letters instead of a disc. */
+.app[data-paper="1"] .rr .rr-av {
+  background: transparent;
+  color: oklch(.5 .13 var(--av-h, 250));
+  box-shadow: inset 0 0 0 1.5px oklch(.55 .12 var(--av-h, 250));
+}
+.app[data-paper="1"][data-fiche="1"] .rr .rr-av {
+  color: oklch(.78 .1 var(--av-h, 250));
+  box-shadow: inset 0 0 0 1.5px oklch(.72 .11 var(--av-h, 250));
+}
+/* `.app.app` on purpose: the room's own sheet paints these at the same weight
+   (.app.theme-light .rr ...) and loads later, with the room, so it would win
+   on order alone. */
+.app.app[data-paper="1"] .rr .rr-badge:not([data-mute="1"]) {
+  background: transparent; color: var(--active); box-shadow: inset 0 0 0 1.5px var(--active);
+}
+.app[data-paper="1"] .rr-chip[aria-pressed="true"] {
+  background: transparent; color: var(--t1); border-color: var(--t1); box-shadow: inset 0 0 0 .5px var(--t1);
+}
+.app[data-paper="1"] .rr-chip[aria-pressed="true"] .rr-n { background: transparent; color: var(--t1); box-shadow: inset 0 0 0 1px var(--t1); }
+.app.app[data-paper="1"] .rr .rr-ask,
+.app.app[data-paper="1"] .rr .rr-send:not([data-idle="1"]) {
+  background: transparent; color: var(--active); box-shadow: inset 0 0 0 1.5px var(--active); border-radius: 2px;
+}
+.app.app[data-paper="1"] .rr .rr-ask:hover,
+.app.app[data-paper="1"] .rr .rr-send:not([data-idle="1"]):hover { filter: none; background: color-mix(in oklab, var(--active) 8%, transparent); }
+
+/* Bookmarks' one filled button. */
+.app[data-paper="1"] .bm .bm-btn.is-primary {
+  background: transparent; color: var(--active); box-shadow: inset 0 0 0 1.5px var(--active); border-radius: 2px;
+}

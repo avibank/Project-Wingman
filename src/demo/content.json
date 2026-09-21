@@ -1,0 +1,1126 @@
+{
+ "note": "THE DEMO'S COURSE. Loaded only inside the demo (src/demo/mode.js), never by the real app. Four Part-66 subjects, standard facts only, no video. It exists so a new student can walk a module that is already half done; the real course goes in src/content/test-content.json.",
+ "modules": [
+  {
+   "id": "M1",
+   "name": "Mathematics",
+   "chapters": [
+    {
+     "id": "M1.01",
+     "name": "Arithmetic",
+     "lessons": [
+      {
+       "id": "M1.01.1",
+       "name": "Fractions and decimals",
+       "video": null,
+       "duration": "9:40",
+       "durationS": 580,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.01",
+        "lesson": "M1.01.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M1.01.2",
+       "name": "Ratio and proportion",
+       "video": null,
+       "duration": "8:15",
+       "durationS": 495,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.01",
+        "lesson": "M1.01.2"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M1.01.3",
+       "name": "Powers and roots",
+       "video": null,
+       "duration": "11:05",
+       "durationS": 665,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.01",
+        "lesson": "M1.01.3"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M1.01.QZ",
+      "name": "Arithmetic exam",
+      "questions": [
+       {
+        "id": "M1.01.Q1",
+        "question": "What is 3/8 written as a decimal?",
+        "options": [
+         "0.325",
+         "0.375",
+         "0.38"
+        ],
+        "correct": 1,
+        "explain": "3 divided by 8 is 0.375.",
+        "lessonId": "M1.01.1"
+       },
+       {
+        "id": "M1.01.Q2",
+        "question": "Two numbers are in the ratio 3:5 and the smaller one is 12. What is the larger?",
+        "options": [
+         "15",
+         "20",
+         "24"
+        ],
+        "correct": 1,
+        "explain": "12 is 3 parts, so one part is 4 and 5 parts is 20.",
+        "lessonId": "M1.01.2"
+       },
+       {
+        "id": "M1.01.Q3",
+        "question": "What is 2 to the power of 5?",
+        "options": [
+         "10",
+         "25",
+         "32"
+        ],
+        "correct": 2,
+        "explain": "2 x 2 x 2 x 2 x 2 = 32.",
+        "lessonId": "M1.01.3"
+       },
+       {
+        "id": "M1.01.Q4",
+        "question": "What is the square root of 144?",
+        "options": [
+         "12",
+         "14",
+         "72"
+        ],
+        "correct": 0,
+        "explain": "12 x 12 = 144.",
+        "lessonId": "M1.01.3"
+       },
+       {
+        "id": "M1.01.Q5",
+        "question": "What is 0.25 as a percentage?",
+        "options": [
+         "2.5%",
+         "25%",
+         "250%"
+        ],
+        "correct": 1,
+        "explain": "Multiply by 100: 0.25 is 25%.",
+        "lessonId": "M1.01.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M1",
+      "chapter": "M1.01",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M1.02",
+     "name": "Algebra",
+     "lessons": [
+      {
+       "id": "M1.02.1",
+       "name": "Transposing formulae",
+       "video": null,
+       "duration": "10:20",
+       "durationS": 620,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.02",
+        "lesson": "M1.02.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M1.02.2",
+       "name": "Simultaneous equations",
+       "video": null,
+       "duration": "12:30",
+       "durationS": 750,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.02",
+        "lesson": "M1.02.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M1.02.QZ",
+      "name": "Algebra exam",
+      "questions": [
+       {
+        "id": "M1.02.Q1",
+        "question": "If 3x + 4 = 19, what is x?",
+        "options": [
+         "5",
+         "7.67",
+         "15"
+        ],
+        "correct": 0,
+        "explain": "Take 4 from both sides to get 3x = 15, so x = 5.",
+        "lessonId": "M1.02.1"
+       },
+       {
+        "id": "M1.02.Q2",
+        "question": "Transpose V = IR to make I the subject.",
+        "options": [
+         "I = VR",
+         "I = V / R",
+         "I = R / V"
+        ],
+        "correct": 1,
+        "explain": "Divide both sides by R.",
+        "lessonId": "M1.02.1"
+       },
+       {
+        "id": "M1.02.Q3",
+        "question": "Simplify 2a + 3b - a + b.",
+        "options": [
+         "a + 4b",
+         "3a + 4b",
+         "a + 2b"
+        ],
+        "correct": 0,
+        "explain": "2a - a = a, and 3b + b = 4b.",
+        "lessonId": "M1.02.1"
+       },
+       {
+        "id": "M1.02.Q4",
+        "question": "What is (x squared) cubed?",
+        "options": [
+         "x to the 5",
+         "x to the 6",
+         "x to the 9"
+        ],
+        "correct": 1,
+        "explain": "A power of a power multiplies the indices: 2 x 3 = 6.",
+        "lessonId": "M1.02.1"
+       },
+       {
+        "id": "M1.02.Q5",
+        "question": "Solve x + y = 10 and x - y = 4.",
+        "options": [
+         "x = 7, y = 3",
+         "x = 6, y = 4",
+         "x = 8, y = 2"
+        ],
+        "correct": 0,
+        "explain": "Adding the two gives 2x = 14, so x = 7 and y = 3.",
+        "lessonId": "M1.02.2"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M1",
+      "chapter": "M1.02",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M1.03",
+     "name": "Geometry",
+     "lessons": [
+      {
+       "id": "M1.03.1",
+       "name": "Areas and volumes",
+       "video": null,
+       "duration": "9:10",
+       "durationS": 550,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.03",
+        "lesson": "M1.03.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M1.03.2",
+       "name": "Angles and triangles",
+       "video": null,
+       "duration": "8:45",
+       "durationS": 525,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.03",
+        "lesson": "M1.03.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M1.03.QZ",
+      "name": "Geometry exam",
+      "questions": [
+       {
+        "id": "M1.03.Q1",
+        "question": "The three angles of a triangle add up to how many degrees?",
+        "options": [
+         "90",
+         "180",
+         "360"
+        ],
+        "correct": 1,
+        "explain": "The interior angles of any triangle total 180 degrees.",
+        "lessonId": "M1.03.2"
+       },
+       {
+        "id": "M1.03.Q2",
+        "question": "What is the area of a circle of radius 2 m, to one decimal place?",
+        "options": [
+         "6.3 m²",
+         "12.6 m²",
+         "25.1 m²"
+        ],
+        "correct": 1,
+        "explain": "Area is pi r squared: 3.1416 x 4 = 12.6 m².",
+        "lessonId": "M1.03.1"
+       },
+       {
+        "id": "M1.03.Q3",
+        "question": "A rectangular tank is 2 m by 1 m by 0.5 m. What is its volume?",
+        "options": [
+         "1 m³",
+         "2.5 m³",
+         "3.5 m³"
+        ],
+        "correct": 0,
+        "explain": "Length x width x height: 2 x 1 x 0.5 = 1 m³.",
+        "lessonId": "M1.03.1"
+       },
+       {
+        "id": "M1.03.Q4",
+        "question": "A right-angled triangle has shorter sides of 3 and 4. How long is the hypotenuse?",
+        "options": [
+         "5",
+         "6",
+         "7"
+        ],
+        "correct": 0,
+        "explain": "Pythagoras: 9 + 16 = 25, and the square root of 25 is 5.",
+        "lessonId": "M1.03.2"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M1",
+      "chapter": "M1.03",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M1.04",
+     "name": "Trigonometry and graphs",
+     "lessons": [
+      {
+       "id": "M1.04.1",
+       "name": "Sine, cosine and tangent",
+       "video": null,
+       "duration": "11:50",
+       "durationS": 710,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.04",
+        "lesson": "M1.04.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M1.04.2",
+       "name": "Reading graphs",
+       "video": null,
+       "duration": "7:30",
+       "durationS": 450,
+       "watchedS": 0,
+       "scope": {
+        "module": "M1",
+        "chapter": "M1.04",
+        "lesson": "M1.04.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M1.04.QZ",
+      "name": "Trigonometry and graphs exam",
+      "questions": [
+       {
+        "id": "M1.04.Q1",
+        "question": "What is the sine of 30 degrees?",
+        "options": [
+         "0.5",
+         "0.707",
+         "0.866"
+        ],
+        "correct": 0,
+        "explain": "sin 30° is exactly one half.",
+        "lessonId": "M1.04.1"
+       },
+       {
+        "id": "M1.04.Q2",
+        "question": "Which ratio is the opposite side over the adjacent side?",
+        "options": [
+         "Sine",
+         "Cosine",
+         "Tangent"
+        ],
+        "correct": 2,
+        "explain": "Tangent is opposite over adjacent.",
+        "lessonId": "M1.04.1"
+       },
+       {
+        "id": "M1.04.Q3",
+        "question": "What is the gradient of the line y = 2x + 1?",
+        "options": [
+         "1",
+         "2",
+         "3"
+        ],
+        "correct": 1,
+        "explain": "In y = mx + c the gradient is m, which is 2.",
+        "lessonId": "M1.04.2"
+       },
+       {
+        "id": "M1.04.Q4",
+        "question": "What is the cosine of 60 degrees?",
+        "options": [
+         "0.5",
+         "0.707",
+         "0.866"
+        ],
+        "correct": 0,
+        "explain": "cos 60° is exactly one half.",
+        "lessonId": "M1.04.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M1",
+      "chapter": "M1.04",
+      "lesson": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "M2",
+   "name": "Physics",
+   "chapters": [
+    {
+     "id": "M2.01",
+     "name": "Matter",
+     "lessons": [
+      {
+       "id": "M2.01.1",
+       "name": "Atoms and molecules",
+       "video": null,
+       "duration": "8:20",
+       "durationS": 500,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.01",
+        "lesson": "M2.01.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M2.01.2",
+       "name": "States of matter",
+       "video": null,
+       "duration": "7:45",
+       "durationS": 465,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.01",
+        "lesson": "M2.01.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M2.01.QZ",
+      "name": "Matter exam",
+      "questions": [
+       {
+        "id": "M2.01.Q1",
+        "question": "What is the electrical charge on a neutron?",
+        "options": [
+         "Positive",
+         "Negative",
+         "None"
+        ],
+        "correct": 2,
+        "explain": "Neutrons carry no charge.",
+        "lessonId": "M2.01.1"
+       },
+       {
+        "id": "M2.01.Q2",
+        "question": "Which state of matter has a fixed volume but no fixed shape?",
+        "options": [
+         "Solid",
+         "Liquid",
+         "Gas"
+        ],
+        "correct": 1,
+        "explain": "A liquid keeps its volume and takes the shape of its container.",
+        "lessonId": "M2.01.2"
+       },
+       {
+        "id": "M2.01.Q3",
+        "question": "Which particles orbit the nucleus of an atom?",
+        "options": [
+         "Electrons",
+         "Protons",
+         "Neutrons"
+        ],
+        "correct": 0,
+        "explain": "Electrons occupy the shells around the nucleus.",
+        "lessonId": "M2.01.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M2",
+      "chapter": "M2.01",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M2.02",
+     "name": "Mechanics",
+     "lessons": [
+      {
+       "id": "M2.02.1",
+       "name": "Forces and moments",
+       "video": null,
+       "duration": "12:10",
+       "durationS": 730,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.02",
+        "lesson": "M2.02.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M2.02.2",
+       "name": "Newton's laws of motion",
+       "video": null,
+       "duration": "10:35",
+       "durationS": 635,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.02",
+        "lesson": "M2.02.2"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M2.02.3",
+       "name": "Work, energy and power",
+       "video": null,
+       "duration": "11:20",
+       "durationS": 680,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.02",
+        "lesson": "M2.02.3"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M2.02.QZ",
+      "name": "Mechanics exam",
+      "questions": [
+       {
+        "id": "M2.02.Q1",
+        "question": "What is the SI unit of force?",
+        "options": [
+         "Joule",
+         "Newton",
+         "Watt"
+        ],
+        "correct": 1,
+        "explain": "Force is measured in newtons.",
+        "lessonId": "M2.02.1"
+       },
+       {
+        "id": "M2.02.Q2",
+        "question": "A 10 N force acts 0.5 m from a pivot. What is the moment?",
+        "options": [
+         "5 N m",
+         "10.5 N m",
+         "20 N m"
+        ],
+        "correct": 0,
+        "explain": "Moment is force x distance: 10 x 0.5 = 5 N m.",
+        "lessonId": "M2.02.1"
+       },
+       {
+        "id": "M2.02.Q3",
+        "question": "Power is the rate of doing what?",
+        "options": [
+         "Work",
+         "Force",
+         "Momentum"
+        ],
+        "correct": 0,
+        "explain": "Power is work done per unit time.",
+        "lessonId": "M2.02.3"
+       },
+       {
+        "id": "M2.02.Q4",
+        "question": "Which of these is a vector quantity?",
+        "options": [
+         "Mass",
+         "Speed",
+         "Velocity"
+        ],
+        "correct": 2,
+        "explain": "Velocity has a size and a direction.",
+        "lessonId": "M2.02.2"
+       },
+       {
+        "id": "M2.02.Q5",
+        "question": "What is the weight of a 10 kg mass, taking g as 9.81 m/s²?",
+        "options": [
+         "9.81 N",
+         "98.1 N",
+         "981 N"
+        ],
+        "correct": 1,
+        "explain": "Weight is mass x g: 10 x 9.81 = 98.1 N.",
+        "lessonId": "M2.02.2"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M2",
+      "chapter": "M2.02",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M2.03",
+     "name": "Thermodynamics",
+     "lessons": [
+      {
+       "id": "M2.03.1",
+       "name": "Temperature scales",
+       "video": null,
+       "duration": "7:55",
+       "durationS": 475,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.03",
+        "lesson": "M2.03.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M2.03.2",
+       "name": "Heat transfer",
+       "video": null,
+       "duration": "9:30",
+       "durationS": 570,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.03",
+        "lesson": "M2.03.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M2.03.QZ",
+      "name": "Thermodynamics exam",
+      "questions": [
+       {
+        "id": "M2.03.Q1",
+        "question": "0 °C is approximately how many kelvin?",
+        "options": [
+         "0 K",
+         "100 K",
+         "273 K"
+        ],
+        "correct": 2,
+        "explain": "Add 273 (273.15) to convert Celsius to kelvin.",
+        "lessonId": "M2.03.1"
+       },
+       {
+        "id": "M2.03.Q2",
+        "question": "Heat moving along a solid metal bar is an example of",
+        "options": [
+         "Conduction",
+         "Convection",
+         "Radiation"
+        ],
+        "correct": 0,
+        "explain": "Conduction carries heat through a solid.",
+        "lessonId": "M2.03.2"
+       },
+       {
+        "id": "M2.03.Q3",
+        "question": "In which direction does heat flow on its own?",
+        "options": [
+         "From cold to hot",
+         "From hot to cold",
+         "It does not flow"
+        ],
+        "correct": 1,
+        "explain": "Heat flows from the hotter body to the colder one.",
+        "lessonId": "M2.03.2"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M2",
+      "chapter": "M2.03",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M2.04",
+     "name": "Optics",
+     "lessons": [
+      {
+       "id": "M2.04.1",
+       "name": "Reflection and refraction",
+       "video": null,
+       "duration": "8:40",
+       "durationS": 520,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.04",
+        "lesson": "M2.04.1"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M2.04.QZ",
+      "name": "Optics exam",
+      "questions": [
+       {
+        "id": "M2.04.Q1",
+        "question": "The angle of incidence equals the angle of",
+        "options": [
+         "Refraction",
+         "Reflection",
+         "Diffraction"
+        ],
+        "correct": 1,
+        "explain": "That is the law of reflection.",
+        "lessonId": "M2.04.1"
+       },
+       {
+        "id": "M2.04.Q2",
+        "question": "Light bending as it passes from air into glass is called",
+        "options": [
+         "Reflection",
+         "Refraction",
+         "Dispersion"
+        ],
+        "correct": 1,
+        "explain": "A change of medium changes the speed of light and bends it.",
+        "lessonId": "M2.04.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M2",
+      "chapter": "M2.04",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M2.05",
+     "name": "Wave motion and sound",
+     "lessons": [
+      {
+       "id": "M2.05.1",
+       "name": "Frequency and wavelength",
+       "video": null,
+       "duration": "9:05",
+       "durationS": 545,
+       "watchedS": 0,
+       "scope": {
+        "module": "M2",
+        "chapter": "M2.05",
+        "lesson": "M2.05.1"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M2.05.QZ",
+      "name": "Wave motion and sound exam",
+      "questions": [
+       {
+        "id": "M2.05.Q1",
+        "question": "What is the unit of frequency?",
+        "options": [
+         "Hertz",
+         "Decibel",
+         "Metre"
+        ],
+        "correct": 0,
+        "explain": "One hertz is one cycle per second.",
+        "lessonId": "M2.05.1"
+       },
+       {
+        "id": "M2.05.Q2",
+        "question": "Sound travels fastest through which of these?",
+        "options": [
+         "Air",
+         "Water",
+         "Steel"
+        ],
+        "correct": 2,
+        "explain": "Sound is fastest in solids and slowest in gases.",
+        "lessonId": "M2.05.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M2",
+      "chapter": "M2.05",
+      "lesson": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "M3",
+   "name": "Electrical Fundamentals",
+   "chapters": [
+    {
+     "id": "M3.01",
+     "name": "Electron theory",
+     "lessons": [
+      {
+       "id": "M3.01.1",
+       "name": "Conductors and insulators",
+       "video": null,
+       "duration": "8:10",
+       "durationS": 490,
+       "watchedS": 0,
+       "scope": {
+        "module": "M3",
+        "chapter": "M3.01",
+        "lesson": "M3.01.1"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M3.01.QZ",
+      "name": "Electron theory exam",
+      "questions": [
+       {
+        "id": "M3.01.Q1",
+        "question": "Which of these is a good electrical conductor?",
+        "options": [
+         "Copper",
+         "Glass",
+         "Rubber"
+        ],
+        "correct": 0,
+        "explain": "Copper has free electrons that carry current easily.",
+        "lessonId": "M3.01.1"
+       },
+       {
+        "id": "M3.01.Q2",
+        "question": "In a metal conductor, current is a flow of",
+        "options": [
+         "Protons",
+         "Electrons",
+         "Neutrons"
+        ],
+        "correct": 1,
+        "explain": "In metals the charge carriers are electrons.",
+        "lessonId": "M3.01.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M3",
+      "chapter": "M3.01",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M3.02",
+     "name": "DC circuits",
+     "lessons": [
+      {
+       "id": "M3.02.1",
+       "name": "Ohm's law",
+       "video": null,
+       "duration": "10:15",
+       "durationS": 615,
+       "watchedS": 0,
+       "scope": {
+        "module": "M3",
+        "chapter": "M3.02",
+        "lesson": "M3.02.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M3.02.2",
+       "name": "Series and parallel",
+       "video": null,
+       "duration": "12:40",
+       "durationS": 760,
+       "watchedS": 0,
+       "scope": {
+        "module": "M3",
+        "chapter": "M3.02",
+        "lesson": "M3.02.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M3.02.QZ",
+      "name": "DC circuits exam",
+      "questions": [
+       {
+        "id": "M3.02.Q1",
+        "question": "A 12 V supply drives 2 A through a resistor. What is its resistance?",
+        "options": [
+         "6 Ω",
+         "14 Ω",
+         "24 Ω"
+        ],
+        "correct": 0,
+        "explain": "R = V / I: 12 / 2 = 6 Ω.",
+        "lessonId": "M3.02.1"
+       },
+       {
+        "id": "M3.02.Q2",
+        "question": "Two 10 Ω resistors in series have a total resistance of",
+        "options": [
+         "5 Ω",
+         "10 Ω",
+         "20 Ω"
+        ],
+        "correct": 2,
+        "explain": "Series resistances add: 10 + 10 = 20 Ω.",
+        "lessonId": "M3.02.2"
+       },
+       {
+        "id": "M3.02.Q3",
+        "question": "Two 10 Ω resistors in parallel have a total resistance of",
+        "options": [
+         "5 Ω",
+         "10 Ω",
+         "20 Ω"
+        ],
+        "correct": 0,
+        "explain": "Two equal resistors in parallel give half of one: 5 Ω.",
+        "lessonId": "M3.02.2"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M3",
+      "chapter": "M3.02",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M3.03",
+     "name": "Magnetism",
+     "lessons": [
+      {
+       "id": "M3.03.1",
+       "name": "Magnetic fields",
+       "video": null,
+       "duration": "9:25",
+       "durationS": 565,
+       "watchedS": 0,
+       "scope": {
+        "module": "M3",
+        "chapter": "M3.03",
+        "lesson": "M3.03.1"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M3.03.QZ",
+      "name": "Magnetism exam",
+      "questions": [
+       {
+        "id": "M3.03.Q1",
+        "question": "Two like magnetic poles will",
+        "options": [
+         "Attract",
+         "Repel",
+         "Have no effect on each other"
+        ],
+        "correct": 1,
+        "explain": "Like poles repel and unlike poles attract.",
+        "lessonId": "M3.03.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M3",
+      "chapter": "M3.03",
+      "lesson": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "M4",
+   "name": "Electronic Fundamentals",
+   "chapters": [
+    {
+     "id": "M4.01",
+     "name": "Semiconductors",
+     "lessons": [
+      {
+       "id": "M4.01.1",
+       "name": "Diodes",
+       "video": null,
+       "duration": "9:50",
+       "durationS": 590,
+       "watchedS": 0,
+       "scope": {
+        "module": "M4",
+        "chapter": "M4.01",
+        "lesson": "M4.01.1"
+       },
+       "thumb": null
+      },
+      {
+       "id": "M4.01.2",
+       "name": "Transistors",
+       "video": null,
+       "duration": "11:15",
+       "durationS": 675,
+       "watchedS": 0,
+       "scope": {
+        "module": "M4",
+        "chapter": "M4.01",
+        "lesson": "M4.01.2"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M4.01.QZ",
+      "name": "Semiconductors exam",
+      "questions": [
+       {
+        "id": "M4.01.Q1",
+        "question": "A diode lets current flow",
+        "options": [
+         "In one direction",
+         "In both directions",
+         "Only when it is cold"
+        ],
+        "correct": 0,
+        "explain": "A diode conducts forward and blocks reverse current.",
+        "lessonId": "M4.01.1"
+       },
+       {
+        "id": "M4.01.Q2",
+        "question": "The three terminals of a bipolar transistor are",
+        "options": [
+         "Base, collector and emitter",
+         "Gate, source and drain",
+         "Anode, cathode and grid"
+        ],
+        "correct": 0,
+        "explain": "Gate, source and drain belong to a field-effect transistor.",
+        "lessonId": "M4.01.2"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M4",
+      "chapter": "M4.01",
+      "lesson": null
+     }
+    },
+    {
+     "id": "M4.02",
+     "name": "Printed circuit boards",
+     "lessons": [
+      {
+       "id": "M4.02.1",
+       "name": "How a board is built",
+       "video": null,
+       "duration": "7:40",
+       "durationS": 460,
+       "watchedS": 0,
+       "scope": {
+        "module": "M4",
+        "chapter": "M4.02",
+        "lesson": "M4.02.1"
+       },
+       "thumb": null
+      }
+     ],
+     "quiz": {
+      "id": "M4.02.QZ",
+      "name": "Printed circuit boards exam",
+      "questions": [
+       {
+        "id": "M4.02.Q1",
+        "question": "The copper paths on a printed circuit board are called",
+        "options": [
+         "Tracks",
+         "Leads",
+         "Pins"
+        ],
+        "correct": 0,
+        "explain": "Tracks connect the components on the board.",
+        "lessonId": "M4.02.1"
+       }
+      ]
+     },
+     "scope": {
+      "module": "M4",
+      "chapter": "M4.02",
+      "lesson": null
+     }
+    }
+   ]
+  }
+ ],
+ "notes": [],
+ "threads": [],
+ "replies": [],
+ "people": [],
+ "presence": []
+}

@@ -1,3 +1,7 @@
+/* FIRST, BEFORE ANY OTHER MODULE EVALUATES: in the demo, localStorage becomes
+   a copy in memory (src/demo/boot.js). Imports run in order, so this line
+   has to stay above every other one. Outside the demo it does nothing. */
+import "./demo/boot.js";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
