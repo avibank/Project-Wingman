@@ -22,7 +22,8 @@ import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "../lib/flySolo.js";
 import { clearPresence } from "../lib/presence.js";
 import BlockedList from "./BlockedList.jsx";
-import { saveProfile, fetchProfile, claimCode, freeCode } from "../lib/squadron.js";
+import { saveProfile, fetchProfile } from "../lib/squadron.js";
+import { takeLicenceAsk } from "../lib/licenceAsk.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 import { demoOn, demoProfile, DEMO_ME, DEMO_PRESET, DEMO_BAR } from "../lib/demoFixture.js";
 import { FINISHES, lightOverride } from "../lib/finishEngine.js";
@@ -597,21 +598,22 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   }, [user?.fullName, user?.username, user?.firstName, progress.loaded]);
 
   /* The code comes from the profile, not from Clerk — Clerk has never heard of
-     it. An account from before this existed has none, so one is claimed on
-     sight: it is required, and the licence is where somebody looks for it. */
+     it. IT IS NO LONGER CLAIMED ON SIGHT. It used to be: an account without
+     one was handed a random code the first time it opened this screen, and
+     the stamp creator then let it type a different one that was never
+     claimed. The code IS the stamp now (0035), claimed when the stamp is
+     issued, so an account without one simply has none until then, and the
+     creator offers a suggestion. */
   useEffect(() => {
     let live = true;
     if (!user?.id) return undefined;
-    fetchProfile(user.id).then(async (row) => {
-      if (!live) return;
-      if (row?.code) { setCode(row.code); return; }
-      for (let tries = 0; tries < 3 && live; tries++) {
-        const got = await claimCode(user.id, await freeCode());
-        if (got) { if (live) setCode(got); return; }
-      }
-    });
+    fetchProfile(user.id).then((row) => { if (live && row?.code) setCode(row.code); });
     return () => { live = false; };
   }, [user?.id]);
+
+  /* Straight from the walkthrough: its last button brings a new student here
+     to issue their code and stamp, so the creator opens on arrival. */
+  useEffect(() => { if (takeLicenceAsk()) setPicker("stamp"); }, []);
 
   /* The card's own row, read through 0030's function — the same one anybody
      opening your card uses, so what you see in edit mode is what they see.

@@ -18,17 +18,22 @@
      and a control whose answer is silently thrown away is worse than no
      control at all. If it should be kept, it is one column and one line here.
 
-   ISSUING IS THE SERVER'S. issueStamp calls 0029's function, which refuses a
-   second call and chooses the seed itself. Nothing here can make a stamp
-   permanent or pick its ink texture, and that is deliberate.
+   ISSUING IS THE SERVER'S. issueLicence calls 0035's function, which claims
+   the code and issues the stamp around it in one statement, refuses a second
+   call, and chooses the seed itself. THE CODE IS THE STAMP (owner,
+   2026-09-21): it is chosen here, it is exactly three letters or numbers, and
+   it is claimed only when the stamp is issued, so the two can never differ.
+   Nothing here can make a stamp permanent or pick its ink texture, and that is
+   deliberate.
    ========================================================================= */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Dices } from "lucide-react";
 import {
-  SHAPE_IDS, PATTERNS, PATTERN_IDS, PALETTE, col, cleanCode, cleanRim, drawStamp,
+  SHAPE_IDS, PATTERNS, PATTERN_IDS, PALETTE, col, cleanRim, drawStamp,
   ringPattern,
 } from "../../lib/stamp.js";
-import { issueStamp } from "../../lib/squadron.js";
+import { issueLicence, freeCode } from "../../lib/squadron.js";
+import { normaliseCode, isCode } from "../../lib/code.js";
 import { useEscape } from "./Sheet.jsx";
 import "./licence.css";
 import "./studio.css";
@@ -77,9 +82,19 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
      separate YOUR CODE box above this; deleting it without seeding the field
      would have meant a pilot with a code typing it again from memory. */
   const [draft, setDraft] = useState({
-    shape: "seal", code: cleanCode(code), rim: true, ring: "", pattern: "none",
+    shape: "seal", code: normaliseCode(code), rim: true, ring: "", pattern: "none",
     ink: PALETTE[1].n, seed: 7,
   });
+
+  /* A student with no code yet is handed a free one to start from, so the
+     required field arrives filled and changing it is a choice. Claimed only
+     when the stamp is issued. */
+  useEffect(() => {
+    if (normaliseCode(code)) return undefined;
+    let live = true;
+    freeCode().then((c) => { if (live && c) setDraft((d) => (d.code ? d : { ...d, code: normaliseCode(c) })); });
+    return () => { live = false; };
+  }, [code]);
   const [tab, setTab] = useState("shape");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -103,8 +118,8 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
 
   const codeRef = useRef(null);
   const issue = async () => {
-    if (cleanCode(draft.code).length < 1) {
-      setNote("Add your code: up to 3 letters or numbers.");
+    if (!isCode(draft.code)) {
+      setNote("Your code needs three letters or numbers.");
       /* The code is not on a tab — it is under the preview — so the cursor
          goes to it. Changing the tab instead, which the first version did,
          sent you to Shape to look for something that was never there. */
@@ -113,7 +128,20 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
     }
     if (!confirming) { setConfirming(true); return; }
     setBusy(true);
-    const { row, error } = await issueStamp(userId, draft);
+    const want = normaliseCode(draft.code);
+    const { row, error, taken } = await issueLicence(userId, { ...draft, code: want });
+    if (taken) {
+      /* Somebody else holds it. A new suggestion goes in its place, and the
+         confirmation starts again, because what is about to be issued has
+         changed. */
+      const next = await freeCode();
+      setBusy(false);
+      setDraft((d) => ({ ...d, code: normaliseCode(next) }));
+      setConfirming(false);
+      setNote(`${want} is already somebody's code. Here is another, or type your own.`);
+      codeRef.current?.focus();
+      return;
+    }
     setBusy(false);
     if (error || !row) { setNote("That didn't go through. Try again in a moment."); return; }
     onIssued(row);
@@ -124,11 +152,15 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
          onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="st-studio">
         <div className="st-head">
-          <h3>Your stamp</h3>
+          <h3>Your code and stamp</h3>
           <button type="button" className="lic-x" onClick={onClose} aria-label="Close">
             <X size={15} aria-hidden="true" />
           </button>
         </div>
+        <p className="st-intro">
+          Your code is three letters or numbers, and your stamp is built around it.
+          They are issued together and cannot be changed afterwards.
+        </p>
 
         {/* The preview, on ruled paper, with the dice in the corner. */}
         <div className="st-paper">
@@ -148,8 +180,9 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
                  /* WNG — the reference's own example, and what every
                     screenshot in docs/launch/screens now shows. */
                  value={draft.code} placeholder="WNG" autoComplete="off"
-                 aria-label="Your code, up to 3 letters or numbers"
-                 onChange={(e) => set({ code: cleanCode(e.target.value) })} />
+                 autoCapitalize="characters" spellCheck="false"
+                 aria-label="Your code, three letters or numbers"
+                 onChange={(e) => set({ code: normaliseCode(e.target.value) })} />
         </div>
 
         <div className="st-tabs" role="tablist" aria-label="Stamp">
@@ -264,7 +297,7 @@ export default function StampCreator({ userId, code = "", onIssued, onClose }) {
             </>
           ) : (
             <button type="button" className="st-btn is-pri is-wide" onClick={issue}>
-              Issue my stamp
+              Issue my code and stamp
             </button>
           )}
         </div>

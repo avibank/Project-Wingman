@@ -269,6 +269,24 @@ export async function reportContent({ reporterId, targetType, targetId, reason, 
    from Postgres' point of view and anyone with the publishable key can write.
    The seed is the server's too: it is what gives an account its own permanent
    ink texture, and a client that chose it could choose somebody else's. */
+/* THE CODE AND THE STAMP, ISSUED TOGETHER (0035). One call claims the code and
+   issues the stamp around it; the server refuses a taken code by name, which
+   is the one refusal a student can do something about, so it is told apart
+   here and the creator offers another. */
+export async function issueLicence(userId, { shape, code, rim, ring, pattern, ink }) {
+  const { data, error } = await supabase.rpc("issue_licence", {
+    uid: userId,
+    p_code: normaliseCode(code),
+    p_shape: shape,
+    p_rim: rim !== false,
+    p_ring: ring || "",
+    p_pattern: pattern || "none",
+    p_ink: ink || null,
+  });
+  if (error) return { row: null, error, taken: /code is taken/i.test(error.message || "") };
+  return { row: Array.isArray(data) ? data[0] : data, error: null, taken: false };
+}
+
 export async function issueStamp(userId, { shape, code, rim, ring, pattern, ink }) {
   const { data, error } = await supabase.rpc("issue_stamp", {
     uid: userId,

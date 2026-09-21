@@ -1,51 +1,51 @@
-import { startTransition, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
-import FirstFlight from "./FirstFlight.jsx";
-import Spooling from "./Spooling.jsx";
 
-// §7.1 runs once, for a signed-in user with no profile yet.
-//
-// It fails open in every uncertain case. A read that errors — which is the
-// state until migration 0005 runs — lets the user straight through rather than
-// holding them in onboarding for a table that does not exist.
+/* =============================================================================
+   FIRST FLIGHT HAS NO SCREEN ANY MORE.
+   -----------------------------------------------------------------------------
+   A new student signs up, lands on the Flight Deck, and the walkthrough opens.
+   Its last slide takes them to their licence, where they choose their code and
+   design their stamp, issued together. The owner (2026-09-21): account setup
+   "shouldn't be a part of" the way in; do it after the walkthrough.
+
+   So this gate no longer holds anybody. It does its two jobs in the
+   background and lets the app through at once:
+
+   · A NEW STUDENT'S PROFILE IS MADE HERE, with the username Clerk asked for at
+     sign-up as their callsign. The room, the comments, the roster and
+     people_search all read the callsign from pilot_profiles, and without a
+     row an account is "Someone" to everybody and unfindable.
+   · HEALING THE CALLSIGN. The Licence tab once wrote a callsign to Clerk
+     alone, so an account from then can hold a NULL here. This is the one
+     place with both facts in hand at startup, and the write happens only when
+     the two disagree.
+
+   It fails quietly in every uncertain case: a read that errors writes nothing,
+   and the next start tries again.
+   ========================================================================= */
 
 function FirstFlightGate({ children }) {
   const { isLoaded, isSignedIn, user } = useUser();
-  const [state, setState] = useState("checking");   // checking | onboarding | through
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn || !user?.id) { setState("through"); return; }
+    if (!isLoaded || !isSignedIn || !user?.id) return undefined;
     let live = true;
     fetchProfileStatus(user.id)
       .then(({ profile, failed }) => {
-        if (!live) return;
-        /* HEALING THE CALLSIGN ON THE WAY PAST.
-
-           The Licence tab used to write a callsign to Clerk alone, so every
-           account that set one before that was fixed still has a NULL in
-           pilot_profiles — which is the column the room, the comments, the
-           roster and people_search all read. They would stay "Someone" to
-           everybody forever, and unfindable, without ever being told why.
-
-           This is the one place with both facts in hand at startup, and it is
-           already reading the profile, so the check is free. One write, only
-           when the two actually disagree. */
-        const mine = user.username?.trim();
-        if (profile && mine && profile.callsign !== mine) {
+        if (!live || failed) return;
+        const mine = user.username?.trim() || null;
+        if (!profile) {
+          saveProfile(user.id, { callsign: mine }).catch(() => {});
+        } else if (mine && profile.callsign !== mine) {
           saveProfile(user.id, { callsign: mine }).catch(() => {});
         }
-        setState(failed || profile ? "through" : "onboarding");
       })
-      .catch(() => live && setState("through"));
+      .catch(() => {});
     return () => { live = false; };
-  }, [isLoaded, isSignedIn, user?.id]);
+  }, [isLoaded, isSignedIn, user?.id, user?.username]);
 
-  if (state === "checking") return <Spooling />;
-  /* A transition for the same reason as UsernameGate's: this is the render
-     that swaps First Flight for the whole app, whose screens are lazy. */
-  if (state === "onboarding") return <FirstFlight onDone={() => startTransition(() => setState("through"))} />;
   return children;
 }
 

@@ -227,6 +227,13 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0035, the code is the stamp, has been run against the live project**
+(2026-09-21), verified by connecting: `pilot_code_shape` is now
+`^[A-Z0-9]{3}$`, `issue_licence` claims and issues in one statement,
+`claim_code` refuses to move an issued code, and the trigger holds `code`.
+`npm run check:licence-db` drives 11 assertions over the anon REST path as two
+throwaway accounts and deletes both rows.
+
 **0034, quiz runs and the board, has been run against the live project**
 (2026-09-20), verified by connecting rather than inferred: `quiz_runs` with its
 eleven columns, four CHECK constraints, two indexes and an open policy, and
@@ -431,37 +438,54 @@ question feeds, and the right seat is one person and state that expires.
   livery × night/day × 1920/1512/1024/430, and every control the brief lists:
   `npm run test:rr`.
 
-## Signing in, and First Flight
+## Signing in, the walkthrough, and the licence
 
-Rebuilt on 2026-09-21 at the owner's word: "no more of the old sign up with
-livery and study time".
+Rebuilt on 2026-09-21 at the owner's word, in two passes the same day. The way
+in is now: **sign up → the walkthrough → the licence**, and nothing else.
 
-- **The login is one centred column**: the wordmark line, Clerk's card, and a
-  line under it to cross between signing in and joining (`AuthPage.jsx`).
+- **The login is one centred column** (`AuthPage.jsx`): the wordmark line,
+  Clerk's card, and one line under it to cross between signing in and joining.
   **The title is Clerk's own header**, reworded in `lib/clerkWords.js`, because
-  that header changes at every step ("Check your email") and a title of ours
-  could not.
+  it changes at every step ("Check your email") and a title of ours could not.
 - **Clerk's main button is styled through `elements`, never `colorPrimary`.**
-  Clerk derives shades from `colorPrimary`, and given `var(--accent)` it
-  painted the live Continue button transparent (measured). Variables that are
-  used as they are, backgrounds and text, take the tokens safely.
-- **First Flight is one screen: callsign and code.** The squadron of tails in
-  the retired livery, the module picker (which would read "0 chapters" on the
-  empty skeleton) and "When do you usually study?" are gone. So is the
-  placement by study time they fed, because the Ready Room has discovery. The
-  callsign is written to Clerk as the username too, since FirstFlightGate
-  already heals one from the other. The tour on the Flight Deck does the rest.
-- **FirstFlightGate is outside UsernameGate now**, so a new student meets one
-  screen, not two asking for the same name. The username gate is for an
-  older account that has a profile and no username, and it wears First
-  Flight's look.
-- **Both gates reveal the app inside a transition**, and the username gate
-  stays up while its save is in flight. The app's screens are lazy. Revealed
-  by an urgent render, which is React's own flush at the end of the
-  submitting click, the first one suspends with no boundary above it and the
-  error screen replaces everything. That was measured in the harness, whose
-  Clerk writes the username at once. `?username=none` on the harness is a
-  student with no username yet.
+  Clerk derives shades from `colorPrimary`, and given `var(--accent)` it painted
+  the live Continue button transparent (measured).
+- **First Flight has no screen.** `FirstFlightGate` makes a new student's
+  profile in the background, with the username Clerk asked for as the
+  callsign, and heals the callsign for older accounts. It never holds anybody.
+  The squadron of livery tails, the module picker and "When do you usually
+  study?" are gone, and so is the study-time placement they fed.
+- **The walkthrough opens by itself** for a signed-in student who has not seen
+  it, on the Flight Deck only (`pw-tour` in progress). It is **twelve slides
+  you swipe through** (`features/tour/`), each with a drawing in the app's
+  tokens (`Scenes.jsx`), written for somebody who has never heard of Wingman.
+  It REPLACED a spotlight over the live app, which was slow because every
+  step was a route change, a lazy chunk and a hunt for a selector.
+  - **The app under it is hidden once it has faded in** (`data-tour` on
+    `.app`). Covered, it still repainted: the harness drew 4 frames a second
+    behind the layer and 60 with the app hidden. Do not remove that line.
+  - **`touch-action: pan-y` is on each slide**, not only the viewport: the
+    slide is a scroller, touch-action counts only up to the nearest scroller,
+    and without it the browser took every horizontal swipe.
+  - **A flick is measured over the last 100ms**, not between two events.
+  - The harness treats a uid starting `new` as a brand-new student. Every
+    other fixture student has already seen it, or every suite that loads the
+    Flight Deck would load the walkthrough instead.
+- **It ends at the licence.** Finishing or skipping it takes a student with no
+  stamp to `/account/licence` with the stamp creator open (`lib/licenceAsk.js`).
+- **The code is the stamp, and they are issued together** (migration 0035,
+  `issue_licence`). The code is chosen in the stamp creator, it is exactly three
+  letters or numbers, and it is claimed only when the stamp is issued, in the
+  same statement. After that neither changes: `claim_code` refuses to move it
+  and 0029's trigger now holds `code` too. The licence no longer claims a code
+  on sight. **Any letter and any digit can be typed.** 0, 1, O, I and L used to
+  be dropped as they were typed, and a student saw "A10" lose two characters.
+  Suggestions still avoid those five. `npm run check:licence-db` drives it live.
+- `UsernameGate` is for an account with no Clerk username, in First Flight's
+  look, and reveals the app in a transition while holding the gate during its
+  save. The app's screens are lazy, and an urgent reveal suspended with no
+  boundary above it and took the whole app down (measured with
+  `?username=none`).
 
 ## The Flight Deck's instrument strip
 
