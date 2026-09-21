@@ -153,7 +153,14 @@ export default function ModuleScreen({
         {/* Papers count too: they hang off the module as well as off a
             chapter, so a module can have something to open before it has a
             chapter. */}
-        <p className="sub">{moduleSubtitle(chapters, papers)}</p>
+        {/* A DOOR, NOT ONLY A LINE. It counts what is in the Library, so it opens
+            the Library; worded the same and drawn the same, so the reference
+            diff is untouched. Only a module waiting on everything stays text. */}
+        <p className="sub">
+          {chapters.length || papers.length
+            ? <button type="button" className="sub-go is-inline" onClick={() => onTab("library")}>{moduleSubtitle(chapters, papers)}</button>
+            : moduleSubtitle(chapters, papers)}
+        </p>
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
           the surface below, and the list lives inside the same border. */}

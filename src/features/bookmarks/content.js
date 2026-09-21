@@ -199,6 +199,7 @@ export const routes = {
   folder: (kind) => `/bookmarks/${kind}`,                      // questions | cards | videos | pages
   module: (moduleId) => routePath.module(moduleId),
   library: (moduleId) => routePath.library(moduleId),
+  quizzes: (moduleId) => routePath.library(moduleId, "quizzes"),
   cardSet: (moduleId, chapter) => `${routePath.library(moduleId)}/cards/${chapter}`,
   quiz: (moduleId, chapter) => {
     const c = chapterAt(moduleOf(moduleId), Number(chapter));

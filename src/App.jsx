@@ -1769,6 +1769,7 @@ function AppInner() {
               }));
             }}
             onHome={goHome}
+            onOpenModule={(code) => code && goToModule(code, "chapters")}
             saved={progress.get("pw-room-saved", {})}
             onSave={(threadId) => {
               // Saving a question is the same act as bookmarking a paper, so it
@@ -2017,6 +2018,7 @@ function AppInner() {
             onGoToChapter={goToChapter}
             onResumePlace={resumePlace}
             onOpenReady={() => go(routePath.ready())}
+            onOpenQuizzes={(code) => go(routePath.library(code, "quizzes"))}
             squadrons={squadrons}
             squadronMessages={roomMessages}
             seatCandidates={rightSeat}

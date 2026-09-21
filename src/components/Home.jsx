@@ -277,7 +277,7 @@ const DECK_CSS = `
 .app.smooth-air .deck .mod:hover { transform: none; }
 `;
 
-function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, content,
+function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToChapter, onResumePlace, onEnterModule, onOpenReady, onOpenQuizzes, content,
   squadrons = [], squadronMessages = [], seatCandidates = [], threads = [], replies = [], people = [], onSquadronPost, onOpenRoomAt }) {
   // One content source for the whole app. When the seeded content is on, the
   // module screen reads ITS ids and this read data.js's — so a lesson finished
@@ -649,13 +649,19 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
               />
             ) : (
             <>
-            <div className="cel">
+            {/* EVERY INSTRUMENT OPENS WHAT IT MEASURES (owner, 2026-09-21: every
+                button that can lead somewhere should). The bag opened Bookmarks
+                and the radar the Ready Room; the gyro reads this module's quiz
+                average, so it opens the quizzes, and the hour meter counts time
+                in this module, so it opens the module. */}
+            <button type="button" className="cel radarcel" onClick={() => onOpenQuizzes?.(active.code)}
+                    aria-label={`${active.name} quizzes`}>
               <div className="aiwrap">
                 <Gyro average={average} flown={flown} bar={minimums}
                       C={C} surf={surf} night={night} ballRef={ballRef} />
               </div>
               <div className="cap"><GyroCaption average={average} bar={minimums} /></div>
-            </div>
+            </button>
 
             {/* THE FLIGHT BAG, and it is the instrument rather than a caption.
                 It was a number ladder over a briefcase glyph with "A bookmark
@@ -672,7 +678,8 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
               <FlightBag moduleId={active.code} />
             </div>
 
-            <div className="cel">
+            <button type="button" className="cel radarcel" onClick={() => onEnterModule?.(active)}
+                    aria-label={`Open ${active.name}, ${hobbs.spoken} on it`}>
               {/* DIGITS, AND NOTHING BUT. It was a tenths drum, then hours
                   and minutes with unit letters on them; hobbs.js carries both
                   arguments. The letters were the only part of the instrument
@@ -683,7 +690,7 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
                 <span className="hb-n">{hobbs.reads}</span>
               </div>
               <div className="cap">{hobbs.flown ? "On this module" : "Your first hour"}</div>
-            </div>
+            </button>
 
             {/* Social's only foothold in the academic half. */}
             {(() => {
