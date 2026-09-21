@@ -257,6 +257,14 @@ export const FINISHES = [
   { id: "manual", name: "Manual", line: "Everything you need is in here somewhere." },
 ];
 
+/* AURORA IS NOT OFFERED FOR NOW (owner, 2026-09-21: "remove aurora for now,
+   just keep manual"). It stays in FINISHES and every renderer still draws it,
+   so bringing it back is deleting this filter; `offeredFinish` is what turns
+   somebody who had it into Standard rather than into a finish they cannot
+   see in the picker. */
+export const OFFERED_FINISHES = FINISHES.filter((f) => f.id !== "aurora");
+export const offeredFinish = (id) => (OFFERED_FINISHES.some((f) => f.id === (id ?? null)) ? (id ?? null) : null);
+
 /**
  * Token overrides for a finish, layered over deckVars().
  * Returns an empty object for None, which is what keeps None byte-identical.

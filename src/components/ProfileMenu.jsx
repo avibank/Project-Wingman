@@ -19,15 +19,6 @@ import { useSavesCount } from "../features/bookmarks/deck.js";
 // The account row IS the Licence link — there is no separate Licence row.
 
 const ICON = {
-  /* A compass rose, for being shown around. Outline like the rest — every row
-     here is a door rather than a state. */
-  tour: (
-    <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="10" cy="10" r="7.2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12.8 7.2 8.9 8.9 7.2 12.8l3.9-1.7z" stroke="currentColor"
-            strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  ),
   /* The same bookmark the feature draws everywhere else, at this menu's own
      20x20. Outline, because the row is a door rather than a state. */
   bookmark: (
@@ -195,14 +186,6 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
         <button role="menuitem" type="button" onClick={() => go("bookmarks")}>
           {ICON.bookmark}<span className="mlabel">Bookmarks</span>
           {saved > 0 && <span className="mcount">{saved}</span>}
-        </button>
-
-        {/* THE WAY BACK INTO THE TOUR. It runs once on its own and then never
-            again, which is right — and leaves nowhere to find it from, which
-            is not. A student who skipped it on day one, or who wants the
-            Library explained again in week three, presses this. */}
-        <button role="menuitem" type="button" onClick={() => go("tour")}>
-          {ICON.tour}<span className="mlabel">Show me around</span>
         </button>
 
         {/* No Sign out here. The Licence tab carries it, with "On this

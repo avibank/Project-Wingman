@@ -374,7 +374,10 @@ export function inspStamp(on,size=40,rot=0,st=DEFAULT_STAMP){
 /* THE EIGHT SHAPES, AND THE SIX PATTERNS. The reference gained `shield` and
    `hex`, and dropped `lace`; these two lists are the app's own order for the
    creator's grid and are what `check:stamp` counts. */
-export const SHAPE_IDS = ['seal', 'roundel', 'window', 'gauge', 'postage', 'tag', 'shield', 'hex'];
+/* SIX, not eight (owner, 2026-09-21): the shield and the hex, which read as a
+   bolt head, are no longer offered. The renderer still draws both, because a
+   shape that stops being drawn would blank a stamp already issued in it. */
+export const SHAPE_IDS = ['seal', 'roundel', 'window', 'gauge', 'postage', 'tag'];
 export const PATTERN_IDS = ['none', 'rays', 'checks', 'guilloche', 'crochet', 'knurl'];
 export const escapeText = (v) => String(v ?? '').replace(/[<>&"']/g, (c) => (
   { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));

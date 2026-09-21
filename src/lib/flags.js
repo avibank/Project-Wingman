@@ -17,6 +17,7 @@
 // in the same ticket as the rollout, or you accumulate a second codebase by
 // stealth.
 
+import { demoMode } from "../demo/mode.js";
 import { useMemo } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { loadJSON, saveJSON } from "./storage.js";
@@ -28,7 +29,8 @@ export const FLAGS = [
   { id: "social.crew", label: "Formation and wingman", note: "The two crew-strip cells and the My flight preset.", everyone: true },
   { id: "social.frequency", label: "Frequency", note: "The channel preview and the Open frequency preset.", everyone: true },
   { id: "voice.characters", label: "Voices", note: "Choosing who greets you.", everyone: true },
-  { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield.", everyone: true },
+  /* Off for now, with the Aurora finish (owner, 2026-09-21). */
+  { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield.", everyone: false },
   // The kill pass. Each of these hides an entry point; the route and the code
   // stay put, so any of it is one switch away from coming back.
   { id: "nav.root", label: "Bottom nav", note: "Study · Modules · Logbook · Ready Room.", off: true },
@@ -53,7 +55,11 @@ export const FLAGS = [
      a paper that opens to be scrolled, bookmarked and downloaded, and cannot
      mark anything. Turning the reader back on must not be the price of having
      papers at all, and shipping the viewer must not bring the editor with it. */
-  { id: "paper.viewer", label: "Papers", note: "Papers open in Wingman: scroll, bookmark a page, download. Not the marking reader.", everyone: true },
+  /* OFF FOR LAUNCH (owner, 2026-09-21: "kill papers for now"). With it off the
+     Library, the module's subtitle, Bookmarks' Pages folder and the paper
+     address all show nothing of papers, and a page bookmark is held rather
+     than pruned (useSaves.js). The walkthrough says a reader is coming. */
+  { id: "paper.viewer", label: "Papers", note: "Papers open in Wingman: scroll, bookmark a page, download. Not the marking reader.", everyone: false },
   { id: "reader.v2", label: "Reader rebuild", note: "The rebuilt papers reader — floating chrome, a tray you build, marks as objects. Off is the previous reader.", everyone: true },
   // The one switch that takes the dev panel out. Off for everyone including
   // admins until it is turned on deliberately, and the panel additionally
@@ -188,6 +194,11 @@ export function resolveFlags(isAdmin, overrides = {}) {
 
     out[f.id] = canOverride ? !!overrides[f.id] : flagDefault(f.id, isAdmin);
   }
+  /* The demo has a course in it. content.test is the switch every screen
+     already reads for "load the content document", so the demo turns it on
+     and moduleContent.js hands over the demo's course instead of the real
+     one. Nothing outside the demo is affected. */
+  if (demoMode) out["content.test"] = true;
   return out;
 }
 

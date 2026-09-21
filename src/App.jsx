@@ -162,7 +162,7 @@ function warmOnIntent(e) {
 
 const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
-import { finishVars, ruledLayer } from "./lib/finishEngine.js";
+import { finishVars, ruledLayer, offeredFinish } from "./lib/finishEngine.js";
 import { fetchAllPresence, heartbeat } from "./lib/presence.js";
 import { listen, LIVE_TABLES } from "./lib/live.js";
 import { useDisplayName } from "./lib/identity.js";
@@ -202,9 +202,10 @@ import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
 import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initials } from "./lib/familiar.js";
-import "./features/tour/tour.css";
 import { TOUR_KEY } from "./features/tour/tourSteps.js";
+import "./components/manual-stencil.css";
 import { askForLicence } from "./lib/licenceAsk.js";
+import { demoMode, demoState, enterDemo, leaveDemo } from "./demo/mode.js";
 import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
          subscribe as subscribeSaves, getSnapshot as savesSnapshot } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
@@ -217,7 +218,8 @@ import { StampFilters } from "./components/Stamp.jsx";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 /* The walkthrough is lazy: a student sees it once, and it carries twelve
    drawings nobody else should download. */
-const Tour = lazy(() => import("./features/tour/Tour.jsx"));
+/* The demo guide is lazy, and only ever loaded inside the demo. */
+const Guide = lazy(() => import("./demo/Guide.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
@@ -918,7 +920,7 @@ function AppInner() {
     // sky plus the aurora finish, so the thing they picked still looks like the
     // thing they picked.
     setFinish(demoOn() ? DEMO_FINISH
-      : progress.get("pw-finish", RETIRED_TO_FINISH[storedLivery] ?? null));
+      : offeredFinish(progress.get("pw-finish", RETIRED_TO_FINISH[storedLivery] ?? null)));
     setRuled(progress.get("pw-ruled", true));
     setVariantPin(demoOn() ? DEMO_VARIANT : progress.get("pw-variant-pin", null));
     setGrain(progress.get("pw-grain", true));
@@ -983,32 +985,26 @@ function AppInner() {
   // props cannot disagree about which route is in front of you.
   const roomFull = route.name === "ready" && Boolean(flags["social.readyroom"]);
 
-  /* ---------------------------------------------------------------- the tour
-     RUN ONCE, REMEMBERED ON THE SERVER. `pw-tour` goes through progress rather
-     than localStorage, so a student who was shown around on their phone is not
-     shown around again on a laptop — and the storage epoch cannot sweep it,
-     which would offer the tour to everybody a second time.
+  /* ------------------------------------------------------ the walkthrough
+     THE WALKTHROUGH IS THE DEMO (owner, 2026-09-21): the real screens, tab by
+     tab, with a class already in them, as a separate state of the app
+     (src/demo/mode.js). It starts by itself for a signed-in student who has
+     not seen it, on the Flight Deck only, once progress has loaded; and it is
+     replayed from the foot of the Licence.
 
-     IT OPENS BY ITSELF for a student who has not seen it, on the Flight Deck
-     and nowhere else: a new student lands there from sign-up, and somebody
-     arriving by an invite link finishes joining first. This used to be an
-     offer card; the owner asked for sign-up, then the walkthrough, then the
-     licence (2026-09-21). It waits for progress to load, or a returning
-     student would see it flash open on every start. Finishing it and skipping
-     it both settle it. */
-  const [tourOpen, setTourOpen] = useState(false);
+     RUN ONCE, REMEMBERED ON THE SERVER. `pw-tour` goes through progress, and
+     it is written and CONFIRMED before the reload into the demo, or a new
+     student would be sent round again on every start. The demo's own
+     progress has it set, so nothing inside the demo starts another. */
   const tourSeen = progress.get(TOUR_KEY, null);
   const tourAsked = useRef(false);
+  const startDemoRef = useRef(null);
   useEffect(() => {
-    if (tourAsked.current || tourOpen) return;
+    if (demoMode || tourAsked.current) return;
     if (!isSignedIn || !progress.loaded || tourSeen || route.name !== "home") return;
     tourAsked.current = true;
-    setTourOpen(true);
-  }, [isSignedIn, progress.loaded, tourSeen, tourOpen, route.name]);
-  const settleTour = useCallback((how) => {
-    setTourOpen(false);
-    progress.set(TOUR_KEY, { at: new Date().toISOString(), how });
-  }, [progress]);
+    startDemoRef.current?.("first");
+  }, [isSignedIn, progress.loaded, tourSeen, route.name]);
 
   // The room renders its own copy of the profile menu, so what the menu does
   // has to live somewhere both can reach rather than being written out twice.
@@ -1016,7 +1012,7 @@ function AppInner() {
     /* "Show me around" is not an address — it is a thing that happens on top
        of whatever screen you are on, so it opens the tour rather than
        navigating anywhere. */
-    if (page === "tour") { setTourOpen(true); return; }
+    if (page === "tour") { startDemoRef.current?.("replay"); return; }
     if (page === "licence" || page === "preferences" || page === "appearance") go(routePath.profile(page));
     else goSettings(page);
   };
@@ -1210,16 +1206,36 @@ function AppInner() {
     return () => { live = false; };
   }, [isSignedIn, me]);
 
-  /* THE WALKTHROUGH ENDS AT THE LICENCE for a student with no stamp yet: its
-     last slide says so, and skipping it is an answer too. The licence opens
-     its stamp creator on arrival (lib/licenceAsk.js). Somebody replaying it
-     from the menu with a stamp already issued just closes it. */
-  const endTour = (how) => {
-    settleTour(how);
-    if (isSignedIn && !myProfile?.stamp_issued_at) {
+  /* INTO THE DEMO. `pw-tour` is written and confirmed on the server first,
+     because the reload that follows would drop a write still waiting in the
+     progress debounce. The student's look goes with them, so the demo is
+     their app and not the default one. */
+  const LOOK_KEYS = ["pw-livery", "pw-finish", "pw-variant-pin", "pw-reduce-motion", "pw-ruled", "pw-font-size", "pw-dyslexia-font", "pw-grain"];
+  startDemoRef.current = async (how) => {
+    if (!isSignedIn || !me || demoMode) return;
+    const at = new Date().toISOString();
+    progress.set(TOUR_KEY, { at, how });
+    try { await supabase.rpc("merge_progress", { uid: me, patch: { [TOUR_KEY]: { at, how } } }); } catch { /* the demo still runs */ }
+    const look = {};
+    for (const k of LOOK_KEYS) { const v = progress.get(k, undefined); if (v !== undefined) look[k] = v; }
+    enterDemo({
+      me, how, from: `${location.pathname}${location.search || ""}`,
+      look: { callsign: user?.username || null, name: user?.fullName || null, hasStamp: Boolean(myProfile?.stamp_issued_at), progress: look },
+    });
+  };
+
+  /* OUT OF IT. A first walkthrough ends at the licence for a student with no
+     stamp yet, whether it was finished or left: choosing the code and the
+     stamp comes after the walkthrough (owner, 2026-09-21). A replay goes back
+     to wherever it was started from. */
+  const leaveDemoFor = (why) => {
+    const hasStamp = Boolean(demoState?.look?.hasStamp);
+    if (!hasStamp && (why === "finish" || demoState?.how === "first")) {
       askForLicence();
-      go(routePath.profile("licence"));
+      leaveDemo(routePath.profile("licence"));
+      return;
     }
+    leaveDemo(why === "finish" ? routePath.home() : (demoState?.from || routePath.home()));
   };
 
   /* ------------------------------------------------------------ the papers
@@ -1945,8 +1961,8 @@ function AppInner() {
             /* "security" and "email" are Clerk's, not one of the three tabs —
                `routePath.profile` would fall back to /account/licence, which
                is what made both buttons dead. */
-            onNavigate={(t) => go(t === "security" || t === "email"
-              ? routePath.clerk(t) : routePath.profile(t))}
+            onNavigate={(t) => (t === "tour" ? goProfile("tour") : go(t === "security" || t === "email"
+              ? routePath.clerk(t) : routePath.profile(t)))}
             onBack={() => go(routePath.home())}
             variant={variant}
             variantPin={variantPin}
@@ -2452,14 +2468,11 @@ function AppInner() {
       <PlayerLayer />
       </div>
 
-    {/* THE WALKTHROUGH IS OVER THE APP, a full-screen layer inside `.app` so
-        it has the livery's tokens, and after everything else so nothing paints
-        on top of it. */}
-    {tourOpen && (
+    {/* THE DEMO'S GUIDE, over the real screens, inside `.app` so it has the
+        livery's tokens. Only ever inside the demo. */}
+    {demoMode && (
       <Suspense fallback={null}>
-        <Tour hasStamp={Boolean(myProfile?.stamp_issued_at)}
-              onClose={() => endTour("skipped")}
-              onDone={() => endTour("finished")} />
+        <Guide go={(to) => go(to)} hasStamp={Boolean(demoState?.look?.hasStamp)} onLeave={leaveDemoFor} />
       </Suspense>
     )}
 

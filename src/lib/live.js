@@ -13,6 +13,8 @@
    path that turns rows into state, and the socket cannot drift from it.
    ========================================================================= */
 
+import { demoMode } from "../demo/mode.js";
+
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -21,7 +23,9 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 let clientPromise = null;
 
 async function getClient() {
-  if (!url || !anonKey) return null;
+  /* No socket in the demo: the class it shows lives in this tab, and a live
+     feed from the real project would drop real events into it. */
+  if (!url || !anonKey || demoMode) return null;
   if (!clientPromise) {
     clientPromise = import("@supabase/realtime-js")
       .then(({ RealtimeClient }) => new RealtimeClient(

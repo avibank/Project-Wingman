@@ -12,6 +12,7 @@
 // only ever fetched by someone who has turned the flag on.
 import { MODULES, chaptersForModule } from "../../data.js";
 import { loadContent } from "../../lib/contentLoader.js";
+import { demoMode } from "../../demo/mode.js";
 
 let cache = null;
 let pending = null;
@@ -22,7 +23,8 @@ export function testContentSync() {
 
 export function loadTestContent() {
   if (cache) return Promise.resolve(cache);
-  pending ||= import("../../content/test-content.json")
+  /* The demo's course, in the demo, and never anywhere else. */
+  pending ||= (demoMode ? import("../../demo/content.json") : import("../../content/test-content.json"))
     .then((m) => { cache = loadContent(m.default); return cache; });
   return pending;
 }
