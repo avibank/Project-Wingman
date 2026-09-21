@@ -524,9 +524,12 @@ function AppInner() {
   /* `replace` is for a query the screen owns rather than a place: Bookmarks
      writes the module it is showing into ?m=, and one history entry per glance
      at a different module would make Back mean nothing. */
-  const go = async (to, { keepScroll = false, replace = false } = {}) => {
+  /* `still` moves without the screen transition: the tutorial has its own (the
+     light closing and opening), and a second one photographing the page
+     under it was the longest frame of every move between screens. */
+  const go = async (to, { keepScroll = false, replace = false, still = false } = {}) => {
     const moveKind = transitionKind(route, to, { lessonOrder: lessonOrderRef.current });
-    let kind = canTransition() ? moveKind : null;
+    let kind = canTransition() && !still ? moveKind : null;
     const move = () => { navigate(to, { replace }); };
 
     // WARM THE CHUNK FIRST, and this is the stutter.
@@ -2486,7 +2489,7 @@ function AppInner() {
         livery's tokens. Only ever inside the demo. */}
     {demoMode && (
       <Suspense fallback={null}>
-        <Guide go={(to) => go(to)} guest={Boolean(demoState?.guest)} hasStamp={Boolean(demoState?.look?.hasStamp)} onLeave={leaveDemoFor} />
+        <Guide go={(to) => go(to, { still: true })} warm={(paths) => paths.forEach((p) => { warmRoute(p); })} guest={Boolean(demoState?.guest)} hasStamp={Boolean(demoState?.look?.hasStamp)} onLeave={leaveDemoFor} />
       </Suspense>
     )}
 
