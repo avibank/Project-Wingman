@@ -90,6 +90,7 @@
     "test:exam": "node tests/exam-run.mjs",
     "test:vt": "node tests/vt-run.mjs",
     "test:bm": "node tests/bm-run.mjs",
+    "test:recover": "node tests/recover-run.mjs",
     "test:lesson": "node tests/lesson-run.mjs",
     "test:routes": "node tests/routes-run.mjs",
     "test:solo": "node tests/solo-run.mjs",

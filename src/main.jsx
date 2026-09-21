@@ -2,6 +2,7 @@
    a copy in memory (src/demo/boot.js). Imports run in order, so this line
    has to stay above every other one. Outside the demo it does nothing. */
 import "./demo/boot.js";
+import { installRecovery } from "./lib/recover.js";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
@@ -14,6 +15,11 @@ import { sweepStorage } from "./lib/storage.js";
    while the first render is still being built, so a sweep in a component would
    clear them one frame too late and the first paint would be the old app. */
 sweepStorage();
+
+/* A stylesheet that failed to download is fetched again, or the page reloads
+   once (src/lib/recover.js). Before the first render, so a page that arrived
+   without its stylesheet is mended before anybody sees it. */
+installRecovery();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
