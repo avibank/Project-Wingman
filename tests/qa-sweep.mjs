@@ -23,6 +23,15 @@
    · THE SIGNATURE HAS TO INCLUDE THE TOKENS AND THE STORAGE. Without them
      every theme, livery and finish button reads as dead — it changed a CSS
      variable and nothing else, which is exactly what it is supposed to do.
+
+   AND ONE THE 21 SEP RUN LEARNED: THE STORE IS SHARED. A fresh browser context
+   is a fresh browser, not a fresh student — every context reads the same
+   harness store. "Not now" on the tour offer settled the tour, so every later
+   load of the Flight Deck had two controls fewer than the inventory, and the
+   last two indexes pointed at nothing: logged as "would not click", four of
+   them, none real. So the store is reset before the inventory and before
+   every click, and a click whose label differs from the inventory's says so
+   instead of blaming the control.
    ========================================================================= */
 import { chromium } from "playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -158,9 +167,11 @@ for (const w of WIDTHS) {
 }
 
 /* ---------------------------------------------------- 2 · the click sweep */
+const resetStore = () => fetch(`${BASE}/harness/reset`, { method: "POST" }).catch(() => {});
 const CLICKABLE = ["/", "/m/m1", "/m/m1/library", "/m/m1/crew", "/bookmarks",
                    "/account/licence", "/account/preferences", "/account/appearance", "/ready-room"];
 for (const route of CLICKABLE) {
+  await resetStore();
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   await page.goto(BASE + route, { waitUntil: "domcontentloaded" });
@@ -169,13 +180,15 @@ for (const route of CLICKABLE) {
   await ctx.close();
 
   for (const c of controls) {
+    await resetStore();
     const cx = await b.newContext({ viewport: { width: 1440, height: 900 } });
     const pg = await cx.newPage();
     const errs = [];
     pg.on("pageerror", (e) => errs.push(String(e.message).slice(0, 90)));
     await pg.goto(BASE + route, { waitUntil: "domcontentloaded" });
     await pg.waitForTimeout(1500);
-    await pg.evaluate(tagControls);
+    const now = (await pg.evaluate(tagControls))[c.i];
+    const shifted = now?.label !== c.label;
     const before = await pg.evaluate(sig);
     let clicked = true;
     try { await pg.locator(`[data-qa="${c.i}"]`).click({ timeout: 4000 }); }
@@ -183,7 +196,7 @@ for (const route of CLICKABLE) {
     await pg.waitForTimeout(900);
     const after = await pg.evaluate(sig).catch(() => before);
     const moved = Object.keys(before).filter((k) => before[k] !== after[k]);
-    report.clicks.push({ route, ...c, clicked, moved, errs });
+    report.clicks.push({ route, ...c, clicked, moved, errs, shifted });
     await cx.close();
   }
 }
@@ -196,9 +209,10 @@ const blanks = report.routes.filter((r) => r.blank);
 const errs = report.routes.filter((r) => r.errs.length);
 const bads = report.routes.filter((r) => r.bad.length);
 const over = report.routes.filter((r) => r.overflow);
-const dead = report.clicks.filter((c) => c.clicked && c.moved.length === 0);
+const dead = report.clicks.filter((c) => c.clicked && !c.shifted && c.moved.length === 0);
 const broke = report.clicks.filter((c) => c.errs.length);
-const unclick = report.clicks.filter((c) => !c.clicked);
+const unclick = report.clicks.filter((c) => !c.clicked && !c.shifted);
+const shifted = report.clicks.filter((c) => c.shifted);
 const small = [...new Set(report.responsive.flatMap((r) => r.small))];
 
 console.log(`\nROUTES     ${report.routes.length} loads (${ROUTES.length} addresses × ${WIDTHS.length} widths)`);
@@ -209,6 +223,7 @@ console.log(`  horizontal overflow    ${over.length}${over.length ? "  " + over.
 console.log(`\nCLICKS     ${report.clicks.length} controls across ${CLICKABLE.length} screens`);
 console.log(`  threw                  ${broke.length}${broke.length ? "  " + broke.slice(0, 3).map((c) => `${c.route} "${c.label}"`).join(" | ") : ""}`);
 console.log(`  would not click        ${unclick.length}${unclick.length ? "  " + unclick.slice(0, 3).map((c) => `${c.route} "${c.label}"`).join(" | ") : ""}`);
+console.log(`  page moved under it    ${shifted.length}${shifted.length ? "  " + shifted.slice(0, 3).map((c) => `${c.route} "${c.label}"`).join(" | ") + "   <- the sweep's fault, not the control's" : ""}`);
 console.log(`  changed nothing        ${dead.length}   <- suspects, re-check each by hand`);
 for (const c of dead.slice(0, 25)) console.log(`      ${c.route.padEnd(22)} ${c.tag} "${c.label}" .${c.cls.split(" ")[0]}`);
 console.log(`\nRESPONSIVE controls under 24px: ${small.length}${small.length ? "\n      " + small.slice(0, 8).join("\n      ") : ""}`);
