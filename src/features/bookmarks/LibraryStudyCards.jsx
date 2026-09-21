@@ -36,16 +36,21 @@ export default function LibraryStudyCards({ moduleId }) {
   useSavesState();
   useContentVersion();
   const progress = useUserProgress();
-  const chapters = content.quizChapters(moduleId) ?? [];
+  /* THE CARD SET, NOT THE QUIZ (2026-09-21). A chapter may carry its own
+     cards now, and when it does they are the set — Module 13d's first
+     chapter has 170 cards beside a 40-question quiz. `cardSet` makes that
+     choice, falling back to the quiz questions for a chapter without cards,
+     so this row and the page it opens always count the same set. */
+  const chapters = content.cardChapters(moduleId) ?? [];
   const sets = chapters.map((ch) => {
-    const qs = content.quizQuestions(moduleId, ch) ?? [];
+    const qs = content.cardSet(moduleId, ch) ?? [];
     return {
       ch, n: qs.length,
       kept: qs.filter((q) => isSaved('card', q.id)).length,
       done: seenCount(progress, qs.map((q) => q.id)),
     };
   }).filter((s) => s.n > 0);
-  // No quizzes yet: the section does not appear, so there is nothing to click into.
+  // Nothing to flip yet: the section does not appear, so there is nothing to click into.
   if (!sets.length) return null;
   return (
     <div className="ref-mod libsplit">

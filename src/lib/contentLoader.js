@@ -46,6 +46,18 @@ export function loadContent(doc, { strict = false } = {}) {
       file: p.file,
       pages: p.pages,
     })),
+    /* DOWNLOADS (2026-09-21, owner request) — a file handed over whole, with
+       no viewer. The href is resolved here, rooted at the site, because the
+       Library sits at /m/m1/library and a relative "downloads/x.pdf" would
+       be looked for under /m/m1/. Always an array, so a module with none
+       draws nothing rather than being asked whether it has any. */
+    downloads: (m.downloads || []).map((d) => ({
+      id: d.id,
+      title: d.title,
+      file: d.file,
+      href: `/${String(d.file || "").replace(/^\//, "")}`,
+      pages: d.pages,
+    })),
     chapters: (m.chapters || []).map((c) => ({
       id: c.id,
       code: c.id,
@@ -55,6 +67,20 @@ export function loadContent(doc, { strict = false } = {}) {
       // lessonId on a question is new in Part 12: it is what lets a quiz
       // question point back at the moment it was taught.
       questions: (c.quiz?.questions || []).map((q, i) => ({ ...q, id: q.id || `${c.id}.Q${i + 1}` })),
+      /* THE CHAPTER'S OWN STUDY CARDS, when it has them (2026-09-21, owner
+         request). Until now the card set WAS the quiz, read the other way
+         round. Module 13d's first chapter has a forty-question quiz and a
+         hundred and seventy cards, and the quiz must stay forty — so the
+         cards travel separately and the quiz questions are left exactly as
+         they were. null, not [], when the chapter has none: that is what
+         tells the bookmarks adapter to fall back to the quiz questions.
+
+         The positional fallback id is the same compromise as the quiz's
+         above: a runtime without an id still renders, and
+         scripts/check-question-ids.mjs fails the build before one ships. */
+      cards: Array.isArray(c.cards) && c.cards.length
+        ? c.cards.map((q, i) => ({ ...q, id: q.id || `${c.id}.C${i + 1}` }))
+        : null,
       scope: c.scope || null,
       lessons: (c.lessons || []).map((l) => ({
         id: l.id,

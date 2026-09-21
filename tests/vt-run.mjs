@@ -279,11 +279,11 @@ async function main() {
   const STACK_PANE = WIDTH <= 900;
   const STACK_THREAD = WIDTH <= 1180;
   const back = (label, name) => step(label, click(".rr-backbtn:visible"), { names: [name] });
-  await step("Room: another module", click(".rr-row", { hasText: "Module 2" }), { names: ["wg-pane"] });
+  await step("Room: another module", click(".rr-row", { hasText: "Module 13e" }), { names: ["wg-pane"] });
   if (STACK_PANE) await back("Room: back to the rail", "wg-pane");
   /* Back up the rail to the module the room seed fills, so the question steps
      below have questions to move between. */
-  await step("Room: back to Module 1", click(".rr-row", { hasText: "Module 1" }), { names: ["wg-pane"] });
+  await step("Room: back to Module 13d", click(".rr-row", { hasText: "Module 13d" }), { names: ["wg-pane"] });
   await page.locator(".rr-frow").first().waitFor({ timeout: 8000 }).catch(() => {});
   await step("Room: another question", () => page.locator(".rr-frow[aria-current=\"false\"] .rr-fopen").first().click(), { names: ["wg-detail"] });
   await step("Room: next question", click('button[aria-label="Next question"]'), { names: ["wg-detail"] });

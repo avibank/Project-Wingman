@@ -10,7 +10,10 @@ import { isSaved } from './savesStore';
 import StudyPad from './StudyPad';
 import TestPile from './TestPile';
 
-/** /m/:moduleId/library/cards/:chapter — one chapter quiz, as cards. The cards ARE the quiz questions. */
+/** /m/:moduleId/library/cards/:chapter — one chapter's study cards.
+ *  The chapter's own `cards` when it has them, its quiz questions when it does
+ *  not (2026-09-21): `content.cardSet` decides, so this page and the Library row
+ *  that opens it always agree on the set. */
 export default function CardSetPage({ moduleId, chapter }) {
   const ch = Number(chapter);
   useSavesState();
@@ -19,7 +22,7 @@ export default function CardSetPage({ moduleId, chapter }) {
   /* undefined means "the content chunk has not landed", which is not the same
      as "this chapter has no quiz" — saying the second while the first is true
      shows "Card set not found" for a set that is about to appear. */
-  const loaded = content.quizQuestions(moduleId, ch);
+  const loaded = content.cardSet(moduleId, ch);
   const questions = loaded ?? [];
   const waiting = loaded === undefined;
   const found = questions.length > 0;

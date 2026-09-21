@@ -13,11 +13,13 @@ import { papersOn, flagDefault } from "../../lib/flags.js";
 const shelfOn = papersOn || flagDefault("paper.viewer", false);
 import { useSwitchIn } from "../../lib/tabMotion.js";
 import { QuizzesWaiting, PapersSlot } from "./ModuleWaiting.jsx";
+import LibraryDownloads from "./LibraryDownloads.jsx";
 
 /* ============================================================================
    §5 — THE LIBRARY.
 
-   Two sections in one scroll, in this order: Quizzes, then Papers.
+   Three sections in one scroll, in this order: Quizzes, Study cards, then
+   Papers — and a module's downloads, when it has any, on the Papers shelf.
    The Quizzes header is a heading and a count. It carried a small accuracy
    dial until the bar moved into settings and the Flight Deck's gyro started
    reading it; the dial is on the drill's results screen alone now.
@@ -51,6 +53,9 @@ const QUIZ = (
 export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper, onAddPaper,
   query = "",
+  /* The module's downloads — files handed over whole, never opened in the
+     reader (LibraryDownloads.jsx says why). [] for a module with none. */
+  downloads = [],
   moduleCode = null,
   readerPin = null, faults = new Set(),
 }) {
@@ -142,10 +147,13 @@ export default function LibraryTab({
       )}
 
       {/* -------------------------------------------------- STUDY CARDS ---
-          Between the two, because a card set IS a quiz — the same questions,
-          read the other way round — so it belongs beside the quiz it comes
-          from rather than beside the papers. It draws nothing when the module
-          has no quizzes, so there is never a heading over an empty list.
+          Between the two, because a card set belongs beside the quiz it
+          comes from rather than beside the papers. It used to BE the quiz —
+          the same questions, read the other way round — and still is for a
+          chapter without cards of its own; a chapter that carries `cards`
+          (2026-09-21) has those as its set instead. It draws nothing when
+          there is nothing to flip, so there is never a heading over an
+          empty list.
           Search filters the other two sections; it does not filter this one,
           which is one row per quiz and already the shortest list here. */}
       <LibraryStudyCards moduleId={moduleCode} />
@@ -162,7 +170,7 @@ export default function LibraryTab({
           no reader chunk, no route, no uploader, no mark. PapersSlot is
           markup and nothing else, and check:paused is updated to test for
           exactly that rather than for the section's absence. */}
-      {!shelfOn && <PapersSlot />}
+      {!shelfOn && <PapersSlot downloads={downloads} />}
       {shelfOn && (
       <section aria-labelledby="lsec-papers" ref={papersRef}>
         <div className="lsec">
@@ -203,6 +211,10 @@ export default function LibraryTab({
             )}
           </div>
         )}
+
+        {/* The same download rows the paused slot draws, so turning the
+            viewer on never takes a module's downloads off its shelf. */}
+        <LibraryDownloads downloads={downloads} />
 
         <ul className="papers" ref={papersListRef}>
           {/* §5's own pattern, reused: the thing you are in the middle of is

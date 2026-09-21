@@ -241,6 +241,7 @@ export default function ModuleScreen({
         )}
         {tab === "library" && (
           <LibraryTab chapters={chapters} papers={papers} state={state}
+                      downloads={mod?.downloads || []}
                       sub={librarySub} query={query} moduleCode={mod?.code || mod?.id || null}
                       readerPin={readerPin} onAddPaper={onAddPaper}
                       faults={faults}

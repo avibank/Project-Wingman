@@ -1,7 +1,2360 @@
 {
-  "note": "THE CONTENT DOCUMENT, EMPTY. This is the slot the course goes in: one document, loaded through src/lib/contentLoader.js and checked by src/lib/contentSchema.js, so adding the course is a data change here rather than a code change anywhere. It held four modules of placeholder material — general-knowledge quizzes, Blender open movies, invented notes and threads — which shipped as a lazy chunk every visitor could still be served. That came out for the beta: `npm run check:ship` is the gate that was failing on it, and `git log -- src/content/test-content.json` is where the old set lives if it is ever wanted back. Modules themselves are named in src/data.js; this document is what fills them.",
-  "contentModel": "modules[] -> chapters[] -> lessons[] and one quiz per chapter. notes, threads, replies, people and presence are the lesson surface's own rows. See contentSchema.js for the exact shape and the validator that enforces it.",
-  "modules": [],
+  "note": "THE CONTENT DOCUMENT — the course. This is the slot the course goes in: one document, loaded through src/lib/contentLoader.js and checked by src/lib/contentSchema.js, so adding the course is a data change here rather than a code change anywhere. The general-knowledge set that used to sit here came out for the beta (`git log -- src/content/test-content.json` is where it lives if it is ever wanted back); from 2026-09-21 it holds the owner's own material, starting with Module 13d's first chapter, and the `content.test` switch in src/lib/flags.js is on for everyone so every visitor loads it. Module NAMES are here and in src/data.js, and the two must agree: data.js is what the Flight Deck draws before this document arrives. Module CODES (M1–M4) never change — progress and saves are keyed to them.",
+  "contentModel": "modules[] -> chapters[] -> lessons[] and one quiz per chapter. A chapter may also carry cards[] — its study-card set, same shape as a quiz question; without it the card set is the quiz's questions. A module may carry downloads[] — {id, title, file, pages}, a file under public/ offered as a plain download, never opened in the reader. notes, threads, replies, people and presence are the lesson surface's own rows. See contentSchema.js for the exact shape and the validator that enforces it.",
+  "modules": [
+    {
+      "id": "M1",
+      "name": "Module 13d",
+      "chapters": [
+        {
+          "id": "M1.01",
+          "name": "Rotary Wing Aerodynamics",
+          "lessons": [],
+          "quiz": {
+            "id": "M1.01.QZ",
+            "name": "Rotary wing aerodynamics quiz",
+            "questions": [
+              {
+                "id": "M1.01.Q1",
+                "question": "What is the chord of a rotor blade",
+                "options": [
+                  "A straight line from the blade root to the blade tip",
+                  "A curved line along the upper surface of the blade",
+                  "A straight line from the leading edge to the trailing edge"
+                ],
+                "correct": 2,
+                "explain": "The chord is the straight reference line from leading edge to trailing edge."
+              },
+              {
+                "id": "M1.01.Q2",
+                "question": "How is the relative wind directed in relation to the flight path of the blade",
+                "options": [
+                  "Always along the same flight path",
+                  "Always perpendicular to the path",
+                  "Always opposite to the flight path"
+                ],
+                "correct": 2,
+                "explain": "The relative wind is always opposite to the blade's flight path."
+              },
+              {
+                "id": "M1.01.Q3",
+                "question": "What is the pitch angle",
+                "options": [
+                  "The acute angle between the chord and the plane of rotation",
+                  "The acute angle between the chord and the relative wind",
+                  "The acute angle between the axis and the plane of rotation"
+                ],
+                "correct": 0,
+                "explain": "Pitch angle is measured from the plane of rotation to the chord."
+              },
+              {
+                "id": "M1.01.Q4",
+                "question": "What is the angle of attack",
+                "options": [
+                  "The acute angle between the chord line and the relative wind",
+                  "The acute angle between the relative wind and the plane of rotation",
+                  "The acute angle between the chord line and the plane of rotation"
+                ],
+                "correct": 0,
+                "explain": "Angle of attack is chord line to relative wind."
+              },
+              {
+                "id": "M1.01.Q5",
+                "question": "When is the angle of attack equal to the pitch angle",
+                "options": [
+                  "When the relative wind is perpendicular to the plane of rotation",
+                  "When the relative wind is parallel to the axis of rotation",
+                  "When the relative wind is in the same direction as the plane of rotation"
+                ],
+                "correct": 2,
+                "explain": "If the relative wind lies in the plane of rotation, both angles use the same reference line."
+              },
+              {
+                "id": "M1.01.Q6",
+                "question": "The pilot holds the pitch angle constant, but outside influences change the relative wind. What happens to the angle of attack?",
+                "options": [
+                  "It becomes equal to the pitch angle of the blade",
+                  "It changes, because it depends on the relative wind",
+                  "It stays constant, because the pitch is constant"
+                ],
+                "correct": 1,
+                "explain": "Angle of attack is also affected by relative wind changes, not only by pitch."
+              },
+              {
+                "id": "M1.01.Q7",
+                "question": "In which direction does lift act in relation to the relative wind",
+                "options": [
+                  "Perpendicular to the relative wind",
+                  "Opposite to the relative wind",
+                  "Parallel to the relative wind"
+                ],
+                "correct": 0,
+                "explain": "Lift is perpendicular to the relative wind."
+              },
+              {
+                "id": "M1.01.Q8",
+                "question": "Where does the output occur when a force is applied to a turning rotor",
+                "options": [
+                  "180° later in the direction of rotation",
+                  "90° earlier in the direction of rotation",
+                  "90° later in the direction of rotation"
+                ],
+                "correct": 2,
+                "explain": "The output appears 90° later in the direction of rotation."
+              },
+              {
+                "id": "M1.01.Q9",
+                "question": "Why must the steering input to the rotor be applied 90° before the point where the tilt is wanted",
+                "options": [
+                  "Because the swash plate is mounted 90° to the rotor",
+                  "Because the output occurs 90° later in the direction of rotation",
+                  "Because the output occurs 90° earlier in the direction of rotation"
+                ],
+                "correct": 1,
+                "explain": "Precession shifts the result 90° in the direction of rotation, so the input must lead by 90°."
+              },
+              {
+                "id": "M1.01.Q10",
+                "question": "A helicopter rotor turns counterclockwise. The tip-path plane must tilt backward for rearward flight. Following the precession rule, where must the downward force be put in?",
+                "options": [
+                  "On the left side",
+                  "Right at the rear",
+                  "On the right side"
+                ],
+                "correct": 0,
+                "explain": "The output is wanted at the rear; 90° earlier in counterclockwise rotation is the left side."
+              },
+              {
+                "id": "M1.01.Q11",
+                "question": "Which law explains torque reaction on a helicopter fuselage",
+                "options": [
+                  "Newton's Second Law",
+                  "Newton's law of inertia",
+                  "Newton's Third Law"
+                ],
+                "correct": 2,
+                "explain": "Torque reaction is action and reaction, Newton's Third Law."
+              },
+              {
+                "id": "M1.01.Q12",
+                "question": "In a helicopter with a main rotor and a tail rotor, which component compensates the torque",
+                "options": [
+                  "The main rotor",
+                  "The tail rotor",
+                  "The swash plate"
+                ],
+                "correct": 1,
+                "explain": "The tail rotor compensates torque."
+              },
+              {
+                "id": "M1.01.Q13",
+                "question": "In which direction does rotor thrust always act",
+                "options": [
+                  "Parallel to the rotor plane",
+                  "Perpendicular to the rotor plane",
+                  "Along the direction of flight"
+                ],
+                "correct": 1,
+                "explain": "Rotor thrust is perpendicular to the rotor plane."
+              },
+              {
+                "id": "M1.01.Q14",
+                "question": "Why must the rotor plane be tilted when changing from hover to forward flight",
+                "options": [
+                  "Because the tail rotor thrust acts in the direction of flight",
+                  "Because the rotor RPM must be increased for forward flight",
+                  "Because rotor thrust always acts perpendicular to the rotor plane"
+                ],
+                "correct": 2,
+                "explain": "To point thrust forward, the plane must tilt, because thrust is perpendicular to it."
+              },
+              {
+                "id": "M1.01.Q15",
+                "question": "What does the pilot do to the main rotor blades by moving the collective lever upwards",
+                "options": [
+                  "Increases the pitch angle of each blade once per revolution",
+                  "Tilts the rotor plane in the direction of flight",
+                  "Increases the pitch angle of all blades at the same time"
+                ],
+                "correct": 2,
+                "explain": "Collective up raises the pitch of all blades together."
+              },
+              {
+                "id": "M1.01.Q16",
+                "question": "Besides changing the blade pitch, which other effect does a movement of the collective lever have?",
+                "options": [
+                  "It changes engine power and causes effects like torque",
+                  "It tilts the rotor plane and causes translating tendency",
+                  "It changes tail rotor pitch and causes precession"
+                ],
+                "correct": 0,
+                "explain": "Collective movement also changes engine power and torque effects."
+              },
+              {
+                "id": "M1.01.Q17",
+                "question": "What do the pedals change",
+                "options": [
+                  "The pitch angle of the main rotor blades",
+                  "The pitch angle of the tail rotor blades",
+                  "The tilt of the main rotor plane"
+                ],
+                "correct": 1,
+                "explain": "Pedals change tail rotor blade pitch."
+              },
+              {
+                "id": "M1.01.Q18",
+                "question": "How is the collective pitch change achieved at the swash plate",
+                "options": [
+                  "By rotating the stationary swash plate",
+                  "By lifting or lowering the swash plate",
+                  "By tilting the swash plate to one side"
+                ],
+                "correct": 1,
+                "explain": "Collective raises or lowers the swash plate."
+              },
+              {
+                "id": "M1.01.Q19",
+                "question": "How is the cyclic pitch change achieved at the swash plate",
+                "options": [
+                  "By lifting the whole swash plate",
+                  "By tilting the swash plate",
+                  "By turning the stationary part"
+                ],
+                "correct": 1,
+                "explain": "Cyclic tilts the swash plate."
+              },
+              {
+                "id": "M1.01.Q20",
+                "question": "During a control check the swash plate tilts but its mean height does not change. Which pitch change is being made?",
+                "options": [
+                  "Cyclic pitch change",
+                  "Tail rotor pitch change",
+                  "Collective pitch change"
+                ],
+                "correct": 0,
+                "explain": "Tilting the swash plate produces cyclic pitch change."
+              },
+              {
+                "id": "M1.01.Q21",
+                "question": "Why does the swash plate have to act as an interface",
+                "options": [
+                  "It transfers engine power between the main gearbox and the rotating rotor mast",
+                  "It transfers torque between the main rotor and the tail rotor drive system",
+                  "It transfers control signals between the stationary input system and the rotating rotor"
+                ],
+                "correct": 2,
+                "explain": "Cockpit inputs are stationary but the blades rotate, so the swash plate links the two."
+              },
+              {
+                "id": "M1.01.Q22",
+                "question": "Which statement correctly assigns the swash plate parts?",
+                "options": [
+                  "Upper part rotating, lower part stationary",
+                  "Both parts rotating with the rotor",
+                  "Upper part stationary, lower part rotating"
+                ],
+                "correct": 0,
+                "explain": "The upper part rotates; the lower part is stationary."
+              },
+              {
+                "id": "M1.01.Q23",
+                "question": "What is dissymmetry of lift",
+                "options": [
+                  "The difference in lift between main and tail rotor",
+                  "The difference in lift between advancing and retreating blade",
+                  "The difference in lift in and out of ground effect"
+                ],
+                "correct": 1,
+                "explain": "The lift difference between advancing and retreating blade is dissymmetry of lift."
+              },
+              {
+                "id": "M1.01.Q24",
+                "question": "Why does the advancing blade produce more lift in forward flight",
+                "options": [
+                  "The opposing airstream is added to its rotational speed",
+                  "Its pitch angle is increased by the collective",
+                  "The opposing airstream is subtracted from its rotational speed"
+                ],
+                "correct": 0,
+                "explain": "The airstream adds to its speed, giving more lift."
+              },
+              {
+                "id": "M1.01.Q25",
+                "question": "Why is the installation of a lead-lag hinge required",
+                "options": [
+                  "Flapping blades change the direction of the torque reaction",
+                  "Flapping blades change their pitch angle during each revolution",
+                  "Flapping blades accelerate or decelerate and move forward or backward"
+                ],
+                "correct": 2,
+                "explain": "The forward and backward blade movement caused by flapping must be allowed by a lead-lag hinge."
+              },
+              {
+                "id": "M1.01.Q26",
+                "question": "In forward flight the advancing blade flaps up. Combining the flapping and centre-of-mass facts, how does this blade move in the plane of rotation?",
+                "options": [
+                  "It accelerates and moves forward (leads)",
+                  "It decelerates and moves backward (lags)",
+                  "It keeps its position in the plane"
+                ],
+                "correct": 0,
+                "explain": "The advancing blade flaps up, its CG moves inward, so it accelerates and moves forward."
+              },
+              {
+                "id": "M1.01.Q27",
+                "question": "Why does the advancing blade flap up",
+                "options": [
+                  "It experiences decreased relative wind and generates less lift",
+                  "It experiences increased relative wind and generates more lift",
+                  "Its centre of gravity moves closer to the blade tip"
+                ],
+                "correct": 1,
+                "explain": "More relative wind means more lift, so it flaps up."
+              },
+              {
+                "id": "M1.01.Q28",
+                "question": "Is blade flapping alone sufficient to restore rotor balance",
+                "options": [
+                  "No, it helps to balance but is not sufficient",
+                  "No, it increases the dissymmetry of lift",
+                  "Yes, it fully restores rotor balance"
+                ],
+                "correct": 0,
+                "explain": "Flapping helps but does not fully restore balance."
+              },
+              {
+                "id": "M1.01.Q29",
+                "question": "When are lead-lag movements always generated",
+                "options": [
+                  "When the rotor RPM is held constant",
+                  "When a rotor blade is flapping",
+                  "When the rotor hovers in ground effect"
+                ],
+                "correct": 1,
+                "explain": "Flapping always generates lead-lag movement."
+              },
+              {
+                "id": "M1.01.Q30",
+                "question": "What is translating tendency",
+                "options": [
+                  "The drift caused by the ground effect air cushion",
+                  "The turning of the fuselage opposite to the rotor",
+                  "The drift caused by the thrust of the tail rotor"
+                ],
+                "correct": 2,
+                "explain": "Translating tendency is the tail-rotor-thrust drift."
+              },
+              {
+                "id": "M1.01.Q31",
+                "question": "How may the pilot prevent the lateral drift due to translating tendency",
+                "options": [
+                  "Tilt the main rotor disk slightly opposite to the drift",
+                  "Tilt the main rotor disk slightly in the drift direction",
+                  "Reduce the tail rotor thrust until the drift stops"
+                ],
+                "correct": 0,
+                "explain": "The disk is tilted slightly opposite to the drift."
+              },
+              {
+                "id": "M1.01.Q32",
+                "question": "During hover, tail rotor thrust makes the helicopter drift to the right. How must the main rotor disk be tilted to prevent this?",
+                "options": [
+                  "Slightly forward",
+                  "Slightly to the right",
+                  "Slightly to the left"
+                ],
+                "correct": 2,
+                "explain": "The disk is tilted opposite to the drift, so to the left for a right drift."
+              },
+              {
+                "id": "M1.01.Q33",
+                "question": "Within which height is a helicopter operating in ground effect",
+                "options": [
+                  "Within one rotor diameter",
+                  "Within two rotor diameters",
+                  "Within half a rotor diameter"
+                ],
+                "correct": 0,
+                "explain": "In-ground effect is within one rotor diameter."
+              },
+              {
+                "id": "M1.01.Q34",
+                "question": "How does the power required to hover in ground effect compare with hovering out of ground effect?",
+                "options": [
+                  "The same power is required in both",
+                  "Less power is required in ground effect",
+                  "More power is required in ground effect"
+                ],
+                "correct": 1,
+                "explain": "Hovering in ground effect needs less power."
+              },
+              {
+                "id": "M1.01.Q35",
+                "question": "A helicopter hovering out of ground effect descends into an in-ground effect hover. What happens to blade efficiency and why?",
+                "options": [
+                  "It increases, because the reduced downward airflow increases the angle of attack",
+                  "It decreases, because the increased downward airflow reduces the angle of attack",
+                  "It increases, because the pilot must increase the pitch angle of the blades"
+                ],
+                "correct": 0,
+                "explain": "Reduced downwash raises angle of attack and efficiency."
+              },
+              {
+                "id": "M1.01.Q36",
+                "question": "A pilot descends from an out-of-ground effect hover into ground effect and wants to remain in the ground effect hover. What must he do and why?",
+                "options": [
+                  "Keep the blade pitch angle, because efficiency is unchanged",
+                  "Increase the blade pitch angle, because rotor efficiency decreases",
+                  "Reduce the blade pitch angle, because rotor efficiency increases"
+                ],
+                "correct": 2,
+                "explain": "Entering ground effect raises angle of attack and efficiency, so pitch is reduced to stay in the hover."
+              },
+              {
+                "id": "M1.01.Q37",
+                "question": "Why must the rotor RPM be sustained after an engine failure",
+                "options": [
+                  "So that the tail rotor can be stopped during the descent",
+                  "So that the engine can be restarted during the descent",
+                  "So that a controlled flight can be continued to the ground"
+                ],
+                "correct": 2,
+                "explain": "Rotor RPM keeps the helicopter controllable to the ground."
+              },
+              {
+                "id": "M1.01.Q38",
+                "question": "How is the rotor driving force controlled in autorotation",
+                "options": [
+                  "By adjusting the tail rotor pedals",
+                  "By adjusting the collective pitch",
+                  "By adjusting the engine power lever"
+                ],
+                "correct": 1,
+                "explain": "The collective pitch controls it."
+              },
+              {
+                "id": "M1.01.Q39",
+                "question": "An engine fails in cruise. In which order does the pilot use energy during the autorotation?",
+                "options": [
+                  "Rotor kinetic energy cushions the descent, then altitude drives the rotor at touchdown",
+                  "Altitude drives the rotor in the descent, then rotor kinetic energy cushions touchdown",
+                  "Engine power drives the rotor in the descent, then altitude cushions touchdown"
+                ],
+                "correct": 1,
+                "explain": "Phase 1 converts altitude into rotor energy; phase 2 uses the rotor energy for touchdown."
+              },
+              {
+                "id": "M1.01.Q40",
+                "question": "In which direction does the airflow pass through the main rotor during an autorotative descent",
+                "options": [
+                  "From bottom to top",
+                  "From top to bottom",
+                  "From front to rear"
+                ],
+                "correct": 0,
+                "explain": "In autorotation air flows up through the rotor."
+              }
+            ]
+          },
+          "cards": [
+            {
+              "id": "M1.01.C001",
+              "question": "What is the primary airfoil of the helicopter",
+              "options": [
+                "The main rotor",
+                "The fuselage",
+                "The tail rotor"
+              ],
+              "correct": 0,
+              "explain": "The manual names the main rotor as the helicopter's primary airfoil."
+            },
+            {
+              "id": "M1.01.C002",
+              "question": "Why is the helicopter often referred to as a rotary-wing aircraft",
+              "options": [
+                "Its fuselage acts as a rotating wing",
+                "Its primary airfoil is the tail rotor",
+                "Its primary airfoil is the main rotor"
+              ],
+              "correct": 2,
+              "explain": "Because its main lifting surface is a rotating rotor, the helicopter is called rotary-wing."
+            },
+            {
+              "id": "M1.01.C003",
+              "question": "What is an airfoil by definition",
+              "options": [
+                "Any surface which generates a useful static pressure of the air",
+                "Only a wing surface which generates lift in forward flight",
+                "Any surface which generates a useful dynamic reaction of the air"
+              ],
+              "correct": 2,
+              "explain": "The manual defines an airfoil as any surface giving a useful dynamic reaction of the air."
+            },
+            {
+              "id": "M1.01.C004",
+              "question": "Which two forces are named as the useful reaction of the air on an airfoil",
+              "options": [
+                "Lift and thrust",
+                "Thrust and weight",
+                "Lift and drag"
+              ],
+              "correct": 0,
+              "explain": "The text names lift and thrust as the two forces needed for flying and manoeuvring."
+            },
+            {
+              "id": "M1.01.C005",
+              "question": "What are the airfoils of the main rotor",
+              "options": [
+                "The swash plate",
+                "The rotor blades",
+                "The rotor mast"
+              ],
+              "correct": 1,
+              "explain": "The blades are the main rotor airfoils."
+            },
+            {
+              "id": "M1.01.C006",
+              "question": "What is the root of a rotor blade",
+              "options": [
+                "The outer end of the blade opposite the rotor mast",
+                "The end where the blade is attached to the rotor mast",
+                "The distance from the blade attachment to the outer end"
+              ],
+              "correct": 1,
+              "explain": "The root is the blade end attached to the rotor mast."
+            },
+            {
+              "id": "M1.01.C007",
+              "question": "What is the tip of a rotor blade",
+              "options": [
+                "The inner end of the blade, at the rotor mast",
+                "The outer end of the blade, opposite the root",
+                "The front edge that cuts into the wind"
+              ],
+              "correct": 1,
+              "explain": "The tip is the outer end, opposite the root."
+            },
+            {
+              "id": "M1.01.C008",
+              "question": "What is the span of a rotor blade",
+              "options": [
+                "The distance from leading edge to trailing edge",
+                "The distance from one blade tip to the opposite blade tip",
+                "The distance from root to tip along the blade centerline"
+              ],
+              "correct": 2,
+              "explain": "Span is measured root to tip along the centerline."
+            },
+            {
+              "id": "M1.01.C009",
+              "question": "A technician measures a rotor blade from the attachment point at the rotor mast to its outer end, along its centerline. Which dimension is being measured?",
+              "options": [
+                "The span",
+                "The chord",
+                "The pitch"
+              ],
+              "correct": 0,
+              "explain": "Root to tip along the centerline is the span; the chord runs leading edge to trailing edge."
+            },
+            {
+              "id": "M1.01.C010",
+              "question": "What is the leading edge of a rotor blade",
+              "options": [
+                "The edge that cuts into the wind when the rotor is turning",
+                "The outer end of the blade opposite the root",
+                "The edge opposite the one that cuts into the wind"
+              ],
+              "correct": 0,
+              "explain": "The leading edge cuts into the wind."
+            },
+            {
+              "id": "M1.01.C011",
+              "question": "What is the trailing edge of a rotor blade",
+              "options": [
+                "The edge opposite the leading edge",
+                "The end attached to the rotor mast",
+                "The edge that cuts into the wind"
+              ],
+              "correct": 0,
+              "explain": "The trailing edge is opposite the leading edge."
+            },
+            {
+              "id": "M1.01.C012",
+              "question": "What is the chord of a rotor blade",
+              "options": [
+                "A curved line along the upper surface of the blade",
+                "A straight line from the blade root to the blade tip",
+                "A straight line from the leading edge to the trailing edge"
+              ],
+              "correct": 2,
+              "explain": "The chord is the straight reference line from leading edge to trailing edge."
+            },
+            {
+              "id": "M1.01.C013",
+              "question": "Looking at the cross section of a rotor blade, a straight reference line is drawn from the front edge to the rear edge. What is this line called?",
+              "options": [
+                "The pitch",
+                "The chord",
+                "The span"
+              ],
+              "correct": 1,
+              "explain": "That reference line in the cross section is the chord."
+            },
+            {
+              "id": "M1.01.C014",
+              "question": "What is the advancing blade",
+              "options": [
+                "The backward moving blade",
+                "The blade at the tail boom",
+                "The forward moving blade"
+              ],
+              "correct": 2,
+              "explain": "The blade moving forward is the advancing blade."
+            },
+            {
+              "id": "M1.01.C015",
+              "question": "What is the retreating blade",
+              "options": [
+                "The blade over the cockpit",
+                "The backward moving blade",
+                "The forward moving blade"
+              ],
+              "correct": 1,
+              "explain": "The blade moving backward is the retreating blade."
+            },
+            {
+              "id": "M1.01.C016",
+              "question": "What is the relative wind",
+              "options": [
+                "The direction of the airflow with respect to the rotor blade",
+                "The direction of the airflow with respect to the ground",
+                "The speed of the natural wind at the landing site"
+              ],
+              "correct": 0,
+              "explain": "Relative wind is airflow direction relative to the blade."
+            },
+            {
+              "id": "M1.01.C017",
+              "question": "How is the relative wind directed in relation to the flight path of the blade",
+              "options": [
+                "Always perpendicular to the path",
+                "Always opposite to the flight path",
+                "Always along the same flight path"
+              ],
+              "correct": 1,
+              "explain": "The relative wind is always opposite to the blade's flight path."
+            },
+            {
+              "id": "M1.01.C018",
+              "question": "A blade moves horizontally forward. In which direction does the relative wind move",
+              "options": [
+                "Horizontally backward",
+                "Backward and upward",
+                "Horizontally forward"
+              ],
+              "correct": 0,
+              "explain": "The relative wind is exactly opposite: horizontally backward."
+            },
+            {
+              "id": "M1.01.C019",
+              "question": "A blade moves forward and downward. In which direction does the relative wind move",
+              "options": [
+                "Backward and upward",
+                "Forward and upward",
+                "Backward and downward"
+              ],
+              "correct": 0,
+              "explain": "Exactly opposite to forward-and-downward is backward-and-upward."
+            },
+            {
+              "id": "M1.01.C020",
+              "question": "On the retreating side a blade moves horizontally backward. Which relative wind acts on it",
+              "options": [
+                "Vertically upward",
+                "Horizontally forward",
+                "Horizontally backward"
+              ],
+              "correct": 1,
+              "explain": "Relative wind is always exactly opposite to blade movement."
+            },
+            {
+              "id": "M1.01.C021",
+              "question": "A blade is moving forward and at the same time flapping upward. Applying the rule for relative wind, from which direction does the relative wind come?",
+              "options": [
+                "Backward and downward",
+                "Backward and upward",
+                "Forward and downward"
+              ],
+              "correct": 0,
+              "explain": "The relative wind moves exactly opposite to the blade path, so forward-and-upward blade motion gives a backward-and-downward relative wind."
+            },
+            {
+              "id": "M1.01.C022",
+              "question": "Which two movements of the rotor blades are given as factors affecting the relative wind",
+              "options": [
+                "Turning and flapping",
+                "Turning and folding",
+                "Leading and feathering"
+              ],
+              "correct": 0,
+              "explain": "The manual names turning and flapping of the blades."
+            },
+            {
+              "id": "M1.01.C023",
+              "question": "A helicopter stands with its rotor stopped while wind blows over the blades. Which statement about the relative wind is correct?",
+              "options": [
+                "There is no relative wind because the rotor is stopped",
+                "The relative wind is created only by blade flapping",
+                "The wind blowing over the blade creates the relative wind"
+              ],
+              "correct": 2,
+              "explain": "Even with the rotor stopped, wind over the blade is airflow relative to the blade."
+            },
+            {
+              "id": "M1.01.C024",
+              "question": "What is the axis of rotation",
+              "options": [
+                "The plane formed by the average tip path",
+                "The axis around which the rotor blades are turning",
+                "The line from the leading edge to the trailing edge"
+              ],
+              "correct": 1,
+              "explain": "The rotor blades turn around the axis of rotation."
+            },
+            {
+              "id": "M1.01.C025",
+              "question": "What forms the plane of rotation",
+              "options": [
+                "The average tip path of the blades",
+                "The flapping hinges of the blades",
+                "The chord line of the blades"
+              ],
+              "correct": 0,
+              "explain": "The plane of rotation is formed by the average blade tip path."
+            },
+            {
+              "id": "M1.01.C026",
+              "question": "How is the plane of rotation arranged with respect to the axis of rotation",
+              "options": [
+                "At the pitch angle to it",
+                "Parallel to it",
+                "Perpendicular to it"
+              ],
+              "correct": 2,
+              "explain": "The plane of rotation is perpendicular to the axis."
+            },
+            {
+              "id": "M1.01.C027",
+              "question": "A helicopter is flying and the blades flap during each revolution, so each tip follows a slightly different path. Which path defines the plane of rotation?",
+              "options": [
+                "The path of the blade roots",
+                "The average tip path of the blades",
+                "The highest tip path of the blades"
+              ],
+              "correct": 1,
+              "explain": "The manual defines it by the average tip path."
+            },
+            {
+              "id": "M1.01.C028",
+              "question": "What is the pitch angle",
+              "options": [
+                "The acute angle between the chord and the plane of rotation",
+                "The acute angle between the chord and the relative wind",
+                "The acute angle between the axis and the plane of rotation"
+              ],
+              "correct": 0,
+              "explain": "Pitch angle is measured from the plane of rotation to the chord."
+            },
+            {
+              "id": "M1.01.C029",
+              "question": "Which cockpit control changes the pitch angle of all main rotor blades",
+              "options": [
+                "The tail rotor pedals",
+                "The collective pitch control",
+                "The cyclic pitch stick"
+              ],
+              "correct": 1,
+              "explain": "The collective pitch control changes the pitch angle."
+            },
+            {
+              "id": "M1.01.C030",
+              "question": "Around which axis does the blade rotate when the pitch angle is changed with the collective pitch control",
+              "options": [
+                "The flapping hinge axis",
+                "The hub axis",
+                "The helicopter lateral axis"
+              ],
+              "correct": 1,
+              "explain": "The manual says the blade rotates around the hub axis."
+            },
+            {
+              "id": "M1.01.C031",
+              "question": "Which term is often confused with the pitch angle",
+              "options": [
+                "The flapping angle",
+                "The angle of attack",
+                "The angle of rotation"
+              ],
+              "correct": 1,
+              "explain": "The note warns that pitch angle is often confused with angle of attack."
+            },
+            {
+              "id": "M1.01.C032",
+              "question": "Which statement correctly distinguishes pitch angle from angle of attack?",
+              "options": [
+                "Pitch angle is referenced to the plane of rotation, angle of attack to the relative wind",
+                "Pitch angle is referenced to the relative wind, angle of attack to the plane of rotation",
+                "Pitch angle is referenced to the axis of rotation, angle of attack to the span line"
+              ],
+              "correct": 0,
+              "explain": "Both use the chord, but pitch angle uses the plane of rotation and angle of attack uses the relative wind."
+            },
+            {
+              "id": "M1.01.C033",
+              "question": "What is the angle of attack",
+              "options": [
+                "The acute angle between the chord line and the relative wind",
+                "The acute angle between the relative wind and the plane of rotation",
+                "The acute angle between the chord line and the plane of rotation"
+              ],
+              "correct": 0,
+              "explain": "Angle of attack is chord line to relative wind."
+            },
+            {
+              "id": "M1.01.C034",
+              "question": "Besides the pitch angle, what can the pilot also vary by operating the collective pitch control?",
+              "options": [
+                "The plane of rotation",
+                "The blade span",
+                "The angle of attack"
+              ],
+              "correct": 2,
+              "explain": "The angle of attack can also be varied with the collective."
+            },
+            {
+              "id": "M1.01.C035",
+              "question": "Why do the same factors that affect the relative wind also affect the angle of attack",
+              "options": [
+                "Because the relative wind depends upon the pitch angle",
+                "Because the angle of attack depends upon the blade span",
+                "Because the angle of attack depends upon the relative wind"
+              ],
+              "correct": 2,
+              "explain": "Angle of attack is measured to the relative wind, so what changes one changes the other."
+            },
+            {
+              "id": "M1.01.C036",
+              "question": "When is the angle of attack equal to the pitch angle",
+              "options": [
+                "When the relative wind is parallel to the axis of rotation",
+                "When the relative wind is perpendicular to the plane of rotation",
+                "When the relative wind is in the same direction as the plane of rotation"
+              ],
+              "correct": 2,
+              "explain": "If the relative wind lies in the plane of rotation, both angles use the same reference line."
+            },
+            {
+              "id": "M1.01.C037",
+              "question": "The pilot increases the pitch angle. What happens to the angle of attack",
+              "options": [
+                "It remains unchanged",
+                "It is also increased",
+                "It is decreased"
+              ],
+              "correct": 1,
+              "explain": "Pitch and angle of attack change together."
+            },
+            {
+              "id": "M1.01.C038",
+              "question": "The pilot lowers the collective and so reduces the pitch angle. What happens to the angle of attack?",
+              "options": [
+                "It remains unchanged",
+                "It is increased",
+                "It is also decreased"
+              ],
+              "correct": 2,
+              "explain": "Decreasing pitch also decreases the angle of attack."
+            },
+            {
+              "id": "M1.01.C039",
+              "question": "The pilot holds the pitch angle constant, but outside influences change the relative wind. What happens to the angle of attack?",
+              "options": [
+                "It changes, because it depends on the relative wind",
+                "It stays constant, because the pitch is constant",
+                "It becomes equal to the pitch angle of the blade"
+              ],
+              "correct": 0,
+              "explain": "Angle of attack is also affected by relative wind changes, not only by pitch."
+            },
+            {
+              "id": "M1.01.C040",
+              "question": "How can the pilot increase or decrease the angle of attack",
+              "options": [
+                "By moving the pitch angle of the rotor blade",
+                "By moving the plane of rotation of the rotor",
+                "By changing the span of the rotor blade"
+              ],
+              "correct": 0,
+              "explain": "The pilot changes the angle of attack through the blade pitch angle."
+            },
+            {
+              "id": "M1.01.C041",
+              "question": "In the figure 'Angle of Attack', the relative wind comes from slightly below the plane of rotation. How does the angle of attack compare with the pitch angle?",
+              "options": [
+                "The angle of attack is smaller than the pitch angle",
+                "The angle of attack is larger than the pitch angle",
+                "The angle of attack equals the pitch angle"
+              ],
+              "correct": 1,
+              "explain": "The figure shows the angle of attack as the larger angle because the relative wind is inclined below the plane of rotation."
+            },
+            {
+              "id": "M1.01.C042",
+              "question": "What is lift",
+              "options": [
+                "The force produced by torque reaction",
+                "The force that is produced by gravity",
+                "The force that is produced by the airfoil"
+              ],
+              "correct": 2,
+              "explain": "Lift is the airfoil's force."
+            },
+            {
+              "id": "M1.01.C043",
+              "question": "In which direction does lift act in relation to the relative wind",
+              "options": [
+                "Opposite to the relative wind",
+                "Perpendicular to the relative wind",
+                "Parallel to the relative wind"
+              ],
+              "correct": 1,
+              "explain": "Lift is perpendicular to the relative wind."
+            },
+            {
+              "id": "M1.01.C044",
+              "question": "What is lift required to counteract",
+              "options": [
+                "Drag",
+                "Gravity",
+                "Torque"
+              ],
+              "correct": 1,
+              "explain": "Lift counteracts gravity."
+            },
+            {
+              "id": "M1.01.C045",
+              "question": "To which bodies does gyroscopic precession apply",
+              "options": [
+                "All rotating bodies",
+                "Only the main rotor",
+                "Only the tail rotor"
+              ],
+              "correct": 0,
+              "explain": "It applies to all rotating bodies, including both rotors."
+            },
+            {
+              "id": "M1.01.C046",
+              "question": "How is gyroscopic precession defined",
+              "options": [
+                "The change of the rotational axis as a result of an external force",
+                "The turning of the fuselage opposite to the rotor",
+                "The change of the rotor RPM as a result of an external force"
+              ],
+              "correct": 0,
+              "explain": "Precession is a change of the rotational axis caused by an external force."
+            },
+            {
+              "id": "M1.01.C047",
+              "question": "Where does the output occur when a force is applied to a turning rotor",
+              "options": [
+                "90° earlier in the direction of rotation",
+                "180° later in the direction of rotation",
+                "90° later in the direction of rotation"
+              ],
+              "correct": 2,
+              "explain": "The output appears 90° later in the direction of rotation."
+            },
+            {
+              "id": "M1.01.C048",
+              "question": "From which point is the 90° of gyroscopic precession measured",
+              "options": [
+                "From the point of the input",
+                "From the blade root",
+                "From the nose of the helicopter"
+              ],
+              "correct": 0,
+              "explain": "The 90° is measured from the point of input."
+            },
+            {
+              "id": "M1.01.C049",
+              "question": "In the example wheel, an external force tries to turn the wheel around the input axis. Around which axis does the movement actually take place?",
+              "options": [
+                "Only around the spin axis",
+                "Only around the input axis",
+                "Around the output axis"
+              ],
+              "correct": 2,
+              "explain": "Because of precession the movement occurs around the output axis."
+            },
+            {
+              "id": "M1.01.C050",
+              "question": "For a helicopter whose rotor turns counterclockwise, where must the downward force be put in to tilt the tip-path plane forward?",
+              "options": [
+                "Right in front",
+                "On the left side",
+                "On the right side"
+              ],
+              "correct": 2,
+              "explain": "The manual states the input goes exactly on the right side."
+            },
+            {
+              "id": "M1.01.C051",
+              "question": "In which direction must the tip-path plane be tilted for the helicopter to fly forward",
+              "options": [
+                "To the right",
+                "Backward",
+                "Forward"
+              ],
+              "correct": 2,
+              "explain": "Forward flight needs a forward-tilted tip-path plane."
+            },
+            {
+              "id": "M1.01.C052",
+              "question": "Why must the steering input to the rotor be applied 90° before the point where the tilt is wanted",
+              "options": [
+                "Because the output occurs 90° later in the direction of rotation",
+                "Because the swash plate is mounted 90° to the rotor",
+                "Because the output occurs 90° earlier in the direction of rotation"
+              ],
+              "correct": 0,
+              "explain": "Precession shifts the result 90° in the direction of rotation, so the input must lead by 90°."
+            },
+            {
+              "id": "M1.01.C053",
+              "question": "A downward force is applied on the right side of a counterclockwise turning rotor. Where does the output appear?",
+              "options": [
+                "Right at the rear",
+                "On the left side",
+                "Right in front"
+              ],
+              "correct": 2,
+              "explain": "90° later in counterclockwise rotation from the right side is the front."
+            },
+            {
+              "id": "M1.01.C054",
+              "question": "A helicopter rotor turns counterclockwise. The tip-path plane must tilt backward for rearward flight. Following the precession rule, where must the downward force be put in?",
+              "options": [
+                "On the left side",
+                "Right at the rear",
+                "On the right side"
+              ],
+              "correct": 0,
+              "explain": "The output is wanted at the rear; 90° earlier in counterclockwise rotation is the left side."
+            },
+            {
+              "id": "M1.01.C055",
+              "question": "A helicopter rotor turns counterclockwise. The tip-path plane must tilt to the left. Following the precession rule, where must the downward force be put in?",
+              "options": [
+                "Right at the rear",
+                "On the left side",
+                "Right in front"
+              ],
+              "correct": 2,
+              "explain": "The output is wanted on the left; 90° earlier in counterclockwise rotation is the front."
+            },
+            {
+              "id": "M1.01.C056",
+              "question": "A downward force is applied at the rear of a counterclockwise turning rotor. Where does the tip-path plane tilt down?",
+              "options": [
+                "On the left side",
+                "On the right side",
+                "Right in front"
+              ],
+              "correct": 1,
+              "explain": "90° later than the rear in counterclockwise rotation is the right side."
+            },
+            {
+              "id": "M1.01.C057",
+              "question": "Which law explains torque reaction on a helicopter fuselage",
+              "options": [
+                "Newton's Second Law",
+                "Newton's Third Law",
+                "Newton's law of inertia"
+              ],
+              "correct": 1,
+              "explain": "Torque reaction is action and reaction, Newton's Third Law."
+            },
+            {
+              "id": "M1.01.C058",
+              "question": "In which direction does the helicopter fuselage tend to rotate due to torque",
+              "options": [
+                "Around its lateral axis, nose down",
+                "In the same direction as the rotor blades",
+                "Opposite to the direction of the rotor blades"
+              ],
+              "correct": 2,
+              "explain": "Action and reaction: the fuselage turns opposite to the rotor."
+            },
+            {
+              "id": "M1.01.C059",
+              "question": "What is the effect called when the fuselage tends to rotate opposite to the rotor blades",
+              "options": [
+                "Precession",
+                "Torque",
+                "Translating tendency"
+              ],
+              "correct": 1,
+              "explain": "The manual calls this effect torque."
+            },
+            {
+              "id": "M1.01.C060",
+              "question": "In a helicopter with a main rotor and a tail rotor, which component compensates the torque",
+              "options": [
+                "The swash plate",
+                "The tail rotor",
+                "The main rotor"
+              ],
+              "correct": 1,
+              "explain": "The tail rotor compensates torque."
+            },
+            {
+              "id": "M1.01.C061",
+              "question": "In the most common helicopter design, what does the main rotor create",
+              "options": [
+                "Lift and thrust",
+                "Lift and anti-torque",
+                "Thrust and anti-torque"
+              ],
+              "correct": 0,
+              "explain": "The main rotor creates lift and thrust."
+            },
+            {
+              "id": "M1.01.C062",
+              "question": "A helicopter's main rotor turns counterclockwise seen from above and the tail rotor is not yet producing thrust. Which way does the fuselage tend to turn?",
+              "options": [
+                "Not at all",
+                "Clockwise",
+                "Counterclockwise"
+              ],
+              "correct": 1,
+              "explain": "The fuselage reaction is opposite to a counterclockwise rotor, so clockwise."
+            },
+            {
+              "id": "M1.01.C063",
+              "question": "Why does a helicopter need no pull or push propellers",
+              "options": [
+                "Because the rotors are driven by the airflow",
+                "Because the rotors generate both lift and thrust",
+                "Because the tail rotor generates the thrust"
+              ],
+              "correct": 1,
+              "explain": "The rotor provides both lift and thrust."
+            },
+            {
+              "id": "M1.01.C064",
+              "question": "How do the rotors of a helicopter additionally ensure directional control",
+              "options": [
+                "Control surfaces on the rotor blades are deflected",
+                "The rotor RPM is changed so thrust acts in all directions",
+                "The rotor plane may be tilted so thrust can act in all directions"
+              ],
+              "correct": 2,
+              "explain": "Tilting the rotor plane lets thrust act in any direction."
+            },
+            {
+              "id": "M1.01.C065",
+              "question": "What does lift counteract according to the helicopter description",
+              "options": [
+                "Thrust",
+                "Torque",
+                "Weight"
+              ],
+              "correct": 2,
+              "explain": "Lift counteracts weight."
+            },
+            {
+              "id": "M1.01.C066",
+              "question": "What generates the total rotor thrust",
+              "options": [
+                "The advancing blade alone",
+                "All rotor blades together",
+                "The tail rotor blades"
+              ],
+              "correct": 1,
+              "explain": "The note says all blades together generate total rotor thrust."
+            },
+            {
+              "id": "M1.01.C067",
+              "question": "After an engine failure or broken drive shafts, how can a helicopter land safely",
+              "options": [
+                "By using translating tendency",
+                "By performing an autorotation",
+                "By using ground effect"
+              ],
+              "correct": 1,
+              "explain": "Autorotation allows a safe landing without engine power."
+            },
+            {
+              "id": "M1.01.C068",
+              "question": "During an autorotation after an engine failure, which statement about control is correct?",
+              "options": [
+                "Only the pedals remain effective and the touchdown point cannot be chosen",
+                "The helicopter is fully controllable and the pilot can choose the touchdown point",
+                "The helicopter is not controllable and lands wherever the descent takes it"
+              ],
+              "correct": 1,
+              "explain": "The manual says it is fully controllable and the pilot selects the touchdown location."
+            },
+            {
+              "id": "M1.01.C069",
+              "question": "In the figure 'Helicopter', the total rotor thrust is split into two components. What are they called?",
+              "options": [
+                "Thrust and drag",
+                "Lift and weight",
+                "Lift and thrust"
+              ],
+              "correct": 2,
+              "explain": "The figure shows total rotor thrust with its lift and thrust components."
+            },
+            {
+              "id": "M1.01.C070",
+              "question": "How do helicopters change direction, unlike other aircraft",
+              "options": [
+                "By changing the angle of the rotor blade plane",
+                "By changing the RPM of the main rotor",
+                "By deflecting control surfaces on the fuselage"
+              ],
+              "correct": 0,
+              "explain": "Helicopters tilt the rotor blade plane instead of deflecting surfaces."
+            },
+            {
+              "id": "M1.01.C071",
+              "question": "What achieves the change of the rotor blade plane angle for directional control",
+              "options": [
+                "Mechanical actuators controlled by the pilot and aerodynamic forces on the blades",
+                "Control surfaces on the fuselage and changes of the engine power by the pilot",
+                "Electric motors in the rotor head and the thrust of the tail rotor on the boom"
+              ],
+              "correct": 0,
+              "explain": "The manual names pilot-controlled mechanical actuators plus aerodynamic forces."
+            },
+            {
+              "id": "M1.01.C072",
+              "question": "The pilot moves the cyclic stick forward. What does the rotor plane do",
+              "options": [
+                "It tilts forward",
+                "It tilts backward",
+                "It moves upward"
+              ],
+              "correct": 0,
+              "explain": "Forward cyclic tilts the rotor plane forward."
+            },
+            {
+              "id": "M1.01.C073",
+              "question": "The pilot moves the cyclic stick to the left. In which direction does the helicopter fly",
+              "options": [
+                "To the right",
+                "Backward",
+                "To the left"
+              ],
+              "correct": 2,
+              "explain": "Left cyclic gives flight to the left."
+            },
+            {
+              "id": "M1.01.C074",
+              "question": "In which direction does rotor thrust always act",
+              "options": [
+                "Parallel to the rotor plane",
+                "Perpendicular to the rotor plane",
+                "Along the direction of flight"
+              ],
+              "correct": 1,
+              "explain": "Rotor thrust is perpendicular to the rotor plane."
+            },
+            {
+              "id": "M1.01.C075",
+              "question": "Why must the rotor plane be tilted when changing from hover to forward flight",
+              "options": [
+                "Because the tail rotor thrust acts in the direction of flight",
+                "Because the rotor RPM must be increased for forward flight",
+                "Because rotor thrust always acts perpendicular to the rotor plane"
+              ],
+              "correct": 2,
+              "explain": "To point thrust forward, the plane must tilt, because thrust is perpendicular to it."
+            },
+            {
+              "id": "M1.01.C076",
+              "question": "What is the technical solution for tilting the rotor plane",
+              "options": [
+                "Changing the rotor RPM during each revolution",
+                "Changing the blade span during each revolution",
+                "Changing the pitch angle during each revolution"
+              ],
+              "correct": 2,
+              "explain": "Cyclic pitch changes during each revolution tilt the plane."
+            },
+            {
+              "id": "M1.01.C077",
+              "question": "Which movements do helicopters with one main rotor control with the principle of cyclic control?",
+              "options": [
+                "Vertical and yaw movement",
+                "Longitudinal and vertical movement",
+                "Longitudinal and lateral movement"
+              ],
+              "correct": 2,
+              "explain": "Cyclic control handles longitudinal and lateral movement."
+            },
+            {
+              "id": "M1.01.C078",
+              "question": "How does cyclic control create different amounts of lift within the rotor plane",
+              "options": [
+                "The blade changes its angle of incidence during each revolution",
+                "All blades change their pitch angle at the same time together",
+                "The rotor RPM is increased and decreased during each revolution"
+              ],
+              "correct": 0,
+              "explain": "Cyclic changes the incidence per revolution, giving different lift around the disc."
+            },
+            {
+              "id": "M1.01.C079",
+              "question": "When flying straight ahead, where does the blade reach its minimum angle of incidence",
+              "options": [
+                "Right in the front",
+                "On the right side",
+                "Right at the rear"
+              ],
+              "correct": 0,
+              "explain": "Minimum incidence is right in the front."
+            },
+            {
+              "id": "M1.01.C080",
+              "question": "When flying straight ahead, how many degrees after the minimum does the blade reach its maximum angle of incidence?",
+              "options": [
+                "360°",
+                "180°",
+                "90°"
+              ],
+              "correct": 1,
+              "explain": "The maximum is 180° later, opposite to the direction of flight."
+            },
+            {
+              "id": "M1.01.C081",
+              "question": "In straight-ahead flight the blade has minimum incidence in front and maximum incidence at the rear. What is the result for the rotor plane?",
+              "options": [
+                "It tilts backward, giving lift and rearward thrust",
+                "It stays level, giving lift but no thrust",
+                "It tilts forward, giving lift and forward thrust"
+              ],
+              "correct": 2,
+              "explain": "More lift at the rear and less at the front tilts the plane forward, producing lift and forward thrust."
+            },
+            {
+              "id": "M1.01.C082",
+              "question": "The pilot moves the cyclic stick backward. In which direction does the helicopter fly",
+              "options": [
+                "Backward",
+                "Upward",
+                "Forward"
+              ],
+              "correct": 0,
+              "explain": "Backward cyclic tilts the plane back and the helicopter flies backward."
+            },
+            {
+              "id": "M1.01.C083",
+              "question": "What does the pilot do to the main rotor blades by moving the collective lever upwards",
+              "options": [
+                "Increases the pitch angle of each blade once per revolution",
+                "Increases the pitch angle of all blades at the same time",
+                "Tilts the rotor plane in the direction of flight"
+              ],
+              "correct": 1,
+              "explain": "Collective up raises the pitch of all blades together."
+            },
+            {
+              "id": "M1.01.C084",
+              "question": "The pilot moves the collective lever upwards. What does the helicopter do",
+              "options": [
+                "It turns left",
+                "It descends",
+                "It climbs"
+              ],
+              "correct": 2,
+              "explain": "More pitch gives more lift and the helicopter climbs."
+            },
+            {
+              "id": "M1.01.C085",
+              "question": "The pilot moves the collective lever downwards. What does the helicopter do",
+              "options": [
+                "It descends",
+                "It flies backward",
+                "It climbs"
+              ],
+              "correct": 0,
+              "explain": "Collective down makes the helicopter descend."
+            },
+            {
+              "id": "M1.01.C086",
+              "question": "Which hinges do the rotor blades need to change their pitch angle",
+              "options": [
+                "Feathering hinges",
+                "Lead-lag hinges",
+                "Flapping hinges"
+              ],
+              "correct": 0,
+              "explain": "Pitch change needs feathering hinges."
+            },
+            {
+              "id": "M1.01.C087",
+              "question": "Where are the feathering hinges mounted",
+              "options": [
+                "Between the swash plate and the mast",
+                "Between the tail rotor and the gearbox",
+                "Between the rotor blade and the rotor head"
+              ],
+              "correct": 2,
+              "explain": "Feathering hinges sit between blade and rotor head."
+            },
+            {
+              "id": "M1.01.C088",
+              "question": "Which parts move the rotor blades to larger pitch angles when the collective is raised",
+              "options": [
+                "Drive shafts",
+                "Control rods",
+                "Flapping hinges"
+              ],
+              "correct": 1,
+              "explain": "Control rods move the blades."
+            },
+            {
+              "id": "M1.01.C089",
+              "question": "Besides changing the blade pitch, which other effect does a movement of the collective lever have?",
+              "options": [
+                "It tilts the rotor plane and causes translating tendency",
+                "It changes engine power and causes effects like torque",
+                "It changes tail rotor pitch and causes precession"
+              ],
+              "correct": 1,
+              "explain": "Collective movement also changes engine power and torque effects."
+            },
+            {
+              "id": "M1.01.C090",
+              "question": "A pilot raises the collective lever to climb. The engine power changes and so does the torque effect on the fuselage. Which control must then vary the tail rotor thrust?",
+              "options": [
+                "The collective lever",
+                "The cyclic pitch stick",
+                "The tail rotor pedals"
+              ],
+              "correct": 2,
+              "explain": "Torque is compensated by the tail rotor, whose thrust the pilot varies with the pedals."
+            },
+            {
+              "id": "M1.01.C091",
+              "question": "Which control does the pilot use to turn the helicopter around the rotor mast axis",
+              "options": [
+                "The cyclic pitch stick",
+                "The tail rotor pedals",
+                "The collective lever"
+              ],
+              "correct": 1,
+              "explain": "Pedals turn the helicopter around the mast axis."
+            },
+            {
+              "id": "M1.01.C092",
+              "question": "What do the pedals change",
+              "options": [
+                "The pitch angle of the main rotor blades",
+                "The tilt of the main rotor plane",
+                "The pitch angle of the tail rotor blades"
+              ],
+              "correct": 2,
+              "explain": "Pedals change tail rotor blade pitch."
+            },
+            {
+              "id": "M1.01.C093",
+              "question": "How do the pedals vary the tail rotor thrust",
+              "options": [
+                "By tilting the plane of rotation of the tail rotor",
+                "By changing the RPM of the tail rotor drive shaft",
+                "By changing the pitch angle of the tail rotor blades"
+              ],
+              "correct": 2,
+              "explain": "Tail rotor thrust is varied via blade pitch."
+            },
+            {
+              "id": "M1.01.C094",
+              "question": "The pilot moves the left pedal forward. What happens to the right pedal and the helicopter",
+              "options": [
+                "Right pedal moves backward; helicopter turns left",
+                "Right pedal moves backward; helicopter turns right",
+                "Right pedal moves forward; helicopter turns left"
+              ],
+              "correct": 0,
+              "explain": "Left pedal forward turns the helicopter left, with the right pedal moving back."
+            },
+            {
+              "id": "M1.01.C095",
+              "question": "The pilot wants to turn the helicopter to the right around the rotor mast axis. What must he do?",
+              "options": [
+                "Move the cyclic to the right",
+                "Push the left pedal forward",
+                "Push the right pedal forward"
+              ],
+              "correct": 2,
+              "explain": "Right pedal forward turns the helicopter right."
+            },
+            {
+              "id": "M1.01.C096",
+              "question": "How is the collective pitch change achieved at the swash plate",
+              "options": [
+                "By tilting the swash plate to one side",
+                "By lifting or lowering the swash plate",
+                "By rotating the stationary swash plate"
+              ],
+              "correct": 1,
+              "explain": "Collective raises or lowers the swash plate."
+            },
+            {
+              "id": "M1.01.C097",
+              "question": "How is the cyclic pitch change achieved at the swash plate",
+              "options": [
+                "By lifting the whole swash plate",
+                "By turning the stationary part",
+                "By tilting the swash plate"
+              ],
+              "correct": 2,
+              "explain": "Cyclic tilts the swash plate."
+            },
+            {
+              "id": "M1.01.C098",
+              "question": "A technician watches the swash plate while a helper moves one cockpit control, and the whole swash plate moves up without tilting. Which control is being moved?",
+              "options": [
+                "The cyclic stick",
+                "The collective lever",
+                "The tail pedals"
+              ],
+              "correct": 1,
+              "explain": "Lifting the swash plate is collective; tilting would be cyclic."
+            },
+            {
+              "id": "M1.01.C099",
+              "question": "During a control check the swash plate tilts but its mean height does not change. Which pitch change is being made?",
+              "options": [
+                "Cyclic pitch change",
+                "Tail rotor pitch change",
+                "Collective pitch change"
+              ],
+              "correct": 0,
+              "explain": "Tilting the swash plate produces cyclic pitch change."
+            },
+            {
+              "id": "M1.01.C100",
+              "question": "Where is the swash plate usually located",
+              "options": [
+                "Underneath the rotor plane",
+                "Above the rotor plane",
+                "Inside the tail boom"
+              ],
+              "correct": 0,
+              "explain": "It is usually underneath the rotor plane."
+            },
+            {
+              "id": "M1.01.C101",
+              "question": "To which part of the swash plate are the rotor blade control rods connected",
+              "options": [
+                "The lower part",
+                "The bearing",
+                "The upper part"
+              ],
+              "correct": 2,
+              "explain": "Blade control rods attach to the upper part."
+            },
+            {
+              "id": "M1.01.C102",
+              "question": "Why does the swash plate have to act as an interface",
+              "options": [
+                "It transfers control signals between the stationary input system and the rotating rotor",
+                "It transfers engine power between the main gearbox and the rotating rotor mast",
+                "It transfers torque between the main rotor and the tail rotor drive system"
+              ],
+              "correct": 0,
+              "explain": "Cockpit inputs are stationary but the blades rotate, so the swash plate links the two."
+            },
+            {
+              "id": "M1.01.C103",
+              "question": "Which statement correctly assigns the swash plate parts?",
+              "options": [
+                "Upper part rotating, lower part stationary",
+                "Both parts rotating with the rotor",
+                "Upper part stationary, lower part rotating"
+              ],
+              "correct": 0,
+              "explain": "The upper part rotates; the lower part is stationary."
+            },
+            {
+              "id": "M1.01.C104",
+              "question": "How are the rotating and stationary parts of the swash plate connected",
+              "options": [
+                "By a bearing",
+                "By control rods",
+                "By a flapping hinge"
+              ],
+              "correct": 0,
+              "explain": "A bearing connects the two parts."
+            },
+            {
+              "id": "M1.01.C105",
+              "question": "How are the two parts of the swash plate arranged relative to each other",
+              "options": [
+                "At 90° in turning direction",
+                "Perpendicular to each other",
+                "Parallel to each other"
+              ],
+              "correct": 2,
+              "explain": "The two parts are parallel."
+            },
+            {
+              "id": "M1.01.C106",
+              "question": "Which parts act on the stationary part of the swash plate",
+              "options": [
+                "Control rods and bell cranks connected with the cockpit controls",
+                "The main rotor blades acting through the feathering hinges",
+                "Control rods connected directly to the main rotor blades"
+              ],
+              "correct": 0,
+              "explain": "The stationary part is moved by control rods and bell cranks from the cockpit."
+            },
+            {
+              "id": "M1.01.C107",
+              "question": "How is the rotating part of the swash plate connected to the main rotor blades",
+              "options": [
+                "By bell cranks",
+                "By control rods",
+                "By a bearing"
+              ],
+              "correct": 1,
+              "explain": "Control rods connect the rotating part to the blades."
+            },
+            {
+              "id": "M1.01.C108",
+              "question": "What is the direct result on the rotor blades when the swash plate moves?",
+              "options": [
+                "The blades move forward and backward on lead-lag hinges",
+                "The control rods move and the blade pitch angle changes",
+                "The bearing locks and the blades stop their flapping"
+              ],
+              "correct": 1,
+              "explain": "Swash plate motion moves control rods, which change pitch."
+            },
+            {
+              "id": "M1.01.C109",
+              "question": "Of which two parts does the swash plate consist",
+              "options": [
+                "A rotating part and a stationary part",
+                "An upper rotating part and a rotating bearing",
+                "A cyclic part and a collective part"
+              ],
+              "correct": 0,
+              "explain": "The swash plate has a rotating and a stationary part."
+            },
+            {
+              "id": "M1.01.C110",
+              "question": "In a hover with no wind, how does the lift of the rotor blades compare",
+              "options": [
+                "All blades generate the same amount of lift",
+                "The retreating blade generates more lift",
+                "The advancing blade generates more lift"
+              ],
+              "correct": 0,
+              "explain": "In a no-wind hover all blades have the same parameters."
+            },
+            {
+              "id": "M1.01.C111",
+              "question": "What is dissymmetry of lift",
+              "options": [
+                "The difference in lift between advancing and retreating blade",
+                "The difference in lift in and out of ground effect",
+                "The difference in lift between main and tail rotor"
+              ],
+              "correct": 0,
+              "explain": "The lift difference between advancing and retreating blade is dissymmetry of lift."
+            },
+            {
+              "id": "M1.01.C112",
+              "question": "What is the crucial factor causing dissymmetry of lift when the helicopter flies",
+              "options": [
+                "The interference of the ground surface",
+                "The airstream caused by the speed of flight",
+                "The torque reaction of the main rotor"
+              ],
+              "correct": 1,
+              "explain": "The flight airstream adds to or subtracts from blade speed."
+            },
+            {
+              "id": "M1.01.C113",
+              "question": "Why does the advancing blade produce more lift in forward flight",
+              "options": [
+                "The opposing airstream is subtracted from its rotational speed",
+                "Its pitch angle is increased by the collective",
+                "The opposing airstream is added to its rotational speed"
+              ],
+              "correct": 2,
+              "explain": "The airstream adds to its speed, giving more lift."
+            },
+            {
+              "id": "M1.01.C114",
+              "question": "Why does the retreating blade produce less lift in forward flight",
+              "options": [
+                "The opposing airstream is subtracted from its rotational speed",
+                "The opposing airstream is added to its rotational speed",
+                "Its pitch angle is reduced by the tail rotor pedals"
+              ],
+              "correct": 0,
+              "explain": "The airstream subtracts from its speed, giving less lift."
+            },
+            {
+              "id": "M1.01.C115",
+              "question": "How does the speed change along the blade from root to tip",
+              "options": [
+                "It is the same along the span",
+                "It decreases towards the blade tip",
+                "It increases towards the blade tip"
+              ],
+              "correct": 2,
+              "explain": "Speed increases toward the tip."
+            },
+            {
+              "id": "M1.01.C116",
+              "question": "In the manual example the helicopter flies forward at 100 kts. How does the relative wind change on the advancing and retreating blades?",
+              "options": [
+                "Advancing +100 kts, retreating -100 kts",
+                "Advancing +200 kts, retreating unchanged",
+                "Advancing -100 kts, retreating +100 kts"
+              ],
+              "correct": 0,
+              "explain": "Flight speed adds on the advancing side and subtracts on the retreating side."
+            },
+            {
+              "id": "M1.01.C117",
+              "question": "In the figure 'Dissymmetry of Lift' in forward flight, on which side of the helicopter is the advancing half?",
+              "options": [
+                "The left side",
+                "The right side",
+                "The rear half"
+              ],
+              "correct": 1,
+              "explain": "The figure labels the right side as the advancing half."
+            },
+            {
+              "id": "M1.01.C118",
+              "question": "A mass point on a rotating disk is moved towards the edge of the disk. What happens to the rotational speed and why?",
+              "options": [
+                "It stays constant, because the rotor RPM is fixed by the engine",
+                "It accelerates, because the mass tries to hold its higher speed",
+                "It decelerates, because the mass resists the tangential acceleration"
+              ],
+              "correct": 2,
+              "explain": "Moving outward needs higher circumferential speed; inertia resists and slows the rotation."
+            },
+            {
+              "id": "M1.01.C119",
+              "question": "A mass point on a rotating disk is moved towards the centre of rotation. What does it do to the rotational speed?",
+              "options": [
+                "It has no effect on the rotational speed",
+                "It tries to decelerate the rotational speed",
+                "It tries to accelerate the rotational speed"
+              ],
+              "correct": 2,
+              "explain": "Moving inward, it keeps its higher speed and so accelerates the rotation."
+            },
+            {
+              "id": "M1.01.C120",
+              "question": "Where does the blade's centre of gravity move when the blade flaps upwards",
+              "options": [
+                "Closer towards the blade tip",
+                "Closer towards the rotational axis",
+                "Closer towards the trailing edge"
+              ],
+              "correct": 1,
+              "explain": "Upward flapping brings the CG closer to the axis."
+            },
+            {
+              "id": "M1.01.C121",
+              "question": "Where does the blade's centre of gravity move when the blade flaps downwards",
+              "options": [
+                "Closer to the rotational axis",
+                "Closer to the blade tip",
+                "Closer to the leading edge"
+              ],
+              "correct": 1,
+              "explain": "Downward flapping moves the CG outward toward the tip."
+            },
+            {
+              "id": "M1.01.C122",
+              "question": "With constant rotor RPM, what does an upward flapping blade do",
+              "options": [
+                "It decelerates and moves backward",
+                "It accelerates and moves backward",
+                "It accelerates and moves forward"
+              ],
+              "correct": 2,
+              "explain": "Its CG moves inward, so it speeds up and leads."
+            },
+            {
+              "id": "M1.01.C123",
+              "question": "With constant rotor RPM, what does a downward flapping blade do",
+              "options": [
+                "It decelerates and moves backward",
+                "It decelerates and moves forward",
+                "It accelerates and moves forward"
+              ],
+              "correct": 0,
+              "explain": "Its CG moves outward, so it slows down and lags."
+            },
+            {
+              "id": "M1.01.C124",
+              "question": "Why is the installation of a lead-lag hinge required",
+              "options": [
+                "Flapping blades change their pitch angle during each revolution",
+                "Flapping blades accelerate or decelerate and move forward or backward",
+                "Flapping blades change the direction of the torque reaction"
+              ],
+              "correct": 1,
+              "explain": "The forward and backward blade movement caused by flapping must be allowed by a lead-lag hinge."
+            },
+            {
+              "id": "M1.01.C125",
+              "question": "In forward flight the advancing blade flaps up. Combining the flapping and centre-of-mass facts, how does this blade move in the plane of rotation?",
+              "options": [
+                "It decelerates and moves backward (lags)",
+                "It keeps its position in the plane",
+                "It accelerates and moves forward (leads)"
+              ],
+              "correct": 2,
+              "explain": "The advancing blade flaps up, its CG moves inward, so it accelerates and moves forward."
+            },
+            {
+              "id": "M1.01.C126",
+              "question": "In forward flight the retreating blade flaps down. Combining the flapping and centre-of-mass facts, how does this blade move in the plane of rotation?",
+              "options": [
+                "It accelerates and moves forward (leads)",
+                "It keeps its position in the plane",
+                "It decelerates and moves backward (lags)"
+              ],
+              "correct": 2,
+              "explain": "The retreating blade flaps down, its CG moves outward, so it decelerates and lags."
+            },
+            {
+              "id": "M1.01.C127",
+              "question": "Which self-correcting effect comes along with the dissymmetry of lift",
+              "options": [
+                "The lead-lag movement of the blades",
+                "The flapping of the blades",
+                "The torque of the fuselage"
+              ],
+              "correct": 1,
+              "explain": "Blade flapping is the self-correcting effect."
+            },
+            {
+              "id": "M1.01.C128",
+              "question": "Why does the advancing blade flap up",
+              "options": [
+                "It experiences decreased relative wind and generates less lift",
+                "Its centre of gravity moves closer to the blade tip",
+                "It experiences increased relative wind and generates more lift"
+              ],
+              "correct": 2,
+              "explain": "More relative wind means more lift, so it flaps up."
+            },
+            {
+              "id": "M1.01.C129",
+              "question": "What happens to the angle of attack as the advancing blade flaps up",
+              "options": [
+                "It increases",
+                "It stays the same",
+                "It decreases"
+              ],
+              "correct": 2,
+              "explain": "Upward flapping decreases the angle of attack."
+            },
+            {
+              "id": "M1.01.C130",
+              "question": "What happens to the angle of attack as the retreating blade flaps down",
+              "options": [
+                "It increases",
+                "It stays the same",
+                "It decreases"
+              ],
+              "correct": 0,
+              "explain": "Downward flapping increases the angle of attack."
+            },
+            {
+              "id": "M1.01.C131",
+              "question": "The retreating blade experiences a decreased relative wind. Which sequence follows according to the manual?",
+              "options": [
+                "Less lift, blade flaps down, angle of attack and lift increase",
+                "Less lift, blade flaps up, angle of attack increases",
+                "More lift, blade flaps up, angle of attack and lift decrease"
+              ],
+              "correct": 0,
+              "explain": "The retreating blade flaps down, which raises angle of attack and lift."
+            },
+            {
+              "id": "M1.01.C132",
+              "question": "The advancing blade flaps up in forward flight. What finally happens to its lift?",
+              "options": [
+                "The lift increases as the angle of attack increases",
+                "The lift decreases as the angle of attack decreases",
+                "The lift stays constant as the pitch is constant"
+              ],
+              "correct": 1,
+              "explain": "Upward flapping reduces angle of attack and so lift."
+            },
+            {
+              "id": "M1.01.C133",
+              "question": "Is blade flapping alone sufficient to restore rotor balance",
+              "options": [
+                "No, it increases the dissymmetry of lift",
+                "No, it helps to balance but is not sufficient",
+                "Yes, it fully restores rotor balance"
+              ],
+              "correct": 1,
+              "explain": "Flapping helps but does not fully restore balance."
+            },
+            {
+              "id": "M1.01.C134",
+              "question": "Why does upward flapping reduce the angle of attack of the advancing blade, using the relative wind rule?",
+              "options": [
+                "Moving up adds a downward relative wind component",
+                "Moving up reduces the blade pitch angle",
+                "Moving up adds an upward relative wind component"
+              ],
+              "correct": 0,
+              "explain": "Relative wind is opposite to blade motion, so an upward-moving blade meets air from above, reducing the angle of attack."
+            },
+            {
+              "id": "M1.01.C135",
+              "question": "In the figure 'Blade Flapping', what does upward flapping do to the relative wind and angle of attack?",
+              "options": [
+                "Changes the relative wind and decreases the angle of attack",
+                "Changes the relative wind and increases the angle of attack",
+                "Leaves the relative wind unchanged and decreases the angle"
+              ],
+              "correct": 0,
+              "explain": "The figure states upward flapping changes the relative wind and decreases the angle of attack."
+            },
+            {
+              "id": "M1.01.C136",
+              "question": "In the figure 'Blade Flapping', a blade flaps downward. From which direction does the relative wind now meet the blade, and what is the result?",
+              "options": [
+                "From above; the angle of attack increases",
+                "From below; the angle of attack decreases",
+                "From below; the angle of attack increases"
+              ],
+              "correct": 2,
+              "explain": "A blade moving down gets relative wind from below, which increases the angle of attack."
+            },
+            {
+              "id": "M1.01.C137",
+              "question": "Why must a rotor blade be able to move and occupy a new position",
+              "options": [
+                "Because the torque reaction turns the fuselage",
+                "Because the swash plate rotates with the rotor",
+                "Because aerodynamic forces act on the rotor blade"
+              ],
+              "correct": 2,
+              "explain": "Aerodynamic forces require the blade to move."
+            },
+            {
+              "id": "M1.01.C138",
+              "question": "Which two ways are given to achieve the flexibility for blade flapping",
+              "options": [
+                "A lead-lag hinge or a larger and stiffer tail rotor",
+                "A flapping hinge or blade properties that absorb the forces",
+                "A feathering hinge or a stronger swash plate bearing"
+              ],
+              "correct": 1,
+              "explain": "Either a flapping hinge or blades that absorb the forces."
+            },
+            {
+              "id": "M1.01.C139",
+              "question": "Blade flapping compensates dissymmetry of lift. Which hinge lets the blade move up and down for this?",
+              "options": [
+                "Lead-lag hinge",
+                "Feathering hinge",
+                "Flapping hinge"
+              ],
+              "correct": 2,
+              "explain": "Flapping hinges allow the up-down movement."
+            },
+            {
+              "id": "M1.01.C140",
+              "question": "When are lead-lag movements always generated",
+              "options": [
+                "When the rotor hovers in ground effect",
+                "When a rotor blade is flapping",
+                "When the rotor RPM is held constant"
+              ],
+              "correct": 1,
+              "explain": "Flapping always generates lead-lag movement."
+            },
+            {
+              "id": "M1.01.C141",
+              "question": "Which two causes of blade flapping lead to lead-lag movements",
+              "options": [
+                "Torque reaction or tail rotor pedal inputs",
+                "Dissymmetry of lift or cyclic control inputs",
+                "Ground effect or collective control inputs"
+              ],
+              "correct": 1,
+              "explain": "The manual names dissymmetry of lift and cyclic inputs."
+            },
+            {
+              "id": "M1.01.C142",
+              "question": "A pilot makes a cyclic control input. Which chain of effects follows according to the manual?",
+              "options": [
+                "The tail rotor thrust changes, which generates torque",
+                "The rotor plane tilts, which generates a lead-lag movement",
+                "The swash plate lifts, which generates ground effect"
+              ],
+              "correct": 1,
+              "explain": "Cyclic tilts the plane, and that generates lead-lag."
+            },
+            {
+              "id": "M1.01.C143",
+              "question": "Which turning force does a counterclockwise turning main rotor generate on the fuselage",
+              "options": [
+                "A counterclockwise turning force",
+                "A clockwise turning force",
+                "A nose-down pitching force"
+              ],
+              "correct": 1,
+              "explain": "The fuselage force is opposite, so clockwise."
+            },
+            {
+              "id": "M1.01.C144",
+              "question": "During hover flight, which two jobs does the tail rotor thrust perform",
+              "options": [
+                "Compensate main rotor torque and maintain heading control",
+                "Maintain heading control and tilt the rotor disk",
+                "Generate lift and compensate main rotor torque"
+              ],
+              "correct": 0,
+              "explain": "Tail rotor thrust compensates torque and maintains heading."
+            },
+            {
+              "id": "M1.01.C145",
+              "question": "What is translating tendency",
+              "options": [
+                "The drift caused by the thrust of the tail rotor",
+                "The turning of the fuselage opposite to the rotor",
+                "The drift caused by the ground effect air cushion"
+              ],
+              "correct": 0,
+              "explain": "Translating tendency is the tail-rotor-thrust drift."
+            },
+            {
+              "id": "M1.01.C146",
+              "question": "How may the pilot prevent the lateral drift due to translating tendency",
+              "options": [
+                "Reduce the tail rotor thrust until the drift stops",
+                "Tilt the main rotor disk slightly opposite to the drift",
+                "Tilt the main rotor disk slightly in the drift direction"
+              ],
+              "correct": 1,
+              "explain": "The disk is tilted slightly opposite to the drift."
+            },
+            {
+              "id": "M1.01.C147",
+              "question": "A helicopter in hover drifts sideways although torque is compensated. What causes this drift?",
+              "options": [
+                "The thrust of the tail rotor",
+                "Gyroscopic precession",
+                "Dissymmetry of lift"
+              ],
+              "correct": 0,
+              "explain": "The tail rotor's sideways thrust causes translating tendency."
+            },
+            {
+              "id": "M1.01.C148",
+              "question": "During hover, tail rotor thrust makes the helicopter drift to the right. How must the main rotor disk be tilted to prevent this?",
+              "options": [
+                "Slightly to the left",
+                "Slightly to the right",
+                "Slightly forward"
+              ],
+              "correct": 0,
+              "explain": "The disk is tilted opposite to the drift, so to the left for a right drift."
+            },
+            {
+              "id": "M1.01.C149",
+              "question": "Which rotor thrust both compensates torque and causes translating tendency",
+              "options": [
+                "The total rotor thrust",
+                "The tail rotor thrust",
+                "The main rotor thrust"
+              ],
+              "correct": 1,
+              "explain": "The same tail rotor thrust compensates torque and causes the drift."
+            },
+            {
+              "id": "M1.01.C150",
+              "question": "What is ground effect",
+              "options": [
+                "A condition of reduced performance when hovering near the ground",
+                "A condition of improved performance when hovering near the ground",
+                "A condition of improved performance in high-speed flight"
+              ],
+              "correct": 1,
+              "explain": "Ground effect improves performance near the ground."
+            },
+            {
+              "id": "M1.01.C151",
+              "question": "What causes ground effect",
+              "options": [
+                "Increased air density close to the ground surface",
+                "Interference of the tail rotor with the main rotor airflow",
+                "Interference of the surface with the rotor airflow pattern"
+              ],
+              "correct": 2,
+              "explain": "The ground surface interferes with the rotor airflow."
+            },
+            {
+              "id": "M1.01.C152",
+              "question": "How does ground effect change as the helicopter gets closer to the ground",
+              "options": [
+                "It remains constant",
+                "It becomes more pronounced",
+                "It becomes less pronounced"
+              ],
+              "correct": 1,
+              "explain": "It is more pronounced nearer the ground."
+            },
+            {
+              "id": "M1.01.C153",
+              "question": "Within which height is a helicopter operating in ground effect",
+              "options": [
+                "Within half a rotor diameter",
+                "Within two rotor diameters",
+                "Within one rotor diameter"
+              ],
+              "correct": 2,
+              "explain": "In-ground effect is within one rotor diameter."
+            },
+            {
+              "id": "M1.01.C154",
+              "question": "How does the power required to hover in ground effect compare with hovering out of ground effect?",
+              "options": [
+                "More power is required in ground effect",
+                "The same power is required in both",
+                "Less power is required in ground effect"
+              ],
+              "correct": 2,
+              "explain": "Hovering in ground effect needs less power."
+            },
+            {
+              "id": "M1.01.C155",
+              "question": "A helicopter hovering out of ground effect descends into an in-ground effect hover. What happens to blade efficiency and why?",
+              "options": [
+                "It increases, because the reduced downward airflow increases the angle of attack",
+                "It decreases, because the increased downward airflow reduces the angle of attack",
+                "It increases, because the pilot must increase the pitch angle of the blades"
+              ],
+              "correct": 0,
+              "explain": "Reduced downwash raises angle of attack and efficiency."
+            },
+            {
+              "id": "M1.01.C156",
+              "question": "In ground effect, what happens to the lift vector",
+              "options": [
+                "It tilts toward the tail",
+                "It becomes more horizontal",
+                "It becomes more vertical"
+              ],
+              "correct": 2,
+              "explain": "The manual says the lift vector becomes more vertical."
+            },
+            {
+              "id": "M1.01.C157",
+              "question": "In ground effect, what happens to the downward airflow velocity",
+              "options": [
+                "It is reduced",
+                "It is unchanged",
+                "It is increased"
+              ],
+              "correct": 0,
+              "explain": "Downwash velocity is reduced."
+            },
+            {
+              "id": "M1.01.C158",
+              "question": "A pilot descends from an out-of-ground effect hover into ground effect and wants to remain in the ground effect hover. What must he do and why?",
+              "options": [
+                "Reduce the blade pitch angle, because rotor efficiency increases",
+                "Increase the blade pitch angle, because rotor efficiency decreases",
+                "Keep the blade pitch angle, because efficiency is unchanged"
+              ],
+              "correct": 0,
+              "explain": "Entering ground effect raises angle of attack and efficiency, so pitch is reduced to stay in the hover."
+            },
+            {
+              "id": "M1.01.C159",
+              "question": "A helicopter hovers in ground effect and the pilot climbs out of ground effect without changing the collective. Based on the text, what happens to the power requirement to keep hovering?",
+              "options": [
+                "It increases",
+                "It stays the same",
+                "It decreases"
+              ],
+              "correct": 0,
+              "explain": "Hovering out of ground effect needs higher power than in ground effect."
+            },
+            {
+              "id": "M1.01.C160",
+              "question": "During powered flight, how is the rotor drag overcome",
+              "options": [
+                "With rotor inertia",
+                "With engine power",
+                "With upward airflow"
+              ],
+              "correct": 1,
+              "explain": "In powered flight, engine power overcomes rotor drag."
+            },
+            {
+              "id": "M1.01.C161",
+              "question": "In which two failure cases must some other force sustain the rotor RPM",
+              "options": [
+                "Tail rotor failure or broken pedals",
+                "Engine failure or broken drive shafts",
+                "Swash plate failure or broken control rods"
+              ],
+              "correct": 1,
+              "explain": "Engine failure or broken drive shafts require another force."
+            },
+            {
+              "id": "M1.01.C162",
+              "question": "In which direction does the airflow pass through the main rotor during an autorotative descent",
+              "options": [
+                "From top to bottom",
+                "From front to rear",
+                "From bottom to top"
+              ],
+              "correct": 2,
+              "explain": "In autorotation air flows up through the rotor."
+            },
+            {
+              "id": "M1.01.C163",
+              "question": "What provides the energy to overcome blade drag and turn the rotor during autorotation",
+              "options": [
+                "The engine power through the drive shafts",
+                "The tail rotor thrust through the gearbox",
+                "The airflow passing up through the rotor during descent"
+              ],
+              "correct": 2,
+              "explain": "Upward airflow during descent drives the rotor."
+            },
+            {
+              "id": "M1.01.C164",
+              "question": "How is the rotor driving force controlled in autorotation",
+              "options": [
+                "By adjusting the collective pitch",
+                "By adjusting the engine power lever",
+                "By adjusting the tail rotor pedals"
+              ],
+              "correct": 0,
+              "explain": "The collective pitch controls it."
+            },
+            {
+              "id": "M1.01.C165",
+              "question": "What is the 1st phase of autorotation",
+              "options": [
+                "The controlled descent with the rotor driven by the airflow",
+                "The cushioned touchdown using the rotor's kinetic energy",
+                "The restart of the engine after the rotor RPM has decayed"
+              ],
+              "correct": 0,
+              "explain": "The 1st phase is the controlled autorotative descent."
+            },
+            {
+              "id": "M1.01.C166",
+              "question": "What does the pilot do in the 2nd phase of autorotation",
+              "options": [
+                "Uses the tail rotor thrust to slow down the descent",
+                "Uses the rotor kinetic energy to cushion the touchdown",
+                "Uses the engine power to stop the rate of descent"
+              ],
+              "correct": 1,
+              "explain": "In the 2nd phase the stored kinetic energy cushions the touchdown."
+            },
+            {
+              "id": "M1.01.C167",
+              "question": "In a controlled autorotative descent, which energy is converted to turn the rotor",
+              "options": [
+                "Electrical energy from the battery",
+                "Potential energy due to altitude",
+                "Chemical energy from the fuel"
+              ],
+              "correct": 1,
+              "explain": "Potential energy from altitude drives the rotor."
+            },
+            {
+              "id": "M1.01.C168",
+              "question": "As altitude decreases in autorotation, what happens to the energy stored in the turning rotor?",
+              "options": [
+                "More kinetic energy is converted into potential energy of the helicopter",
+                "The stored rotor energy is lost to drag and the rotor comes to a stop",
+                "More potential energy is converted into kinetic energy stored in the rotor"
+              ],
+              "correct": 2,
+              "explain": "Descent converts potential into kinetic energy stored in the rotor."
+            },
+            {
+              "id": "M1.01.C169",
+              "question": "Why must the rotor RPM be sustained after an engine failure",
+              "options": [
+                "So that the engine can be restarted during the descent",
+                "So that the tail rotor can be stopped during the descent",
+                "So that a controlled flight can be continued to the ground"
+              ],
+              "correct": 2,
+              "explain": "Rotor RPM keeps the helicopter controllable to the ground."
+            },
+            {
+              "id": "M1.01.C170",
+              "question": "An engine fails in cruise. In which order does the pilot use energy during the autorotation?",
+              "options": [
+                "Engine power drives the rotor in the descent, then altitude cushions touchdown",
+                "Altitude drives the rotor in the descent, then rotor kinetic energy cushions touchdown",
+                "Rotor kinetic energy cushions the descent, then altitude drives the rotor at touchdown"
+              ],
+              "correct": 1,
+              "explain": "Phase 1 converts altitude into rotor energy; phase 2 uses the rotor energy for touchdown."
+            }
+          ]
+        }
+      ],
+      "downloads": [
+        {
+          "id": "M1.01.DL1",
+          "title": "Rotary Wing Aerodynamics — study cards",
+          "file": "downloads/M13d-Rotary-Wing-Study-Cards.pdf",
+          "pages": 15
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "Module 13e",
+      "chapters": []
+    },
+    {
+      "id": "M3",
+      "name": "Module 3",
+      "chapters": []
+    },
+    {
+      "id": "M4",
+      "name": "Module 10",
+      "chapters": []
+    }
+  ],
   "notes": [],
   "threads": [],
   "replies": [],

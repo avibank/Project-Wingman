@@ -31,6 +31,8 @@
    here, so there is no control.
    ========================================================================= */
 
+import LibraryDownloads from "./LibraryDownloads.jsx";
+
 /* The faint rows. `ce-blk` is a rectangle where Crew's `ce-face` is a circle —
    a lesson row ends in a thumbnail and a status, not in people. */
 function Ghost({ rows }) {
@@ -169,8 +171,16 @@ export function QuizzesWaiting() {
    button. Turning the papers switch back on (the one variable in
    .env.example, resolved in flags.js) puts the real section, the uploader
    and every existing mark back in its place; LibraryTab decides which of the
-   two to draw, so this file never asks. */
-export function PapersSlot() {
+   two to draw, so this file never asks.
+
+   A MODULE'S DOWNLOADS SIT ON THIS SHELF (2026-09-21, owner request). Module
+   13d's study cards are a PDF to take away, with no viewer — the one kind of
+   file that needs nothing paused to reach the student. When the module has
+   any, their rows ARE the shelf and the waiting rows go: a shelf holding a
+   real file and a promise that files are coming is saying two things at
+   once. The rows are LibraryDownloads' plain <a download>, and this slot
+   still opens nothing itself — check:paused holds both halves. */
+export function PapersSlot({ downloads = [] }) {
   return (
     <section className="libsplit" aria-labelledby="lsec-papers">
       <div className="lsec">
@@ -180,6 +190,7 @@ export function PapersSlot() {
         </div>
       </div>
 
+      {downloads.length > 0 ? <LibraryDownloads downloads={downloads} /> : (
       <div className="cempty">
         {/* IT PROMISES WHAT THE VIEWER WILL ACTUALLY DO, AND NOTHING ELSE.
             This said "read it, mark it, keep what matters" and "what you mark
@@ -199,6 +210,7 @@ export function PapersSlot() {
           — and they come down to your device whenever you want them.
         </p>
       </div>
+      )}
     </section>
   );
 }

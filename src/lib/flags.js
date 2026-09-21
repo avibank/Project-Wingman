@@ -66,21 +66,26 @@ export const FLAGS = [
   // refuses to render for anyone who is not an admin — two locks, because this
   // one writes progress and resets accounts.
   { id: "dev.panel", label: "Dev panel", note: "Set completion, position and scores; reset a module or the whole account. Developer only.", off: true },
-  /* Placeholder content — four modules of general-knowledge quizzes, Blender
-     open movies and invented threads. It was `everyone: true` so the screens
-     could be walked before there was anything to put in them.
+  /* THE COURSE DOCUMENT — ON FOR EVERYONE (owner, 2026-09-21).
 
-     OFF NOW, AND THIS IS THE FIRST OF THE TWO SWITCHES THAT EMPTY THE APP.
-     Beta opens with the owner's own material going in, and placeholder
-     content in front of a first cohort is worse than an empty shelf: it is
-     indistinguishable from the real thing until somebody reads it, and then
-     the whole product looks unfinished. Off means every screen reads
-     `src/data.js`, which is the second switch — four named modules and
-     nothing inside them.
+     This switch decides whether the app loads src/content/test-content.json,
+     the one content document (moduleContent.js). It was `off: true` while
+     that document was empty and, before that, while it held placeholder
+     material — general-knowledge quizzes and open movies — that nobody should
+     mistake for the course. Neither is true now: the document holds the
+     owner's own material, starting with Module 13d's "Rotary Wing
+     Aerodynamics", so off would hide the course from the class it was
+     written for.
 
-     `readOverrides` (localStorage["pw-flags"]) still turns it on for an admin
-     browser, which is how to walk a populated screen without shipping one. */
-  { id: "content.test", label: "Test content", note: "Four modules of placeholder lessons, quizzes and papers. Not real content.", off: true },
+     THE ID KEEPS ITS OLD NAME ON PURPOSE. `content.test` is what App.jsx,
+     the demo (resolveFlags below) and check:epoch's stored-flags fixture all
+     read; renaming it is a second change riding on this one. What changed is
+     what it means, so the label and note say that and nothing else.
+
+     `npm run check:ship` / `check:placeholders` still guard the other half:
+     they grep the build for the markers of placeholder material, and real
+     content carries none of them. */
+  { id: "content.test", label: "Course content", note: "Loads the course document (src/content/test-content.json): chapters, quizzes, study cards and downloads.", everyone: true },
   // Had `off` — no approved design. There is one now, so it ships like the
   // module screen did: `everyone`, not admin-only.
   { id: "social.readyroom", label: "Ready Room", note: "The room itself, and every door into it.", everyone: true },
