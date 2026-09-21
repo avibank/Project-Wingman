@@ -455,11 +455,21 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   callsign, and heals the callsign for older accounts. It never holds anybody.
   The squadron of livery tails, the module picker and "When do you usually
   study?" are gone, and so is the study-time placement they fed.
-- **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides. The
-  owner: walk the real site tab by tab, as a separate state with a class
-  already in it, explaining what, why and how, plainly. 28 steps: the Flight
-  Deck, a module (Lessons, Library, an exam, cards, Crew), the Ready Room,
-  the profile. It can always be left.
+- **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides: a
+  tutorial over the real screens with a class already in them. The owner's
+  word for it is "sweet, clean and explanatory": 17 steps, each a title and
+  a sentence or two, no What / Why / How labels, and it opens with Wingman,
+  not with Part-66. The right seat has two steps of its own, because it is
+  how you study WITH somebody: a lesson watched together, the same quiz. It
+  can always be skipped.
+  - **How it stays smooth** (Guide.jsx), measured on a production build:
+    the dim is four panels moved only by transform (a box-shadow light
+    repainted the screen every frame); one loop eases the light towards its
+    target every frame (a CSS transition restarted on every scroll frame);
+    panel edges snap to device pixels (fractional edges drew seams); screens
+    change only once the light has closed, without the app's own view
+    transition (`go(to, { still: true })`), and every screen it visits is
+    warmed while the first step is read.
   - **It opens by itself only for a visitor who is NOT signed in**, the first
     time they reach the Flight Deck (`walkthroughSeen`, remembered on the
     device on the way in). A signed-in student only gets it by asking:
