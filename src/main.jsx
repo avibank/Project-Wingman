@@ -3,6 +3,7 @@
    has to stay above every other one. Outside the demo it does nothing. */
 import "./demo/boot.js";
 import { installRecovery } from "./lib/recover.js";
+import { watchLayout } from "./lib/canary.js";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
@@ -23,6 +24,9 @@ sweepStorage();
    once (src/lib/recover.js). Before the first render, so a page that arrived
    without its stylesheet is mended before anybody sees it. */
 installRecovery();
+/* And three seconds in, whether the stylesheet's rules are actually in force,
+   with a line in `reports` if they are not (src/lib/canary.js). */
+watchLayout();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 

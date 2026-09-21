@@ -81,7 +81,16 @@ export function postgrestMiddleware() {
     let raw = null;
     if (req.method !== "GET" && req.method !== "DELETE") {
       const chunks = [];
-      for await (const c of req) chunks.push(c);
+      /* A REQUEST THE BROWSER GAVE UP ON is not the harness's failure. A page
+         closed mid-upload (a keepalive report as its tab shuts, say) aborts
+         the stream, and unhandled that rejection took the whole server down
+         between two suites. Drop the request and keep serving. */
+      try {
+        for await (const c of req) chunks.push(c);
+      } catch {
+        if (!res.headersSent) { res.statusCode = 499; res.end(); }
+        return undefined;
+      }
       raw = Buffer.concat(chunks);
       const text = raw.toString("utf8");
       try { body = text ? JSON.parse(text) : null; } catch { body = null; }

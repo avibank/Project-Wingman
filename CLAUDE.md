@@ -787,6 +787,16 @@ App.jsx reloads once when a lazy screen fails.
 - **The course document retries** (`loadTestContent`): three tries, then one
   reload. It used to keep the rejected promise for the whole visit.
 - **One reload per 30 seconds per tab**, never a loop.
+- **And the page is asked whether it is styled** (`src/lib/canary.js`), three
+  seconds in: a token on `:root` and the wordmark's transparent background,
+  both the entry stylesheet's. If either is wrong it sends every stylesheet's
+  state to `reports` (`target_id = 'layout'`). The owner's Safari stayed
+  unstyled after both fetch fixes and sent nothing, so the stylesheet was
+  arriving whole and still not in force. **`?diag` on any address** sends the
+  same line whatever the result and draws it on screen, with no stylesheet
+  needed, for a phone nobody here can hold. Both go through
+  `fieldReport.js`, straight to the real database, because inside the demo
+  the app's own client is a copy in memory.
 - `npm run test:recover` (production harness; `RECOVER_BROWSER=webkit` for
   Safari's engine) fails each download on purpose, and first checks that a
   healthy page fetches once and never reloads — the failure that would cost
