@@ -1021,7 +1021,10 @@ function AppInner() {
       else enterGuestDemo(from);
       return;
     }
-    if (isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen()) return;
+    /* Not over `?diag`: that page is asked for to see the app as it is on
+       this device (src/lib/canary.js), and the demo's reload would take it
+       away before it had looked. */
+    if (isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen() || params.has("diag")) return;
     guestAsked.current = true;
     enterGuestDemo(`${location.pathname}${location.search || ""}`);
   }, [clerkLoaded, isSignedIn, route.name]);   // eslint-disable-line react-hooks/exhaustive-deps
