@@ -48,9 +48,9 @@ const SEEN = "pw-walkthrough-seen";
 export const walkthroughSeen = () => {
   try { return Boolean(window.localStorage.getItem(SEEN)); } catch { return true; }
 };
-export function enterGuestDemo() {
+export function enterGuestDemo(from = "/") {
   try { window.localStorage.setItem(SEEN, new Date().toISOString()); } catch { /* shown once per tab then */ }
-  enterDemo({ me: GUEST_ID, guest: true, how: "first", from: "/", look: { callsign: "you", name: "You" } });
+  enterDemo({ me: GUEST_ID, guest: true, how: "first", from, look: { callsign: "you", name: "You" } });
 }
 
 /* Out of it: forget the copy and reload into the real account, at `to`. */

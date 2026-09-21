@@ -993,18 +993,23 @@ function AppInner() {
      already in them, as a separate state of the app (src/demo/mode.js).
 
      IT OPENS BY ITSELF FOR A VISITOR WHO IS NOT SIGNED IN, the first time
-     they arrive on the Flight Deck, and for nobody else (owner, 2026-09-21).
-     The device remembers it, on the way in, so leaving early is an answer
-     too. A signed-in student only ever gets it by asking: Replay, at the foot
-     of the Licence. It can always be left. */
+     they arrive, and for nobody else (owner, 2026-09-21). On ANY page, not
+     only the Flight Deck: it used to wait for `/`, so a visitor who arrived
+     on a module link, or signed out on the Licence, never saw it (measured
+     on the live site). Three places are left alone, because the visitor came
+     for something specific: signing in, an invite link, and Clerk's account
+     screens. The device remembers it, on the way in, so leaving early is an
+     answer too. A signed-in student only ever gets it by asking: Replay, at
+     the foot of the Licence. It can always be left. */
+  const NO_TOUR_ON = new Set(["signin", "invite", "clerk", "notfound", "redirect"]);
   const startDemoRef = useRef(null);
   const guestAsked = useRef(false);
   useEffect(() => {
     if (demoMode || guestAsked.current) return;
-    if (!clerkLoaded || isSignedIn || route.name !== "home" || walkthroughSeen()) return;
+    if (!clerkLoaded || isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen()) return;
     guestAsked.current = true;
-    enterGuestDemo();
-  }, [clerkLoaded, isSignedIn, route.name]);
+    enterGuestDemo(`${location.pathname}${location.search || ""}`);
+  }, [clerkLoaded, isSignedIn, route.name]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   /* A STUDENT WHO HAS JUST SIGNED UP GOES TO THEIR LICENCE, to choose their
      code and design their stamp. The note is left by the demo's last button
@@ -1237,14 +1242,14 @@ function AppInner() {
   };
 
   /* OUT OF IT. A visitor with no account who finishes it goes to sign up, and
-     from there to their licence; one who leaves early is back on the Flight
-     Deck, signed out, where they were. A signed-in student with no stamp yet
+     from there to their licence; one who leaves early is back on the page
+     they arrived on, signed out. A signed-in student with no stamp yet
      who finishes it goes to the licence; everybody else goes back to where
      they pressed Replay. */
   const leaveDemoFor = (why) => {
     if (demoState?.guest) {
       if (why === "finish") { askForLicence(); leaveDemo(`${routePath.signin()}?join=1`); return; }
-      leaveDemo(routePath.home());
+      leaveDemo(demoState?.from || routePath.home());
       return;
     }
     if (why === "finish" && !demoState?.look?.hasStamp) {
