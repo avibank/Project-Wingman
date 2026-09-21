@@ -5,6 +5,8 @@
 
      CREATOR_BASE=https://www.wingman.institute npm run test:creator
      CREATOR_BASE=http://127.0.0.1:5190 npm run test:creator      (harness)
+     CREATOR_BROWSER=webkit CREATOR_WIDTH=390 ...                  (Safari's engine, a phone)
+     CREATOR_PLANT=1 ...   doubles the rim text; the last line must FAIL
 
    It opens /account/licence?creator, which shows the creator to anybody —
    as a preview, whose only missing part is the button that issues — so it
@@ -34,6 +36,7 @@ const errs = []; pg.on("pageerror", (e) => errs.push(e.message));
 const harness = /127\.0\.0\.1|localhost/.test(BASE) ? "&uid=none" : "";
 await pg.goto(`${BASE}/account/licence?creator${harness}`);
 await pg.waitForSelector(".studio", { timeout: 20000 });
+if (process.env.CREATOR_PLANT) await pg.evaluate(() => { window.__plant = true; });
 await pg.waitForTimeout(800);
 const tab = async (n) => { await pg.locator(".stabs button", { hasText: n }).click(); await pg.waitForTimeout(250); };
 /* Rows and columns of a set of tiles, from where they are drawn. */
@@ -115,17 +118,25 @@ const variants = async (only) => pg.evaluate(async (which) => {
   document.body.append(host);
   const svg = src.cloneNode(true);
   svg.setAttribute("width", "900"); svg.setAttribute("height", "900");
-  svg.style.color = "#000"; svg.style.visibility = "hidden";
+  svg.style.color = "#000";
   svg.querySelectorAll("[filter]").forEach((e) => e.removeAttribute("filter"));
   svg.querySelectorAll("[opacity]").forEach((e) => e.removeAttribute("opacity"));
-  if (which === "rim") {
-    svg.querySelectorAll("text").forEach((t) => { if (t.querySelector("textPath")) t.style.visibility = "visible"; });
-  } else {
-    for (const e of svg.querySelectorAll("path,circle,rect,ellipse")) {
-      if (e.closest("mask,clipPath,defs,text")) continue;
-      if (e.getAttribute("stroke") === "none" || e.closest('[stroke="none"]')) continue;
-      e.style.visibility = "visible";
-    }
+  /* EACH UNWANTED ELEMENT HIDDEN ON ITS OWN. Hiding the whole <svg> and
+     showing the wanted parts is what this did first, and WebKit does not let
+     a child's `visibility: visible` show through a hidden <svg> root: both
+     layers came out blank there, and a blank layer "touches" nothing —
+     measured, the Safari run passed with nothing drawn. */
+  const rimText = (e) => e.tagName === "text" && !!e.querySelector("textPath");
+  /* CREATOR_PLANT=1 doubles the rim text, which must then be caught touching:
+     the proof that this measurement can fail. */
+  if (which === "rim" && window.__plant) svg.querySelectorAll("text").forEach((t) => t.setAttribute("font-size", String(2 * +t.getAttribute("font-size"))));
+  for (const e of svg.querySelectorAll("path,circle,rect,ellipse,text")) {
+    if (e.closest("mask,clipPath,defs")) continue;
+    const inText = e.tagName !== "text" && e.closest("text");
+    if (inText) continue;
+    const border = e.tagName !== "text" && e.getAttribute("stroke") !== "none" && !e.closest('[stroke="none"]');
+    const keep = which === "rim" ? rimText(e) : border;
+    if (!keep) e.style.visibility = "hidden";
   }
   host.replaceChildren(svg);
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -139,6 +150,9 @@ async function touches(shape, ring) {
   await variants("rest"); const B = ink(await pg.locator("#rimtest").screenshot());
   await pg.evaluate(() => document.getElementById("rimtest")?.remove());
   let both = 0, near = 0;
+  const inkA = A.m.reduce((n, v) => n + v, 0), inkB = B.m.reduce((n, v) => n + v, 0);
+  /* A layer with nothing in it proves nothing: say so rather than pass. */
+  if (inkA < 200 || inkB < 200) return { both: -1, gap: NaN, empty: `rim ${inkA}px, borders ${inkB}px` };
   for (let i = 0; i < A.m.length; i++) if (A.m[i] && B.m[i]) both++;
   /* and the closest approach, in stamp units (900px = 49.2 units) */
   const pts = []; for (let y = 0; y < A.h; y += 2) for (let x = 0; x < A.w; x += 2) if (A.m[y * A.w + x]) pts.push([x, y]);
@@ -177,10 +191,10 @@ async function touches(shape, ring) {
 {
   const res = [];
   for (const shape of SIX) for (const ring of ["WNG", "WINGMAN", "HANGAR SIX"]) res.push({ shape, ring, ...(await touches(shape, ring)) });
-  const bad = res.filter((r) => r.both > 0);
+  const bad = res.filter((r) => r.both !== 0);
   const tight = res.reduce((m, r) => (r.gap < m.gap ? r : m), { gap: Infinity });
   line(!bad.length, "Rim text never touches either border on any of the six shapes (WNG, WINGMAN, HANGAR SIX; pixels in both)",
-       bad.length ? bad.map((r) => `${r.shape}/${r.ring}: ${r.both}px`).join(", ") : `closest approach ${tight.gap.toFixed(2)} units (${tight.shape}, ${tight.ring})`);
+       bad.length ? bad.map((r) => `${r.shape}/${r.ring}: ${r.empty ? `nothing drawn (${r.empty})` : `${r.both}px in both`}`).join(", ") : `closest approach ${tight.gap.toFixed(2)} units (${tight.shape}, ${tight.ring})`);
 }
 
 if (errs.length) console.log("page errors:", errs.slice(0, 3));
