@@ -8,6 +8,9 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import { sweepStorage } from "./lib/storage.js";
+/* LAST, so its one rule closes the stylesheet the build emits. recover.js
+   reads that rule to tell a whole stylesheet from one that was cut short. */
+import "./sheet-end.css";
 
 /* BEFORE ANYTHING READS STORAGE. The epoch sweep takes the old course's state
    off a tester's device — see storage.js. It has to run here rather than in an

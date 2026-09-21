@@ -775,6 +775,15 @@ App.jsx reloads once when a lazy screen fails.
   back a sheet whose rules throw SecurityError, as if it were another site's.
   So our own stylesheet with unreadable or no rules is a failed one; it is
   fetched again twice with a cache-busting query, then the page reloads once.
+- **A cut-short stylesheet parses, so the entry one ends with a marker**:
+  `src/sheet-end.css`, imported LAST in `main.jsx`, whose one rule
+  (`#pw-sheet-end`) closes the emitted CSS. Missing marker, fetched again.
+  Safari on the owner's phone kept serving a copy that loaded and had rules
+  while Chrome on the same phone (same engine) had the whole file. Keep the
+  import last, or every visit reads as cut short and re-fetches.
+- **Every time it acts it leaves a line in `reports`** (`target_id =
+  'stylesheet'`, with the state it found and the user agent), because the
+  phones this happens on are not ones anybody here can hold.
 - **The course document retries** (`loadTestContent`): three tries, then one
   reload. It used to keep the rejected promise for the whole visit.
 - **One reload per 30 seconds per tab**, never a loop.
