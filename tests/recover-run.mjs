@@ -9,7 +9,8 @@
                                      would reload on every visit)
      · the stylesheet fails once   → fetched again, styled, no reload
      · it arrives cut short once   → fetched again, whole, and reported
-     · the stylesheet always fails → one reload, then left alone (no loop)
+     · the stylesheet always fails → one reload, then left alone (no loop),
+                                     and the unstyled page reported (canary.js)
      · the course fails once       → the course arrives anyway
      · the course always fails     → one reload at most, and the Flight Deck
                                      still draws from data.js
@@ -57,21 +58,32 @@ const styled = (pg) => pg.evaluate(() => {
   return [...document.querySelectorAll('link[rel="stylesheet"]')]
     .some((l) => { try { return /\/assets\/index-/.test(l.href) && l.sheet && l.sheet.cssRules.length > 100; } catch { return false; } });
 });
+/* Lines in the harness's `reports` for one target (canary.js / recover.js). */
+const reportsFor = (pg, target) => pg.evaluate(async (t) => {
+  const r = await fetch(`/rest/v1/reports?target_id=eq.${t}&select=reason`);
+  const rows = await r.json().catch(() => []);
+  return Array.isArray(rows) ? rows.map((x) => x.reason || "") : [];
+}, target);
 const deckText = (pg) => pg.evaluate(() => (document.querySelector(".deck")?.innerText || "").replace(/\s+/g, " "));
 
 /* 0 · nothing fails: nothing is fetched twice and nothing reloads. The one
    that matters most — a healthy page judged broken would reload every visit. */
 {
   const t = await withFailing(/\/assets\/index-[^/]+\.css/, 0);
+  await t.pg.goto(`${BASE}/signin?uid=student_one`);
+  const before = (await reportsFor(t.pg, "layout")).length;
+  const fetched = t.seen.length;
+  const loaded = t.loads();
   await t.pg.goto(`${BASE}/?uid=student_one`);
   await t.pg.waitForTimeout(4000);
-  ok("a healthy page fetches its stylesheet once", t.seen.length === 1, t.seen.join(" | "));
+  ok("a healthy page is not reported as unstyled", (await reportsFor(t.pg, "layout")).length === before);
+  ok("a healthy page fetches its stylesheet once", t.seen.length - fetched === 1, t.seen.join(" | "));
   ok("and the marker is its last rule", await t.pg.evaluate(() => {
     const l = [...document.querySelectorAll('link[rel="stylesheet"]')].find((x) => /\/assets\/index-/.test(x.href));
     const rules = l?.sheet?.cssRules;
     return Boolean(rules && rules[rules.length - 1].selectorText === "#pw-sheet-end");
   }));
-  ok("and does not reload", t.loads() === 1, `loads ${t.loads()}`);
+  ok("and does not reload", t.loads() - loaded === 1, `loads ${t.loads() - loaded}`);
   ok("and is styled", await styled(t.pg));
   await t.cx.close();
 }
@@ -122,6 +134,8 @@ const deckText = (pg) => pg.evaluate(() => (document.querySelector(".deck")?.inn
   await t.pg.goto(`${BASE}/?uid=student_one`);
   await t.pg.waitForTimeout(12000);
   ok("a stylesheet that never loads reloads the page once, and only once", t.loads() === 2, `loads ${t.loads()}`);
+  const lines = await reportsFor(t.pg, "layout");
+  ok("and the unstyled page is reported, with what the stylesheet looked like", lines.some((x) => /"ok":false/.test(x) && /"sheets"/.test(x)), lines.slice(-1)[0]?.slice(0, 160));
   await t.cx.close();
 }
 

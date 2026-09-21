@@ -27,6 +27,8 @@
    as it is rather than cycling. `tests/recover-run.mjs` fails each download
    on purpose against the production harness and checks the page mends. */
 
+import { fieldReport } from "./fieldReport.js";
+
 const KEY = "pw-recovered-at";
 const WINDOW_MS = 30000;
 
@@ -69,16 +71,8 @@ function sheetState(link) {
   return "ok";
 }
 
-/* A line in the reports table whenever this has to act, so a failure on a
-   phone nobody here can hold is still seen. Loaded only then. */
-function report(detail) {
-  import("./squadron.js").then(({ reportContent }) => reportContent({
-    reporterId: "anonymous",
-    targetType: "route",
-    targetId: "stylesheet",
-    reason: JSON.stringify({ at: new Date().toISOString(), page: window.location.pathname, ua: navigator.userAgent, ...detail }),
-  })).catch(() => { /* nothing more to do from here */ });
-}
+/* A line in the reports table whenever this has to act (fieldReport.js). */
+const report = (detail) => fieldReport("stylesheet", detail);
 
 function refetch(link, attempt, found) {
   const fresh = link.cloneNode();
