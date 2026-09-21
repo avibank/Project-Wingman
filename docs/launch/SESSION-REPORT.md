@@ -264,3 +264,110 @@ node tools/rules.mjs /m/m1 .lbody font-size   # which rule is setting this
 
 `npm run ref:css` regenerates the scoped stylesheets from the reference builds.
 Nothing under `src/components/**/ref-*.css` is hand-edited.
+
+---
+
+# 2026-09-20 / 21 — the beta pass, parts 1 to 8
+
+`CLAUDE-CODE-BRIEF.md`, worked top to bottom. Six PRs, each merged and deployed
+before the next was started, plus the tour and this report.
+
+| Part | | PR |
+|---|---|---|
+| 1 | The beta fixes, applied as sent | [#5](https://github.com/avibank/Project-Wingman/pull/5) |
+| 2 | The wipe, and the half the SQL cannot reach | [#6](https://github.com/avibank/Project-Wingman/pull/6) |
+| 3 | A chapter is a quiz and a card set | [#7](https://github.com/avibank/Project-Wingman/pull/7) |
+| 5 | The things that leave the app | [#8](https://github.com/avibank/Project-Wingman/pull/8) |
+| 4 | The paper viewer | [#9](https://github.com/avibank/Project-Wingman/pull/9) |
+| 6 | The stamp engine | [#10](https://github.com/avibank/Project-Wingman/pull/10) |
+
+## The five faults nothing had noticed
+
+Each of these was live, and none of them was on the brief.
+
+1. **`nextAfterQuiz` dead-ended at every chapter boundary.** Both walkers ended
+   `if (nextChapter?.lessons?.length)`, so with no video — which is every
+   chapter the beta opens with — a student who finished a quiz was told there
+   was nothing further in the module, with the next chapter's quiz sitting
+   right there. "What comes next, always" is the first line of that file.
+2. **The route graphic could never fill.** `deckState` skipped any chapter
+   without lessons, so you could sit every quiz in the module and watch the bar
+   stay empty.
+3. **The Logbook was counting a different app.** It read data.js's twenty
+   skeleton chapters while `content.test` serves twelve, so the tile offered
+   "20 chapters ahead of you" against a total of twelve — and the Debrief
+   looked every score up by id in an array the fixture's ids are not in, so it
+   listed **nothing at all, for anybody**.
+4. **`/m/m1/M1.01/quiz` rendered a literally empty `<main>`** — the same fault
+   the patch fixed for lessons, on the second most shareable address in the
+   app. Found by the route sweep, which flags any screen under 120 characters:
+   this one had none.
+5. **"Add a paper" was a dead control.** It rendered whenever its prop was
+   passed and the sheet behind it was gated on the PAUSED reader's switch, so
+   pressing it did nothing, silently, with no error. Found by the click sweep.
+
+## The four sweeps
+
+`npm run qa` (`tests/qa-sweep.mjs`), against the harness. It reports what it
+saw rather than passing or failing a list, because `npm run check` was green
+before the 20 Sep pass and every fault that pass found was still there.
+
+**1 · Routes** — 35 addresses × 3 widths (1440 / 834 / 390), 105 loads.
+
+* **0** page errors, **0** console errors, **0** 4xx or 5xx.
+* **0** zero counts, at any width, on any screen.
+* **0** horizontal scroll.
+* Blank screens: the five that are short on purpose — `/logbook` and
+  `/this-address-does-not-exist` are "Wrong bay.", `/signin` is a sign-in form,
+  and `/m/m1/paper/M1.DEV` is a paper whose only text is the island's `01/14`.
+
+**2 · Clicks** — 138 controls across nine screens, each clicked from a fresh
+load, indexed **by attribute** rather than by `nth()` (a comma selector orders
+differently from a visibility-filtered `querySelectorAll`, and that alone gave
+the 20 Sep pass 63 false failures).
+
+* **0** threw. **0** console errors on any click, on any screen.
+* 15 changed nothing, re-checked by hand: fourteen were already-selected tabs,
+  an already-selected chip, the wordmark while already home, and the Smooth Air
+  switch — which **works**; it flips `.app` to `reduce-motion smooth-air`,
+  verified by hand. One was real: "Add a paper", now withheld.
+* 3 would not click: "Sign out" (a confirm), and Previous/Next question at the
+  ends of the Ready Room's list, which stay live instead of disabling — the
+  20 Sep pass logged the same two and they are still open, low.
+
+**3 · Responsive** — 360 / 390 / 834 / 1440, measuring placeholders against
+their fields, text against its clipping box, and every control against 24px.
+
+* One control under 24px: the island's page counter at 51×16, which carries a
+  44px `::after` like everything else in this app.
+* The five-pixel search field is 240px at 390 and 210px at 360, in a 44px row.
+
+**4 · Zero counts** — the rendered text of every screen at every width, grepped
+for `0 (quizzes|lessons|chapters|papers|saved|people|questions|answers|cards|marks)`.
+**None, anywhere.**
+
+## What the sweep got wrong, and was fixed
+
+The first run reported **horizontal overflow on 105 of 105 loads**. Every one
+was the Flight Deck's `div.spill` — an absolutely-positioned decoration that is
+supposed to run off the edge and is clipped by its parent. A test that fires on
+every screen is measuring itself. It asks the one question that matters to a
+thumb instead: can the document be dragged sideways. It cannot, anywhere.
+
+## Still open
+
+1. **A phone.** Nothing in this repo has been opened on one. Every width above
+   is an emulated viewport. This is the largest gap on the page and the brief
+   says so too.
+2. **Clerk's test accounts.** Three profiles; reading their names is blocked in
+   this session as PII, and deleting a profile row destroys a stamp
+   permanently — 0029 issues one once and refuses a second. All three left,
+   which is what the brief says to do when you cannot tell them apart.
+3. **"Add a paper" is withheld, not fixed.** The upload path runs the paused
+   reader's ingest. It comes back with the ingest.
+4. **Ready Room Previous/Next stay live at the ends of the list.** Low, and
+   inherited.
+5. **The request waterfall.** `blocks` and `mutes` are cached now; the brief
+   lists `lesson_threads` once per module, `comms_messages` three times,
+   `lesson_replies` twice and `progress_for` three times as still open.
+

@@ -1,0 +1,102 @@
+/* =============================================================================
+   THE TOUR. One light, one card, and the app underneath still working.
+   ========================================================================= */
+.tour{ position: fixed; inset: 0; z-index: 900; pointer-events: none; }
+
+/* THE SPOTLIGHT IS THE SHADOW, not the box. An enormous spread dims the whole
+   window in one paint and leaves the target lit — which is why it can tween
+   between two targets instead of being rebuilt for each. */
+.tour-light{
+  position: fixed; border-radius: 14px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgb(4 8 14 / .68), 0 0 0 2px var(--active) inset;
+  transition: left .46s var(--wg-spring, cubic-bezier(.22,1,.36,1)),
+              top .46s var(--wg-spring, cubic-bezier(.22,1,.36,1)),
+              width .46s var(--wg-spring, cubic-bezier(.22,1,.36,1)),
+              height .46s var(--wg-spring, cubic-bezier(.22,1,.36,1));
+}
+/* The moment before a target is found. Dimmed, but nothing claimed. */
+.tour-dim{ position: fixed; inset: 0; background: rgb(4 8 14 / .68); }
+
+.tour-card{
+  position: fixed; width: 340px; max-width: calc(100vw - 24px);
+  pointer-events: auto; background: var(--panel); color: var(--t1);
+  border: 1px solid var(--line); border-radius: 16px; padding: 16px 16px 12px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / .42);
+  animation: tour-in .34s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes tour-in{ from{ opacity: 0; transform: translateY(8px) scale(.985); } }
+.tour-card:focus{ outline: none; }
+
+.tour-count{ margin: 0 0 6px; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--t3); }
+.tour-title{ margin: 0 0 6px; font: 700 17px/1.25 var(--font-ui); color: var(--t1); }
+.tour-body{ margin: 0 0 14px; font-size: 13.5px; line-height: 1.5; color: var(--t2); }
+
+.tour-acts{ display: flex; align-items: center; gap: 8px; }
+.tour-grow{ flex: 1 1 auto; }
+.tour-back, .tour-skip{
+  background: none; border: 0; padding: 10px 4px; cursor: pointer;
+  font: 600 12.5px var(--font-ui); color: var(--t3);
+}
+.tour-back:hover, .tour-skip:hover{ color: var(--t1); }
+/* `--accent` ON `--ground`, which is what every other primary control in this
+   app is (`.pill.pri`, three stylesheets, all identical).
+
+   THE FIRST VERSION USED `--active-text` AND THE LABEL DISAPPEARED. That token
+   is the accent READ AS WORDS — the colour to write in on the ground — not the
+   colour to write ON a fill. Measured on the Flight Deck: text oklch(.430) on
+   a background of oklch(.455), the same colour twice, a blue pill with nothing
+   on it. CLAUDE.md says which of the three tokens is which and this is the
+   mistake that sentence exists to stop. */
+.tour-next{
+  border: 0; border-radius: 999px; cursor: pointer; padding: 10px 16px;
+  font: 600 13px var(--font-ui);
+  background: var(--accent); color: var(--ground);
+  transition: transform .18s cubic-bezier(.22,1,.36,1), filter .18s;
+}
+.tour-next:hover{ color: var(--ground); }
+.tour-next:hover{ filter: brightness(1.06); }
+.tour-next:active{ transform: scale(.97); }
+
+/* Where you are, without a number to read. */
+.tour-dots{ display: flex; gap: 4px; margin: 12px 2px 2px; }
+.tour-dots i{ width: 5px; height: 5px; border-radius: 50%; background: var(--line);
+  transition: background .3s, width .3s cubic-bezier(.22,1,.36,1); }
+.tour-dots i.was{ background: color-mix(in srgb, var(--active) 45%, transparent); }
+.tour-dots i.on{ background: var(--active); width: 14px; border-radius: 3px; }
+
+/* The offer, on the Flight Deck, the first time only. */
+.tour-offer{
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 14px; padding: 13px 15px;
+  background: color-mix(in srgb, var(--active) 9%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--active) 26%, var(--line));
+  border-radius: 14px;
+  animation: tour-in .4s cubic-bezier(.22,1,.36,1) both;
+}
+.tour-offer p{ margin: 0; font-size: 13.5px; color: var(--t2); flex: 1 1 260px; }
+.tour-offer b{ color: var(--t1); font-weight: 650; }
+.tour-offer .tour-next{ padding: 9px 15px; }
+
+/* §12 — every control at least 44px on its shortest side. */
+.tour-card button{ position: relative; }
+.tour-card button::after, .tour-offer button::after{
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
+}
+.tour-offer button{ position: relative; }
+
+/* SMOOTH AIR AND REDUCED MOTION MEAN NO MOTION, NOT LESS. The light jumps to
+   the next target, the card is simply there. Everything else is identical:
+   nothing is hidden and nothing is skipped, which is the rule the rest of the
+   app follows and the reason this is two declarations rather than a branch in
+   the component. */
+.app.smooth-air .tour-light, .app.reduce-motion .tour-light{ transition: none; }
+.app.smooth-air .tour-card, .app.reduce-motion .tour-card,
+.app.smooth-air .tour-offer, .app.reduce-motion .tour-offer{ animation: none; }
+.app.smooth-air .tour-dots i, .app.reduce-motion .tour-dots i{ transition: none; }
+@media (prefers-reduced-motion: reduce){
+  .tour-light{ transition: none; }
+  .tour-card, .tour-offer{ animation: none; }
+  .tour-dots i{ transition: none; }
+}

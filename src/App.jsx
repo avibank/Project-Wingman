@@ -202,6 +202,9 @@ import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
 import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initials } from "./lib/familiar.js";
+import Tour from "./features/tour/Tour.jsx";
+import "./features/tour/tour.css";
+import { TOUR_KEY } from "./features/tour/tourSteps.js";
 import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
          subscribe as subscribeSaves, getSnapshot as savesSnapshot } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
@@ -711,13 +714,24 @@ function AppInner() {
      from a perfectly good lesson during the load that was about to supply
      it. */
   useEffect(() => {
-    if (route.name !== "lesson" && route.name !== "cards") return;
+    /* A CHAPTER IS ON THIS LIST TOO, and it was the one this effect missed.
+       `/m/m1/M1.01/quiz` returned `<main className="content content--full" />`
+       — the same literally-empty page a dead lesson link used to give, on the
+       second most shareable address in the app: a quiz is what one student
+       sends another. Found by the route sweep, which flags any screen under
+       120 characters of text; this one had NONE.
+
+       Every chapter tab goes through it, because /brief and /comments render
+       from the same missing chapter. */
+    if (!["lesson", "cards", "chapter"].includes(route.name)) return;
     if (flags["content.test"] && !testContent) return;
     const code = route.moduleCode || activeModuleCode;
     const chs = chaptersFor(code, testContent);
     const resolves = route.name === "lesson"
       ? chs.some((c) => c.id === route.chapterId && (c.lessons || []).some((l) => l.id === route.lessonId))
-      : chs.length >= Number(route.chapter || 0);
+      : route.name === "chapter"
+        ? chs.some((c) => c.id === route.chapterId)
+        : chs.length >= Number(route.chapter || 0);
     if (!resolves) navigate(routePath.module(code), { replace: true });
   }, [route, testContent, flags, activeModuleCode, navigate]);
   /* Where a lesson sits in its chapter, which is the direction a move between two
@@ -965,12 +979,36 @@ function AppInner() {
   // props cannot disagree about which route is in front of you.
   const roomFull = route.name === "ready" && Boolean(flags["social.readyroom"]);
 
+  /* ---------------------------------------------------------------- the tour
+     RUN ONCE, REMEMBERED ON THE SERVER. `pw-tour` goes through progress rather
+     than localStorage, so a student who was shown around on their phone is not
+     shown around again on a laptop — and the storage epoch cannot sweep it,
+     which would offer the tour to everybody a second time.
+
+     OFFERED, NOT FORCED. It appears as a line on the Flight Deck rather than
+     as a modal in front of somebody who opened the app to do one thing. Either
+     answer settles it: taking it or waving it away both write the key, because
+     asking twice is what makes a first-run prompt annoying rather than
+     helpful. */
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourAt, setTourAt] = useState(0);
+  const tourSeen = progress.get(TOUR_KEY, null);
+  const settleTour = useCallback((how) => {
+    setTourOpen(false);
+    progress.set(TOUR_KEY, { at: new Date().toISOString(), how });
+  }, [progress]);
+
   // The room renders its own copy of the profile menu, so what the menu does
   // has to live somewhere both can reach rather than being written out twice.
   const goProfile = (page) => {
+    /* "Show me around" is not an address — it is a thing that happens on top
+       of whatever screen you are on, so it opens the tour rather than
+       navigating anywhere. */
+    if (page === "tour") { setTourAt(0); setTourOpen(true); return; }
     if (page === "licence" || page === "preferences" || page === "appearance") go(routePath.profile(page));
     else goSettings(page);
   };
+
 
   /* ------------------------------------------------- the room's shared data */
   // The discussion for whichever module is in front of you, from the shared
@@ -1940,6 +1978,21 @@ function AppInner() {
            ground and carries its own light layers, so the shell's centred,
            padded .content would crop them. */
         <main className="content content-taxi content--deck">
+          {/* OFFERED, NOT FORCED, and only until it is answered. A modal in
+              front of somebody who opened the app to sit one quiz is the worst
+              first thing a product can do; a line they can take or wave away
+              is not. Both answers settle it — asking twice is what makes a
+              first-run prompt a nuisance rather than a help. */}
+          {isSignedIn && !tourSeen && !tourOpen && (
+            <div className="tour-offer">
+              <p><b>First time here?</b> Two minutes and you will know what every
+                 part of this does, and where it is.</p>
+              <button type="button" className="tour-skip is-inline"
+                      onClick={() => settleTour("declined")}>Not now</button>
+              <button type="button" className="tour-next"
+                      onClick={() => { setTourAt(0); setTourOpen(true); }}>Show me around</button>
+            </div>
+          )}
           <Home
             finish={finish}
             activeModuleCode={activeModuleCode}
@@ -2186,7 +2239,9 @@ function AppInner() {
         (() => {
           const chs = chaptersFor(activeModuleCode, useTestContent);
           const ch = chs.find((c) => c.id === route.chapterId) || chs[0];
-          if (!ch) return <main className="content content-taxi content--full" />;
+          /* The effect above is already moving us to the module. Rendering an
+             empty <main> in the meantime is what made this a blank screen. */
+          if (!ch) return null;
           return (
             <main className="content content-taxi content--full">
               <QuizPage
@@ -2263,7 +2318,19 @@ function AppInner() {
             myDone={myCompleted}
             onOpenPerson={openPilot}
             onOpenThreads={() => go(routePath.ready(activeModuleCode))}
-            onAddPaper={() => setAddingPaper(true)}
+            /* A DEAD BUTTON, FOUND BY CLICKING IT. "Add a paper" rendered
+               whenever this prop was passed, and the sheet behind it is gated
+               on `papersOn` — the PAUSED reader's switch — so pressing it did
+               nothing at all, silently, with no error. The click sweep is what
+               noticed: clicked, and not one thing about the page changed.
+
+               The upload path runs the reader's own ingest (pdf.js, a text
+               layer, thumbnails) and that is paused, so there is nothing to
+               wire it to today. It is withheld rather than shown broken: the
+               one rule that has no exceptions is that a control reaches
+               something. Papers arrive by being put in the module for now, and
+               this comes back with the ingest. */
+            onAddPaper={papersOn ? () => setAddingPaper(true) : null}
             /* One list, merged once, above. The Library must not know there
                are two sources. */
             papers={modulePapers}
@@ -2369,6 +2436,17 @@ function AppInner() {
           playback in every browser. */}
       <PlayerLayer />
       </div>
+
+    {/* THE TOUR IS OVER THE APP, NOT IN IT. Outside `.deck` so the spotlight
+        is measured against the window rather than against a scrolled box, and
+        after everything else so nothing paints on top of it. */}
+    <Tour
+      open={tourOpen}
+      at={tourAt}
+      go={(to) => go(to)}
+      onClose={() => settleTour("skipped")}
+      onDone={() => settleTour("finished")}
+    />
 
     <DevPanel
       isAdmin={isAdmin}

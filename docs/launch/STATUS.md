@@ -17,3 +17,32 @@ wingman.institute.
 _Last session ended at:_
 
 ## Next step
+
+---
+
+## 2026-09-21 — the beta brief, parts 1 to 8, and the tour
+
+| Part | Status |
+|---|---|
+| 1 · the beta fixes | **live** — patch applied as sent; `check:ship` CLEAN for the first time |
+| 2 · the wipe | **live** — database wiped and verified by connecting; a storage epoch sweeps each tester's browser |
+| 3 · no lessons | **live** — a chapter is a quiz and a card set; the walk and the route graphic both worked on it |
+| 5 · share, pickers, downloads | **live** — two helpers, HEIC accepted, chat attachments actually download, the two dead Account buttons reach Clerk |
+| 4 · the paper viewer | **live** — island-only chrome, scroll, bookmark, download; imports nothing from the paused reader |
+| 6 · the stamp engine | **live** — rim derived from the shape, eight shapes, six patterns, Matcha, `WNG` |
+| 8 · the self-check | **done** — `npm run qa`, four sweeps, written up in SESSION-REPORT.md |
+| — · the tour | **live** — twelve steps, offered once, re-openable from the profile menu |
+
+**Two things need the owner**, and neither can be done from here:
+
+1. **A phone.** Nothing in this repo has ever been opened on one.
+2. **Clerk's test accounts.** Three profiles. Reading their names is blocked in
+   this session as PII, and deleting a profile row destroys that account's
+   stamp permanently — 0029 issues one once and refuses a second. All three
+   left, which is what the brief says for the case where they cannot be told
+   apart.
+
+**Carried over, low:** "Add a paper" is withheld until the ingest comes back
+with the reader; the Ready Room's Previous/Next stay live at the ends of the
+list; and the request waterfall beyond `blocks`/`mutes` is untouched.
+
