@@ -30,13 +30,39 @@
    ADDING THE FIRST REAL MODULE is a data change here (and, for lessons and
    quizzes, a content document through src/lib/contentLoader.js) — not a code
    change anywhere else.
+
+   THE FIRST REAL CHAPTER IS IN (2026-09-21), and it went in the way the
+   paragraph above says it would: Module 13d's "Rotary Wing Aerodynamics" —
+   its quiz, its study cards and the cards as a PDF — is in the content
+   document, src/content/test-content.json, which `content.test` now loads
+   for everyone. The chapter list below stays empty because the screens read
+   the document once it is loaded; this file is what they draw before that.
    ========================================================================= */
 
+/* THE NAMES ARE THE COURSE'S NOW; THE CODES ARE NOT TOUCHED (owner,
+   2026-09-21). M1 is Module 13d, the one the class is on now, M2 is 13e and
+   M4 is Module 10. M3 keeps "Module 3" until the owner decides what it is.
+
+   ONLY `name` MOVED, AND THAT IS THE WHOLE POINT. Every progress row, quiz
+   score, save, hour-meter entry and route is keyed to the CODE — `pw-quiz-
+   scores`, `saves.module_id`, `/m/m1/...` — so renaming a module relabels it
+   and re-points nothing. Renumbering the codes to match would have orphaned
+   everything anybody has done in the app.
+
+   M1 STAYS FIRST, and that is what makes it current. App.jsx takes the first
+   `active` module as the default for the Flight Deck's hero card, so the
+   module the students are on is the one the app opens on without a second
+   switch saying so.
+
+   THE SAME FOUR NAMES ARE IN src/content/test-content.json, and they have to
+   agree: this list is what the Flight Deck draws until the content document
+   has loaded, and the document's is what it draws after. Two spellings would
+   rename a module in front of the student a frame after they arrived. */
 const MODULES = [
-  { code: "M1", name: "Module 1", status: "active", order: 1 },
-  { code: "M2", name: "Module 2", status: "active", order: 2 },
+  { code: "M1", name: "Module 13d", status: "active", order: 1 },
+  { code: "M2", name: "Module 13e", status: "active", order: 2 },
   { code: "M3", name: "Module 3", status: "active", order: 3 },
-  { code: "M4", name: "Module 4", status: "active", order: 4 },
+  { code: "M4", name: "Module 10", status: "active", order: 4 },
 ];
 
 /* Empty, and the shape is kept so that every reader of it keeps working

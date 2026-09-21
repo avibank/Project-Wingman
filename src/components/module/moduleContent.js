@@ -5,6 +5,12 @@
 // the difference, which is the point — replacing placeholder content with
 // real content is a data change here and nowhere else.
 //
+// content.test is ON FOR EVERYONE again (2026-09-21): the document holds the
+// course now — Module 13d's first chapter — rather than placeholder material,
+// so every visitor fetches the chunk below. It stays a dynamic import for the
+// reason that follows, which is about the entry chunk's size, not about
+// hiding anything.
+//
 // The seeded file is imported DYNAMICALLY. A static import bundles it into
 // the main chunk and every visitor downloads it whether the flag is on or
 // not — measured at 21KB, and the brief is explicit that no placeholder

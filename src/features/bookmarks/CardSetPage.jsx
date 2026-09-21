@@ -10,7 +10,10 @@ import { isSaved } from './savesStore';
 import StudyPad from './StudyPad';
 import TestPile from './TestPile';
 
-/** /m/:moduleId/library/cards/:chapter — one chapter quiz, as cards. The cards ARE the quiz questions. */
+/** /m/:moduleId/library/cards/:chapter — one chapter's study cards.
+ *  The chapter's own `cards` when it has them, its quiz questions when it does
+ *  not (2026-09-21): `content.cardSet` decides, so this page and the Library row
+ *  that opens it always agree on the set. */
 export default function CardSetPage({ moduleId, chapter }) {
   const ch = Number(chapter);
   useSavesState();
@@ -19,7 +22,7 @@ export default function CardSetPage({ moduleId, chapter }) {
   /* undefined means "the content chunk has not landed", which is not the same
      as "this chapter has no quiz" — saying the second while the first is true
      shows "Card set not found" for a set that is about to appear. */
-  const loaded = content.quizQuestions(moduleId, ch);
+  const loaded = content.cardSet(moduleId, ch);
   const questions = loaded ?? [];
   const waiting = loaded === undefined;
   const found = questions.length > 0;
@@ -36,7 +39,7 @@ export default function CardSetPage({ moduleId, chapter }) {
           <div className="bm-empty">This chapter has no quiz yet, so there are no cards to flip. <BmLink className="bm-link" to={routes.library(moduleId)}>Back to the Library</BmLink></div></>
       ) : (<>
         <div className="bm-head">
-          <div><h1 className="bm-h1">Chapter {ch} cards</h1><div className="bm-sub">{plural(questions.length, 'card')} · {n ? `${n} saved` : 'None saved'}</div></div>
+          <div><h1 className="bm-h1">{content.chapterTitle(moduleId, ch)} cards</h1><div className="bm-sub">{plural(questions.length, 'card')} · {n ? `${n} saved` : 'None saved'}</div></div>
           <button type="button" className="bm-btn is-primary" onClick={() => { content.track?.('test_started', { from: 'set' }); setTest(true); }}><IconPlay />Test yourself</button>
         </div>
         <StudyPad questions={questions} moduleId={moduleId} mode="set" />

@@ -143,7 +143,7 @@ try {
 
         if (phone) {
           await check("rail");
-          await page.locator(".rr-row", { hasText: "Module 1" }).first().click();
+          await page.locator(".rr-row", { hasText: "Module 13d" }).first().click();
           await page.locator(".rr-frow").first().waitFor();
           await check("list");
           await page.locator(".rr-fopen").first().click();
@@ -352,7 +352,7 @@ try {
     const view = () => page.evaluate(() => document.querySelector(".rr").dataset.view);
     expect("a phone opens on the rail", (await view()) === "rail");
     expect("with no topbar over the room", (await page.locator(".topbar").count()) === 0);
-    await page.locator(".rr-row", { hasText: "Module 1" }).click();
+    await page.locator(".rr-row", { hasText: "Module 13d" }).click();
     await page.waitForTimeout(300);
     expect("a module opens its list", (await view()) === "list");
     await page.locator(".rr-fopen").first().click();

@@ -4,7 +4,7 @@
    screens never guess.
    ===================================================================== */
 
-/** @typedef {{ id:string, moduleId:string, chapter:number, chapterId:string, stem:string, options:string[], answerIndex:number, explanation?:string, lessonId?:string }} Question */
+/** @typedef {{ id:string, moduleId:string, chapter:number, chapterId:string, stem:string, options:string[], answerIndex:number, explanation?:string, lessonId?:string, fromCards?:boolean }} Question — a quiz question or a study card; the two share a shape */
 /** @typedef {{ id:string, moduleId:string, chapter:number, chapterId:string, lesson:number, title:string, durationSeconds:number, thumbnailUrl?:string }} Lesson */
 /** @typedef {{ id:string, moduleId:string, title:string, pageCount:number }} Paper */
 /** @typedef {{ id:string, name:string }} Module */
@@ -74,7 +74,10 @@ const moduleOf = (id) => app.doc?.modules.find((m) => m.code === id) || null;
    renumbering a module relabels a bookmark rather than re-pointing it. */
 const chapterAt = (m, n) => (m?.chapters || [])[n - 1] || null;
 
-const asQuestion = (q, m, c, n) => ({
+/* `fromCards` says which list a card came from, because the card's face
+   names it: a chapter's own study card is not a question from its quiz, and
+   "Chapter 1 quiz" over one would be untrue (2026-09-21). */
+const asQuestion = (q, m, c, n, fromCards = false) => ({
   id: q.id,
   moduleId: m.code,
   chapter: n,
@@ -84,6 +87,7 @@ const asQuestion = (q, m, c, n) => ({
   answerIndex: q.correct,
   explanation: q.explain || undefined,
   lessonId: q.lessonId || undefined,
+  fromCards: fromCards || undefined,
 });
 
 const asLesson = (l, m, c, n, i) => ({
@@ -117,7 +121,14 @@ export const content = {
     return app.modules.find((m) => String(m.id).toLowerCase() === want)?.id ?? null;
   },
 
-  /** One question by its stable id. undefined while its module is unknown. */
+  /** One question OR study card by its stable id. undefined while its module is unknown.
+   *
+   *  CARDS ARE LOOKED FOR TOO (2026-09-21). A chapter can now carry its own
+   *  card set apart from its quiz, and a card saved from that set is a
+   *  `card` row whose ref_id is the CARD's id. Searching the quiz alone
+   *  would answer null for it — and null PRUNES, which deletes the save
+   *  from the server (see the header). So both lists are searched, and
+   *  check:question-ids keeps an id from meaning two things across them. */
   question(id) {
     if (!app.doc) return undefined;
     for (const m of app.doc.modules) {
@@ -126,18 +137,50 @@ export const content = {
         const c = chapters[n];
         const q = (c.questions || []).find((x) => x.id === id);
         if (q) return asQuestion(q, m, c, n + 1);
+        const card = (c.cards || []).find((x) => x.id === id);
+        if (card) return asQuestion(card, m, c, n + 1, true);
       }
     }
     return null;
   },
 
-  /** The questions of one chapter quiz, in quiz order. This list IS the chapter's card set. */
+  /** The questions of one chapter quiz, in quiz order. The quiz and nothing else — see cardSet. */
   quizQuestions(moduleId, chapter) {
     const m = moduleOf(moduleId);
     if (!m) return app.doc ? [] : undefined;
     const c = chapterAt(m, Number(chapter));
     if (!c) return [];
     return (c.questions || []).map((q) => asQuestion(q, m, c, Number(chapter)));
+  },
+
+  /* THE CARD SET IS NO LONGER ALWAYS THE QUIZ (owner, 2026-09-21).
+     It used to be, by definition: quizQuestions() was the card set and every
+     screen that drew one called it. Module 13d's first chapter has a quiz of
+     forty and a set of a hundred and seventy cards, and the quiz has to stay
+     forty. So a chapter that carries `cards` has those as its set, and one
+     that does not falls back to its quiz questions exactly as before.
+     Everything that builds a card set asks here — the Library's Study cards
+     rows and the card set page — so the choice is made in one place.
+     Same three answers as the rest of this file: undefined while the module
+     is unknown, [] for a chapter with nothing to flip. */
+  /** The study cards of one chapter, in order: its own `cards` if it has them, else its quiz questions. */
+  cardSet(moduleId, chapter) {
+    const m = moduleOf(moduleId);
+    if (!m) return app.doc ? [] : undefined;
+    const c = chapterAt(m, Number(chapter));
+    if (!c) return [];
+    const own = Array.isArray(c.cards) && c.cards.length;
+    return (own ? c.cards : (c.questions || []))
+      .map((q) => asQuestion(q, m, c, Number(chapter), !!own));
+  },
+
+  /** The chapters of a module that have a card set to flip, as display numbers. */
+  cardChapters(moduleId) {
+    const m = moduleOf(moduleId);
+    if (!m) return [];
+    return (m.chapters || [])
+      .map((c, i) => ((c.cards || []).length || (c.questions || []).length ? i + 1 : 0))
+      .filter(Boolean);
   },
 
   /** The chapters of a module that have a quiz, as display numbers: [1, 2, 3]. */

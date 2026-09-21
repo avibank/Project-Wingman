@@ -532,10 +532,10 @@ try {
     expect(`${w}: a tap outside closes it`, (await page.locator(".bm-switch-list").count()) === 0);
     await page.locator(".bm-switch-btn").click();
     await settle(150);
-    await page.locator(".bm-opt", { hasText: "Module 2" }).click();
+    await page.locator(".bm-opt", { hasText: "Module 13e" }).click();
     const switched = await lands(/m=M2/);
     await settle(250);
-    expect(`${w}: picking a module switches to it`, switched && (await page.locator(".bm-switch-btn").textContent()).includes("Module 2"), at());
+    expect(`${w}: picking a module switches to it`, switched && (await page.locator(".bm-switch-btn").textContent()).includes("Module 13e"), at());
 
     /* --- each folder opens, and each play button does its own thing --- */
     await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);

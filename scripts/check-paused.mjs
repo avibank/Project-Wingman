@@ -167,10 +167,39 @@ console.log("\nno way in");
   ok("doors", "the Library's real Papers section is drawn when something can open one",
      /const shelfOn = papersOn \|\| flagDefault\("paper\.viewer", false\);/.test(lib)
      && /\{shelfOn && \(\n\s*<section aria-labelledby="lsec-papers"/.test(lib));
+  /* The slot takes the module's downloads now (2026-09-21) — see the two
+     assertions after the next one for what that is allowed to draw. */
   ok("doors", "and the slot is what shows when NEITHER can",
-     /\{!shelfOn && <PapersSlot \/>\}/.test(lib));
+     /\{!shelfOn && <PapersSlot downloads=\{downloads\} \/>\}/.test(lib));
   ok("doors", "the slot still cannot open, add or mark a paper",
      !/onClick|onOpenPaper|onAddPaper|href=|paperIngest|uploadPaper|ReaderV6/.test(slot));
+
+  /* ONE LINK IS ALLOWED ON THE PAUSED SHELF, AND ONLY ONE KIND (2026-09-21).
+     The owner asked for Module 13d's study cards as a PDF to download, with
+     no viewer. So the slot may now draw a module's downloads — and the rule
+     above still reads the slot's own markup, where there is no href. The
+     link lives in LibraryDownloads.jsx, which is why that file is read here:
+     a slot that opens nothing itself but renders a child that does would be
+     the loophole, so the child is held to being exactly one plain
+     <a href download>, and nothing that routes, fetches, opens a tab or
+     reaches the reader. A second anchor, an onClick, or an import of any
+     kind fails this — the component needs none. */
+  const dl = code(read("src/components/module/LibraryDownloads.jsx"));
+  ok("doors", "the slot draws a module's downloads, and nothing else that links",
+     /<LibraryDownloads downloads=\{downloads\} \/>/.test(slot)
+     && (slot.match(/<[A-Z]\w*/g) || []).every((t) => ["<Ghost", "<LibraryDownloads"].includes(t))
+     && /\{!shelfOn && <PapersSlot downloads=\{downloads\} \/>\}/.test(lib));
+  ok("doors", "a download is exactly one plain <a href download> — no handler, no tab, no reader",
+     (dl.match(/<a\b/g) || []).length === 1
+     && /<a className="lrow paper" href=\{d\.href\} download>/.test(dl)
+     && !/\bimport\b|onClick|window\.open|target=|navigate|\bgo\(|BmLink|fetch\(|Reader|Viewer|papers\.js|fileHref/.test(dl));
+  const loader = read("src/lib/contentLoader.js");
+  const schema = read("src/lib/contentSchema.js");
+  ok("doors", "and its href is a site file named in the content document, never a paper's",
+     /downloads: \(m\.downloads \|\| \[\]\)\.map\(/.test(loader)
+     && /href: `\/\$\{String\(d\.file \|\| ""\)\.replace\(/.test(loader)
+     && /!\/\^\[a-z\]\[a-z0-9\+\.-\]\*:\/i\.test\(d\.file\)/.test(schema)
+     && /\/\\\.pdf\$\/i\.test\(d\.file\)/.test(schema));
   ok("doors", "the search field offers what the shelf is showing",
      /placeholderFor\(tab, shelfOn\)/.test(read("src/components/module/ModuleScreen.jsx")));
   ok("doors", "the room's composer has no Paper passage option",

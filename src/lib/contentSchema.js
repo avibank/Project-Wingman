@@ -12,6 +12,15 @@ function check(cond, where, msg, errs) {
   return cond;
 }
 
+/* One question's rules, shared by a quiz question and a study card, so the
+   two cannot drift: a card IS a question read the other way round. */
+function checkQuestion(q, w, errs) {
+  check(isStr(q.question), w, "question must be a non-empty string", errs);
+  check(Array.isArray(q.options) && q.options.length >= 2, w, "options must have at least two entries", errs);
+  check(isNum(q.correct) && q.correct >= 0 && q.correct < (q.options?.length ?? 0),
+    w, `correct must index one of the ${q.options?.length ?? 0} options`, errs);
+}
+
 export function validateContent(doc) {
   const errs = [];
   if (!doc || typeof doc !== "object") return ["root: not an object"];
@@ -56,16 +65,45 @@ export function validateContent(doc) {
         const qw = `${cw}.quiz`;
         check(isStr(c.quiz.id), qw, "id must be a non-empty string", errs);
         if (Array.isArray(c.quiz.questions)) {
-          c.quiz.questions.forEach((q, qi) => {
-            const w2 = `${qw}.questions[${qi}]`;
-            check(isStr(q.question), w2, "question must be a non-empty string", errs);
-            check(Array.isArray(q.options) && q.options.length >= 2, w2, "options must have at least two entries", errs);
-            check(isNum(q.correct) && q.correct >= 0 && q.correct < (q.options?.length ?? 0),
-              w2, `correct must index one of the ${q.options?.length ?? 0} options`, errs);
-          });
+          c.quiz.questions.forEach((q, qi) => checkQuestion(q, `${qw}.questions[${qi}]`, errs));
+        }
+      }
+
+      /* A CHAPTER'S OWN STUDY CARDS (2026-09-21, owner request). Optional:
+         without them the card set is the quiz's questions, as it always was.
+         With them, each card is held to exactly the quiz question's rules,
+         because StudyPad draws the back of a card from `correct` — a card
+         whose answer indexes nothing flips over to a blank. Ids are held to
+         their uniqueness by scripts/check-question-ids.mjs, across the quiz
+         and the cards together, since a saved card is found by id. */
+      if (c.cards != null) {
+        if (check(Array.isArray(c.cards), cw, "cards must be an array", errs)) {
+          c.cards.forEach((q, qi) => checkQuestion(q, `${cw}.cards[${qi}]`, errs));
         }
       }
     });
+
+    /* DOWNLOADS — a file offered as a plain download and nothing else
+       (2026-09-21, owner request). Not a paper: a paper opens in the reader
+       and the reader is paused, while this is an <a download> to a file under
+       public/. So the file must be a path on this site — no scheme, no
+       leading slash, the loader adds that — and a PDF, because the row says
+       "PDF". A page count is what the row prints, so it must be a real one. */
+    if (m.downloads != null) {
+      if (check(Array.isArray(m.downloads), w, "downloads must be an array", errs)) {
+        m.downloads.forEach((d, di) => {
+          const dw = `${w}.downloads[${di}]`;
+          check(isStr(d.id), dw, "id must be a non-empty string", errs);
+          check(!seen.has(d.id), dw, `duplicate id ${d.id}`, errs);
+          seen.add(d.id);
+          check(isStr(d.title), dw, "title must be a non-empty string", errs);
+          check(isStr(d.file) && !/^[a-z][a-z0-9+.-]*:/i.test(d.file) && !d.file.startsWith("/")
+              && !d.file.split("/").includes("..") && /\.pdf$/i.test(d.file),
+            dw, `file must be a site-relative path to a .pdf, got ${JSON.stringify(d.file)}`, errs);
+          check(isNum(d.pages) && d.pages > 0 && Number.isInteger(d.pages), dw, "pages must be a positive whole number", errs);
+        });
+      }
+    }
 
     if (m.papers != null) {
       check(Array.isArray(m.papers), w, "papers must be an array", errs);

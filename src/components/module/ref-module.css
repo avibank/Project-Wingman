@@ -207,6 +207,9 @@
 .ref-mod .ch-body{display:none;padding:0 14px 14px}
 .ref-mod .chap.open .ch-body{display:block}
 .ref-mod .lrow{width:100%;display:grid;grid-template-columns:62px 1fr auto;gap:14px;align-items:center;padding:8px 12px;border-radius:12px;text-align:left;border:1px solid transparent}
+/* The study-card row is a link (BmLink), not a button, so it drew in link
+   blue with an underline once a module had cards (2026-09-21). */
+.ref-mod a.lrow{color:inherit;text-decoration:none}
 .ref-mod .lrow:hover{background:var(--raised)}
 .ref-mod .lrow.cur{background:var(--accent-soft);border-color:color-mix(in oklab,var(--accent) 45%,transparent)}
 .ref-mod .lrow .th{aspect-ratio:16/9;border-radius:7px;background:radial-gradient(90% 90% at 30% 20%,oklch(.3 .05 250),oklch(.15 .02 255));border:1px solid var(--hair);position:relative;overflow:hidden}
@@ -237,6 +240,10 @@
 .ref-mod .act-o{font-size:13px;font-weight:600;padding:6px 14px;border-radius:8px;border:1px solid color-mix(in oklab,var(--accent) 55%,transparent);color:var(--accent)}
 .ref-mod .paper{display:grid;grid-template-columns:62px 1fr auto;gap:14px;align-items:center;padding:10px 12px;border-radius:12px}
 .ref-mod .paper:hover{background:var(--raised)}
+/* A download row is an <a download>, not a <button> (LibraryDownloads.jsx),
+   so it would otherwise draw in the browser's link blue with an underline.
+   Scoped to the download list: it is the paper row, only as a link. */
+.ref-mod .dl-list a.paper{color:inherit;text-decoration:none}
 .ref-mod .paper .pg{aspect-ratio:16/9;border-radius:7px;border:1px solid var(--line);background:var(--ground);display:grid;place-items:center;color:var(--t2)}
 
 /* crew empty state */

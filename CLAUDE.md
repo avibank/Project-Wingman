@@ -49,29 +49,44 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
 
 ## Content
 
-**There is no real content yet.** This paragraph used to say there was, in
-detail, and every specific was wrong. Verified on 2026-08-31 by reading the two
-files, not inferred:
+**The first real chapter is in** (owner, 2026-09-21). Before that this section
+said "there is no real content yet", which was true until today.
 
-`src/data.js` — **four** modules, M1 to M4, **five** chapters each (20 total).
-Not five modules of four, and the codes JT, PROP, AERO, NAV and WX appear
-nowhere in this repo. **No chapter has `body` prose. No chapter has questions.
-All 20 have `clip: null`.** It is a skeleton: codes, titles and structure.
+`src/data.js` — **four** modules, M1 to M4, and no chapters. The codes never
+change (progress, scores and saves are keyed to them); the NAMES are the
+course's: **M1 is Module 13d** (the one the class is on, and the app's default
+current module because it is the first `active` one), **M2 is Module 13e**,
+**M3 is still "Module 3"** (undecided) and **M4 is Module 10**.
 
-`src/content/test-content.json` — the fixture behind the `content.test` flag,
-which is `everyone: true` and therefore what the app actually shows today: four
-modules, three chapters each, two lessons per chapter, with Blender's open
-movies as clips and general-knowledge quiz questions. `npm run check:ship` is
-the gate that stops it reaching a launch, and it currently fails on purpose.
+`src/content/test-content.json` — the content document, despite its name. It
+is loaded by the `content.test` flag, which is `everyone: true` again (label
+"Course content"); the id kept its old name so nothing that reads it had to
+change. It repeats the four module names, and they must agree with data.js,
+which is what the Flight Deck draws before the document arrives. It holds:
 
-So the two sources disagree about how many chapters a module has — five in
-data.js, three in the fixture — and which one a screen shows depends on whether
-it reads the fixture. That is worth knowing before trusting any count on screen.
+- **Module 13d · M1.01 "Rotary Wing Aerodynamics"**: no lessons, a quiz
+  `M1.01.QZ` of exactly **40** questions (no `lessonId`), and **170 study
+  cards** `M1.01.C001`–`C170`.
+- **`cards` on a chapter is optional and is the card set when present**;
+  without it the card set falls back to the quiz questions as before.
+  `content.cardSet()` / `cardChapters()` in `features/bookmarks/content.js`
+  make that choice for every screen that builds a set, and
+  `content.question(id)` finds card ids too — a saved card that answered
+  `null` would be pruned off the server. `check:question-ids` holds quiz and
+  card ids in one id space.
+- **`downloads` on a module** — `{id, title, file, pages}`, a file under
+  `public/` offered as a plain `<a href download>` on the Library's Papers
+  shelf (`LibraryDownloads.jsx`), with **no viewer**: papers stay paused.
+  `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` is the first.
+  `check:paused` allows exactly that anchor and nothing else on the slot.
 
-Do not invent YouTube ids, chapter prose or questions to fill any of this.
+`check:placeholders` / `check:ship` grep the build for the markers of the old
+placeholder set; the real content carries none and both pass unchanged.
+
+Do not invent YouTube ids, chapter prose or questions to fill the rest.
 
 `chaptersForModule()` and `pdfsForModule()` are in data.js and exported, as the
-architecture note above says — that part was accurate.
+architecture note above says.
 
 ## Design system
 

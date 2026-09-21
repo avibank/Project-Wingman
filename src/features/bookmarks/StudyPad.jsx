@@ -10,7 +10,7 @@ import { markSeen } from './cardsSeen';
 /** The two faces of a study card. Front: the question. Back: the right answer (and the author's explanation, only if the question has one). */
 export function CardFaces({ q }) {
   return (<>
-    <div className="bm-face"><div className="bm-lbl">Chapter {q.chapter} quiz</div><div className={`bm-term${q.stem.length > 40 ? ' is-long' : ''}`}>{q.stem}</div><span className="bm-turn"><IconFlip /></span></div>
+    <div className="bm-face"><div className="bm-lbl">Chapter {q.chapter} {q.fromCards ? 'cards' : 'quiz'}</div><div className={`bm-term${q.stem.length > 40 ? ' is-long' : ''}`}>{q.stem}</div><span className="bm-turn"><IconFlip /></span></div>
     <div className="bm-face is-back"><div className="bm-lbl">Answer</div>
       <div><div className="bm-answer">{letter(q.answerIndex)}. {q.options[q.answerIndex]}</div>{q.explanation ? <p className="bm-meta" style={{ textTransform: 'none', fontFamily: 'inherit', fontSize: '1rem', marginTop: 10 }}>{q.explanation}</p> : null}</div>
       <span className="bm-turn"><IconFlip /></span></div>

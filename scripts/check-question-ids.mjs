@@ -41,6 +41,17 @@ function allQuestions() {
           const q = qs[i];
           out.push({ file, where: `${m.id} ${c.id} #${i + 1}`, id: q.id, stem: q.question, options: q.options, answer: q.correct });
         }
+        /* A CHAPTER'S OWN STUDY CARDS (2026-09-21) are held to the same three
+           rules, in the SAME id space as the quiz. A saved card is found by
+           its id through content.question(), which looks in the quiz and the
+           cards both — so a card sharing an id with a question would make one
+           save mean two things, and a card with no id would fall back to a
+           positional one that renumbers under the next edit. */
+        const cs = Array.isArray(c.cards) ? c.cards : [];
+        for (let i = 0; i < cs.length; i++) {
+          const q = cs[i];
+          out.push({ file, where: `${m.id} ${c.id} card #${i + 1}`, id: q.id, stem: q.question, options: q.options, answer: q.correct });
+        }
       }
     }
   }
@@ -100,4 +111,4 @@ if (problems.length) {
   console.error(`check:question-ids failed:\n  ${problems.join("\n  ")}`);
   process.exit(1);
 }
-console.log(`check:question-ids: ${n} questions, ${seen.size} ids, all stable and unique.`);
+console.log(`check:question-ids: ${n} questions and cards, ${seen.size} ids, all stable and unique.`);
