@@ -1,25 +1,27 @@
 /* =============================================================================
    The three-character code.
    -----------------------------------------------------------------------------
-   Every pilot has one, it is chosen at signup, and it is the mark that gets
-   stamped on a chapter when they finish it. It is meant to be said out loud and
-   written down — on a card, in a post, across a room — so two decisions follow
-   from that and neither is arbitrary:
+   Every student has one, and it IS their stamp: it is chosen in the stamp
+   creator and issued with the stamp, in one statement (0035's issue_licence),
+   and after that neither changes. It is meant to be said out loud and written
+   down, so it is always upper case: nobody saying "a7k" means something
+   different from "A7K".
 
-   NO CONFUSABLE CHARACTERS. 0 and O, 1 and I and L are gone from the alphabet.
-   A code that cannot be read back correctly from a photograph is not an
-   identifier, and this is the one place a person will be reading it back from a
-   photograph. That leaves 31 characters and 29,791 codes.
-
-   ALWAYS UPPERCASE. There is no meaningful difference between "a7k" and "A7K"
-   to anybody saying it, so storing both would make two people think they have
-   different codes when they do not.
+   ANY LETTER, ANY DIGIT. This used to leave out 0, 1, O, I and L so that a
+   code read off a photograph could not be misread, and it dropped them
+   silently as they were typed. A student typing "A10" saw the 1 and the 0
+   vanish and concluded the field took letters only (owner, 2026-09-21). So
+   every character a student types is kept, and only the SUGGESTIONS avoid
+   those five: nobody is handed an ambiguous code, but anybody may choose one.
 
    Pure, no imports: checkable without a browser or a database.
    ========================================================================= */
 
 export const CODE_LENGTH = 3;
-export const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+export const CODE_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+/* What a suggestion is drawn from: everything except the pairs that get read
+   back wrong. The same set 0016's suggest_code draws from on the server. */
+export const SUGGEST_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 export const CODE_SPACE = CODE_ALPHABET.length ** CODE_LENGTH;
 
 /* What a person typed, as a code. Lowercase is lifted, anything outside the
@@ -36,12 +38,12 @@ export function normaliseCode(input) {
 
 export const isCode = (input) => normaliseCode(input).length === CODE_LENGTH;
 
-/* A suggestion, so nobody has to invent one under pressure at signup. The
-   caller checks it is free and asks again if it is not. */
+/* A suggestion, so nobody has to invent one on the spot. The caller checks it
+   is free and asks again if it is not. */
 export function randomCode(rand = Math.random) {
   let out = "";
   for (let i = 0; i < CODE_LENGTH; i++) {
-    out += CODE_ALPHABET[Math.floor(rand() * CODE_ALPHABET.length)];
+    out += SUGGEST_ALPHABET[Math.floor(rand() * SUGGEST_ALPHABET.length)];
   }
   return out;
 }

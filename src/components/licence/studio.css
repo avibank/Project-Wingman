@@ -22,6 +22,9 @@
 }
 .st-head h3{ margin: 0; font-size: 17px; }
 .st-head .lic-x{ position: static; }
+/* What the creator is for, in one sentence, for a student meeting it straight
+   after the walkthrough. */
+.st-intro{ margin: 0 0 12px; padding: 0 18px; font-size: 13.5px; line-height: 1.5; color: var(--t2); }
 
 /* Ruled paper, with the stamp pressed onto it. */
 .st-paper{

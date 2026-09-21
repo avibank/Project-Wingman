@@ -202,9 +202,9 @@ import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
 import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initials } from "./lib/familiar.js";
-import Tour from "./features/tour/Tour.jsx";
 import "./features/tour/tour.css";
 import { TOUR_KEY } from "./features/tour/tourSteps.js";
+import { askForLicence } from "./lib/licenceAsk.js";
 import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
          subscribe as subscribeSaves, getSnapshot as savesSnapshot } from "./features/bookmarks/savesStore.js";
 import { supabase } from "./lib/supabaseClient.js";
@@ -215,6 +215,9 @@ import { fetchSquadron, fetchRoster } from "./lib/squadron.js";
 import { fetchMyCompletions } from "./lib/partners.js";
 import { StampFilters } from "./components/Stamp.jsx";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
+/* The walkthrough is lazy: a student sees it once, and it carries twelve
+   drawings nobody else should download. */
+const Tour = lazy(() => import("./features/tour/Tour.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
@@ -986,14 +989,22 @@ function AppInner() {
      shown around again on a laptop — and the storage epoch cannot sweep it,
      which would offer the tour to everybody a second time.
 
-     OFFERED, NOT FORCED. It appears as a line on the Flight Deck rather than
-     as a modal in front of somebody who opened the app to do one thing. Either
-     answer settles it: taking it or waving it away both write the key, because
-     asking twice is what makes a first-run prompt annoying rather than
-     helpful. */
+     IT OPENS BY ITSELF for a student who has not seen it, on the Flight Deck
+     and nowhere else: a new student lands there from sign-up, and somebody
+     arriving by an invite link finishes joining first. This used to be an
+     offer card; the owner asked for sign-up, then the walkthrough, then the
+     licence (2026-09-21). It waits for progress to load, or a returning
+     student would see it flash open on every start. Finishing it and skipping
+     it both settle it. */
   const [tourOpen, setTourOpen] = useState(false);
-  const [tourAt, setTourAt] = useState(0);
   const tourSeen = progress.get(TOUR_KEY, null);
+  const tourAsked = useRef(false);
+  useEffect(() => {
+    if (tourAsked.current || tourOpen) return;
+    if (!isSignedIn || !progress.loaded || tourSeen || route.name !== "home") return;
+    tourAsked.current = true;
+    setTourOpen(true);
+  }, [isSignedIn, progress.loaded, tourSeen, tourOpen, route.name]);
   const settleTour = useCallback((how) => {
     setTourOpen(false);
     progress.set(TOUR_KEY, { at: new Date().toISOString(), how });
@@ -1005,7 +1016,7 @@ function AppInner() {
     /* "Show me around" is not an address — it is a thing that happens on top
        of whatever screen you are on, so it opens the tour rather than
        navigating anywhere. */
-    if (page === "tour") { setTourAt(0); setTourOpen(true); return; }
+    if (page === "tour") { setTourOpen(true); return; }
     if (page === "licence" || page === "preferences" || page === "appearance") go(routePath.profile(page));
     else goSettings(page);
   };
@@ -1198,6 +1209,18 @@ function AppInner() {
     fetchProfile(me).then((row) => { if (live) setMyProfile(row); });
     return () => { live = false; };
   }, [isSignedIn, me]);
+
+  /* THE WALKTHROUGH ENDS AT THE LICENCE for a student with no stamp yet: its
+     last slide says so, and skipping it is an answer too. The licence opens
+     its stamp creator on arrival (lib/licenceAsk.js). Somebody replaying it
+     from the menu with a stamp already issued just closes it. */
+  const endTour = (how) => {
+    settleTour(how);
+    if (isSignedIn && !myProfile?.stamp_issued_at) {
+      askForLicence();
+      go(routePath.profile("licence"));
+    }
+  };
 
   /* ------------------------------------------------------------ the papers
      TWO ANSWERS, NOT ONE. `paper.viewer` is the thing students get: a paper
@@ -1983,21 +2006,6 @@ function AppInner() {
            ground and carries its own light layers, so the shell's centred,
            padded .content would crop them. */
         <main className="content content-taxi content--deck">
-          {/* OFFERED, NOT FORCED, and only until it is answered. A modal in
-              front of somebody who opened the app to sit one quiz is the worst
-              first thing a product can do; a line they can take or wave away
-              is not. Both answers settle it — asking twice is what makes a
-              first-run prompt a nuisance rather than a help. */}
-          {isSignedIn && !tourSeen && !tourOpen && (
-            <div className="tour-offer">
-              <p><b>First time here?</b> Two minutes and you will know what every
-                 part of this does, and where it is.</p>
-              <button type="button" className="tour-skip is-inline"
-                      onClick={() => settleTour("declined")}>Not now</button>
-              <button type="button" className="tour-next"
-                      onClick={() => { setTourAt(0); setTourOpen(true); }}>Show me around</button>
-            </div>
-          )}
           <Home
             finish={finish}
             activeModuleCode={activeModuleCode}
@@ -2442,16 +2450,16 @@ function AppInner() {
       <PlayerLayer />
       </div>
 
-    {/* THE TOUR IS OVER THE APP, NOT IN IT. Outside `.deck` so the spotlight
-        is measured against the window rather than against a scrolled box, and
-        after everything else so nothing paints on top of it. */}
-    <Tour
-      open={tourOpen}
-      at={tourAt}
-      go={(to) => go(to)}
-      onClose={() => settleTour("skipped")}
-      onDone={() => settleTour("finished")}
-    />
+    {/* THE WALKTHROUGH IS OVER THE APP, a full-screen layer inside `.app` so
+        it has the livery's tokens, and after everything else so nothing paints
+        on top of it. */}
+    {tourOpen && (
+      <Suspense fallback={null}>
+        <Tour hasStamp={Boolean(myProfile?.stamp_issued_at)}
+              onClose={() => endTour("skipped")}
+              onDone={() => endTour("finished")} />
+      </Suspense>
+    )}
 
     <DevPanel
       isAdmin={isAdmin}

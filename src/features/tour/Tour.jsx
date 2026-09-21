@@ -1,191 +1,193 @@
 /* =============================================================================
-   THE TOUR — a light moving round a building the student is standing in.
+   THE WALKTHROUGH — twelve slides you swipe through.
    -----------------------------------------------------------------------------
-   THE SPOTLIGHT IS ONE ELEMENT WITH AN ENORMOUS SHADOW. `box-shadow: 0 0 0
-   9999px` on a box the size of the target dims everything except what is
-   inside it, in one compositor-friendly paint — no four-rectangle overlay to
-   keep in step, no SVG mask to re-generate on every scroll, and the whole
-   thing tweens between targets because it is one box moving.
+   One full-screen layer with a strip of slides in it. Moving between slides is
+   ONE transform on that strip, and while a finger or a mouse is dragging it
+   the transform is written straight to the element: no React render per
+   pointer move, no route change, nothing to load. That is the whole of why
+   this is smooth where the spotlight version it replaces was not.
 
-   IT NEVER COVERS WHAT IT IS POINTING AT. `pointer-events: none` on the
-   spotlight, so the control underneath stays pressable; the tour is over the
-   app, not in front of it.
+   · A SWIPE FOLLOWS THE FINGER and settles on release: past a fifth of the
+     width, or flicked, it goes on; otherwise it springs back. Past either end
+     it resists (a third of the travel) rather than stopping dead.
+   · A VERTICAL DRAG IS LEFT ALONE. The first few pixels decide the axis, and
+     `touch-action: pan-y` lets a long slide scroll on a short phone.
+   · The arrow keys, Enter and the two buttons do the same thing as a swipe.
+     Escape skips.
+   · Smooth Air and prefers-reduced-motion mean NO motion: the strip jumps and
+     the drawings stand still (tour.css).
 
-   IT WAITS FOR ITS TARGET RATHER THAN ASSUMING IT. Steps change route, routes
-   load lazily, and a card pointing at the place a button will be in 400ms is
-   the tour looking broken on the one screen that has to look right. It polls
-   for the selector, scrolls it into view, and if it never arrives it SKIPS the
-   step — content arrives module by module and a tour that breaks the day a
-   chapter is added is worse than no tour.
+   · THE APP UNDERNEATH IS HIDDEN while it is up, once it has faded in. It
+     is covered completely, but it was still animating and repainting: in the
+     harness the Flight Deck drew four frames a second behind this layer, and
+     sixty once it was hidden (measured, 2026-09-21). That, not this file, was
+     most of what felt slow. It comes back as the walkthrough fades out, so
+     leaving is a crossfade rather than a cut.
 
-   MOTION IS THE APP'S. Smooth Air and prefers-reduced-motion mean NO motion,
-   not less: the spotlight jumps, the card appears, everything else is
-   identical. That is `.smooth-air` and the media query at the foot of
-   tour.css, not a branch in here.
+   Finishing it and skipping it are both an answer. App.jsx settles the tour
+   either way and, for a student with no stamp yet, opens the licence next.
    ========================================================================= */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { STEPS, placeOf } from "./tourSteps.js";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { SLIDES } from "./tourSteps.js";
+import Scene from "./Scenes.jsx";
 import "./tour.css";
 
-const GAP = 14;            // between the spotlight and the card
-const PAD = 8;             // how far the light spills past the target
-const TRIES = 26;          // ~2.6s of waiting for a target to arrive
+const EASE = "cubic-bezier(.22,1,.36,1)";
+const still = () =>
+  Boolean(document.querySelector(".app.smooth-air"))
+  || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-export default function Tour({ open, onClose, onDone, go, at = 0 }) {
-  const [i, setI] = useState(at);
-  const [box, setBox] = useState(null);      // the target's rect, or null while hunting
-  const [skipped, setSkipped] = useState(false);
-  const cardRef = useRef(null);
-  /* Its real height, read after it paints. Until then the placement uses a
-     sane default and corrects on the next frame, which is one frame nobody
-     sees because the card fades in over a third of a second. */
-  const [cardH, setCardH] = useState(0);
-  const step = STEPS[i];
+export default function Tour({ onClose, onDone, hasStamp = false }) {
+  const n = SLIDES.length;
+  const [i, setI] = useState(0);
+  const at = useRef(0);
+  const view = useRef(null);
+  const track = useRef(null);
+  const drag = useRef(null);
+  const [leaving, setLeaving] = useState(false);
 
-  /* --------------------------------------------------- finding the target */
   useEffect(() => {
-    if (!open || !step) return undefined;
-    let live = true;
-    let tries = 0;
-    setBox(null);
-    setSkipped(false);
+    const app = document.querySelector(".app");
+    const t = setTimeout(() => app?.setAttribute("data-tour", "1"), still() ? 0 : 400);
+    return () => { clearTimeout(t); app?.removeAttribute("data-tour"); };
+  }, []);
 
-    /* The step's own address first. `go` is the app's navigate, so the move
-       gets the same transition every other navigation does. */
-    if (step.where && window.location.pathname !== step.where) go?.(step.where);
+  /* Out the way it came in: the app is shown again underneath, and this layer
+     fades off it before the answer is given. */
+  const leave = useCallback((then) => {
+    if (leaving) return;
+    document.querySelector(".app")?.removeAttribute("data-tour");
+    if (still()) { then?.(); return; }
+    setLeaving(true);
+    setTimeout(() => then?.(), 280);
+  }, [leaving]);
+  const skip = useCallback(() => leave(onClose), [leave, onClose]);
+  const finish = useCallback(() => leave(onDone), [leave, onDone]);
 
-    const hunt = () => {
-      if (!live) return;
-      const el = document.querySelector(step.find);
-      if (el) {
-        el.scrollIntoView({ block: "center", behavior: "auto" });
-        const r = el.getBoundingClientRect();
-        if (r.width && r.height) { setBox(r); return; }
-      }
-      tries += 1;
-      if (tries > TRIES) {
-        /* NEVER A CARD POINTING AT NOTHING. */
-        if (step.optional || true) { setSkipped(true); }
-        return;
-      }
-      setTimeout(hunt, 100);
-    };
-    const t = setTimeout(hunt, 260);
-    return () => { live = false; clearTimeout(t); };
-  }, [open, i, step, go]);
+  /* Where the strip is. `dx` is a finger's offset from the resting place. */
+  const place = useCallback((to, dx = 0, animate = true) => {
+    const el = track.current;
+    if (!el) return;
+    const w = view.current?.clientWidth || window.innerWidth;
+    el.style.transition = animate && !still() ? `transform 560ms ${EASE}` : "none";
+    el.style.transform = `translate3d(${-to * w + dx}px,0,0)`;
+  }, []);
 
-  /* A skipped step moves on by itself, so the tour never stalls. */
-  useEffect(() => {
-    if (!skipped) return undefined;
-    const t = setTimeout(() => (i + 1 < STEPS.length ? setI(i + 1) : onDone?.()), 140);
-    return () => clearTimeout(t);
-  }, [skipped, i, onDone]);
-
-  /* The light follows the target when the page moves under it. */
-  useEffect(() => {
-    if (!open || !box || !step) return undefined;
-    /* ONLY WHEN IT HAS ACTUALLY MOVED. `setBox` with a fresh rect on every
-       scroll event re-renders, which re-runs this effect, which rebinds the
-       listener — and `scrollIntoView` above fires scroll events of its own, so
-       the two chase each other and the tour never settles. A pixel of
-       tolerance is the difference between following the page and spinning. */
-    const track = () => {
-      const el = document.querySelector(step.find);
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      if (!r.width) return;
-      setBox((was) => (was
-        && Math.abs(was.top - r.top) < 1 && Math.abs(was.left - r.left) < 1
-        && Math.abs(was.width - r.width) < 1 && Math.abs(was.height - r.height) < 1
-        ? was : r));
-    };
-    window.addEventListener("resize", track);
-    window.addEventListener("scroll", track, true);
-    return () => { window.removeEventListener("resize", track); window.removeEventListener("scroll", track, true); };
-  }, [open, step]);
+  const goTo = useCallback((to) => {
+    const t = Math.max(0, Math.min(n - 1, to));
+    at.current = t;
+    setI(t);
+    place(t);
+  }, [n, place]);
 
   const next = useCallback(() => {
-    if (!step) return;
-    if (step.goes) go?.(step.goes);
-    if (i + 1 < STEPS.length) setI(i + 1); else onDone?.();
-  }, [step, i, go, onDone]);
+    if (at.current + 1 < n) goTo(at.current + 1); else finish();
+  }, [n, goTo, finish]);
+  const back = useCallback(() => goTo(at.current - 1), [goTo]);
 
-  const back = useCallback(() => setI((n) => Math.max(0, n - 1)), []);
+  useLayoutEffect(() => {
+    place(at.current, 0, false);
+    const onResize = () => place(at.current, 0, false);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [place]);
 
-  /* Escape leaves, Enter goes on, and the arrows walk it — the same keys the
-     rest of the app answers. */
+  /* Focus goes to the dialog, so a screen reader starts at its name and the
+     first key press works, without a ring drawn round Next before anybody
+     has touched anything. */
+  const rootRef = useRef(null);
+  useEffect(() => { rootRef.current?.focus({ preventScroll: true }); }, []);
+
   useEffect(() => {
-    if (!open) return undefined;
     const key = (e) => {
-      if (e.key === "Escape") { e.preventDefault(); onClose?.(); }
-      else if (e.key === "Enter" || e.key === "ArrowRight") { e.preventDefault(); next(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); next(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); back(); }
+      else if (e.key === "Escape") { e.preventDefault(); skip(); }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [open, next, back, onClose]);
+  }, [next, back, skip]);
 
-  useEffect(() => { if (open) cardRef.current?.focus(); }, [open, i]);
-
-  /* Measured every time the words change, because the words are what make it
-     tall — step 12 is three lines longer than step 1. */
-  useEffect(() => {
-    if (!open) return undefined;
-    const read = () => { const h = cardRef.current?.offsetHeight; if (h && h !== cardH) setCardH(h); };
-    const raf = requestAnimationFrame(read);
-    window.addEventListener("resize", read);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", read); };
-  }, [open, i, cardH]);
-
-  if (!open || !step) return null;
-
-  const below = placeOf(step) === "below";
-  const light = box && {
-    left: Math.max(6, box.left - PAD),
-    top: Math.max(6, box.top - PAD),
-    width: Math.min(window.innerWidth - 12, box.width + PAD * 2),
-    height: box.height + PAD * 2,
+  /* ---------------------------------------------------------- the swipe */
+  const down = (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.target.closest("button, a, input")) return;
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, axis: null, trail: [{ x: e.clientX, t: e.timeStamp }] };
   };
-  /* THE CARD IS CLAMPED AGAINST ITS OWN MEASURED HEIGHT, not a guess at one.
-     The first version assumed 190-200px and clamped to `innerHeight - 200`,
-     which is fine until the target is TALL: the licence card lights a 686px
-     box, the card goes below it, and 700 + its real height is off the bottom
-     of a 900px window. Measured, three of twelve steps put the card where
-     nobody could read it.
-
-     So the height comes from the card itself after its first paint, and when
-     the target is too tall for the card to sit outside it at all, the card
-     goes OVER the lit area rather than beyond the window — a card on top of
-     what it is describing is readable, and a card below the fold is not. */
-  const ch = cardH || 210;
-  const room = window.innerHeight;
-  const wanted = below ? box && box.bottom + GAP : box && box.top - GAP - ch;
-  const card = box && {
-    top: Math.max(12, Math.min(room - ch - 12, wanted)),
-    left: Math.max(12, Math.min(window.innerWidth - 352, box.left + box.width / 2 - 170)),
+  const move = (e) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.axis) {
+      if (Math.abs(dx) < 7 && Math.abs(dy) < 7) return;
+      d.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if (d.axis === "x") view.current?.setPointerCapture?.(e.pointerId);
+    }
+    if (d.axis !== "x") return;
+    /* The last tenth of a second of the drag, for its speed at release. */
+    d.trail.push({ x: e.clientX, t: e.timeStamp });
+    while (d.trail.length > 2 && e.timeStamp - d.trail[0].t > 100) d.trail.shift();
+    const atEdge = (at.current === 0 && dx > 0) || (at.current === n - 1 && dx < 0);
+    d.dx = atEdge ? dx / 3 : dx;
+    place(at.current, d.dx, false);
+  };
+  const up = (e) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || d.id !== e.pointerId || d.axis !== "x") return;
+    const w = view.current?.clientWidth || window.innerWidth;
+    /* A FLICK IS MEASURED OVER TIME, not between two events. Moves can arrive
+       in a burst with no time between them, and one pixel over no time is an
+       infinite speed: a slow 40px drag read as a flick until this. */
+    const a = d.trail[0];
+    const z = d.trail[d.trail.length - 1];
+    const span = z.t - a.t;
+    const vx = span >= 20 ? (z.x - a.x) / span : 0;
+    const far = Math.abs(d.dx) > w * 0.2;
+    const flick = Math.abs(vx) > 0.45 && Math.abs(d.dx) > 24;
+    if ((far || flick) && d.dx < 0 && at.current < n - 1) goTo(at.current + 1);
+    else if ((far || flick) && d.dx > 0 && at.current > 0) goTo(at.current - 1);
+    else place(at.current);
   };
 
+  const last = i === n - 1;
   return (
-    <div className="tour" role="dialog" aria-modal="true" aria-label="A tour of Wingman">
-      {light && <div className="tour-light" style={light} aria-hidden="true" />}
-      {!light && <div className="tour-dim" aria-hidden="true" />}
+    <div className={`tour${leaving ? " is-leaving" : ""}`} ref={rootRef} tabIndex={-1}
+         role="dialog" aria-modal="true" aria-label="A walkthrough of Wingman">
+      <header className="tour-top">
+        <span className="tour-brand">Wingman</span>
+        <button type="button" className="tour-skip" onClick={skip}>Skip walkthrough</button>
+      </header>
 
-      <div className="tour-card" ref={cardRef} tabIndex={-1} style={card || { top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
-        <p className="tour-count">{i + 1} of {STEPS.length}</p>
-        <h2 className="tour-title">{step.title}</h2>
-        <p className="tour-body">{step.body}</p>
-        <div className="tour-acts">
-          {i > 0 && <button type="button" className="tour-back is-inline" onClick={back}>Back</button>}
-          <span className="tour-grow" />
-          <button type="button" className="tour-skip is-inline" onClick={onClose}>Find your own way</button>
-          <button type="button" className="tour-next" onClick={next}>
-            {step.last ? "Start flying" : (step.action || "Next")}
-          </button>
-        </div>
-        <div className="tour-dots" aria-hidden="true">
-          {STEPS.map((s, n) => <i key={s.id} className={n === i ? "on" : n < i ? "was" : ""} />)}
+      <div className="tour-view" ref={view} aria-roledescription="carousel"
+           onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+        <div className="tour-track" ref={track}>
+          {SLIDES.map((s, k) => (
+            <section key={s.id} className={`tour-slide${k === i ? " is-on" : ""}`}
+                     role="group" aria-roledescription="slide" aria-label={`${k + 1} of ${n}`}
+                     aria-hidden={k !== i} inert={k !== i ? "" : undefined}>
+              <div className="tour-scene"><Scene id={s.id} on={k === i} /></div>
+              <div className="tour-copy">
+                <p className="tour-count">{k + 1} of {n}</p>
+                <h2 className="tour-title">{s.title}</h2>
+                <p className="tour-body">{s.body}</p>
+              </div>
+            </section>
+          ))}
         </div>
       </div>
+
+      <footer className="tour-foot">
+        <button type="button" className="tour-back" onClick={back} disabled={i === 0}>Back</button>
+        <div className="tour-dots" aria-hidden="true">
+          {SLIDES.map((s, k) => <i key={s.id} className={k === i ? "on" : k < i ? "was" : undefined} />)}
+        </div>
+        <button type="button" className="tour-next" onClick={next}>
+          {last ? (hasStamp ? "Done" : "Create my licence") : "Next"}
+        </button>
+      </footer>
+      <p className="tour-hint" aria-hidden="true">Swipe, or use the arrow keys</p>
     </div>
   );
 }

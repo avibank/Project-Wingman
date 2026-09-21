@@ -144,6 +144,14 @@ const EDITABLE = ["body", "colour", "ring", "kind", "style", "hint", "anonymous"
    the SECONDS are the wall clock between two stamps this file writes, never a
    countdown the page sent. An unfinished run has no submitted_at and is not on
    the board. Somebody flying solo is on their own board and nobody else's. */
+/* A FIXTURE STUDENT HAS BEEN THROUGH THE WALKTHROUGH. It opens by itself for
+   anybody who has not, full screen, so without this every suite that loads the
+   Flight Deck would load the walkthrough instead. A uid starting "new" is a
+   brand-new student and gets it, which is how the walkthrough is walked. */
+const startingProgress = (uid) => (/^new/.test(String(uid || ""))
+  ? {}
+  : { "pw-tour": { at: "2026-09-01T00:00:00.000Z", how: "fixture" } });
+
 const RPC = {
   start_quiz_run: (s, b) => {
     if (!b.uid || !b.p_quiz || !(b.p_total > 0)) return null;
@@ -249,7 +257,7 @@ const RPC = {
     }
     return n;
   },
-  progress_for: (s, b) => (s.user_progress.find((r) => r.user_id === b.uid)?.data || {}),
+  progress_for: (s, b) => (s.user_progress.find((r) => r.user_id === b.uid)?.data || startingProgress(b.uid)),
   progress_clear: (s, b) => {
     const at = s.user_progress.findIndex((r) => r.user_id === b.uid);
     if (at >= 0) s.user_progress.splice(at, 1);
@@ -269,7 +277,7 @@ const RPC = {
     return null;
   },
   merge_progress: (s, b) => {
-    const row = s.user_progress.find((r) => r.user_id === b.uid) || { user_id: b.uid, data: {} };
+    const row = s.user_progress.find((r) => r.user_id === b.uid) || { user_id: b.uid, data: startingProgress(b.uid) };
     row.data = { ...row.data, ...b.patch };
     if (!s.user_progress.includes(row)) s.user_progress.push(row);
     return null;
@@ -321,6 +329,30 @@ const RPC = {
     Object.assign(row, {
       stamp_shape: b.p_shape,
       stamp_code: code,
+      stamp_rim: b.p_rim !== false,
+      stamp_ring: String(b.p_ring || "").toUpperCase().replace(/[^A-Z0-9 .'-]/g, "").slice(0, 10) || null,
+      stamp_pattern: b.p_pattern || "none",
+      stamp_ink: b.p_ink || null,
+      stamp_seed: 1 + Math.floor(Math.random() * 999998),
+      stamp_issued_at: new Date().toISOString(),
+    });
+    return row;
+  },
+
+  /* 0035 — the code and the stamp, issued together. The same refusals as the
+     SQL, worded the same way, because the creator tells "taken" apart by the
+     words: a three-character code, one issue, and nobody else's code. */
+  issue_licence: (s, b) => {
+    const want = String(b.p_code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!/^[A-Z0-9]{3}$/.test(want)) throw new Error("a licence needs a three-character code");
+    let row = s.pilot_profiles.find((p) => p.user_id === b.uid);
+    if (!row) { row = { user_id: b.uid }; s.pilot_profiles.push(row); }
+    if (row.stamp_issued_at) throw new Error("that stamp is already issued");
+    if (s.pilot_profiles.some((p) => p.code === want && p.user_id !== b.uid)) throw new Error("that code is taken");
+    Object.assign(row, {
+      code: want,
+      stamp_code: want,
+      stamp_shape: b.p_shape,
       stamp_rim: b.p_rim !== false,
       stamp_ring: String(b.p_ring || "").toUpperCase().replace(/[^A-Z0-9 .'-]/g, "").slice(0, 10) || null,
       stamp_pattern: b.p_pattern || "none",

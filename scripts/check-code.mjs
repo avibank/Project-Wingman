@@ -25,27 +25,29 @@ const ok = (name, cond, detail = "") => {
 console.log("\nthe alphabet");
 {
   ok("three characters", CODE_LENGTH === 3);
-  /* The whole reason this alphabet is not A-Z0-9. A code is read back off a
-     card, a slide or a photograph, and O/0 and I/1/L are the pairs that get
-     read back wrong. Dropping them costs 5 characters and buys the code its
-     one job. */
+  /* ANY LETTER, ANY DIGIT (owner, 2026-09-21). This used to assert that O, 0,
+     I, 1 and L were NOT in the alphabet, so a code read off a photograph could
+     not be misread. They were dropped as they were typed, and a student typing
+     "A10" watched two characters vanish and read the field as letters only.
+     The reading-back argument survives in the suggestions, below: nobody is
+     HANDED an ambiguous code, and anybody may CHOOSE one. */
   for (const c of "O0I1L") {
-    ok(`${c} is not in the alphabet`, !CODE_ALPHABET.includes(c));
+    ok(`${c} can be typed`, CODE_ALPHABET.includes(c));
   }
-  ok("everything else is", CODE_ALPHABET.length === 31, String(CODE_ALPHABET.length));
-  ok("which is 29,791 codes", CODE_SPACE === 29791, String(CODE_SPACE));
+  ok("all twenty-six letters and ten digits", CODE_ALPHABET.length === 36, String(CODE_ALPHABET.length));
+  ok("which is 46,656 codes", CODE_SPACE === 46656, String(CODE_SPACE));
   ok("uppercase only", CODE_ALPHABET === CODE_ALPHABET.toUpperCase());
 }
 
 console.log("\nreading what somebody typed");
 {
   ok("lowercase is lifted", normaliseCode("a7k") === "A7K");
+  ok("a mix of digits and letters is kept whole", normaliseCode("a10") === "A10");
   ok("punctuation and spaces are dropped, not refused", normaliseCode(" a-7 k ") === "A7K");
   ok("it never runs past three", normaliseCode("ABCDEF") === "ABC");
-  ok("confusables leave nothing behind", normaliseCode("O0IL1") === "");
-  ok("a short code is not a code", !isCode("A7") && !isCode("") && isCode("A7K"));
+  ok("a short code is not a code", !isCode("A7") && !isCode("") && isCode("A7K") && isCode("A10"));
   ok("and it can say which characters it refused",
-     refusedCharacters("A0O").join("") === "0O", refusedCharacters("A0O").join(""));
+     refusedCharacters("A#0").join("") === "#", refusedCharacters("A#0").join(""));
 }
 
 console.log("\nsuggestions");
@@ -53,6 +55,7 @@ console.log("\nsuggestions");
   const seen = new Set();
   for (let i = 0; i < 500; i++) seen.add(randomCode());
   ok("every suggestion is a valid code", [...seen].every(isCode));
+  ok("and none is one you could misread", [...seen].every((c) => !/[O0I1L]/.test(c)));
   ok("and they are not all the same one", seen.size > 400, `${seen.size} of 500`);
 }
 
@@ -61,8 +64,18 @@ console.log("\nuniqueness is the database's job, not the client's");
   const sql = read("supabase/migrations/0016_pilot_code.sql");
   ok("a unique index, so two people cannot hold one code",
      /create unique index if not exists pilot_profiles_code_key/.test(sql));
+  const sql35 = read("supabase/migrations/0035_the_code_is_the_stamp.sql");
   ok("the shape is a CHECK, with the same alphabet",
-     /check \(code is null or code ~ '\^\[23456789ABCDEFGHJKMNPQRSTUVWXYZ\]\{3\}\$'\)/.test(sql));
+     /check \(code is null or code ~ '\^\[A-Z0-9\]\{3\}\$'\)/.test(sql35));
+  /* 0035 — THE CODE IS THE STAMP. One statement claims the code and issues
+     the stamp around it, so the two can never differ, and after that the code
+     is as permanent as the stamp. */
+  ok("the code and the stamp are issued in one statement",
+     /create or replace function issue_licence/.test(sql35)
+     && /code = want,\s*\n\s*stamp_code = want/.test(sql35));
+  ok("and an issued code cannot be moved",
+     /p\.stamp_issued_at is not null\s*\n\s*and p\.code is distinct from want/.test(sql35)
+     && /or new\.code\s+is distinct from old\.code/.test(sql35));
   ok("the column is nullable, so accounts that predate it still work",
      !/add column if not exists code text not null/i.test(sql));
 
@@ -81,13 +94,18 @@ console.log("\nuniqueness is the database's job, not the client's");
 
 console.log("\nwhere it shows");
 {
-  const ff = read("src/components/FirstFlight.jsx");
-  ok("signup asks for one", /Your code/.test(ff) && /claimCode\(/.test(ff));
-  ok("and will not go on without a valid one", /disabled=\{busy \|\| !isCode\(code\)\}/.test(ff));
+  /* THE CREATOR ASKS FOR IT NOW, NOT SIGNUP. First Flight had a code field of
+     its own; the code is chosen in the stamp creator and issued with the stamp
+     (owner, 2026-09-21), so these four are the same four facts, where the code
+     now lives. */
+  const sc = read("src/components/licence/StampCreator.jsx");
+  ok("the stamp creator asks for one, and issues it with the stamp",
+     /Your code, three letters or numbers/.test(sc) && /issueLicence\(/.test(sc));
+  ok("and will not issue without a valid one", /if \(!isCode\(draft\.code\)\)/.test(sc));
   ok("a suggestion is waiting, so the required field starts satisfied",
-     /freeCode\(\)\.then/.test(ff));
-  ok("a code taken a second ago keeps you on the screen with another",
-     /has just been taken/.test(ff));
+     /freeCode\(\)\.then/.test(sc));
+  ok("a code taken a second ago keeps you in the creator with another",
+     /is already somebody's code/.test(sc) && /if \(taken\)/.test(sc));
 
   const profile = read("src/components/Profile.jsx");
   /* THE LICENCE NO LONGER SHOWS IT IN A BOX OF ITS OWN. This used to assert
@@ -117,8 +135,12 @@ console.log("\nwhere it shows");
     ok("and the placeholder is nowhere in the codebase", hits.length === 0, hits.join(", "));
   }
   ok("the creator is handed it", /<StampCreator userId=\{user\?\.id\} code=\{code\}/.test(profile));
-  ok("and opens on it", /code: cleanCode\(code\)/.test(read("src/components/licence/StampCreator.jsx")));
-  ok("an account from before this gets one on sight", /claimCode\(user\.id, await freeCode\(\)\)/.test(profile));
+  ok("and opens on it", /code: normaliseCode\(code\)/.test(sc));
+  /* This used to assert the opposite: an account without a code was handed a
+     random one the first time it opened the licence. Claimed then, a code
+     could differ from the stamp typed a minute later. It is claimed with the
+     stamp now, and nowhere else. */
+  ok("the licence no longer claims one on sight", !/claimCode\(/.test(profile));
 
   /* THE LESSON ROW DRAWS A STAMP NOW, NOT THE CODE. It used to put the three
      characters in a bordered box, the same three on every row — and §4 of the
