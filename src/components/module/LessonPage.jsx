@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../../lib/clerk.js";
 import { ChevronLeft, ChevronDown } from "lucide-react";
 import { nextAfterLesson, nextLabel, nextWhere } from "./nextUp.js";
 import { mmss } from "./lessonState.js";

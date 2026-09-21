@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronUp, ChevronDown, Flag, EyeOff, ShieldCheck, AlertTriangle } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { useIsAdmin } from "../lib/admin.js";
 import { displayNameFor, COLLAPSE_SCORE } from "../lib/social.js";
 import {

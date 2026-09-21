@@ -28,14 +28,29 @@ try { state = JSON.parse(window.sessionStorage.getItem(KEY) || "null"); } catch 
 /** True for the whole life of a page that booted into the demo. */
 export const demoMode = Boolean(state && state.me);
 
-/** { me, look, from, how, at } — who the demo is for, how their app looks, where they started, and whether it was their first. */
+/** { me, look, from, how, guest, at } — who the demo is for, how their app looks, where they started, whether it was their first, and whether they have an account. */
 export const demoState = state;
 
 /* Into the demo: remember who it is for and how their app looks, then reload
    so the whole app boots against the copy. */
-export function enterDemo({ me, look = {}, from = "/", how = "replay" }) {
-  try { window.sessionStorage.setItem(KEY, JSON.stringify({ me, look, from, how, at: Date.now() })); } catch { /* private mode */ }
+export function enterDemo({ me, look = {}, from = "/", how = "replay", guest = false }) {
+  try { window.sessionStorage.setItem(KEY, JSON.stringify({ me, look, from, how, guest, at: Date.now() })); } catch { /* private mode */ }
   window.location.assign("/");
+}
+
+/* A VISITOR WITH NO ACCOUNT gets the demo once, the first time they arrive
+   signed out (owner, 2026-09-21), as "You": a student who exists only in the
+   demo's copy of the database (src/lib/clerk.js). Remembered on the device,
+   and remembered on the way IN, so leaving early is an answer too and nobody
+   is sent round twice. Signed-in students only ever get it by asking. */
+export const GUEST_ID = "demo_you";
+const SEEN = "pw-walkthrough-seen";
+export const walkthroughSeen = () => {
+  try { return Boolean(window.localStorage.getItem(SEEN)); } catch { return true; }
+};
+export function enterGuestDemo() {
+  try { window.localStorage.setItem(SEEN, new Date().toISOString()); } catch { /* shown once per tab then */ }
+  enterDemo({ me: GUEST_ID, guest: true, how: "first", from: "/", look: { callsign: "you", name: "You" } });
 }
 
 /* Out of it: forget the copy and reload into the real account, at `to`. */

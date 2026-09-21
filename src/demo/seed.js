@@ -185,7 +185,6 @@ export function seed({ me, look = {} } = {}) {
 
   const signed = (min) => ({ rot: Math.round((((min * 7) % 12) - 6) * 10) / 10, at: ago(min) });
   const progress = {
-    "pw-tour": { at: new Date(now).toISOString(), how: "demo" },
     "pw-lesson-done": { "M1.01.1": true, "M1.01.2": true, "M1.01.3": true, "M1.02.1": true, "M2.02.1": true },
     "pw-signoff": {
       "M1.01.1": signed(60 * 24 * 9), "M1.01.2": signed(60 * 24 * 8), "M1.01.3": signed(60 * 24 * 8 - 30),

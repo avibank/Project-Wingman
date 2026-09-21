@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { reportContent } from "../lib/squadron.js";
 
 // One tap, and it carries the route and the state with it. The point is that

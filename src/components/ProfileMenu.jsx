@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
 import { useFlags } from "../lib/flags.js";
 import { FLY_SOLO_KEY } from "../lib/flySolo.js";

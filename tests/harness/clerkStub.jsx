@@ -18,7 +18,13 @@
 import React from "react";
 
 const q = new URLSearchParams(typeof location === "undefined" ? "" : location.search);
-const id = q.get("uid") || "student_one";
+/* WHO YOU ARE LASTS FOR THE TAB, as a real session does. An address that
+   says `?uid=` always wins; one that does not keeps the last answer, which
+   is what a reload the app makes itself needs (the demo leaving to
+   /signin?join=1 would otherwise sign a signed-out visitor in). */
+const remembered = (() => { try { return sessionStorage.getItem("harness-uid"); } catch { return null; } })();
+const id = q.get("uid") || remembered || "student_one";
+try { if (q.get("uid")) sessionStorage.setItem("harness-uid", q.get("uid")); } catch { /* storage refused */ }
 const staff = q.get("staff") === "1";
 
 const NAMES = {
@@ -41,6 +47,21 @@ const user = {
 };
 
 const signedOut = id === "none";
+
+/* THE WALKTHROUGH OPENS FOR A SIGNED-OUT FIRST VISIT (src/demo/mode.js), and
+   every fresh browser context is a first visit. So the harness counts it as
+   seen, or every suite that loads a signed-out page would load the demo
+   instead. `?walkthrough=1` is a first visit, which is how the demo itself is
+   walked. */
+const walking = (() => {
+  try {
+    if (q.has("walkthrough")) sessionStorage.setItem("harness-walkthrough", "1");
+    return sessionStorage.getItem("harness-walkthrough") === "1";
+  } catch { return q.has("walkthrough"); }
+})();
+if (!walking) {
+  try { if (!localStorage.getItem("pw-walkthrough-seen")) localStorage.setItem("pw-walkthrough-seen", "harness"); } catch { /* storage refused */ }
+}
 
 export const useUser = () => (signedOut
   ? { isSignedIn: false, isLoaded: true, user: null }

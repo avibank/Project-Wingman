@@ -9,7 +9,7 @@ import ThreadsPanel from "./ThreadsPanel.jsx";
 import { countAnnotations } from "../lib/notebook.js";
 import { countThreads } from "../lib/discussion.js";
 import { useUserProgress } from "../lib/userProgress.jsx";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { useSocialPrefs } from "../lib/social.js";
 import { fetchWingmen, recordStudyDay, recordCompletion, fetchSharedCompletions } from "../lib/partners.js";
 

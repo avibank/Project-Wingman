@@ -19,7 +19,7 @@
 
 import { demoMode } from "../demo/mode.js";
 import { useMemo } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "./clerk.js";
 import { loadJSON, saveJSON } from "./storage.js";
 
 export const FLAGS = [

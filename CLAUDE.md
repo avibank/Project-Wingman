@@ -459,9 +459,18 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   owner: walk the real site tab by tab, as a separate state with a class
   already in it, explaining what, why and how, plainly. 28 steps: the Flight
   Deck, a module (Lessons, Library, an exam, cards, Crew), the Ready Room,
-  the profile. It starts by itself for a signed-in student with no `pw-tour`,
-  on the Flight Deck only, and is replayed from the foot of the Licence (not
-  the menu).
+  the profile. It can always be left.
+  - **It opens by itself only for a visitor who is NOT signed in**, the first
+    time they reach the Flight Deck (`walkthroughSeen`, remembered on the
+    device on the way in). A signed-in student only gets it by asking:
+    Replay, at the foot of the Licence. A visitor is "You" inside it: every
+    Clerk hook comes through `src/lib/clerk.js`, which signs a demo guest in
+    as a student who exists only in the demo's database. Clerk's components
+    still come from Clerk.
+  - **Finishing it as a visitor goes to `/signin?join=1`** (Join is open), and
+    the note to open the licence waits in sessionStorage. **Anyone who signs
+    up** lands on the Licence with the stamp creator open: FirstFlightGate
+    leaves that note when it makes a new profile, and App listens for it.
   - **It is a separate state.** `enterDemo` sets a sessionStorage flag and
     reloads; the whole app then boots against an in-memory database seeded
     with a class (`seed.js`) and a course (`content.json`). Every request goes
@@ -469,14 +478,14 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     `supabaseClient.js`); `localStorage` is a copy in memory (`boot.js`,
     imported first in `main.jsx`); the live socket stays shut. Nothing in the
     demo can write to the real account, and the app underneath the guide is
-    not pressable. `pw-tour` is written and confirmed on the server BEFORE the
-    reload, or the demo would start again every visit.
+    not pressable.
   - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
-  - **Walked and measured**: every step lights its target at 1440 and 390, the
-    card never leaves the window, and "Create my licence" lands on the real
-    Licence with the creator open.
+  - **Walked and measured**: every step lights its target at 1440 and 390, as
+    a visitor and as a student, and the card never leaves the window. In the
+    harness the walkthrough counts as seen unless `?walkthrough=1`, and the
+    identity from `?uid=` lasts for the tab, as a real session does.
 - **It ends at the licence.** Finishing it, or leaving a first run, takes a
   student with no stamp to `/account/licence` with the stamp creator open
   (`lib/licenceAsk.js`, which survives the reload out of the demo).

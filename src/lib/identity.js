@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "./clerk.js";
 
 export function useDisplayName() {
   const { user } = useUser();

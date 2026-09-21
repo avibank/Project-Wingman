@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { fetchMessages, sendMessage } from "../lib/comms.js";
 import { groupMessages } from "../lib/commsGrouping.js";
 import { splitQuestions, answeredStrip, composerPlaceholder, SQUAWK, SQUAWK_LABEL } from "../lib/questions.js";

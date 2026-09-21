@@ -67,8 +67,13 @@ const clerkLook = {
   },
 };
 
+/* The demo's last button sends a visitor here to join, as /signin?join=1. */
+const startsOnJoin = () => {
+  try { return new URLSearchParams(window.location.search).has("join"); } catch { return false; }
+};
+
 export default function AuthPage() {
-  const [mode, setMode] = useState("signin");
+  const [mode, setMode] = useState(() => (startsOnJoin() ? "signup" : "signin"));
   const signin = mode === "signin";
   return (
     <div className="auth">

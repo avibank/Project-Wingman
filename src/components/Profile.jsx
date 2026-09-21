@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import { useUser, useClerk } from "../lib/clerk.js";
 import LicenceCard from "./licence/LicenceCard.jsx";
 import CoverPicker from "./licence/CoverPicker.jsx";
 import PhrasePicker from "./licence/PhrasePicker.jsx";
