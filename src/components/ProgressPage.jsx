@@ -44,7 +44,7 @@ function ProgressPage({ onBack }) {
   useEffect(() => {
     if (content) return undefined;
     let live = true;
-    loadTestContent().then((c) => { if (live) setContent(c); });
+    loadTestContent().then((c) => { if (live) setContent(c); }).catch(() => {});
     return () => { live = false; };
   }, [content]);
   const chapters = allModules(content).flatMap((m) => chaptersFor(m.code, content));

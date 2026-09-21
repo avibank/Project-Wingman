@@ -19,6 +19,7 @@
 import { MODULES, chaptersForModule } from "../../data.js";
 import { loadContent } from "../../lib/contentLoader.js";
 import { demoMode } from "../../demo/mode.js";
+import { reloadOnce } from "../../lib/recover.js";
 
 let cache = null;
 let pending = null;
@@ -27,11 +28,28 @@ export function testContentSync() {
   return cache;
 }
 
+/* A FAILED DOWNLOAD IS TRIED AGAIN. It used to be kept: `pending` held the
+   rejected promise for the rest of the visit, so one dropped request left
+   every screen on its "goes in here" line until a reload (measured on the
+   owner's phone, 2026-09-21). Three tries a few seconds apart, then one
+   reload (src/lib/recover.js), because a browser may remember a failed
+   module and refuse it again without asking the network. */
+const importCourse = () => (demoMode ? import("../../demo/content.json") : import("../../content/test-content.json"));
+const wait = (ms) => new Promise((r) => { setTimeout(r, ms); });
+async function fetchCourse() {
+  for (let n = 0; ; n++) {
+    try { return await importCourse(); } catch (err) {
+      if (n >= 2) { reloadOnce(); throw err; }
+      await wait(1500 * (n + 1));
+    }
+  }
+}
 export function loadTestContent() {
   if (cache) return Promise.resolve(cache);
   /* The demo's course, in the demo, and never anywhere else. */
-  pending ||= (demoMode ? import("../../demo/content.json") : import("../../content/test-content.json"))
-    .then((m) => { cache = loadContent(m.default); return cache; });
+  pending ||= fetchCourse()
+    .then((m) => { cache = loadContent(m.default); return cache; })
+    .catch((err) => { pending = null; throw err; });
   return pending;
 }
 

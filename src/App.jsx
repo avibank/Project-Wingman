@@ -696,7 +696,9 @@ function AppInner() {
   useEffect(() => {
     if (!flags["content.test"]) { setTestContent(null); return; }
     let live = true;
-    loadTestContent().then((c) => { if (live) setTestContent(c); });
+    /* A failure here has already been retried and, if it can be, answered
+       with a reload (moduleContent.js); the screens keep data.js meanwhile. */
+    loadTestContent().then((c) => { if (live) setTestContent(c); }).catch(() => {});
     return () => { live = false; };
   }, [flags]);
   const useTestContent = testContent;

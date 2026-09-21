@@ -762,6 +762,27 @@ things that are not navigations.
   software and the dev build of React does several times the work, and both
   once made a smooth transition measure at 200ms a frame.
 
+## When a download fails
+
+`src/lib/recover.js`, installed first thing in `main.jsx`. The owner opened
+the live site on a phone and got a half-styled Flight Deck — Safari's own grey
+buttons, nothing laid out — and the course's "goes in here" placeholder: the
+stylesheet and the course document had both failed on that visit, and nothing
+could recover without a manual reload. Screens already could: `chunk()` in
+App.jsx reloads once when a lazy screen fails.
+
+- **A failed stylesheet is not a null `sheet`.** Chromium and WebKit both hand
+  back a sheet whose rules throw SecurityError, as if it were another site's.
+  So our own stylesheet with unreadable or no rules is a failed one; it is
+  fetched again twice with a cache-busting query, then the page reloads once.
+- **The course document retries** (`loadTestContent`): three tries, then one
+  reload. It used to keep the rejected promise for the whole visit.
+- **One reload per 30 seconds per tab**, never a loop.
+- `npm run test:recover` (production harness; `RECOVER_BROWSER=webkit` for
+  Safari's engine) fails each download on purpose, and first checks that a
+  healthy page fetches once and never reloads — the failure that would cost
+  the most if the detection were wrong.
+
 ## Status
 
 `npm run build` succeeds. Nothing in this codebase has been verified against the live
