@@ -136,6 +136,16 @@ export function seed({ me, look = {} } = {}) {
       "The question gives a radius of 2 m and I worked it out with 4 m. Posting it so nobody else does the same."),
     thread("DT4", "demo_hamad", daysAgo(3, 10, 5), "Quickest way to learn the powers of 2?",
       "I can do them slowly, but not under the exam clock."),
+    /* Two on the lesson you are in the middle of, at a second of it: the
+       right seat's comment and your own question. They are what fills the
+       lesson's logbook and its Comments, and they are older than DT1 so the
+       question board still opens on the one with answers. */
+    { ...thread("DT5", "demo_sara", ago(300), "Subtract, or add?",
+      "Both equations have +y here, so taking one from the other removes y. With a −y in one of them you would add instead."),
+      lesson_id: "M1.02.2", t: 188 },
+    { ...thread("DT6", me, ago(290), "Is checking one equation enough?",
+      "I got x = 3 and y = 1. Do I need to put them back into both equations, or is one enough?"),
+      lesson_id: "M1.02.2", t: 276 },
   ];
   const reply = (id, tid, who, at, body, parent = null) => ({ id, thread_id: tid, author_id: who, created_at: at, parent_id: parent, body });
   const lesson_replies = [
@@ -145,6 +155,7 @@ export function seed({ me, look = {} } = {}) {
     reply("DT2.R1", "DT2", "demo_mariam", ago(140), "Cut an equilateral triangle in half. The side opposite the 30° angle is half the hypotenuse, so the ratio is exactly one half."),
     reply("DT3.R1", "DT3", "demo_omar", daysAgo(1, 17, 2), "Easy one to miss under the clock. I underline the word radius now."),
     reply("DT3.R2", "DT3", "demo_haya", daysAgo(1, 18, 40), "Did the same thing in the Physics exam. Thanks for posting it."),
+    reply("DT6.R1", "DT6", "demo_mariam", ago(270), "Both. Plenty of pairs fit one equation on its own; only the right one fits both."),
   ];
   const thread_votes = [
     { thread_id: "DT1", user_id: "demo_yousef", dir: 1, created_at: ago(90) },
@@ -190,7 +201,15 @@ export function seed({ me, look = {} } = {}) {
       "M1.01.1": signed(60 * 24 * 9), "M1.01.2": signed(60 * 24 * 8), "M1.01.3": signed(60 * 24 * 8 - 30),
       "M1.02.1": signed(60 * 24 * 2), "M2.02.1": signed(60 * 24 * 4),
     },
-    "pw-lesson-pos": { "M1.02.2": 310 },
+    "pw-lesson-pos": { "M1.02.2": { pct: 0.82 } },
+    /* Your own notes on that lesson, private, at the second you wrote them.
+       Marked as already seeded, or session.jsx's first-run seeding writes the
+       course document's notes (none) over them. */
+    "pw-lesson-seeded": true,
+    "pw-notes": [
+      { id: "DN1", lessonId: "M1.02.2", t: 64, body: "Two unknowns need two equations.", authorId: me, createdAt: ago(40) },
+      { id: "DN2", lessonId: "M1.02.2", t: 231, body: "Elimination: make one letter match in both, then add or subtract to remove it.", authorId: me, createdAt: ago(35) },
+    ],
     "pw-quiz-scores": {
       "M1.01": { correct: 5, total: 5 }, "M1.02": { correct: 4, total: 5 }, "M1.03": { correct: 2, total: 4 },
       "M2.02": { correct: 5, total: 5 }, "M2.01": { correct: 3, total: 3 },
@@ -198,7 +217,7 @@ export function seed({ me, look = {} } = {}) {
     "pw-minimums": 85,
     "pw-hobbs": { M1: 15120, M2: 3900 },
     "pw-days": { n: 12, last: today },
-    "pw-last-place": [{ kind: "lesson", moduleCode: "M1", chapterId: "M1.02", lessonId: "M1.02.2", pct: 0.41 }],
+    "pw-last-place": [{ kind: "lesson", moduleCode: "M1", chapterId: "M1.02", lessonId: "M1.02.2", pct: 0.82 }],
     ...(look.progress || {}),
   };
 

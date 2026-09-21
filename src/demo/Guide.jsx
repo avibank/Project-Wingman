@@ -16,44 +16,63 @@
    (1 - e^(-dt/τ)), which follows a scroll as smoothly as it glides between
    targets, with nothing to restart. Between screens the hole closes to the
    centre like an iris, and opens again on the next target when it arrives.
-   The card is placed only once the light has settled, so it never jitters,
-   and it glides there by transform.
+
+   THE CARD DOES NOT MOVE. It used to follow the light, placed beside each
+   target once the light had settled and gliding there by transform, and the
+   owner's word for it was that it "lags around": every step, the thing you
+   are reading set off across the screen a beat after you pressed Next. So it
+   is docked, at the foot of the window (or as a sheet on a phone), and the
+   page is scrolled so the target sits clear of it. Only when a target cannot
+   be scrolled clear, because the screen does not scroll there (the Ready
+   Room's composer is fixed to the bottom of the window), does the card move
+   to the top instead, and then it fades across rather than travelling.
 
    The app underneath is the real one with the demo's class in it, and it is
    not pressable while the tutorial is up. Swipe the card, use the arrows,
    or press Next. It can always be skipped.
    Smooth Air and prefers-reduced-motion: the light jumps, nothing eases.
    ========================================================================= */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { STEPS } from "./steps.js";
 import "./guide.css";
 
 const PAD = 8;           // how far the light spills past its target
 const TAU = 120;         // ms: the easing time constant of the light
 const TAU_CLOSE = 55;    // ms: closing for a screen change, faster, so it is shut before the screen swaps
-const SWEEP_MS = 1800;   // a sweep step's dwell on each target
+const GAP = 16;          // the docked card's distance from the window's edge
+const CARD_W = 600;      // the docked card's width on a wide screen
+const TOP_CLEAR = 84;    // below the app bar: the highest a target is scrolled to
 const still = () =>
   Boolean(document.querySelector(".app.smooth-air"))
   || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const phone = () => window.innerWidth < 700;
 
+/* A target is an element, or a few that are lit as one (a function in a step
+   may return an array: the player's three buttons, say). */
+const rectOf = (t) => {
+  if (!Array.isArray(t)) return t.getBoundingClientRect();
+  const rs = t.map((e) => e.getBoundingClientRect());
+  const left = Math.min(...rs.map((r) => r.left));
+  const top = Math.min(...rs.map((r) => r.top));
+  return { left, top, width: Math.max(...rs.map((r) => r.right)) - left, height: Math.max(...rs.map((r) => r.bottom)) - top };
+};
+const connected = (t) => (Array.isArray(t) ? t.every((e) => e.isConnected) : t.isConnected);
+/* The first thing on the list that is on the page and has a size. Every match
+   of a selector is tried, not just the first: a closed chapter's rows are in
+   the page at no height, ahead of the open one's. */
+const sized = (t) => {
+  if (!t || (Array.isArray(t) && (!t.length || t.some((e) => !e)))) return false;
+  const r = rectOf(t);
+  return r.width > 4 && r.height > 4;
+};
 const pick = (list = []) => {
   for (const f of list) {
-    const el = typeof f === "function" ? f() : document.querySelector(f);
-    if (el) {
-      const r = el.getBoundingClientRect();
-      if (r.width > 4 && r.height > 4) return el;
-    }
+    const el = typeof f === "function" ? f() : [...document.querySelectorAll(f)].find(sized);
+    if (sized(el)) return el;
   }
   return null;
 };
 const padded = (r) => ({ x: r.left - PAD, y: r.top - PAD, w: r.width + PAD * 2, h: r.height + PAD * 2 });
-const union = (els) => {
-  const rs = els.map((e) => e.getBoundingClientRect());
-  const x = Math.min(...rs.map((r) => r.left));
-  const y = Math.min(...rs.map((r) => r.top));
-  return { left: x, top: y, width: Math.max(...rs.map((r) => r.right)) - x, height: Math.max(...rs.map((r) => r.bottom)) - y };
-};
 function scroller(el) {
   for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
     const s = getComputedStyle(n).overflowY;
@@ -61,16 +80,45 @@ function scroller(el) {
   }
   return null;
 }
-/* Into view, and clear of the card: centred on a wide screen, centred in the
-   part above the sheet on a phone. */
-function bringIntoView(el, sheetH) {
-  const r = el.getBoundingClientRect();
+/* Where the docked card sits, as a rect, for a card `h` tall. */
+function dockRect(side, h) {
+  const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const room = phone() ? vh - sheetH - 16 : vh;
-  const want = Math.max(72, (room - r.height) / 2);
-  const delta = r.top - want;
-  if (Math.abs(delta) < 24) return;
-  const box = scroller(el);
+  const m = phone() ? 0 : GAP;
+  const w = phone() ? vw : Math.min(CARD_W, vw - 32);
+  return { x: (vw - w) / 2, y: side === "top" ? m : vh - m - h, w, h };
+}
+const overlap = (a, b) =>
+  Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x))
+  * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+/* How to show `el` beside a card `h` tall: which edge the card docks on, and
+   how far to scroll. The foot of the window, with the target centred in the
+   room above the card, whenever the page can scroll it there; the top when
+   it cannot; and whichever covers less of it when neither is clear. */
+function plan(el, h) {
+  const r = rectOf(el);
+  const vh = window.innerHeight;
+  const box = scroller(Array.isArray(el) ? el[0] : el);
+  const cur = box ? box.scrollTop : window.scrollY;
+  const max = box ? box.scrollHeight - box.clientHeight : document.documentElement.scrollHeight - vh;
+  const option = (side) => {
+    const band = dockRect(side, h);
+    const lo = side === "top" ? band.y + band.h + 20 : TOP_CLEAR;
+    const hi = side === "top" ? vh - 20 : band.y - 20;
+    const want = lo + Math.max(0, (hi - lo - r.height) / 2);
+    let delta = Math.max(-cur, Math.min(max - cur, r.top - want));
+    if (Math.abs(delta) < 24) delta = 0;
+    const lit = padded({ left: r.left, top: r.top - delta, width: r.width, height: r.height });
+    return { side, delta, covered: overlap(lit, band) };
+  };
+  const bottom = option("bottom");
+  if (!bottom.covered) return bottom;
+  const top = option("top");
+  return top.covered < bottom.covered ? top : bottom;
+}
+function scrollBy(el, delta) {
+  if (!delta) return;
+  const box = scroller(Array.isArray(el) ? el[0] : el);
   const behavior = still() ? "auto" : "smooth";
   if (box) box.scrollBy({ top: delta, behavior });
   else window.scrollBy({ top: delta, behavior });
@@ -79,7 +127,9 @@ function bringIntoView(el, sheetH) {
 export default function Guide({ go, warm, onLeave, hasStamp = false, guest = false }) {
   const [i, setI] = useState(0);
   const [dir, setDir] = useState(1);
-  const [cardAt, setCardAt] = useState(null);
+  const [dock, setDock] = useState("bottom");
+  const [away, setAway] = useState(false);
+  const [, setWidth] = useState(0);
   const step = STEPS[i];
   const last = i === STEPS.length - 1;
 
@@ -87,9 +137,9 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
   const ring = useRef(null);
   const card = useRef(null);
   const target = useRef(null);     // element being lit, or null
-  const sweepEls = useRef(null);   // a sweep step's elements, for placing the card
   const hole = useRef(null);       // where the hole is now
-  const settledAt = useRef(null);  // the rect the card was last placed against
+  const docked = useRef("bottom"); // the edge the card is on, or going to
+  const swap = useRef(0);
   const drag = useRef(null);
 
   /* EVERY SCREEN IT WILL VISIT IS LOADED WHILE THE FIRST STEP IS READ, so a
@@ -108,24 +158,23 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
     return () => app?.removeAttribute("data-demo");
   }, []);
 
-  /* Where the card goes against a lit rect (null: the middle of the screen). */
-  const place = useCallback((r) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const cw = card.current?.offsetWidth || 360;
-    const ch = card.current?.offsetHeight || 220;
-    if (phone()) return { x: 0, y: vh - ch };
-    if (!r) return { x: (vw - cw) / 2, y: (vh - ch) / 2 };
-    const gap = 20;
-    const clampX = (x) => Math.min(vw - cw - 16, Math.max(16, x));
-    const clampY = (y) => Math.min(vh - ch - 16, Math.max(16, y));
-    const midX = clampX(r.x + r.w / 2 - cw / 2);
-    const midY = clampY(r.y + r.h / 2 - ch / 2);
-    if (vh - (r.y + r.h) - gap >= ch + 16) return { x: midX, y: r.y + r.h + gap };
-    if (r.y - gap >= ch + 16) return { x: midX, y: r.y - gap - ch };
-    if (vw - (r.x + r.w) - gap >= cw + 16) return { x: r.x + r.w + gap, y: midY };
-    if (r.x - gap >= cw + 16) return { x: r.x - gap - cw, y: midY };
-    return { x: vw - cw - 24, y: vh - ch - 24 };
+  /* The card changes edge by fading out, and in again on the other side. It
+     never travels across the screen. */
+  const dockTo = useCallback((side) => {
+    if (docked.current === side) return;
+    docked.current = side;
+    clearTimeout(swap.current);
+    if (still()) { setDock(side); return; }
+    setAway(true);
+    swap.current = setTimeout(() => { setDock(side); setAway(false); }, 170);
+  }, []);
+  useEffect(() => () => clearTimeout(swap.current), []);
+
+  /* A phone turned on its side is a different screen: the sheet or the card. */
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   /* ---------------------------------------------------- the light's loop */
@@ -165,7 +214,7 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
       const dt = Math.min(64, now - prev);
       prev = now;
       const el = target.current;
-      const goal = el && el.isConnected ? padded(el.getBoundingClientRect()) : closed();
+      const goal = el && connected(el) ? padded(rectOf(el)) : closed();
       const k = still() ? 1 : 1 - Math.exp(-dt / (el ? TAU : TAU_CLOSE));
       const h = hole.current;
       h.x += (goal.x - h.x) * k;
@@ -173,33 +222,18 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
       h.w += (goal.w - h.w) * k;
       h.h += (goal.h - h.h) * k;
       paint(h);
-      /* The card is placed once the light has arrived, and again only if the
-         target itself has moved on (a scroll, a resize). */
-      const arrived = Math.abs(goal.x - h.x) + Math.abs(goal.y - h.y) + Math.abs(goal.w - h.w) + Math.abs(goal.h - h.h) < 2;
-      if (arrived && el) {
-        const basis = sweepEls.current?.length ? padded(union(sweepEls.current)) : goal;
-        const was = settledAt.current;
-        if (!was || Math.abs(was.x - basis.x) + Math.abs(was.y - basis.y) + Math.abs(was.w - basis.w) + Math.abs(was.h - basis.h) > 6) {
-          settledAt.current = basis;
-          setCardAt(place(basis));
-        }
-      }
       raf = requestAnimationFrame(tick);
     };
-    const onResize = () => { settledAt.current = null; };
-    window.addEventListener("resize", onResize);
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
-  }, [place]);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   /* ----------------------------------------------------- going to a step */
   useEffect(() => {
     let live = true;
     let timer = 0;
-    let sweepTimer = 0;
+    let check = 0;
     target.current = null;          // the hole closes towards the middle
-    sweepEls.current = null;
-    settledAt.current = null;
     /* A NEW SCREEN IS SHOWN ONLY ONCE THE LIGHT HAS CLOSED. Rendering a
        screen is the one thing here that can hold a frame, and done under a
        closed iris nothing is moving to stutter; the light opens when the
@@ -210,40 +244,39 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
     let acted = false;
     let tries = 0;
     const onScreen = () => !step.where || window.location.pathname === step.where;
+    const cardH = () => card.current?.offsetHeight || 220;
+    /* Once any scroll has finished: if the page could not put the target
+       where the plan said (it grew, or a column opened), the card takes the
+       other edge rather than sit on what it is describing. */
+    const settle = (el) => {
+      if (!live || !connected(el)) return;
+      const lit = padded(rectOf(el));
+      const here = docked.current;
+      const there = here === "top" ? "bottom" : "top";
+      if (overlap(lit, dockRect(here, cardH())) > overlap(lit, dockRect(there, cardH()))) dockTo(there);
+    };
     const hunt = () => {
       if (!live) return;
       if (!onScreen()) { if (++tries < 60) timer = setTimeout(hunt, 80); return; }
       if (step.act && !acted) { acted = true; step.act(); timer = setTimeout(hunt, 320); return; }
-      if (step.sweep) {
-        const els = step.sweep.map((s) => pick([s])).filter(Boolean);
-        if (els.length) {
-          sweepEls.current = els;
-          bringIntoView(els[0].parentElement || els[0], card.current?.offsetHeight || 0);
-          let k = 0;
-          target.current = els[0];
-          const on = () => { if (!live) return; k = (k + 1) % els.length; target.current = els[k]; sweepTimer = setTimeout(on, SWEEP_MS); };
-          sweepTimer = setTimeout(on, SWEEP_MS);
-          return;
-        }
-      } else if (step.find) {
-        const el = pick(step.find);
-        if (el) { bringIntoView(el, card.current?.offsetHeight || 0); target.current = el; return; }
-      } else {
-        return;                     // a step with nothing to light: the whole screen dims
+      if (!step.find) { dockTo("bottom"); return; }   // nothing to light: the whole screen dims
+      const el = pick(step.find);
+      if (el) {
+        const p = plan(el, cardH());
+        dockTo(p.side);
+        scrollBy(el, p.delta);
+        target.current = el;
+        check = setTimeout(() => settle(el), p.delta ? 700 : 120);
+        return;
       }
-      if (++tries > 50) { setCardAt(place(null)); return; }   // never a light on nothing
+      if (++tries > 50) { dockTo("bottom"); return; }  // never a light on nothing
       timer = setTimeout(hunt, 80);
     };
     /* Pressing something (opening a chat) renders too, so it waits for the
        closed light as a screen change does. */
     timer = setTimeout(hunt, moving || step.act ? 320 : 40);
-    return () => { live = false; clearTimeout(timer); clearTimeout(sweepTimer); clearTimeout(navTimer); };
-  }, [i]);   // eslint-disable-line react-hooks/exhaustive-deps
-
-  /* A step with no target has its card in the middle straight away. */
-  useLayoutEffect(() => {
-    if (!step.find && !step.sweep) setCardAt(place(null));
-  }, [i, place, step.find, step.sweep]);
+    return () => { live = false; clearTimeout(timer); clearTimeout(check); clearTimeout(navTimer); };
+  }, [i]);
 
   /* --------------------------------------------------------------- moving */
   const next = useCallback(() => {
@@ -299,8 +332,11 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
     else if ((far || flick) && d.dx > 0) back();
   };
 
-  const at = cardAt || { x: (window.innerWidth - 360) / 2, y: window.innerHeight };
   const finish = guest ? "Create my account" : hasStamp ? "Done" : "Create my licence";
+  /* Where you are: the page, and how far through it. A dot a step stopped
+     fitting once every page had its own steps. */
+  const ofPage = STEPS.filter((s) => s.section === step.section).length;
+  const onPage = STEPS.slice(0, i + 1).filter((s) => s.section === step.section).length;
 
   return (
     <div className="dg" role="dialog" aria-modal="true" aria-label="A tour of Wingman">
@@ -309,11 +345,14 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
       ))}
       <div className="dg-ring" ref={ring} aria-hidden="true" />
 
-      <div ref={card} className={`dg-card${phone() ? " is-sheet" : ""}`}
-           style={{ transform: `translate3d(calc(${Math.round(at.x)}px + var(--drag, 0px)),${Math.round(at.y)}px,0)` }}
+      <div ref={card} className={`dg-card${phone() ? " is-sheet" : ""}${away ? " is-away" : ""}`} data-dock={dock}
            onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+        <div className="dg-bar" aria-hidden="true"><i style={{ transform: `scaleX(${(i + 1) / STEPS.length})` }} /></div>
         <div className="dg-top">
-          <span className="dg-kicker">{step.section}</span>
+          <span className="dg-kicker">
+            {step.section}
+            {ofPage > 1 && <span className="dg-count">{onPage} of {ofPage}</span>}
+          </span>
           <button type="button" className="dg-skip is-inline" onClick={() => onLeave?.("leave")}>Skip</button>
         </div>
 
@@ -325,9 +364,7 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
 
         <div className="dg-acts">
           <button type="button" className="dg-back is-inline" onClick={back} disabled={i === 0}>Back</button>
-          <div className="dg-dots" aria-hidden="true">
-            {STEPS.map((s, k) => <i key={k} className={k === i ? "on" : k < i ? "was" : undefined} />)}
-          </div>
+          <span />
           <button type="button" className="dg-next" onClick={next}>{last ? finish : "Next"}</button>
         </div>
       </div>
