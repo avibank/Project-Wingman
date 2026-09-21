@@ -58,13 +58,6 @@ export async function freeCode() {
 }
 
 // ---------------------------------------------------------------- squadron
-export async function assignSquadron(userId, moduleCode, studyTime) {
-  if (!userId || !moduleCode) return null;
-  const { data, error } = await supabase.rpc("assign_squadron", { uid: userId, mod: moduleCode, stime: studyTime || null });
-  if (error) return fail(error, null);
-  return data;
-}
-
 export async function fetchSquadron(userId, moduleCode) {
   // Fly solo is symmetric: you see nobody. Gated here rather than in each
   // component, so no caller can forget and leak.
@@ -141,27 +134,6 @@ export async function fetchModuleProgress(userIds = [], moduleCode, totalChapter
   return Object.fromEntries(
     ids.map((id) => [id, Math.round(((seen[id]?.size || 0) / totalChapters) * 100)])
   );
-}
-
-// §7.1 screen 1 shows real pilots who are already flying. If there are none
-// yet, it returns an empty list and the screen says what to do next -- it never
-// backfills. §1, non-negotiable 3.
-export async function fetchRecentPilots(userId, limit = 8) {
-  // Fly solo is symmetric: you see nobody. Gated here rather than in each
-  // component, so no caller can forget and leak.
-  if (isFlySolo()) return [];
-  const { data, error } = await supabase
-    .from("pilot_profiles")
-    .select("user_id, callsign, is_staff, study_time, created_at")
-    .eq("invisible", false)
-    .order("created_at", { ascending: false })
-    .limit(limit + 1);
-  if (error) return fail(error, []);
-  const blocked = userId ? await fetchBlocks(userId) : [];
-  return (data || [])
-    .filter((p) => p.user_id !== userId && !blocked.includes(p.user_id))
-    .slice(0, limit)
-    .map((p) => ({ ...p, joined_at: p.created_at }));
 }
 
 // §7.1 — a Forming squadron shows real members at full size and renders the

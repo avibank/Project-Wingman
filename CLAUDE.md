@@ -431,6 +431,38 @@ question feeds, and the right seat is one person and state that expires.
   livery × night/day × 1920/1512/1024/430, and every control the brief lists:
   `npm run test:rr`.
 
+## Signing in, and First Flight
+
+Rebuilt on 2026-09-21 at the owner's word: "no more of the old sign up with
+livery and study time".
+
+- **The login is one centred column**: the wordmark line, Clerk's card, and a
+  line under it to cross between signing in and joining (`AuthPage.jsx`).
+  **The title is Clerk's own header**, reworded in `lib/clerkWords.js`, because
+  that header changes at every step ("Check your email") and a title of ours
+  could not.
+- **Clerk's main button is styled through `elements`, never `colorPrimary`.**
+  Clerk derives shades from `colorPrimary`, and given `var(--accent)` it
+  painted the live Continue button transparent (measured). Variables that are
+  used as they are, backgrounds and text, take the tokens safely.
+- **First Flight is one screen: callsign and code.** The squadron of tails in
+  the retired livery, the module picker (which would read "0 chapters" on the
+  empty skeleton) and "When do you usually study?" are gone. So is the
+  placement by study time they fed, because the Ready Room has discovery. The
+  callsign is written to Clerk as the username too, since FirstFlightGate
+  already heals one from the other. The tour on the Flight Deck does the rest.
+- **FirstFlightGate is outside UsernameGate now**, so a new student meets one
+  screen, not two asking for the same name. The username gate is for an
+  older account that has a profile and no username, and it wears First
+  Flight's look.
+- **Both gates reveal the app inside a transition**, and the username gate
+  stays up while its save is in flight. The app's screens are lazy. Revealed
+  by an urgent render, which is React's own flush at the end of the
+  submitting click, the first one suspends with no boundary above it and the
+  error screen replaces everything. That was measured in the harness, whose
+  Clerk writes the username at once. `?username=none` on the harness is a
+  student with no username yet.
+
 ## The Flight Deck's instrument strip
 
 Four instruments in one row — gyro, flight bag, hour meter, radar — inside

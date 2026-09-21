@@ -1,0 +1,60 @@
+/* First Flight and the username gate: one centred column, on the app's own
+   tokens. Both screens draw with these classes so a student never meets two
+   looks on the way in. */
+.ff {
+  min-height: 100dvh; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 22px 64px;
+}
+.ff-col { width: 100%; max-width: 440px; }
+@media (prefers-reduced-motion: no-preference) {
+  .app:not(.smooth-air) .ff-col { animation: ff-in 420ms cubic-bezier(.22,1,.36,1) both; }
+}
+@keyframes ff-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.ff-eyebrow {
+  margin: 0 0 10px; font: 500 12px/1 var(--font-mono); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--t3);
+}
+.ff-title {
+  margin: 0 0 8px; font: 600 clamp(24px, 5vw, 30px)/1.15 var(--font-ui);
+  letter-spacing: -.01em; color: var(--t1);
+}
+.ff-sub { margin: 0 0 26px; font-size: 15px; line-height: 1.55; color: var(--t2); max-width: 46ch; }
+
+.ff-l { display: block; margin: 0 0 6px; font-size: 14px; font-weight: 500; color: var(--t2); }
+.ff-h { margin: -2px 0 10px; font-size: 14px; line-height: 1.5; color: var(--t3); max-width: 46ch; }
+.ff-in {
+  display: block; width: 100%; box-sizing: border-box; margin: 0 0 22px; padding: 12px 15px;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 12px;
+  color: var(--t1); font: 16px var(--font-ui);
+}
+/* The code is typed in the face it will be read in: monospaced, spaced out,
+   upper case. Three characters in a field the width of a sentence would look
+   like a field somebody forgot to finish. */
+.ff-code {
+  display: block; width: 6.5ch; margin: 0 0 8px; padding: 10px 0; text-align: center;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 12px;
+  color: var(--t1); font: 26px var(--font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.ff-in:focus, .ff-code:focus { outline: 2px solid var(--active); outline-offset: 1px; }
+.ff-in[aria-invalid="true"] { border-color: var(--active); }
+.ff-note { margin: -14px 0 18px; font-size: 14px; line-height: 1.45; color: var(--t1); }
+.ff-code + .ff-note { margin: 0 0 12px; }
+
+.ff-go {
+  display: block; width: 100%; min-height: 48px; margin-top: 22px;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--active-fill); color: var(--ground);
+  font: 600 16px var(--font-ui);
+  transition: transform .18s cubic-bezier(.22,1,.36,1), filter .18s;
+}
+.ff-go:hover { filter: brightness(1.06); }
+.ff-go:active { transform: scale(.98); }
+.ff-go:disabled { background: var(--raised); color: var(--t3); cursor: default; filter: none; transform: none; }
+.ff-after { margin: 12px 0 0; font-size: 13px; color: var(--t3); text-align: center; }
+
+/* Manual finish: the primary action is outlined there, as it is on the deck. */
+.app[data-paper="1"] .ff-go:not(:disabled) {
+  background: transparent; color: var(--active); border: 1.5px solid var(--active); border-radius: 2px;
+}
