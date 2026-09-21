@@ -992,15 +992,16 @@ function AppInner() {
      THE WALKTHROUGH IS THE DEMO: the real screens, tab by tab, with a class
      already in them, as a separate state of the app (src/demo/mode.js).
 
-     IT OPENS BY ITSELF FOR A VISITOR WHO IS NOT SIGNED IN, the first time
-     they arrive, and for nobody else (owner, 2026-09-21). On ANY page, not
+     IT OPENS BY ITSELF FOR A VISITOR WHO IS NOT SIGNED IN, whenever they
+     arrive, and for nobody else (owner, 2026-09-21). On ANY page, not
      only the Flight Deck: it used to wait for `/`, so a visitor who arrived
      on a module link, or signed out on the Licence, never saw it (measured
      on the live site). Three places are left alone, because the visitor came
      for something specific: signing in, an invite link, and Clerk's account
-     screens. The device remembers it, on the way in, so leaving early is an
-     answer too. A signed-in student only ever gets it by asking: Replay, at
-     the foot of the Licence. It can always be left. */
+     screens. Finishing or skipping it keeps it away for the rest of the
+     visit (walkthroughSeen, in mode.js), not for good. A signed-in student
+     only ever gets it by asking: Replay, at the foot of the Licence. It can
+     always be left. */
   const NO_TOUR_ON = new Set(["signin", "invite", "clerk", "notfound", "redirect"]);
   const startDemoRef = useRef(null);
   const guestAsked = useRef(false);
