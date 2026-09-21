@@ -206,7 +206,7 @@ import { initials } from "./lib/familiar.js";
 import "./components/manual-stencil.css";
 import { askForLicence, licenceAsked } from "./lib/licenceAsk.js";
 import { supabase } from "./lib/supabaseClient.js";
-import { demoMode, demoState, enterDemo, leaveDemo, enterGuestDemo, walkthroughSeen } from "./demo/mode.js";
+import { demoMode, demoState, enterDemo, leaveDemo, enterGuestDemo, walkthroughSeen, markWalkthroughSeen } from "./demo/mode.js";
 import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
          subscribe as subscribeSaves, getSnapshot as savesSnapshot } from "./features/bookmarks/savesStore.js";
 import { stampOf, stampTilt } from "./lib/stamp.js";
@@ -1005,8 +1005,20 @@ function AppInner() {
   const startDemoRef = useRef(null);
   const guestAsked = useRef(false);
   useEffect(() => {
-    if (demoMode || guestAsked.current) return;
-    if (!clerkLoaded || isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen()) return;
+    if (demoMode || guestAsked.current || !clerkLoaded) return;
+    /* `?tour` opens it for anybody, any time: signed out as a visitor,
+       signed in as themselves. The one way to show it on a device that has
+       already seen it, and a link that can be sent to somebody. */
+    const params = new URLSearchParams(location.search || "");
+    if (params.has("tour")) {
+      guestAsked.current = true;
+      params.delete("tour");
+      const from = `${location.pathname}${params.toString() ? `?${params}` : ""}`;
+      if (isSignedIn) startDemoRef.current?.("replay");
+      else enterGuestDemo(from);
+      return;
+    }
+    if (isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen()) return;
     guestAsked.current = true;
     enterGuestDemo(`${location.pathname}${location.search || ""}`);
   }, [clerkLoaded, isSignedIn, route.name]);   // eslint-disable-line react-hooks/exhaustive-deps
@@ -1248,6 +1260,7 @@ function AppInner() {
      they pressed Replay. */
   const leaveDemoFor = (why) => {
     if (demoState?.guest) {
+      markWalkthroughSeen();
       if (why === "finish") { askForLicence(); leaveDemo(`${routePath.signin()}?join=1`); return; }
       leaveDemo(demoState?.from || routePath.home());
       return;

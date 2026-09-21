@@ -15,6 +15,9 @@ import { demoMode } from "./mode.js";
 
 if (demoMode) {
   const copy = new Map();
+  /* The real one is kept, for the one write the demo is allowed to make on the
+     way out: that this device has seen the walkthrough (mode.js). */
+  try { window.__pwRealStorage = window.localStorage; } catch { /* none */ }
   try {
     const real = window.localStorage;
     for (let i = 0; i < real.length; i++) {

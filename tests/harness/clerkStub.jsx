@@ -60,7 +60,7 @@ const walking = (() => {
   } catch { return q.has("walkthrough"); }
 })();
 if (!walking) {
-  try { if (!localStorage.getItem("pw-walkthrough-seen")) localStorage.setItem("pw-walkthrough-seen", "harness"); } catch { /* storage refused */ }
+  try { if (!localStorage.getItem("pw-walkthrough-seen-2")) localStorage.setItem("pw-walkthrough-seen-2", "harness"); } catch { /* storage refused */ }
 }
 
 export const useUser = () => (signedOut
