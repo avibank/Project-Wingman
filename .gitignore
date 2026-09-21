@@ -44,3 +44,6 @@ tools/.auth.json
 # visual-diff's output — screenshots, regenerated on every run.
 tools/diff/
 tools/qa/
+
+# Rows of deleted accounts: personal data, kept locally until the owner removes them.
+backups/accounts-*/

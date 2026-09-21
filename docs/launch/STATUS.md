@@ -36,13 +36,16 @@ _Last session ended at:_
 **Two things need the owner**, and neither can be done from here:
 
 1. **A phone.** Nothing in this repo has ever been opened on one.
-2. **Clerk's test accounts.** Three profiles. Reading their names is blocked in
-   this session as PII, and deleting a profile row destroys that account's
-   stamp permanently — 0029 issues one once and refuses a second. All three
-   left, which is what the brief says for the case where they cannot be told
-   apart.
+2. **Three Clerk sign-ins.** Their database side is gone (the owner asked for
+   every trace, 2026-09-21: 24 rows across 8 tables, their id off one paper, then all 100 tables in
+   every schema searched for the three ids and none found). The sign-ins
+   need the Clerk dashboard, because this machine has no Clerk secret key.
+   LAUNCH-MORNING.md §2 has the ids and the order.
 
 **Carried over, low:** "Add a paper" is withheld until the ingest comes back
 with the reader; the Ready Room's Previous/Next stay live at the ends of the
-list; and the request waterfall beyond `blocks`/`mutes` is untouched.
+list; and the request waterfall beyond `blocks`/`mutes` is untouched. One 68-byte
+PNG from a check account (`chk_upload_A`) is still in `chat-attachments`.
+Supabase refuses to delete storage rows over SQL, and the anon key has no
+delete policy there. Nothing links to it.
 

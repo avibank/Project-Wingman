@@ -250,7 +250,7 @@ filter on, and it does not filter. One real annotation row returned in full:
 
 | field | what came back |
 |---|---|
-| `author_id` | `user_3I2iHG…` — the marker's Clerk id, in the clear |
+| `author_id` | `user_…` — the marker's Clerk id, in the clear |
 | `anchor` | 278 characters including `quote`, `prefix`, `suffix` — **the exact words they marked** |
 | `body`, `hint` | the note text |
 | `ring`, `colour`, `kind` | which ring it was posted to, and how it was tagged |

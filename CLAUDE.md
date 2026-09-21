@@ -36,12 +36,16 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
   `pdfsForModule()` in data.js are the single source of that partition. Anything that
   reads the global `CHAPTERS` or `PDFS` array directly is a bug waiting to surface —
   both the chapter list and the Library have already had exactly this bug.
-- **There is no `enrollments` table.** This line used to say there was one in
-  Supabase, with self-serve enroll/unenroll. Verified on 2026-09-02 by querying
-  the live database: no such table, and no client code reads one. All four
-  modules are open and nothing is gated, which is why nothing missed it.
-  What a student studies is derived instead, from `chapter_completions` and
-  `lesson_threads` — see `my_modules` in migration 0011.
+- **An `enrollments` table exists, and nothing uses it.** This line used to say
+  there was no such table, "verified on 2026-09-02 by querying the live
+  database". That was wrong. It was found on 2026-09-21 while deleting three
+  accounts: `id, user_id, module_code, enrolled_at`, three rows, for modules
+  `JT` and `PROP`, which date it to the prototype before M1-M4. It is in no
+  migration and no client code reads it. All four modules are open and
+  nothing is gated. It is **empty** now, and left standing because migrations
+  never drop a table. What a student studies is derived from
+  `chapter_completions` and `lesson_threads` instead — see `my_modules` in
+  migration 0011.
 
 ## Content
 
@@ -287,10 +291,10 @@ capacity refuses a join by card AND by link — and deletes every row it makes.
 All four discovery RPCs answer over the anon REST path. It is deliberately NOT
 in `npm run check`, because that suite must not need database credentials.
 
-There is **no `enrollments` table**, despite what the Content section of this
-file says. Verified by looking. 0011's `my_modules` is built from
-`chapter_completions` and `lesson_threads` instead, which are the two real
-signals for what somebody studies.
+`enrollments` is a hand-made table from before the series: in no migration,
+read by nothing, empty since 2026-09-21 (see the architecture note). 0011's
+`my_modules` is built from `chapter_completions` and `lesson_threads` instead,
+which are the two real signals for what somebody studies.
 
 **0000-0009 have all been run against the live project.** Verified by connecting
 on 2026-08-31, not inferred: all three of 0008's tables exist, both its functions
