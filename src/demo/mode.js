@@ -38,23 +38,31 @@ export function enterDemo({ me, look = {}, from = "/", how = "replay", guest = f
   window.location.assign("/");
 }
 
-/* A VISITOR WITH NO ACCOUNT gets the demo once, the first time they arrive
-   signed out (owner, 2026-09-21), as "You": a student who exists only in the
-   demo's copy of the database (src/lib/clerk.js). Remembered on the device,
-   and remembered on the way IN, so leaving early is an answer too and nobody
-   is sent round twice. Signed-in students only ever get it by asking. */
-export const GUEST_ID = "demo_you";
-const SEEN = "pw-walkthrough-seen";
-export const walkthroughSeen = () => {
-  try { return Boolean(window.localStorage.getItem(SEEN)); } catch { return true; }
-};
-export function enterGuestDemo(from = "/") {
-  try { window.localStorage.setItem(SEEN, new Date().toISOString()); } catch { /* shown once per tab then */ }
-  enterDemo({ me: GUEST_ID, guest: true, how: "first", from, look: { callsign: "you", name: "You" } });
-}
-
 /* Out of it: forget the copy and reload into the real account, at `to`. */
 export function leaveDemo(to = "/") {
   try { window.sessionStorage.removeItem(KEY); } catch { /* nothing to clear */ }
   window.location.assign(to);
+}
+
+/* A VISITOR WITH NO ACCOUNT gets the demo the first time they arrive signed
+   out (owner, 2026-09-21), as "You": a student who exists only in the demo's
+   copy of the database (src/lib/clerk.js). A signed-in student only ever
+   gets it by asking.
+
+   SEEN IS WRITTEN WHEN IT ENDS, finished or skipped, not when it starts: a
+   tab closed half way through has not seen it. The key carries a version,
+   so a device marked by an earlier walkthrough is shown this one. It was
+   `pw-walkthrough-seen`, written on the way in, and the owner, testing on a
+   device an earlier build had marked, could not make it appear at all. */
+export const GUEST_ID = "demo_you";
+export const SEEN_KEY = "pw-walkthrough-seen-2";
+const real = () => { try { return window.__pwRealStorage || window.localStorage; } catch { return null; } };
+export const walkthroughSeen = () => {
+  try { return Boolean(real()?.getItem(SEEN_KEY)); } catch { return true; }
+};
+export const markWalkthroughSeen = () => {
+  try { real()?.setItem(SEEN_KEY, new Date().toISOString()); } catch { /* shown again next time, then */ }
+};
+export function enterGuestDemo(from = "/") {
+  enterDemo({ me: GUEST_ID, guest: true, how: "first", from, look: { callsign: "you", name: "You" } });
 }
