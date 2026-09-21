@@ -1,0 +1,8 @@
+/* THE LAST RULE IN THE APP'S STYLESHEET, AND IT IS LAST ON PURPOSE.
+   main.jsx imports this file after everything else, so it closes the entry
+   stylesheet the build emits. src/lib/recover.js looks for it: a stylesheet
+   whose last rule is not this one arrived cut short — which is what Safari
+   on the owner's phone kept serving (2026-09-21) while Chrome on the same
+   phone, same engine, had the whole file — and it is fetched again. It
+   paints nothing. */
+#pw-sheet-end { --pw-sheet: end; }

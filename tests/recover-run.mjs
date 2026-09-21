@@ -8,6 +8,7 @@
                                      matters: a healthy page judged broken
                                      would reload on every visit)
      · the stylesheet fails once   → fetched again, styled, no reload
+     · it arrives cut short once   → fetched again, whole, and reported
      · the stylesheet always fails → one reload, then left alone (no loop)
      · the course fails once       → the course arrives anyway
      · the course always fails     → one reload at most, and the Flight Deck
@@ -65,6 +66,11 @@ const deckText = (pg) => pg.evaluate(() => (document.querySelector(".deck")?.inn
   await t.pg.goto(`${BASE}/?uid=student_one`);
   await t.pg.waitForTimeout(4000);
   ok("a healthy page fetches its stylesheet once", t.seen.length === 1, t.seen.join(" | "));
+  ok("and the marker is its last rule", await t.pg.evaluate(() => {
+    const l = [...document.querySelectorAll('link[rel="stylesheet"]')].find((x) => /\/assets\/index-/.test(x.href));
+    const rules = l?.sheet?.cssRules;
+    return Boolean(rules && rules[rules.length - 1].selectorText === "#pw-sheet-end");
+  }));
   ok("and does not reload", t.loads() === 1, `loads ${t.loads()}`);
   ok("and is styled", await styled(t.pg));
   await t.cx.close();
@@ -79,6 +85,35 @@ const deckText = (pg) => pg.evaluate(() => (document.querySelector(".deck")?.inn
   ok("and the page is styled", await styled(t.pg));
   ok("without a reload", t.loads() === 1, `loads ${t.loads()}`);
   await t.cx.close();
+}
+
+/* 1b · the stylesheet arrives cut short once: it loads, it has rules, and
+   most of them are missing — what Safari kept serving the owner's phone */
+{
+  const cx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const pg = await cx.newPage();
+  let n = 0;
+  let loads = 0;
+  const seen = [];
+  pg.on("load", () => { loads++; });
+  await pg.route(/\/assets\/index-[^/]+\.css/, async (route) => {
+    seen.push(route.request().url());
+    if (n++ > 0) return route.continue();
+    const res = await route.fetch();
+    const body = await res.text();
+    return route.fulfill({ response: res, body: body.slice(0, Math.floor(body.length * 0.4)) });
+  });
+  await pg.goto(`${BASE}/?uid=student_one`);
+  await pg.waitForTimeout(4000);
+  ok("a stylesheet that arrived cut short is fetched again", seen.length === 2 && /[?&]r=/.test(seen[1]), seen.join(" | "));
+  ok("and the page is whole", await styled(pg));
+  ok("without a reload", loads === 1, `loads ${loads}`);
+  ok("and it is reported", await pg.evaluate(async () => {
+    const r = await fetch("/rest/v1/reports?target_id=eq.stylesheet&select=reason");
+    const rows = await r.json().catch(() => []);
+    return Array.isArray(rows) && rows.some((x) => /cut short/.test(x.reason || ""));
+  }));
+  await cx.close();
 }
 
 /* 2 · the stylesheet always fails */
