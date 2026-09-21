@@ -313,27 +313,33 @@ saw rather than passing or failing a list, because `npm run check` was green
 before the 20 Sep pass and every fault that pass found was still there.
 
 **1 · Routes** — 35 addresses × 3 widths (1440 / 834 / 390), 105 loads.
+Re-run on merged `main`, 2026-09-21.
 
 * **0** page errors, **0** console errors, **0** 4xx or 5xx.
 * **0** zero counts, at any width, on any screen.
 * **0** horizontal scroll.
-* Blank screens: the five that are short on purpose — `/logbook` and
-  `/this-address-does-not-exist` are "Wrong bay.", `/signin` is a sign-in form,
-  and `/m/m1/paper/M1.DEV` is a paper whose only text is the island's `01/14`.
+* Blank screens: four addresses that are short on purpose. `/logbook` and
+  `/this-address-does-not-exist` are "Wrong bay.", `/signin` is a sign-in
+  form, and `/m/m1/paper/M1.DEV` is a paper whose only text is the island's
+  `01/14`. `/m/m1/M1.01/quiz` is no longer among them; it renders.
 
-**2 · Clicks** — 138 controls across nine screens, each clicked from a fresh
-load, indexed **by attribute** rather than by `nth()` (a comma selector orders
-differently from a visibility-filtered `querySelectorAll`, and that alone gave
-the 20 Sep pass 63 false failures).
+**2 · Clicks** — 139 controls across nine screens, each clicked from a fresh
+load **and a freshly reset store**, indexed **by attribute** rather than by
+`nth()` (a comma selector orders differently from a visibility-filtered
+`querySelectorAll`, and that alone gave the 20 Sep pass 63 false failures).
 
 * **0** threw. **0** console errors on any click, on any screen.
-* 15 changed nothing, re-checked by hand: fourteen were already-selected tabs,
-  an already-selected chip, the wordmark while already home, and the Smooth Air
-  switch — which **works**; it flips `.app` to `reduce-motion smooth-air`,
-  verified by hand. One was real: "Add a paper", now withheld.
-* 3 would not click: "Sign out" (a confirm), and Previous/Next question at the
-  ends of the Ready Room's list, which stay live instead of disabling — the
-  20 Sep pass logged the same two and they are still open, low.
+* **0** clicked a different control from the one counted (see below).
+* 2 would not click: Previous and Next question in the Ready Room. There is
+  one question in the list, so both are `disabled`, which is correct.
+* 14 changed nothing, and every one was checked by hand. Nine are already
+  where they point: selected tabs, a selected chip, and the wordmark at home.
+  In the Ready Room, the module row, the `All` chip and the question are the
+  ones already open at 1440. "Sign out" asks first. Search works: it moves
+  focus to the search field, and the sweep does not measure focus.
+  **One was a real bug.** "Post" on an empty answer did nothing at all: no
+  focus, no message. It now puts the cursor in the answer box, as the Ask
+  form's empty title already did (`rr/Detail.jsx`).
 
 **3 · Responsive** — 360 / 390 / 834 / 1440, measuring placeholders against
 their fields, text against its clipping box, and every control against 24px.
@@ -354,19 +360,32 @@ supposed to run off the edge and is clipped by its parent. A test that fires on
 every screen is measuring itself. It asks the one question that matters to a
 thumb instead: can the document be dragged sideways. It cannot, anywhere.
 
+**The second thing it got wrong** came on 21 Sep: four controls that "would
+not click". They were "Find a squadron" and the report button on the Flight
+Deck, and Plain Language and the report button on Appearance. Each clicked
+fine by hand. A fresh browser context is a fresh browser, not a fresh
+student, and every context reads the same harness store. "Not now" on the
+tour offer settled the tour, so every later Flight Deck load had two controls
+fewer than the inventory, and the last two indexes pointed at nothing. The
+store is reset before the inventory and before every click now. A click
+whose label differs from the one inventoried is reported as the page moving
+under the sweep, not as a dead control. The re-run found none.
+
 ## Still open
 
 1. **A phone.** Nothing in this repo has been opened on one. Every width above
    is an emulated viewport. This is the largest gap on the page and the brief
    says so too.
-2. **Clerk's test accounts.** Three profiles; reading their names is blocked in
-   this session as PII, and deleting a profile row destroys a stamp
-   permanently — 0029 issues one once and refuses a second. All three left,
-   which is what the brief says to do when you cannot tell them apart.
+2. **Three Clerk sign-ins.** The owner asked for all three accounts and every
+   trace of them gone. The database side is done: 24 rows, then every table in
+   every schema searched for the three ids, with none found. The sign-ins
+   themselves need the Clerk dashboard. LAUNCH-MORNING §2.
 3. **"Add a paper" is withheld, not fixed.** The upload path runs the paused
    reader's ingest. It comes back with the ingest.
-4. **Ready Room Previous/Next stay live at the ends of the list.** Low, and
-   inherited.
+4. ~~Ready Room Previous/Next stay live at the ends of the list.~~ **They
+   don't.** Checked by hand on 2026-09-21: with one question in the list, both
+   are `disabled`. That is why the sweep could not click them, and it is what
+   they should do.
 5. **The request waterfall.** `blocks` and `mutes` are cached now; the brief
    lists `lesson_threads` once per module, `comms_messages` three times,
    `lesson_replies` twice and `progress_for` three times as still open.

@@ -43,9 +43,8 @@ _Last session ended at:_
    LAUNCH-MORNING.md §2 has the ids and the order.
 
 **Carried over, low:** "Add a paper" is withheld until the ingest comes back
-with the reader; the Ready Room's Previous/Next stay live at the ends of the
-list; and the request waterfall beyond `blocks`/`mutes` is untouched. One 68-byte
-PNG from a check account (`chk_upload_A`) is still in `chat-attachments`.
+with the reader, and the request waterfall beyond `blocks`/`mutes` is
+untouched. One 68-byte PNG from a check account (`chk_upload_A`) is still in `chat-attachments`.
 Supabase refuses to delete storage rows over SQL, and the anon key has no
 delete policy there. Nothing links to it.
 

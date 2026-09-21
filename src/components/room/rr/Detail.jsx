@@ -60,7 +60,7 @@ function AnswerBar({ thread, me, who, replyTo, onClearReply, onAnswer, wide }) {
   }, [draft, wide]);
   const post = () => {
     const body = draft.trim();
-    if (!body) return;
+    if (!body) { ref.current?.focus(); return; }
     onAnswer({ threadId: thread.id, body, parentId: replyTo?.id || null });
     setDraft("");
     onClearReply();
