@@ -100,12 +100,18 @@ console.log("\nwhere it shows");
      now lives. */
   const sc = read("src/components/licence/StampCreator.jsx");
   ok("the stamp creator asks for one, and issues it with the stamp",
-     /Your code, three letters or numbers/.test(sc) && /issueLicence\(/.test(sc));
-  ok("and will not issue without a valid one", /if \(!isCode\(draft\.code\)\)/.test(sc));
-  ok("a suggestion is waiting, so the required field starts satisfied",
-     /freeCode\(\)\.then/.test(sc));
-  ok("a code taken a second ago keeps you in the creator with another",
-     /is already somebody's code/.test(sc) && /if \(taken\)/.test(sc));
+     /aria-label="Your 3-character code"/.test(sc) && /issueLicence\(/.test(sc));
+  ok("and will not issue without one that is free", /if \(st\.k !== "free"\)/.test(sc));
+  /* THE FIELD STARTS EMPTY, WITH WNG AS ITS EXAMPLE — the reference's
+     openMaker, and the owner's list (2026-09-21) asks to see that
+     placeholder. It used to arrive pre-filled with a suggested code, which
+     hid it. What replaced the suggestion is better: the status line asks
+     the database whether a code is free as it is typed, and offers three
+     free neighbours when it is not (codeState / codeAlts). */
+  ok("the field starts empty with WNG as its example, and says whether a code is free",
+     /placeholder="WNG"/.test(sc) && /takenCodes\(/.test(sc) && !/freeCode\(\)\.then/.test(sc));
+  ok("a code taken a second ago keeps you in the creator, with free neighbours",
+     /if \(taken\)/.test(sc) && /is taken\./.test(sc) && /className="calts"/.test(sc));
 
   const profile = read("src/components/Profile.jsx");
   /* THE LICENCE NO LONGER SHOWS IT IN A BOX OF ITS OWN. This used to assert

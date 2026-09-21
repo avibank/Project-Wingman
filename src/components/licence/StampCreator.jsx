@@ -1,307 +1,282 @@
 /* =============================================================================
-   THE STAMP CREATOR — §5's studio, ported from the reference's `paintStudio`.
+   THE STAMP CREATOR — docs/launch/code/15-stamp-creator.js, in React.
    -----------------------------------------------------------------------------
-   A big preview with a dice on it, the code directly under it, four tabs —
-   Shape · Rim · Pattern · Ink — and one button that issues it for good.
+   The owner (2026-09-21): "Replace the creator with 15-stamp-creator.js."
+   The markup below is paintStudio's own — the same elements, the same class
+   names, the same words, in the same order — so the reference's stylesheet
+   (03-stamp-creator.css, scoped into ref-licence.css by `npm run ref:css`)
+   draws it unchanged, and every picture in it comes from the engine
+   (stamp-engine.js): inspStamp for the preview and the shape tiles,
+   ringPattern for the pattern tiles, colourGrid for all three colour grids.
 
-   WHAT THE REFERENCE OFFERS AND THIS DOES NOT, and why each is left out:
+   WHAT IS THE APP'S, and each is only what a live page needs that a static
+   one did not:
 
-   · SYMBOLS. The older build had a Mark tab with a plane, a spanner and a
-     propeller. The newer one already maps that tab back to Shape on the first
-     line of paintStudio, and §4 says it outright: "a code of 1-3 characters,
-     A-Z or 0-9, required. There are no symbols." The renderer can still draw
-     one (stamp.js keeps MARKS) because the house seal is a tick.
-   · PATTERN SCOPE — Both / Centre / Rim. drawStamp honours `pscope`, so it
-     works on screen; §4's data model is
-     {shape, code, rim, ring, pattern, ink, seed, issued_at} and 0029 stores
-     exactly those. A choice that cannot be stored is lost on the next load,
-     and a control whose answer is silently thrown away is worse than no
-     control at all. If it should be kept, it is one column and one line here.
-
-   ISSUING IS THE SERVER'S. issueLicence calls 0035's function, which claims
-   the code and issues the stamp around it in one statement, refuses a second
-   call, and chooses the seed itself. THE CODE IS THE STAMP (owner,
-   2026-09-21): it is chosen here, it is exactly three letters or numbers, and
-   it is claimed only when the stamp is issued, so the two can never differ.
-   Nothing here can make a stamp permanent or pick its ink texture, and that is
-   deliberate.
+   · THE CODE'S STATUS is asked of the real database (takenCodes), where the
+     reference had a hard-coded set. The sentences are codeState's own.
+   · ISSUING is issue_licence (0035, 0036): the server claims the code and
+     issues the stamp around it in one statement, refuses a second call, and
+     chooses the seed. A code somebody took in the meantime comes back as
+     "taken", and the status line offers its neighbours.
+   · THE 44px FLOOR (§12). The design's small controls keep their drawn size
+     and wear an invisible 44px hit area (stamp-creator-fit.css), as the
+     Ready Room's port does.
+   · SIX SHAPES, not the engine's eight: SHAPE_IDS leaves out the shield
+     and the hex (owner, 2026-09-21), and they are laid out three across.
+   · `preview`: opened by `?creator` for somebody who cannot issue one (signed
+     out, or already issued), so the creator can be looked at on the live
+     site. Everything works except the button that issues.
    ========================================================================= */
-import { useEffect, useRef, useState } from "react";
-import { X, Dices } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  SHAPE_IDS, PATTERNS, PATTERN_IDS, PALETTE, col, cleanRim, drawStamp,
-  ringPattern,
+  SHAPE_IDS, PATTERNS, PALETTE, inspStamp, ringPattern, colourGrid,
+  drawStamp, cleanRim,
 } from "../../lib/stamp.js";
-import { issueLicence, freeCode } from "../../lib/squadron.js";
-import { normaliseCode, isCode } from "../../lib/code.js";
+import { issueLicence, takenCodes } from "../../lib/squadron.js";
+import { normaliseCode } from "../../lib/code.js";
+import { toast } from "../../features/bookmarks/toastBus.js";
 import { useEscape } from "./Sheet.jsx";
 import "./licence.css";
-import "./studio.css";
 import "./ref-licence.css";
+import "./stamp-creator-fit.css";
 
-const TABS = [["shape", "Shape"], ["ring", "Rim"], ["pat", "Pattern"], ["ink", "Ink"]];
+const TABS = { shape: "Shape", ring: "Rim", pat: "Pattern", ink: "Ink" };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const html = (h) => ({ __html: h });
 
-/* A tile is a real stamp drawn small, so what you are choosing is what you
-   will get — not an icon standing in for it. */
-const Tile = ({ st, size = 46 }) => (
-  <span className="st-svg" aria-hidden="true"
-        dangerouslySetInnerHTML={{ __html: drawStamp(st, { on: false, size, rot: 0 }) }} />
-);
+/* codeState's sentences, word for word. `taken` is read from the database. */
+function codeState(c, taken) {
+  c = (c || "").toUpperCase();
+  if (!c) return { k: "empty", msg: "Three characters, letters or numbers. Once it is yours nobody else can take it." };
+  if (!/^[A-Z0-9]{1,3}$/.test(c)) return { k: "bad", msg: "Letters and numbers only." };
+  if (c.length < 3) return { k: "short", msg: "Three characters." };
+  if (taken === undefined) return { k: "checking", msg: `${c}` };
+  if (taken) return { k: "taken", msg: `${c} is taken.` };
+  return { k: "free", msg: `${c} is free. Issue your stamp and it is yours for good.` };
+}
+/* codeAlts' candidates, in its order: the last character, then the middle. */
+function codeCandidates(c) {
+  const pool = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ", out = [];
+  for (const ch of pool) { const t = c.slice(0, 2) + ch; if (t !== c && !out.includes(t)) out.push(t); }
+  for (const ch of pool) { const t = c[0] + ch + c[2]; if (t !== c && !out.includes(t)) out.push(t); }
+  return out;
+}
 
-/* A PATTERN TILE IS THE PATTERN ALONE, not a whole stamp with the pattern
-   somewhere inside it. Drawn the way the reference draws it
-   (docs/launch/code/15-stamp-creator.js): the ring art between two plain
-   circles, at a scale where it can be seen.
-
-   It was `drawStamp` at 40px with the rim text and the seal's zigzag edge
-   around it, and all six came out as the same small ring — measured by
-   looking: None, Rays, Waves, Checks, Swirl and Guilloche were
-   indistinguishable, so the tab offered six choices and showed one. */
-const PatternTile = ({ id }) => (
-  <span className="st-svg" aria-hidden="true">
-    <svg width="40" height="40" viewBox="3 3 34 34" fill="none" stroke="currentColor"
-         dangerouslySetInnerHTML={{
-           __html: `${id === "none" ? "" : ringPattern(id, { type: "circle", ri: 8, ro: 15.5 })}`
-             + '<circle cx="20" cy="20" r="7.6" stroke-width=".7"/>'
-             + '<circle cx="20" cy="20" r="16" stroke-width=".9"/>',
-         }} />
-  </span>
-);
-
-/* Where a pattern is allowed to go. The drawing has always read
-   `st.pscope || 'both'` (stamp.js §pattern) — there was simply nothing that
-   could set it, so two of its three answers were unreachable. */
-const SCOPES = [["both", "Both"], ["centre", "Centre"], ["rim", "Rim"]];
-
-export default function StampCreator({ userId, code = "", onIssued, onClose }) {
+export default function StampCreator({ userId, code = "", onIssued, onClose, preview = false }) {
   useEscape(onClose);
-
-  /* THE CREATOR IS WHERE THE CODE IS CHOSEN (§2), so it opens on the one the
-     account already has rather than empty. The licence card used to carry a
-     separate YOUR CODE box above this; deleting it without seeding the field
-     would have meant a pilot with a code typing it again from memory. */
-  const [draft, setDraft] = useState({
-    shape: "seal", code: normaliseCode(code), rim: true, ring: "", pattern: "none",
-    ink: PALETTE[1].n, seed: 7,
-  });
-
-  /* A student with no code yet is handed a free one to start from, so the
-     required field arrives filled and changing it is a choice. Claimed only
-     when the stamp is issued. */
-  useEffect(() => {
-    if (normaliseCode(code)) return undefined;
-    let live = true;
-    freeCode().then((c) => { if (live && c) setDraft((d) => (d.code ? d : { ...d, code: normaliseCode(c) })); });
-    return () => { live = false; };
-  }, [code]);
+  const [draft, setDraft] = useState(() => ({
+    shape: "seal", code: normaliseCode(code), sym: null, ring: "", rim: true,
+    pattern: "none", pscope: "both", ink: PALETTE[1], pink: null, cink: null, seed: 7, cmode: "code",
+  }));
   const [tab, setTab] = useState("shape");
   const [confirming, setConfirming] = useState(false);
+  const [anim, setAnim] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState(null);
+  const codeRef = useRef(null);
 
-  /* Every change un-confirms: you cannot wander back into "Issue it" having
-     changed the shape underneath it. */
-  const set = (patch) => { setDraft((d) => ({ ...d, ...patch })); setConfirming(false); setNote(null); };
+  /* Every change un-confirms and presses the preview again, as `set` does. */
+  const set = (patch) => { setDraft((d) => ({ ...d, ...patch })); setConfirming(false); setAnim(true); };
+  useEffect(() => { if (!anim) return undefined; const t = setTimeout(() => setAnim(false), 460); return () => clearTimeout(t); }, [anim, draft]);
+
+  /* THE CODE'S STATUS, and three free neighbours when it is taken. */
+  const [look, setLook] = useState({ code: "", taken: undefined, alts: [] });
+  const [asked, setAsked] = useState(0);       // bumped to ask again about the same code
+  useEffect(() => {
+    const c = draft.code;
+    if (c.length !== 3) { setLook({ code: c, taken: undefined, alts: [] }); return undefined; }
+    let live = true;
+    const cands = codeCandidates(c).slice(0, 24);
+    const t = setTimeout(async () => {
+      const taken = await takenCodes([c, ...cands], userId);
+      if (!live) return;
+      if (!taken) { setLook({ code: c, taken: false, alts: [] }); return; }
+      const isTaken = taken.has(c);
+      setLook({ code: c, taken: isTaken, alts: isTaken ? cands.filter((x) => !taken.has(x)).slice(0, 3) : [] });
+    }, 220);
+    return () => { live = false; clearTimeout(t); };
+  }, [draft.code, userId, asked]);
+  const st = codeState(draft.code, look.code === draft.code ? look.taken : undefined);
 
   const shuffle = () => set({
-    shape: pick(SHAPE_IDS),
-    pattern: pick(PATTERN_IDS),
-    /* The scope too — the reference's dice rolls it, and a shuffle that
-       never moved the pattern off "both" would show two thirds of the
-       patterns' range and none of their placement. */
-    pscope: pick(["both", "centre", "rim"]),
-    ink: pick(PALETTE).n,
-    rim: Math.random() > 0.35,
-    seed: 1 + Math.floor(Math.random() * 40),
+    shape: pick(SHAPE_IDS), pattern: pick(Object.keys(PATTERNS)),
+    pscope: pick(["both", "centre", "rim"]), ink: pick(PALETTE),
+    pink: Math.random() > 0.5 ? pick(PALETTE) : null, cink: Math.random() > 0.6 ? pick(PALETTE) : null,
+    rim: Math.random() > 0.35, seed: 1 + Math.floor(Math.random() * 40),
   });
 
-  const codeRef = useRef(null);
+  /* Clicks inside a colour grid, which the engine hands over as markup. */
+  const onGrid = (attr, key) => (e) => {
+    const b = e.target.closest(`[${attr}]`);
+    if (b) set({ [key]: PALETTE[+b.getAttribute(attr)] });
+  };
+
   const issue = async () => {
-    if (!isCode(draft.code)) {
-      setNote("Your code needs three letters or numbers.");
-      /* The code is not on a tab — it is under the preview — so the cursor
-         goes to it. Changing the tab instead, which the first version did,
-         sent you to Shape to look for something that was never there. */
-      codeRef.current?.focus();
+    if (preview) return;
+    if (!confirming) {
+      if (st.k !== "free") {
+        codeRef.current?.focus();
+        toast(st.k === "taken" ? st.msg : "Pick your three-character code first");
+        return;
+      }
+      setConfirming(true);
       return;
     }
-    if (!confirming) { setConfirming(true); return; }
     setBusy(true);
-    const want = normaliseCode(draft.code);
-    const { row, error, taken } = await issueLicence(userId, { ...draft, code: want });
+    const { row, error, taken } = await issueLicence(userId, { ...draft, code: normaliseCode(draft.code) });
+    setBusy(false);
     if (taken) {
-      /* Somebody else holds it. A new suggestion goes in its place, and the
-         confirmation starts again, because what is about to be issued has
-         changed. */
-      const next = await freeCode();
-      setBusy(false);
-      setDraft((d) => ({ ...d, code: normaliseCode(next) }));
       setConfirming(false);
-      setNote(`${want} is already somebody's code. Here is another, or type your own.`);
+      setLook({ code: "", taken: undefined, alts: [] });
+      setAsked((n) => n + 1);
+      toast(`${draft.code} is taken.`);
       codeRef.current?.focus();
       return;
     }
-    setBusy(false);
-    if (error || !row) { setNote("That didn't go through. Try again in a moment."); return; }
+    if (error || !row) { toast("That didn't go through. Try again in a moment."); return; }
+    toast(`Stamp issued — ${draft.code} is yours`);
     onIssued(row);
   };
 
-  return (
-    <div className="lic-scrim" role="dialog" aria-label="Your stamp"
-         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="st-studio">
-        <div className="st-head">
-          <h3>Your code and stamp</h3>
-          <button type="button" className="lic-x" onClick={onClose} aria-label="Close">
-            <X size={15} aria-hidden="true" />
-          </button>
-        </div>
-        <p className="st-intro">
-          Your code is three letters or numbers, and your stamp is built around it.
-          They are issued together and cannot be changed afterwards.
-        </p>
+  const shapeTiles = useMemo(() => SHAPE_IDS.map((k) => [k,
+    inspStamp(false, 46, 0, { shape: k, code: "", sym: null, ring: "", rim: false, band: false, pattern: "none" })]), []);
+  const patternTiles = useMemo(() => Object.entries(PATTERNS).map(([k, n]) => [k, n,
+    `${k === "none" ? "" : ringPattern(k, { type: "circle", ri: 8, ro: 15.5 })}<circle cx="20" cy="20" r="7.6" stroke-width=".7"/><circle cx="20" cy="20" r="16" stroke-width=".9"/>`]), []);
 
-        {/* The preview, on ruled paper, with the dice in the corner. */}
-        <div className="st-paper">
-          <span className="st-big" aria-hidden="true"
-                dangerouslySetInnerHTML={{ __html: drawStamp(draft, { on: true, size: 196, rot: -5 }) }} />
-          <button type="button" className="st-dice" onClick={shuffle}
-                  title="Surprise me" aria-label="Shuffle">
-            <Dices size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* §4 — the code sits directly under the preview, not behind a tab.
-            It is the one part that is required, so it is the one part that is
-            never more than a glance away. */}
-        <div className="st-crow">
-          <input ref={codeRef} className={`st-code${draft.code ? " is-on" : ""}`} maxLength={3}
-                 /* WNG — the reference's own example, and what every
-                    screenshot in docs/launch/screens now shows. */
-                 value={draft.code} placeholder="WNG" autoComplete="off"
-                 autoCapitalize="characters" spellCheck="false"
-                 aria-label="Your code, three letters or numbers"
-                 onChange={(e) => set({ code: normaliseCode(e.target.value) })} />
-        </div>
-
-        <div className="st-tabs" role="tablist" aria-label="Stamp">
-          {TABS.map(([k, n]) => (
-            <button key={k} type="button" role="tab" aria-selected={tab === k}
-                    onClick={() => setTab(k)}>{n}</button>
-          ))}
-        </div>
-
-        <div className="st-body">
-          {tab === "shape" && (
-            <div className="st-row">
-              {SHAPE_IDS.map((k) => (
-                <button key={k} type="button" aria-label={k} aria-pressed={draft.shape === k}
-                        className={`st-tile${draft.shape === k ? " is-on" : ""}`}
-                        onClick={() => set({ shape: k })}>
-                  <Tile st={{ shape: k, code: "", ring: "", pattern: "none", seed: draft.seed }} />
-                </button>
+  const d = draft;
+  /* RENDERED AT THE ROOT OF .app, NOT WHERE IT IS OPENED. The licence sits in
+     a panel whose ancestors establish a containing block, so a fixed scrim
+     opened there covered only the content column and the app bar sat over
+     the top of the sheet (measured at 1440). `.app` is where the tokens are,
+     so the portal goes there rather than to <body>. */
+  const root = typeof document !== "undefined" ? document.querySelector(".app") || document.body : null;
+  const sheet = (
+    <div className="ref-lic">
+      <div className="scrim open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="sheet" role="dialog" aria-modal="true" aria-label="Your stamp">
+          <div className="studio">
+            <div className="shead">
+              <h3>Your stamp</h3>
+              <button type="button" className="x2 is-inline" onClick={onClose} aria-label="Close">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+              </button>
+            </div>
+            <div className="spaper">
+              <span className={`big${anim ? " go" : ""}`} dangerouslySetInnerHTML={html(drawStamp(d, { on: true, size: 196, rot: -5 }))} />
+              <button type="button" className="dice is-inline" onClick={shuffle} title="Surprise me" aria-label="Shuffle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4" /><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /></svg>
+              </button>
+            </div>
+            <div className="crow">
+              <input ref={codeRef} className={`cin${d.sym ? "" : " on"}`} maxLength={3} value={d.sym ? "" : d.code}
+                     placeholder="WNG" autoComplete="off" autoCapitalize="characters" spellCheck="false"
+                     aria-label="Your 3-character code"
+                     onChange={(e) => set({ code: normaliseCode(e.target.value), sym: null, cmode: "code" })} />
+            </div>
+            <p className={`cstat is-${st.k}`} aria-live="polite">
+              {st.msg}
+              {st.k === "taken" && look.alts.length > 0 && (
+                <> <span className="calts">Free: {look.alts.map((a) => (
+                  <button key={a} type="button" className="is-inline" onClick={() => set({ code: a })}>{a}</button>
+                ))}</span></>
+              )}
+            </p>
+            <div className="stabs" role="tablist">
+              {Object.entries(TABS).map(([k, n]) => (
+                <button key={k} type="button" role="tab" aria-selected={tab === k}
+                        onClick={() => { setTab(k); setAnim(false); }}>{n}</button>
               ))}
             </div>
-          )}
-
-          {tab === "ring" && (
-            <>
-              <div className="st-tgl">
-                <span id="rimlab">Rim text</span>
-                <button type="button" role="switch" aria-checked={draft.rim !== false}
-                        aria-labelledby="rimlab" className="st-sw is-inline"
-                        onClick={() => set({ rim: draft.rim === false })} />
-              </div>
-              {draft.rim !== false ? (
-                <>
-                  <input className="st-in" maxLength={10} value={draft.ring}
-                         placeholder="WINGMAN" autoComplete="off" aria-label="Rim text"
-                         onChange={(e) => set({ ring: cleanRim(e.target.value) })} />
-                  <p className="st-note">Never fly alone runs along the bottom.</p>
-                </>
-              ) : <p className="st-note">Your pattern fills the ring.</p>}
-            </>
-          )}
-
-          {tab === "pat" && (
-            <>
-            {/* THREE UP, THREE DOWN. Six patterns now that `lace` is gone, and
-                the reference lays them out in two rows of three (`.srow.pat3`)
-                rather than letting them wrap wherever they land — a pattern
-                tile is wide, and five across then one alone reads as a
-                mistake. */}
-            <div className="st-row is-three">
-              {PATTERN_IDS.map((k) => (
-                <button key={k} type="button" aria-pressed={draft.pattern === k}
-                        className={`st-tile is-wide${draft.pattern === k ? " is-on" : ""}`}
-                        onClick={() => set({ pattern: k })}>
-                  <PatternTile id={k} />
-                  <small>{PATTERNS[k]}</small>
-                </button>
-              ))}
-            </div>
-            {/* WHERE THE PATTERN GOES, and only once there is a pattern to
-                place. Both / Centre / Rim, as the reference has it. */}
-            {draft.pattern !== "none" && (
-              <div className="ref-lic">
-                <div className="seg2" role="group" aria-label="Where the pattern goes">
-                  {SCOPES.map(([k, n]) => (
-                    <button key={k} type="button" aria-pressed={(draft.pscope || "both") === k}
-                            className={(draft.pscope || "both") === k ? "on" : undefined}
-                            onClick={() => set({ pscope: k })}>{n}</button>
+            <div className="sbody">
+              {tab === "shape" && (
+                /* SIX, THREE ACROSS. The reference lays eight out four across
+                   (.srow.shp); with the shield and the hex gone that is a row
+                   of four and a row of two, so the reference's own three-up
+                   rule (.srow.pat3, the patterns' row) lays them out instead:
+                   two full rows, the same grid as the Pattern tab. */
+                <div className="srow shp pat3">
+                  {shapeTiles.map(([k, svg]) => (
+                    <button key={k} type="button" className={`stile${d.shape === k ? " on" : ""}`} data-shape={k} aria-label={k}
+                            aria-pressed={d.shape === k} onClick={() => set({ shape: k })}
+                            dangerouslySetInnerHTML={html(svg)} />
                   ))}
                 </div>
-              </div>
-            )}
-            </>
-          )}
-
-          {/* EVERY COLOUR IS NAMED, HERE TOO. The reference's ink tab is
-              `colourGrid(d.ink, 'data-ink')` — the same `.pal` the cover
-              picker draws, a swatch with its name under it. This was thirty-six
-              bare circles with the name only in a `title`, which is a colour
-              you can point at and never say; and it is the same thirty-six
-              names as the cover and the initials, so a pilot who cannot read
-              one here cannot match it there. */}
-          {tab === "ink" && (
-            <div className="ref-lic">
-              <div className="pal" role="group" aria-label="Ink">
-                {PALETTE.map((p) => (
-                  <button key={p.n} type="button" aria-label={p.n}
-                          aria-pressed={draft.ink === p.n}
-                          className={draft.ink === p.n ? "on" : undefined}
-                          onClick={() => set({ ink: p.n })}>
-                    <i style={{ background: col(p) }} />
-                    <span>{p.n}</span>
-                  </button>
-                ))}
-              </div>
+              )}
+              {tab === "ring" && (
+                <>
+                  <div className="tgl">
+                    <span>Rim text</span>
+                    <button type="button" className="sw2 is-inline" role="switch" aria-checked={d.rim !== false} aria-label="Rim text"
+                            onClick={() => set({ rim: d.rim === false })} />
+                  </div>
+                  {d.rim !== false ? (
+                    <>
+                      <input className="sin" maxLength={10} value={d.ring} placeholder="WINGMAN" autoComplete="off" aria-label="Rim text"
+                             onChange={(e) => set({ ring: cleanRim(e.target.value.replace(/[^A-Za-z0-9 ]/g, "")) })} />
+                      <p className="snote" style={{ margin: 0 }}>Motto runs along the bottom</p>
+                    </>
+                  ) : <p className="snote" style={{ margin: 0 }}>Your pattern fills the ring</p>}
+                </>
+              )}
+              {tab === "pat" && (
+                <>
+                  <div className="srow pat3">
+                    {patternTiles.map(([k, n, art]) => (
+                      <button key={k} type="button" className={`stile wide pt${d.pattern === k ? " on" : ""}`} data-pat={k}
+                              aria-pressed={d.pattern === k} onClick={() => set({ pattern: k })}>
+                        <svg width="40" height="40" viewBox="3 3 34 34" fill="none" stroke="currentColor" dangerouslySetInnerHTML={html(art)} />
+                        <small>{n}</small>
+                      </button>
+                    ))}
+                  </div>
+                  {d.pattern !== "none" && (
+                    <>
+                      <div className="seg2">
+                        {[["both", "Both"], ["centre", "Centre"], ["rim", "Rim"]].map(([k, n]) => (
+                          <button key={k} type="button" className={`is-inline${(d.pscope || "both") === k ? " on" : ""}`} data-scope={k}
+                                  aria-pressed={(d.pscope || "both") === k} onClick={() => set({ pscope: k })}>{n}</button>
+                        ))}
+                      </div>
+                      <p className="lab" style={{ margin: "14px 0 6px", alignSelf: "stretch" }}>Pattern colour</p>
+                      <button type="button" className={`schip is-inline${d.pink ? "" : " on"}`} id="pinkSame"
+                              style={d.pink ? undefined : { boxShadow: "inset 0 0 0 1.5px var(--accent)", color: "var(--t1)" }}
+                              onClick={() => set({ pink: null })}>Same as the ink</button>
+                      <div style={{ display: "contents" }} onClick={onGrid("data-pink", "pink")} dangerouslySetInnerHTML={html(colourGrid(d.pink, "data-pink"))} />
+                    </>
+                  )}
+                </>
+              )}
+              {tab === "ink" && (
+                <>
+                  <p className="lab" style={{ margin: "0 0 6px", alignSelf: "stretch" }}>Stamp ink</p>
+                  <div style={{ display: "contents" }} onClick={onGrid("data-ink", "ink")} dangerouslySetInnerHTML={html(colourGrid(d.ink, "data-ink"))} />
+                  <p className="lab" style={{ margin: "16px 0 6px", alignSelf: "stretch" }}>The code</p>
+                  <button type="button" className={`schip is-inline${d.cink ? "" : " on"}`} id="cinkSame"
+                          style={d.cink ? undefined : { boxShadow: "inset 0 0 0 1.5px var(--accent)", color: "var(--t1)" }}
+                          onClick={() => set({ cink: null })}>Same as the ink</button>
+                  <div style={{ display: "contents" }} onClick={onGrid("data-cink", "cink")} dangerouslySetInnerHTML={html(colourGrid(d.cink, "data-cink"))} />
+                </>
+              )}
             </div>
-          )}
-        </div>
-
-        <div className="st-foot">
-          {note && <p className="st-warn">{note}</p>}
-          {confirming ? (
-            <>
-              <p>It can&rsquo;t be changed after this.</p>
-              <div className="st-btns">
-                <button type="button" className="st-btn" onClick={() => setConfirming(false)}>
-                  Keep editing
-                </button>
-                <button type="button" className="st-btn is-pri" onClick={issue} disabled={busy}>
-                  {busy ? "Issuing…" : "Issue it"}
-                </button>
-              </div>
-            </>
-          ) : (
-            <button type="button" className="st-btn is-pri is-wide" onClick={issue}>
-              Issue my code and stamp
-            </button>
-          )}
+            <div className="sfoot">
+              {preview ? (
+                <p>A preview. Sign in with an account that has no stamp yet to issue yours.</p>
+              ) : confirming ? (
+                <>
+                  <p>It can&rsquo;t be changed after this.</p>
+                  <div className="sbtns">
+                    <button type="button" className="pill" onClick={() => setConfirming(false)}>Keep editing</button>
+                    <button type="button" className="pill pri" onClick={issue} disabled={busy}>{busy ? "Issuing…" : "Issue it"}</button>
+                  </div>
+                </>
+              ) : (
+                <button type="button" className="pill pri issueb" onClick={issue}>Issue my stamp</button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
+  return root ? createPortal(sheet, root) : sheet;
 }

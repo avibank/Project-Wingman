@@ -1,0 +1,35 @@
+/* =============================================================================
+   THE STAMP CREATOR'S 44px FLOOR, WITHOUT CHANGING ITS DRAWING (§12).
+   -----------------------------------------------------------------------------
+   The creator is the reference's markup under the reference's stylesheet
+   (03-stamp-creator.css, scoped into ref-licence.css). A few of its controls
+   are drawn smaller than 44px: the close button, the dice, the rim switch,
+   Both / Centre / Rim and "Same as the ink". They opt out of the app's global
+   min-height with .is-inline and keep their drawn size, and each gets an
+   invisible 44px target centred on it — the trade rr-app.css makes for the
+   Ready Room's design. `position: relative` is added where the design left
+   the control static; with no offsets it draws exactly as before.
+   ========================================================================= */
+.ref-lic .studio .x2,
+.ref-lic .studio .seg2 button,
+.ref-lic .studio .schip { position: relative; }
+.ref-lic .studio .x2::before,
+.ref-lic .studio .dice::before,
+.ref-lic .studio .sw2::before,
+.ref-lic .studio .seg2 button::before,
+.ref-lic .studio .schip::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
+}
+
+/* IN FRONT OF THE APP BAR, which the reference's page did not have. */
+.ref-lic .scrim.open:has(.studio) { z-index: 70; }
+
+/* THE COLOUR GRID ON A PHONE. The reference's `.pal` is six columns of 1fr,
+   and 1fr will not go narrower than its longest name: at 390px "Clementine"
+   held its column open and the sixth column — Glacier, Matcha, Papaya — ran
+   off the sheet (measured). minmax(0, 1fr) lets the columns be equal, and a
+   name that still cannot fit is cut rather than pushing the grid wide. */
+.ref-lic .studio .pal { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.ref-lic .studio .pal button { min-width: 0; }
+.ref-lic .studio .pal button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

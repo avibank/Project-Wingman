@@ -242,6 +242,17 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0036 and 0037, the whole stamp, have been run against the live project**
+(2026-09-21), verified by connecting. 0036 found the live checks still on an
+older pack — no Crochet, no Knurl, so a student choosing either could not
+issue at all — and fixed the pattern list, added `stamp_pscope`,
+`stamp_pink` and `stamp_cink` (inks by name, held to the thirty-six), made
+them permanent with the rest, widened `licence_card` and `quiz_leaderboard`
+to return them, and added a ten-argument `issue_licence` beside 0035's seven
+(PostgREST picks by argument names). 0037 narrowed the shapes back to six
+the same day, after the owner took the shield and the hex out again.
+`npm run check:licence-db` now drives 18 assertions over the anon REST path.
+
 **0035, the code is the stamp, has been run against the live project**
 (2026-09-21), verified by connecting: `pilot_code_shape` is now
 `^[A-Z0-9]{3}$`, `issue_licence` claims and issues in one statement,
@@ -567,8 +578,21 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
 - **Aurora is off** (`OFFERED_FINISHES` in `finishEngine.js`, and
   `livery.aurora`): not offered, and a stored Aurora reads as Standard. The
   renderers stay.
-- **Six stamp shapes**, not eight: shield and hex (the bolt head) are no
-  longer offered, and still draw for any stamp issued in them.
+- **The stamp engine is the launch pack's, byte for byte**:
+  `src/lib/stamp-engine.js` is `docs/launch/code/05-stamp-engine.js` between
+  two marker lines, with only FONTS, one page-level `<svg><defs>` (first in
+  `<body>`, because the engine finds its defs with `querySelector('svg
+  defs')` and measures paths there) and an export list around it.
+  `check:stamp` fails on one changed byte. `src/lib/stamp.js` is the app's
+  layer and draws nothing. The creator is `15-stamp-creator.js`'s markup in
+  React, under `03-stamp-creator.css` (scoped into `ref-licence.css` by `npm
+  run ref:css`), rendered into `.app` through a portal so its scrim covers
+  the window. `?creator` opens it for anybody — a preview when you cannot
+  issue — and `npm run test:creator` walks the owner's eight-line list
+  against any base, measuring "rim text never touches a border" in pixels.
+- **Six stamp shapes**, not eight: shield and hex (the bolt head) are not
+  offered (`SHAPE_IDS` leaves them out, 0037 refuses them). The engine still
+  draws both.
 - **Manual is drawn, not lit, everywhere** (`manual-stencil.css`): a fill
   becomes a 1.5px stroke of the same colour in the top bar, the Ready Room and
   Bookmarks, as it already was on the Flight Deck.

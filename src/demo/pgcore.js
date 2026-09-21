@@ -200,6 +200,7 @@ export const RPC = {
         stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,
         stamp_pattern: p.stamp_pattern ?? null, stamp_ink: p.stamp_ink ?? null,
         stamp_seed: p.stamp_seed ?? null, stamp_issued_at: p.stamp_issued_at ?? null,
+        stamp_pscope: p.stamp_pscope ?? null, stamp_pink: p.stamp_pink ?? null, stamp_cink: p.stamp_cink ?? null,
       };
     });
   },
@@ -353,7 +354,11 @@ export const RPC = {
       stamp_rim: b.p_rim !== false,
       stamp_ring: String(b.p_ring || "").toUpperCase().replace(/[^A-Z0-9 .'-]/g, "").slice(0, 10) || null,
       stamp_pattern: b.p_pattern || "none",
+      /* 0036's three, cleared with the pattern as the SQL clears them. */
+      stamp_pscope: (b.p_pattern || "none") === "none" ? null : (b.p_pscope || "both"),
       stamp_ink: b.p_ink || null,
+      stamp_pink: (b.p_pattern || "none") === "none" ? null : (b.p_pink || null),
+      stamp_cink: b.p_cink || null,
       stamp_seed: 1 + Math.floor(Math.random() * 999998),
       stamp_issued_at: new Date().toISOString(),
     });
@@ -376,7 +381,8 @@ export const RPC = {
       "cover", "cover_ink", "cover_image", "is_staff", "hours_s", "lessons_signed",
       "days_flown", "stamp_shape", "stamp_code", "stamp_rim", "stamp_ring",
       "stamp_pattern", "stamp_ink", "stamp_seed", "stamp_issued_at",
-      "photo_url", "photo_zoom", "photo_x", "photo_y"];
+      "photo_url", "photo_zoom", "photo_x", "photo_y",
+      "stamp_pscope", "stamp_pink", "stamp_cink"];
     const out = {};
     for (const k of take) out[k] = row[k] ?? null;
     return [out];
