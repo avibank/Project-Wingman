@@ -471,8 +471,10 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     transition (`go(to, { still: true })`), and every screen it visits is
     warmed while the first step is read.
   - **It opens by itself only for a visitor who is NOT signed in**, the first
-    time they reach the Flight Deck (`walkthroughSeen`, remembered on the
-    device on the way in). A signed-in student only gets it by asking:
+    time they arrive, on ANY page but sign-in, an invite link and Clerk's
+    account screens (`walkthroughSeen`, remembered on the device on the way
+    in). It once waited for `/`, and a visitor who arrived anywhere else
+    never saw it. Skip takes them back to the page they arrived on. A signed-in student only gets it by asking:
     Replay, at the foot of the Licence. A visitor is "You" inside it: every
     Clerk hook comes through `src/lib/clerk.js`, which signs a demo guest in
     as a student who exists only in the demo's database. Clerk's components
