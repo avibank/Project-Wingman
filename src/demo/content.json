@@ -1,5 +1,5 @@
 {
- "note": "THE DEMO'S COURSE. Loaded only inside the demo (src/demo/mode.js), never by the real app. Four Part-66 subjects, standard facts only, no video. It exists so a new student can walk a module that is already half done; the real course goes in src/content/test-content.json.",
+ "note": "THE DEMO'S COURSE. Loaded only inside the demo (src/demo/mode.js), never by the real app. Four Part-66 subjects, standard facts only. One lesson has a video, M1.02.2, the one the demo student is in the middle of: five minutes of worked examples drawn for the demo (public/demo/), whose moments are the ones the seeded logbook marks. It exists so a new student can walk a module that is already half done; the real course goes in src/content/test-content.json.",
  "modules": [
   {
    "id": "M1",
@@ -145,9 +145,12 @@
       {
        "id": "M1.02.2",
        "name": "Simultaneous equations",
-       "video": null,
-       "duration": "12:30",
-       "durationS": 750,
+       "video": {
+        "src": "/demo/simultaneous-equations.mp4#t=0.1",
+        "seconds": 300
+       },
+       "duration": "5:00",
+       "durationS": 300,
        "watchedS": 0,
        "scope": {
         "module": "M1",

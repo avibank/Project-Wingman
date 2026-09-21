@@ -2505,7 +2505,10 @@ function AppInner() {
 
     {/* THE DEMO'S GUIDE, over the real screens, inside `.app` so it has the
         livery's tokens. Only ever inside the demo. */}
-    {demoMode && (
+    {/* `?noguide` shows the demo's data without the tutorial over it, for
+        mapping its screens. Development only: a production build folds it
+        away. */}
+    {demoMode && !(import.meta.env.DEV && /[?&]noguide/.test(location.search)) && (
       <Suspense fallback={null}>
         <Guide go={(to) => go(to, { still: true })} warm={(paths) => paths.forEach((p) => { warmRoute(p); })} guest={Boolean(demoState?.guest)} hasStamp={Boolean(demoState?.look?.hasStamp)} onLeave={leaveDemoFor} />
       </Suspense>

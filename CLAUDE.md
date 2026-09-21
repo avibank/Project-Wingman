@@ -456,12 +456,33 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   The squadron of livery tails, the module picker and "When do you usually
   study?" are gone, and so is the study-time placement they fed.
 - **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides: a
-  tutorial over the real screens with a class already in them. The owner's
-  word for it is "sweet, clean and explanatory": 17 steps, each a title and
-  a sentence or two, no What / Why / How labels, and it opens with Wingman,
-  not with Part-66. The right seat has two steps of its own, because it is
-  how you study WITH somebody: a lesson watched together, the same quiz. It
+  tutorial over the real screens with a class already in them. It goes
+  **page by page, top to bottom, one step per thing on the page** (owner,
+  2026-09-21, after a 17-step version "glossed over" them): top bar, Flight
+  Deck, module, a lesson, Library, a quiz, study cards, Crew, the Ready Room
+  (rail, board, question, answers, a squadron chat), Bookmarks, and the
+  three profile tabs. 75 steps, each a title and a sentence or two in plain
+  words, no What / Why / How labels, and it opens with Wingman, not with
+  Part-66. The card's kicker names the page and how far through it you are.
+  The right seat is shown as what it is for, studying WITH somebody: on the
+  Flight Deck, in the room, and in the lesson, where their questions land in
+  your logbook. Every claim in `steps.js` was checked against the code that
+  does it; change the feature and the sentence has to change with it. It
   can always be skipped.
+  - **The text panel does not move.** It used to be placed beside each target
+    and glide there, and the owner's word for that was "lags around". It is
+    docked at the foot of the window (a sheet on a phone), and `plan()`
+    scrolls the target into the room above it. Only when a target cannot be
+    scrolled clear (the Ready Room's answer bar and composer are fixed to the
+    bottom) does it take the top edge instead, and it fades across rather than
+    travelling. The deck gets 45vh (55vh on a phone) of room at its foot while
+    the tutorial is up, except in the Ready Room, which fills the window.
+  - **The demo lesson has a real video**: `public/demo/simultaneous-equations.mp4`,
+    five minutes of worked examples drawn on a canvas and recorded in Chromium
+    (no ffmpeg on the build machine; `MediaRecorder` writes H.264 MP4 with a
+    proper duration, which WebKit plays). Its moments are the seeded logbook's:
+    your note at 1:04, the right seat's comment at 3:08, yours at 3:51 and
+    your question at 4:36. Only the demo's `content.json` points at it.
   - **How it stays smooth** (Guide.jsx), measured on a production build:
     the dim is four panels moved only by transform (a box-shadow light
     repainted the screen every frame); one loop eases the light towards its
@@ -500,7 +521,8 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
   - **Walked and measured**: every step lights its target at 1440 and 390, as
-    a visitor and as a student, and the card never leaves the window. In the
+    a visitor and as a student, the card covers none of it, and at 1440 the
+    card holds one position for 71 of the 75 steps. In the
     harness the walkthrough counts as seen unless `?walkthrough=1`, and the
     identity from `?uid=` lasts for the tab, as a real session does.
 - **It ends at the licence.** Finishing it, or leaving a first run, takes a

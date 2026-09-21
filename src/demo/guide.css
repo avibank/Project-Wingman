@@ -9,11 +9,15 @@
 
 .dg { position: fixed; inset: 0; z-index: 950; pointer-events: none; }
 
-/* ON A PHONE THE CARD IS A SHEET over the bottom of the screen, and the last
-   thing on a page (the right-seat card on the Flight Deck) cannot scroll up
-   past it. So while the tutorial is up the page is given room at its foot. */
+/* THE CARD IS DOCKED at the foot of the window, and the last things on a
+   page (the right-seat card on the Flight Deck, the account box at the foot
+   of the Licence) cannot scroll up past it. So while the tutorial is up the
+   page is given room at its foot. Not the Ready Room, which fills the window
+   and scrolls inside its own columns: room at the foot of its deck would
+   take height from all three. */
+.app[data-demo="1"]:not(:has(.rr-app)) .deck { padding-bottom: 45vh; }
 @media (max-width: 699px) {
-  .app[data-demo="1"] .deck { padding-bottom: 55vh; }
+  .app[data-demo="1"]:not(:has(.rr-app)) .deck { padding-bottom: 55vh; }
 }
 
 /* A panel is the whole window, scaled from its top-left corner down to the
@@ -32,44 +36,61 @@
   opacity: 0; transition: opacity .25s ease; will-change: transform;
 }
 
+/* Docked, centred, and still. The only transform is the swipe's. */
 .dg-card {
-  position: fixed; left: 0; top: 0; width: min(360px, calc(100vw - 32px)); box-sizing: border-box;
+  position: fixed; left: 0; right: 0; bottom: 16px; margin: 0 auto;
+  width: min(600px, calc(100vw - 32px)); box-sizing: border-box; overflow: hidden;
   pointer-events: auto; touch-action: pan-y; user-select: none; -webkit-user-select: none;
-  padding: 16px 18px 14px; border-radius: 18px;
+  padding: 18px 22px 14px; border-radius: 18px;
   background: var(--ground); color: var(--t1); border: 1px solid var(--line);
   box-shadow: 0 18px 50px rgb(0 0 0 / .32);
-  transition: transform .6s cubic-bezier(.22,1,.36,1);
-  will-change: transform;
+  transform: translate3d(var(--drag, 0px), 0, 0);
+  transition: opacity .17s ease, transform .35s cubic-bezier(.22,1,.36,1);
+  animation: dg-card-in .5s cubic-bezier(.22,1,.36,1) backwards;
+  will-change: transform, opacity;
 }
-.dg-card[data-dragging="1"] { transition: none; }
+@keyframes dg-card-in { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
+.dg-card[data-dock="top"] { top: 16px; bottom: auto; }
+.dg-card.is-away { opacity: 0; }
+.dg-card[data-dragging="1"] { transition: opacity .17s ease; }
 .dg-card.is-sheet {
-  width: 100vw; border-radius: 20px 20px 0 0; border-bottom: 0;
-  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  width: 100vw; bottom: 0; border-radius: 20px 20px 0 0; border-bottom: 0;
+  padding: 18px 18px max(14px, env(safe-area-inset-bottom));
 }
+.dg-card.is-sheet[data-dock="top"] {
+  top: 0; bottom: auto; border-radius: 0 0 20px 20px; border-top: 0; border-bottom: 1px solid var(--line);
+  padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: 14px;
+}
+
+/* How far through the whole tour: one thin line along the card's top edge. */
+.dg-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--line); }
+.dg-bar i { display: block; height: 100%; background: var(--active); transform-origin: 0 50%;
+  transition: transform .45s cubic-bezier(.22,1,.36,1); }
+.dg-card.is-sheet[data-dock="top"] .dg-bar { top: auto; bottom: 0; }
 
 .dg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .dg-kicker { font: 500 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--active-text); }
+.dg-count { margin-left: 10px; letter-spacing: .06em; text-transform: none; color: var(--t3); font-variant-numeric: tabular-nums; }
 .dg-skip { background: none; border: 0; padding: 6px 2px; cursor: pointer; font: 500 13px var(--font-ui); color: var(--t3); position: relative; }
 .dg-skip::after { content: ""; position: absolute; inset: -10px -8px; }
 .dg-skip:hover { color: var(--t1); }
 
-.dg-body { animation: dg-in-r .5s cubic-bezier(.22,1,.36,1) both; }
+/* The words change in place: a short fade with a nudge from the side you
+   are heading, and nothing else on the card moves. */
+.dg-body { animation: dg-in-r .38s cubic-bezier(.22,1,.36,1) both; }
 .dg-body.from-left { animation-name: dg-in-l; }
-@keyframes dg-in-r { from { opacity: 0; transform: translate3d(14px,0,0); } to { opacity: 1; transform: none; } }
-@keyframes dg-in-l { from { opacity: 0; transform: translate3d(-14px,0,0); } to { opacity: 1; transform: none; } }
+@keyframes dg-in-r { from { opacity: 0; transform: translate3d(10px,0,0); } to { opacity: 1; transform: none; } }
+@keyframes dg-in-l { from { opacity: 0; transform: translate3d(-10px,0,0); } to { opacity: 1; transform: none; } }
 .dg-title { margin: 0 0 6px; font: 600 19px/1.25 var(--font-ui); letter-spacing: -.01em; color: var(--t1); }
-.dg-text { margin: 0; font-size: 15px; line-height: 1.55; color: var(--t2); }
+/* Three lines are held whatever the step says, so the card keeps one height
+   from step to step and its top edge does not jump with the word count. */
+.dg-text { margin: 0; font-size: 15px; line-height: 1.55; color: var(--t2); min-height: calc(3 * 1.55em); }
 .dg-note { margin: 10px 0 0; font-size: 13.5px; color: var(--t3); }
 
 .dg-acts { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; margin-top: 16px; }
 .dg-back { background: none; border: 0; padding: 8px 4px; cursor: pointer; font: 500 14px var(--font-ui); color: var(--t2); position: relative; }
 .dg-back::after { content: ""; position: absolute; inset: -8px -6px; }
 .dg-back:disabled { visibility: hidden; }
-.dg-dots { display: flex; justify-content: center; gap: 5px; min-width: 0; }
-.dg-dots i { width: 5px; height: 5px; border-radius: 3px; background: var(--line); flex: none;
-  transition: width .45s cubic-bezier(.22,1,.36,1), background-color .3s; }
-.dg-dots i.was { background: var(--t3); }
-.dg-dots i.on { width: 16px; background: var(--active); }
 .dg-next {
   padding: 0 18px; border: 0; border-radius: 999px; cursor: pointer; white-space: nowrap;
   font: 600 14.5px var(--font-ui); background: var(--active-fill); color: var(--ground);
