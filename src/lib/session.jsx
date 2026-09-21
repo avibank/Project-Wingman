@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "./clerk.js";
 import { initialSession, playerReducer, DEFAULT_BAR_POS } from "./lessonSurface.js";
 import { useUserProgress } from "./userProgress.jsx";
 import { fetchDiscussion, insertThread, insertReply, deleteThread, deleteReply } from "./threads.js";

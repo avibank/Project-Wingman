@@ -23,25 +23,14 @@
 import { MARKS, INK, PROFILES, THREADS } from "./fixture.js";
 import { makeStore as coreStore, handle, clone } from "../../src/demo/pgcore.js";
 
-/* A FIXTURE STUDENT HAS BEEN THROUGH THE WALKTHROUGH. It opens by itself for
-   anybody who has not, full screen, so without this every suite that loads the
-   Flight Deck would load the walkthrough instead. A uid starting "new" is a
-   brand-new student and gets it, which is how the walkthrough is walked. */
-const startingProgress = (uid) => (/^new/.test(String(uid || ""))
-  ? {}
-  : { "pw-tour": { at: "2026-09-01T00:00:00.000Z", how: "fixture" } });
-
-
 /* Reset per page load so tests do not leak into each other. The logic is
-   src/demo/pgcore.js's; the fixture and the walkthrough rule are the
-   harness's own. */
+   src/demo/pgcore.js's; the fixture is the harness's own. */
 export function makeStore() {
   return coreStore({
     paper_annotations: clone(MARKS),
     paper_ink: clone(INK),
     pilot_profiles: Object.values(clone(PROFILES)),
     lesson_threads: clone(THREADS),
-    defaultProgress: startingProgress,
   });
 }
 

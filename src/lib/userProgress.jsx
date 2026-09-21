@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "./clerk.js";
 import { supabase } from "./supabaseClient.js";
 import { loadJSON, saveJSON } from "./storage.js";
 

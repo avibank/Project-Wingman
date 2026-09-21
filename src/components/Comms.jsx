@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { chaptersForModule } from "../data.js";
 import {
   fetchMessages, sendMessage, fetchPinned, pinToChapter, unpin,

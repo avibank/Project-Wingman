@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CautionMark } from "./module/Instruments.jsx";
 import { moduleNeedsYou, readMinimums } from "../lib/minimums.js";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { MODULES as FALLBACK_MODULES, chaptersForModule as fallbackChapters } from "../data.js";
 import { deckStateFrom } from "../lib/deckState.js";
 import { HOBBS_KEY, hobbsSeconds, hobbsClock } from "../lib/hobbs.js";

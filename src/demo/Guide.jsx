@@ -39,7 +39,7 @@ function findTarget(list = []) {
   return null;
 }
 
-export default function Guide({ go, onLeave, hasStamp = false }) {
+export default function Guide({ go, onLeave, hasStamp = false, guest = false }) {
   const [i, setI] = useState(0);
   const step = STEPS[i];
   const [box, setBox] = useState(null);          // the lit rect, or null
@@ -241,7 +241,7 @@ export default function Guide({ go, onLeave, hasStamp = false }) {
           <button type="button" className="dg-back" onClick={back} disabled={i === 0}>Back</button>
           <span className="dg-count">{i + 1} / {STEPS.length}</span>
           <button type="button" className="dg-next" onClick={next}>
-            {last ? (hasStamp ? "Back to my account" : "Create my licence") : "Next"}
+            {last ? (guest ? "Create my account" : hasStamp ? "Back to my account" : "Create my licence") : "Next"}
           </button>
         </div>
       </div>

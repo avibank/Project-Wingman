@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { fetchMissStats } from "../lib/quizStats.js";
 import { fetchMessages, sendMessage } from "../lib/comms.js";
 

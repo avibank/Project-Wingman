@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { recordAttempt, fetchMissStats } from "../lib/quizStats.js";
 import Debrief from "./Debrief.jsx";
 import { ChevronRight, Star, CheckCircle2, XCircle, Plane } from "lucide-react";

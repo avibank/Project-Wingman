@@ -1,6 +1,8 @@
 import { useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
+import { askForLicence } from "../lib/licenceAsk.js";
+import { demoMode } from "../demo/mode.js";
 
 /* =============================================================================
    FIRST FLIGHT HAS NO SCREEN ANY MORE.
@@ -14,7 +16,7 @@ import { fetchProfileStatus, saveProfile } from "../lib/squadron.js";
    background and lets the app through at once:
 
    · A NEW STUDENT'S PROFILE IS MADE HERE, with the username Clerk asked for at
-     sign-up as their callsign. The room, the comments, the roster and
+     sign-up as their callsign, and their next stop is the licence. The room, the comments, the roster and
      people_search all read the callsign from pilot_profiles, and without a
      row an account is "Someone" to everybody and unfindable.
    · HEALING THE CALLSIGN. The Licence tab once wrote a callsign to Clerk
@@ -38,6 +40,10 @@ function FirstFlightGate({ children }) {
         const mine = user.username?.trim() || null;
         if (!profile) {
           saveProfile(user.id, { callsign: mine }).catch(() => {});
+          /* A brand-new account: its next stop is the licence, to choose a
+             code and design a stamp. Never inside the demo, which has its
+             own student already. */
+          if (!demoMode) askForLicence();
         } else if (mine && profile.callsign !== mine) {
           saveProfile(user.id, { callsign: mine }).catch(() => {});
         }

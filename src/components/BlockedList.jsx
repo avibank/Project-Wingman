@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { fetchBlocks, fetchMutes, unblockUser, unmuteUser, fetchProfiles } from "../lib/squadron.js";
 import Tail, { TailStyles } from "./Tail.jsx";
 

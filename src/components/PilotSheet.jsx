@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import LicenceCard from "./licence/LicenceCard.jsx";
 import { fetchCard, statsOf } from "../lib/licence.js";
 import { stampOf } from "../lib/stamp.js";

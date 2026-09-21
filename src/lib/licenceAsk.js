@@ -16,6 +16,16 @@ let asked = false;
 export const askForLicence = () => {
   asked = true;
   try { window.sessionStorage.setItem(KEY, "1"); } catch { /* memory is enough */ }
+  /* App listens, so a note left after a round trip still takes the student
+     to the licence. */
+  try { window.dispatchEvent(new Event("pw-licence-ask")); } catch { /* no window */ }
+};
+
+/* Whether a note is waiting, without taking it: App uses this to bring a
+   student who has just signed up to the licence, where it is taken. */
+export const licenceAsked = () => {
+  if (asked) return true;
+  try { return window.sessionStorage.getItem(KEY) === "1"; } catch { return false; }
 };
 
 export const takeLicenceAsk = () => {

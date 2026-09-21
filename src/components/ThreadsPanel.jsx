@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, MessageSquare } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "../lib/clerk.js";
 import { displayNameFor } from "../lib/social.js";
 import { fetchThreads, createThread, fetchPosts, addPost } from "../lib/discussion.js";
 

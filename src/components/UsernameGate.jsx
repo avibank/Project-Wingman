@@ -1,5 +1,5 @@
 import { startTransition, useState } from "react";
-import { useUser, useReverification } from "@clerk/clerk-react";
+import { useUser, useReverification } from "../lib/clerk.js";
 import { ERROR_GENERIC } from "../lib/copy.js";
 import "./first-flight.css";
 

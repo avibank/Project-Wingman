@@ -2,7 +2,8 @@ import "./styles/foundations.css";
 import "./styles/fonts.css";
 import "./styles/app.css";
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { ClerkProvider, useUser } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/clerk-react";
+import { useUser } from "./lib/clerk.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import TransitionRouter, { popHandler } from "./components/TransitionRouter.jsx";
 import { flushSync } from "react-dom";
@@ -202,13 +203,12 @@ import { BookmarksToastHost } from "./features/bookmarks/Toast.jsx";
 import { provideNav } from "./features/bookmarks/nav.jsx";
 import { provideContent, providePapers } from "./features/bookmarks/content.js";
 import { initials } from "./lib/familiar.js";
-import { TOUR_KEY } from "./features/tour/tourSteps.js";
 import "./components/manual-stencil.css";
-import { askForLicence } from "./lib/licenceAsk.js";
-import { demoMode, demoState, enterDemo, leaveDemo } from "./demo/mode.js";
+import { askForLicence, licenceAsked } from "./lib/licenceAsk.js";
+import { supabase } from "./lib/supabaseClient.js";
+import { demoMode, demoState, enterDemo, leaveDemo, enterGuestDemo, walkthroughSeen } from "./demo/mode.js";
 import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
          subscribe as subscribeSaves, getSnapshot as savesSnapshot } from "./features/bookmarks/savesStore.js";
-import { supabase } from "./lib/supabaseClient.js";
 import { stampOf, stampTilt } from "./lib/stamp.js";
 import { SIGNOFF_KEY, sign, unsign, tiltOf } from "./lib/signoff.js";
 import PilotSheet from "./components/PilotSheet.jsx";
@@ -986,25 +986,38 @@ function AppInner() {
   const roomFull = route.name === "ready" && Boolean(flags["social.readyroom"]);
 
   /* ------------------------------------------------------ the walkthrough
-     THE WALKTHROUGH IS THE DEMO (owner, 2026-09-21): the real screens, tab by
-     tab, with a class already in them, as a separate state of the app
-     (src/demo/mode.js). It starts by itself for a signed-in student who has
-     not seen it, on the Flight Deck only, once progress has loaded; and it is
-     replayed from the foot of the Licence.
+     THE WALKTHROUGH IS THE DEMO: the real screens, tab by tab, with a class
+     already in them, as a separate state of the app (src/demo/mode.js).
 
-     RUN ONCE, REMEMBERED ON THE SERVER. `pw-tour` goes through progress, and
-     it is written and CONFIRMED before the reload into the demo, or a new
-     student would be sent round again on every start. The demo's own
-     progress has it set, so nothing inside the demo starts another. */
-  const tourSeen = progress.get(TOUR_KEY, null);
-  const tourAsked = useRef(false);
+     IT OPENS BY ITSELF FOR A VISITOR WHO IS NOT SIGNED IN, the first time
+     they arrive on the Flight Deck, and for nobody else (owner, 2026-09-21).
+     The device remembers it, on the way in, so leaving early is an answer
+     too. A signed-in student only ever gets it by asking: Replay, at the foot
+     of the Licence. It can always be left. */
   const startDemoRef = useRef(null);
+  const guestAsked = useRef(false);
   useEffect(() => {
-    if (demoMode || tourAsked.current) return;
-    if (!isSignedIn || !progress.loaded || tourSeen || route.name !== "home") return;
-    tourAsked.current = true;
-    startDemoRef.current?.("first");
-  }, [isSignedIn, progress.loaded, tourSeen, route.name]);
+    if (demoMode || guestAsked.current) return;
+    if (!clerkLoaded || isSignedIn || route.name !== "home" || walkthroughSeen()) return;
+    guestAsked.current = true;
+    enterGuestDemo();
+  }, [clerkLoaded, isSignedIn, route.name]);
+
+  /* A STUDENT WHO HAS JUST SIGNED UP GOES TO THEIR LICENCE, to choose their
+     code and design their stamp. The note is left by the demo's last button
+     and by FirstFlightGate when it makes a new profile, which happens after
+     a round trip, so this listens as well as looking once. */
+  useEffect(() => {
+    if (demoMode) return undefined;
+    const check = () => {
+      if (!isSignedIn || !licenceAsked()) return;
+      if (window.location.pathname === routePath.profile("licence")) return;
+      go(routePath.profile("licence"));
+    };
+    check();
+    window.addEventListener("pw-licence-ask", check);
+    return () => window.removeEventListener("pw-licence-ask", check);
+  }, [isSignedIn]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // The room renders its own copy of the profile menu, so what the menu does
   // has to live somewhere both can reach rather than being written out twice.
@@ -1206,16 +1219,12 @@ function AppInner() {
     return () => { live = false; };
   }, [isSignedIn, me]);
 
-  /* INTO THE DEMO. `pw-tour` is written and confirmed on the server first,
-     because the reload that follows would drop a write still waiting in the
-     progress debounce. The student's look goes with them, so the demo is
-     their app and not the default one. */
+  /* INTO THE DEMO, BY ASKING: Replay, at the foot of the Licence. The
+     student's look goes with them, so the demo is their app and not the
+     default one, and they are themselves in it rather than "You". */
   const LOOK_KEYS = ["pw-livery", "pw-finish", "pw-variant-pin", "pw-reduce-motion", "pw-ruled", "pw-font-size", "pw-dyslexia-font", "pw-grain"];
-  startDemoRef.current = async (how) => {
+  startDemoRef.current = (how) => {
     if (!isSignedIn || !me || demoMode) return;
-    const at = new Date().toISOString();
-    progress.set(TOUR_KEY, { at, how });
-    try { await supabase.rpc("merge_progress", { uid: me, patch: { [TOUR_KEY]: { at, how } } }); } catch { /* the demo still runs */ }
     const look = {};
     for (const k of LOOK_KEYS) { const v = progress.get(k, undefined); if (v !== undefined) look[k] = v; }
     enterDemo({
@@ -1224,18 +1233,23 @@ function AppInner() {
     });
   };
 
-  /* OUT OF IT. A first walkthrough ends at the licence for a student with no
-     stamp yet, whether it was finished or left: choosing the code and the
-     stamp comes after the walkthrough (owner, 2026-09-21). A replay goes back
-     to wherever it was started from. */
+  /* OUT OF IT. A visitor with no account who finishes it goes to sign up, and
+     from there to their licence; one who leaves early is back on the Flight
+     Deck, signed out, where they were. A signed-in student with no stamp yet
+     who finishes it goes to the licence; everybody else goes back to where
+     they pressed Replay. */
   const leaveDemoFor = (why) => {
-    const hasStamp = Boolean(demoState?.look?.hasStamp);
-    if (!hasStamp && (why === "finish" || demoState?.how === "first")) {
+    if (demoState?.guest) {
+      if (why === "finish") { askForLicence(); leaveDemo(`${routePath.signin()}?join=1`); return; }
+      leaveDemo(routePath.home());
+      return;
+    }
+    if (why === "finish" && !demoState?.look?.hasStamp) {
       askForLicence();
       leaveDemo(routePath.profile("licence"));
       return;
     }
-    leaveDemo(why === "finish" ? routePath.home() : (demoState?.from || routePath.home()));
+    leaveDemo(demoState?.from || routePath.home());
   };
 
   /* ------------------------------------------------------------ the papers
@@ -2472,7 +2486,7 @@ function AppInner() {
         livery's tokens. Only ever inside the demo. */}
     {demoMode && (
       <Suspense fallback={null}>
-        <Guide go={(to) => go(to)} hasStamp={Boolean(demoState?.look?.hasStamp)} onLeave={leaveDemoFor} />
+        <Guide go={(to) => go(to)} guest={Boolean(demoState?.guest)} hasStamp={Boolean(demoState?.look?.hasStamp)} onLeave={leaveDemoFor} />
       </Suspense>
     )}
 
