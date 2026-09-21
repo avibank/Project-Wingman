@@ -57,6 +57,21 @@ export async function freeCode() {
   return data;
 }
 
+/* WHICH OF THESE CODES ARE SOMEBODY ELSE'S. The creator's status line — the
+   reference's codeState — says whether a code is free before the student
+   issues it, and offers free neighbours when it is not. pilot_profiles is
+   readable (every table here is), so this is one query for the code and its
+   candidates together. The student's own row never counts against them. */
+export async function takenCodes(codes, userId) {
+  const list = [...new Set((codes || []).map(normaliseCode).filter((c) => c.length === 3))];
+  if (!list.length) return new Set();
+  let q = supabase.from("pilot_profiles").select("code").in("code", list);
+  if (userId) q = q.neq("user_id", userId);
+  const { data, error } = await q;
+  if (error) { console.error(error); return null; }
+  return new Set((data || []).map((r) => r.code));
+}
+
 // ---------------------------------------------------------------- squadron
 export async function fetchSquadron(userId, moduleCode) {
   // Fly solo is symmetric: you see nobody. Gated here rather than in each
@@ -273,7 +288,11 @@ export async function reportContent({ reporterId, targetType, targetId, reason, 
    issues the stamp around it; the server refuses a taken code by name, which
    is the one refusal a student can do something about, so it is told apart
    here and the creator offers another. */
-export async function issueLicence(userId, { shape, code, rim, ring, pattern, ink }) {
+/* TEN ARGUMENTS, since 0036: where the pattern sits and its two extra inks.
+   PostgREST reaches 0036's overload by these names; the seven-argument one
+   0035 wrote stays for a bundle deployed before it. Inks go as NAMES. */
+export async function issueLicence(userId, { shape, code, rim, ring, pattern, pscope, ink, pink, cink }) {
+  const name = (v) => (v && typeof v === "object" ? v.n : v) || null;
   const { data, error } = await supabase.rpc("issue_licence", {
     uid: userId,
     p_code: normaliseCode(code),
@@ -281,7 +300,10 @@ export async function issueLicence(userId, { shape, code, rim, ring, pattern, in
     p_rim: rim !== false,
     p_ring: ring || "",
     p_pattern: pattern || "none",
-    p_ink: ink || null,
+    p_ink: name(ink),
+    p_pscope: pscope || "both",
+    p_pink: name(pink),
+    p_cink: name(cink),
   });
   if (error) return { row: null, error, taken: /code is taken/i.test(error.message || "") };
   return { row: Array.isArray(data) ? data[0] : data, error: null, taken: false };

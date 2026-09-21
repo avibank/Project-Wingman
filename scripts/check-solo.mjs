@@ -194,9 +194,15 @@ const ok = (name, cond, detail) => {
      whose row it wants or asks for visible rows only, so a list of people
      added later cannot leak somebody flying solo. */
   const profileReads = squad.split('.from("pilot_profiles")').slice(1).map((r) => r.slice(0, 240));
+  /* ONE NAMED EXCEPTION: takenCodes, the stamp creator's "is this code free?"
+     It must see every account's code, Fly solo or not, or two students could
+     hold one code — and it selects the code and nothing else, so what it
+     returns is a set of three-character strings, not a list of people. A read
+     that selects anything more than `code` is held to the rule. */
+  const codeOnly = (r) => /^\s*\.select\("code"\)/.test(r.replace(/^\)/, ""));
   ok("the roster asks the server for visible rows only",
      profileReads.length > 0
-     && profileReads.every((r) => /\.(eq|in)\("user_id"|\.upsert\(\{ user_id|\.eq\("invisible", false\)/.test(r)));
+     && profileReads.every((r) => codeOnly(r) || /\.(eq|in)\("user_id"|\.upsert\(\{ user_id|\.eq\("invisible", false\)/.test(r)));
 
   const presence = read("src/lib/presence.js");
   ok("presence is gated at the WRITE, so there is nothing to read",

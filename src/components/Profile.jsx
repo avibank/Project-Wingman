@@ -614,6 +614,13 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
   /* Straight from the walkthrough: its last button brings a new student here
      to issue their code and stamp, so the creator opens on arrival. */
   useEffect(() => { if (takeLicenceAsk()) setPicker("stamp"); }, []);
+  /* `?creator` opens it too, for ANYBODY: signed out, or with a stamp already
+     issued, it opens as a preview whose one missing part is the button that
+     issues (StampCreator's `preview`). It is how the creator is looked at on
+     the live site by somebody who cannot, or need not, make a stamp. */
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("creator")) setPicker("stamp");
+  }, []);
 
   /* The card's own row, read through 0030's function — the same one anybody
      opening your card uses, so what you see in edit mode is what they see.
@@ -971,6 +978,7 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
           )}
           {picker === "stamp" && (
             <StampCreator userId={user?.id} code={code}
+                          preview={!signedIn || Boolean(card?.stamp_issued_at)}
                           onIssued={(row) => { setCard(row); setPicker(null); }}
                           onClose={() => setPicker(null)} />
           )}

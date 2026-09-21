@@ -214,7 +214,6 @@ import { SIGNOFF_KEY, sign, unsign, tiltOf } from "./lib/signoff.js";
 import PilotSheet from "./components/PilotSheet.jsx";
 import { fetchSquadron, fetchRoster } from "./lib/squadron.js";
 import { fetchMyCompletions } from "./lib/partners.js";
-import { StampFilters } from "./components/Stamp.jsx";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 /* The walkthrough is lazy: a student sees it once, and it carries twelve
    drawings nobody else should download. */
@@ -1021,10 +1020,10 @@ function AppInner() {
       else enterGuestDemo(from);
       return;
     }
-    /* Not over `?diag`: that page is asked for to see the app as it is on
-       this device (src/lib/canary.js), and the demo's reload would take it
-       away before it had looked. */
-    if (isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen() || params.has("diag")) return;
+    /* Not over `?diag` or `?creator`: each is asked for to look at something
+       as it is (src/lib/canary.js, the stamp creator), and the demo's reload
+       would take it away before it had been looked at. */
+    if (isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen() || params.has("diag") || params.has("creator")) return;
     guestAsked.current = true;
     enterGuestDemo(`${location.pathname}${location.search || ""}`);
   }, [clerkLoaded, isSignedIn, route.name]);   // eslint-disable-line react-hooks/exhaustive-deps
@@ -2569,7 +2568,6 @@ function AppInner() {
                      had just blocked stayed on screen until a reload. */
                   onChanged={refreshRoom} />
     )}
-    <StampFilters />
     <BookmarksToastHost />
     </UsernameGate>
     </FirstFlightGate>

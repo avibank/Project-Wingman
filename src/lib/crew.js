@@ -61,7 +61,7 @@ export async function fetchCrew(moduleCode, me, { chapterIds = [] } = {}) {
      it. `.eq("invisible", false)` is how squadron.js does the same thing. */
   const profiles = await supabase
     .from("pilot_profiles")
-    .select("user_id, callsign, real_name, is_staff, invisible, stamp_shape, stamp_code, stamp_rim, stamp_ring, stamp_pattern, stamp_ink, stamp_seed, stamp_issued_at")
+    .select("user_id, callsign, real_name, is_staff, invisible, stamp_shape, stamp_code, stamp_rim, stamp_ring, stamp_pattern, stamp_ink, stamp_seed, stamp_issued_at, stamp_pscope, stamp_pink, stamp_cink")
     .in("user_id", ids)
     .then(({ data, error }) => fail(error, data || []));
 

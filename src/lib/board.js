@@ -60,6 +60,7 @@ const toRow = (r) => ({
     stamp_shape: r.stamp_shape, stamp_code: r.stamp_code, stamp_rim: r.stamp_rim,
     stamp_ring: r.stamp_ring, stamp_pattern: r.stamp_pattern, stamp_ink: r.stamp_ink,
     stamp_seed: r.stamp_seed, stamp_issued_at: r.stamp_issued_at,
+    stamp_pscope: r.stamp_pscope, stamp_pink: r.stamp_pink, stamp_cink: r.stamp_cink,
   },
 });
 

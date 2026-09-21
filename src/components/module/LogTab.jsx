@@ -22,7 +22,6 @@ import { useMemo } from "react";
 import { Trash2 } from "lucide-react";
 import { LOG_FILTERS, filterLog, exportText, exportName } from "../../lib/lessonLog.js";
 import { drawLogStamp, logTilt } from "../../lib/logStamp.js";
-import { useSeed } from "../Stamp.jsx";
 import { mmss } from "./lessonState.js";
 import { downloadBlob, downloadSaid } from "../../lib/outside.js";
 import { toast } from "../../features/bookmarks/toastBus.js";
@@ -40,7 +39,6 @@ export default function LogTab({
   entries, filter, onFilter, onSeek, onDelete, seat = null, stamp = null,
 }) {
   const seed = stamp?.seed || 1;
-  useSeed(seed);
   const shown = filterLog(entries, filter);
 
   return (
