@@ -84,7 +84,7 @@ export default function Guide({ go, onLeave, hasStamp = false }) {
     };
     timer = setTimeout(hunt, 60);
     return () => { live = false; clearTimeout(timer); };
-  }, [i]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [i]);
 
   /* ------------------------------------------ following the target */
   useEffect(() => {

@@ -174,10 +174,10 @@ export const STEPS = [
   },
   {
     section: "The module", where: "/m/m1/library",
-    title: "Coming soon: the reader",
+    title: "The reader: one PDF for the whole module",
     body: [
-      "Wingman has a reader for PDFs shared across a whole module: handouts and notes that everyone on the module reads, marks up and discusses on the page itself.",
-      "A note one student leaves on a hard page helps the whole class. It opens to students soon, and shared papers will appear in the Library when it does.",
+      "Wingman also has a reader for PDFs shared across a whole module: handouts and notes that everyone on the module reads, marks up and discusses on the page itself.",
+      "A note one student leaves on a hard page helps the whole class. It opens to students next, and shared papers will appear in the Library when it does.",
     ],
   },
 
