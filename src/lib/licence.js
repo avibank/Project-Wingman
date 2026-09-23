@@ -30,6 +30,20 @@ export async function fetchCard(viewer, userId) {
   return (data || [])[0] || null;
 }
 
+/* HOW MANY CHANGES TO A STAMP ARE OWED (0039), and it is deliberately NOT on
+   `licence_card`: that function is what a CLASSMATE opens, and whether you
+   are owed a remake is nobody else's business. Your own row, by user_id, one
+   column. Nought for an account with none owed, for a bundle that predates
+   the column, and for any error — the door it draws is an extra, so failing
+   to read it must leave the licence exactly as it was. */
+export async function changesOwed(userId) {
+  if (!userId) return 0;
+  const { data, error } = await supabase
+    .from('pilot_profiles').select('stamp_redo').eq('user_id', userId).maybeSingle();
+  if (error) return 0;
+  return Number(data?.stamp_redo) || 0;
+}
+
 /* -------------------------------------------------------------- the writes */
 
 /* Clamped here as well as in the CHECK: a value the server refuses is a save

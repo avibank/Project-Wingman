@@ -35,7 +35,9 @@ console.log("\nthe alphabet");
     ok(`${c} can be typed`, CODE_ALPHABET.includes(c));
   }
   ok("all twenty-six letters and ten digits", CODE_ALPHABET.length === 36, String(CODE_ALPHABET.length));
-  ok("which is 46,656 codes", CODE_SPACE === 46656, String(CODE_SPACE));
+  /* 36 + 36² + 36³ — one, two and three characters, since 0039 (owner,
+     2026-09-23: "a max of 3 a min of 1"). It was 36³ alone. */
+  ok("which is 47,988 codes of one, two or three characters", CODE_SPACE === 47988, String(CODE_SPACE));
   ok("uppercase only", CODE_ALPHABET === CODE_ALPHABET.toUpperCase());
 }
 
@@ -45,7 +47,11 @@ console.log("\nreading what somebody typed");
   ok("a mix of digits and letters is kept whole", normaliseCode("a10") === "A10");
   ok("punctuation and spaces are dropped, not refused", normaliseCode(" a-7 k ") === "A7K");
   ok("it never runs past three", normaliseCode("ABCDEF") === "ABC");
-  ok("a short code is not a code", !isCode("A7") && !isCode("") && isCode("A7K") && isCode("A10"));
+  /* A SHORT CODE IS A CODE NOW, and it is the whole of what 0039 changed:
+     two students had already issued a stamp they did not want because three
+     was the only length the field would take. Nothing is a code, still. */
+  ok("one, two or three characters are all codes, and nothing is not",
+     isCode("K") && isCode("A7") && isCode("A7K") && isCode("A10") && !isCode("") && !isCode("  "));
   ok("and it can say which characters it refused",
      refusedCharacters("A#0").join("") === "#", refusedCharacters("A#0").join(""));
 }
@@ -100,7 +106,12 @@ console.log("\nwhere it shows");
      now lives. */
   const sc = read("src/components/licence/StampCreator.jsx");
   ok("the stamp creator asks for one, and issues it with the stamp",
-     /aria-label="Your 3-character code"/.test(sc) && /issueLicence\(/.test(sc));
+     /aria-label="Your code, one to three characters"/.test(sc) && /issueLicence\(/.test(sc));
+  /* And the field's own sentences agree with the server's rule (0039), which
+     is the half of it a student reads. */
+  const scCode = sc.replace(/\/\*[\s\S]*?\*\//g, "");   // the note about the old rule says its words
+  ok("and it asks for one to three characters, never three exactly",
+     /One to three characters, letters or numbers/.test(scCode) && !/"Three characters\."/.test(scCode));
   ok("and will not issue without one that is free", /if \(st\.k !== "free"\)/.test(sc));
   /* THE FIELD STARTS EMPTY, WITH WNG AS ITS EXAMPLE — the reference's
      openMaker, and the owner's list (2026-09-21) asks to see that

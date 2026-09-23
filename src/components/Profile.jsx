@@ -8,7 +8,7 @@ import PhotoPicker from "./licence/PhotoPicker.jsx";
 import CoverCrop from "./licence/CoverCrop.jsx";
 import AvatarCrop from "./licence/AvatarCrop.jsx";
 import { checkFile, uploadCover, renderAvatar, uploadAvatar } from "../lib/coverImage.js";
-import { fetchCard, saveCard, syncStats, statsFrom } from "../lib/licence.js";
+import { fetchCard, changesOwed, saveCard, syncStats, statsFrom } from "../lib/licence.js";
 import { HOBBS_KEY, DAYS_KEY } from "../lib/hobbs.js";
 import { stampOf } from "../lib/stamp.js";
 import { ShieldCheck, X } from "lucide-react";
@@ -651,7 +651,14 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
         await saveProfile(user.id, { real_name: clerkName });
         row = await fetchCard(user.id, user.id);
       }
-      if (live && row) setCard(row);
+      /* The card comes from licence_card, which is what everybody sees; the
+         one fact that is yours alone — whether a change to your stamp is owed
+         (0039) — is read beside it and merged in, so the card on screen stays
+         one object. */
+      if (live && row) {
+        const owed = await changesOwed(user.id);
+        if (live) setCard({ ...row, stamp_redo: owed });
+      }
     })();
     return () => { live = false; };
   }, [user?.id, progress.loaded]);
@@ -811,6 +818,11 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                stands on this device, and the line under it says what to do
                about it. */
             edit={signedIn}
+            /* 0039 — a change the owner granted, if one is owed. The column
+               comes down with the profile row (`select *`), so a bundle
+               deployed before the migration simply sees undefined and draws
+               the stamp as the picture it was. */
+            redo={card?.stamp_redo || 0}
             onPickCover={() => setPicker("cover")}
             onPickPhoto={() => setPicker("photo")}
             onPickPhrase={() => setPicker("phrase")}
@@ -977,8 +989,14 @@ function Profile({ page = "licence", onNavigate, onBack, variantPin, onVariantPi
                           onClose={() => setPicker(null)} />
           )}
           {picker === "stamp" && (
+            /* PREVIEW MEANS "look, but you cannot issue". Signed out, always;
+               with a stamp already, unless the owner has granted a change
+               (0039) — which is the whole of what that grant does here. A
+               remake opens on the stamp they HAVE rather than on a blank one:
+               "make it again" means this one, altered. */
             <StampCreator userId={user?.id} code={code}
-                          preview={!signedIn || Boolean(card?.stamp_issued_at)}
+                          from={card?.stamp_issued_at ? myStamp : null}
+                          preview={!signedIn || (Boolean(card?.stamp_issued_at) && !(card?.stamp_redo > 0))}
                           onIssued={(row) => { setCard(row); setPicker(null); }}
                           onClose={() => setPicker(null)} />
           )}

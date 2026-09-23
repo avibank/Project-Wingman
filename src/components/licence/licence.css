@@ -345,3 +345,20 @@ input.lic-bio{ width: min(100%, 40ch); }
 
 .ref-lic .lic .ghost{ display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .ref-lic .lic .ghost b{ position: static; transform: none; }
+
+/* ------------------------------------------------- THE ONE CHANGE (0039)
+   An issued stamp is a picture, except on the licence of somebody who is
+   owed a change — two students issued one they did not want while a code had
+   to be exactly three characters, so the owner granted every account with a
+   stamp exactly one remake. Then it is the same door "Create your stamp"
+   was, drawn on the stamp they already have, and the word under it is the
+   whole explanation. Same column, same gap and same button reset as the
+   ghost above it, so nothing about the block moves when a change is spent. */
+.ref-lic .lic .got.is-again{
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  background: none; border: 0; padding: 0; cursor: pointer; line-height: 0;
+}
+.ref-lic .lic .got.is-again b{
+  font: 600 13px/1 var(--font-ui); color: var(--t2); letter-spacing: .01em;
+}
+.ref-lic .lic .got.is-again:hover b, .ref-lic .lic .got.is-again:focus-visible b{ color: var(--t1); }

@@ -383,13 +383,18 @@ export const RPC = {
 
   /* 0035 — the code and the stamp, issued together. The same refusals as the
      SQL, worded the same way, because the creator tells "taken" apart by the
-     words: a three-character code, one issue, and nobody else's code. */
+     words: a code of one to three characters, one issue unless a change is
+     owed (0039), and nobody else's code. */
   issue_licence: (s, b) => {
     const want = String(b.p_code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (!/^[A-Z0-9]{3}$/.test(want)) throw new Error("a licence needs a three-character code");
+    /* ONE TO THREE since 0039, and the same sentence the server raises. */
+    if (!/^[A-Z0-9]{1,3}$/.test(want)) throw new Error("a licence needs a code of one to three characters");
     let row = s.pilot_profiles.find((p) => p.user_id === b.uid);
     if (!row) { row = { user_id: b.uid }; s.pilot_profiles.push(row); }
-    if (row.stamp_issued_at) throw new Error("that stamp is already issued");
+    /* An issued stamp is permanent unless a change is owed, and issuing
+       spends it — 0039, in the same order as the SQL. */
+    const again = Boolean(row.stamp_issued_at);
+    if (again && !(row.stamp_redo > 0)) throw new Error("that stamp is already issued");
     if (s.pilot_profiles.some((p) => p.code === want && p.user_id !== b.uid)) throw new Error("that code is taken");
     Object.assign(row, {
       code: want,
@@ -405,6 +410,8 @@ export const RPC = {
       stamp_cink: b.p_cink || null,
       stamp_seed: 1 + Math.floor(Math.random() * 999998),
       stamp_issued_at: new Date().toISOString(),
+      /* 0039 — a change is spent by the same write that uses it. */
+      stamp_redo: again ? (row.stamp_redo || 0) - 1 : (row.stamp_redo || 0),
     });
     return row;
   },

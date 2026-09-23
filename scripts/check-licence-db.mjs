@@ -56,8 +56,12 @@ try {
   const b3 = (await c.query("select stamp_issued_at from pilot_profiles where user_id = $1", [B])).rows[0];
   ok("and issues nothing", !b3?.stamp_issued_at);
 
-  const r4 = await rpc("issue_licence", { uid: B, p_code: "Q7", ...stamp });
-  ok("two characters is not a code", r4.status >= 400 && /three-character/.test(JSON.stringify(r4.j)), JSON.stringify(r4).slice(0, 200));
+  /* TWO CHARACTERS IS A CODE SINCE 0039, so what is refused here is four:
+     that migration lowered the floor to one and left the ceiling alone. B has
+     to come out of this with no stamp, because the two claim_code assertions
+     below are about an account that has not issued one. */
+  const r4 = await rpc("issue_licence", { uid: B, p_code: "Q7X9", ...stamp });
+  ok("four characters is not a code", r4.status >= 400 && /one to three/.test(JSON.stringify(r4.j)), JSON.stringify(r4).slice(0, 200));
 
   const r5 = await rpc("claim_code", { uid: A, want: "B22" });
   ok("claim_code will not move an issued code", r5.status === 200 && r5.j === null, JSON.stringify(r5));
@@ -70,7 +74,7 @@ try {
   ok("and the trigger holds an issued code too", /cannot be changed/.test(refused), refused);
 
   const def = (await c.query("select pg_get_constraintdef(oid) d from pg_constraint where conname = 'pilot_code_shape'")).rows[0]?.d;
-  ok("the CHECK is A-Z and 0-9, three of them", /\[A-Z0-9\]\{3\}/.test(def || ""), def);
+  ok("the CHECK is A-Z and 0-9, one to three of them", /\[A-Z0-9\]\{1,3\}/.test(def || ""), def);
 
   /* 0036 — the ten-argument call the creator makes now: a shape and a
      pattern the old checks refused, where the pattern sits, and two inks. */
@@ -91,11 +95,53 @@ try {
   let held = "no error";
   try { await c.query("update pilot_profiles set stamp_pink = 'Ruby' where user_id = $1", [C]); } catch (e) { held = e.message; }
   ok("0036: and the new three are as permanent as the rest", /cannot be changed/.test(held), held);
+  /* ---------------------------------------------------------------- 0039 */
+  const E = `chk_lic_E_${tag}`, F = `chk_lic_F_${tag}`;
+  const r10 = await rpc("issue_licence", { uid: E, p_code: "k", ...stamp });
+  ok("0039: a code of ONE character is issued", r10.status === 200 && r10.j?.code === "K", JSON.stringify(r10).slice(0, 200));
+  const r11 = await rpc("issue_licence", { uid: F, p_code: "4z", ...stamp });
+  ok("0039: and one of two", r11.status === 200 && r11.j?.code === "4Z", JSON.stringify(r11).slice(0, 200));
+  const r12 = await rpc("issue_licence", { uid: `${F}x`, p_code: "ABCD", ...stamp });
+  ok("0039: four is still refused", r12.status >= 400, JSON.stringify(r12).slice(0, 160));
+  const r13 = await rpc("issue_licence", { uid: `${F}y`, p_code: "!!", ...stamp });
+  ok("0039: and a code with nothing in the alphabet is refused", r13.status >= 400, JSON.stringify(r13).slice(0, 160));
+
+  /* The one change: refused with no credit, allowed with one, refused again
+     after it is spent — and the code moves with the stamp. */
+  const r14 = await rpc("issue_licence", { uid: E, p_code: "KK", ...stamp, p_shape: "tag" });
+  ok("0039: a second stamp is refused when no change is owed", r14.status >= 400, JSON.stringify(r14).slice(0, 160));
+  ok("0039: and the account starts with none owed",
+     (await c.query("select stamp_redo from pilot_profiles where user_id = $1", [E])).rows[0]?.stamp_redo === 0);
+  const granted = await c.query("select grant_stamp_redo($1) as n", [E]);
+  ok("0039: the owner can grant one", granted.rows[0].n === 1, JSON.stringify(granted.rows[0]));
+  const r15 = await rpc("issue_licence", { uid: E, p_code: "KK9", ...stamp, p_shape: "tag", p_pattern: "rays" });
+  ok("0039: which spends on ONE change, stamp and code together",
+     r15.status === 200 && r15.j?.code === "KK9" && r15.j?.stamp_code === "KK9"
+     && r15.j?.stamp_shape === "tag" && r15.j?.stamp_redo === 0, JSON.stringify(r15).slice(0, 240));
+  const r16 = await rpc("issue_licence", { uid: E, p_code: "K7", ...stamp });
+  ok("0039: and then it is permanent again", r16.status >= 400, JSON.stringify(r16).slice(0, 160));
+
+  /* The credit is the whole of the permission, so it must not be writable by
+     the key every browser carries. */
+  const raise = await fetch(`${url}/rest/v1/pilot_profiles?user_id=eq.${E}`, {
+    method: "PATCH",
+    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=representation" },
+    body: JSON.stringify({ stamp_redo: 3 }),
+  });
+  const raised = (await c.query("select stamp_redo from pilot_profiles where user_id = $1", [E])).rows[0]?.stamp_redo;
+  ok("0039: nobody can hand themselves a change with the publishable key",
+     raise.status >= 400 && raised === 0, `${raise.status} redo=${raised}`);
+  let stampHeld = "no error";
+  try { await c.query("update pilot_profiles set stamp_shape = 'seal' where user_id = $1", [E]); } catch (e) { stampHeld = e.message; }
+  ok("0039: and a stamp that has had its change is as permanent as it ever was",
+     /cannot be changed/.test(stampHeld), stampHeld);
+
   const card = await rpc("licence_card", { p_viewer: A, p_user: C });
   ok("0036: a classmate opening the licence gets all of it",
      card.status === 200 && card.j?.[0]?.stamp_pscope === "rim" && card.j?.[0]?.stamp_cink === "Plum", JSON.stringify(card).slice(0, 200));
 } finally {
-  const del = await c.query("delete from pilot_profiles where user_id = any($1)", [[A, B, C, D, `${C}x`, `${D}h`, `${D}s`]]);
+  const del = await c.query("delete from pilot_profiles where user_id = any($1)",
+    [[A, B, C, D, `${C}x`, `${D}h`, `${D}s`, `chk_lic_E_${tag}`, `chk_lic_F_${tag}`, `chk_lic_F_${tag}x`, `chk_lic_F_${tag}y`]]);
   ok("every row it made is deleted", del.rowCount >= 4, String(del.rowCount));
   const left = await c.query("select count(*)::int n from pilot_profiles where user_id like $1", [`chk_lic_%_${tag}%`]);
   ok("and none is left behind", left.rows[0].n === 0, String(left.rows[0].n));

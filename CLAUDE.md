@@ -268,6 +268,16 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0039, one to three and one change, has been run against the live project**
+(2026-09-23), verified by connecting: `pilot_code_shape` is now
+`^[A-Z0-9]{1,3}$`, `pilot_profiles.stamp_redo` exists with its CHECK,
+`stamp_is_permanent` allows exactly the update that spends a credit,
+`grant_stamp_redo` is granted to `service_role` alone, and both arities of
+`issue_licence` take a code of one to three. The backfill gave one change to
+each of the two accounts that had issued a stamp. `npm run check:licence-db`
+is 29 assertions now, including a live PATCH with the publishable key proving
+nobody can hand themselves a change.
+
 **0038, who has finished a quiz, has been run against the live project**
 (2026-09-23), verified by connecting: `quiz_finishers(uid, p_quizzes, p_cap)`
 is in `pg_proc` and answers over the anon REST path. It groups runs into
@@ -529,26 +539,30 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   study?" are gone, and so is the study-time placement they fed.
 - **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides: a
   tutorial over the real screens with a class already in them. It is
-  **twenty-five steps, one per IDEA**, each a short paragraph (owner,
-  2026-09-23, on the 75-step page-by-page version that came before it: "way
-  too long — explain concepts generally and what is special about us and the
-  features we have, rather than explaining how a chat works, which is
-  something everyone knows. Same goes for profile: explain concepts, why and
-  how and what, in text, not bullet points"). THIS REVERSES the page-by-page
-  brief of 2026-09-21 above it, which had itself replaced a 17-step version
-  that "glossed over" things — the length is now spent on what a student
-  cannot guess from other apps (the right seat, the logbook pinned to the
-  video, signing a chapter off, the stamp, the bar you set yourself and the
-  caution lamp watching it, a quiz sat as an exam, the class living inside
-  the module) and not on Previous and Next, a search box, or how to send a
-  message. It still opens with Wingman rather than Part-66, the card's kicker
-  names the page and how far through it you are, and it can always be
-  skipped. Every claim in `steps.js` is checked against the code that does
-  it; change the feature and the paragraph has to change with it.
-  - **The order of the two lesson steps is load-bearing**: the player's tools
-    are lit in the step straight after the player itself, because
-    `.player-layer` is not mounted on a lesson nobody has touched. With the
-    logbook step between them the light found nothing (measured on the walk).
+  **twelve steps, and every one of them is a decision this app has made that
+  another study app has not** (owner, 2026-09-23: "we are dealing with
+  university students who are familiar with study apps — we aren't trying to
+  teach them how to operate an OS but to introduce them to our own system,
+  our own quirks and ideas, rather than teach them how to use a video
+  player"). That is the THIRD length in three days and the direction is
+  settled by it: 75 page-by-page steps (2026-09-21) were "way too long", 25
+  one-per-idea steps still explained things every student already knows, and
+  what is left is the instruments that refuse to flatter you, the pass mark
+  you set for yourself and the one lamp that watches it, the right seat, the
+  class living inside the module, a logbook pinned to the minute of the video
+  that caused it, a quiz sat as an exam with the clock belonging to the
+  paper, what comes back afterwards, what the class has already finished, an
+  answer that can be endorsed but never buried, and a signature you design
+  once. Nothing in it explains Previous and Next, a search box, a tab or how
+  to send a message. It still opens with Wingman rather than Part-66, the
+  card's kicker names the page and how far through it you are, and it can
+  always be skipped. Every claim in `steps.js` is checked against the code
+  that does it; change the feature and the paragraph has to change with it.
+  - **Nothing lights the player's tools any more, and that is deliberate**:
+    `.player-layer` is not mounted on a lesson nobody has touched, so a step
+    about it only ever lit when it came straight after a step on the player
+    itself — and a step on the player was one of the ones the owner cut. The
+    lesson's single step lights the logbook, which is there on arrival.
   - **The text panel does not move.** It used to be placed beside each target
     and glide there, and the owner's word for that was "lags around". It is
     docked at the foot of the window (a sheet on a phone), and `plan()`
@@ -602,9 +616,9 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
-  - **Walked and measured**: all twenty-five steps light their target at 1440
-    and at 390, every one of them fully on screen, and the card covers none
-    of any of them. The card is docked, so what changes between steps is its
+  - **Walked and measured**: all twelve steps light their target at 1440 and
+    at 390, every one of them fully on screen, and the card covers none of
+    any of them. The card is docked, so what changes between steps is its
     height and never its foot. Bookmarks is given the same room at its foot
     as the deck while the tutorial is up (`.bm-page` in `guide.css`): its
     folder grid could not scroll clear of the card, so the card took the top
@@ -615,13 +629,35 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   student with no stamp to `/account/licence` with the stamp creator open
   (`lib/licenceAsk.js`, which survives the reload out of the demo).
 - **The code is the stamp, and they are issued together** (migration 0035,
-  `issue_licence`). The code is chosen in the stamp creator, it is exactly three
-  letters or numbers, and it is claimed only when the stamp is issued, in the
-  same statement. After that neither changes: `claim_code` refuses to move it
-  and 0029's trigger now holds `code` too. The licence no longer claims a code
-  on sight. **Any letter and any digit can be typed.** 0, 1, O, I and L used to
-  be dropped as they were typed, and a student saw "A10" lose two characters.
-  Suggestions still avoid those five. `npm run check:licence-db` drives it live.
+  `issue_licence`). The code is chosen in the stamp creator and claimed only
+  when the stamp is issued, in the same statement. After that neither changes:
+  `claim_code` refuses to move it and 0029's trigger holds `code` too. The
+  licence no longer claims a code on sight. **Any letter and any digit can be
+  typed.** 0, 1, O, I and L used to be dropped as they were typed, and a
+  student saw "A10" lose two characters. Suggestions still avoid those five.
+  `npm run check:licence-db` drives it live.
+- **A code is ONE TO THREE characters** (owner, 2026-09-23; migration 0039).
+  It was exactly three, and two students had already issued a stamp they did
+  not want because three was the only length the field would take. Three is
+  still the ceiling and still what a suggestion is. The rule is in four
+  places and they have to agree: the CHECK `pilot_code_shape`, `claim_code`,
+  both arities of `issue_licence`, and `src/lib/code.js` — a client that let
+  somebody type a code the database refuses is the worse half of the bug.
+- **A stamp is permanent, and the one exception is a change that was
+  GRANTED.** `pilot_profiles.stamp_redo` is a count, not a date: 0039 gave
+  exactly one to every account that had already issued a stamp, and
+  `issue_licence` spends it in the same UPDATE that changes the stamp — which
+  is the only shape of change `stamp_is_permanent` allows. When it is spent
+  the account is back under the original rule with nothing to turn off, which
+  is what a window would have needed. Because RLS is open here by design, the
+  credit is protected too: the trigger refuses any UPDATE that RAISES it
+  unless `pw.grant_redo` is set, and only `grant_stamp_redo()` sets that —
+  granted to `service_role`, never to anon. On the licence, a stamp with a
+  change owed becomes the door back into the creator ("Make it again") and
+  the creator opens on the stamp they have rather than a blank one; with
+  nothing owed it is the picture it always was. `changesOwed()` reads it from
+  your OWN row rather than `licence_card`, because whether you are owed a
+  remake is nobody else's business.
 - `UsernameGate` is for an account with no Clerk username, in First Flight's
   look, and reveals the app in a transition while holding the gate during its
   save. The app's screens are lazy, and an urgent reveal suspended with no

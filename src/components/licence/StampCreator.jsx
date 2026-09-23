@@ -31,7 +31,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   SHAPE_IDS, PATTERNS, PALETTE, inspStamp, ringPattern, colourGrid,
-  drawStamp, cleanRim,
+  drawStamp, cleanRim, inkByName, inkName,
 } from "../../lib/stamp.js";
 import { issueLicence, takenCodes } from "../../lib/squadron.js";
 import { normaliseCode } from "../../lib/code.js";
@@ -45,27 +45,47 @@ const TABS = { shape: "Shape", ring: "Rim", pat: "Pattern", ink: "Ink" };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const html = (h) => ({ __html: h });
 
-/* codeState's sentences, word for word. `taken` is read from the database. */
+/* codeState's sentences. `taken` is read from the database.
+   ONE TO THREE CHARACTERS (owner, 2026-09-23), which is 0039's rule on the
+   server too, so the "Three characters." nudge is gone: a code of one is a
+   code, and the only thing left to say about a short one is whether anybody
+   else has it. */
 function codeState(c, taken) {
   c = (c || "").toUpperCase();
-  if (!c) return { k: "empty", msg: "Three characters, letters or numbers. Once it is yours nobody else can take it." };
-  if (!/^[A-Z0-9]{1,3}$/.test(c)) return { k: "bad", msg: "Letters and numbers only." };
-  if (c.length < 3) return { k: "short", msg: "Three characters." };
+  if (!c) return { k: "empty", msg: "One to three characters, letters or numbers. Once it is yours nobody else can take it." };
+  if (!/^[A-Z0-9]{1,3}$/.test(c)) return { k: "bad", msg: "Letters and numbers only, three at most." };
   if (taken === undefined) return { k: "checking", msg: `${c}` };
   if (taken) return { k: "taken", msg: `${c} is taken.` };
   return { k: "free", msg: `${c} is free. Issue your stamp and it is yours for good.` };
 }
-/* codeAlts' candidates, in its order: the last character, then the middle. */
+/* codeAlts' candidates, in its order: the last character first, then each one
+   before it. A code can be one, two or three characters now (0039), so this
+   walks the code it is given rather than indexing 0, 1 and 2 — on "A7" the
+   old one built `A7undefined`. A short code also has a neighbour the long one
+   does not: itself with one more character on the end. */
 function codeCandidates(c) {
   const pool = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ", out = [];
-  for (const ch of pool) { const t = c.slice(0, 2) + ch; if (t !== c && !out.includes(t)) out.push(t); }
-  for (const ch of pool) { const t = c[0] + ch + c[2]; if (t !== c && !out.includes(t)) out.push(t); }
+  const push = (t) => { if (t !== c && !out.includes(t)) out.push(t); };
+  for (let i = c.length - 1; i >= 0; i--) for (const ch of pool) push(c.slice(0, i) + ch + c.slice(i + 1));
+  if (c.length < 3) for (const ch of pool) push(c + ch);
   return out;
 }
 
-export default function StampCreator({ userId, code = "", onIssued, onClose, preview = false }) {
+export default function StampCreator({ userId, code = "", from = null, onIssued, onClose, preview = false }) {
   useEscape(onClose);
-  const [draft, setDraft] = useState(() => ({
+  /* `from` IS A STAMP TO START FROM — the one this student already has, when
+     they have been granted the one change 0039 allows. Inks are stored and
+     drawn by NAME; in here they are palette entries, because that is what the
+     swatches compare against, so each of the three is looked up on the way
+     in. Without a `from` the draft is the first one every student gets. */
+  const [draft, setDraft] = useState(() => (from ? {
+    shape: from.shape || "seal", code: normaliseCode(from.code || code), sym: from.sym || null,
+    ring: from.ring || "", rim: from.rim !== false,
+    pattern: from.pattern || "none", pscope: from.pscope || "both",
+    ink: inkByName(inkName(from.ink)) || PALETTE[1],
+    pink: inkByName(inkName(from.pink)), cink: inkByName(inkName(from.cink)),
+    seed: from.seed || 7, cmode: from.sym ? "sym" : "code",
+  } : {
     shape: "seal", code: normaliseCode(code), sym: null, ring: "", rim: true,
     pattern: "none", pscope: "both", ink: PALETTE[1], pink: null, cink: null, seed: 7, cmode: "code",
   }));
@@ -84,7 +104,7 @@ export default function StampCreator({ userId, code = "", onIssued, onClose, pre
   const [asked, setAsked] = useState(0);       // bumped to ask again about the same code
   useEffect(() => {
     const c = draft.code;
-    if (c.length !== 3) { setLook({ code: c, taken: undefined, alts: [] }); return undefined; }
+    if (!c.length) { setLook({ code: c, taken: undefined, alts: [] }); return undefined; }
     let live = true;
     const cands = codeCandidates(c).slice(0, 24);
     const t = setTimeout(async () => {
@@ -116,7 +136,7 @@ export default function StampCreator({ userId, code = "", onIssued, onClose, pre
     if (!confirming) {
       if (st.k !== "free") {
         codeRef.current?.focus();
-        toast(st.k === "taken" ? st.msg : "Pick your three-character code first");
+        toast(st.k === "taken" ? st.msg : "Pick your code first");
         return;
       }
       setConfirming(true);
@@ -170,7 +190,7 @@ export default function StampCreator({ userId, code = "", onIssued, onClose, pre
             <div className="crow">
               <input ref={codeRef} className={`cin${d.sym ? "" : " on"}`} maxLength={3} value={d.sym ? "" : d.code}
                      placeholder="WNG" autoComplete="off" autoCapitalize="characters" spellCheck="false"
-                     aria-label="Your 3-character code"
+                     aria-label="Your code, one to three characters"
                      onChange={(e) => set({ code: normaliseCode(e.target.value), sym: null, cmode: "code" })} />
             </div>
             <p className={`cstat is-${st.k}`} aria-live="polite">
