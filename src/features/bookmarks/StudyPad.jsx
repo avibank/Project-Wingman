@@ -5,15 +5,22 @@ import { findSave, addSave, removeSave, restoreSave } from './savesStore';
 import { useSavesState } from './useSaves';
 import { toast } from './toastBus';
 import { useUserProgress } from '../../lib/userProgress.jsx';
-import { markSeen } from './cardsSeen';
+import { markSeen, firstUnseen, allSeen } from './cardsSeen';
 
-/** The two faces of a study card. Front: the question. Back: the right answer (and the author's explanation, only if the question has one). */
-export function CardFaces({ q }) {
+/** The two faces of a study card. Front: the question. Back: the right answer (and the author's explanation, only if the question has one).
+ *
+ *  `turn` DRAWS THE FLIP GLYPH, and it is drawn ONCE (owner, 2026-09-23:
+ *  "less repeated icons"). It used to sit on both faces of every card in both
+ *  surfaces: on the back it is telling you to do the thing you have just
+ *  done, and inside "Test yourself" there is a turn BUTTON under the card
+ *  saying it a third time. So it is the front of a card in the pad, and
+ *  nowhere else. */
+export function CardFaces({ q, turn = true }) {
   return (<>
-    <div className="bm-face"><div className="bm-lbl">Chapter {q.chapter} {q.fromCards ? 'cards' : 'quiz'}</div><div className={`bm-term${q.stem.length > 40 ? ' is-long' : ''}`}>{q.stem}</div><span className="bm-turn"><IconFlip /></span></div>
+    <div className="bm-face"><div className="bm-lbl">Chapter {q.chapter} {q.fromCards ? 'cards' : 'quiz'}</div><div className={`bm-term${q.stem.length > 40 ? ' is-long' : ''}`}>{q.stem}</div>{turn ? <span className="bm-turn"><IconFlip /></span> : null}</div>
     <div className="bm-face is-back"><div className="bm-lbl">Answer</div>
       <div><div className="bm-answer">{letter(q.answerIndex)}. {q.options[q.answerIndex]}</div>{q.explanation ? <p className="bm-meta" style={{ textTransform: 'none', fontFamily: 'inherit', fontSize: '1rem', marginTop: 10 }}>{q.explanation}</p> : null}</div>
-      <span className="bm-turn"><IconFlip /></span></div>
+    </div>
   </>);
 }
 
@@ -25,7 +32,13 @@ export function CardFaces({ q }) {
 export default function StudyPad({ questions, moduleId, mode }) {
   useSavesState();
   const progress = useUserProgress();
-  const [k, setK] = useState(0);
+  /* IT OPENS WHERE YOU STOPPED (owner, 2026-09-23: "study cards should save
+     your progress"). The first card you have not turned over is where you
+     stopped, so no second key is kept and nothing can fall out of step with
+     `pw-cards-seen`. A set you have been all the way through opens at the top
+     again, and the line under the pad says so rather than silently
+     restarting. */
+  const [k, setK] = useState(() => firstUnseen(progress, questions));
   const [flipped, setFlipped] = useState(false);
   const pad = useRef(null);
   /* BOTH REFS ABOVE THE EARLY RETURN. p0 was declared below `if (!cur) return
@@ -87,6 +100,12 @@ export default function StudyPad({ questions, moduleId, mode }) {
         <button type="button" className="bm-round bm-pd-arrow is-prev" disabled={k === 0} onClick={() => go(-1)} aria-label="Previous card"><IconLeft /></button>
         <button type="button" className="bm-round bm-pd-arrow is-next" disabled={k === n - 1} onClick={() => go(1)} aria-label="Next card"><IconRight /></button>
       </div>
+      {/* THE ONE LINE THAT SAYS HOW IT WORKS, because the pad's affordances
+          were in an aria-label and nowhere a sighted student could read them.
+          It is words rather than a third row of icons. */}
+      <p className="bm-padhint">{allSeen(progress, questions)
+        ? 'You have been through these. Tap a card to turn it over, swipe for the next.'
+        : 'Tap a card to turn it over. Swipe, or use the arrows, for the next.'}</p>
     </div>
   );
 }

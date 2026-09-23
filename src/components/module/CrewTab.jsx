@@ -43,7 +43,17 @@ import CrewEmpty, { CrewGhost } from "./CrewEmpty.jsx";
  * inside a chapter header. The reference does it this way too — `face()` there
  * is a span, and the stack's click is delegated. */
 function Face({ p, mate, onOpen, inert = false }) {
-  const cls = `av${p.on ? " on" : ""}${mate ? " sqring" : ""}`;
+  /* `is-inline` OPTS OUT OF THE 44px FLOOR (§12, App.jsx), and it has to.
+     A face is a 32px CIRCLE, and the floor is a min-height: the button came
+     out 32 wide by 44 tall, so every face in every stack was drawn as an
+     upright OVAL — which is what the owner saw and called squished
+     (2026-09-23). The alternative, a 44px circle, cannot work either: the
+     faces overlap by design, so a 44px target over a 26px advance would put
+     you on the person to the right of the one you pressed. The 44px route to
+     the same person is on this screen already — the stamps on the wall below
+     are 44px buttons and open exactly the same card — which is the same
+     argument `.qcell` makes in exam.css about Previous and Next. */
+  const cls = `av is-inline${p.on ? " on" : ""}${mate ? " sqring" : ""}`;
   const style = { background: `oklch(.55 .09 ${hueFor(p.name)})` };
   const title = `${p.name}${mate ? " · your squadron" : ""}`;
   if (inert) {

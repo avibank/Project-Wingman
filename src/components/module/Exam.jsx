@@ -355,13 +355,26 @@ export default function Exam({
 
   /* The grid box pops when its question gets an answer. The class has to come
      off and go back on with a reflow between, or a second answer to the same
-     question does nothing. */
+     question does nothing.
+
+     IT IS `is-pop`, AND THE BARE NAME WAS A LIVE BUG (owner, 2026-09-23:
+     "switching answers slightly breaks the quiz chart enlarging the
+     numbers"). `.pop` is the Flight Deck's popover in instruments.css — a
+     bare selector carrying `width: 286px` — and instruments.css is loaded on
+     every module screen, which is where a quiz is opened from. So the second
+     answer to one question, which is the only path that takes the class off
+     and puts it back, handed the cell a 286px width; `aspect-ratio: 1` made
+     it 286 tall, the grid's `1fr` columns collapsed the other three to 2px,
+     and the navigator became three enormous squares. Reproduced at 1512 and
+     measured: `49px 49px 49px 49px` became `286px 2px 2px 2px`.
+     `check:collisions` now fails on any class added at runtime that another
+     sheet styles from a bare selector. */
   const pop = useCallback((i) => {
     const cell = gridRef.current?.querySelector(`[data-i="${i}"]`);
     if (!cell || calm()) return;
-    cell.classList.remove("pop");
+    cell.classList.remove("is-pop");
     void cell.offsetWidth;
-    cell.classList.add("pop");
+    cell.classList.add("is-pop");
   }, [calm]);
 
   /* The model owns what an answer is. `answer()` clears a choice you pick

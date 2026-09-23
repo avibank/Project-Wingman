@@ -193,3 +193,13 @@
    nothing. `scripts/scope-ref-css.mjs` restores the same line, for the same
    reason, for the other reference builds. */
 .app .bm{ font: 15px/1.5 var(--font-ui); }
+
+/* THE PAD'S ONE LINE OF INSTRUCTION (owner, 2026-09-23: study cards should be
+   more intuitive). The pack drew the affordances as glyphs on the card and
+   said the rest in an aria-label, which a sighted student never meets. One
+   quiet line under the pad, in the app's own sheet because the pack's is a
+   port. */
+.bm .bm-padhint {
+  margin: 12px 2px 0; font-size: 13px; line-height: 1.5; color: var(--t3);
+  text-align: center; text-wrap: pretty;
+}
