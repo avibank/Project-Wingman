@@ -429,7 +429,11 @@ reader does can damage the paper. Module 1 only for now, behind
   text runs are split, which changes the extracted string, which silently
   orphans every mark ever made. See the header of `src/lib/paperText.js`.
 - The reader is its own lazy chunk (~428KB) and `check:bundle` asserts pdf.js
-  never reaches the entry chunk.
+  never reaches the entry chunk. **That check reads the entry's name out of
+  `dist/index.html`** rather than looking for a file called `index-*`: on
+  2026-09-23 a second `index-*` chunk appeared, readdir handed back the 59KB
+  one first, and the gate passed while the real 676KB entry went unmeasured.
+  A gate that can pass by accident is worse than no gate.
 - **Ink is not an annotation, and that is not a loophole.** A pen stroke is
   coordinates and nothing else — there is no sentence you could store instead
   that would let you draw it again — so it lives in `paper_ink`, which has no
@@ -538,24 +542,23 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   The squadron of livery tails, the module picker and "When do you usually
   study?" are gone, and so is the study-time placement they fed.
 - **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides: a
-  tutorial over the real screens with a class already in them. It is
-  **twelve steps, and every one of them is a decision this app has made that
-  another study app has not** (owner, 2026-09-23: "we are dealing with
-  university students who are familiar with study apps — we aren't trying to
-  teach them how to operate an OS but to introduce them to our own system,
-  our own quirks and ideas, rather than teach them how to use a video
-  player"). That is the THIRD length in three days and the direction is
-  settled by it: 75 page-by-page steps (2026-09-21) were "way too long", 25
-  one-per-idea steps still explained things every student already knows, and
-  what is left is the instruments that refuse to flatter you, the pass mark
-  you set for yourself and the one lamp that watches it, the right seat, the
-  class living inside the module, a logbook pinned to the minute of the video
-  that caused it, a quiz sat as an exam with the clock belonging to the
-  paper, what comes back afterwards, what the class has already finished, an
-  answer that can be endorsed but never buried, and a signature you design
-  once. Nothing in it explains Previous and Next, a search box, a tab or how
-  to send a message. It still opens with Wingman rather than Part-66, the
-  card's kicker names the page and how far through it you are, and it can
+  tutorial over the real screens with a class already in them. **Twenty-five
+  steps: every SCREEN, no screen's manual, and the social half carrying as
+  many steps as the studying half.** It took four goes to land, and the
+  argument of each is in `steps.js`'s header, because the next person to
+  shorten it will otherwise take out the wrong half:
+    · 75 steps page by page (2026-09-21) — "way too long";
+    · 25 one per idea — still explained what every student already knows;
+    · 12, quirks only — "walk them through every screen, just not every
+      boring detail — you hardly explained the social side";
+    · 25 again, and a different 25: every screen, in a classmate's voice,
+      with the right seat, Crew, bringing your own class in, the room,
+      squadrons and the boards taking eight of them.
+  **The voice is charm and kindness** (owner's word, 2026-09-23): it never
+  tells anybody off, and it says what the app will NOT do to them — no locked
+  chapters, no guilt over a broken streak, no score on a card set — as
+  plainly as what it will. It still opens with Wingman rather than Part-66,
+  the card's kicker names the page and how far through it you are, and it can
   always be skipped. Every claim in `steps.js` is checked against the code
   that does it; change the feature and the paragraph has to change with it.
   - **Nothing lights the player's tools any more, and that is deliberate**:
@@ -616,9 +619,11 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
-  - **Walked and measured**: all twelve steps light their target at 1440 and
-    at 390, every one of them fully on screen, and the card covers none of
-    any of them. The card is docked, so what changes between steps is its
+  - **Walked and measured**: all twenty-five steps light their target at 1440
+    and at 390, every one of them fully on screen, and the card covers none
+    of any of them. The study-cards step lights the top CARD rather than the
+    whole pad: at 390 the pad is 499px tall and its light's own padding came
+    down on the docked card by four pixels. The card is docked, so what changes between steps is its
     height and never its foot. Bookmarks is given the same room at its foot
     as the deck while the tutorial is up (`.bm-page` in `guide.css`): its
     folder grid could not scroll clear of the card, so the card took the top

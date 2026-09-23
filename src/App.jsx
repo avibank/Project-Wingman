@@ -8,7 +8,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import TransitionRouter, { popHandler } from "./components/TransitionRouter.jsx";
 import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
-import InviteSheet from "./components/InviteSheet.jsx";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
 import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH, DEMO_PAPERS } from "./lib/demoFixture.js";
@@ -69,6 +68,10 @@ const CHUNK = {
   // phone, so it should not drag the whole Ready Room down the wire to render
   // one room name and one button.
   invite: chunk(() => import("./components/room/InviteLanding.jsx")),
+  /* "Invite your class" opens a sheet, from one button on an empty Crew tab.
+     It is not on any first paint, and imported eagerly it put the entry
+     chunk 1KB over its budget — which is check:bundle doing exactly its job. */
+  inviteSheet: chunk(() => import("./components/InviteSheet.jsx")),
   modules: chunk(() => import("./components/ModulesPage.jsx")),
   moduleHub: chunk(() => import("./components/ModuleHub.jsx")),
   module: chunk(() => import("./components/module/ModuleScreen.jsx")),
@@ -172,6 +175,7 @@ import { ChevronRight, Lock, Plane } from "lucide-react";
 const ChaptersPanel = lazy(CHUNK.chapters);
 import Home from "./components/Home.jsx";
 const InviteLanding = lazy(CHUNK.invite);
+const InviteSheet = lazy(CHUNK.inviteSheet);
 const ModulesPage = lazy(CHUNK.modules);
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
@@ -2555,9 +2559,14 @@ function AppInner() {
     {/* One <filter> per ink seed on screen, shared. §8: "Crew walls with 100+
         stamps stay smooth… share the filter defs." */}
     {inviteClass && (
-      <InviteSheet moduleCode={inviteClass}
-                   moduleName={moduleByCode(inviteClass, useTestContent)?.name || "this module"}
-                   onClose={() => setInviteClass(null)} />
+      /* `fallback={null}`: the sheet is one network hop away and the screen
+         behind it is already the answer to "where am I". A spinner over a
+         Crew tab for 80ms would be the loudest thing on the page. */
+      <Suspense fallback={null}>
+        <InviteSheet moduleCode={inviteClass}
+                     moduleName={moduleByCode(inviteClass, useTestContent)?.name || "this module"}
+                     onClose={() => setInviteClass(null)} />
+      </Suspense>
     )}
 
     {pilotSheet && (
