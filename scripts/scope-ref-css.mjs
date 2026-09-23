@@ -50,6 +50,12 @@ const CUTS = [
     find: /@media \(prefers-color-scheme:dark\)\{:root[\s\S]*?\n\}\}\n/g, guard: /prefers-color-scheme:dark\)\{:root/ },
   { why: "the [data-theme=dark] token block",
     find: /:root\[data-theme="dark"\]\{[\s\S]*?\n\}\n/g, guard: /:root\[data-theme="dark"\]\{/ },
+  /* The quiz-stamps sheet carries the reference page's own toggle bar and
+     says so: "The `.dbar` block below is demo chrome — do not port it." */
+  { why: "the demo bar and its page padding (the sheet says not to port them)",
+    /* The guard matches a RULE, not the sentence above it: the sheet's own
+       header names `.dbar` while telling you not to port it. */
+    find: /\.qs-page\{[^\n]*\n(?:\.dbar[^\n]*\n)+/g, guard: /^\.dbar[^\n]*\{/m },
   { why: "the global reset — *, html, body, button, :focus-visible",
     /* Two shapes, because the two reference builds differ by one selector:
        reference 02's focus rule names `select`, reference 01's does not. */
@@ -116,6 +122,17 @@ const BUNDLES = [
        have their 15px/1.55 type scale, which is not this design's. Two names
        it reads and this app spells differently, and nothing else. */
     vars: `ROOT{ --font: var(--font-ui); --font-mono: var(--font-mono); }\n` },
+
+  /* THE QUIZ STAMPS SHEET (2026-09-23). Its own header says it "sits ON TOP
+     of the module/Library stylesheet" and introduces no token, so it takes
+     the same aliases the module bundle does — and its own scope, because the
+     board it draws is shown inside the exam screen, which is not `.ref-mod`.
+     `.res`, `.br`, `.fin` and `.note` are bare names this app renders
+     elsewhere (`.note` alone is in the lesson and the Ready Room), which is
+     the same reason every other handed-over sheet is scoped. */
+  { root: ".qstamps", out: "src/components/module/quiz-stamps.css",
+    from: "docs/launch/code/19-quiz-stamps.css (the quiz-stamps pack, as delivered)",
+    src: [() => PACK("19-quiz-stamps.css")] },
 
   { root: ".ref-lic", out: "src/components/licence/ref-licence.css",
     from: "01-tokens-and-base.css + 02-licence-card.css + 03-stamp-creator.css + 04-account-and-preferences.css",

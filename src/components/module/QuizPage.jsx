@@ -26,8 +26,8 @@ import "./lesson.css";
    written on every question so the Flight Deck can offer to put you back. */
 export default function QuizPage({
   minimums, module: mod, chapter, chapterNo = null, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
-  me = null, onOpenPilot = null,
-}) {
+  me = null, myStamp,
+ }) {
   const run = state?.run?.[chapter.id] || null;
   const score = state?.quiz?.[chapter.id];
   const up = upFrom({ kind: "quiz", moduleId: mod?.code || mod?.id, moduleName: mod?.name })?.label;
@@ -97,8 +97,8 @@ export default function QuizPage({
             /* R5/R6 — who the sitting belongs to, and which paper it is. The
                board is the only thing here that needs an identity. */
             me={me}
+            myStamp={myStamp}
             chapterId={chapter.id}
-            onOpenPilot={onOpenPilot}
             onDone={(t) => {
               // FIRST ATTEMPT ONLY counts. A retake is a fresh sitting and must
               // not move the needle, so it is not recorded as a score.

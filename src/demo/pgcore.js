@@ -176,6 +176,50 @@ export const RPC = {
     return row;
   },
 
+  /* 0038 — who has FINISHED each quiz, one row per person: the Library's
+     finisher line. Yours first, then most recent, capped; `finishers` is the
+     whole count, not the capped one. The same Fly solo and block rules as
+     the board above. */
+  quiz_finishers: (s, b) => {
+    const blocked = (a, c) => s.blocks.some((x) =>
+      (x.user_id === a && x.blocked_id === c) || (x.user_id === c && x.blocked_id === a));
+    const want = new Set(b.p_quizzes || []);
+    const cap = Math.max(1, Math.min(b.p_cap || 11, 24));
+    const latest = new Map();                       // `${quiz}|${user}` -> newest finish
+    for (const r of s.quiz_runs) {
+      if (!want.has(r.quiz_id) || !r.submitted_at) continue;
+      if (r.user_id !== b.uid) {
+        const p = s.pilot_profiles.find((x) => x.user_id === r.user_id) || {};
+        if (p.invisible || blocked(b.uid, r.user_id)) continue;
+      }
+      const k = `${r.quiz_id}|${r.user_id}`;
+      const had = latest.get(k);
+      if (!had || String(r.submitted_at) > String(had.submitted_at)) latest.set(k, r);
+    }
+    const out = [];
+    for (const quiz of want) {
+      const people = [...latest.values()].filter((r) => r.quiz_id === quiz)
+        .sort((x, y) => (y.user_id === b.uid) - (x.user_id === b.uid)
+          || String(y.submitted_at).localeCompare(String(x.submitted_at))
+          || String(x.user_id).localeCompare(String(y.user_id)));
+      for (const r of people.slice(0, cap)) {
+        const p = s.pilot_profiles.find((x) => x.user_id === r.user_id) || {};
+        out.push({
+          quiz_id: quiz, user_id: r.user_id,
+          callsign: (p.callsign || "").trim() || "Someone",
+          code: (p.code || "").trim() || "---",
+          finished_at: r.submitted_at, is_you: r.user_id === b.uid, finishers: people.length,
+          stamp_shape: p.stamp_shape ?? null, stamp_code: p.stamp_code ?? null,
+          stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,
+          stamp_pattern: p.stamp_pattern ?? null, stamp_pscope: p.stamp_pscope ?? null,
+          stamp_ink: p.stamp_ink ?? null, stamp_pink: p.stamp_pink ?? null, stamp_cink: p.stamp_cink ?? null,
+          stamp_seed: p.stamp_seed ?? null, stamp_issued_at: p.stamp_issued_at ?? null,
+        });
+      }
+    }
+    return out;
+  },
+
   quiz_leaderboard: (s, b) => {
     const blocked = (a, c) => s.blocks.some((x) =>
       (x.user_id === a && x.blocked_id === c) || (x.user_id === c && x.blocked_id === a));

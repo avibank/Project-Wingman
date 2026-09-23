@@ -1,0 +1,78 @@
+/* Quiz stamps — additions to the module sheet.
+   Reference build: reference/03-quiz-stamps.html (artifact "Quiz Stamps").
+   This sits ON TOP of the module/Library stylesheet (the crew build's <style>),
+   not on top of the old card-styled leaderboard. Tokens are the ones already
+   there: --ground --hair --line --t1/t2/t3 --accent --mono --sans --ease.
+   Nothing here introduces a card, a shadow or a new token.
+
+   The rules for what gets stamped are in code/18-quiz-stamps.js.
+   The `.dbar` block below is demo chrome — do not port it. */
+
+.qs-page{padding-bottom:70px}
+.dbar{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--hair);position:sticky;top:0;background:var(--ground);z-index:9}
+.dbar .g{display:inline-flex;align-items:center;gap:8px}
+.dbar .sw{display:inline-flex;gap:6px}
+.dbar .lb{font:10.5px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--t3)}
+.dbar .seg{display:inline-flex;gap:2px;border:1px solid var(--hair);border-radius:999px;padding:2px}
+.dbar .seg button{border:0;background:none;color:var(--t3);font:600 12.5px/1 var(--sans);padding:7px 11px;border-radius:999px;cursor:pointer}
+.dbar .seg button[aria-pressed="true"]{background:var(--t1);color:var(--ground)}
+.dbar .sw{display:flex;gap:6px}
+.dbar .sw button{flex:0 0 20px;width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;background:var(--c);box-sizing:border-box}
+.dbar .sw button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--t1)}
+
+/* the result — the stamp leads, the words follow */
+.res{padding:40px 0 30px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 28px;align-items:center}
+.res__stamp{color:var(--ink);line-height:0}
+.res__stamp svg{display:block}
+.res__k{font:11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.res h1{margin:8px 0 0;font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.18;text-wrap:balance}
+.res p{margin:9px 0 0;color:var(--t2);max-width:50ch}
+.res__btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.pillb{border:1px solid var(--line);background:none;color:var(--t1);border-radius:999px;padding:9px 17px;font:600 14px/1 var(--sans);cursor:pointer}
+.pillb:hover{background:var(--raised)}
+.pillb.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (max-width:620px){.res{grid-template-columns:1fr;gap:16px;padding-top:26px}.res h1{font-size:24px}}
+
+/* the board — rows on hairlines, no card */
+.bhead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:6px 0 10px;border-bottom:1px solid var(--line)}
+.bhead h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em}
+.bhead span{font-size:14px;color:var(--t3)}
+.bhead b{color:var(--t1);font-weight:600}
+.brows{list-style:none;margin:0;padding:0}
+.br{display:grid;grid-template-columns:28px 42px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--hair);position:relative}
+.br:first-child{border-top:0}
+.br__n{font:13.5px/1 var(--mono);color:var(--t3);font-variant-numeric:tabular-nums}
+.br__st{width:42px;height:42px;line-height:0;display:grid;place-items:center}
+.br__st svg{display:block}
+.br__st.rep{opacity:0}
+.br__who{min-width:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.br__ac{font:11.5px/1 var(--mono);color:var(--t3);white-space:nowrap}
+.br__cs{font-size:15.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.br__ag{font:10.5px/1 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--t3)}
+.br__sc{font:600 14px/1 var(--mono);color:var(--t2);font-variant-numeric:tabular-nums}
+.br__tm{font:13.5px/1 var(--mono);color:var(--t3);font-variant-numeric:tabular-nums;min-width:50px;text-align:right}
+.br.you .br__n,.br.you .br__cs,.br.you .br__sc{color:var(--t1)}
+.br.you .br__cs{font-weight:600}
+.br.you::after{content:"";position:absolute;left:-20px;top:0;bottom:0;width:2px;background:var(--accent)}
+.bfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0 0;border-top:1px solid var(--line);font-size:13px;color:var(--t3)}
+[data-stamps="off"] .br{grid-template-columns:28px 0 minmax(0,1fr) auto auto;gap:0 14px}
+[data-stamps="off"] .br__st{display:none}
+
+/* the finisher line under a Library quiz row */
+.fin{grid-column:2/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px}
+.fin__set{display:flex;flex-wrap:wrap;gap:1px;margin-left:-3px}
+.fin__set span{line-height:0;display:block}
+.fin__n{font-size:12.5px;color:var(--t3)}
+.fin__more{font:12px/1 var(--mono);color:var(--t2);align-self:center;margin-left:-3px}
+[data-stamps="off"] .fin{display:none}
+.lrow.q{grid-template-columns:62px 1fr auto;row-gap:0}
+.note{margin-top:30px;padding-top:14px;border-top:1px solid var(--hair);font-size:13.5px;color:var(--t3);line-height:1.6;max-width:62ch}
+.note b{color:var(--t2);font-weight:600}
+@media (max-width:620px){
+  .br{grid-template-columns:24px 36px minmax(0,1fr) auto;gap:10px;row-gap:2px}
+  .br__st{width:36px;height:36px}
+  .br__tm{grid-column:3/-1;text-align:left;min-width:0}
+  [data-stamps="off"] .br{grid-template-columns:24px 0 minmax(0,1fr) auto}
+  .br.you::after{left:-12px}
+}
+

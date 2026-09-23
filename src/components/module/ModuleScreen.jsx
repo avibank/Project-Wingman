@@ -240,7 +240,7 @@ export default function ModuleScreen({
                     onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
         )}
         {tab === "library" && (
-          <LibraryTab chapters={chapters} papers={papers} state={state}
+          <LibraryTab chapters={chapters} papers={papers} state={state} me={me}
                       downloads={mod?.downloads || []}
                       sub={librarySub} query={query} moduleCode={mod?.code || mod?.id || null}
                       readerPin={readerPin} onAddPaper={onAddPaper}

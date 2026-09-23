@@ -14,6 +14,11 @@ const shelfOn = papersOn || flagDefault("paper.viewer", false);
 import { useSwitchIn } from "../../lib/tabMotion.js";
 import { QuizzesWaiting, PapersSlot } from "./ModuleWaiting.jsx";
 import LibraryDownloads from "./LibraryDownloads.jsx";
+import Stamp from "../Stamp.jsx";
+import { stampOf } from "../../lib/stamp.js";
+import { fetchFinishers } from "../../lib/board.js";
+import { tilt } from "./Leaderboard.jsx";
+import "./quiz-stamps.css";
 
 /* ============================================================================
    §5 — THE LIBRARY.
@@ -50,8 +55,56 @@ const QUIZ = (
   </svg>
 );
 
+/* RULE 4 OF THE QUIZ-STAMPS BRIEF (2026-09-23) — WHO HAS FINISHED.
+   -----------------------------------------------------------------------------
+   A line of finisher stamps under each quiz row: one per person, their most
+   recent finish first, at most eleven, then "+n", then the count in words.
+   The markup and the class names are `finisherLine` in
+   docs/launch/code/18-quiz-stamps.js; the sheet is 19-quiz-stamps.css.
+
+   Three things are this app's:
+
+   · THE ORDER AND THE CAP ARE THE SERVER'S (0038). Yours is pinned first
+     (owner, on the brief's open question 2), and pinning in the client would
+     come too late — the cap would already have dropped you.
+   · THE EMPTY LINE NAMES ITS NEXT ACTION. The brief's words are "Nobody has
+     taken this one yet", and this app's §10 forbids naming an absence: "Every
+     empty state names its next action inside the sentence." So the row that
+     nobody has finished says "Be the first to take it" — the same fact, from
+     the other end, and never an empty strip.
+   · A PERSON WITH NO STAMP YET draws the un-inked outline, the licence's own
+     "not yet" mark (owner, on the brief's open question 1). */
+const STAMP_CAP = 11;
+const LIB_STAMP_PX = 36;
+
+function FinisherLine({ found }) {
+  const people = found?.people || [];
+  if (!people.length) {
+    return <span className="fin"><span className="fin__n">Be the first to take it</span></span>;
+  }
+  const over = Math.max(0, (found.total || people.length) - people.length);
+  return (
+    <span className="fin">
+      <span className="fin__set">
+        {people.map((p, i) => (
+          <span key={p.userId} title={p.isYou ? `${p.callsign} (you)` : p.callsign}>
+            <Stamp stamp={stampOf(p.profile)} size={LIB_STAMP_PX}
+                   rot={tilt(i) + (i % 2 ? 1 : -1)}
+                   on={!!p.profile?.stamp_issued_at} />
+          </span>
+        ))}
+      </span>
+      {over > 0 && <span className="fin__more">+{over}</span>}
+      <span className="fin__n">{found.total} finished</span>
+    </span>
+  );
+}
+
 export default function LibraryTab({
   chapters, papers, state, sub, onOpenQuiz, onOpenPaper, onAddPaper,
+  /* Who is looking, so the line can pin their own stamp and leave out
+     anybody flying solo or blocked either way (0038). */
+  me = null,
   query = "",
   /* The module's downloads — files handed over whole, never opened in the
      reader (LibraryDownloads.jsx says why). [] for a module with none. */
@@ -60,6 +113,21 @@ export default function LibraryTab({
   readerPin = null, faults = new Set(),
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
+
+  /* WHO HAS FINISHED EACH QUIZ, in one call for the whole tab rather than one
+     per row. Re-asked when the chapters change (another module) and when the
+     student's own scores do, which is what changes after they hand a paper
+     in and come back here. */
+  const [finishers, setFinishers] = useState({});
+  const quizIds = chapters.map((c) => c.quizId || c.id).filter(Boolean).join(",");
+  useEffect(() => {
+    if (!me || !quizIds) { setFinishers({}); return undefined; }
+    let live = true;
+    fetchFinishers({ me, quizIds: quizIds.split(","), cap: STAMP_CAP })
+      .then((found) => { if (live) setFinishers(found); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [me, quizIds, state?.quiz]);
 
   // §5 turned the Library's segmented control into one scroll, but the URL
   // still distinguishes /library from /library/quizzes. Rather than drop that
@@ -107,14 +175,14 @@ export default function LibraryTab({
           </div>
         </div>
 
-        <div className="papers">
+        <div className="papers qstamps">
 
           {shownQuizzes.map((c) => {
             const s = state?.quiz?.[c.id];
             const lit = faults.has(c.id);
             const total = s?.total ?? c.quizCount ?? null;
             return (
-              <button type="button" key={c.id} className="lrow" onClick={() => onOpenQuiz(c)}
+              <button type="button" key={c.id} className="lrow q" onClick={() => onOpenQuiz(c)}
                       data-state={s && !lit ? "done" : undefined}>
                 {/* THE ANSWER SHEET, not a document glyph — the same thumbnail
                     the quiz row inside a chapter carries, in the same slot, so
@@ -135,6 +203,7 @@ export default function LibraryTab({
                     : <span className="act-o">Take it</span>}
                   {lit && <span className="act-o">Re-check</span>}
                 </span>
+                <FinisherLine found={finishers[c.quizId || c.id]} />
               </button>
             );
           })}

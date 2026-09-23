@@ -172,6 +172,32 @@ merge them back together.
   place are all the server's — the client only formats, which `check:exam`
   asserts by refusing a `.sort(` or a `Date.parse` in either file. It draws
   nothing until somebody else is on it.
+- **Stamps reach the board, the result and the Library** (the quiz-stamps
+  pack, 2026-09-23: `docs/launch/BRIEF-QUIZ-STAMPS.md`, `18-quiz-stamps.js`,
+  `19-quiz-stamps.css` scoped to `.qstamps` by `npm run ref:css`). A stamp
+  belongs to the PERSON, never to the run, and every one on these screens
+  comes through the app's one renderer.
+  - The result's aeroplane-in-a-ring is **gone**: the student's own stamp
+    leads the screen at 132px, level with the headline, in a column that
+    collapses at 620px (`result-stamp.css`).
+  - On the board **every run keeps its row**, and the stamp is drawn only on
+    an account's first row — which, the board arriving sorted, is that
+    person's best run. A repeat keeps the empty slot and takes the word
+    "again". The de-duplication is at render; the query still returns runs.
+  - A Library quiz row carries a line of **finisher stamps**: one per person,
+    yours pinned first and then most recent, eleven at most, then "+n", then
+    the count in words. The order and the cap are the server's (0038) — a cap
+    applied in the client would have dropped the student's own stamp off the
+    end. A quiz nobody has sat says "Be the first to take it", because §10
+    forbids naming an absence, which is what the brief's own words did.
+  - A person with no stamp yet draws the **un-inked outline**, the licence's
+    own "not yet" mark (owner, on the brief's open question 1).
+  - **The pack's row is a `<li>` of spans, so a board row has no door on it**
+    any more; the pilot sheet is still reached from Crew, the Ready Room and a
+    lesson. One button on a row would put it back.
+  - `npm run check:quiz-stamps` is 46 assertions, and the last of them drive
+    the demo's emulation of 0038 with a class of fourteen, a repeat, a block
+    and somebody flying solo.
 - **The clock is a FLAT TWENTY MINUTES** for any quiz up to forty questions
   (owner, 2026-09-20), which reverses the 75-seconds-a-question figure below.
   `estimate` keeps the 75 seconds, because a row reading "about 20 minutes"
@@ -241,6 +267,14 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
+
+**0038, who has finished a quiz, has been run against the live project**
+(2026-09-23), verified by connecting: `quiz_finishers(uid, p_quizzes, p_cap)`
+is in `pg_proc` and answers over the anon REST path. It groups runs into
+people (`max(submitted_at)`), pins the caller first, then orders by recency,
+counts the WHOLE quiz rather than the capped page, and carries 0034's
+visibility rules — Fly solo, and a block cutting both ways. `quiz_leaderboard`
+is untouched and still returns every run, which is what the board draws.
 
 **0036 and 0037, the whole stamp, have been run against the live project**
 (2026-09-21), verified by connecting. 0036 found the live checks still on an

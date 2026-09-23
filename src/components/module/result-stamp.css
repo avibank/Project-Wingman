@@ -1,0 +1,44 @@
+/* =============================================================================
+   THE STAMP AT THE HEAD OF THE RESULT — Rule 2 of the quiz-stamps brief.
+   -----------------------------------------------------------------------------
+   "The person's own stamp sits at the head of the result at 132px, rotated
+   -6°, in the column beside the headline — not a small icon above it. It is
+   the first thing on the screen and it holds its own against the heading."
+
+   The brief draws that with its own `.res` grid (19-quiz-stamps.css). This
+   screen is the EXAM pack's, not the module sheet's: the percentage, the
+   meter and the correction below them are that pack's design and are not what
+   this brief changes. So the column is added to the exam pack's own
+   `.result__top` — the same two-column shape, the same collapse at 620px, no
+   ring, no border and no plate behind the stamp — and nothing else about the
+   screen moves.
+   ========================================================================= */
+.exam-frame .result__top.has-stamp {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 28px;
+  align-items: center;
+}
+/* The stamp spans the rows beside it: the percentage, the headline and the
+   meter are the block it is level with. */
+.exam-frame .result__top.has-stamp .res__stamp {
+  grid-row: 1 / -1;
+  line-height: 0;
+  color: var(--state-ink);
+}
+.exam-frame .result__top.has-stamp .res__stamp svg { display: block; }
+/* The brief's own breakpoint: under 620px the two columns become one. */
+@media (max-width: 620px) {
+  .exam-frame .result__top.has-stamp { grid-template-columns: 1fr; row-gap: 12px; }
+  .exam-frame .result__top.has-stamp .res__stamp { grid-row: auto; }
+  .exam-frame .result__top.has-stamp .res__stamp svg { width: 96px; height: 96px; }
+}
+
+/* THE BOARD SHARES THE RESULT'S GUTTER. The brief puts no card round the
+   board, and this screen's result IS a card, so without this the board's rows
+   begin 24px wider than the words above them and the two read as different
+   columns. The figures are the result card's own, at both of its widths
+   (exam.css). */
+.exam-frame .qstamps { padding-inline: 24px; }
+@container (max-width: 859px) {
+  .exam-frame .qstamps { padding-inline: 14px; }
+}

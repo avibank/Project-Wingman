@@ -12,6 +12,8 @@ import { addMany } from "../../features/bookmarks/savesStore.js";
 import { toast } from "../../features/bookmarks/toastBus.js";
 import { lockExam, unlockExam } from "../../lib/examLock.js";
 import Leaderboard from "./Leaderboard.jsx";
+import Stamp from "../Stamp.jsx";
+import "./result-stamp.css";
 import { startRun, finishRun, fetchBoard } from "../../lib/board.js";
 /* R1 — the pack's stylesheet, imported once, here, so it arrives with the exam
    chunk rather than on every first paint. `.locked-note` in the app bar is the
@@ -78,11 +80,9 @@ const IconPass = () => (
    before this one gave the tick to a pass and a retry arrow to a not-yet; the
    matte handoff replaces both, and the verdict is still said in words on the
    line beside it and drawn in the colour of the score line under it. */
-const IconPlane = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" />
-  </svg>
-);
+/* THE PLANE GLYPH IS GONE (the quiz-stamps brief, Rule 2): the person's own
+   stamp leads the result now, and the brief's check greps this file for the
+   path it used to draw. */
 const IconBar = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.5" fill="currentColor" />
@@ -154,7 +154,10 @@ function ReviewRow({ item, mine, n, k }) {
 export default function Exam({
   title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
   minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
-  moduleCode = null, chapterNo = null, chapterId = null, onLeave = null, me = null, onOpenPilot = null,
+  moduleCode = null, chapterNo = null, chapterId = null, onLeave = null, me = null,
+  /* The student's own stamp, for the head of the result (the quiz-stamps
+     brief, Rule 2). Null until they have issued one. */
+  myStamp = null,
 }) {
   /* A lesson id is not a name. Without this, "where these came from" reads as
      a row of ids, which is a worse answer than no list at all. */
@@ -691,11 +694,26 @@ export default function Exam({
 
         {result && (
           <section className={`result ${result.passed ? "is-pass" : "is-notyet"} ${inView ? "is-in" : ""}`} aria-live="polite">
-            <div className="result__top">
+            {/* RULE 2 OF THE QUIZ-STAMPS BRIEF (2026-09-23): "The circled
+                plane glyph is gone. The person's own stamp sits at the head of
+                the result at 132px, rotated -6°, in the column beside the
+                headline — not a small icon above it." No ring, no border, no
+                plate: the stamp carries its own outline.
+
+                The column is added to the exam pack's own `.result__top`
+                rather than replacing it with the brief's `.res`, because the
+                rest of this screen — the percentage, the meter, the
+                correction under it — is the exam pack's and is not what this
+                brief changes. result-stamp.css is those few lines and says
+                the same thing. A student who has not issued a stamp yet gets
+                the un-inked outline (owner, on the brief's open question 1),
+                which is the licence's own "not yet" mark. */}
+            <div className="result__top has-stamp">
+              <span className="res__stamp" aria-hidden="true">
+                <Stamp stamp={myStamp} size={132} rot={-6} on={Boolean(myStamp)} />
+              </span>
               <span className="result__big">{shown}%</span>
-              <h2 className="result__head">
-                <span className="result__icon" aria-hidden="true"><IconPlane /></span>{headText}
-              </h2>
+              <h2 className="result__head">{headText}</h2>
               {/* NO NUMBERS ON THE MARKERS. The line says the three figures
                   once, where a screen reader will read them and a tooltip will
                   show them, rather than printing them over a 12px bar. */}
@@ -778,7 +796,7 @@ export default function Exam({
         {phase === "done" && board && (
           <Leaderboard title={`${title} · everyone on the module`}
                        runs={board.runs} boardSize={board.total} total={total}
-                       onShowWho={onOpenPilot} />
+                       />
         )}
       </div>
 

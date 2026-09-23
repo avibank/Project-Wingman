@@ -182,6 +182,31 @@ export function seed({ me, look = {} } = {}) {
     { id: "d2000000-0000-4000-8000-000000000002", session_id: SEAT, user_id: me, body: "Good luck. I'm on simultaneous equations.", kept: false, created_at: ago(13) },
   ];
 
+  /* WHO HAS FINISHED WHICH QUIZ (0038, the quiz-stamps brief). Fourteen
+     people on the first chapter's paper, so the Library's line shows its cap
+     — eleven stamps, "+3", "14 finished" — six on the second, two on the
+     third, and none on the fourth, which is the line that names its next
+     action instead. Two people sat the first one twice, which is what puts
+     "again" on the board without changing who is stamped. */
+  let runN = 0;
+  const run = (who, quiz, chapter, score, total, mins, took = 11) => ({
+    id: `d4000000-0000-4000-8000-${String(++runN).padStart(12, "0")}`,
+    user_id: who, module_code: "M1", chapter_id: chapter, quiz_id: quiz,
+    total, score, callsign: who === me ? (look.callsign || "You") : CLASS.find((p) => p.id === who)?.cs || null,
+    code: who === me ? "A7K" : CLASS.find((p) => p.id === who)?.code || null,
+    started_at: ago(mins + took), submitted_at: ago(mins),
+  });
+  const quiz_runs = [
+    ...CLASS.slice(0, 13).map((p, k) => run(p.id, "M1.01.QZ", "M1.01", 5 - (k % 3 === 2 ? 1 : 0), 5, 90 + k * 37, 9 + (k % 5))),
+    run(me, "M1.01.QZ", "M1.01", 5, 5, 60 * 24 * 9, 12),
+    run("demo_sara", "M1.01.QZ", "M1.01", 4, 5, 60 * 24 * 11, 14),   // a second sitting: "again"
+    run("demo_dana", "M1.01.QZ", "M1.01", 3, 5, 60 * 24 * 13, 16),
+    ...CLASS.slice(0, 5).map((p, k) => run(p.id, "M1.02.QZ", "M1.02", 5 - (k % 2), 5, 200 + k * 55, 10 + k)),
+    run(me, "M1.02.QZ", "M1.02", 4, 5, 60 * 24 * 2, 13),
+    run("demo_mariam", "M1.03.QZ", "M1.03", 4, 4, 300, 15),
+    run(me, "M1.03.QZ", "M1.03", 2, 4, 60 * 6, 17),
+  ];
+
   const save = (kind, ref, chapter, extra = {}) => ({
     id: `d3000000-0000-4000-8000-${String(ref).replace(/\W/g, "").padStart(12, "0").slice(-12)}`,
     user_id: me, module_id: "M1", kind, ref_id: ref, chapter, at_seconds: null, page: null, created_at: ago(200), ...extra,
@@ -224,7 +249,7 @@ export function seed({ me, look = {} } = {}) {
   return {
     pilot_profiles, chapter_completions, presence, squadrons, squadron_members,
     comms_messages, comms_receipts, lesson_threads, lesson_replies, thread_votes, lesson_reply_votes,
-    copilot_sessions, copilot_participants, seat_messages, saves,
+    copilot_sessions, copilot_participants, seat_messages, saves, quiz_runs,
     user_progress: [{ user_id: me, data: progress }],
   };
 }
