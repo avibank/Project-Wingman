@@ -117,6 +117,12 @@ function Cover({ cover, edit, onPick }) {
 
 export default function LicenceCard({
   profile, stats = [], stamp = null, edit = false, admin = false, loading = false,
+  /* HOW MANY CHANGES ARE OWED (0039). A stamp is permanent, and the one
+     exception is a change the owner has granted — two students issued one
+     they did not want while a code had to be exactly three characters. When
+     a change is owed, the issued stamp becomes the door back into the
+     creator; when it is not, it is the picture it has always been. */
+  redo = 0,
   slam = false,
   onPickCover, onPickPhoto, onPickPhrase, onCallsign, onBio, onCreateStamp,
   action = null,
@@ -190,7 +196,13 @@ export default function LicenceCard({
               Somebody else's unissued stamp is just the ghost: it is not your
               stamp to create, and a button here would say otherwise. */}
           <div className="sblock">
-            {issued ? (
+            {issued && edit && redo > 0 ? (
+              <button type="button" className={`got is-again${slam ? " slam" : ""}`} onClick={onCreateStamp}
+                      aria-label="Make your stamp again">
+                <Stamp stamp={stamp} size={150} rot={-6} label={`${name}'s stamp`} />
+                <b>Make it again</b>
+              </button>
+            ) : issued ? (
               <span className={`got${slam ? " slam" : ""}`}>
                 <Stamp stamp={stamp} size={150} rot={-6} label={`${name}'s stamp`} />
               </span>
