@@ -41,7 +41,7 @@ function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) walk(p, out);
-    else if (/\.(css|jsx)$/.test(name)) out.push(p);
+    else if (/\.(css|jsx|js)$/.test(name)) out.push(p);
   }
   return out;
 }
@@ -228,6 +228,35 @@ for (const f of files.filter((x) => x.endsWith(".jsx"))) {
   }
 }
 
+/* ------------------------------------------------ A CLASS ADDED AT RUNTIME.
+ *
+ * The fourth time this bug shipped, and the first one no CSS-against-CSS scan
+ * could have seen: `classList.add("pop")` in Exam.jsx, against `.pop` in
+ * instruments.css — the Flight Deck's popover, bare, carrying `width: 286px`.
+ * The exam's own rule is scoped (`.exam-frame .qcell.pop`), so the pair reads
+ * as the shared-base shape above and passes; the class only exists for the
+ * 350ms of an animation, and only on the SECOND answer to one question, which
+ * is the one path that takes it off and puts it back. The navigator's four
+ * 49px columns became `286px 2px 2px 2px` — three enormous squares — and the
+ * owner found it on the live site rather than here (2026-09-23).
+ *
+ * A class the markup carries is at least readable beside the component. One
+ * added from JS is invisible to every reader and every other check, so the
+ * rule is absolute: it may not be a name another file claims globally. There
+ * is no exception list, because at the time of writing there is nothing to
+ * except — the repo's own `is-*` convention already keeps these scoped. */
+const runtime = [];
+for (const f of files.filter((x) => /\.(jsx|js)$/.test(x))) {
+  const src = decomment(readFileSync(f, "utf8"));
+  for (const m of src.matchAll(/classList\.add\(\s*['"`]([A-Za-z0-9_-]+)['"`]/g)) {
+    const owners = [...(bareOwners.get(m[1]) || [])].filter((o) => o !== f);
+    if (owners.length) {
+      const line = src.slice(0, m.index).split("\n").length;
+      runtime.push(`${f}:${line} adds .${m[1]}, which ${owners.join(" and ")} claims globally`);
+    }
+  }
+}
+
 console.log(`collisions: ${bareOwners.size} classes carry a bare rule somewhere`);
 if (skipped.length) {
   console.log(`            ${skipped.length} stylesheet(s) skipped as unreachable: ${skipped.map((f) => f.split("/").pop()).join(", ")}`);
@@ -240,11 +269,13 @@ for (const c of fresh) {
 if (!fresh.length) {
   console.log("  ok    no class carries a bare rule in two different files");
 }
+for (const x of runtime) console.log(`  RUNTIME CLASS   ${x}`);
+if (!runtime.length) console.log("  ok    no class added at runtime is one another file claims globally");
 for (const x of stray) console.log(`  STRAY BACKTICK  ${x}`);
 if (!stray.length) console.log("  ok    no CSS template literal is closed early by a backtick inside it");
 console.log(`  note  ${baseAndOverride.length} classes are bare in one file and scoped in another —`);
 console.log("        the shared-base shape, which is correct on purpose, and also");
 console.log("        where .lamp hid. Read it when a component looks nearly right.");
-const bad = fresh.length + stray.length;
+const bad = fresh.length + stray.length + runtime.length;
 console.log(bad ? `\nFAILED: ${bad}` : "\nMATCH");
 process.exitCode = bad ? 1 : 0;

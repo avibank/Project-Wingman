@@ -177,5 +177,46 @@ await fresh();
   ok("ships", "nothing in src/ imports the fake server", importers.length === 0, importers.join(" "));
 }
 
+const { readFileSync } = await import("node:fs");
+
+/* 13 — WHAT A CARD SET REMEMBERS (owner, 2026-09-23: "study cards should save
+   your progress"). Two facts, one key each, and neither of them is a score:
+   where you stopped, which is the first card you have not turned over, and
+   what stuck, which is spent on the ORDER of the next deal. Pure functions
+   over a stand-in provider, so this needs no browser and no server. */
+{
+  const { firstUnseen, allSeen, dealOrder, markGot, markSeen, seenCount, CARDS_GOT, CARDS_SEEN } =
+    await import("../src/features/bookmarks/cardsSeen.js");
+  const store = {};
+  const progress = { get: (k, d) => (k in store ? store[k] : d), set: (k, v) => { store[k] = v; } };
+  const cards = ["a", "b", "c", "d"].map((id) => ({ id }));
+
+  ok("cards", "a set nobody has opened starts at the top", firstUnseen(progress, cards) === 0);
+  markSeen(progress, "a"); markSeen(progress, "b");
+  ok("cards", "and a set you left half way starts where you stopped", firstUnseen(progress, cards) === 2);
+  ok("cards", "turning the same card twice writes nothing new",
+     (() => { const before = JSON.stringify(store[CARDS_SEEN]); markSeen(progress, "a"); return JSON.stringify(store[CARDS_SEEN]) === before; })());
+  ok("cards", "a set you have been all the way through opens at the top again, and says so",
+     !allSeen(progress, cards) && (markSeen(progress, "c"), markSeen(progress, "d"), allSeen(progress, cards) && firstUnseen(progress, cards) === 0));
+  ok("cards", "and it counts by id, never by position", seenCount(progress, ["a", "d", "zz"]) === 2);
+
+  markGot(progress, "a", true); markGot(progress, "d", true);
+  ok("cards", "the ones you had are remembered by id", store[CARDS_GOT].a === true && store[CARDS_GOT].d === true);
+  ok("cards", "and the ones that slipped are dealt first",
+     dealOrder(progress, cards).map((c) => c.id).join("") === "bcad");
+  markGot(progress, "a", false);
+  ok("cards", "getting one wrong puts it back on the pile",
+     !("a" in store[CARDS_GOT]) && dealOrder(progress, cards).map((c) => c.id).join("") === "abcd");
+  ok("cards", "a card nobody has met sits between the two",
+     (() => { const s2 = { [CARDS_SEEN]: { b: true }, [CARDS_GOT]: { c: true } };
+       const p2 = { get: (k, d) => (k in s2 ? s2[k] : d), set: () => {} };
+       return dealOrder(p2, cards).map((c) => c.id).join("") === "badc"; })());
+  /* The comment at the top of FinishPanel says "no scores, no stats" — which
+     is the rule, not a breach of it, so the prose goes first. */
+  ok("cards", "and nothing the student reads at the end is a score",
+     !/missed|wrong|score/i.test(readFileSync("src/features/bookmarks/FinishPanel.jsx", "utf8")
+       .replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
+}
+
 console.log(`\nsaves: ${pass} passed, ${fails.length} failed`);
 process.exit(fails.length ? 1 : 0);

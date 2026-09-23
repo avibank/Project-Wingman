@@ -273,18 +273,35 @@ const KNOWN_ORPHAN_KEYS = {
    pill came out 38px wide with 78px of content spilling out of it. Measured,
    not guessed, and invisible in a diff.
 
-   So every class the Crew tab draws is prefixed. This is what keeps it that
-   way. `crew`, `is-on` and the stamp's own wrapper are the three that are
-   allowed through by name. */
+   So nothing in crew.css may reach outside the tab. The rule was "every class
+   is prefixed `crew-`", which was true while the tab drew its own port; it
+   now draws the REFERENCE's names (`.stack`, `.av`, `.wall`) under
+   ref-module.css, and that file is generated — a hand edit in it does not
+   survive `npm run ref:css`. So an app-side rule for one of those names has
+   to live here, and what actually keeps it in the tab is the ROOT of the
+   selector, not the spelling of the class.
+
+   Hence: an unprefixed class is allowed only in a selector that starts at
+   `.crew`, which is this tab's own root element. `.mscreen .hrow` — the
+   collision that cost the pills 78px of content — could not be written that
+   way. */
 {
   const css = readFileSync(new URL("../src/components/module/crew.css", import.meta.url), "utf8")
     .replace(/\/\*[\s\S]*?\*\//g, "");
   const ALLOW = new Set(["crew", "is-on", "insp-stamp", "app", "smooth-air"]);
   const loose = new Set();
-  for (const m of css.matchAll(/\.([a-zA-Z][\w-]*)/g)) {
-    if (!ALLOW.has(m[1]) && !m[1].startsWith("crew-")) loose.add(m[1]);
+  for (const m of css.matchAll(/(^|[};])([^{};@]*?)\{/g)) {
+    for (const part of m[2].split(",")) {
+      const sel = part.trim();
+      if (!sel.includes(".")) continue;
+      const rooted = /^\.crew\b/.test(sel);
+      for (const c of sel.matchAll(/\.([a-zA-Z][\w-]*)/g)) {
+        if (ALLOW.has(c[1]) || c[1].startsWith("crew-") || rooted) continue;
+        loose.add(`${c[1]} (in "${sel}")`);
+      }
+    }
   }
-  ok("scope", `every class the Crew tab draws is its own (${[...loose].length ? "" : "all prefixed"})`,
+  ok("scope", `every rule the Crew tab draws is rooted in its own tab (${[...loose].length ? "" : "all scoped"})`,
      loose.size === 0, [...loose].join(" "));
 }
 

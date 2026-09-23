@@ -7,10 +7,19 @@ import { findSave, removeSave, restoreSave } from './savesStore';
 import { toast } from './toastBus';
 import { CardFaces } from './StudyPad';
 import FinishPanel from './FinishPanel';
+import { useUserProgress } from '../../lib/userProgress.jsx';
+import { dealOrder, markGot } from './cardsSeen';
 
 /** "Test yourself": swipe right if you've got it, left if not yet. Tap to turn the card. */
 export default function TestPile({ cards: initial, onClose }) {
-  const [cards, setCards] = useState(initial);
+  const progress = useUserProgress();
+  /* WHAT SLIPPED LAST TIME IS DEALT FIRST (owner, 2026-09-23: study cards
+     should save your progress). The outcome of every card is kept by id, and
+     it is spent on the order rather than on a score — this screen has never
+     shown one and still does not. Shuffle overrides it, which is what Shuffle
+     is for. The order is worked out ONCE, on the way in, so a card does not
+     move under your thumb the moment you answer it. */
+  const [cards, setCards] = useState(() => dealOrder(progress, initial));
   const [k, setK] = useState(0);
   const [flip, setFlip] = useState(false);
   const [got, setGot] = useState(() => new Set());
@@ -22,6 +31,7 @@ export default function TestPile({ cards: initial, onClose }) {
   const fling = (yes) => {
     if (done || fly) return; const c = cards[k];
     if (yes) setGot((g) => new Set(g).add(c.id));
+    markGot(progress, c.id, yes);
     setFly({ id: c.id, dir: yes ? 1 : -1 });
     setTimeout(() => { setFly(null); setFlip(false); setK((x) => x + 1); }, 380);
   };
@@ -66,7 +76,7 @@ export default function TestPile({ cards: initial, onClose }) {
                 <div key={c.id} ref={d === 0 ? topRef : null} data-d={d} className={`bm-dc${flying ? ' is-fly' : ''}`} style={{ zIndex: 10 - d, ...(flying ? { transform: `translate(${fly.dir * 130}%,-4%) rotate(${fly.dir * 14}deg)`, opacity: 0 } : {}) }}
                   onPointerDown={d === 0 ? pd : undefined} onPointerMove={d === 0 ? pm : undefined} onPointerUp={d === 0 ? pu : undefined}>
                   <div className="bm-pad-stage" style={{ aspectRatio: 'auto', height: '100%' }}>
-                    <div className="bm-pc"><div className={`bm-pc-in${d === 0 && flip ? ' is-flipped' : ''}`}><CardFaces q={c} /></div></div>
+                    <div className="bm-pc"><div className={`bm-pc-in${d === 0 && flip ? ' is-flipped' : ''}`}><CardFaces q={c} turn={false} /></div></div>
                   </div>
                 </div>
               );

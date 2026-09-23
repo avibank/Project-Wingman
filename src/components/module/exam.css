@@ -264,7 +264,7 @@
    grid of answered questions reads as a page rather than as a wall of colour.
    exam-matte.css owns how it looks; this keeps only what is structural. */
 .exam-frame .qcell.is-answered { color: var(--t1); }
-.exam-frame .qcell.pop { animation: exam-pop .35s var(--ease); }
+.exam-frame .qcell.is-pop { animation: exam-pop .35s var(--ease); }
 .exam-frame .qcell.is-current { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--t1); }
 .exam-frame .qcell::after {                      /* red corner = flagged for review */
   content: ""; position: absolute; top: -1px; right: -1px; width: 14px; height: 14px;

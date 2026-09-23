@@ -35,3 +35,68 @@ export function markSeen(progress, id) {
   if (seen[id]) return;
   progress.set(CARDS_SEEN, { ...seen, [id]: true });
 }
+
+/* =============================================================================
+   AND WHAT YOU GOT, WHICH IS A SECOND THING THE SET HAS TO REMEMBER.
+   -----------------------------------------------------------------------------
+   The owner (2026-09-23): "study cards should save your progress". Two kinds
+   of progress, and they are not the same:
+
+   · WHERE YOU STOPPED. `pw-cards-seen` already knows which cards have been
+     turned over, so the pad does not need a second key to open where you left
+     off: the first card you have not turned IS where you stopped. A separate
+     "last index" would be a second truth to keep in step, and would renumber
+     itself the moment a set gained a card.
+   · WHAT STUCK. "Test yourself" asked you card by card and then threw the
+     answer away at the door. It is kept now, by question id, and it is spent
+     on the ORDER OF THE NEXT DEAL rather than on a number: the ones that
+     slipped come round first, then the ones you have not met, then the ones
+     you had. This app does not score a card set — FinishPanel's header says
+     so in as many words — so what you got changes what you are handed, which
+     is the same bargain the caution pile makes after a quiz.
+
+   Getting one right takes it off the pile; getting it wrong puts it back on.
+   Nothing here ever shows a count of what you missed.
+   ========================================================================= */
+export const CARDS_GOT = 'pw-cards-got';
+
+/** The stored map of ids you had, always an object. */
+export const gotMap = (progress) => progress.get(CARDS_GOT, {}) || {};
+
+/** Record one card's outcome. Right takes it off the pile, wrong puts it back. */
+export function markGot(progress, id, yes) {
+  if (!id) return;
+  const got = gotMap(progress);
+  if (yes === !!got[id]) return;                 // nothing to write
+  const next = { ...got };
+  if (yes) next[id] = true; else delete next[id];
+  progress.set(CARDS_GOT, next);
+}
+
+/** Where the pad opens: the first card not turned over yet, or the top. */
+export function firstUnseen(progress, cards = []) {
+  const seen = seenMap(progress);
+  const i = cards.findIndex((c) => !seen[c.id]);
+  return i < 0 ? 0 : i;
+}
+
+/** Has every card in this set been turned over at least once? */
+export const allSeen = (progress, cards = []) =>
+  cards.length > 0 && seenCount(progress, cards.map((c) => c.id)) === cards.length;
+
+/**
+ * The order a test deals in: what slipped, then what you have not met, then
+ * what you had. Stable inside each group, so a set is not reshuffled by the
+ * act of remembering — Shuffle is still the button for that.
+ */
+export function dealOrder(progress, cards = []) {
+  const got = gotMap(progress);
+  const seen = seenMap(progress);
+  const missed = [], fresh = [], held = [];
+  for (const c of cards) {
+    if (got[c.id]) held.push(c);
+    else if (seen[c.id]) missed.push(c);
+    else fresh.push(c);
+  }
+  return [...missed, ...fresh, ...held];
+}
