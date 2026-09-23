@@ -79,6 +79,40 @@ export async function fetchBoard({ me, quizId, limit = 50 }) {
 }
 
 /** 7:35, never 07:35 — the pack's own `mmss`. */
+/* =============================================================================
+   WHO HAS FINISHED — Rule 4 of the quiz-stamps brief, migration 0038.
+   -----------------------------------------------------------------------------
+   One row per PERSON per quiz, their most recent finish first and yours
+   pinned ahead of them (the owner's answer to the brief's open question 2),
+   capped, with the whole count beside it. The cap and the order are the
+   server's for the same reason the board's rank is: a client that ordered
+   this could drop you off your own row.
+   ========================================================================= */
+export async function fetchFinishers({ me, quizIds = [], cap = 11 }) {
+  const ids = [...new Set(quizIds.filter(Boolean))];
+  if (!configured || !me || !ids.length) return {};
+  const { data, error } = await supabase.rpc("quiz_finishers", {
+    uid: me, p_quizzes: ids, p_cap: cap,
+  });
+  if (error) return fail(error, {});
+  const out = {};
+  for (const r of data || []) {
+    const q = (out[r.quiz_id] ||= { people: [], total: 0 });
+    q.total = Number(r.finishers) || q.total;
+    q.people.push({
+      userId: r.user_id, callsign: r.callsign, account: r.code, isYou: !!r.is_you,
+      /* Shaped for stampOf, which is the one thing allowed to read a stamp row. */
+      profile: {
+        stamp_shape: r.stamp_shape, stamp_code: r.stamp_code, stamp_rim: r.stamp_rim,
+        stamp_ring: r.stamp_ring, stamp_pattern: r.stamp_pattern, stamp_pscope: r.stamp_pscope,
+        stamp_ink: r.stamp_ink, stamp_pink: r.stamp_pink, stamp_cink: r.stamp_cink,
+        stamp_seed: r.stamp_seed, stamp_issued_at: r.stamp_issued_at,
+      },
+    });
+  }
+  return out;
+}
+
 export const mmss = (s) => {
   const n = Math.max(0, Math.floor(Number(s) || 0));
   return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`;

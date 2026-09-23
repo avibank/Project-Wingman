@@ -575,10 +575,15 @@ console.log("\nthe matte finish");
   const nested = exam.match(/^\s+(?:const|function)\s+[A-Z]\w*\s*[=(]/gm) || [];
   ok("matte", "no component is declared inside another component", nested.length === 0, nested.join(" "));
 
-  /* The result's mark is the aeroplane in a ring, which is the finish's own. */
-  ok("matte", "the result wears the plane",
-     /const IconPlane/.test(exam) && /<IconPlane \/><\/span>\{headText\}/.test(exam)
-     && /\.result__icon \{[\s\S]{0,120}border: 1\.5px solid var\(--accent\)/.test(matte));
+  /* R2 OF THE QUIZ-STAMPS BRIEF (2026-09-23) — the aeroplane in a ring is
+     gone and the student's OWN STAMP leads the result at 132px, level with
+     the headline rather than an icon above it. The plane is asserted absent
+     because it is the thing that would come back: it is still in `matte` as
+     a class, and the brief names the path itself. */
+  ok("matte", "the result leads with the student's own stamp, not a plane",
+     !/const IconPlane/.test(exam) && !/<IconPlane/.test(exam)
+     && !/M21 16v-2l-8-5V3\.5/.test(exam)
+     && /<span className="res__stamp"[\s\S]{0,200}<Stamp stamp=\{myStamp\} size=\{132\} rot=\{-6\}/.test(exam));
 
   /* Both sheets have to agree about where the navigator moves, or there is a
      band of widths where one says one column and the other says two. */
@@ -839,8 +844,12 @@ console.log("\nthe board");
   ok("board", "the client does not rank, and does not work out a time",
      !/\.sort\(/.test(code(board)) && !/\.sort\(/.test(code(lb))
      && !/submitted_at|startedAt|Date\.parse|getTime\(\)/.test(code(board) + code(lb)));
+  /* THE BOARD IS THE QUIZ-STAMPS PACK'S NOW (2026-09-23), so the class names
+     are `br__*` rather than `lb-row__*`. What is asserted is unchanged: the
+     rank is the server's, a row reads [account] callsign, and the stamp comes
+     through the app's one renderer. */
   ok("board", "the rank drawn is the server's, not the row's place in the array",
-     /className="lb-row__rank">\{r\.rank\}/.test(lb));
+     /className="br__n">\{r\.rank\}/.test(lb));
   ok("board", "and the place counts the whole board, not the page of it",
      /runs_total/.test(board) && /boardSize \|\| runs\.length/.test(lb));
 
@@ -861,8 +870,8 @@ console.log("\nthe board");
 
   /* R6 — the board lists RUNS. One account, several rows, one code. */
   ok("board", "a row reads [account] callsign",
-     /className="lb-row__acct">\[\{r\.account\}\]/.test(lb)
-     && /className="lb-row__call">\{r\.callsign\}/.test(lb));
+     /className="br__ac">\[\{r\.account\}\]/.test(lb)
+     && /className="br__cs">\{r\.callsign\}/.test(lb));
   ok("board", "the callsign is the run's, snapshotted when it was handed in",
      /callsign\s+=\s+\(select p\.callsign from pilot_profiles/.test(sql));
 
@@ -882,9 +891,10 @@ console.log("\nthe board");
   ok("board", "it draws nothing until somebody else is on it",
      /if \(runs\.length < 2\) return null;/.test(lb));
 
-  /* The pack's rules paint it, so it has to be inside their scope. */
+  /* The quiz-stamps pack's rules paint it now, so it has to be inside THEIR
+     scope — `.examport` no longer carries a board rule. */
   ok("board", "and it is inside the pack's scope, or nothing paints it",
-     /<div className="examport">/.test(lb));
+     /<div className="qstamps">/.test(lb) && /import "\.\/quiz-stamps\.css"/.test(lb));
 
   /* The run is opened when the paper is, not when it is handed in. */
   ok("board", "the run is opened with the paper", /startRun\(\{ me, moduleCode, chapterId, quizId: id, total \}\)/.test(exam));

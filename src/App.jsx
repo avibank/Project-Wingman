@@ -2318,10 +2318,15 @@ function AppInner() {
               <QuizPage
                 module={moduleByCode(activeModuleCode, useTestContent)} chapter={ch} state={moduleState}
                 me={me}
-                /* §2 — a face or a stamp opens the person, which on the board
-                   means the pilot sheet this app already carries rather than
-                   the pack's own popover. */
-                onOpenPilot={openPilot}
+                /* Rule 2 of the quiz-stamps brief: the student's own stamp
+                   leads the result, where the plane glyph used to be. */
+                myStamp={myStamp}
+                /* NO DOOR ON A BOARD ROW, and it is the quiz-stamps pack's
+                   doing rather than a deletion: its row is a `<li>` of spans,
+                   with no control on it, and §2's "a face or a stamp opens the
+                   person" was drawn by the board this one replaced. The pilot
+                   sheet is still reached from Crew, the Ready Room and a
+                   lesson; one button on a row would put it back here. */
                 /* The chapter's NUMBER, which is its place in the module — the
                    word "Chapter 3" — and what a saved question is labelled
                    with. Nothing is saved against it: the save points at the
