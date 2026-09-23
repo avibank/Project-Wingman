@@ -31,6 +31,7 @@ import { stampTilt } from "../../lib/stamp.js";
 import { initials, hueFor } from "../../lib/familiar.js";
 import "./crew.css";
 import "./ref-module.css";
+import "./ref-module-app.css";
 import CrewEmpty, { CrewGhost } from "./CrewEmpty.jsx";
 
 /* One face. `on` is a live presence dot; `mate` is the teal ring.

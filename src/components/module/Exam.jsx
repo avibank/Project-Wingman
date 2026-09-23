@@ -17,6 +17,7 @@ import { startRun, finishRun, fetchBoard } from "../../lib/board.js";
    chunk rather than on every first paint. `.locked-note` in the app bar is the
    one rule of it in use today; the rest waits for the markup. */
 import "./exam-port.css";
+import "./exam-port-app.css";
 import { useGo } from "../../features/bookmarks/nav.jsx";
 import { PASS_PCT } from "../../lib/minimums.js";
 import "./exam.css";

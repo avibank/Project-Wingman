@@ -25,6 +25,7 @@
 import './bookmarks.css';
 import './bm-app.css';
 import '../../components/module/ref-module.css';
+import '../../components/module/ref-module-app.css';
 import { BmLink } from './nav';
 import { content, routes, plural, useContentVersion } from './content';
 import { useSavesState } from './useSaves';

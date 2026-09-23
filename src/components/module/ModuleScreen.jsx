@@ -18,6 +18,7 @@ import { currentLesson } from "./lessonState.js";
 import { useTabPill } from "../../lib/tabMotion.js";
 import "./module.css";
 import "./ref-module.css";
+import "./ref-module-app.css";
 import "./manual.css";
 
 // The three tabs live in the URL, so a student sharing a link to People lands

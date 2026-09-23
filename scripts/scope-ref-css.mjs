@@ -32,10 +32,25 @@
  *
  * Generated, not hand-edited, so the two cannot drift:
  *   npm run ref:css
+ *
+ * AND HELD TO IT, because "do not edit" in a header did not stop anybody.
+ * ref-module.css and exam-port.css were both edited by hand — a link colour,
+ * a ghost row, the phone search field, a var() fallback — and the next run of
+ * this script deleted every one of them without a word. So:
+ *   npm run check:ref-css      (this file with --check, in `npm run check`)
+ * renders every bundle in memory and fails if a committed sheet differs from
+ * it, whichever side moved: a hand edit to the output, or a change to the
+ * pack that nobody regenerated. It writes nothing.
+ *
+ * What the app adds on top of a sheet goes in the bundle's `app` companion,
+ * imported straight after it — the shape of rr-app.css and
+ * stamp-creator-fit.css. --check also holds that every file importing the
+ * sheet imports the companion after it, because a companion rule that ties on
+ * specificity only wins by coming later.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const MARK = "C";
@@ -84,6 +99,7 @@ const MODULE_REF = () => REF("01-module-lesson-crew.html");
 
 const BUNDLES = [
   { root: ".ref-mod", out: "src/components/module/ref-module.css",
+    app: "src/components/module/ref-module-app.css",
     from: "reference/01-module-lesson-crew.html (its whole style block)",
     src: [MODULE_REF] },
   { root: ".ref-les", out: "src/components/module/ref-lesson.css",
@@ -109,6 +125,7 @@ const BUNDLES = [
      declarations already scoped by the attribute, and prefixing them would
      stop them reaching <html>. */
   { root: ".examport", out: "src/components/module/exam-port.css",
+    app: "src/components/module/exam-port-app.css",
     from: "docs/launch/code/17-exam-result-leaderboard.css (the exam pack, as delivered)",
     src: [() => PACK("17-exam-result-leaderboard.css")], keepRoot: /^:root\[data-screen="exam"\]/,
     /* The exam pack declares its own tokens in its `:root[data-screen="exam"]`
@@ -238,12 +255,75 @@ function scopeOne(bundle) {
    cannot escape its screen; nothing is renamed and no value is changed.
    Cut on the way in:
 ${cut.map((c) => `     . ${c}`).join("\n")}
-   Re-generate with: npm run ref:css */
+   Re-generate with: npm run ref:css
+   A hand edit here fails check:ref-css. ${bundle.app
+     ? `The app's own rules go in\n   ${bundle.app.split("/").pop()}, imported straight after this sheet.`
+     : "The app's own rules go in a sheet\n   of their own beside it."} */
 `;
 
-  writeFileSync(join(ROOT, bundle.out),
-    head + (bundle.vars ?? VARS).replaceAll("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"));
-  console.log(`wrote ${bundle.out}  (${text.split("\n").length} lines, ${cut.length} cuts)`);
+  return {
+    css: head + (bundle.vars ?? VARS).replaceAll("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"),
+    lines: text.split("\n").length, cuts: cut.length,
+  };
 }
 
-for (const b of BUNDLES) scopeOne(b);
+if (!process.argv.includes("--check")) {
+  for (const b of BUNDLES) {
+    const { css, lines, cuts } = scopeOne(b);
+    writeFileSync(join(ROOT, b.out), css);
+    console.log(`wrote ${b.out}  (${lines} lines, ${cuts} cuts)`);
+  }
+} else {
+  /* --check: nothing is written. */
+  const fails = [];
+  for (const b of BUNDLES) {
+    const want = scopeOne(b).css;
+    const path = join(ROOT, b.out);
+    const have = existsSync(path) ? readFileSync(path, "utf8") : null;
+    if (have === want) { console.log(`  ok    ${b.out} is exactly what the generator writes`); continue; }
+    if (have === null) { fails.push(`${b.out} is missing — run npm run ref:css`); continue; }
+    const a = have.split("\n"), w = want.split("\n");
+    let i = 0;
+    while (i < a.length && i < w.length && a[i] === w[i]) i += 1;
+    fails.push(`${b.out}:${i + 1} is not what npm run ref:css writes\n`
+      + `          committed: ${a[i] === undefined ? "(end of file)" : a[i].trim()}\n`
+      + `          generated: ${w[i] === undefined ? "(end of file)" : w[i].trim()}\n`
+      + `          If this is a hand edit, move it to ${b.app ?? "a sheet beside it"}; the next run of the\n`
+      + `          generator deletes it. If the pack changed, run npm run ref:css and commit the result.`);
+  }
+
+  /* The companions: they exist, and every file that imports a sheet imports
+     its companion after it. Imports are resolved, not matched by name, so a
+     file two folders away is held the same as one beside the sheet. */
+  const code = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir)) {
+      const p = join(dir, e);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (/\.(jsx?|mjs)$/.test(p)) code.push(p);
+    }
+  })(join(ROOT, "src"));
+  const cssImports = (file) => [...readFileSync(file, "utf8").matchAll(/^import\s+["']([^"']+\.css)["']/gm)]
+    .map((m) => ({ at: m.index, to: resolve(dirname(file), m[1]) }));
+  for (const b of BUNDLES.filter((x) => x.app)) {
+    const sheet = join(ROOT, b.out), app = join(ROOT, b.app);
+    if (!existsSync(app)) { fails.push(`${b.app} is missing — ${b.out} names it as its companion`); continue; }
+    const importers = code.filter((f) => cssImports(f).some((i) => i.to === sheet));
+    const wrong = importers.filter((f) => {
+      const imps = cssImports(f);
+      const s = imps.find((i) => i.to === sheet), c = imps.find((i) => i.to === app);
+      return !c || c.at < s.at;
+    });
+    if (!importers.length) fails.push(`nothing imports ${b.out}`);
+    for (const f of wrong) {
+      fails.push(`${relative(ROOT, f)} imports ${b.out.split("/").pop()} without ${b.app.split("/").pop()} after it`);
+    }
+    if (importers.length && !wrong.length) {
+      console.log(`  ok    ${b.app.split("/").pop()} follows ${b.out.split("/").pop()} in all ${importers.length} file(s) that import it`);
+    }
+  }
+
+  for (const f of fails) console.log(`  FAIL  ${f}`);
+  console.log(fails.length ? `\nREF-CSS: ${fails.length} failed` : "\nMATCH");
+  process.exitCode = fails.length ? 1 : 0;
+}

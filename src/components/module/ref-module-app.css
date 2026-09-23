@@ -1,0 +1,45 @@
+/* =============================================================================
+   WHAT THE APP ADDS TO THE MODULE SCREEN'S REFERENCE SHEET.
+   -----------------------------------------------------------------------------
+   ref-module.css is produced by `npm run ref:css` from the reference build and
+   is never edited: every rule below once lived inside it, and the next run of
+   the generator deleted them without a word. `npm run check:ref-css` now fails
+   the build if the generated sheet differs from what the generator writes, so
+   anything this screen needs that the reference does not draw goes HERE.
+
+   Imported straight after ref-module.css, everywhere it is imported, because
+   two of these rules tie with the sheet's own on specificity and win only by
+   coming later. check:ref-css holds that too.
+   ========================================================================= */
+
+/* The study-card row is a link (BmLink), not a button, so it drew in link
+   blue with an underline once a module had cards (2026-09-21). */
+.ref-mod a.lrow{color:inherit;text-decoration:none}
+
+/* A download row is an <a download>, not a <button> (LibraryDownloads.jsx),
+   so it would otherwise draw in the browser's link blue with an underline.
+   Scoped to the download list: it is the paper row, only as a link. */
+.ref-mod .dl-list a.paper{color:inherit;text-decoration:none}
+
+/* The rectangle a lesson, quiz or paper row ends in, where Crew's ghost
+   ends in faces. Same pulse, same weight, so the two empty states of one
+   screen breathe together. The keyframes are the sheet's own `cepulse`. */
+.ref-mod .ce-blk{width:54px;height:26px;border-radius:7px;background:var(--raised);border:2px solid var(--ground);animation:cepulse 2.4s var(--ease) infinite}
+
+@media (max-width:560px){
+  /* THE FIELD TAKES ITS OWN ROW ON A PHONE, AND THIS IS THE THIRD GO AT IT.
+     Three tabs and a field in one flex row is a desktop shape. Squeezed to
+     390px the field was 68px wide; at 360, with the Crew count badge on the
+     tab beside it, it was FIVE pixels — a search box rendering the letter "S"
+     and nothing else, which is what it is doing on the live site now. Making
+     it narrower still, or hiding the placeholder, is measuring the wrong
+     thing: there is no room on that line, so it does not go on that line.
+     Wrapped, it is the width of the card, which is the one width that is
+     always enough.
+
+     The sheet's own phone rules stay as generated — `.mtabs{gap:16px}` and
+     `.search{padding:6px 10px}`. `row-gap` below ties with that `gap` and wins
+     by order; the field's padding wins by specificity (`.mtabs .search`). */
+  .ref-mod .mtabs{flex-wrap:wrap;row-gap:0}
+  .ref-mod .mtabs .search{order:2;flex:1 0 100%;margin-left:0;margin-block:0 10px;padding:9px 12px}
+}
