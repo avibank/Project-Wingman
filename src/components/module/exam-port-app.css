@@ -1,0 +1,15 @@
+/* =============================================================================
+   WHAT THE APP ADDS TO THE EXAM PACK'S SHEET.
+   -----------------------------------------------------------------------------
+   exam-port.css is produced by `npm run ref:css` from the pack as delivered and
+   is never edited — `npm run check:ref-css` fails the build if it differs from
+   what the generator writes. Anything the app needs on top goes here, imported
+   straight after it in Exam.jsx.
+
+   `--n` is set by the leaderboard's own markup (`style={{ "--n": ... }}` on
+   the board, Leaderboard.jsx). It is an animation delay, so it takes a fallback
+   of 0 and degrades to the base offset rather than to no delay at all if a
+   board is ever drawn without it. Same selector as the pack's rule, so this
+   wins by coming later, which is why the import order is held.
+   ========================================================================= */
+.examport .is-in .lb-row.is-you{animation-delay:calc(var(--n, 0)*50ms + 170ms)}

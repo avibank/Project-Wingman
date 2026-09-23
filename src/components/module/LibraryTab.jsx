@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
 import { QuizThumb } from "./RouteTab.jsx";
 import "./ref-module.css";
+import "./ref-module-app.css";
 import { hits, terms } from "../../lib/moduleSearch.js";
 import { papersOn, flagDefault } from "../../lib/flags.js";
 

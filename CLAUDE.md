@@ -114,6 +114,16 @@ architecture note above says.
   no separate display face. Fraunces and Inter are not loaded and must not be added.
   Numerals are tabular everywhere.
 - Every ambient motion respects the "Smooth Air" preference and `prefers-reduced-motion`.
+- **Four stylesheets are generated and never edited**: `ref-module.css`,
+  `ref-lesson.css`, `exam-port.css` and `ref-licence.css`, written by `npm run
+  ref:css` from `docs/launch/`. Hand edits to two of them — the study-card and
+  download rows' link colour, the Library's ghost rectangles, the phone search
+  field, the exam's `--n` fallback — were deleted by the next run without a
+  word (found 2026-09-21). They live in `ref-module-app.css` and
+  `exam-port-app.css` now, imported straight after the sheet they add to, and
+  `npm run check:ref-css` (in `npm run check`) fails if a generated sheet
+  differs from what the generator writes or a companion is not imported after
+  it. An app-side rule goes in a companion, never in the generated file.
 
 ## Voice
 
