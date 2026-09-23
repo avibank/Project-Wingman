@@ -1,27 +1,41 @@
 /* =============================================================================
-   THE TUTORIAL, PAGE BY PAGE, TOP TO BOTTOM.
+   THE TUTORIAL — THE CONCEPTS, NOT THE CONTROLS.
    -----------------------------------------------------------------------------
-   The owner (2026-09-21): every page explained, and what each thing on it
-   does, top to bottom, rather than a highlight reel. Plain sentences in a
-   classmate's voice. It opens with Wingman rather than the syllabus, and the
-   right seat is shown as what it is for: studying WITH somebody, a lesson or
-   a quiz.
+   The owner (2026-09-23), on the 75-step page-by-page version that came
+   before this one: "way too long — explain concepts generally and what is
+   special about us and the features we have, rather than explaining how a
+   chat works, which is something everyone knows. Same goes for profile:
+   explain concepts, why and how and what, in text, not bullet points."
 
-   Every step is on the real screen, with the demo's class in it (seed.js).
+   So this is twenty-five steps, one per IDEA, and each one is a short
+   paragraph in a classmate's voice rather than a label for a button. What
+   went out with the old version: Previous and Next, how to send a message,
+   what a search box is for, how a tab works, and every step that named a
+   control and stopped there. What stayed, and what the length is spent on,
+   is the part a student cannot guess from having used other apps — the right
+   seat, the logbook pinned to the video, sign-off and the stamp, the bar you
+   set for yourself and the caution lamp that watches it, a quiz sat as an
+   exam, and the class being inside the module rather than in a group chat
+   somewhere else.
+
+   The machinery is unchanged. Every step is on the real screen, with the
+   demo's class in it (seed.js):
      where  the address the step shows; the guide goes there first
      find   what the light settles on: selectors, or functions returning an
             element, first match wins. None dims the whole screen.
-     act    something to do once the screen is there (open a chat, say)
+     act    something to do once the screen is there (open a board, say)
 
-   Every claim was checked against the code that does it: the badge counting
-   only what is addressed to you (ReadyRoomPill), the gyro opening the quizzes
-   and the hour meter the module (Home), the target that cannot go under the
-   pass mark (minimums.js), Re-check lighting under YOUR bar (faultChapters),
-   the 20-minute clock that stops when you leave (quiz.js), the player's
-   stamp, ask and bookmark (PlayerLayer), the signed-off
-   answer and then the most endorsed first (Detail), the ticks (0027), the
-   logbook's three kinds (lessonLog.js), and the stamp being issued once
-   (LicenceCard).
+   Every claim is checked against the code that does it: the hour meter
+   running only inside a module and stopping on a hidden tab (hobbs.js),
+   Master Caution lighting on a module AVERAGE under the student's own bar
+   (minimums.js), the bar that cannot go under the pass mark (minimums.js),
+   the flat twenty minutes and the clock that belongs to the attempt
+   (quiz.js), nothing marked before hand-in and the correction carried inside
+   the result (Exam.jsx), the board listing runs with one stamp per person
+   (Leaderboard.jsx), the Library's finisher line (0038), the logbook's three
+   kinds and their timestamps (lessonLog.js), answers being endorse-only
+   (0010), and the stamp and the code being issued once, together (0035).
+   Change the feature and the paragraph has to change with it.
    ========================================================================= */
 
 const clickText = (root, text) => () => {
@@ -38,7 +52,6 @@ const shown = (sel) => {
 /* The first element matching `sel` whose text matches `re`, for the parts of
    a page that have no class of their own. */
 const withText = (sel, re) => () => [...document.querySelectorAll(sel)].find((el) => re.test(el.textContent || "")) || null;
-const lastOf = (sel) => () => [...document.querySelectorAll(sel)].pop() || null;
 /* ON A PHONE THE ROOM SHOWS ONE COLUMN AT A TIME, so a step about a column
    that is not on screen opens it first. On a wide screen nothing is pressed. */
 const unless = (sel, act) => () => { if (!shown(sel)) act(); };
@@ -51,7 +64,6 @@ const toRail = () => {
   };
   go();
 };
-const firstQuestion = () => document.querySelector(".rr-fopen")?.click();
 const mathsBoard = clickText(".rr-rail", "Mathematics");
 /* The Flight Deck's right-seat card: the ground card whose OWN label says so. */
 const seatCard = () => [...document.querySelectorAll(".deck .bog-card")]
@@ -69,401 +81,142 @@ const QUIZ = "/m/m1/M1.03/quiz";
 export const STEPS = [
   {
     section: "Welcome", where: "/",
-    title: "Welcome to Wingman",
-    text: "A study app and a social hub, made by students for students. This tour walks every page, top to bottom, with a class already in it.",
-    note: "Nothing here is saved. Swipe, use the arrow keys, or skip whenever you like.",
+    title: "This is Wingman",
+    text: "A study app for aircraft maintenance students, made by people sitting the same exams. One idea holds the whole thing together: the material and the people doing the course belong in the same place, so being stuck is a five-minute problem instead of an evening.",
+    note: "Nothing here is real — it is a class we made up. Swipe, use the arrow keys, or skip whenever you like.",
   },
 
-  /* ------------------------------------------------------------- the top bar */
-  {
-    section: "Top bar", where: "/", find: [".topbar .brandmark"],
-    title: "Home, from anywhere",
-    text: "The bar at the top stays on every page. Tap Wingman to come back to your Flight Deck.",
-  },
-  {
-    section: "Top bar", where: "/", find: [".topbar .rrpill"],
-    title: "The Ready Room",
-    text: "Where everyone talks. The number counts what is addressed to you: unread squadron messages, and replies in threads you are part of.",
-  },
-  {
-    section: "Top bar", where: "/", find: [".topbar .avbtn", ".topbar-right"],
-    title: "Your menu",
-    text: "Your initials open your Licence, Preferences, Appearance and Bookmarks.",
-  },
-  {
-    section: "Top bar", where: "/", find: [".rpt"],
-    title: "Something's wrong here",
-    text: "On every page. Spot a mistake or something broken, tap it once, and it reaches us with the page you were on.",
-  },
-
-  /* ------------------------------------------------------------ Flight Deck */
-  {
-    section: "Flight Deck", where: "/", find: [".deck .dhead"],
-    title: "Your Flight Deck",
-    text: "Your home screen. What you are in the middle of, and anything that needs you, starts here.",
-  },
+  /* ------------------------------------------------------------- Flight Deck */
   {
     section: "Flight Deck", where: "/", find: [".deck .card .cardbody"],
-    title: "Resume",
-    text: "The last thing you were doing, and exactly where you stopped. Resume puts you straight back in.",
+    title: "It knows where you stopped",
+    text: "The Flight Deck opens on the module you are studying and the exact lesson you left, so no part of starting is deciding where to start. Everything else on this screen answers the other two questions worth asking: am I doing enough, and where am I weak.",
   },
   {
-    section: "Flight Deck", where: "/", find: [".deck .strip > :nth-child(1)"],
-    title: "The dial",
-    text: "Your average quiz score in this module, against the target you set. The line under it says how far over or under you are. Tap it for the module's quizzes.",
-  },
-  {
-    section: "Flight Deck", where: "/", find: [".deck .strip > :nth-child(2)"],
-    title: "Your flight bag",
-    text: "Counts what you have saved in this module: questions, study cards and moments in lessons. Tap it to open your Bookmarks.",
-  },
-  {
-    section: "Flight Deck", where: "/", find: [".deck .strip > :nth-child(3)"],
-    title: "The hour meter",
-    text: "Time spent studying this module. It only runs while Wingman is on your screen, so a forgotten tab adds nothing. Tap it to open the module.",
-  },
-  {
-    section: "Flight Deck", where: "/", find: [".deck .strip > :nth-child(4)"],
-    title: "The radar",
-    text: "Classmates online right now. Tap it to go to the Ready Room and talk to them.",
-  },
-  {
-    section: "Flight Deck", where: "/", find: [".deck .sec"],
-    title: "Your modules",
-    text: "A card for every module, showing how far into it you are. Tap one to open it.",
+    section: "Flight Deck", where: "/", find: [".deck .strip"],
+    title: "Four honest instruments",
+    text: "How you are scoring, what you have put in your bag, how long you have actually spent on this module, and who else is around. The hours are the part to trust: the meter runs only while you are inside the module and stops when you leave the tab, so it is time you really flew rather than time the window was open.",
   },
   {
     section: "Flight Deck", where: "/", find: [".deck .rail .mod .lamp-mark", ".deck .rail .mod"],
-    title: "Master Caution",
-    text: "Lights on a module when your average there falls below your target, and nowhere else. Mathematics is at 77% against a target of 85%.",
-  },
-  {
-    section: "Flight Deck", where: "/", find: [".deck .bog-head"],
-    title: "Back on the ground",
-    text: "The social half of your home screen. The line under the heading counts who is on your route, your unread messages and the open threads.",
-  },
-  {
-    section: "Flight Deck", where: "/", find: [".deck .bog-route", ".deck .bog-card"],
-    title: "On your route",
-    text: "The module's chapters drawn as a route, with you and your classmates placed along it: who is ahead, who is with you, who is just behind. Tap a face to open their licence.",
+    title: "Master Caution, and when it lights",
+    text: "Your modules sit here. A module lights its caution lamp only when its average has fallen under the pass mark you set for yourself — not when a single chapter dips, and never when there is nothing to say. A warning that comes on while everything is fine is one you learn to look past, so this one stays dark until it means something.",
   },
   {
     section: "Flight Deck", where: "/", find: [seatCard, ".deck .bog-cards"],
-    title: "Your right seat",
-    text: "Pick one classmate to study alongside. Watch the same lesson and see each other's questions on it, sit the same quiz and compare. The seat clears after an hour of quiet.",
+    title: "The right seat",
+    text: "Pick one person to fly with and the app stops being something you use alone. You can see what they are on, their questions land in the lessons you are watching, and yours land in theirs. It is the difference between a study group you have to organise and somebody simply being there.",
   },
 
   /* ------------------------------------------------------------------ module */
   {
-    section: "Module", where: "/m/m1", find: [".mscreen .hdr .up"],
-    title: "Inside a module",
-    text: "Every module opens to the same page. The arrow at the top takes you back to the Flight Deck.",
-  },
-  {
-    section: "Module", where: "/m/m1", find: [".ref-mod .sub-go", ".ref-mod .sub"],
-    title: "What is in it",
-    text: "Under the name, what this module holds. Tap it to go straight to the Library.",
-  },
-  {
     section: "Module", where: "/m/m1", find: [".mtabs"],
-    title: "Three tabs",
-    text: "Lessons are the videos, chapter by chapter. Library has the quizzes and study cards. Crew is everyone studying this module.",
-  },
-  {
-    section: "Module", where: "/m/m1", find: [".mtabs .search"],
-    title: "Search",
-    text: "Finds a lesson in this module. On the Library tab it finds quizzes and cards, and on Crew it finds people.",
+    title: "A module holds three things",
+    text: "Lessons is the syllabus in order, Library is everything that is not a video, and Crew is the class on this module. Anything about Module 13d is behind one of those three, and nothing belonging to another module is anywhere near them.",
   },
   {
     section: "Module", where: "/m/m1", find: [".pane .chap"],
-    title: "A chapter",
-    text: "Each chapter opens to its lessons and its quiz. A finished one says Done. Tap it to open or close it.",
-  },
-  {
-    section: "Module", where: "/m/m1", find: [".pane .ch-body .lrow[data-state='done']", ".pane .ch-body .lrow"],
-    title: "A finished lesson",
-    text: "Watched in full, and signed off with your own stamp.",
-  },
-  {
-    section: "Module", where: "/m/m1", find: [".pane .lrow.cur", ".pane .lrow[data-state='current']"],
-    title: "The lesson you are on",
-    text: "Shows how long is left. Resume opens it at the second you stopped.",
+    title: "You sign your own chapters off",
+    text: "A chapter opens into its lessons, and when you are done with one you sign it off yourself — nothing marks it for you and nothing unlocks. That signature is also what the rest of the class sees, which is what makes their wall worth looking at and yours worth keeping straight.",
   },
 
   /* ------------------------------------------------------------------ lesson */
   {
     section: "Lesson", where: LESSON, find: [".lesson .player", ".lesson .col"],
-    title: "A lesson",
-    text: "The video picks up where you stopped. The marks along its bar are the moments noted on this lesson: yours, and your right seat's.",
+    title: "A lesson is a video with a margin",
+    text: "The video runs at the top and everything about it lives directly underneath. The point is that you never have to leave: the notes, the questions and the answers are in the same column as the thing they are about.",
   },
   {
     section: "Lesson", where: LESSON, find: [playerTools, ".player-layer .pctl-row"],
-    title: "Note, ask, keep",
-    text: "Pause on any second. The stamp writes yourself a note there, the diamond asks the class about it, and the bookmark keeps the moment in your bag.",
+    title: "Ask without leaving",
+    text: "A question asked from a lesson carries the lesson and the timestamp with it onto the module's board, so whoever answers already knows what you were watching and where. The answer comes back to the place you asked from, not to a notification you have to go and find.",
   },
   {
-    section: "Lesson", where: LESSON, find: [".lesson .title-row"],
-    title: "Signing it off",
-    text: "Watch to the end and the circle beside the title unlocks. Press it to sign the lesson off with your stamp.",
-  },
-  {
-    section: "Lesson", where: LESSON, find: [".lesson .card .tabs"],
-    title: "Logbook and Comments",
-    text: "Logbook is everything marked on this lesson, in order. Comments is the whole class's questions on it. Export saves your logbook as a file.",
-  },
-  {
-    section: "Lesson", where: LESSON, find: [".lesson .lg-chips"],
-    title: "Whose marks",
-    text: "Show everything, only yours, or only your right seat's. That last one is there while someone is beside you.",
-  },
-  {
-    section: "Lesson", where: LESSON, find: [".lesson .lg-entry"],
-    title: "A note",
-    text: "Stamped with the second it belongs to. Tap the stamp and the video jumps there. Your notes are private: only you see them.",
-  },
-  {
-    section: "Lesson", where: LESSON, find: [withText(".lesson .lg-entry", /SPARROW/), ".lesson .lg-list"],
-    title: "Your right seat's questions",
-    text: "When you study with someone, their questions on the lesson land in your logbook at the moment they asked. You watch it together, even apart.",
-  },
-  {
-    section: "Lesson", where: LESSON, find: [".lesson .next-h", ".lesson .next-up"],
-    title: "The rest of the chapter",
-    text: "The other lessons in this chapter, and what comes next.",
+    section: "Lesson", where: LESSON, find: [".lesson .lg-entry", ".lesson .lg-list"],
+    title: "The logbook",
+    text: "Anything you write while watching is stamped with the moment you wrote it at, so tapping it later takes the video back there. Your notes, your questions and anything your right seat left on the same lesson sit in one list. Come exam week that list is your own thinking, still attached to the minute that caused it.",
   },
 
   /* ----------------------------------------------------------------- Library */
   {
     section: "Library", where: "/m/m1/library", find: ["section[aria-labelledby='lsec-quizzes']", ".libsplit"],
-    title: "Quizzes",
-    text: "One quiz for every chapter, with your score beside it. A score under your target says so, and Re-check takes you back in.",
+    title: "The Library",
+    text: "Everything that is not a video: a quiz for each chapter, the study cards, and the module's papers to keep on your phone. Under each quiz are the stamps of the people who have finished it, most recent first, which is a quiet way of seeing what the class is working through this week. A reader for marking those papers up together opens here next.",
   },
   {
     section: "Library", where: "/m/m1/library", find: [withText(".libtab .libsplit", /Study cards/)],
     title: "Study cards",
-    text: "The same questions again, as cards to flip. Good for the ten minutes between other things.",
-  },
-  {
-    section: "Library", where: "/m/m1/library", find: [".libtab .cempty"],
-    title: "Shared papers, next",
-    text: "Wingman has a reader for PDFs shared across a whole module, so everyone reads and marks up the same handout together. It opens to students here next.",
+    text: "The same questions again, as cards to turn over. Recognising the right answer in a list is not the same thing as being able to produce it, and cards are the cheapest way to find out which of the two you have in the ten minutes before a bus.",
   },
 
   /* -------------------------------------------------------------------- quiz */
   {
-    section: "Quiz", where: QUIZ, find: [".exam-bar"],
-    title: "A quiz sits like the real exam",
-    text: "The chapter, the time left, and End exam. Nothing is marked until you hand the whole paper in.",
+    section: "Quiz", where: QUIZ, find: [".exam-bar", ".exam-body .question"],
+    title: "A quiz is sat, not played",
+    text: "You answer the whole paper and hand it in. Nothing is marked while you are still working, because knowing that question three was right changes how you answer question four — and the real paper will not tell you either. The options are shuffled each sitting, so what sticks is the answer rather than its place in the list.",
   },
   {
     section: "Quiz", where: QUIZ, find: [".exam-timer"],
-    title: "Twenty minutes",
-    text: "The clock counts down and hands the paper in at zero. Leave the page and it stops, and waits for you.",
-  },
-  {
-    section: "Quiz", where: QUIZ, find: [".exam-body .question"],
-    title: "The question",
-    text: "Pick one answer. The options are shuffled every time you sit it, so you learn the answer rather than where it was.",
-  },
-  {
-    section: "Quiz", where: QUIZ, find: [".question__foot"],
-    title: "Move, flag, save",
-    text: "Previous and Next move between questions. Flag one to come back to before you hand in. The bookmark keeps the question in your bag for good.",
+    title: "Twenty minutes, counting down",
+    text: "The clock belongs to the paper rather than to the wall: leave and it stops where it was, come back and it carries on from there. Sitting against a clock for the first time in an examination hall is an expensive place to learn what that feels like.",
   },
   {
     section: "Quiz", where: QUIZ, find: [".navigator"],
-    title: "The whole paper",
-    text: "Jump to any question, and see how many are answered. Hand in from the last one: 75% passes, every miss comes back with the right answer, and your time goes on the module's board.",
-  },
-
-  /* ------------------------------------------------------------- study cards */
-  {
-    section: "Study cards", where: "/m/m1/library/cards/2", find: [".bm-pad"],
-    title: "A study card",
-    text: "The question on the front, the answer on the back. Tap to turn it over, swipe for the next. The bookmark on a card keeps it for another look.",
-  },
-  {
-    section: "Study cards", where: "/m/m1/library/cards/2", find: [".bm-head .bm-btn"],
-    title: "Test yourself",
-    text: "Go through the set as a pile: swipe right for the ones you know, left for the ones you don't yet.",
+    title: "What you get back",
+    text: "Seventy-five per cent passes. The result carries the correction inside it — every question you missed, with your pick struck through and the right answer after it — and under that, the board: everyone's runs on that paper, ranked by score and then by time, with one stamp each.",
   },
 
   /* -------------------------------------------------------------------- Crew */
   {
-    section: "Crew", where: "/m/m1/crew", find: [".crew .csum"],
-    title: "Your crew",
-    text: "Everyone studying this module, and how many are studying right now.",
-  },
-  {
-    section: "Crew", where: "/m/m1/crew", find: [".crew .cch"],
-    title: "Chapter by chapter",
-    text: "Who has signed off each chapter, with everyone's stamps, and who is on it now. It is how you find someone at the same point as you.",
-  },
-  {
-    section: "Crew", where: "/m/m1/crew", find: [".crew .helpers"],
-    title: "Answering questions",
-    text: "The people answering the most in this module. Open the threads to ask them, or to join in.",
+    section: "Crew", where: "/m/m1/crew", find: [".crew .cch", ".crew .csum"],
+    title: "Crew is the class, chapter by chapter",
+    text: "Who has signed each chapter off, who is on it right now, and who is ahead of you. It exists so that when you are stuck you can find the person sitting at exactly your point, or the one who was there last week, instead of asking a room of strangers a question with no context.",
   },
 
-  /* -------------------------------------------------------------- Ready Room */
+  /* ------------------------------------------------------------- Ready Room */
   {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-rail .rr-rail-head"], act: toRail,
+    section: "Ready Room", where: "/ready-room/m1", find: [".rr-rail .rr-rail-head", ".rr-rail"], act: toRail,
     title: "The Ready Room",
-    text: "The social hub. Search finds people, chats and questions across every module you study.",
+    text: "One room for everything with other people in it: a question board for each module, squadrons for your own group, and whoever is in your right seat. It is the only part of Wingman that is not about a single lesson, which is why it is kept in one place rather than scattered through the app.",
   },
   {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-rail .rr-seats", withText(".rr-rail .rr-sect", /Right seat/i)], act: toRail,
-    title: "Right seat",
-    text: "The people you study with, with a dot for who is here now. Tap one, or See all, to take someone into your right seat for a lesson or a quiz.",
+    section: "Ready Room", where: "/ready-room/m1", find: [".rr-feed .rr-frow", ".rr-feed"], act: unless(".rr-feed", mathsBoard),
+    title: "Questions the class has already answered",
+    text: "Every module has a board. An answer can be endorsed but never buried, and the one the class has backed sits at the top — so the board settles on the best answer instead of the loudest. Most of what you are about to ask has been asked by somebody a week ahead of you.",
   },
   {
-    section: "Ready Room", where: "/ready-room/m1", find: [withText(".rr-rail .rr-row", /Night Shift/)], act: toRail,
+    section: "Ready Room", where: "/ready-room/m1", find: [withText(".rr-rail .rr-row", /Night Shift/), ".rr-rail .rr-sect"], act: toRail,
     title: "Squadrons",
-    text: "Group chats for the people you study with. The number is unread messages. Find one lists squadrons you can join.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [withText(".rr-rail .rr-row", /Mathematics/)], act: toRail,
-    title: "Module boards",
-    text: "Every module has a question board for everyone studying it. Each row shows the newest question, and the number is how many are still waiting on an answer.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-chips"], act: unless(".rr-chips", mathsBoard),
-    title: "The question board",
-    text: "Filter to your own questions or the answered ones. Ask posts a new one to everyone on the module.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-feed .rr-frow"], act: unless(".rr-feed", mathsBoard),
-    title: "A question",
-    text: "Who asked it, and where it stands: waiting, answered, or signed off by the person who asked. The numbers are votes and answers.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-detail .rr-dtool"], act: unless(".rr-detail", firstQuestion),
-    title: "Reading it",
-    text: "The question opens beside the list. The arrows step through the board, and Fill the pane gives it the whole width.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-detail .rr-dactions"], act: unless(".rr-detail", firstQuestion),
-    title: "Vote, save, share",
-    text: "Vote a question up if you want it answered too. Save keeps it in your bag, and Share copies a link to it.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-detail .rr-ans"], act: unless(".rr-detail", firstQuestion),
-    title: "Answers",
-    text: "The one the asker signed off comes first, then the most endorsed. Endorse an answer that helped you, or reply to it.",
-  },
-  {
-    section: "Ready Room", where: "/ready-room/m1", find: [".rr-detail .rr-abar"], act: unless(".rr-abar", firstQuestion),
-    title: "Write an answer",
-    text: "Type your answer and post it. Everyone on the module can read it.",
-  },
-  {
-    section: "Ready Room", find: [lastOf(".rr-chat .rr-msg[data-me='1'] .rr-bub"), ".rr-chat .rr-transcript"],
-    act: clickText(".rr-rail", "Night Shift"),
-    title: "A squadron chat",
-    text: "The ticks tell the truth. One grey until everyone has your message, two grey once they do, blue when everyone has read it.",
-  },
-  {
-    section: "Ready Room", find: [".rr-chat .rr-composer"],
-    title: "Sending",
-    text: "Type a message, or press + to add a photo or a file. Right click a message, or hold it on a phone, to reply, react, copy, pin or report it.",
+    text: "A squadron is a small group that stays — your class, or the four of you who study at night. You already know how a group chat works; what is worth knowing here is that it sits inside the course rather than beside it, so the thing you are all studying is one tap from the conversation about it. Its link is how you get your own class in.",
   },
 
-  /* ---------------------------------------------------------------- Bookmarks */
+  /* --------------------------------------------------------------- bookmarks */
   {
     section: "Bookmarks", where: "/bookmarks", find: [".bm-folders"],
-    title: "Bookmarks",
-    text: "Everything you keep, sorted into folders on its own: questions from quizzes, study cards and moments in lessons. Open a folder to go through it again.",
-  },
-  {
-    section: "Bookmarks", where: "/bookmarks", find: [".bm-switch"],
-    title: "One module at a time",
-    text: "Bookmarks are kept per module. Switch module here.",
+    title: "One pocket for everything you keep",
+    text: "Questions, study cards, videos and pages, in four folders. Whatever you save — from a quiz, a card, a lesson or a paper — lands here and stays with the account rather than the device, and the flight bag on the Flight Deck counts what is in it for the module you are on.",
   },
 
-  /* ------------------------------------------------------------------ Licence */
+  /* ----------------------------------------------------------------- licence */
   {
-    section: "Licence", where: "/account/licence", find: [".profile .tabs"],
-    title: "Your profile",
-    text: "Three tabs: your Licence, your Preferences, and how Wingman looks.",
+    section: "Licence", where: "/account/licence", find: [".lic .cover", ".lic"],
+    title: "Your profile is a licence",
+    text: "It carries what the class actually knows you by: your callsign, a three-character code that belongs to you alone, and the chapters and hours behind you. It is a record of what you have done rather than a page about you.",
   },
   {
-    section: "Licence", where: "/account/licence", find: [".lic .cover"],
-    title: "The cover",
-    text: "The band across the top of your licence. Cover lets you pick a design or use your own picture.",
+    section: "Licence", where: "/account/licence", find: [".lic .sblock", ".lic .tag"],
+    title: "The stamp, and why it is issued once",
+    text: "In this trade a signature on a certificate is a stamp, so that is what you sign a chapter with here. You design yours — shape, pattern, ink, your code in the middle — and it is issued once, with the code, in the same moment. After that neither moves, because a stamp that could be redrawn every week would not be worth putting on anything. It appears on every chapter you sign, on the board after a quiz, and under the quizzes you have finished.",
   },
   {
-    section: "Licence", where: "/account/licence", find: [".lic .avw"],
-    title: "Photo and callsign",
-    text: "Your photo, or your initials, and your callsign under it: the name classmates know you by. Tap either to change it.",
+    section: "Preferences", where: "/account/preferences", find: [withText(".profile .box", /Your bar/), ".profile .box"],
+    title: "You set the standard you are held to",
+    text: "Your bar is the score you count as a pass for yourself. It can go above the official seventy-five per cent but never below it, and it is what Master Caution and every prompt to go back over a chapter measure you against. Beside it, Fly solo takes you off other people's boards and walls without taking any of the app away from you.",
   },
   {
-    section: "Licence", where: "/account/licence", find: [".lic .tag"],
-    title: "Your phrase",
-    text: "A line about you, picked from a list. Anyone who opens your licence sees it.",
-  },
-  {
-    section: "Licence", where: "/account/licence", find: [".lic .stats"],
-    title: "Your numbers",
-    text: "Hours studied, lessons signed off, and the days you have studied.",
-  },
-  {
-    section: "Licence", where: "/account/licence", find: [".lic .sblock"],
-    title: "Your stamp",
-    text: "Built around a three-character code of letters and numbers that is yours alone. It signs off every lesson you finish. You design it once, and it is yours for good.",
-  },
-  {
-    section: "Licence", where: "/account/licence", find: [".profile .boxh .pill"],
-    title: "See it as others do",
-    text: "Your licence exactly as a classmate sees it when they open it.",
-  },
-  {
-    section: "Licence", where: "/account/licence", find: [withText(".profile .box", /The walkthrough/)],
-    title: "Your account",
-    text: "Email, password, signing out, and this tour again whenever you want it.",
-  },
-
-  /* -------------------------------------------------------------- Preferences */
-  {
-    section: "Preferences", where: "/account/preferences", find: [withText(".profile .box", /Who greets you/i)],
-    title: "Who greets you",
-    text: "Choose the voice of the line at the top of your Flight Deck, and what it calls you.",
-  },
-  {
-    section: "Preferences", where: "/account/preferences", find: [withText(".profile .box", /Fly solo/)],
-    title: "How social, and Fly solo",
-    text: "How much of the class you want on your screens. Fly solo hides you completely: nobody sees you, and you see nobody, until you turn it off.",
-  },
-  {
-    section: "Preferences", where: "/account/preferences", find: [withText(".profile .box", /Your bar/)],
-    title: "Your target",
-    text: "The score you are aiming for. It cannot go below the 75% pass mark. The dial and Master Caution measure you against it.",
-  },
-  {
-    section: "Preferences", where: "/account/preferences", find: [withText(".profile .box", /Blocked and muted/), ".profile .bl"],
-    title: "Blocked and muted",
-    text: "Block or mute anyone from their profile. Everyone you have is listed here, and you can undo it.",
-  },
-
-  /* --------------------------------------------------------------- Appearance */
-  {
-    section: "Appearance", where: "/account/appearance", find: [withText(".profile .block", /Panel lighting/i)],
-    title: "Light or dark",
-    text: "Light, dark, or Auto to follow your device.",
-  },
-  {
-    section: "Appearance", where: "/account/appearance", find: [".profile .block-livery"],
-    title: "Livery",
-    text: "The colour Wingman is painted in. The preview under the swatches shows it before you leave the page.",
-  },
-  {
-    section: "Appearance", where: "/account/appearance", find: [withText(".profile .block-livery", /Finish/)],
-    title: "Finish",
-    text: "Standard, or Manual: the whole app drawn in ink on paper, plain or ruled.",
-  },
-  {
-    section: "Appearance", where: "/account/appearance", find: [withText(".profile .block", /Accessibility/)],
-    title: "Comfort",
-    text: "Smooth Air turns every animation off, and Plain Language switches to a clearer typeface. Text size is just above. Your choices follow you to every device.",
+    section: "Appearance", where: "/account/appearance", find: [".profile .block-livery", ".profile .block"],
+    title: "Made to be read for hours",
+    text: "Day and night, six liveries, and a Manual finish that redraws the whole app in ink, because this is a screen you will be on late and often. And if movement bothers you, Smooth Air turns the animation off rather than making it quicker.",
   },
 
   {

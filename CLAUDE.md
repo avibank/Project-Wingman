@@ -497,6 +497,18 @@ question feeds, and the right seat is one person and state that expires.
   it: `npm run harness`, then `node tests/harness/room-seed.mjs`. To test every
   livery × night/day × 1920/1512/1024/430, and every control the brief lists:
   `npm run test:rr`.
+- **"Invite your class" is a link to send out of the app** (owner,
+  2026-09-23), not a room to stand in: `InviteSheet.jsx`, opened from Crew's
+  empty state. It used to open the module's question board, which is a
+  reasonable place to be and not an invitation — nothing about it could be
+  sent to somebody who does not have an account yet. **The link is the
+  MODULE'S** (`/m/<code>`), because there is no class to join: every module is
+  open, a visitor who taps it is shown round by the walkthrough before
+  deciding anything, and when they sign up they appear on that module's Crew
+  wall. Sending it is `lib/outside.js`'s job — the share sheet on a phone, the
+  clipboard on a desktop, and the link in a field that can be copied by hand
+  where neither works, which is why the field is on screen from the start
+  rather than after a failure. Nothing claims a success it did not observe.
 
 ## Signing in, the walkthrough, and the licence
 
@@ -516,19 +528,27 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   The squadron of livery tails, the module picker and "When do you usually
   study?" are gone, and so is the study-time placement they fed.
 - **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides: a
-  tutorial over the real screens with a class already in them. It goes
-  **page by page, top to bottom, one step per thing on the page** (owner,
-  2026-09-21, after a 17-step version "glossed over" them): top bar, Flight
-  Deck, module, a lesson, Library, a quiz, study cards, Crew, the Ready Room
-  (rail, board, question, answers, a squadron chat), Bookmarks, and the
-  three profile tabs. 75 steps, each a title and a sentence or two in plain
-  words, no What / Why / How labels, and it opens with Wingman, not with
-  Part-66. The card's kicker names the page and how far through it you are.
-  The right seat is shown as what it is for, studying WITH somebody: on the
-  Flight Deck, in the room, and in the lesson, where their questions land in
-  your logbook. Every claim in `steps.js` was checked against the code that
-  does it; change the feature and the sentence has to change with it. It
-  can always be skipped.
+  tutorial over the real screens with a class already in them. It is
+  **twenty-five steps, one per IDEA**, each a short paragraph (owner,
+  2026-09-23, on the 75-step page-by-page version that came before it: "way
+  too long — explain concepts generally and what is special about us and the
+  features we have, rather than explaining how a chat works, which is
+  something everyone knows. Same goes for profile: explain concepts, why and
+  how and what, in text, not bullet points"). THIS REVERSES the page-by-page
+  brief of 2026-09-21 above it, which had itself replaced a 17-step version
+  that "glossed over" things — the length is now spent on what a student
+  cannot guess from other apps (the right seat, the logbook pinned to the
+  video, signing a chapter off, the stamp, the bar you set yourself and the
+  caution lamp watching it, a quiz sat as an exam, the class living inside
+  the module) and not on Previous and Next, a search box, or how to send a
+  message. It still opens with Wingman rather than Part-66, the card's kicker
+  names the page and how far through it you are, and it can always be
+  skipped. Every claim in `steps.js` is checked against the code that does
+  it; change the feature and the paragraph has to change with it.
+  - **The order of the two lesson steps is load-bearing**: the player's tools
+    are lit in the step straight after the player itself, because
+    `.player-layer` is not mounted on a lesson nobody has touched. With the
+    logbook step between them the light found nothing (measured on the walk).
   - **The text panel does not move.** It used to be placed beside each target
     and glide there, and the owner's word for that was "lags around". It is
     docked at the foot of the window (a sheet on a phone), and `plan()`
@@ -582,11 +602,15 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
-  - **Walked and measured**: every step lights its target at 1440 and 390, as
-    a visitor and as a student, the card covers none of it, and at 1440 the
-    card holds one position for 71 of the 75 steps. In the
-    harness the walkthrough counts as seen unless `?walkthrough=1`, and the
-    identity from `?uid=` lasts for the tab, as a real session does.
+  - **Walked and measured**: all twenty-five steps light their target at 1440
+    and at 390, every one of them fully on screen, and the card covers none
+    of any of them. The card is docked, so what changes between steps is its
+    height and never its foot. Bookmarks is given the same room at its foot
+    as the deck while the tutorial is up (`.bm-page` in `guide.css`): its
+    folder grid could not scroll clear of the card, so the card took the top
+    edge and still came down on the first 15px of it. In the harness the
+    walkthrough counts as seen unless `?walkthrough=1`, and the identity from
+    `?uid=` lasts for the tab, as a real session does.
 - **It ends at the licence.** Finishing it, or leaving a first run, takes a
   student with no stamp to `/account/licence` with the stamp creator open
   (`lib/licenceAsk.js`, which survives the reload out of the demo).

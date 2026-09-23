@@ -14,10 +14,16 @@
    of the Licence) cannot scroll up past it. So while the tutorial is up the
    page is given room at its foot. Not the Ready Room, which fills the window
    and scrolls inside its own columns: room at the foot of its deck would
-   take height from all three. */
-.app[data-demo="1"]:not(:has(.rr-app)) .deck { padding-bottom: 45vh; }
+   take height from all three. AND BOOKMARKS IS NOT A DECK: its folder grid
+   is 574px tall and sits 254px down the page, so with nothing under it the
+   page could not scroll, the card took the top edge instead, and its foot
+   still came down on the first 15px of the grid. Measured at 1440 on the
+   walk. */
+.app[data-demo="1"]:not(:has(.rr-app)) .deck,
+.app[data-demo="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 45vh; }
 @media (max-width: 699px) {
-  .app[data-demo="1"]:not(:has(.rr-app)) .deck { padding-bottom: 55vh; }
+  .app[data-demo="1"]:not(:has(.rr-app)) .deck,
+  .app[data-demo="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 55vh; }
 }
 
 /* A panel is the whole window, scaled from its top-left corner down to the

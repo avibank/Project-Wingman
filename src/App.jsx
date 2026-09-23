@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import TransitionRouter, { popHandler } from "./components/TransitionRouter.jsx";
 import { flushSync } from "react-dom";
 import { parseRoute, path as routePath } from "./lib/routes.js";
+import InviteSheet from "./components/InviteSheet.jsx";
 import { titleForRoute, useDocumentTitle } from "./lib/title.js";
 import { FLY_SOLO_KEY, mirrorFlySolo } from "./lib/flySolo.js";
 import { demoOn, DEMO_LIVERY, DEMO_VARIANT, DEMO_FINISH, DEMO_PAPERS } from "./lib/demoFixture.js";
@@ -1371,6 +1372,11 @@ function AppInner() {
   const [squadronMates, setSquadronMates] = useState(() => new Set());
   const [myCompleted, setMyCompleted] = useState(() => new Set());
   const [pilotSheet, setPilotSheet] = useState(null);
+  /* INVITE YOUR CLASS opens a link to send out of the app (owner, 2026-09-23),
+     rather than the module's own board, which was a place to be rather than an
+     invitation. The sheet is in src/components/InviteSheet.jsx and its header
+     says why the link is the module's. */
+  const [inviteClass, setInviteClass] = useState(null);
 
   useEffect(() => {
     if (!me || !activeModuleCode) { setSquadronMates(new Set()); return undefined; }
@@ -2436,7 +2442,7 @@ function AppInner() {
                screen of their own: Discover is where a squadron is found, and
                the module's own feed is where you would say where you are. */
             onFindSquadron={() => openRoomAt({ kind: "discover", moduleCode: activeModuleCode })}
-            onInviteClass={() => openRoomAt({ kind: "ask", moduleCode: activeModuleCode })}
+            onInviteClass={() => setInviteClass(activeModuleCode)}
             onTab={(t) => go(t === "library" ? routePath.library(activeModuleCode)
               : t === "crew" ? routePath.crew(activeModuleCode)
               : t === "people" ? routePath.people(activeModuleCode)
@@ -2548,6 +2554,12 @@ function AppInner() {
         the way OUT of a page survives the navigation that raised it. */}
     {/* One <filter> per ink seed on screen, shared. §8: "Crew walls with 100+
         stamps stay smooth… share the filter defs." */}
+    {inviteClass && (
+      <InviteSheet moduleCode={inviteClass}
+                   moduleName={moduleByCode(inviteClass, useTestContent)?.name || "this module"}
+                   onClose={() => setInviteClass(null)} />
+    )}
+
     {pilotSheet && (
       /* §5 — the profile viewer. The sheet draws that person's licence card
          and offers what you can actually do with them: ask for the right seat
