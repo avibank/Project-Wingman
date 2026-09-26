@@ -90,8 +90,16 @@ which is what the Flight Deck draws before the document arrives. It holds:
 - **`downloads` on a module** — `{id, title, file, pages}`, a file under
   `public/` offered as a plain `<a href download>` on the Library's Papers
   shelf (`LibraryDownloads.jsx`), with **no viewer**: papers stay paused.
-  `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` is the first.
+  `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` is the first and
+  `M13d-Instruments-Question-Set.pdf` (35 pages, 2026-09-26) is the second.
   `check:paused` allows exactly that anchor and nothing else on the slot.
+  **A .docx becomes one of these without LibreOffice**, which is not on the
+  build machine: `textutil -convert html` keeps the words and the answer-key
+  table, a small script groups each question with its options so neither is
+  split across a page and tags the headings by what they SAY (textutil
+  flattens every heading level into one paragraph class), and Chromium
+  prints it to A4. `pages` is counted out of the PDF rather than guessed,
+  because the row prints it.
 
 `check:placeholders` / `check:ship` grep the build for the markers of the old
 placeholder set; the real content carries none and both pass unchanged.
