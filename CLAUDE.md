@@ -67,6 +67,19 @@ which is what the Flight Deck draws before the document arrives. It holds:
 - **Module 13d · M1.01 "Rotary Wing Aerodynamics"**: no lessons, a quiz
   `M1.01.QZ` of exactly **40** questions (no `lessonId`), and **170 study
   cards** `M1.01.C001`–`C170`.
+- **Module 13d · M1.02 "Instruments"** (owner, 2026-09-26): no lessons, a
+  quiz `M1.02.QZ` of **40** questions, and **345 study cards**
+  `M1.02.C001`–`C345`. It came in as two .docx files — a 345-question set
+  ("Batch 2", LTT M13.08 pages 2–57, levelled L1/L2/L3) and a 40-question
+  practice quiz drawn from it — each three options with an answer key
+  carrying the letter and a one-line reason, which became `correct` and
+  `explain`. The converter is in the session scratchpad rather than the
+  repo: it is a one-off for that document's shape, and a second batch should
+  be read and checked rather than trusted to it. Spot-checked against the
+  source, and the answers come out 115/115/115 across a/b/c.
+- **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
+  which draws its own "Lessons are filming" state. That is where a quiz and
+  a card set live, so content with no video is not invisible.
 - **`cards` on a chapter is optional and is the card set when present**;
   without it the card set falls back to the quiz questions as before.
   `content.cardSet()` / `cardChapters()` in `features/bookmarks/content.js`
