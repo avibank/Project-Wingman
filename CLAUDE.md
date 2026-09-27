@@ -99,11 +99,14 @@ which is what the Flight Deck draws before the document arrives. It holds:
 - **`downloads` on a module** — `{id, title, file, pages}`, a file under
   `public/` offered as a plain `<a href download>` on the Library's Papers
   shelf (`LibraryDownloads.jsx`), with **no viewer**: papers stay paused.
-  Three of them: `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` (15
-  pages), `M13d-Instruments-Question-Set.pdf` (31 pages, re-made from the
-  revised document on 2026-09-27) and `M13d-Instruments-Practice-Quiz.pdf`
-  (4 pages, the same day) — the forty-question paper with its answer key,
-  which is what a student prints to sit away from the app.
+  **THE SHELF IS THE FULL SETS, AND ONLY THOSE** (owner, 2026-09-27):
+  "papers should be the big doc exhaustion sets, the ones you use for the
+  study cards, and those only, named correctly." So it carries one paper per
+  chapter — the complete set its study cards are made from — named for the
+  chapter and what it is: `M13d-Rotary-Wing-Full-Set.pdf` (15 pages, 170)
+  and `M13d-Instruments-Full-Set.pdf` (31 pages, 275). A four-page print of
+  the Instruments practice quiz was on the shelf for an hour and came off
+  with this rule; the app's own quiz is where a student sits that.
   `check:paused` allows exactly that anchor and nothing else on the slot.
   **A .docx becomes one of these without LibreOffice**, which is not on the
   build machine: `textutil -convert html` keeps the words and the answer-key
