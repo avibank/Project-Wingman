@@ -329,8 +329,34 @@ console.log("\nleaving and coming back");
   const functional = code.match(/\bput\(\((?:a\)|\) =>)/g) || [];
   ok("resume", `every one of the ${puts.length} changes takes a function of the previous state`,
      functional.length === puts.length, `${functional.length} of ${puts.length}`);
+  /* THE LENGTH TEST MOVED WHEN THE PAPER STARTED BEING DRAWN (quiz.js §8,
+     2026-09-27). A held attempt is restored when its answers match the ids
+     it recorded AND every one of those questions is still in the bank —
+     `paperOf` is what answers the second half, and it returns null when the
+     content changed underneath a half-finished paper. */
   ok("resume", "and a held attempt is restored rather than started over",
-     /loadAttempt\(id\)/.test(exam) && /held\.answers\?\.length === questions\.length/.test(exam));
+     /loadAttempt\(id\)/.test(exam)
+     && /held\.answers\?\.length === held\.qids\?\.length/.test(exam)
+     && /&& paperOf\(held, pool\)/.test(exam));
+  /* §8 — THE RANDOMIZER. Three things have to be true for it to be a paper
+     rather than a lottery: the size is the chapter's own, a retake draws
+     again, and nothing recomputes an existing paper from a seed. */
+  ok("draw", "the paper is drawn from the bank, at the quiz's own size",
+     /const \[size\] = useState\(questions\.length\)/.test(exam)
+     && /newAttempt\(\{ id, questions: drawPaper\(pool, size, freshSeed\(\)\) \}\)/.test(exam));
+  ok("draw", "and the bank is the quiz's questions and the chapter's cards, once each",
+     /\[\.\.\.questions, \.\.\.\(bank \|\| \[\]\)\]\.filter\(/.test(exam)
+     && /bank=\{chapter\.cards \|\| null\}/.test(readFileSync("src/components/module/QuizPage.jsx", "utf8")));
+  ok("draw", "a retake is a NEW paper",
+     /again = \(\) => \{[\s\S]{0,400}drawPaper\(pool, size, freshSeed\(\)\)/.test(exam));
+  ok("draw", "a restored paper has to hash the same, not merely match by id",
+     /sig: signPaper\(quiz\.questions\)/.test(readFileSync("src/lib/quiz.js", "utf8"))
+     && /!attempt\.sig\) return null/.test(readFileSync("src/lib/quiz.js", "utf8"))
+     && /signPaper\(out\) === attempt\.sig/.test(readFileSync("src/lib/quiz.js", "utf8")));
+  ok("draw", "and a paper is rebuilt from the ids it recorded, never from a seed",
+     /qids: quiz\.questions\.map\(q => q\.id\)/.test(readFileSync("src/lib/quiz.js", "utf8"))
+     && !/drawPaper\([^)]*seedOf/.test(exam));
+
   ok("resume", "and the time left comes back with them",
      /left: timeLeft\(held\)/.test(exam));
   ok("resume", "a submitted attempt is not resumed", /!held\.submittedAt/.test(exam));

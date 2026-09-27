@@ -70,6 +70,10 @@ export default function QuizPage({
                arrives carrying subjects this reads as the subject. */
             eyebrow={[mod?.name, chapter.title].filter(Boolean).join(" · ")}
             questions={chapter.questions}
+            /* THE REST OF THE CHAPTER'S BANK (quiz.js §8). The paper is forty
+               questions drawn from the quiz's own and the study cards
+               together, so two sittings are two different papers. */
+            bank={chapter.cards || null}
             // The lessons, so going through the paper can name where a missed
             // question came from rather than printing its id.
             lessons={chapter.lessons || []}
