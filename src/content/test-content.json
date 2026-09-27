@@ -5811,21 +5811,15 @@
       "downloads": [
         {
           "id": "M1.01.DL1",
-          "title": "Rotary Wing Aerodynamics — study cards",
-          "file": "downloads/M13d-Rotary-Wing-Study-Cards.pdf",
+          "title": "Rotary Wing Aerodynamics — full set",
+          "file": "downloads/M13d-Rotary-Wing-Full-Set.pdf",
           "pages": 15
         },
         {
           "id": "M1.02.DL1",
-          "title": "Instruments — question set",
-          "file": "downloads/M13d-Instruments-Question-Set.pdf",
+          "title": "Instruments — full set",
+          "file": "downloads/M13d-Instruments-Full-Set.pdf",
           "pages": 31
-        },
-        {
-          "id": "M1.02.DL2",
-          "title": "Instruments — practice quiz",
-          "file": "downloads/M13d-Instruments-Practice-Quiz.pdf",
-          "pages": 4
         }
       ]
     },
