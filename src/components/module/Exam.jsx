@@ -153,7 +153,7 @@ function ReviewRow({ item, mine, n, k }) {
 }
 
 export default function Exam({
-  title, eyebrow, questions, bank = null, quizId, resumeAt = 0, lessons = [],
+  title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
   minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
   moduleCode = null, chapterNo = null, chapterId = null, onLeave = null, me = null,
   /* The student's own stamp, for the head of the result (the quiz-stamps
@@ -166,18 +166,15 @@ export default function Exam({
     (id2) => lessons.find((l) => l.id === id2)?.title || "That lesson",
     [lessons],
   );
-  /* THE BANK THIS PAPER IS DRAWN FROM, latched at mount: the chapter's quiz
-     questions and its study cards, which are the same kind of object. A pool
-     that changes underneath an index makes the paper skip questions and end
-     early, so it is taken once. `bank` is optional — a chapter with no cards
-     draws its own forty in a fresh order, which is still a different paper
-     every sitting. */
+  /* THE PAPER'S QUESTIONS, latched at mount: the chapter's own quiz, all of
+     it. A list that changes underneath an index makes the paper skip
+     questions and end early, so it is taken once. What changes between
+     sittings is the ORDER and nothing else (quiz.js §8) — the study cards
+     are a different exercise and are not examined here. */
   const [pool] = useState(() => {
     const seen = new Set();
-    return [...questions, ...(bank || [])].filter((q) => q && !seen.has(q.id) && seen.add(q.id));
+    return questions.filter((q) => q && !seen.has(q.id) && seen.add(q.id));
   });
-  /* HOW MANY THE PAPER ASKS. The chapter's own quiz says so, and it does not
-     change because the bank behind it grew. */
   const [size] = useState(questions.length);
   /* NOT `goTo`: that name is already the attempt's own — quiz.js exports
      goTo(attempt, index, total), which is what the navigator's grid calls to
@@ -194,7 +191,7 @@ export default function Exam({
   const [attempt, setAttempt] = useState(() => {
     const held = loadAttempt(id);
     /* RESTORED ONLY IF EVERY QUESTION IT WAS ON IS STILL THERE. `paperOf`
-       answers null when the bank has changed under a half-finished paper,
+       answers null when the questions have changed under a half-finished paper,
        and the alternative — keeping the answers and re-drawing — would put
        yesterday's ticks against today's questions. */
     if (held && !held.submittedAt && held.answers?.length === held.qids?.length
@@ -431,8 +428,8 @@ export default function Exam({
     setInView(false);
     setShown(0);
     setPhase("paper");
-    /* A RETAKE IS A NEW PAPER, not the same one again — which is the whole
-       point of drawing from the bank (quiz.js §8). */
+    /* A RETAKE IS THE SAME FORTY IN A NEW ORDER (quiz.js §8), never the
+       same paper handed back in the order it was just answered in. */
     put(() => saveAttempt(newAttempt({ id, questions: drawPaper(pool, size, freshSeed()) })));
   };
 
