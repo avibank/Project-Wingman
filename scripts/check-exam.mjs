@@ -338,16 +338,18 @@ console.log("\nleaving and coming back");
      /loadAttempt\(id\)/.test(exam)
      && /held\.answers\?\.length === held\.qids\?\.length/.test(exam)
      && /&& paperOf\(held, pool\)/.test(exam));
-  /* §8 — THE RANDOMIZER. Three things have to be true for it to be a paper
-     rather than a lottery: the size is the chapter's own, a retake draws
-     again, and nothing recomputes an existing paper from a seed. */
-  ok("draw", "the paper is drawn from the bank, at the quiz's own size",
+  /* §8 — THE RANDOMIZER, and the owner's own words for it (2026-09-27):
+     "when I say random I mean just rearranged, and that only goes for the 40
+     quiz questions". So: every question of the chapter's own quiz, none of
+     its cards, a new order each sitting, and a retake rearranged again. */
+  ok("draw", "a paper is the chapter's own quiz, all of it",
      /const \[size\] = useState\(questions\.length\)/.test(exam)
      && /newAttempt\(\{ id, questions: drawPaper\(pool, size, freshSeed\(\)\) \}\)/.test(exam));
-  ok("draw", "and the bank is the quiz's questions and the chapter's cards, once each",
-     /\[\.\.\.questions, \.\.\.\(bank \|\| \[\]\)\]\.filter\(/.test(exam)
-     && /bank=\{chapter\.cards \|\| null\}/.test(readFileSync("src/components/module/QuizPage.jsx", "utf8")));
-  ok("draw", "a retake is a NEW paper",
+  ok("draw", "and the study cards are NOT examined in it",
+     /const \[pool\] = useState\(\(\) => \{[\s\S]{0,160}questions\.filter\(/.test(exam)
+     && !/\bbank\b/.test(exam)
+     && !/\bbank=/.test(readFileSync("src/components/module/QuizPage.jsx", "utf8")));
+  ok("draw", "a retake is rearranged again",
      /again = \(\) => \{[\s\S]{0,400}drawPaper\(pool, size, freshSeed\(\)\)/.test(exam));
   ok("draw", "a restored paper has to hash the same, not merely match by id",
      /sig: signPaper\(quiz\.questions\)/.test(readFileSync("src/lib/quiz.js", "utf8"))

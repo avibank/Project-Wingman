@@ -381,28 +381,28 @@ export function seedOf(attempt) {
 
 
 /* ============================================================================
-   8 · THE PAPER IS DRAWN, NOT FIXED
+   8 · THE SAME FORTY, IN A NEW ORDER EVERY SITTING
    ----------------------------------------------------------------------------
-   Owner, 2026-09-27: "introduce a randomizer to the quizzes."
+   Owner, 2026-09-27: "introduce a randomizer to the quizzes" — and then,
+   plainly: "when I say random I mean just rearranged, and that only goes for
+   the 40 quiz questions: they should be shuffled on each attempt."
 
-   A chapter's forty questions were the same forty, in the same order, every
-   sitting — so a retake rehearsed the ORDER as much as the material, and a
-   second sitting of Module 13d's Instruments paper asked the identical
-   questions it had just given the answers to.
+   So a paper is the chapter's OWN quiz, every question of it, in a different
+   order each time. It is not drawn from the study cards: the forty are the
+   forty the author chose to examine on, and a paper assembled out of the
+   card bank would be a different paper from the one the chapter says it
+   sets. The first version of this shipped that way for a few hours and this
+   is the correction.
 
-   THE BANK IS THE WHOLE CHAPTER. Its quiz questions and its study cards are
-   the same kind of object — "a card IS a question read the other way round",
-   which is why contentSchema holds them to one rule — so the paper is drawn
-   from all of them and stays the size the chapter's quiz says it is. Module
-   13d's Instruments chapter has 40 + 275 in the bank and hands out 40, and
-   two sittings in a row are different papers.
+   What the shuffle is worth: the same forty in the same order teaches the
+   ORDER — "the long one about RVSM comes after the two about capsules" —
+   which is the one thing an exam will not reward.
 
-   THE DRAW IS RECORDED, NOT REPRODUCED. The shuffle is deterministic so a
-   test can drive it, but nothing recomputes a paper from a seed: the ids go
-   into the attempt, and a resumed paper is rebuilt from them. Deriving it
-   from a seed instead would silently re-draw the moment the bank changed —
-   which is the same class of bug as reseeding the option order, and §4 has
-   the argument for why that one was so hard to see.
+   THE ORDER IS RECORDED, NOT REPRODUCED. The ids go into the attempt and a
+   resumed paper is rebuilt from them; recomputing from a seed would reshuffle
+   silently the moment anything about the chapter changed, which is the same
+   class of bug as reseeding the option order (§4 has the argument for why
+   that one was so hard to see).
    ============================================================================ */
 
 /**
@@ -426,7 +426,12 @@ export function signPaper(questions) {
   return h.toString(36);
 }
 
-/** Deterministic shuffle-and-take. Same seed, same paper, on any device. */
+/**
+ * Deterministic shuffle. Same seed, same order, on any device.
+ * `size` exists for the one case that is not a straight rearrangement — a
+ * paper shorter than its own question list — and defaults to all of them,
+ * which is every quiz this app has.
+ */
 export function drawPaper(pool, size, seed) {
   const list = [...(pool || [])];
   let s = (Number(seed) >>> 0) || 1;

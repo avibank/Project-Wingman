@@ -99,9 +99,11 @@ which is what the Flight Deck draws before the document arrives. It holds:
 - **`downloads` on a module** — `{id, title, file, pages}`, a file under
   `public/` offered as a plain `<a href download>` on the Library's Papers
   shelf (`LibraryDownloads.jsx`), with **no viewer**: papers stay paused.
-  `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` is the first and
-  `M13d-Instruments-Question-Set.pdf` (31 pages, re-made from the revised
-  document on 2026-09-27) is the second.
+  Three of them: `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` (15
+  pages), `M13d-Instruments-Question-Set.pdf` (31 pages, re-made from the
+  revised document on 2026-09-27) and `M13d-Instruments-Practice-Quiz.pdf`
+  (4 pages, the same day) — the forty-question paper with its answer key,
+  which is what a student prints to sit away from the app.
   `check:paused` allows exactly that anchor and nothing else on the slot.
   **A .docx becomes one of these without LibreOffice**, which is not on the
   build machine: `textutil -convert html` keeps the words and the answer-key
@@ -229,18 +231,19 @@ merge them back together.
   - `npm run check:quiz-stamps` is 46 assertions, and the last of them drive
     the demo's emulation of 0038 with a class of fourteen, a repeat, a block
     and somebody flying solo.
-- **THE PAPER IS DRAWN, NOT FIXED** (owner, 2026-09-27: "introduce a
-  randomizer to the quizzes"; `quiz.js` §8). A chapter's paper is drawn from
-  the whole chapter's bank — its quiz questions AND its study cards, which
-  are the same kind of object — and stays the size the chapter's quiz says
-  it is. Instruments has 40 + 275 in the bank and hands out 40, so two
-  sittings are two different papers: measured on a real sitting and its
-  retake, 4 questions in common out of 40. A chapter with no cards draws its
-  own forty in a fresh order.
-  - **The draw is RECORDED, never reproduced.** The ids go into the attempt
+- **THE SAME FORTY, IN A NEW ORDER EVERY SITTING** (`quiz.js` §8). The
+  owner asked for "a randomizer on the quizzes" and then said what that
+  meant: "when I say random I mean just rearranged, and that only goes for
+  the 40 quiz questions — they should be shuffled on each attempt." So a
+  paper is the chapter's OWN quiz, all of it, rearranged; a retake is
+  rearranged again. **It is NOT drawn from the study cards** — the first
+  version of this did draw 40 out of the chapter's 315 and shipped that way
+  for a few hours; the forty are the forty the author chose to examine on.
+  Measured live: two sittings, the same forty ids, a different order.
+  - **The order is RECORDED, never reproduced.** The ids go into the attempt
     and a resumed paper is rebuilt from them; recomputing from a seed would
-    silently re-draw the moment the bank changed, which is the same class of
-    bug as reseeding the option order.
+    reshuffle silently the moment anything about the chapter changed, which
+    is the same class of bug as reseeding the option order.
   - **And the attempt carries a hash of what the questions SAID** — an id is
     positional inside its chapter, so replacing a chapter's documents leaves
     every id in place and changes what each one says. `paperOf` refuses an
