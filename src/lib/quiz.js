@@ -125,6 +125,15 @@ export const passAt = n => Math.ceil(n * PASS_MARK);   // 8 -> 6
 export function newAttempt(quiz) {
   return {
     quizId: quiz.id,
+    /* WHICH QUESTIONS THIS PAPER IS, by id. A paper is DRAWN from the
+       chapter's bank now (§8), so "question 4" means nothing without the
+       list it was drawn from — and an attempt restored against a bank that
+       has changed underneath it would put yesterday's answers on today's
+       questions. `paperOf` rebuilds the paper from these and refuses when
+       one of them has gone. */
+    qids: quiz.questions.map(q => q.id),
+    /* And what they SAID when this paper was drawn — see signPaper. */
+    sig: signPaper(quiz.questions),
     lessonIds: quiz.questions.map(q => q.lessonId),
     answers: new Array(quiz.questions.length).fill(null),  // null = unanswered
     flagged: new Array(quiz.questions.length).fill(false),
@@ -370,6 +379,85 @@ export function seedOf(attempt) {
   return Number.isFinite(t) ? Math.abs(t % 100000) : 1;
 }
 
+
+/* ============================================================================
+   8 · THE PAPER IS DRAWN, NOT FIXED
+   ----------------------------------------------------------------------------
+   Owner, 2026-09-27: "introduce a randomizer to the quizzes."
+
+   A chapter's forty questions were the same forty, in the same order, every
+   sitting — so a retake rehearsed the ORDER as much as the material, and a
+   second sitting of Module 13d's Instruments paper asked the identical
+   questions it had just given the answers to.
+
+   THE BANK IS THE WHOLE CHAPTER. Its quiz questions and its study cards are
+   the same kind of object — "a card IS a question read the other way round",
+   which is why contentSchema holds them to one rule — so the paper is drawn
+   from all of them and stays the size the chapter's quiz says it is. Module
+   13d's Instruments chapter has 40 + 275 in the bank and hands out 40, and
+   two sittings in a row are different papers.
+
+   THE DRAW IS RECORDED, NOT REPRODUCED. The shuffle is deterministic so a
+   test can drive it, but nothing recomputes a paper from a seed: the ids go
+   into the attempt, and a resumed paper is rebuilt from them. Deriving it
+   from a seed instead would silently re-draw the moment the bank changed —
+   which is the same class of bug as reseeding the option order, and §4 has
+   the argument for why that one was so hard to see.
+   ============================================================================ */
+
+/**
+ * A fingerprint of the paper's WORDS, not just its ids.
+ *
+ * An id here is positional inside its chapter (`M1.02.C014`), so replacing a
+ * chapter's documents leaves every id in place and changes what each one
+ * says — which is exactly what happened to Instruments on 2026-09-27. An
+ * attempt restored by id alone would then put yesterday's answers against
+ * today's questions and mark them, silently. So the attempt carries a hash
+ * of what it was drawn from, and `paperOf` refuses anything that does not
+ * still hash the same. An attempt written before this existed carries no
+ * signature at all and is refused for the same reason.
+ */
+export function signPaper(questions) {
+  let h = 5381;
+  for (const q of questions || []) {
+    const s = `${q.id}|${q.question}|${(q.options || []).join("|")}|${q.correct}`;
+    for (let i = 0; i < s.length; i += 1) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  }
+  return h.toString(36);
+}
+
+/** Deterministic shuffle-and-take. Same seed, same paper, on any device. */
+export function drawPaper(pool, size, seed) {
+  const list = [...(pool || [])];
+  let s = (Number(seed) >>> 0) || 1;
+  const rnd = () => {
+    s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
+    return s / 4294967296;
+  };
+  for (let i = list.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rnd() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  const n = Math.max(1, Math.min(Number(size) || list.length, list.length));
+  return list.slice(0, n);
+}
+
+/** A seed for a fresh draw. Never used to rebuild one — see the header. */
+export const freshSeed = () => 1 + Math.floor(Math.random() * 4294967294);
+
+/**
+ * The questions an attempt is on, rebuilt from the ids it stored.
+ * Null when any of them has gone: the bank changed under a half-finished
+ * paper, and half of somebody's answers would land on other questions.
+ */
+export function paperOf(attempt, pool) {
+  const ids = attempt?.qids;
+  if (!Array.isArray(ids) || !ids.length || !attempt.sig) return null;
+  const by = new Map((pool || []).map(q => [q.id, q]));
+  const out = ids.map(id => by.get(id));
+  if (!out.every(Boolean) || out.length !== ids.length) return null;
+  return signPaper(out) === attempt.sig ? out : null;
+}
 
 /* ============================================================================
    7 · WHAT WAS DELIBERATELY NOT TAKEN

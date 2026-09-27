@@ -67,16 +67,25 @@ which is what the Flight Deck draws before the document arrives. It holds:
 - **Module 13d · M1.01 "Rotary Wing Aerodynamics"**: no lessons, a quiz
   `M1.01.QZ` of exactly **40** questions (no `lessonId`), and **170 study
   cards** `M1.01.C001`–`C170`.
-- **Module 13d · M1.02 "Instruments"** (owner, 2026-09-26): no lessons, a
-  quiz `M1.02.QZ` of **40** questions, and **345 study cards**
-  `M1.02.C001`–`C345`. It came in as two .docx files — a 345-question set
-  ("Batch 2", LTT M13.08 pages 2–57, levelled L1/L2/L3) and a 40-question
-  practice quiz drawn from it — each three options with an answer key
-  carrying the letter and a one-line reason, which became `correct` and
-  `explain`. The converter is in the session scratchpad rather than the
-  repo: it is a one-off for that document's shape, and a second batch should
-  be read and checked rather than trusted to it. Spot-checked against the
-  source, and the answers come out 115/115/115 across a/b/c.
+- **Module 13d · M1.02 "Instruments"**: no lessons, a quiz `M1.02.QZ` of
+  **40** questions, and **275 study cards** `M1.02.C001`–`C275`. It comes
+  from two .docx files — a question set grouped by subject then by level
+  (L1/L2/L3) and a 40-question practice quiz drawn from it — each three
+  options with an answer key carrying the letter and a one-line reason,
+  which became `correct` and `explain`. Spot-checked against the source, and
+  the answers come out 92/92/91 across a/b/c.
+  **BOTH DOCUMENTS WERE REPLACED ON 2026-09-27**, a day after the first
+  import, and the replacement is why `STORAGE_EPOCH` is 2 and
+  `supabase/reset-instruments-progress.sql` exists. The new set is NOT a
+  superset of the old: 275 cards where there were 345, 27 of the 40 quiz
+  questions changed, and 217 of the cards that kept their wording given
+  different options or a different answer. **The ids are positional inside
+  the chapter**, so every one of them stayed and changed meaning — which is
+  what makes a stale score, a saved card or a half-finished paper wrong
+  rather than merely old. If a third batch arrives, expect to reset again.
+  The converter is in the session scratchpad rather than the repo: it is a
+  one-off for that document's shape, and a new batch should be read and
+  checked rather than trusted to it.
 - **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
   which draws its own "Lessons are filming" state. That is where a quiz and
   a card set live, so content with no video is not invisible.
@@ -91,7 +100,8 @@ which is what the Flight Deck draws before the document arrives. It holds:
   `public/` offered as a plain `<a href download>` on the Library's Papers
   shelf (`LibraryDownloads.jsx`), with **no viewer**: papers stay paused.
   `public/downloads/M13d-Rotary-Wing-Study-Cards.pdf` is the first and
-  `M13d-Instruments-Question-Set.pdf` (35 pages, 2026-09-26) is the second.
+  `M13d-Instruments-Question-Set.pdf` (31 pages, re-made from the revised
+  document on 2026-09-27) is the second.
   `check:paused` allows exactly that anchor and nothing else on the slot.
   **A .docx becomes one of these without LibreOffice**, which is not on the
   build machine: `textutil -convert html` keeps the words and the answer-key
@@ -219,6 +229,24 @@ merge them back together.
   - `npm run check:quiz-stamps` is 46 assertions, and the last of them drive
     the demo's emulation of 0038 with a class of fourteen, a repeat, a block
     and somebody flying solo.
+- **THE PAPER IS DRAWN, NOT FIXED** (owner, 2026-09-27: "introduce a
+  randomizer to the quizzes"; `quiz.js` §8). A chapter's paper is drawn from
+  the whole chapter's bank — its quiz questions AND its study cards, which
+  are the same kind of object — and stays the size the chapter's quiz says
+  it is. Instruments has 40 + 275 in the bank and hands out 40, so two
+  sittings are two different papers: measured on a real sitting and its
+  retake, 4 questions in common out of 40. A chapter with no cards draws its
+  own forty in a fresh order.
+  - **The draw is RECORDED, never reproduced.** The ids go into the attempt
+    and a resumed paper is rebuilt from them; recomputing from a seed would
+    silently re-draw the moment the bank changed, which is the same class of
+    bug as reseeding the option order.
+  - **And the attempt carries a hash of what the questions SAID** — an id is
+    positional inside its chapter, so replacing a chapter's documents leaves
+    every id in place and changes what each one says. `paperOf` refuses an
+    attempt whose questions no longer hash the same, and refuses one written
+    before the hash existed. Without it, the Instruments replacement would
+    have marked yesterday's answers against today's questions.
 - **The clock is a FLAT TWENTY MINUTES** for any quiz up to forty questions
   (owner, 2026-09-20), which reverses the 75-seconds-a-question figure below.
   `estimate` keeps the 75 seconds, because a row reading "about 20 minutes"
@@ -288,6 +316,17 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
+
+**The Instruments chapter's progress was reset on 2026-09-27**, live, with
+`supabase/reset-instruments-progress.sql` (not part of the numbered series:
+it is a one-off about content, not schema, and is safe to run twice). Both
+source documents were replaced and the ids are positional, so 2 board runs,
+16 saved questions and cards, and every M1.02 entry in `pw-quiz-scores`,
+`pw-quiz-run`, `pw-cards-seen`, `pw-cards-got` and both retention piles went
+with them. Verified after: 0 rows anywhere for M1.02, and M1.01 untouched —
+4 board runs, 3 saves and 2 score documents still there. The device half is
+`STORAGE_EPOCH = 2`, because a browser holding the old score would have
+patched it straight back.
 
 **0039, one to three and one change, has been run against the live project**
 (2026-09-23), verified by connecting: `pilot_code_shape` is now

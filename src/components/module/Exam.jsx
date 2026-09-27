@@ -3,6 +3,7 @@ import {
   newAttempt, answer, flag, goTo, next as nextQ, prev as prevQ, submit,
   score, review, weakLessons, retakeWrong, scoreLine,
   navigator as navRow, seedOf, saveAttempt, loadAttempt, clearAttempt,
+  drawPaper, paperOf, freshSeed,
   passAt, answeredCount, flagged, unanswered, tick, timeLeft, clock,
   SECONDS_LOW, LABELS,
 } from "../../lib/quiz.js";
@@ -152,7 +153,7 @@ function ReviewRow({ item, mine, n, k }) {
 }
 
 export default function Exam({
-  title, eyebrow, questions, quizId, resumeAt = 0, lessons = [],
+  title, eyebrow, questions, bank = null, quizId, resumeAt = 0, lessons = [],
   minimums = PASS_PCT, onProgress, onAnswers, onDone, onOpenLesson,
   moduleCode = null, chapterNo = null, chapterId = null, onLeave = null, me = null,
   /* The student's own stamp, for the head of the result (the quiz-stamps
@@ -165,9 +166,19 @@ export default function Exam({
     (id2) => lessons.find((l) => l.id === id2)?.title || "That lesson",
     [lessons],
   );
-  /* A SITTING IS A FIXED SET, latched at mount. A set derived from a list that
-     changes underneath an index makes the paper skip questions and end early. */
-  const [set] = useState(questions);
+  /* THE BANK THIS PAPER IS DRAWN FROM, latched at mount: the chapter's quiz
+     questions and its study cards, which are the same kind of object. A pool
+     that changes underneath an index makes the paper skip questions and end
+     early, so it is taken once. `bank` is optional — a chapter with no cards
+     draws its own forty in a fresh order, which is still a different paper
+     every sitting. */
+  const [pool] = useState(() => {
+    const seen = new Set();
+    return [...questions, ...(bank || [])].filter((q) => q && !seen.has(q.id) && seen.add(q.id));
+  });
+  /* HOW MANY THE PAPER ASKS. The chapter's own quiz says so, and it does not
+     change because the bank behind it grew. */
+  const [size] = useState(questions.length);
   /* NOT `goTo`: that name is already the attempt's own — quiz.js exports
      goTo(attempt, index, total), which is what the navigator's grid calls to
      jump between questions. Shadowing it here pointed every one of those
@@ -182,14 +193,19 @@ export default function Exam({
      number rather than to a paper that has run out. */
   const [attempt, setAttempt] = useState(() => {
     const held = loadAttempt(id);
-    if (held && !held.submittedAt && held.answers?.length === questions.length) {
+    /* RESTORED ONLY IF EVERY QUESTION IT WAS ON IS STILL THERE. `paperOf`
+       answers null when the bank has changed under a half-finished paper,
+       and the alternative — keeping the answers and re-drawing — would put
+       yesterday's ticks against today's questions. */
+    if (held && !held.submittedAt && held.answers?.length === held.qids?.length
+        && paperOf(held, pool)) {
       return {
         ...held,
-        at: Math.min(resumeAt || held.at || 0, questions.length - 1),
+        at: Math.min(resumeAt || held.at || 0, held.qids.length - 1),
         left: timeLeft(held),
       };
     }
-    return newAttempt({ id, questions });
+    return newAttempt({ id, questions: drawPaper(pool, size, freshSeed()) });
   });
   const [phase, setPhase] = useState("paper");     // paper | done | review | retake
   const [leaving, setLeaving] = useState(false);
@@ -254,6 +270,8 @@ export default function Exam({
      wrong. startedAt travels with the attempt, so it is the one number that is
      the same both times. */
   const seed = seedOf(attempt);
+  /* The paper is the attempt's own questions, in the order it drew them. */
+  const set = useMemo(() => paperOf(attempt, pool) || [], [attempt, pool]);
   const paper = useMemo(
     () => set.map((q, i) => ({ ...q, ...shuffleOptions(q, seed + i * 17) })),
     [set, seed],
@@ -413,7 +431,9 @@ export default function Exam({
     setInView(false);
     setShown(0);
     setPhase("paper");
-    put(() => saveAttempt(newAttempt({ id, questions: set })));
+    /* A RETAKE IS A NEW PAPER, not the same one again — which is the whole
+       point of drawing from the bank (quiz.js §8). */
+    put(() => saveAttempt(newAttempt({ id, questions: drawPaper(pool, size, freshSeed()) })));
   };
 
   if (!q) return null;
