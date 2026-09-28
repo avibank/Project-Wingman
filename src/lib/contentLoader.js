@@ -63,6 +63,13 @@ export function loadContent(doc, { strict = false } = {}) {
       code: c.id,
       title: c.name,
       quizId: c.quiz?.id,
+      /* THE QUIZ'S OWN NAME, when the document gives it one (2026-09-28).
+         Every screen used to compose "<chapter> quiz", which is the right
+         answer for a chapter whose quiz has no title of its own and the
+         wrong one the moment an author names their paper — the owner's
+         documents are titled, and the row has to read what the document is
+         called. Null when it is unnamed, and the composed label stands. */
+      quizName: c.quiz?.name || null,
       quizCount: c.quiz?.questions?.length,
       // lessonId on a question is new in Part 12: it is what lets a quiz
       // question point back at the moment it was taught.
@@ -78,6 +85,9 @@ export function loadContent(doc, { strict = false } = {}) {
          The positional fallback id is the same compromise as the quiz's
          above: a runtime without an id still renders, and
          scripts/check-question-ids.mjs fails the build before one ships. */
+      /* The card set's own name, when the document has one — see the quiz's
+         note above; the two work the same way. */
+      cardsName: c.cardsName || null,
       cards: Array.isArray(c.cards) && c.cards.length
         ? c.cards.map((q, i) => ({ ...q, id: q.id || `${c.id}.C${i + 1}` }))
         : null,

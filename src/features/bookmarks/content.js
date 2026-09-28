@@ -197,6 +197,13 @@ export const content = {
     return chapterAt(moduleOf(moduleId), Number(chapter))?.title || `Chapter ${chapter}`;
   },
 
+  /** What a chapter's card set is called: the document's own name when it
+   *  has one, and "<chapter> cards" when it has not. */
+  cardSetName(moduleId, chapter) {
+    const c = chapterAt(moduleOf(moduleId), Number(chapter));
+    return c?.cardsName || `${c?.title || `Chapter ${chapter}`} cards`;
+  },
+
   /** One lesson by id. undefined while nothing is loaded. */
   lesson(id) {
     if (!app.doc) return undefined;

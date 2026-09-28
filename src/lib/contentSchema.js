@@ -81,6 +81,11 @@ export function validateContent(doc) {
           c.cards.forEach((q, qi) => checkQuestion(q, `${cw}.cards[${qi}]`, errs));
         }
       }
+      /* AND WHAT THE SET IS CALLED, when the document that supplied it has a
+         name of its own (2026-09-28). Optional: without it the row reads
+         "<chapter> cards", which is what every set read before an author
+         titled one. */
+      if (c.cardsName != null) check(isStr(c.cardsName), cw, "cardsName must be a non-empty string", errs);
     });
 
     /* DOWNLOADS — a file offered as a plain download and nothing else

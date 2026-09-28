@@ -35,15 +35,18 @@
    it. flySolo.js imports nothing, so there is no cycle. */
 import { FLY_SOLO_KEY } from "./flySolo.js";
 
-/* 2 — the Instruments chapter's questions were replaced (2026-09-27). Its
-   ids are positional inside the chapter and the new documents are not a
-   superset of the old, so a device holding `pw-quiz-scores`, `pw-cards-seen`
-   or a half-finished paper from before would patch a score earned on other
-   questions straight back onto the server on its next load. The server half
-   is supabase/reset-instruments-progress.sql, run the same day; this is the
-   half that reaches a browser. Signed-in progress is read back from the
-   server, so what a student actually loses is what only their device knew. */
-export const STORAGE_EPOCH = 2;
+/* 2 — the Instruments chapter's questions were replaced (2026-09-27), and
+   3 — replaced again (2026-09-28). Its ids are positional inside the
+   chapter and each revision is not a superset of the one before, so a
+   device holding `pw-quiz-scores`, `pw-cards-seen` or a half-finished paper
+   from before would patch a score earned on other questions straight back
+   onto the server on its next load. The server half is
+   supabase/reset-instruments-progress.sql, run on each of those days; this
+   is the half that reaches a browser. Signed-in progress is read back from
+   the server, so what a student actually loses is what only their device
+   knew. Raise it again with the next revision — it is a no-op on a device
+   that has already swept at this number. */
+export const STORAGE_EPOCH = 3;
 const EPOCH_KEY = "pw-epoch";
 
 /* Device preferences. Everything else under `pw-` is state. */
