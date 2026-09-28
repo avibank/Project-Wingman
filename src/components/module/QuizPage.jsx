@@ -64,7 +64,8 @@ export default function QuizPage({
           <Exam
             key={chapter.id}
             quizId={chapter.quizId || chapter.id}
-            title={`${chapter.title} quiz`}
+            /* The document's own title when it has one — see contentLoader. */
+            title={chapter.quizName || `${chapter.title} quiz`}
             /* The module and what this paper is on, in the bar's small line.
                Both are the app's own names for them, so when real content
                arrives carrying subjects this reads as the subject. */

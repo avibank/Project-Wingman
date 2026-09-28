@@ -68,24 +68,33 @@ which is what the Flight Deck draws before the document arrives. It holds:
   `M1.01.QZ` of exactly **40** questions (no `lessonId`), and **170 study
   cards** `M1.01.C001`–`C170`.
 - **Module 13d · M1.02 "Instruments"**: no lessons, a quiz `M1.02.QZ` of
-  **40** questions, and **275 study cards** `M1.02.C001`–`C275`. It comes
-  from two .docx files — a question set grouped by subject then by level
-  (L1/L2/L3) and a 40-question practice quiz drawn from it — each three
-  options with an answer key carrying the letter and a one-line reason,
-  which became `correct` and `explain`. Spot-checked against the source, and
-  the answers come out 92/92/91 across a/b/c.
-  **BOTH DOCUMENTS WERE REPLACED ON 2026-09-27**, a day after the first
-  import, and the replacement is why `STORAGE_EPOCH` is 2 and
-  `supabase/reset-instruments-progress.sql` exists. The new set is NOT a
-  superset of the old: 275 cards where there were 345, 27 of the 40 quiz
-  questions changed, and 217 of the cards that kept their wording given
-  different options or a different answer. **The ids are positional inside
-  the chapter**, so every one of them stayed and changed meaning — which is
-  what makes a stale score, a saved card or a half-finished paper wrong
-  rather than merely old. If a third batch arrives, expect to reset again.
-  The converter is in the session scratchpad rather than the repo: it is a
-  one-off for that document's shape, and a new batch should be read and
-  checked rather than trusted to it.
+  **40** questions, and **272 study cards** `M1.02.C001`–`C272`. Two .docx
+  files feed it and they do not feed the same things (owner, 2026-09-28):
+  **the Quiz document is the quiz and nothing else; the Full Set is the
+  study cards AND the paper on the shelf.** Each question carries three
+  options and an answer-key row with the letter and a one-line reason, which
+  become `correct` and `explain`. Spot-checked against the source; the
+  answers come out 91/91/90 across a/b/c.
+  - **THE NAMES ARE THE DOCUMENTS' OWN, exactly** (owner, 2026-09-28: "name
+    them exactly as I say"). The quiz row and the exam header read
+    **M13.8 Instruments 345-406 — Quiz**; the card set and the paper read
+    **M13.8 Instruments 345-406 — Full Set**. Two optional fields carry
+    that: `quiz.name` and the chapter's `cardsName`, both null for a chapter
+    whose documents are untitled, where the old composed labels
+    ("<chapter> quiz", "<chapter> cards") still stand. M1.01's quiz has a
+    name of its own in the document and now uses it.
+  - **IT HAS BEEN REPLACED TWICE**, on 2026-09-27 and again on 2026-09-28,
+    and each revision is why `STORAGE_EPOCH` went to 2 and then 3 and why
+    `supabase/reset-instruments-progress.sql` exists. No revision is a
+    superset of the one before — 345 → 275 → 272 cards, with most of the
+    shared wording given different options or a different answer — and
+    **the ids are positional inside the chapter**, so every id stays and
+    changes meaning. That is what makes a stale score, a saved card or a
+    half-finished paper wrong rather than merely old. Expect to reset again
+    with the next one: run the SQL, raise the epoch, re-make the paper.
+  - The converter is in the session scratchpad rather than the repo: it is a
+    one-off for that document's shape, and a new batch should be read and
+    checked rather than trusted to it.
 - **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
   which draws its own "Lessons are filming" state. That is where a quiz and
   a card set live, so content with no video is not invisible.
@@ -102,11 +111,12 @@ which is what the Flight Deck draws before the document arrives. It holds:
   **THE SHELF IS THE FULL SETS, AND ONLY THOSE** (owner, 2026-09-27):
   "papers should be the big doc exhaustion sets, the ones you use for the
   study cards, and those only, named correctly." So it carries one paper per
-  chapter — the complete set its study cards are made from — named for the
-  chapter and what it is: `M13d-Rotary-Wing-Full-Set.pdf` (15 pages, 170)
-  and `M13d-Instruments-Full-Set.pdf` (31 pages, 275). A four-page print of
-  the Instruments practice quiz was on the shelf for an hour and came off
-  with this rule; the app's own quiz is where a student sits that.
+  chapter — the complete set its study cards are made from — and nothing
+  else: `M13d-Rotary-Wing-Full-Set.pdf` (15 pages, 170 cards) and
+  `M13.8-Instruments-345-406-Full-Set.pdf` (31 pages, 272). A four-page
+  print of the Instruments practice quiz was on the shelf for an hour and
+  came off with this rule; the app's own quiz is where a student sits that,
+  and the Quiz document reaches no other surface.
   `check:paused` allows exactly that anchor and nothing else on the slot.
   **A .docx becomes one of these without LibreOffice**, which is not on the
   build machine: `textutil -convert html` keeps the words and the answer-key

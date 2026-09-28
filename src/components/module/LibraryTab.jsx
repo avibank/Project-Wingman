@@ -146,7 +146,7 @@ export default function LibraryTab({
   }, [sub]);
   const searching = terms(query).length > 0;
 
-  const shownQuizzes = chapters.filter((c) => hits(`${c.title} quiz ${c.id}`, query));
+  const shownQuizzes = chapters.filter((c) => hits(`${c.quizName || `${c.title} quiz`} ${c.title} ${c.id}`, query));
   const shownPapers = papers.filter(
     (p) => (!chapterFilter || p.chapterId === chapterFilter)
       && hits(`${p.title} ${p.chapterTitle || ""}`, query));
@@ -191,7 +191,7 @@ export default function LibraryTab({
                 <span>
                   {/* §7 — the chapter name IS the row's own name here; the
                       meta says the shape of the quiz and nothing else. */}
-                  <div className="lt">{c.title} quiz</div>
+                  <div className="lt">{c.quizName || `${c.title} quiz`}</div>
                   <div className={`ls${lit ? " warn" : ""}`}>
                     {[total ? `${total} question${total === 1 ? "" : "s"}` : "Not yet taken",
                       lit ? "below the pass mark" : null].filter(Boolean).join(" · ")}
