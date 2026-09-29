@@ -1008,9 +1008,29 @@ function AppInner() {
      visit (walkthroughSeen, in mode.js), not for good. A signed-in student
      only ever gets it by asking: Replay, at the foot of the Licence. It can
      always be left. */
-  const NO_TOUR_ON = new Set(["signin", "invite", "clerk", "notfound", "redirect"]);
+  /* AND NEVER OVER A PAPER. The owner, 2026-09-29: "a one off where I was
+     taken back to the tutorial mid quiz then back." The tour opens for
+     somebody who is NOT signed in, and Clerk can report exactly that for a
+     moment while it revalidates a session — one render with `isLoaded` true
+     and `isSignedIn` false is enough, and what follows is `enterGuestDemo`,
+     a sessionStorage flag and a FULL RELOAD into the demo. A student sitting
+     a timed paper loses the screen they were on, and comes back to an app
+     whose saves store belongs to a guest: no bookmarks, and a bookmark
+     button that silently does nothing, which is the other half of what was
+     reported the same morning.
+
+     So the quiz route is on the list, the exam lock is checked, and a
+     signed-out reading is confirmed a second later before anything reloads.
+     Three guards, because this one is not reproducible on demand and each
+     of them is cheap. */
+  const NO_TOUR_ON = new Set(["signin", "invite", "clerk", "notfound", "redirect", "chapter"]);
   const startDemoRef = useRef(null);
   const guestAsked = useRef(false);
+  /* Clerk's latest answer, readable from inside a timeout — the effect's own
+     closure holds the reading that started it, which is the one under
+     suspicion. */
+  const clerkRef = useRef({ isLoaded: false, isSignedIn: false });
+  clerkRef.current = { isLoaded: clerkLoaded, isSignedIn };
   useEffect(() => {
     if (demoMode || guestAsked.current || !clerkLoaded) return;
     /* `?tour` opens it for anybody, any time: signed out as a visitor,
@@ -1029,8 +1049,19 @@ function AppInner() {
        as it is (src/lib/canary.js, the stamp creator), and the demo's reload
        would take it away before it had been looked at. */
     if (isSignedIn || NO_TOUR_ON.has(route.name) || walkthroughSeen() || params.has("diag") || params.has("creator")) return;
-    guestAsked.current = true;
-    enterGuestDemo(`${location.pathname}${location.search || ""}`);
+    /* An open paper is never interrupted, whatever the route says. */
+    if (examLock().locked) return;
+    /* CONFIRMED, NOT GLIMPSED. A second passes and the same reading has to
+       hold: a session that was merely being revalidated is signed in again
+       by then, and nothing reloads. A visitor waits a second for the tour to
+       open, which nobody can feel. */
+    const t = setTimeout(() => {
+      if (guestAsked.current || demoMode || examLock().locked) return;
+      if (clerkRef.current.isSignedIn || !clerkRef.current.isLoaded) return;
+      guestAsked.current = true;
+      enterGuestDemo(`${location.pathname}${location.search || ""}`);
+    }, 1000);
+    return () => clearTimeout(t);
   }, [clerkLoaded, isSignedIn, route.name]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   /* A STUDENT WHO HAS JUST SIGNED UP GOES TO THEIR LICENCE, to choose their

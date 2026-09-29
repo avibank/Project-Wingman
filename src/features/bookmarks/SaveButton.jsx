@@ -38,7 +38,11 @@ export default function SaveButton({ kind, moduleId, refId, chapter = null, page
       }
     }
     const r = await addSave({ kind, moduleId, refId, chapter, page, atSeconds: kind === 'video' ? Math.floor(getAtSeconds?.() ?? 0) : null });
-    if (r.ok) toast(`Saved to ${folder.name}`, { icon: <IconBookmark on />, action: { label: 'View', fn: () => nav(`${routes.folder(folder.slug)}?m=${moduleId}`) } });
+    if (r.ok) { toast(`Saved to ${folder.name}`, { icon: <IconBookmark on />, action: { label: 'View', fn: () => nav(`${routes.folder(folder.slug)}?m=${moduleId}`) } }); return; }
+    /* A PRESS ALWAYS ANSWERS. The store's other failures raise their own
+       toast with a Retry; this one is the store having no student, which
+       Retry cannot help — so it names the way forward instead. */
+    if (r.reason === 'nobody') toast('Sign in to keep this one', { action: { label: 'Sign in', fn: () => nav('/signin') } });
   }
 
   return (
