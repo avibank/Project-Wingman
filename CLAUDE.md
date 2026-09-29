@@ -665,9 +665,20 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     transition (`go(to, { still: true })`), and every screen it visits is
     warmed while the first step is read.
   - **It opens by itself for every visit by somebody who is NOT signed in**,
-    on ANY page but sign-in, an invite link and Clerk's account screens. It
-    once waited for `/`, and a visitor who arrived anywhere else never saw
-    it. Skip takes them back to the page they arrived on.
+    on ANY page but sign-in, an invite link, Clerk's account screens and
+    **a quiz**. It once waited for `/`, and a visitor who arrived anywhere
+    else never saw it. Skip takes them back to the page they arrived on.
+  - **THREE GUARDS, BECAUSE IT ONCE TOOK A SIGNED-IN STUDENT'S PAPER**
+    (owner, 2026-09-29: "a one off where I was taken back to the tutorial
+    mid quiz then back"). Clerk can report `isLoaded` true and `isSignedIn`
+    false for a single render while it revalidates a session, and what
+    follows is `enterGuestDemo`, a sessionStorage flag and a FULL RELOAD
+    into the demo — the paper gone, and afterwards a saves store belonging
+    to a guest, which is why the same morning brought "can't bookmark" and
+    "old bookmarks are gone". So: the quiz route is on `NO_TOUR_ON`, an open
+    paper is refused outright through `examLock()`, and a signed-out reading
+    has to STILL be signed out a second later, read from a ref rather than
+    from the effect's own closure. A visitor waits a second nobody can feel.
   - **Seen lasts one visit, and a visit is a tab** (`pw-walkthrough-visit` in
     sessionStorage, which survives the demo's reloads). It is written when
     the walkthrough ENDS, finished or skipped. It used to be remembered on
@@ -827,7 +838,14 @@ and `claude/bookmarks-report.md` is what each rule measured.
   0028). The screen changes first and the server follows; if the server
   refuses, the row goes back and the student is told, with Retry. Nothing is
   ever shown as saved that is not saved. `npm run check:saves` drives the
-  store against a stand-in server — 16 assertions, no browser.
+  store against a stand-in server — 29 assertions, no browser.
+- **A PRESS ALWAYS ANSWERS.** `addSave` used to return a bare `{ok: false}`
+  when the store had no student, and the button swallowed the press: no
+  toast, no error, nothing — which is what a session read as signed out for
+  a moment looks like from the outside, and what was reported on 2026-09-29
+  as "can't bookmark". It returns `reason: "nobody"` now and the button says
+  "Sign in to keep this one" with a way there. Every other failure keeps its
+  Retry.
 - **The drop's SQL could not work here.** It defaulted `user_id` to
   `auth.jwt() ->> 'sub'` and wrote four policies against the same claim; this
   client sends the anon key as its own bearer, so that claim is NULL on every

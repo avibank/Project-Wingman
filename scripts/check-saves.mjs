@@ -179,6 +179,22 @@ await fresh();
 
 const { readFileSync } = await import("node:fs");
 
+/* 12b — A PRESS ALWAYS ANSWERS (2026-09-29). The button swallowed every
+   press when the store had no student — which is what a signed-in session
+   read as signed out for a moment looks like from the outside: a bookmark
+   that does nothing, with no toast and no error. The store now says which
+   refusal it is, and SaveButton has a sentence for it. */
+{
+  const { addSave, noStudent } = await import("../src/features/bookmarks/savesStore.js");
+  noStudent();
+  const r = await addSave({ kind: "question", moduleId: "m1", refId: "M1.02.Q1" });
+  ok("nobody", "a save with nobody signed in says WHICH refusal it is",
+     r.ok === false && r.reason === "nobody", JSON.stringify(r));
+  const btn = readFileSync("src/features/bookmarks/SaveButton.jsx", "utf8");
+  ok("nobody", "and the button answers the press with a way forward",
+     /r\.reason === 'nobody'/.test(btn) && /Sign in to keep this one/.test(btn));
+}
+
 /* 13 — WHAT A CARD SET REMEMBERS (owner, 2026-09-23: "study cards should save
    your progress"). Two facts, one key each, and neither of them is a score:
    where you stopped, which is the first card you have not turned over, and

@@ -75,7 +75,12 @@ const failCopy = (res, verb) => (res.offline ? `You're offline, so that didn't $
  * @param {{kind:Kind, moduleId:string, refId:string, chapter?:number|null, atSeconds?:number|null, page?:number|null}} s
  */
 export async function addSave({ kind, moduleId, refId, chapter = null, atSeconds = null, page = null }, { quiet = false } = {}) {
-  if (!state.userId) return { ok: false };
+  /* NOBODY IS SIGNED IN — and the caller is told which refusal this is, so a
+     bookmark that cannot be kept says so instead of doing nothing at all.
+     That silence was reported on 2026-09-29 as "can't bookmark": the store
+     had no student, because the app had a moment of reading the session as
+     signed out, and the button swallowed every press. */
+  if (!state.userId) return { ok: false, reason: "nobody" };
   const prev = findSave(kind, refId, page);
   const row = { id: prev?.id ?? newId(), user_id: state.userId, module_id: moduleId, kind, ref_id: String(refId), chapter, at_seconds: atSeconds, page, created_at: new Date().toISOString() };
   state.rows = [row, ...state.rows.filter((r) => r !== prev)]; emit();
