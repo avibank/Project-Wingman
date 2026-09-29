@@ -761,9 +761,18 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
 - **Papers are off** (`paper.viewer` is `everyone: false`): nothing in the
   Library, the subtitle, Bookmarks or the paper address. The demo says a
   reader for module-wide shared PDFs is coming.
-- **Aurora is off** (`OFFERED_FINISHES` in `finishEngine.js`, and
-  `livery.aurora`): not offered, and a stored Aurora reads as Standard. The
-  renderers stay.
+- **Aurora is back** (owner, 2026-09-29: "reintroduce aurora as a finish
+  like it was"), which reverses the 2026-09-21 removal. It was never taken
+  out — it stayed in `FINISHES`, every renderer kept drawing it, and
+  `check:contrast`, `check:surfaces` and `test:bm` never stopped measuring
+  it — so bringing it back was deleting one filter in `finishEngine.js`,
+  exactly as the note there said it would be. `offeredFinish` stays, because
+  it is what stops a stored finish this build does not know about painting
+  nothing. **Aurora is still a night sky**: App.jsx forces the night variant
+  on it and the picker says so, which is why there are 30 real skins and not
+  36. The `livery.aurora` FLAG is a different thing and stays off — it gates
+  the retired aurora LIVERY, and a student stored on it still comes back as
+  sky plus the aurora finish (`RETIRED_TO_FINISH`).
 - **The stamp engine is the launch pack's, byte for byte**:
   `src/lib/stamp-engine.js` is `docs/launch/code/05-stamp-engine.js` between
   two marker lines, with only FONTS, one page-level `<svg><defs>` (first in
