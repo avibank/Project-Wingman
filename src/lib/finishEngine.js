@@ -257,12 +257,22 @@ export const FINISHES = [
   { id: "manual", name: "Manual", line: "Everything you need is in here somewhere." },
 ];
 
-/* AURORA IS NOT OFFERED FOR NOW (owner, 2026-09-21: "remove aurora for now,
-   just keep manual"). It stays in FINISHES and every renderer still draws it,
-   so bringing it back is deleting this filter; `offeredFinish` is what turns
-   somebody who had it into Standard rather than into a finish they cannot
-   see in the picker. */
-export const OFFERED_FINISHES = FINISHES.filter((f) => f.id !== "aurora");
+/* AURORA IS OFFERED AGAIN (owner, 2026-09-29: "reintroduce aurora as a
+   finish like it was"), which reverses 2026-09-21's "remove aurora for now,
+   just keep manual". It was never taken out — it stayed in FINISHES, every
+   renderer kept drawing it, and check:contrast, check:surfaces and test:bm
+   have been measuring it the whole time — so bringing it back is deleting
+   the filter that stood here, which is what that note said it would be.
+
+   `offeredFinish` stays: it is what stops a stored finish this build does
+   not know about painting nothing, and it is how a retired one would be
+   turned back into Standard if a finish is ever withdrawn again.
+
+   AURORA IS STILL A NIGHT SKY. App.jsx forces the night variant on it
+   (`variant = finish === "aurora" ? "night" : …`) and `lightOverride` says
+   so in the picker, so there are 30 real skins rather than 36. That rule
+   was never conditional on the finish being offered. */
+export const OFFERED_FINISHES = FINISHES;
 export const offeredFinish = (id) => (OFFERED_FINISHES.some((f) => f.id === (id ?? null)) ? (id ?? null) : null);
 
 /**
