@@ -105,6 +105,22 @@ which is what the Flight Deck draws before the document arrives. It holds:
   "M13.8 Pitot-Static 408-426"; the title is what the author typed inside
   the document, so it is what the rows say. Nothing was reset for this one:
   a new chapter has no progress to lose.
+  - **TWO QUESTIONS WERE REWRITTEN IN THE APP** (owner, 2026-09-30, on a
+    screenshot of his own result screen: "change those they are
+    confusing"). `M1.03.Q13`/`C018` asked "how are the static ports
+    installed" while its options varied on two axes at once — flush or
+    protruding AND nose or sides — so a student who knew "flush" still had
+    to guess the half the question had not asked; the stem now asks for
+    both. `M1.03.Q24`/`C054` asked which dependency of the static source
+    error is "marked as unusual", which is a fact about the manual's
+    typography rather than about aeroplanes; it now asks which one affects
+    it "even though you would not expect it to", which is the same answer
+    reached by thinking. Both keep their ids, their options and their
+    correct answer, and both were changed in the quiz AND the card set.
+    **THE SOURCE .docx STILL CARRIES THE OLD WORDING** — the paper on the
+    shelf was re-made with the same two corrections applied on the way
+    through, so the app and the paper agree, but a re-import of that
+    document would bring the old stems back unless it is edited too.
 - **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
   which draws its own "Lessons are filming" state. That is where a quiz and
   a card set live, so content with no video is not invisible.
