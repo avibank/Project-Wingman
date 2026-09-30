@@ -144,6 +144,12 @@ console.log("\nand where the course comes from");
      /id: "content\.live"/.test(flags) && /liveContentOn/.test(loader));
   ok("course", "the Studio publishes through the RPC, with a key it keeps in the browser",
      /publishCourse\(doc, pubKey\.trim\(\)/.test(studio) && /PUBKEY_KEY = "wingman\.studio\.key"/.test(studio));
+  /* AND IT CHECKS THE BYTES, not the status: this app answers every unknown
+     path with index.html and a 200, so `r.ok` called every missing paper
+     present (measured on the way in). */
+  ok("course", "a publish checks every paper is actually on the server",
+     /const missingPapers = async/.test(studio) && /is not on the server yet/.test(studio)
+     && /head !== "%PDF-"/.test(studio) && !/method: "HEAD"/.test(studio));
   ok("course", "and the key is never written into the repo",
      !/[A-Za-z0-9_-]{22,}/.test((studio.match(/PUBKEY[\s\S]{0,200}/) || [""])[0].replace("wingman.studio.key", "")));
 }

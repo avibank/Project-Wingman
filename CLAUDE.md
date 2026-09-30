@@ -850,6 +850,14 @@ the result away.
   an empty table, a paused project or a slow phone must never be a blank
   Library. `content.live` is the switch that takes the table out of the path
   for everybody without a deploy, and the demo never reads it at all.
+- **A PUBLISH CHECKS ITS PAPERS ARE ACTUALLY THERE.** Publishing can put a
+  `downloads/…` row in front of the class tonight while the FILE only
+  arrives with the next commit, so every path is fetched first and the
+  publish stops with the file's own name. It reads the first five bytes
+  rather than the status: this app answers every unknown path with
+  index.html and a 200, on the dev server and on Vercel both, so `r.ok`
+  called every missing paper present — measured on the way in, and the
+  reason the check greps for `%PDF-`.
 - `npm run check:course-db` drives all of that against the live database —
   14 assertions including a publish, a wrong key, three malformed documents
   and an insert, a delete and a patch attempted with the publishable key —

@@ -141,8 +141,39 @@ export default function Studio() {
      on disk is how the course is committed, and the two are not rivals —
      publish puts it in front of the class tonight, the commit is what the
      next build ships with. */
+  /* A PAPER THAT IS NOT ON THE SERVER YET IS A 404 IN FRONT OF A CLASS.
+     Publishing can put a `downloads/…` row in the Library tonight, but the
+     FILE only arrives with the next commit — so every path is asked for
+     before the document goes, and one that is not there stops the publish
+     with its own name. Attaching a PDF in this session is exactly when this
+     happens, which is why the message says what to do about it. */
+  const missingPapers = async () => {
+    const paths = (doc.modules || []).flatMap((m) => (m.downloads || []).map((d) => d.file)).filter(Boolean);
+    const gone = [];
+    for (const path of paths) {
+      try {
+        /* NOT `r.ok`, AND NOT A HEAD. This app is a single page: the dev
+           server and Vercel both answer a path they do not have with
+           index.html and a 200, so "did it 404" cannot tell a missing paper
+           from a missing route — it said every file was there (measured on
+           the way in). The first five bytes can: a PDF starts `%PDF-`. */
+        const r = await fetch(`/${path}`, { headers: { Range: "bytes=0-4" }, cache: "no-store" });
+        const head = r.ok ? (await r.text()).slice(0, 5) : "";
+        if (head !== "%PDF-") gone.push(path);
+      } catch { gone.push(path); }
+    }
+    return gone;
+  };
+
   const publish = async () => {
     if (!pubKey.trim()) { setAsking(true); return; }
+    setBusy("Checking the papers…");
+    const gone = await missingPapers();
+    if (gone.length) {
+      setBusy("");
+      toast(`${gone[0].split("/").pop()} is not on the server yet — export it and commit it first, then publish.`);
+      return;
+    }
     setBusy("Publishing…");
     const r = await publishCourse(doc, pubKey.trim(), {
       note: note.trim() || null,
