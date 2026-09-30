@@ -5917,7 +5917,7 @@
               },
               {
                 "id": "M1.03.Q13",
-                "question": "How are the static ports installed on the aircraft",
+                "question": "Where on the aircraft are the static ports fitted, and how do they sit in the skin?",
                 "options": [
                   "Protruding from the skin on the sides of the aircraft",
                   "Flush with the skin on the nose of the aircraft",
@@ -6038,14 +6038,14 @@
               },
               {
                 "id": "M1.03.Q24",
-                "question": "The static source error is listed with several dependencies. Which of them is marked as unusual?",
+                "question": "Which of these affects the static source error even though you would not expect it to?",
                 "options": [
                   "The position of the flaps",
                   "The position of the nose gear",
                   "The angle of attack"
                 ],
                 "correct": 1,
-                "explain": "Only the nose gear position carries the remark unusual."
+                "explain": "Flaps and angle of attack are the obvious influences; the nose gear's position is the one the manual singles out as unusual."
               },
               {
                 "id": "M1.03.Q25",
@@ -6416,7 +6416,7 @@
             },
             {
               "id": "M1.03.C018",
-              "question": "How are the static ports installed on the aircraft",
+              "question": "Where on the aircraft are the static ports fitted, and how do they sit in the skin?",
               "options": [
                 "Protruding from the skin on the sides of the aircraft",
                 "Flush with the skin on the nose of the aircraft",
@@ -6812,14 +6812,14 @@
             },
             {
               "id": "M1.03.C054",
-              "question": "The static source error is listed with several dependencies. Which of them is marked as unusual?",
+              "question": "Which of these affects the static source error even though you would not expect it to?",
               "options": [
                 "The position of the flaps",
                 "The position of the nose gear",
                 "The angle of attack"
               ],
               "correct": 1,
-              "explain": "Only the nose gear position carries the remark unusual."
+              "explain": "Flaps and angle of attack are the obvious influences; the nose gear's position is the one the manual singles out as unusual."
             },
             {
               "id": "M1.03.C055",
