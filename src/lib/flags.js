@@ -31,6 +31,10 @@ export const FLAGS = [
   { id: "voice.characters", label: "Voices", note: "Choosing who greets you.", everyone: true },
   /* Off for now, with the Aurora finish (owner, 2026-09-21). */
   { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield.", everyone: false },
+  /* THE STUDIO — writing a chapter inside the app instead of sending the
+     document away (owner, 2026-09-30). `everyone: false` means admins have
+     it and nobody else does, which is what flagDefault does with that. */
+  { id: "admin.studio", label: "Studio", note: "Writing quizzes, study cards and papers in the app.", everyone: false },
   // The kill pass. Each of these hides an entry point; the route and the code
   // stay put, so any of it is one switch away from coming back.
   { id: "nav.root", label: "Bottom nav", note: "Study · Modules · Logbook · Ready Room.", off: true },
