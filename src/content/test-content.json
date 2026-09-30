@@ -5774,6 +5774,1351 @@
               "explain": "Figure 35 shows the stretched side getting longer and thinner, and R = rho x l / A, so both changes raise the resistance."
             }
           ]
+        },
+        {
+          "id": "M1.03",
+          "name": "Pitot-Static Systems",
+          "lessons": [],
+          "quiz": {
+            "id": "M1.03.QZ",
+            "name": "M13.8 Pitot-Static Systems 408-426 — Quiz",
+            "questions": [
+              {
+                "id": "M1.03.Q1",
+                "question": "Which instrument indicates the altitude of an aircraft",
+                "options": [
+                  "The altimeter",
+                  "The airspeed indicator",
+                  "The vertical speed indicator"
+                ],
+                "correct": 0,
+                "explain": "The altimeter is the instrument the manual gives for altitude."
+              },
+              {
+                "id": "M1.03.Q2",
+                "question": "Which pressure is used by a vertical speed indicator",
+                "options": [
+                  "Pitot and static pressure",
+                  "Static pressure only",
+                  "Pitot pressure only"
+                ],
+                "correct": 1,
+                "explain": "The manual gives static pressure as the only supply of the vertical speed indicator."
+              },
+              {
+                "id": "M1.03.Q3",
+                "question": "Why are the left and right hand static pressure measuring locations of one static system connected to each other",
+                "options": [
+                  "To drain any water collected inside the static pressure lines",
+                  "To compensate for any unbalance in pressure measurement",
+                  "To increase the pressure delivered to the connected instruments"
+                ],
+                "correct": 1,
+                "explain": "Cross-connecting the two sides evens out an unbalanced pressure reading between them."
+              },
+              {
+                "id": "M1.03.Q4",
+                "question": "Which pressure is used by an altimeter",
+                "options": [
+                  "Pitot and static pressure",
+                  "Pitot pressure only",
+                  "Static pressure only"
+                ],
+                "correct": 2,
+                "explain": "The manual states the altimeter works on static pressure alone."
+              },
+              {
+                "id": "M1.03.Q5",
+                "question": "How many pitot systems and static systems does the simple system of a small aircraft have",
+                "options": [
+                  "One pitot system and two static systems",
+                  "One pitot system and one static system",
+                  "Two pitot systems and one static system"
+                ],
+                "correct": 1,
+                "explain": "The simple system has exactly one of each."
+              },
+              {
+                "id": "M1.03.Q6",
+                "question": "How many separate pitot-static pressure systems are installed on modern commercial aircraft",
+                "options": [
+                  "One or two separate systems",
+                  "Three or four separate systems",
+                  "Two or three separate systems"
+                ],
+                "correct": 2,
+                "explain": "The manual gives two or three separate systems."
+              },
+              {
+                "id": "M1.03.Q7",
+                "question": "What does IFR stand for in the description of the static source selector valve",
+                "options": [
+                  "Instrument flight rules",
+                  "Inertial flight rules",
+                  "Instrument flight reference"
+                ],
+                "correct": 0,
+                "explain": "The manual spells IFR out as instrument flight rules."
+              },
+              {
+                "id": "M1.03.Q8",
+                "question": "Why are modern commercial aircraft fitted with separate pitot-static pressure systems",
+                "options": [
+                  "For safety reasons",
+                  "For calibration reasons",
+                  "For weight reasons"
+                ],
+                "correct": 0,
+                "explain": "Redundant systems are installed for safety."
+              },
+              {
+                "id": "M1.03.Q9",
+                "question": "What does the alternate static source selector valve allow the Captain to do",
+                "options": [
+                  "Use the copilot's static pressure system",
+                  "Use the copilot's pitot pressure system",
+                  "Isolate the copilot's static pressure system"
+                ],
+                "correct": 0,
+                "explain": "The valve switches the Captain over to the copilot's static source."
+              },
+              {
+                "id": "M1.03.Q10",
+                "question": "What do some aircraft types have fitted at their static ports",
+                "options": [
+                  "Pneumatically heated static ports",
+                  "Electrically drained static ports",
+                  "Electrically heated static ports"
+                ],
+                "correct": 2,
+                "explain": "The manual states that some types use electrically heated static ports."
+              },
+              {
+                "id": "M1.03.Q11",
+                "question": "What is static pressure",
+                "options": [
+                  "The build-up of air pressure in a tube facing the airstream",
+                  "The actual atmospheric pressure surrounding the aircraft",
+                  "The difference between total pressure and ram pressure"
+                ],
+                "correct": 1,
+                "explain": "Static pressure is simply the ambient atmospheric pressure around the aircraft."
+              },
+              {
+                "id": "M1.03.Q12",
+                "question": "Most helicopters carry an extra item at their static ports. What is this item?",
+                "options": [
+                  "Special drain holes",
+                  "Special cover plates",
+                  "Special flapper plates"
+                ],
+                "correct": 1,
+                "explain": "The manual names special cover plates."
+              },
+              {
+                "id": "M1.03.Q13",
+                "question": "How are the static ports installed on the aircraft",
+                "options": [
+                  "Protruding from the skin on the sides of the aircraft",
+                  "Flush with the skin on the nose of the aircraft",
+                  "Flush with the skin on the sides of the aircraft"
+                ],
+                "correct": 2,
+                "explain": "Static ports sit flush in the skin on the sides of the fuselage."
+              },
+              {
+                "id": "M1.03.Q14",
+                "question": "Why do most helicopters have special cover plates at the static ports",
+                "options": [
+                  "To compensate the effects caused by the strong downwash of the rotor",
+                  "To compensate the effects caused by the strong vibration of the rotor",
+                  "To compensate the effects caused by the high angle of attack of the rotor"
+                ],
+                "correct": 0,
+                "explain": "The cover plates offset the pressure effects of the rotor downwash."
+              },
+              {
+                "id": "M1.03.Q15",
+                "question": "A technician is told that the static port zones must be absolutely clean and have a smooth surface. Which reason does the warning give?",
+                "options": [
+                  "So that no electrical heating current can be lost",
+                  "So that no pressure distorting turbulences can occur",
+                  "So that no water can enter the connected pressure lines"
+                ],
+                "correct": 1,
+                "explain": "Dirt or roughness creates turbulence that distorts the sensed pressure."
+              },
+              {
+                "id": "M1.03.Q16",
+                "question": "Why was the international standard atmosphere introduced",
+                "options": [
+                  "To have a uniform heating value for the probes",
+                  "To have a uniform reference value for aviation",
+                  "To have a correction table for high speed flight"
+                ],
+                "correct": 1,
+                "explain": "The ISA gives aviation one common reference."
+              },
+              {
+                "id": "M1.03.Q17",
+                "question": "Why are static ports placed in areas with low turbulence and ram air distortion",
+                "options": [
+                  "Because turbulence and ram air distortion block the static pressure hoses",
+                  "Because turbulence and ram air distortion overheat the static port zones",
+                  "Because turbulence and ram air distortion falsify the static pressure reading"
+                ],
+                "correct": 2,
+                "explain": "Where such zones cannot be found the static pressure reading is affected, so a quiet zone keeps the reading true."
+              },
+              {
+                "id": "M1.03.Q18",
+                "question": "What does the abbreviation SSE stand for",
+                "options": [
+                  "Standard source error",
+                  "Static system error",
+                  "Static source error"
+                ],
+                "correct": 2,
+                "explain": "SSE is the static source error."
+              },
+              {
+                "id": "M1.03.Q19",
+                "question": "Which pressure reading is affected by a static source error",
+                "options": [
+                  "The ram pressure reading",
+                  "The total pressure reading",
+                  "The static pressure reading"
+                ],
+                "correct": 2,
+                "explain": "The SSE falsifies the static pressure reading."
+              },
+              {
+                "id": "M1.03.Q20",
+                "question": "Why can a static source error arise on an aircraft",
+                "options": [
+                  "It is not always possible to find turbulence and ram air free zones on the aircraft",
+                  "It is not always possible to keep the static ports electrically heated in flight",
+                  "It is not always possible to calibrate the pneumatic devices to the ISA values"
+                ],
+                "correct": 0,
+                "explain": "Where no turbulence free and ram air free zone exists, the sensed static pressure is falsified."
+              },
+              {
+                "id": "M1.03.Q21",
+                "question": "An engineer is told that the static source error of a jet aeroplane is not a constant value. On which factors does it depend?",
+                "options": [
+                  "The mach number, the air density, the flap position and the outside air temperature",
+                  "The mach number, the angle of attack, the flap position and the nose gear position",
+                  "The mach number, the angle of attack, the rudder position and the nose gear position"
+                ],
+                "correct": 1,
+                "explain": "These four items are the dependencies the manual lists for the SSE."
+              },
+              {
+                "id": "M1.03.Q22",
+                "question": "A static source error falsifies the static pressure supplied to a simple pitot-static system. Which instruments are affected?",
+                "options": [
+                  "All three instruments of the simple system",
+                  "Only the vertical speed indicator of the system",
+                  "Only the airspeed indicator of the system"
+                ],
+                "correct": 0,
+                "explain": "All three instruments of the simple system are supplied with static pressure, so all three are affected."
+              },
+              {
+                "id": "M1.03.Q23",
+                "question": "What can happen to the static source error of a jet aeroplane flying near the speed of sound",
+                "options": [
+                  "It can exceed the tolerances required by law",
+                  "It can fall below the tolerances required by law",
+                  "It can become independent of the angle of attack"
+                ],
+                "correct": 0,
+                "explain": "Close to the speed of sound the error may go beyond the legal tolerance."
+              },
+              {
+                "id": "M1.03.Q24",
+                "question": "The static source error is listed with several dependencies. Which of them is marked as unusual?",
+                "options": [
+                  "The position of the flaps",
+                  "The position of the nose gear",
+                  "The angle of attack"
+                ],
+                "correct": 1,
+                "explain": "Only the nose gear position carries the remark unusual."
+              },
+              {
+                "id": "M1.03.Q25",
+                "question": "Which two pressures make up the total pressure Ptot",
+                "options": [
+                  "Ram pressure and differential pressure",
+                  "Static pressure and differential pressure",
+                  "Ram pressure and static pressure"
+                ],
+                "correct": 2,
+                "explain": "The manual gives total pressure as ram pressure plus static pressure."
+              },
+              {
+                "id": "M1.03.Q26",
+                "question": "What is pitot pressure",
+                "options": [
+                  "The actual atmospheric pressure in the air surrounding the aircraft",
+                  "The build-up of air pressure in a tube with its opening facing the airstream",
+                  "The build-up of air pressure in a tube with its opening across the airstream"
+                ],
+                "correct": 1,
+                "explain": "Pitot pressure builds up in a tube whose opening points into the airstream."
+              },
+              {
+                "id": "M1.03.Q27",
+                "question": "Ram pressure cannot be sensed on its own. Which pressure is already known from the static ports and is used to obtain it?",
+                "options": [
+                  "The total pressure Ptot",
+                  "The dynamic pressure q",
+                  "The static pressure ps"
+                ],
+                "correct": 2,
+                "explain": "The static ports supply ps, which is subtracted from Ptot to leave q."
+              },
+              {
+                "id": "M1.03.Q28",
+                "question": "How is ram pressure q obtained in the instrument",
+                "options": [
+                  "By measuring the static pressure at two separate static ports",
+                  "By measuring the sum of the total pressure and the static pressure",
+                  "By measuring the differential pressure between total and static pressure"
+                ],
+                "correct": 2,
+                "explain": "Ram pressure is the difference between total and static pressure."
+              },
+              {
+                "id": "M1.03.Q29",
+                "question": "What does electrical heating of the pitot tube prevent",
+                "options": [
+                  "The tube from freezing up",
+                  "The tube from draining",
+                  "The tube from deforming"
+                ],
+                "correct": 0,
+                "explain": "The heater is there to stop the tube icing up."
+              },
+              {
+                "id": "M1.03.Q30",
+                "question": "Where is the pitot tube usually located on the aircraft",
+                "options": [
+                  "Near the nose, on the wing leading edge or below the flaps",
+                  "Near the tail, on the fin itself or below the rudder",
+                  "Near the nose, on the nose itself or below the cockpit"
+                ],
+                "correct": 2,
+                "explain": "These are the three locations the manual names."
+              },
+              {
+                "id": "M1.03.Q31",
+                "question": "What do the small drain hole and the baffle of a pitot tube ensure",
+                "options": [
+                  "That ram air entering the tube is slowed down",
+                  "That water entering the tube is drained away",
+                  "That the tube inlet is kept free of any deformation"
+                ],
+                "correct": 1,
+                "explain": "Their job is to get rid of water that has entered the tube."
+              },
+              {
+                "id": "M1.03.Q32",
+                "question": "A student is worried that the drain hole in a pitot tube lets pressure escape. Which statement from the manual answers this?",
+                "options": [
+                  "The drain hole and the baffle do not affect the total pressure",
+                  "The drain hole and the baffle slightly reduce the total pressure",
+                  "The drain hole and the baffle slightly reduce the static pressure"
+                ],
+                "correct": 0,
+                "explain": "The manual states in brackets that they do not affect the total pressure."
+              },
+              {
+                "id": "M1.03.Q33",
+                "question": "Why is the Prandtl tube electrically heated",
+                "options": [
+                  "To prevent condensation",
+                  "To prevent deformation",
+                  "To prevent icing"
+                ],
+                "correct": 2,
+                "explain": "Electrical heating keeps the probe free of ice."
+              },
+              {
+                "id": "M1.03.Q34",
+                "question": "A Prandtl tube supplies both pressures from one probe. Where is it located on the aircraft?",
+                "options": [
+                  "At the rear of the aircraft",
+                  "Under the wing of the aircraft",
+                  "At the front of the aircraft"
+                ],
+                "correct": 2,
+                "explain": "It sits at the front, like the pitot tube."
+              },
+              {
+                "id": "M1.03.Q35",
+                "question": "What do the flapper plate and drain hole of a Prandtl tube prevent",
+                "options": [
+                  "Water from entering the pitot line",
+                  "Icing from forming at the tube inlet",
+                  "Roughness from forming on the tube surface"
+                ],
+                "correct": 0,
+                "explain": "They keep water out of the pitot line."
+              },
+              {
+                "id": "M1.03.Q36",
+                "question": "A Prandtl tube delivers total pressure and static pressure. Where is the required differential pressure obtained?",
+                "options": [
+                  "In the tube itself or in the piping",
+                  "In the static port or in the drain hole",
+                  "In the instrument or in a computer"
+                ],
+                "correct": 2,
+                "explain": "The subtraction is done in the instrument or in a computer, not in the probe."
+              },
+              {
+                "id": "M1.03.Q37",
+                "question": "How does a Prandtl tube obtain the ram pressure and static pressure needed for speed indication",
+                "options": [
+                  "From two separate measuring points",
+                  "From one single ram air tube",
+                  "From two connected static ports"
+                ],
+                "correct": 1,
+                "explain": "The Prandtl tube takes both pressures at one single tube."
+              },
+              {
+                "id": "M1.03.Q38",
+                "question": "An air data system receives three parameters from one single multi function probe. Which parameters are they?",
+                "options": [
+                  "Angle of attack, static air temperature and static pressure",
+                  "Angle of sideslip, total air temperature and total pressure",
+                  "Angle of attack, total air temperature and total pressure"
+                ],
+                "correct": 2,
+                "explain": "AOA, TAT and total pressure are the three outputs of the probe."
+              },
+              {
+                "id": "M1.03.Q39",
+                "question": "Which part of the multi function probe measures the angle of attack",
+                "options": [
+                  "A pitot probe",
+                  "A TAT tube",
+                  "A wind vane"
+                ],
+                "correct": 2,
+                "explain": "The wind vane is the AOA sensing element."
+              },
+              {
+                "id": "M1.03.Q40",
+                "question": "A multi function probe must deliver the total pressure to the air data system. Which of its parts provides this parameter?",
+                "options": [
+                  "The pitot probe",
+                  "The temperature tube",
+                  "The wind vane"
+                ],
+                "correct": 0,
+                "explain": "The built-in pitot probe supplies the total pressure."
+              }
+            ]
+          },
+          "cardsName": "M13.8 Pitot-Static Systems 408-426 — Full Set",
+          "cards": [
+            {
+              "id": "M1.03.C001",
+              "question": "Which pressure is used by an altimeter",
+              "options": [
+                "Pitot and static pressure",
+                "Pitot pressure only",
+                "Static pressure only"
+              ],
+              "correct": 2,
+              "explain": "The manual states the altimeter works on static pressure alone."
+            },
+            {
+              "id": "M1.03.C002",
+              "question": "An airspeed indicator in a simple system is connected to two pressure lines. Which pressures does it use?",
+              "options": [
+                "Pitot pressure and static pressure",
+                "Pitot pressure and total pressure",
+                "Static pressure and differential pressure"
+              ],
+              "correct": 0,
+              "explain": "The airspeed indicator is the only one of the three that needs both pitot and static pressure."
+            },
+            {
+              "id": "M1.03.C003",
+              "question": "A small aircraft is fitted with one pitot system and one static system. Which three instruments are supplied by it?",
+              "options": [
+                "Altimeter, airspeed indicator and total air temperature gauge",
+                "Altimeter, vertical speed indicator and standby compass",
+                "Altimeter, vertical speed indicator and airspeed indicator"
+              ],
+              "correct": 2,
+              "explain": "The simple system feeds exactly these three pitot-static instruments."
+            },
+            {
+              "id": "M1.03.C004",
+              "question": "How does pitot pressure reach the relevant instruments in a simple system",
+              "options": [
+                "It is sensed by a pitot probe and guided via a tube to the instruments",
+                "It is sensed by a static port and guided via a tube to the instruments",
+                "It is sensed by a pitot probe and guided via a wind vane to the instruments"
+              ],
+              "correct": 0,
+              "explain": "A pitot probe senses the pressure and a tube carries it to the instruments."
+            },
+            {
+              "id": "M1.03.C005",
+              "question": "Which instrument indicates the altitude of an aircraft",
+              "options": [
+                "The altimeter",
+                "The airspeed indicator",
+                "The vertical speed indicator"
+              ],
+              "correct": 0,
+              "explain": "The altimeter is the instrument the manual gives for altitude."
+            },
+            {
+              "id": "M1.03.C006",
+              "question": "Which pressure is used by a vertical speed indicator",
+              "options": [
+                "Pitot and static pressure",
+                "Static pressure only",
+                "Pitot pressure only"
+              ],
+              "correct": 1,
+              "explain": "The manual gives static pressure as the only supply of the vertical speed indicator."
+            },
+            {
+              "id": "M1.03.C007",
+              "question": "An airspeed indicator is fitted in a small aeroplane. What does this instrument indicate?",
+              "options": [
+                "The altitude of the aircraft",
+                "The speed in the surrounding air",
+                "The vertical speed of the aircraft"
+              ],
+              "correct": 1,
+              "explain": "The manual defines the airspeed indicator as showing the speed in the surrounding air."
+            },
+            {
+              "id": "M1.03.C008",
+              "question": "How many pitot systems and static systems does the simple system of a small aircraft have",
+              "options": [
+                "One pitot system and two static systems",
+                "One pitot system and one static system",
+                "Two pitot systems and one static system"
+              ],
+              "correct": 1,
+              "explain": "The simple system has exactly one of each."
+            },
+            {
+              "id": "M1.03.C009",
+              "question": "Where are the pressure measuring locations of one static pressure system situated",
+              "options": [
+                "On the nose and the tail of the fuselage",
+                "On the upper and lower side of the fuselage",
+                "On the left and right hand side of the fuselage"
+              ],
+              "correct": 2,
+              "explain": "Each static system has one measuring location on each side of the fuselage."
+            },
+            {
+              "id": "M1.03.C010",
+              "question": "How many separate pitot-static pressure systems are installed on modern commercial aircraft",
+              "options": [
+                "One or two separate systems",
+                "Three or four separate systems",
+                "Two or three separate systems"
+              ],
+              "correct": 2,
+              "explain": "The manual gives two or three separate systems."
+            },
+            {
+              "id": "M1.03.C011",
+              "question": "A maintenance manual lists the separate pitot-static pressure systems of a large aeroplane. How are they termed according to their allocation?",
+              "options": [
+                "Captain's system, F/O's system and auxiliary system",
+                "Captain's system, purser's system and auxiliary system",
+                "Captain's system, F/O's system and alternate system"
+              ],
+              "correct": 0,
+              "explain": "These are the three names given in the manual."
+            },
+            {
+              "id": "M1.03.C012",
+              "question": "In which small aircraft is the static source selector valve also found",
+              "options": [
+                "Small single pilot aircraft certified for visual flight rules",
+                "Small two pilot aircraft certified for instrument flight rules",
+                "Small single pilot aircraft certified for instrument flight rules"
+              ],
+              "correct": 2,
+              "explain": "The manual names single pilot aircraft certified for IFR."
+            },
+            {
+              "id": "M1.03.C013",
+              "question": "What does IFR stand for in the description of the static source selector valve",
+              "options": [
+                "Instrument flight rules",
+                "Inertial flight rules",
+                "Instrument flight reference"
+              ],
+              "correct": 0,
+              "explain": "The manual spells IFR out as instrument flight rules."
+            },
+            {
+              "id": "M1.03.C014",
+              "question": "What is static pressure",
+              "options": [
+                "The build-up of air pressure in a tube facing the airstream",
+                "The actual atmospheric pressure surrounding the aircraft",
+                "The difference between total pressure and ram pressure"
+              ],
+              "correct": 1,
+              "explain": "Static pressure is simply the ambient atmospheric pressure around the aircraft."
+            },
+            {
+              "id": "M1.03.C015",
+              "question": "Which authority introduced the international standard atmosphere",
+              "options": [
+                "The international aviation authority ICAO",
+                "The international aviation authority EASA",
+                "The international aviation authority IATA"
+              ],
+              "correct": 0,
+              "explain": "ICAO introduced the ISA."
+            },
+            {
+              "id": "M1.03.C016",
+              "question": "A pneumatic device is calibrated to the international standard atmosphere. Which value of air density at mean sea level applies?",
+              "options": [
+                "1,150 kg/m3",
+                "1,013 kg/m3",
+                "1,225 kg/m3"
+              ],
+              "correct": 2,
+              "explain": "The ISA sea level density given in the manual is 1,225 kg/m3."
+            },
+            {
+              "id": "M1.03.C017",
+              "question": "What are the ISA values of temperature and air pressure at mean sea level",
+              "options": [
+                "15 °C and 1225 mbar",
+                "20 °C and 1013 mbar",
+                "15 °C and 1013 mbar"
+              ],
+              "correct": 2,
+              "explain": "The manual defines 15 °C and 1013 mbar at MSL."
+            },
+            {
+              "id": "M1.03.C018",
+              "question": "How are the static ports installed on the aircraft",
+              "options": [
+                "Protruding from the skin on the sides of the aircraft",
+                "Flush with the skin on the nose of the aircraft",
+                "Flush with the skin on the sides of the aircraft"
+              ],
+              "correct": 2,
+              "explain": "Static ports sit flush in the skin on the sides of the fuselage."
+            },
+            {
+              "id": "M1.03.C019",
+              "question": "What do some aircraft types have fitted at their static ports",
+              "options": [
+                "Pneumatically heated static ports",
+                "Electrically drained static ports",
+                "Electrically heated static ports"
+              ],
+              "correct": 2,
+              "explain": "The manual states that some types use electrically heated static ports."
+            },
+            {
+              "id": "M1.03.C020",
+              "question": "Where does the static pressure originate on the aircraft",
+              "options": [
+                "In the static ports",
+                "In the pitot probe",
+                "In the drain hole"
+              ],
+              "correct": 0,
+              "explain": "The static ports are the source of static pressure."
+            },
+            {
+              "id": "M1.03.C021",
+              "question": "At which level are the ISA values of density, temperature and pressure defined",
+              "options": [
+                "At the cruise level",
+                "At mean sea level",
+                "At the tropopause"
+              ],
+              "correct": 1,
+              "explain": "The manual gives the ISA figures for mean sea level."
+            },
+            {
+              "id": "M1.03.C022",
+              "question": "The current air pressure has to reach the individual air data measuring systems. How is it carried there?",
+              "options": [
+                "Via hoses and pipes",
+                "Via a digital converter",
+                "Via a wind vane"
+              ],
+              "correct": 0,
+              "explain": "Hoses and pipes carry the sensed pressure to the measuring systems."
+            },
+            {
+              "id": "M1.03.C023",
+              "question": "Most helicopters carry an extra item at their static ports. What is this item?",
+              "options": [
+                "Special drain holes",
+                "Special cover plates",
+                "Special flapper plates"
+              ],
+              "correct": 1,
+              "explain": "The manual names special cover plates."
+            },
+            {
+              "id": "M1.03.C024",
+              "question": "What does the abbreviation SSE stand for",
+              "options": [
+                "Standard source error",
+                "Static system error",
+                "Static source error"
+              ],
+              "correct": 2,
+              "explain": "SSE is the static source error."
+            },
+            {
+              "id": "M1.03.C025",
+              "question": "What is pitot pressure",
+              "options": [
+                "The actual atmospheric pressure in the air surrounding the aircraft",
+                "The build-up of air pressure in a tube with its opening facing the airstream",
+                "The build-up of air pressure in a tube with its opening across the airstream"
+              ],
+              "correct": 1,
+              "explain": "Pitot pressure builds up in a tube whose opening points into the airstream."
+            },
+            {
+              "id": "M1.03.C026",
+              "question": "Which two pressures make up the total pressure Ptot",
+              "options": [
+                "Ram pressure and differential pressure",
+                "Static pressure and differential pressure",
+                "Ram pressure and static pressure"
+              ],
+              "correct": 2,
+              "explain": "The manual gives total pressure as ram pressure plus static pressure."
+            },
+            {
+              "id": "M1.03.C027",
+              "question": "Which quantity does the symbol q represent in the pitot pressure relation",
+              "options": [
+                "Ram pressure",
+                "Total pressure",
+                "Static pressure"
+              ],
+              "correct": 0,
+              "explain": "The manual defines q as the ram pressure."
+            },
+            {
+              "id": "M1.03.C028",
+              "question": "Where is the pitot tube usually located on the aircraft",
+              "options": [
+                "Near the nose, on the wing leading edge or below the flaps",
+                "Near the tail, on the fin itself or below the rudder",
+                "Near the nose, on the nose itself or below the cockpit"
+              ],
+              "correct": 2,
+              "explain": "These are the three locations the manual names."
+            },
+            {
+              "id": "M1.03.C029",
+              "question": "What does the pitot tube consist of and which pressure is present in it during the entire flight",
+              "options": [
+                "A cylindrical pipe in which total pressure Ptot is present",
+                "A cylindrical pipe in which static pressure Ps is present",
+                "A flapper plate chamber in which total pressure Ptot is present"
+              ],
+              "correct": 0,
+              "explain": "It is a cylindrical pipe carrying total pressure throughout the flight."
+            },
+            {
+              "id": "M1.03.C030",
+              "question": "What does electrical heating of the pitot tube prevent",
+              "options": [
+                "The tube from freezing up",
+                "The tube from draining",
+                "The tube from deforming"
+              ],
+              "correct": 0,
+              "explain": "The heater is there to stop the tube icing up."
+            },
+            {
+              "id": "M1.03.C031",
+              "question": "How is the pressure in the pitot tube transferred to the interior of the aircraft",
+              "options": [
+                "Via piping",
+                "Via a baffle",
+                "Via a drain hole"
+              ],
+              "correct": 0,
+              "explain": "Piping carries the pressure from the tube into the aircraft."
+            },
+            {
+              "id": "M1.03.C032",
+              "question": "Why is the Prandtl tube electrically heated",
+              "options": [
+                "To prevent condensation",
+                "To prevent deformation",
+                "To prevent icing"
+              ],
+              "correct": 2,
+              "explain": "Electrical heating keeps the probe free of ice."
+            },
+            {
+              "id": "M1.03.C033",
+              "question": "A Prandtl tube supplies both pressures from one probe. Where is it located on the aircraft?",
+              "options": [
+                "At the rear of the aircraft",
+                "Under the wing of the aircraft",
+                "At the front of the aircraft"
+              ],
+              "correct": 2,
+              "explain": "It sits at the front, like the pitot tube."
+            },
+            {
+              "id": "M1.03.C034",
+              "question": "Through which part of the Prandtl tube does the total pressure enter",
+              "options": [
+                "The holes in the sides",
+                "The flapper plate",
+                "The cylindrical inlet"
+              ],
+              "correct": 2,
+              "explain": "Total pressure enters at the cylindrical inlet at the front."
+            },
+            {
+              "id": "M1.03.C035",
+              "question": "An air data system receives three parameters from one single multi function probe. Which parameters are they?",
+              "options": [
+                "Angle of attack, static air temperature and static pressure",
+                "Angle of sideslip, total air temperature and total pressure",
+                "Angle of attack, total air temperature and total pressure"
+              ],
+              "correct": 2,
+              "explain": "AOA, TAT and total pressure are the three outputs of the probe."
+            },
+            {
+              "id": "M1.03.C036",
+              "question": "Which part of the multi function probe measures the angle of attack",
+              "options": [
+                "A pitot probe",
+                "A TAT tube",
+                "A wind vane"
+              ],
+              "correct": 2,
+              "explain": "The wind vane is the AOA sensing element."
+            },
+            {
+              "id": "M1.03.C037",
+              "question": "Which part of the multi function probe measures the total air temperature",
+              "options": [
+                "The wind vane of the probe",
+                "The tube of the probe",
+                "The pitot probe element"
+              ],
+              "correct": 1,
+              "explain": "A tube inside the probe senses the total air temperature."
+            },
+            {
+              "id": "M1.03.C038",
+              "question": "Why are the left and right hand static pressure measuring locations of one static system connected to each other",
+              "options": [
+                "To drain any water collected inside the static pressure lines",
+                "To compensate for any unbalance in pressure measurement",
+                "To increase the pressure delivered to the connected instruments"
+              ],
+              "correct": 1,
+              "explain": "Cross-connecting the two sides evens out an unbalanced pressure reading between them."
+            },
+            {
+              "id": "M1.03.C039",
+              "question": "Why are modern commercial aircraft fitted with separate pitot-static pressure systems",
+              "options": [
+                "For safety reasons",
+                "For calibration reasons",
+                "For weight reasons"
+              ],
+              "correct": 0,
+              "explain": "Redundant systems are installed for safety."
+            },
+            {
+              "id": "M1.03.C040",
+              "question": "What does the alternate static source selector valve allow the Captain to do",
+              "options": [
+                "Use the copilot's static pressure system",
+                "Use the copilot's pitot pressure system",
+                "Isolate the copilot's static pressure system"
+              ],
+              "correct": 0,
+              "explain": "The valve switches the Captain over to the copilot's static source."
+            },
+            {
+              "id": "M1.03.C041",
+              "question": "The Captain's static system becomes faulty in flight. Which statement about switching over to the auxiliary system by means of the static air source selector valve is correct?",
+              "options": [
+                "On every aircraft type the indicators can be switched to the auxiliary system",
+                "Only on a few aircraft types can the indicators be switched to the auxiliary system",
+                "Only on a few aircraft types can the indicators be switched to the pitot system"
+              ],
+              "correct": 1,
+              "explain": "The manual restricts this switching possibility to a few aircraft types only."
+            },
+            {
+              "id": "M1.03.C042",
+              "question": "On which two quantities does air pressure p depend",
+              "options": [
+                "Air density and temperature",
+                "Air density and mach number",
+                "Temperature and angle of attack"
+              ],
+              "correct": 0,
+              "explain": "The manual lists air density and temperature as the two quantities."
+            },
+            {
+              "id": "M1.03.C043",
+              "question": "What is done with the ISA values defined at mean sea level",
+              "options": [
+                "All pneumatic devices are corrected according to the flap position",
+                "All pneumatic devices are calibrated according to these values",
+                "All pneumatic devices are heated according to these values"
+              ],
+              "correct": 1,
+              "explain": "The ISA values are the calibration reference for pneumatic devices."
+            },
+            {
+              "id": "M1.03.C044",
+              "question": "What do aircraft manufacturers ensure when they choose the position of the static ports",
+              "options": [
+                "That they lie in areas with low temperature and air density variation",
+                "That they lie in areas with low turbulence and ram air distortion",
+                "That they lie in areas with high turbulence and ram air distortion"
+              ],
+              "correct": 1,
+              "explain": "Low turbulence and low ram air distortion keep the static reading true."
+            },
+            {
+              "id": "M1.03.C045",
+              "question": "A technician is told that the static port zones must be absolutely clean and have a smooth surface. Which reason does the warning give?",
+              "options": [
+                "So that no electrical heating current can be lost",
+                "So that no pressure distorting turbulences can occur",
+                "So that no water can enter the connected pressure lines"
+              ],
+              "correct": 1,
+              "explain": "Dirt or roughness creates turbulence that distorts the sensed pressure."
+            },
+            {
+              "id": "M1.03.C046",
+              "question": "Why do most helicopters have special cover plates at the static ports",
+              "options": [
+                "To compensate the effects caused by the strong downwash of the rotor",
+                "To compensate the effects caused by the strong vibration of the rotor",
+                "To compensate the effects caused by the high angle of attack of the rotor"
+              ],
+              "correct": 0,
+              "explain": "The cover plates offset the pressure effects of the rotor downwash."
+            },
+            {
+              "id": "M1.03.C047",
+              "question": "Why was the international standard atmosphere introduced",
+              "options": [
+                "To have a uniform heating value for the probes",
+                "To have a uniform reference value for aviation",
+                "To have a correction table for high speed flight"
+              ],
+              "correct": 1,
+              "explain": "The ISA gives aviation one common reference."
+            },
+            {
+              "id": "M1.03.C048",
+              "question": "Why can a static source error arise on an aircraft",
+              "options": [
+                "It is not always possible to find turbulence and ram air free zones on the aircraft",
+                "It is not always possible to keep the static ports electrically heated in flight",
+                "It is not always possible to calibrate the pneumatic devices to the ISA values"
+              ],
+              "correct": 0,
+              "explain": "Where no turbulence free and ram air free zone exists, the sensed static pressure is falsified."
+            },
+            {
+              "id": "M1.03.C049",
+              "question": "An engineer is told that the static source error of a jet aeroplane is not a constant value. On which factors does it depend?",
+              "options": [
+                "The mach number, the air density, the flap position and the outside air temperature",
+                "The mach number, the angle of attack, the flap position and the nose gear position",
+                "The mach number, the angle of attack, the rudder position and the nose gear position"
+              ],
+              "correct": 1,
+              "explain": "These four items are the dependencies the manual lists for the SSE."
+            },
+            {
+              "id": "M1.03.C050",
+              "question": "How large is the static source error on slow-flying propeller planes",
+              "options": [
+                "So small that it is negligible",
+                "So small that it must be measured",
+                "So large that it must be corrected"
+              ],
+              "correct": 0,
+              "explain": "At low speed the error is negligible."
+            },
+            {
+              "id": "M1.03.C051",
+              "question": "The crew has to obtain the correct value from the distorted values being displayed. Where are the correction tables found?",
+              "options": [
+                "In the Aircraft Maintenance Manual or in the flight log",
+                "In the Operating Manual or in the flight regulations",
+                "In the Operating Manual or in the weight and balance data"
+              ],
+              "correct": 1,
+              "explain": "The manual names the Operating Manual and the flight regulations as the sources of the correction tables."
+            },
+            {
+              "id": "M1.03.C052",
+              "question": "What can make the static source error of one individual aircraft change over time",
+              "options": [
+                "Recalibration changes to the air data computer",
+                "Surface changes to the static ports",
+                "Surface changes to the pitot probe inlet"
+              ],
+              "correct": 1,
+              "explain": "Changes to the static port surfaces alter the error over the life of the aircraft."
+            },
+            {
+              "id": "M1.03.C053",
+              "question": "Which pressure reading is affected by a static source error",
+              "options": [
+                "The ram pressure reading",
+                "The total pressure reading",
+                "The static pressure reading"
+              ],
+              "correct": 2,
+              "explain": "The SSE falsifies the static pressure reading."
+            },
+            {
+              "id": "M1.03.C054",
+              "question": "The static source error is listed with several dependencies. Which of them is marked as unusual?",
+              "options": [
+                "The position of the flaps",
+                "The position of the nose gear",
+                "The angle of attack"
+              ],
+              "correct": 1,
+              "explain": "Only the nose gear position carries the remark unusual."
+            },
+            {
+              "id": "M1.03.C055",
+              "question": "What can happen to the static source error of a jet aeroplane flying near the speed of sound",
+              "options": [
+                "It can exceed the tolerances required by law",
+                "It can fall below the tolerances required by law",
+                "It can become independent of the angle of attack"
+              ],
+              "correct": 0,
+              "explain": "Close to the speed of sound the error may go beyond the legal tolerance."
+            },
+            {
+              "id": "M1.03.C056",
+              "question": "What do the correction tables enable the crew to do",
+              "options": [
+                "Calibrate the pneumatic devices to the ISA values",
+                "Find the correct value from the distorted values displayed",
+                "Switch the indicators over to the auxiliary system"
+              ],
+              "correct": 1,
+              "explain": "The tables turn a distorted indication back into the correct value."
+            },
+            {
+              "id": "M1.03.C057",
+              "question": "Two aeroplanes of the same type show different static source errors. Which statement matches the manual?",
+              "options": [
+                "Deviations can occur only between different aircraft types",
+                "Deviations can occur within any one aircraft type",
+                "Deviations can occur only on slow-flying propeller planes"
+              ],
+              "correct": 1,
+              "explain": "The manual allows for differences between individual aircraft of the same type."
+            },
+            {
+              "id": "M1.03.C058",
+              "question": "Which pressure alone is required to measure the speed of the aircraft in relation to the ambient air",
+              "options": [
+                "The ram pressure q",
+                "The total pressure Ptot",
+                "The static pressure ps"
+              ],
+              "correct": 0,
+              "explain": "Only the dynamic or ram pressure q is needed for speed measurement."
+            },
+            {
+              "id": "M1.03.C059",
+              "question": "How is ram pressure q obtained in the instrument",
+              "options": [
+                "By measuring the static pressure at two separate static ports",
+                "By measuring the sum of the total pressure and the static pressure",
+                "By measuring the differential pressure between total and static pressure"
+              ],
+              "correct": 2,
+              "explain": "Ram pressure is the difference between total and static pressure."
+            },
+            {
+              "id": "M1.03.C060",
+              "question": "Ram pressure cannot be sensed on its own. Which pressure is already known from the static ports and is used to obtain it?",
+              "options": [
+                "The total pressure Ptot",
+                "The dynamic pressure q",
+                "The static pressure ps"
+              ],
+              "correct": 2,
+              "explain": "The static ports supply ps, which is subtracted from Ptot to leave q."
+            },
+            {
+              "id": "M1.03.C061",
+              "question": "A pitot tube is being refitted to an aeroplane after removal. How must it be aligned?",
+              "options": [
+                "So that it faces the predetermined airstream",
+                "So that it faces the predetermined rotor downwash",
+                "So that it lies across the predetermined airstream"
+              ],
+              "correct": 0,
+              "explain": "The tube must point into the airstream to build up total pressure."
+            },
+            {
+              "id": "M1.03.C062",
+              "question": "What do the small drain hole and the baffle of a pitot tube ensure",
+              "options": [
+                "That ram air entering the tube is slowed down",
+                "That water entering the tube is drained away",
+                "That the tube inlet is kept free of any deformation"
+              ],
+              "correct": 1,
+              "explain": "Their job is to get rid of water that has entered the tube."
+            },
+            {
+              "id": "M1.03.C063",
+              "question": "A student is worried that the drain hole in a pitot tube lets pressure escape. Which statement from the manual answers this?",
+              "options": [
+                "The drain hole and the baffle do not affect the total pressure",
+                "The drain hole and the baffle slightly reduce the total pressure",
+                "The drain hole and the baffle slightly reduce the static pressure"
+              ],
+              "correct": 0,
+              "explain": "The manual states in brackets that they do not affect the total pressure."
+            },
+            {
+              "id": "M1.03.C064",
+              "question": "During a walk-around a technician finds a small dent at the inlet of a pitot tube. Which instruction from the manual applies?",
+              "options": [
+                "The tube inlet may display slight deformation if the heating is serviceable",
+                "The tube inlet must not display any signs of deformation whatsoever",
+                "The tube inlet may display slight deformation if the drain hole is clear"
+              ],
+              "correct": 1,
+              "explain": "The manual allows no deformation of the inlet at all."
+            },
+            {
+              "id": "M1.03.C065",
+              "question": "What does the Prandtl tube combine in one unit",
+              "options": [
+                "A pitot tube with a sensor to measure total air temperature",
+                "A pitot tube with a sensor to measure static pressure",
+                "A static port with a sensor to measure the angle of attack"
+              ],
+              "correct": 1,
+              "explain": "It puts the pitot function and a static pressure sensor into one probe."
+            },
+            {
+              "id": "M1.03.C066",
+              "question": "A Prandtl tube has a cylindrical inlet at the front and a row of holes drilled in its sides. What do these side holes supply?",
+              "options": [
+                "Information for one or two connected pitot lines",
+                "Drainage for one or two connected water traps",
+                "Information for one or two connected static lines"
+              ],
+              "correct": 2,
+              "explain": "The side holes feed the static lines, while the front inlet feeds total pressure."
+            },
+            {
+              "id": "M1.03.C067",
+              "question": "What do the flapper plate and drain hole of a Prandtl tube prevent",
+              "options": [
+                "Water from entering the pitot line",
+                "Icing from forming at the tube inlet",
+                "Roughness from forming on the tube surface"
+              ],
+              "correct": 0,
+              "explain": "They keep water out of the pitot line."
+            },
+            {
+              "id": "M1.03.C068",
+              "question": "A Prandtl tube is found with a rough surface after a repair. Which consequence does the manual warn about?",
+              "options": [
+                "It will lead to heating element failures",
+                "It will lead to total pressure errors",
+                "It will lead to static pressure errors"
+              ],
+              "correct": 2,
+              "explain": "Roughness disturbs the flow over the side holes and falsifies static pressure."
+            },
+            {
+              "id": "M1.03.C069",
+              "question": "A technician is about to touch a heated pitot or Prandtl tube shortly after the aircraft has landed. Which warning applies?",
+              "options": [
+                "Risk of shock",
+                "Risk of icing",
+                "Risk of burns"
+              ],
+              "correct": 2,
+              "explain": "The heated probe stays hot, so the manual warns of burns."
+            },
+            {
+              "id": "M1.03.C070",
+              "question": "How does a Prandtl tube obtain the ram pressure and static pressure needed for speed indication",
+              "options": [
+                "From two separate measuring points",
+                "From one single ram air tube",
+                "From two connected static ports"
+              ],
+              "correct": 1,
+              "explain": "The Prandtl tube takes both pressures at one single tube."
+            },
+            {
+              "id": "M1.03.C071",
+              "question": "Which two separate measuring points does the Prandtl tube replace",
+              "options": [
+                "The pitot tube and the static port",
+                "The static port and the difference bellows",
+                "The pitot tube and the air data computer"
+              ],
+              "correct": 0,
+              "explain": "The manual names the pitot tube and the static port as the two points it replaces."
+            },
+            {
+              "id": "M1.03.C072",
+              "question": "A Prandtl tube delivers total pressure and static pressure. Where is the required differential pressure obtained?",
+              "options": [
+                "In the tube itself or in the piping",
+                "In the static port or in the drain hole",
+                "In the instrument or in a computer"
+              ],
+              "correct": 2,
+              "explain": "The subtraction is done in the instrument or in a computer, not in the probe."
+            },
+            {
+              "id": "M1.03.C073",
+              "question": "A multi function probe must deliver the total pressure to the air data system. Which of its parts provides this parameter?",
+              "options": [
+                "The pitot probe",
+                "The temperature tube",
+                "The wind vane"
+              ],
+              "correct": 0,
+              "explain": "The built-in pitot probe supplies the total pressure."
+            },
+            {
+              "id": "M1.03.C074",
+              "question": "Each multi function probe has to pass its measured data to the related computer. Through which item does it do so?",
+              "options": [
+                "Through the air data computer",
+                "Through the digital converter",
+                "Through the difference bellows"
+              ],
+              "correct": 1,
+              "explain": "The digital converter is the link between the probe and the related computer."
+            },
+            {
+              "id": "M1.03.C075",
+              "question": "To which item does a multi function probe finally send its measured data",
+              "options": [
+                "The related computer",
+                "The alternate static valve",
+                "The heated static port"
+              ],
+              "correct": 0,
+              "explain": "The data ends up at the related computer."
+            },
+            {
+              "id": "M1.03.C076",
+              "question": "A technician traces one static pressure system of a small aeroplane and finds a measuring location on the left and on the right hand side of the fuselage. Which statement describes this arrangement correctly?",
+              "options": [
+                "Each location belongs to a separate static system and they stay isolated",
+                "Both locations belong to the same pitot system and are connected together",
+                "Both locations belong to the same static system and are connected together"
+              ],
+              "correct": 2,
+              "explain": "One static system uses both side locations and they are joined to each other."
+            },
+            {
+              "id": "M1.03.C077",
+              "question": "An aeroplane has a fault in one pilot's static system and is not one of the few types that can be switched to the auxiliary system. Which possibility remains?",
+              "options": [
+                "Use of the pitot system via the selector valve",
+                "Use of the auxiliary system via the selector valve",
+                "Use of the other pilot's static system via the selector valve"
+              ],
+              "correct": 2,
+              "explain": "Switching to the auxiliary system is limited to a few types, so the cross-over to the other pilot's static system is what remains."
+            },
+            {
+              "id": "M1.03.C078",
+              "question": "Why are static ports placed in areas with low turbulence and ram air distortion",
+              "options": [
+                "Because turbulence and ram air distortion block the static pressure hoses",
+                "Because turbulence and ram air distortion overheat the static port zones",
+                "Because turbulence and ram air distortion falsify the static pressure reading"
+              ],
+              "correct": 2,
+              "explain": "Where such zones cannot be found the static pressure reading is affected, so a quiet zone keeps the reading true."
+            },
+            {
+              "id": "M1.03.C079",
+              "question": "A jet aeroplane flies near to the speed of sound and its static source error exceeds the tolerances required by law. Which correction becomes necessary?",
+              "options": [
+                "A correction using a differential pressure bellows",
+                "A correction using an air data computer",
+                "A correction using an alternate static source valve"
+              ],
+              "correct": 1,
+              "explain": "The manual calls for an air data computer correction in this case."
+            },
+            {
+              "id": "M1.03.C080",
+              "question": "A static source error falsifies the static pressure supplied to a simple pitot-static system. Which instruments are affected?",
+              "options": [
+                "All three instruments of the simple system",
+                "Only the vertical speed indicator of the system",
+                "Only the airspeed indicator of the system"
+              ],
+              "correct": 0,
+              "explain": "All three instruments of the simple system are supplied with static pressure, so all three are affected."
+            },
+            {
+              "id": "M1.03.C081",
+              "question": "A slow-flying propeller aeroplane and a jet aeroplane near the speed of sound both have a static source error. Which comparison is correct?",
+              "options": [
+                "Beyond the legal tolerance on both aeroplanes and corrected by the air data computer",
+                "Negligible on the propeller aeroplane and possibly beyond the legal tolerance on the jet",
+                "Negligible on the jet aeroplane and possibly beyond the legal tolerance on the propeller plane"
+              ],
+              "correct": 1,
+              "explain": "The manual calls the error negligible at low speed and possibly beyond the legal tolerance near the speed of sound."
+            }
+          ]
         }
       ],
       "downloads": [
@@ -5788,6 +7133,12 @@
           "title": "M13.8 Instruments 345-406 — Full Set",
           "file": "downloads/M13.8-Instruments-345-406-Full-Set.pdf",
           "pages": 31
+        },
+        {
+          "id": "M1.03.DL1",
+          "title": "M13.8 Pitot-Static Systems 408-426 — Full Set",
+          "file": "downloads/M13.8-Pitot-Static-Systems-408-426-Full-Set.pdf",
+          "pages": 10
         }
       ]
     },
