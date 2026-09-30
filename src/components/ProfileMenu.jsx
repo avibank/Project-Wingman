@@ -19,6 +19,14 @@ import { useSavesCount } from "../features/bookmarks/deck.js";
 // The account row IS the Licence link — there is no separate Licence row.
 
 const ICON = {
+  /* A sheet with a line of writing on it: the Studio is where a chapter is
+     WRITTEN, and the menu's other icons are all outlines at this size. */
+  studio: (
+    <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4.6 3.4h7.2l3.6 3.6v9.6H4.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M11.6 3.4v3.8h3.8M7.2 11h5.6M7.2 13.6h3.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
   /* The same bookmark the feature draws everywhere else, at this menu's own
      20x20. Outline, because the row is a door rather than a state. */
   bookmark: (
@@ -187,6 +195,17 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
           {ICON.bookmark}<span className="mlabel">Bookmarks</span>
           {saved > 0 && <span className="mcount">{saved}</span>}
         </button>
+
+        {/* THE STUDIO, for admins only (owner, 2026-09-30). It is the one
+            row here that goes somewhere no student can reach, so it carries
+            the same Admin mark the licence row does rather than looking
+            like an ordinary destination. */}
+        {isAdmin && (
+          <button role="menuitem" type="button" onClick={() => go("studio")}>
+            {ICON.studio}<span className="mlabel">Studio</span>
+            <span className="admin small">Admin</span>
+          </button>
+        )}
 
         {/* No Sign out here. The Licence tab carries it, with "On this
             device only" under it, which is the better place for the one

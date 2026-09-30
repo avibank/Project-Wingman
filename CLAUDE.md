@@ -783,6 +783,47 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   boundary above it and took the whole app down (measured with
   `?username=none`).
 
+## The Studio
+
+`/studio`, admin only, behind `admin.studio` — the owner, 2026-09-30: "I want
+a way as an admin to add quizzes and study cards and papers natively, like
+how I feed you those — add, delete, edit. Build a demo." This is that demo,
+and what it demonstrates is the whole loop: drop the same .docx, watch it
+become a quiz or a card set, edit any question by hand, attach a paper, take
+the result away.
+
+- **It reads a .docx in the browser, with no library.** `src/lib/docxQuestions.js`
+  walks the ZIP's central directory, inflates `word/document.xml` with
+  `DecompressionStream("deflate-raw")` and scans the XML: a paragraph
+  starting `<n>.` is a question, one starting `a.`/`b.`/`c.` is an option,
+  and the answer key is the one table whose rows start with a number. Run
+  against the owner's three real documents it produces the same counts and
+  the same answer spreads as the Python importer that has been doing this by
+  hand. `npm run check:studio` drives it against a .docx the check BUILDS —
+  a real zip with a real deflate-raw entry — because a check that needs a
+  file in somebody's Downloads fails on every other machine.
+- **A question the key does not answer is REPORTED, never guessed.** An
+  importer that quietly answered "a" would put a wrong answer in front of a
+  student with nothing to show for it.
+- **It edits the RAW document**, not the normalised one the screens read:
+  what has to come out is `src/content/test-content.json` key for key.
+- **Nothing here publishes.** There is no content table, so a draft lives in
+  the browser until Export hands back the document and any attached PDF to
+  commit. The screen says that in those words rather than implying a save.
+  The step after this demo is a content table and a loader that prefers it —
+  a decision about where the course lives, worth making with this in front of
+  you rather than before it.
+- **The draft key is `wingman.studio.draft`, not `pw-`**, because the storage
+  epoch sweeps every `pw-` key when content is replaced — exactly when
+  somebody is most likely to be part-way through writing the replacement.
+- **A paper's page count is READ from the PDF** through the app's own pdf.js
+  (which sets `workerSrc`; without it the document never opens and every
+  paper came out as one page — measured). The row prints that number to a
+  student, so it is not typed.
+- **Export is refused while a question is unfinished** — no stem, fewer than
+  two answers, no right answer chosen, or an id used twice. `check:question-ids`
+  is in prebuild and would fail the build anyway; the footer says which.
+
 ## Off for launch, and Manual
 
 - **Papers are off** (`paper.viewer` is `everyone: false`): nothing in the

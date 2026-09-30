@@ -136,6 +136,10 @@ export function parseRoute(pathname) {
   // in the same place rather than on a page that no longer exists.
   if (parts[0] === "settings") return { name: "redirect", to: "/bookmarks" };
   if (parts[0] === "modules") return { name: "modules" };
+  /* The Studio. Admin-only, and the screen itself says so rather than the
+     router: a route that 404s for some people is a route that cannot be
+     linked to in a message. */
+  if (parts[0] === "studio") return { name: "studio" };
   // §6 — the profile's three tabs are real URLs, not a tab state. They sit
   // under /account now; settings should not sit at the root.
   if (parts[0] === "account" && PROFILE_TABS.includes(parts[1])) return { name: "profile", tab: parts[1] };
@@ -157,6 +161,7 @@ export function parseRoute(pathname) {
 export const path = {
   home: () => "/",
   modules: () => "/modules",
+  studio: () => "/studio",
   module: (m) => `/m/${String(m).toLowerCase()}`,
   library: (m, sub) => `/m/${String(m).toLowerCase()}/library` + (sub === "quizzes" ? "/quizzes" : ""),
   lesson: (m, c, l, q) =>

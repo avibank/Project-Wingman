@@ -102,6 +102,10 @@ const CHUNK = {
      nobody who never presses them should pay for it. */
   account: chunk(() => import("./components/AccountPortal.jsx")),
   progress: chunk(() => import("./components/ProgressPage.jsx")),
+  /* The Studio: an admin screen, and the pdf.js it reaches for to count a
+     paper's pages is loaded only when a PDF is actually attached. Nobody who
+     is not writing a chapter pays for any of it. */
+  studio: chunk(() => import("./components/admin/Studio.jsx")),
   /* Bookmarks and the card set come out of one chunk: they share the store,
      the adapter, the study pad and the whole stylesheet, so splitting them
      would download most of it twice. */
@@ -121,6 +125,7 @@ const ROUTE_CHUNKS = {
   review: [CHUNK.module],
   ready: [CHUNK.roomShell],
   modules: [CHUNK.modules],
+  studio: [CHUNK.studio],
   profile: [CHUNK.profile],
   clerk: [CHUNK.account],
   logbook: [CHUNK.progress],
@@ -176,6 +181,7 @@ const ChaptersPanel = lazy(CHUNK.chapters);
 import Home from "./components/Home.jsx";
 const InviteLanding = lazy(CHUNK.invite);
 const InviteSheet = lazy(CHUNK.inviteSheet);
+const Studio = lazy(CHUNK.studio);
 const ModulesPage = lazy(CHUNK.modules);
 import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
@@ -1087,6 +1093,7 @@ function AppInner() {
        of whatever screen you are on, so it opens the tour rather than
        navigating anywhere. */
     if (page === "tour") { startDemoRef.current?.("replay"); return; }
+    if (page === "studio") { go(routePath.studio()); return; }
     if (page === "licence" || page === "preferences" || page === "appearance") go(routePath.profile(page));
     else goSettings(page);
   };
@@ -2021,6 +2028,21 @@ function AppInner() {
       ) : settingsPage === "progress" ? (
         <main className="content content-taxi">
           <ProgressPage onBack={() => go(-1)} />
+        </main>
+      ) : route.name === "studio" ? (
+        /* ADMIN ONLY, AND THE SCREEN SAYS SO RATHER THAN THE ROUTER. A 404
+           for some people is a link nobody can send; this is a sentence and
+           a way back instead. */
+        <main className="content content-taxi">
+          {isAdmin && flags["admin.studio"] ? <Studio /> : (
+            <div className="deck-note">
+              <h1>The Studio is for admins</h1>
+              <p>
+                It is where a chapter's quiz, study cards and paper are written.
+                <button type="button" className="linkish" onClick={() => go(routePath.home())}>Back to the Flight Deck</button>
+              </p>
+            </div>
+          )}
         </main>
       ) : route.name === "bookmarks" || route.name === "cards" ? (
         /* Bookmarks is content-width like every other hub screen; the folder
