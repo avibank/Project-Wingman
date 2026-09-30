@@ -31,6 +31,10 @@ export function makeStore() {
     paper_ink: clone(INK),
     pilot_profiles: Object.values(clone(PROFILES)),
     lesson_threads: clone(THREADS),
+    /* 0040's publishing key, so the Studio's publish path can be driven
+       here. The live database holds a digest of a secret nobody commits;
+       this is a fixture and says so. */
+    course_keys: [{ id: 1, key: "harness-publishing-key" }],
   });
 }
 

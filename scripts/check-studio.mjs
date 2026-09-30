@@ -126,5 +126,27 @@ console.log("\nwho can reach it");
      /no right answer chosen/.test(studio) && /disabled=\{faults\.length > 0\}/.test(studio));
 }
 
+console.log("\nand where the course comes from");
+{
+  const loader = readFileSync("src/components/module/moduleContent.js", "utf8");
+  const store = readFileSync("src/lib/courseStore.js", "utf8");
+  const studio = readFileSync("src/components/admin/Studio.jsx", "utf8");
+  const flags = readFileSync("src/lib/flags.js", "utf8");
+  ok("course", "the published document wins, and the shipped one is the floor",
+     /const live = await fetchLiveCourse\(\)/.test(loader) && /return live\.doc/.test(loader)
+     && /const m = await fetchCourse\(\)/.test(loader));
+  ok("course", "the demo never reads it", /if \(!demoMode && liveContentOn\)/.test(loader));
+  ok("course", "a read that is slow or broken falls back rather than throwing",
+     /READ_TIMEOUT/.test(store) && /catch \(e\)[\s\S]{0,120}return null/.test(store));
+  ok("course", "and a published document is validated before it is used",
+     /validateContent\(doc\)/.test(store) && /the published document was refused/.test(store));
+  ok("course", "there is one switch that puts everybody back on the bundle",
+     /id: "content\.live"/.test(flags) && /liveContentOn/.test(loader));
+  ok("course", "the Studio publishes through the RPC, with a key it keeps in the browser",
+     /publishCourse\(doc, pubKey\.trim\(\)/.test(studio) && /PUBKEY_KEY = "wingman\.studio\.key"/.test(studio));
+  ok("course", "and the key is never written into the repo",
+     !/[A-Za-z0-9_-]{22,}/.test((studio.match(/PUBKEY[\s\S]{0,200}/) || [""])[0].replace("wingman.studio.key", "")));
+}
+
 console.log(`\nstudio: ${pass} passed, ${fails.length} failed`);
 process.exit(fails.length ? 1 : 0);

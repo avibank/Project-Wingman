@@ -31,6 +31,8 @@
    ========================================================================= */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { readQuestionsDocx } from "../../lib/docxQuestions.js";
+import { publishCourse, fetchCourseVersions } from "../../lib/courseStore.js";
+import { useUser } from "../../lib/clerk.js";
 import { downloadBlob, downloadSaid } from "../../lib/outside.js";
 import { toast } from "../../features/bookmarks/toastBus.js";
 /* THE RAW DOCUMENT, not the loaded one. moduleContent/contentLoader hand
@@ -41,6 +43,10 @@ import { toast } from "../../features/bookmarks/toastBus.js";
 import "./studio.css";
 
 const DRAFT_KEY = "wingman.studio.draft";
+/* The publishing key lives in the admin's own browser and nowhere else — not
+   in the repository, not in a build, not in this file. 0040 compares it as a
+   digest and never returns it. */
+const PUBKEY_KEY = "wingman.studio.key";
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const readDraft = () => { try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch { return null; } };
@@ -105,6 +111,11 @@ export default function Studio() {
   const [tab, setTab] = useState("quiz");         // quiz | cards | paper
   const [busy, setBusy] = useState("");
   const [papers, setPapers] = useState({});       // path -> File, attached this session
+  const [versions, setVersions] = useState([]);   // what has been published
+  const [pubKey, setPubKey] = useState(() => { try { return localStorage.getItem(PUBKEY_KEY) || ""; } catch { return ""; } });
+  const [asking, setAsking] = useState(false);    // the key field is open
+  const [note, setNote] = useState("");
+  const { user } = useUser();
   const fileRef = useRef(null);
   const pdfRef = useRef(null);
 
@@ -122,6 +133,30 @@ export default function Studio() {
   }, []);
 
   const edit = useCallback((fn) => setDoc((d) => { const next = clone(d); fn(next); writeDraft(next); return next; }), []);
+
+  const loadVersions = useCallback(() => { fetchCourseVersions(8).then(setVersions).catch(() => setVersions([])); }, []);
+  useEffect(() => { loadVersions(); }, [loadVersions]);
+
+  /* PUBLISHING IS THE POINT OF THE TABLE. Export stays beside it: a document
+     on disk is how the course is committed, and the two are not rivals —
+     publish puts it in front of the class tonight, the commit is what the
+     next build ships with. */
+  const publish = async () => {
+    if (!pubKey.trim()) { setAsking(true); return; }
+    setBusy("Publishing…");
+    const r = await publishCourse(doc, pubKey.trim(), {
+      note: note.trim() || null,
+      by: user?.username || user?.id || null,
+    });
+    setBusy("");
+    if (!r.ok) { toast(r.error || "That did not publish."); return; }
+    try { localStorage.setItem(PUBKEY_KEY, pubKey.trim()); } catch { /* blocked */ }
+    setAsking(false);
+    setNote("");
+    setLive(clone(doc));           // the draft and the published course now agree
+    loadVersions();
+    toast(`Published as version ${r.id}. Everybody sees it on their next load.`);
+  };
 
   const modules = doc?.modules || [];
   const mod = modules[mi] || null;
@@ -256,15 +291,40 @@ export default function Studio() {
         <div>
           <h1>Studio</h1>
           <p>
-            Write a chapter here, then export it. A draft stays in this browser —
-            students see it once the export is committed.
+            Write a chapter here, then publish it. A draft stays in this browser
+            until you do; publishing puts it in front of the class on their next
+            load. Export hands you the same document to commit.
           </p>
+          <p className="st-live">
+            {versions.length
+              ? `Live: version ${versions[0].id}, published ${new Date(versions[0].published_at).toLocaleString()}${versions[0].published_by ? ` by ${versions[0].published_by}` : ""}${versions[0].note ? ` — ${versions[0].note}` : ""}`
+              : "Nothing published yet — students are reading the document this build shipped with."}
+          </p>
+          {asking && (
+            <div className="st-ask">
+              <label className="st-field">
+                <span>Publishing key</span>
+                <input type="password" autoComplete="off" value={pubKey} placeholder="The key you were given"
+                       onChange={(e) => setPubKey(e.target.value)} />
+              </label>
+              <label className="st-field">
+                <span>What changed (optional)</span>
+                <input value={note} placeholder="e.g. Pitot-Static, two stems reworded"
+                       onChange={(e) => setNote(e.target.value)} />
+              </label>
+              <button type="button" className="st-btn st-btn--go" onClick={publish} disabled={!pubKey.trim()}>
+                Publish it
+              </button>
+              <button type="button" className="st-btn" onClick={() => setAsking(false)}>Not now</button>
+            </div>
+          )}
         </div>
         <div className="st-headacts">
           {changed && <span className="st-dirty">Draft</span>}
           <button type="button" className="st-btn" onClick={discard} disabled={!changed}>Discard</button>
-          <button type="button" className="st-btn st-btn--go" onClick={exportAll} disabled={faults.length > 0}>
-            Export
+          <button type="button" className="st-btn" onClick={exportAll} disabled={faults.length > 0}>Export</button>
+          <button type="button" className="st-btn st-btn--go" onClick={publish} disabled={faults.length > 0 || !!busy}>
+            Publish
           </button>
         </div>
       </header>

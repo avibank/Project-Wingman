@@ -37,6 +37,9 @@ export function makeStore(seed = {}) {
     blocks: [], mutes: [], wingmen: [], uploads: {},
     formation_members: [], squadron_members: [], squadrons: [],
     chapter_completions: [], quiz_attempts: [], quiz_runs: [],
+    /* 0040's course table. The harness seeds a key so the Studio's publish
+       path can be driven; the live one holds a digest and never this. */
+    course_docs: [], course_keys: [],
     /* Everything else the app touches while a paper is open. Empty, but
        PRESENT: a 501 here is the harness failing, not the product, and it
        would drown the console assertion that catches real errors. */
@@ -218,6 +221,33 @@ export const RPC = {
       }
     }
     return out;
+  },
+
+  /* 0040 — the published course. The digest comparison is the server's job;
+     here the seeded key is compared as plain text, because the harness has
+     no crypto and the rule being emulated is "the wrong key is refused". */
+  current_course: (s) => {
+    const rows = [...(s.course_docs || [])].sort((a, b2) => String(b2.published_at).localeCompare(String(a.published_at)));
+    const top = rows[0];
+    return top ? [{ id: top.id, doc: top.doc, note: top.note ?? null, published_at: top.published_at }] : [];
+  },
+
+  publish_course: (s, b) => {
+    const key = (s.course_keys || [])[0]?.key;
+    if (!key) throw new Error("no publishing key is set");
+    if (!b.p_key || b.p_key !== key) throw new Error("that publishing key is not right");
+    const doc = b.p_doc;
+    if (!doc || !Array.isArray(doc.modules)) throw new Error("a course document has a modules array");
+    if (!doc.modules.length) throw new Error("a course document has at least one module");
+    if (doc.modules.some((m) => !m.id || !m.name)) throw new Error("module(s) without an id or a name");
+    if (doc.modules.some((m) => (m.chapters || []).some((c) => !c.id))) throw new Error("chapter(s) without an id");
+    const row = {
+      id: (s.course_docs.length ? Math.max(...s.course_docs.map((r) => r.id)) : 0) + 1,
+      doc, note: (b.p_note || "").trim() || null, published_by: (b.p_by || "").trim() || null,
+      published_at: new Date().toISOString(),
+    };
+    s.course_docs.push(row);
+    return [{ id: row.id, published_at: row.published_at }];
   },
 
   quiz_leaderboard: (s, b) => {

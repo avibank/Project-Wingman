@@ -20,9 +20,21 @@ import { MODULES, chaptersForModule } from "../../data.js";
 import { loadContent } from "../../lib/contentLoader.js";
 import { demoMode } from "../../demo/mode.js";
 import { reloadOnce } from "../../lib/recover.js";
+import { fetchLiveCourse } from "../../lib/courseStore.js";
+import { flagDefault, readOverrides } from "../../lib/flags.js";
 
 let cache = null;
 let pending = null;
+let liveVersion = null;
+/* Read once, at module scope: the switch that takes the published course out
+   of the path entirely if it ever misbehaves, without a deploy. */
+const liveContentOn = (() => {
+  /* An admin's own override wins; everybody else gets the flag's default.
+     Read once here rather than through useFlags, because this module is not
+     a component and the answer cannot change inside a page load. */
+  const ov = readOverrides();
+  return "content.live" in ov ? ov["content.live"] !== false : flagDefault("content.live", false);
+})();
 
 export function testContentSync() {
   return cache;
@@ -44,11 +56,35 @@ async function fetchCourse() {
     }
   }
 }
+/* WHERE THE COURSE ACTUALLY COMES FROM (migration 0040, 2026-09-30).
+   The published document in `course_docs` wins; the document this build
+   shipped with is the floor under it. In that order, and never the other way
+   round: a publish has to be able to correct a mistake that is already in
+   the bundle, and a database that is empty, paused or slow has to end with a
+   Library rather than a blank one.
+
+   THE DEMO NEVER READS IT. Its course is its own (src/demo/content.json) and
+   the whole point of that state is that nothing outside it is consulted.
+
+   Whatever comes back is validated before it is used — courseStore does that
+   — so a bad publish costs a version rather than a class's evening. */
+async function courseDocument() {
+  if (!demoMode && liveContentOn) {
+    const live = await fetchLiveCourse();
+    if (live?.doc) { liveVersion = { id: live.id, at: live.at, note: live.note }; return live.doc; }
+  }
+  const m = await fetchCourse();
+  liveVersion = null;
+  return m.default;
+}
+
+/** Which published version is on screen, or null when it is the shipped one. */
+export const publishedVersion = () => liveVersion;
+
 export function loadTestContent() {
   if (cache) return Promise.resolve(cache);
-  /* The demo's course, in the demo, and never anywhere else. */
-  pending ||= fetchCourse()
-    .then((m) => { cache = loadContent(m.default); return cache; })
+  pending ||= courseDocument()
+    .then((doc) => { cache = loadContent(doc); return cache; })
     .catch((err) => { pending = null; throw err; });
   return pending;
 }
