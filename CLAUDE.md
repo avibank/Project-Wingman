@@ -95,6 +95,16 @@ which is what the Flight Deck draws before the document arrives. It holds:
   - The converter is in the session scratchpad rather than the repo: it is a
     one-off for that document's shape, and a new batch should be read and
     checked rather than trusted to it.
+- **Module 13d · M1.03 "Pitot-Static Systems"** (owner, 2026-09-30, the
+  third entry in the Library): no lessons, a quiz `M1.03.QZ` of **40**
+  questions and **81 study cards** `M1.03.C001`–`C081`, from the same pair
+  of documents in the same two roles — the Quiz is the quiz and nothing
+  else, the Full Set is the cards AND the paper. Answers 27/27/27 across
+  a/b/c. **The names are the documents' own internal titles**, which read
+  "M13.8 Pitot-Static **Systems** 408-426" where the filenames say
+  "M13.8 Pitot-Static 408-426"; the title is what the author typed inside
+  the document, so it is what the rows say. Nothing was reset for this one:
+  a new chapter has no progress to lose.
 - **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
   which draws its own "Lessons are filming" state. That is where a quiz and
   a card set live, so content with no video is not invisible.
@@ -112,8 +122,9 @@ which is what the Flight Deck draws before the document arrives. It holds:
   "papers should be the big doc exhaustion sets, the ones you use for the
   study cards, and those only, named correctly." So it carries one paper per
   chapter — the complete set its study cards are made from — and nothing
-  else: `M13d-Rotary-Wing-Full-Set.pdf` (15 pages, 170 cards) and
-  `M13.8-Instruments-345-406-Full-Set.pdf` (31 pages, 272). A four-page
+  else: `M13d-Rotary-Wing-Full-Set.pdf` (15 pages, 170 cards),
+  `M13.8-Instruments-345-406-Full-Set.pdf` (31 pages, 272) and
+  `M13.8-Pitot-Static-Systems-408-426-Full-Set.pdf` (10 pages, 81). A four-page
   print of the Instruments practice quiz was on the shelf for an hour and
   came off with this rule; the app's own quiz is where a student sits that,
   and the Quiz document reaches no other surface.
