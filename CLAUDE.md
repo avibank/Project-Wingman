@@ -360,6 +360,17 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0040, the course in a table, has been run against the live project**
+(2026-09-30), verified by connecting: `course_docs` with one SELECT policy
+and no write policies, `course_keys` with none at all, and
+`publish_course` / `current_course` / `set_course_key` in `pg_proc`. The
+publishing key was set the same day and the document this build ships with
+was published as version 1. `npm run check:course-db` is 14 live assertions.
+pgcrypto lives in the `extensions` schema on this project, so every function
+here sets `search_path = public, extensions` — without the second entry
+`digest()` is not found, which is how the first run of this migration
+failed.
+
 **The Instruments chapter's progress was reset on 2026-09-27**, live, with
 `supabase/reset-instruments-progress.sql` (not part of the numbered series:
 it is a one-off about content, not schema, and is safe to run twice). Both
@@ -807,12 +818,43 @@ the result away.
   student with nothing to show for it.
 - **It edits the RAW document**, not the normalised one the screens read:
   what has to come out is `src/content/test-content.json` key for key.
-- **Nothing here publishes.** There is no content table, so a draft lives in
-  the browser until Export hands back the document and any attached PDF to
-  commit. The screen says that in those words rather than implying a save.
-  The step after this demo is a content table and a loader that prefers it —
-  a decision about where the course lives, worth making with this in front of
-  you rather than before it.
+- **AND IT PUBLISHES** (migration 0040, the owner's "build it", same day).
+  The course document has a home the app reads at runtime: `course_docs`,
+  newest row wins, read by `current_course()` and written only by
+  `publish_course()`. A draft still lives in the browser until Publish; the
+  version line at the top says which version is live, who published it and
+  when. Export stays beside it, because a commit is still what the next
+  build ships with — the two are not rivals.
+- **THE COURSE IS THE ONE TABLE HERE THAT ANON CANNOT WRITE.** 0009's rule —
+  open policies, access control in the app — costs a student their own rows
+  if it is abused; for the course it would cost the syllabus. So
+  `course_docs` has a SELECT policy and NO insert, update or delete policy
+  at all, and RLS refuses what no policy allows. The only way in is
+  `publish_course`, SECURITY DEFINER, which demands a **publishing key** it
+  compares as a SHA-256 digest and never returns. `course_keys` has no
+  policies either, so the digest is not readable with the publishable key.
+  It is a shared secret rather than an identity, and that is a stated limit:
+  there is no trusted identity to check here (a uid is a claim, and every
+  user id in this database is readable). The day there is a server of our
+  own it becomes a token check and the table does not move. The key is in
+  `.env.local` as `COURSE_PUBLISH_KEY`, never in the repo, and rotating it
+  is `select set_course_key('…')` as service_role.
+- **A PUBLISH CANNOT EMPTY THE LIBRARY.** The SQL refuses a document with no
+  modules, a module with no id or name, or a chapter with no id — the three
+  things progress, saves and stamps are keyed to. The client refuses more
+  than that: `validateContent` runs before the RPC and again on what comes
+  back, and a published document that fails it is treated as no document at
+  all, so a bad publish costs a version rather than a class's evening.
+- **Reading it is allowed to fail.** Four-second timeout, every error
+  swallowed, and the answer is then the document the build shipped with —
+  an empty table, a paused project or a slow phone must never be a blank
+  Library. `content.live` is the switch that takes the table out of the path
+  for everybody without a deploy, and the demo never reads it at all.
+- `npm run check:course-db` drives all of that against the live database —
+  14 assertions including a publish, a wrong key, three malformed documents
+  and an insert, a delete and a patch attempted with the publishable key —
+  and deletes every version it makes, which puts the previous one back on
+  top. Like the other live checks it is NOT in `npm run check`.
 - **The draft key is `wingman.studio.draft`, not `pw-`**, because the storage
   epoch sweeps every `pw-` key when content is replaced — exactly when
   somebody is most likely to be part-way through writing the replacement.

@@ -31,6 +31,10 @@ export const FLAGS = [
   { id: "voice.characters", label: "Voices", note: "Choosing who greets you.", everyone: true },
   /* Off for now, with the Aurora finish (owner, 2026-09-21). */
   { id: "livery.aurora", label: "Aurora", note: "The one livery with curtains and a starfield.", everyone: false },
+  /* THE PUBLISHED COURSE (migration 0040). On for everyone, because it is
+     where the course comes from; off is the switch that puts every visitor
+     back on the document the build shipped with, without a deploy. */
+  { id: "content.live", label: "Published course", note: "Read the course from the table rather than the bundle.", everyone: true },
   /* THE STUDIO — writing a chapter inside the app instead of sending the
      document away (owner, 2026-09-30). `everyone: false` means admins have
      it and nobody else does, which is what flagDefault does with that. */
