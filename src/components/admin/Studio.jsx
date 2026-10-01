@@ -40,7 +40,13 @@ import { toast } from "../../features/bookmarks/toastBus.js";
    resolved durations — which is the shape the screens want and the wrong
    shape to edit: what has to come out of here is the document the
    repository takes, key for key. So the Studio imports the JSON itself. */
+import {
+  clone, nextId, emptyQuestion, copiedInto,
+  askedFor, shownList, faultList, countPdfPages,
+} from "./studioModel.js";
 import "./studio.css";
+
+export { countPdfPages };
 
 const DRAFT_KEY = "wingman.studio.draft";
 /* The publishing key lives in the admin's own browser and nowhere else — not
@@ -48,60 +54,14 @@ const DRAFT_KEY = "wingman.studio.draft";
    digest and never returns it. */
 const PUBKEY_KEY = "wingman.studio.key";
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
-const clone = (v) => JSON.parse(JSON.stringify(v));
 const readDraft = () => { try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch { return null; } };
 const writeDraft = (d) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* full or blocked */ } };
 
-/* An id for a new question, in the chapter's own space and never colliding
-   with one that is already there — the ids are what a saved bookmark, a
-   retention pile and a half-finished paper all point at. */
-function nextId(chapter, kind) {
-  const prefix = `${chapter.id}.${kind === "cards" ? "C" : "Q"}`;
-  const taken = new Set([...(chapter.quiz?.questions || []), ...(chapter.cards || [])].map((q) => q.id));
-  for (let n = 1; n < 10000; n += 1) {
-    const id = kind === "cards" ? `${prefix}${String(n).padStart(3, "0")}` : `${prefix}${n}`;
-    if (!taken.has(id)) return id;
-  }
-  return `${prefix}${Date.now()}`;
-}
-
-/** Pages in a PDF, by counting its page objects. 0 when they cannot be seen
- *  — a file whose objects are compressed into streams — and the caller says
- *  so rather than guessing. */
-export function countPdfPages(bytes) {
-  const text = new TextDecoder("latin1").decode(bytes);
-  const objects = (text.match(/\/Type\s*\/Page[^s]/g) || []).length;
-  if (objects > 0) return objects;
-  /* Failing that, the page tree's own count, which a linearised file keeps
-     near the front. */
-  const counts = [...text.matchAll(/\/Count\s+(\d+)/g)].map((m) => Number(m[1]));
-  return counts.length ? Math.max(...counts) : 0;
-}
-
-const emptyQuestion = (chapter, kind) => ({
-  id: nextId(chapter, kind), question: "", options: ["", "", ""], correct: 0, explain: "",
-});
-
-/* What cannot be exported, in the words the footer uses. */
-function faultsOf(doc) {
-  const out = [];
-  const seen = new Map();
-  for (const m of doc.modules || []) {
-    for (const c of m.chapters || []) {
-      const all = [...(c.quiz?.questions || []).map((q) => ["quiz", q]), ...((c.cards || []).map((q) => ["card", q]))];
-      for (const [kind, q] of all) {
-        const where = `${c.name || c.id} · ${kind} ${q.id}`;
-        if (!q.id) out.push(`${where}: no id`);
-        if (seen.has(q.id)) out.push(`${q.id} is used twice`); else seen.set(q.id, where);
-        if (!String(q.question || "").trim()) out.push(`${where}: no question`);
-        const opts = (q.options || []).filter((o) => String(o).trim());
-        if (opts.length < 2) out.push(`${where}: needs at least two answers`);
-        if (!(q.correct >= 0 && q.correct < (q.options || []).length)) out.push(`${where}: no right answer chosen`);
-      }
-    }
-  }
-  return out;
-}
+/* HOW MANY QUESTION EDITORS ARE MOUNTED AT ONCE. A chapter of 345 is 345
+   stems, 1035 answer fields and 345 reasons if the list is drawn whole —
+   about 1700 inputs, and typing in any one of them re-renders the lot.
+   Forty at a time, and more on asking. Search is the other way through. */
+const PAGE = 40;
 
 export default function Studio() {
   const [doc, setDoc] = useState(null);           // the working copy
@@ -115,6 +75,9 @@ export default function Studio() {
   const [pubKey, setPubKey] = useState(() => { try { return localStorage.getItem(PUBKEY_KEY) || ""; } catch { return ""; } });
   const [asking, setAsking] = useState(false);    // the key field is open
   const [note, setNote] = useState("");
+  const [query, setQuery] = useState("");         // the search box
+  const [shown, setShown] = useState(PAGE);       // how many editors are mounted
+  const [picked, setPicked] = useState(() => new Set());  // chosen questions, BY ID
   const { user } = useUser();
   const fileRef = useRef(null);
   const pdfRef = useRef(null);
@@ -197,8 +160,23 @@ export default function Studio() {
     if (!chapter) return [];
     return tab === "cards" ? (chapter.cards || []) : (chapter.quiz?.questions || []);
   }, [chapter, tab]);
+  /* Pairs of [question, its real index]. Not the index on screen: a filtered
+     list that renumbered would delete the wrong question (studioModel.js). */
+  const hits = useMemo(() => shownList(list, query), [list, query]);
+  const view = useMemo(() => hits.slice(0, shown), [hits, shown]);
+  /* CHOSEN BY ID RATHER THAN BY POSITION, because what the choosing is FOR is
+     moving and deleting, and both change every position after them. */
+  const chosen = useMemo(() => list.filter((q) => picked.has(q.id)), [list, picked]);
 
-  const faults = useMemo(() => (doc ? faultsOf(doc) : []), [doc]);
+  /* A new chapter, a new tab or a new search is a new list, so the window
+     closes back to its first page and nothing stays chosen across it —
+     "delete the 8 I picked" must never mean 8 in a list you cannot see. */
+  useEffect(() => { setShown(PAGE); setPicked(new Set()); }, [mi, ci, tab]);
+  useEffect(() => { setShown(PAGE); }, [query]);
+
+  const faults = useMemo(() => (doc ? faultList(doc) : []), [doc]);
+  /* The ids of broken questions, so a row can be marked where it stands. */
+  const broken = useMemo(() => new Set(faults.map((f) => f.id).filter(Boolean)), [faults]);
   const changed = useMemo(() => (doc && live ? JSON.stringify(doc) !== JSON.stringify(live) : false), [doc, live]);
 
   /* ------------------------------------------------------------ the writes */
@@ -218,6 +196,42 @@ export default function Studio() {
     [next[i], next[j]] = [next[j], next[i]];
     setList(next);
   };
+
+  /* ------------------------------------------------------- the chosen ones */
+  const toggle = (id) => setPicked((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const pickAllShown = () => setPicked(new Set(hits.map(([q]) => q.id)));
+  const pickNone = () => setPicked(new Set());
+  const delPicked = () => {
+    if (!chosen.length) return;
+    if (!window.confirm(`Delete ${chosen.length} question${chosen.length === 1 ? "" : "s"} from the draft?`)) return;
+    setList(list.filter((q) => !picked.has(q.id)));
+    pickNone();
+  };
+  /* COPY OR MOVE TO THE OTHER EXERCISE. The ids are re-issued in the
+     destination's space by `copiedInto`; a move deletes the originals in the
+     same edit, so the document is never briefly holding both. */
+  const sendPicked = (move) => {
+    if (!chosen.length) return;
+    const other = tab === "cards" ? "quiz" : "cards";
+    const n = chosen.length;
+    edit((d) => {
+      const c = d.modules[mi].chapters[ci];
+      const made = copiedInto(c, other, chosen);
+      if (other === "cards") c.cards = [...(c.cards || []), ...made];
+      else { c.quiz = c.quiz || { id: `${c.id}.QZ`, name: "", questions: [] }; c.quiz.questions = [...c.quiz.questions, ...made]; }
+      if (move) {
+        if (tab === "cards") c.cards = (c.cards || []).filter((q) => !picked.has(q.id));
+        else c.quiz.questions = c.quiz.questions.filter((q) => !picked.has(q.id));
+      }
+    });
+    pickNone();
+    toast(`${n} ${move ? "moved" : "copied"} to ${other === "cards" ? "the study cards" : "the quiz"}`);
+  };
+
+  /* The way to a broken question from the footer that named it: its chapter,
+     its tab, its position — and the search box set to that position, which is
+     what puts it inside the window. */
+  const goToFault = (f) => { setMi(f.mi); setCi(f.ci); setTab(f.kind); setQuery(`#${f.i + 1}`); };
 
   const addChapter = () => edit((d) => {
     const m = d.modules[mi];
@@ -446,16 +460,54 @@ export default function Studio() {
                            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                            onChange={(e) => { importDocx(e.target.files?.[0]); e.target.value = ""; }} />
                     <button type="button" className="st-btn" onClick={addQ}>Add a question</button>
-                    <span className="st-count">{list.length} in this {tab === "cards" ? "set" : "quiz"}</span>
+                    <label className="st-search">
+                      <span className="st-sr">Find a question</span>
+                      <input value={query} placeholder="Find a word, or a number for its place"
+                             onChange={(e) => setQuery(e.target.value)} />
+                      {query && <button type="button" className="st-mini" onClick={() => setQuery("")}>Clear</button>}
+                    </label>
+                    <span className="st-count">
+                      {query
+                        ? `${hits.length} of ${list.length}${askedFor(query).kind === "at" ? "" : " match"}`
+                        : `${list.length} in this ${tab === "cards" ? "set" : "quiz"}`}
+                    </span>
                     {busy && <span className="st-busy">{busy}</span>}
                   </div>
 
+                  {/* CHOOSING SEVERAL AND DOING ONE THING TO THEM is the half of
+                      this screen that makes a 345-question chapter editable: the
+                      quiz is drawn from the set, so "these forty are also the
+                      quiz" is the commonest edit there is. */}
+                  <div className="st-bulk">
+                    <button type="button" className="st-mini" onClick={pickAllShown} disabled={!hits.length}>
+                      {query ? `Choose these ${hits.length}` : `Choose all ${list.length}`}
+                    </button>
+                    {chosen.length > 0 && (
+                      <>
+                        <span className="st-chosen">{chosen.length} chosen</span>
+                        <button type="button" className="st-mini" onClick={() => sendPicked(false)}>
+                          Copy to {tab === "cards" ? "the quiz" : "the study cards"}
+                        </button>
+                        <button type="button" className="st-mini" onClick={() => sendPicked(true)}>
+                          Move there
+                        </button>
+                        <button type="button" className="st-mini st-danger" onClick={delPicked}>Delete them</button>
+                        <button type="button" className="st-mini" onClick={pickNone}>Let them go</button>
+                      </>
+                    )}
+                  </div>
+
                   <ol className="st-qs">
-                    {list.map((q, i) => (
-                      <li key={q.id} className="st-q">
+                    {view.map(([q, i]) => (
+                      <li key={q.id} className={`st-q${broken.has(q.id) ? " is-broken" : ""}${picked.has(q.id) ? " is-chosen" : ""}`}>
                         <div className="st-qhead">
+                          <label className="st-pick">
+                            <input type="checkbox" checked={picked.has(q.id)} onChange={() => toggle(q.id)}
+                                   aria-label={`Choose question ${i + 1}`} />
+                          </label>
                           <span className="st-qn">{i + 1}</span>
                           <code>{q.id}</code>
+                          {broken.has(q.id) && <span className="st-warn">needs a look</span>}
                           <span className="st-spacer" />
                           <button type="button" className="st-mini" onClick={() => moveQ(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
                           <button type="button" className="st-mini" onClick={() => moveQ(i, 1)} disabled={i === list.length - 1} aria-label="Move down">↓</button>
@@ -493,7 +545,15 @@ export default function Studio() {
                       </li>
                     ))}
                   </ol>
+                  {hits.length > view.length && (
+                    <button type="button" className="st-btn st-more" onClick={() => setShown((n) => n + PAGE)}>
+                      Show {Math.min(PAGE, hits.length - view.length)} more of {hits.length - view.length}
+                    </button>
+                  )}
                   {!list.length && <p className="st-empty">Import a .docx, or add the first question by hand.</p>}
+                  {!!list.length && !hits.length && (
+                    <p className="st-empty">Nothing here says that — clear the search to see all {list.length}.</p>
+                  )}
                 </>
               )}
             </>
@@ -505,7 +565,15 @@ export default function Studio() {
         {faults.length ? (
           <>
             <b>{faults.length} to put right before this can leave:</b>
-            <span>{faults.slice(0, 3).join(" · ")}{faults.length > 3 ? " …" : ""}</span>
+            {/* EACH ONE IS THE WAY TO ITSELF. The sentences alone told the
+                owner a question three hundred rows down was broken and left
+                him to find it. */}
+            {faults.slice(0, 3).map((f, k) => (
+              <button key={`${f.where}-${f.why}-${k}`} type="button" className="st-mini" onClick={() => goToFault(f)}>
+                {f.where}: {f.why}
+              </button>
+            ))}
+            {faults.length > 3 && <span>and {faults.length - 3} more</span>}
           </>
         ) : (
           <span>

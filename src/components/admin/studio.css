@@ -10,21 +10,42 @@
    arrows and the answer-removers, which are `st-mini` at 44px tall and sit
    in a row of their own, and the radio, which is the native one.
    ========================================================================= */
-.studio { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 14px; min-height: 70vh; }
+/* THE WHOLE SCREEN IS A SURFACE, and that is the fix for what the owner
+   photographed on 2026-09-30: the Studio was laid straight onto the deck, so
+   its prose was being read off whatever the livery paints there — and under
+   Aurora that is a moving teal-and-green sky with a starfield. No token can
+   be measured against a picture.
+
+   So the screen sits on `--panel` with the app's own border and radius, the
+   way every other surface here does. Two things follow: the words are on a
+   colour the palette knows, which is what makes them legible in all six
+   liveries and all three finishes; and `npm run test:studio` can MEASURE
+   them, because there is now a defined thing behind them. */
+.studio { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 14px; min-height: 70vh;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px; box-shadow: var(--shadow); }
+@media (max-width: 700px) { .studio { padding: 12px; border-radius: 12px; } }
 
 .st-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .st-head h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.015em; }
-.st-head p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: var(--t3); max-width: 62ch; text-wrap: pretty; }
+.st-head p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: var(--t2); max-width: 62ch; text-wrap: pretty; }
 .st-headacts { display: flex; align-items: center; gap: 8px; }
 .st-dirty { font: 600 10.5px/1 var(--font-mono); letter-spacing: .09em; text-transform: uppercase;
   color: var(--active-text); border: 1px solid var(--active); border-radius: 999px; padding: 6px 10px; }
 
 .st-btn { min-height: 44px; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--line);
-  background: var(--panel); color: var(--t1); font: 600 14px/1 var(--font-ui); cursor: pointer; }
+  background: var(--raised); color: var(--t1); font: 600 14px/1 var(--font-ui); cursor: pointer; }
 .st-btn:hover:not(:disabled) { border-color: var(--t3); }
 .st-btn:disabled { color: var(--t3); cursor: default; }
 .st-btn--go { background: var(--active-fill); border-color: var(--active-fill); color: var(--ground); }
 .st-btn--go:disabled { background: var(--panel); border-color: var(--line); color: var(--t3); }
+/* THE MANUAL FINISH IN DAY IS THE ONE PLACE A FILL NEEDS ITS OWN STEP, and
+   Bookmarks already found it (bm-app.css, the same rule): finishEngine.js
+   leaves `--active-fill` at the accent's own lightness on paper and darkens
+   `--active-text` by .13 for Day instead, so a filled control is left pale
+   on cream — Publish measured 3.94:1 on Runway. It takes the ink the finish
+   already computed. `check:studio` measures it. */
+.app.theme-light[data-paper] .st-btn--go { background: var(--active-text); border-color: var(--active-text); }
 
 .st-mini { min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
   background: none; color: var(--t2); font: 600 12.5px/1 var(--font-ui); cursor: pointer; }
@@ -37,15 +58,17 @@
 
 .st-rail { display: grid; gap: 10px; }
 .st-railhead { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  font: 10.5px/1 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--t3); }
+  font: 10.5px/1 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--t2); }
 .st-chaps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+/* Inside a panel, a card of the same colour is invisible: these lift to
+   --raised so the list reads as a list on every livery. */
 .st-chap { width: 100%; min-height: 44px; display: grid; gap: 2px; text-align: left; cursor: pointer;
-  padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--t1); }
-.st-chap small { font: 11.5px/1 var(--font-mono); color: var(--t3); }
+  padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--raised); color: var(--t1); }
+.st-chap small { font: 11.5px/1 var(--font-mono); color: var(--t2); }
 .st-chap.is-on { border-color: var(--active); }
 
 .st-field { display: grid; gap: 5px; }
-.st-field > span { font: 10.5px/1 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--t3); }
+.st-field > span { font: 10.5px/1 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--t2); }
 .st-field input, .st-field select { min-height: 44px; width: 100%; padding: 9px 12px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--panel); color: var(--t1); font: 15px/1.3 var(--font-ui); }
 
@@ -55,17 +78,17 @@
 
 .st-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
 .st-tabs button { min-height: 44px; padding: 10px 14px; border: 0; background: none; cursor: pointer;
-  color: var(--t3); font: 600 14px/1 var(--font-ui); border-bottom: 2px solid transparent; }
+  color: var(--t2); font: 600 14px/1 var(--font-ui); border-bottom: 2px solid transparent; }
 .st-tabs button[aria-selected="true"] { color: var(--t1); border-bottom-color: var(--active); }
 
 .st-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.st-count, .st-busy { font: 12.5px/1 var(--font-mono); color: var(--t3); }
+.st-count, .st-busy { font: 12.5px/1 var(--font-mono); color: var(--t2); }
 
 .st-qs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.st-q { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--panel); display: grid; gap: 8px; }
+.st-q { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--raised); display: grid; gap: 8px; }
 .st-qhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .st-qn { font: 600 13px/1 var(--font-mono); color: var(--t2); min-width: 22px; }
-.st-qhead code { font: 11.5px/1 var(--font-mono); color: var(--t3); }
+.st-qhead code { font: 11.5px/1 var(--font-mono); color: var(--t2); }
 .st-spacer { flex: 1 1 auto; }
 
 .st-stem, .st-why, .st-otext { width: 100%; border-radius: 10px; border: 1px solid var(--line);
@@ -76,7 +99,11 @@
 .st-opts { display: grid; gap: 6px; }
 .st-opt { display: flex; align-items: center; gap: 8px; }
 .st-opt input[type="radio"] { width: 20px; height: 20px; min-height: 0; accent-color: var(--active); flex: none; }
-.st-letter { font: 600 12.5px/1 var(--font-mono); color: var(--t3); width: 14px; flex: none; }
+/* THE LETTER IS THE ANSWER'S NAME, not decoration — a student reads "B" off
+   a result screen. t2, like every other label here that means something.
+   What is left at t3 in this file is hover borders and disabled text, which
+   is a state rather than information. */
+.st-letter { font: 600 12.5px/1 var(--font-mono); color: var(--t2); width: 14px; flex: none; }
 .st-opt.is-right .st-letter { color: var(--active-text); }
 .st-opt.is-right .st-otext { border-color: var(--active); }
 
@@ -85,15 +112,50 @@
   border: 1px solid var(--line); border-radius: 12px; padding: 12px; width: 100%; }
 .st-paperrow b { grid-column: 1; }
 .st-paperrow .st-mini { grid-column: 2; grid-row: 1 / span 2; justify-self: end; }
-.st-paperrow span { grid-column: 1; font: 12.5px/1.4 var(--font-mono); color: var(--t3); }
+.st-paperrow span { grid-column: 1; font: 12.5px/1.4 var(--font-mono); color: var(--t2); }
 
-.st-empty { margin: 0; font-size: 14px; color: var(--t3); }
+.st-empty { margin: 0; font-size: 14px; color: var(--t2); }
 .st-foot { border-top: 1px solid var(--line); padding-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;
-  font-size: 13px; color: var(--t3); }
+  font-size: 13px; color: var(--t2); }
 .st-foot b { color: var(--bad); font-weight: 600; }
 
 /* The published line and the key, which only appears when one is needed. */
-.st-live { margin: 6px 0 0; font: 12.5px/1.5 var(--font-mono); color: var(--t3); }
+/* The version line is a FACT about the course, not decoration: t2, the
+   tier this app uses for text that carries meaning. */
+.st-live { margin: 6px 0 0; font: 12.5px/1.5 var(--font-mono); color: var(--t2); }
 .st-ask { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; margin-top: 10px;
-  border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); }
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--raised); }
 .st-ask .st-field { min-width: 220px; }
+
+/* ------------------------------------------------- finding and choosing
+   Added 2026-10-01 with the authoring pass. Every colour here is one the
+   contrast block in `check:studio` already measures — words are `--t1` or
+   `--t2`, surfaces are `--panel` and `--raised`, and nothing new is invented
+   on a screen whose whole legibility problem was that it had no surface. */
+.st-search { display: flex; align-items: center; gap: 6px; flex: 1 1 220px; min-width: 180px; }
+.st-search input { min-height: 44px; min-width: 0; flex: 1; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--ground); color: var(--t1); font: 500 13.5px var(--font-ui); }
+.st-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.st-bulk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.st-chosen { font: 600 12.5px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--t2); }
+
+.st-pick { display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; margin: -10px 0 -10px -4px; cursor: pointer; }
+.st-pick input { width: 17px; height: 17px; accent-color: var(--active); cursor: pointer; }
+
+/* A BROKEN QUESTION IS MARKED WHERE IT STANDS, not only in the footer. The
+   caution colour, not `--bad`: nothing here is lost, and §10's rule about red
+   holds on this screen too.
+   THE COLOUR IS THE EDGE AND THE WORD IS `--t2`. Caution is an annunciator
+   amber, lit to be read as a lamp, and as 11px words on `--raised` in Day it
+   measured 2.24:1 on Beacon — the check caught it the first time it was asked.
+   An edge is a graphic and clears the 3:1 that applies to one; the word next
+   to it says the same thing in a colour that has been measured. */
+.st-q.is-broken { border-color: color-mix(in oklch, var(--caution) 55%, var(--line));
+  box-shadow: inset 3px 0 0 var(--caution); }
+.st-warn { font: 600 11px var(--font-ui); letter-spacing: .02em; text-transform: uppercase;
+  color: var(--t2); }
+.st-q.is-chosen { border-color: var(--active); background: color-mix(in oklch, var(--raised) 86%, var(--active)); }
+
+.st-more { width: 100%; }
