@@ -866,13 +866,61 @@ the result away.
 - **The draft key is `wingman.studio.draft`, not `pw-`**, because the storage
   epoch sweeps every `pw-` key when content is replaced — exactly when
   somebody is most likely to be part-way through writing the replacement.
-- **A paper's page count is READ from the PDF** through the app's own pdf.js
-  (which sets `workerSrc`; without it the document never opens and every
-  paper came out as one page — measured). The row prints that number to a
-  student, so it is not typed.
+- **A paper's page count is READ from the PDF, by COUNTING PAGE OBJECTS IN
+  THE BYTES.** Not with pdf.js: papers are paused and `check:paused` asserts
+  that none of the reader's libraries reach the build at all, and one import
+  of the app's own put a 357KB chunk back into it (caught on the way in).
+  This is a page count, not a render — a scan of a few hundred kilobytes
+  answers it, and a PDF whose pages hide inside object streams answers 0,
+  which the screen says out loud instead of inventing a number. The row
+  prints that number to a student, so it is not typed.
 - **Export is refused while a question is unfinished** — no stem, fewer than
   two answers, no right answer chosen, or an id used twice. `check:question-ids`
   is in prebuild and would fail the build anyway; the footer says which.
+- **`studioModel.js` holds everything that is not a screen**, the way
+  `quiz.js` does for the exam and for the same reason: a rule that lives in
+  a component is a rule somebody tidying the markup can change. It is a
+  plain module so `check:studio` can IMPORT it and drive the ids, the
+  copying, the searching and the faults for real rather than grepping the
+  JSX for them.
+- **IT SITS ON `--panel`, AND THAT IS THE WHOLE LEGIBILITY FIX** (owner,
+  2026-09-30, who photographed it on Aurora: "see how it is, fix it across
+  all liveries"). It was laid straight on the deck, so its prose was read
+  off whatever the livery paints there — under Aurora a moving teal sky with
+  a starfield. No token can be measured against a picture. On a surface the
+  palette knows, it can be: `check:studio` composites ground → panel →
+  raised in OKLab and measures every text pair on all six liveries × night
+  and day × three finishes (Aurora has no day), 180 pairs, floor 4.5:1,
+  worst 5.40:1. Two things came out of that measurement rather than out of
+  an opinion: **Publish takes `--active-text` under Manual in Day**, which
+  is Bookmarks' own rule (the finish leaves `--active-fill` at the accent's
+  lightness, so a filled control is pale on cream — 3.94:1 on Runway), and
+  **a broken question says "needs a look" in `--t2`, never in `--caution`**,
+  which measured 2.24:1 on Beacon in Day. Caution is an annunciator amber
+  lit to be read as a lamp on a dark face; it is the row's EDGE here and the
+  word beside it carries the meaning.
+- **FORTY QUESTION EDITORS AT A TIME.** A chapter here is 345 cards, and
+  drawn whole that is about 1700 inputs where typing in any one re-renders
+  the lot. Forty, then more on asking — and search is the other way through.
+- **Search reads the stem, every answer, the reason and the ID**, and a bare
+  number (or `#212`) is a PLACE rather than a word, because those are the
+  two ways the owner names a question. What it hands back is each question's
+  REAL index: a filtered view that renumbered would delete the wrong one.
+- **Choosing several and doing one thing to them**, because the quiz is
+  drawn from the set and "these forty are also the quiz" is the commonest
+  edit there is. Copy or move to the other exercise, or delete. They are
+  chosen BY ID, not by position — moving and deleting change every position
+  after them — and nothing stays chosen across a chapter, a tab or a search.
+  **A copy re-issues every id in the destination's space**: quiz and cards
+  share one id space (`check:question-ids`), so a copy that kept its id
+  would be the same id twice and would fail the build.
+- **A broken question is marked where it stands, and the footer is the way
+  there.** Each fault carries its address — module, chapter, exercise,
+  position — so the sentence is a button that opens that chapter, switches
+  to that tab and searches for that place. The sentences alone told the
+  owner a question three hundred rows down was broken and left him to find
+  it.
+- `npm run check:studio` is 45 assertions.
 
 ## Off for launch, and Manual
 
