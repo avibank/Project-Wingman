@@ -40,13 +40,21 @@ import { FLY_SOLO_KEY } from "./flySolo.js";
    chapter and each revision is not a superset of the one before, so a
    device holding `pw-quiz-scores`, `pw-cards-seen` or a half-finished paper
    from before would patch a score earned on other questions straight back
-   onto the server on its next load. The server half is
-   supabase/reset-instruments-progress.sql, run on each of those days; this
-   is the half that reaches a browser. Signed-in progress is read back from
-   the server, so what a student actually loses is what only their device
-   knew. Raise it again with the next revision — it is a no-op on a device
-   that has already swept at this number. */
-export const STORAGE_EPOCH = 3;
+   onto the server on its next load.
+
+   4 — ALL THREE CHAPTERS CAME OUT (2026-10-03, the owner: "delete all
+   quizzes and sets and all traces of them"). Not a revision this time but a
+   removal: there is no M1 question left for any of those ids to mean, and
+   the replacement batches will arrive under ids that have never existed. A
+   device holding the old scores would still put them back, which is the
+   whole reason this number exists.
+
+   The server half is supabase/reset-module-13d-progress.sql; this is the
+   half that reaches a browser. Signed-in progress is read back from the
+   server, so what a student actually loses is what only their device knew.
+   Raise it again with the next revision — it is a no-op on a device that
+   has already swept at this number. */
+export const STORAGE_EPOCH = 4;
 const EPOCH_KEY = "pw-epoch";
 
 /* Device preferences. Everything else under `pw-` is state. */
