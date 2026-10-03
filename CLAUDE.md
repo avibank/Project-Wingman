@@ -49,45 +49,81 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
 
 ## Content
 
-**THERE IS NO CONTENT IN THE APP RIGHT NOW, AND THAT IS DELIBERATE** (owner,
-2026-10-03: "delete all quizzes and sets and all traces of them"; then "I'll
-give you the new files, just delete the old ones"). All three of Module 13d's
-chapters came out in one commit, with their three papers, and replacement
-batches are coming. Every module is waiting on its first chapter again.
+**TWO CHAPTERS, BOTH NEW TODAY** (owner, 2026-10-03). All three of the
+previous ones came out in the morning at his word — "delete all quizzes and
+sets and all traces of them" — and these went in the same day, under chapter
+ids that had never existed:
 
-What went, and what it is worth knowing about it if it ever has to come back
-(`git log -- src/content/test-content.json`):
+- **M1.B1 · "Theory of Flight · Rotary Wing"** — a quiz `M1.B1.QZ` of **40**
+  questions, **170** study cards `M1.B1.C001`–`C170`, and the Full Set on the
+  Papers shelf at 26 pages. PDF pages 1–68 of the manual.
+- **M1.B6 · "Instruments (ATA 31)"** — a quiz `M1.B6.QZ` of **40**, **416**
+  study cards `M1.B6.C001`–`C416`, and the Full Set at 65 pages. PDF pages
+  352–491.
 
-- **M1.01 Rotary Wing Aerodynamics** — a 40-question quiz and 170 study cards.
-- **M1.02 Instruments** — 40 and 272, after being replaced twice (2026-09-27
-  and 2026-09-28), which is what `STORAGE_EPOCH` 2 and 3 were for.
-- **M1.03 Pitot-Static Systems** — 40 and 81, including the two questions
-  rewritten in the app on 2026-09-30 and not in the source .docx.
-- Three papers from `public/downloads/`, which is now empty.
+**THE IDS HAVE NEVER EXISTED BEFORE, AND THAT IS THE POINT.** The deleted
+chapters were `M1.01`–`M1.03` and ids are positional inside a chapter, so
+reusing one would silently inherit whatever any device still remembered about
+it. Nothing in the app parses a chapter id for a number — `chapterNo` comes
+from the chapter's POSITION and `chaptersForModule` only splits on the first
+`.` — so `M1.B1` is as valid as `M1.01` and cannot collide. **No reset was
+needed for this import**, which is the first time that has been true.
 
-**AND EVERY TRACE OF THEM WENT WITH THEM**, because this was a removal rather
-than a revision: after it there is no M1 question for any of those ids to
-point at, so a score, a saved card, a caution pile or a board run against one
-would be a result attributed to a question that exists nowhere.
-`supabase/reset-module-13d-progress.sql` is the server half and was run live
-on 2026-10-03 (11 board runs, 11 saves and 2 progress documents; its own proof
-block runs in the same transaction and rolls the whole thing back if one row
-is left). `STORAGE_EPOCH` 4 is the device half. **Hours flown deliberately
-stayed**: `pw-hobbs` is time a student really spent, not a result, and the
-meter never counts up. Licences, stamps, callsigns, squadrons, notes and the
-logbook were never in scope.
+**THE DOCUMENTS CHANGED SHAPE, so there are two readers and not one edited
+one.** The September documents carried a single answer-key TABLE at the end
+(columns No./Ans/Level/Marked/PDF page/Why). The October ones carry an
+"Answers — <topic>" block after every topic, written as prose:
+`12. b <explanation> (L3, PDF p. 352)`. A single parser trying to be both
+would have had to guess which it was reading, and a wrong guess there puts a
+wrong answer in front of a student. Both live in the session scratchpad
+rather than the repo: each is a one-off for one document shape, and a third
+shape should be read and checked rather than trusted to either.
 
-The emptied document was **published as course version 7**, because
-`course_docs` is what a student actually loads (migration 0040) — leaving it
-would have served all three chapters to the class from a table while the
-repository said they were gone.
+**BOTH READ A LAID-OUT PDF BY GEOMETRY, never by prose.** The repo's own
+pinned pdf.js gives every line its x and its first run's height, and these
+documents are exact — in the October shape, stems at x≈60 h=10.5, their wraps
+at x≈78, options at x≈82, every continuation at x≈91 or beyond, key rows at
+x≈60 h=9, headings at h=15/11/10/8.5, and the page number and running header
+past x=200. That is what lets a converter tell a section heading from a
+wrapped stem without reading a word of either. **Anything it cannot place is
+REPORTED, never assumed**: all four documents came out with zero warnings.
+The level and the manual page are lifted out of the explanation rather than
+shown to a student inside it, because in the old documents they were separate
+columns.
 
-**The empty states were already there and still read correctly**, measured in
-the browser after the deletion rather than assumed: the Flight Deck says "The
-first chapter goes in here", the module says "Waiting on its first chapter"
-over "Module 13d starts here", the Library says "Quizzes land here", and the
-instruments say "FIRST QUIZ FILLS THE RING" and "YOUR FIRST HOUR". §10 holds
-— not one of them states an absence or a zero count.
+**Spot-check the answer spread**: a correct join lands near a third each
+across a/b/c. These came out 14/13/13, 57/57/56, 14/13/13 and 139/139/138.
+
+**The names are the documents' own titles**, which in this batch are also the
+filenames: `quiz.name` is "M13 Batch 1 — Quiz" and the chapter's `cardsName`
+is "M13 Batch 1 — Full Set". The chapter NAME is the document's own subtitle
+("M13.1 Theory of Flight · Rotary wing"), which is the subject rather than
+the batch.
+
+**A quiz document is the quiz and nothing else; a Full Set is the study cards
+AND the paper** (owner, 2026-09-28, held to ever since). The practice quiz
+never reaches the Papers shelf: the app's own quiz is where a student sits it.
+
+`src/data.js` — **four** modules, M1 to M4, and no chapters. The codes never
+change (progress, scores and saves are keyed to them); the NAMES are the
+course's: **M1 is Module 13d** (the one the class is on, and the app's default
+current module because it is the first `active` one), **M2 is Module 13e**,
+**M3 is still "Module 3"** (undecided) and **M4 is Module 10**.
+
+`src/content/test-content.json` — the content document, despite its name. It
+is loaded by the `content.test` flag, which is `everyone: true` (label
+"Course content"); the id kept its old name so nothing that reads it had to
+change. It repeats the four module names, and they must agree with data.js,
+which is what the Flight Deck draws before the document arrives.
+
+**What went this morning**, if it is ever wanted back
+(`git log -- src/content/test-content.json`): M1.01 Rotary Wing Aerodynamics
+(40 + 170), M1.02 Instruments (40 + 272, replaced twice, which is what
+`STORAGE_EPOCH` 2 and 3 were for) and M1.03 Pitot-Static Systems (40 + 81,
+including two questions rewritten in the app on 2026-09-30 and never in the
+source .docx). `supabase/reset-module-13d-progress.sql` took 11 board runs,
+11 saves and 2 progress documents with them; `STORAGE_EPOCH` is 4. Hours
+flown deliberately stayed.
 
 ### What the next batch has to carry
 
