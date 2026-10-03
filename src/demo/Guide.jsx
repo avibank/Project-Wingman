@@ -36,9 +36,30 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { STEPS } from "./steps.js";
 import "./guide.css";
 
+/* HOW LONG A STEP TAKES TO STOP MOVING, which the owner's word for the old
+   numbers was "floaty" (2026-10-03). Measured before and after, on the real
+   twenty-five steps rather than on one: from pressing Next to nothing moving
+   was a median of 1185ms and a worst of 1460ms. Almost none of that was the
+   easing itself — it was dead time waiting for timers, and a browser-paced
+   smooth scroll nobody could tune.
+
+   What makes it feel snappy is not a shorter animation, it is a shorter wait
+   before the animation starts. So the eases are roughly halved and every
+   fixed delay is cut to what the thing it waits for actually needs:
+   TAU_CLOSE's own 3.5τ for the iris, one render for a screen. */
 const PAD = 8;           // how far the light spills past its target
-const TAU = 120;         // ms: the easing time constant of the light
-const TAU_CLOSE = 55;    // ms: closing for a screen change, faster, so it is shut before the screen swaps
+const TAU = 62;          // ms: the easing time constant of the light (~190ms to rest)
+const TAU_CLOSE = 34;    // ms: closing for a screen change, faster, so it is shut before the screen swaps
+const NAV_WAIT = 120;    // ms before a screen changes: 3.5 × TAU_CLOSE, by which point the iris is 97% shut
+const SETTLE_IN = 110;   // ms before looking for the target after a screen change — two frames past the commit
+const ACT_IN = 90;       // ms after a press (opening a chat), which renders but does not change screen
+const HUNT_POLL = 40;    // ms between looks for a target that is not there yet
+/* THE PAGE ARRIVES BEFORE THE LIGHT DOES, deliberately. The light follows
+   whatever it is lighting every frame, so a page that settles first lets the
+   light converge on something that has stopped — and an exponential's tail is
+   long (τ·ln(2·distance) to reach half a pixel), which is most of what was
+   left of a slow step after the dead time went. */
+const SCROLL_TAU = 45;
 const GAP = 16;          // the docked card's distance from the window's edge
 const CARD_W = 600;      // the docked card's width on a wide screen
 const TOP_CLEAR = 84;    // below the app bar: the highest a target is scrolled to
@@ -116,12 +137,34 @@ function plan(el, h) {
   const top = option("top");
   return top.covered < bottom.covered ? top : bottom;
 }
-function scrollBy(el, delta) {
-  if (!delta) return;
+/* THE SCROLL IS OURS, not the browser's.
+   `behavior: "smooth"` is paced by the engine, takes about half a second,
+   cannot be tuned and cannot be awaited — so the light eased on one clock
+   while the page moved on another, and the step was not finished until the
+   slower of the two gave up. This runs the page on the SAME exponential as
+   the light, which means they arrive together, and it calls back when it is
+   actually done instead of being guessed at with a timer.
+   Returns a cancel, because a step can be left before its scroll ends. */
+function scrollBy(el, delta, done) {
+  if (!delta) { done?.(); return () => {}; }
   const box = scroller(Array.isArray(el) ? el[0] : el);
-  const behavior = still() ? "auto" : "smooth";
-  if (box) box.scrollBy({ top: delta, behavior });
-  else window.scrollBy({ top: delta, behavior });
+  const read = () => (box ? box.scrollTop : window.scrollY);
+  const write = (v) => (box ? (box.scrollTop = v) : window.scrollTo(0, v));
+  const to = read() + delta;
+  if (still()) { write(to); done?.(); return () => {}; }
+  let raf = 0;
+  let prev = performance.now();
+  let at = read();
+  const tick = (now) => {
+    const dt = Math.min(64, now - prev);
+    prev = now;
+    at += (to - at) * (1 - Math.exp(-dt / SCROLL_TAU));
+    if (Math.abs(to - at) < 0.5) { write(to); done?.(); return; }
+    write(at);
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(raf);
 }
 
 export default function Guide({ go, warm, onLeave, hasStamp = false, guest = false }) {
@@ -166,7 +209,7 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
     clearTimeout(swap.current);
     if (still()) { setDock(side); return; }
     setAway(true);
-    swap.current = setTimeout(() => { setDock(side); setAway(false); }, 170);
+    swap.current = setTimeout(() => { setDock(side); setAway(false); }, 110);
   }, []);
   useEffect(() => () => clearTimeout(swap.current), []);
 
@@ -240,7 +283,8 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
        screen is there. */
     const moving = step.where && window.location.pathname !== step.where;
     let navTimer = 0;
-    if (moving) navTimer = setTimeout(() => { if (live) go(step.where); }, still() ? 0 : 260);
+    let stopScroll = () => {};
+    if (moving) navTimer = setTimeout(() => { if (live) go(step.where); }, still() ? 0 : NAV_WAIT);
     let acted = false;
     let tries = 0;
     const onScreen = () => !step.where || window.location.pathname === step.where;
@@ -257,25 +301,31 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
     };
     const hunt = () => {
       if (!live) return;
-      if (!onScreen()) { if (++tries < 60) timer = setTimeout(hunt, 80); return; }
-      if (step.act && !acted) { acted = true; step.act(); timer = setTimeout(hunt, 320); return; }
+      /* The patience is unchanged — about five seconds of looking — only the
+         interval is shorter, so a target that turns up early is lit early. */
+      if (!onScreen()) { if (++tries < 120) timer = setTimeout(hunt, HUNT_POLL); return; }
+      if (step.act && !acted) { acted = true; step.act(); timer = setTimeout(hunt, ACT_IN); return; }
       if (!step.find) { dockTo("bottom"); return; }   // nothing to light: the whole screen dims
       const el = pick(step.find);
       if (el) {
         const p = plan(el, cardH());
         dockTo(p.side);
-        scrollBy(el, p.delta);
+        /* The light is given its target FIRST and then the page moves, so the
+           two ease together on one clock rather than the light waiting for a
+           scroll to finish before it starts. And the check happens when the
+           scroll has really ended, which is a thing we now know rather than a
+           timer long enough to cover the worst case. */
         target.current = el;
-        check = setTimeout(() => settle(el), p.delta ? 700 : 120);
+        stopScroll = scrollBy(el, p.delta, () => { check = setTimeout(() => settle(el), 60); });
         return;
       }
-      if (++tries > 50) { dockTo("bottom"); return; }  // never a light on nothing
-      timer = setTimeout(hunt, 80);
+      if (++tries > 100) { dockTo("bottom"); return; }  // never a light on nothing
+      timer = setTimeout(hunt, HUNT_POLL);
     };
     /* Pressing something (opening a chat) renders too, so it waits for the
        closed light as a screen change does. */
-    timer = setTimeout(hunt, moving || step.act ? 320 : 40);
-    return () => { live = false; clearTimeout(timer); clearTimeout(check); clearTimeout(navTimer); };
+    timer = setTimeout(hunt, moving ? SETTLE_IN : (step.act ? ACT_IN : 24));
+    return () => { live = false; stopScroll(); clearTimeout(timer); clearTimeout(check); clearTimeout(navTimer); };
   }, [i]);
 
   /* --------------------------------------------------------------- moving */

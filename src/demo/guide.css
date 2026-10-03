@@ -32,14 +32,14 @@
 .dg-panel {
   position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
   background: rgb(6 10 18 / .58); transform-origin: 0 0; will-change: transform;
-  animation: dg-in .4s ease both;
+  animation: dg-in .24s ease both;
 }
 @keyframes dg-in { from { opacity: 0; } to { opacity: 1; } }
 
 .dg-ring {
   position: fixed; left: 0; top: 0; width: 0; height: 0; box-sizing: border-box;
   border-radius: 10px; box-shadow: 0 0 0 2px var(--active);
-  opacity: 0; transition: opacity .25s ease; will-change: transform;
+  opacity: 0; transition: opacity .15s ease; will-change: transform;
 }
 
 /* Docked, centred, and still. The only transform is the swipe's. */
@@ -51,14 +51,14 @@
   background: var(--ground); color: var(--t1); border: 1px solid var(--line);
   box-shadow: 0 18px 50px rgb(0 0 0 / .32);
   transform: translate3d(var(--drag, 0px), 0, 0);
-  transition: opacity .17s ease, transform .35s cubic-bezier(.22,1,.36,1);
-  animation: dg-card-in .5s cubic-bezier(.22,1,.36,1) backwards;
+  transition: opacity .12s ease, transform .22s cubic-bezier(.22,1,.36,1);
+  animation: dg-card-in .3s cubic-bezier(.22,1,.36,1) backwards;
   will-change: transform, opacity;
 }
 @keyframes dg-card-in { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
 .dg-card[data-dock="top"] { top: 16px; bottom: auto; }
 .dg-card.is-away { opacity: 0; }
-.dg-card[data-dragging="1"] { transition: opacity .17s ease; }
+.dg-card[data-dragging="1"] { transition: opacity .12s ease; }
 .dg-card.is-sheet {
   width: 100vw; bottom: 0; border-radius: 20px 20px 0 0; border-bottom: 0;
   padding: 18px 18px max(14px, env(safe-area-inset-bottom));
@@ -71,7 +71,7 @@
 /* How far through the whole tour: one thin line along the card's top edge. */
 .dg-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--line); }
 .dg-bar i { display: block; height: 100%; background: var(--active); transform-origin: 0 50%;
-  transition: transform .45s cubic-bezier(.22,1,.36,1); }
+  transition: transform .26s cubic-bezier(.22,1,.36,1); }
 .dg-card.is-sheet[data-dock="top"] .dg-bar { top: auto; bottom: 0; }
 
 .dg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
@@ -82,8 +82,14 @@
 .dg-skip:hover { color: var(--t1); }
 
 /* The words change in place: a short fade with a nudge from the side you
-   are heading, and nothing else on the card moves. */
-.dg-body { animation: dg-in-r .38s cubic-bezier(.22,1,.36,1) both; }
+   are heading, and nothing else on the card moves.
+   EVERY DURATION ON THIS SHEET WAS ROUGHLY HALVED on 2026-10-03, the owner:
+   "make it feel snappy rather than floaty". Nothing here was slow on its own
+   — it was that the card's words, the card's entry, the dim and the progress
+   bar each finished at a different time, so the step never had a moment of
+   being done. They land together now. The eases are unchanged: the curve was
+   never the problem. */
+.dg-body { animation: dg-in-r .22s cubic-bezier(.22,1,.36,1) both; }
 .dg-body.from-left { animation-name: dg-in-l; }
 @keyframes dg-in-r { from { opacity: 0; transform: translate3d(10px,0,0); } to { opacity: 1; transform: none; } }
 @keyframes dg-in-l { from { opacity: 0; transform: translate3d(-10px,0,0); } to { opacity: 1; transform: none; } }
@@ -100,7 +106,7 @@
 .dg-next {
   padding: 0 18px; border: 0; border-radius: 999px; cursor: pointer; white-space: nowrap;
   font: 600 14.5px var(--font-ui); background: var(--active-fill); color: var(--ground);
-  transition: transform .18s cubic-bezier(.22,1,.36,1), filter .18s;
+  transition: transform .12s cubic-bezier(.22,1,.36,1), filter .12s;
 }
 .dg-next:hover { filter: brightness(1.06); }
 .dg-next:active { transform: scale(.97); }

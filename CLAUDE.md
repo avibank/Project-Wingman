@@ -787,9 +787,38 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
-  - **Walked and measured**: all twenty-five steps light their target at 1440
-    and at 390, every one of them fully on screen, and the card covers none
-    of any of them. The study-cards step lights the top CARD rather than the
+  - **SNAPPY RATHER THAN FLOATY** (owner, 2026-10-03, which was his word for
+    the old numbers). From pressing Next to nothing moving was a median of
+    **1185ms** and a worst of 1460ms; it is **~600ms** and 1000ms now,
+    measured over all twenty-five steps at 1440 and at 390 rather than over
+    one. Almost none of what went was the easing — it was dead time waiting
+    on timers, so what makes it feel quick is a shorter wait BEFORE the
+    movement, not a shorter movement. The eases are roughly halved (τ 120 →
+    62, close 55 → 34, and every duration in `guide.css`), every fixed delay
+    is cut to what the thing it waits for actually needs, and **the scroll is
+    ours now**: `behavior: "smooth"` is engine-paced, takes about half a
+    second, cannot be tuned and cannot be awaited, so the light eased on one
+    clock while the page moved on another and the step was not done until the
+    slower gave up. The page now runs on the same exponential as the light,
+    slightly faster (τ 45) so it arrives first and the light converges on
+    something that has stopped — and `settle` runs when the scroll has really
+    ended instead of after a timer long enough to cover the worst case. The
+    CURVES are untouched: the curve was never the problem.
+  - **Walked and measured, and now held**: `npm run test:tour` (143
+    assertions) walks all twenty-five steps at 1440 and at 390 and asserts
+    that every step naming a target lights one, that what is lit is fully on
+    screen, that the card covers none of it, and that each step stops moving.
+    It needs the harness, so like `test:bm` and `test:rr` it is not in
+    `npm run check`. That claim had been in this file since 2026-09-21,
+    measured by hand and held by nothing, while the timing that decides all
+    three lives in Guide.jsx — so halving it was the moment to write the walk.
+    Proved by planting all three of its bugs: a light eased far too slowly,
+    a `plan()` that scrolls nothing into view, and a selector that stops
+    matching. Each one fails it; restored, it passes.
+  - **Pressing Next faster than a step settles is fine**, which a quicker
+    tutorial invites: at a 150ms gap and at 60ms, straight through all
+    twenty-five, it lands on the farewell with no console error — each step's
+    effect cancels the one before it, including its scroll. The study-cards step lights the top CARD rather than the
     whole pad: at 390 the pad is 499px tall and its light's own padding came
     down on the docked card by four pixels. The card is docked, so what changes between steps is its
     height and never its foot. Bookmarks is given the same room at its foot
