@@ -49,8 +49,47 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
 
 ## Content
 
-**The first real chapter is in** (owner, 2026-09-21). Before that this section
-said "there is no real content yet", which was true until today.
+**THERE IS NO CONTENT IN THE APP RIGHT NOW, AND THAT IS DELIBERATE** (owner,
+2026-10-03: "delete all quizzes and sets and all traces of them"; then "I'll
+give you the new files, just delete the old ones"). All three of Module 13d's
+chapters came out in one commit, with their three papers, and replacement
+batches are coming. Every module is waiting on its first chapter again.
+
+What went, and what it is worth knowing about it if it ever has to come back
+(`git log -- src/content/test-content.json`):
+
+- **M1.01 Rotary Wing Aerodynamics** — a 40-question quiz and 170 study cards.
+- **M1.02 Instruments** — 40 and 272, after being replaced twice (2026-09-27
+  and 2026-09-28), which is what `STORAGE_EPOCH` 2 and 3 were for.
+- **M1.03 Pitot-Static Systems** — 40 and 81, including the two questions
+  rewritten in the app on 2026-09-30 and not in the source .docx.
+- Three papers from `public/downloads/`, which is now empty.
+
+**AND EVERY TRACE OF THEM WENT WITH THEM**, because this was a removal rather
+than a revision: after it there is no M1 question for any of those ids to
+point at, so a score, a saved card, a caution pile or a board run against one
+would be a result attributed to a question that exists nowhere.
+`supabase/reset-module-13d-progress.sql` is the server half and was run live
+on 2026-10-03 (11 board runs, 11 saves and 2 progress documents; its own proof
+block runs in the same transaction and rolls the whole thing back if one row
+is left). `STORAGE_EPOCH` 4 is the device half. **Hours flown deliberately
+stayed**: `pw-hobbs` is time a student really spent, not a result, and the
+meter never counts up. Licences, stamps, callsigns, squadrons, notes and the
+logbook were never in scope.
+
+The emptied document was **published as course version 7**, because
+`course_docs` is what a student actually loads (migration 0040) — leaving it
+would have served all three chapters to the class from a table while the
+repository said they were gone.
+
+**The empty states were already there and still read correctly**, measured in
+the browser after the deletion rather than assumed: the Flight Deck says "The
+first chapter goes in here", the module says "Waiting on its first chapter"
+over "Module 13d starts here", the Library says "Quizzes land here", and the
+instruments say "FIRST QUIZ FILLS THE RING" and "YOUR FIRST HOUR". §10 holds
+— not one of them states an absence or a zero count.
+
+### What the next batch has to carry
 
 `src/data.js` — **four** modules, M1 to M4, and no chapters. The codes never
 change (progress, scores and saves are keyed to them); the NAMES are the
@@ -59,68 +98,18 @@ current module because it is the first `active` one), **M2 is Module 13e**,
 **M3 is still "Module 3"** (undecided) and **M4 is Module 10**.
 
 `src/content/test-content.json` — the content document, despite its name. It
-is loaded by the `content.test` flag, which is `everyone: true` again (label
+is loaded by the `content.test` flag, which is `everyone: true` (label
 "Course content"); the id kept its old name so nothing that reads it had to
 change. It repeats the four module names, and they must agree with data.js,
-which is what the Flight Deck draws before the document arrives. It holds:
+which is what the Flight Deck draws before the document arrives.
 
-- **Module 13d · M1.01 "Rotary Wing Aerodynamics"**: no lessons, a quiz
-  `M1.01.QZ` of exactly **40** questions (no `lessonId`), and **170 study
-  cards** `M1.01.C001`–`C170`.
-- **Module 13d · M1.02 "Instruments"**: no lessons, a quiz `M1.02.QZ` of
-  **40** questions, and **272 study cards** `M1.02.C001`–`C272`. Two .docx
-  files feed it and they do not feed the same things (owner, 2026-09-28):
-  **the Quiz document is the quiz and nothing else; the Full Set is the
-  study cards AND the paper on the shelf.** Each question carries three
-  options and an answer-key row with the letter and a one-line reason, which
-  become `correct` and `explain`. Spot-checked against the source; the
-  answers come out 91/91/90 across a/b/c.
-  - **THE NAMES ARE THE DOCUMENTS' OWN, exactly** (owner, 2026-09-28: "name
-    them exactly as I say"). The quiz row and the exam header read
-    **M13.8 Instruments 345-406 — Quiz**; the card set and the paper read
-    **M13.8 Instruments 345-406 — Full Set**. Two optional fields carry
-    that: `quiz.name` and the chapter's `cardsName`, both null for a chapter
-    whose documents are untitled, where the old composed labels
-    ("<chapter> quiz", "<chapter> cards") still stand. M1.01's quiz has a
-    name of its own in the document and now uses it.
-  - **IT HAS BEEN REPLACED TWICE**, on 2026-09-27 and again on 2026-09-28,
-    and each revision is why `STORAGE_EPOCH` went to 2 and then 3 and why
-    `supabase/reset-instruments-progress.sql` exists. No revision is a
-    superset of the one before — 345 → 275 → 272 cards, with most of the
-    shared wording given different options or a different answer — and
-    **the ids are positional inside the chapter**, so every id stays and
-    changes meaning. That is what makes a stale score, a saved card or a
-    half-finished paper wrong rather than merely old. Expect to reset again
-    with the next one: run the SQL, raise the epoch, re-make the paper.
-  - The converter is in the session scratchpad rather than the repo: it is a
-    one-off for that document's shape, and a new batch should be read and
-    checked rather than trusted to it.
-- **Module 13d · M1.03 "Pitot-Static Systems"** (owner, 2026-09-30, the
-  third entry in the Library): no lessons, a quiz `M1.03.QZ` of **40**
-  questions and **81 study cards** `M1.03.C001`–`C081`, from the same pair
-  of documents in the same two roles — the Quiz is the quiz and nothing
-  else, the Full Set is the cards AND the paper. Answers 27/27/27 across
-  a/b/c. **The names are the documents' own internal titles**, which read
-  "M13.8 Pitot-Static **Systems** 408-426" where the filenames say
-  "M13.8 Pitot-Static 408-426"; the title is what the author typed inside
-  the document, so it is what the rows say. Nothing was reset for this one:
-  a new chapter has no progress to lose.
-  - **TWO QUESTIONS WERE REWRITTEN IN THE APP** (owner, 2026-09-30, on a
-    screenshot of his own result screen: "change those they are
-    confusing"). `M1.03.Q13`/`C018` asked "how are the static ports
-    installed" while its options varied on two axes at once — flush or
-    protruding AND nose or sides — so a student who knew "flush" still had
-    to guess the half the question had not asked; the stem now asks for
-    both. `M1.03.Q24`/`C054` asked which dependency of the static source
-    error is "marked as unusual", which is a fact about the manual's
-    typography rather than about aeroplanes; it now asks which one affects
-    it "even though you would not expect it to", which is the same answer
-    reached by thinking. Both keep their ids, their options and their
-    correct answer, and both were changed in the quiz AND the card set.
-    **THE SOURCE .docx STILL CARRIES THE OLD WORDING** — the paper on the
-    shelf was re-made with the same two corrections applied on the way
-    through, so the app and the paper agree, but a re-import of that
-    document would bring the old stems back unless it is edited too.
+- **GIVE NEW CHAPTERS IDS THAT HAVE NEVER EXISTED.** Ids are positional
+  inside a chapter (`M1.02.Q7`, `M1.02.C014`) and a reused id silently
+  inherits whatever any device still remembers about the old one. Nothing in
+  the app parses a chapter id for a number — `chapterNo` comes from the
+  chapter's POSITION and `chaptersForModule` only splits on the first `.` —
+  so `M1.B1` is as valid as `M1.01` and cannot collide with anything that
+  came before.
 - **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
   which draws its own "Lessons are filming" state. That is where a quiz and
   a card set live, so content with no video is not invisible.
@@ -131,30 +120,41 @@ which is what the Flight Deck draws before the document arrives. It holds:
   `content.question(id)` finds card ids too — a saved card that answered
   `null` would be pruned off the server. `check:question-ids` holds quiz and
   card ids in one id space.
+- **A quiz document is the quiz and nothing else; a Full Set is the study
+  cards AND the paper** (owner, 2026-09-28, restated 2026-09-30). That is the
+  rule for every batch: the practice quiz never reaches the Papers shelf,
+  because the app's own quiz is where a student sits it.
+- **THE NAMES ARE THE DOCUMENTS' OWN** (owner, 2026-09-28: "name them exactly
+  as I say"), and where a document carries an internal title that differs
+  from its filename, the internal title is what the author typed and is what
+  the rows say. `quiz.name` and the chapter's `cardsName` carry them, both
+  optional: with neither, the old composed labels ("<chapter> quiz",
+  "<chapter> cards") still stand.
 - **`downloads` on a module** — `{id, title, file, pages}`, a file under
   `public/` offered as a plain `<a href download>` on the Library's Papers
   shelf (`LibraryDownloads.jsx`), with **no viewer**: papers stay paused.
-  **THE SHELF IS THE FULL SETS, AND ONLY THOSE** (owner, 2026-09-27):
-  "papers should be the big doc exhaustion sets, the ones you use for the
-  study cards, and those only, named correctly." So it carries one paper per
-  chapter — the complete set its study cards are made from — and nothing
-  else: `M13d-Rotary-Wing-Full-Set.pdf` (15 pages, 170 cards),
-  `M13.8-Instruments-345-406-Full-Set.pdf` (31 pages, 272) and
-  `M13.8-Pitot-Static-Systems-408-426-Full-Set.pdf` (10 pages, 81). A four-page
-  print of the Instruments practice quiz was on the shelf for an hour and
-  came off with this rule; the app's own quiz is where a student sits that,
-  and the Quiz document reaches no other surface.
   `check:paused` allows exactly that anchor and nothing else on the slot.
-  **A .docx becomes one of these without LibreOffice**, which is not on the
-  build machine: `textutil -convert html` keeps the words and the answer-key
-  table, a small script groups each question with its options so neither is
-  split across a page and tags the headings by what they SAY (textutil
-  flattens every heading level into one paragraph class), and Chromium
-  prints it to A4. `pages` is counted out of the PDF rather than guessed,
-  because the row prints it.
+  `pages` is counted out of the PDF rather than guessed, because the row
+  prints it to a student.
+- **A .docx becomes a paper without LibreOffice**, which is not on the build
+  machine: `textutil -convert html` keeps the words and the answer-key table,
+  a small script groups each question with its options so neither is split
+  across a page and tags the headings by what they SAY (textutil flattens
+  every heading level into one paragraph class), and Chromium prints it to
+  A4. **A PDF that is already laid out needs none of that** and can be read
+  directly: the repo's own pinned pdf.js extracts each line with its x and
+  its height, and these documents are exact — stems at x=55 h=10.5, options
+  at x=75, headings h>11, footers h=8 and the answer key h=9 — so a
+  converter classifies by GEOMETRY instead of guessing at prose. The
+  "Marked" column is present on batches drawn from the owner's highlights
+  and absent on the others. Spot-check the answer spread: a correct join
+  comes out near a third each across a/b/c.
+- **Expect to reset again with every replacement.** Run the SQL, raise the
+  epoch, re-make the paper, and publish — a commit alone leaves the class on
+  whatever `course_docs` last served.
 
 `check:placeholders` / `check:ship` grep the build for the markers of the old
-placeholder set; the real content carries none and both pass unchanged.
+placeholder set; nothing carries them and both pass unchanged.
 
 Do not invent YouTube ids, chapter prose or questions to fill the rest.
 
@@ -370,6 +370,13 @@ pgcrypto lives in the `extensions` schema on this project, so every function
 here sets `search_path = public, extensions` — without the second entry
 `digest()` is not found, which is how the first run of this migration
 failed.
+
+**ALL OF MODULE 13d's PROGRESS WAS RESET ON 2026-10-03**, live, with
+`supabase/reset-module-13d-progress.sql`, when all three chapters came out of
+the course at the owner's word. 11 board runs, 11 saves and 2 progress
+documents went; completions, paper marks and ink were already empty. Hours
+flown stayed, deliberately. The device half is `STORAGE_EPOCH = 4`, and the
+emptied document was published as course version 7 — see "Content".
 
 **The Instruments chapter's progress was reset on 2026-09-27**, live, with
 `supabase/reset-instruments-progress.sql` (not part of the numbered series:
