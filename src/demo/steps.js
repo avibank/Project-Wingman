@@ -158,7 +158,7 @@ export const STEPS = [
   {
     section: "Quiz", where: QUIZ, find: [".exam-bar", ".exam-body .question"],
     title: "A quiz is sat, not played",
-    text: "You answer the whole paper and hand it in, with nothing marked while you are still working — knowing question three was right changes how you answer question four, and the real paper will not tell you either. The clock is twenty minutes and it belongs to the paper: step away and it stops, come back and it picks up where it was.",
+    text: "You answer the whole paper and hand it in, with nothing marked while you are still working — knowing question three was right changes how you answer question four, and the real paper will not tell you either. The clock is thirty minutes and it belongs to the paper: step away and it stops, come back and it picks up where it was.",
   },
   {
     section: "Quiz", where: QUIZ, find: [".navigator"],

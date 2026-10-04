@@ -16,6 +16,7 @@ const rnd = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
 
 const ok = (s) => `oklch(${s})`;
 
+
 /* ---------- aurora specs, one per livery ---------- */
 // [hue, weight, chromaMul]. Narrower bands, lower blur and a pass of fine
 // rays, so each display reads as structure rather than bloom.
@@ -255,24 +256,38 @@ export const FINISHES = [
   { id: null, name: "Standard", line: "The livery, as it is." },
   { id: "aurora", name: "Aurora", line: "Polar route, no traffic, nothing to do but look up." },
   { id: "manual", name: "Manual", line: "Everything you need is in here somewhere." },
+  { id: "tribal", name: "Tribal", line: "Four blades and a hub, repeated to the horizon." },
+  { id: "tiedye", name: "Tie-dye", line: "Dyed through folded cloth, in your own colours." },
 ];
 
-/* AURORA IS OFFERED AGAIN (owner, 2026-09-29: "reintroduce aurora as a
-   finish like it was"), which reverses 2026-09-21's "remove aurora for now,
-   just keep manual". It was never taken out — it stayed in FINISHES, every
-   renderer kept drawing it, and check:contrast, check:surfaces and test:bm
-   have been measuring it the whole time — so bringing it back is deleting
-   the filter that stood here, which is what that note said it would be.
+/* THE PATTERN FINISHES ARE NOT DRAWN FROM THIS FILE. `src/lib/finishPattern.js`
+   holds both, and App imports it lazily when one is on — because everything
+   here is in the entry chunk, which sits exactly on its budget, and a
+   wallpaper nobody has chosen must not be on anybody's first paint. The
+   metadata above is all the entry needs to OFFER them. */
+export const PATTERN_FINISHES = new Set(["tribal", "tiedye"]);
+export const isPattern = (id) => PATTERN_FINISHES.has(id);
 
-   `offeredFinish` stays: it is what stops a stored finish this build does
-   not know about painting nothing, and it is how a retired one would be
-   turned back into Standard if a finish is ever withdrawn again.
+/* AURORA IS NOT OFFERED (owner, 2026-10-04: "remove aurora"). It was taken
+   out on 2026-09-21, put back on 2026-09-29 ("reintroduce aurora as a finish
+   like it was"), and is out again — which is the third time this one line has
+   moved, so it is written to move cleanly rather than to be clever.
 
-   AURORA IS STILL A NIGHT SKY. App.jsx forces the night variant on it
-   (`variant = finish === "aurora" ? "night" : …`) and `lightOverride` says
-   so in the picker, so there are 30 real skins rather than 36. That rule
-   was never conditional on the finish being offered. */
-export const OFFERED_FINISHES = FINISHES;
+   IT IS A FILTER, NOT A DELETION, every time. Aurora stays in FINISHES,
+   every renderer keeps drawing it, and check:contrast, check:surfaces and
+   test:bm keep measuring it — so nothing about it rots while it is out, and
+   putting it back is this line again. Deleting the renderers to "tidy up"
+   is what would make the next reinstatement a rewrite.
+
+   `offeredFinish` is the other half: an account stored on Aurora reads back
+   as Standard rather than painting nothing, which is what makes withdrawing
+   a finish safe at all.
+
+   AURORA IS STILL A NIGHT SKY while it is unoffered. App.jsx forces the
+   night variant on it and `lightOverride` says so, and neither rule was ever
+   conditional on the finish being offered — which is what keeps `?finish=`
+   and the harness honest. */
+export const OFFERED_FINISHES = FINISHES.filter((f) => f.id !== "aurora");
 export const offeredFinish = (id) => (OFFERED_FINISHES.some((f) => f.id === (id ?? null)) ? (id ?? null) : null);
 
 /**

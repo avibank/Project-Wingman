@@ -60,12 +60,12 @@ console.log("\nthe shape");
      promises now, deliberately: the row answers "how long will this take me"
      and the paper answers "how long have I got", and on a short quiz those
      are different numbers. Owner's decision, 2026-09-20. */
-  ok("shape", "the clock is a flat twenty minutes", allowanceFor(8) === 1200 && allowanceFor(1) === 1200);
+  ok("shape", "the clock is a flat thirty minutes", allowanceFor(8) === 1800 && allowanceFor(1) === 1800);
   ok("shape", "up to forty questions, and only up to forty",
-     allowanceFor(40) === 1200 && allowanceFor(41) === 41 * 75);
-  ok("shape", "an empty paper still gets the sitting, not a minute", allowanceFor(0) === 1200);
+     allowanceFor(40) === 1800 && allowanceFor(41) === 41 * 75);
+  ok("shape", "an empty paper still gets the sitting, not a minute", allowanceFor(0) === 1800);
   /* The estimate keeps the per-question figure, because a row reading "about
-     20 minutes" for every quiz in the module says nothing at all. */
+     30 minutes" for every quiz in the module says nothing at all. */
   ok("shape", "the row's estimate is still per question", /10 minutes/.test(estimate(8)));
 }
 

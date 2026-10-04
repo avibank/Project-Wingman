@@ -9,11 +9,11 @@
         {
           "id": "M1.B1",
           "name": "Theory of Flight · Rotary Wing",
-          "cardsName": "M13 Batch 1 — Full Set",
+          "cardsName": "M13 Batch 1 — Full Set · pages 1–68",
           "lessons": [],
           "quiz": {
             "id": "M1.B1.QZ",
-            "name": "M13 Batch 1 — Quiz",
+            "name": "M13 Batch 1 — Quiz · pages 1–68",
             "questions": [
               {
                 "id": "M1.B1.Q1",
@@ -2333,11 +2333,11 @@
         {
           "id": "M1.B6",
           "name": "Instruments (ATA 31)",
-          "cardsName": "M13 Batch 6 — Full Set",
+          "cardsName": "M13 Batch 6 — Full Set · pages 352–491",
           "lessons": [],
           "quiz": {
             "id": "M1.B6.QZ",
-            "name": "M13 Batch 6 — Quiz",
+            "name": "M13 Batch 6 — Quiz · pages 352–491",
             "questions": [
               {
                 "id": "M1.B6.Q1",
@@ -7364,13 +7364,13 @@
       "downloads": [
         {
           "id": "M1.B1.DL1",
-          "title": "M13 Batch 1 — Full Set",
+          "title": "M13 Batch 1 — Full Set · pages 1–68",
           "file": "downloads/M13-Batch-1-Full-Set-pages-1-68.pdf",
           "pages": 26
         },
         {
           "id": "M1.B6.DL1",
-          "title": "M13 Batch 6 — Full Set",
+          "title": "M13 Batch 6 — Full Set · pages 352–491",
           "file": "downloads/M13-Batch-6-Full-Set-pages-352-491.pdf",
           "pages": 65
         }

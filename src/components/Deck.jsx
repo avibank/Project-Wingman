@@ -205,6 +205,13 @@ const ROOM_CSS = `
 /* ruled-lines layer for the Manual finish */
 .rules { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; }
 
+/* TRIBAL — one repeating tile, and nothing else. It sits with the rules, in
+   front of the lamps and behind every row of content, so the livery's own
+   light still falls across it. No blend mode: the tile already carries its
+   own alpha and screening it would bleach the hub to white on a dark ground
+   and lose it entirely on a light one. */
+.tribal { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
 /* MANUAL — printed by day, microfiche by night */
 .app[data-paper="1"] { --rule: oklch(.58 .012 85 / .55); --hair: oklch(.58 .012 85 / .30); }
 .app[data-paper="1"][data-fiche="1"] { --rule: oklch(.62 .010 85 / .48); --hair: oklch(.62 .010 85 / .26); }
@@ -325,7 +332,7 @@ const ROOM_CSS = `
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 `;
 
-function Deck({ aurora, rules }) {
+function Deck({ aurora, rules, tribal }) {
   const stars = useMemo(() => ({
     "--stars-a": dotTile(30, 20260824, 1.4, 0.8),
     "--stars-b": dotTile(20, 77003311, 1.0, 0.58),
@@ -339,6 +346,7 @@ function Deck({ aurora, rules }) {
       <div className="lamp fill"><i /></div>
       <div className="a-cloud" />
       <div className="rules" style={rules || undefined} />
+      {tribal && <div className="tribal" style={tribal} />}
       <div className="lamp spill"><i /></div>
       <div className="grain" />
       <style>{ROOM_CSS}</style>

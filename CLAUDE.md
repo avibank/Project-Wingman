@@ -94,11 +94,14 @@ columns.
 **Spot-check the answer spread**: a correct join lands near a third each
 across a/b/c. These came out 14/13/13, 57/57/56, 14/13/13 and 139/139/138.
 
-**The names are the documents' own titles**, which in this batch are also the
-filenames: `quiz.name` is "M13 Batch 1 — Quiz" and the chapter's `cardsName`
-is "M13 Batch 1 — Full Set". The chapter NAME is the document's own subtitle
-("M13.1 Theory of Flight · Rotary wing"), which is the subject rather than
-the batch.
+**The names are the documents' own titles, PLUS THE PAGE RANGE** (owner,
+2026-10-04: "the quizzes and sets should have the page numbers stated
+clearly"). `quiz.name` is "M13 Batch 1 — Quiz · pages 1–68" and the chapter's
+`cardsName` is "M13 Batch 1 — Full Set · pages 1–68"; the paper on the shelf
+takes the same string. The range is the one fact these documents are named by
+— it is in every filename and in every document's own subtitle — and it was
+the only part of the title the October layout dropped. The chapter NAME stays
+the subject ("Theory of Flight · Rotary Wing"), not the batch.
 
 **A quiz document is the quiz and nothing else; a Full Set is the study cards
 AND the paper** (owner, 2026-09-28, held to ever since). The practice quiz
@@ -326,10 +329,14 @@ merge them back together.
     attempt whose questions no longer hash the same, and refuses one written
     before the hash existed. Without it, the Instruments replacement would
     have marked yesterday's answers against today's questions.
-- **The clock is a FLAT TWENTY MINUTES** for any quiz up to forty questions
-  (owner, 2026-09-20), which reverses the 75-seconds-a-question figure below.
-  `estimate` keeps the 75 seconds, because a row reading "about 20 minutes"
-  for every quiz would say nothing.
+- **The clock is a FLAT THIRTY MINUTES** for any quiz up to forty questions
+  (owner, 2026-10-04), which raises R5's twenty (2026-09-20) and reverses the
+  75-seconds-a-question figure below. Past forty the per-question figure comes
+  back, rather than a forty-one-question paper silently getting the same
+  sitting as an eight-question one. `estimate` keeps the 75 seconds, because a
+  row reading "about 30 minutes" for every quiz would say nothing. The number
+  is in `quiz.js` and `check:exam` holds it; `steps.js` says it out loud to a
+  visitor, so it has to move with it.
 - **The clock counts DOWN, and hands the paper in at zero.** This file used
   to say "elapsed time, never a countdown", and `quiz.js` §1 carried the
   argument: a countdown decides when you stop. The approved screen reverses it
@@ -999,18 +1006,69 @@ the result away.
 - **Papers are off** (`paper.viewer` is `everyone: false`): nothing in the
   Library, the subtitle, Bookmarks or the paper address. The demo says a
   reader for module-wide shared PDFs is coming.
-- **Aurora is back** (owner, 2026-09-29: "reintroduce aurora as a finish
-  like it was"), which reverses the 2026-09-21 removal. It was never taken
-  out — it stayed in `FINISHES`, every renderer kept drawing it, and
-  `check:contrast`, `check:surfaces` and `test:bm` never stopped measuring
-  it — so bringing it back was deleting one filter in `finishEngine.js`,
-  exactly as the note there said it would be. `offeredFinish` stays, because
-  it is what stops a stored finish this build does not know about painting
-  nothing. **Aurora is still a night sky**: App.jsx forces the night variant
-  on it and the picker says so, which is why there are 30 real skins and not
-  36. The `livery.aurora` FLAG is a different thing and stays off — it gates
-  the retired aurora LIVERY, and a student stored on it still comes back as
-  sky plus the aurora finish (`RETIRED_TO_FINISH`).
+- **Aurora is OUT again** (owner, 2026-10-04: "remove aurora"). Out on
+  2026-09-21, back on 2026-09-29, out again now — three moves of one line, so
+  it is written to move cleanly. **It is a filter, never a deletion**: Aurora
+  stays in `FINISHES`, every renderer keeps drawing it, and `check:contrast`,
+  `check:surfaces` and `test:bm` keep measuring it, so nothing rots while it
+  is out and putting it back is that line again. Deleting the renderers to
+  tidy up is what would make the next reinstatement a rewrite. `offeredFinish`
+  is the other half: an account stored on Aurora reads back as Standard rather
+  than painting nothing. The `livery.aurora` FLAG is a different thing and
+  stays off — it gates the retired aurora LIVERY (`RETIRED_TO_FINISH`).
+- **TWO PATTERN FINISHES** (owner, 2026-10-04, from two reference images):
+  **Tribal**, a four-blade rotor tile — the reference was a deco floor tile,
+  and drawn literally it is somebody else's; drawn as a hub, four blades and
+  four pitch-link darts it is the same geometry and the thing these students
+  are studying. And **Tie-dye**, a spiral wound from the centre.
+  - **ONE HUE EACH, NOT A RAINBOW**, and that is the house rule rather than a
+    limitation. §Design's two-layer colour reserves `--presence` amber for
+    "something is happening here"; a wallpaper painted in it would spend the
+    one colour this app keeps for that. So both patterns are drawn in the
+    LIVERY's own accent hue, walked a few degrees the way `AUR.cH` walks it —
+    the tile in four tones of it, the spiral in a band ±54° around it. Six
+    liveries that all came out rainbow would not be six liveries.
+  - **The hue is read off the accent, not tabled**, so a seventh livery gets
+    both finishes for free.
+  - **Day is not night inverted.** On a lit ground the pattern has to go
+    darker than the paper to be seen at all, so lightness crosses over while
+    chroma and hue do not.
+  - **Neither moves**, which is the cheapest way to obey §Design's last line:
+    there is no animation for Smooth Air to turn off.
+  - **The spiral is drawn, not faked.** Colour as a function of angle AND
+    radius is what a tie-dye is, and no CSS gradient does both — one conic
+    gives wedges, one radial gives rings. Sixteen rings of twenty-six wedges,
+    each ring turned a full wedge further than the one inside it, is a real
+    spiral. Two bugs are in its history and `check:pattern` holds both: it
+    wound too little and read as a **dartboard**, and the rings were
+    inscribed in their box so it was a **disc with four dark corners**.
+  - **The bleed is what makes it dye**: one blur over the colour, with the
+    crinkle streaks sharp on top, because a fold line is the one crisp thing
+    in a real tie-dye. It is rasterised once when the image decodes.
+  - **The tile is tiled and the spiral is not.** A spiral has one centre;
+    repeating it puts a seam through every copy.
+  - **`src/lib/finishPattern.js` IS NEVER IMPORTED BY `finishEngine.js`.**
+    The entry chunk sat exactly on its budget and pulling the pattern code
+    in through the engine — which every screen needs — put it over. App
+    imports it lazily when a pattern finish is on and holds the layer in
+    state, so a wallpaper nobody has chosen costs first paint nothing. The
+    cost is stated: a pattern student gets the deck for a frame or two before
+    it arrives, which looks like a wallpaper fading up.
+  - **The budget moved once, to 684KB**, deliberately and with the next 4KB
+    already identified in its own comment: `AUR`'s spec table is in the entry
+    on every first paint for a finish that is not offered, and nothing calls
+    `auroraLayers`, `starfield` or `horizon` any more — only `finishVars`'s
+    aurora branch holds it in. Moving that the way the patterns went puts the
+    entry back under 680 with room.
+  - **`?pattern` on any address** opens them over the real app with a desk to
+    turn the dials (`?tiedye` opens on the spiral). It is the real finish
+    through the real door — Deck's layer — not a preview of one, because a
+    tile shown on its own always looks good and tells you nothing about
+    whether a chapter row is readable on top of it. Nothing it does is saved.
+  - `npm run check:pattern` is 57 assertions, and the geometry ones read the
+    drawn paths rather than the constants — the blade bug was that paths
+    authored about the origin were rotated about the hub, so the first render
+    drew a grid and a rosette and no blades at all.
 - **The stamp engine is the launch pack's, byte for byte**:
   `src/lib/stamp-engine.js` is `docs/launch/code/05-stamp-engine.js` between
   two marker lines, with only FONTS, one page-level `<svg><defs>` (first in
