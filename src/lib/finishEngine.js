@@ -256,8 +256,7 @@ export const FINISHES = [
   { id: null, name: "Standard", line: "The livery, as it is." },
   { id: "aurora", name: "Aurora", line: "Polar route, no traffic, nothing to do but look up." },
   { id: "manual", name: "Manual", line: "Everything you need is in here somewhere." },
-  { id: "tribal", name: "Tribal", line: "Four blades and a hub, repeated to the horizon." },
-  { id: "tiedye", name: "Tie-dye", line: "Dyed through folded cloth, in your own colours." },
+  { id: "tiedye", name: "Tie-dye", line: "A fan disc over dyed cloth, in your own colours." },
 ];
 
 /* THE PATTERN FINISHES ARE NOT DRAWN FROM THIS FILE. `src/lib/finishPattern.js`
@@ -265,7 +264,7 @@ export const FINISHES = [
    here is in the entry chunk, which sits exactly on its budget, and a
    wallpaper nobody has chosen must not be on anybody's first paint. The
    metadata above is all the entry needs to OFFER them. */
-export const PATTERN_FINISHES = new Set(["tribal", "tiedye"]);
+export const PATTERN_FINISHES = new Set(["tiedye"]);
 export const isPattern = (id) => PATTERN_FINISHES.has(id);
 
 /* AURORA IS NOT OFFERED (owner, 2026-10-04: "remove aurora"). It was taken

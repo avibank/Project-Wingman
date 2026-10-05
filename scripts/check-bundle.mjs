@@ -11,8 +11,8 @@ import { join } from "node:path";
 const DIST = "dist/assets";
 const HTML = "dist/index.html";
 /* 680 on the day it was set, when the entry measured 645. Raised to 684 on
-   2026-10-04, deliberately and once, for the two pattern finishes (Tribal and
-   Tie-dye): the metadata that OFFERS them has to be in the entry, and the
+   2026-10-04, deliberately and once, for the pattern finish (Tie-dye): the
+   metadata that OFFERS it has to be in the entry, and the
    code that draws them is not — `src/lib/finishPattern.js` is imported lazily
    by App and nothing in the entry references it, which is worth about 3KB of
    the 4 this would otherwise have cost.

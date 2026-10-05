@@ -208,6 +208,18 @@ architecture note above says.
   this was collapsed to one hue once and then explicitly reversed.
 - Accent is driven by `--accent-h/s/l` channels; every other accent token derives from
   them via `calc()`. Changing the hue re-tints the app. Five user-selectable liveries.
+- **TARMAC IS COPPER, NOT BLUE** (owner, 2026-10-04: "tarmac colours are off,
+  less purps more copper"). It sat at hue 255 with chroma .022 — a blue so
+  desaturated it read as purple-grey, which is what he was seeing. The design
+  always meant otherwise: the POC's own description for this livery is
+  "Concrete and a copper floodlight", and the numbers never delivered it. Hue
+  48, chroma .034, and the Day stock ground with it. **A livery lives in three
+  files and all three had to move together**: `liveryEngine.js`,
+  `docs/reference/wingman-poc.html` (which `check:livery` lifts and diffs
+  against, token for token) and `design/wingman-day-source.js` (which
+  `check:day` does the same with). It passes the signal rule at the new hue:
+  caution is a hue-locked amber at 78 and this is 30 away, but at .034 against
+  .156 of chroma a warm grey ground cannot be mistaken for a lit annunciator.
 - `--accent-dim` is for decorative labels; `--accent-tint` is for text that carries
   meaning (chapter codes). Using dim for the latter makes it unreadable.
 - **There is one livery system, and it is the app's.** A second one — a livery a
@@ -1016,59 +1028,68 @@ the result away.
   is the other half: an account stored on Aurora reads back as Standard rather
   than painting nothing. The `livery.aurora` FLAG is a different thing and
   stays off — it gates the retired aurora LIVERY (`RETIRED_TO_FINISH`).
-- **TWO PATTERN FINISHES** (owner, 2026-10-04, from two reference images):
-  **Tribal**, a four-blade rotor tile — the reference was a deco floor tile,
-  and drawn literally it is somebody else's; drawn as a hub, four blades and
-  four pitch-link darts it is the same geometry and the thing these students
-  are studying. And **Tie-dye**, a spiral wound from the centre.
-  - **ONE HUE EACH, NOT A RAINBOW**, and that is the house rule rather than a
+- **ONE PATTERN FINISH: Tie-dye, and it is a jet turbine** (owner,
+  2026-10-04, from two reference images and then "tie dye should be a mix of
+  what i sent and a jet turbine, clear yet background").
+  - **The dye is the colour and the turbine is the form.** Over the wound
+    bands sits a fan disc — a spinner, twenty-two swept blades, a containment
+    ring and a nozzle ring. They are one drawing rather than two stacked,
+    because they share a centre and a direction of turn: the blades lean the
+    same way the dye winds.
+  - **"CLEAR YET BACKGROUND" IS TWO NUMBERS, not one compromise.** The form is
+    drawn hard — crisp blade edges, true rings, the dye pulled back under it —
+    and the whole layer is then taken to single-digit opacity. Blurring the
+    blades to make them subtle loses the turbine and keeps the haze, which is
+    the worst of both; the first cut did exactly that and the fan washed out.
+  - **The disc has to survive the crop.** The field is one square drawn
+    `cover`, so on a wide screen it scales to the WIDTH and the top and bottom
+    are cut away. At a tip radius of .47 the fan ran off both edges and what
+    was left read as a few arcs. At .30 the whole disc is inside the shortest
+    viewport this app supports.
+  - **ONE HUE, NOT A RAINBOW**, and that is the house rule rather than a
     limitation. §Design's two-layer colour reserves `--presence` amber for
     "something is happening here"; a wallpaper painted in it would spend the
-    one colour this app keeps for that. So both patterns are drawn in the
-    LIVERY's own accent hue, walked a few degrees the way `AUR.cH` walks it —
-    the tile in four tones of it, the spiral in a band ±54° around it. Six
-    liveries that all came out rainbow would not be six liveries.
-  - **The hue is read off the accent, not tabled**, so a seventh livery gets
-    both finishes for free.
-  - **Day is not night inverted.** On a lit ground the pattern has to go
-    darker than the paper to be seen at all, so lightness crosses over while
-    chroma and hue do not.
-  - **Neither moves**, which is the cheapest way to obey §Design's last line:
+    one colour this app keeps for that. So the band runs ±54° around the
+    LIVERY's own accent hue, **read off the accent rather than tabled**, so a
+    seventh livery gets the finish for free.
+  - **Day is not night inverted**: on a lit ground the pattern goes darker
+    than the paper, so lightness crosses over while chroma and hue do not.
+  - **Nothing moves**, which is the cheapest way to obey §Design's last line:
     there is no animation for Smooth Air to turn off.
-  - **The spiral is drawn, not faked.** Colour as a function of angle AND
-    radius is what a tie-dye is, and no CSS gradient does both — one conic
-    gives wedges, one radial gives rings. Sixteen rings of twenty-six wedges,
-    each ring turned a full wedge further than the one inside it, is a real
-    spiral. Two bugs are in its history and `check:pattern` holds both: it
-    wound too little and read as a **dartboard**, and the rings were
-    inscribed in their box so it was a **disc with four dark corners**.
-  - **The bleed is what makes it dye**: one blur over the colour, with the
-    crinkle streaks sharp on top, because a fold line is the one crisp thing
-    in a real tie-dye. It is rasterised once when the image decodes.
-  - **The tile is tiled and the spiral is not.** A spiral has one centre;
-    repeating it puts a seam through every copy.
+  - **It is ONE FIELD BEHIND THE WHOLE APP** (owner's choice of three): fixed
+    to the viewport and drawn OUTSIDE `.deck-light`, which clips and
+    paint-contains its children — a child of that could never reach the app
+    bar and would be cut at the deck's own edge, and a spiral cut off at a
+    panel edge is the one thing this finish must not do. **Nothing else had to
+    change for it to show through**: `--panel` and `--raised` have carried
+    alpha since the livery engine was written, so the tab strip and the cards
+    on it are already glass and the field simply continues underneath them.
+    **One exception, named rather than silent: Beacon's `--raised` is fully
+    opaque** (it alone carries `glass: 0.93`), so on Beacon the field shows
+    through the ground and the panels but not through a raised card. A
+    seventh opaque surface fails `check:pattern`.
+  - **TRIBAL IS GONE** (owner, same day: "kill tribal"). It shipped and was
+    killed within a day, and unlike Aurora it is **deleted rather than
+    filtered** — Aurora is kept standing because it has shipped, been
+    withdrawn and been reinstated twice, so its renderers earn their place; a
+    finish that lasted one day leaves nothing worth keeping warm, and `git
+    show` has it.
   - **`src/lib/finishPattern.js` IS NEVER IMPORTED BY `finishEngine.js`.**
-    The entry chunk sat exactly on its budget and pulling the pattern code
-    in through the engine — which every screen needs — put it over. App
-    imports it lazily when a pattern finish is on and holds the layer in
-    state, so a wallpaper nobody has chosen costs first paint nothing. The
-    cost is stated: a pattern student gets the deck for a frame or two before
-    it arrives, which looks like a wallpaper fading up.
-  - **The budget moved once, to 684KB**, deliberately and with the next 4KB
-    already identified in its own comment: `AUR`'s spec table is in the entry
-    on every first paint for a finish that is not offered, and nothing calls
-    `auroraLayers`, `starfield` or `horizon` any more — only `finishVars`'s
-    aurora branch holds it in. Moving that the way the patterns went puts the
-    entry back under 680 with room.
-  - **`?pattern` on any address** opens them over the real app with a desk to
-    turn the dials (`?tiedye` opens on the spiral). It is the real finish
-    through the real door — Deck's layer — not a preview of one, because a
-    tile shown on its own always looks good and tells you nothing about
-    whether a chapter row is readable on top of it. Nothing it does is saved.
-  - `npm run check:pattern` is 57 assertions, and the geometry ones read the
-    drawn paths rather than the constants — the blade bug was that paths
-    authored about the origin were rotated about the hub, so the first render
-    drew a grid and a rosette and no blades at all.
+    The entry chunk sat on its budget and pulling the pattern code in through
+    the engine — which every screen needs — put it over. App imports it
+    lazily when the finish is on, so a wallpaper nobody has chosen costs first
+    paint nothing. The cost is stated: a Tie-dye student gets the deck for a
+    frame or two before the field arrives.
+  - **The budget moved once, to 684KB**, with the next 4KB already named in
+    its own comment: `AUR`'s spec table is in the entry on every first paint
+    for a finish that is not offered, and only `finishVars`'s aurora branch
+    holds it in.
+  - **`?pattern` on any address** opens it over the real app with a desk for
+    the strength and the hue. It is the real finish through the real door —
+    Deck's layer — not a preview of one, because a pattern shown on its own
+    always looks good and tells you nothing about whether a chapter row is
+    readable on top of it. Nothing it does is saved.
+  - `npm run check:pattern` is 75 assertions.
 - **The stamp engine is the launch pack's, byte for byte**:
   `src/lib/stamp-engine.js` is `docs/launch/code/05-stamp-engine.js` between
   two marker lines, with only FONTS, one page-level `<svg><defs>` (first in

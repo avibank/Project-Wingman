@@ -910,10 +910,10 @@ function AppInner() {
      the desk holds the dials in state and the tab forgets them. */
   const [patDemo, setPatDemo] = useState(() => {
     const q = new URLSearchParams(window.location.search);
-    const on = q.has("pattern") || q.has("tribal") || q.has("tiedye");
-    return { open: on, kind: q.has("tiedye") ? "tiedye" : "tribal", alpha: null, size: 240, tint: null };
+    const on = q.has("pattern") || q.has("tiedye");
+    return { open: on, alpha: null, tint: null };
   });
-  const patKind = patDemo.open ? patDemo.kind : (isPattern(finish) ? finish : null);
+  const patKind = patDemo.open || isPattern(finish) ? "tiedye" : null;
   const [patLayer, setPatLayer] = useState(null);
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [boarding, setBoarding] = useState(true);
@@ -1657,10 +1657,10 @@ function AppInner() {
     const accent = deckVars(patDemo.tint || shownLivery, variant).C.active;
     import("./lib/finishPattern.js").then(({ patternLayer }) => {
       if (live) setPatLayer(patternLayer(patKind, accent, variant,
-        { alpha: patDemo.alpha ?? undefined, size: patDemo.size }));
+        { alpha: patDemo.alpha ?? undefined }));
     }).catch(() => { if (live) setPatLayer(null); });
     return () => { live = false; };
-  }, [patKind, patDemo.tint, patDemo.alpha, patDemo.size, shownLivery, variant]);
+  }, [patKind, patDemo.tint, patDemo.alpha, shownLivery, variant]);
 
   // The livery and variant are mirrored onto the root because html and body sit
   // outside .app, so the page behind the app would otherwise have to hardcode a
@@ -1784,7 +1784,7 @@ function AppInner() {
     <Deck aurora={finish === "aurora" && variant !== "day"}
             rules={finish === "manual" && ruled
               ? ruledLayer(deckVars(shownLivery, variant).C.active, variant === "day") : null}
-            tribal={patLayer} />
+            turbine={patLayer} />
     {patDemo.open && (
       <Suspense fallback={null}>
         <PatternDemo value={patDemo} onChange={(v) => setPatDemo({ ...v, open: true })}

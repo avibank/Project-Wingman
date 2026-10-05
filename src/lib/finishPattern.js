@@ -1,5 +1,5 @@
 /* =============================================================================
-   THE PATTERN FINISHES — Tribal's rotor tile and Tie-dye's spiral.
+   THE TURBINE — the pattern behind the "Tie-dye" finish.
    -----------------------------------------------------------------------------
    THIS FILE IS NEVER IMPORTED BY finishEngine.js, AND THAT IS THE POINT.
    The entry chunk sat exactly on its 680KB budget, and pulling the tile code
@@ -15,12 +15,14 @@
    faint backgrounds by design, so what that looks like is a wallpaper fading
    up, and it is the same bargain the reader's pdf.js already takes.
 
+   ---
    -----------------------------------------------------------------------------
-   THE ROTOR TILE — the pattern behind the "Tribal" finish.
-   -----------------------------------------------------------------------------
-   The owner handed over a tile (2026-10-04) and asked for "aviation tribal,
-   Wingman, Google-like, a pattern that lives in the background, faint but
-   noticeable, and a version for each colour."
+   THE TRIBAL TILE WAS HERE AND IS GONE (owner, 2026-10-04: "kill tribal").
+   It shipped and was killed the same day; `git show` has it if it is ever
+   wanted. This is not the Aurora case and does not get Aurora's treatment —
+   that one is kept standing because it has shipped, been withdrawn and been
+   reinstated twice, so its renderers earn their place. A finish that lasted
+   one day leaves nothing worth keeping warm.
 
    WHAT IT DRAWS, and why it is this and not the reference traced. The
    reference is a deco floor tile: four cream petals round a gold rosette,
@@ -82,116 +84,34 @@ export function oklchHex(L, C, hDeg) {
    The corner rosette is a QUARTER drawn at each corner. Four tiles meeting
    complete it, which is the join: without something crossing the seam the
    grid reads as separate squares and the eye finds the edges. */
-const T = 240;
-const C = T / 2;
-
-/* EVERYTHING STAYS INSIDE ITS SQUARE. The first cut ran the blades to 86 of a
-   120 half-tile and they crossed the rule into the neighbour's square, which
-   turned a grid of motifs into one continuous thicket — the reference's whole
-   character is that each tile is a contained object with air round it. The
-   blade reaches 66 and the dart 86, both clear of the 120 edge.
-
-   A blade has one convex edge and one concave, so it reads as a blade with a
-   leading and a trailing edge rather than as a symmetric leaf. */
-const BLADE = "M0,-11 C20,-24 48,-34 66,-31 C60,-12 34,2 0,11 C-5,3 -5,-4 0,-11 Z";
-/* A dart: the pitch link, thin and pointed, on the axis between two blades,
-   and longer than the blade because in the reference the thin gold leaves
-   reach furthest. */
-const DART = "M0,-20 L6,-52 L0,-86 L-6,-52 Z";
-
-/* TRANSLATE THEN ROTATE. Both paths are authored about the ORIGIN — that is
-   what lets one path be reused four times — so each has to be carried to the
-   hub before it is turned. Rotating about the hub without translating first
-   draws them at the tile's top-left corner and swings them off the tile
-   entirely, which is what the first render did: a hub and a grid, and no
-   blades at all. */
-const rot = (deg) => `translate(${C} ${C}) rotate(${deg})`;
-
-/**
- * The tile, as a data: URL.
- *
- * `blade`, `dart`, `hub` and `rule` are hex colours; `alpha` is the whole
- * tile's opacity, which is the one dial between "faint" and "noticeable" and
- * the only one worth exposing.
- */
-export function rotorTile({ blade, dart, hub, rule, alpha = 1, size = T }) {
-  const g = (body) => `<g transform="translate(${C} ${C})">${body}</g>`;
-  /* THE HIERARCHY IS INSIDE THE TILE, not in the colours. The reference reads
-     as cream petals with gold accents on them; here one hue does all of it, so
-     what separates blade from dart from hub is how solid each is. Give them
-     equal weight and the motif turns into a blot. */
-  const blades = [45, 135, 225, 315]
-    .map((d) => `<path d="${BLADE}" fill="${blade}" opacity=".55" transform="${rot(d)}"/>`).join("");
-  const darts = [0, 90, 180, 270]
-    .map((d) => `<path d="${DART}" fill="${dart}" opacity=".85" transform="${rot(d)}"/>`).join("");
-  /* The hub: a ring, a disc and eight short spokes — the rosette of the
-     reference, read as the head of a rotor mast. */
-  const spokes = Array.from({ length: 8 }, (_, i) =>
-    `<rect x="-1.6" y="-23" width="3.2" height="9" fill="${hub}" transform="rotate(${i * 45})"/>`).join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" viewBox="0 0 ${T} ${T}">`
-    + `<g opacity="${alpha}">`
-    /* The grid. Drawn on all four edges at half width, so two neighbours
-       make one line of the intended weight and no edge is doubled. */
-    + `<path d="M0,0 H${T} M0,${T} H${T} M0,0 V${T} M${T},0 V${T}" stroke="${rule}" stroke-width="2" opacity=".5" fill="none"/>`
-    + blades + darts
-    + `<circle cx="${C}" cy="${C}" r="17" fill="none" stroke="${hub}" stroke-width="2.5"/>`
-    + `<circle cx="${C}" cy="${C}" r="7.5" fill="${hub}"/>`
-    + g(spokes)
-    /* The corner rosette, quartered across the seam. */
-    + [[0, 0], [T, 0], [0, T], [T, T]]
-      .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="${dart}" stroke-width="2.5"/>`
-        + `<circle cx="${x}" cy="${y}" r="3" fill="${dart}"/>`).join("")
-    + `</g></svg>`;
-  const url = `data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, "%27").replace(/"/g, "%22")}`;
-  return { url, size };
-}
-
-/* ---------- a version for each colour -------------------------------------
-   One spec per livery, derived from the livery's own accent hue rather than
-   hand-picked, so a seventh livery would get a tribal finish for free. The
-   numbers are the material: how far the blade is lifted off the ground, how
-   much more chroma the dart carries, how far the hue walks between them.
-
-   DAY IS NOT NIGHT INVERTED. On a lit ground the pattern has to go DARKER
-   than the paper to be seen at all, so lightness crosses over while chroma
-   and hue do not. */
-export const TRIBAL = {
-  /* "Faint but noticeable" is one number and it is this one. Picked by eye
-     against a swept strip rather than argued: below about .10 the tile is
-     gone on a phone in daylight, above about .20 it starts competing with the
-     panels in front of it. */
-  alpha: 0.15,
-  night: { bladeL: 0.62, bladeC: 0.055, dartL: 0.70, dartC: 0.115, hubL: 0.74, hubC: 0.130, ruleL: 0.46, ruleC: 0.040, walk: 14 },
-  day: { bladeL: 0.52, bladeC: 0.060, dartL: 0.46, dartC: 0.120, hubL: 0.42, hubC: 0.135, ruleL: 0.62, ruleC: 0.045, walk: 14 },
-};
-
-/** The hue a livery's tribal pattern is drawn in: the accent's own. */
-export function tribalHue(accent) {
+/** The hue a pattern is drawn in: the livery's accent's own, read off it
+ *  rather than tabled, so a seventh livery needs no entry here. */
+export function patternHue(accent) {
   const m = /oklch\(\s*[\d.]+\s+[\d.]+\s+([\d.]+)/.exec(String(accent || ""));
   return m ? Number(m[1]) : 250;
 }
 
-/**
- * The finished tile for a livery, as `{ url, size }`.
- * `accent` is that livery's `--active`; `alpha` is the strength dial.
- */
-export function tribalTile(accent, variant = "night", alpha = TRIBAL.alpha) {
-  const h = tribalHue(accent);
-  const k = variant === "day" ? TRIBAL.day : TRIBAL.night;
-  return rotorTile({
-    blade: oklchHex(k.bladeL, k.bladeC, h),
-    dart: oklchHex(k.dartL, k.dartC, h + k.walk),
-    hub: oklchHex(k.hubL, k.hubC, h + k.walk),
-    rule: oklchHex(k.ruleL, k.ruleC, h - k.walk),
-    alpha,
-  });
-}
 
 /* ===========================================================================
    THE SPIRAL — the pattern behind the "Tie-dye" finish.
    ---------------------------------------------------------------------------
    The owner handed over a classic spiral tie-dye (2026-10-04) and asked for
    it "with each livery using its own colours and hues".
+
+   AND IT IS A JET TURBINE (owner, 2026-10-04: "tie dye should be a mix of
+   what i sent and a jet turbine, clear yet background"). So the dye is the
+   colour and the turbine is the form: over the wound bands sits a fan disc —
+   a spinner, a ring of blades swept from it, a containment ring and a nozzle
+   ring outside that. The two are the same drawing because they share a
+   centre and a direction of turn, which is the only way a mix of them is a
+   thing rather than two things on top of each other.
+
+   "CLEAR YET BACKGROUND" is a contradiction worth stating as two numbers
+   rather than splitting the difference. The FORM is drawn hard — blade edges
+   crisp, rings true — so it reads as a turbine the moment you look at it;
+   the whole layer is then taken down to single-digit opacity so it never
+   competes. Blurring the blades to make them "subtle" would have lost the
+   turbine and kept the haze, which is the worst of both.
 
    SO IT IS NOT A RAINBOW, and that is the whole translation. The reference
    gets its energy from running the entire spectrum, which is exactly what
@@ -228,6 +148,24 @@ export function tribalTile(accent, variant = "night", alpha = TRIBAL.alpha) {
    crinkle lines ARE the crisp part, because they are where the cloth was
    folded and the dye did not reach. */
 const SP = { rings: 16, arms: 26, spokes: 90 };
+/* The fan. Blades is a real fan count — a big turbofan runs 18 to 26 — and
+   the sweep is what makes them blades rather than spokes: each one leans
+   into the direction of turn, the same direction the dye winds, so the two
+   halves of this drawing agree about which way the thing is rotating. */
+/* THE DISC HAS TO SURVIVE THE CROP. The field is one square drawn `cover`
+   over the window, so on a wide screen the square is scaled to the WIDTH and
+   the top and bottom are cut away — at a tip radius of .47 the fan ran off
+   both edges and what was left read as a few arcs rather than as a fan. At
+   .30 the whole disc is inside the shortest viewport this app supports, so
+   it is still a turbine on a laptop and on a phone. */
+const FAN = { blades: 22, sweep: 26, hubR: 0.055, rootR: 0.085, tipR: 0.30, ringR: 0.335, nozzleR: 0.385 };
+/* "CLEAR YET BACKGROUND" IS TWO NUMBERS, not one compromise, and this is the
+   pair. The whole layer goes to single-digit opacity, so the only way the
+   turbine survives is for the FORM to carry far more weight than the colour
+   inside the image: the fan is drawn strong and the dye is pulled back under
+   it. The first cut had them the other way round and the fan washed out. */
+const FAN_INK = { blade: 0.58, edge: 0.88, ring: 0.62, nozzle: 0.34, root: 0.46, spinner: 0.9 };
+const DYE_UNDER = 0.72;
 /* The ring stack has to reach past the corners or the pattern is a disc on a
    ground, with four dark corners — `slice` cannot help, because the circle is
    inscribed in the box rather than filling it. 0.78 of the box takes the
@@ -286,11 +224,52 @@ export function spiralDye({ hue, spread = 54, lightFrom = 0.34, lightTo = 0.80, 
      crinkle sits on top of it sharp, because a fold line is the one crisp
      thing in a real tie-dye. It costs nothing per frame: this is rasterised
      once when the browser decodes the image, like the starfield. */
+  /* ---- the fan disc ------------------------------------------------------
+     Drawn OVER the dye and never blurred. Each blade is a quadrilateral from
+     root to tip whose trailing edge lags its leading edge by `sweep` degrees,
+     which is camber; the pair of arcs closing it makes the root and tip
+     follow the discs they sit on rather than cutting straight across. */
+  const ink = oklchHex(lightTo, chroma * 0.5, hue);
+  const shade = oklchHex(lightFrom * 0.8, chroma * 0.6, hue);
+  const pol = (r, deg) => {
+    const a = ((deg - 90) * Math.PI) / 180;
+    return `${(c + r * Math.cos(a)).toFixed(1)},${(c + r * Math.sin(a)).toFixed(1)}`;
+  };
+  const R = (k) => box * FAN[k];
+  let fan = "";
+  for (let i = 0; i < FAN.blades; i += 1) {
+    const a0 = (i * 360) / FAN.blades;
+    const w = 360 / FAN.blades;
+    const lead = a0;
+    const trail = a0 + w * 0.62;
+    fan += `<path d="M${pol(R("rootR"), lead)} L${pol(R("tipR"), lead + FAN.sweep)}`
+      + ` A${R("tipR").toFixed(1)},${R("tipR").toFixed(1)} 0 0 1 ${pol(R("tipR"), trail + FAN.sweep)}`
+      + ` L${pol(R("rootR"), trail)}`
+      + ` A${R("rootR").toFixed(1)},${R("rootR").toFixed(1)} 0 0 0 ${pol(R("rootR"), lead)} Z"`
+      + ` fill="${ink}" opacity="${FAN_INK.blade}"/>`
+      /* The lit leading edge. A blade you can see the edge of reads as metal;
+         a flat silhouette reads as a paper cut-out. */
+      + `<path d="M${pol(R("rootR"), lead)} L${pol(R("tipR"), lead + FAN.sweep)}"`
+      + ` stroke="${ink}" stroke-width="${(box / 460).toFixed(2)}" opacity="${FAN_INK.edge}" fill="none"/>`;
+  }
+  const ring = (r, o, wdt) => `<circle cx="${c}" cy="${c}" r="${R(r).toFixed(1)}" fill="none"`
+    + ` stroke="${ink}" stroke-width="${wdt}" opacity="${o}"/>`;
+  const disc = `<g>${fan}`
+    + ring("ringR", String(FAN_INK.ring), (box / 260).toFixed(2))    // containment ring
+    + ring("nozzleR", String(FAN_INK.nozzle), (box / 430).toFixed(2))  // nozzle, outside it
+    + ring("rootR", String(FAN_INK.root), (box / 520).toFixed(2))    // where the blades root
+    /* The spinner, with the painted swirl every fan has on it so you can see
+       at a glance that it is turning. */
+    + `<circle cx="${c}" cy="${c}" r="${R("hubR").toFixed(1)}" fill="${shade}" opacity=".7"/>`
+    + `<path d="M${pol(R("hubR") * 0.92, 0)} A${(R("hubR") * 0.92).toFixed(1)},${(R("hubR") * 0.92).toFixed(1)} 0 1 1 ${pol(R("hubR") * 0.92, 200)}"`
+    + ` stroke="${ink}" stroke-width="${(box / 290).toFixed(2)}" fill="none" opacity="${FAN_INK.spinner}"/>`
+    + `</g>`;
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}"`
     + ` preserveAspectRatio="xMidYMid slice">`
     + `<defs><filter id="w" x="-10%" y="-10%" width="120%" height="120%">`
     + `<feGaussianBlur stdDeviation="${(box / 46).toFixed(1)}"/></filter></defs>`
-    + `<g opacity="${alpha}"><g filter="url(%23w)">${turns.join("")}</g>${crinkle}</g></svg>`;
+    + `<g opacity="${alpha}"><g opacity="${DYE_UNDER}"><g filter="url(%23w)">${turns.join("")}</g>${crinkle}</g>${disc}</g></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, "%27").replace(/"/g, "%22")}`;
 }
 
@@ -300,7 +279,7 @@ export const DYE = {
   /* The same "faint but noticeable" dial as the tile, and a lower number: a
      spiral fills the whole layer where the tile leaves ground between its
      motifs, so the same alpha reads about twice as strong. */
-  alpha: 0.085,
+  alpha: 0.11,
   spread: 54,
   night: { lightFrom: 0.30, lightTo: 0.76, chroma: 0.145 },
   day: { lightFrom: 0.52, lightTo: 0.90, chroma: 0.110 },
@@ -309,7 +288,7 @@ export const DYE = {
 /** The finished spiral for a livery, as `{ url }`. */
 export function tieDye(accent, variant = "night", alpha = DYE.alpha) {
   const k = variant === "day" ? DYE.day : DYE.night;
-  return { url: spiralDye({ hue: tribalHue(accent), spread: DYE.spread, alpha, ...k }) };
+  return { url: spiralDye({ hue: patternHue(accent), spread: DYE.spread, alpha, ...k }) };
 }
 
 /* ---------------------------------------------------------------------------
@@ -317,11 +296,6 @@ export function tieDye(accent, variant = "night", alpha = DYE.alpha) {
    shape Deck takes, so neither App nor Deck knows a spiral from a tile.
 --------------------------------------------------------------------------- */
 export function patternLayer(kind, accent, variant, opts = {}) {
-  if (kind === "tribal") {
-    const t = tribalTile(accent, variant, opts.alpha ?? TRIBAL.alpha);
-    const size = opts.size ?? 240;
-    return { backgroundImage: `url("${t.url}")`, backgroundSize: `${size}px ${size}px`, backgroundRepeat: "repeat" };
-  }
   if (kind === "tiedye") {
     const d = tieDye(accent, variant, opts.alpha ?? DYE.alpha);
     /* COVER, CENTRED, NOT REPEATED — a spiral has one centre and tiling it
