@@ -1,5 +1,5 @@
 /* =============================================================================
-   THE PATTERN FINISHES — the tile, the spiral, their six colours each.
+   THE TURBINE — the Tie-dye finish's spiral, its six colours, and its field.
    -----------------------------------------------------------------------------
    `src/lib/finishPattern.js` is a plain module for the same reason `studioModel.js`
    is: the parts worth holding here are geometry and a colour conversion, and
@@ -17,9 +17,8 @@
    ========================================================================= */
 import { readFileSync } from "node:fs";
 import { LIVERIES, deckVars } from "../src/lib/liveryEngine.js";
-import { oklchHex, rotorTile, tribalTile, tribalHue, TRIBAL } from "../src/lib/finishPattern.js";
 import { FINISHES, OFFERED_FINISHES, offeredFinish, finishVars, isPattern } from "../src/lib/finishEngine.js";
-import { patternLayer, tieDye, DYE } from "../src/lib/finishPattern.js";
+import { oklchHex, patternLayer, patternHue, tieDye, DYE } from "../src/lib/finishPattern.js";
 
 let pass = 0;
 const fails = [];
@@ -47,84 +46,84 @@ console.log("the colour conversion");
      /^#[0-9a-f]{6}$/.test(oklchHex(0.95, 0.4, 140)), oklchHex(0.95, 0.4, 140));
 }
 
-console.log("\nthe geometry");
-{
-  const svg = svgOf(rotorTile({ blade: "#111111", dart: "#222222", hub: "#333333", rule: "#444444" }).url);
-  const paths = [...svg.matchAll(/<path d="(M0,-[\d.]+[^"]*)"[^>]*transform="translate\(120 120\) rotate\((\d+)\)"/g)];
-  ok("tile", "four blades and four darts, each carried to the hub before it is turned",
-     paths.length === 8 && paths.filter((p) => /C/.test(p[1])).length === 4,
-     `${paths.length} placed paths`);
-  ok("tile", "and they are at the four diagonals and the four axes",
-     [45, 135, 225, 315].every((d) => svg.includes(`rotate(${d})`))
-     && [0, 90, 180, 270].every((d) => svg.includes(`rotate(${d})`)));
-
-  /* EVERY ELEMENT INSIDE ITS OWN SQUARE. The furthest point of any path
-     authored about the origin has to clear the 120 half-tile, or the motif
-     crosses the rule into its neighbour. Read out of the path data rather
-     than asserted as a constant, so editing a path is what moves it. */
-  const reach = (d) => Math.max(...[...d.matchAll(/-?[\d.]+/g)].map((m) => Math.abs(Number(m[0]))));
-  const worst = Math.max(...paths.map((p) => reach(p[1])));
-  ok("tile", "nothing reaches past its own square", worst < 120, `furthest point is ${worst} of 120`);
-  ok("tile", "and there is air left round it", worst < 100, `furthest point is ${worst}`);
-
-  ok("tile", "the corner rosette is quartered across all four corners, so tiles join",
-     ["0\" cy=\"0", "240\" cy=\"0", "0\" cy=\"240", "240\" cy=\"240"].every((c) => svg.includes(c)));
-  ok("tile", "the grid is drawn on all four edges, at half weight for the join",
-     /M0,0 H240 M0,240 H240 M0,0 V240 M240,0 V240/.test(svg));
-  ok("tile", "it is one tile, not a field of gradients",
-     (svg.match(/<svg/g) || []).length === 1 && !/gradient/i.test(svg));
-  ok("tile", "and nothing in it moves",
-     !/<animate|animation|@keyframes|dur=/.test(svg));
-}
-
 console.log("\na version for each colour");
 {
+  const svgOf = (url) => decodeURIComponent(url.replace(/^data:image\/svg\+xml,/, ""));
   const seen = new Map();
   for (const L of LIVERIES) {
     for (const variant of ["night", "day"]) {
       const accent = deckVars(L.id, variant).vars["--active"];
-      const url = tribalTile(accent, variant).url;
-      const svg = svgOf(url);
+      const svg = svgOf(tieDye(accent, variant, 1).url);
       const hexes = [...new Set([...svg.matchAll(/#[0-9a-f]{6}/g)].map((m) => m[0]))];
-      ok(L.id, `${variant}: drawn in four tones of its own hue`, hexes.length === 4, hexes.join(" "));
+      ok(L.id, `${variant}: drawn in its own hue`, hexes.length > 6, `${hexes.length} tones`);
       seen.set(`${L.id}/${variant}`, hexes.join(""));
     }
-    /* The hue IS the livery's accent hue, not a table somebody has to keep. */
     const accent = deckVars(L.id, "night").vars["--active"];
     const h = Number(/oklch\(\s*[\d.]+\s+[\d.]+\s+([\d.]+)/.exec(accent)[1]);
     ok(L.id, "its hue is the accent's own, so a seventh livery needs no entry",
-       Math.abs(tribalHue(accent) - h) < 0.001);
+       Math.abs(patternHue(accent) - h) < 0.001);
   }
-  ok("colours", "and no two liveries get the same tile",
+  ok("colours", "and no two liveries get the same field",
      new Set(seen.values()).size === seen.size, `${new Set(seen.values()).size} of ${seen.size} distinct`);
-  /* DAY IS NOT NIGHT. On a lit ground the pattern has to go darker than the
-     paper; inverting nothing would leave it invisible. */
-  ok("colours", "day is drawn darker than night rather than the same",
-     TRIBAL.day.hubL < TRIBAL.night.hubL && TRIBAL.day.dartL < TRIBAL.night.dartL);
+  ok("colours", "day is drawn lighter than night, because on cream a dark band is a stain",
+     DYE.day.lightFrom > DYE.night.lightFrom);
 }
 
 console.log("\nwhat it must not do");
 {
   ok("tokens", "it moves no token at all — the palette is Standard's",
-     Object.keys(finishVars("sky", "night", "tribal", "oklch(.68 .13 254)")).length === 0,
+     Object.keys(finishVars("sky", "night", "tiedye", "oklch(.68 .13 254)")).length === 0,
      "a finish that only adds a layer must not touch the measured palette");
   ok("tokens", "so every contrast pair already measured for Standard still holds",
-     JSON.stringify(finishVars("beacon", "day", "tribal", "oklch(.67 .15 24)")) === "{}");
+     JSON.stringify(finishVars("beacon", "day", "tiedye", "oklch(.67 .15 24)")) === "{}");
 
-  const layer = patternLayer("tribal", "oklch(0.6800 0.1303 253.95)", "night");
-  ok("layer", "it is delivered as one repeating image, like the ruled lines are",
-     /^url\("data:image\/svg\+xml,/.test(layer.backgroundImage) && layer.backgroundRepeat === "repeat");
+  const layer = patternLayer("tiedye", "oklch(0.6800 0.1303 253.95)", "night");
+  ok("layer", "it is delivered as one image, like the ruled lines are",
+     /^url\("data:image\/svg\+xml,/.test(layer.backgroundImage));
   ok("layer", "and it carries no blend mode to bleach the hub",
      !("mixBlendMode" in layer) && !("filter" in layer));
 
-  ok("faint", `the default strength is faint but not gone (${TRIBAL.alpha})`,
-     TRIBAL.alpha >= 0.08 && TRIBAL.alpha <= 0.22, String(TRIBAL.alpha));
+  ok("faint", `the default strength is faint but not gone (${DYE.alpha})`,
+     DYE.alpha >= 0.03 && DYE.alpha <= 0.20, String(DYE.alpha));
 
   const deck = readFileSync("src/components/Deck.jsx", "utf8");
-  ok("deck", "the layer sits with the rules — behind content, in front of the lamps",
-     /\.tribal \{[^}]*z-index: 1/.test(deck) && /\.tribal \{[^}]*pointer-events: none/.test(deck));
-  ok("deck", "and Deck is told what to draw rather than knowing which finish asked",
-     /function Deck\(\{ aurora, rules, tribal \}\)/.test(deck) && !/finishPattern/.test(deck));
+  /* ONE FIELD BEHIND EVERYTHING. It has to be FIXED and it has to be outside
+     `.deck-light`, which clips and paint-contains its children — inside it,
+     the spiral could never reach the app bar and would be cut at the deck's
+     own edge, which is the one thing this finish must not do. */
+  ok("field", "the field is fixed to the viewport, not absolute inside the deck",
+     /\.turbine-field \{[^}]*position: fixed/.test(deck) && /\.turbine-field \{[^}]*inset: 0/.test(deck));
+  ok("field", "and it is drawn OUTSIDE the clipped, paint-contained light layer",
+     deck.indexOf('className="turbine-field"') < deck.indexOf('className={`deck-light'));
+  ok("field", "it never takes a press", /\.turbine-field \{[^}]*pointer-events: none/.test(deck));
+  ok("field", "and Deck is told what to draw rather than knowing which finish asked",
+     /function Deck\(\{ aurora, rules, turbine \}\)/.test(deck) && !/finishPattern/.test(deck));
+
+  /* THE PANELS WERE ALREADY GLASS, which is why nothing else had to change
+     for the field to continue under the tab strip and every card on it. If a
+     livery ever emitted an opaque surface the field would stop at that edge
+     and the whole decision would be undone without a word.
+
+     ONE EXCEPTION, NAMED RATHER THAN SILENT, which is how check:doors handles
+     the same problem: BEACON'S `--raised` IS FULLY OPAQUE. It is not an
+     oversight — Beacon carries `glass: 0.93` in its livery spec, the only one
+     of the six that does, and that is a deliberate choice about Beacon rather
+     than anything to do with this finish. The cost is real and belongs
+     written down: on Beacon the field shows through the ground and the panels
+     but NOT through a raised card. A seventh opaque surface fails here. */
+  const OPAQUE_OK = new Set(["beacon/--raised"]);
+  for (const L of LIVERIES) {
+    for (const variant of ["night", "day"]) {
+      const v = deckVars(L.id, variant).vars;
+      const alpha = (tok) => { const m = /\/\s*([\d.]+)\s*\)/.exec(String(v[tok])); return m ? Number(m[1]) : 1; };
+      for (const tok of ["--panel", "--raised"]) {
+        if (OPAQUE_OK.has(`${L.id}/${tok}`)) continue;
+        ok("glass", `${L.id}/${variant}: ${tok} lets the field through`, alpha(tok) < 1, String(alpha(tok)));
+      }
+    }
+  }
+  ok("glass", "and the one opaque surface is still the only one",
+     [...OPAQUE_OK].length === 1 && OPAQUE_OK.has("beacon/--raised"));
 }
 
 console.log("\nand aurora is out, not deleted");
@@ -136,9 +135,13 @@ console.log("\nand aurora is out, not deleted");
      offeredFinish("aurora") === null);
   ok("aurora", "and its palette still resolves, so check:contrast keeps measuring it",
      Object.keys(finishVars("sky", "night", "aurora", "oklch(.68 .13 254)")).length > 0);
-  ok("tribal", "the new finish IS offered, and says what it is",
-     OFFERED_FINISHES.some((f) => f.id === "tribal" && /blades/.test(f.line)));
-  ok("tiedye", "and so is the spiral", OFFERED_FINISHES.some((f) => f.id === "tiedye"));
+  ok("tiedye", "the new finish IS offered, and says what it is",
+     OFFERED_FINISHES.some((f) => f.id === "tiedye" && /fan disc/.test(f.line)));
+  /* KILLED THE SAME DAY IT SHIPPED (owner: "kill tribal"), and unlike Aurora
+     it is gone rather than filtered — a finish that lasted one day leaves no
+     renderers worth keeping warm, and git has it. */
+  ok("tribal", "and Tribal is gone, not merely unoffered",
+     !FINISHES.some((f) => f.id === "tribal") && patternLayer("tribal", "oklch(.68 .13 254)", "night") === null);
 }
 
 console.log("\nthe spiral");
@@ -167,6 +170,20 @@ console.log("\nthe spiral");
   ok("dye", "the colour bleeds and the crinkle stays sharp",
      /feGaussianBlur/.test(svg) && /filter="url\(%23w\)"/.test(svg)
      && svg.indexOf("<rect") > svg.indexOf("filter=\"url(%23w)\""));
+  /* THE TURBINE IS DRAWN HARD AND THE LAYER IS TAKEN DOWN, which is what
+     "clear yet background" means in two numbers rather than one compromise:
+     blurring the blades to make them subtle loses the turbine and keeps the
+     haze. So the fan must sit OUTSIDE the blur group. */
+  ok("dye", "the fan disc is a real fan — blades, a containment ring and a spinner",
+     (svg.match(/ fill="#[0-9a-f]{6}" opacity="0?\.\d+"\/>/g) || []).length >= 18
+     && (svg.match(/<circle/g) || []).length >= 4);
+  /* Read the blur group's OWN contents rather than matching across the whole
+     document: a greedy match from the filter tag finds every circle on the
+     page and claims the fan is inside it. */
+  const blurOpen = svg.indexOf('<g filter="url(%23w)">');
+  const blurred = svg.slice(blurOpen, svg.indexOf("</g>", blurOpen));
+  ok("dye", "and it is drawn sharp, outside the blur, after the dye",
+     blurOpen > -1 && !blurred.includes("<circle") && svg.lastIndexOf("<circle") > blurOpen);
   ok("dye", "and nothing in it moves", !/<animate|dur=/.test(svg));
 
   /* IT IS NOT A RAINBOW. Each livery runs a band around ITS OWN hue — six
@@ -199,13 +216,11 @@ console.log("\nthe spiral");
 
   ok("dye", "it is drawn centred and uncut rather than tiled — a spiral has one centre",
      patternLayer("tiedye", "oklch(.68 .13 254)", "night").backgroundRepeat === "no-repeat");
-  ok("dye", "it is fainter than the tile by default, because it fills where the tile leaves ground",
-     DYE.alpha < TRIBAL.alpha, `${DYE.alpha} vs ${TRIBAL.alpha}`);
   ok("dye", "day is lighter than night, because on cream a dark band is a stain",
      DYE.day.lightFrom > DYE.night.lightFrom);
 
-  ok("pattern", "both finishes are named as patterns, so App knows to load them lazily",
-     isPattern("tribal") && isPattern("tiedye") && !isPattern("manual") && !isPattern(null));
+  ok("pattern", "it is named a pattern, so App knows to load it lazily",
+     isPattern("tiedye") && !isPattern("tribal") && !isPattern("manual") && !isPattern(null));
   const app = readFileSync("src/App.jsx", "utf8");
   ok("pattern", "and App is the only place that imports the pattern module, lazily",
      /import\("\.\/lib\/finishPattern\.js"\)/.test(app));

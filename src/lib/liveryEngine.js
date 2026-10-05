@@ -34,10 +34,23 @@ export const LIVERIES = [
     description: "Nothing is actually wrong. The lamp just likes your attention.",
     hue: 78, dDark: -14, dLight: 14, midAt: 0.45, midC: 1.18,
     chroma: 0.126, ground: 0.158, light: 0.944, fillAbs: 70, fillC: 0.15 },
-  { id: "tarmac", name: "Tarmac grey", anchors: "gunmetal → graphite → grey",
-    description: "Cold concrete, borrowed light, working hours.",
-    hue: 255, dDark: 6, dLight: -12, midAt: 0.50, midC: 1.00,
-    chroma: 0.022, ground: 0.145, light: 0.955, keyAbs: 58, keyC: 0.105, fillAbs: 256, fillC: 0.30 },
+  // COPPER, NOT BLUE (owner, 2026-10-04: "tarmac colours are off, less purps
+  // more copper"). It sat at hue 255 with chroma .022 — a blue so desaturated
+  // it read as purple-grey, which is what he was seeing. The design always
+  // meant otherwise: the POC's own description for this livery is "Concrete
+  // and a copper floodlight", and the numbers never delivered it. Hue 48 is
+  // that floodlight, and the chroma is lifted just enough to carry it while
+  // this stays the near-neutral livery of the six.
+  //
+  // It passes the signal check at the new hue: caution is a hue-locked amber
+  // at 78 and this is 30 away, but the two are nowhere near each other in
+  // CHROMA — .034 against .156 — so a warm grey ground cannot be mistaken for
+  // a lit annunciator. Amber the livery is at 78 and is the one that collides
+  // with the lamp; see the note at the caution token.
+  { id: "tarmac", name: "Tarmac grey", anchors: "gunmetal → bronze → warm grey",
+    description: "Concrete and a copper floodlight. Everything you see is borrowed.",
+    hue: 48, dDark: 6, dLight: -12, midAt: 0.50, midC: 1.00,
+    chroma: 0.034, ground: 0.145, light: 0.955, keyAbs: 58, keyC: 0.105, fillAbs: 256, fillC: 0.30 },
   // Restored on instruction: the original signal red, name and description.
   { id: "beacon", name: "Beacon red", anchors: "maroon → university red → signal red",
     description: "Red, rotating, and not asking twice.",
@@ -201,7 +214,7 @@ export const DAY = {
 // that is exactly why Day read as one theme wearing six accents. Beacon's is
 // the loud one on purpose: a blush pink under deep signal-red ink.
 export const STOCK = {
-  sky: [".014", 240], amber: [".024", 80], tarmac: [".008", 250],
+  sky: [".014", 240], amber: [".024", 80], tarmac: [".012", 50],
   beacon: [".038", 16], runway: [".015", 122], skydrol: [".015", 296],
 };
 
@@ -320,7 +333,7 @@ export function deckVars(liveryId, variant = "night") {
   // cannot carry this.
   //
   // The collision is real and measured rather than assumed. Accent hues sit at
-  // sky 254, amber 83, tarmac 252, beacon 24, runway 145, skydrol 303 — so
+  // sky 254, amber 83, tarmac 46, beacon 24, runway 145, skydrol 303 — so
   // against caution's 78, ONLY Amber collides, at 5 degrees. Beacon is 54 away
   // and needs nothing. In the colliding case the hue is kept and the VALUE
   // separates: lighter than the accent at night, darker than it in day.

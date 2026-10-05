@@ -43,7 +43,7 @@ const DAY = {
 const STOCK = {
   sky    : ['.014', 240],
   amber  : ['.024',  80],
-  tarmac : ['.008', 250],
+  tarmac : ['.012', 50],   // copper, not blue — see liveryEngine's tarmac note (2026-10-04)
   beacon : ['.038',  16],       /* blush */
   runway : ['.015', 122],
   skydrol: ['.015', 296]
