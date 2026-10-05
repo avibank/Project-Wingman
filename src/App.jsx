@@ -172,7 +172,7 @@ function warmOnIntent(e) {
 
 const NotFound = lazy(CHUNK.notFound);
 import { engineLivery, deckVars, DEFAULT_LIVERY, RETIRED_TO_FINISH } from "./lib/liveryEngine.js";
-import { finishVars, ruledLayer, offeredFinish, isPattern } from "./lib/finishEngine.js";
+import { finishVars, ruledLayer, offeredFinish } from "./lib/finishEngine.js";
 import { fetchAllPresence, heartbeat } from "./lib/presence.js";
 import { listen, LIVE_TABLES } from "./lib/live.js";
 import { useDisplayName } from "./lib/identity.js";
@@ -230,9 +230,6 @@ const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
    drawings nobody else should download. */
 /* The demo guide is lazy, and only ever loaded inside the demo. */
 const Guide = lazy(() => import("./demo/Guide.jsx"));
-/* `?pattern` only. Lazy so a finish nobody has asked to look at costs the
-   entry chunk nothing. */
-const PatternDemo = lazy(() => import("./dev/PatternDemo.jsx"));
 import UsernameGate from "./components/UsernameGate.jsx";
 import FirstFlightGate from "./components/FirstFlightGate.jsx";
 import { MODULES, NAV, TRIVIA } from "./data.js";
@@ -904,17 +901,6 @@ function AppInner() {
   // not offered while Aurora is selected, and not reachable if it was already
   // pinned when the finish was chosen.
   const variant = finish === "aurora" ? "night" : (variantPin || autoVariant);
-  /* THE PATTERN FINISHES, TO LOOK AT (`?pattern`, owner 2026-10-04). It is
-     the real finish through the real door — Deck's layer — rather than a
-     preview of one, so what is judged is what would ship. Nothing is saved:
-     the desk holds the dials in state and the tab forgets them. */
-  const [patDemo, setPatDemo] = useState(() => {
-    const q = new URLSearchParams(window.location.search);
-    const on = q.has("pattern") || q.has("tiedye");
-    return { open: on, alpha: null, tint: null };
-  });
-  const patKind = patDemo.open || isPattern(finish) ? "tiedye" : null;
-  const [patLayer, setPatLayer] = useState(null);
   const [dyslexiaFont, setDyslexiaFont] = useState(false);
   const [boarding, setBoarding] = useState(true);
   // onAnimationEnd was the only way out of a full-screen blocking overlay, and
@@ -1641,26 +1627,6 @@ function AppInner() {
   // temporal dead zone and throws. A bundler will not catch that.
   const shownLivery = livery === "aurora" && !flags["livery.aurora"] ? DEFAULT_LIVERY : livery;
 
-  /* THE PATTERN ARRIVES LATE AND THAT IS DELIBERATE. finishPattern.js is
-     imported here and nowhere in the entry chunk, so a wallpaper nobody has
-     chosen costs first paint nothing (check:bundle). Until it lands the deck
-     is simply the livery, which is what it was before any of this.
-
-     IT SITS BELOW `shownLivery` BECAUSE IT READS IT. The note above this
-     line is the reason: these are evaluated during render, so an effect
-     placed higher would put a `const` below it in the temporal dead zone and
-     throw — and a bundler will not catch that. eslint's no-use-before-define
-     did, on the first attempt. */
-  useEffect(() => {
-    if (!patKind) { setPatLayer(null); return undefined; }
-    let live = true;
-    const accent = deckVars(patDemo.tint || shownLivery, variant).C.active;
-    import("./lib/finishPattern.js").then(({ patternLayer }) => {
-      if (live) setPatLayer(patternLayer(patKind, accent, variant,
-        { alpha: patDemo.alpha ?? undefined }));
-    }).catch(() => { if (live) setPatLayer(null); });
-    return () => { live = false; };
-  }, [patKind, patDemo.tint, patDemo.alpha, shownLivery, variant]);
 
   // The livery and variant are mirrored onto the root because html and body sit
   // outside .app, so the page behind the app would otherwise have to hardcode a
@@ -1784,13 +1750,7 @@ function AppInner() {
     <Deck aurora={finish === "aurora" && variant !== "day"}
             rules={finish === "manual" && ruled
               ? ruledLayer(deckVars(shownLivery, variant).C.active, variant === "day") : null}
-            turbine={patLayer} />
-    {patDemo.open && (
-      <Suspense fallback={null}>
-        <PatternDemo value={patDemo} onChange={(v) => setPatDemo({ ...v, open: true })}
-                    onClose={() => setPatDemo((t) => ({ ...t, open: false }))} />
-      </Suspense>
-    )}
+ />
       {flags["chrome.boarding"] && boarding && (
         <div className="boarding-overlay" onAnimationEnd={() => setBoarding(false)}>
           <div className="boarding-pass">

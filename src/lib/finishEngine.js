@@ -256,16 +256,18 @@ export const FINISHES = [
   { id: null, name: "Standard", line: "The livery, as it is." },
   { id: "aurora", name: "Aurora", line: "Polar route, no traffic, nothing to do but look up." },
   { id: "manual", name: "Manual", line: "Everything you need is in here somewhere." },
-  { id: "tiedye", name: "Tie-dye", line: "A fan disc over dyed cloth, in your own colours." },
 ];
 
-/* THE PATTERN FINISHES ARE NOT DRAWN FROM THIS FILE. `src/lib/finishPattern.js`
-   holds both, and App imports it lazily when one is on — because everything
-   here is in the entry chunk, which sits exactly on its budget, and a
-   wallpaper nobody has chosen must not be on anybody's first paint. The
-   metadata above is all the entry needs to OFFER them. */
-export const PATTERN_FINISHES = new Set(["tiedye"]);
-export const isPattern = (id) => PATTERN_FINISHES.has(id);
+/* THE PATTERN FINISHES ARE GONE (owner, 2026-10-05: "kill tye dye, just have
+   manual and standard"). Tribal lasted a day and Tie-dye two, and both are
+   DELETED rather than filtered — `src/lib/finishPattern.js`, the demo desk and
+   `check:pattern` with them. Aurora is the one that stays standing while
+   unoffered, because it has shipped, been withdrawn and been reinstated
+   twice: its renderers have earned the room. A finish nobody ever chose has
+   not, and git has all three.
+
+   What this leaves is two finishes and the deliberately-unoffered third, which
+   is what the launch handoff always said it would be. */
 
 /* AURORA IS NOT OFFERED (owner, 2026-10-04: "remove aurora"). It was taken
    out on 2026-09-21, put back on 2026-09-29 ("reintroduce aurora as a finish

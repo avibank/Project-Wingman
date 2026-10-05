@@ -10,23 +10,21 @@ import { join } from "node:path";
 
 const DIST = "dist/assets";
 const HTML = "dist/index.html";
-/* 680 on the day it was set, when the entry measured 645. Raised to 684 on
-   2026-10-04, deliberately and once, for the pattern finish (Tie-dye): the
-   metadata that OFFERS it has to be in the entry, and the
-   code that draws them is not — `src/lib/finishPattern.js` is imported lazily
-   by App and nothing in the entry references it, which is worth about 3KB of
-   the 4 this would otherwise have cost.
+/* 680 on the day it was set, when the entry measured 645.
+   It was raised to 684 on 2026-10-04 for the two pattern finishes and PUT
+   BACK on 2026-10-05 when they were killed — a budget raised for something
+   that is gone is a gate that has been quietly loosened, which is how the
+   header above says budgets die.
 
-   THE NEXT 4KB IS ALREADY IDENTIFIED, and it is worth having rather than
-   raising this again: the `AUR` spec table in finishEngine.js — six liveries
-   of curtain specs with their prose — is in the entry on every first paint,
-   for a finish that is NOT OFFERED. Nothing calls `auroraLayers`,
-   `starfield`, `horizon` or `STAR_TILE` any more (grepped), so the only
-   thing holding AUR in is `finishVars`'s aurora branch. Moving that branch
-   and its table out the way the patterns went would put this back under 680
-   with room. It was left alone here because it is a refactor of a measured
-   file, and this commit is two finishes and a clock. */
-const BUDGET = 684 * 1024;      // entry chunk
+   THE 4KB THIS ONCE BOUGHT IS STILL THERE TO HAVE, and is worth taking the
+   next time the entry is tight rather than raising this again: the `AUR`
+   spec table in finishEngine.js — six liveries of curtain specs with their
+   prose — is in the entry on every first paint for a finish that is NOT
+   OFFERED. Nothing calls `auroraLayers`, `starfield`, `horizon` or
+   `STAR_TILE` any more (grepped), so the only thing holding AUR in is
+   `finishVars`'s aurora branch. Move that branch and its table to a lazily
+   imported module and the entry drops under 680 with room. */
+const BUDGET = 680 * 1024;      // entry chunk
 
 let files;
 try { files = readdirSync(DIST); }
