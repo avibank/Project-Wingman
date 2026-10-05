@@ -341,14 +341,18 @@ merge them back together.
     attempt whose questions no longer hash the same, and refuses one written
     before the hash existed. Without it, the Instruments replacement would
     have marked yesterday's answers against today's questions.
-- **The clock is a FLAT THIRTY MINUTES** for any quiz up to forty questions
-  (owner, 2026-10-04), which raises R5's twenty (2026-09-20) and reverses the
-  75-seconds-a-question figure below. Past forty the per-question figure comes
-  back, rather than a forty-one-question paper silently getting the same
-  sitting as an eight-question one. `estimate` keeps the 75 seconds, because a
-  row reading "about 30 minutes" for every quiz would say nothing. The number
-  is in `quiz.js` and `check:exam` holds it; `steps.js` says it out loud to a
-  visitor, so it has to move with it.
+- **The clock is a FLAT FIFTY MINUTES** for any quiz up to forty questions
+  (owner, 2026-10-05). It was R5's twenty (2026-09-20), then thirty
+  (2026-10-04), and fifty is where it should have been all along: **the
+  owner's own question papers say so on their first page** — "40 questions is
+  50 minutes at the Part-66 allowance" — so a forty-question paper here is
+  now timed exactly as the one these students will sit, which is the whole
+  argument for having a clock. Past forty the per-question figure comes back,
+  rather than a forty-one-question paper silently getting the same sitting as
+  an eight-question one. `estimate` keeps the 75 seconds, because a row
+  reading "about 50 minutes" for every quiz would say nothing. **The number
+  lives in three places and they have to move together**: `quiz.js`,
+  `check:exam`, and `steps.js`, which says it out loud to a visitor.
 - **The clock counts DOWN, and hands the paper in at zero.** This file used
   to say "elapsed time, never a countdown", and `quiz.js` §1 carried the
   argument: a countdown decides when you stop. The approved screen reverses it
@@ -1028,68 +1032,24 @@ the result away.
   is the other half: an account stored on Aurora reads back as Standard rather
   than painting nothing. The `livery.aurora` FLAG is a different thing and
   stays off — it gates the retired aurora LIVERY (`RETIRED_TO_FINISH`).
-- **ONE PATTERN FINISH: Tie-dye, and it is a jet turbine** (owner,
-  2026-10-04, from two reference images and then "tie dye should be a mix of
-  what i sent and a jet turbine, clear yet background").
-  - **The dye is the colour and the turbine is the form.** Over the wound
-    bands sits a fan disc — a spinner, twenty-two swept blades, a containment
-    ring and a nozzle ring. They are one drawing rather than two stacked,
-    because they share a centre and a direction of turn: the blades lean the
-    same way the dye winds.
-  - **"CLEAR YET BACKGROUND" IS TWO NUMBERS, not one compromise.** The form is
-    drawn hard — crisp blade edges, true rings, the dye pulled back under it —
-    and the whole layer is then taken to single-digit opacity. Blurring the
-    blades to make them subtle loses the turbine and keeps the haze, which is
-    the worst of both; the first cut did exactly that and the fan washed out.
-  - **The disc has to survive the crop.** The field is one square drawn
-    `cover`, so on a wide screen it scales to the WIDTH and the top and bottom
-    are cut away. At a tip radius of .47 the fan ran off both edges and what
-    was left read as a few arcs. At .30 the whole disc is inside the shortest
-    viewport this app supports.
-  - **ONE HUE, NOT A RAINBOW**, and that is the house rule rather than a
-    limitation. §Design's two-layer colour reserves `--presence` amber for
-    "something is happening here"; a wallpaper painted in it would spend the
-    one colour this app keeps for that. So the band runs ±54° around the
-    LIVERY's own accent hue, **read off the accent rather than tabled**, so a
-    seventh livery gets the finish for free.
-  - **Day is not night inverted**: on a lit ground the pattern goes darker
-    than the paper, so lightness crosses over while chroma and hue do not.
-  - **Nothing moves**, which is the cheapest way to obey §Design's last line:
-    there is no animation for Smooth Air to turn off.
-  - **It is ONE FIELD BEHIND THE WHOLE APP** (owner's choice of three): fixed
-    to the viewport and drawn OUTSIDE `.deck-light`, which clips and
-    paint-contains its children — a child of that could never reach the app
-    bar and would be cut at the deck's own edge, and a spiral cut off at a
-    panel edge is the one thing this finish must not do. **Nothing else had to
-    change for it to show through**: `--panel` and `--raised` have carried
-    alpha since the livery engine was written, so the tab strip and the cards
-    on it are already glass and the field simply continues underneath them.
-    **One exception, named rather than silent: Beacon's `--raised` is fully
-    opaque** (it alone carries `glass: 0.93`), so on Beacon the field shows
-    through the ground and the panels but not through a raised card. A
-    seventh opaque surface fails `check:pattern`.
-  - **TRIBAL IS GONE** (owner, same day: "kill tribal"). It shipped and was
-    killed within a day, and unlike Aurora it is **deleted rather than
-    filtered** — Aurora is kept standing because it has shipped, been
-    withdrawn and been reinstated twice, so its renderers earn their place; a
-    finish that lasted one day leaves nothing worth keeping warm, and `git
-    show` has it.
-  - **`src/lib/finishPattern.js` IS NEVER IMPORTED BY `finishEngine.js`.**
-    The entry chunk sat on its budget and pulling the pattern code in through
-    the engine — which every screen needs — put it over. App imports it
-    lazily when the finish is on, so a wallpaper nobody has chosen costs first
-    paint nothing. The cost is stated: a Tie-dye student gets the deck for a
-    frame or two before the field arrives.
-  - **The budget moved once, to 684KB**, with the next 4KB already named in
-    its own comment: `AUR`'s spec table is in the entry on every first paint
-    for a finish that is not offered, and only `finishVars`'s aurora branch
-    holds it in.
-  - **`?pattern` on any address** opens it over the real app with a desk for
-    the strength and the hue. It is the real finish through the real door —
-    Deck's layer — not a preview of one, because a pattern shown on its own
-    always looks good and tells you nothing about whether a chapter row is
-    readable on top of it. Nothing it does is saved.
-  - `npm run check:pattern` is 75 assertions.
+- **THERE ARE TWO FINISHES: Standard and Manual** (owner, 2026-10-05: "kill
+  tye dye, just have manual and standard"). Two pattern finishes were built
+  and killed in two days — **Tribal** (a four-blade rotor tile, 2026-10-04)
+  and **Tie-dye** (a jet-turbine fan disc over a dyed spiral, the next day) —
+  and both are **DELETED rather than filtered**, along with
+  `src/lib/finishPattern.js`, the `?pattern` demo desk and `check:pattern`.
+  - **That is the opposite of Aurora's treatment and the difference is
+    earned.** Aurora stays standing while unoffered because it has shipped,
+    been withdrawn and been reinstated twice, so its renderers will be wanted
+    again. A finish nobody ever chose has no such history, and `git show` has
+    all of it if either is ever wanted back.
+  - **The bundle budget went back to 680KB with them.** It was raised to 684
+    for the patterns; a budget raised for something that is gone is a gate
+    quietly loosened, which is exactly how `check:bundle`'s own header says
+    budgets die. The 4KB it once bought is still available and named in that
+    comment: `AUR`'s spec table is in the entry on every first paint for a
+    finish that is not offered, and only `finishVars`'s aurora branch holds
+    it there.
 - **The stamp engine is the launch pack's, byte for byte**:
   `src/lib/stamp-engine.js` is `docs/launch/code/05-stamp-engine.js` between
   two marker lines, with only FONTS, one page-level `<svg><defs>` (first in

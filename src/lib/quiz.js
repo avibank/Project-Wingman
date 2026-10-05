@@ -47,25 +47,30 @@ export const estimate = n => `about ${Math.max(1, Math.round(n * SECONDS_PER_Q /
    examination hall, which is the one place nobody should meet anything for the
    first time.
 
-   THE ALLOWANCE IS A FLAT THIRTY MINUTES, and that reverses what stood here.
-   It used to be this file's own nominal 75 seconds a question, so an
-   eight-question chapter quiz was ten minutes and a forty-question one was
-   fifty. R5 of the exam brief fixed it at twenty for any quiz up to forty
-   (owner, 2026-09-20), and the owner raised it to THIRTY on 2026-10-04 —
-   which is the figure to keep: twenty was the brief's, thirty is his, and
-   the real papers these students sit are the thing either one is rehearsing.
+   THE ALLOWANCE IS A FLAT FIFTY MINUTES. R5 of the exam brief fixed it at
+   twenty for any quiz up to forty (owner, 2026-09-20), the owner raised it
+   to thirty on 2026-10-04 and to FIFTY on 2026-10-05, which is where it
+   should have been: the owner's own question papers say so on their first
+   page — "40 questions is 50 minutes at the Part-66 allowance" — so the
+   clock on a forty-question paper here is now the clock these students will
+   actually sit against, which is the whole argument for having one.
+
+   It also lands back on this file's own nominal 75 seconds a question for a
+   full paper (40 x 75 = 3000), which is a coincidence worth noticing rather
+   than a derivation: the figure is the Part-66 allowance, and the flatness
+   is still the point.
 
    A FIXED CLOCK IS A DIFFERENT EXERCISE FROM A PER-QUESTION ONE, and that is
    the point rather than a side effect. Scaling the allowance means every
    paper feels the same however long it is, which is comfortable and is not
    what the real one does: the paper these students sit gives a fixed sitting
    and the length of it is part of what they are rehearsing. On a short
-   chapter quiz thirty minutes is generous, which is correct — the clock is
+   chapter quiz fifty minutes is generous, which is correct — the clock is
    there to be practised against, not to catch anybody out.
 
    `estimate` keeps the 75 seconds. It answers a different question — "how
    long will this take me" on a row you have not opened — and a row reading
-   "about 30 minutes" for every quiz in the module would say nothing at all.
+   "about 50 minutes" for every quiz in the module would say nothing at all.
 
    IT IS NOT ELAPSED-SINCE-START, and that is the bug this replaced rather than
    a detail. `elapsed(startedAt)` shipped, and startedAt is persisted with the
@@ -74,11 +79,11 @@ export const estimate = n => `about ${Math.max(1, Math.round(n * SECONDS_PER_Q /
    paper is on screen, which is also what makes leaving and coming back keep
    it. */
 export const SECONDS_LOW = 60;               // the last minute, in --bad
-export const EXAM_SECONDS = 30 * 60;     // flat, for any quiz up to 40 Qs (owner, 2026-10-04)
+export const EXAM_SECONDS = 50 * 60;     // flat, for any quiz up to 40 Qs (owner, 2026-10-05)
 export const EXAM_MAX_QS = 40;
 
 /* Past forty the brief stops speaking, so the per-question figure comes back
-   rather than a forty-one-question paper silently getting the same thirty
+   rather than a forty-one-question paper silently getting the same fifty
    minutes as an eight-question one. Nothing in this app is near it today;
    this is the edge being stated instead of left to be discovered. */
 export const allowanceFor = (n) => {

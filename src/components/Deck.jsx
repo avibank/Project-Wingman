@@ -205,22 +205,6 @@ const ROOM_CSS = `
 /* ruled-lines layer for the Manual finish */
 .rules { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; }
 
-/* THE TURBINE IS ONE FIELD BEHIND THE WHOLE APP, not a layer inside the deck
-   (owner, 2026-10-04: one spiral, full bleed, with the tabs and panels
-   letting it through). So it is FIXED to the viewport and it sits OUTSIDE
-   the .deck-light layer, which clips and paint-contains everything in it —
-   a child of that could never have reached the app bar or run past the
-   deck's own edge, and a spiral cut off at a panel edge is the one thing
-   this finish must not do.
-
-   Nothing else had to change for it to show through: --panel and --raised
-   have carried alpha since the livery engine was written (.78 and .87 at
-   night), so the tab strip and every card on it are already glass. The field
-   simply continues underneath them.
-
-   No blend mode: the spiral carries its own alpha, and screening it would
-   bleach the hub white on a dark ground and lose it entirely on a light one. */
-.turbine-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
 /* MANUAL — printed by day, microfiche by night */
 .app[data-paper="1"] { --rule: oklch(.58 .012 85 / .55); --hair: oklch(.58 .012 85 / .30); }
@@ -342,16 +326,14 @@ const ROOM_CSS = `
 .deck *:focus-visible { outline: 2px solid var(--active); outline-offset: 2px; }
 `;
 
-function Deck({ aurora, rules, turbine }) {
+function Deck({ aurora, rules }) {
   const stars = useMemo(() => ({
     "--stars-a": dotTile(30, 20260824, 1.4, 0.8),
     "--stars-b": dotTile(20, 77003311, 1.0, 0.58),
   }), []);
 
   return (
-    <>
-      {turbine && <div className="turbine-field" style={turbine} aria-hidden="true" />}
-      <div className={`deck-light ${aurora ? "aur" : ""}`} style={stars} aria-hidden="true">
+    <div className={`deck-light ${aurora ? "aur" : ""}`} style={stars} aria-hidden="true">
       <div className="lamp key"><i /></div>
       <div className="stars" />
       <div className="stars-b" />
@@ -361,8 +343,7 @@ function Deck({ aurora, rules, turbine }) {
       <div className="lamp spill"><i /></div>
       <div className="grain" />
       <style>{ROOM_CSS}</style>
-      </div>
-    </>
+    </div>
   );
 }
 
