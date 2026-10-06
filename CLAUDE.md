@@ -149,6 +149,19 @@ which is what the Flight Deck draws before the document arrives.
   chapter's POSITION and `chaptersForModule` only splits on the first `.` —
   so `M1.B1` is as valid as `M1.01` and cannot collide with anything that
   came before.
+- **THE PORTED LIBRARY IS DRAWN IN THE DESIGN'S OWN 760px COLUMN.** The demo
+  it comes from wraps everything in `.wrap{max-width:760px}`, and every size
+  inside is drawn against that: the three tiles come out 215px each, which is
+  what makes a 128px thumbnail fill one. Dropped into the module screen's
+  1010px column the tiles stretched to 313px and the thumbnails sat marooned
+  in the middle of them (owner, 2026-10-06: "the icons for the batches are
+  squashed"). Measured against the reference demo side by side: 214.7px
+  there against 313.3px here, now 215.3. It keeps the LEFT edge rather than
+  centring the way the demo does, because module.css opens by declaring one
+  left edge for the whole page. The quiz thumbnail also came out 75px against
+  the design's 72, because `aspect-ratio` is only a suggestion once
+  min-content is taller and that stack measures 3px more on this app's faces;
+  one row of `minmax(0,1fr)` lets the ratio decide.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
@@ -942,6 +955,21 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     your note at 1:04, the right seat's comment at 3:08, yours at 3:51 and
     your question at 4:36. Only the demo's `content.json` points at it, and it
     is the lesson the tour's two Lesson steps open.
+  - **THE DIM IS FOUR PANELS, NOT A BOX-SHADOW** (owner, 2026-10-06: "as
+    smooth and exact as the transitions like the demo"). The ported
+    stylesheet carries the dim as a fourth layer of the ring's own shadow —
+    `0 0 0 100vmax rgba(6,10,18,.58)` — and a shadow that large is repainted
+    across the whole window on every frame the ring's width, height or
+    position changes. The walkthrough's previous engine had the same thing
+    and the same complaint, and this is the fix it landed on, in its own
+    words: "a panel is the whole window, scaled from its top-left corner down
+    to the strip it covers. Scaling a flat colour is the compositor's job:
+    nothing repaints while the light moves." The colour is the ported sheet's
+    to the digit and the ring keeps its accent line and glow, which are small
+    and local; appearance is unchanged. **The cost is a new way to be wrong**
+    — a panel aimed badly leaves an undimmed strip, or doubles the alpha over
+    one — so `test:tour` measures the four panels plus the hole against the
+    window on every step, at rest, and allows 400px² of rounding.
   - **THE SCROLL IS OURS, NOT THE BROWSER'S** (owner, 2026-10-06: the demo is
     "glitchy jittery and not as smooth as the transitions"). The handoff's
     engine scrolled with `behavior: "smooth"` — engine-paced, on a curve

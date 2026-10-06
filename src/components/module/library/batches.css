@@ -24,7 +24,21 @@
    ordinary words that already paint other surfaces in this app. The exam
    screen hit exactly this and scoped itself to `.exam-frame` for it.
    ========================================================================= */
+/* THE DESIGN'S OWN COLUMN, 760px. The demo this screen is ported from wraps
+   everything in `.wrap{max-width:760px}`, and every size inside it is drawn
+   against that: the three tiles come out 215px each, which is what makes a
+   128px thumbnail fill one. Dropped into the module screen's 1010px column
+   the tiles stretched to 313px and the thumbnails sat marooned in the middle
+   of them, which is what "the icons for the batches are squashed" was (owner,
+   2026-10-06). Measured against the reference demo side by side: 214.7px
+   there, 313.3px here.
+
+   It keeps the LEFT edge rather than centring the way the demo does, because
+   module.css opens by declaring one left edge for the whole page — the title,
+   the tabs, the search and every list row line up on it, and a centred block
+   under a left-aligned header is a second margin nobody asked for. */
 .lib2 {
+  max-width: 760px;
   --accent: var(--active);
   /* The ink ON the accent, which is what a filled waypoint carries. The app's
      own rule for this is `--ground` on `--active-fill`, and Manual in Day is
@@ -88,7 +102,14 @@
 
 /* live-site thumbnails (markup and look copied from the module screen), scaled up and animated */
 .lib2 .lb-th {display:block;width:128px;aspect-ratio:16/9;border-radius:8px;border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
-.lib2 .lb-quiz-thumb {display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:10px 12px;background:var(--raised);overflow:visible}
+/* `grid-template-rows` so the ASPECT RATIO decides the height and the content
+   does not. `aspect-ratio` is only a suggestion once min-content is taller:
+   the count is a 20px numeral over a 10px label with a 16px pencil above it,
+   and on this app's faces that stack measures 3px more than it did on the
+   demo's, so the box came out 75px against the design's 72. One row of
+   `minmax(0,1fr)` lets it sit at the ratio's height; `overflow:visible` is
+   the design's own and is what lets the stamp hang outside the corner. */
+.lib2 .lb-quiz-thumb {display:grid;grid-template-columns:auto 1fr;grid-template-rows:minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;background:var(--raised);overflow:visible}
 .lib2 .lb-quiz-thumb.lb-blank .lb-quiz-thumb__sheet i {border-style:dashed}
 .lib2 .lb-pencil {display:block;color:var(--accent);margin-left:auto;width:16px;margin-bottom:2px;transform-origin:20% 80%}
 .lib2 .lb-row.lb-on .lb-pencil {animation:write 1.2s var(--ease) .5s 2}

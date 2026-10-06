@@ -120,6 +120,21 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
          the rest detector above lets go, and reading the overlap then found
          148509 square pixels on a step whose final geometry is a clean 72px
          gap. Measured both ways. */
+      /* The dim settles on the same .55s as the light, so like the overlap
+         above it is a property of the step at rest. */
+      {
+        const dd = document.querySelector(".dg-dim");
+        const gg3 = document.querySelector(".dg-ring");
+        if (dd && gg3 && dd.children.length === 4) {
+          const area = [...dd.children].reduce((n, e) => {
+            const q = e.getBoundingClientRect();
+            return n + Math.max(0, q.width) * Math.max(0, q.height);
+          }, 0);
+          const rr2 = gg3.getBoundingClientRect();
+          const off = area + rr2.width * rr2.height - window.innerWidth * window.innerHeight;
+          if (Math.abs(off) >= 400) return false;
+        }
+      }
       if (expect.clear) {
         const gg2 = document.querySelector(".dg-ring");
         const cc = document.querySelector(".dg-card");
@@ -164,6 +179,24 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
     onScreen: Boolean(r && r.left >= -1 && r.top >= -1 && r.right <= window.innerWidth + 1 && r.bottom <= window.innerHeight + 1),
     covered: Math.round(over(r, cr)),
     tab: tabEl ? tabEl.textContent.trim().split(/\s+/)[0].toLowerCase() : null,
+    /* THE DIM IS FOUR PANELS AND THEY MUST TILE THE WINDOW. The dim used to
+       be a `0 0 0 100vmax` layer of the ring's own box-shadow, which repaints
+       the whole window on every frame the ring moves; it is four flat panels
+       moved only by transform now, which is the compositor's job. The cost of
+       that is a new way to be wrong — a panel aimed badly leaves an undimmed
+       strip — so the four panels plus the hole are measured against the
+       window on every step. */
+    dimGap: (() => {
+      const d = document.querySelector(".dg-dim");
+      const g = document.querySelector(".dg-ring");
+      if (!d || !g || d.children.length !== 4) return null;
+      const area = [...d.children].reduce((n, e) => {
+        const b = e.getBoundingClientRect();
+        return n + Math.max(0, b.width) * Math.max(0, b.height);
+      }, 0);
+      const r = g.getBoundingClientRect();
+      return Math.round(area + r.width * r.height - window.innerWidth * window.innerHeight);
+    })(),
     rrPane: ["rr-seatgrid", "rr-chat", "rr-threads"].find((k) => paneKids.some((c) => c.split(/\s+/).includes(k))) || null,
     vw: window.innerWidth,
     vh: window.innerHeight,
@@ -216,8 +249,11 @@ try {
         lit += 1;
         /* A `whole` step's light IS the window, so it is on screen by
            construction and the card necessarily stands on it. Only a step
-           pointing at one thing is asked these two. */
-        if (!step.whole) {
+           pointing at ONE NAMED THING is asked these two — keyed off the
+           script rather than off whether a light happens to have size, because
+           the farewell step names nothing and its light is still shrinking out
+           of the previous step's full-window frame when this is read. */
+        if (step.target && !step.whole) {
           ok(name, `step ${n + 2} lights something fully on screen`, r.onScreen,
              `${r.kicker}: ${JSON.stringify(r.rect)} in ${r.vw}×${r.vh}`);
           ok(name, `step ${n + 2}'s card does not cover what it points at`, r.covered === 0,
@@ -238,6 +274,9 @@ try {
         ok(name, `step ${n + 2} opens the ${step.pane} pane`, r.rrPane === want.pane,
            `${r.kicker}: pane is ${r.rrPane ?? "none"}, wanted ${want.pane}`);
       }
+      /* A couple of square pixels of rounding is fine; a strip is not. */
+      ok(name, `step ${n + 2}'s dim covers the window`, r.dimGap === null || Math.abs(r.dimGap) < 400,
+         `${r.kicker}: off by ${r.dimGap}px²`);
       ok(name, `step ${n + 2} stops moving`, r.rest < CEILING, `${r.kicker}: ${r.rest}ms`);
       await page.waitForTimeout(80);
     }
