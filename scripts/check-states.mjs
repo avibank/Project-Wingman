@@ -160,6 +160,25 @@ for (const f of all.filter((x) => x.startsWith("src/components/"))) {
   }
 }
 
+/* 5 · A SCREEN BEHIND A FLAG FALLS BACK TO THE ONE IT REPLACES, rather than
+      to nothing. The ported Library draws a row per BATCH, and `batchesOf`
+      keeps a chapter only when `Number.isFinite(c.batch)` — so a course
+      document written before the port, which is what `course_docs` serves
+      until somebody publishes a new one, gives it an empty list. It rendered
+      the empty list: an admin on the live site got the module header, the tab
+      strip, and blank deck to the bottom of the window (2026-10-06).
+
+      The header had the fallback all along — `batchSubtitle` returns
+      `moduleSubtitle` when there is nothing to count — which is why that
+      screenshot carried the OLD sentence over the NEW screen's empty body.
+      Those two have to fall back together, so this holds the condition that
+      makes them. */
+const lib = all.find((f) => /module\/LibraryTab\.jsx$/.test(f));
+if (!lib) fails.push("LibraryTab is gone — the Library has no shelves");
+else if (!/if\s*\(\s*asBatches\s*&&\s*batches\.length\s*\)/.test(src(lib))) {
+  fails.push("LibraryTab takes the ported batches screen without checking it has a batch to draw — a course document with no batch numbers renders an empty Library");
+}
+
 // 4 · The report control — one tap, carrying the route.
 const rpt = all.find((f) => /ReportProblem\.jsx$/.test(f));
 if (!rpt) fails.push("no way for someone to say a page is wrong");

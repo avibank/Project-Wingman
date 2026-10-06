@@ -59,7 +59,9 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
       navigate: (route) => new Promise((res) => {
         live.current.go?.(route);
         /* Resolve once the new screen has actually rendered, which is what
-           the engine's `waitFor` then measures against. */
+           the engine's `waitFor` then measures against. Putting it at its top
+           is the engine's job, not this one's — it owns the whole sequence
+           and holds the screen there until the step's target exists. */
         requestAnimationFrame(() => requestAnimationFrame(() => res()));
       }),
       currentRoute: () => window.location.pathname,

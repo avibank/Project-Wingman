@@ -149,6 +149,20 @@ which is what the Flight Deck draws before the document arrives.
   chapter's POSITION and `chaptersForModule` only splits on the first `.` —
   so `M1.B1` is as valid as `M1.01` and cannot collide with anything that
   came before.
+- **A SCREEN BEHIND A FLAG FALLS BACK TO THE ONE IT REPLACES.** The ported
+  Library draws a row per BATCH and `batchesOf` keeps a chapter only when
+  `Number.isFinite(c.batch)` — so a course document written before the port,
+  which is what `course_docs` serves until somebody publishes a new one, gave
+  it an empty list and it rendered the empty list. An admin on the live site
+  got the module header, the tab strip, and blank deck to the bottom of the
+  window (owner, 2026-10-06). The header had the fallback all along —
+  `batchSubtitle` returns `moduleSubtitle` when there is nothing to count —
+  which is why that screenshot carried the OLD sentence ("2 quizzes, 2 card
+  sets and 1 paper") over the NEW screen's empty body. `LibraryTab` takes the
+  ported branch only `if (asBatches && batches.length)` now, so the two fall
+  back together, and `check:states` holds that condition. A flag that turns a
+  working Library into an empty one for whoever has it on is worse than the
+  flag being off.
 - **Chapters with no lessons show in the LIBRARY, not on the Lessons tab**,
   which draws its own "Lessons are filming" state. That is where a quiz and
   a card set live, so content with no video is not invisible.
@@ -901,6 +915,37 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     your note at 1:04, the right seat's comment at 3:08, yours at 3:51 and
     your question at 4:36. Only the demo's `content.json` points at it, and it
     is the lesson the tour's two Lesson steps open.
+  - **THE SCROLL IS OURS, NOT THE BROWSER'S** (owner, 2026-10-06: the demo is
+    "glitchy jittery and not as smooth as the transitions"). The handoff's
+    engine scrolled with `behavior: "smooth"` — engine-paced, on a curve
+    nothing can tune, and impossible to await or cancel — while the light
+    eased over .55s on `cubic-bezier(.3,.7,.3,1)` beside it. Two clocks.
+    Measured over twelve steps: **three single-frame scroll jumps, the worst
+    891px, and one step where the page went one way and came back**. It is
+    **1 jump at 128px and no reversals** now. Four things did it, and the
+    numbers are what chose each:
+    · the scroll runs on one rAF loop on **the light's own curve** over 480ms
+      against the light's 550, so the page arrives first and the light settles
+      onto something that has stopped. The curve matters as much as the loop:
+      the first attempt used the previous engine's exponential at τ 45, but
+      that light was an exponential too and this one is not — at τ 45 the page
+      covers 31% of the distance in the first frame, so a 500px move opened
+      with a 155px jump. On the light's curve the first frame is 41px;
+    · a page change **eases rather than snapping**. The light is shut there
+      and fades in, but the PAGE is not hidden — the dim is the light's own
+      shadow — so a student watched the new screen appear and then jump 494px;
+    · the screen is **held at its top** from the navigation until the step's
+      target exists. One reset is not enough: a lazy screen (the lesson, with
+      its video) commits several frames after the navigation resolves, so the
+      reset landed on the outgoing screen. Measured before the pin: 22 frames,
+      nearly 400ms, of the lesson painted 494px down and then snapping;
+    · the card's ResizeObserver **re-frames the light without re-scrolling**.
+      `frame()` does both, and calling it there scrolled instantly every time
+      the card changed height — a 315px jump mid-step, and the reversal.
+    · and the light is **re-measured once the ease ends**. `plan` aims at where
+      the target WILL be, measured before the page moved; a screen whose height
+      changes while it moves invalidates that aim, and `onScroll` is
+      deliberately deaf while the engine is the one scrolling.
   - **Walked, measured and held**: `npm run test:tour` is **258 assertions**.
     It walks all twenty-one steps at 1440 and at 390 and asserts that every
     step naming a target lights one, that what is lit is fully on screen,
@@ -915,6 +960,11 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     compute to `oklch(...)`, and reading three numbers out of that string
     gave lightness, chroma and a hue angle where red, green and blue were
     expected, which made every pair on every livery come out at exactly 2:1.
+    The card standing clear of its target is asserted **at rest**, not on
+    every frame: a page change eases now, so the light is mid-travel for about
+    half a second after the rest detector lets go, and reading the overlap
+    there found 148509 square pixels on a step whose settled geometry is a
+    clean 72px gap.
     It needs the harness, so like `test:bm` and `test:rr` it is not in
     `npm run check`.
     Proved by planting its bugs: a dropped `data-tour` attribute, a dead

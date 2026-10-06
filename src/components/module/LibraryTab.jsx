@@ -186,7 +186,24 @@ export default function LibraryTab({
     })
     : [];
 
-  if (asBatches) {
+  /* AND ONLY WHEN THERE IS A BATCH TO DRAW. `batchesOf` keeps a chapter only
+     if `Number.isFinite(c.batch)`, so a course document written before the
+     port — which is what `course_docs` serves until somebody publishes a new
+     one — yields an empty list, and this screen drew nothing at all: an
+     admin on the live site got the module header, the tab strip and then
+     blank deck to the bottom of the window (owner, 2026-10-06).
+
+     The header already handled this and the screen did not, which is the
+     whole bug: `batchSubtitle` falls back to `moduleSubtitle` when there is
+     nothing to count, which is why that screenshot's subtitle read "2
+     quizzes, 2 card sets and 1 paper" — the old sentence over the new
+     screen's empty body. The two now fall back together.
+
+     It is a FALLBACK rather than a fix to the content: a flag that turns a
+     working Library into an empty one for whoever has it on is worse than
+     the flag being off, and publishing is not something this screen can
+     wait for. */
+  if (asBatches && batches.length) {
     /* NOT `ref-mod`, and that is the whole of the collision fix. Twelve of the
        demo's class names — row, head, stage, list, more, empty, chev, drawer,
        title, meta, route, th — are already painted by this app, several of
