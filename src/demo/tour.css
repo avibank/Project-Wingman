@@ -30,14 +30,36 @@
   .app[data-tour-on="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 55vh; }
 }
 
+/* ---- the dim ----
+   FOUR PANELS AROUND A HOLE, AND EVERY ONE OF THEM MOVES BY TRANSFORM ONLY.
+   The stylesheet this was ported from carries the dim as a fourth layer of
+   the ring's own box-shadow — `0 0 0 100vmax rgba(6,10,18,.58)` — and a
+   box-shadow that large is repainted across the whole window on every frame
+   the ring's width, height or position changes. The walkthrough's previous
+   engine had the same thing and the same complaint, and this is the fix it
+   landed on, in its own words: "a panel is the whole window, scaled from its
+   top-left corner down to the strip it covers. Scaling a flat colour is the
+   compositor's job: nothing repaints while the light moves."
+
+   The colour is the ported sheet's, to the digit. The ring keeps its accent
+   line and its glow, which are small and local; only the full-window layer
+   moved out here. Appearance is unchanged — this is how it is drawn, not
+   what it looks like (owner, 2026-10-06: "as smooth and exact as the
+   transitions like the demo"). */
+.dg-dim { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease }
+.dg-dim i {
+  position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; display: block;
+  background: rgba(6,10,18,.58); transform-origin: 0 0; will-change: transform;
+  transition: transform .55s cubic-bezier(.3,.7,.3,1);
+}
+
 /* ---- highlight frame ---- */
 .dg-ring {
   position: fixed; left: 0; top: 0; border-radius: 18px; opacity: 0; pointer-events: none;
   box-shadow:
     0 0 0 1.5px var(--active),
     0 0 0 6px color-mix(in oklch, var(--active) 16%, transparent),
-    0 0 32px 4px color-mix(in oklch, var(--active) 22%, transparent),
-    0 0 0 100vmax rgba(6,10,18,.58);
+    0 0 32px 4px color-mix(in oklch, var(--active) 22%, transparent);
   transition:
     transform .55s cubic-bezier(.3,.7,.3,1),
     width .55s cubic-bezier(.3,.7,.3,1),
@@ -47,14 +69,8 @@
     opacity .3s ease;
   will-change: transform, width, height;
 }
-/* nothing framed: just dim */
-.dg-ring.full { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent, 0 0 0 0 transparent, 0 0 0 100vmax rgba(6,10,18,.58) }
-/* whole page: frame the viewport, no dim */
-.dg-ring.whole { box-shadow:
-  0 0 0 1.5px var(--active),
-  0 0 0 6px color-mix(in oklch, var(--active) 16%, transparent),
-  0 0 32px 4px color-mix(in oklch, var(--active) 22%, transparent),
-  0 0 0 100vmax rgba(6,10,18,0) }
+/* nothing framed: the dim covers the window and there is no frame to draw */
+.dg-ring.full { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent, 0 0 0 0 transparent }
 
 /* ---- card ---- */
 .dg-card {
@@ -124,9 +140,10 @@
 @keyframes dg-in-l { from { opacity: 0; transform: translate3d(-14px,0,0) } to { opacity: 1; transform: none } }
 
 @media (prefers-reduced-motion: reduce) {
-  .dg-ring, .dg-card, .dg-bar i, .dg-modal { transition: none !important }
+  .dg-ring, .dg-card, .dg-bar i, .dg-modal, .dg-dim, .dg-dim i { transition: none !important }
   .dg-card, .dg-body, .dg-box, .dg-modal { animation: none !important }
 }
 /* Smooth Air behaves exactly as reduced motion does — the app's own class. */
-.app.smooth-air .dg-ring, .app.smooth-air .dg-card, .app.smooth-air .dg-bar i, .app.smooth-air .dg-modal { transition: none !important }
+.app.smooth-air .dg-ring, .app.smooth-air .dg-card, .app.smooth-air .dg-bar i, .app.smooth-air .dg-modal,
+.app.smooth-air .dg-dim, .app.smooth-air .dg-dim i { transition: none !important }
 .app.smooth-air .dg-card, .app.smooth-air .dg-body, .app.smooth-air .dg-box, .app.smooth-air .dg-modal { animation: none !important }

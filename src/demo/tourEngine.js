@@ -208,6 +208,32 @@ export function startTour({
     return best;
   }
 
+  /* The four panels, aimed at the four strips around the hole the light makes.
+     Each is the whole window scaled from its top-left corner, so the only
+     thing that changes per frame is a transform — see the note in tour.css
+     for why the dim is not a box-shadow any more. */
+  function dimTo(hx, hy, hw, hh, instant) {
+    const d = $(".dg-dim");
+    if (!d) return;
+    const v = sc.view, W = innerWidth, H = innerHeight;
+    const x1 = Math.max(0, hx), y1 = Math.max(0, hy);
+    const x2 = Math.min(W, hx + hw), y2 = Math.min(H, hy + hh);
+    const strips = [
+      [0, 0, W, y1],                      // above
+      [0, y2, W, H - y2],                 // below
+      [0, y1, x1, Math.max(0, y2 - y1)],  // left of the hole
+      [x2, y1, W - x2, Math.max(0, y2 - y1)], // right of it
+    ];
+    [...d.children].forEach((el, k) => {
+      const [L, T, w, h] = strips[k];
+      el.style.transition = instant ? "none" : "";
+      el.style.transform = `translate(${L}px,${T}px) scale(${Math.max(0, w) / W},${Math.max(0, h) / H})`;
+      if (instant) { void el.offsetWidth; el.style.transition = ""; }
+    });
+    d.style.opacity = 1;
+    void v;
+  }
+
   function ringTo(el, dock, stFinal, instant) {
     const ring = $(".dg-ring"); if (!ring) return;
     const s = steps[i], v = sc.view;
@@ -218,6 +244,9 @@ export function startTour({
         opacity: 1, width: `${v.w - 12}px`, height: `${v.h - 12}px`,
         transform: `translate(${v.left + 6}px,${v.top + 6}px)`, borderRadius: "14px",
       });
+      /* The whole window is the hole, so the panels have nothing to cover —
+         which is what the ported sheet said with a dim at zero alpha. */
+      dimTo(v.left + 6, v.top + 6, v.w - 12, v.h - 12, instant);
       return;
     }
     if (!el) {
@@ -226,6 +255,8 @@ export function startTour({
         opacity: 1, width: "0px", height: "0px",
         transform: `translate(${v.left + v.w / 2}px,${v.top + v.h / 2}px)`,
       });
+      /* Nothing framed: the hole has no size, so the panels cover the lot. */
+      dimTo(v.left + v.w / 2, v.top + v.h / 2, 0, 0, instant);
       return;
     }
     ring.className = "dg-ring";
@@ -239,6 +270,7 @@ export function startTour({
       opacity: 1, width: `${w}px`, height: `${Math.max(0, y2 - y1)}px`,
       transform: `translate(${x}px,${v.top + y1}px)`, borderRadius: "18px",
     });
+    dimTo(x, v.top + y1, w, Math.max(0, y2 - y1), instant);
   }
 
   /* HOLD THE SCREEN AT ITS TOP WHILE A PAGE CHANGE LANDS.
@@ -342,7 +374,8 @@ export function startTour({
 
   function ensureCard() {
     if ($(".dg-card")) { observeCard(); return; }
-    dg.innerHTML = `<div class="dg-ring"></div>
+    dg.innerHTML = `<div class="dg-dim"><i></i><i></i><i></i><i></i></div>
+      <div class="dg-ring"></div>
       <div class="dg-card" role="dialog" aria-label="A tour of Wingman">
         <div class="dg-bar"><i></i></div>
         <div class="dg-top"><span class="dg-kicker"></span><button class="dg-skip" type="button">Skip</button></div>
@@ -399,6 +432,8 @@ export function startTour({
     if (newPage && page !== null && ring && !reduce()) {
       ring.style.transition = "opacity .22s ease";
       ring.style.opacity = 0;
+      const d0 = $(".dg-dim");
+      if (d0) { d0.style.transition = "opacity .22s ease"; d0.style.opacity = 0; }
       await wait(220);
     }
     if (t !== token) return;
@@ -426,7 +461,10 @@ export function startTour({
            the light fades in across it. */
         frame(false);
         const r = $(".dg-ring");
+        const d1 = $(".dg-dim");
         if (r && !reduce()) { r.style.opacity = 0; void r.offsetWidth; r.style.transition = "opacity .35s ease .1s"; r.style.opacity = 1; }
+        if (d1 && !reduce()) { d1.style.opacity = 0; void d1.offsetWidth; d1.style.transition = "opacity .35s ease .1s"; d1.style.opacity = 1; }
+        else if (d1) d1.style.opacity = 1;
       });
     } else {
       requestAnimationFrame(() => frame(false));
