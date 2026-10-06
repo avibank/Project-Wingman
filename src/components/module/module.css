@@ -900,3 +900,33 @@
 }
 .ref-mod .sub-go:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); }
 .ref-mod .sub-go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ------------------------------------------------- SHARED STUDY MATERIAL ---
+   The Library's last row, and the one row here that does not open anything.
+   The annotation layer is paused (`paper.viewer`), and this is what a student
+   reads about it in the meantime: the name of the thing and what it will do,
+   with a pill saying it is not here yet.
+
+   IT IS NOT A CONTROL, and it must not look like one — `.lrow`'s hover fill
+   would promise a press that nothing answers, so the fill is turned off here
+   rather than by leaving the class off, which would also drop the row's grid.
+   It is a div, so `check:doors` reads it as prose rather than a dead button.
+
+   THE PILL IS WORDS, SO IT TAKES --active-text AND NOT --active. The brief
+   says `var(--active)`; that token is the accent as a MARK, and at 10px on a
+   panel it is the pair this repo has already measured under 4.5:1 (the module
+   picker's own name, 3.96:1 in Day). Bookmarks' rule is the one that measures:
+   --active for a mark, --active-fill for a fill, --active-text for the accent
+   read as words. Everything else here is the brief's: Geist Mono 10px, .12em
+   of tracking, a hairline ring, fully rounded. */
+.ref-mod .lrow[data-soon="1"]{ cursor: default; }
+.ref-mod .lrow[data-soon="1"]:hover{ background: none; }
+.wm-pill-soon{
+  font: 500 10px/1 var(--font-mono);
+  letter-spacing: .12em;
+  color: var(--active-text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}

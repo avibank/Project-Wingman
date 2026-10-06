@@ -132,8 +132,18 @@ export function BackOnTheGround({
 
   if (!on) return <section className="bog" ref={rootRef} hidden />;
 
+  /* `data-tour` is the tour's only hook into a screen (src/demo/tourEngine.js).
+     It names the whole block including its heading, because the step that
+     uses it is about the whole of Back on the ground.
+
+     EACH CARD BELOW CARRIES ITS NAME ON EVERY ONE OF ITS BRANCHES, not just
+     the first. The right seat, the squadron and the thread card each render
+     two or three different shapes depending on what there is to show, and
+     naming only the first meant the name was on the shape the seeded demo
+     does not use: three steps dimmed the screen and pointed at nothing. The
+     name belongs to the card, not to one of its states. */
   return (
-    <section className="bog" ref={rootRef}>
+    <section className="bog" ref={rootRef} data-tour="deck-ground">
       <div className="bog-head">
         <span className="bog-stack">
           <h2>Back on the ground</h2>

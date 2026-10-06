@@ -54,7 +54,7 @@ export function RouteStrip({
   const groups = width ? clusterByPixel(placed, chapters, mapX, tight ? 34 : 42) : [];
 
   return (
-    <div className="bog-card">
+    <div data-tour="deck-route" className="bog-card">
       <div className="bog-rhead">
         <span className="bog-rname">On your route</span>
         <span className="bog-rsrc">{sourceLabel}</span>

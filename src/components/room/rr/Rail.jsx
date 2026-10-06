@@ -119,6 +119,9 @@ export default function Rail({
           </>
         )}
 
+        {/* `display: contents`, so the rail's own layout is untouched — the
+            tour measures the union of the children (tourEngine's rectOf). */}
+        <div className="rr-tourgrp" data-tour="rr-rightseat">
         <div className="rr-sect">
           <span className="rr-micro">Right seat</span>
           <span className="rr-grow" />
@@ -141,8 +144,11 @@ export default function Rail({
           <button type="button" className="rr-ghostbtn is-inline" onClick={onSeeSeats}>Find a right seat</button>
         )}
 
+        </div>
+
         <div className="rr-hr" />
 
+        <div className="rr-tourgrp" data-tour="rr-squadrons">
         <div className="rr-sect">
           <span className="rr-micro">Squadrons</span>
           <span className="rr-grow" />
@@ -166,6 +172,9 @@ export default function Rail({
           <button type="button" className="rr-ghostbtn is-inline" onClick={onFindSquadron}>Find a squadron</button>
         )}
 
+        </div>
+
+        <div className="rr-tourgrp" data-tour="rr-modules">
         <div className="rr-sect"><span className="rr-micro">Modules</span></div>
         {mods.map(({ m, code, newest, waiting }) => (
           <Row key={code}
@@ -177,6 +186,7 @@ export default function Rail({
                badge={waiting} mute
                onClick={() => onOpen({ kind: "module", id: code })} />
         ))}
+      </div>
       </div>
     </aside>
   );

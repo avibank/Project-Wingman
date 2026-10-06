@@ -1,0 +1,132 @@
+/* =============================================================================
+   THE TOUR — the approved stylesheet, 2026-10-06.
+   -----------------------------------------------------------------------------
+   Replaces the old `dg-*` rules in `guide.css`. Every colour here is one of
+   this app's own tokens, which rule 4 of the handoff asks for by name; the one
+   hard-coded value is the dim, which is the live one.
+
+   SMOOTH AIR IS `.app.smooth-air`, not `[data-smooth-air="1"]`. The handoff
+   says to swap in the real one, and this app has spelled it that way since
+   the motion system was written.
+   ========================================================================= */
+
+/* ---- layer ---- */
+.dg { position: fixed; inset: 0; z-index: 1000; pointer-events: none }
+.dg.on { pointer-events: auto }
+
+/* ROOM AT THE FOOT WHILE THE TOUR IS UP, carried over from guide.css and the
+   one rule of it that is not a `dg-*` style. The card is docked at the foot,
+   and a target in the last screenful cannot be scrolled above it unless the
+   page can scroll past its own end — without this the engine's `plan` scores
+   the bottom dock badly and falls back to the top edge, which is the approved
+   behaviour only for the two panes that are genuinely fixed.
+   The Ready Room is excluded because it fills the window and does not scroll
+   as a page. The marker is set by tourEngine on .app and removed when the tour
+   closes, so nothing is padded after it ends. */
+.app[data-tour-on="1"]:not(:has(.rr-app)) .deck,
+.app[data-tour-on="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 45vh; }
+@media (max-width: 699px) {
+  .app[data-tour-on="1"]:not(:has(.rr-app)) .deck,
+  .app[data-tour-on="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 55vh; }
+}
+
+/* ---- highlight frame ---- */
+.dg-ring {
+  position: fixed; left: 0; top: 0; border-radius: 18px; opacity: 0; pointer-events: none;
+  box-shadow:
+    0 0 0 1.5px var(--active),
+    0 0 0 6px color-mix(in oklch, var(--active) 16%, transparent),
+    0 0 32px 4px color-mix(in oklch, var(--active) 22%, transparent),
+    0 0 0 100vmax rgba(6,10,18,.58);
+  transition:
+    transform .55s cubic-bezier(.3,.7,.3,1),
+    width .55s cubic-bezier(.3,.7,.3,1),
+    height .55s cubic-bezier(.3,.7,.3,1),
+    border-radius .55s cubic-bezier(.3,.7,.3,1),
+    box-shadow .45s ease,
+    opacity .3s ease;
+  will-change: transform, width, height;
+}
+/* nothing framed: just dim */
+.dg-ring.full { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent, 0 0 0 0 transparent, 0 0 0 100vmax rgba(6,10,18,.58) }
+/* whole page: frame the viewport, no dim */
+.dg-ring.whole { box-shadow:
+  0 0 0 1.5px var(--active),
+  0 0 0 6px color-mix(in oklch, var(--active) 16%, transparent),
+  0 0 32px 4px color-mix(in oklch, var(--active) 22%, transparent),
+  0 0 0 100vmax rgba(6,10,18,0) }
+
+/* ---- card ---- */
+.dg-card {
+  position: fixed; left: 0; right: 0; bottom: 16px; margin: 0 auto; width: min(600px, calc(100vw - 32px));
+  box-sizing: border-box; overflow: hidden; pointer-events: auto; touch-action: pan-y; user-select: none;
+  padding: 18px 22px 14px; border-radius: 18px;
+  background: var(--ground); color: var(--t1); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0,0,0,.32);
+  transform: translate3d(var(--drag,0px),0,0);
+  transition: opacity .12s, transform .22s cubic-bezier(.22,1,.36,1), height .38s cubic-bezier(.3,.7,.3,1), top .4s cubic-bezier(.22,1,.36,1), bottom .4s cubic-bezier(.22,1,.36,1);
+  animation: dg-card-in .3s cubic-bezier(.22,1,.36,1) backwards;
+  will-change: transform, opacity;
+  z-index: 1;
+}
+.dg-card[data-dock="top"] { top: 16px; bottom: auto }
+.dg-card[data-dragging="1"] { transition: opacity .12s }
+.dg-card.is-sheet { width: 100vw; bottom: 0; border-radius: 20px 20px 0 0; border-bottom: 0; padding: 18px 18px max(14px, env(safe-area-inset-bottom)) }
+.dg-card.is-sheet[data-dock="top"] { top: 0; bottom: auto; border-radius: 0 0 20px 20px; border-top: 0; border-bottom: 1px solid var(--line); padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: 14px }
+
+.dg-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--line) }
+.dg-card.is-sheet[data-dock="top"] .dg-bar { top: auto; bottom: 0 }
+.dg-bar i { display: block; height: 100%; background: var(--active); transform-origin: 0 50%; transition: transform .26s cubic-bezier(.22,1,.36,1) }
+
+.dg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px }
+.dg-kicker { font: 500 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--active-text) }
+.dg-count { margin-left: 10px; letter-spacing: .06em; text-transform: none; color: var(--t3); font-variant-numeric: tabular-nums }
+.dg-skip { background: none; border: 0; padding: 6px 2px; cursor: pointer; font: 500 13px var(--font-ui); color: var(--t3); position: relative }
+.dg-skip::after { content: ""; position: absolute; inset: -10px -8px }
+.dg-skip:hover { color: var(--t1) }
+
+.dg-body { animation: dg-in-r .34s cubic-bezier(.3,.7,.3,1) both }
+.dg-body.from-left { animation-name: dg-in-l }
+.dg-title { margin: 0 0 6px; font: 600 19px/1.25 var(--font-ui); letter-spacing: -.01em; color: var(--t1); text-wrap: balance }
+.dg-text { margin: 0; font-size: 15px; line-height: 1.55; color: var(--t2); min-height: 4.65em }
+
+.dg-acts { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; margin-top: 16px }
+.dg-back { background: none; border: 0; padding: 8px 4px; cursor: pointer; font: 500 14px var(--font-ui); color: var(--t2); position: relative }
+.dg-back::after { content: ""; position: absolute; inset: -8px -6px }
+.dg-back:disabled { visibility: hidden }
+.dg-next { grid-column: 3; height: 40px; padding: 0 18px; border: 0; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  font: 600 14.5px var(--font-ui); background: var(--active-fill); color: var(--ground);
+  transition: transform .12s cubic-bezier(.22,1,.36,1), filter .12s }
+.dg-next:hover { filter: brightness(1.06) }
+.dg-next:active { transform: scale(.97) }
+/* the finish override this app already had for the tour's button */
+.app[data-paper="1"] .dg-next { background: transparent; color: var(--active); border: 1.5px solid var(--active) }
+
+/* ---- beta pop-up ---- */
+.dg-modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(6,10,18,.58); animation: dg-in .24s ease both; transition: opacity .2s ease }
+.dg-modal.is-out { opacity: 0 }
+.dg-box { width: min(500px,100%); box-sizing: border-box; background: var(--ground); color: var(--t1); border: 1px solid var(--line); border-radius: 18px; padding: 24px 24px 18px; box-shadow: 0 18px 50px rgba(0,0,0,.32); animation: dg-card-in .3s cubic-bezier(.22,1,.36,1) backwards }
+.dg-box .dg-kicker { display: block; margin-bottom: 10px }
+.dg-box h3 { margin: 0 0 8px; font: 600 22px/1.25 var(--font-ui); letter-spacing: -.01em; text-wrap: balance }
+.dg-box p { margin: 0; color: var(--t2); font-size: 15px; line-height: 1.55 }
+.dg-box .dg-cls { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--t3) }
+.dg-modal-acts { display: flex; justify-content: flex-end; margin-top: 18px }
+.dg-modal-acts .dg-next { grid-column: auto }
+
+/* ---- "in the works" / "also in the ready room" pill ---- */
+/* .wm-pill-soon is a real app style now and lives in module.css: the
+   Library's "Shared study material" row and a lesson comment's "also in the
+   Ready Room" tag both wear it outside the tour. Defining it here too would
+   be two sources for one look, and the lazy sheet would win by load order. */
+
+@keyframes dg-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes dg-card-in { from { opacity: 0; translate: 0 14px } to { opacity: 1; translate: 0 } }
+@keyframes dg-in-r { from { opacity: 0; transform: translate3d(14px,0,0) } to { opacity: 1; transform: none } }
+@keyframes dg-in-l { from { opacity: 0; transform: translate3d(-14px,0,0) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-ring, .dg-card, .dg-bar i, .dg-modal { transition: none !important }
+  .dg-card, .dg-body, .dg-box, .dg-modal { animation: none !important }
+}
+/* Smooth Air behaves exactly as reduced motion does — the app's own class. */
+.app.smooth-air .dg-ring, .app.smooth-air .dg-card, .app.smooth-air .dg-bar i, .app.smooth-air .dg-modal { transition: none !important }
+.app.smooth-air .dg-card, .app.smooth-air .dg-body, .app.smooth-air .dg-box, .app.smooth-air .dg-modal { animation: none !important }

@@ -243,6 +243,16 @@ export function seed({ me, look = {} } = {}) {
     "pw-hobbs": { M1: 15120, M2: 3900 },
     "pw-days": { n: 12, last: today },
     "pw-last-place": [{ kind: "lesson", moduleCode: "M1", chapterId: "M1.02", lessonId: "M1.02.2", pct: 0.82 }],
+    /* OPEN FREQUENCY, so all three of Back on the ground's cards are there.
+       `surfacesFor` in lib/ground.js reads this: Quiet skies draws none of
+       them, My flight (the default, "crew") draws the right seat alone, and
+       Open frequency draws the right seat, the squadron chat and the module's
+       threads. The walkthrough has a step on each of the three, and on the
+       default preset two of them pointed at a card that was not rendered —
+       so this is the seed carrying what the tour needs rather than the tour
+       claiming something a student cannot see. It is also the truthful
+       setting for this student: the demo class talks. */
+    "pw-social-preset": "open",
     ...(look.progress || {}),
   };
 

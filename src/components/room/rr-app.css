@@ -255,3 +255,11 @@
 .rr-app .rr-tt-go { all: unset; display: block; cursor: pointer; border-radius: 4px; }
 .rr-app .rr-tt-go:hover b { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); }
 .rr-app .rr-tt-go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* THE TOUR'S THREE RAIL GROUPS, and they must cost the layout nothing.
+   `ready-room.css` is the design's stylesheet kept as sent, and the rail is a
+   flat run of headers and rows by its design — so the wrappers the tour needs
+   to point at a whole section are transparent to layout and exist only to
+   carry `data-tour`. The engine measures the union of their children
+   (tourEngine.js, `rectOf`), which is the only reason this works. */
+.rr-tourgrp { display: contents; }

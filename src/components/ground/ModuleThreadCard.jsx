@@ -11,7 +11,7 @@ export function ModuleThreadCard({
 }) {
   if (!threads || threads.length === 0) {
     return (
-      <div className="bog-card">
+      <div data-tour="deck-thread" className="bog-card">
         <div className="bog-ch"><span className="bog-lbl">{moduleName}</span></div>
         <div className="bog-body">
           <div className="bog-invite">
@@ -30,7 +30,7 @@ export function ModuleThreadCard({
   if (threads.length === 1) {
     const t = threads[0];
     return (
-      <div className="bog-card">
+      <div data-tour="deck-thread" className="bog-card">
         <div className="bog-ch">
           <span className="bog-lbl">Last thread · {moduleName}</span>
           <span className="bog-aside">{t.when}</span>
@@ -54,7 +54,7 @@ export function ModuleThreadCard({
   const rest = threads.length - rows.length;
 
   return (
-    <div className="bog-card">
+    <div data-tour="deck-thread" className="bog-card">
       <div className="bog-ch">
         <span className="bog-lbl">Threads · {moduleName}</span>
         <span className="bog-aside">{threads.length} open</span>
