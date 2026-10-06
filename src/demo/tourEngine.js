@@ -124,11 +124,18 @@ export function startTour({
   const appEl = document.querySelector(".app");
   appEl?.setAttribute("data-tour-on", "1");
 
-  let i = 0, last = -1, page = null, auto = false, autoT = 0, token = 0;
+  let i = 0, last = -1, page = null, auto = false, autoT = 0, token = 0, stepAt = 0;
   const $ = (sel) => dg.querySelector(sel);
   const target = () => (steps[i].target ? document.querySelector(`[data-tour="${steps[i].target}"]`) : null);
   const sheet = () => sc.view.w < SHEET_BP;
-  const cardH = () => ($(".dg-card")?.offsetHeight || 0);
+  /* THE CARD'S FINAL HEIGHT, not its height right now. `free()` subtracts it
+     to find the room left for the light, and the card ANIMATES its height
+     between steps — so reading it live gave a different answer on every frame
+     of that animation. An observer on the card then re-framed on each of
+     them, which snapped the ring instead of letting it glide. `setCard` knows
+     the height the card is going to, so it records it. */
+  let cardFinalH = 0;
+  const cardH = () => cardFinalH || $(".dg-card")?.offsetHeight || 0;
 
   function free(dock) {
     const v = sc.view, gap = sheet() ? 0 : 16, ch = cardH();
@@ -151,32 +158,6 @@ export function startTour({
     return best;
   }
 
-  /* The four panels, aimed at the four strips around the hole the light makes.
-     Each is the whole window scaled from its top-left corner, so the only
-     thing that changes per frame is a transform — see the note in tour.css
-     for why the dim is not a box-shadow any more. */
-  function dimTo(hx, hy, hw, hh, instant) {
-    const d = $(".dg-dim");
-    if (!d) return;
-    const v = sc.view, W = innerWidth, H = innerHeight;
-    const x1 = Math.max(0, hx), y1 = Math.max(0, hy);
-    const x2 = Math.min(W, hx + hw), y2 = Math.min(H, hy + hh);
-    const strips = [
-      [0, 0, W, y1],                      // above
-      [0, y2, W, H - y2],                 // below
-      [0, y1, x1, Math.max(0, y2 - y1)],  // left of the hole
-      [x2, y1, W - x2, Math.max(0, y2 - y1)], // right of it
-    ];
-    [...d.children].forEach((el, k) => {
-      const [L, T, w, h] = strips[k];
-      el.style.transition = instant ? "none" : "";
-      el.style.transform = `translate(${L}px,${T}px) scale(${Math.max(0, w) / W},${Math.max(0, h) / H})`;
-      if (instant) { void el.offsetWidth; el.style.transition = ""; }
-    });
-    d.style.opacity = 1;
-    void v;
-  }
-
   function ringTo(el, dock, stFinal, instant) {
     const ring = $(".dg-ring"); if (!ring) return;
     const s = steps[i], v = sc.view;
@@ -184,22 +165,20 @@ export function startTour({
     if (s.whole) {
       ring.className = "dg-ring whole";
       Object.assign(ring.style, {
-        opacity: 1, width: `${v.w - 12}px`, height: `${v.h - 12}px`,
+        width: `${v.w - 12}px`, height: `${v.h - 12}px`,
         transform: `translate(${v.left + 6}px,${v.top + 6}px)`, borderRadius: "14px",
       });
       /* The whole window is the hole, so the panels have nothing to cover —
          which is what the ported sheet said with a dim at zero alpha. */
-      dimTo(v.left + 6, v.top + 6, v.w - 12, v.h - 12, instant);
       return;
     }
     if (!el) {
       ring.className = "dg-ring full";
       Object.assign(ring.style, {
-        opacity: 1, width: "0px", height: "0px",
+        width: "0px", height: "0px",
         transform: `translate(${v.left + v.w / 2}px,${v.top + v.h / 2}px)`,
       });
       /* Nothing framed: the hole has no size, so the panels cover the lot. */
-      dimTo(v.left + v.w / 2, v.top + v.h / 2, 0, 0, instant);
       return;
     }
     ring.className = "dg-ring";
@@ -210,10 +189,9 @@ export function startTour({
     x = Math.max(v.left + 6, x);
     const w = Math.min(w0, v.left + v.w - 6 - x);
     Object.assign(ring.style, {
-      opacity: 1, width: `${w}px`, height: `${Math.max(0, y2 - y1)}px`,
+      width: `${w}px`, height: `${Math.max(0, y2 - y1)}px`,
       transform: `translate(${x}px,${v.top + y1}px)`, borderRadius: "18px",
     });
-    dimTo(x, v.top + y1, w, Math.max(0, y2 - y1), instant);
   }
 
   function smooth(top, instant) {
@@ -237,40 +215,27 @@ export function startTour({
     ringTo(el, p.dock, p.st, instant);
   }
 
-  /* ADAPTATION 5: THE CARD'S HEIGHT IS AN INPUT, SO A CHANGE IN IT RE-FRAMES.
-     `free()` subtracts the card's height to work out the room left for the
-     light, and `ringTo` clips the light to `f.bot + 4` so it can never stand
-     more than 4px under the card. Both read `cardH()` at the instant they
-     run — which is before the browser has laid out the new step's text. The
-     cards are not all the same height (245px and 268px on two consecutive
-     steps at 390), so the light was clipped to the room the PREVIOUS card
-     left and then the card grew into it: measured 10px of overlap on the
-     lesson's second step and 56px on the deck's modules at 390.
-     One observer, re-framing when the card resizes, and the overlap is 0.
-
-     IT RE-FRAMES THE LIGHT AND DOES NOT TOUCH THE SCROLL. `frame()` does
-     both, and calling it here scrolled the page instantly every time the card
-     changed height — a 315px jump mid-step, with the page going one way and
-     then back, which is half of what "jittery" was. The card's height only
-     decides where the light may be CLIPPED, so only the clip is redone: the
-     scroll the step planned is left alone. */
-  const cardRO = typeof ResizeObserver === "function"
+  /* The TARGET is watched, never the card. A target can change size under the
+     light — an image arriving — and that is worth a re-frame; the card's own
+     height is known in advance (see `cardFinalH`) and watching it only ever
+     fought the glide. Callbacks are ignored while the engine is scrolling and
+     for 600ms after a step change, which is the window the entrance animation
+     occupies. */
+  const targetRO = typeof ResizeObserver === "function"
     ? new ResizeObserver(() => {
-      if (!$(".dg-card") || $(".dg-modal")) return;
-      const el = target();
-      const s = steps[i];
-      if (!el || s?.whole) return;
-      ringTo(el, $(".dg-card").dataset.dock || "bottom", null, true);
+      if (auto || performance.now() - stepAt < 600) return;
+      const el = target(), c = $(".dg-card");
+      if (!el || !c || steps[i]?.whole) return;
+      ringTo(el, c.dataset.dock || "bottom", null, true);
     })
     : null;
-
-  let watched = null;
-  function observeCard() {
-    const c = $(".dg-card");
-    if (!cardRO || !c || watched === c) return;
-    if (watched) cardRO.unobserve(watched);
-    cardRO.observe(c);
-    watched = c;
+  let watchedTarget = null;
+  function observeTarget() {
+    const el = target();
+    if (!targetRO || watchedTarget === el) return;
+    if (watchedTarget) targetRO.unobserve(watchedTarget);
+    watchedTarget = el || null;
+    if (el) targetRO.observe(el);
   }
 
   function waitFor(sel, ms = 1600) {
@@ -283,9 +248,8 @@ export function startTour({
   }
 
   function ensureCard() {
-    if ($(".dg-card")) { observeCard(); return; }
-    dg.innerHTML = `<div class="dg-dim"><i></i><i></i><i></i><i></i></div>
-      <div class="dg-ring"></div>
+    if ($(".dg-card")) return;
+    dg.innerHTML = `<div class="dg-ring"></div>
       <div class="dg-card" role="dialog" aria-label="A tour of Wingman">
         <div class="dg-bar"><i></i></div>
         <div class="dg-top"><span class="dg-kicker"></span><button class="dg-skip" type="button">Skip</button></div>
@@ -294,7 +258,6 @@ export function startTour({
       </div>`;
     const card = $(".dg-card");
     $(".dg-next").onclick = () => go(i + 1);
-    observeCard();
     $(".dg-back").onclick = () => go(i - 1);
     $(".dg-skip").onclick = () => close("skip");
     let sx = null;
@@ -325,6 +288,7 @@ export function startTour({
     $(".dg-next").textContent = s.cta || "Next";
     card.style.height = "";
     const h1 = card.offsetHeight;
+    cardFinalH = h1;
     if (h0 && h0 !== h1 && !reduce()) {
       card.style.height = `${h0}px`;
       void card.offsetHeight;
@@ -348,32 +312,39 @@ export function startTour({
     if (newPage && page !== null && ring && !reduce()) {
       ring.style.transition = "opacity .22s ease";
       ring.style.opacity = 0;
-      const d0 = $(".dg-dim");
-      if (d0) { d0.style.transition = "opacity .22s ease"; d0.style.opacity = 0; }
-      appEl?.setAttribute("data-tour-swap", "1");
       await wait(220);
     }
-    if (t !== token) { appEl?.removeAttribute("data-tour-swap"); return; }
+    if (t !== token) return;
     if (currentRoute() !== s.route) await navigate(s.route);
     if (s.pane && setPane) await setPane(s.pane);
     if (s.panelTab && setPanelTab) await setPanelTab(s.panelTab);
     await waitFor(s.target ? `[data-tour="${s.target}"]` : null);
-    if (t !== token) { appEl?.removeAttribute("data-tour-swap"); return; }
+    if (t !== token) return;
     page = s.page;
+    stepAt = performance.now();
+    bindScroll();
     if (newPage) {
+      /* PLACED WHILE IT IS STILL INVISIBLE, THEN FADED IN. `ringTo` sets no
+         opacity at all now — it used to set 1 on every call, so the ring
+         appeared at its old size for a frame before being moved, which is the
+         flash on a page change. Opacity is this function's business and
+         nowhere else's. */
       sc.to(0, true);
       requestAnimationFrame(() => {
         frame(true);
-        /* and back in, once the light has been aimed at the new screen */
-        appEl?.removeAttribute("data-tour-swap");
+        observeTarget();
         const r = $(".dg-ring");
-        const d1 = $(".dg-dim");
-        if (r && !reduce()) { r.style.opacity = 0; void r.offsetWidth; r.style.transition = "opacity .35s ease .1s"; r.style.opacity = 1; }
-        if (d1 && !reduce()) { d1.style.opacity = 0; void d1.offsetWidth; d1.style.transition = "opacity .35s ease .1s"; d1.style.opacity = 1; }
-        else if (d1) d1.style.opacity = 1;
+        if (r && !reduce()) { r.style.transition = "opacity .35s ease .1s"; r.style.opacity = 1; }
+        else if (r) r.style.opacity = 1;
       });
     } else {
-      requestAnimationFrame(() => frame(false));
+      /* Same page: the ring is already on screen, so it simply glides. */
+      requestAnimationFrame(() => {
+        const r = $(".dg-ring");
+        if (r) { r.style.transition = ""; r.style.opacity = 1; }
+        frame(false);
+        observeTarget();
+      });
     }
   }
 
@@ -437,19 +408,37 @@ export function startTour({
      goes on the CAPTURE phase at the document — one binding that still hears
      whichever element is scrolling now. */
   document.addEventListener("keydown", onKey);
-  document.addEventListener("scroll", onScroll, { passive: true, capture: true });
-  document.addEventListener("scrollend", onScrollEnd, { capture: true });
+  /* THE ACTIVE SCROLLER, NOT THE DOCUMENT. Listening on `document` with
+     capture caught every scroll on the page, including ones in panes the tour
+     is not pointing at, and kept catching them after the app had replaced the
+     scroller on a page change. `bindScroll` re-binds to whatever `box()`
+     answers now, and is called on every step. */
+  let boundTo = null;
+  function bindScroll() {
+    const el = box() || window;
+    if (boundTo === el) return;
+    if (boundTo) {
+      boundTo.removeEventListener("scroll", onScroll);
+      boundTo.removeEventListener("scrollend", onScrollEnd);
+    }
+    boundTo = el;
+    boundTo.addEventListener("scroll", onScroll, { passive: true });
+    boundTo.addEventListener("scrollend", onScrollEnd);
+  }
+  bindScroll();
   addEventListener("resize", onResize);
 
   function close(reason) {
     token++;
     document.removeEventListener("keydown", onKey);
-    document.removeEventListener("scroll", onScroll, { capture: true });
-    document.removeEventListener("scrollend", onScrollEnd, { capture: true });
+    if (boundTo) {
+      boundTo.removeEventListener("scroll", onScroll);
+      boundTo.removeEventListener("scrollend", onScrollEnd);
+      boundTo = null;
+    }
     removeEventListener("resize", onResize);
-    appEl?.removeAttribute("data-tour-swap");
-    cardRO?.disconnect();
-    watched = null;
+    targetRO?.disconnect();
+    watchedTarget = null;
     dg.remove();
     appEl?.removeAttribute("data-tour-on");
     onClose?.(reason);
