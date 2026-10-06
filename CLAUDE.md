@@ -166,6 +166,28 @@ which is what the Flight Deck draws before the document arrives.
     Rotary Wing" and "Instruments (ATA 31)" again. Batch 6 has no `ref` now:
     its name already carries ATA 31 and the row prints name and reference on
     consecutive lines.
+- **AND THE SAME TREATMENT, SCREEN BY SCREEN** (owner, 2026-10-06: "apply
+  the same"). What that turned out to mean, measured rather than assumed —
+  heading size and content column at 1440/900/600/390:
+  - **The Flight Deck's title was the one page title in the app that never
+    moved**, a flat 32px at every width (`.deck .title` in Home.jsx). It takes
+    the module's scale now, so the two page titles grow and shrink together:
+    40/40/36/32.
+  - **Bookmarks already responds** (44 to 32), and its sheet is a signed-off
+    pack.
+  - **The Ready Room's 32px and the Licence's 30px are left alone, and that
+    is deliberate.** `ready-room.css` is the design's stylesheet kept as sent,
+    with exactly two marked changes and `check:rr` holding it; the licence's
+    `.ptitle` is `calc(30px * var(--scale,1))`, which already scales with the
+    student's own font-size preference, just not with the viewport. Both are
+    approved designs that state a fixed size; overriding them is a design
+    decision rather than a layout fix.
+  - **THE LESSON IS A `.mscreen` TOO, and the module's column nearly squeezed
+    it.** `LessonPage` renders `<div className="mscreen lessonpage ref-les">`
+    and is drawn to a different width — `--wrap: 1010px` in ref-lesson.css —
+    with a 16:9 player sized against it. A bare `.mscreen { max-width: 760px }`
+    took 300px off that player. The rule is on `mscreen-mod` now, a class
+    `ModuleScreen` carries and the lesson does not.
 - **THE MODULE SCREEN IS THE DESIGN'S OWN COLUMN: 760px, CENTRED.** This took
   five goes and every one of them was the same mistake — treating the app's
   wider column as fixed and reshaping the design to fill it. The build this

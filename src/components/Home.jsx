@@ -80,7 +80,13 @@ const DECK_CSS = `
 /* zoom: 1 because .content still carries the shell's --font-scale zoom, and
    with --scale also driving the instruments the deck was scaling twice. */
 .deck .dhead { margin-bottom: 18px; }
-.deck .title { font-size: 32px; font-weight: 700; letter-spacing: -.7px; line-height: 1.05; margin: 0; color: var(--t1); }
+/* FLUID, AND THE SAME SCALE THE MODULE SCREEN'S TITLE TAKES. It was a flat
+   32px at every width — the one page title in the app that never moved. The
+   number is the approved build's own clamp of 32 to 40 over 6vw, so the two
+   page titles grow and shrink together instead of one being a fixed size
+   (owner, 2026-10-06: "nothing is a fixed size, everything should size to
+   scale"). */
+.deck .title { font-size: clamp(32px, 6vw, 40px); font-weight: 700; letter-spacing: -.7px; line-height: 1.05; margin: 0; color: var(--t1); }
 .deck .greet { font-size: 20px; font-weight: 600; margin-top: 7px; letter-spacing: -.2px; min-height: 24px; }
 .deck .since { font-size: 13px; color: var(--t2); margin-top: 2px; }
 
