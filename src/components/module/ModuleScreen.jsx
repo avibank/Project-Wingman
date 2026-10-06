@@ -139,7 +139,10 @@ export default function ModuleScreen({
 
 
   return (
-    <div className="mscreen">
+    /* `mscreen-mod` so the module screen's own column (module.css) cannot
+       reach the LESSON page, which is also a `.mscreen` and is drawn to a
+       different width — see `--wrap` in ref-lesson.css. */
+    <div className="mscreen mscreen-mod">
       <div className="hdr">
         {/* Up, to the parent, labelled with the destination. */}
         <button type="button" className="up" onClick={onBack}>
