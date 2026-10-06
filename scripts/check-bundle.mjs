@@ -11,20 +11,30 @@ import { join } from "node:path";
 const DIST = "dist/assets";
 const HTML = "dist/index.html";
 /* 680 on the day it was set, when the entry measured 645.
-   It was raised to 684 on 2026-10-04 for the two pattern finishes and PUT
-   BACK on 2026-10-05 when they were killed — a budget raised for something
-   that is gone is a gate that has been quietly loosened, which is how the
-   header above says budgets die.
 
-   THE 4KB THIS ONCE BOUGHT IS STILL THERE TO HAVE, and is worth taking the
-   next time the entry is tight rather than raising this again: the `AUR`
-   spec table in finishEngine.js — six liveries of curtain specs with their
-   prose — is in the entry on every first paint for a finish that is NOT
-   OFFERED. Nothing calls `auroraLayers`, `starfield`, `horizon` or
-   `STAR_TILE` any more (grepped), so the only thing holding AUR in is
-   `finishVars`'s aurora branch. Move that branch and its table to a lazily
-   imported module and the entry drops under 680 with room. */
-const BUDGET = 680 * 1024;      // entry chunk
+   IT HAS MOVED TWICE AND THE TWO ARE NOT THE SAME MOVE. On 2026-10-04 it went
+   to 684 for two pattern finishes and came back to 680 the next day when they
+   were killed — a budget left raised for something that no longer exists is a
+   gate quietly loosened, which is how the note above says budgets die. On
+   2026-10-06 it went to 684 again for the Reports screen and the composer
+   behind the "Something's wrong here" pill, and that one STAYS: an admin
+   surface that reads what students send is not going away, and the budget's
+   own rule is that it sits at what the build achieves rather than at an
+   aspiration. The composer itself is NOT in here — it is lazy, because it is
+   only ever needed after a press (src/components/ReportAsk.jsx).
+
+   THE 4KB TO TAKE BEFORE RAISING THIS AGAIN, still unclaimed: the `AUR` spec
+   table in finishEngine.js — six liveries of curtain specs with their prose —
+   is in the entry on every first paint for a finish that is NOT OFFERED.
+   Nothing calls `auroraLayers`, `starfield`, `horizon` or `STAR_TILE` any
+   more (grepped); only `finishVars`'s aurora branch holds the table in.
+   Moving both to a lazily imported module is worth about 4KB — but it is not
+   free, and that is why it has not been done in passing: CLAUDE.md states
+   that aurora still resolves while unoffered, which is what keeps `?finish=`
+   and the harness honest, and what check:contrast, check:surfaces and test:bm
+   measure. Doing it means giving those a path to the moved table, and that
+   deserves its own change rather than a line in somebody else's. */
+const BUDGET = 684 * 1024;      // entry chunk
 
 let files;
 try { files = readdirSync(DIST); }

@@ -39,6 +39,7 @@ export const FLAGS = [
      document away (owner, 2026-09-30). `everyone: false` means admins have
      it and nobody else does, which is what flagDefault does with that. */
   { id: "admin.studio", label: "Studio", note: "Writing quizzes, study cards and papers in the app.", everyone: false },
+  { id: "admin.reports", label: "Reports", note: "What the 'Something's wrong here' pill has sent, and what the app reported about itself.", everyone: false },
   // The kill pass. Each of these hides an entry point; the route and the code
   // stay put, so any of it is one switch away from coming back.
   { id: "nav.root", label: "Bottom nav", note: "Study · Modules · Logbook · Ready Room.", off: true },

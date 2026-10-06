@@ -21,6 +21,14 @@ import { useSavesCount } from "../features/bookmarks/deck.js";
 const ICON = {
   /* A sheet with a line of writing on it: the Studio is where a chapter is
      WRITTEN, and the menu's other icons are all outlines at this size. */
+  /* A megaphone turned down: the pill in the corner, as an icon. */
+  reports: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+      <path d="M4 10v4a1 1 0 0 0 1 1h2l5 3.5V5.5L7 9H5a1 1 0 0 0-1 1Z"
+            stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M16 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  ),
   studio: (
     <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path d="M4.6 3.4h7.2l3.6 3.6v9.6H4.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -203,6 +211,16 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
         {isAdmin && (
           <button role="menuitem" type="button" onClick={() => go("studio")}>
             {ICON.studio}<span className="mlabel">Studio</span>
+            <span className="admin small">Admin</span>
+          </button>
+        )}
+
+        {/* REPORTS, beside it (owner, 2026-10-06: "I can't see it if someone
+            presses it as an admin"). The pill in the corner has been writing
+            to a table nobody could read. */}
+        {isAdmin && (
+          <button role="menuitem" type="button" onClick={() => go("reports")}>
+            {ICON.reports}<span className="mlabel">Reports</span>
             <span className="admin small">Admin</span>
           </button>
         )}

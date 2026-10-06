@@ -140,6 +140,7 @@ export function parseRoute(pathname) {
      router: a route that 404s for some people is a route that cannot be
      linked to in a message. */
   if (parts[0] === "studio") return { name: "studio" };
+  if (parts[0] === "reports") return { name: "reports" };
   // §6 — the profile's three tabs are real URLs, not a tab state. They sit
   // under /account now; settings should not sit at the root.
   if (parts[0] === "account" && PROFILE_TABS.includes(parts[1])) return { name: "profile", tab: parts[1] };
@@ -162,6 +163,7 @@ export const path = {
   home: () => "/",
   modules: () => "/modules",
   studio: () => "/studio",
+  reports: () => "/reports",
   module: (m) => `/m/${String(m).toLowerCase()}`,
   library: (m, sub) => `/m/${String(m).toLowerCase()}/library` + (sub === "quizzes" ? "/quizzes" : ""),
   lesson: (m, c, l, q) =>

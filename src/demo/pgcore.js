@@ -723,11 +723,17 @@ export function handle(store, { method, url, headers = {}, body = null }) {
         rows.push(store[table][at]);
         continue;
       }
+      /* `status` DEFAULTS PER TABLE, because the schema does. "ok" is right
+         for a paper annotation and wrong for a report: 0005 declares
+         `reports.status` default 'open', and an admin screen filtering on
+         Open found nothing here while the live table was full of it
+         (measured, 2026-10-06). A stand-in backend that defaults a column
+         differently from the real one is a harness that lies quietly. */
       const row = {
         id: raw.id || uuid(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        status: "ok",
+        status: table === "reports" ? "open" : "ok",
         ...raw,
       };
       store[table].push(row);
