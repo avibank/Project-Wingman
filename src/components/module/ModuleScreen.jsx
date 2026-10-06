@@ -1,7 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { Suspense, lazy, useState, useEffect, useRef } from "react";
 import { ChevronLeft, Search, X } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
+/* The ported Lessons tab, behind the same flag as the Library and lazy for
+   the same reason — it carries its own stylesheet. */
+const LessonsWaiting = lazy(() => import("./library/LessonsWaiting.jsx"));
 import CrewTab from "./CrewTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
@@ -240,7 +243,16 @@ export default function ModuleScreen({
           separate rows, housing separates sections, and if every row is a card
           then nothing is. */}
       <div className="pane" role="tabpanel">
-        {tab === "route" && (
+        {/* THE PORTED LESSONS TAB REPLACES RouteTab rather than sitting above
+            it: the demo's Lessons is one player block and nothing else — no
+            chapter list, no route strip. */}
+        {tab === "route" && asBatches && (
+          <Suspense fallback={null}>
+            <LessonsWaiting moduleName={mod?.name}
+                            onOpenLibrary={() => onTab("library")} />
+          </Suspense>
+        )}
+        {tab === "route" && !asBatches && (
           <RouteTab chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
                     /* Waiting and empty, told apart one level up: App knows
