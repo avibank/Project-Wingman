@@ -931,26 +931,41 @@
   white-space: nowrap;
 }
 
-/* ------------------------------------------------ WIDE, BUT NOT HUGE ---
-   (owner, 2026-10-06: "resize the tabs to fill much more of the screen",
-   "all tabs web wide without being too huge".)
+/* --------------------------------- LAID OUT AT 760, DISPLAYED BIGGER ---
+   (owner, 2026-10-06: "why does it feel streched and akward", then "complete
+   creative control ... neat proportions like the demo".)
 
-   The design is drawn at 760px and every number in its sheet is a pixel
-   measured against that. Two ways to put it on a wider screen, and both were
-   tried: STRETCH it — the column grows, every size stays — and the drawings
-   sit marooned in tiles twice their size. Or SCALE it — zoom the block so
-   every proportion holds — and the type grows with everything else, which on
-   a 2000px window makes a 40px title 105px. "Wide without being too huge" is
-   neither of those: it is the column going wide, the TYPE staying the size it
-   was drawn, and only the DRAWINGS growing to keep their share of the tile.
-   That is why the scale steps are on `.lb-th` and not on the block.
+   THE TILE IS THE WHOLE STORY. In the build it is 215x145. Stretched into a
+   1400px row it became 360x145 and then 420x145 — the width doubled and the
+   height never moved, so every tile turned into a letterbox with a drawing
+   floating in it. Scaling the drawing alone only made the letterbox more
+   obvious, because the box itself was the wrong shape. The rail went the same
+   way (ten 28px dots 140px apart instead of 75), and so did the row header
+   (a title with 900px of nothing before the chevron). ONLY ONE AXIS WAS
+   SCALING. A design has two.
 
-   `:has()` because `.content--full` declares `max-width: none` and then the
-   media query's own `.content { max-width: 1100px }` beats it on source order
-   at equal specificity — which is why this screen was 1056 wide inside a
-   column that had already said it had no cap. */
-.app main.content--full:has(.mscreen-mod) { max-width: none; }
+   So the screen is laid out at the width it was DRAWN for — 760px, where
+   every number in its sheet is correct by construction — and then displayed
+   larger. `zoom` scales layout, so the block still occupies the room it is
+   given and nothing downstream has to be compensated for.
+   `tan(atan2())` is how CSS divides one length by another and gets a number.
+
+   The cap is the judgement. Uncapped, a 2000px window would scale the design
+   2.6x and a 40px title would arrive at 105px. At 1.4 the page title is 56px
+   and the row titles 23px — big, and in proportion with everything around
+   them, because EVERY value moved by the same factor: tiles, gaps, rail
+   spacing, badges, type, row heights.
+
+   BELOW 760 IT SCALES DOWN THE SAME WAY, to a floor of 0.8 — the design laid
+   out at its own width and shown smaller holds every proportion, where
+   letting it reflow into a narrower column does not. The floor is where the
+   row titles reach 13px. Under that the tiles stack, on a CONTAINER query
+   rather than a viewport one: a viewport media query and this zoom measure
+   different things and would shrink the same tile twice. */
+.app main.content--full:has(.mscreen-mod) { max-width: none; container-type: inline-size; }
 .mscreen-mod {
-  width: min(1400px, 100%);
+  width: 100%;
+  max-width: 760px;
   margin-inline: auto;
+  zoom: clamp(0.8, tan(atan2(100cqw, 760px)), 1.4);
 }

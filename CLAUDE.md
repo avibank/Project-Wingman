@@ -188,43 +188,49 @@ which is what the Flight Deck draws before the document arrives.
     with a 16:9 player sized against it. A bare `.mscreen { max-width: 760px }`
     took 300px off that player. The rule is on `mscreen-mod` now, a class
     `ModuleScreen` carries and the lesson does not.
-- **WIDE, BUT NOT HUGE** (owner, 2026-10-06: "resize the tabs to fill much
-  more of the screen", "all tabs web wide without being too huge"). The design
-  is drawn at 760px and every number in its sheet is a pixel measured against
-  that, which leaves exactly two ways to put it on a wider screen, and both
-  were tried and rejected in turn:
-  - **STRETCH** — the column grows, every size stays. The drawings sit
-    marooned in tiles twice their size ("the icons for the batches are
-    squashed"), and the whole screen reads sparse: "you have more space more
-    freedom yet you squish everything".
-  - **SCALE** — the column is the design's own 760, or the block is zoomed so
-    every proportion holds. Proportions are then exact, and the screen uses
-    half a window ("resize the tabs to fill much more of the screen"); zoom
-    the block to fill instead and a 40px title becomes 105px on a 2000px
-    window.
-  - **So it is neither.** The column goes wide, the TYPE stays the size it was
-    drawn, and only the DRAWINGS grow to keep their share of the tile. That is
-    why the scale steps are on `.lb-th` and not on the block. Measured at
-    2000/1680/1440/1100/820/620/390: column 1196 where it was 760, tabs
-    spanning 1194, and the drawing holding **0.55 to 0.65** of its tile
-    against the design's own 0.595, with nothing clipped and the title at
-    42px.
-  - **`:has()` is what lets the column be wide.** `.content--full` declares
-    `max-width: none` and the media query's own `.content { max-width: 1100px }`
-    then beats it on source order at equal specificity — which is why this
-    screen sat at 1056 inside a column that had already said it had no cap.
-    `.app main.content--full:has(.mscreen-mod)` wins it back for this screen
-    and nothing else. The real ceiling above that is `.deck-inner`'s 1240px,
-    which every screen shares and which is left alone.
-  - **The container queries measure the tile's CONTENT box.** An inline-size
-    container does not include the tile's 12px of padding either side, so
-    steps written against the tile's outer width all landed one step low —
-    0.50 of the tile where the design is 0.595. Each step is
-    `0.595 x (content + 24) / 128`, every 40px, and carries the stage's height
-    with it so nothing is drawn outside it.
-  - **Below 560px the tiles stack**, because three of them plus their gaps and
-    the 68px indent need about that much row before a tile is narrower than
-    the drawing inside it.
+- **IT IS LAID OUT AT 760 AND DISPLAYED BIGGER** (owner, 2026-10-07, after
+  five rounds of this: "why does it feel streched and akward", then "complete
+  creative control ... neat proportions like the demo").
+
+  **THE TILE WAS THE WHOLE STORY.** In the build it is 215x145. Stretched into
+  a wide row it became 360x145, then 420x145 — the width doubled and the
+  height never moved, so every tile turned into a letterbox with a drawing
+  floating in it. Scaling the drawing alone only made the letterbox more
+  obvious, because the box itself was the wrong shape. The rail went the same
+  way (ten 28px dots 140px apart against the build's 75), and the row header
+  too (a title with 900px of nothing before its chevron). **Only one axis was
+  scaling, and a design has two.**
+
+  So the screen is laid out at the width it was DRAWN for and displayed
+  larger: `width:100%; max-width:760px; zoom: clamp(.8, tan(atan2(100cqw,
+  760px)), 1.4)`. `zoom` scales LAYOUT, so the block still occupies the room
+  it is given. `tan(atan2())` is how CSS divides one length by another and
+  gets a number. Every value moves by the same factor — tiles, gaps, rail
+  spacing, badges, type, row heights — so the proportions are the build's by
+  construction rather than by adjustment.
+  - **Measured against the build at 2000/1680/1440/1100/820**: tile aspect
+    **1.49** and drawing share **0.596** at every one of them, against the
+    build's own 1.49 and 0.596. Column 1064 where the design is 760.
+  - **The cap is the judgement.** Uncapped, a 2000px window scales it 2.6x and
+    a 40px title lands at 105px. At 1.4 the page title is 59px and the row
+    titles 23px — large, and in proportion with everything beside them.
+  - **It scales DOWN the same way**, to a floor of 0.8, which is where the row
+    titles reach 13px. A design laid out at its own width and shown smaller
+    keeps every proportion; one reflowed into a narrower column does not.
+  - **Under 620px of container the tiles stack, AND A STACKED TILE IS A ROW.**
+    Three side by side are cards and the build draws them as cards: a drawing
+    over its name, centred, about 3:2. Stacked, that same box is the width of
+    the screen and 88px tall, and a centred drawing in it is a letterbox —
+    the exact fault this screen had at the other end of the scale. A box that
+    wide IS a row, so the drawing goes left and the name sits beside it.
+  - **A CONTAINER query, never a viewport one**, and the rules go at the END
+    of the sheet. The screen is zoomed, so a viewport media query measures a
+    different number from the one this layout is in and the two shrink the
+    same tile twice; and `.lib2 .lb-tile` is declared earlier at the same
+    specificity, which a container query does not raise, so a block written
+    beside the grid loses on source order — the tile became a row and its name
+    stayed centred in the space left over. The drawing's own scale steps fell
+    into the same trap before they were deleted.
   - The quiz thumbnail also came out 75px against the design's 72, because
     `aspect-ratio` is only a suggestion once min-content is taller and that
     stack measures 3px more on this app's faces; one row of `minmax(0,1fr)`
