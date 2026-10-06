@@ -188,53 +188,34 @@ which is what the Flight Deck draws before the document arrives.
     with a 16:9 player sized against it. A bare `.mscreen { max-width: 760px }`
     took 300px off that player. The rule is on `mscreen-mod` now, a class
     `ModuleScreen` carries and the lesson does not.
-- **IT IS LAID OUT AT 760 AND DISPLAYED BIGGER** (owner, 2026-10-07, after
-  five rounds of this: "why does it feel streched and akward", then "complete
-  creative control ... neat proportions like the demo").
-
-  **THE TILE WAS THE WHOLE STORY.** In the build it is 215x145. Stretched into
-  a wide row it became 360x145, then 420x145 — the width doubled and the
-  height never moved, so every tile turned into a letterbox with a drawing
-  floating in it. Scaling the drawing alone only made the letterbox more
-  obvious, because the box itself was the wrong shape. The rail went the same
-  way (ten 28px dots 140px apart against the build's 75), and the row header
-  too (a title with 900px of nothing before its chevron). **Only one axis was
-  scaling, and a design has two.**
-
-  So the screen is laid out at the width it was DRAWN for and displayed
-  larger: `width:100%; max-width:760px; zoom: clamp(.8, tan(atan2(100cqw,
-  760px)), 1.4)`. `zoom` scales LAYOUT, so the block still occupies the room
-  it is given. `tan(atan2())` is how CSS divides one length by another and
-  gets a number. Every value moves by the same factor — tiles, gaps, rail
-  spacing, badges, type, row heights — so the proportions are the build's by
-  construction rather than by adjustment.
-  - **Measured against the build at 2000/1680/1440/1100/820**: tile aspect
-    **1.49** and drawing share **0.596** at every one of them, against the
-    build's own 1.49 and 0.596. Column 1064 where the design is 760.
-  - **The cap is the judgement.** Uncapped, a 2000px window scales it 2.6x and
-    a 40px title lands at 105px. At 1.4 the page title is 59px and the row
-    titles 23px — large, and in proportion with everything beside them.
-  - **It scales DOWN the same way**, to a floor of 0.8, which is where the row
-    titles reach 13px. A design laid out at its own width and shown smaller
-    keeps every proportion; one reflowed into a narrower column does not.
-  - **Under 620px of container the tiles stack, AND A STACKED TILE IS A ROW.**
-    Three side by side are cards and the build draws them as cards: a drawing
-    over its name, centred, about 3:2. Stacked, that same box is the width of
-    the screen and 88px tall, and a centred drawing in it is a letterbox —
-    the exact fault this screen had at the other end of the scale. A box that
-    wide IS a row, so the drawing goes left and the name sits beside it.
-  - **A CONTAINER query, never a viewport one**, and the rules go at the END
-    of the sheet. The screen is zoomed, so a viewport media query measures a
-    different number from the one this layout is in and the two shrink the
-    same tile twice; and `.lib2 .lb-tile` is declared earlier at the same
+- **WIDE AND LOW, NOT MAGNIFIED** (owner, 2026-10-07, and this took six
+  rounds). Scaling the whole screen as one piece — `zoom` driven by the
+  container, laid out at the 760px it was drawn for — held every proportion
+  EXACTLY: tile aspect 1.49 and drawing share 0.596 against the build's own
+  1.49 and 0.596, at every width. And it was wrong: "if this is the resault
+  then its bad", "you just magnfied them". 39px waypoints, 59px titles,
+  202px tiles. **Proportion is not density, and this screen wants density.**
+  - So there is no zoom. Every element is the size it was drawn, the column
+    spans (`width: min(1400px, 100%)`), and the two things that made it feel
+    tall came down: the waypoints to 22px, and the tile from 202px to 98.
+  - **THE TILE IS A ROW ONCE IT IS WIDE.** Three side by side in a 760px page
+    are cards, and the build draws them as cards — a drawing over its name,
+    centred, about 3:2. Give each one 340px and that same card is a letterbox
+    with the drawing stranded in it and 100px of height doing nothing. A box
+    that wide IS a row, so above 700px of container the drawing goes left and
+    the name sits beside it. Below 620px they stack, and a stacked tile is a
+    row for exactly the same reason.
+  - **The whole sequence, so nobody walks it again**: `1fr` tiles in a wide
+    column (drawing marooned) → cap the tile at 215 (three stranded in the
+    left two-thirds) → cap the screen at 760 left-aligned (block floating in
+    its card) → cap it centred (half the window empty) → scale the block
+    (magnified) → **wide, low, design-sized, tiles as rows**.
+  - **A CONTAINER query, never a viewport one, and the rules at the END of the
+    sheet.** `.lib2 .lb-tile` and `.lb-stage` are declared earlier at the same
     specificity, which a container query does not raise, so a block written
     beside the grid loses on source order — the tile became a row and its name
-    stayed centred in the space left over. The drawing's own scale steps fell
-    into the same trap before they were deleted.
-  - The quiz thumbnail also came out 75px against the design's 72, because
-    `aspect-ratio` is only a suggestion once min-content is taller and that
-    stack measures 3px more on this app's faces; one row of `minmax(0,1fr)`
-    lets the ratio decide.
+    stayed centred in the space left over. Two separate rounds lost a whole
+    change to that.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
@@ -1466,6 +1447,27 @@ and `claude/bookmarks-report.md` is what each rule measured.
   and the launch sweep — offline, two tabs, a second student, a deleted
   question and a keyboard-only pass. **Aurora has no Day**: `App.jsx` forces
   night on it, so there are 30 real skins, not 36.
+
+## When a deploy lands under an open tab
+
+**A DEPLOY INVALIDATES THE CHUNK NAMES A LOADED TAB IS HOLDING.** The owner
+hit it with the walkthrough open across six deploys in an hour: `Unable to
+preload CSS for /assets/LibraryBatches-B3D89J1k.css`, which 404s, because his
+`index.js` was two deploys old and named files that no longer exist. A reload
+fixes it — the HTML revalidates and names the new ones — and `chunk()` in
+App.jsx reloads once so it can never loop. Two things were wrong with that
+once:
+
+- **The flag was set and never cleared**, so "once" meant once per TAB for as
+  long as it lived. A tab that had recovered from one bad chunk weeks of
+  deploys ago could never recover from the next. It is cleared the moment any
+  chunk loads, so the budget is one reload per incident.
+- **It reloaded on ANY error out of the factory**, including a genuine crash
+  inside a screen's module scope — which a reload cannot fix, and which would
+  burn the one reload a later stale chunk needed. Only the three messages a
+  browser uses for a module or its CSS failing to arrive get the reload
+  (`STALE_CHUNK` in App.jsx); everything else is thrown to the boundary,
+  which is where a real bug belongs.
 
 ## What rides first paint
 

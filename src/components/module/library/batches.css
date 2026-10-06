@@ -222,3 +222,28 @@
   .lib2 .lb-tile {grid-template-columns:auto minmax(0,1fr);justify-items:start;align-items:center;text-align:left;gap:14px;padding:12px 14px}
   .lib2 .lb-tile strong {align-self:center}
 }
+
+/* ---- wide and low ----
+   AT THE END OF THE SHEET, because everything here overrides a rule declared
+   earlier at the same specificity and a container query raises none.
+
+   THE TILE IS A ROW ONCE IT IS WIDE. Three of them side by side in a 760px
+   page are cards, and the build draws them as cards: a drawing over its name,
+   centred, about 3:2. Give each one 340px and that same card is a letterbox
+   with the drawing stranded in the middle of it and 200px of height doing
+   nothing — which is what "reduce the height" is pointing at. A box that wide
+   IS a row, so above 700px of container the drawing goes left and the name
+   sits beside it, and the tile comes down from 202px to about 90. */
+@container (min-width: 700px) {
+  .lib2 .lb-tile {grid-template-columns:auto minmax(0,1fr);justify-items:start;align-items:center;text-align:left;gap:14px;padding:12px 16px}
+  .lib2 .lb-stage {height:auto}
+}
+
+/* The waypoints, smaller. 28px is the build's, drawn for a 758px rail where
+   ten of them sit 75px apart; on a rail twice that they are ten islands on a
+   long dashed line, and the first thing the eye lands on. 22px, and the line
+   reads as a track again. */
+@container (min-width: 700px) {
+  .lib2 .lb-wp {width:22px;height:22px;font-size:10px}
+  .lib2 .lb-route {padding:12px 18px 10px}
+}

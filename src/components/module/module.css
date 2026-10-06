@@ -931,41 +931,19 @@
   white-space: nowrap;
 }
 
-/* --------------------------------- LAID OUT AT 760, DISPLAYED BIGGER ---
-   (owner, 2026-10-06: "why does it feel streched and akward", then "complete
-   creative control ... neat proportions like the demo".)
+/* --------------------------------------- WIDE AND LOW, NOT MAGNIFIED ---
+   (owner, 2026-10-07, on the scaled version: "if this is the resault the its
+   bad already — reduce the size of the batches circles, reduce the height,
+   have it span left to right without being compressed".)
 
-   THE TILE IS THE WHOLE STORY. In the build it is 215x145. Stretched into a
-   1400px row it became 360x145 and then 420x145 — the width doubled and the
-   height never moved, so every tile turned into a letterbox with a drawing
-   floating in it. Scaling the drawing alone only made the letterbox more
-   obvious, because the box itself was the wrong shape. The rail went the same
-   way (ten 28px dots 140px apart instead of 75), and so did the row header
-   (a title with 900px of nothing before the chevron). ONLY ONE AXIS WAS
-   SCALING. A design has two.
-
-   So the screen is laid out at the width it was DRAWN for — 760px, where
-   every number in its sheet is correct by construction — and then displayed
-   larger. `zoom` scales layout, so the block still occupies the room it is
-   given and nothing downstream has to be compensated for.
-   `tan(atan2())` is how CSS divides one length by another and gets a number.
-
-   The cap is the judgement. Uncapped, a 2000px window would scale the design
-   2.6x and a 40px title would arrive at 105px. At 1.4 the page title is 56px
-   and the row titles 23px — big, and in proportion with everything around
-   them, because EVERY value moved by the same factor: tiles, gaps, rail
-   spacing, badges, type, row heights.
-
-   BELOW 760 IT SCALES DOWN THE SAME WAY, to a floor of 0.8 — the design laid
-   out at its own width and shown smaller holds every proportion, where
-   letting it reflow into a narrower column does not. The floor is where the
-   row titles reach 13px. Under that the tiles stack, on a CONTAINER query
-   rather than a viewport one: a viewport media query and this zoom measure
-   different things and would shrink the same tile twice. */
+   Scaling the whole screen held every proportion exactly and made everything
+   CHUNKY: 39px waypoints, 59px titles, 202px-tall tiles. Proportion is not
+   the same thing as density, and this screen wants density. So the zoom is
+   gone, every element is back to the size it was drawn, and the column simply
+   spans — with the two things that made it feel tall taken down: the
+   waypoints and the tile. */
 .app main.content--full:has(.mscreen-mod) { max-width: none; container-type: inline-size; }
 .mscreen-mod {
-  width: 100%;
-  max-width: 760px;
+  width: min(1400px, 100%);
   margin-inline: auto;
-  zoom: clamp(0.8, tan(atan2(100cqw, 760px)), 1.4);
 }
