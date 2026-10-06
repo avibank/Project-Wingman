@@ -930,3 +930,34 @@
   padding: 5px 9px;
   white-space: nowrap;
 }
+
+/* ------------------------------------------- THE DESIGN'S OWN COLUMN ---
+   760px, centred. The build this screen is ported from wraps its whole page
+   in `.wrap{max-width:760px;margin:0 auto}`, and every number in its
+   stylesheet is a pixel measured against that: 215px tiles, a 128px drawing,
+   28px waypoints, 16.5px titles. The generated sheet carries `--wrap: 1010px`
+   from the OLDER reference this screen was first built against, so the design
+   was being laid out 39% wider than it was drawn — stretched, not scaled.
+   Everything then read sparse: waypoints far apart on a long dashed line, a
+   title with 700px of nothing after it, a drawing marooned in its tile.
+
+   Three rounds went into adjusting one element at a time, and a fourth into
+   scaling the whole block with `zoom`, before the answer turned out to be the
+   number the design states outright. `--wrap` is the one place it lives, and
+   `.ref-mod .wrap` already builds the column from it, so this is that number
+   and nothing else. (owner, 2026-10-06: "nothing is a fixed size ... we are
+   aiming for horizontal centered finishes where stuff spans left to right in
+   one clean line".) */
+.mscreen {
+  max-width: 760px;
+  margin-inline: auto;
+}
+/* `--wrap` is the generated sheet's own name for this and is kept in step, so
+   anything inside that builds a column from it lands on the same number. */
+.mscreen .ref-mod { --wrap: 760px; }
+
+/* The title's own fluid scale, the build's: `clamp(32px,6vw,40px)` against the
+   generated sheet's `clamp(34px,5vw,42px)`. Both are fluid — this is the
+   build's numbers rather than the older reference's, so the diff against it is
+   zero at every width rather than 2px out at each end. */
+.mscreen .mod h1 { font-size: clamp(32px, 6vw, 40px); }

@@ -69,26 +69,10 @@
 .lib2 .lb-drawer {display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s var(--ease)}
 .lib2 .lb-row.lb-on .lb-drawer {grid-template-rows:1fr}
 .lib2 .lb-drawer>div {overflow:hidden}
-/* THE TILES FILL THE ROW AND THE DRAWINGS GROW WITH THEM.
-   This took three goes and the two failures are worth stating, because both
-   look reasonable and neither is right. The demo wraps its page at 760px,
-   where `1fr` makes a tile 215px and the 128px drawing inside fills it — a
-   drawing to inner-width ratio of about 0.67. In the module screen's card a
-   `1fr` tile is 313px and the drawing, still 128px, is marooned in the middle
-   of it: that is "the icons for the batches are squashed". Capping the tile at
-   the design's 215px fixes the drawing and strands the three of them in the
-   left two-thirds of a 1200px row, with dead space beside them: that is
-   "squashed still".
-
-   So the tile fills, as the design has it, and the drawing is SCALED to keep
-   the design's own ratio inside whatever width the tile ends up. The drawings
-   are built from fixed pixels — 10px dots, a 46x58 page, 6.5px type — so they
-   scale as a whole rather than being re-sized part by part, in steps on the
-   tile's own container width. `scale` rather than `transform`, because the
-   thumbnails already carry a `transform` on hover and the two compose.
-   The stage grows with them so nothing is clipped. */
+/* The design's own grid, untouched: three equal tracks. At the width this
+   screen is laid out in — 760px, see the zoom below — that makes each tile
+   215px, which is what the 128px drawing inside it was drawn to fill. */
 .lib2 .lb-tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 10px 14px 68px}
-.lib2 .lb-tile {container-type:inline-size}
 
 /* A PHONE CANNOT HOLD THREE OF THEM. Three tiles plus their gaps and the 68px
    indent that aligns them under the row's title need about 560px of row before
@@ -98,7 +82,6 @@
    goes: at that width the number badge is the only thing to their left. */
 @media (max-width: 560px) {
   .lib2 .lb-tiles {grid-template-columns:minmax(0,1fr);padding:0 10px 14px 10px}
-}
 }
 .lib2 .lb-tile {display:grid;gap:10px;justify-items:center;align-content:start;text-align:center;padding:16px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);opacity:0;transform:translateY(10px);transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s,box-shadow .2s}
 .lib2 .lb-row.lb-on .lb-tile {opacity:1;transform:none}
@@ -222,24 +205,3 @@
 .lib2 .lb-wp[aria-disabled="true"] { cursor: default; }
 .lib2 .lb-wp[aria-disabled="true"]:hover { transform: none; }
 
-/* ---- the drawings, scaled to the tile they are in ----
-   AT THE END OF THE SHEET ON PURPOSE. `.lib2 .lb-stage{height:84px}` and
-   `.lib2 .lb-th{width:128px}` are declared above at the same specificity, so
-   a container query written beside the grid lost to them and only the scale
-   took — the drawing grew and its stage did not, and it sat over the label.
-
-   The steps keep the drawing between about 0.55 and 0.62 of its tile's width.
-   The design's own figure is 0.595: a 128px drawing in the 215px tile that
-   `1fr` produces at the demo's 760px page. Each step carries the stage height
-   with it, 84px times the same factor, so nothing is ever drawn outside it. */
-/* And below the design's own 215px tile the drawing has to come DOWN, or it
-   fills a tile it was drawn to sit inside: measured 0.90 of the tile at a
-   620px window, against the design's 0.595. */
-@container (max-width: 164px) { .lib2 .lb-th {scale:0.72} .lib2 .lb-stage {height:61px} }
-@container (min-width: 165px) and (max-width: 194px) { .lib2 .lb-th {scale:0.85} .lib2 .lb-stage {height:71px} }
-@container (min-width: 235px) { .lib2 .lb-th {scale:1.12} .lib2 .lb-stage {height:94px} }
-@container (min-width: 265px) { .lib2 .lb-th {scale:1.24} .lib2 .lb-stage {height:104px} }
-@container (min-width: 300px) { .lib2 .lb-th {scale:1.40} .lib2 .lb-stage {height:118px} }
-@container (min-width: 340px) { .lib2 .lb-th {scale:1.58} .lib2 .lb-stage {height:133px} }
-@container (min-width: 380px) { .lib2 .lb-th {scale:1.77} .lib2 .lb-stage {height:149px} }
-@container (min-width: 430px) { .lib2 .lb-th {scale:2.00} .lib2 .lb-stage {height:168px} }
