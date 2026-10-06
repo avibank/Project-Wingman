@@ -931,19 +931,15 @@
   white-space: nowrap;
 }
 
-/* --------------------------------------- WIDE AND LOW, NOT MAGNIFIED ---
-   (owner, 2026-10-07, on the scaled version: "if this is the resault the its
-   bad already — reduce the size of the batches circles, reduce the height,
-   have it span left to right without being compressed".)
-
-   Scaling the whole screen held every proportion exactly and made everything
-   CHUNKY: 39px waypoints, 59px titles, 202px-tall tiles. Proportion is not
-   the same thing as density, and this screen wants density. So the zoom is
-   gone, every element is back to the size it was drawn, and the column simply
-   spans — with the two things that made it feel tall taken down: the
-   waypoints and the tile. */
-.app main.content--full:has(.mscreen-mod) { max-width: none; container-type: inline-size; }
+/* ------------------------------------------- THE DESIGN'S OWN COLUMN ---
+   760px, centred — the width the build wraps its whole page at, and the one
+   every number in its sheet is measured against. Six rounds of widening,
+   capping, scaling and re-shaping this screen all chased a fault that was
+   never about width: the port's buttons were being deformed by the app's own
+   §12 floor (see `wm-port` in batches.css). With that gone the design draws
+   as drawn, so it is drawn at its own size. */
 .mscreen-mod {
-  width: min(1400px, 100%);
+  width: 100%;
+  max-width: 760px;
   margin-inline: auto;
 }

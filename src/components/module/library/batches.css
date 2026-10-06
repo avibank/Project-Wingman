@@ -74,14 +74,6 @@
    215px, which is what the 128px drawing inside it was drawn to fill. */
 .lib2 .lb-tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 10px 14px 68px}
 
-/* A PHONE CANNOT HOLD THREE OF THEM. Three tiles plus their gaps and the 68px
-   indent need about 620px of row before a tile is narrower than the drawing
-   inside it. The build has no breakpoint here because it is 760px wide and
-   never meets one. So they stack, and the indent goes: at that width the
-   number badge is the only thing to their left.
-   A CONTAINER query, not a viewport one: the screen is zoomed, so a viewport
-   media query measures a different number from the one this layout is in and
-   the two would shrink the same tile twice. */
 
 .lib2 .lb-tile {display:grid;gap:10px;justify-items:center;align-content:start;text-align:center;padding:16px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);opacity:0;transform:translateY(10px);transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s,box-shadow .2s}
 .lib2 .lb-row.lb-on .lb-tile {opacity:1;transform:none}
@@ -205,45 +197,49 @@
 .lib2 .lb-wp[aria-disabled="true"] { cursor: default; }
 .lib2 .lb-wp[aria-disabled="true"]:hover { transform: none; }
 
-/* ---- stacked, at the end of the sheet ----
-   `.lib2 .lb-tile` is declared above at the same specificity, and a container
-   query adds none, so written beside the grid these lost to it on source
-   order: the tile became a row and its name stayed centred in the space left
-   over. Same trap the drawing's own scale steps fell into. */
-@container (max-width: 619px) {
-  .lib2 .lb-tiles {grid-template-columns:minmax(0,1fr);padding:0 10px 14px 10px}
-  /* AND A STACKED TILE IS A ROW, because that is the shape it has. Three
-     tiles side by side are cards and the design draws them as cards: a
-     drawing over its name, centred, in a box about 3:2. Stacked, the same
-     box is the width of the screen and 116px tall — 4.4:1 — and a centred
-     drawing in it reads as a letterbox, which is the exact fault this whole
-     screen had at the other end of the scale. A box that wide IS a row, so
-     the drawing goes left and its name sits beside it. */
-  .lib2 .lb-tile {grid-template-columns:auto minmax(0,1fr);justify-items:start;align-items:center;text-align:left;gap:14px;padding:12px 14px}
-  .lib2 .lb-tile strong {align-self:center}
-}
+/* ====================================================================== */
+/* THE PORT IS ISOLATED FROM THE APP, which is the whole of what was wrong.
+   -----------------------------------------------------------------------
+   This screen is built from the build's own markup, and the build styles its
+   controls as DRAWINGS: a 28px waypoint, a tile that is a thumbnail over a
+   label. The app styles every control as a TARGET — §12, enforced globally in
+   App.jsx: `.app button:not(.is-inline) { min-height: 44px }`. `min-height`
+   beats `height`, so every waypoint has been 22x44 or 28x44 since stage one
+   of this port. They were never circles. That is why the rail never read as a
+   track, and it is what six rounds of widening, capping, scaling and
+   re-shaping this screen were actually chasing.
 
-/* ---- wide and low ----
-   AT THE END OF THE SHEET, because everything here overrides a rule declared
-   earlier at the same specificity and a container query raises none.
+   ONLY THE FLOOR IS UNDONE, not the app's button styling wholesale. Clearing
+   padding, border, background and font too is right when the build's own
+   rules are re-applied above at higher specificity, and wrong here: this
+   port's rules are `.lib2 .lb-*`, (0,2,0), weaker than such a reset — a
+   blanket one took the tile's own padding, border and background with it.
+   One property is all that was ever reaching in.
 
-   THE TILE IS A ROW ONCE IT IS WIDE. Three of them side by side in a 760px
-   page are cards, and the build draws them as cards: a drawing over its name,
-   centred, about 3:2. Give each one 340px and that same card is a letterbox
-   with the drawing stranded in the middle of it and 200px of height doing
-   nothing — which is what "reduce the height" is pointing at. A box that wide
-   IS a row, so above 700px of container the drawing goes left and the name
-   sits beside it, and the tile comes down from 202px to about 90. */
-@container (min-width: 700px) {
-  .lib2 .lb-tile {grid-template-columns:auto minmax(0,1fr);justify-items:start;align-items:center;text-align:left;gap:14px;padding:12px 16px}
-  .lib2 .lb-stage {height:auto}
-}
+   `.app .wm-port button:not(.is-inline)` and not `.wm-port button`, because
+   the rule being undone is `.app button:not(.is-inline)` — (0,2,1) with the
+   `:not()` counted — and a two-element selector loses to it outright. This is
+   the app's own selector with the port's class in front: (0,3,1), which wins
+   on specificity rather than on load order.
 
-/* The waypoints, smaller. 28px is the build's, drawn for a 758px rail where
-   ten of them sit 75px apart; on a rail twice that they are ten islands on a
-   long dashed line, and the first thing the eye lands on. 22px, and the line
-   reads as a track again. */
-@container (min-width: 700px) {
-  .lib2 .lb-wp {width:22px;height:22px;font-size:10px}
-  .lib2 .lb-route {padding:12px 18px 10px}
+   §12 is not weakened anywhere else. A waypoint is a drawing inside a row
+   that is itself the target. */
+.app .wm-port button:not(.is-inline) { min-height: 0; }
+.app .wm-port .lb-wp { width: 28px; height: 28px; aspect-ratio: 1/1; flex: none; }
+
+/* The build's own narrow block, ported — it keeps three tiles across and
+   shrinks what is inside them, which is the designer's answer for a phone. */
+@media (max-width: 620px) {
+  .app .wm-port .lb-wp { width: 22px; height: 22px; font-size: 10px; }
+  .lib2 .lb-head { grid-template-columns: 40px minmax(0,1fr) auto; }
+  .lib2 .lb-num { width: 40px; height: 40px; }
+  .lib2 .lb-tiles { gap: 8px; padding-left: 10px; }
+  .lib2 .lb-tile { padding: 14px 6px 10px; }
+  .lib2 .lb-th { width: 92px; }
+  .lib2 .lb-stage { height: 66px; }
+  .lib2 .lb-quiz-thumb { padding: 6px 7px; gap: 5px; }
+  .lib2 .lb-quiz-thumb__sheet, .lib2 .lb-quiz-thumb__sheet span { gap: 3px; }
+  .lib2 .lb-quiz-thumb__sheet i { width: 7px; height: 7px; }
+  .lib2 .lb-quiz-thumb__count b { font-size: 15px; }
+  .lib2 .lb-stamp { width: 30px; height: 30px; font-size: 10px; right: -12px; top: -14px; }
 }
