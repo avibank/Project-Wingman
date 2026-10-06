@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
 import { QuizThumb } from "./RouteTab.jsx";
 import "./ref-module.css";
@@ -19,6 +19,15 @@ import { stampOf } from "../../lib/stamp.js";
 import { fetchFinishers } from "../../lib/board.js";
 import { tilt } from "./Leaderboard.jsx";
 import "./quiz-stamps.css";
+/* THE PORTED LIBRARY, behind `library.batches` while the rest of the module
+   screen lands (2026-10-06). When it is on it replaces the three shelves
+   entirely — it is not an addition to them. */
+/* ITS OWN CHUNK. It is behind a flag, it renders on one tab of one screen,
+   and its stylesheet is the whole ported design — in the entry it put the
+   bundle 6KB over its budget. */
+const LibraryBatches = lazy(() => import("./library/LibraryBatches.jsx"));
+import { batchesOf, hereBatch } from "./library/batchModel.js";
+import { seenCount } from "../../features/bookmarks/cardsSeen.js";
 
 /* ============================================================================
    §5 — THE LIBRARY.
@@ -111,6 +120,11 @@ export default function LibraryTab({
   downloads = [],
   moduleCode = null,
   readerPin = null, faults = new Set(),
+  /* The ported screen, and what it needs that the shelves never did: how many
+     batches the module will have, and the progress store the card counts are
+     read out of. */
+  asBatches = false, totalBatches = null, progress = null, currentChapterId = null,
+  onOpenCards = null, onOpenDownload = null,
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
 
@@ -160,6 +174,43 @@ export default function LibraryTab({
      a Library with a piece missing. Study cards draws nothing on its own
      when there are no quizzes to make cards from. */
   const bare = !chapters.length && !searching;
+
+  /* THE PORTED SCREEN REPLACES THE SHELVES, it does not sit above them. While
+     `library.batches` is off this is dead and the three shelves below are the
+     Library, exactly as they were. */
+  const batches = asBatches
+    ? batchesOf({ chapters }, {
+      scoreOf: (c) => state?.quiz?.[c.id]?.pct ?? state?.quiz?.[c.id]?.score ?? null,
+      seenOf: (c) => (progress ? seenCount(progress, (c.cards || c.questions || []).map((x) => x.id)) : 0),
+      paperOf: (c) => downloads.find((d) => String(d.id).startsWith(`${c.id}.`)) || null,
+    })
+    : [];
+
+  if (asBatches) {
+    /* NOT `ref-mod`, and that is the whole of the collision fix. Twelve of the
+       demo's class names — row, head, stage, list, more, empty, chev, drawer,
+       title, meta, route, th — are already painted by this app, several of
+       them under `.ref-mod`, and `.ref-mod .row` turned every ported row into
+       a four-column grid (measured: the title wrapped one letter per line).
+       Scoping the PORTED rules was never going to be enough; what matters is
+       that the app's own rules cannot reach in. The exam screen solved the
+       same problem the same way. */
+    return (
+      <div className="libtab">
+        <Suspense fallback={null}>
+        <LibraryBatches
+          batches={batches}
+          total={totalBatches || null}
+          here={hereBatch(batches, currentChapterId)}
+          query={query}
+          onQuiz={(b) => onOpenQuiz?.(b.chapter)}
+          onCards={(b) => onOpenCards?.(b.chapter)}
+          onPaper={(b) => onOpenDownload?.(b.paper)}
+        />
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <div className="libtab ref-mod">

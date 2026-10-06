@@ -7,7 +7,7 @@ import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
 import { faultChapters } from "../../lib/minimums.js";
 import { useCrew, crewCount } from "../../lib/crew.js";
-import { moduleSubtitle } from "../../lib/moduleLine.js";
+import { moduleSubtitle, batchSubtitle } from "../../lib/moduleLine.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import { papersOn, flagDefault } from "../../lib/flags.js";
 
@@ -55,8 +55,21 @@ export default function ModuleScreen({
      this module really has nothing in it, which is a state with its own
      screen rather than a skeleton that never resolves. */
   contentPending = false,
+  /* THE PORTED MODULE SCREEN (2026-10-06), behind `library.batches`. The flags
+     and the progress store come from App with the rest of the account state,
+     for the same reason `minimums` does: one render of the app must not hold
+     two answers to the same question. */
+  flags = null, progress = null, onOpenCards, onOpenDownload,
 }) {
   const here = currentLesson(chapters, state);
+
+  /* THE HEADER LINE, which the ported screen counts in batches (2026-10-06).
+     It needs no progress to say what is open, so it is built from the chapters
+     alone and falls back to the sentence the screen has always carried. */
+  const asBatches = Boolean(flags?.["library.batches"]);
+  const sub = asBatches
+    ? batchSubtitle(chapters, mod?.batches || null, moduleSubtitle(chapters, papers))
+    : moduleSubtitle(chapters, papers);
 
   // The chapter you are in opens by itself on arrival; after that it is yours
   // to open and close, any number at once.
@@ -158,8 +171,8 @@ export default function ModuleScreen({
             diff is untouched. Only a module waiting on everything stays text. */}
         <p className="sub">
           {chapters.length || papers.length
-            ? <button type="button" className="sub-go is-inline" onClick={() => onTab("library")}>{moduleSubtitle(chapters, papers)}</button>
-            : moduleSubtitle(chapters, papers)}
+            ? <button type="button" className="sub-go is-inline" onClick={() => onTab("library")}>{sub}</button>
+            : sub}
         </p>
 
       {/* §2.6 — one card: the tabs are a strip along its top edge, joined to
@@ -245,6 +258,13 @@ export default function ModuleScreen({
                       sub={librarySub} query={query} moduleCode={mod?.code || mod?.id || null}
                       readerPin={readerPin} onAddPaper={onAddPaper}
                       faults={faults}
+                      /* The ported module screen, behind `library.batches`. */
+                      asBatches={asBatches}
+                      totalBatches={mod?.batches || null}
+                      progress={progress}
+                      currentChapterId={chapters[chapters.length - 1]?.id || null}
+                      onOpenCards={onOpenCards}
+                      onOpenDownload={onOpenDownload}
                       onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
         )}
         {tab === "crew" && (

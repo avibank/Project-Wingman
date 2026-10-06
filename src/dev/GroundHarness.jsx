@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BackOnTheGround } from "../components/ground/BackOnTheGround.jsx";
 import { deckVars, LIVERIES } from "../lib/liveryEngine.js";
 import { finishVars } from "../lib/finishEngine.js";
+import { auroraVars } from "../lib/auroraFinish.js";
 import "../styles/foundations.css";
 import "../styles/app.css";
 import "../components/ground/ground.css";
@@ -98,7 +99,7 @@ export function GroundHarness() {
 
   useEffect(() => {
     const base = deckVars(livery, light).vars;
-    const vars = { ...base, ...finishVars(livery, light, finish, base["--active"]) };
+    const vars = { ...base, ...finishVars(livery, light, finish, base["--active"], auroraVars) };
     const root = document.documentElement;
     for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
     root.dataset.variant = light;

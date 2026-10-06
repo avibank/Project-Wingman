@@ -12,29 +12,21 @@ const DIST = "dist/assets";
 const HTML = "dist/index.html";
 /* 680 on the day it was set, when the entry measured 645.
 
-   IT HAS MOVED TWICE AND THE TWO ARE NOT THE SAME MOVE. On 2026-10-04 it went
-   to 684 for two pattern finishes and came back to 680 the next day when they
-   were killed — a budget left raised for something that no longer exists is a
-   gate quietly loosened, which is how the note above says budgets die. On
-   2026-10-06 it went to 684 again for the Reports screen and the composer
-   behind the "Something's wrong here" pill, and that one STAYS: an admin
-   surface that reads what students send is not going away, and the budget's
-   own rule is that it sits at what the build achieves rather than at an
-   aspiration. The composer itself is NOT in here — it is lazy, because it is
-   only ever needed after a press (src/components/ReportAsk.jsx).
+   IT HAS MOVED THREE TIMES AND IS BACK WHERE IT STARTED. 684 on 2026-10-04
+   for two pattern finishes; 680 the next day when they were killed, because a
+   budget left raised for something that is gone is a gate quietly loosened;
+   684 again on 2026-10-06 for the Reports screen. And 680 again the same day,
+   because the 4KB this comment had been naming for two days was finally
+   taken: `AUR`'s spec table and every aurora renderer moved to
+   `src/lib/auroraFinish.js` and are passed INTO `finishVars`, so a finish
+   that is not offered no longer rides every first paint. The module-screen
+   port went in under the old number as a result.
 
-   THE 4KB TO TAKE BEFORE RAISING THIS AGAIN, still unclaimed: the `AUR` spec
-   table in finishEngine.js — six liveries of curtain specs with their prose —
-   is in the entry on every first paint for a finish that is NOT OFFERED.
-   Nothing calls `auroraLayers`, `starfield`, `horizon` or `STAR_TILE` any
-   more (grepped); only `finishVars`'s aurora branch holds the table in.
-   Moving both to a lazily imported module is worth about 4KB — but it is not
-   free, and that is why it has not been done in passing: CLAUDE.md states
-   that aurora still resolves while unoffered, which is what keeps `?finish=`
-   and the harness honest, and what check:contrast, check:surfaces and test:bm
-   measure. Doing it means giving those a path to the moved table, and that
-   deserves its own change rather than a line in somebody else's. */
-const BUDGET = 684 * 1024;      // entry chunk
+   WHAT TO SPEND BEFORE RAISING THIS AGAIN: nothing is queued. The next
+   candidate is the same shape as the last one — find something in the entry
+   that only one screen needs, and lazily import it there. The pattern
+   finishes, the report composer and the ported Library all went that way. */
+const BUDGET = 680 * 1024;      // entry chunk
 
 let files;
 try { files = readdirSync(DIST); }

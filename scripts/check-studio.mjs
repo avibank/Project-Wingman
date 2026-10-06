@@ -257,6 +257,7 @@ console.log("\nand it is legible on every skin");
      4.5 for all of it. */
   const { LIVERIES, deckVars } = await import("../src/lib/liveryEngine.js");
   const { finishVars } = await import("../src/lib/finishEngine.js");
+  const { auroraVars } = await import("../src/lib/auroraFinish.js");
   const toLin = ([L, a, b]) => {
     const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
     const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
@@ -286,7 +287,7 @@ console.log("\nand it is legible on every skin");
            pair does not exist and measuring it would be measuring nothing. */
         if (finish === "aurora" && variant === "day") continue;
         const base = deckVars(L.id, variant).vars;
-        const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"]) };
+        const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"], auroraVars) };
         const t = (k) => parse(v[k]);
         const ground = toLin(t("--ground").lab);
         const panel = over(t("--panel"), ground);

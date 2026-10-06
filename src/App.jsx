@@ -2532,6 +2532,17 @@ function AppInner() {
                the quiz row on the Lessons list — opening a quiz cut hard while
                every other row on the same list moved. */
             onOpenQuiz={(ch) => go(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
+            /* The ported module screen (2026-10-06). `cards` takes the
+               chapter's POSITION in the module, which is what that route has
+               always carried — not its batch number, which is a different
+               thing now that batches 1 and 6 exist with nothing between. */
+            flags={flags}
+            progress={progress}
+            onOpenCards={(ch) => {
+              const at = chaptersFor(activeModuleCode, useTestContent).findIndex((c) => c.id === ch.id) + 1;
+              if (at >= 1) go(routePath.cards(activeModuleCode, at));
+            }}
+            onOpenDownload={(d) => { if (d?.href) window.open(d.href, "_blank", "noopener"); }}
             onOpenQuestion={(target) => {
               // The one bridge from People back to the moment. A module post
               // has no moment, so watchAt() hands back null and there is

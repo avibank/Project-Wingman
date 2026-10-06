@@ -18,6 +18,7 @@
  */
 import { deckVars, LIVERIES } from "../src/lib/liveryEngine.js";
 import { finishVars } from "../src/lib/finishEngine.js";
+import { auroraVars } from "../src/lib/auroraFinish.js";
 import { parse, contrastOn, lin, Y, ratio, over } from "./lib/oklch.mjs";
 
 let fails = 0;
@@ -75,7 +76,7 @@ for (const L of LIVERIES) {
     for (const finish of FINISHES) {
       skins += 1;
       const base = deckVars(L.id, variant).vars;
-      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"]) };
+      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"], auroraVars) };
       const skin = `${L.id}/${variant}/${finish || "standard"}`;
 
       for (const t of REQUIRED) {
@@ -116,7 +117,7 @@ for (const L of LIVERIES) {
     for (const variant of VARIANTS) {
       for (const finish of FINISHES) {
         const base = deckVars(L.id, variant).vars;
-        const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"]) };
+        const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"], auroraVars) };
         const skin = `${L.id}/${variant}/${finish || "standard"}`;
         const g = parse(v["--ground"]), p = parse(v["--panel"]);
 

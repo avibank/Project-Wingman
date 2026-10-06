@@ -86,7 +86,19 @@ export function validateContent(doc) {
          "<chapter> cards", which is what every set read before an author
          titled one. */
       if (c.cardsName != null) check(isStr(c.cardsName), cw, "cardsName must be a non-empty string", errs);
+      /* THE BATCH, THE REF AND THE PAGE RANGE (2026-10-06). All optional, and
+         `batch` is a POSITION ON THE MODULE'S ROUTE rather than an index into
+         this array — batches 1 and 6 of ten exist with nothing between them,
+         so it is checked as a whole number and never against chapters.length. */
+      if (c.batch != null) check(Number.isInteger(c.batch) && c.batch > 0, cw, "batch must be a whole number above zero", errs);
+      if (c.ref != null) check(isStr(c.ref), cw, "ref must be a non-empty string", errs);
+      if (c.pages != null) check(isStr(c.pages), cw, "pages must be a non-empty string", errs);
     });
+
+    /* HOW MANY BATCHES THE MODULE WILL HAVE (2026-10-06). Optional, and
+       deliberately allowed to be LARGER than the chapters present: that gap
+       is the point of the route strip. */
+    if (m.batches != null) check(Number.isInteger(m.batches) && m.batches > 0, w, "batches must be a whole number above zero", errs);
 
     /* DOWNLOADS — a file offered as a plain download and nothing else
        (2026-09-21, owner request). Not a paper: a paper opens in the reader

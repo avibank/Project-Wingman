@@ -13,6 +13,7 @@
 // same number.
 import { deckVars, LIVERIES } from "../src/lib/liveryEngine.js";
 import { finishVars } from "../src/lib/finishEngine.js";
+import { auroraVars } from "../src/lib/auroraFinish.js";
 
 const M = [[4.0767416621, -3.3077115913, .2309699292],
            [-1.2684380046, 2.6097574011, -.3413193965],
@@ -61,7 +62,7 @@ for (const L of LIVERIES) {
     // the one never measured here. check:surfaces found real failures in it.
     for (const finish of [null, "aurora", "manual"]) {
       const base = deckVars(L.id, variant).vars;
-      const over1 = finishVars(L.id, variant, finish, base["--active"]);
+      const over1 = finishVars(L.id, variant, finish, base["--active"], auroraVars);
       const v = { ...base, ...over1 };
 
       const ground = parse(v["--ground"]);
