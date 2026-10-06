@@ -44,3 +44,22 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).has("bog")) {
     </React.StrictMode>
   );
 }
+
+/* A STALE CHUNK AFTER A DEPLOY, CAUGHT AT THE WINDOW. `chunk()` in App.jsx
+   already catches a lazy SCREEN failing to arrive and reloads once; Vite also
+   raises `vite:preloadError` for a stylesheet or module preload that 404s,
+   which is the shape the owner hit — "Unable to preload CSS for
+   /assets/LibraryBatches-….css" — and which no screen's own catch sees if it
+   fires before the import rejects. Same budget as the other: one reload per
+   tab-incident, guarded in sessionStorage so it can never loop, and the guard
+   is cleared by App.jsx the moment any chunk loads. */
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (e) => {
+    let already = true;
+    try { already = sessionStorage.getItem("pw-chunk-reloaded") === "1"; } catch { /* private mode */ }
+    if (already) return;
+    try { sessionStorage.setItem("pw-chunk-reloaded", "1"); } catch { return; }
+    e.preventDefault();
+    window.location.reload();
+  });
+}

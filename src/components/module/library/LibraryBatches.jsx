@@ -18,7 +18,11 @@
    ========================================================================= */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuizThumb, CardsThumb, PaperThumb, CHEV } from "./thumbs.jsx";
-import "./batches.css";
+/* `batches.css` is imported by LibraryTab, not here. This component is a lazy
+   chunk and Vite gives a lazy chunk its own stylesheet — one more file that
+   can fail on its own, and when it does the Library renders unstyled. Imported
+   from the tab it rides the module screen's own CSS, which is already loaded
+   by the time anything can ask for this screen. */
 
 const pad = (n) => String(n).padStart(2, "0");
 

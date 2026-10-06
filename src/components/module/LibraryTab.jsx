@@ -19,6 +19,7 @@ import { stampOf } from "../../lib/stamp.js";
 import { fetchFinishers } from "../../lib/board.js";
 import { tilt } from "./Leaderboard.jsx";
 import "./quiz-stamps.css";
+import "./library/batches.css";
 /* THE PORTED LIBRARY, behind `library.batches` while the rest of the module
    screen lands (2026-10-06). When it is on it replaces the three shelves
    entirely — it is not an addition to them. */
