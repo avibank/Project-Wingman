@@ -166,19 +166,34 @@ which is what the Flight Deck draws before the document arrives.
     Rotary Wing" and "Instruments (ATA 31)" again. Batch 6 has no `ref` now:
     its name already carries ATA 31 and the row prints name and reference on
     consecutive lines.
-- **THE TILES ARE THE DESIGN'S SIZE AND THE ROW IS THE APP'S WIDTH.** The demo
-  this screen comes from wraps the page at 760px, where `1fr` makes each tile
-  215px — which is what a 128px thumbnail fills. The module screen's card is
-  half as wide again, so `1fr` stretched them to 313px and the thumbnails sat
-  marooned in the middle (owner: "the icons for the batches are squashed").
-  Capping the whole SCREEN at 760 fixed the tiles and left the block floating
-  in a card it no longer filled ("its not sized to fit"), so the cap is on the
-  TILES: `repeat(3, minmax(0,215px))`. The rail, the rows and their headings
-  span the card the way the tab strip above them does, and the three tiles sit
-  at their drawn size on the 68px indent that aligns them under the title.
-  - **Below 560px they stack**, because three of them plus their gaps and that
-    indent need about that much row before a 128px thumbnail overflows its own
-    tile — measured at 390, where the tile came out 66px around a 128px
+- **THE TILES FILL THE ROW AND THE DRAWINGS SCALE WITH THEM.** This took
+  three goes, and both failures look reasonable, which is why they are written
+  down. The demo wraps its page at 760px, where `1fr` makes a tile 215px and
+  the 128px drawing inside fills it — a drawing-to-tile ratio of **0.595**. In
+  the module screen's card a `1fr` tile is 313px and the drawing, still 128px,
+  is marooned in the middle of it: that is "the icons for the batches are
+  squashed". Capping the tile at 215px fixes the drawing and strands the three
+  of them in the left two-thirds of a 1200px row: that is "squashed still".
+  Capping the whole SCREEN at 760 does the same to the block inside its card:
+  "its not sized to fit".
+  - So the tile fills, as the design has it, and the drawing is **scaled** to
+    hold that 0.595 inside whatever width the tile ends up. Measured across
+    ten widths from 1680 to 390, the ratio now runs **0.55 to 0.65**.
+  - The drawings are built from fixed pixels — 10px dots, a 46×58 page, 6.5px
+    type — so they scale **as a whole**, in steps on the tile's own container
+    width, rather than being re-sized part by part. `scale` rather than
+    `transform`, because the thumbnails already carry a `transform` on hover
+    and the two compose (checked: `scale: 1.4` beside the hover's rotate).
+    Each step carries the stage's height with it, 84px times the same factor,
+    so nothing is ever drawn outside it.
+  - **The steps live at the END of the sheet.** `.lib2 .lb-stage{height:84px}`
+    and `.lib2 .lb-th{width:128px}` are declared above at the same
+    specificity, so a container query written beside the grid lost to them and
+    only the scale took — the drawing grew, its stage did not, and it sat over
+    the label.
+  - **Below 560px they stack.** Three tiles plus their gaps and the 68px
+    indent need about that much row before a tile is narrower than the drawing
+    inside it — measured at 390, where the tile came out 66px around a 128px
     drawing. The demo has no breakpoint here because it is 760px wide and
     never meets one.
   - The quiz thumbnail also came out 75px against the design's 72, because
