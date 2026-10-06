@@ -149,6 +149,23 @@ which is what the Flight Deck draws before the document arrives.
   chapter's POSITION and `chaptersForModule` only splits on the first `.` —
   so `M1.B1` is as valid as `M1.01` and cannot collide with anything that
   came before.
+- **THE COURSE WAS REPUBLISHED ON 2026-10-06 AS VERSION 10, and that is what
+  put the ported Library in front of the owner.** The port added `batch`,
+  `ref`, `pages` and `batches` to `src/content/test-content.json` — but
+  `course_docs` is what the live app reads, and a commit does not publish, so
+  the live document still had none of them. `batchesOf` keeps a chapter only
+  when `Number.isFinite(c.batch)`, so the fallback added the same day did
+  exactly what it should and drew the old shelves ("WE ARE BACK TO OLD
+  SCREEN?"). Nothing about the content changed: same chapter ids, same 40 and
+  40 questions, same 170 and 416 cards, same two papers — so no reset, and
+  every attempt's question hash still matches.
+  - **AND THE CHAPTER NAMES WENT BACK TO THE OWNER'S.** Stage one of the port
+    shortened them to "Theory of Flight" and "Instruments", moving the rest
+    into `ref` — which is class-facing wording this file protects by name
+    ("The chapter NAME stays the subject"). They are "Theory of Flight ·
+    Rotary Wing" and "Instruments (ATA 31)" again. Batch 6 has no `ref` now:
+    its name already carries ATA 31 and the row prints name and reference on
+    consecutive lines.
 - **THE PORTED LIBRARY IS DRAWN IN THE DESIGN'S OWN 760px COLUMN.** The demo
   it comes from wraps everything in `.wrap{max-width:760px}`, and every size
   inside is drawn against that: the three tiles come out 215px each, which is

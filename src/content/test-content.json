@@ -8,7 +8,7 @@
       "chapters": [
         {
           "id": "M1.B1",
-          "name": "Theory of Flight",
+          "name": "Theory of Flight · Rotary Wing",
           "cardsName": "M13 Batch 1 — Full Set · pages 1–68",
           "lessons": [],
           "quiz": {
@@ -2335,7 +2335,7 @@
         },
         {
           "id": "M1.B6",
-          "name": "Instruments",
+          "name": "Instruments (ATA 31)",
           "cardsName": "M13 Batch 6 — Full Set · pages 352–491",
           "lessons": [],
           "quiz": {
@@ -7363,7 +7363,6 @@
             }
           ],
           "batch": 6,
-          "ref": "ATA 31",
           "pages": "352–491"
         }
       ],
