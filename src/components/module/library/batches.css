@@ -24,21 +24,7 @@
    ordinary words that already paint other surfaces in this app. The exam
    screen hit exactly this and scoped itself to `.exam-frame` for it.
    ========================================================================= */
-/* THE DESIGN'S OWN COLUMN, 760px. The demo this screen is ported from wraps
-   everything in `.wrap{max-width:760px}`, and every size inside it is drawn
-   against that: the three tiles come out 215px each, which is what makes a
-   128px thumbnail fill one. Dropped into the module screen's 1010px column
-   the tiles stretched to 313px and the thumbnails sat marooned in the middle
-   of them, which is what "the icons for the batches are squashed" was (owner,
-   2026-10-06). Measured against the reference demo side by side: 214.7px
-   there, 313.3px here.
-
-   It keeps the LEFT edge rather than centring the way the demo does, because
-   module.css opens by declaring one left edge for the whole page — the title,
-   the tabs, the search and every list row line up on it, and a centred block
-   under a left-aligned header is a second margin nobody asked for. */
 .lib2 {
-  max-width: 760px;
   --accent: var(--active);
   /* The ink ON the accent, which is what a filled waypoint carries. The app's
      own rule for this is `--ground` on `--active-fill`, and Manual in Day is
@@ -83,7 +69,31 @@
 .lib2 .lb-drawer {display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s var(--ease)}
 .lib2 .lb-row.lb-on .lb-drawer {grid-template-rows:1fr}
 .lib2 .lb-drawer>div {overflow:hidden}
-.lib2 .lb-tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 10px 14px 68px}
+/* THE TILES ARE THE DESIGN'S SIZE, AND THE ROW IS THE APP'S WIDTH.
+   The demo this comes from wraps the page at 760px, where `1fr` makes each
+   tile 215px — which is what a 128px thumbnail fills. The module screen's
+   card is half as wide again, so `1fr` stretched them to 313px and the
+   thumbnails sat marooned in the middle ("the icons for the batches are
+   squashed"). Capping the whole screen at 760 fixed the tiles and left the
+   block floating in a card it no longer filled ("its not sized to fit").
+   So the cap is on the TILES, not the screen: the rail, the rows and their
+   headings span the card the way the tab strip above them does, and the
+   three tiles sit at their drawn size under the row's title, on the 68px
+   indent that aligns them with it.
+   `minmax(0,215px)` rather than a flat 215, so they still shrink on a phone
+   rather than overflowing the row. */
+.lib2 .lb-tiles {display:grid;grid-template-columns:repeat(3,minmax(0,215px));gap:10px;padding:0 10px 14px 68px}
+/* A PHONE CANNOT HOLD THREE OF THEM. The thumbnails are drawn at a fixed
+   128px, and three tiles plus their gaps and the 68px indent that aligns them
+   under the row's title need about 560px of row before a thumbnail stops
+   overflowing its own tile — measured at 390, where the tile came out 66px
+   wide around a 128px drawing. The demo has no breakpoint here because it is
+   760px wide and never meets one. So they stack, and the indent goes: at that
+   width the number badge is the only thing to the left and the tiles read as
+   the row's own list. */
+@media (max-width: 560px) {
+  .lib2 .lb-tiles {grid-template-columns:minmax(0,1fr);padding:0 10px 14px 10px}
+}
 .lib2 .lb-tile {display:grid;gap:10px;justify-items:center;align-content:start;text-align:center;padding:16px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);opacity:0;transform:translateY(10px);transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s,box-shadow .2s}
 .lib2 .lb-row.lb-on .lb-tile {opacity:1;transform:none}
 .lib2 .lb-row.lb-on .lb-tile:nth-child(1) {transition-delay:.08s,.08s,0s,0s}

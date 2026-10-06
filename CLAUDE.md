@@ -166,19 +166,25 @@ which is what the Flight Deck draws before the document arrives.
     Rotary Wing" and "Instruments (ATA 31)" again. Batch 6 has no `ref` now:
     its name already carries ATA 31 and the row prints name and reference on
     consecutive lines.
-- **THE PORTED LIBRARY IS DRAWN IN THE DESIGN'S OWN 760px COLUMN.** The demo
-  it comes from wraps everything in `.wrap{max-width:760px}`, and every size
-  inside is drawn against that: the three tiles come out 215px each, which is
-  what makes a 128px thumbnail fill one. Dropped into the module screen's
-  1010px column the tiles stretched to 313px and the thumbnails sat marooned
-  in the middle of them (owner, 2026-10-06: "the icons for the batches are
-  squashed"). Measured against the reference demo side by side: 214.7px
-  there against 313.3px here, now 215.3. It keeps the LEFT edge rather than
-  centring the way the demo does, because module.css opens by declaring one
-  left edge for the whole page. The quiz thumbnail also came out 75px against
-  the design's 72, because `aspect-ratio` is only a suggestion once
-  min-content is taller and that stack measures 3px more on this app's faces;
-  one row of `minmax(0,1fr)` lets the ratio decide.
+- **THE TILES ARE THE DESIGN'S SIZE AND THE ROW IS THE APP'S WIDTH.** The demo
+  this screen comes from wraps the page at 760px, where `1fr` makes each tile
+  215px — which is what a 128px thumbnail fills. The module screen's card is
+  half as wide again, so `1fr` stretched them to 313px and the thumbnails sat
+  marooned in the middle (owner: "the icons for the batches are squashed").
+  Capping the whole SCREEN at 760 fixed the tiles and left the block floating
+  in a card it no longer filled ("its not sized to fit"), so the cap is on the
+  TILES: `repeat(3, minmax(0,215px))`. The rail, the rows and their headings
+  span the card the way the tab strip above them does, and the three tiles sit
+  at their drawn size on the 68px indent that aligns them under the title.
+  - **Below 560px they stack**, because three of them plus their gaps and that
+    indent need about that much row before a 128px thumbnail overflows its own
+    tile — measured at 390, where the tile came out 66px around a 128px
+    drawing. The demo has no breakpoint here because it is 760px wide and
+    never meets one.
+  - The quiz thumbnail also came out 75px against the design's 72, because
+    `aspect-ratio` is only a suggestion once min-content is taller and that
+    stack measures 3px more on this app's faces; one row of `minmax(0,1fr)`
+    lets the ratio decide.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
@@ -987,37 +993,26 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     — a panel aimed badly leaves an undimmed strip, or doubles the alpha over
     one — so `test:tour` measures the four panels plus the hole against the
     window on every step, at rest, and allows 400px² of rounding.
-  - **THE SCROLL IS OURS, NOT THE BROWSER'S** (owner, 2026-10-06: the demo is
-    "glitchy jittery and not as smooth as the transitions"). The handoff's
-    engine scrolled with `behavior: "smooth"` — engine-paced, on a curve
-    nothing can tune, and impossible to await or cancel — while the light
-    eased over .55s on `cubic-bezier(.3,.7,.3,1)` beside it. Two clocks.
-    Measured over twelve steps: **three single-frame scroll jumps, the worst
-    891px, and one step where the page went one way and came back**. It is
-    **1 jump at 128px and no reversals** now. Four things did it, and the
-    numbers are what chose each:
-    · the scroll runs on one rAF loop on **the light's own curve** over 480ms
-      against the light's 550, so the page arrives first and the light settles
-      onto something that has stopped. The curve matters as much as the loop:
-      the first attempt used the previous engine's exponential at τ 45, but
-      that light was an exponential too and this one is not — at τ 45 the page
-      covers 31% of the distance in the first frame, so a 500px move opened
-      with a 155px jump. On the light's curve the first frame is 41px;
-    · a page change **eases rather than snapping**. The light is shut there
-      and fades in, but the PAGE is not hidden — the dim is the light's own
-      shadow — so a student watched the new screen appear and then jump 494px;
-    · the screen is **held at its top** from the navigation until the step's
-      target exists. One reset is not enough: a lazy screen (the lesson, with
-      its video) commits several frames after the navigation resolves, so the
-      reset landed on the outgoing screen. Measured before the pin: 22 frames,
-      nearly 400ms, of the lesson painted 494px down and then snapping;
-    · the card's ResizeObserver **re-frames the light without re-scrolling**.
-      `frame()` does both, and calling it there scrolled instantly every time
-      the card changed height — a 315px jump mid-step, and the reversal.
-    · and the light is **re-measured once the ease ends**. `plan` aims at where
-      the target WILL be, measured before the page moved; a screen whose height
-      changes while it moves invalidates that aim, and `onScroll` is
-      deliberately deaf while the engine is the one scrolling.
+  - **THE MOTION IS THE HANDOFF'S, AND IT WAS PUT BACK** (owner, 2026-10-06:
+    "rework the demo transitions for the final time, I need it to be like the
+    demo"). It had been replaced with an rAF ease on the light's own curve
+    over 480ms, and page changes eased rather than snapping. That measured
+    better — 1 teleport against 3, no reversals, a 128px worst frame against
+    891 — and it made every page change about half a second slower to come to
+    rest, which is the thing this owner reads as wrong. **"Like the demo"
+    means the demo's code**, so `sc.to` is `behavior: "smooth"` again, a page
+    change positions in one frame under a closed light again, and the pin that
+    held a new screen at its top is gone. The numbers that buys back are
+    stated rather than hidden: 3 single-frame jumps over sixteen steps, the
+    worst 494px, which is the instant positioning working as drawn.
+  - **TWO FIXES WERE KEPT, because neither changes how anything moves.**
+    The dim is four transform-only panels rather than a `0 0 0 100vmax`
+    box-shadow (see below), and the card's `ResizeObserver` re-frames the
+    light without touching the scroll — that one was the step that went one
+    way and came back, and the reversal has stayed gone. The light is also
+    re-measured on `scrollend`, which is the handoff's own listener: `plan`
+    aims at where a target WILL be, and a screen whose height changes while it
+    scrolls invalidates that aim.
   - **Walked, measured and held**: `npm run test:tour` is **258 assertions**.
     It walks all twenty-one steps at 1440 and at 390 and asserts that every
     step naming a target lights one, that what is lit is fully on screen,
