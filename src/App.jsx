@@ -48,11 +48,34 @@ const POLL_WHEN_LIVE_MS = 60000;
 const POLL_WHEN_DOWN_MS = 5000;
 
 const CHUNK_RELOADED = "pw-chunk-reloaded";
-const chunk = (factory) => () => factory().catch((err) => {
+/* A DEPLOY INVALIDATES THE CHUNK NAMES A LOADED TAB IS HOLDING, and that tab
+   then asks for a file that is no longer on the server. The owner hit it with
+   the walkthrough open across six deploys in an hour: "Unable to preload CSS
+   for /assets/LibraryBatches-B3D89J1k.css", which 404s, because his index.js
+   was two deploys old. A reload fixes it — the HTML is revalidated and names
+   the new files — and this reloads once so it can never become a loop.
+
+   TWO THINGS WERE WRONG WITH THAT ONCE.
+   1. The flag was set and never cleared, so "once" meant once per TAB for as
+      long as it lived. A tab that had recovered from one bad chunk weeks of
+      deploys ago could never recover from the next. It is cleared the moment
+      any chunk loads, so the budget is one reload per incident.
+   2. It reloaded on ANY error out of the factory, including a genuine crash
+      inside a screen's module scope — which a reload cannot fix and which
+      would burn the one reload that a later stale chunk needed. Only the
+      three messages a browser uses for a module or its CSS failing to arrive
+      get the reload; everything else is thrown to the boundary, which is
+      where a real bug belongs. */
+const STALE_CHUNK = /dynamically imported module|Unable to preload CSS|Importing a module script failed/i;
+const chunk = (factory) => () => factory().then((mod) => {
+  try { sessionStorage.removeItem(CHUNK_RELOADED); } catch { /* private mode */ }
+  return mod;
+}).catch((err) => {
+  if (!STALE_CHUNK.test(String(err?.message || err))) throw err;
   let already = true;
   try { already = sessionStorage.getItem(CHUNK_RELOADED) === "1"; } catch { /* private mode */ }
   if (already) throw err;
-  try { sessionStorage.setItem(CHUNK_RELOADED, "1"); } catch { /* ignore */ }
+  try { sessionStorage.setItem(CHUNK_RELOADED, "1"); } catch { throw err; }
   window.location.reload();
   return new Promise(() => {});
 });
