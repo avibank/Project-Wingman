@@ -1,0 +1,63 @@
+/* The Reports screen. It sits on `--panel` for the same reason the Studio
+   does: this is prose on a surface, and a surface the palette knows is the
+   only kind that can be measured. The Studio's own note has the argument. */
+.rep { display: grid; gap: 14px; min-height: 60vh;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px; box-shadow: var(--shadow); align-content: start; }
+@media (max-width: 700px) { .rep { padding: 12px; border-radius: 12px; } }
+
+.rep-head { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: start; }
+.rep-head h1 { margin: 0; font: 600 22px/1.15 var(--font-ui); letter-spacing: -.015em; color: var(--t1); }
+.rep-head p { margin: 6px 0 0; max-width: 56ch; font-size: 13.5px; line-height: 1.5; color: var(--t2); }
+
+.rep-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.rep-filters button { min-height: 36px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--raised); color: var(--t2);
+  font: 500 12.5px var(--font-ui); cursor: pointer; }
+.rep-filters button:hover { color: var(--t1); }
+.rep-filters button[aria-pressed="true"] { border-color: var(--active); color: var(--t1); }
+.rep-refresh { margin-left: 4px; }
+
+.rep-count { margin: 0; font: 500 11.5px var(--font-mono); letter-spacing: .06em;
+  text-transform: uppercase; color: var(--t2); font-variant-numeric: tabular-nums; }
+
+.rep-empty { margin: 0; padding: 22px 0; color: var(--t2); font-size: 14px; line-height: 1.55; max-width: 60ch; }
+.rep-empty small { display: block; margin-top: 8px; font: 500 11.5px var(--font-mono); color: var(--t3); }
+
+.rep-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rep-row { background: var(--raised); border: 1px solid var(--line); border-radius: 13px;
+  padding: 12px 13px; display: grid; gap: 8px; min-width: 0; }
+/* A DEVICE ROW IS THE APP REPORTING ITSELF, from a phone nobody here can
+   hold, so it carries the caution edge the Studio uses for a broken question
+   — the colour is the edge and the words beside it are a measured tier. */
+.rep-row.is-device { box-shadow: inset 3px 0 0 var(--caution); }
+
+.rep-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; }
+.rep-kind { font: 600 10.5px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--t2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 8px; }
+.rep-kind.is-device { color: var(--t1); border-color: color-mix(in oklch, var(--caution) 55%, var(--line)); }
+.rep-where { font: 500 12px var(--font-mono); color: var(--t2); word-break: break-all; min-width: 0; }
+.rep-when { margin-left: auto; font: 500 11.5px var(--font-mono); color: var(--t2);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.rep-said { margin: 0; font: 500 15px/1.5 var(--font-ui); color: var(--t1); }
+.rep-said.rep-quiet { font-weight: 400; font-size: 13.5px; color: var(--t2); }
+
+.rep-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  font: 500 11.5px var(--font-mono); color: var(--t2); min-width: 0; }
+.rep-meta > span { word-break: break-word; min-width: 0; }
+.rep-more { margin-left: auto; min-height: 32px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: none; color: var(--t2);
+  font: 500 11.5px var(--font-ui); cursor: pointer; }
+.rep-more:hover { color: var(--t1); }
+
+.rep-raw { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--ground);
+  border: 1px solid var(--line); color: var(--t2);
+  font: 400 11.5px/1.55 var(--font-mono); overflow-x: auto; white-space: pre; }
+
+.rep-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.rep-acts button { min-height: 36px; padding: 6px 13px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--t1);
+  font: 600 12.5px var(--font-ui); cursor: pointer; }
+.rep-acts button:hover { border-color: var(--active); }
+.rep-dismiss { color: var(--t2); }

@@ -1017,6 +1017,51 @@ the result away.
   it.
 - `npm run check:studio` is 45 assertions.
 
+## The pill in the corner, and who reads it
+
+**"Something's wrong here" is fixed to the bottom-left of every screen**
+(`ReportProblem.jsx`). It always knew WHERE a student was — the route, the
+viewport and the user agent go with every report, so nobody has to describe
+the page they are looking at. What it never asked was WHAT was wrong (owner,
+2026-10-06: "should mean something when pressed"), so three reports had
+reached the table saying only that somebody somewhere was unhappy with
+`/account/appearance`.
+
+- **It asks now, and the answer is OPTIONAL.** One line, pre-focused, Send.
+  Sending nothing still sends: a student who taps the pill and cannot put
+  words to it has still told you the page is wrong, and refusing that would
+  lose the report the feature was built for. The placeholder says the page
+  comes with it, so nobody spends their sentence describing the route.
+- **The composer is its own chunk** (`ReportAsk.jsx`). The pill is on every
+  screen and the sheet is only ever needed after a press; in the entry it put
+  the bundle 4KB over its budget.
+- **`/reports`, admin only, behind `admin.reports`** — the same shape the
+  Studio uses, including the sentence-and-a-way-back for anyone else rather
+  than a 404, because a 404 for some people is a link nobody can send.
+  - **The sentence leads.** A report's value is what the student said; the
+    route, the viewport and the device are evidence underneath it in the
+    quiet tier. A row with no sentence still says where and when.
+  - **ONE TABLE, THREE MEANINGS**, sorted out in `reportsStore.js` rather
+    than in the screen: `target_type` `route` is somebody pressing the pill,
+    `target_id` `stylesheet` or `layout` is **the app reporting itself** from
+    `recover.js` and `canary.js`, and anything else is 0005's content
+    moderation. A device row carries the caution edge, because nobody pressed
+    anything and those come from phones nobody here can hold — one had been
+    sitting unread since the styling problem was last chased by hand.
+  - **`reason` is parsed defensively.** It is free text in the schema and
+    three different writers put things in it; a screen that assumed JSON
+    would throw on the first hand-written row and take the list with it.
+  - **Mark done / Dismiss write `status`**, which 0005 already declares
+    (`open` | `actioned` | `dismissed`), so no migration was needed. The
+    screen changes first and the server follows, the way `savesStore` does.
+- **The harness was lying about the schema, and that is fixed too.**
+  `pgcore.js` defaulted every inserted row's `status` to `"ok"`, which is
+  right for a paper annotation and wrong for a report: 0005 declares
+  `reports.status` default `'open'`, so the Open filter found nothing in the
+  harness while the live table was full of it. A stand-in backend that
+  defaults a column differently from the real one is a harness that lies
+  quietly, and the demo runs on the same file.
+
 ## Off for launch, and Manual
 
 - **Papers are off** (`paper.viewer` is `everyone: false`): nothing in the
