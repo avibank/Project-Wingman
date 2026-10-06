@@ -40,7 +40,7 @@ export function RightSeatCard({
 
   if (!squadron) {
     return (
-      <div className="bog-card">
+      <div data-tour="deck-rightseat" className="bog-card">
         <div className="bog-ch"><span className="bog-lbl">Right seat</span></div>
         <div className="bog-body">
           <div className="bog-invite">
@@ -78,7 +78,7 @@ export function RightSeatCard({
 
   if (!pool.length) {
     return (
-      <div className="bog-card">
+      <div data-tour="deck-rightseat" className="bog-card">
         <div className="bog-ch"><span className="bog-lbl">Right seat</span></div>
         <div className="bog-body">
           <div className="bog-invite">
@@ -97,7 +97,7 @@ export function RightSeatCard({
   const thin = shown.length <= 2 && !overflow;
 
   return (
-    <div className="bog-card">
+    <div data-tour="deck-rightseat" className="bog-card">
       <div className="bog-ch">
         <span className="bog-lbl">Right seat</span>
         <span className="bog-seg">

@@ -590,7 +590,10 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
         </div>
 
         {/* The hero card is never touched by social. */}
-        <div className="card">
+        {/* The tour frames this card INCLUDING its instrument strip, which is
+            why the attribute is on the card and not on `.cardbody`: the step
+            is about the card and the four dials under it as one thing. */}
+        <div className="card" data-tour="deck-hero">
           <div className="cardbody">
             <div className="cardtext">
               <div className="chapter">{heroChapter ? heroChapter.title : active.name}</div>
@@ -725,7 +728,9 @@ function Home({ activeModuleCode, livery, variant, reduceMotion, finish, onGoToC
             <h2>Modules</h2>
             <div className="more">{started ? `${started} active` : `${moduleRows.length} to choose from`}</div>
           </div>
-          <div className={`railwrap ${railOverflows ? "more" : ""}`} ref={wrapRef}>
+          {/* The GRID, not the section: the tour's step is about the module
+              cards together and the handoff says to leave the heading out. */}
+          <div className={`railwrap ${railOverflows ? "more" : ""}`} ref={wrapRef} data-tour="deck-modules">
             <div className="rail" ref={railRef}>
               {/* data-code is the module's identifier, and the transition
                   layer reads it: opening a module names THIS card and the

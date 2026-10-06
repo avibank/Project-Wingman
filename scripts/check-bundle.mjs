@@ -22,10 +22,27 @@ const HTML = "dist/index.html";
    that is not offered no longer rides every first paint. The module-screen
    port went in under the old number as a result.
 
-   WHAT TO SPEND BEFORE RAISING THIS AGAIN: nothing is queued. The next
-   candidate is the same shape as the last one — find something in the entry
-   that only one screen needs, and lazily import it there. The pattern
-   finishes, the report composer and the ported Library all went that way. */
+   AND THEN 41KB CAME BACK AT ONCE (2026-10-06). App.jsx carried
+   `import { MODULE_TABS } from "./components/module/ModuleScreen.jsx"` beside
+   its own `chunk(() => import(...))` of the same file, and never used the
+   import — the only other mention of MODULE_TABS in App.jsx is a comment. A
+   static import wins: Rollup put ModuleScreen and everything it reaches
+   (LibraryTab, CrewTab, LogTab, Instruments) in the ENTRY and left the lazy
+   chunk as a re-export, so a screen nobody has opened was on every first
+   paint. Removing one line moved 41KB out and gave the module screen the
+   36KB chunk it was always supposed to have. The entry went 680 -> 639KB.
+
+   The budget stays at 680 rather than dropping to what the build now
+   achieves, and that is a judgement rather than laziness: this find is the
+   headroom the next two screens will be ported into, and a budget re-cut to
+   the day's number every time something is saved never buys anything. It is
+   a ceiling, and 41KB under it is where this should sit.
+
+   WHAT TO SPEND BEFORE RAISING THIS AGAIN: 41KB of headroom, measured. The
+   next candidate after that is the same shape as the last one — find
+   something in the entry that only one screen needs, and lazily import it
+   there. The pattern finishes, the report composer and the ported Library
+   all went that way. */
 const BUDGET = 680 * 1024;      // entry chunk
 
 let files;
@@ -66,9 +83,36 @@ console.log(`        ${lazy.length} split chunks, ${kb(lazyTotal)} in total, non
 const top = lazy.map((f) => [f, size(f)]).sort((a, b) => b[1] - a[1]).slice(0, 3);
 for (const [f, n] of top) console.log(`        largest: ${f.replace(/-[A-Za-z0-9_]+\.js$/, "")} ${kb(n)}`);
 
+/* A LAZY ROUTE THAT IS ALSO IMPORTED STATICALLY IS NOT LAZY, and nothing said
+   so. App.jsx declares every screen as `chunk(() => import(path))`; a plain
+   `import ... from path` for the same file anywhere in App.jsx puts the whole
+   module back in the entry and leaves the dynamic chunk as a re-export. The
+   build does not warn, the chunk still appears in the listing at a plausible
+   size, and the only symptom is the entry being tens of kilobytes bigger than
+   anybody expected — which is exactly how ModuleScreen rode first paint for
+   as long as it did. The size budget alone could not catch it: it was inside
+   the number all along.
+
+   This reads App.jsx rather than the build, because the pairing is the thing
+   that is wrong and the source is where it is legible. A screen that really
+   does need to export a constant can: move the constant to a module of its
+   own (`lib/routes.js` already holds CHAPTER_TABS and PROFILE_TABS). */
+const APP = "src/App.jsx";
+const app = (() => { try { return readFileSync(APP, "utf8"); } catch { return ""; } })();
+const dyn = new Set([...app.matchAll(/import\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]));
+const stat = new Set([...app.matchAll(/^\s*import\s[^;]*?from\s*["']([^"']+)["']/gm)].map((m) => m[1]));
+const both = [...dyn].filter((p) => stat.has(p));
+if (both.length) {
+  console.log(`BOTH LAZY AND EAGER in ${APP} — these ride first paint anyway:`);
+  for (const p of both) console.log(`        ${p}`);
+  process.exitCode = 1;
+} else {
+  console.log(`        ${dyn.size} route chunks, none of them also imported statically`);
+}
+
 if (entry > BUDGET) {
   console.log(`OVER BUDGET by ${kb(entry - BUDGET)} — split a route or raise the number deliberately`);
   process.exitCode = 1;
-} else {
+} else if (!process.exitCode) {
   console.log("MATCH");
 }

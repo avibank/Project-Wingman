@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { tourPane } from "../../lib/tourState.js";
 import {
   Users, Radio, CornerUpLeft, Copy, Pin, Pencil, Trash2, Flag, Link2, Check, Ban, SmilePlus,
 } from "lucide-react";
@@ -197,6 +198,59 @@ export default function ReadyRoom({
     });
     setView(next.kind === "module" && next.thread ? "thread" : "list");
   }, [threads, query, replies, me, who]);
+
+  /* ONCE PER MOUNT. The effect below re-runs whenever the squadron list or
+     the module list changes, and re-applying the standing request on each of
+     those would drag a student back to the tour's pane every time presence
+     ticked. */
+  const tourPosed = useRef(false);
+
+  /* The walkthrough asks for a pane by what a student would call it —
+     "right-seat", "squadron:night-shift", "module:m1" — and this resolves that
+     to one of `go`'s own kinds. A squadron is matched on its NAME slugified,
+     never on its id: the ids here are UUIDs, and a tour script carrying one
+     would break the moment the seed changed. It must not transition; `go`
+     changes the pane in place, which is what the brief asks for. */
+  useEffect(() => {
+    /* Returns whether the request could be HONOURED, which is not the same as
+       having been received: a squadron is found by name in a list that is
+       empty on the first render, and reporting success there spent the
+       once-per-mount guard below on a lookup that did nothing. The room then
+       came up on its default pane with the request still standing. */
+    const apply = (want) => {
+      const [kind, rest] = want.includes(":") ? [want.slice(0, want.indexOf(":")), want.slice(want.indexOf(":") + 1)] : [want, ""];
+      const slug = (t) => String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      let done = false;
+      if (kind === "right-seat" || kind === "seat" || kind === "seats") { go({ kind: "seats" }); done = true; }
+      else if (kind === "squadron" || kind === "squad") {
+        const q = squadronsWithPresence.find((x) => x.id === rest || slug(x.name) === slug(rest));
+        if (q) { go({ kind: "squad", id: q.id }); done = true; }
+      } else if (kind === "module") {
+        const m = modules.find((x) => slug(x.code || x.id) === slug(rest));
+        if (m) { go({ kind: "module", id: m.code || m.id }); done = true; }
+      }
+      /* AND ON A NARROW ROOM, THE RAIL IS THE COLUMN TO BE ON. Below 900px
+         this room shows one column at a time, and `go` leaves the PANE
+         showing — which is right when a student picked a squadron and wrong
+         when the walkthrough is about to point at the rail's own sections.
+         Measured at 390: the lights for Squadrons and Modules came out 20x2px
+         at the window's corner, because the elements they name were in the
+         column that was off screen. Every narrow step about this room is
+         about the rail; the pane itself is covered by the step that frames
+         the whole window. */
+      if (done && narrow()) setView("rail");
+      return done;
+    };
+    /* THE STANDING REQUEST FIRST. The step that brings the tour here asks for
+       a pane in the same breath as the navigation, and this screen is a lazy
+       chunk — so by the time it exists the event has been and gone. Reading
+       the request on mount is what makes the order of those two irrelevant. */
+    const standing = tourPane();
+    if (standing && !tourPosed.current && apply(standing)) tourPosed.current = true;
+    const onPane = (e) => apply(String(e.detail || ""));
+    window.addEventListener("wm-tour:pane", onPane);
+    return () => window.removeEventListener("wm-tour:pane", onPane);
+  }, [go, squadronsWithPresence, modules]);
 
   const back = useCallback(() => {
     setInfo(null);

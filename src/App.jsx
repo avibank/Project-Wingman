@@ -190,7 +190,6 @@ import RootNav from "./components/RootNav.jsx";
 import RunwayLights from "./components/RunwayLights.jsx";
 import Deck from "./components/Deck.jsx";
 const ModuleHub = lazy(CHUNK.moduleHub);
-import { MODULE_TABS } from "./components/module/ModuleScreen.jsx";
 const ModuleScreen = lazy(CHUNK.module);
 const LessonPage = lazy(CHUNK.lesson);
 const ReaderV6 = papersOn ? lazy(CHUNK.paper) : null;

@@ -14,7 +14,7 @@ export function SquadronCard({
 
   if (!squadron) {
     return (
-      <div className="bog-card">
+      <div data-tour="deck-squadron" className="bog-card">
         <div className="bog-ch"><span className="bog-lbl">Squadron</span></div>
         <div className="bog-body">
           <div className="bog-invite">
@@ -41,7 +41,7 @@ export function SquadronCard({
   const messages = (squadron.messages || []).slice(-limit);
 
   return (
-    <div className="bog-card">
+    <div data-tour="deck-squadron" className="bog-card">
       <div className="bog-ch">
         <span className="bog-lbl">{squadron.name}</span>
         <span className="bog-aside">

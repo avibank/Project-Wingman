@@ -351,8 +351,13 @@ merge them back together.
   rather than a forty-one-question paper silently getting the same sitting as
   an eight-question one. `estimate` keeps the 75 seconds, because a row
   reading "about 50 minutes" for every quiz would say nothing. **The number
-  lives in three places and they have to move together**: `quiz.js`,
-  `check:exam`, and `steps.js`, which says it out loud to a visitor.
+  lives in TWO places now and they have to move together**: `quiz.js` and
+  `check:exam`. It was three: `steps.js` said it out loud to a visitor, and
+  that file went with the tour rebuild on 2026-10-06. The approved tour's
+  script does not state the clock anywhere, so a visitor is no longer told
+  the figure before they meet it — which is the handoff's wording and not an
+  oversight here. If it should be said again it belongs in `tourSteps.js`,
+  and then this is three places again.
 - **The clock counts DOWN, and hands the paper in at zero.** This file used
   to say "elapsed time, never a countdown", and `quiz.js` §1 carried the
   argument: a countdown decides when you stop. The approved screen reverses it
@@ -722,52 +727,124 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   The squadron of livery tails, the module picker and "When do you usually
   study?" are gone, and so is the study-time placement they fed.
 - **The walkthrough is a DEMO of the real app** (`src/demo/`), not slides: a
-  tutorial over the real screens with a class already in them. **Twenty-five
-  steps: every SCREEN, no screen's manual, and the social half carrying as
-  many steps as the studying half.** It took four goes to land, and the
-  argument of each is in `steps.js`'s header, because the next person to
-  shorten it will otherwise take out the wrong half:
-    · 75 steps page by page (2026-09-21) — "way too long";
-    · 25 one per idea — still explained what every student already knows;
-    · 12, quirks only — "walk them through every screen, just not every
-      boring detail — you hardly explained the social side";
-    · 25 again, and a different 25: every screen, in a classmate's voice,
-      with the right seat, Crew, bringing your own class in, the room,
-      squadrons and the boards taking eight of them.
-  **The voice is charm and kindness** (owner's word, 2026-09-23): it never
+  tutorial over the real screens with a class already in them.
+
+  **REBUILT 2026-10-06 FROM AN APPROVED TOUR, and it is a different thing
+  from what came before.** The old one was twenty-five steps, a four-panel
+  dim, a docked card placed by `plan()`, and `steps.js`. The new one is
+  **TWENTY-ONE steps behind a BETA NOTE**, and the files are
+  `src/demo/tourSteps.js` (the script, word for word as approved),
+  `src/demo/tourEngine.js` (the engine, framework-free), `src/demo/tour.css`
+  and `src/lib/tourState.js`. `Guide.jsx` is now the wiring and renders
+  `null`. `guide.css` and `steps.js` are DELETED — both sheets used the same
+  `dg-*` class names, so they could not stand side by side.
+
+  **WHAT DELIBERATELY DID NOT CHANGE**: how it is opened (`?tour`, Replay at
+  the foot of the Licence, the three guards below), that it runs inside the
+  `pw-demo` sessionStorage demo mode against a seeded class, and what leaving
+  it means. `Guide`'s props are the ones App already passed.
+
+- **IT ADDRESSES THE APP BY NAME, not by CSS selector.** A step names a
+  `data-tour` value and the engine looks it up; eleven elements carry one —
+  `deck-hero`, `deck-modules`, `deck-ground`, `deck-route`, `deck-rightseat`,
+  `deck-squadron`, `deck-thread`, `lesson-logbook`, `rr-rightseat`,
+  `rr-squadrons`, `rr-modules`. That removes one class of silent failure (a
+  selector that stops matching) and adds another (a name nobody applied), so
+  `test:tour` checks every name in the script against the running app.
+  - **A card's name goes on EVERY one of its render branches.** The right
+    seat, the squadron and the thread card each draw two or three different
+    shapes depending on what there is to show, and naming only the first put
+    the name on the shape the seeded demo does not use: three steps dimmed
+    the screen and pointed at nothing.
+  - The rail's three sections are wrapped in `.rr-tourgrp`, which is
+    `display: contents`, so the rail's own grid is untouched. `rectOf` in the
+    engine unions the children of an element with no box of its own.
+
+- **`pane` AND `panelTab` ARE INSTRUCTIONS TO THE PAGE, NOT ROUTES**, and
+  they travel as a CustomEvent **plus a standing request**
+  (`src/lib/tourState.js`). The event alone was not enough: the step that
+  opens the Ready Room navigates and asks for a pane in the same breath, and
+  the room is a lazy chunk — so the ask was dispatched into a window with
+  nothing listening yet and all four room steps came up on the module
+  threads. A page now reads the standing request when it MOUNTS and listens
+  for later ones, so the order of the two stops mattering.
+  - The detail is the **bare value**. It was `{ pane }` while every listener
+    read `e.detail` as a string, so nothing moved and nothing said why.
+  - The Ready Room resolves a squadron by its NAME slugified, never by id:
+    the ids are UUIDs and a script carrying one would break with the seed.
+  - `apply` returns whether the request could be HONOURED, which is not the
+    same as received — a squadron is looked up in a list that is empty on the
+    first render, and reporting success there spent the once-per-mount guard
+    on a lookup that did nothing.
+  - **On a room under 900px the rail becomes the visible column**, because
+    that is where every narrow step about the room points. Without it the
+    lights for Squadrons and Modules came out 20×2px in the window's corner.
+  - The lesson maps the tour's `"logbook"` onto its own `"notes"` tab id
+    rather than renaming the id, so every stored tab value keeps working.
+
+- **"UNMOUNT" IS NOT "SKIP", and conflating them is an infinite loop.** React
+  runs an effect, its cleanup and the effect again on every mount in
+  development, so `Guide`'s cleanup fired before the tour had been on screen
+  for a frame. Reading that as the student leaving sent `onLeave("skip")` to
+  App, which left the demo and reloaded back onto the `?tour` address it came
+  from — which entered the demo again. **44 document loads in five seconds,
+  measured, with nothing in the console to say why.** The engine's `close`
+  carries its reason and only a real Skip is passed on.
+
+- **THE CARD'S HEIGHT IS AN INPUT, SO A CHANGE IN IT RE-FRAMES.** `free()`
+  subtracts the card's height to find the room left for the light, and
+  `ringTo` clips the light to `f.bot + 4` so it can never stand more than 4px
+  under the card. Both read it at the instant they run, before the browser
+  has laid out the new step's text — and the cards are not all the same
+  height (245px and 268px on two consecutive steps at 390). The light was
+  clipped to the room the PREVIOUS card left and then the card grew into it:
+  10px of overlap on the lesson's second step, 56px on the deck's modules.
+  One `ResizeObserver` on the card, and the overlap is 0.
+
+- **The demo student is on Open frequency** (`pw-social-preset` in `seed.js`).
+  `surfacesFor` in `lib/ground.js` draws none of Back on the ground's three
+  cards on Quiet skies and only the right seat on My flight, which is the
+  default — so two of the three steps about them pointed at a card that was
+  not rendered. The seed carries what the tour needs rather than the tour
+  claiming something a student cannot see.
+
+- **The deck keeps 45vh of room at its foot while the tour is up** (55vh on a
+  phone), which is the one rule carried over from `guide.css`. The card is
+  docked at the foot and a target in the last screenful cannot be scrolled
+  above it unless the page can scroll past its own end. `tourEngine` sets
+  `data-tour-on` on `.app` and removes it on close, so nothing is padded
+  after the tour ends. The Ready Room is excluded: it fills the window.
+
+- **Two small pieces of real UI came with it**, and both are the app's rather
+  than the tour's:
+  - The Library's last row, **"Shared study material · Highlight and take
+    notes together"**, with an **IN THE WORKS** pill. It is a `div`, not a
+    button — `check:doors` asks that no control be bound to nothing, and a
+    row that answers a press with nothing is exactly that.
+  - A lesson comment carries **ALSO IN THE READY ROOM**, linking to that
+    thread. A lesson comment and a module thread are ONE record —
+    `commentsFor` filters the same `threads` array the room's module pane
+    reads — so there is no mirroring step to wait for and nothing can be out
+    of date. `BmLink`, so the middle click and the status bar still work and
+    the plain click goes through `go()`.
+  - **The pill is WORDS, so it takes `--active-text` and not `--active`.**
+    The brief says `var(--active)`; that token is the accent as a MARK, and
+    at 10px on a panel it is the pair this repo has already measured under
+    4.5:1 (the module picker's own name, 3.96:1 in Day).
+
+- **The voice is charm and kindness** (owner's word, 2026-09-23): it never
   tells anybody off, and it says what the app will NOT do to them — no locked
   chapters, no guilt over a broken streak, no score on a card set — as
-  plainly as what it will. It still opens with Wingman rather than Part-66,
-  the card's kicker names the page and how far through it you are, and it can
-  always be skipped. Every claim in `steps.js` is checked against the code
-  that does it; change the feature and the paragraph has to change with it.
-  - **Nothing lights the player's tools any more, and that is deliberate**:
-    `.player-layer` is not mounted on a lesson nobody has touched, so a step
-    about it only ever lit when it came straight after a step on the player
-    itself — and a step on the player was one of the ones the owner cut. The
-    lesson's single step lights the logbook, which is there on arrival.
-  - **The text panel does not move.** It used to be placed beside each target
-    and glide there, and the owner's word for that was "lags around". It is
-    docked at the foot of the window (a sheet on a phone), and `plan()`
-    scrolls the target into the room above it. Only when a target cannot be
-    scrolled clear (the Ready Room's answer bar and composer are fixed to the
-    bottom) does it take the top edge instead, and it fades across rather than
-    travelling. The deck gets 45vh (55vh on a phone) of room at its foot while
-    the tutorial is up, except in the Ready Room, which fills the window.
-  - **The demo lesson has a real video**: `public/demo/simultaneous-equations.mp4`,
-    five minutes of worked examples drawn on a canvas and recorded in Chromium
-    (no ffmpeg on the build machine; `MediaRecorder` writes H.264 MP4 with a
-    proper duration, which WebKit plays). Its moments are the seeded logbook's:
-    your note at 1:04, the right seat's comment at 3:08, yours at 3:51 and
-    your question at 4:36. Only the demo's `content.json` points at it.
-  - **How it stays smooth** (Guide.jsx), measured on a production build:
-    the dim is four panels moved only by transform (a box-shadow light
-    repainted the screen every frame); one loop eases the light towards its
-    target every frame (a CSS transition restarted on every scroll frame);
-    panel edges snap to device pixels (fractional edges drew seams); screens
-    change only once the light has closed, without the app's own view
-    transition (`go(to, { still: true })`), and every screen it visits is
-    warmed while the first step is read.
+  plainly as what it will. It opens with the beta note rather than a feature,
+  the card's kicker names the section and how far through it you are, and it
+  can always be skipped. Every claim in `tourSteps.js` is checked against the
+  code that does it; change the feature and the paragraph has to change with
+  it.
+  - **How it stays smooth**: the dim is one element's box-shadow spread
+    rather than four panels, the light eases on a transition the engine owns,
+    screens change through `go(to, { still: true })` so the app's own view
+    transition does not fight the tour's, and every screen it visits is
+    warmed while the beta note is being read.
   - **It opens by itself for every visit by somebody who is NOT signed in**,
     on ANY page but sign-in, an invite link, Clerk's account screens and
     **a quiz**. It once waited for `/`, and a visitor who arrived anywhere
@@ -790,11 +867,18 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     skipped it, reported that it did not trigger at all. A returning student
     stays signed in and never meets it; a visitor with no account meets it
     each time, one tap from gone. **`?tour` on any address opens it for
-    anybody**: a visitor as "You", a signed-in student as themselves. A signed-in student only gets it by asking:
-    Replay, at the foot of the Licence. A visitor is "You" inside it: every
-    Clerk hook comes through `src/lib/clerk.js`, which signs a demo guest in
-    as a student who exists only in the demo's database. Clerk's components
-    still come from Clerk.
+    anybody**: a visitor as "You", a signed-in student as themselves. A
+    signed-in student only gets it by asking: Replay, at the foot of the
+    Licence. A visitor is "You" inside it: every Clerk hook comes through
+    `src/lib/clerk.js`, which signs a demo guest in as a student who exists
+    only in the demo's database. Clerk's components still come from Clerk.
+  - **The last button says what pressing it will do**, and that is the one
+    thing about the script that is not fixed: "Create my account" for a
+    visitor, "Done" for a student who already has a stamp, and the script's
+    own "Create my licence" for everybody else. `Guide` passes a copy of the
+    script with that one label changed, and reads `guest`/`hasStamp` through
+    a ref so the effect cannot restart the tour when App's account state
+    settles.
   - **Finishing it as a visitor goes to `/signin?join=1`** (Join is open), and
     the note to open the licence waits in sessionStorage. **Anyone who signs
     up** lands on the Licence with the stamp creator open: FirstFlightGate
@@ -810,46 +894,40 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   - **The backend is the harness's**: `src/demo/pgcore.js` is the PostgREST
     emulation both use. The harness serves it over HTTP; the demo runs it in
     the tab. Change it in one place.
-  - **SNAPPY RATHER THAN FLOATY** (owner, 2026-10-03, which was his word for
-    the old numbers). From pressing Next to nothing moving was a median of
-    **1185ms** and a worst of 1460ms; it is **~600ms** and 1000ms now,
-    measured over all twenty-five steps at 1440 and at 390 rather than over
-    one. Almost none of what went was the easing — it was dead time waiting
-    on timers, so what makes it feel quick is a shorter wait BEFORE the
-    movement, not a shorter movement. The eases are roughly halved (τ 120 →
-    62, close 55 → 34, and every duration in `guide.css`), every fixed delay
-    is cut to what the thing it waits for actually needs, and **the scroll is
-    ours now**: `behavior: "smooth"` is engine-paced, takes about half a
-    second, cannot be tuned and cannot be awaited, so the light eased on one
-    clock while the page moved on another and the step was not done until the
-    slower gave up. The page now runs on the same exponential as the light,
-    slightly faster (τ 45) so it arrives first and the light converges on
-    something that has stopped — and `settle` runs when the scroll has really
-    ended instead of after a timer long enough to cover the worst case. The
-    CURVES are untouched: the curve was never the problem.
-  - **Walked and measured, and now held**: `npm run test:tour` (143
-    assertions) walks all twenty-five steps at 1440 and at 390 and asserts
-    that every step naming a target lights one, that what is lit is fully on
-    screen, that the card covers none of it, and that each step stops moving.
+  - **The demo lesson has a real video**: `public/demo/simultaneous-equations.mp4`,
+    five minutes of worked examples drawn on a canvas and recorded in Chromium
+    (no ffmpeg on the build machine; `MediaRecorder` writes H.264 MP4 with a
+    proper duration, which WebKit plays). Its moments are the seeded logbook's:
+    your note at 1:04, the right seat's comment at 3:08, yours at 3:51 and
+    your question at 4:36. Only the demo's `content.json` points at it, and it
+    is the lesson the tour's two Lesson steps open.
+  - **Walked, measured and held**: `npm run test:tour` is **258 assertions**.
+    It walks all twenty-one steps at 1440 and at 390 and asserts that every
+    step naming a target lights one, that what is lit is fully on screen,
+    that the card covers none of it (except a `whole` step, where the light
+    IS the window), that a step asking for a pane or a tab gets it, and that
+    each step stops moving. It checks every `data-tour` name in the script
+    against the running app. And it **measures contrast on the card and the
+    beta note across six liveries × night and day** — ten text pairs each,
+    floor 4.5:1, worst 4.79:1 — because a token is not a contrast ratio and
+    this card floats over a dimmed screen rather than sitting on `--panel`.
+    Every colour is resolved through a CANVAS rather than parsed: the tokens
+    compute to `oklch(...)`, and reading three numbers out of that string
+    gave lightness, chroma and a hue angle where red, green and blue were
+    expected, which made every pair on every livery come out at exactly 2:1.
     It needs the harness, so like `test:bm` and `test:rr` it is not in
-    `npm run check`. That claim had been in this file since 2026-09-21,
-    measured by hand and held by nothing, while the timing that decides all
-    three lives in Guide.jsx — so halving it was the moment to write the walk.
-    Proved by planting all three of its bugs: a light eased far too slowly,
-    a `plan()` that scrolls nothing into view, and a selector that stops
-    matching. Each one fails it; restored, it passes.
-  - **Pressing Next faster than a step settles is fine**, which a quicker
-    tutorial invites: at a 150ms gap and at 60ms, straight through all
-    twenty-five, it lands on the farewell with no console error — each step's
-    effect cancels the one before it, including its scroll. The study-cards step lights the top CARD rather than the
-    whole pad: at 390 the pad is 499px tall and its light's own padding came
-    down on the docked card by four pixels. The card is docked, so what changes between steps is its
-    height and never its foot. Bookmarks is given the same room at its foot
-    as the deck while the tutorial is up (`.bm-page` in `guide.css`): its
-    folder grid could not scroll clear of the card, so the card took the top
-    edge and still came down on the first 15px of it. In the harness the
-    walkthrough counts as seen unless `?walkthrough=1`, and the identity from
-    `?uid=` lasts for the tab, as a real session does.
+    `npm run check`.
+    Proved by planting its bugs: a dropped `data-tour` attribute, a dead
+    `wm-tour:pane` listener, a tab mapping that always answers "notes", and a
+    body colour at 4.34:1. Each one fails it; restored, it passes.
+  - **QUIET IS ONLY REST ONCE SOMETHING HAS MOVED.** A step that changes page
+    awaits a navigation, a pane and a lazy chunk before it touches the light,
+    and nothing on screen changes while it does — so the walk's old detector
+    accepted 200ms of quiet straight after the press, returned before the
+    step had started, read an unlit light and called three good steps dark.
+    It waits for the first change, then for the quiet. Median time to rest is
+    **~35ms**, worst 540ms, and one step of twenty needs any wait at all
+    after that (under 30ms) for the thing it points at to arrive.
 - **It ends at the licence.** Finishing it, or leaving a first run, takes a
   student with no stamp to `/account/licence` with the stamp creator open
   (`lib/licenceAsk.js`, which survives the reload out of the demo).
@@ -1221,6 +1299,33 @@ and `claude/bookmarks-report.md` is what each rule measured.
   and the launch sweep — offline, two tabs, a second student, a deleted
   question and a keyboard-only pass. **Aurora has no Day**: `App.jsx` forces
   night on it, so there are 30 real skins, not 36.
+
+## What rides first paint
+
+**41KB CAME OUT OF THE ENTRY CHUNK ON 2026-10-06, by deleting one line.**
+`App.jsx` carried `import { MODULE_TABS } from "./components/module/ModuleScreen.jsx"`
+beside its own `chunk(() => import(...))` of the same file — and never used
+the import: the only other mention of `MODULE_TABS` in App.jsx is a comment.
+A static import wins, so Rollup put ModuleScreen and everything it reaches
+(LibraryTab, CrewTab, LogTab, Instruments) in the ENTRY and left the lazy
+chunk as a re-export. A screen nobody has opened was on every first paint.
+The entry went **680KB to 639KB** and the module screen got the 36KB chunk it
+was always meant to have.
+
+- **Nothing warned.** The build is silent, the chunk still appears in the
+  listing at a plausible size, and the size budget could not catch it because
+  it was inside the number all along. So `check:bundle` now asserts that **no
+  path App.jsx imports dynamically is also imported statically** — it reads
+  the source rather than the build, because the pairing is the thing that is
+  wrong and the source is where it is legible. Proved by planting the line
+  back: the check fails and names the path.
+- A screen that really does need to export a constant can — move it to a
+  module of its own. `lib/routes.js` already holds `CHAPTER_TABS` and
+  `PROFILE_TABS`, which is where `MODULE_TABS` would go.
+- **The budget stays at 680KB** rather than dropping to what the build now
+  achieves. That is a judgement: this find is the headroom the next screens
+  get ported into, and a ceiling re-cut to the day's number every time
+  something is saved never buys anything.
 
 ## Every door leads somewhere
 

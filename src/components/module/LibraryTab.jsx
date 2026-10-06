@@ -406,6 +406,28 @@ export default function LibraryTab({
         </ul>
       </section>
       )}
+
+      {/* ------------------------------------- SHARED STUDY MATERIAL ---
+          The last row of the Library, and the only one that opens nothing.
+          The annotation layer is what this names — highlighting a paper and
+          leaving notes on it, together — and it is paused behind
+          `paper.viewer`. The row says the name and what it will do, with a
+          pill saying it is not here yet, because the alternative is a
+          student reading nothing at all about it.
+
+          It is a div and not a button: `check:doors` asks that no control be
+          bound to nothing, and a row that answers a press with nothing is
+          exactly that. The pill is not clickable either. */}
+      <div className="papers">
+        <div className="lrow" data-soon="1">
+          <span className="th" aria-hidden="true" />
+          <span>
+            <div className="lt">Shared study material</div>
+            <div className="ls">Highlight and take notes together</div>
+          </span>
+          <span className="rt"><span className="wm-pill-soon">IN THE WORKS</span></span>
+        </div>
+      </div>
     </div>
   );
 }

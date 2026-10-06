@@ -20,6 +20,9 @@ import { useUserProgress } from "../../lib/userProgress.jsx";
 import { FLY_SOLO_KEY } from "../../lib/flySolo.js";
 import LogTab, { downloadLog } from "./LogTab.jsx";
 import SaveButton from "../../features/bookmarks/SaveButton.jsx";
+import { BmLink } from "../../features/bookmarks/nav.jsx";
+import { path } from "../../lib/routes.js";
+import { tourPanelTab } from "../../lib/tourState.js";
 import { useTabPill, useSwitchIn } from "../../lib/tabMotion.js";
 import SignOff from "./SignOff.jsx";
 import Avatar from "../Avatar.jsx";
@@ -118,6 +121,24 @@ export default function LessonPage({
   const ltabBodyRef = useRef(null);
   useTabPill(ltabsRef, tab);
   useSwitchIn(ltabBodyRef, tab, LESSON_TABS);
+
+  /* The walkthrough asks for a tab by the name a student reads on it
+     ("logbook"), not by this component's id for it ("notes"). Mapping it here
+     rather than renaming the id keeps every stored tab value working. */
+  const tourPosed = useRef(false);
+  useEffect(() => {
+    const apply = (asked) => {
+      const want = asked === "logbook" ? "notes" : asked;
+      if (LESSON_TABS.includes(want)) setTab(want);
+    };
+    /* The standing request, for the same reason the Ready Room reads one: a
+       step can ask for a tab before this screen's chunk has arrived. */
+    const standing = tourPanelTab();
+    if (standing && !tourPosed.current) { tourPosed.current = true; apply(standing); }
+    const onAsk = (e) => apply(String(e.detail || ""));
+    window.addEventListener("wm-tour:panel-tab", onAsk);
+    return () => window.removeEventListener("wm-tour:panel-tab", onAsk);
+  }, [setTab]);
   // `me`, not the default. notesFor filters by author and defaults to the
   // historical "u_you"; new notes are stamped with the real id, so omitting it
   // here made every note vanish the instant it was saved.
@@ -266,7 +287,7 @@ export default function LessonPage({
       </div>
 
 
-      <div className="card logcard">
+      <div className="card logcard" data-tour="lesson-logbook">
         {/* Presence, and the face. WhatsApp's "last seen" and Netflix's
             "continue watching" — the most familiar signal that other humans
             exist in a piece of software, and the only one that works with zero
@@ -363,7 +384,7 @@ export default function LessonPage({
                            const b = document.querySelector(".rpt");
                            if (b) b.click(); else console.info("Problem report", { lesson: l.id });
                          }}
-                         lesson={lesson}
+                         lesson={lesson} moduleCode={mod.code || mod.id}
                          people={people} onSeek={requestSeek} mutate={mutate}
                          pending={pending} postOptimistic={postOptimistic} me={me} />}
         </div>
@@ -441,7 +462,7 @@ export default function LessonPage({
 // replies collapsed behind one expander, because that is what everyone has
 // seen ten thousand times and because an expanded thread pushes the next
 // question off the screen.
-function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pending, postOptimistic, onReport, me }) {
+function CommentsTab({ comments, replies, lesson, moduleCode, people, onSeek, mutate, pending, postOptimistic, onReport, me }) {
   // Author ids are the storage key; a callsign is what a person reads. One
   // resolver so a row never shows "u_five" to a student.
   const who = (id) =>
@@ -495,6 +516,25 @@ function CommentsTab({ comments, replies, lesson, people, onSeek, mutate, pendin
                     </button>
                   </div>
                   <p className="cmt-body">{seekable(c.body, onSeek)}</p>
+                  {/* ALSO IN THE READY ROOM, and it is one record rather than
+                      two. A lesson comment IS a module thread — `commentsFor`
+                      is the same `threads` array the room's module pane reads,
+                      filtered to this lesson — so there is no mirroring step
+                      to wait for and nothing here can be out of date. This
+                      makes that visible and gives it a door, because the
+                      walkthrough says it out loud ("it also shows up as a
+                      thread in the Ready Room") and a student has no other way
+                      to see it.
+                      BmLink, not an onClick: a real href keeps the middle
+                      click and the status bar, and the plain click still goes
+                      through go() so the move transitions (nav.jsx). */}
+                  {moduleCode && (
+                    <div className="cmt-also">
+                      <BmLink to={path.ready(moduleCode, c.id)} className="wm-pill-soon">
+                        ALSO IN THE READY ROOM
+                      </BmLink>
+                    </div>
+                  )}
                   <div className="cmt-acts">
                     {pending?.[c.id] === "failed" ? (
                       /* It stays, with a way back. Never delete what someone

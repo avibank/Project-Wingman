@@ -1194,3 +1194,18 @@
   .mscreen.lessonpage .next{ order: 3; }
   .mscreen.lessonpage .logcard{ order: 4; }
 }
+
+/* -------------------------------------------- ALSO IN THE READY ROOM ---
+   The tag under a comment's text. A lesson comment and a module thread are
+   ONE record, so this is a door rather than a status: it goes to that exact
+   thread in the room.
+
+   It keeps the design's pill size rather than taking §12's 44px floor. That
+   floor is for controls that are targets; this is the exception the rule
+   itself names — a link sitting inside a line of content — which is also why
+   App.jsx's global selector covers button, input, select and textarea and
+   not `a`. What it gets instead is room: 6px above and below, so a thumb
+   aiming at it cannot land on the body's timestamps above or Reply below. */
+.ref-les .cmt-also{ margin: 6px 0; display: flex; }
+.ref-les .cmt-also .wm-pill-soon{ text-decoration: none; }
+.ref-les .cmt-also .wm-pill-soon:hover{ border-color: var(--active-text); }
