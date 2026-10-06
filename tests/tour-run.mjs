@@ -114,6 +114,22 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
         const t = document.querySelector('.logcard [role="tab"][aria-selected="true"]');
         if (!t || t.textContent.trim().split(/\s+/)[0].toLowerCase() !== expect.tab) return false;
       }
+      /* THE CARD STANDING CLEAR IS A PROPERTY OF THE SETTLED STEP, not of
+         every frame on the way there. A page change eases now rather than
+         snapping, so the light is mid-travel for about half a second after
+         the rest detector above lets go, and reading the overlap then found
+         148509 square pixels on a step whose final geometry is a clean 72px
+         gap. Measured both ways. */
+      if (expect.clear) {
+        const gg2 = document.querySelector(".dg-ring");
+        const cc = document.querySelector(".dg-card");
+        const a = gg2?.getBoundingClientRect(), bb = cc?.getBoundingClientRect();
+        if (a && bb) {
+          const ov = Math.max(0, Math.min(a.right, bb.right) - Math.max(a.left, bb.left))
+                   * Math.max(0, Math.min(a.bottom, bb.bottom) - Math.max(a.top, bb.top));
+          if (ov > 0) return false;
+        }
+      }
       return true;
     };
     while (performance.now() - t1 < 1500) {
@@ -188,6 +204,7 @@ try {
             : step.pane.startsWith("squadron") ? "rr-chat" : "rr-threads")
           : null,
         tab: step.panelTab ? (step.panelTab === "logbook" ? "logbook" : "comments") : null,
+        clear: Boolean(step.target) && !step.whole,
       };
       const r = await stepAndRest(page, want);
       if (!r) { fails.push(`${name} · ran out of steps at ${n + 1} of ${TOUR_STEPS.length}`); break; }

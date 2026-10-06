@@ -88,6 +88,33 @@ export function startTour({
      `.deck` on a screen change, so a reference taken at start would be stale
      by the second page. */
   const box = () => scroller || document.querySelector(".deck") || null;
+  /* The one in-flight scroll ease, and the curve it runs on — the same one
+     `.dg-ring` is given in tour.css, so the page and the frame around it move
+     together. `bezier` is x -> y for cubic-bezier(.3,.7,.3,1): Newton for the
+     parameter, then the y polynomial. See `to` below. */
+  let easeRAF = 0;
+  const SCROLL_MS = 480;
+  const bezier = (() => {
+    const [x1, y1, x2, y2] = [0.3, 0.7, 0.3, 1];
+    const c = (a, bb) => { const k3 = 3 * a, k2 = 3 * (bb - a) - k3; return [1 - k3 - k2, k2, k3]; };
+    const [ax, bx, cxk] = c(x1, x2);
+    const [ay, by, cyk] = c(y1, y2);
+    const X = (t) => ((ax * t + bx) * t + cxk) * t;
+    const dX = (t) => (3 * ax * t + 2 * bx) * t + cxk;
+    const Y = (t) => ((ay * t + by) * t + cyk) * t;
+    return (x) => {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      let t = x;
+      for (let k = 0; k < 8; k += 1) {
+        const e = X(t) - x, d = dX(t);
+        if (Math.abs(e) < 1e-6) break;
+        if (!d) break;
+        t -= e / d;
+      }
+      return Y(Math.max(0, Math.min(1, t)));
+    };
+  })();
   const sc = {
     get top() { const b = box(); return b ? b.scrollTop : window.scrollY; },
     get max() { const b = box(); return b ? b.scrollHeight - b.clientHeight : document.documentElement.scrollHeight - innerHeight; },
@@ -96,10 +123,45 @@ export function startTour({
       if (b) { const r = b.getBoundingClientRect(); return { top: r.top, h: b.clientHeight, w: b.clientWidth, left: r.left }; }
       return { top: 0, h: innerHeight, w: innerWidth, left: 0 };
     },
-    to(top, instant) {
-      const o = { top, behavior: instant || reduce() ? "auto" : "smooth" };
+    /* ADAPTATION 6: THE SCROLL IS OURS, NOT THE BROWSER'S.
+       `behavior: "smooth"` is engine-paced — about half a second on a curve
+       nothing can tune, and it cannot be awaited or cancelled. The light
+       eases over .55s on `cubic-bezier(.3,.7,.3,1)` right beside it, so the
+       page and the frame around it ran on two different clocks and arrived at
+       two different times. Measured over twelve steps: three single-frame
+       scroll jumps, the worst 891px, and the page going one way and then back
+       inside one step — which is what "glitchy, jittery" is (owner,
+       2026-10-06).
+
+       So the page runs on ONE rAF loop, on the LIGHT'S OWN CURVE —
+       `cubic-bezier(.3,.7,.3,1)`, the one `.dg-ring` is given in tour.css —
+       over 480ms against the light's 550, so the page arrives first and the
+       light settles onto something that has stopped. It is cancelled the
+       instant anything asks for a new position, so two asks inside one step
+       converge instead of fighting.
+
+       The curve matters as much as the loop. The first version of this used
+       an exponential at τ 45, which is what the walkthrough's previous engine
+       carried — but that light was an exponential too, and this one is not:
+       at τ 45 the page covers 31% of the distance in the first frame, so a
+       500px move opened with a 155px jump while the light was still easing
+       in. Measured, five of those across sixteen steps. On the light's own
+       curve the first frame is about 40px. */
+    to(top, instant, onDone) {
       const b = box();
-      if (b) b.scrollTo(o); else window.scrollTo(o);
+      const put = (y) => { if (b) b.scrollTop = y; else window.scrollTo(0, y); };
+      cancelAnimationFrame(easeRAF);
+      if (instant || reduce()) { put(top); onDone?.(); return; }
+      const from = b ? b.scrollTop : window.scrollY;
+      if (Math.abs(top - from) < 1) { onDone?.(); return; }
+      const t0 = performance.now();
+      const step = (now) => {
+        const x = Math.min(1, (now - t0) / SCROLL_MS);
+        put(from + (top - from) * bezier(x));
+        if (x >= 1) { onDone?.(); return; }
+        easeRAF = requestAnimationFrame(step);
+      };
+      easeRAF = requestAnimationFrame(step);
     },
   };
 
@@ -179,10 +241,43 @@ export function startTour({
     });
   }
 
+  /* HOLD THE SCREEN AT ITS TOP WHILE A PAGE CHANGE LANDS.
+     The router reuses `.deck` across routes, so a new screen inherits the
+     scroll the last one had. One reset is not enough: a screen that is a lazy
+     chunk — the lesson is, with its video — commits several frames after the
+     navigation resolves, and the reset lands on the outgoing screen. Measured
+     before this: 22 frames, nearly 400ms, of the lesson painted 494px down
+     and then snapping to the top.
+     So it is held, every frame, from the navigation until the step's target
+     exists, and released there — which is the moment the engine takes over
+     and does its own scrolling. Nothing else writes the scroll in that
+     window, so the two cannot fight. */
+  function pinTop() {
+    let on = true;
+    const tick = () => {
+      if (!on) return;
+      if (sc.top > 0) sc.to(0, true);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return () => { on = false; };
+  }
+
   function smooth(top, instant) {
     if (Math.abs(sc.top - top) < 1) return;
     auto = true; clearTimeout(autoT); autoT = setTimeout(() => { auto = false; }, 900);
-    sc.to(top, instant);
+    /* AND THE LIGHT IS PUT RIGHT WHERE THE PAGE ACTUALLY STOPPED. `plan` aims
+       at where the target WILL be, measured before the page moved; a screen
+       whose height changes while it moves — the lesson, mounting its video —
+       invalidates that aim, and `onScroll` is deliberately deaf while the
+       engine is the one scrolling. So the ring is re-measured against reality
+       once the ease ends. Without it the lesson's light came to rest 148509
+       square pixels under the card. */
+    sc.to(top, instant, () => {
+      auto = false;
+      const c = $(".dg-card");
+      if (c && !steps[i]?.whole) ringTo(target(), c.dataset.dock, null, true);
+    });
   }
 
   function frame(instant) {
@@ -209,9 +304,22 @@ export function startTour({
      steps at 390), so the light was clipped to the room the PREVIOUS card
      left and then the card grew into it: measured 10px of overlap on the
      lesson's second step and 56px on the deck's modules at 390.
-     One observer, re-framing when the card resizes, and the overlap is 0. */
+     One observer, re-framing when the card resizes, and the overlap is 0.
+
+     IT RE-FRAMES THE LIGHT AND DOES NOT TOUCH THE SCROLL. `frame()` does
+     both, and calling it here scrolled the page instantly every time the card
+     changed height — a 315px jump mid-step, with the page going one way and
+     then back, which is half of what "jittery" was. The card's height only
+     decides where the light may be CLIPPED, so only the clip is redone: the
+     scroll the step planned is left alone. */
   const cardRO = typeof ResizeObserver === "function"
-    ? new ResizeObserver(() => { if ($(".dg-card") && !$(".dg-modal")) frame(true); })
+    ? new ResizeObserver(() => {
+      if (!$(".dg-card") || $(".dg-modal")) return;
+      const el = target();
+      const s = steps[i];
+      if (!el || s?.whole) return;
+      ringTo(el, $(".dg-card").dataset.dock || "bottom", null, true);
+    })
     : null;
 
   let watched = null;
@@ -294,16 +402,29 @@ export function startTour({
       await wait(220);
     }
     if (t !== token) return;
-    if (currentRoute() !== s.route) await navigate(s.route);
-    if (s.pane && setPane) await setPane(s.pane);
-    if (s.panelTab && setPanelTab) await setPanelTab(s.panelTab);
-    await waitFor(s.target ? `[data-tour="${s.target}"]` : null);
+    const unpin = newPage ? pinTop() : null;
+    try {
+      if (currentRoute() !== s.route) await navigate(s.route);
+      if (s.pane && setPane) await setPane(s.pane);
+      if (s.panelTab && setPanelTab) await setPanelTab(s.panelTab);
+      await waitFor(s.target ? `[data-tour="${s.target}"]` : null);
+    } finally { unpin?.(); }
     if (t !== token) return;
     page = s.page;
     if (newPage) {
-      sc.to(0, true);
+      /* A backstop for a scroller the router restores after the pin let go.
+         Almost always a no-op. */
+      if (sc.top > 0) sc.to(0, true);
       requestAnimationFrame(() => {
-        frame(true);
+        /* EASED, NOT INSTANT, even though this is a page change. The light is
+           shut here and fades in over the next .35s, so the engine positioned
+           the page in one frame underneath it — but the page itself is NOT
+           hidden while the light is out (the dim IS the light's own shadow),
+           so what a student saw was the new screen appearing at its top and
+           then snapping, 494px in a single frame on the lesson. Measured.
+           It travels on the same curve and clock as every other step now, and
+           the light fades in across it. */
+        frame(false);
         const r = $(".dg-ring");
         if (r && !reduce()) { r.style.opacity = 0; void r.offsetWidth; r.style.transition = "opacity .35s ease .1s"; r.style.opacity = 1; }
       });
