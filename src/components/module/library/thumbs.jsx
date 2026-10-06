@@ -62,7 +62,17 @@ export function PaperThumb({ pp }) {
     <span className="lb-th lb-pg" aria-hidden="true">
       <span className="lb-pp lb-b2" /><span className="lb-pp lb-b1" />
       <span className="lb-top"><span className="lb-qb">Q-BANK</span>{q(1)}{q(2)}{q(3)}</span>
-      <span className="lb-count"><span data-count={pp}>{pp}</span><small>pages</small></span>
+      {/* AN EM DASH, NOT A ZERO. `batchesOf` sets `pp` to 0 for a batch with
+          no paper on the shelf yet — its own comment says the tile is shown
+          disabled "rather than a made-up number" — and this printed that 0
+          out loud as "0 pages", which §10 forbids outright. The hour meter
+          settled the same question the same way: it reads an em dash under a
+          minute, because "0m" is a zero count. The tile is disabled either
+          way, so nothing here is a door that goes nowhere. */}
+      <span className="lb-count">
+        <span data-count={pp || null}>{pp ? pp : "—"}</span>
+        {pp ? <small>pages</small> : null}
+      </span>
     </span>
   );
 }

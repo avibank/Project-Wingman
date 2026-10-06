@@ -146,7 +146,9 @@ export default function LibraryBatches({
                   </button>
                   <button type="button" className="lb-tile" onClick={() => onPaper?.(b)}
                           disabled={!b.paper}
-                          aria-label={`Question bank, PDF, ${b.pp} pages, download`}>
+                          aria-label={b.paper
+                            ? `Question bank, PDF, ${b.pp} pages, download`
+                            : "Question bank, not on the shelf yet"}>
                     <span className="lb-stage"><PaperThumb pp={b.pp} /></span>
                     <strong>Question bank</strong>
                   </button>

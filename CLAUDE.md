@@ -149,6 +149,33 @@ which is what the Flight Deck draws before the document arrives.
   chapter's POSITION and `chaptersForModule` only splits on the first `.` —
   so `M1.B1` is as valid as `M1.01` and cannot collide with anything that
   came before.
+- **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
+  2026-10-06: it "showes the previus format ... for the libary").
+  `resolveFlags` turns `library.batches` on inside the demo the way it
+  already turns on `content.test`, because the approved tour's own words for
+  that step — "each chapter's quiz, question bank and study cards are all in
+  one place" — are the ported batch row tile for tile, and it was pointing at
+  the three shelves instead. Nothing a student opens changes: the flag stays
+  admin-only for the real app until the port's third stage is in, and the
+  demo's course and database are its own.
+  - The demo's course gained what that screen counts: a `batch`, a `ref` and
+    a page range on every chapter, `batches` on every module, and **40 study
+    cards across Module 1's four chapters** with `cardsName` on each. Without
+    `cards` the set falls back to the quiz's own questions, so Quiz and Cards
+    read the same number. The spread is 16/12/12 across a/b/c.
+  - **The waiting screen is for a module with no video, not for whoever has
+    the flag on.** `LessonsWaiting` says "video lessons are on the way",
+    which is true of the course as it ships and false of the demo's twelve
+    lessons — turning the flag on put that sentence over a class watching
+    videos. The Lessons tab asks the module now (`hasLessons`), and the flag
+    only decides which of the two screens answers. `check:states` holds it.
+  - **A batch with no paper shows an em dash, not "0 pages".** `batchesOf`
+    sets `pp` to 0 for a batch whose paper is not on the shelf — its own
+    comment says the tile is shown disabled "rather than a made-up number" —
+    and `PaperThumb` printed that 0 out loud, which §10 forbids. The hour
+    meter settled the same question the same way. The tile is disabled
+    either way, so it is not a door that goes nowhere, and its label says
+    "not on the shelf yet" rather than naming a count.
 - **A SCREEN BEHIND A FLAG FALLS BACK TO THE ONE IT REPLACES.** The ported
   Library draws a row per BATCH and `batchesOf` keeps a chapter only when
   `Number.isFinite(c.batch)` — so a course document written before the port,

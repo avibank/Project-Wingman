@@ -179,6 +179,24 @@ else if (!/if\s*\(\s*asBatches\s*&&\s*batches\.length\s*\)/.test(src(lib))) {
   fails.push("LibraryTab takes the ported batches screen without checking it has a batch to draw — a course document with no batch numbers renders an empty Library");
 }
 
+/* 6 · AND THE WAITING SCREEN IS FOR A MODULE WITH NO VIDEO, not for whoever
+      has the flag on. `LessonsWaiting` says "video lessons are on the way",
+      which is true of the course as it ships and false of any module that has
+      lessons — the demo's has twelve. Gating it on the flag alone put that
+      sentence over a class watching videos. Same shape as the Library above:
+      a flag turning a working screen into an empty one. */
+const mod = all.find((f) => /module\/ModuleScreen\.jsx$/.test(f));
+if (!mod) fails.push("ModuleScreen is gone");
+else {
+  const t = src(mod);
+  if (!/asBatches\s*&&\s*!hasLessons/.test(t)) {
+    fails.push("ModuleScreen shows the lessons-waiting screen without asking whether the module has lessons — a module with video would be told its video is on the way");
+  }
+  if (!/\(!asBatches \|\| hasLessons\)/.test(t)) {
+    fails.push("ModuleScreen never falls back to the lesson list, so a module with video has nowhere to draw it");
+  }
+}
+
 // 4 · The report control — one tap, carrying the route.
 const rpt = all.find((f) => /ReportProblem\.jsx$/.test(f));
 if (!rpt) fails.push("no way for someone to say a page is wrong");
