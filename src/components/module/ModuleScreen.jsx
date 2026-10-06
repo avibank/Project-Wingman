@@ -70,6 +70,9 @@ export default function ModuleScreen({
      It needs no progress to say what is open, so it is built from the chapters
      alone and falls back to the sentence the screen has always carried. */
   const asBatches = Boolean(flags?.["library.batches"]);
+  /* Whether this module has any video at all, which is what decides between
+     the lesson list and the "on the way" screen — see the Lessons tab below. */
+  const hasLessons = (chapters || []).some((c) => (c.lessons || []).length > 0);
   const sub = asBatches
     ? batchSubtitle(chapters, mod?.batches || null, moduleSubtitle(chapters, papers))
     : moduleSubtitle(chapters, papers);
@@ -246,13 +249,22 @@ export default function ModuleScreen({
         {/* THE PORTED LESSONS TAB REPLACES RouteTab rather than sitting above
             it: the demo's Lessons is one player block and nothing else — no
             chapter list, no route strip. */}
-        {tab === "route" && asBatches && (
+        {/* THE WAITING SCREEN IS FOR A MODULE WITH NO VIDEO, not for whoever
+            has the flag on. `LessonsWaiting` says "video lessons are on the
+            way", which is true of the course as it ships and false of any
+            module that actually has lessons — and the demo has twelve. Gating
+            it on the flag alone put that sentence over a class watching
+            videos, which is the same shape of bug as the Library drawing
+            nothing: a flag turning a working screen into an empty one.
+            So it asks the module, and the flag only decides which of the two
+            waiting-or-listing screens is used. */}
+        {tab === "route" && asBatches && !hasLessons && (
           <Suspense fallback={null}>
             <LessonsWaiting moduleName={mod?.name}
                             onOpenLibrary={() => onTab("library")} />
           </Suspense>
         )}
-        {tab === "route" && !asBatches && (
+        {tab === "route" && (!asBatches || hasLessons) && (
           <RouteTab chapters={chapters} state={state} here={here}
                     open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
                     /* Waiting and empty, told apart one level up: App knows

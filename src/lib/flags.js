@@ -217,6 +217,19 @@ export function resolveFlags(isAdmin, overrides = {}) {
      and moduleContent.js hands over the demo's course instead of the real
      one. Nothing outside the demo is affected. */
   if (demoMode) out["content.test"] = true;
+  /* AND THE DEMO SHOWS THE LIBRARY THE TOUR DESCRIBES. The approved tour's
+     own words for that step are "each chapter's quiz, question bank and study
+     cards are all in one place" — which is the ported batch row, tile for
+     tile, and not the three shelves it was drawing. A tutorial that describes
+     one screen while pointing at another is the thing this flag was meant to
+     prevent, not cause (owner, 2026-10-06: the demo "shows the previous
+     format ... for the libary").
+
+     It is demo-only on purpose. `library.batches` stays admin-only for the
+     real app until the port's third stage is in, and nothing here changes
+     what a student opens — the demo's course is its own document and the
+     demo's database is in memory. */
+  if (demoMode) out["library.batches"] = true;
   return out;
 }
 
