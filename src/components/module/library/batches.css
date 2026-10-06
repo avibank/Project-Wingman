@@ -83,7 +83,7 @@
 @media (max-width: 560px) {
   .lib2 .lb-tiles {grid-template-columns:minmax(0,1fr);padding:0 10px 14px 10px}
 }
-.lib2 .lb-tile {display:grid;gap:10px;justify-items:center;align-content:start;text-align:center;padding:16px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);opacity:0;transform:translateY(10px);transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s,box-shadow .2s}
+.lib2 .lb-tile {container-type:inline-size;display:grid;gap:10px;justify-items:center;align-content:start;text-align:center;padding:16px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);opacity:0;transform:translateY(10px);transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s,box-shadow .2s}
 .lib2 .lb-row.lb-on .lb-tile {opacity:1;transform:none}
 .lib2 .lb-row.lb-on .lb-tile:nth-child(1) {transition-delay:.08s,.08s,0s,0s}
 .lib2 .lb-row.lb-on .lb-tile:nth-child(2) {transition-delay:.16s,.16s,0s,0s}
@@ -205,3 +205,30 @@
 .lib2 .lb-wp[aria-disabled="true"] { cursor: default; }
 .lib2 .lb-wp[aria-disabled="true"]:hover { transform: none; }
 
+/* ---- the drawings, scaled to the tile they sit in ----
+   AT THE END OF THE SHEET ON PURPOSE. `.lib2 .lb-stage{height:84px}` and
+   `.lib2 .lb-th{width:128px}` are declared above at the same specificity, so
+   a container query written beside the grid loses to them and only the scale
+   takes — the drawing grows, its stage does not, and it sits over the label.
+
+   The design's own figure is 0.595: a 128px drawing in the 215px tile that
+   `1fr` produces at its 760px page. These steps hold that between about 0.55
+   and 0.62 as the tile gets wider, which is what lets the column go web-wide
+   without the drawings being marooned in it. Each step carries the stage
+   height with it, 84px times the same factor, so nothing is drawn outside it.
+   Below the design's own tile the drawing comes DOWN, or it fills a tile it
+   was drawn to sit inside. */
+/* The thresholds are the tile's CONTENT width — an inline-size container
+   measures the content box, so the tile's 12px of padding either side is not
+   in the number a query sees, and steps written against the tile's outer
+   width all landed one step low (0.50 of the tile where the design is 0.595).
+   Each step is 0.595 x (content + 24) / 128, rounded, every 40px. */
+@container (max-width: 139px) { .lib2 .lb-th {scale:0.72} .lib2 .lb-stage {height:61px} }
+@container (min-width: 140px) and (max-width: 169px) { .lib2 .lb-th {scale:0.86} .lib2 .lb-stage {height:73px} }
+@container (min-width: 200px) { .lib2 .lb-th {scale:1.04} .lib2 .lb-stage {height:88px} }
+@container (min-width: 240px) { .lib2 .lb-th {scale:1.23} .lib2 .lb-stage {height:104px} }
+@container (min-width: 280px) { .lib2 .lb-th {scale:1.41} .lib2 .lb-stage {height:119px} }
+@container (min-width: 320px) { .lib2 .lb-th {scale:1.60} .lib2 .lb-stage {height:135px} }
+@container (min-width: 360px) { .lib2 .lb-th {scale:1.79} .lib2 .lb-stage {height:151px} }
+@container (min-width: 400px) { .lib2 .lb-th {scale:1.97} .lib2 .lb-stage {height:166px} }
+@container (min-width: 440px) { .lib2 .lb-th {scale:2.16} .lib2 .lb-stage {height:182px} }
