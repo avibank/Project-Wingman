@@ -931,38 +931,26 @@
   white-space: nowrap;
 }
 
-/* ------------------------------------------- THE DESIGN'S OWN COLUMN ---
-   760px, centred. The build this screen is ported from wraps its whole page
-   in `.wrap{max-width:760px;margin:0 auto}`, and every number in its
-   stylesheet is a pixel measured against that: 215px tiles, a 128px drawing,
-   28px waypoints, 16.5px titles. The generated sheet carries `--wrap: 1010px`
-   from the OLDER reference this screen was first built against, so the design
-   was being laid out 39% wider than it was drawn — stretched, not scaled.
-   Everything then read sparse: waypoints far apart on a long dashed line, a
-   title with 700px of nothing after it, a drawing marooned in its tile.
+/* ------------------------------------------------ WIDE, BUT NOT HUGE ---
+   (owner, 2026-10-06: "resize the tabs to fill much more of the screen",
+   "all tabs web wide without being too huge".)
 
-   Three rounds went into adjusting one element at a time, and a fourth into
-   scaling the whole block with `zoom`, before the answer turned out to be the
-   number the design states outright. `--wrap` is the one place it lives, and
-   `.ref-mod .wrap` already builds the column from it, so this is that number
-   and nothing else. (owner, 2026-10-06: "nothing is a fixed size ... we are
-   aiming for horizontal centered finishes where stuff spans left to right in
-   one clean line".)
+   The design is drawn at 760px and every number in its sheet is a pixel
+   measured against that. Two ways to put it on a wider screen, and both were
+   tried: STRETCH it — the column grows, every size stays — and the drawings
+   sit marooned in tiles twice their size. Or SCALE it — zoom the block so
+   every proportion holds — and the type grows with everything else, which on
+   a 2000px window makes a 40px title 105px. "Wide without being too huge" is
+   neither of those: it is the column going wide, the TYPE staying the size it
+   was drawn, and only the DRAWINGS growing to keep their share of the tile.
+   That is why the scale steps are on `.lb-th` and not on the block.
 
-   SCOPED TO `mscreen-mod`, NOT `.mscreen`. The LESSON page is a `.mscreen`
-   too — `<div className="mscreen lessonpage ref-les">` — and it is drawn to
-   a different width (`--wrap: 1010px` in ref-lesson.css), with a 16:9 player
-   sized against it. A bare `.mscreen` rule squeezed that player by 300px. */
+   `:has()` because `.content--full` declares `max-width: none` and then the
+   media query's own `.content { max-width: 1100px }` beats it on source order
+   at equal specificity — which is why this screen was 1056 wide inside a
+   column that had already said it had no cap. */
+.app main.content--full:has(.mscreen-mod) { max-width: none; }
 .mscreen-mod {
-  max-width: 760px;
+  width: min(1400px, 100%);
   margin-inline: auto;
 }
-/* `--wrap` is the generated sheet's own name for this and is kept in step, so
-   anything inside that builds a column from it lands on the same number. */
-.mscreen-mod .ref-mod { --wrap: 760px; }
-
-/* The title's own fluid scale, the build's: `clamp(32px,6vw,40px)` against the
-   generated sheet's `clamp(34px,5vw,42px)`. Both are fluid — this is the
-   build's numbers rather than the older reference's, so the diff against it is
-   zero at every width rather than 2px out at each end. */
-.mscreen-mod .mod h1 { font-size: clamp(32px, 6vw, 40px); }

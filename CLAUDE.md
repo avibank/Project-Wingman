@@ -188,39 +188,43 @@ which is what the Flight Deck draws before the document arrives.
     with a 16:9 player sized against it. A bare `.mscreen { max-width: 760px }`
     took 300px off that player. The rule is on `mscreen-mod` now, a class
     `ModuleScreen` carries and the lesson does not.
-- **THE MODULE SCREEN IS THE DESIGN'S OWN COLUMN: 760px, CENTRED.** This took
-  five goes and every one of them was the same mistake — treating the app's
-  wider column as fixed and reshaping the design to fill it. The build this
-  screen is ported from wraps its whole page in `.wrap{max-width:760px;margin:0
-  auto}`, and every number in its stylesheet is a pixel measured against that:
-  215px tiles, a 128px drawing, 28px waypoints, 16.5px titles. Laid out at the
-  app's 1056 it was STRETCHED, not scaled — waypoints far apart on a long
-  dashed line, a title with 700px of nothing after it, a drawing marooned in
-  its tile. What failed first, in order, so nobody repeats it: `1fr` tiles in
-  the wider column; capping the tile at 215 and stranding three of them in the
-  left two-thirds; capping the whole screen at 760 but LEFT-aligned, so the
-  block floated in a card it no longer filled; and scaling the block with
-  `zoom: tan(atan2(100cqw, 760px))`, which worked and was still the wrong
-  question. The answer is the number the design states outright.
-  - `.mscreen { max-width: 760px; margin-inline: auto }`. The width owner was
-    never the module screen — it is the app's own `main.content` at 1100 — so
-    the column has to be declared here. `--wrap` is kept in step for anything
-    inside that builds a column from it.
-  - **Diffed element by element against the build**, at 1440: card, tab strip,
-    route, waypoint, row, number, title, tiles, tile, thumbnail and stage all
-    land on the same width AND the same offset from the card's left edge. The
-    one width that differs is the search field, 492 against 532, because our
-    tabs carry a count and sit on a 22px gap rather than 18 — it still ends
-    flush, which is what `flex: 1 1 auto` on it is for.
-  - **The title takes the build's fluid scale**, `clamp(32px,6vw,40px)`, over
-    the generated sheet's `clamp(34px,5vw,42px)`. Both are fluid; this one
-    makes the diff zero at 1440, 900, 600 and 390 rather than 2px out at each
-    end.
-  - **Below 560px the tiles stack.**
-
-    inside it — measured at 390, where the tile came out 66px around a 128px
-    drawing. The demo has no breakpoint here because it is 760px wide and
-    never meets one.
+- **WIDE, BUT NOT HUGE** (owner, 2026-10-06: "resize the tabs to fill much
+  more of the screen", "all tabs web wide without being too huge"). The design
+  is drawn at 760px and every number in its sheet is a pixel measured against
+  that, which leaves exactly two ways to put it on a wider screen, and both
+  were tried and rejected in turn:
+  - **STRETCH** — the column grows, every size stays. The drawings sit
+    marooned in tiles twice their size ("the icons for the batches are
+    squashed"), and the whole screen reads sparse: "you have more space more
+    freedom yet you squish everything".
+  - **SCALE** — the column is the design's own 760, or the block is zoomed so
+    every proportion holds. Proportions are then exact, and the screen uses
+    half a window ("resize the tabs to fill much more of the screen"); zoom
+    the block to fill instead and a 40px title becomes 105px on a 2000px
+    window.
+  - **So it is neither.** The column goes wide, the TYPE stays the size it was
+    drawn, and only the DRAWINGS grow to keep their share of the tile. That is
+    why the scale steps are on `.lb-th` and not on the block. Measured at
+    2000/1680/1440/1100/820/620/390: column 1196 where it was 760, tabs
+    spanning 1194, and the drawing holding **0.55 to 0.65** of its tile
+    against the design's own 0.595, with nothing clipped and the title at
+    42px.
+  - **`:has()` is what lets the column be wide.** `.content--full` declares
+    `max-width: none` and the media query's own `.content { max-width: 1100px }`
+    then beats it on source order at equal specificity — which is why this
+    screen sat at 1056 inside a column that had already said it had no cap.
+    `.app main.content--full:has(.mscreen-mod)` wins it back for this screen
+    and nothing else. The real ceiling above that is `.deck-inner`'s 1240px,
+    which every screen shares and which is left alone.
+  - **The container queries measure the tile's CONTENT box.** An inline-size
+    container does not include the tile's 12px of padding either side, so
+    steps written against the tile's outer width all landed one step low —
+    0.50 of the tile where the design is 0.595. Each step is
+    `0.595 x (content + 24) / 128`, every 40px, and carries the stage's height
+    with it so nothing is drawn outside it.
+  - **Below 560px the tiles stack**, because three of them plus their gaps and
+    the 68px indent need about that much row before a tile is narrower than
+    the drawing inside it.
   - The quiz thumbnail also came out 75px against the design's 72, because
     `aspect-ratio` is only a suggestion once min-content is taller and that
     stack measures 3px more on this app's faces; one row of `minmax(0,1fr)`
