@@ -339,24 +339,33 @@ export function startTour({
     ensureCard(); setCard(s, dir);
     const newPage = s.page !== page;
     const ring = $(".dg-ring");
+    /* THE SCREEN GOES OUT WITH THE LIGHT, and the swap happens behind it.
+       The demo fades its app, waits 220ms, and only then replaces the content
+       and puts the scroll back to the top — so the cut and the reset are both
+       invisible and what a person sees is a crossfade. We were doing those
+       two things in full view, which is the difference between "smooth" and
+       "awful" (owner, 2026-10-06, comparing the two side by side). */
     if (newPage && page !== null && ring && !reduce()) {
       ring.style.transition = "opacity .22s ease";
       ring.style.opacity = 0;
       const d0 = $(".dg-dim");
       if (d0) { d0.style.transition = "opacity .22s ease"; d0.style.opacity = 0; }
+      appEl?.setAttribute("data-tour-swap", "1");
       await wait(220);
     }
-    if (t !== token) return;
+    if (t !== token) { appEl?.removeAttribute("data-tour-swap"); return; }
     if (currentRoute() !== s.route) await navigate(s.route);
     if (s.pane && setPane) await setPane(s.pane);
     if (s.panelTab && setPanelTab) await setPanelTab(s.panelTab);
     await waitFor(s.target ? `[data-tour="${s.target}"]` : null);
-    if (t !== token) return;
+    if (t !== token) { appEl?.removeAttribute("data-tour-swap"); return; }
     page = s.page;
     if (newPage) {
       sc.to(0, true);
       requestAnimationFrame(() => {
         frame(true);
+        /* and back in, once the light has been aimed at the new screen */
+        appEl?.removeAttribute("data-tour-swap");
         const r = $(".dg-ring");
         const d1 = $(".dg-dim");
         if (r && !reduce()) { r.style.opacity = 0; void r.offsetWidth; r.style.transition = "opacity .35s ease .1s"; r.style.opacity = 1; }
@@ -438,6 +447,7 @@ export function startTour({
     document.removeEventListener("scroll", onScroll, { capture: true });
     document.removeEventListener("scrollend", onScrollEnd, { capture: true });
     removeEventListener("resize", onResize);
+    appEl?.removeAttribute("data-tour-swap");
     cardRO?.disconnect();
     watched = null;
     dg.remove();

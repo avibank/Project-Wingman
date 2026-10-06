@@ -166,33 +166,36 @@ which is what the Flight Deck draws before the document arrives.
     Rotary Wing" and "Instruments (ATA 31)" again. Batch 6 has no `ref` now:
     its name already carries ATA 31 and the row prints name and reference on
     consecutive lines.
-- **THE TILES FILL THE ROW AND THE DRAWINGS SCALE WITH THEM.** This took
-  three goes, and both failures look reasonable, which is why they are written
-  down. The demo wraps its page at 760px, where `1fr` makes a tile 215px and
-  the 128px drawing inside fills it — a drawing-to-tile ratio of **0.595**. In
-  the module screen's card a `1fr` tile is 313px and the drawing, still 128px,
-  is marooned in the middle of it: that is "the icons for the batches are
-  squashed". Capping the tile at 215px fixes the drawing and strands the three
-  of them in the left two-thirds of a 1200px row: that is "squashed still".
-  Capping the whole SCREEN at 760 does the same to the block inside its card:
-  "its not sized to fit".
-  - So the tile fills, as the design has it, and the drawing is **scaled** to
-    hold that 0.595 inside whatever width the tile ends up. Measured across
-    ten widths from 1680 to 390, the ratio now runs **0.55 to 0.65**.
-  - The drawings are built from fixed pixels — 10px dots, a 46×58 page, 6.5px
-    type — so they scale **as a whole**, in steps on the tile's own container
-    width, rather than being re-sized part by part. `scale` rather than
-    `transform`, because the thumbnails already carry a `transform` on hover
-    and the two compose (checked: `scale: 1.4` beside the hover's rotate).
-    Each step carries the stage's height with it, 84px times the same factor,
-    so nothing is ever drawn outside it.
-  - **The steps live at the END of the sheet.** `.lib2 .lb-stage{height:84px}`
-    and `.lib2 .lb-th{width:128px}` are declared above at the same
-    specificity, so a container query written beside the grid lost to them and
-    only the scale took — the drawing grew, its stage did not, and it sat over
-    the label.
-  - **Below 560px they stack.** Three tiles plus their gaps and the 68px
-    indent need about that much row before a tile is narrower than the drawing
+- **THE MODULE SCREEN IS THE DESIGN'S OWN COLUMN: 760px, CENTRED.** This took
+  five goes and every one of them was the same mistake — treating the app's
+  wider column as fixed and reshaping the design to fill it. The build this
+  screen is ported from wraps its whole page in `.wrap{max-width:760px;margin:0
+  auto}`, and every number in its stylesheet is a pixel measured against that:
+  215px tiles, a 128px drawing, 28px waypoints, 16.5px titles. Laid out at the
+  app's 1056 it was STRETCHED, not scaled — waypoints far apart on a long
+  dashed line, a title with 700px of nothing after it, a drawing marooned in
+  its tile. What failed first, in order, so nobody repeats it: `1fr` tiles in
+  the wider column; capping the tile at 215 and stranding three of them in the
+  left two-thirds; capping the whole screen at 760 but LEFT-aligned, so the
+  block floated in a card it no longer filled; and scaling the block with
+  `zoom: tan(atan2(100cqw, 760px))`, which worked and was still the wrong
+  question. The answer is the number the design states outright.
+  - `.mscreen { max-width: 760px; margin-inline: auto }`. The width owner was
+    never the module screen — it is the app's own `main.content` at 1100 — so
+    the column has to be declared here. `--wrap` is kept in step for anything
+    inside that builds a column from it.
+  - **Diffed element by element against the build**, at 1440: card, tab strip,
+    route, waypoint, row, number, title, tiles, tile, thumbnail and stage all
+    land on the same width AND the same offset from the card's left edge. The
+    one width that differs is the search field, 492 against 532, because our
+    tabs carry a count and sit on a 22px gap rather than 18 — it still ends
+    flush, which is what `flex: 1 1 auto` on it is for.
+  - **The title takes the build's fluid scale**, `clamp(32px,6vw,40px)`, over
+    the generated sheet's `clamp(34px,5vw,42px)`. Both are fluid; this one
+    makes the diff zero at 1440, 900, 600 and 390 rather than 2px out at each
+    end.
+  - **Below 560px the tiles stack.**
+
     inside it — measured at 390, where the tile came out 66px around a 128px
     drawing. The demo has no breakpoint here because it is 760px wide and
     never meets one.

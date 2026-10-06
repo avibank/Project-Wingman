@@ -30,6 +30,26 @@
   .app[data-tour-on="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 55vh; }
 }
 
+/* ---- the screen change ----
+   THE SCREEN FADES AND LIFTS, AND THE SWAP HAPPENS WHILE IT IS INVISIBLE.
+   This is the whole of what made the tour demo feel smooth and this feel
+   awful, and it is not the ring and it is not the scroll. The demo's engine
+   puts `.out` on its app, waits 220ms, and only THEN replaces the content and
+   sets the scroll back to the top — so the hard cut and the scroll reset both
+   happen behind an invisible screen, and what a person sees is one thing
+   fading into another. We were doing the same two changes in full view.
+
+   The numbers are the demo's: opacity .22s ease, transform .32s on its own
+   curve, a 6px lift, and 220ms before the swap. */
+.app[data-tour-on="1"] .deck,
+.app[data-tour-on="1"] .rr-app {
+  transition: opacity .22s ease, transform .32s cubic-bezier(.3,.7,.3,1);
+}
+.app[data-tour-on="1"][data-tour-swap="1"] .deck,
+.app[data-tour-on="1"][data-tour-swap="1"] .rr-app {
+  opacity: 0; transform: translateY(6px);
+}
+
 /* ---- the dim ----
    FOUR PANELS AROUND A HOLE, AND EVERY ONE OF THEM MOVES BY TRANSFORM ONLY.
    The stylesheet this was ported from carries the dim as a fourth layer of
@@ -140,10 +160,12 @@
 @keyframes dg-in-l { from { opacity: 0; transform: translate3d(-14px,0,0) } to { opacity: 1; transform: none } }
 
 @media (prefers-reduced-motion: reduce) {
-  .dg-ring, .dg-card, .dg-bar i, .dg-modal, .dg-dim, .dg-dim i { transition: none !important }
+  .dg-ring, .dg-card, .dg-bar i, .dg-modal, .dg-dim, .dg-dim i,
+  .app[data-tour-on="1"] .deck, .app[data-tour-on="1"] .rr-app { transition: none !important }
   .dg-card, .dg-body, .dg-box, .dg-modal { animation: none !important }
 }
 /* Smooth Air behaves exactly as reduced motion does — the app's own class. */
 .app.smooth-air .dg-ring, .app.smooth-air .dg-card, .app.smooth-air .dg-bar i, .app.smooth-air .dg-modal,
-.app.smooth-air .dg-dim, .app.smooth-air .dg-dim i { transition: none !important }
+.app.smooth-air .dg-dim, .app.smooth-air .dg-dim i,
+.app.smooth-air[data-tour-on="1"] .deck, .app.smooth-air[data-tour-on="1"] .rr-app { transition: none !important }
 .app.smooth-air .dg-card, .app.smooth-air .dg-body, .app.smooth-air .dg-box, .app.smooth-air .dg-modal { animation: none !important }
