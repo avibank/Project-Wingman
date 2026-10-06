@@ -188,34 +188,40 @@ which is what the Flight Deck draws before the document arrives.
     with a 16:9 player sized against it. A bare `.mscreen { max-width: 760px }`
     took 300px off that player. The rule is on `mscreen-mod` now, a class
     `ModuleScreen` carries and the lesson does not.
-- **WIDE AND LOW, NOT MAGNIFIED** (owner, 2026-10-07, and this took six
-  rounds). Scaling the whole screen as one piece — `zoom` driven by the
-  container, laid out at the 760px it was drawn for — held every proportion
-  EXACTLY: tile aspect 1.49 and drawing share 0.596 against the build's own
-  1.49 and 0.596, at every width. And it was wrong: "if this is the resault
-  then its bad", "you just magnfied them". 39px waypoints, 59px titles,
-  202px tiles. **Proportion is not density, and this screen wants density.**
-  - So there is no zoom. Every element is the size it was drawn, the column
-    spans (`width: min(1400px, 100%)`), and the two things that made it feel
-    tall came down: the waypoints to 22px, and the tile from 202px to 98.
-  - **THE TILE IS A ROW ONCE IT IS WIDE.** Three side by side in a 760px page
-    are cards, and the build draws them as cards — a drawing over its name,
-    centred, about 3:2. Give each one 340px and that same card is a letterbox
-    with the drawing stranded in it and 100px of height doing nothing. A box
-    that wide IS a row, so above 700px of container the drawing goes left and
-    the name sits beside it. Below 620px they stack, and a stacked tile is a
-    row for exactly the same reason.
-  - **The whole sequence, so nobody walks it again**: `1fr` tiles in a wide
-    column (drawing marooned) → cap the tile at 215 (three stranded in the
-    left two-thirds) → cap the screen at 760 left-aligned (block floating in
-    its card) → cap it centred (half the window empty) → scale the block
-    (magnified) → **wide, low, design-sized, tiles as rows**.
-  - **A CONTAINER query, never a viewport one, and the rules at the END of the
-    sheet.** `.lib2 .lb-tile` and `.lb-stage` are declared earlier at the same
-    specificity, which a container query does not raise, so a block written
-    beside the grid loses on source order — the tile became a row and its name
-    stayed centred in the space left over. Two separate rounds lost a whole
-    change to that.
+- **THE WAYPOINTS WERE NEVER CIRCLES, and that was the whole thing.** The
+  build styles its controls as DRAWINGS — a 28px waypoint, a tile that is a
+  thumbnail over a label. This app styles every control as a TARGET: §12,
+  enforced globally in App.jsx, `.app button:not(.is-inline){min-height:44px}`.
+  **`min-height` beats `height`**, so every waypoint has been **28x44** since
+  stage one of the port. They were ovals in every screenshot. That is why the
+  rail never read as a track — and it is what SIX rounds of widening, capping,
+  scaling and re-shaping this screen were actually chasing. Measured, not
+  guessed: `22x44`, with `.app button:not(.is-inline)` named as the winning
+  rule.
+  - The port carries `wm-port` and the floor is undone inside it, once:
+    `.app .wm-port button:not(.is-inline) { min-height: 0 }`. **The app's own
+    selector with the port's class in front** — (0,3,1) against (0,2,1) — so
+    it wins on specificity rather than on load order.
+  - **ONLY THE FLOOR**, not the app's button styling wholesale. Clearing
+    padding, border, background and font too is right when the build's own
+    rules are re-applied above at higher specificity, and wrong here: this
+    port's rules are `.lib2 .lb-*`, (0,2,0), weaker than such a reset — a
+    blanket one took the tile's own padding, border and background with it and
+    the tile collapsed to 215x47. One property was all that ever reached in.
+  - §12 is not weakened anywhere else. A waypoint is a drawing inside a row
+    that is itself the target.
+  - **Everything I had invented to compensate is deleted**: the tile-as-a-row,
+    the 22px waypoints at width, the per-drawing container scale steps, the
+    `zoom`, the wide column. The screen is the build's own 760px column again
+    and the build's own `@media (max-width:620px)` block is ported for a
+    phone. Diffed against the build at 1280/820/390: card 760x520 against
+    760x521, waypoint 28x28, number 44x44, tile 215x145 against 215x144,
+    stage 128x84, thumbnail over label at every width.
+  - **The sequence, so nobody walks it again**: `1fr` tiles (drawing
+    marooned) → cap the tile (three stranded left) → cap the screen
+    left-aligned (block floating) → cap it centred (half the window empty) →
+    scale the block (magnified) → wide and low (not the design) → **fix the
+    leak and put every one of them back**.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it

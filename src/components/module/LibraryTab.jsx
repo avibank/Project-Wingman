@@ -213,7 +213,9 @@ export default function LibraryTab({
        that the app's own rules cannot reach in. The exam screen solved the
        same problem the same way. */
     return (
-      <div className="libtab">
+      /* `wm-port` isolates the ported screen from the app's own control
+         styling — see the block at the foot of batches.css. */
+      <div className="libtab wm-port">
         <Suspense fallback={null}>
         <LibraryBatches
           batches={batches}
