@@ -56,14 +56,37 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
       /* `go(to, { still: true })` is the app's own navigation without its
          view transition: the engine runs the page change itself, fading its
          frame around it, and two transitions on one move fight. */
-      navigate: (route) => new Promise((res) => {
+      /* IT RESOLVES WHEN THE PAGE HAS FINISHED MOVING, not two frames later.
+         Two frames is enough for React to commit and nowhere near enough for
+         the app's own Mission Control transition to run, so the engine was
+         measuring a page that was still travelling and framing a target that
+         had not arrived. There is one page transition — the app's — and this
+         waits for it rather than adding a second fade of the tour's own. */
+      navigate: async (route) => {
         live.current.go?.(route);
-        /* Resolve once the new screen has actually rendered, which is what
-           the engine's `waitFor` then measures against. Putting it at its top
-           is the engine's job, not this one's — it owns the whole sequence
-           and holds the screen there until the step's target exists. */
-        requestAnimationFrame(() => requestAnimationFrame(() => res()));
-      }),
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const pageEl = document.querySelector(".deck, .rr-app");
+        if (pageEl?.getAnimations) {
+          await Promise.race([
+            Promise.all(pageEl.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {}))),
+            new Promise((r) => { setTimeout(r, 700); }),
+          ]);
+        }
+        try { await document.fonts?.ready; } catch { /* no font API */ }
+        /* and two frames where it has stopped moving */
+        await new Promise((r) => {
+          let last = "", same = 0;
+          const tick = () => {
+            const el = document.querySelector(".deck, .rr-app");
+            const b = el ? el.getBoundingClientRect() : { top: 0, height: 0 };
+            const k = `${b.top}|${b.height}`;
+            same = k === last ? same + 1 : 0;
+            last = k;
+            if (same >= 2) r(); else requestAnimationFrame(tick);
+          };
+          tick();
+        });
+      },
       currentRoute: () => window.location.pathname,
       setPane: (pane) => setTourPane(pane),
       setPanelTab: (tab) => setTourPanelTab(tab),

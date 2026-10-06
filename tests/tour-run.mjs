@@ -120,21 +120,6 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
          the rest detector above lets go, and reading the overlap then found
          148509 square pixels on a step whose final geometry is a clean 72px
          gap. Measured both ways. */
-      /* The dim settles on the same .55s as the light, so like the overlap
-         above it is a property of the step at rest. */
-      {
-        const dd = document.querySelector(".dg-dim");
-        const gg3 = document.querySelector(".dg-ring");
-        if (dd && gg3 && dd.children.length === 4) {
-          const area = [...dd.children].reduce((n, e) => {
-            const q = e.getBoundingClientRect();
-            return n + Math.max(0, q.width) * Math.max(0, q.height);
-          }, 0);
-          const rr2 = gg3.getBoundingClientRect();
-          const off = area + rr2.width * rr2.height - window.innerWidth * window.innerHeight;
-          if (Math.abs(off) >= 400) return false;
-        }
-      }
       if (expect.clear) {
         const gg2 = document.querySelector(".dg-ring");
         const cc = document.querySelector(".dg-card");
@@ -179,23 +164,19 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
     onScreen: Boolean(r && r.left >= -1 && r.top >= -1 && r.right <= window.innerWidth + 1 && r.bottom <= window.innerHeight + 1),
     covered: Math.round(over(r, cr)),
     tab: tabEl ? tabEl.textContent.trim().split(/\s+/)[0].toLowerCase() : null,
-    /* THE DIM IS FOUR PANELS AND THEY MUST TILE THE WINDOW. The dim used to
-       be a `0 0 0 100vmax` layer of the ring's own box-shadow, which repaints
-       the whole window on every frame the ring moves; it is four flat panels
-       moved only by transform now, which is the compositor's job. The cost of
-       that is a new way to be wrong — a panel aimed badly leaves an undimmed
-       strip — so the four panels plus the hole are measured against the
-       window on every step. */
+    /* THE CUT-OUT FOLLOWS THE RING'S RADIUS. The dim was four transform-only
+       panels for a while — cheaper to animate, and square: four rectangles
+       around a hole cannot follow an 18px corner, so the cut-out had hard
+       corners where the design has round ones. It is the ring's own shadow
+       spread again, which follows border-radius by construction, so what is
+       asserted is that the shadow carries the dim and the radius is set. */
     dimGap: (() => {
-      const d = document.querySelector(".dg-dim");
-      const g = document.querySelector(".dg-ring");
-      if (!d || !g || d.children.length !== 4) return null;
-      const area = [...d.children].reduce((n, e) => {
-        const b = e.getBoundingClientRect();
-        return n + Math.max(0, b.width) * Math.max(0, b.height);
-      }, 0);
-      const r = g.getBoundingClientRect();
-      return Math.round(area + r.width * r.height - window.innerWidth * window.innerHeight);
+      const gg = document.querySelector(".dg-ring");
+      if (!gg) return null;
+      const cs = getComputedStyle(gg);
+      const dimmed = /100vmax|\d{3,}px/.test(cs.boxShadow);
+      const round = parseFloat(cs.borderRadius) > 0 || /\bwhole\b|\bfull\b/.test(gg.className);
+      return dimmed && round ? 0 : 9999;
     })(),
     rrPane: ["rr-seatgrid", "rr-chat", "rr-threads"].find((k) => paneKids.some((c) => c.split(/\s+/).includes(k))) || null,
     vw: window.innerWidth,
@@ -275,8 +256,8 @@ try {
            `${r.kicker}: pane is ${r.rrPane ?? "none"}, wanted ${want.pane}`);
       }
       /* A couple of square pixels of rounding is fine; a strip is not. */
-      ok(name, `step ${n + 2}'s dim covers the window`, r.dimGap === null || Math.abs(r.dimGap) < 400,
-         `${r.kicker}: off by ${r.dimGap}px²`);
+      ok(name, `step ${n + 2}'s cut-out is dimmed and round`, r.dimGap === null || r.dimGap === 0,
+         `${r.kicker}: ring shadow carries no dim, or no radius`);
       ok(name, `step ${n + 2} stops moving`, r.rest < CEILING, `${r.kicker}: ${r.rest}ms`);
       await page.waitForTimeout(80);
     }
