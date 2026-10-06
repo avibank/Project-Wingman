@@ -8,7 +8,7 @@
       "chapters": [
         {
           "id": "M1.B1",
-          "name": "Theory of Flight · Rotary Wing",
+          "name": "Theory of Flight",
           "cardsName": "M13 Batch 1 — Full Set · pages 1–68",
           "lessons": [],
           "quiz": {
@@ -2328,11 +2328,14 @@
               "correct": 1,
               "explain": "Phase 1 converts altitude into rotor energy; phase 2 uses the rotor energy for touchdown."
             }
-          ]
+          ],
+          "batch": 1,
+          "ref": "13.1",
+          "pages": "1–68"
         },
         {
           "id": "M1.B6",
-          "name": "Instruments (ATA 31)",
+          "name": "Instruments",
           "cardsName": "M13 Batch 6 — Full Set · pages 352–491",
           "lessons": [],
           "quiz": {
@@ -7358,7 +7361,10 @@
               "correct": 1,
               "explain": "The piston raises bellows pressure ahead of the real static pressure change."
             }
-          ]
+          ],
+          "batch": 6,
+          "ref": "ATA 31",
+          "pages": "352–491"
         }
       ],
       "downloads": [
@@ -7374,7 +7380,8 @@
           "file": "downloads/M13-Batch-6-Full-Set-pages-352-491.pdf",
           "pages": 65
         }
-      ]
+      ],
+      "batches": 10
     },
     {
       "id": "M2",

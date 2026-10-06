@@ -14,6 +14,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { deckVars, LIVERIES } from "../src/lib/liveryEngine.js";
 import { finishVars } from "../src/lib/finishEngine.js";
+import { auroraVars } from "../src/lib/auroraFinish.js";
 
 /* STYLESHEETS, AND THE <style> BLOCKS INSIDE COMPONENTS — which is where the
    gap was. This walked .css only, and about a third of this app's CSS is
@@ -48,7 +49,7 @@ for (const L of LIVERIES) {
     const base = deckVars(L.id, variant).vars;
     for (const k of Object.keys(base)) emitted.add(k);
     for (const finish of [null, "aurora", "manual"]) {
-      for (const k of Object.keys(finishVars(L.id, variant, finish, base["--active"]))) emitted.add(k);
+      for (const k of Object.keys(finishVars(L.id, variant, finish, base["--active"], auroraVars))) emitted.add(k);
     }
   }
 }

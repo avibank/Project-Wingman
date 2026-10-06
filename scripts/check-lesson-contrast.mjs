@@ -13,6 +13,7 @@
 // missed by looking, so the number is what counts, not the screenshot.
 import { deckVars, LIVERIES } from "../src/lib/liveryEngine.js";
 import { finishVars } from "../src/lib/finishEngine.js";
+import { auroraVars } from "../src/lib/auroraFinish.js";
 
 const M = [[4.0767416621, -3.3077115913, .2309699292],
            [-1.2684380046, 2.6097574011, -.3413193965],
@@ -92,7 +93,7 @@ for (const L of LIVERIES) {
   for (const variant of ["night", "day"]) {
     for (const finish of [null, "aurora", "manual"]) {
       const base = deckVars(L.id, variant).vars;
-      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"]) };
+      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"], auroraVars) };
       const ground = parse(v["--ground"]);
       const panel = parse(v["--panel"]);
       const where = `${L.id}/${variant}/${finish || "standard"}`;
@@ -148,7 +149,7 @@ for (const L of LIVERIES) {
   for (const variant of ["night", "day"]) {
     for (const finish of [null, "aurora", "manual"]) {
       const base = deckVars(L.id, variant).vars;
-      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"]) };
+      const v = { ...base, ...finishVars(L.id, variant, finish, base["--active"], auroraVars) };
       const where = `${L.id}/${variant}/${finish || "standard"}`;
       const ground = parse(v["--ground"]);
       const panel = parse(v["--panel"]);

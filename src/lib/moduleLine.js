@@ -46,3 +46,27 @@ export function moduleSubtitle(chapters = [], papers = []) {
     ? `${parts[0]} and ${parts[1]}`
     : `${parts[0]}, ${parts[1]} and ${parts[2]}`;
 }
+
+/* THE PORTED SCREEN'S OWN LINE (2026-10-06), which counts batches rather than
+   chapters: "2 of 10 batches open · 80 quiz questions · 586 cards". It sits
+   beside `moduleSubtitle` rather than replacing it, because the two answer
+   different questions and only one of them is behind `library.batches` — a
+   module with no batch numbers on its chapters still gets the sentence above.
+   Falls back to that sentence when there is nothing to count, so §10 holds:
+   the line never states an absence. */
+export function batchSubtitle(chapters = [], total = null, fallback = "") {
+  /* COUNTED OFF THE CHAPTERS DIRECTLY rather than through `batchesOf`, so
+     `batchModel.js` stays out of the entry chunk with the rest of the ported
+     screen — this line is on the module header, which every module draws. */
+  const batches = chapters
+    .filter((c) => Number.isFinite(c.batch))
+    .map((c) => ({ q: c.quizCount ?? (c.questions || []).length, cards: (c.cards || c.questions || []).length }));
+  if (!batches.length) return fallback;
+  const q = batches.reduce((a, b) => a + (b.q || 0), 0);
+  const cards = batches.reduce((a, b) => a + (b.cards || 0), 0);
+  const parts = [];
+  parts.push(total ? `${batches.length} of ${total} batches open` : plural(batches.length, "batch", "batches") + " open");
+  if (q) parts.push(`${q} quiz questions`);
+  if (cards) parts.push(`${cards} cards`);
+  return parts.join(" · ");
+}

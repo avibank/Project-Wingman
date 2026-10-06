@@ -37,6 +37,11 @@ export function loadContent(doc, { strict = false } = {}) {
     id: m.id,
     code: m.id,
     name: m.name,
+    /* HOW MANY BATCHES THIS MODULE WILL HAVE when it is finished — the route
+       strip draws one waypoint per batch, including the ones not landed yet,
+       so the number is the MODULE's and never `chapters.length`. Null when
+       the document does not say, and the strip then draws only what exists. */
+    batches: Number.isFinite(m.batches) ? m.batches : null,
     papers: (m.papers || []).map((p) => ({
       id: p.id,
       title: p.title,
@@ -88,6 +93,22 @@ export function loadContent(doc, { strict = false } = {}) {
       /* The card set's own name, when the document has one — see the quiz's
          note above; the two work the same way. */
       cardsName: c.cardsName || null,
+      /* THE BATCH THIS CHAPTER IS, and the two facts the Library row prints
+         beside it (the module-screen port, 2026-10-06). They were already in
+         the app — inside the display names, as "pages 352–491" and "(ATA 31)"
+         — and the row needs them APART from the title to set them in their
+         own tier. Reading them back out of the name would have worked until
+         the first chapter an author titled differently, which is the same
+         trap the composed quiz label was.
+
+         `batch` is the number on the module's route strip, and it is NOT the
+         chapter's position: M1.B1 and M1.B6 are batches 1 and 6 of ten, with
+         nothing between them yet, and the strip has to show the gap. All
+         three are optional — a chapter without them draws a row with no
+         waypoint and no meta line rather than inventing either. */
+      batch: Number.isFinite(c.batch) ? c.batch : null,
+      ref: c.ref || null,
+      pages: c.pages || null,
       cards: Array.isArray(c.cards) && c.cards.length
         ? c.cards.map((q, i) => ({ ...q, id: q.id || `${c.id}.C${i + 1}` }))
         : null,
