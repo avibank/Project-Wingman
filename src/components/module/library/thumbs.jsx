@@ -1,16 +1,25 @@
 /* =============================================================================
-   THE THREE THUMBNAILS — the demo's `T.quiz`, `T.cards` and `T.paper`.
+   THE THREE THUMBNAILS, FROM THE DEMO'S `T` OBJECT.
    -----------------------------------------------------------------------------
-   The markup is the demo's, element for element and class for class, because
-   `batches.css` is the demo's stylesheet and every rule in it depends on this
-   exact nesting. Changing a wrapper here is changing the design.
+   `docs/launch/reference/06-library-lessons-cards.html`, the handoff's "source
+   of truth — copy this". The markup below is its `T.quiz`, `T.cards` and
+   `T.paper` element for element and class for class, including the names that
+   look like typos (`.pp.b1`, `.q > b + span > i + em > u`): the stylesheet is
+   generated from the same file and keys off exactly these.
 
-   `data-count` IS READ BY `countUp`, which runs when a row opens and ticks
-   each number up from zero. The number is also the element's text, so a row
-   that never animates (reduced motion, or a browser that skipped the frame)
-   still reads correctly — the animation replaces a value that was already
-   right rather than filling in a blank.
+   THE CLASS NAMES ARE THE DEMO'S, NOT RENAMED. The first port renamed every
+   one of them to `.lb-*` so the sheet could live under `.ref-mod`; §4 of the
+   second handoff asks for the opposite — the demo's own names, with the whole
+   screen wrapped in `.wm-port` so neither sheet can reach the other. That is
+   what lets this file be checked against the demo by eye.
+
+   `data-count` IS NOT DECORATION. The demo counts every number up from zero
+   when a row opens (`countUp`), reading the target off this attribute, so a
+   number that is printed without one simply appears — which is most of what
+   the row's opening animation is. `useCountUp` in LibraryBatches.jsx is the
+   other half.
    ========================================================================= */
+
 const PENCIL = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
        strokeWidth="1.8" strokeLinejoin="round">
@@ -18,68 +27,81 @@ const PENCIL = (
   </svg>
 );
 
-/* The quiz sheet shows the LAST attempt — nine bubbles, filled to the score —
-   and the best score is stamped on it. Never sat is a dashed blank sheet with
-   a pencil that scribbles. */
-export function QuizThumb({ q, score, got }) {
-  const sat = score != null;
-  const dots = Array.from({ length: 9 }, (_, i) => (
-    <i key={i} className={sat && i < (got || 0) ? "lb-on" : ""} />
-  ));
-  return (
-    <span className={`lb-th lb-quiz-thumb ${sat ? "lb-sat" : "lb-blank"}`} aria-hidden="true">
-      <span className="lb-quiz-thumb__sheet">
-        {[0, 3, 6].map((k) => <span key={k}>{dots.slice(k, k + 3)}</span>)}
-      </span>
-      <span className="lb-quiz-thumb__count">
-        {!sat && <span className="lb-pencil">{PENCIL}</span>}
-        <b data-count={q}>{q}</b>Qs
-      </span>
-      {sat && <span className="lb-stamp" data-count={score}>{score}</span>}
-    </span>
-  );
-}
-
-/* Always fanned; the top card carries how many are done out of the total. */
-export function CardsThumb({ seen, cards }) {
-  return (
-    <span className="lb-th lb-cards-thumb" aria-hidden="true">
-      <i /><i /><i />
-      <span className="lb-done"><b data-count={seen}>{seen}</b><small>/{cards}</small></span>
-    </span>
-  );
-}
-
-/* The question bank: a stack of pages with a Q-BANK header and three numbered
-   questions, and the page count as a big number. */
-export function PaperThumb({ pp }) {
-  const q = (n) => (
-    <span className="lb-q" key={n}>
-      <b>{n}</b><span><i /><em><u /><u /><u /></em></span>
-    </span>
-  );
-  return (
-    <span className="lb-th lb-pg" aria-hidden="true">
-      <span className="lb-pp lb-b2" /><span className="lb-pp lb-b1" />
-      <span className="lb-top"><span className="lb-qb">Q-BANK</span>{q(1)}{q(2)}{q(3)}</span>
-      {/* AN EM DASH, NOT A ZERO. `batchesOf` sets `pp` to 0 for a batch with
-          no paper on the shelf yet — its own comment says the tile is shown
-          disabled "rather than a made-up number" — and this printed that 0
-          out loud as "0 pages", which §10 forbids outright. The hour meter
-          settled the same question the same way: it reads an em dash under a
-          minute, because "0m" is a zero count. The tile is disabled either
-          way, so nothing here is a door that goes nowhere. */}
-      <span className="lb-count">
-        <span data-count={pp || null}>{pp ? pp : "—"}</span>
-        {pp ? <small>pages</small> : null}
-      </span>
-    </span>
-  );
-}
-
 export const CHEV = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 9l6 6 6-6" />
   </svg>
 );
+
+export const PLAY = (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z" /></svg>
+);
+
+/* THE QUIZ: the answer sheet shows the LAST attempt, the best score is stamped
+   on it, and a batch nobody has sat draws a blank sheet and a pencil instead.
+   Nine bubbles in three rows of three; `got` of them filled. */
+export function QuizThumb({ batch }) {
+  const sat = batch.score != null;
+  const dots = Array.from({ length: 9 }, (_, i) => (sat && i < batch.got));
+  return (
+    <span className={`th quiz-thumb ${sat ? "sat" : "blank"}`} aria-hidden="true">
+      <span className="quiz-thumb__sheet">
+        {[0, 3, 6].map((k) => (
+          <span key={k}>
+            {dots.slice(k, k + 3).map((on, i) => <i key={i} className={on ? "on" : ""} />)}
+          </span>
+        ))}
+      </span>
+      <span className="quiz-thumb__count">
+        {!sat && <span className="pencil">{PENCIL}</span>}
+        <b data-count={batch.q}>{batch.q}</b>Qs
+      </span>
+      {sat && <span className="stamp" data-count={batch.score}>{batch.score}</span>}
+    </span>
+  );
+}
+
+/* THE CARDS: always fanned, and the top card carries how many of the set are
+   done over the total. No progress bar — the demo took it out and the
+   handoff's checklist says so twice ("no progress bar"). */
+export function CardsThumb({ batch }) {
+  return (
+    <span className="th cards-thumb" aria-hidden="true">
+      <i /><i /><i />
+      <span className="done">
+        <b data-count={batch.seen}>{batch.seen}</b>
+        <small>/{batch.cards}</small>
+      </span>
+    </span>
+  );
+}
+
+/* THE QUESTION BANK: a stack of pages whose top sheet has the Q-BANK header
+   and three numbered questions, their answer lines drawing in as the row
+   opens, with the page count beside it.
+
+   `pp` IS COUNTED OUT OF THE PDF, never guessed — the row prints it to a
+   student (CLAUDE.md). A batch whose paper is not on the shelf has `pp` 0, and
+   that 0 is never printed: the tile is disabled and says so in words, because
+   §10 forbids naming an absence. */
+export function PaperThumb({ batch }) {
+  const q = (n) => (
+    <span className="q" key={n}>
+      <b>{n}</b>
+      <span><i /><em><u /><u /><u /></em></span>
+    </span>
+  );
+  return (
+    <span className="th pg" aria-hidden="true">
+      <span className="pp b2" /><span className="pp b1" />
+      <span className="top">
+        <span className="qb">Q-BANK</span>
+        {q(1)}{q(2)}{q(3)}
+      </span>
+      <span className="count">
+        <span data-count={batch.pp}>{batch.pp}</span><small>pages</small>
+      </span>
+    </span>
+  );
+}

@@ -1,0 +1,896 @@
+# Wingman — Module screen: full port of the approved demo
+
+**Instruction:** make the live module screen look and behave exactly like the attached demo (`wingman-library-lessons.html`, also pasted in full at the bottom of this message). This is a copy job, not a design job. Do not redesign, simplify, re-space, rename, re-word or "improve" anything. Every size, gap, radius, colour role, font, keyframe, delay, easing, SVG path and line of copy in the demo is approved. If live code disagrees with the demo, the demo wins, except for the three items in section 3.
+
+Open the demo in a browser and click through every part of it before writing any code. When you are done, the live screen and the demo must be indistinguishable side by side.
+
+---
+
+## 1. Fix the broken deploy first
+
+The current live build is broken: `/m/m1/library` crashes with
+`Error: Unable to preload CSS for /assets/LibraryBatches-CceAjFvE.css` — the index references that CSS chunk but the server returns 404, so the Library's styles never load.
+
+1. Delete `dist` and any build cache, run a clean production build, deploy the **entire** output folder.
+2. After deploying, request every `/assets/*` file referenced by the built index and every lazy chunk; none may return 404.
+3. Import the module screen's CSS from the ModuleScreen entry (or the global stylesheet) so it can never fail as a separate lazy CSS chunk.
+4. Add a stale-chunk guard: on `vite:preloadError` or a failed dynamic import, reload the page once (guard with a `sessionStorage` flag so it can't loop).
+
+## 2. Scope
+
+**Replace on the module screen (`.ref-mod`, routes `/m/:moduleId`, `/m/:moduleId/library`):**
+
+| Part | Becomes |
+|---|---|
+| Subtitle under the module title | `{open} of {total} batches open · {questions} quiz questions · {cards} cards` |
+| Tabs | **Lessons** and **Library** only, plus the search field stretching to the end of the strip |
+| Route strip | The 10-waypoint `.route` (Library tab only) |
+| Library tab | Demo `library()` / `row()` output, including the quiz attempt stamps on each row |
+| Lessons tab | Demo `lessons()` output (coming-soon player) |
+| Study cards | Demo study-card session (`#deck` overlay). Replaces the old cards page (`…/cards`, "M13 Batch 6 — Full Set · pages 352–491" + "Test yourself") |
+
+**Kill the Crew tab completely.** It does not exist in the demo. Remove the Crew tab button and its count badge, the Crew panel/component, the `/m/:moduleId/crew` route (redirect it to `/m/:moduleId/library`), and any links to it. "Who's on this module" now lives only as the quiz attempt stamps on each batch row (section 5, Crew on the quiz).
+
+**Do not touch:** Flight Deck, Ready Room, quiz taker, Licence/account/profile pages, top bar, account menu, liveries/finishes system, the Mission Control transitions, the hidden papers reader.
+
+## 3. The only things that come from live instead of the demo
+
+1. **Design tokens.** Delete the demo's own `:root`, `@media (prefers-color-scheme: dark)` and `[data-theme]` colour blocks. Map every demo token to the live token with a search-and-replace (so all liveries, finishes and light/dark keep working):
+
+| Demo | Live |
+|---|---|
+| `--ground` | `--bg-ground` |
+| `--panel` | `--bg-panel` |
+| `--raised` | `--bg-raised` |
+| `--line` | `--hairline` |
+| `--t1` / `--t2` / `--t3` | `--text-primary` / `--text-secondary` / `--text-tertiary` |
+| `--accent` | `--accent-interactive` |
+| `--accent-ink` | live text-on-accent colour (what live solid buttons use) |
+| `--accent-soft` | `color-mix(in srgb, var(--accent-interactive) 12%, transparent)` |
+| `--ui` / `--mono` | `--font-ui` / live Geist Mono variable |
+| `--r` | live card radius (13px) |
+| `--ease` | live `--ease` (`cubic-bezier(.3,.7,.3,1)`) |
+
+   Hard-coded colours that stay as they are: the `oklch(0 0 0 / …)` shadows, the `oklch(1 0 0 / …)` highlights on the Lessons player, and the player's dark base `rgb(7,13,22)`.
+
+2. **Stamps.** The demo draws placeholder round stamps (`miniStamp()` with codes like K1T, H4L). On live, every stamp in the attempt strip and its pop-out must be **that student's real stamp exactly as Wingman renders it on their Licence** (the stamp we actually offer — same component, same design, same ink colour), just scaled: 26 px in the row strip, 44 px in the pop-out. Students without a custom stamp show the default stamp live gives them. Keep the demo's layout, overlap (−9 px), drop shadow, hover spread, pop-out animation and callsign labels exactly.
+
+3. **Routing, data, auth.** Use the live router, data layer and user state (section 7). Everything in the demo's data objects is example data.
+
+## 4. Isolate the port so live styles can't leak in
+
+Live global styles currently distort the port (route circles become ovals, tiles lie sideways). Demo class names (`.tile .row .head .num .title .meta .route .wp .btn .tab .search .card .bar .face .side .turn .sheet .pill .crew`) collide with live classes.
+
+1. Wrap the whole ported module body (tabs content, route, library, lessons) and the `#deck` overlay in a root element with class `wm-port`.
+2. Prefix **every** selector of the demo stylesheet with `.wm-port ` (keyframes stay unprefixed).
+3. Put this reset before the prefixed demo rules:
+
+```css
+.wm-port button{min-height:0;min-width:0;height:auto;padding:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;color:inherit;line-height:inherit;letter-spacing:inherit;text-transform:none;text-align:inherit;appearance:none;-webkit-appearance:none}
+.wm-port button::before,.wm-port button::after{content:none}
+.wm-port .wp{width:28px;height:28px;aspect-ratio:1/1;flex:none}
+@media (max-width:620px){.wm-port .wp{width:22px;height:22px}}
+```
+
+4. No live wrappers inside the port (no `.lrow`, no list-row flex). The DOM nesting must be exactly:
+
+```
+.row > .head(button) + .crew + .drawer > div > .tiles > .tile(button) > .stage > .th
+.row > .crewpop > .crewgrid > .cp(button)                      (pop-out, appended on click)
+.table > .setpick + .pile > ( .ul, .ul, .cshadow, #fc > .in > .face + .face.back, .side.no, .side.yes ) + .deckspot.no + .turn + .deckspot.yes
+```
+
+## 5. Everything visual and behavioural — tick every line
+
+**Header**
+- [ ] Back link, big module title, subtitle as in section 2. Tabs: Lessons, Library; active tab underlined in accent; search pill fills the rest of the strip.
+
+**Route (Library only)**
+- [ ] 10 perfect circles with numbers, dashed line behind. Student's current batch filled in accent with a soft halo; published batches ringed in accent; unpublished batches dashed. Hover scales 1.12. Clicking a published one opens that row and scrolls it to centre.
+
+**Batch rows**
+- [ ] 44 px rounded number tile (2-digit, mono), topic, meta `Batch n · ref · pp x–y`, 28 px round chevron that rotates 180° when open. Row hover tint; open row on the raised background; open row's number tile scales up slightly.
+- [ ] Only the student's current batch is open on load. One open at a time. Opening: drawer grows (`grid-template-rows 0fr→1fr`, .4 s), tiles rise in at 80/160/240 ms, numbers count up.
+- [ ] **The three tiles (Quiz, Cards, Question bank) span the row evenly with equal space on the left and right edge of the open row** — `.tiles` padding `4px 14px 16px` and 12 px gaps on desktop/tablet, `4px 10px 14px` and 8 px gaps on phone. They are NOT indented under the title.
+- [ ] Each tile: thumbnail centred on top, label centred under it, 12 px radius, border lights up in accent with a soft shadow on hover.
+
+**Crew on the quiz (replaces the Crew tab)**
+- [ ] On each published row, right side before the chevron: overlapping strip of the real stamps (section 3.2) of everyone who has **sat** that batch's quiz — attempted only, no scores, no pass/fail. Current student's stamp first (in their ink) when they've sat it, then most recent first.
+- [ ] Up to 11 on desktop/tablet, up to 6 on phone, then `+N` in mono.
+- [ ] Nobody yet: one dashed empty circle, not clickable.
+- [ ] Hover: strip gets a raised pill background and spreads slightly. Click: pop-out under it fans in every stamp (staggered drop + untilt) with callsign under each ("You" for self). Click a stamp → that student's profile. Click outside or Escape closes. Clicking the strip never opens/closes the row.
+- [ ] Phone: strip sits under the batch title instead of beside the chevron.
+
+**Quiz thumbnail**
+- [ ] Answer sheet (3×3 bubbles) shows the last attempt: `got` bubbles filled. Best score drops on as a round stamp (`stampin`) at the top-right corner. Not sat: dashed bubbles + pencil that scribbles on open.
+- [ ] Hover: sheet lifts and tilts −2°, bubbles ripple in a diagonal wave, pencil scribbles.
+
+**Cards thumbnail**
+- [ ] Always fanned stack; top card shows done count over `/total`, sized to sit inside the top card; no progress bar. Hover: fan widens and lifts. Clicking opens the study session.
+
+**Question bank thumbnail** (label "Question bank")
+- [ ] Stack of pages, top page with Q-BANK header and three numbered questions with answer bubbles whose lines draw in on open; big page count with "pages". Hover: pages fan further. Clicking downloads the PDF.
+
+**Below the rows**
+- [ ] Dashed `Batch {next}` row with "Next to land" on the right, then `{n} more batches on the way.` Hidden while searching. Search matches topic, ref, pages, "batch n"; empty search result line as in the demo.
+
+**Lessons tab**
+- [ ] Only the player: dark base with accent glow and grain, "IN PRODUCTION" pill with the clapperboard arm snapping every 4 s, frosted round play button, "Video lessons are on the way" / "They'll appear here as they're made.", dimmed control bar with `--:--`. Footer line `Everything for {module} is in the Library for now.` + "Open the Library" button (switches tab). No route on this tab.
+
+**Study cards session** (`#deck`, full screen, locks page scroll, fits one screen at every size, card keeps 3:2)
+- [ ] No start screen; opens on All.
+- [ ] Set picker top centre: current set's deck. Click → Missed slides out to its left and Saved to its right, staying centred; empty sets disabled with a dashed ghost card. Picking a set: current card sinks (240 ms), new set dealt. Switching keeps the Got it / Not yet decks.
+- [ ] Card: plain face, question centred; X top-left and bookmark top-right on the card (both faces); bookmark fills with accent when saved; `{position} / {set size}` bottom centre. Back face = answer only.
+- [ ] Reveal = demo `flip()`: lift, tilt, turn with overshoot (720 ms), sheen sweep, table shadow shrinks. Triggers: tap card, turn button, Space.
+- [ ] Sorting: drag/flick (110 px threshold, GOT IT / NOT YET tags fade in), ← →, and on desktop ≥ 900 px the round Not yet / Got it buttons either side (card leans toward the hovered one). Card flicks and spins face-down onto its deck (640 ms); newest card drops into the fan.
+- [ ] Not yet does not loop back into the session.
+- [ ] Decks: bottom-left Not yet, bottom-right Got it; fan of the 7 most recent, widening with count; total under it. Hover peeks (scale 1.9). Click opens the bottom sheet listing every card in that deck with its answer, newest first.
+- [ ] End: "Deck cleared" card with tally + "Back to the Library".
+- [ ] Escape closes: sheet → set picker → session.
+
+**Everywhere**
+- [ ] `prefers-reduced-motion`: all motion off, everything still readable and usable.
+- [ ] Works in every livery, every finish, light and dark.
+
+## 6. Port method
+
+1. Build the pieces as components in the live stack but keep the demo's markup and class names 1:1 inside them.
+2. Copy the demo `<style>` into the module screen stylesheet, apply the token mapping (3.1) and the `.wm-port` prefix + reset (4).
+3. Copy the animation/logic functions verbatim and wire them to refs: `setOpen`, `countUp`, `crewStrip`/`openCrew`/`closeCrew` (with real stamps), `openDeck`, `startMode`, `switchSet`, `setMenu`, `drawDeck`, `fan`, `flip`, `answer`, `dragify`, `openList`, `closeMissed`, `closeDeck`.
+4. Delete: the old Library list, the old Lessons empty state, the old cards page, the Crew tab and everything only it used.
+
+## 7. Data and wiring (replace the demo's example data)
+
+Delete the demo example objects: `B`, `DECKS`, `MEM`, `PEOPLE`, `ME`, `ATTEMPTS`. Keep `CAP = 11`.
+
+Per module, per batch (`B`):
+```
+n       batch number on the route        topic   topic name (demo "Theory of flight" is a placeholder)
+ref     ATA / syllabus ref               pages   page range text
+pp      question-bank PDF page count     q       quiz question count
+cards   study card count                 here    true for the student's current batch
+```
+Unpublished batches are entries with only `n`. Total batches comes from the module, not a hard-coded 10.
+
+Per student, per batch:
+```
+score   best quiz % or null              got     Math.round(lastAttemptScore / 100 * 9)
+seen    study cards done                 missed  card ids marked Not yet, not since marked Got it
+saved   bookmarked card ids
+```
+Class-wide, per batch (`ATTEMPTS[n]`): every student on the module who has sat batch n's quiz at least once — current student first, then most recent first — each with callsign and their real stamp.
+
+Cards: `DECKS[n]` = the batch's card set from the question bank as question/answer with **stable card ids** (not array indexes).
+
+Write-backs to the student's account (not localStorage): Got it → remove from `missed`; Not yet → add to `missed`; bookmark → toggle in `saved`; on close → `seen += got + again`; then re-render the Library.
+
+Wiring: `[data-quiz]` → existing quiz taker for that batch · `[data-deck]` → `openDeck(n)` (optional deep link `/m/:moduleId/cards/:batch`) · `[data-paper]` → existing PDF download · `[data-profile]` → that student's profile · `[data-tab-go]` → switch tab.
+
+## 8. Verify before saying done
+
+1. Hard-refresh live: no console errors, no 404s.
+2. Demo and live side by side at 1280×800, 820×760 and 390×760, in two liveries, every finish, light and dark. Check: perfect circles on the route; tiles evenly spanning the open row with equal side space; thumbnail-over-label tiles; hover motion on all three thumbnails; attempt stamps showing real Licence stamps with +N and pop-out; no Crew tab anywhere and `/crew` redirects; Lessons player; the full card session.
+3. Confirm nothing outside the module screen changed.
+4. Report back with screenshots of: Library with a batch open, the stamp pop-out, Lessons, and the card session (front, back, mid-sort, deck list) at each size.
+
+---
+
+## 9. The demo — source of truth (copy this)
+
+```html
+<title>Wingman Library by Batch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the live module screen. One card with tabs; a numbered route of batches on top.
+   Library = one row per batch; opening it plays the quiz / cards / question-bank thumbnails into place; Cards opens a study session. Lessons = a player waiting for its first video. */
+:root{
+  --ground:oklch(.975 .006 255);--panel:oklch(1 0 0);--raised:oklch(.955 .01 255);
+  --line:oklch(.25 .03 258 / .1);--t1:oklch(.22 .03 258);--t2:oklch(.42 .025 258);--t3:oklch(.58 .02 258);
+  --accent:oklch(.55 .15 254);--accent-ink:oklch(1 0 0);--accent-soft:oklch(.55 .15 254 / .1);
+  --screen:oklch(.3 .05 258);--screen-ink:oklch(.97 .01 255);
+  --ui:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",monospace;
+  --r:13px;--ease:cubic-bezier(.3,.7,.3,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:oklch(.19 .035 258);--panel:oklch(.235 .032 258);--raised:oklch(.275 .032 258);
+  --line:oklch(1 0 0 / .085);--t1:oklch(.96 .008 255);--t2:oklch(.78 .015 255);--t3:oklch(.6 .02 255);
+  --accent:oklch(.68 .1303 253.95);--accent-ink:oklch(.18 .04 258);--accent-soft:oklch(.68 .1303 253.95 / .14);
+  --screen:oklch(.16 .03 258);--screen-ink:oklch(.97 .01 255);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:oklch(.19 .035 258);--panel:oklch(.235 .032 258);--raised:oklch(.275 .032 258);
+  --line:oklch(1 0 0 / .085);--t1:oklch(.96 .008 255);--t2:oklch(.78 .015 255);--t3:oklch(.6 .02 255);
+  --accent:oklch(.68 .1303 253.95);--accent-ink:oklch(.18 .04 258);--accent-soft:oklch(.68 .1303 253.95 / .14);
+  --screen:oklch(.16 .03 258);--screen-ink:oklch(.97 .01 255);color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--ground);color:var(--t1);font-family:var(--ui);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:28px 60px}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:22px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.back{color:var(--t2);font-size:14px}
+h1{font-size:clamp(32px,6vw,40px);line-height:1.1;margin:6px 0 4px;font-weight:600;letter-spacing:-.02em}
+.sub{color:var(--t3);margin:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);white-space:nowrap}
+
+/* tabs + search */
+.tabs{display:flex;align-items:center;gap:18px;padding:12px 16px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{padding:6px 0 10px;color:var(--t3);border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{color:var(--t1);border-color:var(--accent)}
+.search{flex:1;min-width:180px;margin-bottom:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 14px;color:var(--t3)}
+.search input{all:unset;flex:1;min-width:0;color:var(--t1);font-size:14px}
+
+/* route: numbered waypoints. filled = you, ring = open, dashed = on the way */
+.route{position:relative;display:grid;grid-template-columns:repeat(10,1fr);align-items:center;padding:18px 18px 16px;border-bottom:1px solid var(--line)}
+.route::before{content:"";position:absolute;left:calc(18px + 5%);right:calc(18px + 5%);top:50%;border-top:1.5px dashed color-mix(in oklch,var(--t3) 40%,transparent)}
+.wp{position:relative;justify-self:center;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:11px;background:var(--panel);color:var(--t3);border:1.5px dashed color-mix(in oklch,var(--t3) 55%,transparent);transition:transform .2s var(--ease)}
+.wp.open{border:1.5px solid var(--accent);color:var(--accent)}
+.wp.here{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 4px var(--accent-soft)}
+.wp:hover{transform:scale(1.12)}
+
+/* ---------- Library: rows ---------- */
+.list{display:grid;padding:6px 8px 4px}
+.row{border-radius:10px;transition:background .25s var(--ease)}
+.row:hover{background:color-mix(in oklch,var(--raised) 55%,transparent)}
+.row.on{background:var(--raised)}
+.head{width:100%;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 10px;text-align:left}
+.num{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-size:15px;background:var(--accent-soft);color:var(--accent);transition:transform .3s var(--ease)}
+.here .num{background:var(--accent);color:var(--accent-ink)}
+.row.on .num{transform:scale(1.06)}
+.title{font-size:16.5px;font-weight:600;line-height:1.25}
+.meta{font-size:13px;color:var(--t3);margin-top:1px}
+.chev{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--t3);border:1px solid var(--line);transition:transform .35s var(--ease),color .2s,border-color .2s}
+.row:hover .chev{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 50%,transparent)}
+.row.on .chev{transform:rotate(180deg);color:var(--accent)}
+/* stamps of everyone who has sat the quiz, on the row */
+.row{position:relative}
+.crew{position:absolute;right:54px;top:21px;z-index:2;display:flex;align-items:center;padding:3px 6px;border-radius:999px;transition:background .2s}
+.crew:hover{background:var(--raised)}
+.row.on .crew:hover{background:var(--panel)}
+.crew .cs{display:block;margin-left:-9px;transition:transform .3s var(--ease);transition-delay:calc(var(--i) * 18ms)}
+.crew .cs:first-child{margin-left:0}
+.crew .cs svg{display:block;filter:drop-shadow(0 1px 1.5px oklch(0 0 0 / .35))}
+.crew:hover .cs{transform:translateX(calc(var(--i) * 3px)) rotate(calc(var(--i) * 1deg - 5deg))}
+.crew .cmore{margin-left:7px;font:600 11.5px var(--mono);color:var(--t2)}
+.crew.none{pointer-events:none}
+.ghoststamp{width:26px;height:26px;border-radius:50%;border:1.5px dashed color-mix(in oklch,var(--t3) 55%,transparent)}
+.crewpop{position:absolute;right:44px;top:58px;z-index:20;width:min(400px,calc(100vw - 48px));padding:12px;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 40px oklch(0 0 0 / .3);opacity:0;transform:translateY(-6px) scale(.97);transform-origin:top right;transition:opacity .2s,transform .25s var(--ease)}
+.crewpop.show{opacity:1;transform:none}
+.crewgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px 4px}
+.cp{display:grid;justify-items:center;gap:4px;padding:6px 2px;border-radius:10px;font:600 10.5px var(--mono);color:var(--t2);opacity:0;transform:translateY(-10px) rotate(-12deg) scale(.6)}
+.crewpop.show .cp{opacity:1;transform:none;transition:opacity .25s,transform .4s var(--ease),background .2s;transition-delay:calc(var(--i) * 22ms)}
+.cp:hover{background:var(--raised);color:var(--t1)}
+.cp svg{transition:transform .25s var(--ease)}
+.cp:hover svg{transform:rotate(-8deg) scale(1.06)}
+
+/* opening: the panel grows, then each tile rises in turn */
+.drawer{display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s var(--ease)}
+.row.on .drawer{grid-template-rows:1fr}
+.drawer>div{overflow:hidden}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:4px 14px 16px 14px}
+.tile{display:grid;gap:10px;justify-items:center;align-content:start;text-align:center;padding:16px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);opacity:0;transform:translateY(10px);transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s,box-shadow .2s}
+.row.on .tile{opacity:1;transform:none}
+.row.on .tile:nth-child(1){transition-delay:.08s,.08s,0s,0s}
+.row.on .tile:nth-child(2){transition-delay:.16s,.16s,0s,0s}
+.row.on .tile:nth-child(3){transition-delay:.24s,.24s,0s,0s}
+.tile:hover{border-color:var(--accent);box-shadow:0 8px 22px oklch(0 0 0 / .12)}
+.tile strong{font-size:13.5px;font-weight:600;color:var(--t2);transition:color .2s}
+.tile:hover strong{color:var(--accent)}
+.tile .st{font-size:12.5px;color:var(--t3)}
+.tile .go{color:var(--accent);font-weight:600;font-size:13px;display:inline-flex;gap:4px;align-items:center}
+.tile .go span{transition:transform .2s var(--ease)}
+.tile:hover .go span{transform:translateX(3px)}
+.bar{height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:4px;background:var(--accent);transition:width .8s var(--ease) .4s}
+.stage{height:84px;display:flex;align-items:center;justify-content:center}
+
+/* live-site thumbnails (markup and look copied from the module screen), scaled up and animated */
+.th{display:block;width:128px;aspect-ratio:16/9;border-radius:8px;border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
+.quiz-thumb{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:10px 12px;background:var(--raised);overflow:visible}
+.quiz-thumb.blank .quiz-thumb__sheet i{border-style:dashed}
+.pencil{display:block;color:var(--accent);margin-left:auto;width:16px;margin-bottom:2px;transform-origin:20% 80%}
+.row.on .pencil{animation:write 1.2s var(--ease) .5s 2}
+@keyframes write{25%{transform:rotate(-12deg) translate(-2px,1px)}50%{transform:rotate(6deg) translate(2px,0)}75%{transform:rotate(-8deg)}}
+.stamp{position:absolute;right:-20px;top:-20px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 13px var(--mono);color:var(--accent);border:2px solid var(--accent);background:color-mix(in oklch,var(--panel) 85%,transparent);transform:rotate(-14deg);opacity:0}
+.stamp::after{content:"%";font-size:9px;margin-left:1px}
+.row.on .stamp{animation:stampin .5s var(--ease) .8s forwards}
+@keyframes stampin{0%{opacity:0;transform:rotate(-30deg) scale(1.6)}70%{opacity:1;transform:rotate(-10deg) scale(.92)}100%{opacity:1;transform:rotate(-14deg) scale(1)}}
+.quiz-thumb__sheet{display:grid;gap:4px}
+.quiz-thumb__sheet span{display:flex;gap:4px}
+.quiz-thumb__sheet i{width:10px;height:10px;border-radius:50%;border:1px solid var(--t3);transition:background .2s,border-color .2s,transform .2s var(--ease)}
+.row.on .quiz-thumb__sheet i.on{animation:fill .3s var(--ease) both}
+.quiz-thumb__sheet i.on{background:var(--accent);border-color:var(--accent)}
+.row.on .quiz-thumb__sheet span:nth-child(1) i.on{animation-delay:.3s}
+.row.on .quiz-thumb__sheet span:nth-child(2) i.on{animation-delay:.42s}
+.row.on .quiz-thumb__sheet span:nth-child(3) i.on{animation-delay:.54s}
+@keyframes fill{from{background:transparent;border-color:var(--t3);transform:scale(.6)}to{transform:none}}
+.tile:hover .quiz-thumb__sheet i:not(.on){border-color:var(--accent)}
+.quiz-thumb{transition:transform .35s var(--ease)}
+.tile:hover .quiz-thumb{transform:translateY(-3px) rotate(-2deg)}
+.tile:hover .quiz-thumb__sheet i{animation:ripple .9s var(--ease) both}
+.tile:hover .quiz-thumb__sheet span:nth-child(1) i:nth-child(1){animation-delay:0s}.tile:hover .quiz-thumb__sheet span:nth-child(1) i:nth-child(2){animation-delay:.05s}.tile:hover .quiz-thumb__sheet span:nth-child(1) i:nth-child(3){animation-delay:.1s}
+.tile:hover .quiz-thumb__sheet span:nth-child(2) i:nth-child(1){animation-delay:.08s}.tile:hover .quiz-thumb__sheet span:nth-child(2) i:nth-child(2){animation-delay:.13s}.tile:hover .quiz-thumb__sheet span:nth-child(2) i:nth-child(3){animation-delay:.18s}
+.tile:hover .quiz-thumb__sheet span:nth-child(3) i:nth-child(1){animation-delay:.16s}.tile:hover .quiz-thumb__sheet span:nth-child(3) i:nth-child(2){animation-delay:.21s}.tile:hover .quiz-thumb__sheet span:nth-child(3) i:nth-child(3){animation-delay:.26s}
+@keyframes ripple{40%{transform:scale(1.35)}100%{transform:none}}
+.tile:hover .pencil{animation:write 1s var(--ease)}
+.quiz-thumb__count{font-family:var(--mono);font-size:10px;line-height:1.1;color:var(--t2);text-align:right}
+.quiz-thumb__count b{display:block;font-size:20px;color:var(--t1);font-weight:600;font-variant-numeric:tabular-nums}
+.cards-thumb{display:grid;place-items:center;overflow:visible;border:0}
+.cards-thumb i{position:absolute;width:50%;height:88%;border-radius:6px;background:var(--raised);border:1px solid var(--line);transition:transform .5s var(--ease)}
+.cards-thumb i:nth-child(1){background:color-mix(in oklab,var(--raised) 70%,var(--ground))}
+.cards-thumb i:nth-child(3){background:var(--ground);border-color:color-mix(in oklab,var(--accent) 60%,transparent)}
+.row.on .cards-thumb i:nth-child(1){transform:rotate(-13deg) translate(-9px);transition-delay:.35s}
+.row.on .cards-thumb i:nth-child(2){transform:rotate(7deg) translate(8px);transition-delay:.4s}
+.row.on .tile:hover .cards-thumb i:nth-child(1){transform:rotate(-19deg) translate(-15px,-2px);transition-delay:0s;transition-duration:.35s}
+.row.on .tile:hover .cards-thumb i:nth-child(2){transform:rotate(12deg) translate(14px,-2px);transition-delay:0s;transition-duration:.35s}
+.row.on .tile:hover .cards-thumb i:nth-child(3){transform:translateY(-3px);transition-delay:0s;transition-duration:.35s}
+.cards-thumb .done{transition:transform .35s var(--ease)}
+.tile:hover .cards-thumb .done{transform:translateY(-3px)}
+.cards-thumb .done{position:relative;z-index:2;width:46%;display:grid;justify-items:center;gap:2px;font:600 clamp(11px,1.15vw,14px) var(--mono);color:var(--accent);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em}
+.cards-thumb .done small{font:500 8.5px var(--mono);color:var(--t3);letter-spacing:-.02em}
+.cards-thumb .done b{font:inherit}
+
+/* paper: a stack of question-bank pages; the top page shows numbered questions with answer bubbles */
+.pg{display:grid;place-items:center;background:var(--ground);overflow:visible;padding-right:34px}
+.pg .pp{position:absolute;width:46px;height:58px;border-radius:3px;background:var(--panel);border:1px solid var(--line);transition:transform .5s var(--ease)}
+.pg .pp.b1{transform:translate(0,0)}.pg .pp.b2{transform:translate(0,0)}
+.row.on .pg .pp.b1{transform:translate(5px,-3px) rotate(4deg);transition-delay:.35s}
+.row.on .pg .pp.b2{transform:translate(9px,-6px) rotate(8deg);transition-delay:.4s}
+.row.on .tile:hover .pg .pp.b1{transform:translate(9px,-5px) rotate(7deg);transition-delay:0s}
+.row.on .tile:hover .pg .pp.b2{transform:translate(16px,-9px) rotate(13deg);transition-delay:0s}
+.pg .top{position:relative;z-index:2;width:46px;height:58px;border-radius:3px;background:var(--panel);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);padding:5px 5px 0;display:grid;align-content:start;gap:4px;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,0 100%);transition:transform .3s var(--ease)}
+.pg .top::after{content:"";position:absolute;right:0;top:0;width:9px;height:9px;background:color-mix(in srgb,var(--accent) 35%,var(--raised));border-bottom-left-radius:2px}
+.pg .qb{font:600 6.5px var(--mono);letter-spacing:.08em;color:var(--accent)}
+.pg .q{display:grid;grid-template-columns:7px 1fr;gap:3px;align-items:center}
+.pg .q b{font:600 5.5px var(--mono);color:var(--t3)}
+.pg .q span{display:grid;gap:2px}
+.pg .q i{display:block;height:2px;border-radius:2px;background:var(--line);transform-origin:left;transform:scaleX(0);transition:transform .35s var(--ease)}
+.pg .q em{display:flex;gap:2px}
+.pg .q em u{width:3.5px;height:3.5px;border-radius:50%;border:.8px solid var(--t3);text-decoration:none}
+.row.on .pg .q i{transform:none}
+.row.on .pg .q:nth-of-type(2) i{transition-delay:.45s}.row.on .pg .q:nth-of-type(3) i{transition-delay:.6s}.row.on .pg .q:nth-of-type(4) i{transition-delay:.75s}
+.tile:hover .pg .top{transform:translateY(-3px) rotate(-3deg)}
+.pg .count{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:3;display:grid;justify-items:center;font:600 15px var(--mono);color:var(--t1);line-height:1}
+.pg .count small{font:500 9px var(--mono);color:var(--t3);margin-top:3px}
+
+.soon .head{padding:8px 10px;cursor:default}
+.soon:hover{background:none}
+.soon .num{height:30px;background:none;border:1.5px dashed color-mix(in oklch,var(--t3) 50%,transparent);color:var(--t3);font-size:12px}
+.soon .title{font-size:14.5px;font-weight:500;color:var(--t2)}
+.soon .flag{font-size:12px;color:var(--accent)}
+.more{padding:10px 18px 16px;color:var(--t3);font-size:13.5px}
+
+/* ---------- Lessons: a player waiting for its first video ---------- */
+.lessons{padding:18px;display:grid;gap:16px}
+.player{position:relative;aspect-ratio:16/9;width:100%;max-height:440px;border-radius:12px;overflow:hidden;color:oklch(.97 0 0);
+  background:radial-gradient(70% 90% at 75% 10%,color-mix(in oklch,var(--accent) 38%,transparent),transparent 65%),radial-gradient(90% 90% at 20% 100%,oklch(.3 .05 258 / .8),transparent 70%),rgb(7,13,22);
+  box-shadow:inset 0 0 0 1px oklch(1 0 0 / .06)}
+.player .grain{position:absolute;inset:0;opacity:.07;background-image:radial-gradient(oklch(1 0 0) .6px,transparent .7px);background-size:3px 3px}
+.player .mid{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center;padding:16px 16px 50px}
+.player .playbtn{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:oklch(1 0 0 / .9);background:oklch(1 0 0 / .08);border:1px solid oklch(1 0 0 / .18);backdrop-filter:blur(6px);margin-bottom:6px}
+.player h3{margin:0;font-size:clamp(19px,3.4vw,24px);font-weight:600;letter-spacing:-.01em}
+.player p{margin:0;font-size:14px;color:oklch(.82 .015 255);max-width:38ch}
+.player .rec{position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:7px;padding:5px 10px 5px 8px;border-radius:999px;background:oklch(0 0 0 / .35);border:1px solid oklch(1 0 0 / .12);font:500 10.5px var(--mono);letter-spacing:.14em;color:oklch(.92 0 0)}
+.player .rec svg .arm{transform-origin:3px 9px;animation:clap 4s var(--ease) infinite}
+@keyframes clap{0%,70%,100%{transform:rotate(0)}78%{transform:rotate(-24deg)}86%{transform:rotate(2deg)}}
+.player .ctrl{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(transparent,oklch(0 0 0 / .45));color:oklch(1 0 0 / .45);font:500 11px var(--mono)}
+.player .ctrl .track{flex:1;height:3px;border-radius:3px;background:oklch(1 0 0 / .15)}
+.lessons .foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--t2);font-size:14px;padding:0 2px}
+.empty{padding:22px 18px;color:var(--t3);font-size:14px}
+
+/* ---------- Study cards session (opens from the cards thumbnail) ---------- */
+.deck{position:fixed;inset:0;z-index:40;display:grid;grid-template-rows:auto 1fr;grid-auto-rows:1fr;background:radial-gradient(80% 50% at 50% 0%,color-mix(in oklch,var(--accent) 10%,transparent),transparent 70%),var(--ground);padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(14px + env(safe-area-inset-bottom,0px));opacity:0;transform:scale(.97);transition:opacity .3s var(--ease),transform .35s var(--ease);overflow:hidden;height:100%;height:100dvh}
+.deck.show{opacity:1;transform:none}
+.deck-top{max-width:680px;width:100%;margin:0 auto;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:12px}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--t2);background:var(--panel);transition:color .2s,border-color .2s,background .2s}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent)}
+.icon-btn[aria-pressed="true"]{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.icon-btn:disabled{opacity:.3;pointer-events:none}
+.deck-title{text-align:center;display:grid;gap:6px}
+.deck-title b{font-size:15px;font-weight:600}
+.deck-title .prog{display:flex;align-items:center;gap:8px;justify-content:center;font:500 12px var(--mono);color:var(--t3);font-variant-numeric:tabular-nums}
+.deck-title .prog .track{width:min(220px,40vw);height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.deck-title .prog .track i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .4s var(--ease)}
+
+/* mode picker */
+.modes{align-self:center;justify-self:center;width:min(560px,100%);display:grid;gap:14px;margin-block:24px;overflow:auto;max-height:100%}
+.modes h3{margin:0 0 4px;text-align:center;font-size:22px;font-weight:600}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mode{display:grid;gap:10px;justify-items:start;text-align:left;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--panel);transition:border-color .2s,transform .2s var(--ease),box-shadow .2s}
+.mode:hover:not(:disabled){border-color:var(--accent);transform:translateY(-2px);box-shadow:0 10px 24px oklch(0 0 0 / .14)}
+.mode:disabled{opacity:.4;cursor:default}
+.mode .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.mode b{font-size:15px;font-weight:600}
+.mode span.n{font:500 12px var(--mono);color:var(--t3)}
+
+/* table: the card is the hero, centred; the two fanned decks sit in the bottom corners */
+.table{position:relative;grid-row:1/-1;min-height:0;display:grid;place-items:center;padding-top:62px;padding-bottom:clamp(96px,17vh,150px)}
+.pile{position:relative;width:min(800px,94vw,calc((100dvh - clamp(96px,17vh,150px) - 120px) * 1.5));aspect-ratio:3/2;perspective:1600px}
+.pile .ul{position:absolute;inset:0;border-radius:18px;background:var(--panel);border:1px solid var(--line)}
+.pile .ul:nth-child(1){transform:rotate(-3deg) translate(-10px,9px);opacity:.45}
+.pile .ul:nth-child(2){transform:rotate(2deg) translate(8px,5px);opacity:.75}
+.fc{position:absolute;inset:0;z-index:5;cursor:grab;touch-action:none;transform-style:preserve-3d;transition:transform .45s var(--ease)}
+.fc.drag{transition:none;cursor:grabbing}
+.fc .in{position:absolute;inset:0;transform-style:preserve-3d}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;text-align:center;
+  background-image:radial-gradient(120% 90% at 0% 0%,oklch(1 0 0 / .045),transparent 60%)}
+.face.back{transform:rotateY(180deg);background-color:color-mix(in srgb,var(--accent) 7%,var(--panel));border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.face .no{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;font:500 12px var(--mono);letter-spacing:.06em;color:var(--t3);font-variant-numeric:tabular-nums}
+.face .lbl{position:absolute;left:50%;transform:translateX(-50%);top:22px;font:600 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.face h3{margin:0;padding:40px clamp(30px,7%,64px);font-size:clamp(17px,min(3.2vw,4.4dvh),30px);line-height:1.36;font-weight:600;text-wrap:balance;color:var(--t1)}
+.face .hint{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;align-items:center;gap:6px;font-size:12.5px;color:var(--t3)}
+/* sheen that sweeps across during the flip */
+.face .sheen{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 30%,oklch(1 0 0 / .16) 48%,transparent 66%);background-size:260% 100%;background-position:120% 0;opacity:0}
+/* set picker on the table, top-left: the current deck; it spreads to show the other two */
+.setpick{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:12;display:flex;gap:0;padding:4px}
+.setpick .pk{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:8px 14px 8px 8px;border-radius:14px;color:var(--t3);background:var(--panel);border:1px solid var(--line);text-align:left;
+  transition:transform .42s var(--ease),opacity .3s var(--ease),background .2s,border-color .2s,color .2s;transition-delay:calc(var(--k) * 40ms)}
+.setpick .pk .mfan{grid-row:1/3;width:30px;height:30px}
+.setpick .pk .mfan i{width:17px;height:23px;margin-left:-8.5px}
+.setpick .pk b{font-size:13px;font-weight:600;color:var(--t1);line-height:1.1}
+.setpick .pk span:last-child{font:500 11px var(--mono);color:var(--t3)}
+.setpick .pk.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.setpick .pk.on b{color:var(--accent)}
+.setpick .pk:hover:not(:disabled){border-color:var(--accent)}
+.setpick .pk:disabled{opacity:.4;cursor:default}
+.setpick .pk{order:var(--o,0)}
+.setpick .pk:not([data-dk]){opacity:0;pointer-events:none;max-width:0;padding-left:0;padding-right:0;border-width:0;margin:0;overflow:hidden;transform:scale(.85);transition:max-width .42s var(--ease),padding .42s var(--ease),margin .42s var(--ease),opacity .25s,transform .42s var(--ease),border-width .2s}
+.setpick.open .pk:not([data-dk]){opacity:1;pointer-events:auto;max-width:160px;padding:8px 14px 8px 8px;border-width:1px;margin:0 3px;transform:none}
+.setpick.open .pk:disabled{opacity:.4}
+.setpick .pk[data-dk] .mfan i{transition:transform .35s var(--ease)}
+.setpick.open .pk[data-dk] .mfan i:first-child{transform:rotate(-20deg)!important}
+.setpick.open .pk[data-dk] .mfan i:last-child:not(:first-child){transform:rotate(20deg)!important}
+.mfan{position:relative;color:currentColor}
+.mfan i{position:absolute;left:50%;bottom:0;border-radius:3px;background:var(--panel);border:1px solid currentColor;transform-origin:50% 140%;transition:transform .3s var(--ease)}
+.mfan i.ghost{border-style:dashed;background:none}
+/* sort with the mouse: a clear button either side of the card */
+.side{position:absolute;top:50%;z-index:6;display:grid;justify-items:center;gap:8px;transform:translateY(-50%);color:var(--t2);transition:color .2s,transform .25s var(--ease)}
+.side.no{right:calc(100% + 22px)}.side.yes{left:calc(100% + 22px)}
+.side .ring{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:var(--panel);border:1.5px solid var(--line);transition:background .2s,border-color .2s,color .2s,transform .25s var(--ease)}
+.side .ring svg{width:22px;height:22px}
+.side b{font-size:12.5px;font-weight:600}
+.side.no:hover{color:var(--t1)}.side.no:hover .ring{border-color:var(--t2);transform:translateX(-3px)}
+.side.yes{color:var(--accent)}.side.yes .ring{border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
+.side.yes:hover .ring{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);transform:translateX(3px)}
+.side:active .ring{transform:scale(.94)}
+/* the card leans toward the side you're hovering, so it's clear what will happen */
+.pile:has(.side.yes:hover) .fc{transform:translateX(10px) rotate(1.4deg)}
+.pile:has(.side.no:hover) .fc{transform:translateX(-10px) rotate(-1.4deg)}
+.pile:has(.side.yes:hover) .verdict.yes,.pile:has(.side.no:hover) .verdict.no{opacity:.9!important;transition:opacity .2s}
+@media (hover:none),(pointer:coarse),(max-width:900px){.side{display:none}}
+@media (max-width:620px){.setpick .pk,.setpick.open .pk:not([data-dk]){padding:6px 10px 6px 6px}}
+/* exit and save sit on the card itself */
+.cbtn{position:absolute;top:12px;z-index:3;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--t3);background:transparent;transition:color .2s,background .2s}
+.cbtn:hover{color:var(--t1);background:var(--raised)}
+.cbtn.x{left:12px}.cbtn.sv{right:12px}
+.cbtn.sv[aria-pressed="true"]{color:var(--accent)}
+.cbtn.sv[aria-pressed="true"] path{fill:currentColor}
+.done-card .cbtn.x{top:12px;left:12px}
+/* soft shadow on the table that shrinks while the card is lifted */
+.cshadow{position:absolute;left:6%;right:6%;bottom:-14px;height:30px;border-radius:50%;background:oklch(0 0 0 / .45);filter:blur(16px);z-index:4;transition:transform .2s}
+.again-tag{position:absolute;left:18px;top:14px;font:600 9.5px var(--mono);letter-spacing:.1em;color:var(--t2);border:1px dashed var(--t3);border-radius:5px;padding:2px 6px}
+.verdict{position:absolute;top:56px;z-index:3;font:700 12px var(--mono);letter-spacing:.12em;padding:5px 10px;border-radius:8px;border:2px solid;opacity:0;pointer-events:none}
+.verdict.yes{right:22px;color:var(--accent);transform:rotate(8deg)}
+.verdict.no{left:30px;color:var(--t2);transform:rotate(-8deg)}
+.fc.enter{animation:enter .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes enter{from{transform:translateY(16px) scale(.95) rotate(-.6deg);opacity:0;filter:blur(2px)}60%{opacity:1;filter:blur(0)}}
+.fc{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+/* face-down card back, used mid-flight and in the decks */
+.cardback{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 85%,#000),color-mix(in srgb,var(--accent) 55%,#000));border:1px solid color-mix(in srgb,var(--accent) 70%,transparent)}
+
+/* fanned decks */
+.deckspot{position:absolute;bottom:0;z-index:6;display:grid;gap:2px;justify-items:center;width:clamp(120px,22vw,190px);padding:6px}
+.fanbtn{display:grid;gap:6px;justify-items:center;width:100%}
+.fanbtn:disabled{cursor:default}
+.seeall{font:500 11.5px var(--ui);color:var(--accent);padding:2px 8px;border-radius:999px}
+.seeall:hover{background:var(--accent-soft)}
+.deckspot.no{left:0}.deckspot.yes{right:0}
+.fan{position:relative;width:100%;height:clamp(78px,12vh,110px);border-radius:12px;transition:transform .35s var(--ease)}
+.fan .mc{position:absolute;left:50%;bottom:4px;width:clamp(62px,9vw,86px);aspect-ratio:3/2;margin-left:calc(clamp(62px,9vw,86px) / -2);border-radius:7px;background:var(--panel);border:1px solid var(--line);box-shadow:0 4px 10px oklch(0 0 0 / .18);transform-origin:50% 160%;transition:transform .45s var(--ease);overflow:hidden;display:grid;place-items:center}
+.deckspot.yes .fan .mc{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.fan .mc span{font:600 5.6px/1.3 var(--ui);color:var(--t2);padding:4px 5px;text-align:center;overflow:hidden}
+.fan .mc.drop{animation:drop .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes drop{from{transform:rotate(var(--r)) translateY(-10px) scale(1.15);opacity:.4}}
+.fan .slot{position:absolute;left:50%;bottom:4px;width:clamp(62px,9vw,86px);aspect-ratio:3/2;margin-left:calc(clamp(62px,9vw,86px) / -2);border-radius:7px;border:1.5px dashed color-mix(in srgb,var(--t3) 60%,transparent)}
+/* peek: hovering a deck spreads it and lifts it so you can read the cards */
+.fanbtn:hover .fan,.fanbtn:focus-visible .fan{transform:translateY(-8px) scale(1.9)}
+.deckspot.no .fanbtn:hover .fan{transform-origin:15% 100%}.deckspot.yes .fanbtn:hover .fan{transform-origin:85% 100%}
+.deckspot .lab{display:flex;align-items:center;gap:6px;font:600 12px var(--mono);color:var(--t2);font-variant-numeric:tabular-nums}
+.deckspot.yes .lab{color:var(--accent)}
+.deckspot.bump .fan{animation:bump .35s var(--ease)}
+@keyframes bump{40%{transform:translateY(4px) scale(1.05)}}
+.turn{position:absolute;bottom:clamp(30px,6vh,52px);left:50%;transform:translateX(-50%);z-index:6;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--t2);transition:color .2s,border-color .2s}
+.turn:hover{color:var(--accent);border-color:var(--accent)}
+.keys{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font:500 11px var(--mono);color:var(--t3);white-space:nowrap}
+.flyer{position:fixed;z-index:60;pointer-events:none;border-radius:18px;transform-style:preserve-3d}
+.flyer .fside{position:absolute;inset:0;border-radius:inherit;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flyer .fside.b{transform:rotateY(180deg)}
+
+/* everything you missed */
+.sheet{position:absolute;inset:auto 0 0 0;z-index:30;max-height:78%;display:grid;grid-template-rows:auto 1fr;background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;box-shadow:0 -20px 50px oklch(0 0 0 / .3);width:min(680px,100%);margin:0 auto;transform:translateY(102%);transition:transform .4s var(--ease)}
+.sheet.show{transform:none}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.sheet-h b{font-size:16px;display:flex;align-items:center;gap:8px}
+.sheet ol{list-style:none;margin:0;padding:8px 10px 18px;overflow:auto;display:grid;gap:6px}
+.sheet li{display:grid;gap:4px;padding:12px;border-radius:12px;background:var(--raised)}
+.sheet li b{font-size:14.5px;font-weight:600}
+.sheet li span{font-size:13.5px;color:var(--accent)}
+.sheet li small{font:500 10.5px var(--mono);color:var(--t3)}
+.sheet .go{justify-self:center;margin:4px 0 14px}
+.scrim{position:absolute;inset:0;z-index:29;background:oklch(0 0 0 / .35);opacity:0;transition:opacity .3s}
+.scrim.show{opacity:1}
+/* finish */
+.done-card{position:absolute;inset:0;z-index:5;border-radius:18px;background:var(--panel);border:1px solid var(--line);display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:20px}
+.done-card h3{margin:0;font-size:22px}
+.done-card .tally{display:flex;gap:26px;font:600 15px var(--mono)}
+.done-card .tally span{display:flex;align-items:center;gap:6px}
+.done-card .row-b{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.btn.solid{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:620px){.keys{display:none}.mode-grid{grid-template-columns:1fr}.face h3{padding:10px 26px}.face .hint{font-size:11px}.x-old-holes{display:none}}
+@media (hover:none){.fanbtn:hover .fan{transform:none}}
+
+@media (max-width:620px){
+  .crew{position:relative;right:auto;top:auto;margin:-8px 0 10px 58px;width:max-content}
+  .crewpop{right:auto;left:10px;top:auto}
+  .head{grid-template-columns:40px minmax(0,1fr) auto}
+  .num{width:40px;height:40px}
+  .tiles{gap:8px;padding:4px 10px 14px 10px}
+  .tile{padding:14px 6px 10px}
+  .th{width:92px}
+  .stage{height:66px}
+  .quiz-thumb{padding:6px 7px;gap:5px}
+  .quiz-thumb__sheet,.quiz-thumb__sheet span{gap:3px}
+  .quiz-thumb__sheet i{width:7px;height:7px}
+  .quiz-thumb__count b{font-size:15px}
+  .stamp{width:30px;height:30px;font-size:10px;right:-12px;top:-14px}
+
+  .wp{width:22px;height:22px;font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <div>
+    <div class="back">‹ Flight Deck</div>
+    <h1>Module 13d</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <section class="card" aria-label="Module 13d">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="lessons" aria-selected="false">Lessons</button>
+      <button class="tab" role="tab" data-tab="library" aria-selected="true">Library</button>
+      <label class="search"><span aria-hidden="true">⌕</span><input id="q" placeholder="Search topics, ATA or page" aria-label="Search"></label>
+    </div>
+    <div class="route" id="route" aria-label="Batches in this module"></div>
+    <div id="body"></div>
+  </section>
+</div>
+
+<div class="deck" id="deck" role="dialog" aria-modal="true" aria-label="Study cards" hidden></div>
+<script>
+// Example data. Batches 1 and 6 are live on the site; "Theory of flight" is a placeholder name for batch 1.
+// Batch 1 is shown part-done and batch 6 fresh, so every icon state is visible.
+// got = dots filled on the quiz sheet (out of 9) from the last attempt; seen = cards done.
+const B=[
+ {n:1,topic:"Theory of flight",ref:"13.1",pages:"1–68",pp:26,q:40,cards:170,seen:120,saved:0,score:82,got:7,downloaded:false,marks:0},
+ {n:2},{n:3},{n:4},{n:5},
+ {n:6,topic:"Instruments",ref:"ATA 31",pages:"352–491",pp:65,q:40,cards:416,seen:1,saved:3,score:null,downloaded:true,marks:2,here:true},
+ {n:7},{n:8},{n:9},{n:10}
+];
+// Thumbnails: same markup as the live module screen
+const PENCIL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg>';
+const TICK='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+const T={
+ // quiz: the answer sheet shows your last attempt; best score is stamped on it. Not sat = blank sheet + pencil
+ quiz:b=>{
+   const sat=b.score!=null, dots=Array.from({length:9},(_,i)=>`<i class="${sat&&i<b.got?"on":""}"></i>`);
+   const sheet=`<span class="quiz-thumb__sheet">${[0,3,6].map(k=>`<span>${dots.slice(k,k+3).join("")}</span>`).join("")}</span>`;
+   return `<span class="th quiz-thumb ${sat?"sat":"blank"}" aria-hidden="true">${sheet}<span class="quiz-thumb__count">${sat?`<b data-count="${b.q}">${b.q}</b>Qs`:`<span class="pencil">${PENCIL}</span><b data-count="${b.q}">${b.q}</b>Qs`}</span>${sat?`<span class="stamp" data-count="${b.score}">${b.score}</span>`:""}</span>`},
+
+ // cards: always fanned; the top card shows how many you've done out of the total, with a meter
+ cards:b=>`<span class="th cards-thumb" aria-hidden="true"><i></i><i></i><i></i><span class="done"><b data-count="${b.seen}">${b.seen}</b><small>/${b.cards}</small></span></span>`,
+ paper:b=>{
+   const q=n=>`<span class="q"><b>${n}</b><span><i></i><em><u></u><u></u><u></u></em></span></span>`;
+   return `<span class="th pg" aria-hidden="true"><span class="pp b2"></span><span class="pp b1"></span><span class="top"><span class="qb">Q-BANK</span>${q(1)}${q(2)}${q(3)}</span><span class="count"><span data-count="${b.pp}">${b.pp}</span><small>pages</small></span></span>`}};
+const CHEV='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const PLAY='<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>';
+const open=B.filter(b=>b.topic), soon=B.filter(b=>!b.topic);
+const next=soon.find(b=>b.n>Math.max(...open.map(o=>o.n)))||soon[0];
+let tab="library", expanded=6, query="";
+const $=s=>document.querySelector(s), pad=n=>String(n).padStart(2,"0");
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+$("#sub").textContent=`${open.length} of ${B.length} batches open · ${open.reduce((a,b)=>a+b.q,0)} quiz questions · ${open.reduce((a,b)=>a+b.cards,0)} cards`;
+$("#route").innerHTML=B.map(b=>`<button class="wp ${b.topic?"open":""} ${b.here?"here":""}" data-wp="${b.n}" title="Batch ${b.n}${b.topic?" · "+b.topic:" · on the way"}">${b.n}</button>`).join("");
+const match=b=>{const q=query.toLowerCase();return !q||[b.topic,b.ref,b.pages,"batch "+b.n].join(" ").toLowerCase().includes(q)};
+
+/* ---- Crew on the quiz: the stamps of everyone who has sat a batch's quiz ---- */
+// Example classmates for the demo (callsign, 3-character stamp code, ink hue). Real data: each student's own stamp from the Licence.
+const PEOPLE=[["KITE","K1T",254],["HALO","H4L",300],["TORQUE","TQ7",25],["SPARROW","SPR",150],["RIVET","RV8",70],["NOVA","N0V",330],["ATLAS","ATL",200],["EMBER","EMB",40],["ORBIT","0RB",270],["FALCON","FLC",230],["LUNA","LN4",310],["BOLT","B0T",95],["MAPLE","MPL",15],["ZULU","ZU1",175]];
+const ME=["YOU","B26",null];
+const ATTEMPTS={1:[ME,...PEOPLE], 6:PEOPLE.slice(0,4)};
+const CAP=11;
+function miniStamp(p,size){
+  const [name,code,h]=p, ink=h==null?"var(--accent)":`oklch(.66 .15 ${h})`;
+  let d="";const N=28;for(let i=0;i<=N*2;i++){const a=i/(N*2)*Math.PI*2,r=i%2?44:48;d+=(i?"L":"M")+(50+Math.cos(a)*r).toFixed(1)+" "+(50+Math.sin(a)*r).toFixed(1)}
+  return `<svg class="ms" width="${size}" height="${size}" viewBox="0 0 100 100" style="color:${ink}" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="var(--panel)"/><path d="${d}Z" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" stroke-width="3"/><text x="50" y="59" text-anchor="middle" font-family="Geist Mono,monospace" font-weight="600" font-size="25" fill="currentColor">${code}</text></svg>`;
+}
+function crewStrip(b){
+  const list=ATTEMPTS[b.n]||[];
+  if(!list.length) return `<span class="crew none" title="No one has sat this quiz yet"><span class="ghoststamp"></span></span>`;
+  const cap=matchMedia('(max-width:620px)').matches?6:CAP; // up to 11 on the row (6 on phones), then +N
+  const shown=list.slice(0,cap), more=list.length-shown.length;
+  return `<button class="crew" data-crew="${b.n}" aria-label="${list.length} ${list.length===1?"person has":"people have"} sat this quiz. Show them">${shown.map((p,k)=>`<span class="cs" style="--i:${k}">${miniStamp(p,26)}</span>`).join("")}${more?`<span class="cmore">+${more}</span>`:""}</button>`;
+}
+function openCrew(n,anchor){
+  closeCrew();
+  const list=ATTEMPTS[n]||[]; if(!list.length)return;
+  const pop=document.createElement("div"); pop.className="crewpop"; pop.setAttribute("role","dialog"); pop.setAttribute("aria-label","Who has sat this quiz");
+  pop.innerHTML=`<div class="crewgrid">${list.map((p,k)=>`<button class="cp" style="--i:${k}" data-profile="${p[0]}" aria-label="Open ${p[0]==="YOU"?"your":p[0]+"'s"} profile">${miniStamp(p,44)}<span>${p[0]==="YOU"?"You":p[0]}</span></button>`).join("")}</div>`;
+  anchor.closest(".row").append(pop);
+  requestAnimationFrame(()=>pop.classList.add("show"));
+}
+function closeCrew(){document.querySelectorAll(".crewpop").forEach(p=>{p.classList.remove("show");setTimeout(()=>p.remove(),250)})}
+
+/* ---- Library: a row per batch; its quiz, cards and paper live inside it ---- */
+function row(b){
+  return `<div class="row ${b.here?"here":""}" id="b${b.n}" data-row="${b.n}">
+    <button class="head" data-n="${b.n}" aria-expanded="false">
+      <span class="num">${pad(b.n)}</span>
+      <span style="min-width:0"><div class="title">${b.topic}</div><div class="meta">Batch ${b.n} · ${b.ref} · pp ${b.pages}</div></span>
+      <span class="chev" aria-hidden="true">${CHEV}</span>
+    </button>
+    ${crewStrip(b)}
+    <div class="drawer"><div><div class="tiles">
+      <button class="tile" data-quiz="${b.n}" aria-label="Quiz, ${b.q} questions, ${b.score==null?"not sat yet":"best "+b.score+"%"}"><span class="stage">${T.quiz(b)}</span><strong>Quiz</strong></button>
+      <button class="tile" data-deck="${b.n}" aria-label="Study cards, ${b.seen} of ${b.cards} done"><span class="stage">${T.cards(b)}</span><strong>Cards</strong></button>
+      <button class="tile" data-paper="${b.n}" aria-label="Question bank, PDF, ${b.pp} pages, download"><span class="stage">${T.paper(b)}</span><strong>Question bank</strong></button>
+    </div></div></div>
+  </div>`;
+}
+function library(){
+  const rows=open.filter(match).map(row).join("");
+  if(query) return rows?`<div class="list">${rows}</div>`:`<div class="empty">Nothing in 13d matches “${query}”.</div>`;
+  return `<div class="list">${rows}
+    <div class="row soon"><div class="head"><span class="num">${pad(next.n)}</span><span class="title">Batch ${next.n}</span><span class="flag">Next to land</span></div></div>
+  </div><div class="more">${soon.length-1} more batches on the way.</div>`;
+}
+// open / close without re-rendering, so the animation plays
+function setOpen(n){
+  document.querySelectorAll(".row[data-row]").forEach(r=>{
+    const on=+r.dataset.row===n, was=r.classList.contains("on");
+    r.classList.toggle("on",on); r.querySelector(".head").setAttribute("aria-expanded",on);
+    r.querySelectorAll(".bar i").forEach(i=>i.style.width=on?i.dataset.w+"%":"0");
+    if(on&&!was) countUp(r);
+  });
+}
+function countUp(r){
+  r.querySelectorAll("[data-count]").forEach(el=>{
+    const end=+el.dataset.count; if(reduced){el.textContent=end;return}
+    const t0=performance.now()+300, d=700;
+    const step=t=>{const p=Math.min(1,Math.max(0,(t-t0)/d));el.textContent=Math.round(end*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(step)};
+    el.textContent=0; requestAnimationFrame(step);
+  });
+}
+
+/* ---- Lessons: no set plan, just a player saying videos are coming ---- */
+function lessons(){
+  return `<div class="lessons">
+    <div class="player">
+      <span class="grain"></span>
+      <span class="rec"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11" rx="1.5"/><g class="arm"><path d="M3 9l1.2-4.6L21 4l-.8 3.2z"/><path d="M8 4.3L6.6 8.6M13 4.2l-1.4 4.4M18 4.1l-1.4 4.4"/></g></svg>IN PRODUCTION</span>
+      <div class="mid"><span class="playbtn">${PLAY}</span><h3>Video lessons are on the way</h3><p>They'll appear here as they're made.</p></div>
+      <div class="ctrl" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg><span class="track"></span><span>--:--</span></div>
+    </div>
+    <div class="foot"><span>Everything for 13d is in the Library for now.</span><button class="btn" data-tab-go="library">Open the Library</button></div>
+  </div>`;
+}
+
+function render(){
+  $("#route").hidden=tab!=="library";
+  $("#body").innerHTML=tab==="lessons"?lessons():library();
+  if(tab==="library") requestAnimationFrame(()=>requestAnimationFrame(()=>setOpen(expanded)));
+}
+function setTab(t){
+  tab=t;
+  document.querySelectorAll("[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
+  $("#q").placeholder=t==="lessons"?"Search lessons":"Search topics, ATA or page";
+  render();
+}
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)setTab(b.dataset.tab)});
+document.querySelector(".card").addEventListener("click",e=>{
+  const wp=e.target.closest("[data-wp]");
+  if(wp){const n=+wp.dataset.wp;if(!B[n-1].topic)return;expanded=n;setOpen(n);document.getElementById("b"+n)?.scrollIntoView({behavior:"smooth",block:"center"});return}
+  const go=e.target.closest("[data-tab-go]"); if(go){setTab(go.dataset.tabGo);return}
+  const cr=e.target.closest("[data-crew]"); if(cr){const isOpen=cr.closest(".row").querySelector(".crewpop.show");if(isOpen)closeCrew();else openCrew(+cr.dataset.crew,cr);return}
+  if(e.target.closest("[data-profile]"))return; // live site: opens that student's profile
+  if(!e.target.closest(".crewpop"))closeCrew();
+  const dk=e.target.closest("[data-deck]"); if(dk){openDeck(+dk.dataset.deck);return}
+  const h=e.target.closest(".head[data-n]"); if(h){const n=+h.dataset.n;expanded=expanded===n?null:n;setOpen(expanded)}
+});
+/* ---- Study cards session ---- */
+// Example cards for the demo, written from the batch topics. The real deck comes from the question bank.
+const DECKS={
+ 1:[["What is the angle of attack?","The angle between the wing chord line and the relative airflow"],
+    ["What happens to stall speed when aircraft weight increases?","It increases"],
+    ["Which force acts opposite to drag?","Thrust"],
+    ["What does increasing camber do to lift at a given angle of attack?","It increases lift"]],
+ 6:[["To which group of instruments does the attitude director indicator (ADI) belong?","Gyroscopic flight instruments"],
+    ["Which pressure does the altimeter use?","Static pressure only"],
+    ["What does the airspeed indicator actually measure?","The difference between pitot (total) and static pressure"],
+    ["How does a vertical speed indicator sense a climb or descent?","Through the rate of change of static pressure across a calibrated leak"],
+    ["Which three things set the rigidity of a gyro?","Rotor mass, rotor speed and the radius at which the mass sits"]]};
+// what the student already has on each batch (demo): cards missed last time and cards saved
+const MEM={1:{missed:new Set([1]),saved:new Set()},6:{missed:new Set([2]),saved:new Set([4])}};
+const IC={x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ save:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+ again:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+ ok:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
+ turn:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+ tap:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v1M17 11a2 2 0 0 1 4 0v4a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L5 15a2 2 0 0 1 3-2.5l1 1"/></svg>',
+ all:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="7" width="13" height="13" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
+ miss:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+ shuf:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>'};
+let S=null;
+const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+function openDeck(n){
+  S={n,b:B[n-1],cards:DECKS[n],mem:MEM[n]};
+  const d=$("#deck"); d.hidden=false; document.body.style.overflow="hidden";
+  startMode("all"); requestAnimationFrame(()=>d.classList.add("show"));
+}
+function startMode(mode){
+  const all=S.cards.map((_,k)=>k);
+  const q=mode==="missed"?[...S.mem.missed]:mode==="saved"?[...S.mem.saved]:all;
+  // switching sets keeps what you've already sorted; only the cards left to study change
+  const fresh=!S.yesDeck;
+  Object.assign(S,{stage:"run",mode,queue:q,total:q.length,pos:0,menu:false},fresh?{got:0,again:0,cleared:new Set(),back:new Set(),yesDeck:[],noDeck:[]}:{});
+  drawDeck();
+}
+function setMenu(on){
+  S.menu=on; const sp=$("#deck .setpick"); if(!sp)return;
+  sp.classList.toggle("open",on);
+  sp.querySelector('[data-dk="sets"]').setAttribute("aria-expanded",on);
+  sp.querySelectorAll("[data-mode]").forEach(b=>b.tabIndex=on?0:-1);
+}
+// switching set: the current card slides back into the pile, then the new set is dealt
+function switchSet(mode){
+  setMenu(false);
+  const fc=$("#fc");
+  if(!fc||matchMedia("(prefers-reduced-motion: reduce)").matches){startMode(mode);return}
+  fc.animate([{transform:"none",opacity:1},{transform:"translateY(18px) scale(.94)",opacity:0}],{duration:240,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>startMode(mode);
+}
+function closeDeck(){
+  const d=$("#deck"); d.classList.remove("show"); document.body.style.overflow="";
+  if(S&&S.cleared) S.b.seen=Math.min(S.b.cards,S.b.seen+S.got+S.again);
+  setTimeout(()=>{d.hidden=true;d.innerHTML="";S=null;render()},300);
+}
+// a fanned deck: it widens as cards are added; each mini card carries its question so you can peek
+function fan(kind){
+  const list=kind==="yes"?S.yesDeck:S.noDeck, n=list.length, shown=list.slice(-7), m=shown.length;
+  const spread=Math.min(14*(m-1),80), step=m>1?spread/(m-1):0;
+  const fresh=S.last===kind;
+  const cards=m?shown.map((idx,k)=>`<i class="mc ${fresh&&k===m-1?"drop":""}" style="--r:${(-spread/2+k*step).toFixed(1)}deg;transform:rotate(var(--r))"><span>${S.cards[idx][0]}</span></i>`).join(""):'<i class="slot"></i>';
+  return `<div class="deckspot ${kind}"><button class="fanbtn" data-list="${kind}" ${n?"":"disabled"} aria-label="Open the ${kind==="yes"?"Got it":"Not yet"} cards, ${n}"><span class="fan">${cards}</span><span class="lab">${kind==="yes"?IC.ok:IC.again}${n}</span></button></div>`;
+}
+function drawDeck(){
+  const {b,cards,mem}=S;
+  const {queue,pos}=S, done=pos>=queue.length, idx=queue[pos];
+    // the set you're studying: a small deck button on the card; it opens three little decks to pick up
+  const SETS=[["all","All",cards.length],["missed","Missed",mem.missed.size],["saved","Saved",mem.saved.size]];
+  const curSet=SETS.find(x=>x[0]===S.mode);
+  const minifan=n=>{const m=Math.max(1,Math.min(n,4));return Array.from({length:m},(_,k)=>`<i style="transform:rotate(${(m>1?-12+k*24/(m-1):0).toFixed(1)}deg)"></i>`).join("")};
+  // the current set is shown first; tapping it spreads the other two decks out beside it
+  const ordered=[curSet,...SETS.filter(x=>x!==curSet)];
+  const setPick=`<div class="setpick ${S.menu?"open":""}" role="group" aria-label="Which cards">${ordered.map(([id,label,n],k)=>`<button class="pk ${S.mode===id?"on":""}" style="--k:${k};--o:${k===0?1:k===1?0:2}" ${k===0?`data-dk="sets" aria-expanded="${!!S.menu}" aria-label="Studying ${label} cards, ${n}. Change"`:`data-mode="${id}" ${n?"":"disabled"} aria-label="Study ${label} cards, ${n}" tabindex="${S.menu?0:-1}"`}><span class="mfan">${n?minifan(Math.max(3,n)):'<i class="ghost"></i>'}</span><b>${label}</b><span>${n}</span></button>`).join("")}</div>`;
+  const corner=`<button class="cbtn x" data-dk="close" aria-label="Close">${IC.x}</button><button class="cbtn sv" data-dk="save" aria-label="Save this card" aria-pressed="${mem.saved.has(idx)}">${IC.save}</button>`;
+  $("#deck").innerHTML=`
+    <div class="table">
+    ${setPick}
+    <div class="pile"><span class="ul"></span><span class="ul"></span>
+      ${done?`<div class="done-card"><button class="cbtn x" data-dk="close" aria-label="Close">${IC.x}</button><h3>Deck cleared</h3><div class="tally"><span style="color:var(--accent)">${IC.ok}${S.got}</span><span style="color:var(--t2)">${IC.again}${S.again}</span></div>
+        <div class="row-b"><button class="btn" data-dk="close">Back to the Library</button></div></div>`
+      :`<span class="cshadow" id="cshadow"></span><div class="fc enter" id="fc">
+        <span class="verdict yes">GOT IT</span><span class="verdict no">NOT YET</span>
+        <div class="in">
+          <div class="face">${corner}<span class="no">${pos+1} / ${queue.length}</span>
+            <h3>${cards[idx][0]}</h3><span class="sheen"></span></div>
+          <div class="face back">${corner}<span class="no">${pos+1} / ${queue.length}</span>
+            <h3>${cards[idx][1]}</h3><span class="sheen"></span></div>
+        </div></div>
+      <button class="side no" data-dk="no" aria-label="Not yet"><span class="ring">${IC.again}</span><b>Not yet</b></button>
+      <button class="side yes" data-dk="yes" aria-label="Got it"><span class="ring">${IC.ok}</span><b>Got it</b></button>`}
+    </div>
+    ${fan("no")}${done?"":`<button class="turn" data-dk="turn" aria-label="Turn over">${IC.turn}</button>`}${fan("yes")}
+    </div>`;
+  if(!done) dragify($("#fc"));
+}
+function openList(kind){
+  const list=(kind==="yes"?S.yesDeck:S.noDeck).slice().reverse();
+  if(!list.length)return;
+  const el=document.createElement("div");el.innerHTML=`<div class="scrim" data-dk="sheet-x"></div><div class="sheet" role="dialog" aria-label="${kind==="yes"?"Got it":"Not yet"} cards">
+    <div class="sheet-h"><b>${kind==="yes"?IC.ok+" Got it":IC.again+" Not yet"} · ${list.length}</b><button class="icon-btn" data-dk="sheet-x" aria-label="Close">${IC.x}</button></div>
+    <ol>${list.map(k=>`<li><small>No. ${String(k+1).padStart(4,"0")}</small><b>${S.cards[k][0]}</b><span>${S.cards[k][1]}</span></li>`).join("")}</ol>
+  </div>`;
+  $("#deck").append(...el.children);
+  requestAnimationFrame(()=>{$("#deck .sheet").classList.add("show");$("#deck .scrim").classList.add("show")});
+}
+function closeMissed(){const sh=$("#deck .sheet"),sc=$("#deck .scrim");if(!sh)return;sh.classList.remove("show");sc.classList.remove("show");setTimeout(()=>{sh.remove();sc.remove()},400)}
+// flick and spin: the card lifts, spins over in the air and lands face-down on its deck
+function answer(yes,fromDx=0){
+  if(!S||S.stage!=="run")return;
+  const fc=$("#fc"); if(!fc||fc.dataset.busy)return; fc.dataset.busy=1;
+  const idx=S.queue[S.pos];
+  if(yes){S.got++;S.cleared.add(idx);S.mem.missed.delete(idx);S.yesDeck.push(idx)}
+  else{S.again++;S.mem.missed.add(idx);S.noDeck.push(idx)}
+  const done=()=>{S.pos++;S.last=yes?"yes":"no";drawDeck();S.last=null;const h=document.querySelector(`.deckspot.${yes?"yes":"no"}`);if(h){h.classList.add("bump")}};
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches){done();return}
+  const r=fc.getBoundingClientRect(), target=document.querySelector(`.deckspot.${yes?"yes":"no"} .fan`).getBoundingClientRect();
+  const fl=document.createElement("div"); fl.className="flyer";
+  Object.assign(fl.style,{left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px"});
+  const front=fc.querySelector(fc.classList.contains("flipped")?".face.back":".face:not(.back)").cloneNode(true);
+  front.classList.add("fside");front.style.visibility="visible";front.style.transform="none";front.querySelector(".sheen")?.remove();
+  const back=document.createElement("div");back.className="fside b cardback";
+  fl.append(front,back); document.body.append(fl); fc.style.visibility="hidden";
+  const s=(target.width*.5)/r.width, dx=target.left+target.width/2-(r.left+r.width/2), dy=target.top+target.height*.55-(r.top+r.height/2), dir=yes?1:-1;
+  const a=fl.animate([
+    {transform:`translate(${fromDx}px,0) rotateZ(${fromDx/18}deg)`},
+    {transform:`translate(${fromDx*.6+dir*30}px,-40px) rotateZ(${dir*8}deg) rotateY(${dir*40}deg) scale(1.04)`,offset:.22},
+    {transform:`translate(${dx}px,${dy}px) rotateZ(${dir*(360+10)}deg) rotateY(${dir*180}deg) scale(${s})`}
+  ],{duration:640,easing:"cubic-bezier(.5,0,.2,1)",fill:"forwards"});
+  a.onfinish=()=>{fl.remove();done()};
+}
+// the reveal: the card lifts off the table, turns with a slight tilt, light sweeps across it, and it settles with a little overshoot
+function flip(){
+  const fc=$("#fc"); if(!fc||fc.dataset.busy||fc.dataset.turning)return;
+  const inn=fc.querySelector(".in"), on=!fc.classList.contains("flipped"), from=on?0:180, to=on?180:0, d=on?1:-1;
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches){inn.style.transform=`rotateY(${to}deg)`;fc.classList.toggle("flipped",on);return}
+  fc.dataset.turning=1;
+  inn.animate([
+    {transform:`rotateY(${from}deg)`},
+    {transform:`translateZ(70px) translateY(-10px) rotateY(${from+d*70}deg) rotateX(7deg) rotateZ(${-d*2}deg)`,offset:.38},
+    {transform:`translateZ(40px) translateY(-6px) rotateY(${from+d*150}deg) rotateX(3deg) rotateZ(${-d*.5}deg)`,offset:.66},
+    {transform:`rotateY(${to+d*6}deg)`,offset:.86},
+    {transform:`rotateY(${to}deg)`}
+  ],{duration:720,easing:"cubic-bezier(.3,.1,.25,1)",fill:"forwards"}).onfinish=a=>{inn.style.transform=`rotateY(${to}deg)`;a.target.cancel?.();delete fc.dataset.turning};
+  fc.querySelectorAll(".sheen").forEach(sh=>sh.animate([{opacity:0,backgroundPosition:"120% 0"},{opacity:1,offset:.45},{opacity:0,backgroundPosition:"-30% 0"}],{duration:720,easing:"ease-in-out"}));
+  $("#cshadow")?.animate([{transform:"scale(1)",opacity:1},{transform:"scale(.82) translateY(10px)",opacity:.45,offset:.4},{transform:"scale(1)",opacity:1}],{duration:720,easing:"ease-in-out"});
+  fc.classList.toggle("flipped",on);
+}
+function dragify(fc){
+  let x0=null,dx=0,moved=false;
+  fc.addEventListener("pointerdown",e=>{if(e.target.closest(".cbtn"))return;if(S.menu){setMenu(false);return}x0=e.clientX;dx=0;moved=false;fc.setPointerCapture(e.pointerId);fc.classList.add("drag")});
+  fc.addEventListener("pointermove",e=>{if(x0==null)return;dx=e.clientX-x0;if(Math.abs(dx)>6)moved=true;
+    fc.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;
+    fc.querySelector(".verdict.yes").style.opacity=Math.max(0,dx/120);fc.querySelector(".verdict.no").style.opacity=Math.max(0,-dx/120)});
+  const end=()=>{if(x0==null)return;fc.classList.remove("drag");x0=null;
+    if(Math.abs(dx)>110){const d=dx;fc.style.transform="";answer(d>0,d)}else{fc.style.transform="";fc.querySelectorAll(".verdict").forEach(v=>v.style.opacity=0);if(!moved)flip()}};
+  fc.addEventListener("pointerup",end);fc.addEventListener("pointercancel",end);
+}
+$("#deck").addEventListener("click",e=>{
+  const md=e.target.closest("[data-mode]"); if(md){switchSet(md.dataset.mode);return}
+  if(S&&S.menu&&!e.target.closest(".setpick")){setMenu(false)}
+  const ls=e.target.closest("[data-list]"); if(ls){openList(ls.dataset.list);return}
+  const k=e.target.closest("[data-dk]");if(!k)return;const a=k.dataset.dk;
+  if(a==="close")closeDeck();
+  if(a==="yes")answer(true);
+  if(a==="no")answer(false);
+  if(a==="sets"){setMenu(!S.menu)}
+  if(a==="sheet-x")closeMissed();
+  if(a==="turn")flip();
+  if(a==="save"&&S.stage==="run"){const idx=S.queue[S.pos];S.mem.saved.has(idx)?S.mem.saved.delete(idx):S.mem.saved.add(idx);document.querySelectorAll('#fc [data-dk="save"]').forEach(b=>b.setAttribute("aria-pressed",S.mem.saved.has(idx)))}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.querySelector(".crewpop.show")){closeCrew();return}if($("#deck").hidden)return;
+  if(e.key==="Escape"){if($("#deck .sheet"))closeMissed();else if(S&&S.menu){setMenu(false)}else closeDeck();return}
+  if(!S||S.stage!=="run")return;
+  if(e.key===" "){e.preventDefault();flip()}
+  if(e.key==="ArrowRight")answer(true);
+  if(e.key==="ArrowLeft")answer(false);
+});
+
+$("#q").oninput=e=>{query=e.target.value.trim();if(tab==="library")render()};
+render();
+</script>
+
+```

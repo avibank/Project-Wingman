@@ -19,7 +19,7 @@ import { stampOf } from "../../lib/stamp.js";
 import { fetchFinishers } from "../../lib/board.js";
 import { tilt } from "./Leaderboard.jsx";
 import "./quiz-stamps.css";
-import "./library/batches.css";
+import "./library/port.css";
 /* THE PORTED LIBRARY, behind `library.batches` while the rest of the module
    screen lands (2026-10-06). When it is on it replaces the three shelves
    entirely — it is not an addition to them. */
@@ -140,6 +140,9 @@ export default function LibraryTab({
      read out of. */
   asBatches = false, totalBatches = null, progress = null, currentChapterId = null,
   onOpenCards = null, onOpenDownload = null,
+  /* The module's own name, for the ported search's empty line, and the door to
+     a classmate from a row's stamp strip. */
+  moduleName = null, onOpenPerson = null,
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
 
@@ -227,20 +230,28 @@ export default function LibraryTab({
        Scoping the PORTED rules was never going to be enough; what matters is
        that the app's own rules cannot reach in. The exam screen solved the
        same problem the same way. */
+    /* NO WRAPPER OF ITS OWN. `wm-port` is on `PortPanel` now — one element
+       above the card, so the demo's own `.card` rule can reach it — and that
+       wrapper covers the tab strip, the route and both tab bodies, which is
+       what §4.1 asks for. A second `wm-port` here would be harmless but would
+       also be the only clue left that the scope used to start lower down. */
     return (
-      /* `wm-port` isolates the ported screen from the app's own control
-         styling — see the block at the foot of batches.css. */
-      <div className="libtab wm-port">
-        <LibraryBatches
-          batches={batches}
-          total={totalBatches || null}
-          here={hereBatch(batches, currentChapterId)}
-          query={query}
-          onQuiz={(b) => onOpenQuiz?.(b.chapter)}
-          onCards={(b) => onOpenCards?.(b.chapter)}
-          onPaper={(b) => onOpenDownload?.(b.paper)}
-        />
-      </div>
+      <LibraryBatches
+        batches={batches}
+        total={totalBatches || null}
+        here={hereBatch(batches, currentChapterId)}
+        query={query}
+        moduleName={moduleName}
+        me={me}
+        /* Who has sat each quiz, for the row's stamp strip (§5, migration
+           0038). The same one lookup the shelves' finisher line uses — one
+           call for the whole tab rather than one per row. */
+        finishers={finishers}
+        onQuiz={(b) => onOpenQuiz?.(b.chapter)}
+        onCards={(b) => onOpenCards?.(b.chapter)}
+        onPaper={(b) => onOpenDownload?.(b.paper)}
+        onProfile={(p) => onOpenPerson?.(p)}
+      />
     );
   }
 
