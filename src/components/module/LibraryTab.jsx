@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LibraryStudyCards from "../../features/bookmarks/LibraryStudyCards.jsx";
 import { QuizThumb } from "./RouteTab.jsx";
 import "./ref-module.css";
@@ -23,10 +23,24 @@ import "./library/batches.css";
 /* THE PORTED LIBRARY, behind `library.batches` while the rest of the module
    screen lands (2026-10-06). When it is on it replaces the three shelves
    entirely — it is not an addition to them. */
-/* ITS OWN CHUNK. It is behind a flag, it renders on one tab of one screen,
-   and its stylesheet is the whole ported design — in the entry it put the
-   bundle 6KB over its budget. */
-const LibraryBatches = lazy(() => import("./library/LibraryBatches.jsx"));
+/* NOT ITS OWN CHUNK ANY MORE, AND THAT IS THE HITCH FIXED (owner, 2026-10-07:
+   "the libafy hithes before it loads always").
+   ---------------------------------------------------------------------------
+   It was lazy for a good reason that has since gone away: its stylesheet is
+   the whole ported design and in the ENTRY it put the bundle 6KB over budget.
+   But the sheet moved into this file on 2026-10-06 (see `batches.css` above,
+   and the PR that stopped it being a file that can fail alone), and this file
+   is part of the MODULE chunk — which has been its own 36KB chunk since the
+   static-import leak was found. So the 6KB of JS left behind the lazy boundary
+   buys nothing in the entry and costs a network round trip on EVERY open of
+   the Library, with `fallback={null}` for a blank in the meantime. Blank, then
+   pop, every time, which is exactly what a hitch is.
+
+   A static import here folds it into a chunk that is already being downloaded
+   when the module screen opens, so the tab paints in the same frame it is
+   pressed. `check:bundle` still holds the entry: if this ever reaches it, the
+   budget fails and names it. */
+import LibraryBatches from "./library/LibraryBatches.jsx";
 import { batchesOf, hereBatch } from "./library/batchModel.js";
 import { seenCount } from "../../features/bookmarks/cardsSeen.js";
 
@@ -217,7 +231,6 @@ export default function LibraryTab({
       /* `wm-port` isolates the ported screen from the app's own control
          styling — see the block at the foot of batches.css. */
       <div className="libtab wm-port">
-        <Suspense fallback={null}>
         <LibraryBatches
           batches={batches}
           total={totalBatches || null}
@@ -227,7 +240,6 @@ export default function LibraryTab({
           onCards={(b) => onOpenCards?.(b.chapter)}
           onPaper={(b) => onOpenDownload?.(b.paper)}
         />
-        </Suspense>
       </div>
     );
   }

@@ -142,20 +142,78 @@ export function startTour({
     return dock === "top" ? { top: ch + gap + M, bot: v.h - M } : { top: M, bot: v.h - ch - gap - M };
   }
 
-  function plan(el) {
+  /* THE PAGE DOES NOT MOVE TO FOCUS. THE LIGHT DOES.
+     ---------------------------------------------------------------------------
+     Owner, 2026-10-07: "never crop to focus show the whole screen at all times
+     only use the highlight box to focus on stuff."
+
+     The handoff's plan CENTRED its target in the room the card leaves, so every
+     step scrolled whether it needed to or not — and `want` is a position, not a
+     constraint, so a target already in plain sight was still dragged to the
+     middle of the free area. On a tall screen that reads as a crop: the lesson's
+     two steps scrolled the video off the top and left a close-up of one panel,
+     which is the opposite of showing somebody where a thing is.
+
+     It also cost the smoothness. A scroll and the light are on two different
+     clocks — the browser's own smooth-scroll curve and the ring's CSS
+     transition — and they agree only at the two endpoints, so for the whole of
+     every move the box slid out of register with the thing it was framing. A
+     step that does not scroll cannot do that.
+
+     So MOVING THE CARD BEATS MOVING THE PAGE. `opts` offers each dock two
+     options — leave the scroll exactly where it is, or move it the LEAST amount
+     that brings the frame inside the free area — and a standing option wins
+     OUTRIGHT whenever it shows MIN_VIS of the target. Not on a tie-break, not
+     with a small penalty: both docks are tried standing still before any
+     scrolling is considered at all.
+
+     A THUMB ON THE SCALE WAS NOT ENOUGH, and that is the instructive part. The
+     first attempt kept `vis / th` as the score and subtracted 0.01 for moving.
+     The lesson's panel is taller than the room the card leaves, so docking at
+     the TOP showed 238px of it with no scroll while docking at the bottom and
+     scrolling 435px showed all of it — 0.46 against 0.98, which 0.01 does not
+     touch. The page still scrolled and the video still went off the top.
+     Visibility was never the thing to maximise. Stillness is. */
+
+  /* ENOUGH OF A TARGET TO BE A TARGET. A frame showing less than this is not
+     worth leaving the page still for — below it the step is pointing at a
+     sliver and the scroll earns its keep. It is the §12 hit area, which is the
+     smallest thing this app ever asks anybody to aim at. */
+  const MIN_VIS = 44;
+
+  function opts(el, dock) {
     const v = sc.view, r = rectOf(el), yNow = r.top - v.top, th = r.height + PAD * 2;
-    let best = null;
-    for (const dock of ["bottom", "top"]) {
-      const f = free(dock), room = f.bot - f.top;
-      const want = th < room ? f.top + (room - th) / 2 : f.top;
-      let st = sc.top + (yNow - PAD) - want;
-      st = Math.max(0, Math.min(sc.max, st));
+    const f = free(dock), room = f.bot - f.top, y0 = yNow - PAD;
+    const seen = (st) => {
       const y = yNow - (st - sc.top) - PAD;
-      const vis = Math.max(0, Math.min(y + th, f.bot) - Math.max(y, f.top));
-      const score = vis / th - (dock === "top" ? 0.02 : 0);
-      if (!best || score > best.score) best = { dock, st, score };
+      return Math.max(0, Math.min(y + th, f.bot) - Math.max(y, f.top));
+    };
+    let want = sc.top;
+    if (th <= room) {
+      if (y0 < f.top) want = sc.top - (f.top - y0);
+      else if (y0 + th > f.bot) want = sc.top + (y0 + th - f.bot);
+    } else if (y0 > f.top) {
+      want = sc.top + (y0 - f.top);
     }
-    return best;
+    const clamp = (n) => Math.max(0, Math.min(sc.max, n));
+    const still = clamp(sc.top), moved = clamp(want);
+    return {
+      still: { dock, st: still, vis: seen(still), moves: false },
+      moved: { dock, st: moved, vis: seen(moved), moves: Math.abs(moved - sc.top) > 1 },
+    };
+  }
+
+  function plan(el) {
+    const r = rectOf(el), th = r.height + PAD * 2;
+    const need = Math.min(th, MIN_VIS);
+    const o = ["bottom", "top"].map((d) => opts(el, d));
+    /* Bottom first, so a dock that keeps the card where it already is wins a
+       genuine tie — the card moving from foot to head is itself a change the
+       student has to re-read. */
+    const pick = (list) => list.reduce((a, c) => (c.vis > a.vis + 0.5 ? c : a));
+    const stand = o.map((x) => x.still).filter((x) => x.vis >= need);
+    if (stand.length) return pick(stand);
+    return pick(o.map((x) => x.moved));
   }
 
   function ringTo(el, dock, stFinal, instant) {
@@ -334,7 +392,13 @@ export function startTour({
         frame(true);
         observeTarget();
         const r = $(".dg-ring");
-        if (r && !reduce()) { r.style.transition = "opacity .35s ease .1s"; r.style.opacity = 1; }
+        /* NO DELAY. The curve and the duration are the handoff's and they
+           stay; the `.1s` in front of them was 100ms in which the light was
+           already in the right place and deliberately not being drawn. A
+           page change measured 1130ms from the press to rest, and about 460
+           of those were a dimmed screen with no light on it at all — dead
+           time before the movement, which is the thing that reads as slow. */
+        if (r && !reduce()) { r.style.transition = "opacity .35s ease"; r.style.opacity = 1; }
         else if (r) r.style.opacity = 1;
       });
     } else {

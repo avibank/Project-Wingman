@@ -30,6 +30,41 @@
   .app[data-tour-on="1"]:not(:has(.rr-app)) .bm-page { padding-bottom: 55vh; }
 }
 
+/* THE AMBIENT STOPS DRIFTING WHILE THE TOUR IS UP, AND THAT IS THE SMOOTHNESS.
+   -----------------------------------------------------------------------------
+   Owner, 2026-10-07: the transitions "arent smooth and seamless". Measured on
+   a production build rather than guessed at, and the engine turned out not to
+   be the problem: the light's own glide drops SIX frames across the whole
+   twenty-step walk. What drops the other 220 is the app sitting still.
+
+   Every screen the tour visits idles under 60fps because of the three light
+   layers Deck.jsx drifts behind it — the module screen 48fps and 9 dropped
+   frames in two seconds with NOTHING happening on it, the Library 50, the
+   lesson 48. The Flight Deck alone holds 60, which is why six rounds of
+   looking at the engine never found this. Pausing those three layers and
+   nothing else takes all three screens to a clean 60fps with 0 dropped.
+
+   Paused only while the tour is up, because the dim is 58% black over them and
+   a drift nobody can see through is cost for no picture. On the six `whole`
+   steps the dim is transparent and the wash is held still for a few seconds,
+   which is what Smooth Air already does to it all the time.
+
+   The idle cost itself is the APP's, not the tour's, and it is the owner's call
+   whether a student should be paying it on every module screen. It is stated in
+   the PR rather than quietly fixed here. */
+/* THE SELECTOR IS LONG ON PURPOSE. `animation-play-state` is reset by the
+   `animation` SHORTHAND, and Deck.jsx declares each layer with the shorthand —
+   `.deck-light .lamp.key` at (0,3,0) and `.deck-light.aur .lamp.key` at
+   (0,4,0). A tidy `.app[data-tour-on="1"] .lamp` is (0,3,0): it ties the first
+   and loses the second, which is how the first version of this rule left all
+   three lamps running on the lesson while the stars obeyed it. Measured, not
+   reasoned about — the walk reports each layer's `playState`. */
+.app[data-tour-on="1"] .deck-light .lamp.key,
+.app[data-tour-on="1"] .deck-light .lamp.fill,
+.app[data-tour-on="1"] .deck-light .lamp.spill,
+.app[data-tour-on="1"] .deck-light .stars,
+.app[data-tour-on="1"] .deck-light .stars-b { animation-play-state: paused; }
+
 /* ---- highlight frame ---- */
 /* THE DIM IS THE RING'S OWN SHADOW, AND IT HAS TO BE. It was four
    transform-only panels for a while — cheaper to animate, and square: four

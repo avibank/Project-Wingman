@@ -1,10 +1,14 @@
-import { Suspense, lazy, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Search, X } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
 import LibraryTab from "./LibraryTab.jsx";
-/* The ported Lessons tab, behind the same flag as the Library and lazy for
-   the same reason — it carries its own stylesheet. */
-const LessonsWaiting = lazy(() => import("./library/LessonsWaiting.jsx"));
+/* The ported Lessons tab. It was lazy because it carries its own stylesheet,
+   and it is not any more, for the reason the Library's own chunk went the same
+   way on 2026-10-07: this screen is ALREADY a lazy chunk, so 1.6KB of JS and
+   2.2KB of CSS behind their own two requests cost the entry nothing and cost a
+   tab press two network round trips with `fallback={null}` for a blank in
+   between. A lone stylesheet is also a file that can fail on its own. */
+import LessonsWaiting from "./library/LessonsWaiting.jsx";
 import CrewTab from "./CrewTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
@@ -262,10 +266,8 @@ export default function ModuleScreen({
             So it asks the module, and the flag only decides which of the two
             waiting-or-listing screens is used. */}
         {tab === "route" && asBatches && !hasLessons && (
-          <Suspense fallback={null}>
-            <LessonsWaiting moduleName={mod?.name}
-                            onOpenLibrary={() => onTab("library")} />
-          </Suspense>
+          <LessonsWaiting moduleName={mod?.name}
+                          onOpenLibrary={() => onTab("library")} />
         )}
         {tab === "route" && (!asBatches || hasLessons) && (
           <RouteTab chapters={chapters} state={state} here={here}
