@@ -222,6 +222,72 @@ which is what the Flight Deck draws before the document arrives.
     left-aligned (block floating) → cap it centred (half the window empty) →
     scale the block (magnified) → wide and low (not the design) → **fix the
     leak and put every one of them back**.
+- **THE SCREEN WAS PORTED AGAIN ON 2026-10-07, FROM A SECOND HANDOFF, and
+  almost everything above about HOW is now reversed.** The brief is
+  `docs/launch/BRIEF-MODULE-PORT.md` and the demo it points at is
+  `docs/launch/reference/06-library-lessons-cards.html`, both committed. What
+  it asks for is a copy, not a design: "If live code disagrees with the demo,
+  the demo wins."
+  - **THE STYLESHEET IS GENERATED, NOT HAND-WRITTEN.** `npm run ref:css` grew
+    a `.wm-port` bundle beside the launch pack's four: it lifts the demo's
+    whole `<style>` block, cuts the token blocks and the page reset BY NAME
+    with a guard on each, maps the demo's token names onto this app's, and
+    prefixes every selector. `src/components/module/library/port.css`, 353
+    lines, 7 cuts. The sheet and the approved demo cannot drift, and a third
+    demo is one more entry. **`batches.css` and `lessons.css` are deleted.**
+  - **AND THE CLASS NAMES ARE THE DEMO'S OWN NOW.** The first port renamed all
+    twelve colliding names to `.lb-*` so the sheet could live under
+    `.ref-mod`; §4 of the second handoff asks for the opposite — `.row`,
+    `.head`, `.num`, `.title`, `.tile`, `.stage`, `.th` — so the markup can be
+    read against the demo line for line.
+  - **SO THE PORT HAS TO STAND OUTSIDE `.mscreen` AND `.ref-mod`, and that is
+    the whole of §4.** Wrapping the body in `.wm-port` is not enough and
+    raising its specificity is not enough either: those two scopes style
+    twenty-four of the same bare words, including the app's OWN
+    `.quiz-thumb__sheet i` and `.cards-thumb i`, and a descendant of either
+    inherits every property the demo does not also declare. Measured:
+    `.mscreen .route` turned the ten waypoints into a 483px column, and when
+    specificity fixed `display` it still kept the app's `gap: 18px`. You
+    cannot out-declare that list; you have to leave it. `ModuleScreen` returns
+    the demo's own `.wm-port > .wrap` when the flag is on, and the app's
+    module screen below it is untouched for everybody else.
+  - **THE UNDO OF §12's FLOOR IS ON THE ROOT, NOT PREFIXED WITH IT.** Written
+    `.app ROOT …` it expands to `.app .app .wm-port button` — a selector
+    needing TWO nested `.app` elements, so it matched nothing and the
+    waypoints went straight back to 28x44. Specificity arithmetic has to be
+    done on the EXPANDED selector, not on the template.
+  - **AND THE DEMO'S `font: 15px/1.5` HAD TO GO BACK** with the cut body rule,
+    the same line the launch pack's own bundles needed. Without it every line
+    box was three to four pixels short: the card 516 against 527, a tile 140
+    against 144, a tab 38 against 41.
+  - **THE TILES WERE INDENTED UNDER THE TITLE, and the owner saw it**
+    (2026-10-07, "move the tabs to be dead center with just a slither of
+    boarder"). The first port's `.lb-tiles` carried
+    `padding: 0 10px 14px 68px` — 68px being the number tile plus its gap — so
+    the three drawings sat under the title with a sliver on the right. The
+    demo is `4px 14px 16px` and §5 says it in words: "They are NOT indented
+    under the title." **Measured against the ROW rather than against `.tiles`,
+    which is the mistake that let it through the first verification**: 14 left
+    and 14 right now, and the tiles are true thirds of the row (230/230/230 at
+    1280), not stretched.
+  - **CREW ON THE QUIZ REPLACES THE CREW TAB** on the ported strip (§3.2, §5):
+    real stamps through the app's one renderer at the demo's 26px on a row and
+    44px in the pop-out, ordered by the server (0038) with the student pinned
+    first. Eleven then `+N` on the row, six on a phone. **The pop-out asks
+    again uncapped**, because §5 says it fans in EVERY stamp while the row
+    shows eleven. A quiz nobody has sat draws the demo's dashed circle and
+    says "Be the first to take it" — §10 forbids naming an absence, which the
+    demo's own title did.
+  - **Measured against the demo at 1280, 820 and 390**: every element matches
+    to the pixel. Two differences stated rather than hidden — the page gutter
+    is the app's (62px a side at 820 against the demo's 16), and the quiz
+    thumbnail is 75 against 73 on a font strut, inside a tile that matches.
+  - **WHAT IS NOT BUILT**: the study-card session (`#deck`) — the set picker,
+    the 3D turn, drag/flick sorting, the two fanned decks, the bottom sheet,
+    "Deck cleared". §7's `missed`/`saved` write-backs with it. And Crew is
+    only gone from the PORTED strip: `CrewTab`, its route and its links still
+    work, because `library.batches` is admin-only and deleting them would take
+    Crew off students who cannot yet see the stamps that replace it.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
