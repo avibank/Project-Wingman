@@ -135,10 +135,31 @@ ROOT{
      41 — a consistent three to four pixels on everything with words in it. */
   font: 15px/1.5 var(--font-ui);
 }
-/* Manual in Day leaves \`--active-fill\` at the accent's own lightness, so the
-   accent read as WORDS needs its own darker step there — Bookmarks' own rule,
-   measured at 3.96:1 on \`--active\` in Day. */
-.app.theme-light[data-paper] ROOT{ --accent: var(--active-text); }
+/* THE ACCENT READ AS WORDS TAKES \`--active-text\` IN DAY, which is this app's
+   own three-token rule: \`--active\` for a mark, \`--active-fill\` for a fill,
+   \`--active-text\` for the accent read as words (CLAUDE.md, Bookmarks).
+   Measured here rather than assumed — six liveries x night and day, and every
+   failure was in DAY:
+
+     the Got it label     3.55:1 on Runway, 3.86 Tarmac, 3.89 Amber
+     the Got it count     3.96:1 on Sky  (the exact number CLAUDE.md already
+                          records for the module picker's name)
+     the current set      4.09:1 on Runway, 4.47 Tarmac, 4.49 Amber
+
+   Only the WORDS move. The ring around the tick and the mini cards' accent
+   borders are marks and keep \`--active\`, which is what stops this becoming
+   the one-hue collapse the design has already reversed once.
+
+   THESE SELECTORS ARE SPELLED OUT RATHER THAN BUILT FROM THE SCOPE TOKEN, and
+   that is deliberate: the scope is \`.app .wm-port\`, so putting the token
+   after \`.app.theme-light\` expands to a selector with \`.app\` in it twice —
+   two nested elements carrying that class, which do not exist. The Manual line
+   below was written that way and silently matched nothing from the day it was
+   added. (The substitution is textual, so it reaches comments too.) */
+.app.theme-light[data-paper] .wm-port{ --accent: var(--active-text); }
+.app.theme-light .wm-port .setpick .pk.on b,
+.app.theme-light .wm-port .side.yes b,
+.app.theme-light .wm-port .deckspot.yes .lab{ color: var(--active-text); }
 
 /* §4.3 — THE RESET, AND WHY IT IS IN TWO PARTS.
    -----------------------------------------------------------------------------

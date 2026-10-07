@@ -282,12 +282,66 @@ which is what the Flight Deck draws before the document arrives.
     to the pixel. Two differences stated rather than hidden — the page gutter
     is the app's (62px a side at 820 against the demo's 16), and the quiz
     thumbnail is 75 against 73 on a font strut, inside a tile that matches.
-  - **WHAT IS NOT BUILT**: the study-card session (`#deck`) — the set picker,
-    the 3D turn, drag/flick sorting, the two fanned decks, the bottom sheet,
-    "Deck cleared". §7's `missed`/`saved` write-backs with it. And Crew is
-    only gone from the PORTED strip: `CrewTab`, its route and its links still
-    work, because `library.batches` is admin-only and deleting them would take
-    Crew off students who cannot yet see the stamps that replace it.
+  - **AND THE STUDY-CARD SESSION IS BUILT** (2026-10-08). `CardSession.jsx` is
+    the screen, `cardSession.js` the rules — the house split, so the sets, the
+    queue, the two piles and the fan are importable and `check:cards` drives
+    them for real. It replaces the old cards page (`CardSetPage`, "Test
+    yourself") on `/m/:moduleId/library/cards/:chapter` behind the same flag;
+    `screens.jsx` branches and the old page keeps working for everyone else.
+    - **NOTHING NEW IS STORED, and §7 needed no migration.** Got it is
+      `markGot(id, true)`, Not yet is `markGot(id, false)`, both mark the card
+      seen, and the bookmark is a `saves` row of kind "card" — the three stores
+      that already existed. So "on close → `seen += got + again`" happens card
+      by card as it is sorted, and an abandoned session keeps what it earned.
+    - **THE MISSED PILE IS LIVE; THE QUEUE IS NOT.** The demo mutates
+      `mem.missed` as each card is sorted and recounts the picker every render,
+      so Missed fills up in front of you. Frozen at the door — which is how it
+      was written first — the button stayed disabled for the whole session and
+      there was no way to drill what had just slipped. `startMode` still runs
+      only on an explicit switch, so nothing is renumbered under a student half
+      way through a set. Only the counts move.
+    - **IT IS PORTALLED INTO `.app`.** The session renders from the cards
+      ROUTE, which sits inside the app's own scroller — and that scroller is
+      also called `.deck`. A `position: fixed` overlay inside it is trapped in
+      that stacking context: the overlay drew perfectly and the scroller took
+      every click. The stamp creator solved the same problem the same way.
+    - **AND THE DEMO'S `data-*` ATTRIBUTES ARE LOAD-BEARING CSS, not event
+      hooks.** `.pk:not([data-dk])` is what collapses the two sets you are not
+      studying to `max-width: 0`. Written with `onClick` and no attribute, all
+      three matched the collapsed rule and the picker measured 8px wide against
+      the demo's 88. Five rules key off it.
+    - **THE CARD WAS INVISIBLE AFTER THE FIRST SORT, and the walk did not
+      notice.** `sort` hides the real card with an inline `visibility: hidden`
+      while the clone flies; the demo then rebuilds `#fc` with `innerHTML` and
+      the style goes with the element, while React keeps the same node for the
+      whole session. Every card after the first was unseeable — and the
+      counter, the text and both decks all read correctly, because
+      `textContent` reads a hidden node perfectly well. The walk asserts the
+      card is hit-testable now, and that assertion was proved by planting the
+      bug back.
+    - **THE ACCENT READ AS WORDS TAKES `--active-text` IN DAY**, which is this
+      app's own three-token rule. Measured across six liveries x night and day,
+      and every failure was in Day: Got it at 3.55:1 on Runway, its count at
+      3.96 on Sky — the exact number CLAUDE.md already records for the module
+      picker. Only the words move; the ring and the mini cards' borders are
+      marks and keep `--active`. Worst pair is 4.75:1 now.
+    - **A selector built from the scope token can expand to `.app` twice.**
+      `.app.theme-light ROOT` becomes `.app.theme-light .app .wm-port`, which
+      needs two nested `.app` elements. The Manual-in-Day line was written that
+      way and matched nothing from the day it was added. Spelled out now, and
+      the substitution is textual so it reaches comments too.
+    - `npm run check:cards` is **38 assertions** (no browser, in `npm run
+      check`); `npm run test:cards` is **133**, including the three ways to
+      turn a card over, the three ways to sort, the 110px flick either side of
+      its threshold, that Not yet never comes round again, Escape peeling one
+      layer at a time, the write-backs read back out of the progress document,
+      and contrast across six liveries x night and day. It puts the student's
+      skin back in a `finally`.
+  - **WHAT IS STILL NOT BUILT**: Crew is only gone from the PORTED strip —
+    `CrewTab`, its route and its links still work, because `library.batches` is
+    admin-only and deleting them would take Crew off students who cannot yet
+    see the stamps that replace it. One decision (turn the flag on) and it is a
+    small deletion.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
