@@ -2092,7 +2092,11 @@ function AppInner() {
            grid widens itself from inside (.bm-wide), because a full folder
            needs the room and an empty one reads better narrow. */
         <main className="content content-taxi">
-          <BookmarksScreens route={route} />
+          <BookmarksScreens route={route}
+                            /* The ported card session is a full-screen
+                               overlay with one way out, and it goes back to
+                               the Library it was opened from. */
+                            onCloseCards={() => go(routePath.library(route.moduleCode || activeModuleCode))} />
         </main>
       ) : route.name === "clerk" ? (
         /* Clerk owns the email and password flows, including verification and
