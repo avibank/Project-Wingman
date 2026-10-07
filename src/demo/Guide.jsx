@@ -37,7 +37,15 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
        read, so a move between pages never waits for a lazy chunk. The old
        tour did this and it is the one piece of it worth keeping. */
     const t = setTimeout(() => {
-      live.current.warm?.(["/", "/m/m1", "/m/m1/library", "/m/m1/crew", "/ready-room/m1", "/account/licence", "/account/preferences"]);
+      /* THE LESSON WAS MISSING FROM THIS LIST, and it is the heaviest screen
+         the tour visits — it mounts a video. Measured on a production build:
+         its two steps dropped 45 and 77 frames against 0 to 5 on the deck,
+         which is the stutter under the light's fade-in on exactly the two
+         steps the owner was looking at. Every other route the script names
+         was here; this one never was. */
+      live.current.warm?.(["/", "/m/m1", "/m/m1/library", "/m/m1/crew",
+                           "/m/m1/M1.02/lesson/M1.02.2",
+                           "/ready-room/m1", "/account/licence", "/account/preferences"]);
     }, 400);
 
     /* THE LAST BUTTON SAYS WHAT PRESSING IT WILL DO, and that depends on who
@@ -65,12 +73,29 @@ export default function Guide({ go, warm, onLeave, hasStamp = false, guest = fal
       navigate: async (route) => {
         live.current.go?.(route);
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        /* THE ONES THAT CAN FINISH, AND ONLY THOSE. `getAnimations` hands back
+           the ambient lighting too — Deck.jsx drifts three light layers on
+           `infinite` keyframes — and an infinite animation's `finished` never
+           resolves. So this race was decided by its own timeout EVERY time,
+           and every page change in the tour sat dark for the full 700ms with
+           the light already faded out: measured at 1038ms from the press to
+           the new light appearing, against a real view transition of about
+           350ms. That dead second is what "not seamless" is made of.
+
+           A finite animation is still waited for, because placing the light
+           while the screen it points at is still sliding is the thing this
+           wait exists to prevent. The timeout stays as a backstop. */
         const pageEl = document.querySelector(".deck, .rr-app");
         if (pageEl?.getAnimations) {
-          await Promise.race([
-            Promise.all(pageEl.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {}))),
-            new Promise((r) => { setTimeout(r, 700); }),
-          ]);
+          const finite = pageEl.getAnimations({ subtree: true }).filter((a) => {
+            try { return a.effect?.getTiming?.().iterations !== Infinity; } catch { return false; }
+          });
+          if (finite.length) {
+            await Promise.race([
+              Promise.all(finite.map((a) => a.finished.catch(() => {}))),
+              new Promise((r) => { setTimeout(r, 700); }),
+            ]);
+          }
         }
         try { await document.fonts?.ready; } catch { /* no font API */ }
         /* and two frames where it has stopped moving */

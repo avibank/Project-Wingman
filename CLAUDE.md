@@ -1050,12 +1050,74 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     re-measured on `scrollend`, which is the handoff's own listener: `plan`
     aims at where a target WILL be, and a screen whose height changes while it
     scrolls invalidates that aim.
-  - **Walked, measured and held**: `npm run test:tour` is **258 assertions**.
+  - **NOTHING CROPS TO FOCUS. THE PAGE STAYS STILL AND THE LIGHT MOVES**
+    (owner, 2026-10-07: "the lesson demo section should show the whole screen
+    and only highlight the comments with the box not crop to focous on it,
+    never crop to focus show the whole screen at all times only use the
+    highlight box to focus on stuff"). The handoff's `plan` CENTRED its target
+    in the room the card leaves, so every step scrolled whether it needed to
+    or not — measured, **7 of 20 steps**, two of them by 554px and 778px. On
+    the lesson that pushed the video off the top and left a close-up of one
+    panel. `plan` maximises **stillness** instead now: each dock is offered the
+    scroll it already has and the LEAST that would bring the frame in, and a
+    standing option wins outright whenever it shows 44px of the target. It is
+    **2 of 20** now, and the lesson's two steps scroll 0px.
+    - **A thumb on the scale was not enough, and that is the instructive
+      part.** The first attempt kept `vis / th` as the score and subtracted
+      0.01 for moving. The lesson's panel is taller than the room, so standing
+      still showed 238px of it and scrolling 435px showed all of it — 0.46
+      against 0.98, which 0.01 does not touch. Visibility was never the thing
+      to maximise.
+    - Bringing something genuinely off screen INTO view is not cropping, so it
+      is still allowed: the Flight Deck's route strip at 1440, and the ground
+      and thread cards on a 390 phone where the deck is one tall column.
+      `test:tour` tells the two apart by measuring how much of the target was
+      already on screen BEFORE the press rather than by a named list.
+  - **AND THE AMBIENT STOPS DRIFTING WHILE THE TOUR IS UP, which is what
+    "smooth" actually turned out to be** (owner, 2026-10-07: the transitions
+    "arent smooth and seamless"). Measured frame by frame on a production
+    build, the engine was not the problem — **the light's own glide drops one
+    frame across the whole twenty-step walk**. What dropped the other 219 was
+    the app standing still: every screen the tour visits idles **under 60fps**
+    because of the three light layers `Deck.jsx` drifts behind it. The module
+    screen 48fps and 9 dropped frames in two seconds with NOTHING happening on
+    it, the Library 50, the lesson 48. **The Flight Deck alone holds 60**,
+    which is why six rounds of looking at the engine never found it. Pausing
+    those three layers and nothing else: all three screens to a clean 60fps, 0
+    dropped. Across the walk, **220 dropped frames to 10**.
+    - Paused only under `[data-tour-on]`, because the dim is 58% black over
+      them and a drift nobody can see through is cost for no picture. On the
+      six `whole` steps the wash is held still for a few seconds, which is
+      what Smooth Air already does to it permanently.
+    - **The selector is long on purpose.** `animation-play-state` is reset by
+      the `animation` SHORTHAND, and `Deck.jsx` declares each layer with it —
+      `.deck-light .lamp.key` at (0,3,0) and `.deck-light.aur .lamp.key` at
+      (0,4,0). A tidy `.app[data-tour-on="1"] .lamp` is (0,3,0): it ties the
+      first and loses the second, so the first version of this rule paused the
+      stars and left all three lamps running. Caught by measuring `playState`,
+      not by reading the sheet.
+    - **The idle cost is the APP's, not the tour's.** A student is paying it on
+      every module screen, Library and lesson right now, with no tour in sight.
+      Stopping the app's own ambient is a design decision and is NOT taken
+      here; it is stated so it is not lost.
+  - **AND THE DEAD TIME BEFORE A PAGE CHANGE IS GONE.** A page change measured
+    1130ms from the press to rest, of which about 460 were a dimmed screen with
+    no light on it at all. Two causes, both dead time rather than curve:
+    `Guide`'s `navigate` awaited `getAnimations()` against a 700ms timeout, and
+    the ambient layers are **infinite** animations whose `finished` never
+    resolves — so that race was decided by its own timeout EVERY time. It
+    filters to animations that can finish. And the fade-in carried a `.1s`
+    delay in which the light was already in place and deliberately not drawn.
+    Worst step 1466ms to 1069ms; the curves and durations are untouched.
+  - **Walked, measured and held**: `npm run test:tour` is **369 assertions**.
     It walks all twenty-one steps at 1440 and at 390 and asserts that every
     step naming a target lights one, that what is lit is fully on screen,
     that the card covers none of it (except a `whole` step, where the light
-    IS the window), that a step asking for a pane or a tab gets it, and that
-    each step stops moving. It checks every `data-tour` name in the script
+    IS the window), that a step asking for a pane or a tab gets it, that a
+    step whose target was ALREADY on screen does not move the page, that a
+    step opening a new screen shows it from the top, that no light layer is
+    still drifting, and that each step stops moving. It checks every
+    `data-tour` name in the script
     against the running app. And it **measures contrast on the card and the
     beta note across six liveries × night and day** — ten text pairs each,
     floor 4.5:1, worst 4.79:1 — because a token is not a contrast ratio and
@@ -1474,6 +1536,32 @@ once:
   browser uses for a module or its CSS failing to arrive get the reload
   (`STALE_CHUNK` in App.jsx); everything else is thrown to the boundary,
   which is where a real bug belongs.
+
+## When a tab is a network request
+
+**THE LIBRARY HITCHED ON EVERY SINGLE OPEN** (owner, 2026-10-07: "the libafy
+hithes before it loads always"), and it was not the content or the entrance
+animation. `LibraryBatches` was a **6KB lazy chunk behind `fallback={null}`**:
+press the tab, get a blank, wait for an HTTP round trip, watch it pop in. Every
+time, because nothing warmed it. `LessonsWaiting` on the tab beside it was the
+same defect twice over — 1.6KB of JS and 2.2KB of CSS as **two** separate
+requests.
+
+Both were lazy for a reason that had already gone away. They carry the ported
+design's stylesheets and in the ENTRY those put the bundle over budget — but
+`batches.css` moved into `LibraryTab.jsx` on 2026-10-06, and that file is part
+of the **module** chunk, which has been its own chunk since the static-import
+leak was found. So the lazy boundary bought the entry nothing and cost a tab
+press a round trip. Both are static imports now, folded into a chunk that is
+already downloading when the module screen opens, and the tab paints in the
+frame it is pressed.
+
+- **The entry did not move**: 640KB against the 680KB budget, before and after.
+  The module chunk went 36KB to 43KB, and 41 split chunks to 39.
+- **A lone stylesheet is also a file that can fail on its own**, which is the
+  thing the previous day's PR fixed for `batches.css` by hand.
+- `check:bundle` still holds the entry, so if either ever reaches it the budget
+  fails and names the path.
 
 ## What rides first paint
 

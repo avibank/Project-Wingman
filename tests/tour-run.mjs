@@ -65,6 +65,32 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
     const cs = c ? getComputedStyle(c).transform + getComputedStyle(c).opacity : "";
     return ring + scrolls + cs;
   };
+  /* HOW FAR THE PAGE MOVED, which is a different question from whether the
+     light moved. The owner's rule is that a step frames its target where it
+     stands — "never crop to focus show the whole screen at all times only use
+     the highlight box to focus on stuff" (2026-10-07) — so the scroll is the
+     thing to measure, and the worst excursion rather than the endpoints: a
+     step that scrolled away and back would read as 0 from the two ends. */
+  /* HOW MUCH OF THE NEXT STEP'S TARGET WAS ALREADY ON SCREEN. That is what
+     decides whether a scroll was a crop or a necessity: there is no framing a
+     thing where it stands if it is not standing anywhere you can see. Read
+     BEFORE the press, because the press is what moves the page. */
+  const preEl = expect.target ? document.querySelector(`[data-tour="${expect.target}"]`) : null;
+  const preVis = (() => {
+    if (!preEl) return 0;
+    const b = preEl.getBoundingClientRect();
+    if (!b.height) {
+      const kids = [...preEl.children].map((c) => c.getBoundingClientRect()).filter((k) => k.height > 0);
+      if (!kids.length) return 0;
+      const t = Math.min(...kids.map((k) => k.top)), bo = Math.max(...kids.map((k) => k.bottom));
+      return Math.max(0, Math.min(bo, window.innerHeight) - Math.max(t, 0));
+    }
+    return Math.max(0, Math.min(b.bottom, window.innerHeight) - Math.max(b.top, 0));
+  })();
+  const scrollerOf = () => document.querySelector(".deck") || document.querySelector(".rr-app");
+  const topNow = () => { const b = scrollerOf(); return b ? b.scrollTop : window.scrollY; };
+  const top0 = topNow();
+  let scrolled = 0;
   const btn = document.querySelector(".dg-acts .dg-next");
   if (!btn) return null;
   const t0 = performance.now();
@@ -84,6 +110,7 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
     const tick = () => {
       const now = performance.now();
       const s = sig();
+      scrolled = Math.max(scrolled, Math.abs(topNow() - top0));
       if (s !== prev) { prev = s; last = now; moved = true; }
       if (moved && now - last > 200) return res();
       if (now - t0 > 7000) return res();
@@ -106,6 +133,18 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
       const rr = gg ? gg.getBoundingClientRect() : null;
       const isLit = Boolean(rr && rr.width > 6 && rr.height > 6 && getComputedStyle(gg).opacity !== "0");
       if (expect.lit && !isLit) return false;
+      /* A NEW SCREEN IS NOT SETTLED UNTIL IT IS AT ITS TOP. The engine puts a
+         new scroller back to 0 after the navigation resolves, and for a
+         `whole` step the light is correct before that happens — so reading the
+         scroll the moment the light was right caught the OUTGOING page's
+         position and failed an assertion the app passes. Measured: the deck
+         reaches 0 at 332ms on this step. Waiting for it here makes the number
+         below deterministic; a screen that really is left part-way down never
+         satisfies this and the assertion fails on the value, as it should. */
+      if (expect.fromTop) {
+        const b = document.querySelector(".deck") || document.querySelector(".rr-app");
+        if (b && b.scrollTop > 2) return false;
+      }
       if (expect.pane) {
         const kids = [...(document.querySelector(".rr-pane")?.children || [])].map((c) => String(c.className));
         if (!kids.some((c) => c.split(/\s+/).includes(expect.pane))) return false;
@@ -179,6 +218,23 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
       return dimmed && round ? 0 : 9999;
     })(),
     rrPane: ["rr-seatgrid", "rr-chat", "rr-threads"].find((k) => paneKids.some((c) => c.split(/\s+/).includes(k))) || null,
+    scrolled: Math.round(Math.max(scrolled, Math.abs(topNow() - top0))),
+    preVis: Math.round(preVis),
+    finalTop: Math.round(topNow()),
+    /* THE AMBIENT, HELD STILL. Deck.jsx drifts three light layers behind every
+       screen and they are what held the module screen, the Library and the
+       lesson at 48fps while NOTHING was happening on them — 220 dropped frames
+       across the walk against 10 with them paused, measured on a production
+       build. tour.css pauses them under `[data-tour-on]`, and the selector has
+       to out-specify an `animation` SHORTHAND, so the first version of the rule
+       silently did nothing to the lamps. This counts what is still running. */
+    drifting: document.getAnimations().filter((a) => {
+      let it = null;
+      try { it = a.effect?.getTiming?.().iterations; } catch { return false; }
+      if (it !== Infinity || a.playState !== "running") return false;
+      const el = a.effect?.target;
+      return Boolean(el?.closest?.(".deck-light"));
+    }).length,
     vw: window.innerWidth,
     vh: window.innerHeight,
   };
@@ -219,6 +275,8 @@ try {
           : null,
         tab: step.panelTab ? (step.panelTab === "logbook" ? "logbook" : "comments") : null,
         clear: Boolean(step.target) && !step.whole,
+        target: step.target || null,
+        fromTop: step.page !== TOUR_STEPS[n].page,
       };
       const r = await stepAndRest(page, want);
       if (!r) { fails.push(`${name} · ran out of steps at ${n + 1} of ${TOUR_STEPS.length}`); break; }
@@ -255,6 +313,30 @@ try {
         ok(name, `step ${n + 2} opens the ${step.pane} pane`, r.rrPane === want.pane,
            `${r.kicker}: pane is ${r.rrPane ?? "none"}, wanted ${want.pane}`);
       }
+      /* THE PAGE STAYS WHERE IT IS. The light is what focuses; a step that
+         scrolls to put its target in the middle of the room the card leaves is
+         a crop, and on the lesson it took the video off the top of the screen
+         (owner, 2026-10-07). `plan` maximises STILLNESS rather than visibility
+         now, and the two steps that still move the page are named above rather
+         than left to a threshold — a third one failing this is the regression
+         worth catching, and it names itself. */
+      if (step.target && step.page === TOUR_STEPS[n].page && r.preVis >= 44) {
+        ok(name, `step ${n + 2} frames its target without moving the page`, r.scrolled <= 2,
+           `${r.kicker}: ${r.preVis}px of it was already on screen, and the page still moved ${r.scrolled}px`);
+      }
+      /* AND A NEW PAGE IS SHOWN FROM ITS TOP. The rule above is measured
+         against where the page already was, which on a page change is the
+         page the student is LEAVING — so the step that opens the lesson was
+         exempt from it, and that step is the one the complaint was about. The
+         engine puts a new scroller back to 0 and then refuses to move it, so
+         the whole of a new screen is on show; a step that ends part-way down
+         one has scrolled to focus, whatever it was doing before. */
+      if (step.page !== TOUR_STEPS[n].page) {
+        ok(name, `step ${n + 2} shows its new screen from the top`, r.finalTop <= 2,
+           `${r.kicker}: left ${r.finalTop}px down the page`);
+      }
+      ok(name, `step ${n + 2} holds the ambient still`, r.drifting === 0,
+         `${r.kicker}: ${r.drifting} light layer(s) still drifting`);
       /* A couple of square pixels of rounding is fine; a strip is not. */
       ok(name, `step ${n + 2}'s cut-out is dimmed and round`, r.dimGap === null || r.dimGap === 0,
          `${r.kicker}: ring shadow carries no dim, or no radius`);
