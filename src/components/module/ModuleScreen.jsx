@@ -9,6 +9,7 @@ import LibraryTab from "./LibraryTab.jsx";
    tab press two network round trips with `fallback={null}` for a blank in
    between. A lone stylesheet is also a file that can fail on its own. */
 import LessonsWaiting from "./library/LessonsWaiting.jsx";
+import PortPanel from "./library/PortPanel.jsx";
 import CrewTab from "./CrewTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
@@ -142,6 +143,108 @@ export default function ModuleScreen({
   };
 
 
+  /* THE TWO TAB BODIES, LIFTED OUT OF THE PANEL, because there are two panels
+     now: the demo's (behind `library.batches`) and the app's own. Rendering the
+     same component from two places is what stops the ported branch drifting
+     from the one students are on. The two conditions below are stated exactly
+     as they were — `check:states` holds both by name. */
+  const lessonsBody = () => {
+    /* THE WAITING SCREEN IS FOR A MODULE WITH NO VIDEO, not for whoever has
+       the flag on. `LessonsWaiting` says "video lessons are on the way", which
+       is true of the course as it ships and false of any module that actually
+       has lessons — and the demo has twelve. Gating it on the flag alone put
+       that sentence over a class watching videos, which is the same shape of
+       bug as the Library drawing nothing: a flag turning a working screen into
+       an empty one. So it asks the module, and the flag only decides which of
+       the two waiting-or-listing screens is used. */
+    if (asBatches && !hasLessons) {
+      return <LessonsWaiting moduleName={mod?.name} onOpenLibrary={() => onTab("library")} />;
+    }
+    if (!asBatches || hasLessons) {
+      return (
+        <RouteTab chapters={chapters} state={state} here={here}
+                  open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
+                  /* Waiting and empty, told apart one level up: App knows
+                     whether a content document is still in flight, and this
+                     screen is the only thing that can name the module. */
+                  pending={contentPending} moduleName={mod?.name}
+                  /* One tab across, where the work actually is while the
+                     video is being made. */
+                  onLibrary={() => onTab("library")}
+                  onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
+      );
+    }
+    return null;
+  };
+  const libraryBody = () => (
+    <LibraryTab chapters={chapters} papers={papers} state={state} me={me}
+                downloads={mod?.downloads || []}
+                sub={librarySub} query={query} moduleCode={mod?.code || mod?.id || null}
+                readerPin={readerPin} onAddPaper={onAddPaper}
+                faults={faults}
+                /* The ported module screen, behind `library.batches`. */
+                asBatches={asBatches}
+                totalBatches={mod?.batches || null}
+                moduleName={mod?.name}
+                progress={progress}
+                currentChapterId={chapters[chapters.length - 1]?.id || null}
+                onOpenCards={onOpenCards}
+                onOpenDownload={onOpenDownload}
+                onOpenPerson={onOpenPerson}
+                onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
+  );
+
+  /* THE PORTED SCREEN STANDS ON ITS OWN, OUTSIDE `.mscreen` AND `.ref-mod`.
+     -----------------------------------------------------------------------------
+     This is the whole of §4 ("live global styles currently distort the port")
+     and it took a measurement to get right. Wrapping the ported body in
+     `.wm-port` INSIDE the app's module screen is not enough and raising the
+     port's specificity is not enough either: `.mscreen` and `.ref-mod` style
+     twenty-four of the same bare words the demo does — `.row`, `.route`,
+     `.title`, `.tab`, `.tabs`, `.search`, `.card`, `.top`, and the app's OWN
+     `.quiz-thumb__sheet i` and `.cards-thumb i`, which are the same class
+     names — and a descendant of either inherits every property the demo does
+     not also declare. Measured on the way in: `.mscreen .route` turned the ten
+     waypoints into a 483px column, and when specificity fixed the `display` it
+     still kept the app's `gap: 18px`. You cannot out-declare that list; you
+     have to leave it.
+
+     So when the flag is on this screen is the demo's own structure — `.wrap`
+     holding the back link, the title, the subtitle and the card — and the app's
+     module screen below is untouched for everybody else. When the flag goes to
+     everyone, everything below this return comes out.
+
+     TWO THINGS ARE THE APP'S, DELIBERATELY. The back link's label comes from
+     `upFrom` so it names its destination like every other one in the app, and
+     the subtitle is a DOOR as well as a line (it counts what is in the Library,
+     so it opens the Library) — worded and drawn exactly as the demo has it. */
+  if (asBatches) {
+    return (
+      <div className="wm-port">
+        <div className="wrap">
+          <div>
+            <button type="button" className="back" onClick={onBack}>
+              &lsaquo; {upFrom({ kind: "module" })?.label}
+            </button>
+            <h1>{mod.name}</h1>
+            <p className="sub">
+              {chapters.length || papers.length
+                ? (
+                  <button type="button" className="sub-go is-inline"
+                          onClick={() => onTab("library")}>{sub}</button>
+                )
+                : sub}
+            </p>
+          </div>
+          <PortPanel mod={mod} tab={tab} onTab={onTab} query={query} onQuery={setQuery}>
+            {tab === "route" && lessonsBody()}
+            {tab === "library" && libraryBody()}
+          </PortPanel>
+        </div>
+      </div>
+    );
+  }
+
   return (
     /* `mscreen-mod` so the module screen's own column (module.css) cannot
        reach the LESSON page, which is also a `.mscreen` and is drawn to a
@@ -265,37 +368,8 @@ export default function ModuleScreen({
             nothing: a flag turning a working screen into an empty one.
             So it asks the module, and the flag only decides which of the two
             waiting-or-listing screens is used. */}
-        {tab === "route" && asBatches && !hasLessons && (
-          <LessonsWaiting moduleName={mod?.name}
-                          onOpenLibrary={() => onTab("library")} />
-        )}
-        {tab === "route" && (!asBatches || hasLessons) && (
-          <RouteTab chapters={chapters} state={state} here={here}
-                    open={open} onToggle={toggle} query={query} stamp={stamp} tilts={tilts}
-                    /* Waiting and empty, told apart one level up: App knows
-                       whether a content document is still in flight, and this
-                       screen is the only thing that can name the module. */
-                    pending={contentPending} moduleName={mod?.name}
-                    /* One tab across, where the work actually is while the
-                       video is being made. */
-                    onLibrary={() => onTab("library")}
-                    onOpenLesson={onOpenLesson} onOpenQuiz={onOpenQuiz} />
-        )}
-        {tab === "library" && (
-          <LibraryTab chapters={chapters} papers={papers} state={state} me={me}
-                      downloads={mod?.downloads || []}
-                      sub={librarySub} query={query} moduleCode={mod?.code || mod?.id || null}
-                      readerPin={readerPin} onAddPaper={onAddPaper}
-                      faults={faults}
-                      /* The ported module screen, behind `library.batches`. */
-                      asBatches={asBatches}
-                      totalBatches={mod?.batches || null}
-                      progress={progress}
-                      currentChapterId={chapters[chapters.length - 1]?.id || null}
-                      onOpenCards={onOpenCards}
-                      onOpenDownload={onOpenDownload}
-                      onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
-        )}
+        {tab === "route" && lessonsBody()}
+        {tab === "library" && libraryBody()}
         {tab === "crew" && (
           <CrewTab crew={crew} moduleName={mod?.name}
                    chapters={chapters} me={me} myStamp={stamp} mates={mates}
