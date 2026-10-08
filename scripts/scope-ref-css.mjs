@@ -156,6 +156,40 @@ ROOT{
    two nested elements carrying that class, which do not exist. The Manual line
    below was written that way and silently matched nothing from the day it was
    added. (The substitution is textual, so it reaches comments too.) */
+/* ONE FOREIGN RULE STILL REACHES THE ROUTE STRIP, AND IT MOVED IT.
+   -----------------------------------------------------------------------------
+   \`.route { position: sticky; top: 16px; max-height: calc(100vh - 32px);
+   flex-direction: column; min-width: 0 }\` — somebody else's \`.route\`, at
+   (0,1,0). The port overrides \`position\` and \`display\`, so it loses those, but
+   a rule only loses the properties the port ALSO declares: \`top: 16px\` stayed,
+   and on a relatively-positioned box it shifts the strip 16px down over the
+   first row. Measured against the demo at 1440: the demo leaves a 6px gap
+   between the route and the first row, and this left MINUS TEN — the open
+   row's focus ring drawn across the waypoints (owner, 2026-10-08).
+
+   Undone at (0,4,0) rather than (0,3,0), because this block is emitted ABOVE
+   the ported rules and a tie would go to them on order. The four properties
+   are named rather than reset wholesale: the port's own \`display: grid\` and
+   \`position: relative\` are doing their job and must not be touched. */
+.app .wm-port .card .route{ top: auto; max-height: none; min-width: auto; flex-direction: row; }
+
+/* AND THE ATTEMPT STRIP SITS ON THE CHEVRON'S LINE (owner, 2026-10-08: "align
+   the stamp? and the arrow").
+   -----------------------------------------------------------------------------
+   The demo pins \`.crew\` at a flat \`top: 21px\`, which would centre a bare 26px
+   stamp on a 68px head — but \`.crew\` has 3px of padding of its own, so the box
+   is 32px and its centre lands 3px BELOW the chevron's. Measured: head centre
+   383, chevron centre 383, stamp centre 386.
+
+   This is the demo's own geometry, not a port defect — it measures 3px out
+   there too — so it is a change to the design rather than a correction, and it
+   is written here where changes to the design live. 21 − 3 = 18 puts the two
+   on one line exactly, and it stays a fixed top rather than becoming
+   \`top: 50%\`: \`.crew\` is positioned against the ROW, and a row with its drawer
+   open is hundreds of pixels tall, so a percentage would drop the stamps into
+   the tiles. */
+.app .wm-port .row .crew{ top: 18px; }
+
 .app.theme-light[data-paper] .wm-port{ --accent: var(--active-text); }
 .app.theme-light .wm-port .setpick .pk.on b,
 .app.theme-light .wm-port .side.yes b,

@@ -70,7 +70,7 @@ function countUp(root, reduced) {
  */
 export default function LibraryBatches({
   batches, total, here, query = "", moduleName = null, me = null,
-  finishers = {}, onQuiz, onCards, onPaper, onProfile,
+  finishers = {}, onQuiz, onCards, onPaper, onProfile, onHere,
 }) {
   const open = useMemo(() => batches.filter((b) => b.n != null), [batches]);
   /* THE CURRENT BATCH IS OPEN ON ARRIVAL, and it has to be set once the
@@ -88,7 +88,16 @@ export default function LibraryBatches({
     const want = here ?? open[0]?.n ?? null;
     if (want != null) setOpenRow(want);
   }, [here, open, openRow]);
-  const choose = (n) => { touched.current = true; setOpenRow(n); setCrewRow(null); };
+  /* Opening a row is what says "this is where I am", so it is also what moves
+     the light on the route strip — and it is remembered, so coming back to the
+     module opens the same one. Closing a row (n === null) leaves the light
+     where it was: you have not moved on, you have just folded it up. */
+  const choose = (n) => {
+    touched.current = true;
+    setOpenRow(n);
+    setCrewRow(null);
+    if (n != null) onHere?.(n);
+  };
   const listRef = useRef(null);
   const reduced = typeof matchMedia === "function"
     && matchMedia("(prefers-reduced-motion: reduce)").matches;

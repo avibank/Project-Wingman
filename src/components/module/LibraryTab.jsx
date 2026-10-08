@@ -41,7 +41,7 @@ import "./library/port.css";
    pressed. `check:bundle` still holds the entry: if this ever reaches it, the
    budget fails and names it. */
 import LibraryBatches from "./library/LibraryBatches.jsx";
-import { batchesOf, hereBatch } from "./library/batchModel.js";
+import { batchesOf, hereBatch, lastBatch, rememberBatch } from "./library/batchModel.js";
 import { seenCount } from "../../features/bookmarks/cardsSeen.js";
 
 /* ============================================================================
@@ -239,7 +239,13 @@ export default function LibraryTab({
       <LibraryBatches
         batches={batches}
         total={totalBatches || null}
-        here={hereBatch(batches, currentChapterId)}
+        /* The light follows the batch this student last opened (owner,
+           2026-10-08), falling back to the module's own current chapter and
+           then to the first — never to the last, which is where it used to
+           sit. It also decides which row is open on arrival, so the two agree
+           by construction: you come back to where you were. */
+        here={hereBatch(batches, currentChapterId, lastBatch(progress, moduleCode))}
+        onHere={(n) => rememberBatch(progress, moduleCode, n)}
         query={query}
         moduleName={moduleName}
         me={me}

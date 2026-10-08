@@ -135,7 +135,8 @@ export default function ModuleScreen({
     const btns = [...(tabsRef.current?.querySelectorAll('[role="tab"]') || [])];
     const i = btns.indexOf(document.activeElement);
     if (i < 0 || !btns.length) return;
-    const move = (n) => { e.preventDefault(); btns[n]?.focus(); onTab(MODULE_TABS[n].id); };
+    const list = asBatches ? MODULE_TABS.filter((t) => t.id !== "crew") : MODULE_TABS;
+    const move = (n) => { e.preventDefault(); btns[n]?.focus(); onTab(list[n].id); };
     if (e.key === "ArrowRight") move((i + 1) % btns.length);
     if (e.key === "ArrowLeft") move((i - 1 + btns.length) % btns.length);
     if (e.key === "Home") move(0);
@@ -218,7 +219,24 @@ export default function ModuleScreen({
      `upFrom` so it names its destination like every other one in the app, and
      the subtitle is a DOOR as well as a line (it counts what is in the Library,
      so it opens the Library) — worded and drawn exactly as the demo has it. */
-  if (asBatches) {
+  /* THE PORTED PANEL IS ONLY FOR PORTED MARKUP, and that is not a detail.
+     `.wm-port` is a one-way scope: it stops the demo's sheet escaping, and it
+     does nothing to stop that sheet painting whatever else is put inside it.
+     The Lessons tab of a module that HAS videos renders `RouteTab`, which is
+     the app's own — and the demo styles `.th`, `.chev`, `.quiz-thumb` and
+     every `button` under exactly those names. Measured: 26 of the app's lesson
+     thumbnails taking the demo's `.th`, plus the button reset stripping the
+     rows' padding and their 44px floor. The list came out with its titles
+     running into each other (owner, 2026-10-08: "lessons are broken").
+
+     So the ported screen is used when the body it is about to draw is ported —
+     the Library always, and Lessons only when the module has no video and the
+     ported player is what answers. A module with videos falls through to the
+     app's own screen below, which draws that list correctly. The real course
+     has no videos, so a student sees the ported strip on both tabs; it is the
+     demo's twelve lessons that take the other branch. */
+  const portedBody = asBatches && (tab === "library" || !hasLessons);
+  if (portedBody) {
     return (
       <div className="wm-port">
         <div className="wrap">
@@ -303,7 +321,13 @@ export default function ModuleScreen({
           auto` now and takes whatever the tabs leave. */}
       <div className="mtabs" role="tablist" aria-label={`${mod.name} sections`}
            ref={tabsRef} onKeyDown={walkTabs}>
-        {MODULE_TABS.map((t) => (
+        {/* CREW IS GONE WHEN THE PORT IS ON, here as well as on the ported
+            strip (owner, 2026-10-08: "remove crew as we killed it"). The
+            attempt stamps on each batch row replace it, and leaving the tab on
+            this strip meant the Lessons tab of a module with videos still
+            offered a screen the Library no longer admits to having. The
+            component and its route still exist for everyone without the flag. */}
+        {(asBatches ? MODULE_TABS.filter((t) => t.id !== "crew") : MODULE_TABS).map((t) => (
           <button key={t.id} type="button" role="tab" className="tab"
                   aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
                   onClick={() => onTab(t.id)}>
