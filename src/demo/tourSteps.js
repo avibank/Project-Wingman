@@ -60,7 +60,7 @@ export const TOUR_STEPS = [
 
   { section: "Module", page: "module", route: "/m/m1", whole: true,
     title: "A module, and everything in it",
-    text: "Lessons is for videos. Library has the quizzes, question banks and study cards. Crew is the module’s social side: who’s studying it and how far along they are." },
+    text: "Lessons is for videos. Library has everything else — each batch’s quiz, question bank and study cards in one row, and the stamps of everyone who has sat it." },
   { section: "Library", page: "module", route: "/m/m1/library", whole: true,
     title: "The Library",
     text: "Each chapter’s quiz, question bank and study cards are all in one place. We’re also working on shared study material. Everyone will be able to highlight it and take notes on it, so the whole class ends up studying from one shared copy for the unified exams." },

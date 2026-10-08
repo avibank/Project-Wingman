@@ -175,11 +175,21 @@ export function startTour({
      touch. The page still scrolled and the video still went off the top.
      Visibility was never the thing to maximise. Stillness is. */
 
-  /* ENOUGH OF A TARGET TO BE A TARGET. A frame showing less than this is not
-     worth leaving the page still for — below it the step is pointing at a
-     sliver and the scroll earns its keep. It is the §12 hit area, which is the
-     smallest thing this app ever asks anybody to aim at. */
+  /* ENOUGH OF A TARGET TO BE A TARGET.
+     ---------------------------------------------------------------------------
+     Owner, 2026-10-08: "during the demo you can scroll down a bit just dont
+     overly crop." Both halves matter and the first version only had the
+     second: a standing option won as soon as 44px of the target was showing,
+     so the ground card was lit along the very bottom edge of the window with
+     everything it contained below the fold. 44px is a hit area, not a sight.
+
+     So: a frame that FITS in the room the card leaves has to be showing in
+     FULL before the page is allowed to stay put, and one taller than the room
+     has to be showing most of that room. Short of either, the page moves — and
+     it still moves by the LEAST amount that brings the frame in, never to
+     centre it, which is the difference between scrolling a bit and cropping. */
   const MIN_VIS = 44;
+  const enough = (th, room) => Math.min(th, room * 0.6);
 
   function opts(el, dock) {
     const v = sc.view, r = rectOf(el), yNow = r.top - v.top, th = r.height + PAD * 2;
@@ -188,12 +198,20 @@ export function startTour({
       const y = yNow - (st - sc.top) - PAD;
       return Math.max(0, Math.min(y + th, f.bot) - Math.max(y, f.top));
     };
+    /* IT MOVES BY THE SHORTFALL, NOT BY WHATEVER WOULD CONTAIN THE FRAME.
+       A frame that FITS is brought fully in — that is already the least that
+       can be asked. One TALLER than the room never fits, and putting its top
+       at the top of the free area, which is what this did, is the full
+       centring scroll under another name: 435px on the lesson, the video off
+       the top, the crop the owner objected to in the first place. A tall frame
+       is moved just far enough to be showing `enough` of itself, and not one
+       pixel more (owner, 2026-10-08: "scroll down a bit just dont overly
+       crop"). */
+    const short = Math.max(0, enough(th, room) - seen(sc.top));
     let want = sc.top;
-    if (th <= room) {
-      if (y0 < f.top) want = sc.top - (f.top - y0);
-      else if (y0 + th > f.bot) want = sc.top + (y0 + th - f.bot);
-    } else if (y0 > f.top) {
-      want = sc.top + (y0 - f.top);
+    if (short > 0.5) {
+      if (y0 + th > f.bot && y0 > f.top) want = sc.top + Math.min(short, y0 - f.top);
+      else if (y0 < f.top) want = sc.top - Math.min(short, f.top - y0);
     }
     const clamp = (n) => Math.max(0, Math.min(sc.max, n));
     const still = clamp(sc.top), moved = clamp(want);
@@ -205,7 +223,8 @@ export function startTour({
 
   function plan(el) {
     const r = rectOf(el), th = r.height + PAD * 2;
-    const need = Math.min(th, MIN_VIS);
+    const room = Math.max(1, free("bottom").bot - free("bottom").top);
+    const need = Math.max(MIN_VIS, Math.min(th, enough(th, room)));
     const o = ["bottom", "top"].map((d) => opts(el, d));
     /* Bottom first, so a dock that keeps the card where it already is wins a
        genuine tie — the card moving from foot to head is itself a change the
@@ -241,11 +260,20 @@ export function startTour({
     }
     ring.className = "dg-ring";
     const r = rectOf(el), shift = stFinal == null ? 0 : stFinal - sc.top, f = free(dock);
-    let x = r.left - PAD;
-    const y = r.top - v.top - PAD - shift, w0 = r.width + PAD * 2, h = r.height + PAD * 2;
+    const y = r.top - v.top - PAD - shift, h = r.height + PAD * 2;
     const y1 = Math.max(y, f.top - 4), y2 = Math.min(y + h, f.bot + 4);
-    x = Math.max(v.left + 6, x);
-    const w = Math.min(w0, v.left + v.w - 6 - x);
+    /* BOTH EDGES ARE CLAMPED, NOT THE LEFT ONE AND THE WIDTH (owner, 2026-10-08:
+       "fix the box to only be around what you are pointing in the ready room").
+       It used to take `width = r.width + 2·PAD` and then push `x` right to the
+       window's edge — so whenever a target starts at x=0, as the Ready Room's
+       rail does, the box kept its full width from the clamped left and spilled
+       over the right. Measured on the Squadrons step: the rail's content is
+       330px wide and ends at 331, and the ring ran to 356 — 25px of chat
+       column lit along with it. The right edge is worked out from the target's
+       own right now, so clamping one side cannot move the other. */
+    const x = Math.max(v.left + 6, r.left - PAD);
+    const right = Math.min(r.right + PAD, v.left + v.w - 6);
+    const w = Math.max(0, right - x);
     Object.assign(ring.style, {
       width: `${w}px`, height: `${Math.max(0, y2 - y1)}px`,
       transform: `translate(${x}px,${v.top + y1}px)`, borderRadius: "18px",

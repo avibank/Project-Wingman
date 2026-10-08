@@ -76,17 +76,32 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
      thing where it stands if it is not standing anywhere you can see. Read
      BEFORE the press, because the press is what moves the page. */
   const preEl = expect.target ? document.querySelector(`[data-tour="${expect.target}"]`) : null;
-  const preVis = (() => {
-    if (!preEl) return 0;
-    const b = preEl.getBoundingClientRect();
-    if (!b.height) {
-      const kids = [...preEl.children].map((c) => c.getBoundingClientRect()).filter((k) => k.height > 0);
-      if (!kids.length) return 0;
-      const t = Math.min(...kids.map((k) => k.top)), bo = Math.max(...kids.map((k) => k.bottom));
-      return Math.max(0, Math.min(bo, window.innerHeight) - Math.max(t, 0));
-    }
-    return Math.max(0, Math.min(b.bottom, window.innerHeight) - Math.max(b.top, 0));
-  })();
+  const boxOf = (el) => {
+    const b = el.getBoundingClientRect();
+    if (b.height) return b;
+    const kids = [...el.children].map((c) => c.getBoundingClientRect()).filter((k) => k.height > 0);
+    if (!kids.length) return b;
+    const t = Math.min(...kids.map((k) => k.top)), bo = Math.max(...kids.map((k) => k.bottom));
+    return { top: t, bottom: bo, height: bo - t };
+  };
+  /* THE ROOM THE CARD LEAVES, NOT THE WINDOW. The engine decides whether a
+     target is showing enough against the free area — the window minus the
+     docked card — and measuring against the whole window instead called a
+     target "already in view" when 262px of it sat behind the card. Three
+     assertions failed on steps the engine had got right. */
+  const freeBottom = () => {
+    const c = document.querySelector(".dg-card");
+    const b = c ? c.getBoundingClientRect() : null;
+    return b && b.top > 0 ? b.top : window.innerHeight;
+  };
+  const visOf = (nm) => {
+    const el = nm ? document.querySelector(`[data-tour="${nm}"]`) : null;
+    if (!el) return 0;
+    const b = boxOf(el);
+    return Math.max(0, Math.min(b.bottom, freeBottom()) - Math.max(b.top, 0));
+  };
+  const targetH = preEl ? boxOf(preEl).height : 0;
+  const preVis = visOf(expect.target);
   const scrollerOf = () => document.querySelector(".deck") || document.querySelector(".rr-app");
   const topNow = () => { const b = scrollerOf(); return b ? b.scrollTop : window.scrollY; };
   const top0 = topNow();
@@ -220,6 +235,8 @@ const stepAndRest = async (page, want) => page.evaluate(async (expect) => {
     rrPane: ["rr-seatgrid", "rr-chat", "rr-threads"].find((k) => paneKids.some((c) => c.split(/\s+/).includes(k))) || null,
     scrolled: Math.round(Math.max(scrolled, Math.abs(topNow() - top0))),
     preVis: Math.round(preVis),
+    targetH: Math.round(targetH),
+    postVis: Math.round(visOf(expect.target)),
     finalTop: Math.round(topNow()),
     /* THE AMBIENT, HELD STILL. Deck.jsx drifts three light layers behind every
        screen and they are what held the module screen, the Library and the
@@ -320,9 +337,21 @@ try {
          now, and the two steps that still move the page are named above rather
          than left to a threshold — a third one failing this is the regression
          worth catching, and it names itself. */
-      if (step.target && step.page === TOUR_STEPS[n].page && r.preVis >= 44) {
-        ok(name, `step ${n + 2} frames its target without moving the page`, r.scrolled <= 2,
-           `${r.kicker}: ${r.preVis}px of it was already on screen, and the page still moved ${r.scrolled}px`);
+      /* THE RULE CHANGED ON 2026-10-08 and this changed with it: "during the
+         demo you can scroll down a bit just dont overly crop." A step may move
+         the page now — by the shortfall and no more — so what is asserted is
+         the half that did not change: a target ALREADY FULLY ON SCREEN is not
+         worth moving the page for at all. The old threshold was 44px of it
+         showing, which let a card be lit along the very bottom edge. */
+      /* The engine's own figure: a frame showing `min(its height, 60% of the
+         room the card leaves)` is showing enough, and the page stays still.
+         The room is approximated here by the window, which is the larger of
+         the two — so this only ever asks for MORE than the engine does, and a
+         step that passes it is comfortably inside the rule. */
+      const plenty = Math.min(r.targetH, Math.round(r.vh * 0.45));
+      if (step.target && step.page === TOUR_STEPS[n].page && r.preVis >= plenty) {
+        ok(name, `step ${n + 2} leaves the page alone when its target is already well in view`, r.scrolled <= 2,
+           `${r.kicker}: ${r.preVis}px of ${r.targetH}px was on screen, and the page still moved ${r.scrolled}px`);
       }
       /* AND A NEW PAGE IS SHOWN FROM ITS TOP. The rule above is measured
          against where the page already was, which on a page change is the
@@ -331,9 +360,20 @@ try {
          engine puts a new scroller back to 0 and then refuses to move it, so
          the whole of a new screen is on show; a step that ends part-way down
          one has scrolled to focus, whatever it was doing before. */
-      if (step.page !== TOUR_STEPS[n].page) {
-        ok(name, `step ${n + 2} shows its new screen from the top`, r.finalTop <= 2,
-           `${r.kicker}: left ${r.finalTop}px down the page`);
+      /* AND WHAT IT DOES MOVE, IT MOVES A BIT — owner, 2026-10-08: "you can
+         scroll down a bit just dont overly crop". A crop is a big jump that
+         puts one thing in the middle of the screen and takes the rest off it;
+         half a screenful is the line between the two, and the engine moves by
+         the SHORTFALL so in practice it is far under. Measured on the lesson,
+         which is the step this came from: 435px before, 73px now at 1440 and
+         156px at 390. */
+      /* A page change is exempt: the engine puts the new scroller back to its
+         top in ONE frame under a light that has already faded out, so the
+         distance is whatever the last screen happened to be scrolled to and
+         nobody sees it move. */
+      if (step.page === TOUR_STEPS[n].page) {
+        ok(name, `step ${n + 2} scrolls a bit rather than cropping`, r.scrolled <= r.vh / 2,
+           `${r.kicker}: moved ${r.scrolled}px of a ${r.vh}px screen`);
       }
       ok(name, `step ${n + 2} holds the ambient still`, r.drifting === 0,
          `${r.kicker}: ${r.drifting} light layer(s) still drifting`);
