@@ -66,6 +66,7 @@
     "qa": "node tests/qa-sweep.mjs",
     "check:board-db": "node --env-file=.env.local scripts/check-board-db.mjs",
     "check:licence-db": "node --env-file=.env.local scripts/check-licence-db.mjs",
+    "publish-course": "node scripts/publish-course.mjs",
     "check:course-db": "node --env-file=.env.local scripts/check-course-db.mjs",
     "check:paper-db": "node --env-file=.env.local scripts/check-paper-db.mjs",
     "check:code": "node scripts/check-code.mjs",

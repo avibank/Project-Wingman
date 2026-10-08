@@ -49,63 +49,84 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
 
 ## Content
 
-**TWO CHAPTERS, BOTH NEW TODAY** (owner, 2026-10-03). All three of the
-previous ones came out in the morning at his word — "delete all quizzes and
-sets and all traces of them" — and these went in the same day, under chapter
-ids that had never existed:
+**MODULE 13d IS TEN BATCHES** (owner, 2026-10-08: "delete every quiz and trace
+and update those, push them in"). M1.B1 and M1.B6 came out with everything they
+carried; twenty documents — a Quiz and a Full Set for each of ten batches —
+went in the same day under ids that had never existed, `M1.T1` to `M1.T10`.
 
-- **M1.B1 · "Theory of Flight · Rotary Wing"** — a quiz `M1.B1.QZ` of **40**
-  questions, **170** study cards `M1.B1.C001`–`C170`, and the Full Set on the
-  Papers shelf at 26 pages. PDF pages 1–68 of the manual.
-- **M1.B6 · "Instruments (ATA 31)"** — a quiz `M1.B6.QZ` of **40**, **416**
-  study cards `M1.B6.C001`–`C416`, and the Full Set at 65 pages. PDF pages
-  352–491.
+| batch | id | ref | pages | quiz | cards | paper |
+|---|---|---|---|---|---|---|
+| 1 | M1.T1 | 13.1 | 1–63 | 40 | 160 | 24pp |
+| 2 | M1.T2 | 13.3 | 64–155 | 40 | 340 | 52pp |
+| 3 | M1.T3 | 13.3 | 156–231 | 40 | 277 | 43pp |
+| 4 | M1.T4 | 13.3 | 232–321 | 40 | 311 | 45pp |
+| 5 | M1.T5 | 13.6 | 322–448 | 40 | 332 | 50pp |
+| 6 | M1.T6 | 13.8 | 449–562 | 40 | 326 | 50pp |
+| 7 | M1.T7 | 13.8 | 563–650 | 40 | 246 | 37pp |
+| 8 | M1.T8 | 13.8 | 651–767 | 40 | 312 | 45pp |
+| 9 | M1.T9 | 13.8 | 768–917 | 40 | 417 | 60pp |
+| 10 | M1.T10 | 13.8 | 918–1008 | 40 | 227 | 35pp |
 
-**THE IDS HAVE NEVER EXISTED BEFORE, AND THAT IS THE POINT.** The deleted
-chapters were `M1.01`–`M1.03` and ids are positional inside a chapter, so
-reusing one would silently inherit whatever any device still remembered about
-it. Nothing in the app parses a chapter id for a number — `chapterNo` comes
-from the chapter's POSITION and `chaptersForModule` only splits on the first
-`.` — so `M1.B1` is as valid as `M1.01` and cannot collide. **No reset was
-needed for this import**, which is the first time that has been true.
+**400 quiz questions, 2,948 cards, 10 papers.** The names are the documents'
+own — batches 2-4 are all "Autoflight (ATA 22)" and 6-10 all "Instruments (ATA
+31)", which is what the syllabus says; a row prints the name, the ref and the
+page range, so three batches sharing a subject are still told apart. Batch 5's
+name spans two sections because its document's own subtitle does.
 
-**THE DOCUMENTS CHANGED SHAPE, so there are two readers and not one edited
-one.** The September documents carried a single answer-key TABLE at the end
-(columns No./Ans/Level/Marked/PDF page/Why). The October ones carry an
-"Answers — <topic>" block after every topic, written as prose:
-`12. b <explanation> (L3, PDF p. 352)`. A single parser trying to be both
-would have had to guess which it was reading, and a wrong guess there puts a
-wrong answer in front of a student. Both live in the session scratchpad
-rather than the repo: each is a one-off for one document shape, and a third
-shape should be read and checked rather than trusted to either.
+**THE IDS HAD NEVER EXISTED, AND THEY WERE CHECKED RATHER THAN ASSUMED.** Every
+chapter id this file has ever carried was listed out of git history first —
+`M1.01`, `M1.02`, `M1.03`, `M1.B1`, `M1.B6`, `M1.P1`-`M1.P7` — because ids are
+positional inside a chapter and a reused one silently inherits whatever any
+device still remembers about the old one.
 
-**BOTH READ A LAID-OUT PDF BY GEOMETRY, never by prose.** The repo's own
-pinned pdf.js gives every line its x and its first run's height, and these
-documents are exact — in the October shape, stems at x≈60 h=10.5, their wraps
-at x≈78, options at x≈82, every continuation at x≈91 or beyond, key rows at
-x≈60 h=9, headings at h=15/11/10/8.5, and the page number and running header
-past x=200. That is what lets a converter tell a section heading from a
-wrapped stem without reading a word of either. **Anything it cannot place is
-REPORTED, never assumed**: all four documents came out with zero warnings.
-The level and the manual page are lifted out of the explanation rather than
-shown to a student inside it, because in the old documents they were separate
-columns.
+**THE PAGE RANGES TILE THE MANUAL, AND THAT IS WHAT CAUGHT THE EXTRA FILES.**
+1–63, 64–155 … 918–1008, no gap and no overlap. Downloads also still held the
+SUPERSEDED Batch 1 (pages 1–68) and Batch 6 (pages 352–491), whose ranges
+overlap these — taking "every M13 file in the folder" would have built twelve
+batches out of ten. The importer names its twenty explicitly and refuses if a
+batch's Quiz and Full Set disagree about the name or the range.
 
-**Spot-check the answer spread**: a correct join lands near a third each
-across a/b/c. These came out 14/13/13, 57/57/56, 14/13/13 and 139/139/138.
+**READ BY GEOMETRY, NEVER BY PROSE.** These are the October shape: stems at
+x≈60 h=10.5, their wraps at x≈78, options at x≈82, every continuation at x≈91
+or beyond, key rows at x≈60 h=9, headings at h=20/15/11/10/8.5, and the running
+header and page number past x=200. **Anything the converter cannot place is
+REPORTED, never assumed** — all twenty came out with zero warnings. The level
+and the manual page are lifted out of "(L3, PDF p. 24)" rather than shown to a
+student inside the explanation.
 
-**The names are the documents' own titles, PLUS THE PAGE RANGE** (owner,
-2026-10-04: "the quizzes and sets should have the page numbers stated
-clearly"). `quiz.name` is "M13 Batch 1 — Quiz · pages 1–68" and the chapter's
-`cardsName` is "M13 Batch 1 — Full Set · pages 1–68"; the paper on the shelf
-takes the same string. The range is the one fact these documents are named by
-— it is in every filename and in every document's own subtitle — and it was
-the only part of the title the October layout dropped. The chapter NAME stays
-the subject ("Theory of Flight · Rotary Wing"), not the batch.
+- **THE HEIGHT TOLERANCE HAS TO BE TIGHTER THAN THE GAP BETWEEN TWO MEANINGS.**
+  These documents step in halves — 20, 15, 11, 10.5, 10, 9, 8.5 — so a window
+  of 0.6 makes every stem (10.5) match the subtitle (11) and the level heading
+  (10). It did: 152 warnings out of one file and nothing read at all. 0.2
+  cannot reach the next meaning along.
+- **THE KEY IS NOT ALWAYS A SECTION AT THE END.** A Quiz carries one "Answers"
+  heading (h=15) with the per-topic blocks under it; a Full Set has NO such
+  heading and puts an "Answers — <topic>" block after each topic as it goes.
+  Assuming the first shape read 160 questions and answered none of them. What
+  hands over from questions to a key is the "Answers — …" line itself.
+- **The opening blurb and the key share a height.** Both are x≈60 h=9, and only
+  WHERE they are tells them apart: the blurb is the prose before the first
+  topic heading. The count to trust is the document's own ("160 questions"),
+  not a topic's meta line, which gave 9.
+- **Spot-check the answer spread**: near a third each across a/b/c. The
+  quizzes came out 14/13/13 and the sets from 54/53/53 to 139/139/139.
 
-**A quiz document is the quiz and nothing else; a Full Set is the study cards
-AND the paper** (owner, 2026-09-28, held to ever since). The practice quiz
-never reaches the Papers shelf: the app's own quiz is where a student sits it.
+**THE RESET AND THE PUBLISH BOTH RAN, and a commit is neither.**
+`supabase/reset-module-13d-progress.sql` is scoped to `M1.%` and safe to run
+twice, so it took M1.B1 and M1.B6 with it while the new ids, which no row
+mentioned yet, were untouched: 2 board runs went, and afterwards 0 rows
+anywhere point at an M1 question, card or paper. **Hours flown stayed** — 5
+documents still carry `pw-hobbs` for M1, deliberately. `STORAGE_EPOCH` is **5**.
+The document was published as **course version 11** and read back through
+`current_course()` to confirm: 10 chapters, 400 questions, 2,948 cards, 10
+papers. 1.26MB over the wire in 1.3s, well inside the four-second timeout that
+would otherwise fall back to the bundled copy.
+
+**`npm run publish-course` IS THE WAY IN NOW** (`scripts/publish-course.mjs`).
+It refuses a malformed document before the RPC and **checks every paper is
+actually on the other end first, by reading the first five bytes** — this app
+answers every unknown path with index.html and a 200, so a status check calls
+every missing paper present. Then it reads the document back and compares.
 
 `src/data.js` — **four** modules, M1 to M4, and no chapters. The codes never
 change (progress, scores and saves are keyed to them); the NAMES are the
@@ -117,16 +138,13 @@ current module because it is the first `active` one), **M2 is Module 13e**,
 is loaded by the `content.test` flag, which is `everyone: true` (label
 "Course content"); the id kept its old name so nothing that reads it had to
 change. It repeats the four module names, and they must agree with data.js,
-which is what the Flight Deck draws before the document arrives.
+which is what the Flight Deck draws before the document arrives. It is 1.86MB
+now and its built chunk is 1.21MB (294KB gzipped), lazy and off first paint.
 
-**What went this morning**, if it is ever wanted back
-(`git log -- src/content/test-content.json`): M1.01 Rotary Wing Aerodynamics
-(40 + 170), M1.02 Instruments (40 + 272, replaced twice, which is what
-`STORAGE_EPOCH` 2 and 3 were for) and M1.03 Pitot-Static Systems (40 + 81,
-including two questions rewritten in the app on 2026-09-30 and never in the
-source .docx). `supabase/reset-module-13d-progress.sql` took 11 board runs,
-11 saves and 2 progress documents with them; `STORAGE_EPOCH` is 4. Hours
-flown deliberately stayed.
+**What went before this**, if any of it is ever wanted back
+(`git log -- src/content/test-content.json`): M1.B1 Theory of Flight · Rotary
+Wing (40 + 170, pages 1–68) and M1.B6 Instruments (40 + 416, pages 352–491),
+which themselves replaced M1.01-M1.03 on 2026-10-03.
 
 ### What the next batch has to carry
 
