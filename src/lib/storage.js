@@ -49,12 +49,21 @@ import { FLY_SOLO_KEY } from "./flySolo.js";
    device holding the old scores would still put them back, which is the
    whole reason this number exists.
 
-   The server half is supabase/reset-module-13d-progress.sql; this is the
-   half that reaches a browser. Signed-in progress is read back from the
-   server, so what a student actually loses is what only their device knew.
-   Raise it again with the next revision — it is a no-op on a device that
-   has already swept at this number. */
-export const STORAGE_EPOCH = 4;
+   5 — AND THE TEN BATCHES LANDED (2026-10-08, the owner: "delete every quiz
+   and trace and update those"). The two chapters epoch 4 was raised for —
+   M1.B1 and M1.B6 — came out with everything they carried, and the whole of
+   Module 13d is now ten batches under ids that have never existed, M1.T1 to
+   M1.T10. Same argument as 4, one step further: nothing on a device points
+   at a question that still exists, and a browser holding `pw-quiz-scores`,
+   `pw-cards-seen` or `pw-cards-got` from before would patch a score for a
+   deleted chapter straight back onto the server on its next load.
+
+   The server half is supabase/reset-module-13d-progress.sql, which is scoped
+   to `M1.%` and safe to run twice; this is the half that reaches a browser.
+   Signed-in progress is read back from the server, so what a student actually
+   loses is what only their device knew. Raise it again with the next revision
+   — it is a no-op on a device that has already swept at this number. */
+export const STORAGE_EPOCH = 5;
 const EPOCH_KEY = "pw-epoch";
 
 /* Device preferences. Everything else under `pw-` is state. */

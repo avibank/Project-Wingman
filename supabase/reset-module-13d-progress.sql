@@ -24,6 +24,16 @@
 -- same commit: a browser holding `pw-quiz-scores` from before would otherwise
 -- patch an old M1 score straight back onto the server on its next load.
 --
+-- RUN AGAIN ON 2026-10-08, for the same reason one step on. The two chapters
+-- that replaced the three — M1.B1 and M1.B6 — came out with everything they
+-- carried, and Module 13d is now TEN batches under ids that have never
+-- existed, M1.T1 to M1.T10 (the owner: "delete every quiz and trace and update
+-- those"). Nothing a student did against M1.B1 or M1.B6 points at a question
+-- that still exists, so the same delete applies unchanged: every statement
+-- here is scoped to `M1.%` and takes the old ids with it while the new ones,
+-- which no row mentions yet, are untouched. The device half is STORAGE_EPOCH,
+-- raised to 5 in the same commit.
+--
 -- Safe to run twice.
 -- =============================================================================
 
