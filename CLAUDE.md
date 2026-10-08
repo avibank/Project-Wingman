@@ -984,7 +984,8 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   **REBUILT 2026-10-06 FROM AN APPROVED TOUR, and it is a different thing
   from what came before.** The old one was twenty-five steps, a four-panel
   dim, a docked card placed by `plan()`, and `steps.js`. The new one is
-  **TWENTY-ONE steps behind a BETA NOTE**, and the files are
+  **TWENTY steps behind a BETA NOTE** — twenty-one until Crew was killed on
+  2026-10-08 and its step went with it — and the files are
   `src/demo/tourSteps.js` (the script, word for word as approved),
   `src/demo/tourEngine.js` (the engine, framework-free), `src/demo/tour.css`
   and `src/lib/tourState.js`. `Guide.jsx` is now the wiring and renders
@@ -1248,7 +1249,7 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
     delay in which the light was already in place and deliberately not drawn.
     Worst step 1466ms to 1069ms; the curves and durations are untouched.
   - **Walked, measured and held**: `npm run test:tour` is **369 assertions**.
-    It walks all twenty-one steps at 1440 and at 390 and asserts that every
+    It walks every step at 1440 and at 390 and asserts that every
     step naming a target lights one, that what is lit is fully on screen,
     that the card covers none of it (except a `whole` step, where the light
     IS the window), that a step asking for a pane or a tab gets it, that a

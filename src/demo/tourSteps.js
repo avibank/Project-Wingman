@@ -64,10 +64,6 @@ export const TOUR_STEPS = [
   { section: "Library", page: "module", route: "/m/m1/library", whole: true,
     title: "The Library",
     text: "Each chapter’s quiz, question bank and study cards are all in one place. We’re also working on shared study material. Everyone will be able to highlight it and take notes on it, so the whole class ends up studying from one shared copy for the unified exams." },
-  { section: "Crew", page: "module", route: "/m/m1/crew", whole: true,
-    title: "Crew: your class, chapter by chapter",
-    text: "Who has signed each chapter off, who is on it right now, and who is a little ahead. It is here so that when you are stuck you can find the person sitting at exactly your problem — or the one who was sitting at it last week and remembers how it went." },
-
   { section: "Lesson", page: "lesson", route: "/m/m1/M1.02/lesson/M1.02.2", target: "lesson-logbook", panelTab: "logbook",
     title: "Your logbook",
     text: "Anything you write while watching is saved with the exact time in the video. Tap the note later and you jump straight back to that moment." },
