@@ -188,7 +188,18 @@ export default function ModuleScreen({
                 totalBatches={mod?.batches || null}
                 moduleName={mod?.name}
                 progress={progress}
-                currentChapterId={chapters[chapters.length - 1]?.id || null}
+                /* NOT THE LAST CHAPTER. This fed `hereBatch` the final
+                   chapter and called it "current", which is a guess dressed as
+                   a fact: there is no marking on a module that says which
+                   chapter somebody is on. It is also what defeated the fix for
+                   the light on the route strip — the remembered batch wins,
+                   but with nothing remembered the "marked" branch returned the
+                   LAST batch rather than the first, so a student opening
+                   Module 13d for the first time landed on batch 10 of 10 with
+                   its drawer open. Nobody starts a course at the end. Null
+                   until there is a real source for it; `hereBatch` then falls
+                   back to the first batch, which is where a course starts. */
+                currentChapterId={null}
                 onOpenCards={onOpenCards}
                 onOpenDownload={onOpenDownload}
                 onOpenPerson={onOpenPerson}
