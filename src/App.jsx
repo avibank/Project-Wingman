@@ -382,6 +382,17 @@ function AppInner() {
     if (route.name === "redirect") navigate(route.to, { replace: true });
   }, [route.name, route.to, navigate]);
 
+  /* A PAPER NEEDS AN ACCOUNT, and the redirect is an effect for the same
+     reason the one above is: the branch that would render the paper returns
+     null while this runs, so nothing of it is ever drawn. `replace`, so Back
+     does not bounce a visitor between the sign-in page and a paper they
+     cannot have. */
+  useEffect(() => {
+    if (route.name !== "chapter" || route.tab !== "quiz") return;
+    if (!clerkLoaded || isSignedIn) return;
+    navigate(`${routePath.signin()}?join=1&for=quiz`, { replace: true });
+  }, [route.name, route.tab, clerkLoaded, isSignedIn, navigate]);
+
   // A review flow is a module screen, not the hub. It was left out of this list
   // once and the Flight Deck rendered underneath a perfectly correct URL.
   // A paper is inside a module, like a lesson is. Leaving it out sent the whole
@@ -2416,6 +2427,24 @@ function AppInner() {
             </main>
           );
         })()
+      ) : route.name === "chapter" && route.tab === "quiz" && clerkLoaded && !isSignedIn ? (
+        /* A PAPER NEEDS AN ACCOUNT (owner, 2026-10-10: "make it that only
+           signed in users can attempt a quiz").
+           ---------------------------------------------------------------------
+           Gated at the ROUTE and not only at the door, because the door is not
+           the only way in: this address can be typed, shared, bookmarked or
+           arrived at by Back. Measured before it was built — a fresh browser
+           with no account could skip the walkthrough and open the full
+           forty-question Batch 1 paper, clock running, nothing asked.
+           And it wrote: four `quiz_runs` reached the live database owned by a
+           placeholder id with no profile behind it, which is what drew
+           "Someone" on the Library.
+
+           `clerkLoaded` is part of the condition on purpose. Clerk reports
+           nobody for the first moments of every load, and redirecting on that
+           reading would throw a signed-in student off their own paper — which
+           is the exact failure the walkthrough's three guards exist for. */
+        null
       ) : flags["module.screen"] && route.name === "chapter" && route.tab === "quiz" ? (
         (() => {
           const chs = chaptersFor(activeModuleCode, useTestContent);
@@ -2557,7 +2586,13 @@ function AppInner() {
                directly skips the transition layer entirely, and this one was
                the quiz row on the Lessons list — opening a quiz cut hard while
                every other row on the same list moved. */
-            onOpenQuiz={(ch) => go(routePath.chapter(activeModuleCode, ch.id, "quiz"))}
+            /* The row still presses; where it goes depends on whether there
+               is anybody to keep the result for. Sending a visitor to the
+               paper and bouncing them off the route would work too, and would
+               flash a screen they cannot have. */
+            onOpenQuiz={(ch) => (isSignedIn
+              ? go(routePath.chapter(activeModuleCode, ch.id, "quiz"))
+              : go(`${routePath.signin()}?join=1&for=quiz`))}
             /* The ported module screen (2026-10-06). `cards` takes the
                chapter's POSITION in the module, which is what that route has
                always carried — not its batch number, which is a different

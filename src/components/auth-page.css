@@ -11,6 +11,15 @@
   text-transform: uppercase; color: var(--t3);
 }
 .auth-mark span { margin: 0 .35em; }
+/* THE LINE THAT SAYS WHY, above Clerk's card and below the wordmark. It is
+   only ever drawn when a visitor was sent here from something they pressed
+   (`?for=…`), so the page a student goes to on purpose is unchanged — one
+   wordmark, one card, one line underneath. `--t2` rather than `--t3`: it is a
+   sentence somebody is meant to read, not a label. */
+.auth-why {
+  margin: 0 0 16px; max-width: 38ch; text-align: center;
+  font-size: 14px; line-height: 1.5; color: var(--t2); text-wrap: balance;
+}
 .auth-card { width: 100%; display: flex; justify-content: center; }
 .auth-switch {
   display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px 6px;
