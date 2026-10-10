@@ -125,7 +125,14 @@ try {
   let s = await state(pg);
   ok(name, "it opens straight into the cards, with no start screen", !!s.question && !s.done);
   ok(name, "it opens on All", /^All/.test(s.sets[0] || ""), s.sets.join(" / "));
-  ok(name, "the counter starts at one", s.counter === "1 / 170", s.counter || "none");
+  /* THE TOTAL IS READ, NOT WRITTEN DOWN. It was `1 / 170` here, and the course
+     was replaced on 2026-10-08 — chapter one is 160 cards now, so three
+     assertions failed on a screen that was working perfectly. A walk that
+     pins a content figure fails every time the content changes and says
+     nothing about the screen. */
+  const total = Number((s.counter || "").split("/")[1]);
+  ok(name, "the counter starts at one", s.counter === `1 / ${total}`, s.counter || "none");
+  ok(name, "and counts a real set", Number.isFinite(total) && total > 1, String(total));
   ok(name, "the front is the question and the back is the answer",
      Boolean(s.question && s.answer && s.question !== s.answer));
 
@@ -147,7 +154,7 @@ try {
   await tap(pg, '.wm-port [data-dk="yes"]', '.wm-port [data-dk="yes"]');
   await pg.waitForTimeout(1100);
   s = await state(pg);
-  ok(name, "the Got it button sorts the card", s.yes === 1 && s.counter === "2 / 170", `yes=${s.yes} at ${s.counter}`);
+  ok(name, "the Got it button sorts the card", s.yes === 1 && s.counter === `2 / ${total}`, `yes=${s.yes} at ${s.counter}`);
   ok(name, "and the next card is a different one", s.question !== first);
   ok(name, "and the card that replaces it can actually be seen", s.cardSeen === true,
      `cardSeen=${s.cardSeen}`);
@@ -156,7 +163,7 @@ try {
   await pg.keyboard.press("ArrowLeft");
   await pg.waitForTimeout(1100);
   s = await state(pg);
-  ok(name, "the left arrow is Not yet", s.no === 1 && s.counter === "3 / 170", `no=${s.no} at ${s.counter}`);
+  ok(name, "the left arrow is Not yet", s.no === 1 && s.counter === `3 / ${total}`, `no=${s.no} at ${s.counter}`);
   await pg.keyboard.press("ArrowRight");
   await pg.waitForTimeout(1100);
   s = await state(pg);

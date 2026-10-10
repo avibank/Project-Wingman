@@ -96,19 +96,33 @@ export function SessionProvider({ children }) {
   // is what the user_id columns hold everywhere else in this codebase, so it
   // is what they hold here.
   //
-  // Signed out falls back to "u_you": the seeded demo is authored by it and
-  // nothing signed out can write to the shared tables anyway.
+  // SIGNED OUT IS NOBODY, NOT "u_you". This used to fall back to the
+  // placeholder on the reasoning that "nothing signed out can write to the
+  // shared tables anyway", and that reasoning was wrong: every writer guards
+  // on a FALSY `me`, and "u_you" is a perfectly good string. So a visitor,
+  // or anybody caught in the moment before Clerk answers, became a real
+  // identity and wrote real rows as it.
   //
-  // BUT NOT WHILE CLERK IS STILL ANSWERING. `user` is undefined for the first
-  // moments of every load, which is indistinguishable from signed out here —
-  // so the placeholder became the identity, and effects downstream sent it to
-  // the database. Four `blocks?user_id=eq.u_you` requests per Ready Room load
-  // were measured against production: harmless in that they match nothing,
-  // and wrong in that a made-up id is being asked about at all. Every
-  // consumer already guards on a falsy `me`, so nobody is the honest answer
-  // until Clerk gives a real one.
+  // MEASURED ON THE LIVE DATABASE (2026-10-10, the owner: "WHY does it show
+  // as someone"): four `quiz_runs` against Module 13d owned by `u_you`, an
+  // id with no `pilot_profiles` row at all — so the Library's attempt strip
+  // drew a stamp for an account that does not exist and labelled it
+  // "Someone", which is this app's fallback for a profile with no callsign.
+  // The runs were real: a started paper and three handed in.
+  //
+  // The comment this replaces had already worked it out — "a made-up id is
+  // being asked about at all ... nobody is the honest answer until Clerk
+  // gives a real one" — and then left the fallback in place. It is gone.
+  //
+  // `LEGACY_ME` still does the job it was written for, one line down: it
+  // rewrites the AUTHORSHIP of seeded and pre-identity rows onto whoever is
+  // here now. Being a name on old rows and being somebody are different
+  // things, and conflating them is what put rows in the database.
+  //
+  // The demo is unaffected: `lib/clerk.js` signs its guest in with a real
+  // `user.id`, so `me` is that id and never the placeholder.
   const { user, isLoaded } = useUser();
-  const me = !isLoaded ? null : (user?.id || LEGACY_ME);
+  const me = !isLoaded ? null : (user?.id || null);
   const progressRef = useRef(progress);
   progressRef.current = progress;
   const [session, setSession] = useState(() => ({ ...initialSession, barPos: readBarPos() }));
