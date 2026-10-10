@@ -72,12 +72,34 @@ const startsOnJoin = () => {
   try { return new URLSearchParams(window.location.search).has("join"); } catch { return false; }
 };
 
+/* WHY SOMEBODY IS STANDING HERE, when they did not come looking for it.
+   -----------------------------------------------------------------------------
+   Pressing a quiz with no account used to open the paper — forty questions, a
+   fifty-minute clock, and a result that reached a placeholder id rather than a
+   person (owner, 2026-10-10). The paper needs an account now, and a visitor
+   who presses it arrives here having asked for something else entirely. A
+   sign-in page that says nothing reads as a wall; one that says what it is for
+   reads as the next step.
+
+   §10's rule applies to this sentence as much as to an empty state: it names
+   what the account is FOR rather than what the visitor cannot do, and there is
+   no telling-off in it for having tried. */
+const REASONS = {
+  quiz: "A paper is sat against the clock and kept to your licence — your score, your time and the stamp you sign it with. Make an account and it is yours.",
+};
+const reasonFor = () => {
+  try { return REASONS[new URLSearchParams(window.location.search).get("for")] || null; }
+  catch { return null; }
+};
+
 export default function AuthPage() {
   const [mode, setMode] = useState(() => (startsOnJoin() ? "signup" : "signin"));
+  const [why] = useState(reasonFor);
   const signin = mode === "signin";
   return (
     <div className="auth">
       <p className="auth-mark">Wingman <span aria-hidden="true">·</span> Part-66</p>
+      {why && <p className="auth-why">{why}</p>}
       <div className="auth-card">
         {signin
           ? <SignIn routing="virtual" appearance={clerkLook} signUpUrl="#" />

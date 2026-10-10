@@ -18,7 +18,7 @@
    ========================================================================= */
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
-import { seedOf, allowanceFor, clock } from "../src/lib/quiz.js";
+import { seedOf, allowanceFor, clock, signPaper } from "../src/lib/quiz.js";
 import { shuffleOptions } from "../src/lib/retention.js";
 import { lightOverride } from "../src/lib/finishEngine.js";
 import { loadContent } from "../src/lib/contentLoader.js";
@@ -35,7 +35,16 @@ const SHOTS = "tests/screens/exam";
 const ALL_SHOTS = process.env.EXAM_SHOTS === "all";
 const NOISE = /WebSocket|realtime|ERR_CONNECTION_REFUSED|Failed to load resource|Failed to fetch/;
 
-const CHAPTER = "M1.01";
+/* THE CHAPTER IS FOUND, NOT WRITTEN DOWN. It was `M1.01`, and the course has
+   been replaced twice since — M1.B1/M1.B6 on 2026-10-03 and then the ten
+   batches M1.T1-T10 on 2026-10-08. Neither replacement touched this screen and
+   both broke this walk, because `chapters.find(c => c.id === "M1.01")` quietly
+   returned undefined and every assertion downstream failed on a paper that was
+   working perfectly. The first chapter with a quiz is what this is about: the
+   walk measures the EXAM, and which paper it sits is not part of the subject. */
+const chapterOf = (doc) => doc.modules[0].chapters.find((c) => (c.questions || []).length)
+  || doc.modules[0].chapters[0];
+const CHAPTER = chapterOf(loadContent(fixture)).id;
 const QUIZ_URL = `${BASE}/m/m1/${CHAPTER}/quiz?uid=student_one`;
 
 let failures = 0;
@@ -216,7 +225,7 @@ const audit = (page, expect) => page.evaluate((expect) => {
    so the stored answer means the same sentence on the way back in. */
 /* The same adapter the app uses, so the ids, the quiz id and the question
    order here are the ones the screen will read rather than a second opinion. */
-const chapter = loadContent(fixture).modules[0].chapters.find((c) => c.id === CHAPTER);
+const chapter = chapterOf(loadContent(fixture));
 const attemptWith = (right) => {
   const startedAt = new Date().toISOString();
   const draft = { startedAt };
@@ -227,6 +236,13 @@ const attemptWith = (right) => {
   });
   return {
     quizId: chapter.quizId, lessonIds: chapter.questions.map((qn) => qn.lessonId),
+    /* WHICH QUESTIONS, AND WHAT THEY SAID. A seeded attempt without these is
+       refused by `paperOf` — which is the whole point of them, and is why
+       every result case in this walk was timing out on a screen that works:
+       the paper was being rebuilt from an attempt the app correctly would not
+       trust. Added when the shuffle and the signature landed, and missed here. */
+    qids: chapter.questions.map((qn) => qn.id),
+    sig: signPaper(chapter.questions),
     answers, flagged: answers.map(() => false), at: 0,
     left: allowanceFor(answers.length), submittedAt: null, startedAt,
   };
