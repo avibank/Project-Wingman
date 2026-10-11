@@ -51,10 +51,11 @@ export default function ModuleScreen({
   readerPin = null, onAddPaper,
   stamp = null, tilts = null,
   /* `onOpenPerson` is the door from a batch row's attempt stamps to that
-     student's sheet. The five that stood beside it — onFindSquadron,
-     onInviteClass, mates, myDone, onOpenThreads — were Crew's and went with
-     it on 2026-10-11. */
-  me = null, onOpenPerson,
+     student's sheet. Four of the five that stood beside it — onFindSquadron,
+     mates, myDone, onOpenThreads — were Crew's and went with it on
+     2026-10-11. `onInviteClass` came BACK the same day: Crew's empty state
+     was the invitation's only door, so the Library's foot is it now. */
+  me = null, onOpenPerson, onInviteClass = null,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
@@ -200,6 +201,7 @@ export default function ModuleScreen({
                 onOpenCards={onOpenCards}
                 onOpenDownload={onOpenDownload}
                 onOpenPerson={onOpenPerson}
+                onInviteClass={onInviteClass}
                 onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
   );
 

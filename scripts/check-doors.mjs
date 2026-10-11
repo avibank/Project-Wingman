@@ -152,6 +152,14 @@ const GONE = [
   [/\bSettings\b/, "Settings", ["src/lib/routes.js"]],
   [/\bCalibration\b/, "Calibration", []],
   [/\bCompete\b/, "Compete", []],
+  /* CREW WENT ON 2026-10-11 — the tab, its route, CrewTab.jsx, CrewEmpty.jsx,
+     crew.css and lib/crew.js. What drew a class is the attempt strip on each
+     batch row now. It is here because the invite sheet still told a student
+     their classmates would "appear here on Crew": that copy was stale from
+     the morning Crew went and nothing caught it, because the sheet had no
+     door on it for the rest of that day. A screen with no door is still a
+     screen whose words can be wrong. */
+  [/\bCrew\b/, "Crew", []],
   [/\bminimums\b/i, "minimums (never the bar's name in the UI)", ["src/lib/minimums.js", "src/components/module/Exam.jsx", "src/components/module/QuizPage.jsx", "src/App.jsx", "src/components/Home.jsx", "src/components/PaperStrip.jsx", "src/components/module/Review.jsx", "src/components/module/ModuleScreen.jsx", "src/components/ModulesPage.jsx", "src/components/module/QuizResults.jsx", "src/components/module/RouteTab.jsx", "src/components/module/LibraryTab.jsx", "src/components/Deck.jsx", "src/components/ChaptersPanel.jsx", "src/components/module/ModuleHub.jsx", "src/components/ModuleHub.jsx"]],
 ];
 const said = [];

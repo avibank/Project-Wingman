@@ -143,6 +143,9 @@ export default function LibraryTab({
   /* The module's own name, for the ported search's empty line, and the door to
      a classmate from a row's stamp strip. */
   moduleName = null, onOpenPerson = null,
+  /* The door to the invite sheet, drawn at the foot of the batch list. The
+     shelves below never had one — Crew's empty state was it. */
+  onInviteClass = null,
 }) {
   const [chapterFilter, setChapterFilter] = useState(null);
 
@@ -257,6 +260,7 @@ export default function LibraryTab({
         onCards={(b) => onOpenCards?.(b.chapter)}
         onPaper={(b) => onOpenDownload?.(b.paper)}
         onProfile={(p) => onOpenPerson?.(p)}
+        onInviteClass={onInviteClass}
       />
     );
   }
