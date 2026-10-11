@@ -248,8 +248,6 @@ import { initSaves, resetSaves, noStudent, addSave, removeSave, findSave,
 import { stampOf, stampTilt } from "./lib/stamp.js";
 import { SIGNOFF_KEY, sign, unsign, tiltOf } from "./lib/signoff.js";
 import PilotSheet from "./components/PilotSheet.jsx";
-import { fetchSquadron, fetchRoster } from "./lib/squadron.js";
-import { fetchMyCompletions } from "./lib/partners.js";
 const AuthPage = lazy(() => import("./components/AuthPage.jsx"));
 /* The walkthrough is lazy: a student sees it once, and it carries twelve
    drawings nobody else should download. */
@@ -1448,35 +1446,25 @@ function AppInner() {
      or stamp opens the profile viewer." That viewer is the licence card, which
      is item 5; until it exists this opens the pilot sheet, which is this app's
      current answer to "who is this" and carries report and block. */
-  const [squadronMates, setSquadronMates] = useState(() => new Set());
-  const [myCompleted, setMyCompleted] = useState(() => new Set());
+  /* `squadronMates` and `myCompleted` stood here and were fed by two effects
+     below — a squadron roster and this student's completions, fetched on
+     every module load. Crew was the only thing that read either, so both the
+     state and the two fetches went with it on 2026-10-11: two queries per
+     module load that nobody looked at. */
   const [pilotSheet, setPilotSheet] = useState(null);
   /* INVITE YOUR CLASS opens a link to send out of the app (owner, 2026-09-23),
      rather than the module's own board, which was a place to be rather than an
      invitation. The sheet is in src/components/InviteSheet.jsx and its header
-     says why the link is the module's. */
+     says why the link is the module's.
+
+     IT HAS NO DOOR ON IT TODAY (2026-10-11). Crew's empty state was the only
+     one, and Crew is gone — what it drew is the attempt stamps on each batch
+     row now. The sheet, its chunk and this state all still work and are
+     reached from nothing, which is the same state "Put right" and "going
+     through the paper" are already in and is recorded for the same reason:
+     one button anywhere puts it back, and deleting it would make that a
+     rewrite instead. */
   const [inviteClass, setInviteClass] = useState(null);
-
-  useEffect(() => {
-    if (!me || !activeModuleCode) { setSquadronMates(new Set()); return undefined; }
-    let live = true;
-    (async () => {
-      const sq = await fetchSquadron(me, activeModuleCode);
-      if (!live || !sq?.id) { if (live) setSquadronMates(new Set()); return; }
-      const roster = await fetchRoster(me, sq.id);
-      if (live) setSquadronMates(new Set((roster || []).map((r) => r.user_id).filter(Boolean)));
-    })();
-    return () => { live = false; };
-  }, [me, activeModuleCode]);
-
-  useEffect(() => {
-    if (!me || !activeModuleCode) { setMyCompleted(new Set()); return undefined; }
-    let live = true;
-    fetchMyCompletions(me, activeModuleCode).then((rows) => {
-      if (live) setMyCompleted(new Set((rows || []).map((r) => r.chapter_id)));
-    });
-    return () => { live = false; };
-  }, [me, activeModuleCode]);
 
   const openPilot = (p) => {
     const id = typeof p === "string" ? p : (p?.userId || p?.user_id);
@@ -1717,7 +1705,6 @@ function AppInner() {
     // keepScroll because this restores each tab's own position below, and go()
     // would otherwise send both to the top.
     go(nextTab === "pdf" || nextTab === "library" ? routePath.library(activeModuleCode)
-       : nextTab === "crew" ? routePath.crew(activeModuleCode)
        : routePath.module(activeModuleCode),
        { keepScroll: true })
       // Chained rather than fired straight away: go() is async now, so a bare
@@ -2529,10 +2516,10 @@ function AppInner() {
                without being sorted to the top, and `myDone` so their own stamp
                goes on the walls of the chapters they have signed off. */
             me={me}
-            mates={squadronMates}
-            myDone={myCompleted}
+            /* The door from a batch row's attempt stamps to that student's
+               sheet. `mates`, `myDone` and `onOpenThreads` stood here until
+               2026-10-11 and were Crew's; they went with it. */
             onOpenPerson={openPilot}
-            onOpenThreads={() => go(routePath.ready(activeModuleCode))}
             /* A DEAD BUTTON, FOUND BY CLICKING IT. "Add a paper" rendered
                whenever this prop was passed, and the sheet behind it is gated
                on `papersOn` — the PAUSED reader's switch — so pressing it did
@@ -2574,10 +2561,7 @@ function AppInner() {
                the Ready Room at the place that does the thing rather than a
                screen of their own: Discover is where a squadron is found, and
                the module's own feed is where you would say where you are. */
-            onFindSquadron={() => openRoomAt({ kind: "discover", moduleCode: activeModuleCode })}
-            onInviteClass={() => setInviteClass(activeModuleCode)}
             onTab={(t) => go(t === "library" ? routePath.library(activeModuleCode)
-              : t === "crew" ? routePath.crew(activeModuleCode)
               : t === "people" ? routePath.people(activeModuleCode)
               : routePath.module(activeModuleCode))}
             onBack={() => go(routePath.home())}

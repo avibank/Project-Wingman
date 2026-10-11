@@ -78,7 +78,7 @@ const ok = (name, cond, detail) => {
 */
 {
   const FILES = [
-    "src/lib/presence.js", "src/lib/crew.js", "src/lib/comms.js",
+    "src/lib/presence.js", "src/lib/comms.js",
     "src/lib/readyRoom.js", "src/lib/rightSeat.js", "src/lib/roomData.js",
     "src/lib/partners.js",
   ];
@@ -88,8 +88,8 @@ const ok = (name, cond, detail) => {
   const MUST_BE_GATED = new Set([
     // presence: where anybody is
     "fetchChapterPresence", "fetchModulePresence", "fetchAllPresence",
-    // the module's crew, and the chapter's chat
-    "fetchCrew", "fetchMessages", "fetchPinned",
+    // the chapter's chat
+    "fetchMessages", "fetchPinned",
     // the room: questions asked, and study sessions you could walk into
     "fetchOpenSquawks", "fetchFormations",
     // the right seat, both directions
@@ -169,23 +169,29 @@ const ok = (name, cond, detail) => {
        ? `${unclassified.join(" · ")} — add it to MUST_BE_GATED or say which kind it is`
        : "");
 
-  /* And the gate returns the EMPTY SHAPE the caller expects, never null into
-     a .map(). This is the literal crew's own gate returns. */
-  const shapes = read("src/lib/crew.js");
-  ok("crew's gate returns the shape the screen renders, with solo said out loud",
-     /const none = \{ people: \[\], onNow: 0, finished: 0, solo: true \}/.test(shapes)
-     /* `&& !demoOn()` is the dev fixture, and it is IN the gate rather than in
-        front of it so that this assertion still reads one expression. */
-     && /if \(isFlySolo\(\) && !demoOn\(\)\) return none;/.test(shapes));
 }
 
 /* ------------------------------------------------ inbound: nobody sees you */
 {
-  const crew = read("src/lib/crew.js");
-  ok("Crew drops an invisible profile from everything it draws",
-     /\.filter\(\(p\) => !p\.invisible\)/.test(crew));
-  ok("and it selects `invisible` in order to be able to",
-     /select\([^)]*invisible/.test(crew));
+  /* CREW'S TWO ASSERTIONS MOVED TO THE SQL RATHER THAN BEING DELETED WITH IT.
+     -------------------------------------------------------------------------
+     `src/lib/crew.js` is gone with the Crew tab (2026-10-11) and so are the two
+     rules this used to read off it: that an invisible profile is dropped from
+     everything the tab drew, and that it selected `invisible` in order to be
+     able to. What replaced the tab is the attempt stamps on each batch row,
+     fed by `quiz_finishers` — and that enforces the same two things in SQL,
+     which is a better place for them than a client filter anybody can forget.
+
+     So the coverage follows the feature instead of lapsing with the file. The
+     cost of letting it lapse is specific: a student on Fly solo, or one who
+     has blocked somebody, would have their stamp drawn on a row in front of
+     them with nothing in the suite to say so. */
+  const finishers = read("supabase/migrations/0038_who_has_finished_a_quiz.sql");
+  ok("the stamps that replaced Crew leave out anybody on Fly solo",
+     /not coalesce\(p\.invisible, false\)/.test(finishers));
+  ok("and a block cuts both ways in them",
+     /b\.user_id = uid\s+and b\.blocked_id = r\.user_id/.test(finishers)
+     && /b\.user_id = r\.user_id and b\.blocked_id = uid/.test(finishers));
 
   const squad = read("src/lib/squadron.js");
   /* The one roster this file read was First Flight's list of recent pilots,

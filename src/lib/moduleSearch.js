@@ -63,6 +63,4 @@ export const countLessons = (chapters) =>
    is the same lie one section along. */
 export const placeholderFor = (tab, papers = true) =>
   tab === "library" ? (papers ? "Search quizzes, cards and papers" : "Search quizzes and cards")
-    /* Crew is a list of PEOPLE, so the field says so. */
-    : tab === "crew" ? "Find someone"
     : "Search lessons";
