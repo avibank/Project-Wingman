@@ -64,7 +64,6 @@ const SHAPES = [
   routePath.library("M1"),
   routePath.library("M1", "quizzes"),
   routePath.cards("M1", 1),
-  routePath.crew("M1"),
   routePath.ready("M1"),
   routePath.bookmarks("questions"),
   routePath.profile("licence"),

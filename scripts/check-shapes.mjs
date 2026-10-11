@@ -140,7 +140,7 @@ for (const line of COPY) {
    The reference's own words (§4): "Search lessons", "Search quizzes, cards
    and papers", "Find someone". */
 check(placeholderFor("route") !== placeholderFor("library"), "the search placeholder does not change per tab");
-check(placeholderFor("library") !== placeholderFor("crew"), "Crew and the Library share a placeholder");
+check(placeholderFor("library") !== placeholderFor("route"), "Lessons and the Library share a placeholder");
 check(/cards/.test(placeholderFor("library")), "the Library placeholder does not mention the cards it searches");
 
 console.log(`shapes: ${checked} assertions across route geometry (${WIDTHS.length} widths x ${COUNTS.length} counts),`);

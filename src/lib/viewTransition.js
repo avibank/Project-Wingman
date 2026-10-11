@@ -51,7 +51,9 @@ const PLACE = {
   notfound: ["notfound", 0],
 };
 
-const MODULE_TAB_ORDER = ["chapters", "pdf", "crew", "people"];
+/* Crew came out on 2026-10-11; the order is what is left, and the
+   direction a tab slides is read from it. */
+const MODULE_TAB_ORDER = ["chapters", "pdf", "people"];
 
 export function placeOf(route) {
   const [sec, depth] = PLACE[route?.name] || ["other", 0];

@@ -355,11 +355,41 @@ which is what the Flight Deck draws before the document arrives.
       layer at a time, the write-backs read back out of the progress document,
       and contrast across six liveries x night and day. It puts the student's
       skin back in a `finally`.
-  - **WHAT IS STILL NOT BUILT**: Crew is only gone from the PORTED strip —
-    `CrewTab`, its route and its links still work, because `library.batches` is
-    admin-only and deleting them would take Crew off students who cannot yet
-    see the stamps that replace it. One decision (turn the flag on) and it is a
-    small deletion.
+  - **AND IT IS ON FOR EVERYBODY** (owner, 2026-10-10: "turn it on"). The flag
+    was admin-only with its own condition beside it — off "until the Library,
+    the Lessons player and the study-card session are all in" — and all three
+    are in. **Turning it on is what found the last bug in it**: the light on
+    the route strip was meant to follow the batch you last opened, falling back
+    to the first, and `ModuleScreen` was feeding `hereBatch` the LAST chapter
+    as `currentChapterId`. That is a guess dressed as a fact — nothing marks
+    which chapter somebody is on — so a student opening Module 13d for the
+    first time landed on batch 10 of 10 with its drawer open. It only showed up
+    then because every test until then had been run as an admin with a history;
+    "a student who has opened nothing" was the case nobody had looked at.
+  - **AND CREW IS DELETED** (owner, 2026-10-11: "remove"). `CrewTab.jsx`,
+    `CrewEmpty.jsx`, `crew.css` and `lib/crew.js` are gone, with the tab, its
+    count badge, its search placeholder, its place in the tab-slide order, and
+    the two fetches App ran on every module load to feed it — a squadron roster
+    and this student's completions, which nothing read any more.
+    `/m/<code>/crew` redirects to the Library in ONE hop, because students have
+    it in their history.
+    - **`crew` MEANT TWO THINGS and only one of them went.** The Crew TAB is
+      deleted; `social.crew`, the "My flight" preset on the Flight Deck and in
+      Preferences, is a different feature and is untouched. Deleting by
+      grepping the word would have taken the social presets with it.
+    - **ITS PRIVACY ASSERTIONS MOVED RATHER THAN LAPSED.** `check:solo` read
+      two rules off `crew.js` — an invisible profile is dropped, and it selects
+      `invisible` in order to be able to. What replaced the tab is the attempt
+      stamps, fed by `quiz_finishers`, and 0038 enforces the same two things in
+      SQL. The assertions follow the feature onto the migration. Letting them
+      lapse with the file would have cost exactly this: a student on Fly solo,
+      or one who has blocked somebody, having their stamp drawn on a row in
+      front of them with nothing in the suite to say so.
+    - **"Invite your class" HAS NO DOOR ON IT TODAY.** Crew's empty state was
+      the only one. `InviteSheet.jsx`, its chunk and App's state all still work
+      and are reached from nothing — the same state "Put right" and "going
+      through the paper" are in, kept for the same reason: one button anywhere
+      puts it back, and deleting it would make that a rewrite.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
