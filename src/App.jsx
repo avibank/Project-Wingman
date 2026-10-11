@@ -1457,13 +1457,13 @@ function AppInner() {
      invitation. The sheet is in src/components/InviteSheet.jsx and its header
      says why the link is the module's.
 
-     IT HAS NO DOOR ON IT TODAY (2026-10-11). Crew's empty state was the only
-     one, and Crew is gone — what it drew is the attempt stamps on each batch
-     row now. The sheet, its chunk and this state all still work and are
-     reached from nothing, which is the same state "Put right" and "going
-     through the paper" are already in and is recorded for the same reason:
-     one button anywhere puts it back, and deleting it would make that a
-     rewrite instead. */
+     ITS DOOR IS THE FOOT OF THE LIBRARY (2026-10-11). Crew's empty state was
+     the only one until Crew was deleted that morning, and the Library is
+     where it belongs: what Crew drew is the attempt strip on every batch row,
+     so the line that ADDS to that class goes under them. Once at the foot,
+     not once per row, and the module's code is what the sheet sends — there
+     is no class to join, so the link is `/m/<code>` and the walkthrough
+     shows a visitor round before they decide anything. */
   const [inviteClass, setInviteClass] = useState(null);
 
   const openPilot = (p) => {
@@ -2520,6 +2520,7 @@ function AppInner() {
                sheet. `mates`, `myDone` and `onOpenThreads` stood here until
                2026-10-11 and were Crew's; they went with it. */
             onOpenPerson={openPilot}
+            onInviteClass={() => setInviteClass(activeModuleCode)}
             /* A DEAD BUTTON, FOUND BY CLICKING IT. "Add a paper" rendered
                whenever this prop was passed, and the sheet behind it is gated
                on `papersOn` — the PAUSED reader's switch — so pressing it did
