@@ -672,7 +672,7 @@ merge them back together.
   - A person with no stamp yet draws the **un-inked outline**, the licence's
     own "not yet" mark (owner, on the brief's open question 1).
   - **ONE ANSWER IS WHAT STAMPS YOU, NOT A HAND-IN** (owner, 2026-10-12;
-    migration 0042, **not yet run**). A run joins the quiz's stamps once it
+    migration 0042, run live the same day). A run joins the quiz's stamps once it
     has been ANSWERED or submitted — `quiz_runs.answered_at`, written by
     `mark_quiz_progress` on the first answer of a sitting. Measured in a
     browser: opened with no answer gives 0 stamps, one answer gives 1, and
@@ -813,13 +813,26 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
-**0041, a name finds anybody, HAS NOT BEEN RUN** (written 2026-10-11). It is
-the only migration in this file that says so, and it says so because this
-session had neither credentials nor a local Postgres: `people_search` is
-replaced and `people_browse` is added, and **both are still only text until
-somebody runs them**. Until then the live search behaves as 0032 left it.
-Run it, then verify by connecting the way every entry below was — and change
-this paragraph rather than adding to it.
+**0041 AND 0042 HAVE BEEN RUN AGAINST THE LIVE PROJECT** (2026-10-12),
+verified by connecting rather than inferred — `npm run check:people-db`, 13
+assertions over the anon REST path. Afterwards: `people_search` returns
+`(user_id, callsign, real_name, module_code, shares_squadron)` and no
+`display_name`, `people_browse` and `mark_quiz_progress` exist where neither
+did, `quiz_finishers` returns `run_id`, and `quiz_runs.answered_at` is
+present. One letter into search finds people and hands back zero names, which
+is the disclosure rule holding on real data.
+
+**THE ORDER WAS MERGE, DEPLOY, THEN MIGRATE, and it had to be.** 0041 DROPS
+`display_name`, which the deployed client read; running it first would have
+blanked every search result for the class until the bundle caught up. The
+other direction has its own gap — the new bundle asks for `callsign` while the
+old function still answers `display_name` — so `searchPeople` carries a
+`compat` fallback for exactly that window. **Delete `compat` now that 0041 has
+run**, which is what its own comment says; `check:people` holds it until then.
+
+**`scripts/apply-migration.mjs` is how they were applied**: one transaction per
+file, so a failure leaves nothing behind, and it prints the shape of what it
+touches before and after, which is where the paragraph above came from.
 
 What it does: the ORBIT SCOPE IS WITHDRAWN FOR SEARCH. 0011 built
 `people_search` so it "cannot return a stranger", through `in_my_orbit` —

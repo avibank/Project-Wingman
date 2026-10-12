@@ -73,6 +73,7 @@
     "check:code": "node scripts/check-code.mjs",
     "check:exam": "node scripts/check-exam.mjs",
     "check:people": "node scripts/check-people.mjs",
+    "check:people-db": "node --env-file=.env.local scripts/check-people-db.mjs",
     "check:saves": "node scripts/check-saves.mjs",
     "check:stamp": "node scripts/check-stamp.mjs",
     "check:studio": "node scripts/check-studio.mjs",
