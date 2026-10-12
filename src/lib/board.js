@@ -100,7 +100,9 @@ export async function fetchFinishers({ me, quizIds = [], cap = 11 }) {
     const q = (out[r.quiz_id] ||= { people: [], total: 0 });
     q.total = Number(r.finishers) || q.total;
     q.people.push({
-      userId: r.user_id, callsign: r.callsign, account: r.code, isYou: !!r.is_you,
+      /* ONE ROW PER ATTEMPT NOW (0042), so `userId` is no longer unique in
+         this list and cannot be a React key. `runId` is. */
+      runId: r.run_id, userId: r.user_id, callsign: r.callsign, account: r.code, isYou: !!r.is_you,
       /* Shaped for stampOf, which is the one thing allowed to read a stamp row. */
       profile: {
         stamp_shape: r.stamp_shape, stamp_code: r.stamp_code, stamp_rim: r.stamp_rim,
@@ -111,6 +113,18 @@ export async function fetchFinishers({ me, quizIds = [], cap = 11 }) {
     });
   }
   return out;
+}
+
+/* THE FIRST ANSWER OF A SITTING (0042). Fire and forget, like startRun: a
+   paper must be sittable with the network down, and a sitting the server
+   never heard about simply does not stamp. `mark_quiz_progress` is idempotent
+   on the server, so the caller does not have to remember whether it has
+   already said so. */
+export async function markProgress({ me, runId }) {
+  if (!configured || !me || !runId) return null;
+  const { data, error } = await supabase.rpc("mark_quiz_progress", { p_me: me, p_run: runId });
+  if (error) return fail(error, null);
+  return data || null;
 }
 
 export const mmss = (s) => {

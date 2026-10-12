@@ -605,6 +605,37 @@ merge them back together.
     forbids naming an absence, which is what the brief's own words did.
   - A person with no stamp yet draws the **un-inked outline**, the licence's
     own "not yet" mark (owner, on the brief's open question 1).
+  - **ONE ANSWER IS WHAT STAMPS YOU, NOT A HAND-IN** (owner, 2026-10-12;
+    migration 0042, **not yet run**). A run joins the quiz's stamps once it
+    has been ANSWERED or submitted — `quiz_runs.answered_at`, written by
+    `mark_quiz_progress` on the first answer of a sitting. Measured in a
+    browser: opened with no answer gives 0 stamps, one answer gives 1, and
+    leaving by "Leave it for now" keeps it.
+    - **OPENING WAS ASKED FOR FIRST AND ARGUED DOWN.** The row already exists
+      on open (`start_quiz_run` fires from an effect), so reading it would
+      have been a one-line change — it is not the rule because opening is
+      free and repeatable, because the screen it sits on marks nothing before
+      hand-in, and because "Leave it for now" exists so a mis-tap costs
+      nothing. One answer cannot be reached by accident and is reached long
+      before a hand-in, which is the liveness that was actually wanted.
+    - **THE CONDITION WAS THAT LEAVING KEEPS YOUR PLACE, and it already did** —
+      measured before 0042 was written: answer two, step to the third, leave,
+      come back to question 3 with 2 of 40 answered and the clock 0 seconds
+      further on. **The limit, stated rather than discovered: the attempt is
+      localStorage only (`wingman.attempt.<quizId>`), so resume is PER
+      DEVICE.** Leave on a phone, open on a laptop, and you get a fresh paper;
+      the stamp is then the only trace of the first sitting.
+  - **A REPEAT IS A SECOND STAMP NOW**, and the old rule is withdrawn (owner:
+    "if I attempt it twice, I get stamped"). It was one stamp per person on
+    their best run, with a repeat keeping an empty slot and the word "again".
+    `quiz_finishers` returns one row per RUN rather than per person, the
+    render-time de-duplication in `Leaderboard.jsx` is gone, and `run_id` is
+    returned because `user_id` is no longer unique in that list — React would
+    have dropped the duplicate silently, which would have looked exactly like
+    the de-duplication being removed. **The cost is stated rather than
+    hidden**: twelve runs from nine people now read as twelve stamps, which is
+    what the old rule existed to prevent. A better treatment for a repeat is
+    wanted later and belongs in `Leaderboard.jsx`.
   - **The pack's row is a `<li>` of spans, so a board row has no door on it**
     any more; the pilot sheet is still reached from Crew, the Ready Room and a
     lesson. One button on a row would put it back.

@@ -71,7 +71,7 @@ function CrewPop({ people, onProfile }) {
          aria-label="Who has sat this quiz">
       <div className="crewgrid">
         {people.map((p, k) => (
-          <button key={p.userId} className="cp" style={{ "--i": k }} type="button"
+          <button key={p.runId || p.userId} className="cp" style={{ "--i": k }} type="button"
                   onClick={() => onProfile?.(p)}
                   aria-label={`Open ${p.isYou ? "your" : `${p.callsign}'s`} profile`}>
             <Mini person={p} size={POP_STAMP_PX} i={k} />
@@ -140,7 +140,7 @@ export default function CrewStrip({ found, me = null, quizId = null, open = fals
               onClick={(e) => { e.stopPropagation(); onToggle?.(); }}
               aria-label={`${total} ${total === 1 ? "person has" : "people have"} sat this quiz. Show them`}>
         {shownPeople.map((p, k) => (
-          <span className="cs" style={{ "--i": k }} key={p.userId}
+          <span className="cs" style={{ "--i": k }} key={p.runId || p.userId}
                 title={p.isYou ? `${p.callsign} (you)` : p.callsign}>
             <Mini person={p} size={ROW_STAMP_PX} i={k} />
           </span>

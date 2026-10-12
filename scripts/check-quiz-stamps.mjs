@@ -73,12 +73,19 @@ const brief = read("../docs/launch/BRIEF-QUIZ-STAMPS.md");
      !/\.res__stamp[^{]*\{[^}]*(border|box-shadow|background)/.test(rs));
 }
 
-/* ------------------------------------------- 3 · one stamp per person, best run */
+/* --------------------------------------------- 3 · a stamp on every attempt
+   THE RULE REVERSED ON 2026-10-12. It was "one stamp per person, on their
+   best run": a repeat kept its row, lost its stamp and took the word "again",
+   so twelve runs from nine people did not read as twelve people. The owner
+   withdrew it — "if I attempt it twice, I get stamped" — knowing the cost,
+   and with a better treatment for a repeat to come later. These two
+   assertions held the old rule; they hold the new one. */
 {
-  ok("board", "the de-duplication is at render, over a Set of accounts",
-     /const seen = new Set\(\);/.test(lb) && /const first = !seen\.has\(r\.userId\);/.test(lb) && /seen\.add\(r\.userId\);/.test(lb));
-  ok("board", "so a repeat keeps its row, loses its stamp and takes the word again",
-     /br__st\$\{first \? "" : " rep"\}/.test(lb) && /\{!first && <span className="br__ag">again<\/span>\}/.test(lb));
+  ok("board", "every run carries its own stamp, repeats included",
+     /<Stamp stamp=\{stampOf\(r\.profile\)\}/.test(lb)
+     && !/const seen = new Set\(\);/.test(lb) && !/!seen\.has\(/.test(lb));
+  ok("board", "and nothing calls a second attempt 'again'",
+     !/br__ag/.test(lb) && !/>again</.test(lb));
   ok("board", "the slot the stamp leaves stays the width of a stamp",
      /\.br\s*\{[^}]*grid-template-columns:\s*28px 42px/.test(css) && /\.br__st\.rep\s*\{\s*opacity:\s*0/.test(css));
   ok("board", "the stamp on a row is 42px", /size=\{42\}/.test(lb));
@@ -144,12 +151,23 @@ const brief = read("../docs/launch/BRIEF-QUIZ-STAMPS.md");
   ];
   const rows = RPC.quiz_finishers(s, { uid: "me", p_quizzes: ["Q1", "Q2"], p_cap: 11 });
   const q1 = rows.filter((r) => r.quiz_id === "Q1");
-  ok("server", "fourteen finishers show eleven stamps and a count of fourteen",
-     q1.length === 11 && q1.every((r) => r.finishers === 14), `${q1.length} rows, ${q1[0]?.finishers} counted`);
-  ok("server", "so the row says +3", (q1[0]?.finishers ?? 0) - q1.length === 3);
-  ok("server", "somebody who sat it twice is one stamp, at their later finish",
-     q1.filter((r) => r.user_id === "u1").length === 1
-     && q1.find((r) => r.user_id === "u1")?.finished_at === day(20));
+  /* FIFTEEN ATTEMPTS FROM FOURTEEN PEOPLE, because u1 sat it twice — and
+     since 0042 the unit is the ATTEMPT, so the count is 15 rather than 14. */
+  ok("server", "fifteen attempts show eleven stamps and a count of fifteen",
+     q1.length === 11 && q1.every((r) => r.finishers === 15), `${q1.length} rows, ${q1[0]?.finishers} counted`);
+  ok("server", "so the row says +4", (q1[0]?.finishers ?? 0) - q1.length === 4);
+  /* ASKED UNCAPPED, because the cap is doing its job: u1's two attempts are
+     the newest (day 20) and the OLDEST (day 2) of fifteen, so the older one
+     sits outside a page of eleven. Asserting "two rows" against the capped
+     page tested the cap and called it de-duplication. */
+  {
+    const whole = RPC.quiz_finishers(s, { uid: "me", p_quizzes: ["Q1"], p_cap: 400 });
+    ok("server", "somebody who sat it twice is TWO stamps now, not one",
+       whole.filter((r) => r.user_id === "u1").length === 2,
+       `${whole.filter((r) => r.user_id === "u1").length} rows for u1 of ${whole.length}`);
+  }
+  ok("server", "and every row is told apart by its run, not by its account",
+     new Set(q1.map((r) => r.run_id)).size === q1.length && q1.every((r) => !!r.run_id));
   ok("server", "yours is pinned first, where a cap on recency would have dropped it",
      q1[0]?.user_id === "me" && q1[0]?.is_you === true);
   ok("server", "and the rest are most recent first",
