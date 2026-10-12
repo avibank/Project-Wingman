@@ -750,7 +750,7 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 **0041, a name finds anybody, HAS NOT BEEN RUN** (written 2026-10-11). It is
 the only migration in this file that says so, and it says so because this
 session had neither credentials nor a local Postgres: `people_search` is
-replaced and `active_students` is added, and **both are still only text until
+replaced and `people_browse` is added, and **both are still only text until
 somebody runs them**. Until then the live search behaves as 0032 left it.
 Run it, then verify by connecting the way every entry below was — and change
 this paragraph rather than adding to it.
@@ -773,15 +773,19 @@ their callsign still finds them; what it refuses is confirming a hidden name
 one substring at a time. You also never find yourself, which orbit used to do
 incidentally and is now explicit.
 
-**AND `active_students`, WHICH RETURNS ROWS AND NO NUMBER.** The owner asked
+**AND `people_browse`, WHICH RETURNS ROWS AND NO NUMBER.** The owner asked
 for "some sort of glossary that shows active users in a way that doesn't
-expose if we have small users". So there is no count to print: no total, no
-headcount, and deliberately **no `count(*)` companion**, because the moment
-one exists a screen will use it. A caller that needs to know whether there are
-more than it draws asks for one row more and looks — "at least one more" is
-not a population. Active means DID something inside a fortnight, across five
-signals (seen, asked, answered, finished a chapter, sat a paper), so it is not
-secretly "who has a presence row".
+expose if we have small users", and then for where it lives: "if you select
+people, it shows every current person". So it is EVERYBODY, alphabetical by
+callsign, and there is no count to print — no total, no headcount, and
+deliberately **no `count(*)` companion**, because the moment one exists a
+screen will use it.
+
+It was `active_students` and a fortnight's activity in the first draft. The
+window survives as `p_since`, null by default, for a class big enough to want
+one; "every current person" is what was asked for. Activity is still read
+across five signals (seen, asked, answered, finished a chapter, sat a paper)
+rather than from presence alone, so a window means what it says.
 
 **0040, the course in a table, has been run against the live project**
 (2026-09-30), verified by connecting: `course_docs` with one SELECT policy
