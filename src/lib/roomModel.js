@@ -141,34 +141,14 @@ export function rightSeatCandidates({ me, members = [], presence = [], blocked =
    two people share a timestamp. */
 export const PRESENCE_SHOWN = 3;
 
-/* THE PEOPLE LIST, GROUPED BY LETTER (0041).
-   -------------------------------------------------------------------------
-   "They are filtered in alphabetical order ... we filter as per username"
-   (owner, 2026-10-12). The letter is the CALLSIGN's first character, never
-   the name's: the name is not on screen — people_browse has no column for one
-   — so grouping by it would scatter the list for a reason nobody could see.
+/* THE PEOPLE LIST WAS GROUPED BY LETTER HERE, and is not any more (owner,
+   2026-10-12: "it doesnt have to show it just do it quietly theyll
+   understand"). `byLetter` put each person under A, B, C … with a "#" bucket
+   last; the headers are gone, and the one thing they were really carrying —
+   that a callsign starting with punctuation belongs at the END, where the
+   database collation puts it first — moved into the SQL in 0043, beside the
+   rest of the order. The client formats and does not sort. */
 
-   Anything that is not A-Z lands under "#", which is where a callsign
-   starting with a digit belongs: a code here is one to three characters of
-   `[A-Z0-9]` (0039), so digits are ordinary rather than exceptional, and "#"
-   sorts last so the alphabet is not interrupted by one.
-
-   NOTHING IS COUNTED. The rule from the first version of this screen still
-   holds: no total, no per-letter tally. A group carries its rows and nothing
-   else, so there is no number for a screen to print. */
-export function byLetter(people = []) {
-  const out = new Map();
-  for (const p of people) {
-    const c = String(p.callsign || "").trim().toUpperCase();
-    if (!c) continue;
-    const L = /^[A-Z]/.test(c) ? c[0] : "#";
-    if (!out.has(L)) out.set(L, []);
-    out.get(L).push(p);
-  }
-  return [...out.entries()]
-    .sort((a, b) => (a[0] === "#") - (b[0] === "#") || a[0].localeCompare(b[0]))
-    .map(([letter, rows]) => ({ letter, rows }));
-}
 
 /* Presence arrives in TWO shapes and the room only ever understood one.
 

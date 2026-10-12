@@ -1,7 +1,9 @@
 import { Av } from "./bits.jsx";
 import { RailSearch } from "./icons.jsx";
 import { initials } from "../../../lib/familiar.js";
-import { when, titleOf, matches, chatUnread, answerCount, byLetter } from "../../../lib/roomModel.js";
+import { when, titleOf, matches, chatUnread, answerCount } from "../../../lib/roomModel.js";
+import Stamp from "../../Stamp.jsx";
+import { stampOf, stampTilt } from "../../../lib/stamp.js";
 import { waitingOnAnswer, newestFirst } from "../../../lib/rrModel.js";
 
 /* ============================================================================
@@ -33,6 +35,24 @@ const SCOPES = [
    is the deliberate way to a name.
 
    Neither half is a count. */
+/* THEIR FACE AND THEIR MARK (owner, 2026-10-12). The profile stays — it is
+   what a student recognises from every other surface — and the stamp sits
+   beside the callsign, which is where identity reads. Through the app's one
+   renderer, so a stamp is drawn here exactly as it is on the board and the
+   quiz row; somebody who has not made one gets the un-inked outline, which is
+   the licence's own "not yet" mark and the nudge doing its work in the place
+   people actually look at each other.
+
+   SMALL AND WITHOUT ITS CODE. At 22px the three characters inside a stamp are
+   noise; the shape and the ink are what read at a glance. */
+const Mark = ({ p }) => (
+  <span className="rr-who">
+    <span className="rr-cs">{p.callsign}</span>
+    <Stamp stamp={stampOf(p.profile)} size={22} rot={stampTilt(p.profile?.stamp_seed, p.user_id)}
+           on={Boolean(p.profile?.stamp_issued_at)} />
+  </span>
+);
+
 const personLine = (p) => [
   p.real_name || null,
   p.module_code || null,
@@ -133,18 +153,19 @@ export default function Rail({
         {/* PEOPLE IS ITS OWN VIEW, not a section above the others: picking it
             means you are looking for a person, and the squadrons and modules
             below would be noise under a list of everybody. */}
+        {/* NO LETTER HEADERS (owner: "it doesnt have to show it just do it
+            quietly theyll understand"). Still A to Z, with anything that does
+            not start with a letter last — that part moved into the SQL in
+            0043, because the grouping was the only thing putting `_vnx` at
+            the end and the collation alone puts it first. The avatars carry
+            the alphabet down the left edge on their own. */}
         {scope === "people" ? (
-          peopleRows.length ? byLetter(peopleRows).map(({ letter, rows }) => (
-            <div key={letter}>
-              <div className="rr-sect"><span className="rr-micro">{letter}</span></div>
-              {rows.map((p) => (
-                <Row key={p.user_id}
-                     avatar={<Av id={p.user_id} name={p.callsign} size={44} />}
-                     l1={p.callsign}
-                     l2={personLine(p)}
-                     onClick={() => onProfile(p.user_id, p)} />
-              ))}
-            </div>
+          peopleRows.length ? peopleRows.map((p) => (
+            <Row key={p.user_id}
+                 avatar={<Av id={p.user_id} name={p.callsign} size={44} />}
+                 l1={<Mark p={p} />}
+                 l2={personLine(p)}
+                 onClick={() => onProfile(p.user_id, p)} />
           )) : (
             <p className="rr-note">
               {q ? "No callsign or name matches that. Try fewer letters."
@@ -163,7 +184,7 @@ export default function Rail({
             {foundPeople.map((p) => (
               <Row key={p.user_id}
                    avatar={<Av id={p.user_id} name={p.callsign} size={44} />}
-                   l1={p.callsign}
+                   l1={<Mark p={p} />}
                    l2={personLine(p)}
                    onClick={() => onProfile(p.user_id, p)} />
             ))}

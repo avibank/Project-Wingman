@@ -21,10 +21,16 @@
    ========================================================================= */
 import { readFileSync } from "node:fs";
 
-for (const line of readFileSync(new URL("../.env.local", import.meta.url), "utf8").split("\n")) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
-}
+/* .env.local IS A CONVENIENCE, NOT A REQUIREMENT. It is read when it is there
+   and the environment wins when it is not — a worktree does not have one
+   (it is gitignored, so it stays in the checkout it was made in), and this
+   threw ENOENT rather than using variables that were already set. */
+try {
+  for (const line of readFileSync(new URL("../.env.local", import.meta.url), "utf8").split("\n")) {
+    const m = line.match(/^([A-Z_]+)=(.*)$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  }
+} catch { /* no file: whatever is in the environment is what we have */ }
 const url = process.env.VITE_SUPABASE_URL;
 const anon = process.env.VITE_SUPABASE_ANON_KEY;
 const key = process.env.COURSE_PUBLISH_KEY;

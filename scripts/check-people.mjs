@@ -18,7 +18,6 @@
    ========================================================================= */
 import { readFileSync } from "node:fs";
 import { makeStore, RPC } from "../src/demo/pgcore.js";
-import { byLetter } from "../src/lib/roomModel.js";
 
 let pass = 0; const fails = [];
 const ok = (group, what, cond, detail = "") => {
@@ -38,7 +37,9 @@ const store = () => makeStore({
   pilot_profiles: [
     { user_id: "me",       callsign: "ALX", real_name: "Alex Mercer" },
     { user_id: "mate",     callsign: "DNA", real_name: "Dana Okafor" },
-    { user_id: "stranger", callsign: "RVN", real_name: "Rowan Vance" },
+    { user_id: "stranger", callsign: "RVN", real_name: "Rowan Vance",
+      stamp_shape: "seal", stamp_code: "RVN", stamp_seed: 7, stamp_ink: "Graphite",
+      stamp_issued_at: "2026-10-01T10:00:00Z" },
     { user_id: "kai",      callsign: "KAI", real_name: "Kai Lindqvist" },
     { user_id: "byname",   callsign: "ARC", real_name: "Priya Patel" },
     { user_id: "solo",     callsign: "QNN", real_name: "Quinn Adeyemi", invisible: true },
@@ -47,6 +48,7 @@ const store = () => makeStore({
     { user_id: "hidden",   callsign: "HID", real_name: "Hide Mee", discoverable: false },
     { user_id: "nohandle", callsign: "",    real_name: "Noah Handle" },
     { user_id: "digit",    callsign: "7UP", real_name: "Seven Upton" },
+    { user_id: "punct",    callsign: "_vnx", real_name: "Vee Enex" },
     { user_id: "stale",    callsign: "OLD", real_name: "Olive Dormant" },
   ],
   user_prefs: [{ user_id: "byname", identity_display: "username" }],
@@ -137,9 +139,9 @@ console.log("\nwhat you typed comes first, and the list is A-Z");
 ok("order", "an exact callsign leads", find("ARC")[0]?.callsign === "ARC");
 ok("order", "a squadron-mate breaks a tie ahead of a stranger",
   signs(find("a")).indexOf("DNA") < signs(find("a")).indexOf("RVN"), JSON.stringify(signs(find("a"))));
-ok("order", "browse is alphabetical by callsign",
-  JSON.stringify(signs(browse())) === JSON.stringify([...signs(browse())].sort()),
-  JSON.stringify(signs(browse())));
+/* "alphabetical" is asserted properly in section 6, which knows that a
+   callsign not starting with a letter goes LAST (0043). A plain `.sort()`
+   does not, and this said so by failing on a correct list. */
 {
   /* SCOPED TO THE PEOPLE BLOCK, not to the file. Written as "`everyone` or
      `foundPeople` within 200 characters of a `.sort(`" this matched the
@@ -165,20 +167,38 @@ ok("browse", "a window is available for a class big enough to want one",
   !RPC.people_browse(s, { p_me: "me", p_since: "14 days" }).map((r) => r.callsign).includes("OLD"));
 ok("browse", "the limit is the server's", browse("me", { p_limit: 2 }).length === 2);
 
-/* ----------------------------------------------------- 6 · grouped by letter */
-console.log("\ngrouped by letter, and by callsign");
+/* --------------------------------------------- 6 · a face and a mark (0043)
+   The list draws the person's own stamp beside their callsign, so the rows
+   have to carry one; and with the letter headers gone, the ORDER has to carry
+   what they were carrying. */
+console.log("\ntheir face, and their mark");
 {
-  const g = byLetter(browse());
-  ok("letter", "the letter is the CALLSIGN's, never the name's",
-    g.find((x) => x.letter === "R")?.rows[0]?.callsign === "RVN");
-  ok("letter", "letters come in order", JSON.stringify(g.map((x) => x.letter))
-    === JSON.stringify([...g.map((x) => x.letter)].sort((a, b) => (a === "#") - (b === "#") || a.localeCompare(b))));
-  ok("letter", "a callsign starting with a digit lands under #",
-    !!g.find((x) => x.letter === "#")?.rows.some((r) => r.callsign === "7UP"),
-    JSON.stringify(g.map((x) => x.letter)));
-  ok("letter", "# sorts last, after the letters", g.at(-1)?.letter === "#");
-  ok("letter", "a group carries rows and no tally",
-    g.every((x) => Object.keys(x).join() === "letter,rows"));
+  const rows = browse();
+  ok("mark", "every row carries the stamp columns",
+    rows.every((r) => "stamp_issued_at" in r && "stamp_shape" in r && "stamp_seed" in r),
+    JSON.stringify(Object.keys(rows[0] || {})));
+  ok("mark", "a person who issued one brings it back",
+    rows.find((r) => r.callsign === "RVN")?.stamp_shape === "seal");
+  ok("mark", "a person who has not gets nulls, which is what draws the outline",
+    rows.find((r) => r.callsign === "DNA")?.stamp_issued_at == null);
+  ok("mark", "and still no real name anywhere in the list",
+    rows.every((r) => !("real_name" in r)) && !JSON.stringify(rows).includes("Rowan"));
+  ok("mark", "a search hit carries one too",
+    "stamp_issued_at" in (find("rowan")[0] || {}));
+}
+console.log("\nA to Z, and the stragglers last");
+{
+  const cs = browse().map((r) => r.callsign);
+  const letters = cs.filter((c) => /^[A-Za-z]/.test(c));
+  const rest = cs.filter((c) => !/^[A-Za-z]/.test(c));
+  ok("order", "the letters come first and in order",
+    cs.slice(0, letters.length).join() === letters.join()
+    && letters.every((c, i) => i === 0 || letters[i - 1].toUpperCase().localeCompare(c.toUpperCase()) <= 0),
+    JSON.stringify(cs));
+  /* The letter headers used to put "#" last. With them gone, the SQL does it
+     - and the collation alone would have put `_vnx` FIRST. */
+  ok("order", "a callsign that does not start with a letter is last",
+    rest.length > 0 && cs.at(-1) === rest.at(-1), JSON.stringify(cs));
 }
 
 /* ------------------------------------------- 7 · AND NOTHING IS EVER COUNTED

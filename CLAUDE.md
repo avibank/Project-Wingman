@@ -133,6 +133,33 @@ student inside the explanation.
 - **Spot-check the answer spread**: near a third each across a/b/c. The
   quizzes came out 14/13/13 and the sets from 54/53/53 to 139/139/139.
 
+**THE RESET AND THE PUBLISH BOTH RAN AGAIN ON 2026-10-12**, in the order the
+epoch requires: merge, deploy, reset, publish. The deploy has to come FIRST
+because `STORAGE_EPOCH` is the device half — an un-swept browser holding
+`pw-quiz-scores` for a chapter that no longer exists patches it straight back
+on its next load. Confirmed the deploy had landed by fetching a paper off the
+live site and matching its length against the new file (203,831 bytes, where
+the one it replaced was 282,593) rather than waiting on a status that never
+appeared.
+
+Measured rather than asserted: **4 board runs, 14 saves and 2 progress
+documents went**, and **hours flown stayed at 6 documents**, which the runner
+checks and refuses to let change. `STORAGE_EPOCH` is **6**. The document was
+published as **course version 14** (from 11) and read back through
+`current_course()`: 10 chapters M1.V1-M1.V10, 400 quiz questions, 2,616 cards,
+10 papers, and all ten papers answered `%PDF-` from the live site before the
+RPC ran.
+
+`scripts/batches/reset.mjs` is the runner, and it counts BEFORE as well as
+after, so the paragraph above is a measurement rather than "it ran".
+
+**SUPABASE PREVIEW NOW FAILS ON MAIN, AND IT IS NOT THIS.** Its branch
+database replays the whole series into an empty project and hits `policy
+"lesson_notes_no_bulk_read" for table "lesson_notes" already exists` —
+0009 creates it unguarded and `ALL.sql` carries it too, so the two together
+collide. Production is untouched; it is the preview that cannot rebuild. The
+fix is an `if not exists` guard or a drop-first in 0009, and it is NOT done.
+
 **THE RESET AND THE PUBLISH BOTH RAN, and a commit is neither.**
 `supabase/reset-module-13d-progress.sql` is scoped to `M1.%` and safe to run
 twice, so it took M1.B1 and M1.B6 with it while the new ids, which no row
@@ -1157,6 +1184,23 @@ reader does can damage the paper. Module 1 only for now, behind
     than in `discovery.js`, because discovery.js imports the Supabase client
     and so cannot be imported by a node check — the same split `quiz.js` and
     `cardSession.js` already make.
+- **THEIR FACE AND THEIR MARK** (owner, 2026-10-12: "the stamp is the
+  identity so i want that integrated too", then "keep the profile but also add
+  the stamp near the name"). The avatar stays — it is what a student
+  recognises everywhere else — and the stamp sits beside the callsign at 22px,
+  through the app's ONE renderer, so a stamp is drawn here exactly as it is on
+  the board and the quiz row. Somebody who has not made one gets the un-inked
+  outline, which puts the nudge in the one place students look at each other.
+  Migration **0043** widens both functions with the same eleven stamp columns
+  `quiz_finishers` already returns; no real name comes with it.
+- **AND THE LETTER HEADERS ARE GONE** ("it doesnt have to show it just do it
+  quietly theyll understand"). Still A to Z — but **the one thing those
+  headers were really carrying moved into the SQL**: a callsign that does not
+  start with a letter belongs LAST, and the database collation puts it FIRST.
+  `byLetter` in roomModel.js was doing that silently, and dropping the
+  grouping without moving the rule would have quietly reordered the screen.
+  Measured on the live list before it moved. The client formats and does not
+  sort.
 - **AND NOTHING IN IT IS COUNTED**, which was the owner's first requirement
   for this screen and still holds. No headcount, no "+4", no "of", and
   deliberately no `count(*)` companion in the SQL, because the moment one
