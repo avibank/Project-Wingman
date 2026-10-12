@@ -10,11 +10,9 @@ import LibraryTab from "./LibraryTab.jsx";
    between. A lone stylesheet is also a file that can fail on its own. */
 import LessonsWaiting from "./library/LessonsWaiting.jsx";
 import PortPanel from "./library/PortPanel.jsx";
-import CrewTab from "./CrewTab.jsx";
 import PeopleTab from "./PeopleTab.jsx";
 import { upFrom } from "../../lib/lessonSurface.js";
 import { faultChapters } from "../../lib/minimums.js";
-import { useCrew, crewCount } from "../../lib/crew.js";
 import { moduleSubtitle, batchSubtitle } from "../../lib/moduleLine.js";
 import { placeholderFor, terms } from "../../lib/moduleSearch.js";
 import { papersOn, flagDefault } from "../../lib/flags.js";
@@ -28,29 +26,36 @@ import "./module.css";
 import "./ref-module.css";
 import "./manual.css";
 
-// The three tabs live in the URL, so a student sharing a link to People lands
-// on People. The tab is not component state.
-// §2.6 — Lessons and Library. People is hidden rather than deleted: it is
-// coming back in a different position, and the strip is built so a third entry
-// needs no relayout. Its component and data wiring are untouched.
-/* CREW IS THE THIRD TAB, after Lessons and Library, which is the order §2 of
-   the launch handoff gives. It is a new screen rather than a renamed one:
-   `people` was the question FEED — a thread list — and it keeps its own hidden
-   route, because the Ready Room is where questions live now. */
+// The tabs live in the URL, so a student sharing a link lands on the same one.
+// The tab is not component state.
+// People is hidden rather than deleted: it is coming back in a different
+// position, and the strip is built so a third entry needs no relayout. Its
+// component and data wiring are untouched.
+/* CREW IS GONE (2026-10-11). It was the third tab, and what it drew — who has
+   signed each chapter off and who is on it now — is the attempt stamps on each
+   batch row instead (§5 of the module-screen handoff: "who's on this module
+   now lives only as the quiz attempt stamps"). The tab came off the ported
+   strip on 2026-10-08 and the port went to everybody on 2026-10-10, so there
+   was nobody left it could still be the third tab for. `/m/<code>/crew`
+   redirects to the Library in one hop; the screen, its empty state, its
+   stylesheet and its fetch are deleted. */
 export const MODULE_TABS = [
   { id: "route", label: "Lessons" },
   { id: "library", label: "Library" },
-  { id: "crew", label: "Crew" },
 ];
 export const HIDDEN_TABS = [{ id: "people", label: "People" }];
 
 export default function ModuleScreen({
   module: mod, chapters, state, tab, onTab, onBack, onOpenLesson, onOpenQuiz,
-  onFindSquadron, onInviteClass,
   papers = [], librarySub = "papers", onOpenPaper,
   readerPin = null, onAddPaper,
   stamp = null, tilts = null,
-  me = null, mates = new Set(), myDone = new Set(), onOpenPerson, onOpenThreads,
+  /* `onOpenPerson` is the door from a batch row's attempt stamps to that
+     student's sheet. Four of the five that stood beside it — onFindSquadron,
+     mates, myDone, onOpenThreads — were Crew's and went with it on
+     2026-10-11. `onInviteClass` came BACK the same day: Crew's empty state
+     was the invitation's only door, so the Library's foot is it now. */
+  me = null, onOpenPerson, onInviteClass = null,
   // §8's second number. It comes from App with the rest of the account state
   // rather than being read here, so one render of the app cannot hold two
   // values for the bar — the deck's lamp and this screen's lamp are the same
@@ -111,15 +116,9 @@ export default function ModuleScreen({
   // Cleared when the tab changes. Carrying a query across tabs shows somebody a
   // filtered list they did not ask to filter, and the commonest way to meet an
   // empty tab is to arrive at one still holding a search.
-  /* THE CREW READ LIVES HERE, not in the panel: "Crew 15" is on the TAB, so
-     the number has to exist one level above the thing that draws the people.
-     One fetch, both sides. */
-  const crew = useCrew(mod?.code || mod?.id, me, chapters.map((c) => c.id));
-  const crewTotal = crewCount(crew);
-
   const [query, setQuery] = useState("");
   useEffect(() => { setQuery(""); }, [tab]);
-  const searchable = tab === "route" || tab === "library" || tab === "crew";
+  const searchable = tab === "route" || tab === "library";
   const searching = terms(query).length > 0;
   const fieldRef = useRef(null);
 
@@ -135,8 +134,7 @@ export default function ModuleScreen({
     const btns = [...(tabsRef.current?.querySelectorAll('[role="tab"]') || [])];
     const i = btns.indexOf(document.activeElement);
     if (i < 0 || !btns.length) return;
-    const list = asBatches ? MODULE_TABS.filter((t) => t.id !== "crew") : MODULE_TABS;
-    const move = (n) => { e.preventDefault(); btns[n]?.focus(); onTab(list[n].id); };
+    const move = (n) => { e.preventDefault(); btns[n]?.focus(); onTab(MODULE_TABS[n].id); };
     if (e.key === "ArrowRight") move((i + 1) % btns.length);
     if (e.key === "ArrowLeft") move((i - 1 + btns.length) % btns.length);
     if (e.key === "Home") move(0);
@@ -188,10 +186,22 @@ export default function ModuleScreen({
                 totalBatches={mod?.batches || null}
                 moduleName={mod?.name}
                 progress={progress}
-                currentChapterId={chapters[chapters.length - 1]?.id || null}
+                /* NOT THE LAST CHAPTER. This fed `hereBatch` the final
+                   chapter and called it "current", which is a guess dressed as
+                   a fact: there is no marking on a module that says which
+                   chapter somebody is on. It is also what defeated the fix for
+                   the light on the route strip — the remembered batch wins,
+                   but with nothing remembered the "marked" branch returned the
+                   LAST batch rather than the first, so a student opening
+                   Module 13d for the first time landed on batch 10 of 10 with
+                   its drawer open. Nobody starts a course at the end. Null
+                   until there is a real source for it; `hereBatch` then falls
+                   back to the first batch, which is where a course starts. */
+                currentChapterId={null}
                 onOpenCards={onOpenCards}
                 onOpenDownload={onOpenDownload}
                 onOpenPerson={onOpenPerson}
+                onInviteClass={onInviteClass}
                 onOpenQuiz={onOpenQuiz} onOpenPaper={onOpenPaper} />
   );
 
@@ -321,13 +331,7 @@ export default function ModuleScreen({
           auto` now and takes whatever the tabs leave. */}
       <div className="mtabs" role="tablist" aria-label={`${mod.name} sections`}
            ref={tabsRef} onKeyDown={walkTabs}>
-        {/* CREW IS GONE WHEN THE PORT IS ON, here as well as on the ported
-            strip (owner, 2026-10-08: "remove crew as we killed it"). The
-            attempt stamps on each batch row replace it, and leaving the tab on
-            this strip meant the Lessons tab of a module with videos still
-            offered a screen the Library no longer admits to having. The
-            component and its route still exist for everyone without the flag. */}
-        {(asBatches ? MODULE_TABS.filter((t) => t.id !== "crew") : MODULE_TABS).map((t) => (
+        {MODULE_TABS.map((t) => (
           <button key={t.id} type="button" role="tab" className="tab"
                   aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
                   onClick={() => onTab(t.id)}>
@@ -337,21 +341,12 @@ export default function ModuleScreen({
                 selected tab always looked like; only who draws it moved. */}
             <span className="tab-pill" aria-hidden="true" />
             {t.label}
-            {/* THE COUNT, ON THE TAB (bug 14). Nothing until the answer is
-                in — a badge that flickers 1 and then 15 is worse than one
-                that arrives once — and the count itself after that, one being
-                a real answer: on a module you are the only one on, "Crew 1"
-                is the true number and the tab says so. It read `> 1` for a
-                day and the badge was missing on the live site for exactly
-                that reason. */}
-            {t.id === "crew" && crewTotal != null && <small>{crewTotal}</small>}
           </button>
         ))}
 
         {/* People has no search: it is a handful of rows about other people,
-            and a field that filters nothing is worse than no field. Crew DOES:
-            it can be forty faces and a wall of stamps, and the reference gives
-            it the same field with "Find someone" in it. */}
+            and a field that filters nothing is worse than no field. Lessons
+            and the Library both have enough in them to be worth filtering. */}
         {searchable && (
           <label className="search">
             <Search size={15} aria-hidden="true" />
@@ -394,17 +389,6 @@ export default function ModuleScreen({
             waiting-or-listing screens is used. */}
         {tab === "route" && lessonsBody()}
         {tab === "library" && libraryBody()}
-        {tab === "crew" && (
-          <CrewTab crew={crew} moduleName={mod?.name}
-                   chapters={chapters} me={me} myStamp={stamp} mates={mates}
-                   query={query} myDone={myDone}
-                   onOpenPerson={onOpenPerson} onOpenThreads={onOpenThreads}
-                   /* The empty state's two ways out. Both open the Ready Room
-                      at the place that does the thing — Discover finds a
-                      squadron, and the module's own feed is where you would
-                      tell your class where you are. Neither is a new screen. */
-                   onFindSquadron={onFindSquadron} onInviteClass={onInviteClass} />
-        )}
         {tab === "people" && (
           <PeopleTab module={mod} people={people.people} onOpenAt={onOpenQuestion}
                      loading={!people.people?.length} />

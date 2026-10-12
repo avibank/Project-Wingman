@@ -152,6 +152,14 @@ const GONE = [
   [/\bSettings\b/, "Settings", ["src/lib/routes.js"]],
   [/\bCalibration\b/, "Calibration", []],
   [/\bCompete\b/, "Compete", []],
+  /* CREW WENT ON 2026-10-11 — the tab, its route, CrewTab.jsx, CrewEmpty.jsx,
+     crew.css and lib/crew.js. What drew a class is the attempt strip on each
+     batch row now. It is here because the invite sheet still told a student
+     their classmates would "appear here on Crew": that copy was stale from
+     the morning Crew went and nothing caught it, because the sheet had no
+     door on it for the rest of that day. A screen with no door is still a
+     screen whose words can be wrong. */
+  [/\bCrew\b/, "Crew", []],
   [/\bminimums\b/i, "minimums (never the bar's name in the UI)", ["src/lib/minimums.js", "src/components/module/Exam.jsx", "src/components/module/QuizPage.jsx", "src/App.jsx", "src/components/Home.jsx", "src/components/PaperStrip.jsx", "src/components/module/Review.jsx", "src/components/module/ModuleScreen.jsx", "src/components/ModulesPage.jsx", "src/components/module/QuizResults.jsx", "src/components/module/RouteTab.jsx", "src/components/module/LibraryTab.jsx", "src/components/Deck.jsx", "src/components/ChaptersPanel.jsx", "src/components/module/ModuleHub.jsx", "src/components/ModuleHub.jsx"]],
 ];
 const said = [];
@@ -265,45 +273,23 @@ const KNOWN_ORPHAN_KEYS = {
   ok("state", `every progress key has both a reader and a writer, or says why not (${keys.size})`, orphans.length === 0, orphans.join("; "));
 }
 
-/* ------------------------------------------- 8 · a screen inside a screen
-   THE CREW TAB LIVES INSIDE .mscreen, AND SO DOES THE MODULE SCREEN'S OWN CSS.
-   Both scoped, so check:collisions is happy; both at the same specificity, so
-   source order decides. `.mscreen .hrow` is a grid whose first column is 38px,
-   and the Crew tab's own `.hrow` inherited it — every "Answering questions"
-   pill came out 38px wide with 78px of content spilling out of it. Measured,
-   not guessed, and invisible in a diff.
+/* THE CREW TAB'S SCOPE RULE IS GONE WITH THE TAB (2026-10-11).
+   -----------------------------------------------------------------------------
+   It asserted that nothing in `crew.css` could reach outside `.crew`, after a
+   collision that cost every "Answering questions" pill 78px of content:
+   `.mscreen .hrow` and the tab's own `.hrow`, both scoped, both at the same
+   specificity, so source order decided. The tab, its stylesheet and its empty
+   state are deleted — what it drew is the attempt stamps on each batch row
+   now — so there is no file left to read and nothing left to keep in it.
 
-   So nothing in crew.css may reach outside the tab. The rule was "every class
-   is prefixed `crew-`", which was true while the tab drew its own port; it
-   now draws the REFERENCE's names (`.stack`, `.av`, `.wall`) under
-   ref-module.css, and that file is generated — a hand edit in it does not
-   survive `npm run ref:css`. So an app-side rule for one of those names has
-   to live here, and what actually keeps it in the tab is the ROOT of the
-   selector, not the spelling of the class.
+   The LESSON is not deleted, because it was never only about Crew: a scoped
+   sheet still collides with another scoped sheet at the same specificity, and
+   what keeps a rule in its own screen is the ROOT of the selector rather than
+   the spelling of the class. The module port learned it again from the other
+   end on 2026-10-08 — `.wm-port` is a one-way scope, and the app's own lesson
+   list rendered inside it took the demo's `.th` and `.chev`. CLAUDE.md carries
+   it under the port rather than here. */
 
-   Hence: an unprefixed class is allowed only in a selector that starts at
-   `.crew`, which is this tab's own root element. `.mscreen .hrow` — the
-   collision that cost the pills 78px of content — could not be written that
-   way. */
-{
-  const css = readFileSync(new URL("../src/components/module/crew.css", import.meta.url), "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "");
-  const ALLOW = new Set(["crew", "is-on", "insp-stamp", "app", "smooth-air"]);
-  const loose = new Set();
-  for (const m of css.matchAll(/(^|[};])([^{};@]*?)\{/g)) {
-    for (const part of m[2].split(",")) {
-      const sel = part.trim();
-      if (!sel.includes(".")) continue;
-      const rooted = /^\.crew\b/.test(sel);
-      for (const c of sel.matchAll(/\.([a-zA-Z][\w-]*)/g)) {
-        if (ALLOW.has(c[1]) || c[1].startsWith("crew-") || rooted) continue;
-        loose.add(`${c[1]} (in "${sel}")`);
-      }
-    }
-  }
-  ok("scope", `every rule the Crew tab draws is rooted in its own tab (${[...loose].length ? "" : "all scoped"})`,
-     loose.size === 0, [...loose].join(" "));
-}
 
 console.log(`\ndoors: ${pass} passed, ${fails.length} failed`);
 process.exit(fails.length ? 1 : 0);

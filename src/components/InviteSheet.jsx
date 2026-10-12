@@ -10,8 +10,15 @@
    and 0011's `my_modules` works out who studies what from what they have
    actually done. So what a classmate is sent is the module itself: it opens
    the app on Module 13d, the walkthrough shows them round before they decide
-   anything, and when they make an account they turn up on the Crew wall for
-   that module, which is what the person doing the inviting wanted.
+   anything, and once they have an account their stamp lands on the quizzes
+   they sit, beside this student's, which is what the person doing the
+   inviting wanted.
+
+   THAT SENTENCE NAMED THE CREW WALL UNTIL 2026-10-11, and Crew was deleted
+   that morning — the attempt strip on every batch row is what draws a class
+   now. The copy was stale for exactly as long as the sheet had no door on it,
+   which is why nobody saw it; `check:doors` carries \bCrew\b in its GONE list
+   from the same commit, so the next one fails the build instead.
 
    SENDING IT IS THE PLATFORM'S JOB, and `lib/outside.js` already knows how to
    ask on each one: the share sheet on a phone, the clipboard on a desktop, and
@@ -64,8 +71,8 @@ export default function InviteSheet({ moduleCode, moduleName = "this module", on
         <p className="iv-note">
           This link opens {moduleName} on Wingman. Send it to the group chat your class
           already uses — whoever taps it gets a look round the whole app before they
-          decide anything, and once they have an account they appear here on Crew,
-          chapter by chapter, and on the boards beside you.
+          decide anything, and once they have an account their stamp turns up on the
+          quizzes they sit, batch by batch, beside yours.
         </p>
 
         <label className="iv-field">

@@ -33,11 +33,13 @@
  * Generated, not hand-edited, so the two cannot drift:
  *   npm run ref:css
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const CHECKING = process.argv.includes("--check");
+const DIFFERED = [];
 const MARK = "C";
 
 /* Cuts, by name. `find` is what comes out; `guard` is what must then be gone
@@ -190,6 +192,74 @@ ROOT{
    the tiles. */
 .app .wm-port .row .crew{ top: 18px; }
 
+/* AND INVITE YOUR CLASS IS A LINE AT THE FOOT OF THE LIST (2026-10-11).
+   -----------------------------------------------------------------------------
+   Not the demo's — the demo has no such sheet. It is the app's own invitation,
+   and Crew's empty state was the only door it had until Crew was deleted. The
+   Library is where it belongs now: the attempt stamps on every row above ARE
+   the class, so the line that adds to them goes under them.
+
+   \`.more\` is the demo's own foot line and already carries the quiet tier and
+   the padding. All this adds is the layout that keeps the \`.btn\` on the
+   sentence's line rather than lifting it off the baseline, and the wrap that
+   keeps both of them on a phone. */
+.app .wm-port .more.invite{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* AND THIS ONE BUTTON GETS §12's FLOOR BACK.
+   -----------------------------------------------------------------------------
+   The undo below is \`ROOT button:not(.is-inline){min-height:0}\`, and the
+   argument for it is that the demo styles its controls as DRAWINGS inside a
+   row that is itself the target — a 28px waypoint, a tile that is a thumbnail
+   over a label. This button is not that. It is the only door to the invite
+   sheet anywhere in the app, it sits in a line of prose with nothing else
+   pressable near it, and measured as the port leaves it it is 123x34.
+
+   So the floor comes back for this one control and nothing else. (0,5,0)
+   against the undo's (0,3,1) — \`:not()\` carries the specificity of its
+   argument, so that is 3 classes and an element — which is why the selector
+   is spelled out rather than built from the scope token: \`.app ROOT\` expands
+   to \`.app .app .wm-port\` and would need two nested \`.app\` elements. That
+   mistake has already cost this port a week of oval waypoints. */
+.app .wm-port .more.invite .btn{min-height:44px}
+
+/* AND IT IS WORDS, SO IT TAKES \`--active-text\` IN DAY.
+   -----------------------------------------------------------------------------
+   This app's three-token rule: \`--active\` for a mark, \`--active-fill\` for a
+   fill, \`--active-text\` for the accent READ AS WORDS. Measured on the real
+   surface across six liveries x standard/manual x night/day, 48 pairs, and
+   three came in under 4.5:1 — all of them this button's label, all of them
+   Day on the Standard finish: Runway 4.09, Tarmac 4.47, Amber 4.49. Manual
+   was already clear because the line below swaps \`--accent\` wholesale for it.
+
+   ONLY THE COLOUR MOVES. The border is a MARK and keeps \`--accent\`, which is
+   the half of this rule the repo has already got wrong once by collapsing the
+   two. The label's worst is 5.75:1 now (Manual night Runway) against a best
+   of 8.64; the sentence beside it is \`--t3\` and was already there, 4.75 to
+   5.69, which is what the 4.75 in this file's own measurements refers to.
+
+   The scope is spelled out for the same reason as everything else in this
+   block: \`.app.theme-light ROOT\` expands to \`.app.theme-light .app .wm-port\`,
+   which needs two nested \`.app\` elements and has matched nothing before. */
+.app.theme-light .wm-port .more.invite .btn{ color: var(--active-text); }
+
+/* AND ON A PHONE IT HAS TO CLEAR "SOMETHING'S WRONG HERE".
+   -----------------------------------------------------------------------------
+   That pill is fixed to the bottom-LEFT of every screen (ReportProblem.jsx):
+   measured, x 12-189 and 44px tall, so it owns the bottom 56px of the window
+   on that side. Below 620 this line wraps and the button drops to the left of
+   its own row — which is exactly where the pill is. Scrolled to the end at
+   390x844 the two overlapped by 2952 square pixels, and \`elementFromPoint\` at
+   the button's own centre returned the pill, not the button: the only door to
+   the invite sheet anywhere in the app was unpressable where a thumb lands.
+
+   The fix is room to scroll past, not a smaller pill or a moved one — the pill
+   is deliberately on every screen. 72px is the pill's 56 plus 16 of air, and
+   it is padding on this line rather than on the screen, so nothing else moves.
+   620px is the demo's own phone breakpoint, which is where the wrap starts. */
+@media (max-width: 620px){
+  .app .wm-port .more.invite{ padding-bottom: 72px; }
+}
+
 .app.theme-light[data-paper] .wm-port{ --accent: var(--active-text); }
 .app.theme-light .wm-port .setpick .pk.on b,
 .app.theme-light .wm-port .side.yes b,
@@ -244,10 +314,52 @@ const REF = (name) => {
 const PACK = (name) => readFileSync(join(ROOT, "docs/launch/code", name), "utf8");
 const MODULE_REF = () => REF("01-module-lesson-crew.html");
 
+/* THE MODULE SHEET'S OWN CORRECTIONS, AND WHY THEY ARE HERE RATHER THAN IN IT.
+   -----------------------------------------------------------------------------
+   These four rules are the app's, not the reference's. They were HAND-EDITED
+   into `src/components/module/ref-module.css` as each one was measured, and on
+   2026-10-11 a run of `npm run ref:css` for an unrelated bundle deleted all
+   four without a word — a generated file has no memory, and nothing was
+   watching. `check:ref-css` is the other half of the fix: it regenerates every
+   bundle in memory and fails if a committed sheet differs, so the next
+   hand-edit is caught by the build rather than by the next regeneration.
+
+   A correction belongs here when it is about how the app RENDERS the design's
+   markup, which the design could not have known:
+     · THE ROWS ARE LINKS. The reference draws `.lrow` and `.paper` as buttons.
+       The study-card row is a `BmLink` (LibraryStudyCards.jsx) and a download
+       row is an `<a download>` (LibraryDownloads.jsx), because the middle
+       click and the status bar have to keep working — so both came out in the
+       browser's link blue with an underline the moment a module had cards.
+     · `.ce-blk` IS THE APP'S, NOT THE REFERENCE'S. `ModuleWaiting.jsx` draws
+       the rectangle a lesson, quiz or paper row ends in where the reference's
+       ghost ends in `.ce-face` circles. Same pulse, same weight, so the two
+       empty states of one screen breathe together.
+     · THE SEARCH FIELD TAKES ITS OWN ROW ON A PHONE, and this was the third
+       go at it. Three tabs and a field in one flex row is a desktop shape:
+       squeezed to 390px the field was 68px wide, and at 360 it was FIVE
+       pixels — a search box rendering the letter "S" and nothing else, live.
+       Narrower still, or hiding the placeholder, is measuring the wrong
+       thing: there is no room on that line, so it does not go on that line.
+       Wrapped, it is the width of the card, which is the one width that is
+       always enough. It is emitted here INSIDE its own `@media` block rather
+       than appended bare — a tail is outside every at-rule the sheet above
+       opened and closed. */
+const MODULE_TAIL = `
+/* ---- the app's own corrections; see scripts/scope-ref-css.mjs ---- */
+.ref-mod a.lrow{color:inherit;text-decoration:none}
+.ref-mod .dl-list a.paper{color:inherit;text-decoration:none}
+.ref-mod .ce-blk{width:54px;height:26px;border-radius:7px;background:var(--raised);border:2px solid var(--ground);animation:cepulse 2.4s var(--ease) infinite}
+@media (max-width:560px){
+  .ref-mod .mtabs{flex-wrap:wrap;row-gap:0}
+  .ref-mod .mtabs .search{order:2;flex:1 0 100%;margin-left:0;margin-block:0 10px;padding:9px 12px}
+}
+`;
+
 const BUNDLES = [
   { root: ".ref-mod", out: "src/components/module/ref-module.css",
     from: "reference/01-module-lesson-crew.html (its whole style block)",
-    src: [MODULE_REF] },
+    src: [MODULE_REF], tail: MODULE_TAIL },
   { root: ".ref-les", out: "src/components/module/ref-lesson.css",
     from: "reference/01-module-lesson-crew.html (its whole style block)",
     src: [MODULE_REF] },
@@ -277,7 +389,15 @@ const BUNDLES = [
        block, so it needs none of the reference builds' aliases — and must not
        have their 15px/1.55 type scale, which is not this design's. Two names
        it reads and this app spells differently, and nothing else. */
-    vars: `ROOT{ --font: var(--font-ui); --font-mono: var(--font-mono); }\n` },
+    /* AND `--n`, WHICH THE PACK READS AND NOTHING SETS. Its leaderboard
+       delays the student's own row by `calc(var(--n)*50ms + 170ms)`, where
+       `--n` is meant to be the row's index — but nothing in this app sets it,
+       and a `var()` with no value and no fallback makes the whole declaration
+       invalid at computed-value time, so the delay silently became 0 and the
+       row flew in with the others. Declared here as 0 rather than patched
+       into the rule with a fallback: it is one line, an inline `--n` still
+       wins, and `check:tokens` counts a declaration. */
+    vars: `ROOT{ --font: var(--font-ui); --font-mono: var(--font-mono); --n: 0; }\n` },
 
   /* THE QUIZ STAMPS SHEET (2026-09-23). Its own header says it "sits ON TOP
      of the module/Library stylesheet" and introduces no token, so it takes
@@ -443,9 +563,53 @@ ${cut.map((c) => `     . ${c}`).join("\n")}
    Re-generate with: npm run ref:css */
 `;
 
-  writeFileSync(join(ROOT, bundle.out),
-    head + (bundle.vars ?? VARS).replaceAll("ROOT", bundle.root) + text.replace(/\n{3,}/g, "\n\n"));
+  const next = head
+    + (bundle.vars ?? VARS).replaceAll("ROOT", bundle.root)
+    + text.replace(/\n{3,}/g, "\n\n")
+    + (bundle.tail ?? "");
+  const dest = join(ROOT, bundle.out);
+
+  /* --check REGENERATES WITHOUT WRITING, and that is the gate (2026-10-11).
+     -----------------------------------------------------------------------
+     These sheets are generated, and a generated file has no memory: four
+     hand-edits lived in ref-module.css for weeks and a run of `ref:css` for
+     an unrelated bundle deleted all four silently. Nothing could have caught
+     it — the build still passed, the sheet still looked like a sheet, and the
+     loss only showed up because one of the four was the thing check:tokens
+     happens to measure.
+
+     So the committed sheet has to BE the generated one, byte for byte, and
+     the build says so. A correction then has exactly one home — the bundle's
+     `vars` or `tail` in this file, beside the argument for it — which is
+     where the port bundle's corrections already lived. */
+  if (CHECKING) {
+    const have = existsSync(dest) ? readFileSync(dest, "utf8") : "";
+    if (have === next) { console.log(`ok    ${bundle.out}`); return; }
+    const a = have.split("\n");
+    const b = next.split("\n");
+    let i = 0;
+    while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
+    console.error(`DIFFERS  ${bundle.out}:${i + 1}`);
+    console.error(`  committed: ${a[i] === undefined ? "(end of file)" : a[i].trim().slice(0, 150)}`);
+    console.error(`  generated: ${b[i] === undefined ? "(end of file)" : b[i].trim().slice(0, 150)}`);
+    DIFFERED.push(bundle.out);
+    return;
+  }
+
+  writeFileSync(dest, next);
   console.log(`wrote ${bundle.out}  (${text.split("\n").length} lines, ${cut.length} cuts)`);
 }
 
 for (const b of BUNDLES) scopeOne(b);
+
+if (CHECKING) {
+  if (DIFFERED.length) {
+    console.error("");
+    console.error(`ref-css: ${DIFFERED.length} of ${BUNDLES.length} committed sheets are not what the generator produces.`);
+    console.error("         A sheet under src/ is GENERATED. Put the change in scripts/scope-ref-css.mjs");
+    console.error("         (the bundle's `vars` or `tail`) and run `npm run ref:css`, or restore the file.");
+    process.exit(1);
+  }
+  console.log(`ref-css: ${BUNDLES.length} generated sheets match scripts/scope-ref-css.mjs byte for byte`);
+  console.log("MATCH");
+}

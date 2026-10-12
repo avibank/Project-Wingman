@@ -253,6 +253,25 @@ which is what the Flight Deck draws before the document arrives.
     prefixes every selector. `src/components/module/library/port.css`, 353
     lines, 7 cuts. The sheet and the approved demo cannot drift, and a third
     demo is one more entry. **`batches.css` and `lessons.css` are deleted.**
+    - **AND A GENERATED SHEET HAS NO MEMORY, which cost four rules on
+      2026-10-11.** `ref-module.css` carried four HAND-EDITS made after it was
+      generated — `a.lrow` and `.dl-list a.paper` undoing the browser's link
+      blue (both rows really are links, for the middle click), `.ce-blk` which
+      is `ModuleWaiting`'s and not the reference's, and the phone block that
+      wraps the search field onto its own row (at 360 it was FIVE pixels
+      wide). A run of `ref:css` for an unrelated bundle deleted all four
+      without a word. Nothing could have caught it: the build passed, and the
+      loss only surfaced because one of the four happened to be the thing
+      `check:tokens` measures.
+      - **All four live in the generator now**, in the module bundle's `tail`,
+        beside the argument for each. `exam-port.css`'s lost edit went into
+        its `vars` instead: the exam pack reads `--n` and nothing sets it, so
+        a `var()` with no fallback made the whole `animation-delay` invalid
+        and the student's own row flew in with the others. Declared `--n: 0`.
+      - **`npm run check:ref-css` is the gate**, in `npm run check`: it
+        regenerates all six bundles in memory and fails if a committed sheet
+        differs by a byte, naming the file and the first differing line. A
+        correction now has exactly one home. Proved by planting a hand-edit.
   - **AND THE CLASS NAMES ARE THE DEMO'S OWN NOW.** The first port renamed all
     twelve colliding names to `.lb-*` so the sheet could live under
     `.ref-mod`; §4 of the second handoff asks for the opposite — `.row`,
@@ -355,11 +374,58 @@ which is what the Flight Deck draws before the document arrives.
       layer at a time, the write-backs read back out of the progress document,
       and contrast across six liveries x night and day. It puts the student's
       skin back in a `finally`.
-  - **WHAT IS STILL NOT BUILT**: Crew is only gone from the PORTED strip —
-    `CrewTab`, its route and its links still work, because `library.batches` is
-    admin-only and deleting them would take Crew off students who cannot yet
-    see the stamps that replace it. One decision (turn the flag on) and it is a
-    small deletion.
+  - **AND IT IS ON FOR EVERYBODY** (owner, 2026-10-10: "turn it on"). The flag
+    was admin-only with its own condition beside it — off "until the Library,
+    the Lessons player and the study-card session are all in" — and all three
+    are in. **Turning it on is what found the last bug in it**: the light on
+    the route strip was meant to follow the batch you last opened, falling back
+    to the first, and `ModuleScreen` was feeding `hereBatch` the LAST chapter
+    as `currentChapterId`. That is a guess dressed as a fact — nothing marks
+    which chapter somebody is on — so a student opening Module 13d for the
+    first time landed on batch 10 of 10 with its drawer open. It only showed up
+    then because every test until then had been run as an admin with a history;
+    "a student who has opened nothing" was the case nobody had looked at.
+  - **AND CREW IS DELETED** (owner, 2026-10-11: "remove"). `CrewTab.jsx`,
+    `CrewEmpty.jsx`, `crew.css` and `lib/crew.js` are gone, with the tab, its
+    count badge, its search placeholder, its place in the tab-slide order, and
+    the two fetches App ran on every module load to feed it — a squadron roster
+    and this student's completions, which nothing read any more.
+    `/m/<code>/crew` redirects to the Library in ONE hop, because students have
+    it in their history.
+    - **`crew` MEANT TWO THINGS and only one of them went.** The Crew TAB is
+      deleted; `social.crew`, the "My flight" preset on the Flight Deck and in
+      Preferences, is a different feature and is untouched. Deleting by
+      grepping the word would have taken the social presets with it.
+    - **ITS PRIVACY ASSERTIONS MOVED RATHER THAN LAPSED.** `check:solo` read
+      two rules off `crew.js` — an invisible profile is dropped, and it selects
+      `invisible` in order to be able to. What replaced the tab is the attempt
+      stamps, fed by `quiz_finishers`, and 0038 enforces the same two things in
+      SQL. The assertions follow the feature onto the migration. Letting them
+      lapse with the file would have cost exactly this: a student on Fly solo,
+      or one who has blocked somebody, having their stamp drawn on a row in
+      front of them with nothing in the suite to say so.
+    - **"Invite your class" IS A LINE AT THE FOOT OF THE LIBRARY** (owner,
+      2026-10-11: "put it"). Crew's empty state was its only door and Crew was
+      deleted that morning, so it spent a day reached from nothing. The
+      Library is where it belongs: the attempt strip on every batch row IS the
+      class, so the line that ADDS to it goes under them. Once at the foot,
+      not once per row, and hidden while searching like the rest of the foot.
+      §10 holds — it names the action and never counts who is here.
+      - **The sheet's own copy still said "they appear here on Crew"**, stale
+        from the morning Crew went, and nothing caught it because a screen
+        with no door is still a screen whose words can be wrong.
+        `check:doors` carries `\bCrew\b` in its GONE list now, proved by
+        planting the old sentence back.
+      - **It is the one control in the port that keeps §12's 44px floor.**
+        The port undoes the floor because the demo's controls are DRAWINGS
+        inside a row that is itself the target; this one is a lone button in a
+        line of prose. Measured as the port left it: 123x34.
+      - **And on a phone it has to clear "Something's wrong here."** That pill
+        is fixed bottom-LEFT and owns the bottom 56px on that side. Below 620
+        the line wraps and the button drops to exactly where the pill is: at
+        390x844 scrolled to the end they overlapped by 2952 square pixels and
+        `elementFromPoint` at the button's own centre returned the PILL. 72px
+        of foot room under 620, measured clear at 360/390/500/620/700/820/1280.
 - **THE DEMO SHOWS THE PORTED LIBRARY, and only the demo** (owner,
   2026-10-06: it "showes the previus format ... for the libary").
   `resolveFlags` turns `library.batches` on inside the demo the way it
@@ -1127,14 +1193,16 @@ question feeds, and the right seat is one person and state that expires.
   livery × night/day × 1920/1512/1024/430, and every control the brief lists:
   `npm run test:rr`.
 - **"Invite your class" is a link to send out of the app** (owner,
-  2026-09-23), not a room to stand in: `InviteSheet.jsx`, opened from Crew's
-  empty state. It used to open the module's question board, which is a
+  2026-09-23), not a room to stand in: `InviteSheet.jsx`, opened from the foot
+  of the Library since 2026-10-11 and from Crew's empty state before that. It
+  used to open the module's question board, which is a
   reasonable place to be and not an invitation — nothing about it could be
   sent to somebody who does not have an account yet. **The link is the
   MODULE'S** (`/m/<code>`), because there is no class to join: every module is
   open, a visitor who taps it is shown round by the walkthrough before
-  deciding anything, and when they sign up they appear on that module's Crew
-  wall. Sending it is `lib/outside.js`'s job — the share sheet on a phone, the
+  deciding anything, and once they have an account their stamp turns up on the
+  quizzes they sit, beside the inviter's. That sentence named the **Crew wall**
+  until 2026-10-11 and is the copy `check:doors` now guards by name. Sending it is `lib/outside.js`'s job — the share sheet on a phone, the
   clipboard on a desktop, and the link in a field that can be copied by hand
   where neither works, which is why the field is on screen from the start
   rather than after a failure. Nothing claims a success it did not observe.

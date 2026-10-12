@@ -70,7 +70,7 @@ function countUp(root, reduced) {
  */
 export default function LibraryBatches({
   batches, total, here, query = "", moduleName = null, me = null,
-  finishers = {}, onQuiz, onCards, onPaper, onProfile, onHere,
+  finishers = {}, onQuiz, onCards, onPaper, onProfile, onHere, onInviteClass = null,
 }) {
   const open = useMemo(() => batches.filter((b) => b.n != null), [batches]);
   /* THE CURRENT BATCH IS OPEN ON ARRIVAL, and it has to be set once the
@@ -231,6 +231,24 @@ export default function LibraryBatches({
           </div>
           {!query && soonCount > 1 && (
             <div className="more">{soonCount - 1} more batches on the way.</div>
+          )}
+
+          {/* INVITE YOUR CLASS, and this is its only door (2026-10-11). Crew's
+              empty state was the last one and Crew is gone — what Crew drew is
+              the attempt strip on every row above, so the line that ADDS to it
+              belongs under them. One at the foot rather than one per row, and
+              hidden while searching like the rest of the foot.
+
+              §10: the sentence names the action, never an absence. It does not
+              count who is here and does not appear only when nobody is, which
+              would be the same claim made by its presence. */}
+          {!query && onInviteClass && (
+            <div className="more invite">
+              <span>Studying {moduleName || "this module"} with your class?</span>
+              <button type="button" className="btn" onClick={onInviteClass}>
+                Invite your class
+              </button>
+            </div>
           )}
         </>
       )}

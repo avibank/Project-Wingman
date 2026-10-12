@@ -39,10 +39,20 @@ export const FLAGS = [
      document away (owner, 2026-09-30). `everyone: false` means admins have
      it and nobody else does, which is what flagDefault does with that. */
   { id: "admin.studio", label: "Studio", note: "Writing quizzes, study cards and papers in the app.", everyone: false },
-  /* THE MODULE SCREEN'S PORT, landing in stages (2026-10-06). Off until the
-     Library, the Lessons player and the study-card session are all in, so a
-     half-ported screen is never what a student opens. */
-  { id: "library.batches", label: "Library as batches", note: "The approved module-screen port: a row per batch, with its quiz, cards and question bank.", everyone: false },
+  /* THE MODULE SCREEN'S PORT, LANDED (2026-10-06 to 2026-10-10). This was
+     admin-only "until the Library, the Lessons player and the study-card
+     session are all in, so a half-ported screen is never what a student
+     opens". All three are in — the batch rows with their attempt stamps, the
+     player, and the `#deck` session with its two fanned decks — so the
+     condition it was waiting on is met and it is on for everybody (owner,
+     2026-10-10: "turn it on").
+
+     What this changes for a student, rather than for an admin: the Library is
+     a row per batch instead of three shelves, the Cards tile opens the study
+     session instead of the old "Test yourself" page, the Crew TAB is gone and
+     the stamps of everyone who has sat a quiz are on its row instead, and the
+     module strip is two tabs rather than three. */
+  { id: "library.batches", label: "Library as batches", note: "The approved module-screen port: a row per batch, with its quiz, cards and question bank.", everyone: true },
   { id: "admin.reports", label: "Reports", note: "What the 'Something's wrong here' pill has sent, and what the app reported about itself.", everyone: false },
   // The kill pass. Each of these hides an entry point; the route and the code
   // stay put, so any of it is one switch away from coming back.
@@ -225,10 +235,12 @@ export function resolveFlags(isAdmin, overrides = {}) {
      prevent, not cause (owner, 2026-10-06: the demo "shows the previous
      format ... for the libary").
 
-     It is demo-only on purpose. `library.batches` stays admin-only for the
-     real app until the port's third stage is in, and nothing here changes
-     what a student opens — the demo's course is its own document and the
-     demo's database is in memory. */
+     This line is now a no-op in effect — `library.batches` is on for everybody
+     since 2026-10-10 — and it is KEPT rather than deleted, because what it
+     says is still true and still load-bearing: the tour describes the ported
+     screen, so the demo must draw the ported screen whatever the flag is doing
+     for the real app. If the flag is ever turned off again, the walkthrough
+     does not start describing a Library nobody can see. */
   if (demoMode) out["library.batches"] = true;
   return out;
 }
