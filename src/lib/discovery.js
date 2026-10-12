@@ -49,11 +49,27 @@ const fail = (e, f) => { if (e) console.error(e); return f; };
    Drop this once 0041 has run everywhere, and not before. */
 const compat = (r) => (r?.callsign ? r : { ...r, callsign: r?.display_name ?? null });
 
+/* SHAPED FOR `stampOf`, which is the one thing allowed to read a stamp row —
+   the same shape board.js builds for the leaderboard, so the app keeps one
+   renderer and one reader (0043). A person with no stamp has nulls here and
+   `stampOf` answers null, which is what draws the un-inked outline. */
+const withStamp = (r) => ({
+  ...r,
+  profile: {
+    stamp_shape: r.stamp_shape ?? null, stamp_code: r.stamp_code ?? null,
+    stamp_rim: r.stamp_rim ?? null, stamp_ring: r.stamp_ring ?? null,
+    stamp_pattern: r.stamp_pattern ?? null, stamp_pscope: r.stamp_pscope ?? null,
+    stamp_ink: r.stamp_ink ?? null, stamp_pink: r.stamp_pink ?? null,
+    stamp_cink: r.stamp_cink ?? null, stamp_seed: r.stamp_seed ?? null,
+    stamp_issued_at: r.stamp_issued_at ?? null,
+  },
+});
+
 export async function searchPeople(me, q) {
   if (!me || !q?.trim()) return [];
   const { data, error } = await supabase.rpc("people_search", { p_me: me, p_q: q });
   if (error) return fail(error, []);
-  return (data || []).map(compat);
+  return (data || []).map(compat).map(withStamp);
 }
 
 /* THE PEOPLE LIST — everyone, alphabetical by callsign (0041).
@@ -69,7 +85,7 @@ export async function browsePeople(me, limit = 400) {
   if (!me) return [];
   const { data, error } = await supabase.rpc("people_browse", { p_me: me, p_limit: limit });
   if (error) return fail(error, []);
-  return data || [];
+  return (data || []).map(withStamp);
 }
 
 export async function searchSquadrons(q) {

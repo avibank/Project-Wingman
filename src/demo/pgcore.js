@@ -112,6 +112,16 @@ function peopleOf(store, me) {
         findable_name: byUsername ? null : p.real_name,
         module_code: lastModule(p.user_id),
         shares_squadron: sharesSquadron(p.user_id),
+        /* 0043 — the eleven stamp columns, in `quiz_finishers`' order, so the
+           client shapes them for `stampOf` the one way it already does. */
+        stamp: {
+          stamp_shape: p.stamp_shape ?? null, stamp_code: p.stamp_code ?? null,
+          stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,
+          stamp_pattern: p.stamp_pattern ?? null, stamp_pscope: p.stamp_pscope ?? null,
+          stamp_ink: p.stamp_ink ?? null, stamp_pink: p.stamp_pink ?? null,
+          stamp_cink: p.stamp_cink ?? null, stamp_seed: p.stamp_seed ?? null,
+          stamp_issued_at: p.stamp_issued_at ?? null,
+        },
       };
     });
 }
@@ -505,6 +515,7 @@ export const RPC = {
         real_name: revealsName(r.findable_name, term) ? r.findable_name : null,
         module_code: r.module_code,
         shares_squadron: r.shares_squadron,
+        ...r.stamp,
       }));
   },
 
@@ -529,14 +540,20 @@ export const RPC = {
       for (const r of s.quiz_runs || []) mark(r.user_id, r.submitted_at);
     }
     const cap = Math.max(1, Number(b.p_limit) || 400);
+    /* A to Z, and ANYTHING THAT IS NOT A LETTER LAST (0043). The letter
+       headers used to carry that in the client; the collation alone puts a
+       callsign starting with punctuation first. */
+    const straggler = (c) => (/^[A-Z]/.test(String(c).toUpperCase()) ? 0 : 1);
     return peopleOf(s, b.p_me)
       .filter((r) => since == null || at.has(r.user_id))
-      .sort((x, y) => String(x.callsign).toUpperCase().localeCompare(String(y.callsign).toUpperCase())
+      .sort((x, y) => straggler(x.callsign) - straggler(y.callsign)
+        || String(x.callsign).toUpperCase().localeCompare(String(y.callsign).toUpperCase())
         || String(x.user_id).localeCompare(String(y.user_id)))
       .slice(0, cap)
       .map((r) => ({
         user_id: r.user_id, callsign: r.callsign,
         module_code: r.module_code, shares_squadron: r.shares_squadron,
+        ...r.stamp,
       }));
   },
 

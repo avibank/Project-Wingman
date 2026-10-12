@@ -1184,6 +1184,23 @@ reader does can damage the paper. Module 1 only for now, behind
     than in `discovery.js`, because discovery.js imports the Supabase client
     and so cannot be imported by a node check — the same split `quiz.js` and
     `cardSession.js` already make.
+- **THEIR FACE AND THEIR MARK** (owner, 2026-10-12: "the stamp is the
+  identity so i want that integrated too", then "keep the profile but also add
+  the stamp near the name"). The avatar stays — it is what a student
+  recognises everywhere else — and the stamp sits beside the callsign at 22px,
+  through the app's ONE renderer, so a stamp is drawn here exactly as it is on
+  the board and the quiz row. Somebody who has not made one gets the un-inked
+  outline, which puts the nudge in the one place students look at each other.
+  Migration **0043** widens both functions with the same eleven stamp columns
+  `quiz_finishers` already returns; no real name comes with it.
+- **AND THE LETTER HEADERS ARE GONE** ("it doesnt have to show it just do it
+  quietly theyll understand"). Still A to Z — but **the one thing those
+  headers were really carrying moved into the SQL**: a callsign that does not
+  start with a letter belongs LAST, and the database collation puts it FIRST.
+  `byLetter` in roomModel.js was doing that silently, and dropping the
+  grouping without moving the rule would have quietly reordered the screen.
+  Measured on the live list before it moved. The client formats and does not
+  sort.
 - **AND NOTHING IN IT IS COUNTED**, which was the owner's first requirement
   for this screen and still holds. No headcount, no "+4", no "of", and
   deliberately no `count(*)` companion in the SQL, because the moment one

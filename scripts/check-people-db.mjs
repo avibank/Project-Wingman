@@ -17,7 +17,6 @@
 
      node --env-file=.env.local scripts/check-people-db.mjs
    ========================================================================= */
-import { byLetter } from "../src/lib/roomModel.js";
 
 const url = process.env.VITE_SUPABASE_URL;
 const key = process.env.VITE_SUPABASE_ANON_KEY;
@@ -68,20 +67,24 @@ ok("has no column for a real name at all",
 ok("every row carries a callsign to draw",
   b.rows !== null && b.rows.every((r) => typeof r.callsign === "string" && r.callsign.trim() !== ""));
 {
-  /* ALPHABETICAL, AS POSTGRES MEANS IT. The server orders by `upper(callsign)`
-     under the database's collation; a JS `.sort()` is UTF-16 codepoint order,
-     which puts punctuation either side of the letters depending on the
-     character. Comparing the two called a correct list wrong on the first run.
-     What was actually asked for is that the LETTERS read A to Z, so that is
-     what is checked — and the client buckets anything else under "#" and puts
-     it last whatever order it arrived in, which is checked straight after. */
-  const letters = (b.rows || []).map((r) => r.callsign.toUpperCase()).filter((c) => /^[A-Z]/.test(c));
-  const sorted = letters.every((c, i) => i === 0 || letters[i - 1].localeCompare(c, "en") <= 0);
-  ok("the letters read A to Z", sorted, `${letters.length} of ${b.rows?.length ?? 0} start with a letter`);
-  const groups = byLetter(b.rows || []);
-  ok("and the client buckets anything else under # , last",
-    groups.length === 0 || groups.at(-1).letter !== "#" || groups.filter((g) => g.letter === "#").length === 1);
-  console.log(`       (the live list holds ${b.rows?.length ?? 0} people, in ${groups.length} letter groups —`);
+  /* ALPHABETICAL, AND THE STRAGGLERS LAST (0043). The letter headers used to
+     put a callsign starting with punctuation into a "#" bucket at the end;
+     with them gone the SQL does it, because the collation alone puts such a
+     callsign FIRST — measured on this very list before the rule moved. */
+  const cs = (b.rows || []).map((r) => r.callsign);
+  const letters = cs.filter((c) => /^[A-Za-z]/.test(c));
+  const rest = cs.filter((c) => !/^[A-Za-z]/.test(c));
+  ok("the letters read A to Z, and come first",
+    cs.slice(0, letters.length).join() === letters.join()
+    && letters.every((c, i) => i === 0 || letters[i - 1].localeCompare(c, "en", { sensitivity: "base" }) <= 0),
+    `${letters.length} letters, ${rest.length} not`);
+  ok("and anything that does not start with a letter is last",
+    rest.length === 0 || cs.at(-1) === rest.at(-1));
+  ok("every row carries the stamp columns",
+    (b.rows || []).every((r) => "stamp_issued_at" in r && "stamp_shape" in r),
+    b.rows?.[0] ? Object.keys(b.rows[0]).join(",") : "no rows");
+  const inked = (b.rows || []).filter((r) => r.stamp_issued_at).length;
+  console.log(`       (${b.rows?.length ?? 0} people, ${inked} with a stamp issued -`);
   console.log("        printed as counts, never as names)");
 }
 

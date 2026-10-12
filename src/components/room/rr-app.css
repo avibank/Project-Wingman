@@ -78,6 +78,13 @@
   line-height: 1.45;
   color: var(--t2);
 }
+/* THE CALLSIGN AND THE STAMP ON ONE LINE (0043). `.rr-l1` is a single line
+   with an ellipsis, so the two sit in an inline flex inside it and the stamp
+   keeps its size while the name takes what is left. */
+.rr .rr-who{ display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; }
+.rr .rr-cs{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rr .rr-who .insp-stamp{ flex: none; }
+
 .rr .rr-scopes{
   display: flex; gap: 4px; margin: 8px 0 0; padding: 0 2px;
   overflow-x: auto; scrollbar-width: none;
