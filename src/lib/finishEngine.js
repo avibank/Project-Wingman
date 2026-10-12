@@ -66,20 +66,39 @@ export const FINISHES = [
    like it was"), and is out again — which is the third time this one line has
    moved, so it is written to move cleanly rather than to be clever.
 
-   IT IS A FILTER, NOT A DELETION, every time. Aurora stays in FINISHES,
-   every renderer keeps drawing it, and check:contrast, check:surfaces and
-   test:bm keep measuring it — so nothing about it rots while it is out, and
-   putting it back is this line again. Deleting the renderers to "tidy up"
+   IT IS A FILTER, NOT A DELETION, every time. Aurora stays in FINISHES and
+   every renderer keeps drawing it, so nothing about it rots while it is out
+   and putting it back is this line again. Deleting the renderers to "tidy up"
    is what would make the next reinstatement a rewrite.
+
+   WHICH CHECKS STILL MEASURE IT IS NARROWER THAN THIS SAID. It named
+   check:contrast, check:surfaces and test:bm; the first two do, because they
+   resolve the tokens themselves and pass `auroraVars` in. test:bm does NOT
+   and cannot — see the paragraph below — and naming it here is what left that
+   gap looking covered.
 
    `offeredFinish` is the other half: an account stored on Aurora reads back
    as Standard rather than painting nothing, which is what makes withdrawing
    a finish safe at all.
 
-   AURORA IS STILL A NIGHT SKY while it is unoffered. App.jsx forces the
-   night variant on it and `lightOverride` says so, and neither rule was ever
-   conditional on the finish being offered — which is what keeps `?finish=`
-   and the harness honest. */
+   AURORA IS STILL A NIGHT SKY, and both rules that say so are unconditional:
+   App.jsx forces the night variant on `finish === "aurora"` and
+   `lightOverride` says the same.
+
+   NEITHER IS REACHABLE WHILE IT IS UNOFFERED, though, and this comment used
+   to claim the opposite — that the two rules "keep `?finish=` and the harness
+   honest" (corrected 2026-10-10). There is no `?finish=` override anywhere in
+   the app, and the harness sets `pw-finish` through progress like any other
+   account value, so the filter above catches it there too. Nothing can wear
+   Aurora today: `offeredFinish` runs first and the night rule never sees it.
+
+   So what still measures Aurora is the checks that pass `auroraVars` in
+   themselves — check:contrast, check:surfaces, check:tokens,
+   check:lesson-contrast. A BROWSER WALK CANNOT, which is worth knowing before
+   writing one: test:exam asked for the forced night and failed 18 day states
+   on a screen that was obeying its own rule. It holds the other half instead,
+   that a withdrawn finish is worn as Standard. Offering it again is the one
+   line above, and both halves come back with it. */
 export const OFFERED_FINISHES = FINISHES.filter((f) => f.id !== "aurora");
 export const offeredFinish = (id) => (OFFERED_FINISHES.some((f) => f.id === (id ?? null)) ? (id ?? null) : null);
 

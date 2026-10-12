@@ -18,10 +18,11 @@
    ========================================================================= */
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
-import { seedOf, allowanceFor, clock, signPaper } from "../src/lib/quiz.js";
+import { seedOf, allowanceFor, clock, passAt, signPaper } from "../src/lib/quiz.js";
 import { shuffleOptions } from "../src/lib/retention.js";
-import { lightOverride } from "../src/lib/finishEngine.js";
+import { lightOverride, offeredFinish } from "../src/lib/finishEngine.js";
 import { loadContent } from "../src/lib/contentLoader.js";
+import { PASS_PCT } from "../src/lib/minimums.js";
 import fixture from "../src/content/test-content.json" with { type: "json" };
 
 const BASE = process.env.EXAM_BASE || "http://127.0.0.1:5190";
@@ -248,6 +249,23 @@ const attemptWith = (right) => {
   };
 };
 
+/* HOW LONG THE PAPER IS, AND WHAT IT PASSES AT — ASKED, NOT WRITTEN DOWN.
+   Both were constants here: eight questions and a pass mark of six, which is
+   what the fixture carried when this walk was written. The course has been
+   replaced twice since — M1.B1/M1.B6 on 2026-10-03 and the ten batches
+   M1.T1-T10 on 2026-10-08 — and every one of those quizzes is FORTY. So
+   `1/8`, `0/8`, `Not answered 7`, "the last question" at cell 7 and every
+   percentage in the result cases below were all measuring a paper that does
+   not exist, on a screen that was marking the real one perfectly. Same
+   mistake as the pinned `M1.01` above, fixed the same way: ask the chapter.
+   At N=8 every case below is the original table to the digit. */
+const N = chapter.questions.length;
+const pctOf = (right) => Math.round((right / N) * 100);   // the screen's own
+const PASS = passAt(N);                                   // 30 of 40; 6 of 8
+/* Comfortably clear of the pass mark without being a clean sweep: the count
+   the three "above your bar" cases need. 35 of 40; 7 of 8. */
+const HIGH = Math.min(N - 1, PASS + Math.max(1, Math.round(N / 8)));
+
 const browser = await chromium.launch();
 const problems = [];
 const errors = [];
@@ -276,10 +294,23 @@ try {
         await page.locator(".option").first().click();
         await page.locator(".question__foot .btn--primary").click();
         await page.waitForTimeout(250);
-        /* A finish may overrule the light: Aurora is a night sky, so day is
-           not day under it. The screen is asked for what the app will
-           actually be wearing, not for what was pinned. */
-        const lit = lightOverride(finish) ? "night" : variant;
+        /* WHAT THE STUDENT WILL ACTUALLY BE WEARING, which is not the same
+           as what was asked for. Aurora IS a night sky and `lightOverride`
+           still says so — but Aurora is NOT OFFERED (owner, 2026-10-04:
+           "remove aurora"), and App runs the stored finish through
+           `offeredFinish` before anything paints, so a state asking for it
+           wears Standard. Asking for Aurora's forced night therefore failed
+           all 18 day states on a screen obeying its own rule: the ground came
+           out day's 0.968 where this wanted night's matte 0.165.
+
+           Running the ask through the same filter the app uses is what keeps
+           this honest, and it is why Aurora stays in FINISHES here rather
+           than being deleted: offering it again is the one line in
+           finishEngine.js, and these 18 states start measuring the real sky
+           again with no change to this walk. The rule that replaced the stale
+           one — that a withdrawn finish is worn as Standard — is measured
+           just below. */
+        const lit = lightOverride(offeredFinish(finish)) ? "night" : variant;
         for (const [width, height, mode] of SIZES) {
           await page.setViewportSize({ width, height });
           await page.waitForTimeout(220);
@@ -301,6 +332,32 @@ try {
   }
   report(`every livery, finish and layout (${states} states)`, problems);
 
+  /* ------------------------------------- a withdrawn finish is worn as Standard
+     THE RULE THAT REPLACED THE STALE ONE. Those 18 Aurora states used to
+     assert the forced night that `lightOverride` still promises; Aurora is
+     unoffered, so what is actually worth holding is the other half of
+     withdrawing a finish — `offeredFinish` reading a stored Aurora back as
+     Standard "rather than painting nothing", which is what makes withdrawing
+     one safe at all (finishEngine.js). Measured on the one signal that tells
+     the two apart: App sets `data-aur` only for an Aurora night, so an
+     account stored on Aurora must come up day-lit with no sky on it. */
+  {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await prefs({ "pw-livery": "sky", "pw-variant-pin": "day", "pw-finish": "aurora" });
+    await page.goto(QUIZ_URL);
+    await page.locator(".exam-frame .question__text").waitFor({ timeout: 15000 });
+    const worn = await page.evaluate(() => {
+      const app = document.querySelector(".app");
+      return { day: app.classList.contains("theme-light"), aur: app.getAttribute("data-aur") };
+    });
+    const stale = [];
+    if (!(worn.day && worn.aur === null)) {
+      stale.push(`a stored Aurora came up ${worn.day ? "day" : "night"} with data-aur=${worn.aur} — ${JSON.stringify(worn)}`);
+    }
+    report("a withdrawn finish is worn as Standard", stale);
+    await page.close();
+  }
+
   /* ------------------------------------------------------------ the controls */
   await prefs({ "pw-livery": "sky", "pw-variant-pin": "night", "pw-finish": null, "pw-minimums": 75 });
   {
@@ -317,7 +374,7 @@ try {
     await page.locator(".option").nth(1).click();
     await settle();
     expect("an answer fills its grid box", (await cells.first().getAttribute("class")).includes("is-answered"));
-    expect("and the count moves", (await page.locator(".navigator__title span").textContent()) === "1/8");
+    expect("and the count moves", (await page.locator(".navigator__title span").textContent()) === `1/${N}`);
     await page.locator(".option").nth(2).click();
     await settle();
     expect("a second answer replaces the first rather than clearing it",
@@ -345,7 +402,11 @@ try {
     await cells.nth(5).click();
     await settle();
     expect("a grid box jumps to its question", (await page.locator(".question__num b").textContent()) === "6");
-    await cells.nth(7).click();
+    /* THE LAST CELL, NOT THE EIGHTH. Written `nth(7)` against an
+       eight-question fixture; on a forty-question paper that is question 8
+       and its primary button still says Next, so this read as the screen
+       having lost its Review step. */
+    await cells.nth(N - 1).click();
     await settle();
     expect("the last question offers Review rather than Next",
       (await page.locator(".question__foot .btn--primary").textContent()).includes("Review"));
@@ -354,7 +415,7 @@ try {
     await settle();
     expect("Review opens the dialog", await page.locator(".exam-dialog").evaluate((d) => d.open));
     expect("the dialog counts what is answered and what is not",
-      (await page.locator(".exam-dialog .review-list li").allTextContents()).join("|") === "Answered 1|Not answered 7|Flagged 0");
+      (await page.locator(".exam-dialog .review-list li").allTextContents()).join("|") === `Answered 1|Not answered ${N - 1}|Flagged 0`);
     await page.keyboard.press("Escape");
     await settle();
     expect("Esc closes it", !(await page.locator(".exam-dialog").evaluate((d) => d.open)));
@@ -364,7 +425,7 @@ try {
     await settle();
     expect("Back to exam closes it and changes nothing",
       !(await page.locator(".exam-dialog").evaluate((d) => d.open))
-      && (await page.locator(".navigator__title span").textContent()) === "1/8");
+      && (await page.locator(".navigator__title span").textContent()) === `1/${N}`);
 
     await page.locator(".exam-bar .btn", { hasText: "End exam" }).click();
     await page.locator(".exam-dialog .btn", { hasText: "End and mark" }).click();
@@ -395,9 +456,16 @@ try {
     await foot.click();
     await settle(400);
     expect("Try again starts a fresh paper",
-      (await page.locator(".navigator__title span").textContent()) === "0/8"
+      (await page.locator(".navigator__title span").textContent()) === `0/${N}`
       && (await page.locator(".question__num b").textContent()) === "1"
-      && (await page.locator(".exam-timer__value").textContent()) === "20:00");
+      /* THE CLOCK IS DERIVED, NOT WRITTEN DOWN. This said "20:00" — R5's flat
+         twenty, which was the allowance when this walk was last touched
+         (2026-09-20). It became thirty on 2026-10-04 and a flat FIFTY on
+         2026-10-05, and CLAUDE.md says that number lives in two places that
+         have to move together (`quiz.js` and `check:exam`). It was three:
+         this line was the one nobody moved. Asking `clock(allowanceFor(N))`
+         is what stops it ever being a fourth. */
+      && (await page.locator(".exam-timer__value").textContent()) === clock(allowanceFor(N)));
 
     /* AND THE SCREEN FLAG COMES OFF WITH THE QUIZ. It re-grounds the whole
        document while the paper is open; left behind, every screen after it
@@ -481,12 +549,12 @@ try {
     await page.locator(".options .option").first().click();
     await page.waitForTimeout(400);
     expect("the answer registered before anything else is tested",
-      (await page.locator(".navigator__title span").textContent()) === "1/8",
+      (await page.locator(".navigator__title span").textContent()) === `1/${N}`,
       await page.locator(".navigator__title span").textContent());
 
     await page.goBack();
     await page.waitForTimeout(600);
-    expect("and survives the Back", (await page.locator(".navigator__title span").textContent()) === "1/8",
+    expect("and survives the Back", (await page.locator(".navigator__title span").textContent()) === `1/${N}`,
       await page.locator(".navigator__title span").textContent());
     await page.waitForTimeout(600);
     const stayed = (await page.evaluate(() => document.documentElement.dataset.screen)) === "exam";
@@ -528,7 +596,7 @@ try {
         clock: await page.locator(".exam-timer__value").textContent(),
       };
       expect("and the paper is where it was left, unmarked",
-        back.nav === "1/8" && back.result === 0, JSON.stringify(back));
+        back.nav === `1/${N}` && back.result === 0, JSON.stringify(back));
     }
 
     /* The half that would be worse than the bug: a lock that never releases. */
@@ -562,17 +630,28 @@ try {
     await page.close();
   }
 
-  /* ------------------------------------------------------- the six results */
+  /* ------------------------------------------------------ the nine results */
+  /* THE NINE CASES ARE SHAPES, NOT COUNTS. Each row says which branch of
+     `headline()` it is standing on, and the count that lands there is worked
+     out from the paper: one short of the pass mark, three short, a clean
+     sweep, exactly the pass mark under a higher bar, and so on. Written as
+     raw numbers out of eight they all moved the moment the content did — 5 of
+     8 is 63% and "So close", 5 of 40 is 13% and is not.
+
+     The bars are derived too, because "right on your bar" only fires on
+     `pct === bar` and "keep climbing" only on `pct < bar`: a bar written down
+     while the percentage underneath it moves tests a different branch than
+     the one it names. At N=8 this is the original table to the digit. */
   const CASES = [
-    { right: 5, bar: 75, says: "So close. Go again", foot: "Try again" },
-    { right: 3, bar: 75, says: "Not yet. Keep at it", foot: "Try again" },
-    { right: 8, bar: 75, says: "Every one right", foot: "Retake" },
-    { right: 6, bar: 85, says: "Passed. Keep climbing to your bar", foot: "Retake" },
-    { right: 6, bar: 75, says: "Passed, right on your bar", foot: "Retake" },
-    { right: 7, bar: 75, says: "Passed, above your bar", foot: "Retake" },
-    { right: 8, bar: 95, says: "Every one right", foot: "Retake" },
-    { right: 7, bar: 95, says: "Passed. Keep climbing to your bar", foot: "Retake" },
-    { right: 7, bar: 85, says: "Passed, above your bar", foot: "Retake" },
+    { right: PASS - 1, bar: PASS_PCT, says: "So close. Go again", foot: "Try again" },
+    { right: Math.max(0, PASS - 3), bar: PASS_PCT, says: "Not yet. Keep at it", foot: "Try again" },
+    { right: N, bar: PASS_PCT, says: "Every one right", foot: "Retake" },
+    { right: PASS, bar: pctOf(PASS) + 10, says: "Passed. Keep climbing to your bar", foot: "Retake" },
+    { right: PASS, bar: pctOf(PASS), says: "Passed, right on your bar", foot: "Retake" },
+    { right: HIGH, bar: PASS_PCT, says: "Passed, above your bar", foot: "Retake" },
+    { right: N, bar: pctOf(HIGH) + 7, says: "Every one right", foot: "Retake" },
+    { right: HIGH, bar: pctOf(HIGH) + 7, says: "Passed. Keep climbing to your bar", foot: "Retake" },
+    { right: HIGH, bar: pctOf(HIGH) - 3, says: "Passed, above your bar", foot: "Retake" },
   ];
   for (const c of CASES) {
     await prefs({ "pw-minimums": c.bar });
@@ -587,8 +666,8 @@ try {
     await page.locator(".exam-bar .btn", { hasText: "End exam" }).click();
     await page.locator(".exam-dialog .btn", { hasText: "End and mark" }).click();
     await page.locator(".result").waitFor({ timeout: 5000 });
-    const at = `${c.right} of 8 against a bar of ${c.bar}`;
-    const pct = Math.round((c.right / 8) * 100);
+    const at = `${c.right} of ${N} against a bar of ${c.bar}`;
+    const pct = pctOf(c.right);
     await settledResult(page, pct).catch(() => {});
     expect(`${at} counts up to ${pct}%`, (await page.locator(".result__big").textContent()) === `${pct}%`);
     expect(`${at} says "${c.says}"`, (await page.locator(".result__head").textContent()).includes(c.says));
@@ -597,7 +676,7 @@ try {
        is not drawn at all on a clean paper — a button that would save nothing. */
     expect(`${at} offers ${c.foot}, and keeping the misses when there are any`,
       (await page.locator(".result__foot .btn").allTextContents()).join("|")
-        === (c.right < 8 ? `Save the ones I missed|${c.foot}` : c.foot),
+        === (c.right < N ? `Save the ones I missed|${c.foot}` : c.foot),
       (await page.locator(".result__foot .btn").allTextContents()).join("|"));
     expect(`${at} fills the line to ${pct}%`,
       Math.abs(await page.locator(".meter__fill").evaluate((el, w) => {
@@ -605,14 +684,14 @@ try {
         return (el.getBoundingClientRect().width / track) * 100 - w;
       }, pct)) < 2);
     expect(`${at} marks the pass mark, and the bar when it differs`,
-      (await page.locator(".mark").count()) === (c.bar === 75 ? 1 : 2));
+      (await page.locator(".mark").count()) === (c.bar === PASS_PCT ? 1 : 2));
     expect(`${at} puts no number on a marker`,
       (await page.locator(".mark").allTextContents()).every((t) => !/\d/.test(t)));
-    expect(`${at} lists the ${8 - c.right} it missed`,
-      (await page.locator(".result__list.review > .result__row").count()) === 8 - c.right);
+    expect(`${at} lists the ${N - c.right} it missed`,
+      (await page.locator(".result__list.review > .result__row").count()) === N - c.right);
     expect(`${at} folds the right ones away unless nothing was missed`,
-      (await page.locator(".result details").evaluate((d) => d.open).catch(() => c.right === 0)) === (c.right === 8));
-    if (c.right < 8) {
+      (await page.locator(".result details").evaluate((d) => d.open).catch(() => c.right === 0)) === (c.right === N));
+    if (c.right < N) {
       const row = page.locator(".result__list.review > .result__row").first();
       expect(`${at} shows the pick struck through and the right answer after it`,
         (await row.locator("s.ans--wrong").count()) === 1 && (await row.locator(".ans--right").count()) === 1);
@@ -624,7 +703,7 @@ try {
        out the 1.1s the result had already spent, and a student who opened the
        fold got a list of blank rows for a second and a half. Inside the fold
        the stagger counts from the moment it opens. */
-    if (c.right > 0 && c.right < 8) {
+    if (c.right > 0 && c.right < N) {
       const fold = page.locator(".result details");
       await fold.locator("summary").click();
       expect(`${at} the tick row opens the ones you got right`, await fold.evaluate((d) => d.open));
@@ -680,11 +759,14 @@ try {
 
   /* ------------------------------------------------------- motion turned off */
   {
+    /* Half the paper, so the settled figure is a solid 50% and can never be
+       the 0% the count-up starts from. */
+    const CALM_RIGHT = Math.round(N / 2);
     await prefs({ "pw-reduce-motion": true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.addInitScript(([key, value]) => {
       localStorage.clear(); localStorage.setItem(key, value);
-    }, [`wingman.attempt.${chapter.quizId}`, JSON.stringify(attemptWith(4))]);
+    }, [`wingman.attempt.${chapter.quizId}`, JSON.stringify(attemptWith(CALM_RIGHT))]);
     await page.goto(QUIZ_URL);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     await page.locator(".exam-bar .btn", { hasText: "End exam" }).click();
@@ -694,7 +776,11 @@ try {
     const calm = [];
     /* Everything at once: the number is already counted, the line already
        filled, and every row is on screen rather than waiting its turn. */
-    if ((await page.locator(".result__big").textContent()) !== "50%") calm.push("the percentage is still counting up");
+    /* The number it is going to, not the number four right out of eight
+       used to be. The count-up starts at 0 and climbs, so this only means
+       anything while the figure is not 0 — which is why the count is a
+       fraction of the paper rather than a constant. */
+    if ((await page.locator(".result__big").textContent()) !== `${pctOf(CALM_RIGHT)}%`) calm.push("the percentage is still counting up");
     const rows = await page.locator(".result__row").evaluateAll((els) => els.map((el) => ({
       opacity: getComputedStyle(el).opacity, anim: getComputedStyle(el).animationName,
     })));

@@ -443,6 +443,43 @@ which is what the Flight Deck draws before the document arrives.
 - **Expect to reset again with every replacement.** Run the SQL, raise the
   epoch, re-make the paper, and publish — a commit alone leaves the class on
   whatever `course_docs` last served.
+- **AND RUN THE BROWSER SUITES, because `npm run check` does not.**
+  `test:exam`, `test:bm`, `test:rr`, `test:tour`, `test:cards`, `test:lesson`
+  and `test:vt` all need the harness, which is why they are out of `check` —
+  so a content replacement sails through every gate and breaks them silently.
+  `npm run test:exam` was red from 2026-10-03 and nobody knew until
+  2026-10-10, across TWO replacements: it had `M1.01` pinned, an eight-question
+  paper written down as `1/8`, `Not answered 7`, `cells.nth(7)` for "the last
+  question" and nine result cases counted out of eight, and a clock of
+  R5's `20:00`. 54 problems across its 108 states and 53 among its controls,
+  every one of them on a screen that has not changed since 2026-09-27 — and
+  the 54 were a SECOND cause: it asked for Aurora's forced night, and Aurora
+  has been unoffered since 2026-10-04, so `offeredFinish` had been quietly
+  dressing those 18 states in Standard. It runs the ask through the same
+  filter the app does now.
+  - **The fix was to ASK THE FIXTURE, not to update the numbers.** The chapter
+    is now the first one with a quiz, the paper's length is
+    `chapter.questions.length`, the pass mark is `passAt(N)`, the clock is
+    `clock(allowanceFor(N))` and every result case is a BRANCH of
+    `headline()` with its count derived — so the next replacement cannot do
+    this again. At eight questions the derived table is the old hardcoded one
+    to the digit, which is how the generalisation was checked.
+  - **THREE MORE OF THEM ARE RED, each for its own reason**, which is the
+    point: these go one at a time and quietly, and on 2026-10-11 every browser
+    suite that was looked at turned out to be failing.
+    - `test:bm` — its seed asserts 15 rows and the replaced content builds 13,
+      so it throws before its first assertion.
+    - `test:rr` — lays out all 168 states cleanly, then fails two controls
+      ("dragging the splitter sets the feed width", "+ offers Photo, File and
+      Paper passage") and crashes on a click the `.rr-dscroll` overlay
+      intercepts.
+    - `test:vt` — walks as far as "Room → Deck" and then times out waiting for
+      `.chead`.
+    The last two were confirmed PRE-EXISTING by running them in a clean
+    worktree at the same commit (`git worktree add --detach`, its own harness
+    on its own port). That is the only way to tell "I broke it" from "it was
+    already broken", and it is worth the five minutes every time — the
+    alternative is reading somebody else's rot as your own regression.
 
 `check:placeholders` / `check:ship` grep the build for the markers of the old
 placeholder set; nothing carries them and both pass unchanged.
@@ -605,7 +642,10 @@ merge them back together.
   reading "about 50 minutes" for every quiz would say nothing. **The number
   lives in TWO places now and they have to move together**: `quiz.js` and
   `check:exam`. It was three: `steps.js` said it out loud to a visitor, and
-  that file went with the tour rebuild on 2026-10-06. The approved tour's
+  that file went with the tour rebuild on 2026-10-06. It was briefly FOUR —
+  `test:exam` asserted R5's `20:00` and went red unnoticed through both of
+  the clock's changes; it asks `clock(allowanceFor(N))` now, so it tracks
+  this number rather than restating it. The approved tour's
   script does not state the clock anywhere, so a visitor is no longer told
   the figure before they meet it — which is the handoff's wording and not an
   oversight here. If it should be said again it belongs in `tourSteps.js`,
