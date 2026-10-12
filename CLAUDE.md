@@ -49,25 +49,47 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
 
 ## Content
 
-**MODULE 13d IS TEN BATCHES** (owner, 2026-10-08: "delete every quiz and trace
-and update those, push them in"). M1.B1 and M1.B6 came out with everything they
-carried; twenty documents — a Quiz and a Full Set for each of ten batches —
-went in the same day under ids that had never existed, `M1.T1` to `M1.T10`.
+**MODULE 13d IS TEN BATCHES, REWORKED** (owner, 2026-10-12: "i will refeed you
+the batches i need them updated and wipe all attempts"). All twenty documents
+came again — a Quiz and a Full Set for each of ten batches — under ids that
+had never existed, `M1.V1` to `M1.V10`. The ten before them were `M1.T1` to
+`M1.T10` (2026-10-08), and before that M1.B1/M1.B6 and M1.01-M1.03.
 
 | batch | id | ref | pages | quiz | cards | paper |
 |---|---|---|---|---|---|---|
-| 1 | M1.T1 | 13.1 | 1–63 | 40 | 160 | 24pp |
-| 2 | M1.T2 | 13.3 | 64–155 | 40 | 340 | 52pp |
-| 3 | M1.T3 | 13.3 | 156–231 | 40 | 277 | 43pp |
-| 4 | M1.T4 | 13.3 | 232–321 | 40 | 311 | 45pp |
-| 5 | M1.T5 | 13.6 | 322–448 | 40 | 332 | 50pp |
-| 6 | M1.T6 | 13.8 | 449–562 | 40 | 326 | 50pp |
-| 7 | M1.T7 | 13.8 | 563–650 | 40 | 246 | 37pp |
-| 8 | M1.T8 | 13.8 | 651–767 | 40 | 312 | 45pp |
-| 9 | M1.T9 | 13.8 | 768–917 | 40 | 417 | 60pp |
-| 10 | M1.T10 | 13.8 | 918–1008 | 40 | 227 | 35pp |
+| 1 | M1.V1 | 13.1 | 1–63 | 40 | 105 | 18pp |
+| 2 | M1.V2 | 13.3 | 64–155 | 40 | 306 | 47pp |
+| 3 | M1.V3 | 13.3 | 156–231 | 40 | 272 | 42pp |
+| 4 | M1.V4 | 13.3 | 232–321 | 40 | 293 | 44pp |
+| 5 | M1.V5 | 13.6 | 322–448 | 40 | 265 | 43pp |
+| 6 | M1.V6 | 13.8 | 449–562 | 40 | 274 | 43pp |
+| 7 | M1.V7 | 13.8 | 563–650 | 40 | 232 | 36pp |
+| 8 | M1.V8 | 13.8 | 651–767 | 40 | 271 | 39pp |
+| 9 | M1.V9 | 13.8 | 768–917 | 40 | 390 | 57pp |
+| 10 | M1.V10 | 13.8 | 918–1008 | 40 | 208 | 33pp |
 
-**400 quiz questions, 2,948 cards, 10 papers.** The names are the documents'
+**400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
+332 fewer cards: every batch came back trimmed. The previous set was 2,948.
+
+**THE IMPORTER IS IN THE REPO NOW** (`scripts/batches/`), where it was a
+one-off before. `lines.mjs` pulls every line out with its x and its height
+through the repo's own pinned pdf.js; `import.mjs` classifies by that geometry
+and refuses rather than guesses; `build.mjs` puts the result into the content
+document and the papers on the shelf, reading each paper's page count out of
+the file. All twenty came out with **zero warnings**, 3,016 items, every id
+unique, and the spread near a third each — quizzes 14/13/13 to the batch,
+card sets from 70/69/69 to 130/130/130.
+
+- **A BLANKET "SKIP THIS HEIGHT" RULE ATE 92 EXPLANATIONS IN SILENCE.** A key
+  row's tail — "(L3, PDF p. 38)" — breaks onto a continuation line at **x=91
+  h=8.5**, not h=9, and the importer's `if (near(h, 8.5)) continue;` for meta
+  lines swallowed every one of them. The documents still read, every count
+  still tallied, the spread was still a clean third, and 92 explanations
+  simply ended at "(L3, PDF p." — with NO warning, because a catch-all skip
+  is exactly how "report, never assume" gets defeated. Caught by checking all
+  3,016 items mechanically for a surviving `(L…, PDF p.` tail rather than by
+  reading any of them. The test is the INDENT, which only a continuation has;
+  the height is allowed to be either, and the meta skip is pinned to x=60. The names are the documents'
 own — batches 2-4 are all "Autoflight (ATA 22)" and 6-10 all "Instruments (ATA
 31)", which is what the syllabus says; a row prints the name, the ref and the
 page range, so three batches sharing a subject are still told apart. Batch 5's

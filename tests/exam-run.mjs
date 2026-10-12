@@ -477,11 +477,17 @@ try {
        from an open paper says what is unanswered first. */
     await page.locator(".up").click();
     await page.locator("dialog[open] button", { hasText: /Leave it for now/i }).click({ timeout: 8000 });
-    /* `.mtabs`, not `.tabs`. The module screen's strip was renamed when that
-       screen was ported to its reference build; this line waited for a class
-       that had stopped existing, so the walk timed out on its last step and
-       read as a fault in the exam. */
-    await page.locator(".mscreen .mtabs").first().waitFor({ timeout: 8000 });
+    /* THE MODULE SCREEN HAS TWO TAB STRIPS AND THIS HAS NOW CHASED BOTH.
+       It waited for `.tabs`, which became `.mtabs` when the screen was ported
+       to its reference build; then `library.batches` went to everyone
+       (2026-10-09) and the ported screen's own strip — `.tabs` again, inside
+       `.wm-port` — replaced `.mscreen .mtabs` outright, so this timed out on a
+       screen that was rendering perfectly.
+
+       It waits for a tablist now, whichever branch drew it. The ROLE is the
+       thing both strips genuinely share; a class name here has been wrong
+       twice. */
+    await page.locator('[role="tablist"]').first().waitFor({ timeout: 8000 });
     await page.waitForTimeout(300);
     expect("and takes the flag off on the way out",
       (await page.evaluate(() => document.documentElement.dataset.screen)) === undefined);
@@ -513,9 +519,14 @@ try {
        a history entry inside one document, which is the case that matters and
        the only one a student produces. */
     await page.goto(`${BASE}/m/m1?uid=student_one`);
-    await page.locator(".mscreen .mtabs").first().waitFor({ timeout: 15000 });
-    await page.locator(".mtabs button", { hasText: /Library/i }).first().click();
-    await page.locator('section[aria-labelledby="lsec-quizzes"] .lrow').first().click({ timeout: 15000 });
+    await page.locator('[role="tablist"]').first().waitFor({ timeout: 15000 });
+    /* THE LIBRARY IS THE PORTED ONE NOW, for everybody (2026-10-09). The old
+       shelves — `section[aria-labelledby="lsec-quizzes"] .lrow` — are gone,
+       and a batch row's quiz is a tile in its drawer. Reached by ROLE and by
+       the label a screen reader is given, because the class names on this
+       screen have changed under this walk twice already. */
+    await page.getByRole("tab", { name: /Library/i }).first().click();
+    await page.locator('button[aria-label^="Quiz,"]').first().click({ timeout: 15000 });
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     /* The row clicked is whichever quiz the Library lists first, which is not
        necessarily CHAPTER. Come back to THIS paper's address, not to the
