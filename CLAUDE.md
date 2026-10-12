@@ -1444,6 +1444,45 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   places and they have to agree: the CHECK `pilot_code_shape`, `claim_code`,
   both arities of `issue_licence`, and `src/lib/code.js` — a client that let
   somebody type a code the database refuses is the worse half of the bug.
+- **A STAMP IS OPTIONAL, AND THE APP NOW SAYS SO QUIETLY UNTIL THERE IS ONE**
+  (owner, 2026-10-12). A student is taken to the creator once, when
+  FirstFlightGate makes their profile, and can close it — so an account can go
+  on indefinitely with no stamp, and every surface that would carry their mark
+  draws the faint house seal instead. The owner found one that way, on a quiz
+  her class had sat: "I can see her profile, it doesn't have a stamp."
+  - **NOTHING WAS BROKEN, and the first job was proving that.** `quiz_finishers`
+    (0038) and `quiz_leaderboard` (0036) both return `stamp_issued_at` and the
+    stamp columns, `stampOf` answers null only when `stamp_issued_at` is
+    missing, and CrewStrip and Leaderboard both pass
+    `on={Boolean(...stamp_issued_at)}` so a stampless person is drawn faint on
+    purpose. **The catch is that a missing stamp and a missing JOIN render
+    identically** — same faint seal — so the screen cannot tell you which it
+    is, and neither could I without the data. Worth remembering before reading
+    the next blank one as a bug.
+  - **The reminder is a dot and a row, and nothing else.** `ProfileMenu.jsx`:
+    a 9px `--active` dot on the avatar, which is already on every screen, and
+    a row inside the menu that says **"Make your stamp"** and stops.
+
+    **IT CARRIED A SUPPORTING LINE TWICE AND LOST IT TWICE.** First "your mark
+    on the work you sign", which the owner cut as the wrong half of the truth
+    (2026-10-12: "pitch it as your stamp in our community"); then "It's your
+    identity here, and how the rest of the class knows you", cut the same day
+    ("just have it say make your stamp. That's it. We don't need the extra
+    words"). The row is in the account menu, under the student's own name,
+    beside a dot on their own avatar — the context already says whose stamp
+    and where it lives, and the sentence was the menu arguing with somebody
+    who had not asked a question. The TITLE was right from the first draft.
+
+    Both go the moment a stamp is issued and
+    there is nothing to dismiss, because a reminder with a Dismiss on it is
+    one you have to nag about twice. It gates nothing and counts nothing.
+  - **It waits for the profile.** `profile` is null while the row is in
+    flight, so the condition is `isSignedIn && !profileLoading &&
+    Boolean(profile) && !hasStamp` — without the middle two it flashed on
+    every page load for people who already had one, which is exactly the
+    bothering it must not do.
+  - Measured across six liveries x night and day: the row's second line is
+    `--t2` on `--raised`, worst 6.17:1 against the 4.5 floor.
 - **A stamp is permanent, and the one exception is a change that was
   GRANTED.** `pilot_profiles.stamp_redo` is a count, not a date: 0039 gave
   exactly one to every account that had already issued a stamp, and
