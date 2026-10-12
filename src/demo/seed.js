@@ -302,13 +302,12 @@ export const DEMO_RPC = {
       members: members.length, active_week: members.length, is_full: false, known_ids: [],
       already_in: members.some((m) => m.user_id === b.p_me), requested: false };
   }),
-  people_search: (s, b) => {
-    const q = String(b.p_q || "").trim().toLowerCase();
-    if (!q) return [];
-    return s.pilot_profiles
-      .filter((p) => p.user_id !== b.p_me && `${p.callsign || ""} ${p.real_name || ""}`.toLowerCase().includes(q))
-      .map((p) => ({ user_id: p.user_id, display_name: p.callsign || p.real_name, module_code: "M1", shares_squadron: false }));
-  },
+  /* `people_search` WAS HERE, and it was a second answer to a question the
+     server already answers. It existed because pgcore's was `() => []`; with
+     that implemented for real (0041) this copy could only drift — it ignored
+     blocks, ignored Fly solo, ignored 0012's identity rule and answered
+     `module_code: "M1"` for everybody. Deleted, so the demo and the harness
+     read the same rules. `people_browse` is pgcore's for the same reason. */
   seat_heartbeat: () => null,
   expire_right_seats: () => null,
   rate_limit_take: () => true,

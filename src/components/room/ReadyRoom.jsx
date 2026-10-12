@@ -23,7 +23,7 @@ import SquadronSheet from "./SquadronSheet.jsx";
 import CreateSquadron from "./CreateSquadron.jsx";
 import { Menu, Toast } from "./bits.jsx";
 import {
-  discoverSquadrons, joinSquadron, searchPeople, createSquadron, revokeInvite,
+  discoverSquadrons, joinSquadron, searchPeople, browsePeople, createSquadron, revokeInvite,
   inviteUrl, tokenFromLink,
 } from "../../lib/discovery.js";
 import {
@@ -101,6 +101,11 @@ export default function ReadyRoom({
   const [discoverFilter, setDiscoverFilter] = useState("yours");
   const [rooms, setRooms] = useState([]);
   const [foundPeople, setFoundPeople] = useState([]);
+  /* EVERY PERSON, for the search's People filter. Fetched once per visit
+     rather than per keystroke: it is a standing list, not a response to
+     typing. No names are in it — see people_browse in 0041. */
+  const [everyone, setEveryone] = useState([]);
+  const [scope, setScope] = useState("all");
   const [profileOf, setProfileOf] = useState(null);
   const [sheetOf, setSheetOf] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -388,6 +393,16 @@ export default function ReadyRoom({
     }, 180);
     return () => { live = false; clearTimeout(t); };
   }, [query, me]);
+
+  /* Fetched when the People filter is first chosen, and then kept: the list
+     is everybody, so re-asking on every keystroke would be a round trip for a
+     list that has not changed. */
+  useEffect(() => {
+    if (!me || scope !== "people" || everyone.length) return undefined;
+    let live = true;
+    browsePeople(me).then((r) => { if (live) setEveryone(r || []); });
+    return () => { live = false; };
+  }, [me, scope, everyone.length]);
 
   useEffect(() => {
     if (st.kind !== "discover" || !me) return undefined;
@@ -767,6 +782,7 @@ export default function ReadyRoom({
         <Rail me={me} onHome={onHome} query={query} onQuery={onQuery} searchRef={searchRef}
               squadrons={squadronsWithPresence} modules={modules} threads={threads} replies={replies}
               messages={messages} foundPeople={foundPeople} faces={faces}
+              everyone={everyone} scope={scope} onScope={setScope}
               cur={{ kind: st.kind, id: st.id }} who={who} onOpen={openPane}
               onSeeSeats={() => openPane({ kind: "seats" })} onFindSquadron={() => openPane({ kind: "discover" })}
               onProfile={(id, row) => setProfileOf(row

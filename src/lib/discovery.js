@@ -8,22 +8,66 @@ import { supabase } from "./supabaseClient.js";
  *
  * EVERY PEOPLE-FACING READ HERE IS AN RPC, and that is the point rather than a
  * style choice. The browser holds the anon key and every table carries
- * `using (true)`, so a scope enforced in JavaScript is not enforced: PostgREST
- * will serve pilot_profiles to anyone who asks for it. The rule that a person
- * is only findable inside the searcher's orbit lives in 0011 as a function
- * that cannot return a stranger. Adding a `.from("pilot_profiles")` query to
- * this file to "make search faster" would quietly undo it — see the header of
- * 0011, and 0009 before it, for why that is the shape.
+ * `using (true)`, so a rule enforced in JavaScript is not enforced: PostgREST
+ * will serve pilot_profiles to anyone who asks for it. Adding a
+ * `.from("pilot_profiles")` query to this file to "make search faster" would
+ * quietly undo every refusal below — see the header of 0011, and 0009 before
+ * it, for why that is the shape.
+ *
+ * WHAT THOSE REFUSALS ARE CHANGED ON 2026-10-11, and this paragraph used to
+ * name the wrong one. It said the rule was that "a person is only findable
+ * inside the searcher's orbit" — 0011's `in_my_orbit`, which 0041 WITHDREW
+ * for search after the owner looked for somebody he knew by name and by
+ * username and got nothing back. What the function still refuses, and what
+ * therefore still has to stay inside it: Fly solo, blocks both ways, 0011's
+ * `discoverable`, and 0012's rule that a real name somebody chose not to show
+ * is never matched on. Those are the reasons this is an RPC; orbit was only
+ * ever one of them.
  */
 
 const fail = (e, f) => { if (e) console.error(e); return f; };
 
-/* Search. Squadrons and threads are searchable broadly; people are not, and
-   the scoping is the server's. An empty query returns nothing rather than
-   everything — the function refuses a blank term for the same reason. */
+/* Search. A registered student is findable by the name they go by or by their
+   callsign, and the ORDER is the server's — what you typed comes first, then
+   somebody you share a squadron with (0041). The client formats and does not
+   sort, the same division as the leaderboard. An empty query returns nothing
+   rather than everything: the function refuses a blank term too. */
+/* AND IT SURVIVES THE DEPLOY BEING AHEAD OF THE DATABASE. A migration and the
+   bundle that matches it do not land together: Vercel ships on merge, and
+   0041 is run by hand afterwards. In that window this client is asking the
+   OLD function — 0032's, which returns `display_name` and has no `callsign`
+   column — so every result row would draw an undefined name, and the existing
+   search would look broken to a class while the new one was still arriving.
+
+   One line each way. `callsign` falls back to the old column, and `real_name`
+   is simply absent until the new function exists, which is the same thing it
+   is on a callsign match anyway. `people_browse` needs no equivalent: it does
+   not exist yet in that window, the RPC errors, and `fail` already answers
+   with an empty list — a new filter that is briefly empty is a far smaller
+   thing than search going blank.
+
+   Drop this once 0041 has run everywhere, and not before. */
+const compat = (r) => (r?.callsign ? r : { ...r, callsign: r?.display_name ?? null });
+
 export async function searchPeople(me, q) {
   if (!me || !q?.trim()) return [];
   const { data, error } = await supabase.rpc("people_search", { p_me: me, p_q: q });
+  if (error) return fail(error, []);
+  return (data || []).map(compat);
+}
+
+/* THE PEOPLE LIST — everyone, alphabetical by callsign (0041).
+ *
+ * NO NAMES AND NO COUNT, both by construction rather than by restraint. The
+ * function has no column for a real name, so a roster of them cannot be read
+ * off the side of the screen; and it returns rows with no total beside them,
+ * because the owner asked for a directory that does not expose how few
+ * students there might be (2026-10-11). A name arrives only when it was
+ * searched for, or when a profile is opened — see searchPeople below.
+ */
+export async function browsePeople(me, limit = 400) {
+  if (!me) return [];
+  const { data, error } = await supabase.rpc("people_browse", { p_me: me, p_limit: limit });
   if (error) return fail(error, []);
   return data || [];
 }

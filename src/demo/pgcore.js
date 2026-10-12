@@ -72,6 +72,80 @@ const isInvisible = (store, uid) =>
 const nameOf = (store, uid) =>
   store.pilot_profiles.find((p) => p.user_id === uid)?.callsign || "Someone";
 
+/* ---------------------------------------------------- 0041 · finding people
+   The pool both `people_search` and `people_browse` draw from, and the one
+   place their three refusals live — Fly solo, blocks both ways, and 0011's
+   `discoverable` — plus 0012's identity rule, which decides what a searcher
+   may see somebody as AND what they may be matched on.
+
+   `in_my_orbit` is NOT here, and that is 0041: the orbit scope is withdrawn
+   for both of these (owner, 2026-10-11). `discover_squadrons` still uses it
+   for the faces on a room's card, which is a different question. */
+function peopleOf(store, me) {
+  const blocked = (a, c) => (store.blocks || []).some((x) =>
+    (x.user_id === a && x.blocked_id === c) || (x.user_id === c && x.blocked_id === a));
+  const prefOf = (uid) => (store.user_prefs || []).find((u) => u.user_id === uid) || {};
+  const lastModule = (uid) => (store.chapter_completions || [])
+    .filter((c) => c.user_id === uid)
+    .sort((a, c) => String(c.completed_at || "").localeCompare(String(a.completed_at || "")))[0]?.module_code ?? null;
+  const sharesSquadron = (uid) => {
+    const mine = new Set((store.squadron_members || [])
+      .filter((m) => m.user_id === me).map((m) => m.squadron_id));
+    return (store.squadron_members || [])
+      .some((m) => m.user_id === uid && mine.has(m.squadron_id));
+  };
+  return (store.pilot_profiles || [])
+    /* `discoverable` is `not null default true`, so an unset key is TRUE —
+       see the note on people_search. `invisible` defaults false. A profile
+       with no callsign is not listed: the list has nothing else to draw and a
+       blank row is worse than an absent one. */
+    .filter((p) => p.user_id !== me && String(p.callsign || "").trim() !== ""
+      && p.discoverable !== false && !p.invisible && !blocked(me, p.user_id))
+    .map((p) => {
+      const byUsername = (prefOf(p.user_id).identity_display || "real") === "username";
+      return {
+        user_id: p.user_id,
+        callsign: p.callsign,
+        /* Null means "do not match on this", AND "never return this": a real
+           name somebody chose not to show must not be confirmable one
+           substring at a time. */
+        findable_name: byUsername ? null : p.real_name,
+        module_code: lastModule(p.user_id),
+        shares_squadron: sharesSquadron(p.user_id),
+      };
+    });
+}
+
+const hit = (v, term) => !!v && String(v).toLowerCase().includes(term.toLowerCase());
+/* DISCLOSURE IS STRICTER THAN MATCHING (0041). A fragment still FINDS people;
+   it does not hand back a real name unless it is three characters or more AND
+   starts one of the words of that name. A plain substring reveal gave back
+   "Kai Lindqvist" for the two letters "KA" — the start of somebody's
+   CALLSIGN — which is harvesting rather than searching. */
+const NAME_MIN = 3;
+const revealsName = (name, term) => {
+  const t = String(term).trim().toLowerCase();
+  if (!name || t.length < NAME_MIN) return false;
+  const n = String(name).toLowerCase();
+  return n.startsWith(t) || n.includes(` ${t}`);
+};
+/* What you typed first: exact, then starts-with, then merely contains. */
+const rank = (r, term) => {
+  const t = term.toLowerCase();
+  const c = String(r.callsign || "").toLowerCase();
+  const n = String(r.findable_name || "").toLowerCase();
+  if (c === t || (n && n === t)) return 0;
+  if (c.startsWith(t) || (n && n.startsWith(t))) return 1;
+  return 2;
+};
+/* `p_since` is an interval in SQL and a string over the wire. The client does
+   not pass it — the default is the server's — so this only has to understand
+   what the default looks like and fall back rather than guess. */
+const sinceMs = (v) => {
+  const m = /^\s*(\d+)\s*day/i.exec(String(v ?? ""));
+  return (m ? Number(m[1]) : 14) * 86400000;
+};
+
 /* ring_covers, as SQL has it. The fixture has no wingmen or formations, so
    anything narrower than `module` reaches only its author — which is exactly
    what makes the correction test meaningful. */
@@ -183,35 +257,46 @@ export const RPC = {
      finisher line. Yours first, then most recent, capped; `finishers` is the
      whole count, not the capped one. The same Fly solo and block rules as
      the board above. */
+  /* 0042 — ONE ROW PER ATTEMPT, and an ANSWER is what counts.
+     Two changes from 0038, both the owner's (2026-10-12): a run joins this
+     list once it has been answered OR submitted, not only when submitted;
+     and runs are no longer grouped into people, so a second attempt is a
+     second stamp. `run_id` comes back because `user_id` is no longer unique
+     here and React would silently drop the duplicate. */
+  mark_quiz_progress: (s, b) => {
+    const r = (s.quiz_runs || []).find((x) => x.id === b.p_run && x.user_id === b.p_me);
+    if (!r) return null;
+    r.answered_at = r.answered_at || new Date().toISOString();
+    return r.answered_at;
+  },
   quiz_finishers: (s, b) => {
     const blocked = (a, c) => s.blocks.some((x) =>
       (x.user_id === a && x.blocked_id === c) || (x.user_id === c && x.blocked_id === a));
     const want = new Set(b.p_quizzes || []);
-    const cap = Math.max(1, Math.min(b.p_cap || 11, 24));
-    const latest = new Map();                       // `${quiz}|${user}` -> newest finish
+    const cap = Math.max(1, Math.min(b.p_cap || 11, 400));
+    const counted = [];
     for (const r of s.quiz_runs) {
-      if (!want.has(r.quiz_id) || !r.submitted_at) continue;
+      if (!want.has(r.quiz_id)) continue;
+      if (!r.answered_at && !r.submitted_at) continue;
       if (r.user_id !== b.uid) {
         const p = s.pilot_profiles.find((x) => x.user_id === r.user_id) || {};
         if (p.invisible || blocked(b.uid, r.user_id)) continue;
       }
-      const k = `${r.quiz_id}|${r.user_id}`;
-      const had = latest.get(k);
-      if (!had || String(r.submitted_at) > String(had.submitted_at)) latest.set(k, r);
+      counted.push({ ...r, at: r.submitted_at || r.answered_at });
     }
     const out = [];
     for (const quiz of want) {
-      const people = [...latest.values()].filter((r) => r.quiz_id === quiz)
+      const people = counted.filter((r) => r.quiz_id === quiz)
         .sort((x, y) => (y.user_id === b.uid) - (x.user_id === b.uid)
-          || String(y.submitted_at).localeCompare(String(x.submitted_at))
-          || String(x.user_id).localeCompare(String(y.user_id)));
+          || String(y.at).localeCompare(String(x.at))
+          || String(x.id).localeCompare(String(y.id)));
       for (const r of people.slice(0, cap)) {
         const p = s.pilot_profiles.find((x) => x.user_id === r.user_id) || {};
         out.push({
-          quiz_id: quiz, user_id: r.user_id,
+          quiz_id: quiz, run_id: r.id, user_id: r.user_id,
           callsign: (p.callsign || "").trim() || "Someone",
           code: (p.code || "").trim() || "---",
-          finished_at: r.submitted_at, is_you: r.user_id === b.uid, finishers: people.length,
+          finished_at: r.at, is_you: r.user_id === b.uid, finishers: people.length,
           stamp_shape: p.stamp_shape ?? null, stamp_code: p.stamp_code ?? null,
           stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,
           stamp_pattern: p.stamp_pattern ?? null, stamp_pscope: p.stamp_pscope ?? null,
@@ -386,7 +471,74 @@ export const RPC = {
   claim_code: (s, b) => b.want,
   assign_squadron: () => null,
   squadron_roster: () => [],
-  people_search: () => [],
+
+  /* 0041 — A NAME FINDS ANYBODY. This was `() => []` here — the quiet kind
+     of harness lie CLAUDE.md warns about under "the harness was lying about
+     the schema", because an empty People section is also what a correct
+     no-match looks like, so every walk that typed a name passed. The demo
+     carried its OWN copy in seed.js to work around it. One implementation
+     now, here, where both read it.
+
+     A LIST SHOWS CALLSIGNS; A NAME IS SOMETHING YOU ASKED FOR (owner,
+     2026-10-12). `real_name` comes back only on the rows whose name actually
+     matched the term — search "Hamdan" and you get it, search "SRH" or scroll
+     the browse list and you do not. The client cannot leak what it was never
+     sent, which is why this is here and not in the component.
+
+     MIRRORS 0041, including the COLUMN DEFAULTS. `discoverable` is `not null
+     default true`, so a seeded row that never mentions it IS discoverable —
+     hence `!== false` rather than a truthiness test, which would have made
+     every harness profile unfindable and read exactly like the bug being
+     fixed. */
+  people_search: (s, b) => {
+    const term = String(b.p_q ?? "").trim();
+    if (!term) return [];
+    return peopleOf(s, b.p_me)
+      .filter((r) => hit(r.callsign, term) || hit(r.findable_name, term))
+      .sort((x, y) => rank(x, term) - rank(y, term)
+        || (y.shares_squadron === true) - (x.shares_squadron === true)
+        || String(x.callsign).localeCompare(String(y.callsign)))
+      .slice(0, 40)
+      .map((r) => ({
+        user_id: r.user_id,
+        callsign: r.callsign,
+        real_name: revealsName(r.findable_name, term) ? r.findable_name : null,
+        module_code: r.module_code,
+        shares_squadron: r.shares_squadron,
+      }));
+  },
+
+  /* 0041 — THE PEOPLE LIST. Everyone, alphabetical by callsign, no names and
+     no count: it returns rows and nothing else, and there is deliberately no
+     `*_count` beside it, because the moment one exists a screen prints it. */
+  people_browse: (s, b) => {
+    const since = b.p_since == null ? null : sinceMs(b.p_since);
+    const at = new Map();
+    if (since != null) {
+      const cut = Date.now() - since;
+      const mark = (uid, when) => {
+        if (!uid || !when) return;
+        const t = Date.parse(when);
+        if (!Number.isFinite(t) || t < cut) return;
+        if (!at.has(uid) || t > at.get(uid)) at.set(uid, t);
+      };
+      for (const r of s.presence || []) mark(r.user_id, r.last_seen);
+      for (const t of s.lesson_threads || []) mark(t.author_id, t.created_at);
+      for (const r of s.lesson_replies || []) mark(r.author_id, r.created_at);
+      for (const c of s.chapter_completions || []) mark(c.user_id, c.completed_at);
+      for (const r of s.quiz_runs || []) mark(r.user_id, r.submitted_at);
+    }
+    const cap = Math.max(1, Number(b.p_limit) || 400);
+    return peopleOf(s, b.p_me)
+      .filter((r) => since == null || at.has(r.user_id))
+      .sort((x, y) => String(x.callsign).toUpperCase().localeCompare(String(y.callsign).toUpperCase())
+        || String(x.user_id).localeCompare(String(y.user_id)))
+      .slice(0, cap)
+      .map((r) => ({
+        user_id: r.user_id, callsign: r.callsign,
+        module_code: r.module_code, shares_squadron: r.shares_squadron,
+      }));
+  },
 
   /* 0029 — issuing a stamp. The two rules the SQL exists for, kept: it
      refuses a second call, and the SEED IS THE SERVER'S. A harness that let

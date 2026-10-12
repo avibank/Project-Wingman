@@ -509,6 +509,43 @@ which is what the Flight Deck draws before the document arrives.
 - **Expect to reset again with every replacement.** Run the SQL, raise the
   epoch, re-make the paper, and publish — a commit alone leaves the class on
   whatever `course_docs` last served.
+- **AND RUN THE BROWSER SUITES, because `npm run check` does not.**
+  `test:exam`, `test:bm`, `test:rr`, `test:tour`, `test:cards`, `test:lesson`
+  and `test:vt` all need the harness, which is why they are out of `check` —
+  so a content replacement sails through every gate and breaks them silently.
+  `npm run test:exam` was red from 2026-10-03 and nobody knew until
+  2026-10-10, across TWO replacements: it had `M1.01` pinned, an eight-question
+  paper written down as `1/8`, `Not answered 7`, `cells.nth(7)` for "the last
+  question" and nine result cases counted out of eight, and a clock of
+  R5's `20:00`. 54 problems across its 108 states and 53 among its controls,
+  every one of them on a screen that has not changed since 2026-09-27 — and
+  the 54 were a SECOND cause: it asked for Aurora's forced night, and Aurora
+  has been unoffered since 2026-10-04, so `offeredFinish` had been quietly
+  dressing those 18 states in Standard. It runs the ask through the same
+  filter the app does now.
+  - **The fix was to ASK THE FIXTURE, not to update the numbers.** The chapter
+    is now the first one with a quiz, the paper's length is
+    `chapter.questions.length`, the pass mark is `passAt(N)`, the clock is
+    `clock(allowanceFor(N))` and every result case is a BRANCH of
+    `headline()` with its count derived — so the next replacement cannot do
+    this again. At eight questions the derived table is the old hardcoded one
+    to the digit, which is how the generalisation was checked.
+  - **THREE MORE OF THEM ARE RED, each for its own reason**, which is the
+    point: these go one at a time and quietly, and on 2026-10-11 every browser
+    suite that was looked at turned out to be failing.
+    - `test:bm` — its seed asserts 15 rows and the replaced content builds 13,
+      so it throws before its first assertion.
+    - `test:rr` — lays out all 168 states cleanly, then fails two controls
+      ("dragging the splitter sets the feed width", "+ offers Photo, File and
+      Paper passage") and crashes on a click the `.rr-dscroll` overlay
+      intercepts.
+    - `test:vt` — walks as far as "Room → Deck" and then times out waiting for
+      `.chead`.
+    The last two were confirmed PRE-EXISTING by running them in a clean
+    worktree at the same commit (`git worktree add --detach`, its own harness
+    on its own port). That is the only way to tell "I broke it" from "it was
+    already broken", and it is worth the five minutes every time — the
+    alternative is reading somebody else's rot as your own regression.
 
 `check:placeholders` / `check:ship` grep the build for the markers of the old
 placeholder set; nothing carries them and both pass unchanged.
@@ -634,6 +671,37 @@ merge them back together.
     forbids naming an absence, which is what the brief's own words did.
   - A person with no stamp yet draws the **un-inked outline**, the licence's
     own "not yet" mark (owner, on the brief's open question 1).
+  - **ONE ANSWER IS WHAT STAMPS YOU, NOT A HAND-IN** (owner, 2026-10-12;
+    migration 0042, **not yet run**). A run joins the quiz's stamps once it
+    has been ANSWERED or submitted — `quiz_runs.answered_at`, written by
+    `mark_quiz_progress` on the first answer of a sitting. Measured in a
+    browser: opened with no answer gives 0 stamps, one answer gives 1, and
+    leaving by "Leave it for now" keeps it.
+    - **OPENING WAS ASKED FOR FIRST AND ARGUED DOWN.** The row already exists
+      on open (`start_quiz_run` fires from an effect), so reading it would
+      have been a one-line change — it is not the rule because opening is
+      free and repeatable, because the screen it sits on marks nothing before
+      hand-in, and because "Leave it for now" exists so a mis-tap costs
+      nothing. One answer cannot be reached by accident and is reached long
+      before a hand-in, which is the liveness that was actually wanted.
+    - **THE CONDITION WAS THAT LEAVING KEEPS YOUR PLACE, and it already did** —
+      measured before 0042 was written: answer two, step to the third, leave,
+      come back to question 3 with 2 of 40 answered and the clock 0 seconds
+      further on. **The limit, stated rather than discovered: the attempt is
+      localStorage only (`wingman.attempt.<quizId>`), so resume is PER
+      DEVICE.** Leave on a phone, open on a laptop, and you get a fresh paper;
+      the stamp is then the only trace of the first sitting.
+  - **A REPEAT IS A SECOND STAMP NOW**, and the old rule is withdrawn (owner:
+    "if I attempt it twice, I get stamped"). It was one stamp per person on
+    their best run, with a repeat keeping an empty slot and the word "again".
+    `quiz_finishers` returns one row per RUN rather than per person, the
+    render-time de-duplication in `Leaderboard.jsx` is gone, and `run_id` is
+    returned because `user_id` is no longer unique in that list — React would
+    have dropped the duplicate silently, which would have looked exactly like
+    the de-duplication being removed. **The cost is stated rather than
+    hidden**: twelve runs from nine people now read as twelve stamps, which is
+    what the old rule existed to prevent. A better treatment for a repeat is
+    wanted later and belongs in `Leaderboard.jsx`.
   - **The pack's row is a `<li>` of spans, so a board row has no door on it**
     any more; the pilot sheet is still reached from Crew, the Ready Room and a
     lesson. One button on a row would put it back.
@@ -671,7 +739,10 @@ merge them back together.
   reading "about 50 minutes" for every quiz would say nothing. **The number
   lives in TWO places now and they have to move together**: `quiz.js` and
   `check:exam`. It was three: `steps.js` said it out loud to a visitor, and
-  that file went with the tour rebuild on 2026-10-06. The approved tour's
+  that file went with the tour rebuild on 2026-10-06. It was briefly FOUR —
+  `test:exam` asserted R5's `20:00` and went red unnoticed through both of
+  the clock's changes; it asks `clock(allowanceFor(N))` now, so it tracks
+  this number rather than restating it. The approved tour's
   script does not state the clock anywhere, so a visitor is no longer told
   the figure before they meet it — which is the handoff's wording and not an
   oversight here. If it should be said again it belongs in `tourSteps.js`,
@@ -741,6 +812,46 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
+
+**0041, a name finds anybody, HAS NOT BEEN RUN** (written 2026-10-11). It is
+the only migration in this file that says so, and it says so because this
+session had neither credentials nor a local Postgres: `people_search` is
+replaced and `people_browse` is added, and **both are still only text until
+somebody runs them**. Until then the live search behaves as 0032 left it.
+Run it, then verify by connecting the way every entry below was — and change
+this paragraph rather than adding to it.
+
+What it does: the ORBIT SCOPE IS WITHDRAWN FOR SEARCH. 0011 built
+`people_search` so it "cannot return a stranger", through `in_my_orbit` —
+shares a squadron, or has posted in one of your modules. The owner searched
+for somebody he knew by name and by username and got nothing (2026-10-11:
+"disregard anything we decided earlier ... if it is registered on a server, it
+will show their name"), and on a class this size that function was mostly
+answering "is this person already in a room with me". The matching was never
+the problem; 0012 already matched callsign and real name both.
+`in_my_orbit` itself stays — `discover_squadrons` still uses it, which is a
+different question.
+
+**WHAT 0041 KEEPS IS AS MUCH OF THE POINT AS WHAT IT DROPS.** Fly solo, blocks
+both ways, `discoverable`, and 0012's rule that a real name its owner chose not
+to show is never matched on — that last one does not hide anybody, because
+their callsign still finds them; what it refuses is confirming a hidden name
+one substring at a time. You also never find yourself, which orbit used to do
+incidentally and is now explicit.
+
+**AND `people_browse`, WHICH RETURNS ROWS AND NO NUMBER.** The owner asked
+for "some sort of glossary that shows active users in a way that doesn't
+expose if we have small users", and then for where it lives: "if you select
+people, it shows every current person". So it is EVERYBODY, alphabetical by
+callsign, and there is no count to print — no total, no headcount, and
+deliberately **no `count(*)` companion**, because the moment one exists a
+screen will use it.
+
+It was `active_students` and a fortnight's activity in the first draft. The
+window survives as `p_since`, null by default, for a class big enough to want
+one; "every current person" is what was asked for. Activity is still read
+across five signals (seen, asked, answered, finished a chapter, sat a paper)
+rather than from presence alone, so a window means what it says.
 
 **0040, the course in a table, has been run against the live project**
 (2026-09-30), verified by connecting: `course_docs` with one SELECT policy
@@ -970,6 +1081,73 @@ reader does can damage the paper. Module 1 only for now, behind
   adds it to Module 1 under `import.meta.env.DEV` only.
 
 ## The Ready Room
+
+### Finding people, and the circuit
+
+- **A NAME OR A CALLSIGN FINDS ANYONE STUDYING HERE** (owner, 2026-10-11;
+  migration 0041, which is **not yet run** — see Migrations). The order is the
+  server's and is a suggestion list's: exact, then starts-with, then contains,
+  then a squadron-mate ahead of a stranger, then alphabetical. The client
+  formats and never sorts, the same division as the leaderboard.
+  - **The copy moved with the rule.** Discover's last line used to tell a
+    student "a name only finds someone you already share a squadron with"; it
+    said the orbit rule out loud and would have been a lie the moment 0041
+    ran. The rail's second line under a found person had the same problem — it
+    fell back to "In your modules", which was a safe guess only while orbit
+    guaranteed it, and was labelling strangers as classmates. It says what it
+    knows and otherwise says nothing (`personLine` in Rail.jsx).
+- **THE DIRECTORY IS A FILTER ON THE SEARCH, not a section of its own**
+  (owner, 2026-10-12: "we move it to the search bar ... if you select people,
+  it shows every current person"). The rail's search carries All · People ·
+  Squadrons · Questions; People replaces the rail with the whole class, A–Z,
+  whether or not anything is typed. It was a short list pinned to the foot of
+  the rail, capped at eight, whose "see who else" went to the SQUADRON finder
+  — a door that did not go where it said.
+- **THE LIST IS CALLSIGNS. A NAME IS SOMETHING YOU ASKED FOR.** This is a
+  privacy rule, so it lives in the SQL and not in the component: `people_browse`
+  has no column for a real name, and `people_search` returns one only on the
+  rows whose name matched. A roster of real names cannot be read off the side
+  of the screen, and the client cannot leak what it was never sent. The third
+  way to a name is opening the profile, which is a deliberate press on one
+  person.
+  - **DISCLOSURE IS STRICTER THAN MATCHING, and the gap is the whole rule.**
+    Matching stays a loose substring so any fragment still FINDS people;
+    disclosure needs three characters or more that START a word of the name.
+    Written as a plain substring it handed back "Kai Lindqvist" for the two
+    letters "KA" — somebody typing the start of a CALLSIGN was given a real
+    name — and one letter would have harvested the class. Measured on the
+    fixture, not reasoned about.
+  - Ordered by callsign, and grouped by its first character; anything not A–Z
+    lands under "#", which sorts last. `byLetter` in `roomModel.js` rather
+    than in `discovery.js`, because discovery.js imports the Supabase client
+    and so cannot be imported by a node check — the same split `quiz.js` and
+    `cardSession.js` already make.
+- **AND NOTHING IN IT IS COUNTED**, which was the owner's first requirement
+  for this screen and still holds. No headcount, no "+4", no "of", and
+  deliberately no `count(*)` companion in the SQL, because the moment one
+  exists a screen prints it.
+- **`pgcore.js` ANSWERS BOTH FOR REAL NOW.** `people_search` was `() => []`
+  there — the quiet kind of harness lie, because an empty People section is
+  also what a correct no-match looks like, so every walk that typed a name
+  passed. The demo had its own copy in `seed.js` to work around it, ignoring
+  blocks, Fly solo and the identity rule. One implementation, in pgcore, which
+  CLAUDE.md already says is "the PostgREST emulation both use".
+  - The harness's room seed had **no `pilot_profiles` at all**, which is why
+    nobody noticed: there was nobody to find either way. It seeds a class now,
+    including the three who must never be found (Fly solo, blocked, and a
+    hidden real name) — and NOT Alex, Dana or Haddad, who `fixture.js` already
+    defines. Posting those three again appended a second row each, because
+    pgcore does not enforce a primary key, and the directory listed "Dana" and
+    "Dana Okafor" as two people. Measured on the way in.
+- **`npm run check:people` is 40 assertions and IS in `npm run check`**,
+  because it needs no browser and no credentials. That is deliberate: the
+  three suites that would otherwise have caught a search returning nothing —
+  `test:rr`, `test:bm`, `test:exam` — are all outside the gate and all three
+  were found red on 2026-10-10. It drives pgcore's RPCs for real and holds the
+  no-count rule by reading the rail's own source. Proved by planting its bugs:
+  the orbit rule back, the hidden name made matchable, a count rendered in the
+  section, and `more` turned into a number.
+
 
 Rebuilt on 2026-09-15 from a signed-off design (a port brief and a static
 demo, handed over outside the repo). Squadrons are group chats, modules are
@@ -1369,6 +1547,45 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   places and they have to agree: the CHECK `pilot_code_shape`, `claim_code`,
   both arities of `issue_licence`, and `src/lib/code.js` — a client that let
   somebody type a code the database refuses is the worse half of the bug.
+- **A STAMP IS OPTIONAL, AND THE APP NOW SAYS SO QUIETLY UNTIL THERE IS ONE**
+  (owner, 2026-10-12). A student is taken to the creator once, when
+  FirstFlightGate makes their profile, and can close it — so an account can go
+  on indefinitely with no stamp, and every surface that would carry their mark
+  draws the faint house seal instead. The owner found one that way, on a quiz
+  her class had sat: "I can see her profile, it doesn't have a stamp."
+  - **NOTHING WAS BROKEN, and the first job was proving that.** `quiz_finishers`
+    (0038) and `quiz_leaderboard` (0036) both return `stamp_issued_at` and the
+    stamp columns, `stampOf` answers null only when `stamp_issued_at` is
+    missing, and CrewStrip and Leaderboard both pass
+    `on={Boolean(...stamp_issued_at)}` so a stampless person is drawn faint on
+    purpose. **The catch is that a missing stamp and a missing JOIN render
+    identically** — same faint seal — so the screen cannot tell you which it
+    is, and neither could I without the data. Worth remembering before reading
+    the next blank one as a bug.
+  - **The reminder is a dot and a row, and nothing else.** `ProfileMenu.jsx`:
+    a 9px `--active` dot on the avatar, which is already on every screen, and
+    a row inside the menu that says **"Make your stamp"** and stops.
+
+    **IT CARRIED A SUPPORTING LINE TWICE AND LOST IT TWICE.** First "your mark
+    on the work you sign", which the owner cut as the wrong half of the truth
+    (2026-10-12: "pitch it as your stamp in our community"); then "It's your
+    identity here, and how the rest of the class knows you", cut the same day
+    ("just have it say make your stamp. That's it. We don't need the extra
+    words"). The row is in the account menu, under the student's own name,
+    beside a dot on their own avatar — the context already says whose stamp
+    and where it lives, and the sentence was the menu arguing with somebody
+    who had not asked a question. The TITLE was right from the first draft.
+
+    Both go the moment a stamp is issued and
+    there is nothing to dismiss, because a reminder with a Dismiss on it is
+    one you have to nag about twice. It gates nothing and counts nothing.
+  - **It waits for the profile.** `profile` is null while the row is in
+    flight, so the condition is `isSignedIn && !profileLoading &&
+    Boolean(profile) && !hasStamp` — without the middle two it flashed on
+    every page load for people who already had one, which is exactly the
+    bothering it must not do.
+  - Measured across six liveries x night and day: the row's second line is
+    `--t2` on `--raised`, worst 6.17:1 against the 4.5 floor.
 - **A stamp is permanent, and the one exception is a change that was
   GRANTED.** `pilot_profiles.stamp_redo` is a count, not a date: 0039 gave
   exactly one to every account that had already issued a stamp, and
