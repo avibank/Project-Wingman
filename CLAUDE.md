@@ -716,6 +716,42 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
 
+**0041, a name finds anybody, HAS NOT BEEN RUN** (written 2026-10-11). It is
+the only migration in this file that says so, and it says so because this
+session had neither credentials nor a local Postgres: `people_search` is
+replaced and `active_students` is added, and **both are still only text until
+somebody runs them**. Until then the live search behaves as 0032 left it.
+Run it, then verify by connecting the way every entry below was — and change
+this paragraph rather than adding to it.
+
+What it does: the ORBIT SCOPE IS WITHDRAWN FOR SEARCH. 0011 built
+`people_search` so it "cannot return a stranger", through `in_my_orbit` —
+shares a squadron, or has posted in one of your modules. The owner searched
+for somebody he knew by name and by username and got nothing (2026-10-11:
+"disregard anything we decided earlier ... if it is registered on a server, it
+will show their name"), and on a class this size that function was mostly
+answering "is this person already in a room with me". The matching was never
+the problem; 0012 already matched callsign and real name both.
+`in_my_orbit` itself stays — `discover_squadrons` still uses it, which is a
+different question.
+
+**WHAT 0041 KEEPS IS AS MUCH OF THE POINT AS WHAT IT DROPS.** Fly solo, blocks
+both ways, `discoverable`, and 0012's rule that a real name its owner chose not
+to show is never matched on — that last one does not hide anybody, because
+their callsign still finds them; what it refuses is confirming a hidden name
+one substring at a time. You also never find yourself, which orbit used to do
+incidentally and is now explicit.
+
+**AND `active_students`, WHICH RETURNS ROWS AND NO NUMBER.** The owner asked
+for "some sort of glossary that shows active users in a way that doesn't
+expose if we have small users". So there is no count to print: no total, no
+headcount, and deliberately **no `count(*)` companion**, because the moment
+one exists a screen will use it. A caller that needs to know whether there are
+more than it draws asks for one row more and looks — "at least one more" is
+not a population. Active means DID something inside a fortnight, across five
+signals (seen, asked, answered, finished a chapter, sat a paper), so it is not
+secretly "who has a presence row".
+
 **0040, the course in a table, has been run against the live project**
 (2026-09-30), verified by connecting: `course_docs` with one SELECT policy
 and no write policies, `course_keys` with none at all, and
@@ -944,6 +980,73 @@ reader does can damage the paper. Module 1 only for now, behind
   adds it to Module 1 under `import.meta.env.DEV` only.
 
 ## The Ready Room
+
+### Finding people, and the circuit
+
+- **A NAME OR A CALLSIGN FINDS ANYONE STUDYING HERE** (owner, 2026-10-11;
+  migration 0041, which is **not yet run** — see Migrations). The order is the
+  server's and is a suggestion list's: exact, then starts-with, then contains,
+  then a squadron-mate ahead of a stranger, then alphabetical. The client
+  formats and never sorts, the same division as the leaderboard.
+  - **The copy moved with the rule.** Discover's last line used to tell a
+    student "a name only finds someone you already share a squadron with"; it
+    said the orbit rule out loud and would have been a lie the moment 0041
+    ran. The rail's second line under a found person had the same problem — it
+    fell back to "In your modules", which was a safe guess only while orbit
+    guaranteed it, and was labelling strangers as classmates. It says what it
+    knows and otherwise says nothing (`personLine` in Rail.jsx).
+- **THE DIRECTORY IS A FILTER ON THE SEARCH, not a section of its own**
+  (owner, 2026-10-12: "we move it to the search bar ... if you select people,
+  it shows every current person"). The rail's search carries All · People ·
+  Squadrons · Questions; People replaces the rail with the whole class, A–Z,
+  whether or not anything is typed. It was a short list pinned to the foot of
+  the rail, capped at eight, whose "see who else" went to the SQUADRON finder
+  — a door that did not go where it said.
+- **THE LIST IS CALLSIGNS. A NAME IS SOMETHING YOU ASKED FOR.** This is a
+  privacy rule, so it lives in the SQL and not in the component: `people_browse`
+  has no column for a real name, and `people_search` returns one only on the
+  rows whose name matched. A roster of real names cannot be read off the side
+  of the screen, and the client cannot leak what it was never sent. The third
+  way to a name is opening the profile, which is a deliberate press on one
+  person.
+  - **DISCLOSURE IS STRICTER THAN MATCHING, and the gap is the whole rule.**
+    Matching stays a loose substring so any fragment still FINDS people;
+    disclosure needs three characters or more that START a word of the name.
+    Written as a plain substring it handed back "Kai Lindqvist" for the two
+    letters "KA" — somebody typing the start of a CALLSIGN was given a real
+    name — and one letter would have harvested the class. Measured on the
+    fixture, not reasoned about.
+  - Ordered by callsign, and grouped by its first character; anything not A–Z
+    lands under "#", which sorts last. `byLetter` in `roomModel.js` rather
+    than in `discovery.js`, because discovery.js imports the Supabase client
+    and so cannot be imported by a node check — the same split `quiz.js` and
+    `cardSession.js` already make.
+- **AND NOTHING IN IT IS COUNTED**, which was the owner's first requirement
+  for this screen and still holds. No headcount, no "+4", no "of", and
+  deliberately no `count(*)` companion in the SQL, because the moment one
+  exists a screen prints it.
+- **`pgcore.js` ANSWERS BOTH FOR REAL NOW.** `people_search` was `() => []`
+  there — the quiet kind of harness lie, because an empty People section is
+  also what a correct no-match looks like, so every walk that typed a name
+  passed. The demo had its own copy in `seed.js` to work around it, ignoring
+  blocks, Fly solo and the identity rule. One implementation, in pgcore, which
+  CLAUDE.md already says is "the PostgREST emulation both use".
+  - The harness's room seed had **no `pilot_profiles` at all**, which is why
+    nobody noticed: there was nobody to find either way. It seeds a class now,
+    including the three who must never be found (Fly solo, blocked, and a
+    hidden real name) — and NOT Alex, Dana or Haddad, who `fixture.js` already
+    defines. Posting those three again appended a second row each, because
+    pgcore does not enforce a primary key, and the directory listed "Dana" and
+    "Dana Okafor" as two people. Measured on the way in.
+- **`npm run check:people` is 40 assertions and IS in `npm run check`**,
+  because it needs no browser and no credentials. That is deliberate: the
+  three suites that would otherwise have caught a search returning nothing —
+  `test:rr`, `test:bm`, `test:exam` — are all outside the gate and all three
+  were found red on 2026-10-10. It drives pgcore's RPCs for real and holds the
+  no-count rule by reading the rail's own source. Proved by planting its bugs:
+  the orbit rule back, the hidden name made matchable, a count rendered in the
+  section, and `more` turned into a number.
+
 
 Rebuilt on 2026-09-15 from a signed-off design (a port brief and a static
 demo, handed over outside the repo). Squadrons are group chats, modules are

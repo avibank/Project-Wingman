@@ -20,9 +20,15 @@ import { activityLine, headcountLine, inviteUrl } from "../../lib/discovery.js";
  *
  * WHAT WENT: the lede paragraph explaining the product's philosophy, and the
  * note explaining to the reader how other people behave. Both were true and
- * neither belonged on a screen whose job is to list rooms. The one rule worth
- * stating — that people are only findable inside your own orbit — is said once
- * here, at the bottom, instead of under every successful search.
+ * neither belonged on a screen whose job is to list rooms.
+ *
+ * THE LINE AT THE BOTTOM USED TO STATE THE ORBIT RULE — "a name only finds
+ * someone you already share a squadron with, or who has answered in a module
+ * you study". 0041 withdrew that rule (owner, 2026-10-11), so the sentence
+ * stopped being true and had to move with it: a name or a callsign finds
+ * anyone studying here. The line stays because what a link does INSTEAD is
+ * still worth saying on a screen about joining rooms — it carries you into
+ * this squadron, which a search never will.
  */
 const FILTERS = [
   { id: "yours", label: "Your modules" },
@@ -159,8 +165,8 @@ export default function Discover({
 
           <p className="scope">
             <Link2 aria-hidden="true" />
-            A name only finds someone you already share a squadron with, or who has
-            answered in a module you study. A link reaches anyone.
+            A name or a callsign finds anyone studying here. A link brings someone
+            straight into this squadron.
           </p>
         </div>
       </div>

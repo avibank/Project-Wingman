@@ -32,6 +32,46 @@ export async function seedRoom(BASE = process.env.HARNESS || "http://127.0.0.1:5
   
   await fetch(`${BASE}/harness/reset`, { method: "POST" }).catch(() => {});
   
+  /* THE CLASS, because the rail now has a people directory and a search that
+     finds anybody (0041) — and because WITHOUT pilot_profiles both of those
+     are correctly empty, which is indistinguishable from both being broken.
+     That is how `people_search: () => []` in pgcore went unnoticed: there was
+     nobody to find either way.
+
+     Six of these eight exist to be found. The last two exist to prove the
+     refusals that 0041 KEPT, and they must never appear in either list:
+       Quinn    Fly solo — `invisible`, so "I am not here" means it
+       Morgan   blocked, both ways being symmetric
+     and one more carries the identity rule:
+       Priya    goes by callsign (`identity_display: 'username'`), so
+                "Patel" must not match her while "ARC" does. */
+  /* ALEX, DANA AND HADDAD ARE NOT HERE: tests/harness/fixture.js already
+     defines those three and `/harness/reset` above puts them back. Posting
+     them again appended a SECOND row each — pgcore stores what it is given
+     and does not enforce a primary key — so the directory listed "Dana" and
+     "Dana Okafor" as two people. Measured, not guessed.
+
+     They also keep their fixture callsigns and no `real_name`, so every
+     other suite that reads "Dana" still reads "Dana". Finding somebody by
+     their REAL name is demonstrated by the six below, who have both. */
+  await post("pilot_profiles", [
+    /* Strangers: no squadron with Alex, nothing posted in Alex's modules.
+       Before 0041 none of these four could be found by any spelling of
+       their own name. */
+    { user_id: "student_three", callsign: "RVN", real_name: "Rowan Vance",  discoverable: true, invisible: false, is_staff: false, created_at: iso(24, 9, 0) },
+    { user_id: "student_four",  callsign: "KAI", real_name: "Kai Lindqvist", discoverable: true, invisible: false, is_staff: false, created_at: iso(22, 9, 0) },
+    { user_id: "student_five",  callsign: "ARC", real_name: "Priya Patel",   discoverable: true, invisible: false, is_staff: false, created_at: iso(20, 9, 0) },
+    { user_id: "student_six",   callsign: "TOL", real_name: "Tomas Oliveira", discoverable: true, invisible: false, is_staff: false, created_at: iso(18, 9, 0) },
+    { user_id: "student_solo",  callsign: "QNN", real_name: "Quinn Adeyemi",  discoverable: true, invisible: true,  is_staff: false, created_at: iso(16, 9, 0) },
+    { user_id: "student_block", callsign: "MGN", real_name: "Morgan Reyes",   discoverable: true, invisible: false, is_staff: false, created_at: iso(14, 9, 0) },
+  ]);
+  await post("user_prefs", [
+    { user_id: "student_five", identity_display: "username" },
+  ]);
+  await post("blocks", [
+    { user_id: ME, blocked_id: "student_block", created_at: iso(10, 9, 0) },
+  ]);
+
   await post("squadrons", [
     { id: JT, module_code: "M1", name: "JT Squadron", blurb: "Module 1, evenings", status: "active", owner_id: DANA,
       join_policy: "invite_only", invite_token: "jtsq1234", member_cap: 32, created_at: iso(8, 10, 0) },
@@ -111,7 +151,27 @@ export async function seedRoom(BASE = process.env.HARNESS || "http://127.0.0.1:5
     { session_id: "cccccccc-0000-4000-8000-000000000001", user_id: DANA, display_name: "Dana", joined_at: iso(1, 19, 0), left_at: iso(1, 20, 0) },
   ]);
   await post("presence", [{ user_id: DANA, last_seen: new Date().toISOString(), module_code: "M1", lesson_id: null }]);
-  return "seeded: 2 squadrons, 10 messages, 5 receipts, 4 questions, 6 replies, votes, a flight, presence";
+
+  /* WHAT PUTS SOMEBODY IN THE CIRCUIT — any one of the five signals inside the
+     window. Spread across three of them on purpose, so the list is not
+     secretly "who has a presence row": Rowan was seen, Kai and Tomas finished
+     a chapter, Priya sat a paper. Quinn and Morgan are active too, and are
+     still refused — a directory that leaked them would be the bug. */
+  await post("presence", [
+    { user_id: "student_three", last_seen: iso(0, 11, 30), module_code: "M1", lesson_id: null },
+    { user_id: "student_solo",  last_seen: iso(0, 11, 31), module_code: "M1", lesson_id: null },
+    { user_id: "student_block", last_seen: iso(0, 11, 32), module_code: "M1", lesson_id: null },
+  ]);
+  await post("chapter_completions", [
+    { user_id: "student_four", module_code: "M1", chapter_id: "M1.T1", completed_at: iso(1, 17, 0) },
+    { user_id: "student_six",  module_code: "M2", chapter_id: "M2.T1", completed_at: iso(4, 14, 0) },
+    { user_id: DANA,           module_code: "M1", chapter_id: "M1.T2", completed_at: iso(2, 19, 0) },
+  ]);
+  await post("quiz_runs", [
+    { user_id: "student_five", module_code: "M1", chapter_id: "M1.T1", quiz_id: "M1.T1.QZ",
+      total: 40, score: 31, started_at: iso(3, 20, 0), submitted_at: iso(3, 20, 41) },
+  ]);
+  return "seeded: 9 pilots, 2 squadrons, 10 messages, 5 receipts, 4 questions, 6 replies, votes, a flight, presence, the circuit";
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
