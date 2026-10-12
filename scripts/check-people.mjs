@@ -203,5 +203,19 @@ ok("count", "there is no count RPC beside it for a screen to reach for",
     block.length > 200 && counted.length === 0, counted.join(" "));
 }
 
+/* -------------------------------------- 8 · the window between deploy and migration
+   The bundle ships on merge and 0041 is run by hand afterwards, so for a
+   while this client asks 0032's function, which returns `display_name` and
+   no `callsign`. Without the fallback every result row draws an undefined
+   name and the existing search looks broken to a class. */
+console.log("\nwhile the deploy is ahead of the database");
+{
+  const src = readFileSync(new URL("../src/lib/discovery.js", import.meta.url), "utf8");
+  ok("compat", "a row from the OLD function still has a callsign to draw",
+    /callsign:\s*r\?\.display_name/.test(src) && /\.map\(compat\)/.test(src));
+  ok("compat", "and the browse list fails to an empty one rather than throwing",
+    /people_browse[\s\S]{0,200}fail\(error, \[\]\)/.test(src));
+}
+
 console.log(`\npeople: ${pass} passed, ${fails.length} failed`);
 if (fails.length) { for (const f of fails) console.log(`  - ${f}`); process.exit(1); }
