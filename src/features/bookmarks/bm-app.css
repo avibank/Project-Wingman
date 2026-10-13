@@ -130,7 +130,15 @@
 .app .bm .bm-o .bm-w,
 .app .bm .bm-face .bm-answer,
 .app .bm .bm-ans.is-right b,
-.app .bm .bm-ans.is-right .bm-res{ color: var(--bm-accent-text); }
+.app .bm .bm-ans.is-right .bm-res,
+/* AND THE EMPTY FOLDER'S OWN CALL TO ACTION, which is the one that got away.
+   `.bm-eg-cta` ("Find a lesson", "Open a paper") is drawn only when a folder
+   has nothing in it, and until the course lost its video lessons every folder
+   the walk seeded was full — so this pair was never on screen to be measured.
+   It takes the design's `--bm-accent` in bookmarks.css, which is the accent as
+   a MARK: 3.96:1 in Day, the same number this repo already records for the
+   module picker's own name. Words take --active-text. */
+.app .bm .bm-eg-cta{ color: var(--bm-accent-text); }
 /* And fills take the fill step. */
 .app .bm .bm-btn.is-primary,
 .app .bm .bm-fplay{ background: var(--bm-fill); }

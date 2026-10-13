@@ -786,7 +786,13 @@ export default function ReadyRoom({
               cur={{ kind: st.kind, id: st.id }} who={who} onOpen={openPane}
               onSeeSeats={() => openPane({ kind: "seats" })} onFindSquadron={() => openPane({ kind: "discover" })}
               onProfile={(id, row) => setProfileOf(row
-                ? { user_id: row.user_id, callsign: row.display_name, module_code: row.module_code, hue: hueFor(row.user_id) }
+                /* `callsign`, NOT `display_name` — 0041 renamed that column and this
+                   line was not changed with it, so every profile opened from the
+                   People list or a search result arrived with no name and
+                   PilotSheet drew its "This pilot" fallback. The real name is not
+                   passed and does not need to be: the sheet fetches the licence
+                   card itself, which is the deliberate third way to a name. */
+                ? { user_id: row.user_id, callsign: row.callsign, module_code: row.module_code, hue: hueFor(row.user_id) }
                 : personOf(id))} />
 
         <main className="rr-pane" aria-label="Conversation">
