@@ -227,13 +227,6 @@ for (const f of numbered) {
     const pub = ln.match(/^alter publication\s+\S+\s+add table\s+([\w.]+)/i);
     if (pub) hazards.push(`${at} publication add ${pub[1]} (needs a duplicate_object guard)`);
 
-    const con = ln.match(/^alter table\s+(?:only\s+)?[\w.]+\s+add constraint\s+(\w+)/i);
-    if (con) {
-      const byName = new RegExp(`drop constraint if exists\\s+${con[1]}\\b`, "i").test(before);
-      const dynamic = /drop constraint/i.test(near) && /pg_constraint|execute format/i.test(near);
-      if (!byName && !dynamic) hazards.push(`${at} add constraint ${con[1]} (not dropped first)`);
-    }
-
     if (/^insert into\s/i.test(ln)) {
       const stmt = txt.slice(txt.indexOf(ln), txt.indexOf(ln) + 1500).split(";")[0];
       if (!/on conflict|where not exists/i.test(stmt))
@@ -241,13 +234,72 @@ for (const f of numbered) {
     }
   });
 }
+/* ADD CONSTRAINT, SCANNED WITHOUT REGARD TO INDENTATION. Guarding a statement
+   wraps it in a do-block and indents it, so a scan that required column 0
+   stopped seeing the four that were guarded — which would have been a gate
+   quietly loosening itself. `add constraint` is only ever DDL, so matching it
+   anywhere in the file is safe.
+
+   TWO RULES. Every one must be dropped first, by name or by 0017's loop over
+   pg_constraint. And every one a LATER migration re-adds must tolerate
+   check_violation: adding a constraint VALIDATES the existing rows, so
+   replaying 0035's three-character code over data that satisfies 0039's
+   one-to-three cannot work (23514, the fifth thing that stopped the preview).
+   On a fresh database there are no rows to violate, so nothing is skipped and
+   the behaviour is unchanged. */
+const cons = [];
+for (const f of numbered) {
+  const txt = readFileSync(`${dir}/${f}`, "utf8");
+  const re = /alter table\s+(?:only\s+)?[\w.]+\s*\n?\s*add constraint\s+(\w+)/gi;
+  let m;
+  while ((m = re.exec(txt))) {
+    const name = m[1];
+    const before = txt.slice(0, m.index);
+    const near = before.slice(-900);
+    const after = txt.slice(m.index, m.index + 1400);
+    /* FOUR WAYS TO SURVIVE ALREADY EXISTING, and the series uses all four.
+       Two of them were missed by earlier drafts of this check, which between
+       them accused twenty-eight correct statements: the
+       `if not exists (… pg_constraint … conname)` test, which is the
+       commonest, and the do-block that swallows duplicate_object. A check that
+       cries wolf about correct code is worse than no check, so each idiom was
+       added only after reading the statements it was accusing. */
+    const skipsIfPresent = new RegExp(
+      `if not exists\\s*\\([\\s\\S]{0,200}?pg_constraint[\\s\\S]{0,200}?${name}`, "i").test(near);
+    const droppedByName = new RegExp(`drop constraint if exists\\s+${name}\\b`, "i").test(before);
+    const droppedDynamically = /drop constraint/i.test(near) && /pg_constraint|execute format/i.test(near);
+    const tolerateDuplicate = /exception when duplicate_object/i.test(after.slice(0, 500));
+    cons.push({
+      f, name, line: before.split("\n").length,
+      safe: skipsIfPresent || droppedByName || droppedDynamically || tolerateDuplicate,
+      /* IT ONLY RE-VALIDATES IF IT ACTUALLY RUNS AGAIN. A statement skipped
+         because the constraint is already there — whether by the `if not
+         exists` test or by swallowing duplicate_object — never looks at the
+         rows. One that DROPS and re-adds looks at all of them, and that is the
+         only shape that can raise 23514 on a replay. */
+      revalidates: !skipsIfPresent && !tolerateDuplicate
+        && (droppedByName || droppedDynamically),
+      tolerates: /exception when check_violation/i.test(after.slice(0, 500)),
+    });
+  }
+}
+const bare = cons.filter((c) => !c.safe).map((c) => `${c.f}:${c.line} ${c.name}`);
+const lastOf = new Map();
+for (const c of cons) lastOf.set(c.name, c);
+const needTolerance = cons
+  .filter((c) => lastOf.get(c.name) !== c && c.revalidates && !c.tolerates)
+  .map((c) => `${c.f}:${c.line} ${c.name} (superseded by ${lastOf.get(c.name).f})`);
+
+console.log("\nconstraints the series adds and re-adds");
+ok(`${cons.length} add-constraint statements, none fails if it is already there`,
+  bare.length === 0, bare.join("; "));
+ok(`${cons.filter((c) => c.revalidates).length} of them re-validate the rows; every superseded one tolerates that`,
+  needTolerance.length === 0, needTolerance.join("; "));
+
 console.log("\nand the other ways a replay can die");
 ok("no `alter publication … add table` is unguarded",
   !hazards.some((h) => h.includes("publication")),
   hazards.filter((h) => h.includes("publication")).join("; "));
-ok("every `add constraint` is dropped first",
-  !hazards.some((h) => h.includes("add constraint")),
-  hazards.filter((h) => h.includes("add constraint")).join("; "));
 ok("every `insert` tolerates the row already being there",
   !hazards.some((h) => h.includes("insert")),
   hazards.filter((h) => h.includes("insert")).join("; "));

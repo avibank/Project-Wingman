@@ -979,7 +979,35 @@ design since 2026-09-19, and only a replay ever ran it again. It excludes
 read 0031's header before touching it. Every other absence-proof in the series
 was checked and none is stale.
 
-- **ALL FOUR WERE FOUND ONE AT A TIME, each only after fixing the one in front
+**AND A FIFTH, WHICH WAS DATA RATHER THAN SCHEMA.** The run then reached 0035
+and raised
+`check constraint "pilot_code_shape" of relation "pilot_profiles" is violated by some row`.
+**Adding a constraint VALIDATES the existing rows**, and 0039 widens this one
+from exactly three characters to one-to-three — two accounts hold a shorter
+code. A narrowing cannot be replayed over data a later migration widened, so
+the superseded add is skipped when that happens and 0039 adds the correct shape
+a few files later; on a fresh database there are no rows to violate and nothing
+is skipped. Four superseded adds across 0017, 0018, 0035 and 0036 take that
+treatment, of which two were genuine hazards (0017's list is narrower than
+0020's; 0036's is WIDER than 0037's and so was always safe).
+
+- **THE FIRST DRAFT OF THAT CHECK ACCUSED TWENTY-EIGHT CORRECT STATEMENTS**, and
+  that is the part worth remembering. The series guards a constraint four
+  different ways — `drop constraint if exists`, a dynamic drop over
+  `pg_constraint`, an `if not exists (… pg_constraint … conname)` test, and a
+  do-block swallowing `duplicate_object` — and a check that knew only the first
+  called the other three broken. Each idiom was added to the check only after
+  reading the statements it was accusing. **A check that cries wolf about
+  correct code is worse than no check**, because the next person learns to
+  override it. The distinction that matters is narrow: a statement SKIPPED
+  because the constraint is already there never looks at the rows, so only the
+  drop-and-re-add shape can raise 23514 — 11 of the 41 do that.
+- **And wrapping a statement in a guard indents it, which hid it from the
+  gate.** The add-constraint scan required column 0, so guarding four
+  statements took them out of the assertion that had been watching them. It
+  scans regardless of indentation now.
+
+- **ALL FIVE WERE FOUND ONE AT A TIME, each only after fixing the one in front
   of it.** Every fix moved the failure further down the series rather than
   clearing it, which is the thing to expect of this kind of work rather than to
   be surprised by. None of the four is visible by reading any single migration:
@@ -993,7 +1021,7 @@ was checked and none is stale.
   anything, so `check:migrations` only partly reaches that last class. The
   preview run itself is the real test of the series.
 
-- **`npm run check:migrations` is 15 assertions and IS in `npm run check`**,
+- **`npm run check:migrations` is 16 assertions and IS in `npm run check`**,
   because it reads the SQL and needs no credentials. It holds all 36 policies
   and every other DDL statement, every one of the 91 overloads against the
   last definition of its own shape, that only `NNNN_`-prefixed files live in
