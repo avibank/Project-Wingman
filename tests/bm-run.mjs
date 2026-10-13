@@ -788,32 +788,27 @@ try {
     expect(`${w}: Undo puts it back`, (await page.locator(".bm-row").count()) === before);
 
     /* --- the study card pad --- */
+    /* A FRESH PAD, BECAUSE IT OPENS WHERE YOU LEFT OFF. `StudyPad` starts at
+       `firstUnseen`, and the "Test yourself" pile a few steps above marks
+       cards as seen — so the pad opened at "4 / 4" and the two assertions
+       that name a position failed. Making them flexible instead was the wrong
+       fix twice: it still left the block order-dependent, and pressing
+       ArrowLeft from the end then broke the unsave step after it. Clearing
+       the seen set makes the state deterministic, which is what these
+       assertions were always written against. */
+    await setSkin({ "pw-cards-seen": {}, "pw-cards-got": {} });
     await page.goto(`${BASE}/bookmarks/cards?uid=student_one&m=${MOD}`);
     await page.locator(".bm-pad .bm-pc").first().waitFor({ timeout: 15000 });
-    /* WHERE IT IS, NOT THAT IT IS AT THE START. This read `^1 / \d+$`, and the
-       pad does not open at card one: it resumes where the student left off,
-       and the "Test yourself" pile a few steps above this marks cards as seen.
-       Measured at "4 / 4", which is the resume working, not a bug. What is
-       worth asserting is that it says a position WITHIN the set and that the
-       set is the size of what was saved. */
     const padN = (await page.locator(".bm-pd-n").first().textContent().catch(() => "<none>")).trim();
-    const padAt = /^(\d+) \/ (\d+)$/.exec(padN);
-    expect(`${w}: the pad says where it is, within the set`,
-      Boolean(padAt) && Number(padAt[1]) >= 1 && Number(padAt[1]) <= Number(padAt[2])
-      && Number(padAt[2]) === (await page.locator(".bm-pad .bm-pc").count()), padN);
+    expect(`${w}: the pad says where it is`, /^1 \/ \d+$/.test(padN), padN);
     await page.locator(".bm-pad").focus();
     await page.keyboard.press("Space");
     await settle(250);
     expect(`${w}: space turns the card over`, (await page.locator(".bm-pc-in.is-flipped").count()) === 1);
-    /* An arrow moves ONE card, in whichever direction there is room for —
-       pinning it to "2 /" assumed the pad had opened at one. */
-    const was = Number(padAt?.[1] || 1), total = Number(padAt?.[2] || 1);
-    const fwd = was < total;
-    await page.keyboard.press(fwd ? "ArrowRight" : "ArrowLeft");
+    await page.keyboard.press("ArrowRight");
     await settle(250);
     const padN2 = (await page.locator(".bm-pd-n").first().textContent().catch(() => "<none>")).trim();
-    expect(`${w}: an arrow moves one card ${fwd ? "on" : "back"}`,
-      padN2.startsWith(`${fwd ? was + 1 : was - 1} /`), `${padN} -> ${padN2}`);
+    expect(`${w}: an arrow moves to the next card`, padN2.startsWith("2 /"), padN2);
     const cards = await page.locator(".bm-pad .bm-pc").count();
     await page.locator(".bm-pd-mark").click();
     await settle(400);
