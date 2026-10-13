@@ -579,22 +579,60 @@ which is what the Flight Deck draws before the document arrives.
     `headline()` with its count derived — so the next replacement cannot do
     this again. At eight questions the derived table is the old hardcoded one
     to the digit, which is how the generalisation was checked.
-  - **THREE MORE OF THEM ARE RED, each for its own reason**, which is the
-    point: these go one at a time and quietly, and on 2026-10-11 every browser
-    suite that was looked at turned out to be failing.
-    - `test:bm` — its seed asserts 15 rows and the replaced content builds 13,
-      so it throws before its first assertion.
-    - `test:rr` — lays out all 168 states cleanly, then fails two controls
-      ("dragging the splitter sets the feed width", "+ offers Photo, File and
-      Paper passage") and crashes on a click the `.rr-dscroll` overlay
-      intercepts.
-    - `test:vt` — walks as far as "Room → Deck" and then times out waiting for
-      `.chead`.
-    The last two were confirmed PRE-EXISTING by running them in a clean
-    worktree at the same commit (`git worktree add --detach`, its own harness
-    on its own port). That is the only way to tell "I broke it" from "it was
-    already broken", and it is worth the five minutes every time — the
-    alternative is reading somebody else's rot as your own regression.
+  - **AND ALL THREE OF THEM WERE FIXED ON 2026-10-13**, each for its own
+    reason, which is the point: these go red one at a time and quietly.
+    - **`test:bm` NOW ASKS THE COURSE WHAT IT CAN FILL.** Its seed named five
+      question ids out of M1's first chapter, two videos, two pages and two
+      questions out of M2's THIRD chapter, and asserted fifteen rows; M2 has
+      no chapters, so it built thirteen and threw. Raising the number would
+      have been wrong twice over — **no module has any lessons** (and a video
+      row whose lesson id is unknown is DELETED, not merely unshown: eleven
+      seeded, ten survived), **papers are off** so `KINDS` offers three
+      folders and the walk asserted four in five places, and
+      **`library.batches` went on for everybody** so the module card-set page
+      is `CardSession` and `.bm-pad` never arrives on it. The fixture is
+      derived now and **what cannot be covered is NAMED in the output** —
+      the empty Videos folder, the absent Pages folder, the single module —
+      rather than quietly asserted against.
+    - **`test:rr` was a launch-gated option, a drag race, and the litter it
+      left.** The `+` sheet asserted Paper passage, which ReadyRoom withholds
+      while papers are paused. The splitter assertion was FLAKY — a synthetic
+      drag is eight pointer moves and under load the last lands after a fixed
+      200ms settle — so it waits for the width now. **And that uncovered the
+      crash CLAUDE.md had recorded against this suite**: with the drag landing
+      reliably the width PERSISTS, a narrowed feed puts the detail column over
+      the rows, and a `.rr-fopen` press died on `.rr-dscroll` intercepting it.
+      The walk restores the layout, which is the rule this file already states
+      for a walk that changes a livery or a finish.
+    - **`test:vt` WAS A REAL REGRESSION, and the only one of the three.** See
+      "Screen changes and transitions" below: the ported module screen had
+      left the motion system entirely.
+  - **AND A SIDE EFFECT INSIDE A STATE UPDATER, which is the one of these
+    bugs a student could actually have been bitten by.** `StudyPad`'s flip was
+    `setFlipped((f) => { if (!f) markSeen(…); return !f; })` — and a state
+    updater has to be PURE, because React may call it during the render phase.
+    So turning a card over wrote progress from inside another component's
+    render: *"Cannot update a component (UserProgressProvider) while rendering
+    a different component (StudyPad)"*. Dev-only as a message, but a progress
+    write during render is one that can be dropped or doubled, and it fired
+    for **every student the first time they turned a card over**. It had gone
+    unseen because the walk's pad always had cards already marked seen — it
+    surfaced the moment the walk cleared them, which is also the fix to the
+    pad's own order-dependence (`firstUnseen` opens where you stopped, so a
+    pile that marked cards seen had the pad opening at "4 / 4").
+  - **TWO CONTRAST BUGS CAME OUT OF test:bm, both the same mistake**: the
+    accent as a MARK used as WORDS. `.bm-eg-cta` ("Find a lesson") at 3.96:1
+    in Day — drawn only when a folder is EMPTY, which never happened while the
+    course had lessons, which is why it had never been measured. And
+    `.bm-btn.is-primary` under **Manual** at 3.92:1 worst: Manual draws a fill
+    as a line and a label, so there is no fill left for `bm-app.css`'s
+    `--bm-fill` step to darken and the label was left on `--active`. The
+    stroke stays a mark; only the words moved. 4.79:1 and 6.11:1 now.
+  - **AND TWO STALE ASKS WENT WITH THEM.** `test:bm` asked for Aurora's forced
+    night, which `offeredFinish` has been reading back as Standard since
+    2026-10-04 — 120 states failing for the app obeying its own rule, the same
+    bug `test:exam` carried until 2026-10-10 — and a flight-bag count
+    hardcoded to the old seed's 13 while the strip correctly drew 9.
 
 `check:placeholders` / `check:ship` grep the build for the markers of the old
 placeholder set; nothing carries them and both pass unchanged.
@@ -2137,8 +2175,14 @@ and `claude/bookmarks-report.md` is what each rule measured.
 - `npm run test:bm` walks it: 6 liveries × 2 lightings × 3 finishes × 4 widths,
   every control on the brief's R10 list on a desktop and a phone, Smooth Air,
   and the launch sweep — offline, two tabs, a second student, a deleted
-  question and a keyboard-only pass. **Aurora has no Day**: `App.jsx` forces
-  night on it, so there are 30 real skins, not 36.
+  question and a keyboard-only pass. **Aurora has no Day while Aurora is
+  OFFERED**, and it is not: this said "30 real skins, not 36" because
+  `App.jsx` forces night on that finish, but `offeredFinish` has read a stored
+  Aurora back as Standard since 2026-10-04, so Day is honoured and all 36 are
+  real — twelve of them wearing Standard. The walk runs the ask through the
+  app's own filter rather than restating the rule, so it is right either way;
+  the day Aurora is offered again those twelve measure a night sky with no
+  edit. 672 states in all.
 
 ## When a deploy lands under an open tab
 
@@ -2245,6 +2289,31 @@ Control tokens at the top of the view-transition block in `app.css`
 navigation is and names the layers that move; `src/lib/tabMotion.js` moves the
 things that are not navigations.
 
+- **THE PORTED MODULE SCREEN LEFT THE MOTION SYSTEM, AND NOTHING SAID SO**
+  (found 2026-10-13, by running `test:vt` for the first time since it went
+  red). The layers that move are named by SELECTOR, and three of them were
+  keyed to the app's own module screen — `PANELS` as `.mcard > .pane`, `CARD`
+  as `.mscreen .mcard`, `MCARD_HERO` as `.mscreen .mhero`. The ported screen
+  is neither a `.mscreen` nor a `.mcard`, so when `library.batches` went on
+  for everybody on 2026-10-10 **the most-used screen in the app stopped
+  moving**: no morph from the deck card into the heading, no slide between
+  Lessons and Library, no height morph on the card. The build was silent and
+  the only thing watching was outside `npm run check`.
+  - `PortPanel` wraps its body in one `.pane`, because `wg-tabpanel` needs a
+    single element and the body was three bare children of `.card`. Safe
+    because `.card` is `display: block` and port.css has no child, sibling or
+    nth-child selector on it — **measured before adding it**, and the geometry
+    after is the same to the pixel.
+  - The ported heading carries `mhero`, the app's own name, which nothing in
+    port.css styles.
+  - **And `CARD` is read as a whole list now.** It was `CARD[0]` and nothing
+    else, so adding a selector to it would have been dead weight — the kind of
+    fix that looks right in the diff and changes nothing.
+  - **The ported tab strip has no sliding pill, and that is the demo's
+    decision**: it shows the selected tab through `aria-selected`, the pill
+    belongs to the app's own five strips, and putting one here would be a
+    change to an approved design rather than a layout fix. The panel and the
+    card's height are asserted; the pill is not asked for on that strip.
 - **The router is `TransitionRouter`, not `BrowserRouter`, and that is load-
   bearing.** react-router 7 wraps every location change in
   `React.startTransition`, which `flushSync` cannot hurry — so the browser

@@ -10,6 +10,7 @@
      RR_SHOTS=all keeps a screenshot of every state rather than a sample.
    ========================================================================= */
 import { chromium } from "playwright";
+import { layoutKey } from "../src/lib/rrModel.js";
 import { mkdirSync } from "node:fs";
 import { seedRoom } from "./harness/room-seed.mjs";
 
@@ -181,7 +182,12 @@ try {
     body: JSON.stringify({ uid: "student_one", patch: { "pw-livery": "sky", "pw-variant-pin": "night" } }),
   });
   const acts = [];
-  const expect = (name, cond) => { if (!cond) acts.push(name); };
+  /* A third argument carries what was actually seen, the way the other
+     suites' do. Without it a soft failure here says only its own name,
+     which is what made the splitter one take three runs to read. */
+  const expect = (name, cond, detail = "") => {
+    if (!cond) acts.push(detail ? `${name} — ${detail}` : name);
+  };
   {
     const page = await browser.newPage({ viewport: { width: 1512, height: 945 } });
     page.on("pageerror", (e) => errors.push(`controls: ${String(e).slice(0, 160)}`));
@@ -226,13 +232,47 @@ try {
     await page.mouse.down();
     await page.mouse.move(sb.x + 90, sb.y + 200, { steps: 8 });
     await page.mouse.up();
-    await settle(200);
+    /* WAIT FOR THE WIDTH, NOT FOR 200ms. A synthetic drag is eight pointer
+       moves and a release, and under load the last of them can land after a
+       fixed settle — so this assertion failed intermittently with `--fw`
+       still empty while the drag was in fact working. Three runs in a row
+       passed once nothing else was competing for the CPU, which is the
+       signature of a race rather than a defect. Polling for the value keeps
+       the assertion exactly as strict and stops it reporting the stopwatch. */
+    await page.waitForFunction(
+      () => /^\d+px$/.test(document.querySelector(".rr")?.style.getPropertyValue("--fw") || ""),
+      null, { timeout: 4000 },
+    ).catch(() => {});
     const fw = await fwNow();
-    expect("dragging the splitter sets the feed width", /^\d+px$/.test(fw));
+    const dbg = await page.evaluate(() => {
+      const root = document.querySelector(".rr");
+      const sp = document.querySelector(".rr-split");
+      return { wide: root?.dataset.wide ?? null, vis: sp ? getComputedStyle(sp).display : "none",
+               w: innerWidth, fwAttr: root?.style.getPropertyValue("--fw") || "" };
+    });
+    expect("dragging the splitter sets the feed width", /^\d+px$/.test(fw),
+      `fw=${JSON.stringify(fw)} ${JSON.stringify(dbg)}`);
     await page.reload();
     await page.locator(".rr-frow").first().waitFor();
     await settle();
     expect("the width survives a reload", (await fwNow()) === fw);
+
+    /* AND THE WALK PUTS THE LAYOUT BACK, which it never used to because the
+       drag never used to work: `--fw` was left unset, so the default layout
+       carried on into every later step. Once the drag lands reliably the
+       width PERSISTS — it is saved per person in localStorage and survives a
+       reload, which the assertion above is about — and a narrowed feed puts
+       the detail column over the rows the next steps click, so a `.rr-fopen`
+       press died on `.rr-dscroll` intercepting it. That is the same litter
+       CLAUDE.md records for test:bm leaving a Manual ground behind for
+       test:exam: a walk that changes a stored preference restores it. */
+    await page.evaluate((key) => { try { localStorage.removeItem(key); } catch {} },
+      layoutKey("student_one"));
+    await page.reload();
+    await page.locator(".rr-frow").first().waitFor();
+    await settle();
+    expect("and the layout is back to its default for what follows",
+      !(await fwNow()), await fwNow());
     const sb2 = await page.locator(".rr-split").boundingBox();
     await page.mouse.dblclick(sb2.x, sb2.y + 200);
     await settle(200);
@@ -311,7 +351,17 @@ try {
 
     await page.locator(".rr-cin .rr-plus").click();
     await settle(200);
-    expect("+ offers Photo, File and Paper passage", (await page.locator(".rr-sheet button").allTextContents()).join("|") === "PhotoFilePaper passage".replace(/(Photo)(File)(Paper passage)/, "$1|$2|$3"));
+    /* PHOTO AND FILE ALWAYS; PAPER PASSAGE ONLY WHILE PAPERS ARE ON. This
+       asserted all three, and ReadyRoom passes `onAttachPassage` as null
+       while papers are paused — so Chat does not render that button at all
+       ("Withheld rather than hidden", its own comment). The option is
+       launch-gated, not broken, so it is allowed to be absent and nothing
+       else is: an unexpected or misspelt option still fails. */
+    const opts = (await page.locator(".rr-sheet button").allTextContents()).map((s) => s.trim());
+    expect("+ offers Photo and File, and Paper passage when papers are on",
+      opts[0] === "Photo" && opts[1] === "File"
+      && (opts.length === 2 || (opts.length === 3 && opts[2] === "Paper passage")),
+      opts.join("|"));
     expect("and the sheet is open", (await page.locator(".rr-sheetwrap:not([hidden])").count()) === 1);
     await page.mouse.click(760, 160);
     await settle(200);

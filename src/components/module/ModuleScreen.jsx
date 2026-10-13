@@ -251,7 +251,12 @@ export default function ModuleScreen({
     return (
       <div className="wm-port">
         <div className="wrap">
-          <div>
+          {/* `mhero` IS THE APP'S NAME, NOT THE DEMO'S, and nothing in
+              port.css styles it. It is the hook `nameMorph` needs for the
+              other end of the Deck → Module morph: the deck's module card
+              travels into this heading, and with no element to name the morph
+              stopped running here when the port became everybody's screen. */}
+          <div className="mhero">
             <button type="button" className="back" onClick={onBack}>
               &lsaquo; {upFrom({ kind: "module" })?.label}
             </button>

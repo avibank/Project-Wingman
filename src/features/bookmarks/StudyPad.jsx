@@ -55,7 +55,26 @@ export default function StudyPad({ questions, moduleId, mode }) {
      keyboard and anything added later all record the same event — and it is
      the card being FLIPPED, not the card being reached, because seeing the
      answer is the exercise. `markSeen` writes nothing when it already knows. */
-  const flip = () => setFlipped((f) => { if (!f) markSeen(progress, questions[k]?.id); return !f; });
+  /* AND THE WRITE IS NOT INSIDE THE UPDATER. `markSeen` used to sit inside
+     `setFlipped((f) => …)`, and a state updater has to be PURE: React may
+     call it during the render phase, so writing progress from in there is a
+     setState on `UserProgressProvider` while a different component renders —
+     which is exactly what it warned:
+
+       Cannot update a component (UserProgressProvider) while rendering a
+       different component (StudyPad).
+
+     Dev-only as a message, but a progress write during render is a write that
+     can be dropped or doubled, and it fires for every student the FIRST time
+     they turn a card over. It went unseen because the suite's pad always had
+     cards already marked seen; it surfaced the moment the walk cleared them.
+     The boolean keeps its functional updater, which is what batching needs;
+     the side effect reads the committed value, which for a user event is the
+     right one, and `markSeen` writes nothing when it already knows. */
+  const flip = () => {
+    if (!flipped) markSeen(progress, questions[k]?.id);
+    setFlipped((f) => !f);
+  };
   if (!cur) return null;
   const saved = findSave('card', cur.id);
 

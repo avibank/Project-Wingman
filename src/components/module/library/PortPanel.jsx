@@ -79,7 +79,15 @@ export default function PortPanel({
                    }} />
           </label>
         </div>
-      {children}
+      {/* ONE ELEMENT FOR THE TAB TO MOVE. The body was three bare children of
+          `.card`, so `viewTransition.js` had nothing to name as `wg-tabpanel`
+          and switching Lessons/Library stopped sliding the moment this screen
+          became everybody's (`library.batches`, 2026-10-10). `.card` is
+          `display: block` and the port's CSS has no child or sibling
+          selectors on it, so a wrapper changes no layout — measured before
+          adding it. The name goes on this, the card's height morph on
+          `.card`; one element cannot carry both. */}
+      <div className="pane">{children}</div>
     </section>
   );
 }

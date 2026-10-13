@@ -32,6 +32,9 @@
    ========================================================================= */
 import { chromium } from "playwright";
 import { mkdirSync, readFileSync } from "node:fs";
+/* THE SAME FILTER THE APP USES, so a state asks for what a student will
+   actually be wearing. See the note on `lit` in the sweep below. */
+import { lightOverride, offeredFinish } from "../src/lib/finishEngine.js";
 
 const BASE = process.env.BM_BASE || "http://127.0.0.1:5190";
 const LIVERIES = (process.env.BM_LIVERIES || "sky,amber,tarmac,beacon,runway,skydrol").split(",");
@@ -62,42 +65,155 @@ const setSkin = (patch) => fetch(`${BASE}/rest/v1/rpc/merge_progress`, {
   body: JSON.stringify({ uid: "student_one", patch }),
 });
 
-/* A filled account, written over the same wire the app writes over. Four
-   folders with something in each, so every cover, row and play button is on
-   screen rather than being asserted about in the abstract. */
+/* WHAT THIS COURSE CAN FILL, ASKED RATHER THAN ASSUMED.
+   ---------------------------------------------------------------------------
+   This seed used to name its own content: five question ids out of M1's first
+   chapter, four cards out of its second, two videos, two pages, and two more
+   questions out of M2's THIRD chapter — fifteen rows, asserted as fifteen.
+   Every one of those five numbers was a fact about a course that has since
+   been replaced three times, and on 2026-10-13 the walk could not get past
+   its own first assertion: M2 has no chapters at all any more, so it built
+   thirteen rows and threw.
+
+   Raising the number to thirteen would have been the wrong fix twice over.
+   The count was never the point, and three deeper facts had changed with it:
+
+     · NO MODULE HAS ANY LESSONS. A video row whose lesson id is unknown is
+       not merely unshown — `content.lesson` answers null, and only null
+       prunes, so Bookmarks DELETES it from the server. Measured: eleven rows
+       seeded, ten survived, the video gone.
+     · PAPERS ARE OFF for launch, so `KINDS` drops 'page' and the app offers
+       THREE folders, not four. The walk asserted four and clicked a "Pages"
+       folder that is not rendered.
+     · ONLY ONE MODULE HAS CONTENT, so there is nothing to file under a second
+       one and the module filter cannot be exercised with real ids.
+
+   So the fixture is derived, the way test:exam's was after it broke the same
+   way: the module is the first one with a quiz, the cards come from the first
+   chapter that has any, the second module is whichever other one has a quiz
+   if any does, and a video row is seeded only if the document really contains
+   a lesson. What cannot be filled is NAMED in the output rather than being
+   quietly asserted against. Add lessons back, or turn papers on, and those
+   folders come under test again with no edit here. */
+const DOC = JSON.parse(readFileSync(new URL("../src/content/test-content.json", import.meta.url), "utf8"));
+
+const chaptersWith = (m, pred) => (m.chapters || [])
+  .map((c, n) => ({ c, n })).filter(({ c }) => pred(c));
+const hasQuiz = (c) => (c.quiz?.questions || []).length > 0;
+
+const FIX = (() => {
+  const mods = DOC?.modules || [];
+  const quizMods = mods.filter((m) => chaptersWith(m, hasQuiz).length > 0);
+  const mod = quizMods[0];
+  if (!mod) throw new Error("the course document has no module with a quiz — the content did not load");
+  const qCh = chaptersWith(mod, hasQuiz)[0];
+  const cardCh = chaptersWith(mod, (c) => (c.cards || []).length > 0)[0]
+    || chaptersWith(mod, hasQuiz)[1] || qCh;
+  const other = quizMods.find((m) => m.id !== mod.id) || null;
+  const otherCh = other ? chaptersWith(other, hasQuiz)[0] : null;
+  let lesson = null;
+  for (const m of mods) {
+    for (const [n, c] of (m.chapters || []).entries()) {
+      const l = (c.lessons || [])[0];
+      if (l && !lesson) lesson = { id: l.id, chapter: n + 1, moduleId: m.id };
+    }
+  }
+  /* A CHAPTER THE SEED DOES NOT TOUCH, for the tests that need a question
+     starting UNSAVED — pressing the bookmark on a seeded one would be testing
+     a remove. This was the literal `M1.03`, a chapter id that stopped existing
+     two content replacements ago. */
+  const quizChs = chaptersWith(mod, hasQuiz);
+  const freeCh = quizChs.find((x) => x.n !== qCh.n && x.n !== cardCh.n) || quizChs.at(-1);
+  return { mod, qCh, cardCh, other, otherCh, lesson, freeCh };
+})();
+
+const MOD = FIX.mod.id;
+/* Which folders the APP offers, and which the seed could fill. Both are set
+   once, after seeding, by asking the running app rather than re-deriving a
+   flag here — so a walk and the screen it walks cannot disagree. */
+let OFFERED = [];
+let FILLED = new Set();
+
+/* A filled account, written over the same wire the app writes over, with
+   something in every folder this course is capable of filling. */
 async function seedSaves() {
   await fetch(`${BASE}/rest/v1/saves?user_id=eq.student_one`, { method: "DELETE" });
-  /* READ OFF DISK, not over HTTP. The dev server happens to serve the source
-     tree, so fetching `/src/content/…` worked there; the prod harness serves a
-     BUILT bundle and answers that path with the SPA fallback — index.html,
-     which parses as nothing, so the questions silently seeded as none and the
-     walk asserted against four saves instead of fifteen. */
-  const doc = JSON.parse(readFileSync(new URL("../src/content/test-content.json", import.meta.url), "utf8"));
-  /* A question id identifies the question, not the module — `saves_one_per_thing`
-     is (user_id, kind, ref_id, page) — so M2's rows have to carry M2's OWN
-     question ids. Filing M1's chapter-3 ids under M2 made that chapter's paper
-     show every bookmark already pressed. */
-  const qsOf = (id, n) => (doc?.modules?.find((m) => m.id === id)?.chapters?.[n]?.quiz?.questions || []).map((q) => q.id);
-  const qs = (n) => qsOf("M1", n);
+  const ids = (x) => (x ? (x.c.quiz?.questions || []).map((q) => q.id) : []);
+  const cardIds = (x) => (x ? (x.c.cards || []).map((c) => c.id) : []);
+  const stamp = (i) => new Date(Date.now() - i * 1000).toISOString();
+
   const rows = [
-    ...qs(0).slice(0, 5).map((id, i) => ({ user_id: "student_one", module_id: "M1", kind: "question", ref_id: id, chapter: 1, created_at: new Date(Date.now() - i * 1000).toISOString() })),
-    ...qs(1).slice(0, 4).map((id, i) => ({ user_id: "student_one", module_id: "M1", kind: "card", ref_id: id, chapter: 2, created_at: new Date(Date.now() - i * 1000).toISOString() })),
-    { user_id: "student_one", module_id: "M1", kind: "video", ref_id: "M1.01.1", chapter: 1, at_seconds: 372 },
-    { user_id: "student_one", module_id: "M1", kind: "video", ref_id: "M1.02.2", chapter: 2, at_seconds: 12 },
-    { user_id: "student_one", module_id: "M1", kind: "page", ref_id: "M1.DEV", chapter: null, page: 7 },
-    { user_id: "student_one", module_id: "M1", kind: "page", ref_id: "M1.DEV", chapter: null, page: 11 },
-    ...qsOf("M2", 2).slice(0, 2).map((id) => ({ user_id: "student_one", module_id: "M2", kind: "question", ref_id: id, chapter: 3 })),
+    ...ids(FIX.qCh).slice(0, 5).map((id, i) => ({
+      module_id: MOD, kind: "question", ref_id: id, chapter: FIX.qCh.n + 1, created_at: stamp(i) })),
+    /* Cards come from the chapter's OWN card set when it has one, and from its
+       quiz otherwise, which is the same fallback `content.cardSet()` makes. */
+    ...(cardIds(FIX.cardCh).length ? cardIds(FIX.cardCh) : ids(FIX.cardCh)).slice(0, 4).map((id, i) => ({
+      module_id: MOD, kind: "card", ref_id: id, chapter: FIX.cardCh.n + 1, created_at: stamp(i) })),
+    /* A page row is written whether or not papers are on: the row survives
+       either way (it is filtered in the UI, not pruned), so seeding it keeps
+       the Pages folder under test the moment the flag turns on. */
+    { module_id: MOD, kind: "page", ref_id: `${MOD}.DEV`, chapter: null, page: 7 },
+    { module_id: MOD, kind: "page", ref_id: `${MOD}.DEV`, chapter: null, page: 11 },
   ];
+  if (FIX.lesson) {
+    rows.push({ module_id: FIX.lesson.moduleId, kind: "video",
+                ref_id: FIX.lesson.id, chapter: FIX.lesson.chapter, at_seconds: 372 });
+  }
+  /* A question id identifies the question, not the module — `saves_one_per_thing`
+     is (user_id, kind, ref_id, page) — so a second module's rows have to carry
+     that module's OWN question ids. Filing the first module's ids under the
+     second made that chapter's paper show every bookmark already pressed. */
+  if (FIX.otherCh) {
+    rows.push(...ids(FIX.otherCh).slice(0, 2).map((id) => ({
+      module_id: FIX.other.id, kind: "question", ref_id: id, chapter: FIX.otherCh.n + 1 })));
+  }
+
   for (const r of rows) {
     await fetch(`${BASE}/rest/v1/saves?on_conflict=user_id,kind,ref_id,page`, {
       method: "POST",
       headers: { "content-type": "application/json", Prefer: "return=representation,resolution=merge-duplicates" },
-      body: JSON.stringify({ id: crypto.randomUUID(), ...r }),
+      body: JSON.stringify({ id: crypto.randomUUID(), user_id: "student_one", ...r }),
     });
   }
-  if (rows.length !== 15) throw new Error(`the seed built ${rows.length} rows, not 15 — the content did not load`);
-  return `seeded ${rows.length} saves`;
+
+  const byKind = {};
+  for (const r of rows) byKind[r.kind] = (byKind[r.kind] || 0) + 1;
+  /* How many of them are THIS module's, which is what the flight bag counts —
+     it is "this module's saves" and nothing else. Page rows are in the number
+     only when the app shows that folder, and a video only when the lesson is
+     real enough to survive pruning. */
+  const mine = rows.filter((r) => r.module_id === MOD && r.kind !== "page"
+    && (r.kind !== "video" || Boolean(FIX.lesson)));
+  const minePages = rows.filter((r) => r.module_id === MOD && r.kind === "page").length;
+  if (!byKind.question || !byKind.card) {
+    throw new Error(`the seed built ${JSON.stringify(byKind)} — the content did not load`);
+  }
+  return { rows: rows.length, byKind, mine: mine.length, minePages };
 }
+
+/* WHICH FOLDERS THE APP OFFERS. Read off the home screen once, because the
+   app filters `KINDS` by the papers flag and a second copy of that rule here
+   is a second thing to go stale. Also records which of them the seed actually
+   filled, by reading the count the folder itself prints. */
+async function readFolders(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
+  await page.locator(".bm-folders .bm-folder").first().waitFor({ timeout: 20000 });
+  await page.waitForTimeout(2500);        // content load, then pruning
+  const names = (await page.locator(".bm-fname").allTextContents())
+    .map((s) => s.replace(/\d+$/, "").trim());
+  const plays = await page.locator(".bm-fplay").count();
+  const filled = [];
+  for (const n of names) {
+    const c = await page.locator(".bm-folder", { hasText: n }).locator(".bm-count").first().textContent().catch(() => "");
+    if ((c || "").trim()) filled.push(n);
+  }
+  await ctx.close();
+  return { names, filled, plays };
+}
+
+const SLUG = { Questions: "questions", "Study cards": "cards", Videos: "videos", Pages: "pages" };
 
 /* The audit reports its numbers on a #measure line; everywhere but the skin
    sweep, which files them, those are not problems. */
@@ -140,7 +256,8 @@ const audit = (page, expect) => page.evaluate((expect) => {
       if (c[3] > 0.004) { stack.push(c); if (c[3] >= 0.999) break; }
     }
     const ground = rgba(getComputedStyle(document.querySelector(".app") || document.body).backgroundColor);
-    let base = ground[3] >= 0.999 ? ground.slice(0, 3) : (expect.variant === "day" ? [255, 255, 255] : [12, 14, 20]);
+    let base = ground[3] >= 0.999 ? ground.slice(0, 3)
+      : ((expect.lit ?? expect.variant) === "day" ? [255, 255, 255] : [12, 14, 20]);
     for (const c of stack.reverse()) base = overlay(c, base);
     return base;
   };
@@ -182,14 +299,16 @@ const audit = (page, expect) => page.evaluate((expect) => {
   const root = document.querySelector(".bm.bm-page") || document.querySelector(".bm-bagcell");
   if (!root) return ["nothing from Bookmarks rendered"];
 
-  /* AURORA HAS NO DAY. App.jsx: `variant = finish === "aurora" ? "night" : …`,
-     and Preferences says so on the Appearance tab — "a finish forcing the
-     panel dark, where tapping Light otherwise appears to do nothing". So the
-     six liveries × three finishes × two lightings are 30 real combinations,
-     not 36, and this expects what the app actually does rather than failing
-     it for obeying its own rule. */
+  /* A FINISH CAN FORCE THE LIGHTING, AND AN UNOFFERED ONE CANNOT. This read
+     `expect.finish !== "aurora"` — the rule that Aurora has no Day, which
+     App.jsx still honours for a finish it still offers. Aurora is withdrawn,
+     so `offeredFinish` reads it back as Standard and Day is obeyed; naming
+     the finish here failed 120 states for the app doing exactly that. The
+     caller computes the lighting with the app's own `lightOverride` and
+     `offeredFinish` and passes it in, so this stays right whichever finishes
+     are offered. */
   const day = Boolean(document.querySelector(".app")?.classList.contains("theme-light"));
-  const wantDay = expect.variant === "day" && expect.finish !== "aurora";
+  const wantDay = (expect.lit ?? expect.variant) === "day";
   if (day !== wantDay) out.push(`the app is ${day ? "day" : "night"}, not ${wantDay ? "day" : "night"}`);
 
   /* R11 · the tokens the stylesheet maps onto must all resolve. An unmapped one
@@ -362,7 +481,35 @@ const measured = [];
 const errors = [];
 let states = 0;
 try {
-  console.log(await seedSaves());
+  const SEED = await seedSaves();
+  const folders = await readFolders(browser);
+  OFFERED = folders.names;
+  FILLED = new Set(folders.filled);
+  console.log(`seeded ${SEED.rows} saves — ${Object.entries(SEED.byKind).map(([k, n]) => `${n} ${k}`).join(", ")}`);
+  console.log(`  folders offered: ${OFFERED.join(", ")}`);
+  console.log(`  folders filled : ${[...FILLED].join(", ") || "none"}`);
+  /* SAY WHAT COULD NOT BE TESTED, rather than asserting against it. */
+  for (const n of OFFERED.filter((x) => !FILLED.has(x))) {
+    const why = n === "Videos" ? "the course document contains no lessons, so a video row is pruned"
+      : n === "Pages" ? "no page row survived"
+      : "the course document has nothing of that kind";
+    console.log(`  NOT COVERED  the ${n} folder is empty — ${why}`);
+  }
+  if (!OFFERED.includes("Pages")) {
+    console.log("  NOT COVERED  the Pages folder is not offered — paper.viewer is off for launch");
+  }
+  if (!FIX.otherCh) {
+    console.log(`  NOT COVERED  the module filter has one module with content (${MOD}) — nothing to file under a second`);
+  }
+  /* The count the app itself keeps: every seeded row, less the kinds it does
+     not show (pages while papers are off) and the kinds it pruned (a video
+     whose lesson the document does not have). */
+  const countedTotal = (SEED.byKind.question || 0) + (SEED.byKind.card || 0)
+    + (FIX.lesson ? (SEED.byKind.video || 0) : 0)
+    + (OFFERED.includes("Pages") ? (SEED.byKind.page || 0) : 0);
+  /* What the flight bag shows: this module's saves, pages among them only
+     when the app offers that folder. */
+  const bagCount = SEED.mine + (OFFERED.includes("Pages") ? SEED.minePages : 0);
   mkdirSync(SHOTS, { recursive: true });
 
   /* ------------------------------------------------- every skin, every width */
@@ -375,6 +522,20 @@ try {
            with an empty one. A whole skin then failed on "no rows", which
            reads as a bug in the folder rather than as the floor moving. */
         await seedSaves();
+        /* WHAT THE STUDENT WILL ACTUALLY BE WEARING, which is not what was
+           asked for. Aurora IS a night sky and `lightOverride` still says so,
+           but Aurora is NOT OFFERED (owner, 2026-10-04: "remove aurora") and
+           App runs the stored finish through `offeredFinish` before anything
+           paints — so a state asking for Aurora wears Standard, and Standard
+           in Day is DAY. Asserting Aurora's forced night therefore failed 120
+           states on a screen obeying its own rule, which is the same stale
+           ask `test:exam` was carrying until 2026-10-10.
+
+           Running the ask through the app's own filter is what keeps this
+           honest, and it is why Aurora stays in FINISHES rather than being
+           deleted: offering it again is one line in finishEngine.js, and
+           these states start measuring the real sky with no edit here. */
+        const lit = lightOverride(offeredFinish(finish)) ? "night" : variant;
         await setSkin({ "pw-livery": livery, "pw-variant-pin": variant, "pw-finish": finish });
         for (const [width, height] of WIDTHS) {
           /* A phone has no hover, and the folder's play button keys off that:
@@ -413,7 +574,7 @@ try {
               .filter((a) => a.playState === "running" && a.effect?.getTiming?.().iterations !== Infinity)
               .map((a) => a.finished.catch(() => {}))));
             await page.waitForTimeout(80);
-            for (const p of await audit(page, { variant, finish, view, ...extra })) {
+            for (const p of await audit(page, { variant, finish, lit, view, ...extra })) {
               if (p.startsWith("#measure")) { measured.push({ tag, view, line: p }); continue; }
               problems.push(`${tag} ${view}: ${p}`);
             }
@@ -422,19 +583,37 @@ try {
             }
           };
 
-          await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+          await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
           if (!(await ready(".bm-folders .bm-folder", "home"))) { await page.close(); continue; }
           await check("home", { filled: true });
 
-          await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=M1`);
+          await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=${MOD}`);
           if (!(await ready(".bm-list .bm-row", "questions"))) { await page.close(); continue; }
           await check("questions");
 
-          await page.goto(`${BASE}/bookmarks/videos?uid=student_one&m=M1`);
-          if (!(await ready(".bm-vgrid .bm-vcard", "videos"))) { await page.close(); continue; }
-          await check("videos");
+          /* The videos grid is measured only when there is a card in it. With a
+             course that has no lessons the folder is legitimately EMPTY, and
+             the empty state is the screen a student actually meets — so that
+             is what gets measured instead. It is also where the contrast bug
+             this walk found on 2026-10-13 lived: `.bm-eg-cta` took the accent
+             as a MARK and came in at 3.96:1 in Day. */
+          await page.goto(`${BASE}/bookmarks/videos?uid=student_one&m=${MOD}`);
+          if (FILLED.has("Videos")) {
+            if (!(await ready(".bm-vgrid .bm-vcard", "videos"))) { await page.close(); continue; }
+            await check("videos");
+          } else {
+            if (!(await ready(".bm-empty", "videos-empty"))) { await page.close(); continue; }
+            await check("videos-empty");
+          }
 
-          await page.goto(`${BASE}/m/m1/library/cards/1?uid=student_one`);
+          /* BOOKMARKS' OWN CARD PAD, not the module's card set page. This
+             measured /m/m1/library/cards/1, which shared `StudyPad` with
+             Bookmarks until `library.batches` was turned on for everybody on
+             2026-10-10 — that route is `CardSession` now, `.bm-pad` never
+             arrives on it, and CardSession has its own 133-assertion suite
+             (`test:cards`) that does not want it measured twice. The pad
+             itself is unchanged and still Bookmarks', at its own address. */
+          await page.goto(`${BASE}/bookmarks/cards?uid=student_one&m=${MOD}`);
           if (!(await ready(".bm-pad .bm-pc", "cards"))) { await page.close(); continue; }
           await check("cards");
 
@@ -446,7 +625,12 @@ try {
           if (finish === "manual") {
             await page.locator(".deck .strip .cel").first().waitFor({ timeout: 15000 });
             const drawn = (await page.locator(".deck .strip svg text").allTextContents()).join(" ");
-            if (!/\b13\b/.test(drawn)) problems.push(`${tag} bag: the drawn Manual bag does not show the count (${drawn.trim()})`);
+            /* THE NUMBER IS THE SEED'S, NOT THIRTEEN. This matched `\b13\b`,
+               which was the old fifteen-row seed's module count; the strip was
+               correctly drawing 9 and the walk called it wrong in 48 states. */
+            if (!new RegExp(`\\b${bagCount}\\b`).test(drawn)) {
+              problems.push(`${tag} bag: the drawn Manual bag does not show ${bagCount} (${drawn.trim()})`);
+            }
           } else {
             await page.locator(".bm-bagcell .bm-bag.is-full").waitFor({ timeout: 15000 });
             await check("bag");
@@ -507,7 +691,7 @@ try {
     await settle(200);
     expect(`${w}: the profile menu offers Bookmarks with a count`,
       (await page.locator('[role="menuitem"]', { hasText: "Bookmarks" }).count()) === 1
-      && (await page.locator(".menu .mcount").first().textContent()).trim() === "15");
+      && (await page.locator(".menu .mcount").first().textContent()).trim() === String(countedTotal));
     expect(`${w}: and Settings has gone from it`, (await page.locator('[role="menuitem"]', { hasText: "Settings" }).count()) === 0);
     await page.locator('[role="menuitem"]', { hasText: "Bookmarks" }).click();
     expect(`${w}: the menu row opens Bookmarks`, await lands(/^\/bookmarks/), at());
@@ -517,7 +701,7 @@ try {
     expect(`${w}: the back link returns to the Flight Deck`, await lands(/^\/$/), at());
 
     /* --- the module picker --- */
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
     await page.locator(".bm-switch-btn").waitFor({ timeout: 15000 });
     await page.locator(".bm-switch-btn").click();
     await settle(200);
@@ -538,20 +722,26 @@ try {
     expect(`${w}: picking a module switches to it`, switched && (await page.locator(".bm-switch-btn").textContent()).includes("Module 13e"), at());
 
     /* --- each folder opens, and each play button does its own thing --- */
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
     await page.locator(".bm-folders .bm-folder").first().waitFor({ timeout: 15000 });
-    expect(`${w}: all four folders are on the home screen`, (await page.locator(".bm-folder").count()) === 4);
-    for (const [name, slug] of [["Questions", "questions"], ["Study cards", "cards"], ["Videos", "videos"], ["Pages", "pages"]]) {
-      await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    /* EVERY FOLDER THE APP OFFERS, which is three while papers are off and
+       four when they are on. The literal four was the assertion that clicked
+       a Pages folder `KINDS` does not render. */
+    expect(`${w}: every folder the app offers is on the home screen`,
+      (await page.locator(".bm-folder").count()) === OFFERED.length, `${OFFERED.length} offered`);
+    for (const name of OFFERED) {
+      const slug = SLUG[name];
+      await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
       await page.locator(".bm-folders .bm-folder").first().waitFor({ timeout: 15000 });
       await page.locator(".bm-open-f", { hasText: name }).click();
-      expect(`${w}: the ${name} folder opens its list`, await lands(new RegExp(`^/bookmarks/${slug}\\?m=M1$`)), at());
+      expect(`${w}: the ${name} folder opens its list`, await lands(new RegExp(`^/bookmarks/${slug}\\?m=${MOD}$`)), at());
       expect(`${w}: and offers a way back to Bookmarks`, (await page.locator(".bm-back").count()) === 1);
     }
 
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
     await page.locator(".bm-fplay").first().waitFor({ timeout: 15000 });
-    expect(`${w}: every filled folder has a play button`, (await page.locator(".bm-fplay").count()) === 4);
+    expect(`${w}: every filled folder has a play button, and only those`,
+      (await page.locator(".bm-fplay").count()) === FILLED.size, `${FILLED.size} filled`);
     await page.locator('.bm-fplay[aria-label="Practise these"]').click();
     await settle();
     expect(`${w}: Questions plays into the practice sheet`, await page.locator(".bm-sheet").first().isVisible());
@@ -564,16 +754,25 @@ try {
     await page.keyboard.press("Escape");
     await settle(250);
     expect(`${w}: Esc closes the test pile`, (await page.locator(".bm-scrim").count()) === 0);
-    await page.locator('.bm-fplay[aria-label="Resume"]').click();
-    expect(`${w}: Videos resumes a part-watched lesson at the second it was saved at`,
-      await lands(/\/m\/m1\/M1\.0\d\/lesson\/M1\.0\d\.\d\?t=(372|12)$/), at());
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
-    await page.locator(".bm-fplay").first().waitFor({ timeout: 15000 });
-    await page.locator('.bm-fplay[aria-label="Open newest page"]').click();
-    expect(`${w}: Pages opens the newest page in the reader`, await lands(/\/m\/m1\/paper\/M1\.DEV\?page=/), at());
+    /* A play button belongs to a FILLED folder, so these two run only when
+       there is something to resume or open. The lesson address is built from
+       the fixture's own lesson rather than matched against `M1.0\d`, which
+       was a chapter-id shape that stopped existing on 2026-10-08. */
+    if (FILLED.has("Videos") && FIX.lesson) {
+      await page.locator('.bm-fplay[aria-label="Resume"]').click();
+      expect(`${w}: Videos resumes a part-watched lesson at the second it was saved at`,
+        await lands(new RegExp(`/lesson/${FIX.lesson.id.replace(/\./g, "\\.")}\\?t=372$`)), at());
+      await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
+      await page.locator(".bm-fplay").first().waitFor({ timeout: 15000 });
+    }
+    if (FILLED.has("Pages")) {
+      await page.locator('.bm-fplay[aria-label="Open newest page"]').click();
+      expect(`${w}: Pages opens the newest page in the reader`,
+        await lands(new RegExp(`/paper/${MOD}\\.DEV\\?page=`)), at());
+    }
 
     /* --- the questions list --- */
-    await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=${MOD}`);
     await page.locator(".bm-row").first().waitFor({ timeout: 15000 });
     const before = await page.locator(".bm-row").count();
     await page.locator(".bm-q-toggle").first().click();
@@ -589,16 +788,27 @@ try {
     expect(`${w}: Undo puts it back`, (await page.locator(".bm-row").count()) === before);
 
     /* --- the study card pad --- */
-    await page.goto(`${BASE}/bookmarks/cards?uid=student_one&m=M1`);
+    /* A FRESH PAD, BECAUSE IT OPENS WHERE YOU LEFT OFF. `StudyPad` starts at
+       `firstUnseen`, and the "Test yourself" pile a few steps above marks
+       cards as seen — so the pad opened at "4 / 4" and the two assertions
+       that name a position failed. Making them flexible instead was the wrong
+       fix twice: it still left the block order-dependent, and pressing
+       ArrowLeft from the end then broke the unsave step after it. Clearing
+       the seen set makes the state deterministic, which is what these
+       assertions were always written against. */
+    await setSkin({ "pw-cards-seen": {}, "pw-cards-got": {} });
+    await page.goto(`${BASE}/bookmarks/cards?uid=student_one&m=${MOD}`);
     await page.locator(".bm-pad .bm-pc").first().waitFor({ timeout: 15000 });
-    expect(`${w}: the pad says where it is`, /^1 \/ \d+$/.test((await page.locator(".bm-pd-n").textContent()).trim()));
+    const padN = (await page.locator(".bm-pd-n").first().textContent().catch(() => "<none>")).trim();
+    expect(`${w}: the pad says where it is`, /^1 \/ \d+$/.test(padN), padN);
     await page.locator(".bm-pad").focus();
     await page.keyboard.press("Space");
     await settle(250);
     expect(`${w}: space turns the card over`, (await page.locator(".bm-pc-in.is-flipped").count()) === 1);
     await page.keyboard.press("ArrowRight");
     await settle(250);
-    expect(`${w}: an arrow moves to the next card`, (await page.locator(".bm-pd-n").textContent()).trim().startsWith("2 /"));
+    const padN2 = (await page.locator(".bm-pd-n").first().textContent().catch(() => "<none>")).trim();
+    expect(`${w}: an arrow moves to the next card`, padN2.startsWith("2 /"), padN2);
     const cards = await page.locator(".bm-pad .bm-pc").count();
     await page.locator(".bm-pd-mark").click();
     await settle(400);
@@ -609,33 +819,41 @@ try {
     await page.locator(".bm-pad-foot .bm-link").click();
     expect(`${w}: "Browse all card sets" reaches the Library`, await lands(/\/m\/m1\/library/), at());
 
-    /* --- the card set page, reached from the Library --- */
-    await page.locator(".bm-lrow", { hasText: "Chapter 1 cards" }).click();
-    expect(`${w}: a Library row opens its card set`, await lands(/\/m\/m1\/library\/cards\/1/), at());
-    expect(`${w}: the set is that quiz, in quiz order`,
-      (await page.locator(".bm-pad .bm-pc").count()) === 8);
-    await page.locator(".bm-btn.is-primary", { hasText: "Test yourself" }).click();
+    /* --- the pile, opened from Bookmarks' own play button --- */
+    /* THE MODULE'S CARD SET PAGE IS NOT A BOOKMARKS SURFACE ANY MORE, and the
+       block that used to be here drove it: it clicked a Library row reading
+       "Chapter 1 cards", expected /library/cards/1 to draw `.bm-pad .bm-pc`,
+       and counted eight of them. Every part of that is now wrong — the rows
+       carry the documents' own names (CLAUDE.md: "THE NAMES ARE THE
+       DOCUMENTS' OWN"), the route is `CardSession`, and the chapter has 105
+       cards rather than 8. `test:cards` owns that screen in 133 assertions.
+       What is kept is the pile, which is Bookmarks' own and is reached from
+       its own door. */
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
+    await page.locator('.bm-fplay[aria-label="Test yourself"]').waitFor({ timeout: 15000 });
+    await page.locator('.bm-fplay[aria-label="Test yourself"]').click();
     await settle(400);
     expect(`${w}: Test yourself opens the pile`, await page.locator(".bm-deck .bm-pile").first().isVisible());
     await page.locator('.bm-x[aria-label="Close"]').click();
     await settle(300);
     expect(`${w}: the ✕ closes it`, (await page.locator(".bm-scrim").count()) === 0);
-    await page.locator(".bm-back").click();
-    expect(`${w}: the card set goes back to the Library`, await lands(/\/m\/m1\/library$/), at());
 
-    /* --- videos and pages --- */
-    await page.goto(`${BASE}/bookmarks/videos?uid=student_one&m=M1`);
-    await page.locator(".bm-vcard").first().waitFor({ timeout: 15000 });
-    await page.locator(".bm-vthumb").first().click();
-    expect(`${w}: a saved video opens at its second`, await lands(/\/lesson\/[^?]+\?t=\d+/), at());
-
-    await page.goto(`${BASE}/bookmarks/pages?uid=student_one&m=M1`);
-    await page.locator(".bm-row").first().waitFor({ timeout: 15000 });
-    await page.locator(".bm-pill", { hasText: "Open" }).first().click();
-    expect(`${w}: a saved page opens in the reader at that page`, await lands(/\/paper\/[^?]+\?page=\d+/), at());
+    /* --- videos and pages, each only if there is one to open --- */
+    if (FILLED.has("Videos")) {
+      await page.goto(`${BASE}/bookmarks/videos?uid=student_one&m=${MOD}`);
+      await page.locator(".bm-vcard").first().waitFor({ timeout: 15000 });
+      await page.locator(".bm-vthumb").first().click();
+      expect(`${w}: a saved video opens at its second`, await lands(/\/lesson\/[^?]+\?t=\d+/), at());
+    }
+    if (FILLED.has("Pages")) {
+      await page.goto(`${BASE}/bookmarks/pages?uid=student_one&m=${MOD}`);
+      await page.locator(".bm-row").first().waitFor({ timeout: 15000 });
+      await page.locator(".bm-pill", { hasText: "Open" }).first().click();
+      expect(`${w}: a saved page opens in the reader at that page`, await lands(/\/paper\/[^?]+\?page=\d+/), at());
+    }
 
     /* --- the practice sheet, all the way through --- */
-    await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=${MOD}`);
     await page.locator(".bm-btn.is-primary").waitFor({ timeout: 15000 });
     await page.locator(".bm-btn.is-primary").click();
     await settle(400);
@@ -677,18 +895,23 @@ try {
 
     /* --- the empty folders name a control that exists --- */
     await fetch(`${BASE}/rest/v1/saves?user_id=eq.student_one`, { method: "DELETE" });
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
     await page.locator(".bm-empty-cover").first().waitFor({ timeout: 15000 });
     /* EMPTY IS A DESIGNED STATE. The same four folders fill the screen, each
        carrying its icon, one line saying how it gets filled, and a way in. */
-    expect(`${w}: an empty Bookmarks still shows all four folders`,
-      (await page.locator(".bm-folder").count()) === 4 && (await page.locator(".bm-empty-cover").count()) === 4);
-    for (const [name, hint, cta] of [
-      ["Questions", "Bookmark a question while you take a quiz.", "Take a quiz"],
-      ["Study cards", "Flip a chapter\u2019s cards and keep the ones worth another look.", "Open the card sets"],
-      ["Videos", "Bookmark a lesson at the moment that matters.", "Find a lesson"],
-      ["Pages", "Bookmark a page while you read the paper.", "Open the paper"],
-    ]) {
+    expect(`${w}: an empty Bookmarks still shows every folder it offers`,
+      (await page.locator(".bm-folder").count()) === OFFERED.length
+      && (await page.locator(".bm-empty-cover").count()) === OFFERED.length, `${OFFERED.length} offered`);
+    /* The copy for each folder the app OFFERS. Pages is in the table because
+       the folder comes back the moment papers do, and is skipped while it is
+       not rendered rather than being deleted from here. */
+    const COPY = {
+      Questions: ["Bookmark a question while you take a quiz.", "Take a quiz"],
+      "Study cards": ["Flip a chapter\u2019s cards and keep the ones worth another look.", "Open the card sets"],
+      Videos: ["Bookmark a lesson at the moment that matters.", "Find a lesson"],
+      Pages: ["Bookmark a page while you read the paper.", "Open the paper"],
+    };
+    for (const [name, [hint, cta]] of OFFERED.map((n) => [n, COPY[n]])) {
       const cover = page.locator(".bm-folder", { hasText: name }).locator(".bm-empty-cover");
       const said = (await cover.textContent().catch(() => "")).replace(/\s+/g, " ").trim();
       expect(`${w}: the empty ${name} folder says how it gets filled`, said.includes(hint), said);
@@ -698,24 +921,25 @@ try {
       /Not yet in/.test(await page.locator(".bm-sub").textContent())
       && !/Nothing/i.test(await page.locator(".bm-sub").textContent()));
     /* And every way in lands on a screen where that kind can actually be saved. */
-    for (const [name, re] of [
-      ["Questions", /\/m\/m1\/[^/]+\/quiz$/],
-      ["Study cards", /\/m\/m1\/library$/],
-      ["Videos", /\/m\/m1$/],
-      ["Pages", /\/m\/m1\/library$/],
-    ]) {
-      await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    const WAY_IN = {
+      Questions: /\/m\/m1\/[^/]+\/quiz$/,
+      "Study cards": /\/m\/m1\/library$/,
+      Videos: /\/m\/m1$/,
+      Pages: /\/m\/m1\/library$/,
+    };
+    for (const [name, re] of OFFERED.map((n) => [n, WAY_IN[n]])) {
+      await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
       await page.locator(".bm-empty-cover").first().waitFor({ timeout: 15000 });
       await page.locator(".bm-open-f", { hasText: name }).click();
       expect(`${w}: the empty ${name} folder's way in reaches a screen it can be saved on`, await lands(re), at());
     }
-    for (const slug of ["questions", "cards", "videos", "pages"]) {
-      await page.goto(`${BASE}/bookmarks/${slug}?uid=student_one&m=M1`);
+    for (const slug of OFFERED.map((n) => SLUG[n])) {
+      await page.goto(`${BASE}/bookmarks/${slug}?uid=student_one&m=${MOD}`);
       await page.locator(".bm-empty").waitFor({ timeout: 15000 });
       const line = (await page.locator(".bm-empty").textContent()).replace(/\s+/g, " ").trim();
       expect(`${w}: the empty ${slug} folder names where to save one`, /^No .+ saved yet\. Tap\s*.* to keep it here\./.test(line), line);
     }
-    await page.goto(`${BASE}/bookmarks/cards?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks/cards?uid=student_one&m=${MOD}`);
     await page.locator(".bm-empty .bm-link").waitFor({ timeout: 15000 });
     await page.locator(".bm-empty .bm-link").click();
     expect(`${w}: the Study cards empty line reaches the Library`, await lands(/\/m\/m1\/library/), at());
@@ -727,11 +951,19 @@ try {
     expect(`${w}: /settings lands on Bookmarks`, await lands(/^\/bookmarks/), at());
     await page.goto(`${BASE}/saved?uid=student_one`);
     expect(`${w}: /saved lands on Bookmarks`, await lands(/^\/bookmarks/), at());
+    /* A CARD SET THAT DOES NOT EXIST LANDS SOMEWHERE REAL. This expected a
+       "Card set not found" heading with a link out, which is what the old
+       `CardSetPage` drew; since `library.batches` went on for everybody the
+       route is `CardSession`, and a chapter that is not there sends the
+       student to the module screen instead. That satisfies the rule this
+       assertion exists for — no dead end, and a way on from where you land —
+       so it asserts the landing rather than the old wording. */
     await page.goto(`${BASE}/m/m1/library/cards/99?uid=student_one`);
-    await settle(500);
-    expect(`${w}: a card set that does not exist says so with a way back`,
-      (await page.locator(".bm-h1", { hasText: "Card set not found" }).count()) === 1
-      && (await page.locator(".bm-empty .bm-link").count()) === 1);
+    await settle(800);
+    expect(`${w}: a card set that does not exist lands on a screen with a way on`,
+      await lands(/^\/m\/m1$/), at());
+    expect(`${w}: and that screen offers its own way back`,
+      (await page.locator("a,button").filter({ hasText: "Flight Deck" }).count()) >= 1);
 
     await page.close();
   }
@@ -753,9 +985,11 @@ try {
     const settle = (ms = 400) => page.waitForTimeout(ms);
 
     /* 1 · offline. The store refuses rather than pretending, and says which. */
-    /* Chapter 3's paper, because the seed saves chapter 1's first five — and a
-       bookmark pressed on one of those would be testing a REMOVE. */
-    await page.goto(`${BASE}/m/m1/M1.03/quiz?uid=student_one`);
+    /* A chapter the seed does not touch, because the seed saves the first
+       chapter's first five questions — and a bookmark pressed on one of those
+       would be testing a REMOVE. Derived, not named: this read `M1.03` until
+       2026-10-13, and that chapter has not existed since 2026-10-08. */
+    await page.goto(`${BASE}/m/m1/${FIX.freeCh.c.id}/quiz?uid=student_one`);
     await page.locator(".exam-save").waitFor({ timeout: 15000 });
     want("the question under test starts unsaved",
       (await page.locator(".exam-save").getAttribute("aria-pressed")) === "false");
@@ -772,7 +1006,7 @@ try {
     /* 2 · a save made in one tab is there in another after a refresh. Live sync
        is backlog item 3; what must be true today is that it is on the SERVER. */
     const second = await ctx.newPage();
-    await second.goto(`${BASE}/bookmarks/questions?uid=student_one&m=M1`);
+    await second.goto(`${BASE}/bookmarks/questions?uid=student_one&m=${MOD}`);
     await second.locator(".bm-row").first().waitFor({ timeout: 15000 });
     const firstCount = await second.locator(".bm-row").count();
     await page.locator(".exam-save").click();
@@ -787,10 +1021,11 @@ try {
        the check that the app actually applies it. */
     await page.goto(`${BASE}/bookmarks?uid=student_two`);
     await page.locator(".bm-folders").first().waitFor({ timeout: 15000 });
-    /* The four folders are there — empty is a designed state now — so what
-       proves it is that every one of them is EMPTY, and the count is gone. */
+    /* Every folder the app offers is there — empty is a designed state now —
+       so what proves it is that every one of them is EMPTY, and the count is
+       gone. The number is the app's, not four: papers are off for launch. */
     want("a different student sees none of the first one's saves",
-      (await page.locator(".bm-empty-cover").count()) === 4
+      (await page.locator(".bm-empty-cover").count()) === OFFERED.length
       && (await page.locator(".bm-fplay").count()) === 0
       && /Not yet in/.test(await page.locator(".bm-sub").textContent()));
 
@@ -802,7 +1037,7 @@ try {
       headers: { "content-type": "application/json", Prefer: "return=representation,resolution=merge-duplicates" },
       body: JSON.stringify({ id: crypto.randomUUID(), user_id: "student_one", module_id: "M1", kind: "question", ref_id: "q_deleted_by_author", chapter: 1 }),
     });
-    await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks/questions?uid=student_one&m=${MOD}`);
     await page.locator(".bm-row").first().waitFor({ timeout: 15000 });
     await settle(900);
     const left = await page.evaluate(async (base) =>
@@ -817,13 +1052,13 @@ try {
        saved it, and the designed empty state says so. */
     await page.goto(`${BASE}/bookmarks?uid=none`);
     await page.locator(".bm-folders").waitFor({ timeout: 15000 }).catch(() => {});
-    want("signed out, Bookmarks shows its four folders rather than waiting for ever",
-      (await page.locator(".bm-empty-cover").count()) === 4
+    want("signed out, Bookmarks shows its folders rather than waiting for ever",
+      (await page.locator(".bm-empty-cover").count()) === OFFERED.length
       && (await page.locator('.bm-page[aria-busy="true"]').count()) === 0,
       `covers=${await page.locator(".bm-empty-cover").count()} busy=${await page.locator('.bm-page[aria-busy="true"]').count()}`);
 
     /* 5 · keyboard only. Every control reachable, focus visible, Esc closes. */
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
     await page.locator(".bm-folders .bm-folder").first().waitFor({ timeout: 15000 });
     let reached = 0, outlined = 0;
     for (let i = 0; i < 24; i++) {
@@ -854,8 +1089,8 @@ try {
     { const g = page.goto.bind(page); page.goto = (u, o) => g(u, { waitUntil: "domcontentloaded", ...o }); }
     page.on("pageerror", (e) => errors.push(`calm: ${String(e).slice(0, 160)}`));
     for (const [url, wait] of [
-      [`${BASE}/bookmarks?uid=student_one&m=M1`, ".bm-folders .bm-folder"],
-      [`${BASE}/bookmarks/cards?uid=student_one&m=M1`, ".bm-pad .bm-pc"],
+      [`${BASE}/bookmarks?uid=student_one&m=${MOD}`, ".bm-folders .bm-folder"],
+      [`${BASE}/bookmarks/cards?uid=student_one&m=${MOD}`, ".bm-pad .bm-pc"],
       [`${BASE}/?uid=student_one`, ".bm-bagcell .bm-bag"],
     ]) {
       await page.goto(url);
@@ -865,7 +1100,7 @@ try {
     }
     /* And it still WORKS: the covers stay on the newest item rather than
        freezing mid-slide, and the pad still turns. */
-    await page.goto(`${BASE}/bookmarks?uid=student_one&m=M1`);
+    await page.goto(`${BASE}/bookmarks?uid=student_one&m=${MOD}`);
     await page.locator(".bm-folders .bm-folder").first().waitFor({ timeout: 15000 });
     await page.waitForTimeout(600);
     const onNewest = await page.evaluate(() =>

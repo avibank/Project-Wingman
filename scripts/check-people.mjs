@@ -223,18 +223,40 @@ ok("count", "there is no count RPC beside it for a screen to reach for",
     block.length > 200 && counted.length === 0, counted.join(" "));
 }
 
-/* -------------------------------------- 8 · the window between deploy and migration
-   The bundle ships on merge and 0041 is run by hand afterwards, so for a
-   while this client asks 0032's function, which returns `display_name` and
-   no `callsign`. Without the fallback every result row draws an undefined
-   name and the existing search looks broken to a class. */
-console.log("\nwhile the deploy is ahead of the database");
+/* ------------------------------------- 8 · nothing reads the old column name
+   0041 RENAMED `display_name` TO `callsign`, and renaming a column the client
+   reads is only half done when the SQL lands. `searchPeople` carried a
+   `compat` fallback for the window between the deploy and the migration; 0041
+   and 0043 have both run everywhere, so it is deleted — and deleting it is
+   what turned up the half that had been missed for a day.
+
+   ReadyRoom's `onProfile` still built its row as `callsign: row.display_name`.
+   Rows from people_search and people_browse have no such column any more, so
+   every profile opened from the People list or from a search result arrived
+   with `callsign: undefined` and PilotSheet drew its "This pilot" fallback —
+   a live, visible bug that no suite was watching, because the three that walk
+   this screen are all outside `npm run check`.
+
+   So the rule is now the opposite of the old one: a people row is read by its
+   CALLSIGN, and `display_name` must not appear on either side of this path.
+   The column still exists on presence, copilot_sessions and partners, which is
+   why this is scoped to these two files rather than grepped for repo-wide. */
+console.log("\nthe people row is read by its callsign");
 {
-  const src = readFileSync(new URL("../src/lib/discovery.js", import.meta.url), "utf8");
-  ok("compat", "a row from the OLD function still has a callsign to draw",
-    /callsign:\s*r\?\.display_name/.test(src) && /\.map\(compat\)/.test(src));
-  ok("compat", "and the browse list fails to an empty one rather than throwing",
-    /people_browse[\s\S]{0,200}fail\(error, \[\]\)/.test(src));
+  const disc = readFileSync(new URL("../src/lib/discovery.js", import.meta.url), "utf8");
+  ok("name", "discovery.js names no display_name at all",
+    !/display_name/.test(disc));
+  ok("name", "and the compat fallback for the old function is gone",
+    !/compat/.test(disc));
+
+  const room = readFileSync(new URL("../src/components/room/ReadyRoom.jsx", import.meta.url), "utf8");
+  const onProfile = room.slice(room.indexOf("onProfile={"), room.indexOf("onProfile={") + 700);
+  ok("name", "a profile opened from a people row is given row.callsign",
+    /callsign:\s*row\.callsign/.test(onProfile), onProfile.slice(0, 120));
+  ok("name", "and never row.display_name",
+    !/row\.display_name/.test(onProfile));
+  ok("name", "the real name is not passed through the rail",
+    !/real_name/.test(onProfile));
 }
 
 console.log(`\npeople: ${pass} passed, ${fails.length} failed`);
