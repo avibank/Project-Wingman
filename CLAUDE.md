@@ -965,15 +965,35 @@ because a check that flagged `enable row level security`, `replica identity
 full`, `grant` or `alter function … set search_path` would be noise. 14
 assertions now.
 
-- **All three were found one at a time, each only after fixing the one in
-  front of it.** Every fix moved the failure further down the series rather
-  than clearing it, and none of the three is visible by reading any single
-  migration — the first needs the branch's leftover state, the second needs two
-  files compared, the third needs to know that one `alter` is not a no-op.
-  That is why they are assertions rather than paragraphs, and why the fourth
-  class was audited instead of waited for.
+**AND A FOURTH, WHICH WAS NOT A STATEMENT AT ALL BUT A CLAIM GOING STALE.** The
+run then reached 0026's own proof block and raised
+`0026: something can list chat-attachments, and nothing should`. Several
+migrations end in a do-block proving they took; most assert the PRESENCE of
+their own objects, which no later file can falsify. **0026's asserted an
+ABSENCE** — that nothing may list that bucket — and **0031 reversed exactly
+that, deliberately and at length**: Supabase's storage API uploads with
+`x-upsert: true`, which LOOKS FIRST, so with no select policy every attachment
+upload failed with a 403 naming INSERT. So 0026's flat zero has been false by
+design since 2026-09-19, and only a replay ever ran it again. It excludes
+0031's policy by name now and still asserts that no OTHER reader appeared —
+read 0031's header before touching it. Every other absence-proof in the series
+was checked and none is stale.
 
-- **`npm run check:migrations` is 14 assertions and IS in `npm run check`**,
+- **ALL FOUR WERE FOUND ONE AT A TIME, each only after fixing the one in front
+  of it.** Every fix moved the failure further down the series rather than
+  clearing it, which is the thing to expect of this kind of work rather than to
+  be surprised by. None of the four is visible by reading any single migration:
+  the first needs the branch's leftover state, the second needs two files
+  compared, the third needs to know that one `alter` is not a no-op, and the
+  fourth needs to know that a later file withdrew an earlier file's claim. That
+  is why they are assertions now rather than paragraphs — and after the third,
+  the remaining statement classes were audited in one pass instead of waiting
+  for CI to name a fifth.
+- **The limit is stated rather than glossed**: a proof block can assert
+  anything, so `check:migrations` only partly reaches that last class. The
+  preview run itself is the real test of the series.
+
+- **`npm run check:migrations` is 15 assertions and IS in `npm run check`**,
   because it reads the SQL and needs no credentials. It holds all 36 policies
   and every other DDL statement, every one of the 91 overloads against the
   last definition of its own shape, that only `NNNN_`-prefixed files live in
