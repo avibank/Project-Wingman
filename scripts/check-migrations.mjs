@@ -252,6 +252,51 @@ ok("every `insert` tolerates the row already being there",
   !hazards.some((h) => h.includes("insert")),
   hazards.filter((h) => h.includes("insert")).join("; "));
 
+/* --------------------------------------- a proof that asserts an ABSENCE */
+/* THE FOURTH CAUSE WAS NOT A STATEMENT AT ALL, IT WAS A CLAIM GOING STALE.
+   Several migrations end in a do-block that proves they took. Most assert the
+   PRESENCE of their own objects, which no later file can falsify. 0026's
+   asserted an absence — that nothing may list the chat-attachments bucket —
+   and 0031 reversed exactly that, deliberately and with a long argument: an
+   `x-upsert` upload looks first, so with no select policy every attachment
+   upload failed with a 403 naming INSERT. The claim has been false by design
+   since 2026-09-19 and only a replay ever ran it again.
+
+   So: for every proof asserting that nothing may list a bucket, no LATER
+   migration may open that bucket for select unless the proof excludes the
+   policy by name. This is the one of the four causes that a static check can
+   only partly reach — a proof can assert anything — so the preview run itself
+   remains the real test of the series. */
+const proofs = [];
+for (const f of numbered) {
+  const txt = readFileSync(`${dir}/${f}`, "utf8");
+  const re = /cmd\s*=\s*'SELECT'[\s\S]{0,240}?qual ilike '%([\w-]+)%'([\s\S]{0,200}?);/g;
+  let m;
+  while ((m = re.exec(txt))) {
+    proofs.push({ f, bucket: m[1], excluded: /policyname\s*(<>|not in)/i.test(m[2]) });
+  }
+}
+const opened = new Map();
+for (const f of numbered) {
+  const txt = readFileSync(`${dir}/${f}`, "utf8");
+  const re = /create policy\s+(\w+)[\s\S]{0,240}?for select[\s\S]{0,240}?bucket_id\s*=\s*'([\w-]+)'/gi;
+  let m;
+  while ((m = re.exec(txt))) {
+    if (!opened.has(m[2])) opened.set(m[2], []);
+    opened.get(m[2]).push({ f, policy: m[1] });
+  }
+}
+const stale = [];
+for (const p of proofs) {
+  const after = (opened.get(p.bucket) || []).filter((o) => o.f > p.f);
+  if (after.length && !p.excluded) {
+    stale.push(`${p.f} forbids listing '${p.bucket}', opened by ${after.map((o) => `${o.f}:${o.policy}`).join(", ")}`);
+  }
+}
+console.log("\nno proof asserts an absence a later migration creates");
+ok(`${proofs.length} bucket-listing proof${proofs.length === 1 ? "" : "s"}, none stale`,
+  stale.length === 0, stale.join("; "));
+
 /* ------------------------------------------------------------------- bundle */
 /* THE BUNDLES GO STALE SILENTLY, AND BOTH HAVE. ALL.sql sat at 0013 while the
    series had reached 0042, and it was still missing 0043 when this check was

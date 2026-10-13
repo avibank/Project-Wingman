@@ -2745,8 +2745,11 @@ begin
 
   select count(*) into n from pg_policies
    where schemaname = 'storage' and tablename = 'objects' and cmd = 'SELECT'
-     and qual ilike '%chat-attachments%';
-  if n <> 0 then raise exception '0026: something can list chat-attachments, and nothing should'; end if;
+     and qual ilike '%chat-attachments%'
+     and policyname <> 'chat_attachments_read';
+  if n <> 0 then
+    raise exception '0026: something other than 0031''s reader can list chat-attachments';
+  end if;
 
   if has_table_privilege('anon', 'message_attachments', 'INSERT') then
     raise exception '0026: anon can write message_attachments directly';
