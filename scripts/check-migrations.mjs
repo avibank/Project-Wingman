@@ -102,6 +102,98 @@ for (const [kind] of KINDS) {
 ok("nothing in the series would fail on a second run",
   unguarded.length === 0, `${unguarded.length} unguarded`);
 
+/* --------------------------------------------------- functions that are widened */
+/* `create or replace function` CANNOT CHANGE A RETURN TYPE. That is the second
+   way this series stopped being replayable, and it is invisible in any one
+   file: 0011 defines people_search returning four columns, 0041 and 0043 widen
+   it to sixteen, and replaying 0011 against a database holding the final shape
+   fails with 42P13. Seven definitions across the series were in that state.
+
+   So the rule is per OVERLOAD — name plus argument types, since a different
+   argument list is a different function and not affected — and it compares
+   each definition's return shape against the LAST definition of that overload,
+   which is what a replayed database is holding. Trigger functions return
+   `trigger` everywhere, so they never differ and are never asked to be dropped
+   (they could not be, without cascading through the trigger that uses them). */
+const ALIAS = {
+  int: "integer", int4: "integer", int8: "bigint", int2: "smallint",
+  bool: "boolean", float4: "real", float8: "double precision",
+  timestamptz: "timestamp with time zone", varchar: "character varying",
+  decimal: "numeric",
+};
+const nt = (s) => {
+  const k = s.trim().toLowerCase().replace(/\s+/g, " ");
+  return ALIAS[k] || k;
+};
+const stripSql = (s) => s.replace(/--[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+const splitTop = (s) => {
+  const out = []; let dep = 0, cur = "";
+  for (const ch of s) {
+    if (ch === "(") dep += 1;
+    else if (ch === ")") dep -= 1;
+    if (ch === "," && dep === 0) { out.push(cur); cur = ""; } else cur += ch;
+  }
+  if (cur.trim()) out.push(cur);
+  return out.map((x) => x.trim()).filter(Boolean);
+};
+const typeOf = (prm) => {
+  const p = prm.replace(/\s+default\s+[\s\S]*$/i, "").replace(/^(in|out|inout|variadic)\s+/i, "").trim();
+  const toks = p.split(/\s+/);
+  return nt(toks.length > 1 ? toks.slice(1).join(" ") : p);
+};
+const shapeOf = (ret) => {
+  const r = stripSql(ret).trim();
+  const m = r.match(/^table\s*\(([\s\S]*)\)$/i);
+  if (!m) return nt(r);
+  return `table(${splitTop(m[1]).map((c) => {
+    const toks = c.split(/\s+/);
+    return nt(toks.length > 1 ? toks.slice(1).join(" ") : c);
+  }).join(",")})`;
+};
+
+const overloads = new Map();
+for (const f of numbered) {
+  const txt = readFileSync(`${dir}/${f}`, "utf8");
+  const re = /^[ \t]*create (or replace )?function\s+([\w.]+)\s*\(/gm;
+  let m;
+  while ((m = re.exec(txt))) {
+    const name = m[2].split(".").pop();
+    let i = txt.indexOf("(", m.index + m[0].length - 1), dep = 0, j = i;
+    for (; j < txt.length; j += 1) {
+      if (txt[j] === "(") dep += 1;
+      else if (txt[j] === ")") { dep -= 1; if (dep === 0) break; }
+    }
+    const types = splitTop(stripSql(txt.slice(i + 1, j))).map(typeOf);
+    const tail = txt.slice(j + 1, j + 4000);
+    const rm = tail.match(
+      /\breturns\s+(table\s*\([\s\S]*?\)|setof\s+[\w.[\]]+|[\w.[\]]+)\s*(?:language|as\b|stable|immutable|volatile|security|set\s)/i);
+    const key = `${name}(${types.join(",")})`;
+    const dropped = new RegExp(`drop function if exists\\s+${name}\\b`, "i")
+      .test(txt.slice(0, m.index));
+    if (!overloads.has(key)) overloads.set(key, []);
+    overloads.get(key).push({
+      f, line: txt.slice(0, m.index).split("\n").length,
+      shape: rm ? shapeOf(rm[1]) : "?", dropped,
+    });
+  }
+}
+
+const widened = [];
+let multi = 0;
+for (const [key, rows] of overloads) {
+  if (rows.length < 2) continue;
+  multi += 1;
+  const final = rows.at(-1).shape;
+  for (const r of rows.slice(0, -1)) {
+    if (r.shape !== final && !r.dropped) widened.push(`${r.f}:${r.line} ${key}`);
+  }
+}
+
+console.log("\na function the series widens is dropped before it is redefined");
+ok(`${overloads.size} overloads, ${multi} of them defined more than once`, overloads.size > 0);
+ok("no definition would hit 42P13 on a replay",
+  widened.length === 0, widened.join("; "));
+
 /* ------------------------------------------------------------------- bundle */
 /* THE BUNDLES GO STALE SILENTLY, AND BOTH HAVE. ALL.sql sat at 0013 while the
    series had reached 0042, and it was still missing 0043 when this check was

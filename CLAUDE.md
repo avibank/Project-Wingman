@@ -936,11 +936,35 @@ and those four ARE the boundary 0009 exists to draw. Nothing else in the series
 was ever exposed: tables, indexes, triggers, types and functions were all
 already guarded, measured rather than assumed.
 
-- **`npm run check:migrations` is 8 assertions and IS in `npm run check`**,
+**AND THEN IT FAILED FURTHER ALONG, ON A SECOND CAUSE OF THE SAME KIND.** With
+the policies fixed the run got as far as 0011 and stopped with
+`cannot change return type of existing function (SQLSTATE 42P13)`:
+**`create or replace function` cannot change what a function returns**, and
+this series widens functions freely — `people_search` goes from four columns in
+0011 to sixteen in 0043, `licence_card` from 21 to 28, and `quiz_finishers`,
+`squadron_roster`, `paper_marks_for` and `people_browse` all grow too. Replaying
+an early file against a database holding the final shape therefore cannot work
+unless the function is dropped first. **Seven definitions needed that and did
+not have it.** The rule is per OVERLOAD — a different argument list is a
+different function, which is why 0014's `paper_annotation_status(uuid, text)`
+returning `void` is NOT a problem beside 0023's three-argument one returning
+`boolean` — and trigger functions are exempt by construction, since they return
+`trigger` everywhere and could not be dropped without cascading through the
+trigger that uses them.
+
+- **The two causes were found one at a time, and that is worth saying.** Fixing
+  the policies did not make the preview green; it made it fail somewhere else,
+  on a different error, in a different file. Neither cause is visible by
+  reading any single migration — the first needs the branch's leftover state,
+  the second needs two files compared — which is why both are now assertions
+  rather than paragraphs.
+
+- **`npm run check:migrations` is 11 assertions and IS in `npm run check`**,
   because it reads the SQL and needs no credentials. It holds all 36 policies
-  and every other DDL statement, that only `NNNN_`-prefixed files live in the
-  migrations directory, and that **`supabase/ALL.sql` is byte-for-byte what the
-  generator would write** — that bundle sat at 0013 while the series had
+  and every other DDL statement, every one of the 91 overloads against the
+  last definition of its own shape, that only `NNNN_`-prefixed files live in
+  the migrations directory, and that **both bundles are byte-for-byte what
+  their generators would write** — that bundle sat at 0013 while the series had
   reached 0042, and a stale bundle goes stale silently. Proved by planting all
   three bugs back: each one fails it, restored it passes.
 

@@ -159,6 +159,9 @@ $$;
 --
 -- When it is convenient, and with nothing calling it:
 --   drop function if exists paper_annotations_for(text, text, timestamptz);
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists paper_marks_for(text, text, timestamptz);
 create or replace function paper_marks_for(uid text, p_paper text, p_since timestamptz default null)
 returns table (
   id uuid, paper_id text, module_code text, paper_version int,

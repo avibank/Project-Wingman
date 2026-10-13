@@ -26,6 +26,9 @@
 -- board's: a stamp is who signed it, not a snapshot of a night's run.
 -- =============================================================================
 
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists quiz_finishers(text, text[], integer);
 create or replace function quiz_finishers(uid text, p_quizzes text[], p_cap integer default 11)
 returns table (
   quiz_id         text,
