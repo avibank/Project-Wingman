@@ -952,14 +952,28 @@ returning `void` is NOT a problem beside 0023's three-argument one returning
 `trigger` everywhere and could not be dropped without cascading through the
 trigger that uses them.
 
-- **The two causes were found one at a time, and that is worth saying.** Fixing
-  the policies did not make the preview green; it made it fail somewhere else,
-  on a different error, in a different file. Neither cause is visible by
-  reading any single migration — the first needs the branch's leftover state,
-  the second needs two files compared — which is why both are now assertions
-  rather than paragraphs.
+**AND A THIRD, THE SAME SHAPE AGAIN.** With the functions fixed the run reached
+0015 and stopped on
+`relation "lesson_threads" is already member of publication "supabase_realtime"`:
+**adding a table to a publication twice is an error, not a no-op.** Its three
+statements are wrapped in the `duplicate_object` idiom now. At that point the
+remaining classes were audited rather than waited for — `add constraint` (nine,
+all already dropped first, one of them by 0017's loop over `pg_constraint`
+rather than by name) and `insert into` (five, all carrying `on conflict`) — and
+the classes PostgreSQL makes no-ops on repeat are deliberately not asserted,
+because a check that flagged `enable row level security`, `replica identity
+full`, `grant` or `alter function … set search_path` would be noise. 14
+assertions now.
 
-- **`npm run check:migrations` is 11 assertions and IS in `npm run check`**,
+- **All three were found one at a time, each only after fixing the one in
+  front of it.** Every fix moved the failure further down the series rather
+  than clearing it, and none of the three is visible by reading any single
+  migration — the first needs the branch's leftover state, the second needs two
+  files compared, the third needs to know that one `alter` is not a no-op.
+  That is why they are assertions rather than paragraphs, and why the fourth
+  class was audited instead of waited for.
+
+- **`npm run check:migrations` is 14 assertions and IS in `npm run check`**,
   because it reads the SQL and needs no credentials. It holds all 36 policies
   and every other DDL statement, every one of the 91 overloads against the
   last definition of its own shape, that only `NNNN_`-prefixed files live in

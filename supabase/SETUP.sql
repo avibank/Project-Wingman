@@ -1235,9 +1235,15 @@ $$;
 
 -- 0015_live_updates.sql
 
-alter publication supabase_realtime add table lesson_threads;
-alter publication supabase_realtime add table lesson_replies;
-alter publication supabase_realtime add table comms_messages;
+do $$ begin
+  alter publication supabase_realtime add table lesson_threads;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table lesson_replies;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table comms_messages;
+exception when duplicate_object then null; end $$;
 
 alter table lesson_threads  replica identity full;
 alter table lesson_replies  replica identity full;
