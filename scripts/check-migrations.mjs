@@ -194,6 +194,64 @@ ok(`${overloads.size} overloads, ${multi} of them defined more than once`, overl
 ok("no definition would hit 42P13 on a replay",
   widened.length === 0, widened.join("; "));
 
+/* ------------------------------------------- the other ways a replay can die */
+/* THREE CAUSES, FOUND ONE AT A TIME, EACH ONLY AFTER FIXING THE ONE IN FRONT.
+   Policies, then function return types, then this. So the rest of the classes
+   are asserted here rather than waiting for a fourth CI run to name one:
+
+     - `alter publication … add table` is an ERROR the second time, not a
+       no-op (42710). 0015's three were the third cause.
+     - `add constraint` fails if the name is taken. Every one in the series is
+       dropped first — by name, or by 0017's loop over pg_constraint, which is
+       why a nearby dynamic `drop constraint` counts.
+     - a bare `insert into` can violate a unique index on a replay. All five
+       carry `on conflict`.
+
+   Classes deliberately NOT asserted, because PostgreSQL makes them no-ops on
+   repeat and a check that flagged them would be noise: `enable row level
+   security`, `replica identity full`, `enable`/`disable trigger`, `grant`,
+   `revoke`, and `alter function … set search_path`. */
+const hazards = [];
+for (const f of numbered) {
+  const txt = readFileSync(`${dir}/${f}`, "utf8");
+  const lines = txt.split("\n");
+  let inDollar = false;
+  lines.forEach((ln, i) => {
+    const top = !inDollar && /^[a-z]/.test(ln) && !/^\s*--/.test(ln);
+    if ((ln.match(/\$\$/g) || []).length % 2 === 1) inDollar = !inDollar;
+    if (!top) return;
+    const at = `${f}:${i + 1}`;
+    const before = lines.slice(0, i).join("\n");
+    const near = before.slice(-900);
+
+    const pub = ln.match(/^alter publication\s+\S+\s+add table\s+([\w.]+)/i);
+    if (pub) hazards.push(`${at} publication add ${pub[1]} (needs a duplicate_object guard)`);
+
+    const con = ln.match(/^alter table\s+(?:only\s+)?[\w.]+\s+add constraint\s+(\w+)/i);
+    if (con) {
+      const byName = new RegExp(`drop constraint if exists\\s+${con[1]}\\b`, "i").test(before);
+      const dynamic = /drop constraint/i.test(near) && /pg_constraint|execute format/i.test(near);
+      if (!byName && !dynamic) hazards.push(`${at} add constraint ${con[1]} (not dropped first)`);
+    }
+
+    if (/^insert into\s/i.test(ln)) {
+      const stmt = txt.slice(txt.indexOf(ln), txt.indexOf(ln) + 1500).split(";")[0];
+      if (!/on conflict|where not exists/i.test(stmt))
+        hazards.push(`${at} insert with no conflict guard`);
+    }
+  });
+}
+console.log("\nand the other ways a replay can die");
+ok("no `alter publication … add table` is unguarded",
+  !hazards.some((h) => h.includes("publication")),
+  hazards.filter((h) => h.includes("publication")).join("; "));
+ok("every `add constraint` is dropped first",
+  !hazards.some((h) => h.includes("add constraint")),
+  hazards.filter((h) => h.includes("add constraint")).join("; "));
+ok("every `insert` tolerates the row already being there",
+  !hazards.some((h) => h.includes("insert")),
+  hazards.filter((h) => h.includes("insert")).join("; "));
+
 /* ------------------------------------------------------------------- bundle */
 /* THE BUNDLES GO STALE SILENTLY, AND BOTH HAVE. ALL.sql sat at 0013 while the
    series had reached 0042, and it was still missing 0043 when this check was

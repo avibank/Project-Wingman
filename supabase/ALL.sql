@@ -1834,9 +1834,25 @@ $$;
 -- Without it a delete arrives as a bare primary key, and a client that cannot
 -- tell which module a deleted thread belonged to has to refetch all of them.
 
-alter publication supabase_realtime add table lesson_threads;
-alter publication supabase_realtime add table lesson_replies;
-alter publication supabase_realtime add table comms_messages;
+-- ADDING A TABLE TO A PUBLICATION TWICE IS AN ERROR, not a no-op, so each one
+-- is guarded. This is the THIRD thing that stopped Supabase's preview CI from
+-- replaying the series, found the same way as the other two — by fixing the
+-- one in front of it and reading how much further the run got:
+--
+--   ERROR: relation "lesson_threads" is already member of publication
+--          "supabase_realtime" (SQLSTATE 42710)
+--
+-- `duplicate_object` is the condition that covers it, which is the same idiom
+-- 0022 and 0027 already use for a policy. `check:migrations` holds it.
+do $$ begin
+  alter publication supabase_realtime add table lesson_threads;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table lesson_replies;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table comms_messages;
+exception when duplicate_object then null; end $$;
 
 alter table lesson_threads  replica identity full;
 alter table lesson_replies  replica identity full;
