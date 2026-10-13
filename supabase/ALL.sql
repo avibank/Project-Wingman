@@ -2022,8 +2022,14 @@ begin
     execute format('alter table paper_annotations drop constraint %I', c);
   end loop;
 end $$;
-alter table paper_annotations add constraint paper_annotations_kind_check
-  check (kind in ('highlight','underline','strikethrough','note','question','correction'));
+-- SUPERSEDED BY 0018 AND 0020, WHICH ADD four more kinds. Adding a constraint
+-- validates the existing rows, so on a replay a `shape` or `stamp` annotation
+-- — legal since 0020 — cannot satisfy this narrower list. Skipped in that case;
+-- 0020 adds the final list. See 0035 for the argument.
+do $$ begin
+  alter table paper_annotations add constraint paper_annotations_kind_check
+    check (kind in ('highlight','underline','strikethrough','note','question','correction'));
+exception when check_violation then null; end $$;
 
 -- ------------------------------------------------------------------ 3. ink
 create table if not exists paper_ink (
@@ -2221,9 +2227,14 @@ alter table paper_annotations add column if not exists style jsonb;
 -- §5.1 — the remaining kinds. `ink` is deliberately absent: strokes live in
 -- paper_ink, which has no anchor column, for the reason 0017's header gives.
 alter table paper_annotations drop constraint if exists paper_annotations_kind_check;
-alter table paper_annotations add constraint paper_annotations_kind_check
-  check (kind in ('highlight','underline','strikethrough','note','question',
-                  'correction','shape','text','stamp'));
+-- Superseded by a later migration that re-adds this constraint. Adding one
+-- validates the existing rows, so a replay can fail here on data that satisfies
+-- only the LAST version. Skipped in that case (see 0035's note).
+do $$ begin
+  alter table paper_annotations add constraint paper_annotations_kind_check
+    check (kind in ('highlight','underline','strikethrough','note','question',
+                    'correction','shape','text','stamp'));
+exception when check_violation then null; end $$;
 
 -- ---------------------------------------------------------------------------
 -- 3. THE ROUND TRIP (brief §14)
@@ -5540,8 +5551,21 @@ end $$;
 -- =============================================================================
 
 alter table pilot_profiles drop constraint if exists pilot_code_shape;
-alter table pilot_profiles
-  add constraint pilot_code_shape check (code is null or code ~ '^[A-Z0-9]{3}$');
+-- SUPERSEDED BY 0039, WHICH WIDENS THIS TO ONE-TO-THREE CHARACTERS — so on a
+-- replay the rows already satisfy 0039 and CANNOT satisfy this, and adding a
+-- constraint VALIDATES the existing rows:
+--
+--   ERROR: check constraint "pilot_code_shape" of relation "pilot_profiles"
+--          is violated by some row (SQLSTATE 23514)
+--
+-- Two accounts hold a code shorter than three (0039's own note). A narrowing
+-- cannot be replayed over data a later migration widened, so this one is
+-- skipped when that happens and 0039 adds the correct shape a few files later.
+-- On a fresh database there are no rows to violate and nothing is skipped.
+do $$ begin
+  alter table pilot_profiles
+    add constraint pilot_code_shape check (code is null or code ~ '^[A-Z0-9]{3}$');
+exception when check_violation then null; end $$;
 
 create or replace function claim_code(uid text, want text)
 returns text
@@ -5684,9 +5708,14 @@ end $$;
 -- =============================================================================
 
 alter table pilot_profiles drop constraint if exists stamp_shape_known;
-alter table pilot_profiles add constraint stamp_shape_known
-  check (stamp_shape is null or stamp_shape in
-    ('seal','roundel','window','gauge','postage','tag','shield','hex'));
+-- Superseded by a later migration that re-adds this constraint. Adding one
+-- validates the existing rows, so a replay can fail here on data that satisfies
+-- only the LAST version. Skipped in that case (see 0035's note).
+do $$ begin
+  alter table pilot_profiles add constraint stamp_shape_known
+    check (stamp_shape is null or stamp_shape in
+      ('seal','roundel','window','gauge','postage','tag','shield','hex'));
+exception when check_violation then null; end $$;
 
 alter table pilot_profiles drop constraint if exists stamp_pattern_known;
 alter table pilot_profiles add constraint stamp_pattern_known

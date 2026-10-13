@@ -32,9 +32,14 @@
 -- =============================================================================
 
 alter table pilot_profiles drop constraint if exists stamp_shape_known;
-alter table pilot_profiles add constraint stamp_shape_known
-  check (stamp_shape is null or stamp_shape in
-    ('seal','roundel','window','gauge','postage','tag','shield','hex'));
+-- Superseded by a later migration that re-adds this constraint. Adding one
+-- validates the existing rows, so a replay can fail here on data that satisfies
+-- only the LAST version. Skipped in that case (see 0035's note).
+do $$ begin
+  alter table pilot_profiles add constraint stamp_shape_known
+    check (stamp_shape is null or stamp_shape in
+      ('seal','roundel','window','gauge','postage','tag','shield','hex'));
+exception when check_violation then null; end $$;
 
 alter table pilot_profiles drop constraint if exists stamp_pattern_known;
 alter table pilot_profiles add constraint stamp_pattern_known

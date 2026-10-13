@@ -1334,8 +1334,10 @@ begin
     execute format('alter table paper_annotations drop constraint %I', c);
   end loop;
 end $$;
-alter table paper_annotations add constraint paper_annotations_kind_check
-  check (kind in ('highlight','underline','strikethrough','note','question','correction'));
+do $$ begin
+  alter table paper_annotations add constraint paper_annotations_kind_check
+    check (kind in ('highlight','underline','strikethrough','note','question','correction'));
+exception when check_violation then null; end $$;
 
 create table if not exists paper_ink (
   id             uuid primary key default gen_random_uuid(),
@@ -1460,9 +1462,11 @@ create index if not exists paper_annotations_tomb on paper_annotations (paper_id
 alter table paper_annotations add column if not exists style jsonb;
 
 alter table paper_annotations drop constraint if exists paper_annotations_kind_check;
-alter table paper_annotations add constraint paper_annotations_kind_check
-  check (kind in ('highlight','underline','strikethrough','note','question',
-                  'correction','shape','text','stamp'));
+do $$ begin
+  alter table paper_annotations add constraint paper_annotations_kind_check
+    check (kind in ('highlight','underline','strikethrough','note','question',
+                    'correction','shape','text','stamp'));
+exception when check_violation then null; end $$;
 
 alter table lesson_threads add column if not exists paper_id text;
 alter table lesson_threads add column if not exists page int;
@@ -3505,8 +3509,10 @@ end $$;
 -- 0035_the_code_is_the_stamp.sql
 
 alter table pilot_profiles drop constraint if exists pilot_code_shape;
-alter table pilot_profiles
-  add constraint pilot_code_shape check (code is null or code ~ '^[A-Z0-9]{3}$');
+do $$ begin
+  alter table pilot_profiles
+    add constraint pilot_code_shape check (code is null or code ~ '^[A-Z0-9]{3}$');
+exception when check_violation then null; end $$;
 
 create or replace function claim_code(uid text, want text)
 returns text
@@ -3611,9 +3617,11 @@ end $$;
 -- 0036_the_stamp_engine_of_20_september.sql
 
 alter table pilot_profiles drop constraint if exists stamp_shape_known;
-alter table pilot_profiles add constraint stamp_shape_known
-  check (stamp_shape is null or stamp_shape in
-    ('seal','roundel','window','gauge','postage','tag','shield','hex'));
+do $$ begin
+  alter table pilot_profiles add constraint stamp_shape_known
+    check (stamp_shape is null or stamp_shape in
+      ('seal','roundel','window','gauge','postage','tag','shield','hex'));
+exception when check_violation then null; end $$;
 
 alter table pilot_profiles drop constraint if exists stamp_pattern_known;
 alter table pilot_profiles add constraint stamp_pattern_known
