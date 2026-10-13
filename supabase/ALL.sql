@@ -241,6 +241,9 @@ begin
 end $$;
 
 -- Squadron roster with everything the UI needs, minus anyone blocked either way.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists squadron_roster(text, uuid);
 create or replace function squadron_roster(uid text, sid uuid)
 returns table (user_id text, callsign text, livery text, marking text, is_staff boolean, joined_at timestamptz)
 language sql
@@ -1079,6 +1082,19 @@ $$;
 -- The only way the client is allowed to look a person up. Scoped by orbit,
 -- filtered by the opt-out, and blocked BOTH WAYS — blocking is symmetric and
 -- total, so neither party appears to the other, on any surface.
+-- DROPPED FIRST, BECAUSE A LATER MIGRATION CHANGES WHAT THIS RETURNS.
+-- `create or replace function` CANNOT change a return type, and 0041 and 0043
+-- widen this one (4 columns here, 16 by the end). Replaying the series against
+-- a database that already has the final shape therefore stopped dead here:
+--
+--   ERROR: cannot change return type of existing function (SQLSTATE 42P13)
+--   Row type defined by OUT parameters is different.
+--
+-- That is the SECOND cause of Supabase's preview CI being red, found only once
+-- the first was fixed and the run got this far. `check:migrations` compares
+-- every overload's return shape against the LAST definition of it in the
+-- series now, so the next widening cannot do this again.
+drop function if exists people_search(text, text);
 create or replace function people_search(p_me text, p_q text)
 returns table (user_id text, callsign text, module_code text, shares_squadron boolean)
 language sql
@@ -2086,6 +2102,9 @@ $$;
 --
 -- When it is convenient, and with nothing calling it:
 --   drop function if exists paper_annotations_for(text, text, timestamptz);
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists paper_marks_for(text, text, timestamptz);
 create or replace function paper_marks_for(uid text, p_paper text, p_since timestamptz default null)
 returns table (
   id uuid, paper_id text, module_code text, paper_version int,
@@ -4678,6 +4697,9 @@ end $$;
 -- IT RESPECTS FLY SOLO. `invisible` is that switch (0005), and a pilot who has
 -- it on is not on any card anybody opens: the function returns no row, and the
 -- viewer's screen says nothing was found rather than drawing a blank card.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists licence_card(text, text);
 create or replace function licence_card(p_viewer text, p_user text)
 returns table (
   user_id text, callsign text, real_name text, code text,
@@ -4897,6 +4919,9 @@ end $$;
 -- carries the identity_display rule. Replacing 0011's text would have changed
 -- the return type, which Postgres refuses, and would have silently undone
 -- 0012's rule if it had not.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists people_search(text, text);
 create or replace function people_search(p_me text, p_q text)
 returns table (user_id text, display_name text, module_code text, shares_squadron boolean)
 language sql
@@ -5917,6 +5942,9 @@ alter table pilot_profiles add constraint stamp_shape_known
 -- board's: a stamp is who signed it, not a snapshot of a night's run.
 -- =============================================================================
 
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists quiz_finishers(text, text[], integer);
 create or replace function quiz_finishers(uid text, p_quizzes text[], p_cap integer default 11)
 returns table (
   quiz_id         text,
@@ -6637,6 +6665,9 @@ $$;
 -- `p_since` is null by default, which is EVERYONE. It was a fortnight's
 -- activity in the first draft; "every current person" is what was asked for,
 -- and the window stays only as a knob for a class large enough to want one.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists people_browse(text, interval, integer);
 create or replace function people_browse(p_me text, p_since interval default null,
                                          p_limit integer default 400)
 returns table (

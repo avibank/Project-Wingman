@@ -224,6 +224,9 @@ begin
 end $$;
 
 -- Squadron roster with everything the UI needs, minus anyone blocked either way.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists squadron_roster(text, uuid);
 create or replace function squadron_roster(uid text, sid uuid)
 returns table (user_id text, callsign text, livery text, marking text, is_staff boolean, joined_at timestamptz)
 language sql

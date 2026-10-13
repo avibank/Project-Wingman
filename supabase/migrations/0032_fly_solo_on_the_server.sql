@@ -48,6 +48,9 @@
 -- carries the identity_display rule. Replacing 0011's text would have changed
 -- the return type, which Postgres refuses, and would have silently undone
 -- 0012's rule if it had not.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists people_search(text, text);
 create or replace function people_search(p_me text, p_q text)
 returns table (user_id text, display_name text, module_code text, shares_squadron boolean)
 language sql

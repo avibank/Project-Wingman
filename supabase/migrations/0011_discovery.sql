@@ -157,6 +157,19 @@ $$;
 -- The only way the client is allowed to look a person up. Scoped by orbit,
 -- filtered by the opt-out, and blocked BOTH WAYS — blocking is symmetric and
 -- total, so neither party appears to the other, on any surface.
+-- DROPPED FIRST, BECAUSE A LATER MIGRATION CHANGES WHAT THIS RETURNS.
+-- `create or replace function` CANNOT change a return type, and 0041 and 0043
+-- widen this one (4 columns here, 16 by the end). Replaying the series against
+-- a database that already has the final shape therefore stopped dead here:
+--
+--   ERROR: cannot change return type of existing function (SQLSTATE 42P13)
+--   Row type defined by OUT parameters is different.
+--
+-- That is the SECOND cause of Supabase's preview CI being red, found only once
+-- the first was fixed and the run got this far. `check:migrations` compares
+-- every overload's return shape against the LAST definition of it in the
+-- series now, so the next widening cannot do this again.
+drop function if exists people_search(text, text);
 create or replace function people_search(p_me text, p_q text)
 returns table (user_id text, callsign text, module_code text, shares_squadron boolean)
 language sql

@@ -210,6 +210,7 @@ begin
   return target;
 end $$;
 
+drop function if exists squadron_roster(text, uuid);
 create or replace function squadron_roster(uid text, sid uuid)
 returns table (user_id text, callsign text, livery text, marking text, is_staff boolean, joined_at timestamptz)
 language sql
@@ -693,6 +694,7 @@ as $$
   );
 $$;
 
+drop function if exists people_search(text, text);
 create or replace function people_search(p_me text, p_q text)
 returns table (user_id text, callsign text, module_code text, shares_squadron boolean)
 language sql
@@ -1388,6 +1390,7 @@ as $$
    order by k.created_at;
 $$;
 
+drop function if exists paper_marks_for(text, text, timestamptz);
 create or replace function paper_marks_for(uid text, p_paper text, p_since timestamptz default null)
 returns table (
   id uuid, paper_id text, module_code text, paper_version int,
@@ -3040,6 +3043,7 @@ begin
   end if;
 end $$;
 
+drop function if exists licence_card(text, text);
 create or replace function licence_card(p_viewer text, p_user text)
 returns table (
   user_id text, callsign text, real_name text, code text,
@@ -3129,6 +3133,7 @@ end $$;
 
 -- 0032_fly_solo_on_the_server.sql
 
+drop function if exists people_search(text, text);
 create or replace function people_search(p_me text, p_q text)
 returns table (user_id text, display_name text, module_code text, shares_squadron boolean)
 language sql
@@ -3828,6 +3833,7 @@ alter table pilot_profiles add constraint stamp_shape_known
 
 -- 0038_who_has_finished_a_quiz.sql
 
+drop function if exists quiz_finishers(text, text[], integer);
 create or replace function quiz_finishers(uid text, p_quizzes text[], p_cap integer default 11)
 returns table (
   quiz_id         text,
@@ -4322,6 +4328,7 @@ as $$
    limit 40;
 $$;
 
+drop function if exists people_browse(text, interval, integer);
 create or replace function people_browse(p_me text, p_since interval default null,
                                          p_limit integer default 400)
 returns table (

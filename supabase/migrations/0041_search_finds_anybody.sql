@@ -204,6 +204,9 @@ $$;
 -- `p_since` is null by default, which is EVERYONE. It was a fortnight's
 -- activity in the first draft; "every current person" is what was asked for,
 -- and the window stays only as a knob for a class large enough to want one.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists people_browse(text, interval, integer);
 create or replace function people_browse(p_me text, p_since interval default null,
                                          p_limit integer default 400)
 returns table (
