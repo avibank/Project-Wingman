@@ -39,6 +39,15 @@ create table if not exists lesson_notes (
 create index if not exists lesson_notes_user_idx on lesson_notes (user_id, lesson_id, t);
 
 alter table lesson_notes enable row level security;
+-- Dropped first so this file can be run twice, the same as the rest of the
+-- series (0009 carries the argument and check:migrations holds it).
+--
+-- AND THE SEQUENCE MATTERS HERE, which it does nowhere else: 0009 REPLACES
+-- this open policy with a no-bulk-read one, because `using (true)` on a table
+-- of private notes said "anyone may read anyone's notes". Run in order that is
+-- closed again four files later. Running 0008 ALONE against an already
+-- migrated database re-opens it — so run the series, or the bundle.
+drop policy if exists lesson_notes_open on lesson_notes;
 create policy lesson_notes_open on lesson_notes for all using (true) with check (true);
 
 -- ----------------------------------------------------------------- threads
@@ -68,6 +77,7 @@ create index if not exists lesson_threads_module_idx on lesson_threads (module_i
 create index if not exists lesson_threads_lesson_idx on lesson_threads (module_id, lesson_id, t);
 
 alter table lesson_threads enable row level security;
+drop policy if exists lesson_threads_open on lesson_threads;
 create policy lesson_threads_open on lesson_threads for all using (true) with check (true);
 
 -- ----------------------------------------------------------------- replies
@@ -88,6 +98,7 @@ create table if not exists lesson_replies (
 create index if not exists lesson_replies_thread_idx on lesson_replies (thread_id, created_at);
 
 alter table lesson_replies enable row level security;
+drop policy if exists lesson_replies_open on lesson_replies;
 create policy lesson_replies_open on lesson_replies for all using (true) with check (true);
 
 -- ------------------------------------------------------------- the two reads

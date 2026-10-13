@@ -58,5 +58,7 @@ alter table lesson_reply_votes enable row level security;
 -- Open, like every other table in this project: the client is anonymous from
 -- Postgres' point of view and access control happens in the app. See 0009's
 -- header before writing a policy that mentions auth.uid() here.
+-- Dropped first so this file can be run twice (0009 carries the argument).
+drop policy if exists lesson_reply_votes_open on lesson_reply_votes;
 create policy lesson_reply_votes_open on lesson_reply_votes
   for all using (true) with check (true);

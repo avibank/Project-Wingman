@@ -915,6 +915,35 @@ one; "every current person" is what was asked for. Activity is still read
 across five signals (seen, asked, answered, finished a chapter, sat a paper)
 rather than from presence alone, so a window means what it says.
 
+**THE SERIES CAN BE RUN TWICE, AND UNTIL 2026-10-13 IT COULD NOT.** Supabase's
+preview CI applies every file in `supabase/migrations/` to a branch database,
+and it had been failing on the same line for days:
+`policy "lesson_notes_no_bulk_read" for table "lesson_notes" already exists`.
+**Two separate causes, and fixing the first did not fix it.** `supabase/ALL.sql`
+lived in that directory, so the tooling applied the whole bundle as a migration
+and — having no `NNNN_` prefix — applied it FIRST, creating everything twice;
+moving it out on 2026-10-12 was right and was not enough, because by then the
+branch database was holding 0009's policies from a run that died past them
+while the history table never recorded 0009 as applied. **Eight `create policy`
+statements across 0008, 0009 and 0010 had no guard at all**, while all three
+files' headers said "safe to re-run" — so every later run stopped at the same
+statement forever, and nothing in the files said why. They drop first now, which
+is the idiom the other 28 already use (the other two being a do-block
+swallowing `duplicate_object` and an `if not exists (… pg_policies …)` test);
+dropping is the deliberate choice for 0009 because a re-run then converges on
+the definitions in the file rather than on whatever a half-finished run left,
+and those four ARE the boundary 0009 exists to draw. Nothing else in the series
+was ever exposed: tables, indexes, triggers, types and functions were all
+already guarded, measured rather than assumed.
+
+- **`npm run check:migrations` is 8 assertions and IS in `npm run check`**,
+  because it reads the SQL and needs no credentials. It holds all 36 policies
+  and every other DDL statement, that only `NNNN_`-prefixed files live in the
+  migrations directory, and that **`supabase/ALL.sql` is byte-for-byte what the
+  generator would write** — that bundle sat at 0013 while the series had
+  reached 0042, and a stale bundle goes stale silently. Proved by planting all
+  three bugs back: each one fails it, restored it passes.
+
 **0040, the course in a table, has been run against the live project**
 (2026-09-30), verified by connecting: `course_docs` with one SELECT policy
 and no write policies, `course_keys` with none at all, and
@@ -1076,8 +1105,14 @@ all 12 functions are in `pg_proc` with signatures matching every call site.
 Do not trust the comments in `squadron.js`, `comms.js` and `FirstFlightGate` that say
 "until 0005 runs" — they describe the state when they were written and were never
 updated. `npm run check:backend` is the source of truth; run it rather than reading
-prose. `supabase/SETUP.sql` is still the guarded one-paste bundle of 0005-0007 if a
-second environment ever needs building.
+prose. `supabase/SETUP.sql` is the guarded one-paste bundle if a second environment
+ever needs building — **0005 to 0043, not 0005-0007**, which is what this line
+said until 2026-10-13. It is generated (`npm run build:sql`, which writes it
+and `ALL.sql` together) and it had not been regenerated since 0013, so it was
+**thirty migrations and 3,593 lines stale** and would have built an
+environment missing everything from the reader to the course table.
+`check:migrations` runs both generators and compares now, so neither can go
+stale again without the gate saying so.
 
 0004 is not optional: without it, progress does not save. 0000 declares the
 `user_progress` table it writes to, which predates the series and was created by hand —

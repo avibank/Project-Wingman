@@ -16,7 +16,12 @@
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 
 const dir = new URL("../supabase/migrations/", import.meta.url);
-const out = new URL("../supabase/ALL.sql", import.meta.url);
+// An argument overrides where it is written, so check:migrations can
+// regenerate into a temp file and compare rather than reimplementing any of
+// this — a second copy of the header is a second thing to drift.
+const out = process.argv[2]
+  ? new URL(`file://${process.argv[2]}`)
+  : new URL("../supabase/ALL.sql", import.meta.url);
 const files = readdirSync(dir)
   .filter((f) => /^\d{4}_.*\.sql$/.test(f))
   .sort();
