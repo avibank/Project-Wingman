@@ -68,6 +68,30 @@ had never existed, `M1.V1` to `M1.V10`. The ten before them were `M1.T1` to
 | 9 | M1.V9 | 13.8 | 768–917 | 40 | 390 | 57pp |
 | 10 | M1.V10 | 13.8 | 918–1008 | 40 | 208 | 33pp |
 
+**THE FIVE MOCK DOCUMENTS WERE REPLACED THE SAME DAY** (owner: "the same
+files, just updated and corrected… just replace them"). Same five ids, same
+forty questions each, same 7pp: **71 of the 200 questions changed — 51 stems,
+47 option sets, 5 explanations — and ZERO answers**, spread still 14/13/13 to
+the paper. Nobody had attempted them and that was CHECKED rather than taken on
+trust — 0 board runs, 0 saves, 0 completions and 0 progress documents
+mentioning `M1.M%`, read off the live database.
+`supabase/reset-mock-exams-progress.sql` is the server half, scoped to
+`M1.M%` and deliberately **not** `M1.%`: the ten V-batches in the same module
+carry 3 board runs and 15 saves of real work and none of it was being
+replaced. It ran, deleted nothing, and its own verification block confirmed
+the mocks clear with the V-batch runs standing.
+
+- **AND THE STORAGE EPOCH WAS NOT RAISED, which breaks the pattern of every
+  reset before it.** The epoch is the DEVICE half and it sweeps every `pw-`
+  key that is not a preference, for EVERY module, `pw-hobbs` included. There
+  was no mock progress anywhere to sweep, and progress writes are patch-only
+  and immediate, so a device cannot hold a score the server has never seen.
+  Raising it would have swept three students' live V-batch state to guard
+  against something that does not exist. The SQL's header carries the rule:
+  **if that script ever deletes a row, raise the epoch in the same commit.**
+  An in-flight paper is protected either way — `quiz.js` hashes what the
+  questions SAID and `paperOf` refuses an attempt that no longer matches.
+
 **AND FIVE MOCK EXAMS WENT ON THE END ON 2026-10-15** (owner: "those are mock
 exams that cover the whole subject", "name them in letters from a to e
 spanning 1 to 5"). `M13D Mock Exam 1.pdf` is Mock Exam **A**, `… 5.pdf` is
