@@ -94,6 +94,24 @@ reason `mocks` is module-level: the strip draws a waypoint for every batch the
 module WILL have, so 11–15 have to read A–E before there is any chapter to
 ask. `mocks` is the count of TRAILING batches that are mocks.
 
+**THERE ARE TWO IMPORTERS, FOR TWO DOCUMENT SHAPES, and neither is dead.**
+`scripts/batches/` reads a Quiz plus a Full Set and is what built the ten;
+`scripts/mock/` reads a single file that carries the paper, its questions and
+the key, and is what built these five. Both classify by geometry and both
+REFUSE rather than guess. `scripts/mock/census.mjs` is the step to run first
+on any new shape: it tallies x and height across EVERY file before a line of
+parser is written, and on these five that is what found an option-continuation
+band at x=93 that one document would not have shown.
+
+**AND THE 8.5pt TRAP WAS PAID FOR ONCE AND NOT TWICE.** The V-batch import's
+blanket `near(h, 8.5) continue` ate 92 explanations in silence; `scripts/mock`
+was written with the same skip for the key's subheading, so it was changed to
+the lesson that note records — **a continuation is known by its INDENT, not by
+its height**, and the subheading is skipped only at its own column and only
+before a single key row has been read. Checked mechanically afterwards rather
+than by reading: 200 explanations, none truncated, none empty, and the output
+byte-identical before and after the hardening, so nothing had been eaten here.
+
 **ONE DOCUMENT CARRIES ALL THREE THINGS.** The ten numbered batches came as a
 Quiz and a Full Set; a mock is a single file holding the paper, its forty
 questions and the key. So the quiz comes out of it, the card set is LEFT to
