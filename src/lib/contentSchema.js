@@ -100,6 +100,16 @@ export function validateContent(doc) {
        is the point of the route strip. */
     if (m.batches != null) check(Number.isInteger(m.batches) && m.batches > 0, w, "batches must be a whole number above zero", errs);
 
+    /* HOW MANY OF THOSE ARE MOCK EXAMS (2026-10-15). The TRAILING batches, so
+       `batches: 15, mocks: 5` makes 11-15 the mocks and the route reads
+       1-10 then A-E. Optional and zero by default. It cannot exceed `batches`
+       — a module whose every batch is a mock has no course in front of it,
+       and the likeliest way to write that is a typo. */
+    if (m.mocks != null) {
+      check(Number.isInteger(m.mocks) && m.mocks >= 0, w, "mocks must be a whole number, zero or more", errs);
+      if (m.batches != null) check(!(m.mocks > m.batches), w, "mocks cannot exceed batches", errs);
+    }
+
     /* DOWNLOADS — a file offered as a plain download and nothing else
        (2026-09-21, owner request). Not a paper: a paper opens in the reader
        and the reader is paused, while this is an <a download> to a file under

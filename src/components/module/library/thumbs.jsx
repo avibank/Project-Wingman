@@ -100,7 +100,18 @@ export function PaperThumb({ batch }) {
         {q(1)}{q(2)}{q(3)}
       </span>
       <span className="count">
-        <span data-count={batch.pp}>{batch.pp}</span><small>pages</small>
+        {/* THE ZERO IS NEVER PRINTED (§10, and CLAUDE.md has recorded this as
+            the behaviour since 2026-10-06 while this line printed `0` out
+            loud). `pp` is 0 for a batch whose paper is not on the shelf, and
+            "0 pages" is a made-up number as well as a zero count — the hour
+            meter settled the same question the same way, with an em dash.
+            `data-count` goes with it: `countUp` writes `textContent` from
+            that attribute, so a dash left with one would have been animated
+            back to "0" the moment the row opened. */}
+        {batch.pp
+          ? <span data-count={batch.pp}>{batch.pp}</span>
+          : <span aria-hidden="true">&mdash;</span>}
+        <small>pages</small>
       </span>
     </span>
   );

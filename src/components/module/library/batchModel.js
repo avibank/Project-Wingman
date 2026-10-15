@@ -15,6 +15,61 @@
    claim a score of nought.
    ========================================================================= */
 
+/* =============================================================================
+   THE LAST FEW BATCHES ARE MOCK EXAMS, AND THEY ARE LETTERED.
+   -----------------------------------------------------------------------------
+   Owner, 2026-10-15: five mock exams go on the end of Module 13d, and they are
+   "not badges — those are mock exams that cover the whole subject", so the
+   route reads 1-10 then A B C D E rather than 1-15. They are otherwise an
+   ordinary batch: a quiz, a card set and a paper, in a row that opens the same
+   way, remembered by the same light, counted in the same header.
+
+   A MOCK IS STILL A NUMBER UNDERNEATH, and that is deliberate. `batch` orders
+   the rows, places the waypoint, is what `pw-batch` remembers and is what
+   `Number.isFinite` admits to the Library at all; a letter in that field would
+   have to be parsed back into a position by everything that touches it. So
+   batches 11-15 ARE 11-15 and the letter is a LABEL — one function, used by
+   every surface that prints one, so the row, the waypoint and the aria-label
+   cannot disagree.
+
+   THE MODULE SAYS HOW MANY, NOT THE CHAPTER, and that is the whole reason this
+   is a module-level number. The strip draws a waypoint for every batch the
+   module WILL have, landed or not — so waypoints 11-15 have to read A-E before
+   there is any chapter to ask. `mocks` is the count of trailing batches that
+   are mock exams; `batches: 15, mocks: 5` makes 11 the first of them.
+   ========================================================================= */
+
+/** The first batch number that is a mock exam, or null when none are. */
+export function firstMock(total = null, mocks = 0) {
+  if (!Number.isFinite(total) || !Number.isFinite(mocks) || mocks <= 0) return null;
+  return Math.max(1, total - mocks + 1);
+}
+
+/** Is this batch number one of the module's mock exams? */
+export function isMock(n, total = null, mocks = 0) {
+  const first = firstMock(total, mocks);
+  return first != null && Number.isFinite(n) && n >= first;
+}
+
+/**
+ * What a batch is CALLED on the route, the row and every label that names it.
+ *
+ * A numbered batch keeps the demo's two digits ("01"), which is what lines the
+ * row's number tile up. A mock exam is a bare letter: "0A" would be padding a
+ * thing that is not a number. Past the 26th mock it falls back to the figure
+ * rather than inventing a second letter, because a course with 27 mock exams
+ * is a mistake and a silent "AA" would hide it.
+ */
+export function batchLabel(n, total = null, mocks = 0) {
+  const first = firstMock(total, mocks);
+  if (first != null && n >= first) {
+    const k = n - first;
+    if (k < 26) return String.fromCharCode(65 + k);
+    return String(n);
+  }
+  return String(n).padStart(2, "0");
+}
+
 /** Dots filled on the nine-bubble answer sheet, from a percentage. */
 export const dotsFor = (score) =>
   (score == null ? 0 : Math.max(0, Math.min(9, Math.round((score / 100) * 9))));

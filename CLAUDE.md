@@ -67,6 +67,68 @@ went in the same day under ids that had never existed, `M1.T1` to `M1.T10`.
 | 9 | M1.T9 | 13.8 | 768–917 | 40 | 417 | 60pp |
 | 10 | M1.T10 | 13.8 | 918–1008 | 40 | 227 | 35pp |
 
+**AND FIVE MOCK EXAMS WENT ON THE END ON 2026-10-15** (owner: "those are mock
+exams that cover the whole subject", "name them in letters from a to e
+spanning 1 to 5"). `M13D Mock Exam 1.pdf` is Mock Exam **A**, `… 5.pdf` is
+**E**; the module is `batches: 15, mocks: 5`.
+
+| mock | id | batch | quiz | cards | paper |
+|---|---|---|---|---|---|
+| A | M1.MA | 11 | 40 | the quiz's own | 7pp |
+| B | M1.MB | 12 | 40 | the quiz's own | 7pp |
+| C | M1.MC | 13 | 40 | the quiz's own | 7pp |
+| D | M1.MD | 14 | 40 | the quiz's own | 7pp |
+| E | M1.ME | 15 | 40 | the quiz's own | 7pp |
+
+**THE LETTER IS A LABEL; THE BATCH IS STILL A NUMBER.** `batch` orders the
+rows, places the waypoint, is what `pw-batch` remembers and is what
+`Number.isFinite` admits to the Library at all — a letter in that field would
+have to be parsed back into a position by everything that touches it. So
+11–15 ARE 11–15 and `batchLabel` in `batchModel.js` is the ONE function every
+surface calls, so the row, the waypoint and three aria-labels cannot disagree.
+Past the 26th mock it falls back to the figure rather than inventing "AA".
+
+**THE MODULE SAYS HOW MANY ARE MOCKS, NOT THE CHAPTER**, and that is the whole
+reason `mocks` is module-level: the strip draws a waypoint for every batch the
+module WILL have, so 11–15 have to read A–E before there is any chapter to
+ask. `mocks` is the count of TRAILING batches that are mocks.
+
+**ONE DOCUMENT CARRIES ALL THREE THINGS.** The ten numbered batches came as a
+Quiz and a Full Set; a mock is a single file holding the paper, its forty
+questions and the key. So the quiz comes out of it, the card set is LEFT to
+fall back to those same questions (`content.cardSet` does that for a chapter
+with no `cards`) and the file goes on the Papers shelf — which is why Quiz and
+Cards both read 40 on a mock row, and why the cards total is 3,148 rather than
+a new 2,948 + something.
+
+**A MOCK'S ROW SAYS ITS NAME AND NOTHING ELSE** (owner: "it should say just
+mock exam, nothing else"). "Batch 11" is the one thing it must not read — a
+mock is not the eleventh slice of the manual — and the ref and page range that
+LOCATE a normal batch have nothing to locate. Both are still printed if a
+document ever carries them.
+
+**THE STRIP RESIZES TO THE COUNT, AND TEN IS PIXEL-IDENTICAL AFTERWARDS.**
+`1fr` is `minmax(auto,1fr)` and that auto floor is the waypoint's own width,
+so fifteen 22px dots ran **36px past the right edge at 390 and 66px at 360**,
+dots touching. `minmax(0,1fr)` lets a track shrink; the dot then sizes itself
+from `--n` and the strip's own container query, down to a 14px floor, keeping
+the demo's 2px of air; and the dashed rule is worked out from the same cell
+width instead of the 5% that is half a cell only when there are ten of them.
+Measured at 1280/820/620/500/390/360: **ten batches reads 28/28/22/22/22/22 at
+11/11/10/10/10/10 with a 2.6px gap at 360 — the demo's own numbers** — and
+fifteen shrinks only where there is no room (28/28/22/22/16.4/14.4), never
+clipping. Two of my own bugs were caught by those numbers rather than by
+reading: `100cqi` is already the content box and I took the padding off twice
+(a ten-batch phone dot went 22→20), and the dashed-rule override tied on
+specificity and lost on load order, exactly as the `.card .route` note three
+rules above already warns.
+
+**NOTHING WAS RESET, and that is the difference from every replacement before
+it.** This is purely ADDITIVE: no existing chapter id changed, no existing
+question moved, so every attempt's question hash still matches and every
+score, save and board run stands. `STORAGE_EPOCH` stays **5**. The reset SQL
+was not run and must not be.
+
 **400 quiz questions, 2,948 cards, 10 papers.** The names are the documents'
 own — batches 2-4 are all "Autoflight (ATA 22)" and 6-10 all "Instruments (ATA
 31)", which is what the syllabus says; a row prints the name, the ref and the
@@ -138,8 +200,8 @@ current module because it is the first `active` one), **M2 is Module 13e**,
 is loaded by the `content.test` flag, which is `everyone: true` (label
 "Course content"); the id kept its old name so nothing that reads it had to
 change. It repeats the four module names, and they must agree with data.js,
-which is what the Flight Deck draws before the document arrives. It is 1.86MB
-now and its built chunk is 1.21MB (294KB gzipped), lazy and off first paint.
+which is what the Flight Deck draws before the document arrives. It is 1.89MB
+now (1.86 before the five mock exams) and its built chunk is 1.21MB (294KB gzipped), lazy and off first paint.
 
 **What went before this**, if any of it is ever wanted back
 (`git log -- src/content/test-content.json`): M1.B1 Theory of Flight · Rotary

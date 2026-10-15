@@ -184,6 +184,7 @@ export default function ModuleScreen({
                 /* The ported module screen, behind `library.batches`. */
                 asBatches={asBatches}
                 totalBatches={mod?.batches || null}
+                mockBatches={mod?.mocks || 0}
                 moduleName={mod?.name}
                 progress={progress}
                 /* NOT THE LAST CHAPTER. This fed `hereBatch` the final

@@ -35,10 +35,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuizThumb, CardsThumb, PaperThumb, CHEV } from "./thumbs.jsx";
 import CrewStrip from "./CrewStrip.jsx";
+import { batchLabel, isMock } from "./batchModel.js";
 /* `port.css` is imported by LibraryTab, not here — see the note there about a
    stylesheet that can fail on its own. */
-
-const pad = (n) => String(n).padStart(2, "0");
 
 /* THE DEMO'S `countUp`, copied rather than rewritten, per §6.3. Each number
    ticks from zero when its row opens: 300ms of delay, then 700ms on a cubic
@@ -69,7 +68,7 @@ function countUp(root, reduced) {
  * tab's one lookup of who has sat each quiz, keyed by quiz id (migration 0038).
  */
 export default function LibraryBatches({
-  batches, total, here, query = "", moduleName = null, me = null,
+  batches, total, mocks = 0, here, query = "", moduleName = null, me = null,
   finishers = {}, onQuiz, onCards, onPaper, onProfile, onHere, onInviteClass = null,
 }) {
   const open = useMemo(() => batches.filter((b) => b.n != null), [batches]);
@@ -142,6 +141,13 @@ export default function LibraryBatches({
     el?.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
   };
 
+  /* ONE LABEL FUNCTION FOR EVERY SURFACE THAT NAMES A BATCH — the waypoint,
+     the row's number tile, the meta line and three aria-labels. Written out
+     at each of them, the row would have said "A" while the waypoint still
+     said 15. */
+  const labelOf = (n) => batchLabel(n, total, mocks);
+  const mockish = (n) => isMock(n, total, mocks);
+
   const quizIdOf = (b) => b.chapter?.quizId || b.chapter?.id || null;
   const foundFor = (b) => finishers[quizIdOf(b)] || null;
 
@@ -154,15 +160,20 @@ export default function LibraryBatches({
           ten (§7: "Total batches comes from the module"). */}
       {total > 0 && (
         <div className="route" aria-label="Batches in this module"
-             style={{ gridTemplateColumns: `repeat(${total}, 1fr)` }}>
+             /* `minmax(0, 1fr)`, NOT `1fr`: the shorthand is `minmax(auto,
+                1fr)` and that auto floor is the waypoint's own width, so at
+                fifteen the tracks refused to shrink and the strip ran 36px
+                past its right edge on a phone. `--n` is the same number the
+                stylesheet sizes the dots and the dashed rule from. */
+             style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))`, "--n": total }}>
           {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
             const b = open.find((x) => x.n === n);
             return (
               <button key={n} type="button"
                       className={`wp ${b ? "open" : ""} ${here === n ? "here" : ""}`}
-                      title={`Batch ${n}${b ? ` · ${b.topic}` : " · on the way"}`}
+                      title={`${mockish(n) ? `Mock exam ${labelOf(n)}` : `Batch ${n}`}${b ? ` · ${b.topic}` : " · on the way"}`}
                       onClick={() => (b ? go(n) : null)}
-                      aria-disabled={b ? undefined : "true"}>{n}</button>
+                      aria-disabled={b ? undefined : "true"}>{labelOf(n)}</button>
             );
           })}
         </div>
@@ -183,10 +194,25 @@ export default function LibraryBatches({
                    id={`b${b.n}`} data-row={b.n}>
                 <button type="button" className="head" aria-expanded={openRow === b.n}
                         onClick={() => choose(openRow === b.n ? null : b.n)}>
-                  <span className="num">{pad(b.n)}</span>
+                  <span className="num">{labelOf(b.n)}</span>
                   <span style={{ minWidth: 0 }}>
                     <div className="title">{b.topic}</div>
-                    <div className="meta">Batch {b.n}{b.ref ? ` · ${b.ref}` : ""}{b.pages ? ` · pp ${b.pages}` : ""}</div>
+                    {/* A MOCK EXAM'S ROW SAYS ITS NAME AND NOTHING ELSE (owner,
+                        2026-10-15: "it should say just mock exam, nothing
+                        else"). "Batch 11" is the one thing it must not read —
+                        a mock is not the eleventh slice of the manual, it is
+                        the whole subject — and the ref and page range that
+                        locate a normal batch have nothing to locate. They are
+                        still printed if a document carries them, because they
+                        would then be real facts; with neither, the row is the
+                        title alone. */}
+                    {mockish(b.n)
+                      ? ((b.ref || b.pages) && (
+                          <div className="meta">{[b.ref, b.pages && `pp ${b.pages}`].filter(Boolean).join(" · ")}</div>
+                        ))
+                      : (
+                        <div className="meta">Batch {b.n}{b.ref ? ` · ${b.ref}` : ""}{b.pages ? ` · pp ${b.pages}` : ""}</div>
+                      )}
                   </span>
                   <span className="chev" aria-hidden="true">{CHEV}</span>
                 </button>
@@ -222,8 +248,8 @@ export default function LibraryBatches({
             {!query && next && (
               <div className="row soon">
                 <div className="head">
-                  <span className="num">{pad(next)}</span>
-                  <span className="title">Batch {next}</span>
+                  <span className="num">{labelOf(next)}</span>
+                  <span className="title">{mockish(next) ? `Mock exam ${labelOf(next)}` : `Batch ${next}`}</span>
                   <span className="flag">Next to land</span>
                 </div>
               </div>
