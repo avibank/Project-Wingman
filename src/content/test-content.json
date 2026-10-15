@@ -33362,7 +33362,7 @@
       "questions": [
        {
         "id": "M1.MA.Q1",
-        "question": "A crew flies at a level that lies inside the troposphere over the equator but above it over the poles. Which printed thicknesses account for this?",
+        "question": "A crew flies at a level that lies inside the troposphere over the equator but above it over the poles. Which thicknesses of the troposphere account for this?",
         "options": [
          "About 8.5 km at the equator and about 16.8 km at the poles",
          "About 16.8 km at the equator and about 8.5 km at the poles",
@@ -33464,8 +33464,8 @@
         "question": "A GNADIRU is fitted but the aircraft has no air data computer as a separate box. How does the unit obtain its pressures?",
         "options": [
          "From air data modules placed as near as possible to the pitot and static sensors",
-         "From the inertial reference section, which derives them from acceleration",
-         "From pneumatic tubes run from the probes to the unit in the avionics bay"
+         "From pneumatic tubes run from the probes to the unit in the avionics bay",
+         "From the inertial reference section, which derives the air data from accelerations"
         ],
         "correct": 0,
         "explain": "The air data section works like a digital air data computer but is fed digitally by modules mounted close to the probes and ports."
@@ -33527,7 +33527,7 @@
        },
        {
         "id": "M1.MA.Q16",
-        "question": "The damping medium changes volume with temperature. What balances this out?",
+        "question": "In a direct reading compass the damping medium changes volume with temperature. What compensates for this?",
         "options": [
          "Bellows",
          "Slots",
@@ -33549,7 +33549,7 @@
        },
        {
         "id": "M1.MA.Q18",
-        "question": "In what manner does the master warning light behave for a level 3 warning",
+        "question": "How does the master warning light behave for a level 3 warning",
         "options": [
          "It flashes",
          "It stays steady",
@@ -33560,32 +33560,32 @@
        },
        {
         "id": "M1.MA.Q19",
-        "question": "The mode 4A boundary is penetrated at 250 knots with the landing gear still retracted, so which message does the computer generate?",
+        "question": "An aircraft penetrates the mode 4A boundary at 250 knots with the landing gear still retracted. Which message is generated?",
         "options": [
          "TOO LOW TERRAIN",
-         "TOO LOW FLAPS",
-         "TOO LOW GEAR"
+         "TOO LOW GEAR",
+         "TOO LOW FLAPS"
         ],
         "correct": 0,
         "explain": "With the gear still up the boundary is penetrated at 190 knots or below as TOO LOW GEAR, while the boundary that rises with airspeed to 1000 feet at 250 knots gives TOO LOW TERRAIN."
        },
        {
         "id": "M1.MA.Q20",
-        "question": "At 2500 feet the operator rejects the aural TWENTY FIVE HUNDRED, so which other aural can be selected instead?",
+        "question": "An operator does not want the TWENTY FIVE HUNDRED callout at 2500 feet. Which callout can be selected instead?",
         "options": [
-         "The aural TOO LOW TERRAIN",
-         "The aural RADIO ALTITUDE",
-         "The aural MINIMUMS MINIMUMS"
+         "The MINIMUMS MINIMUMS callout",
+         "The RADIO ALTITUDE callout",
+         "The TOO LOW TERRAIN callout"
         ],
         "correct": 1,
         "explain": "At 2500 feet the alternative to TWENTY FIVE HUNDRED is the aural RADIO ALTITUDE."
        },
        {
         "id": "M1.MA.Q21",
-        "question": "The input of a D - Regulator changes at a constant rate. What does the output value do?",
+        "question": "The input of a D-regulator changes at a constant rate. What does the output value do?",
         "options": [
-         "It falls back towards zero",
          "It increases linearly without limit",
+         "It falls back towards zero",
          "It remains steady at one level"
         ],
         "correct": 2,
@@ -33639,9 +33639,9 @@
         "id": "M1.MA.Q26",
         "question": "The flight management system requests a climb. Why must the autoflight system have a pilot input before it starts that climb?",
         "options": [
-         "To prevent the flight management system losing its reference",
          "To prevent the autothrust system reverting to thrust mode",
-         "To prevent altitude changes being made without ATC-clearance"
+         "To prevent the flight management system losing its reference",
+         "To prevent altitude changes being made without ATC clearance"
         ],
         "correct": 2,
         "explain": "The pilot input stands in for the clearance, so the aircraft never changes level on its own."
@@ -33659,11 +33659,11 @@
        },
        {
         "id": "M1.MA.Q28",
-        "question": "Why is the alignment left until shortly before the touch down",
+        "question": "Why is the yaw alignment left until shortly before touchdown",
         "options": [
          "It minimizes the lateral drift",
-         "It minimizes the rudder deflection",
-         "It minimizes the crosswind component"
+         "It minimizes the crosswind component",
+         "It minimizes the rudder deflection"
         ],
         "correct": 0,
         "explain": "Once the crab is taken out the aircraft starts drifting sideways, so the manoeuvre is kept short."
@@ -33681,14 +33681,14 @@
        },
        {
         "id": "M1.MA.Q30",
-        "question": "A CAT III b approach is being planned — what decision height condition applies?",
+        "question": "An approach is flown to a decision height of 250 ft with a reported visual range of 600 m — which category applies?",
         "options": [
-         "Below 50 ft or no decision height",
-         "Below 100 ft but not below 50 ft",
-         "No decision height and no visibility limit"
+         "CAT I",
+         "CAT II",
+         "CAT III a"
         ],
         "correct": 0,
-        "explain": "CAT III b covers decision heights under 50 ft and the no decision height case."
+        "explain": "A decision height of not less than 200 ft together with a visual range of not less than 550 m is CAT I."
        },
        {
         "id": "M1.MA.Q31",
@@ -33703,7 +33703,7 @@
        },
        {
         "id": "M1.MA.Q32",
-        "question": "A low visibility take-off is any take-off made below which runway visual range",
+        "question": "A low visibility take-off is a take-off made below a runway visual range of",
         "options": [
          "400 metres",
          "550 metres",
@@ -33727,16 +33727,16 @@
         "id": "M1.MA.Q34",
         "question": "What is the leading edge of a rotor blade",
         "options": [
-         "The outer end of the blade opposite the root",
          "The edge opposite the one that cuts into the wind",
-         "The edge that cuts into the wind when the rotor is turning"
+         "The outer end of the blade opposite the root",
+         "The edge that cuts into the wind as the blade turns"
         ],
         "correct": 2,
         "explain": "The leading edge cuts into the wind."
        },
        {
         "id": "M1.MA.Q35",
-        "question": "Which statement correctly distinguishes pitch angle from angle of attack?",
+        "question": "Pitch angle and angle of attack are measured from different references. Which pairing of references is correct?",
         "options": [
          "Pitch angle is referenced to the axis of rotation, angle of attack to the span line",
          "Pitch angle is referenced to the plane of rotation, angle of attack to the relative wind",
@@ -33769,14 +33769,14 @@
        },
        {
         "id": "M1.MA.Q38",
-        "question": "A helicopter hovers on the spot in a steady strong wind. Why can its blades not all produce the same lift?",
+        "question": "A helicopter flies forward at a steady speed. Why can its blades not all produce the same lift?",
         "options": [
-         "The wind increases the rotational speed of the whole rotor disc",
-         "The wind raises the pitch angle on one half of the disc and lowers it on the other",
-         "The wind adds to the speed of one half of the disc and subtracts from the other"
+         "The airstream raises the pitch angle on one half of the disc and lowers it on the other",
+         "The airstream increases the rotational speed of the whole rotor disc",
+         "The airstream adds to the speed of one half of the disc and subtracts from the other"
         ],
         "correct": 2,
-        "explain": "Wind is a relative wind just like forward speed, so it adds on the advancing side and subtracts on the retreating side."
+        "explain": "The airstream caused by the speed of flight is added to the rotational speed of the advancing blade and subtracted from that of the retreating blade, so the two sides of the disc cannot make the same lift."
        },
        {
         "id": "M1.MA.Q39",
@@ -33791,11 +33791,11 @@
        },
        {
         "id": "M1.MA.Q40",
-        "question": "Further functions are to be added to an existing nice installation. Which protocol makes the system easy to expand?",
+        "question": "Further functions are to be added to an existing NICE installation. Which protocol makes the system easy to expand?",
         "options": [
          "The standard TCP/IP protocol",
-         "The spanning tree protocol",
-         "The ARINC 429 protocol"
+         "The ARINC 429 protocol",
+         "The spanning tree protocol"
         ],
         "correct": 0,
         "explain": "Expandability comes from the use of the standard TCP/IP protocol."
@@ -33836,7 +33836,7 @@
        },
        {
         "id": "M1.MB.Q3",
-        "question": "What is the amount of tube tip movement proportional to",
+        "question": "In a Bourdon tube gauge the movement of the tube tip is proportional to",
         "options": [
          "The applied pressure",
          "The tube temperature",
@@ -33872,15 +33872,15 @@
         "question": "The pitot tube becomes totally blocked in cruise and the thrust is then increased to accelerate. What does the airspeed indicator show?",
         "options": [
          "No change in the indicated speed",
-         "A fall of the indicated speed to zero",
-         "A rise in the indicated speed"
+         "A rise in the indicated speed",
+         "A fall in the indicated speed to zero"
         ],
         "correct": 0,
         "explain": "At constant altitude neither pressure changes, so the reading is frozen whatever the thrust."
        },
        {
         "id": "M1.MB.Q7",
-        "question": "The airspeed value that the temperature display is used to determine is",
+        "question": "The temperature indication is needed in order to determine",
         "options": [
          "IAS",
          "EAS",
@@ -33904,9 +33904,9 @@
         "id": "M1.MB.Q9",
         "question": "A hybrid air data computer is described as hybrid because",
         "options": [
-         "it can be supplied with either AC or DC power",
          "it uses both pressure capsules and pressure transducers",
-         "it provides output data in analogue form as well as digitally"
+         "it can be supplied with either AC or DC power",
+         "it provides outputs in analogue as well as digital form"
         ],
         "correct": 2,
         "explain": "The mixture of analogue and digital outputs is what makes the computer hybrid."
@@ -33926,20 +33926,20 @@
         "id": "M1.MB.Q11",
         "question": "An angle of attack sensor is a tube lying crosswise to the air stream, pierced by two rows of holes. How does it sense the angle?",
         "options": [
-         "by sensing the movement of the stagnation point between the rows",
          "by measuring the total pressure at the forward row",
-         "by comparing the pressures at the two rows"
+         "by sensing the movement of the stagnation point between the rows",
+         "by comparing the pressures sensed at the two rows"
         ],
         "correct": 2,
         "explain": "The tube senses the angle as a pressure difference between its two rows of holes."
        },
        {
         "id": "M1.MB.Q12",
-        "question": "Besides recording and storing digital flight data, what is the wireless quick access recorder there to do",
+        "question": "Besides recording and storing digital flight data, the wireless quick access recorder is also able to",
         "options": [
-         "transmit digital flight data without wires",
-         "erase digital flight data after transfer",
-         "format digital flight data for the recorder"
+         "transmit the digital flight data to the ground",
+         "format the digital flight data for the recorder",
+         "erase the digital flight data after transfer"
         ],
         "correct": 0,
         "explain": "Recording, storing and wireless transmission are the three stated purposes."
@@ -33979,7 +33979,7 @@
        },
        {
         "id": "M1.MB.Q16",
-        "question": "A pushbutton is lit in a colour that reports normal operation, so which two colours could it be?",
+        "question": "A pushbutton is lit in a colour that reports normal operation. Which two colours can be used for that?",
         "options": [
          "Red or amber",
          "Amber or white",
@@ -34001,7 +34001,7 @@
        },
        {
         "id": "M1.MB.Q18",
-        "question": "A recorder fault and a stall warning occur in the same flight, so how do the two alerts differ in what the crew gets?",
+        "question": "A recorder fault and a stall warning occur on the same flight. How do the two alerts differ in what the crew receives?",
         "options": [
          "One gives a single chime while the other gives no sound",
          "Each one gives an aural alarm but only one gives a light",
@@ -34012,7 +34012,7 @@
        },
        {
         "id": "M1.MB.Q19",
-        "question": "The limits of one of the alerting envelopes are exceeded, so what does the enhanced system give the flight crew?",
+        "question": "The limits of one of the alerting envelopes are exceeded. What does the enhanced ground proximity warning system give the flight crew?",
         "options": [
          "Aural alert messages with visual annunciations and displays",
          "An automatic pull-up commanded through the autopilot",
@@ -34023,10 +34023,10 @@
        },
        {
         "id": "M1.MB.Q20",
-        "question": "A pilot reads the rotor rpm on the triple tachometer, so which part of the dial shows it?",
+        "question": "A pilot reads the rotor rpm on the triple tachometer. Which part of the dial shows it?",
         "options": [
-         "The digital window at the foot of the dial",
          "The large pointer N1 on the outer scale",
+         "The digital window at the foot of the dial",
          "The small pointer R on the inner scale"
         ],
         "correct": 2,
@@ -34056,11 +34056,11 @@
        },
        {
         "id": "M1.MB.Q23",
-        "question": "What decides whether disengagement follows an overpowering of the flight controls",
+        "question": "Whether an overpowering of the flight controls leads to disengagement depends on",
         "options": [
-         "The torque the limiter is built to pass and the airspeed",
+         "The mode selected and the channel that is engaged",
          "The circumstances of the input and the autopilot itself",
-         "The mode selected and the channel that is engaged"
+         "The torque the limiter is built to pass and the airspeed"
         ],
         "correct": 1,
         "explain": "Disengagement is made conditional on both the pilot's input and the design of the autopilot."
@@ -34155,7 +34155,7 @@
        },
        {
         "id": "M1.MB.Q32",
-        "question": "An autopilot that detects its own failure and disengages itself is operated on its own. Which behaviour does the system then show?",
+        "question": "A single autopilot is engaged and it detects its own failure and disengages. Which behaviour does the system show?",
         "options": [
          "fail operational behaviour",
          "fail passive behaviour",
@@ -34188,18 +34188,18 @@
        },
        {
         "id": "M1.MB.Q35",
-        "question": "A helicopter rotor turns counterclockwise. The tip-path plane must tilt backward for rearward flight. Following the precession rule, where must the downward force be put in?",
+        "question": "A helicopter rotor turns counterclockwise. The tip-path plane must tilt backward for rearward flight. Following the precession rule, where must the downward force be applied?",
         "options": [
          "On the left side",
-         "On the right side",
-         "Right at the rear"
+         "Right at the rear",
+         "On the right side"
         ],
         "correct": 0,
         "explain": "The output is wanted at the rear; 90° earlier in counterclockwise rotation is the left side."
        },
        {
         "id": "M1.MB.Q36",
-        "question": "How is gyroscopic precession defined",
+        "question": "Gyroscopic precession is",
         "options": [
          "The change of the rotational axis as a result of an external force",
          "The change of the rotor RPM as a result of an external force",
@@ -34210,11 +34210,11 @@
        },
        {
         "id": "M1.MB.Q37",
-        "question": "During an autorotation after an engine failure, which statement about control is correct?",
+        "question": "An engine fails and the helicopter enters autorotation. What control does the pilot have?",
         "options": [
-         "Only the pedals remain effective and the touchdown point cannot be chosen",
-         "The helicopter is fully controllable and the pilot can choose the touchdown point",
-         "The helicopter is not controllable and lands wherever the descent takes it"
+         "No control, and the helicopter lands where the descent takes it",
+         "Full control, including the choice of the touchdown point",
+         "Pedal control only, with no choice of touchdown point"
         ],
         "correct": 1,
         "explain": "During an autorotative landing the helicopter stays fully controllable and the pilot determines the location for touchdown."
@@ -34266,10 +34266,10 @@
       "questions": [
        {
         "id": "M1.MC.Q1",
-        "question": "Why are static ports placed in areas with low turbulence and ram air distortion",
+        "question": "Why are static ports placed in areas where turbulence and ram air distortion are low",
         "options": [
-         "Because turbulence and ram air distortion block the static pressure hoses",
          "Because turbulence and ram air distortion overheat the static port zones",
+         "Because turbulence and ram air distortion block the static pressure hoses",
          "Because turbulence and ram air distortion falsify the static pressure reading"
         ],
         "correct": 2,
@@ -34288,11 +34288,11 @@
        },
        {
         "id": "M1.MC.Q3",
-        "question": "Where are the limits for damage of the skin at the static ports found",
+        "question": "The limits for damage to the skin at the static ports are found",
         "options": [
-         "In the ATA chapter for air conditioning or the wiring manual",
+         "In the ATA chapter for the instruments or the IPC",
          "In the ATA chapter for the aircraft structure or the SRM",
-         "In the ATA chapter for the instruments or the IPC"
+         "In the ATA chapter for air conditioning or the wiring manual"
         ],
         "correct": 1,
         "explain": "Skin damage is a structural item, so the structure chapter or the SRM holds those limits."
@@ -34332,10 +34332,10 @@
        },
        {
         "id": "M1.MC.Q7",
-        "question": "A servo corrected altimeter reads several thousand feet away from the altitude sent by the air data computer. Why does the correction not bring it into agreement?",
+        "question": "A servo corrected altimeter reads a long way from the altitude sent by the air data computer. Why does the correction not bring it into agreement?",
         "options": [
-         "Correction only works above the altitude set on the baro scale",
          "Correction is inhibited while the internal vibrator is running",
+         "Correction only works above the altitude set on the baro scale",
          "Correction is only possible within a few hundred feet"
         ],
         "correct": 2,
@@ -34376,7 +34376,7 @@
        },
        {
         "id": "M1.MC.Q11",
-        "question": "In the flight avionics of which aircraft are health and usage monitoring systems a common component",
+        "question": "Health and usage monitoring systems are a common part of the flight avionics of",
         "options": [
          "a modern large aeroplane",
          "a modern helicopter",
@@ -34420,14 +34420,14 @@
        },
        {
         "id": "M1.MC.Q15",
-        "question": "The crew reduces the descent rate as soon as the first mode 1 message is heard, so which boundary has not been penetrated?",
+        "question": "The aural message SINK RATE has sounded but PULL UP has not. Which boundary has the aircraft penetrated?",
         "options": [
-         "The inner alert boundary",
          "The outer alert boundary",
-         "The upper alert boundary"
+         "The upper alert boundary",
+         "The inner alert boundary"
         ],
         "correct": 0,
-        "explain": "The first message comes from the outer boundary, so the inner one has still not been crossed."
+        "explain": "SINK RATE is the outer boundary message; PULL UP would mean the inner boundary had been crossed as well."
        },
        {
         "id": "M1.MC.Q16",
@@ -34442,40 +34442,40 @@
        },
        {
         "id": "M1.MC.Q17",
-        "question": "The aircraft drifts 1.5 dots below the beam centre at 800 feet radio altitude, so which activation occurs?",
+        "question": "The aircraft drifts 1.5 dots below the beam centre at 800 feet radio altitude. Which alert, if any, is triggered?",
         "options": [
-         "No alert activation at all",
-         "The hard alert activation",
-         "The soft alert activation"
+         "The hard alert",
+         "No alert at all",
+         "The soft alert"
         ],
         "correct": 2,
         "explain": "The aircraft is beyond 1.3 dots below the beam centre, so the soft alert comes; the hard alert needs below 300 feet radio altitude and more than 2 dots."
        },
        {
         "id": "M1.MC.Q18",
-        "question": "An aural is heard and exactly seven seconds later the same words come again, so which envelope is still penetrated?",
+        "question": "An aural message is heard and exactly seven seconds later the same words are heard again. Which envelope is still penetrated?",
         "options": [
-         "The clearance floor envelope",
+         "The warning envelope",
          "The caution envelope",
-         "The warning envelope"
+         "The clearance floor envelope"
         ],
         "correct": 1,
         "explain": "A seven second repeat is the caution level; the warning level repeats continuously."
        },
        {
         "id": "M1.MC.Q19",
-        "question": "The fuel level in a tank alters, so what does the multi-tubular surface condenser in it do?",
+        "question": "The fuel level in a tank changes. What does the multi-tubular surface condenser in the tank do?",
         "options": [
          "It changes its capacity",
-         "It changes its resistance",
-         "It changes its excitation frequency"
+         "It changes its excitation frequency",
+         "It changes its resistance"
         ],
         "correct": 0,
         "explain": "The condenser changes its capacity depending on the level of fuel in the tank."
        },
        {
         "id": "M1.MC.Q20",
-        "question": "A densitometer output frequency is being read off, so what is that frequency proportional to?",
+        "question": "The output frequency of a densitometer is read. What is that frequency proportional to?",
         "options": [
          "The fuel height",
          "The fuel temperature",
@@ -34497,7 +34497,7 @@
        },
        {
         "id": "M1.MC.Q22",
-        "question": "For a P - Regulator, to what is the change in the output value always proportional",
+        "question": "In a P-regulator the change in the output value is always proportional to",
         "options": [
          "the magnitude of the input value",
          "the change in the input value",
@@ -34508,7 +34508,7 @@
        },
        {
         "id": "M1.MC.Q23",
-        "question": "As the aircraft accelerates past a certain airspeed the maximum rudder deflection available is reduced. What is this limiting there to achieve?",
+        "question": "As the aircraft accelerates past a certain airspeed the maximum rudder deflection available is reduced. What does this limiting achieve?",
         "options": [
          "It keeps the yaw damper inside its authority",
          "It keeps the loads within the limits of structural strength",
@@ -34643,8 +34643,8 @@
         "question": "A pilot raises the collective lever to climb and the torque effect on the fuselage changes. Which control must the pilot then use to vary the thrust that compensates it?",
         "options": [
          "The tail rotor pedals",
-         "The cyclic pitch stick",
-         "The collective lever"
+         "The collective lever",
+         "The cyclic pitch stick"
         ],
         "correct": 0,
         "explain": "Torque is compensated by the tail rotor, whose thrust the pilot varies with the pedals."
@@ -34653,9 +34653,9 @@
         "id": "M1.MC.Q36",
         "question": "A helicopter is hovering with no wind at all. Why is there no dissymmetry of lift in this condition?",
         "options": [
-         "There is no rotational speed at the blade tips, so both blades have the same parameters",
-         "There is no airstream from speed of flight, so both blades have the same parameters",
-         "There is no pitch angle on either blade, so both blades have the same parameters"
+         "There is no pitch angle on either blade, so both blades have the same parameters",
+         "There is no airstream due to forward speed, so both blades have the same parameters",
+         "There is no rotational speed at the blade tips, so both blades have the same parameters"
         ],
         "correct": 1,
         "explain": "Without the airstream caused by the speed of flight there is nothing to add to one blade and subtract from the other."
@@ -34688,14 +34688,14 @@
         "options": [
          "A fixed configuration set once by the airframe manufacturer",
          "Flexibility gained by exchanging the cabin wiring looms",
-         "Flexibility without complex and time expensive hardware changes"
+         "Flexibility without complex and time-consuming hardware changes"
         ],
         "correct": 2,
         "explain": "The CIDS is designed for high flexibility so that complex and time expensive hardware changes are not needed."
        },
        {
         "id": "M1.MC.Q40",
-        "question": "For which aircraft is the nice cabin management system offered",
+        "question": "For which aircraft is the NICE cabin management system offered",
         "options": [
          "Long range freighter aircraft",
          "VIP and government aircraft",
@@ -34731,20 +34731,20 @@
         "id": "M1.MD.Q2",
         "question": "One screen in the cockpit carries all the air data information and also every Basic T parameter. This screen is",
         "options": [
-         "the standby horizon",
+         "the HSI (Horizontal Situation Indicator)",
          "the PFD (Primary Flight Display)",
-         "the HUD (Head Up Display)"
+         "the standby horizon"
         ],
         "correct": 1,
         "explain": "The PFD is the screen that holds all the air data information, and it shows every one of the Basic T parameters."
        },
        {
         "id": "M1.MD.Q3",
-        "question": "The pitot probe of a simple system becomes completely blocked while the static system stays clear. Which of the three supplied instruments is affected?",
+        "question": "The pitot probe of a simple system becomes completely blocked while the static system stays clear. Which of the instruments supplied by that system is affected?",
         "options": [
          "The airspeed indicator",
-         "The vertical speed indicator",
-         "The altimeter"
+         "The altimeter",
+         "The vertical speed indicator"
         ],
         "correct": 0,
         "explain": "Of the three instruments only the airspeed indicator uses pitot pressure, so only it depends on the pitot probe."
@@ -34754,7 +34754,7 @@
         "question": "The Mach module of an analogue air data computer fails. Why is the static source error correction affected as well?",
         "options": [
          "The correction depends primarily on the calibrated airspeed, which comes from that module",
-         "The correction depends on the static pressure, which is routed through that module",
+         "The correction depends on the static pressure, which is routed through the Mach module",
          "The correction depends primarily on the Mach number, which comes from that module"
         ],
         "correct": 2,
@@ -34819,19 +34819,19 @@
         "id": "M1.MD.Q10",
         "question": "A digital air data computer has lost its angle of attack, flap and gear position inputs. Which of its functions is degraded?",
         "options": [
-         "The data corrections, such as the static source error correction",
-         "The transmission of the computed values on the output busses",
-         "The conversion of the input pressures into electrical signals"
+         "The corrections, such as the static source error correction",
+         "The conversion of the input pressures into electrical signals",
+         "The transmission of the computed values on the output busses"
         ],
         "correct": 0,
         "explain": "Those inputs are used for the data corrections, so only the correction accuracy suffers."
        },
        {
         "id": "M1.MD.Q11",
-        "question": "Air data modules are located near the static port or pitot probe and there they",
+        "question": "Air data modules are located near the static port or pitot probe, where they",
         "options": [
          "amplify the air pressure for transmission along the tubes",
-         "convert the air pressure directly into a digital data word",
+         "convert the air pressure directly into a digital word",
          "convert the air pressure into a proportional analogue voltage"
         ],
         "correct": 1,
@@ -34872,7 +34872,7 @@
        },
        {
         "id": "M1.MD.Q15",
-        "question": "A compass finds the angle with a mounted, freely rotating permanent magnet. Which method is this and which kind of compass?",
+        "question": "A compass measures heading with a mounted, freely rotating permanent magnet. Which method is this and which kind of compass?",
         "options": [
          "The mechanical method, a direct reading compass",
          "The mechanical method, a remote reading compass",
@@ -34938,10 +34938,10 @@
        },
        {
         "id": "M1.MD.Q21",
-        "question": "What do the regulations demand regarding the operating states or modes of the autoflight subsystems?",
+        "question": "What do the regulations demand for the operating states or modes of the autoflight subsystems?",
         "options": [
          "Feedback to the pilot by an aural warning tone",
-         "Feedback to the pilot by colourful annunciators",
+         "Feedback to the pilot by coloured annunciators",
          "Feedback to the flight management system by a data bus"
         ],
         "correct": 1,
@@ -34960,7 +34960,7 @@
        },
        {
         "id": "M1.MD.Q23",
-        "question": "A pilot holds a steady force on the control wheel in CWS. What do the inner loops make of it, and what does the aircraft do?",
+        "question": "A pilot holds a steady force on the control wheel in CWS. What do the inner loops produce from it, and what does the aircraft do?",
         "options": [
          "A proportional roll rate, which changes the attitude and the heading",
          "A fixed roll rate, which changes the heading but not the attitude",
@@ -35062,8 +35062,8 @@
         "question": "The cyclic stick is moved to the left-hand side. Which servo stays unenergized and which movement results?",
         "options": [
          "the front servo, and the helicopter moves nose down",
-         "the LH servo, and the helicopter moves left sideward",
-         "the front servo, and the helicopter moves left sideward"
+         "the LH servo, and the helicopter moves sideways to the left",
+         "the front servo, and the helicopter moves sideways to the left"
         ],
         "correct": 2,
         "explain": "A sideward input leaves the front servo unenergized and moves the helicopter sideward to the left."
@@ -35083,9 +35083,9 @@
         "id": "M1.MD.Q34",
         "question": "Which force produced by the main rotor blades holds the helicopter up against gravity?",
         "options": [
-         "Drag",
+         "Thrust",
          "Lift",
-         "Thrust"
+         "Drag"
         ],
         "correct": 1,
         "explain": "Of the two forces the airfoil produces, lift is the one the manual gives as counteracting gravity."
@@ -35095,8 +35095,8 @@
         "question": "A helicopter is in forward flight and one blade is on the advancing side. In which direction does the relative wind on that blade act?",
         "options": [
          "Horizontally backward, opposite to the blade movement",
-         "Backward and upward, across the blade movement",
-         "Horizontally forward, with the blade movement"
+         "Horizontally forward, with the blade movement",
+         "Backward and upward, across the blade movement"
         ],
         "correct": 0,
         "explain": "The advancing blade moves forward, and the relative wind is always opposite to the blade's flight path."
@@ -35106,8 +35106,8 @@
         "question": "What must happen to the plane of rotation when an external force tilts the axis of rotation",
         "options": [
          "It tilts with the axis, staying perpendicular to it",
-         "It stays level, while the axis tilts away from it",
-         "It tilts the opposite way, staying parallel to the axis"
+         "It tilts the opposite way, staying parallel to the axis",
+         "It stays level, while the axis tilts away from it"
         ],
         "correct": 0,
         "explain": "The plane of rotation is always perpendicular to the axis of rotation, so it tilts with the axis."
@@ -35207,7 +35207,7 @@
         "options": [
          "Pneumatically, by an additional set of bellows",
          "Mechanically, by turning the whole altimeter mechanism",
-         "Electrically inside the indicator or via an air data computer"
+         "Electrically, in the instrument or in an air data computer"
         ],
         "correct": 2,
         "explain": "Electrical indicators have no mechanism to turn, so the correction is done electrically."
@@ -35216,16 +35216,16 @@
         "id": "M1.ME.Q5",
         "question": "Why can the speed limit of a jet aeroplane at low altitude be read directly as an indicated airspeed?",
         "options": [
-         "Because the limit there depends on the speed of sound, and the indicated airspeed indicator is a dynamic pressure indicator",
-         "Because the limit there depends on dynamic pressure, and the indicated airspeed indicator is a total pressure indicator",
-         "Because the limit there depends on dynamic pressure, and the indicated airspeed indicator is a dynamic pressure indicator"
+         "Because the limit there depends on the speed of sound, and the airspeed indicator measures dynamic pressure",
+         "Because the limit there depends on dynamic pressure, and the airspeed indicator measures total pressure",
+         "Because the limit there depends on dynamic pressure, and the airspeed indicator measures dynamic pressure"
         ],
         "correct": 2,
         "explain": "The indicated airspeed is a dynamic pressure indicator, and at low altitudes the limit depends on the dynamic pressure acting on the aircraft structure, so that limit can be marked as a speed."
        },
        {
         "id": "M1.ME.Q6",
-        "question": "A machmeter is opened and found to contain a differential pressure bellows and an aneroid bellows. Which instruments use these same two sensing elements?",
+        "question": "A machmeter is opened and found to contain a differential pressure capsule and an aneroid capsule. Which instruments use these same two sensing elements?",
         "options": [
          "The altimeter uses a differential pressure capsule and the airspeed indicator an aneroid capsule",
          "The airspeed indicator uses a differential pressure capsule and the altimeter an aneroid capsule",
@@ -35350,21 +35350,21 @@
         "options": [
          "the compass rose",
          "the course bar",
-         "the distance"
+         "the distance readout"
         ],
         "correct": 0,
         "explain": "The rose is the heading indication; the course bar and the distance are navigation system indications."
        },
        {
         "id": "M1.ME.Q18",
-        "question": "An approaching minimums call-out is selected, so how far above the decision height does it normally come on?",
+        "question": "The approaching minimums option is selected with the aural approaching minimums. How far above the decision height does the call-out normally come on?",
         "options": [
          "100 feet",
          "80 feet",
          "130 feet"
         ],
         "correct": 1,
-        "explain": "The approaching minimums call-out normally comes on 80 feet above the decision height."
+        "explain": "With the approaching minimums aural the call-out normally comes on 80 feet above the decision height; the 100 feet figure belongs to the plus hundred call-out of the same option."
        },
        {
         "id": "M1.ME.Q19",
@@ -35379,7 +35379,7 @@
        },
        {
         "id": "M1.ME.Q20",
-        "question": "The terrain display relays have been energised by the alert discretes, so what do the navigational displays then carry?",
+        "question": "The terrain display relays have been energised by the alert discretes. What do the navigational displays then carry?",
         "options": [
          "The weather radar picture as before",
          "The conflicting ground in yellow or red",
@@ -35390,7 +35390,7 @@
        },
        {
         "id": "M1.ME.Q21",
-        "question": "For an I - Regulator, to what is the rate of change of the output value proportional",
+        "question": "In an I-regulator the rate of change of the output value is proportional to",
         "options": [
          "its input value",
          "the rate of change of its input value",
@@ -35404,19 +35404,19 @@
         "question": "With one exception, direct inputs affecting the translatory degrees of freedom are not possible. How then is the flight path controlled?",
         "options": [
          "Indirectly, through inputs affecting initially the rotary degrees of freedom",
-         "Indirectly, through inputs affecting initially the centre of gravity position",
-         "Directly, through inputs applied to each of the three translatory axes"
+         "Directly, through inputs applied to the three translatory degrees of freedom",
+         "Indirectly, through inputs affecting initially the centre of gravity position"
         ],
         "correct": 0,
         "explain": "The pilot has to change attitude first and let the path follow from it."
        },
        {
         "id": "M1.ME.Q23",
-        "question": "Which parts of the system provide the combinations of regulators used for automatic vertical flight path guidance?",
+        "question": "Which parts of the autoflight system provide the combinations of regulators used for automatic vertical flight path guidance?",
         "options": [
-         "The AP/FD roll channel and the auto-thrust system under FMCS control",
+         "The AP/FD pitch channel and the flight management system under ATC control",
          "The AP/FD pitch channel and the auto-thrust system under AP/FD control",
-         "The AP/FD pitch channel and the flight management system under ATC control"
+         "The AP/FD roll channel and the auto-thrust system under FMCS control"
         ],
         "correct": 1,
         "explain": "Vertical guidance comes from the pitch channel together with the thrust system under AP/FD control."
@@ -35511,21 +35511,21 @@
        },
        {
         "id": "M1.ME.Q32",
-        "question": "An operator intends to fly in all weather conditions — which flight rules must its approval take in?",
+        "question": "An operator intends to fly in all weather conditions — which flight rules must its approval cover?",
         "options": [
-         "Special visual flight rules",
+         "Visual flight rules",
          "Instrument flight rules",
-         "Visual flight rules"
+         "Special visual flight rules"
         ],
         "correct": 1,
         "explain": "The approval must cover IFR flight before all weather operation can follow."
        },
        {
         "id": "M1.ME.Q33",
-        "question": "The aircraft reaches the decision height on a CAT II approach — what is the position regarding a manual landing?",
+        "question": "The aircraft reaches the decision height on a CAT II approach — what applies to a manual landing?",
         "options": [
-         "It is compulsory in every single case",
          "It is forbidden in every case",
+         "It is compulsory in every single case",
          "It is allowed but is not compulsory"
         ],
         "correct": 2,
@@ -35555,14 +35555,14 @@
        },
        {
         "id": "M1.ME.Q36",
-        "question": "During a ground check the whole swash plate is seen to rise without tilting, and every blade takes a larger pitch angle. What will the helicopter do if this is done in flight?",
+        "question": "The bell cranks from the cockpit controls are traced to the swash plate while the blade control rods run from its other part. Which part do the bell cranks move?",
         "options": [
-         "It yaws left, because the tail rotor pitch is increased",
-         "It flies forward, because the rotor plane is tilted forward",
-         "It climbs, because all blades gain pitch together"
+         "Both parts together",
+         "The rotating part",
+         "The stationary part"
         ],
         "correct": 2,
-        "explain": "Lifting the swash plate is a collective pitch increase, which makes more lift and a climb."
+        "explain": "Cockpit inputs arrive through the bell cranks at the stationary part, and the rotating part passes the movement on to the blades."
        },
        {
         "id": "M1.ME.Q37",
@@ -35588,7 +35588,7 @@
        },
        {
         "id": "M1.ME.Q39",
-        "question": "Which two items are the special features of the integrated cabin entertainment and service system rather than its subsystems",
+        "question": "Which two items are special features of the integrated cabin entertainment and service system rather than subsystems of it",
         "options": [
          "The Cabin Lighting System and the Cabin Interphone System",
          "The Cabin Configuration System and the ACESS Test System",
@@ -35599,10 +35599,10 @@
        },
        {
         "id": "M1.ME.Q40",
-        "question": "Which cabin functions can the crew and the passengers reach through the nice system",
+        "question": "Which cabin functions can the crew and the passengers reach through the NICE system",
         "options": [
-         "Illumination, cabin pressure, audio/video and internet access",
          "Window-shades, galley power, audio/video and seat heating",
+         "Illumination, cabin pressure, audio/video and internet access",
          "Illumination, window-shades, audio/video and internet access"
         ],
         "correct": 2,
