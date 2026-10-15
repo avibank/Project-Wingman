@@ -50,3 +50,7 @@ backups/accounts-*/
 
 # Local agent worktrees.
 .claude/worktrees/
+
+# the mock importer writes this on the way to the content document; the
+# document is the committed artefact, this is the intermediate.
+scripts/mock/mocks.json
