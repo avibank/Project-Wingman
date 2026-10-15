@@ -49,23 +49,24 @@ AME students, not pilots. Vocabulary rules changed in the most recent design pas
 
 ## Content
 
-**MODULE 13d IS TEN BATCHES** (owner, 2026-10-08: "delete every quiz and trace
-and update those, push them in"). M1.B1 and M1.B6 came out with everything they
-carried; twenty documents — a Quiz and a Full Set for each of ten batches —
-went in the same day under ids that had never existed, `M1.T1` to `M1.T10`.
+**MODULE 13d IS TEN BATCHES, REWORKED** (owner, 2026-10-12: "i will refeed you
+the batches i need them updated and wipe all attempts"). All twenty documents
+came again — a Quiz and a Full Set for each of ten batches — under ids that
+had never existed, `M1.V1` to `M1.V10`. The ten before them were `M1.T1` to
+`M1.T10` (2026-10-08), and before that M1.B1/M1.B6 and M1.01-M1.03.
 
 | batch | id | ref | pages | quiz | cards | paper |
 |---|---|---|---|---|---|---|
-| 1 | M1.T1 | 13.1 | 1–63 | 40 | 160 | 24pp |
-| 2 | M1.T2 | 13.3 | 64–155 | 40 | 340 | 52pp |
-| 3 | M1.T3 | 13.3 | 156–231 | 40 | 277 | 43pp |
-| 4 | M1.T4 | 13.3 | 232–321 | 40 | 311 | 45pp |
-| 5 | M1.T5 | 13.6 | 322–448 | 40 | 332 | 50pp |
-| 6 | M1.T6 | 13.8 | 449–562 | 40 | 326 | 50pp |
-| 7 | M1.T7 | 13.8 | 563–650 | 40 | 246 | 37pp |
-| 8 | M1.T8 | 13.8 | 651–767 | 40 | 312 | 45pp |
-| 9 | M1.T9 | 13.8 | 768–917 | 40 | 417 | 60pp |
-| 10 | M1.T10 | 13.8 | 918–1008 | 40 | 227 | 35pp |
+| 1 | M1.V1 | 13.1 | 1–63 | 40 | 105 | 18pp |
+| 2 | M1.V2 | 13.3 | 64–155 | 40 | 306 | 47pp |
+| 3 | M1.V3 | 13.3 | 156–231 | 40 | 272 | 42pp |
+| 4 | M1.V4 | 13.3 | 232–321 | 40 | 293 | 44pp |
+| 5 | M1.V5 | 13.6 | 322–448 | 40 | 265 | 43pp |
+| 6 | M1.V6 | 13.8 | 449–562 | 40 | 274 | 43pp |
+| 7 | M1.V7 | 13.8 | 563–650 | 40 | 232 | 36pp |
+| 8 | M1.V8 | 13.8 | 651–767 | 40 | 271 | 39pp |
+| 9 | M1.V9 | 13.8 | 768–917 | 40 | 390 | 57pp |
+| 10 | M1.V10 | 13.8 | 918–1008 | 40 | 208 | 33pp |
 
 **AND FIVE MOCK EXAMS WENT ON THE END ON 2026-10-15** (owner: "those are mock
 exams that cover the whole subject", "name them in letters from a to e
@@ -98,8 +99,8 @@ Quiz and a Full Set; a mock is a single file holding the paper, its forty
 questions and the key. So the quiz comes out of it, the card set is LEFT to
 fall back to those same questions (`content.cardSet` does that for a chapter
 with no `cards`) and the file goes on the Papers shelf — which is why Quiz and
-Cards both read 40 on a mock row, and why the cards total is 3,148 rather than
-a new 2,948 + something.
+Cards both read 40 on a mock row, and why the cards total is 2,816 rather
+than 2,616 plus a new set.
 
 **A MOCK'S ROW SAYS ITS NAME AND NOTHING ELSE** (owner: "it should say just
 mock exam, nothing else"). "Batch 11" is the one thing it must not read — a
@@ -129,7 +130,28 @@ question moved, so every attempt's question hash still matches and every
 score, save and board run stands. `STORAGE_EPOCH` stays **5**. The reset SQL
 was not run and must not be.
 
-**400 quiz questions, 2,948 cards, 10 papers.** The names are the documents'
+**400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
+332 fewer cards: every batch came back trimmed. The previous set was 2,948.
+
+**THE IMPORTER IS IN THE REPO NOW** (`scripts/batches/`), where it was a
+one-off before. `lines.mjs` pulls every line out with its x and its height
+through the repo's own pinned pdf.js; `import.mjs` classifies by that geometry
+and refuses rather than guesses; `build.mjs` puts the result into the content
+document and the papers on the shelf, reading each paper's page count out of
+the file. All twenty came out with **zero warnings**, 3,016 items, every id
+unique, and the spread near a third each — quizzes 14/13/13 to the batch,
+card sets from 70/69/69 to 130/130/130.
+
+- **A BLANKET "SKIP THIS HEIGHT" RULE ATE 92 EXPLANATIONS IN SILENCE.** A key
+  row's tail — "(L3, PDF p. 38)" — breaks onto a continuation line at **x=91
+  h=8.5**, not h=9, and the importer's `if (near(h, 8.5)) continue;` for meta
+  lines swallowed every one of them. The documents still read, every count
+  still tallied, the spread was still a clean third, and 92 explanations
+  simply ended at "(L3, PDF p." — with NO warning, because a catch-all skip
+  is exactly how "report, never assume" gets defeated. Caught by checking all
+  3,016 items mechanically for a surviving `(L…, PDF p.` tail rather than by
+  reading any of them. The test is the INDENT, which only a continuation has;
+  the height is allowed to be either, and the meta skip is pinned to x=60. The names are the documents'
 own — batches 2-4 are all "Autoflight (ATA 22)" and 6-10 all "Instruments (ATA
 31)", which is what the syllabus says; a row prints the name, the ref and the
 page range, so three batches sharing a subject are still told apart. Batch 5's
@@ -172,6 +194,33 @@ student inside the explanation.
   not a topic's meta line, which gave 9.
 - **Spot-check the answer spread**: near a third each across a/b/c. The
   quizzes came out 14/13/13 and the sets from 54/53/53 to 139/139/139.
+
+**THE RESET AND THE PUBLISH BOTH RAN AGAIN ON 2026-10-12**, in the order the
+epoch requires: merge, deploy, reset, publish. The deploy has to come FIRST
+because `STORAGE_EPOCH` is the device half — an un-swept browser holding
+`pw-quiz-scores` for a chapter that no longer exists patches it straight back
+on its next load. Confirmed the deploy had landed by fetching a paper off the
+live site and matching its length against the new file (203,831 bytes, where
+the one it replaced was 282,593) rather than waiting on a status that never
+appeared.
+
+Measured rather than asserted: **4 board runs, 14 saves and 2 progress
+documents went**, and **hours flown stayed at 6 documents**, which the runner
+checks and refuses to let change. `STORAGE_EPOCH` is **6**. The document was
+published as **course version 14** (from 11) and read back through
+`current_course()`: 10 chapters M1.V1-M1.V10, 400 quiz questions, 2,616 cards,
+10 papers, and all ten papers answered `%PDF-` from the live site before the
+RPC ran.
+
+`scripts/batches/reset.mjs` is the runner, and it counts BEFORE as well as
+after, so the paragraph above is a measurement rather than "it ran".
+
+**SUPABASE PREVIEW NOW FAILS ON MAIN, AND IT IS NOT THIS.** Its branch
+database replays the whole series into an empty project and hits `policy
+"lesson_notes_no_bulk_read" for table "lesson_notes" already exists` —
+0009 creates it unguarded and `ALL.sql` carries it too, so the two together
+collide. Production is untouched; it is the preview that cannot rebuild. The
+fix is an `if not exists` guard or a drop-first in 0009, and it is NOT done.
 
 **THE RESET AND THE PUBLISH BOTH RAN, and a commit is neither.**
 `supabase/reset-module-13d-progress.sql` is scoped to `M1.%` and safe to run
@@ -571,6 +620,81 @@ which is what the Flight Deck draws before the document arrives.
 - **Expect to reset again with every replacement.** Run the SQL, raise the
   epoch, re-make the paper, and publish — a commit alone leaves the class on
   whatever `course_docs` last served.
+- **AND RUN THE BROWSER SUITES, because `npm run check` does not.**
+  `test:exam`, `test:bm`, `test:rr`, `test:tour`, `test:cards`, `test:lesson`
+  and `test:vt` all need the harness, which is why they are out of `check` —
+  so a content replacement sails through every gate and breaks them silently.
+  `npm run test:exam` was red from 2026-10-03 and nobody knew until
+  2026-10-10, across TWO replacements: it had `M1.01` pinned, an eight-question
+  paper written down as `1/8`, `Not answered 7`, `cells.nth(7)` for "the last
+  question" and nine result cases counted out of eight, and a clock of
+  R5's `20:00`. 54 problems across its 108 states and 53 among its controls,
+  every one of them on a screen that has not changed since 2026-09-27 — and
+  the 54 were a SECOND cause: it asked for Aurora's forced night, and Aurora
+  has been unoffered since 2026-10-04, so `offeredFinish` had been quietly
+  dressing those 18 states in Standard. It runs the ask through the same
+  filter the app does now.
+  - **The fix was to ASK THE FIXTURE, not to update the numbers.** The chapter
+    is now the first one with a quiz, the paper's length is
+    `chapter.questions.length`, the pass mark is `passAt(N)`, the clock is
+    `clock(allowanceFor(N))` and every result case is a BRANCH of
+    `headline()` with its count derived — so the next replacement cannot do
+    this again. At eight questions the derived table is the old hardcoded one
+    to the digit, which is how the generalisation was checked.
+  - **AND ALL THREE OF THEM WERE FIXED ON 2026-10-13**, each for its own
+    reason, which is the point: these go red one at a time and quietly.
+    - **`test:bm` NOW ASKS THE COURSE WHAT IT CAN FILL.** Its seed named five
+      question ids out of M1's first chapter, two videos, two pages and two
+      questions out of M2's THIRD chapter, and asserted fifteen rows; M2 has
+      no chapters, so it built thirteen and threw. Raising the number would
+      have been wrong twice over — **no module has any lessons** (and a video
+      row whose lesson id is unknown is DELETED, not merely unshown: eleven
+      seeded, ten survived), **papers are off** so `KINDS` offers three
+      folders and the walk asserted four in five places, and
+      **`library.batches` went on for everybody** so the module card-set page
+      is `CardSession` and `.bm-pad` never arrives on it. The fixture is
+      derived now and **what cannot be covered is NAMED in the output** —
+      the empty Videos folder, the absent Pages folder, the single module —
+      rather than quietly asserted against.
+    - **`test:rr` was a launch-gated option, a drag race, and the litter it
+      left.** The `+` sheet asserted Paper passage, which ReadyRoom withholds
+      while papers are paused. The splitter assertion was FLAKY — a synthetic
+      drag is eight pointer moves and under load the last lands after a fixed
+      200ms settle — so it waits for the width now. **And that uncovered the
+      crash CLAUDE.md had recorded against this suite**: with the drag landing
+      reliably the width PERSISTS, a narrowed feed puts the detail column over
+      the rows, and a `.rr-fopen` press died on `.rr-dscroll` intercepting it.
+      The walk restores the layout, which is the rule this file already states
+      for a walk that changes a livery or a finish.
+    - **`test:vt` WAS A REAL REGRESSION, and the only one of the three.** See
+      "Screen changes and transitions" below: the ported module screen had
+      left the motion system entirely.
+  - **AND A SIDE EFFECT INSIDE A STATE UPDATER, which is the one of these
+    bugs a student could actually have been bitten by.** `StudyPad`'s flip was
+    `setFlipped((f) => { if (!f) markSeen(…); return !f; })` — and a state
+    updater has to be PURE, because React may call it during the render phase.
+    So turning a card over wrote progress from inside another component's
+    render: *"Cannot update a component (UserProgressProvider) while rendering
+    a different component (StudyPad)"*. Dev-only as a message, but a progress
+    write during render is one that can be dropped or doubled, and it fired
+    for **every student the first time they turned a card over**. It had gone
+    unseen because the walk's pad always had cards already marked seen — it
+    surfaced the moment the walk cleared them, which is also the fix to the
+    pad's own order-dependence (`firstUnseen` opens where you stopped, so a
+    pile that marked cards seen had the pad opening at "4 / 4").
+  - **TWO CONTRAST BUGS CAME OUT OF test:bm, both the same mistake**: the
+    accent as a MARK used as WORDS. `.bm-eg-cta` ("Find a lesson") at 3.96:1
+    in Day — drawn only when a folder is EMPTY, which never happened while the
+    course had lessons, which is why it had never been measured. And
+    `.bm-btn.is-primary` under **Manual** at 3.92:1 worst: Manual draws a fill
+    as a line and a label, so there is no fill left for `bm-app.css`'s
+    `--bm-fill` step to darken and the label was left on `--active`. The
+    stroke stays a mark; only the words moved. 4.79:1 and 6.11:1 now.
+  - **AND TWO STALE ASKS WENT WITH THEM.** `test:bm` asked for Aurora's forced
+    night, which `offeredFinish` has been reading back as Standard since
+    2026-10-04 — 120 states failing for the app obeying its own rule, the same
+    bug `test:exam` carried until 2026-10-10 — and a flight-bag count
+    hardcoded to the old seed's 13 while the strip correctly drew 9.
 
 `check:placeholders` / `check:ship` grep the build for the markers of the old
 placeholder set; nothing carries them and both pass unchanged.
@@ -696,6 +820,37 @@ merge them back together.
     forbids naming an absence, which is what the brief's own words did.
   - A person with no stamp yet draws the **un-inked outline**, the licence's
     own "not yet" mark (owner, on the brief's open question 1).
+  - **ONE ANSWER IS WHAT STAMPS YOU, NOT A HAND-IN** (owner, 2026-10-12;
+    migration 0042, run live the same day). A run joins the quiz's stamps once it
+    has been ANSWERED or submitted — `quiz_runs.answered_at`, written by
+    `mark_quiz_progress` on the first answer of a sitting. Measured in a
+    browser: opened with no answer gives 0 stamps, one answer gives 1, and
+    leaving by "Leave it for now" keeps it.
+    - **OPENING WAS ASKED FOR FIRST AND ARGUED DOWN.** The row already exists
+      on open (`start_quiz_run` fires from an effect), so reading it would
+      have been a one-line change — it is not the rule because opening is
+      free and repeatable, because the screen it sits on marks nothing before
+      hand-in, and because "Leave it for now" exists so a mis-tap costs
+      nothing. One answer cannot be reached by accident and is reached long
+      before a hand-in, which is the liveness that was actually wanted.
+    - **THE CONDITION WAS THAT LEAVING KEEPS YOUR PLACE, and it already did** —
+      measured before 0042 was written: answer two, step to the third, leave,
+      come back to question 3 with 2 of 40 answered and the clock 0 seconds
+      further on. **The limit, stated rather than discovered: the attempt is
+      localStorage only (`wingman.attempt.<quizId>`), so resume is PER
+      DEVICE.** Leave on a phone, open on a laptop, and you get a fresh paper;
+      the stamp is then the only trace of the first sitting.
+  - **A REPEAT IS A SECOND STAMP NOW**, and the old rule is withdrawn (owner:
+    "if I attempt it twice, I get stamped"). It was one stamp per person on
+    their best run, with a repeat keeping an empty slot and the word "again".
+    `quiz_finishers` returns one row per RUN rather than per person, the
+    render-time de-duplication in `Leaderboard.jsx` is gone, and `run_id` is
+    returned because `user_id` is no longer unique in that list — React would
+    have dropped the duplicate silently, which would have looked exactly like
+    the de-duplication being removed. **The cost is stated rather than
+    hidden**: twelve runs from nine people now read as twelve stamps, which is
+    what the old rule existed to prevent. A better treatment for a repeat is
+    wanted later and belongs in `Leaderboard.jsx`.
   - **The pack's row is a `<li>` of spans, so a board row has no door on it**
     any more; the pilot sheet is still reached from Crew, the Ready Room and a
     lesson. One button on a row would put it back.
@@ -733,7 +888,10 @@ merge them back together.
   reading "about 50 minutes" for every quiz would say nothing. **The number
   lives in TWO places now and they have to move together**: `quiz.js` and
   `check:exam`. It was three: `steps.js` said it out loud to a visitor, and
-  that file went with the tour rebuild on 2026-10-06. The approved tour's
+  that file went with the tour rebuild on 2026-10-06. It was briefly FOUR —
+  `test:exam` asserted R5's `20:00` and went red unnoticed through both of
+  the clock's changes; it asks `clock(allowanceFor(N))` now, so it tracks
+  this number rather than restating it. The approved tour's
   script does not state the clock anywhere, so a visitor is no longer told
   the figure before they meet it — which is the handoff's wording and not an
   oversight here. If it should be said again it belongs in `tourSteps.js`,
@@ -803,6 +961,174 @@ squawks and teams, 0008 the lesson surface, 0009 the right seat's boundary,
 0010 thread titles and answers, 0011 discovery, 0012 search and suggestions,
 0013 retiring the pilot livery, 0014 the annotation layer on papers,
 0015 live updates, 0016 the three-character code, 0017 ink and the palette.
+
+**0041 AND 0042 HAVE BEEN RUN AGAINST THE LIVE PROJECT** (2026-10-12),
+verified by connecting rather than inferred — `npm run check:people-db`, 13
+assertions over the anon REST path. Afterwards: `people_search` returns
+`(user_id, callsign, real_name, module_code, shares_squadron)` and no
+`display_name`, `people_browse` and `mark_quiz_progress` exist where neither
+did, `quiz_finishers` returns `run_id`, and `quiz_runs.answered_at` is
+present. One letter into search finds people and hands back zero names, which
+is the disclosure rule holding on real data.
+
+**THE ORDER WAS MERGE, DEPLOY, THEN MIGRATE, and it had to be.** 0041 DROPS
+`display_name`, which the deployed client read; running it first would have
+blanked every search result for the class until the bundle caught up. The
+other direction has its own gap — the new bundle asks for `callsign` while the
+old function still answers `display_name` — so `searchPeople` carries a
+`compat` fallback for exactly that window. **Delete `compat` now that 0041 has
+run**, which is what its own comment says; `check:people` holds it until then.
+
+**`scripts/apply-migration.mjs` is how they were applied**: one transaction per
+file, so a failure leaves nothing behind, and it prints the shape of what it
+touches before and after, which is where the paragraph above came from.
+
+What it does: the ORBIT SCOPE IS WITHDRAWN FOR SEARCH. 0011 built
+`people_search` so it "cannot return a stranger", through `in_my_orbit` —
+shares a squadron, or has posted in one of your modules. The owner searched
+for somebody he knew by name and by username and got nothing (2026-10-11:
+"disregard anything we decided earlier ... if it is registered on a server, it
+will show their name"), and on a class this size that function was mostly
+answering "is this person already in a room with me". The matching was never
+the problem; 0012 already matched callsign and real name both.
+`in_my_orbit` itself stays — `discover_squadrons` still uses it, which is a
+different question.
+
+**WHAT 0041 KEEPS IS AS MUCH OF THE POINT AS WHAT IT DROPS.** Fly solo, blocks
+both ways, `discoverable`, and 0012's rule that a real name its owner chose not
+to show is never matched on — that last one does not hide anybody, because
+their callsign still finds them; what it refuses is confirming a hidden name
+one substring at a time. You also never find yourself, which orbit used to do
+incidentally and is now explicit.
+
+**AND `people_browse`, WHICH RETURNS ROWS AND NO NUMBER.** The owner asked
+for "some sort of glossary that shows active users in a way that doesn't
+expose if we have small users", and then for where it lives: "if you select
+people, it shows every current person". So it is EVERYBODY, alphabetical by
+callsign, and there is no count to print — no total, no headcount, and
+deliberately **no `count(*)` companion**, because the moment one exists a
+screen will use it.
+
+It was `active_students` and a fortnight's activity in the first draft. The
+window survives as `p_since`, null by default, for a class big enough to want
+one; "every current person" is what was asked for. Activity is still read
+across five signals (seen, asked, answered, finished a chapter, sat a paper)
+rather than from presence alone, so a window means what it says.
+
+**THE SERIES CAN BE RUN TWICE, AND UNTIL 2026-10-13 IT COULD NOT.** Supabase's
+preview CI applies every file in `supabase/migrations/` to a branch database,
+and it had been failing on the same line for days:
+`policy "lesson_notes_no_bulk_read" for table "lesson_notes" already exists`.
+**Two separate causes, and fixing the first did not fix it.** `supabase/ALL.sql`
+lived in that directory, so the tooling applied the whole bundle as a migration
+and — having no `NNNN_` prefix — applied it FIRST, creating everything twice;
+moving it out on 2026-10-12 was right and was not enough, because by then the
+branch database was holding 0009's policies from a run that died past them
+while the history table never recorded 0009 as applied. **Eight `create policy`
+statements across 0008, 0009 and 0010 had no guard at all**, while all three
+files' headers said "safe to re-run" — so every later run stopped at the same
+statement forever, and nothing in the files said why. They drop first now, which
+is the idiom the other 28 already use (the other two being a do-block
+swallowing `duplicate_object` and an `if not exists (… pg_policies …)` test);
+dropping is the deliberate choice for 0009 because a re-run then converges on
+the definitions in the file rather than on whatever a half-finished run left,
+and those four ARE the boundary 0009 exists to draw. Nothing else in the series
+was ever exposed: tables, indexes, triggers, types and functions were all
+already guarded, measured rather than assumed.
+
+**AND THEN IT FAILED FURTHER ALONG, ON A SECOND CAUSE OF THE SAME KIND.** With
+the policies fixed the run got as far as 0011 and stopped with
+`cannot change return type of existing function (SQLSTATE 42P13)`:
+**`create or replace function` cannot change what a function returns**, and
+this series widens functions freely — `people_search` goes from four columns in
+0011 to sixteen in 0043, `licence_card` from 21 to 28, and `quiz_finishers`,
+`squadron_roster`, `paper_marks_for` and `people_browse` all grow too. Replaying
+an early file against a database holding the final shape therefore cannot work
+unless the function is dropped first. **Seven definitions needed that and did
+not have it.** The rule is per OVERLOAD — a different argument list is a
+different function, which is why 0014's `paper_annotation_status(uuid, text)`
+returning `void` is NOT a problem beside 0023's three-argument one returning
+`boolean` — and trigger functions are exempt by construction, since they return
+`trigger` everywhere and could not be dropped without cascading through the
+trigger that uses them.
+
+**AND A THIRD, THE SAME SHAPE AGAIN.** With the functions fixed the run reached
+0015 and stopped on
+`relation "lesson_threads" is already member of publication "supabase_realtime"`:
+**adding a table to a publication twice is an error, not a no-op.** Its three
+statements are wrapped in the `duplicate_object` idiom now. At that point the
+remaining classes were audited rather than waited for — `add constraint` (nine,
+all already dropped first, one of them by 0017's loop over `pg_constraint`
+rather than by name) and `insert into` (five, all carrying `on conflict`) — and
+the classes PostgreSQL makes no-ops on repeat are deliberately not asserted,
+because a check that flagged `enable row level security`, `replica identity
+full`, `grant` or `alter function … set search_path` would be noise. 14
+assertions now.
+
+**AND A FOURTH, WHICH WAS NOT A STATEMENT AT ALL BUT A CLAIM GOING STALE.** The
+run then reached 0026's own proof block and raised
+`0026: something can list chat-attachments, and nothing should`. Several
+migrations end in a do-block proving they took; most assert the PRESENCE of
+their own objects, which no later file can falsify. **0026's asserted an
+ABSENCE** — that nothing may list that bucket — and **0031 reversed exactly
+that, deliberately and at length**: Supabase's storage API uploads with
+`x-upsert: true`, which LOOKS FIRST, so with no select policy every attachment
+upload failed with a 403 naming INSERT. So 0026's flat zero has been false by
+design since 2026-09-19, and only a replay ever ran it again. It excludes
+0031's policy by name now and still asserts that no OTHER reader appeared —
+read 0031's header before touching it. Every other absence-proof in the series
+was checked and none is stale.
+
+**AND A FIFTH, WHICH WAS DATA RATHER THAN SCHEMA.** The run then reached 0035
+and raised
+`check constraint "pilot_code_shape" of relation "pilot_profiles" is violated by some row`.
+**Adding a constraint VALIDATES the existing rows**, and 0039 widens this one
+from exactly three characters to one-to-three — two accounts hold a shorter
+code. A narrowing cannot be replayed over data a later migration widened, so
+the superseded add is skipped when that happens and 0039 adds the correct shape
+a few files later; on a fresh database there are no rows to violate and nothing
+is skipped. Four superseded adds across 0017, 0018, 0035 and 0036 take that
+treatment, of which two were genuine hazards (0017's list is narrower than
+0020's; 0036's is WIDER than 0037's and so was always safe).
+
+- **THE FIRST DRAFT OF THAT CHECK ACCUSED TWENTY-EIGHT CORRECT STATEMENTS**, and
+  that is the part worth remembering. The series guards a constraint four
+  different ways — `drop constraint if exists`, a dynamic drop over
+  `pg_constraint`, an `if not exists (… pg_constraint … conname)` test, and a
+  do-block swallowing `duplicate_object` — and a check that knew only the first
+  called the other three broken. Each idiom was added to the check only after
+  reading the statements it was accusing. **A check that cries wolf about
+  correct code is worse than no check**, because the next person learns to
+  override it. The distinction that matters is narrow: a statement SKIPPED
+  because the constraint is already there never looks at the rows, so only the
+  drop-and-re-add shape can raise 23514 — 11 of the 41 do that.
+- **And wrapping a statement in a guard indents it, which hid it from the
+  gate.** The add-constraint scan required column 0, so guarding four
+  statements took them out of the assertion that had been watching them. It
+  scans regardless of indentation now.
+
+- **ALL FIVE WERE FOUND ONE AT A TIME, each only after fixing the one in front
+  of it.** Every fix moved the failure further down the series rather than
+  clearing it, which is the thing to expect of this kind of work rather than to
+  be surprised by. None of the four is visible by reading any single migration:
+  the first needs the branch's leftover state, the second needs two files
+  compared, the third needs to know that one `alter` is not a no-op, and the
+  fourth needs to know that a later file withdrew an earlier file's claim. That
+  is why they are assertions now rather than paragraphs — and after the third,
+  the remaining statement classes were audited in one pass instead of waiting
+  for CI to name a fifth.
+- **The limit is stated rather than glossed**: a proof block can assert
+  anything, so `check:migrations` only partly reaches that last class. The
+  preview run itself is the real test of the series.
+
+- **`npm run check:migrations` is 16 assertions and IS in `npm run check`**,
+  because it reads the SQL and needs no credentials. It holds all 36 policies
+  and every other DDL statement, every one of the 91 overloads against the
+  last definition of its own shape, that only `NNNN_`-prefixed files live in
+  the migrations directory, and that **both bundles are byte-for-byte what
+  their generators would write** — that bundle sat at 0013 while the series had
+  reached 0042, and a stale bundle goes stale silently. Proved by planting all
+  three bugs back: each one fails it, restored it passes.
 
 **0040, the course in a table, has been run against the live project**
 (2026-09-30), verified by connecting: `course_docs` with one SELECT policy
@@ -965,8 +1291,14 @@ all 12 functions are in `pg_proc` with signatures matching every call site.
 Do not trust the comments in `squadron.js`, `comms.js` and `FirstFlightGate` that say
 "until 0005 runs" — they describe the state when they were written and were never
 updated. `npm run check:backend` is the source of truth; run it rather than reading
-prose. `supabase/SETUP.sql` is still the guarded one-paste bundle of 0005-0007 if a
-second environment ever needs building.
+prose. `supabase/SETUP.sql` is the guarded one-paste bundle if a second environment
+ever needs building — **0005 to 0043, not 0005-0007**, which is what this line
+said until 2026-10-13. It is generated (`npm run build:sql`, which writes it
+and `ALL.sql` together) and it had not been regenerated since 0013, so it was
+**thirty migrations and 3,593 lines stale** and would have built an
+environment missing everything from the reader to the course table.
+`check:migrations` runs both generators and compares now, so neither can go
+stale again without the gate saying so.
 
 0004 is not optional: without it, progress does not save. 0000 declares the
 `user_progress` table it writes to, which predates the series and was created by hand —
@@ -1032,6 +1364,90 @@ reader does can damage the paper. Module 1 only for now, behind
   adds it to Module 1 under `import.meta.env.DEV` only.
 
 ## The Ready Room
+
+### Finding people, and the circuit
+
+- **A NAME OR A CALLSIGN FINDS ANYONE STUDYING HERE** (owner, 2026-10-11;
+  migration 0041, which is **not yet run** — see Migrations). The order is the
+  server's and is a suggestion list's: exact, then starts-with, then contains,
+  then a squadron-mate ahead of a stranger, then alphabetical. The client
+  formats and never sorts, the same division as the leaderboard.
+  - **The copy moved with the rule.** Discover's last line used to tell a
+    student "a name only finds someone you already share a squadron with"; it
+    said the orbit rule out loud and would have been a lie the moment 0041
+    ran. The rail's second line under a found person had the same problem — it
+    fell back to "In your modules", which was a safe guess only while orbit
+    guaranteed it, and was labelling strangers as classmates. It says what it
+    knows and otherwise says nothing (`personLine` in Rail.jsx).
+- **THE DIRECTORY IS A FILTER ON THE SEARCH, not a section of its own**
+  (owner, 2026-10-12: "we move it to the search bar ... if you select people,
+  it shows every current person"). The rail's search carries All · People ·
+  Squadrons · Questions; People replaces the rail with the whole class, A–Z,
+  whether or not anything is typed. It was a short list pinned to the foot of
+  the rail, capped at eight, whose "see who else" went to the SQUADRON finder
+  — a door that did not go where it said.
+- **THE LIST IS CALLSIGNS. A NAME IS SOMETHING YOU ASKED FOR.** This is a
+  privacy rule, so it lives in the SQL and not in the component: `people_browse`
+  has no column for a real name, and `people_search` returns one only on the
+  rows whose name matched. A roster of real names cannot be read off the side
+  of the screen, and the client cannot leak what it was never sent. The third
+  way to a name is opening the profile, which is a deliberate press on one
+  person.
+  - **DISCLOSURE IS STRICTER THAN MATCHING, and the gap is the whole rule.**
+    Matching stays a loose substring so any fragment still FINDS people;
+    disclosure needs three characters or more that START a word of the name.
+    Written as a plain substring it handed back "Kai Lindqvist" for the two
+    letters "KA" — somebody typing the start of a CALLSIGN was given a real
+    name — and one letter would have harvested the class. Measured on the
+    fixture, not reasoned about.
+  - Ordered by callsign, and grouped by its first character; anything not A–Z
+    lands under "#", which sorts last. `byLetter` in `roomModel.js` rather
+    than in `discovery.js`, because discovery.js imports the Supabase client
+    and so cannot be imported by a node check — the same split `quiz.js` and
+    `cardSession.js` already make.
+- **THEIR FACE AND THEIR MARK** (owner, 2026-10-12: "the stamp is the
+  identity so i want that integrated too", then "keep the profile but also add
+  the stamp near the name"). The avatar stays — it is what a student
+  recognises everywhere else — and the stamp sits beside the callsign at 22px,
+  through the app's ONE renderer, so a stamp is drawn here exactly as it is on
+  the board and the quiz row. Somebody who has not made one gets the un-inked
+  outline, which puts the nudge in the one place students look at each other.
+  Migration **0043** widens both functions with the same eleven stamp columns
+  `quiz_finishers` already returns; no real name comes with it.
+- **AND THE LETTER HEADERS ARE GONE** ("it doesnt have to show it just do it
+  quietly theyll understand"). Still A to Z — but **the one thing those
+  headers were really carrying moved into the SQL**: a callsign that does not
+  start with a letter belongs LAST, and the database collation puts it FIRST.
+  `byLetter` in roomModel.js was doing that silently, and dropping the
+  grouping without moving the rule would have quietly reordered the screen.
+  Measured on the live list before it moved. The client formats and does not
+  sort.
+- **AND NOTHING IN IT IS COUNTED**, which was the owner's first requirement
+  for this screen and still holds. No headcount, no "+4", no "of", and
+  deliberately no `count(*)` companion in the SQL, because the moment one
+  exists a screen prints it.
+- **`pgcore.js` ANSWERS BOTH FOR REAL NOW.** `people_search` was `() => []`
+  there — the quiet kind of harness lie, because an empty People section is
+  also what a correct no-match looks like, so every walk that typed a name
+  passed. The demo had its own copy in `seed.js` to work around it, ignoring
+  blocks, Fly solo and the identity rule. One implementation, in pgcore, which
+  CLAUDE.md already says is "the PostgREST emulation both use".
+  - The harness's room seed had **no `pilot_profiles` at all**, which is why
+    nobody noticed: there was nobody to find either way. It seeds a class now,
+    including the three who must never be found (Fly solo, blocked, and a
+    hidden real name) — and NOT Alex, Dana or Haddad, who `fixture.js` already
+    defines. Posting those three again appended a second row each, because
+    pgcore does not enforce a primary key, and the directory listed "Dana" and
+    "Dana Okafor" as two people. Measured on the way in.
+- **`npm run check:people` is 40 assertions and IS in `npm run check`**,
+  because it needs no browser and no credentials. That is deliberate: the
+  three suites that would otherwise have caught a search returning nothing —
+  `test:rr`, `test:bm`, `test:exam` — are all outside the gate and all three
+  were found red on 2026-10-10. It drives pgcore's RPCs for real and holds the
+  no-count rule by reading the rail's own source. Proved by planting its bugs:
+  the orbit rule back, the hidden name made matchable, a count rendered in the
+  section, and `more` turned into a number.
+
 
 Rebuilt on 2026-09-15 from a signed-off design (a port brief and a static
 demo, handed over outside the repo). Squadrons are group chats, modules are
@@ -1431,6 +1847,45 @@ in is now: **sign up → the walkthrough → the licence**, and nothing else.
   places and they have to agree: the CHECK `pilot_code_shape`, `claim_code`,
   both arities of `issue_licence`, and `src/lib/code.js` — a client that let
   somebody type a code the database refuses is the worse half of the bug.
+- **A STAMP IS OPTIONAL, AND THE APP NOW SAYS SO QUIETLY UNTIL THERE IS ONE**
+  (owner, 2026-10-12). A student is taken to the creator once, when
+  FirstFlightGate makes their profile, and can close it — so an account can go
+  on indefinitely with no stamp, and every surface that would carry their mark
+  draws the faint house seal instead. The owner found one that way, on a quiz
+  her class had sat: "I can see her profile, it doesn't have a stamp."
+  - **NOTHING WAS BROKEN, and the first job was proving that.** `quiz_finishers`
+    (0038) and `quiz_leaderboard` (0036) both return `stamp_issued_at` and the
+    stamp columns, `stampOf` answers null only when `stamp_issued_at` is
+    missing, and CrewStrip and Leaderboard both pass
+    `on={Boolean(...stamp_issued_at)}` so a stampless person is drawn faint on
+    purpose. **The catch is that a missing stamp and a missing JOIN render
+    identically** — same faint seal — so the screen cannot tell you which it
+    is, and neither could I without the data. Worth remembering before reading
+    the next blank one as a bug.
+  - **The reminder is a dot and a row, and nothing else.** `ProfileMenu.jsx`:
+    a 9px `--active` dot on the avatar, which is already on every screen, and
+    a row inside the menu that says **"Make your stamp"** and stops.
+
+    **IT CARRIED A SUPPORTING LINE TWICE AND LOST IT TWICE.** First "your mark
+    on the work you sign", which the owner cut as the wrong half of the truth
+    (2026-10-12: "pitch it as your stamp in our community"); then "It's your
+    identity here, and how the rest of the class knows you", cut the same day
+    ("just have it say make your stamp. That's it. We don't need the extra
+    words"). The row is in the account menu, under the student's own name,
+    beside a dot on their own avatar — the context already says whose stamp
+    and where it lives, and the sentence was the menu arguing with somebody
+    who had not asked a question. The TITLE was right from the first draft.
+
+    Both go the moment a stamp is issued and
+    there is nothing to dismiss, because a reminder with a Dismiss on it is
+    one you have to nag about twice. It gates nothing and counts nothing.
+  - **It waits for the profile.** `profile` is null while the row is in
+    flight, so the condition is `isSignedIn && !profileLoading &&
+    Boolean(profile) && !hasStamp` — without the middle two it flashed on
+    every page load for people who already had one, which is exactly the
+    bothering it must not do.
+  - Measured across six liveries x night and day: the row's second line is
+    `--t2` on `--raised`, worst 6.17:1 against the 4.5 floor.
 - **A stamp is permanent, and the one exception is a change that was
   GRANTED.** `pilot_profiles.stamp_redo` is a count, not a date: 0039 gave
   exactly one to every account that had already issued a stamp, and
@@ -1782,8 +2237,14 @@ and `claude/bookmarks-report.md` is what each rule measured.
 - `npm run test:bm` walks it: 6 liveries × 2 lightings × 3 finishes × 4 widths,
   every control on the brief's R10 list on a desktop and a phone, Smooth Air,
   and the launch sweep — offline, two tabs, a second student, a deleted
-  question and a keyboard-only pass. **Aurora has no Day**: `App.jsx` forces
-  night on it, so there are 30 real skins, not 36.
+  question and a keyboard-only pass. **Aurora has no Day while Aurora is
+  OFFERED**, and it is not: this said "30 real skins, not 36" because
+  `App.jsx` forces night on that finish, but `offeredFinish` has read a stored
+  Aurora back as Standard since 2026-10-04, so Day is honoured and all 36 are
+  real — twelve of them wearing Standard. The walk runs the ask through the
+  app's own filter rather than restating the rule, so it is right either way;
+  the day Aurora is offered again those twelve measure a night sky with no
+  edit. 672 states in all.
 
 ## When a deploy lands under an open tab
 
@@ -1890,6 +2351,31 @@ Control tokens at the top of the view-transition block in `app.css`
 navigation is and names the layers that move; `src/lib/tabMotion.js` moves the
 things that are not navigations.
 
+- **THE PORTED MODULE SCREEN LEFT THE MOTION SYSTEM, AND NOTHING SAID SO**
+  (found 2026-10-13, by running `test:vt` for the first time since it went
+  red). The layers that move are named by SELECTOR, and three of them were
+  keyed to the app's own module screen — `PANELS` as `.mcard > .pane`, `CARD`
+  as `.mscreen .mcard`, `MCARD_HERO` as `.mscreen .mhero`. The ported screen
+  is neither a `.mscreen` nor a `.mcard`, so when `library.batches` went on
+  for everybody on 2026-10-10 **the most-used screen in the app stopped
+  moving**: no morph from the deck card into the heading, no slide between
+  Lessons and Library, no height morph on the card. The build was silent and
+  the only thing watching was outside `npm run check`.
+  - `PortPanel` wraps its body in one `.pane`, because `wg-tabpanel` needs a
+    single element and the body was three bare children of `.card`. Safe
+    because `.card` is `display: block` and port.css has no child, sibling or
+    nth-child selector on it — **measured before adding it**, and the geometry
+    after is the same to the pixel.
+  - The ported heading carries `mhero`, the app's own name, which nothing in
+    port.css styles.
+  - **And `CARD` is read as a whole list now.** It was `CARD[0]` and nothing
+    else, so adding a selector to it would have been dead weight — the kind of
+    fix that looks right in the diff and changes nothing.
+  - **The ported tab strip has no sliding pill, and that is the demo's
+    decision**: it shows the selected tab through `aria-selected`, the pill
+    belongs to the app's own five strips, and putting one here would be a
+    change to an approved design rather than a layout fix. The panel and the
+    card's height are asserted; the pill is not asked for on that strip.
 - **The router is `TransitionRouter`, not `BrowserRouter`, and that is load-
   bearing.** react-router 7 wraps every location change in
   `React.startTransition`, which `flushSync` cannot hurry — so the browser

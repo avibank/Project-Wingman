@@ -141,6 +141,15 @@ export function rightSeatCandidates({ me, members = [], presence = [], blocked =
    two people share a timestamp. */
 export const PRESENCE_SHOWN = 3;
 
+/* THE PEOPLE LIST WAS GROUPED BY LETTER HERE, and is not any more (owner,
+   2026-10-12: "it doesnt have to show it just do it quietly theyll
+   understand"). `byLetter` put each person under A, B, C … with a "#" bucket
+   last; the headers are gone, and the one thing they were really carrying —
+   that a callsign starting with punctuation belongs at the END, where the
+   database collation puts it first — moved into the SQL in 0043, beside the
+   rest of the order. The client formats and does not sort. */
+
+
 /* Presence arrives in TWO shapes and the room only ever understood one.
 
    The `presence` table gives user_id / last_seen. The content fixture gives

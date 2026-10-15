@@ -242,10 +242,25 @@ begin
      and policyname = 'chat_attachments_member_upload';
   if n <> 1 then raise exception '0026: the upload policy did not land'; end if;
 
+  -- NOTHING MAY LIST THIS BUCKET — EXCEPT WHAT 0031 ADDED ON PURPOSE.
+  -- This asserted a flat zero, and 0031 reversed the stance deliberately and at
+  -- length: Supabase's storage API uploads with `x-upsert: true`, which LOOKS
+  -- FIRST, so with no select policy every attachment upload failed with a 403
+  -- naming INSERT. Read 0031's header before touching this.
+  --
+  -- A flat zero is therefore a claim that has been false by design since
+  -- 2026-09-19, and replaying the series against a database that already has
+  -- 0031's policy raised here — the fourth thing that stopped Supabase's
+  -- preview CI, and the only one of the four that was a stale CLAIM rather
+  -- than a statement that cannot be run twice. What is still worth asserting,
+  -- and is asserted, is that no OTHER select policy appeared.
   select count(*) into n from pg_policies
    where schemaname = 'storage' and tablename = 'objects' and cmd = 'SELECT'
-     and qual ilike '%chat-attachments%';
-  if n <> 0 then raise exception '0026: something can list chat-attachments, and nothing should'; end if;
+     and qual ilike '%chat-attachments%'
+     and policyname <> 'chat_attachments_read';
+  if n <> 0 then
+    raise exception '0026: something other than 0031''s reader can list chat-attachments';
+  end if;
 
   if has_table_privilege('anon', 'message_attachments', 'INSERT') then
     raise exception '0026: anon can write message_attachments directly';

@@ -6,15 +6,19 @@
    docs/launch/code/18-quiz-stamps.js; the sheet is 19-quiz-stamps.css, scoped
    to `.qstamps` by `npm run ref:css`. Rows on hairlines, no card, no shadow.
 
-   RULE 3 — ONE STAMP PER PERSON, ON THEIR BEST RUN. Every run keeps its row,
-   its rank, its score and its time. The stamp is drawn only on an account's
-   FIRST row in board order — and because the board arrives sorted on score
-   then time, that row is that person's best run. Later rows by the same
-   person keep an empty slot and take the word "again" after the callsign.
-   Twelve runs from nine people otherwise read as twelve people.
+   RULE 3 WAS "ONE STAMP PER PERSON, ON THEIR BEST RUN", AND IT IS WITHDRAWN
+   (owner, 2026-10-12: "if you complete it more than once, you just get
+   stamped twice ... if I attempt it twice, I get stamped"). Every run keeps
+   its row, its rank, its score and its time, as it always did — and every run
+   now carries its own stamp. The de-duplication at render is gone, and the
+   word "again" with it.
 
-   THE DE-DUPLICATION IS HERE, AT RENDER, and the query still returns one row
-   per run (the brief says so outright, and 0034's board is untouched).
+   WHAT THAT COSTS IS STATED RATHER THAN HIDDEN: twelve runs from nine people
+   read as twelve stamps, which is what the original rule existed to prevent.
+   The owner knows — "we will work towards something where an attempt that you
+   have made shows a different version, but as of right now, just stamp it
+   twice". When that version arrives it belongs HERE, as a second treatment
+   for a repeat, rather than as a return to an empty slot.
 
    Three things are this app's rather than the pack's:
 
@@ -47,7 +51,6 @@ export default function Leaderboard({ title, runs = [], total = 0, boardSize = 0
   const you = runs.find((r) => r.isYou) || null;
   const place = you ? you.rank : 0;
   const size = boardSize || runs.length;
-  const seen = new Set();
 
   return (
     <div className="qstamps">
@@ -57,31 +60,26 @@ export default function Leaderboard({ title, runs = [], total = 0, boardSize = 0
           {you && <span>You&rsquo;re <b>{ord(place)}</b> of {size}</span>}
         </div>
         <ol className="brows">
-          {runs.map((r, i) => {
-            const first = !seen.has(r.userId);
-            seen.add(r.userId);
-            return (
+          {runs.map((r, i) => (
               <li key={r.id} className={`br${r.isYou ? " you" : ""}`} style={{ "--i": i }}
                   aria-current={r.isYou ? "true" : undefined}>
                 {/* The RANK the server gave it, not this row's place in the
                     array — with a limit on, those are the same number until
                     they are not, and the one that is true is the server's. */}
                 <span className="br__n">{r.rank}</span>
-                <span className={`br__st${first ? "" : " rep"}`} aria-hidden={first ? undefined : "true"}>
-                  {first && <Stamp stamp={stampOf(r.profile)} size={42} rot={tilt(i)}
-                                   on={!!r.profile?.stamp_issued_at}
-                                   label={`${r.callsign}, ${r.account}`} />}
+                <span className="br__st">
+                  <Stamp stamp={stampOf(r.profile)} size={42} rot={tilt(i)}
+                         on={!!r.profile?.stamp_issued_at}
+                         label={`${r.callsign}, ${r.account}`} />
                 </span>
                 <span className="br__who">
                   <span className="br__ac">[{r.account}]</span>
                   <span className="br__cs">{r.callsign}</span>
-                  {!first && <span className="br__ag">again</span>}
                 </span>
                 <span className="br__sc">{r.score}/{r.total || total}</span>
                 <span className="br__tm">{mmss(r.seconds)}</span>
               </li>
-            );
-          })}
+          ))}
         </ol>
         <div className="bfoot">
           <span>Ranked on score, then time taken.</span>

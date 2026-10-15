@@ -50,7 +50,17 @@
 .app.app[data-paper="1"] .rr .rr-ask:hover,
 .app.app[data-paper="1"] .rr .rr-send:not([data-idle="1"]):hover { filter: none; background: color-mix(in oklab, var(--active) 8%, transparent); }
 
-/* Bookmarks' one filled button. */
+/* Bookmarks' one filled button.
+   THE LABEL IS WORDS, SO IT TAKES --active-text; THE STROKE IS A MARK AND
+   KEEPS --active. Drawing a fill turns it into a line and a label, and a
+   label is the third job of the accent — which is why `finishEngine.js`
+   darkens --active-text by .13 for Day on paper in the first place ("Paper is
+   not the deck: the same accent that reads on a lit ground is too pale on
+   cream"). Measured at `color: var(--active)`: "Practise 5 questions" came in
+   at 4.86:1 on Sky and 4.34:1 on Runway in Day, with a worst of 3.92:1 across
+   the sweep — the same failure, in the same place, as the three the card
+   session found. bm-app.css's `--bm-fill` step could not reach it: on this
+   finish the button has no fill left to darken. */
 .app[data-paper="1"] .bm .bm-btn.is-primary {
-  background: transparent; color: var(--active); box-shadow: inset 0 0 0 1.5px var(--active); border-radius: 2px;
+  background: transparent; color: var(--active-text); box-shadow: inset 0 0 0 1.5px var(--active); border-radius: 2px;
 }

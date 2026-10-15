@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Search, X } from "lucide-react";
 import RouteTab from "./RouteTab.jsx";
+import ModuleNotice from "./ModuleNotice.jsx";
 import LibraryTab from "./LibraryTab.jsx";
 /* The ported Lessons tab. It was lazy because it carries its own stylesheet,
    and it is not any more, for the reason the Library's own chunk went the same
@@ -251,7 +252,12 @@ export default function ModuleScreen({
     return (
       <div className="wm-port">
         <div className="wrap">
-          <div>
+          {/* `mhero` IS THE APP'S NAME, NOT THE DEMO'S, and nothing in
+              port.css styles it. It is the hook `nameMorph` needs for the
+              other end of the Deck → Module morph: the deck's module card
+              travels into this heading, and with no element to name the morph
+              stopped running here when the port became everybody's screen. */}
+          <div className="mhero">
             <button type="button" className="back" onClick={onBack}>
               &lsaquo; {upFrom({ kind: "module" })?.label}
             </button>
@@ -265,6 +271,11 @@ export default function ModuleScreen({
                 : sub}
             </p>
           </div>
+          {/* BOTH BRANCHES DRAW IT. See ModuleNotice's header: a notice on
+              only the ported screen would vanish the day `library.batches`
+              moved, which is the same shape of bug as a `data-tour` name put
+              on one render branch of three. */}
+          <ModuleNotice />
           <PortPanel mod={mod} tab={tab} onTab={onTab} query={query} onQuery={setQuery}>
             {tab === "route" && lessonsBody()}
             {tab === "library" && libraryBody()}
@@ -324,6 +335,8 @@ export default function ModuleScreen({
           the surface below, and the list lives inside the same border. */}
       {/* tools/ref-diff.mjs photographs this element and the same one on
           the reference page. The attribute is the contract between them. */}
+      <ModuleNotice />
+
       <div className="card" data-ref="module-panel">
       {/* THE STRIP IS THE REFERENCE'S `.mtabs`: three tabs and then the field,
           all in one flex row on the card's top edge. The field was a 120px box

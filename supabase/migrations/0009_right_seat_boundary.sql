@@ -107,7 +107,30 @@ $$;
 --
 -- Writes stay open so the table remains usable the moment a JWT exists and the
 -- notes move here properly.
-drop policy if exists lesson_notes_open on lesson_notes;
+-- AND EVERY ONE OF THESE IS DROPPED FIRST, SO THE FILE CAN BE RUN TWICE.
+-- Supabase's preview CI runs the whole series against a branch database, and a
+-- run that died somewhere after this point left these policies standing while
+-- the history table never recorded 0009 as applied. Every run after that
+-- reached the first `create policy` below and stopped:
+--
+--   ERROR: policy "lesson_notes_no_bulk_read" for table "lesson_notes"
+--          already exists (SQLSTATE 42710)   At statement: 3
+--
+-- The header above has said "safe to re-run" since the day this file was
+-- written. Until 2026-10-13 that was not true of its policies, and the check
+-- that would have caught it did not exist: `npm run check:migrations` now
+-- holds every `create policy` in the series, in whichever of the three idioms
+-- this repo already uses.
+--
+-- Dropping rather than swallowing a duplicate_object is the deliberate half. A
+-- re-run converges on the definitions BELOW instead of leaving whatever a
+-- half-finished run happened to leave — and these four ARE the boundary this
+-- file exists to draw, so "it was already there" is not good enough.
+drop policy if exists lesson_notes_open         on lesson_notes;
+drop policy if exists lesson_notes_no_bulk_read on lesson_notes;
+drop policy if exists lesson_notes_write        on lesson_notes;
+drop policy if exists lesson_notes_update       on lesson_notes;
+drop policy if exists lesson_notes_delete       on lesson_notes;
 
 create policy lesson_notes_no_bulk_read on lesson_notes
   for select using (false);

@@ -1,12 +1,27 @@
-// Concatenates the numbered migrations into supabase/migrations/ALL.sql, so the
-// whole schema can be applied in one paste. Every migration is idempotent, so
-// the bundle is safe on a fresh database or a partly-migrated one.
+// Concatenates the numbered migrations into supabase/ALL.sql, so the whole
+// schema can be applied in one paste. Every migration is idempotent, so the
+// bundle is safe on a fresh database or a partly-migrated one.
+//
+// IT IS WRITTEN BESIDE supabase/SETUP.sql, NOT INSIDE supabase/migrations/,
+// AND THAT IS THE WHOLE POINT. It lived in the migrations directory until
+// 2026-10-12, where Supabase's own tooling treated it as a migration and
+// applied it — and, having no `NNNN_` version prefix, applied it FIRST. Every
+// object was then created twice, and the preview branch died on the first
+// unguarded statement it reached: `policy "lesson_notes_no_bulk_read" for
+// table "lesson_notes" already exists`, which is 0009 finding its own policy
+// already there. A bundle of the migrations is not a migration.
 //
 // Run: node scripts/build-migration-bundle.mjs
 
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 
 const dir = new URL("../supabase/migrations/", import.meta.url);
+// An argument overrides where it is written, so check:migrations can
+// regenerate into a temp file and compare rather than reimplementing any of
+// this — a second copy of the header is a second thing to drift.
+const out = process.argv[2]
+  ? new URL(`file://${process.argv[2]}`)
+  : new URL("../supabase/ALL.sql", import.meta.url);
 const files = readdirSync(dir)
   .filter((f) => /^\d{4}_.*\.sql$/.test(f))
   .sort();
@@ -36,6 +51,6 @@ const body = bundled
   })
   .join("\n\n");
 
-writeFileSync(new URL("ALL.sql", dir), header + body);
-console.log(`bundled ${bundled.length} migrations -> supabase/migrations/ALL.sql`);
+writeFileSync(out, header + body);
+console.log(`bundled ${bundled.length} migrations -> supabase/ALL.sql`);
 console.log(bundled.map((f) => "  " + f).join("\n"));

@@ -65,6 +65,46 @@
 }
 
 /* ------------------------------------------------------------ 3 · the parts */
+/* THE SEARCH'S FILTER STRIP, and the people list's one line of prose (0041).
+   The design has no markup for either, so both are drawn with the design's
+   own tokens rather than introducing a new surface.
+
+   `--t2`, NOT `--t3`, on the prose. `.rr-micro` beside it is --t3, which is
+   right for a 10px uppercase label read as a mark; this is a sentence read as
+   words, and §6 below is a list of exactly this mistake measured under 4.5:1. */
+.rr .rr-note{
+  margin: 0 14px 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--t2);
+}
+/* THE CALLSIGN AND THE STAMP ON ONE LINE (0043). `.rr-l1` is a single line
+   with an ellipsis, so the two sit in an inline flex inside it and the stamp
+   keeps its size while the name takes what is left. */
+.rr .rr-who{ display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; }
+.rr .rr-cs{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rr .rr-who .insp-stamp{ flex: none; }
+
+.rr .rr-scopes{
+  display: flex; gap: 4px; margin: 8px 0 0; padding: 0 2px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.rr .rr-scopes::-webkit-scrollbar{ display: none; }
+.rr .rr-scope{
+  flex: none; border: 1px solid transparent; border-radius: 999px;
+  padding: 5px 11px; background: none; color: var(--t2);
+  font-size: 12px; cursor: pointer; white-space: nowrap;
+  transition: background .14s, color .14s, border-color .14s;
+}
+.rr .rr-scope:hover{ background: var(--raised); color: var(--t1); }
+/* THE SELECTED ONE IS READ AS WORDS, so it takes --active-text and not
+   --active. This repo has already measured the accent-as-a-mark under 4.5:1
+   at small sizes in Day (the module picker's own name, 3.96:1); the three
+   tokens are not interchangeable and this is the words one. */
+.rr .rr-scope[aria-selected="true"]{
+  background: var(--raised); border-color: var(--line); color: var(--active-text); font-weight: 600;
+}
+
 /* A face is the app's avatar recipe, keyed by the hue every surface uses for
    that person; a module's tile is ink on the sunk surface. */
 .rr .rr-av{ background: oklch(.62 .115 var(--av-h, 250)); color: oklch(.14 0 0); }

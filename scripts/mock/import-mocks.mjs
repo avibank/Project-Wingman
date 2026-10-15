@@ -95,7 +95,6 @@ async function readMock(spec) {
 
       if (near(h, 8.0) && x > 200) continue;                     // running footer
       if (near(h, 20.0)) { continue; }                            // the title
-      if (near(h, 8.5)) { continue; }                             // the key's subheading
       if (near(h, 15.0)) { phase = "key"; krow = null; continue; } // "Answer key" hands over
 
       if (phase === "key") {
@@ -106,11 +105,22 @@ async function readMock(spec) {
           key.set(krow.n, krow);
           continue;
         }
-        if (at(x, 88) && (near(h, 9.5) || near(h, 9.0))) {
+        /* A CONTINUATION IS KNOWN BY ITS INDENT, NOT BY ITS HEIGHT, which is
+           the lesson the V-batch import paid for: a key row's "(L3, PDF p.
+           38)" tail can break onto a line at 8.5 as readily as at 9, and a
+           blanket "skip this height" rule ate 92 explanations there in total
+           silence — every count still tallied and every spread was still a
+           clean third. Only a continuation is indented, so the indent is the
+           test and the height is allowed to be anything. */
+        if (at(x, 88)) {
           if (!krow) { warn(where, "a key continuation before any key row", s); continue; }
           krow.text += ` ${s}`;
           continue;
         }
+        /* The key's own subheading, and ONLY where it can be: at the stem
+           column, before a single key row has been read. After that, an 8.5pt
+           line at this column is something unexpected and is reported. */
+        if (near(h, 8.5) && at(x, 55) && key.size === 0) continue;
         warn(where, `unplaceable in the key (x=${Math.round(x)} h=${h.toFixed(1)})`, s);
         continue;
       }

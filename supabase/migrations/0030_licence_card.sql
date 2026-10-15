@@ -128,6 +128,9 @@ end $$;
 -- IT RESPECTS FLY SOLO. `invisible` is that switch (0005), and a pilot who has
 -- it on is not on any card anybody opens: the function returns no row, and the
 -- viewer's screen says nothing was found rather than drawing a blank card.
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists licence_card(text, text);
 create or replace function licence_card(p_viewer text, p_user text)
 returns table (
   user_id text, callsign text, real_name text, code text,

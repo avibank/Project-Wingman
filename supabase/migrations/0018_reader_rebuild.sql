@@ -52,9 +52,14 @@ alter table paper_annotations add column if not exists style jsonb;
 -- §5.1 — the remaining kinds. `ink` is deliberately absent: strokes live in
 -- paper_ink, which has no anchor column, for the reason 0017's header gives.
 alter table paper_annotations drop constraint if exists paper_annotations_kind_check;
-alter table paper_annotations add constraint paper_annotations_kind_check
-  check (kind in ('highlight','underline','strikethrough','note','question',
-                  'correction','shape','text','stamp'));
+-- Superseded by a later migration that re-adds this constraint. Adding one
+-- validates the existing rows, so a replay can fail here on data that satisfies
+-- only the LAST version. Skipped in that case (see 0035's note).
+do $$ begin
+  alter table paper_annotations add constraint paper_annotations_kind_check
+    check (kind in ('highlight','underline','strikethrough','note','question',
+                    'correction','shape','text','stamp'));
+exception when check_violation then null; end $$;
 
 -- ---------------------------------------------------------------------------
 -- 3. THE ROUND TRIP (brief §14)

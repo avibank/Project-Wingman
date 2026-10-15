@@ -62,8 +62,17 @@ import { FLY_SOLO_KEY } from "./flySolo.js";
    to `M1.%` and safe to run twice; this is the half that reaches a browser.
    Signed-in progress is read back from the server, so what a student actually
    loses is what only their device knew. Raise it again with the next revision
-   — it is a no-op on a device that has already swept at this number. */
-export const STORAGE_EPOCH = 5;
+   — it is a no-op on a device that has already swept at this number.
+
+   RAISED TO 6 ON 2026-10-12, for the same reason one step further on again.
+   The owner re-fed all twenty documents — "i need them updated and wipe all
+   attempts" — and the ten batches came back reworked: the same 400 quiz
+   questions, 2,616 cards where there were 2,948, under ids that have never
+   existed, `M1.V1` to `M1.V10`. Every id the module has ever carried was
+   listed out of git history first (M1.01-03, M1.B1, M1.B6, M1.T1-T10), because
+   an id is positional inside a chapter and a reused one silently inherits
+   whatever a device still remembers about the old one. */
+export const STORAGE_EPOCH = 6;
 const EPOCH_KEY = "pw-epoch";
 
 /* Device preferences. Everything else under `pw-` is state. */

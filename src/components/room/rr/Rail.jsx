@@ -2,6 +2,8 @@ import { Av } from "./bits.jsx";
 import { RailSearch } from "./icons.jsx";
 import { initials } from "../../../lib/familiar.js";
 import { when, titleOf, matches, chatUnread, answerCount } from "../../../lib/roomModel.js";
+import Stamp from "../../Stamp.jsx";
+import { stampOf, stampTilt } from "../../../lib/stamp.js";
 import { waitingOnAnswer, newestFirst } from "../../../lib/rrModel.js";
 
 /* ============================================================================
@@ -11,6 +13,51 @@ import { waitingOnAnswer, newestFirst } from "../../../lib/rrModel.js";
    ========================================================================= */
 
 const MAC = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
+
+const SCOPES = [
+  { id: "all", label: "All" },
+  { id: "people", label: "People" },
+  { id: "squad", label: "Squadrons" },
+  { id: "module", label: "Questions" },
+];
+
+/* The line under a person's callsign. IT USED TO FALL BACK TO "In your
+   modules", which was the orbit rule speaking: before 0041 a person could
+   only be found if they shared a squadron with you or had answered in a
+   module you study, so one of the two was always true and the fallback was a
+   safe guess. It is not any more, and a stranger was being labelled as
+   somebody you study alongside.
+
+   THE REAL NAME GOES HERE WHEN THERE IS ONE, and there is one only when the
+   search matched it (0041). Scrolling the list, or finding somebody by their
+   callsign, shows no name at all — `p.real_name` is null on those rows
+   because the server never sent it. Pressing the row opens the profile, which
+   is the deliberate way to a name.
+
+   Neither half is a count. */
+/* THEIR FACE AND THEIR MARK (owner, 2026-10-12). The profile stays — it is
+   what a student recognises from every other surface — and the stamp sits
+   beside the callsign, which is where identity reads. Through the app's one
+   renderer, so a stamp is drawn here exactly as it is on the board and the
+   quiz row; somebody who has not made one gets the un-inked outline, which is
+   the licence's own "not yet" mark and the nudge doing its work in the place
+   people actually look at each other.
+
+   SMALL AND WITHOUT ITS CODE. At 22px the three characters inside a stamp are
+   noise; the shape and the ink are what read at a glance. */
+const Mark = ({ p }) => (
+  <span className="rr-who">
+    <span className="rr-cs">{p.callsign}</span>
+    <Stamp stamp={stampOf(p.profile)} size={22} rot={stampTilt(p.profile?.stamp_seed, p.user_id)}
+           on={Boolean(p.profile?.stamp_issued_at)} />
+  </span>
+);
+
+const personLine = (p) => [
+  p.real_name || null,
+  p.module_code || null,
+  p.shares_squadron ? "In a squadron with you" : null,
+].filter(Boolean).join(" · ");
 
 function Row({ current = false, unread = false, avatar, l1, l2, time = "", badge = 0, mute = false, onClick }) {
   return (
@@ -33,8 +80,24 @@ export default function Rail({
   me, onHome, query = "", onQuery, searchRef,
   squadrons = [], modules = [], threads = [], replies = [], messages = [], foundPeople = [],
   faces = [], cur = {}, who, onOpen, onSeeSeats, onFindSquadron, onProfile,
+  everyone = [], scope = "all", onScope = () => {},
 }) {
   const q = query.trim();
+  /* THE FILTER DECIDES WHAT THE RAIL IS ANSWERING. "All" is the rail as it
+     always was — your squadrons and modules, with search results above them.
+     Any other scope narrows it to one kind, and People is the one that has a
+     standing list behind it rather than only search results. */
+  const only = (kind) => scope === "all" || scope === kind;
+  /* People, A-Z by callsign. A query filters the same list rather than
+     replacing it, so typing narrows what you were already scrolling; the
+     server's own matches lead, because they carry the names. */
+  const peopleRows = (() => {
+    if (scope !== "people") return [];
+    const seen = new Set(foundPeople.map((p) => p.user_id));
+    const rest = everyone.filter((p) => !seen.has(p.user_id)
+      && (!q || matches(query, p.callsign)));
+    return q ? [...foundPeople, ...rest] : everyone;
+  })();
   const lastAt = (s) => Date.parse(s.last?.createdAt) || 0;
 
   const squads = squadrons
@@ -73,23 +136,62 @@ export default function Rail({
                  aria-label="Search people, chats and questions" />
           <kbd>{MAC ? "⌘K" : "Ctrl K"}</kbd>
         </label>
+        {/* WHAT YOU ARE LOOKING THROUGH (owner, 2026-10-12: "whenever you
+            search, you can filter ... from group chats or squadrons and then
+            people"). People is where the glossary lives now: picking it lists
+            everybody, A-Z by callsign, whether or not anything is typed. */}
+        <div className="rr-scopes" role="tablist" aria-label="What to search">
+          {SCOPES.map((sc) => (
+            <button key={sc.id} type="button" role="tab" className="rr-scope is-inline"
+                    aria-selected={scope === sc.id}
+                    onClick={() => onScope(sc.id)}>{sc.label}</button>
+          ))}
+        </div>
       </div>
 
       <div className="rr-rail-scroll">
-        {q && foundPeople.length > 0 && (
+        {/* PEOPLE IS ITS OWN VIEW, not a section above the others: picking it
+            means you are looking for a person, and the squadrons and modules
+            below would be noise under a list of everybody. */}
+        {/* NO LETTER HEADERS (owner: "it doesnt have to show it just do it
+            quietly theyll understand"). Still A to Z, with anything that does
+            not start with a letter last — that part moved into the SQL in
+            0043, because the grouping was the only thing putting `_vnx` at
+            the end and the collation alone puts it first. The avatars carry
+            the alphabet down the left edge on their own. */}
+        {scope === "people" ? (
+          peopleRows.length ? peopleRows.map((p) => (
+            <Row key={p.user_id}
+                 avatar={<Av id={p.user_id} name={p.callsign} size={44} />}
+                 l1={<Mark p={p} />}
+                 l2={personLine(p)}
+                 onClick={() => onProfile(p.user_id, p)} />
+          )) : (
+            <p className="rr-note">
+              {q ? "No callsign or name matches that. Try fewer letters."
+                 : "Everyone studying here will be listed as they join."}
+            </p>
+          )
+        ) : (
+        <>
+        {q && only("people") && foundPeople.length > 0 && (
           <>
-            <div className="rr-sect"><span className="rr-micro">People</span></div>
+            <div className="rr-sect">
+              <span className="rr-micro">People</span>
+              <span className="rr-grow" />
+              <button type="button" className="rr-lnk is-inline" onClick={() => onScope("people")}>See all</button>
+            </div>
             {foundPeople.map((p) => (
               <Row key={p.user_id}
-                   avatar={<Av id={p.user_id} name={p.display_name} size={44} />}
-                   l1={p.display_name}
-                   l2={[p.module_code, p.shares_squadron ? "In a squadron with you" : null].filter(Boolean).join(" · ") || "In your modules"}
+                   avatar={<Av id={p.user_id} name={p.callsign} size={44} />}
+                   l1={<Mark p={p} />}
+                   l2={personLine(p)}
                    onClick={() => onProfile(p.user_id, p)} />
             ))}
           </>
         )}
 
-        {hitThreads.length > 0 && (
+        {only("module") && hitThreads.length > 0 && (
           <>
             <div className="rr-sect"><span className="rr-micro">Questions</span></div>
             {hitThreads.map((t) => {
@@ -106,7 +208,7 @@ export default function Rail({
           </>
         )}
 
-        {hitMessages.length > 0 && (
+        {only("squad") && hitMessages.length > 0 && (
           <>
             <div className="rr-sect"><span className="rr-micro">Messages</span></div>
             {hitMessages.map((m) => (
@@ -148,6 +250,7 @@ export default function Rail({
 
         <div className="rr-hr" />
 
+        {only("squad") && (
         <div className="rr-tourgrp" data-tour="rr-squadrons">
         <div className="rr-sect">
           <span className="rr-micro">Squadrons</span>
@@ -173,7 +276,9 @@ export default function Rail({
         )}
 
         </div>
+        )}
 
+        {only("module") && (
         <div className="rr-tourgrp" data-tour="rr-modules">
         <div className="rr-sect"><span className="rr-micro">Modules</span></div>
         {mods.map(({ m, code, newest, waiting }) => (
@@ -186,7 +291,10 @@ export default function Rail({
                badge={waiting} mute
                onClick={() => onOpen({ kind: "module", id: code })} />
         ))}
-      </div>
+        </div>
+        )}
+      </>
+      )}
       </div>
     </aside>
   );

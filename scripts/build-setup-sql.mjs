@@ -56,5 +56,11 @@ ${schema}
 ${setup}
 `;
 
-writeFileSync(new URL("../supabase/SETUP.sql", import.meta.url), out);
+// An argument overrides the destination; see build-migration-bundle.mjs.
+writeFileSync(
+  process.argv[2]
+    ? new URL(`file://${process.argv[2]}`)
+    : new URL("../supabase/SETUP.sql", import.meta.url),
+  out,
+);
 console.log(`SETUP.sql: ${out.split("\n").length} lines from ${files.length} migrations`);

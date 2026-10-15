@@ -38,6 +38,11 @@
      commit and the dev server's frames are not the site's.
    ========================================================================= */
 import { chromium, webkit } from "playwright";
+import { readFileSync } from "node:fs";
+/* The course this build ships with, so a section that needs content it does
+   not have can say so instead of timing out. */
+const COURSE = JSON.parse(
+  readFileSync(new URL("../src/content/test-content.json", import.meta.url), "utf8"));
 import { seedRoom } from "./harness/room-seed.mjs";
 
 const BASE = process.env.VT_BASE || "http://127.0.0.1:5190";
@@ -242,7 +247,14 @@ async function main() {
   await step("Deck → Module", click('.mod[data-code="M1"]'),
     { names: ["wg-content", "wg-mcard"], also: ["::view-transition-group(wg-mcard)"] });
   await step("Lessons → Library", click(".tabs button", { hasText: "Library" }),
-    { names: ["wg-tabpanel"], also: ["::view-transition-group(wg-card)"], moved: ["tab-pill"] });
+    /* NO `tab-pill` ON THIS STRIP, and that is the demo's decision rather
+       than a regression. The ported module panel is `.tabs > .tab` from the
+       approved handoff and shows the selected tab through `aria-selected`;
+       the sliding pill belongs to the app's own five strips (module, Account,
+       lesson, reader), and putting one on this one would be a change to an
+       approved design rather than a layout fix. The panel and the card's
+       height are still asserted, which is the motion system's part of it. */
+    { names: ["wg-tabpanel"], also: ["::view-transition-group(wg-card)"] });
   /* The test paper is added under import.meta.env.DEV only (papersFor), so a
      production build of the harness has no paper to open and no chapter chips
      over an empty list. Those steps are skipped there, and said to be. */
@@ -262,7 +274,7 @@ async function main() {
   } else {
     console.log("skip  Library chips, the paper and its Back   no paper in this build (the test paper is DEV-only)");
   }
-  await step("Back → Lessons", () => page.goBack(), { names: ["wg-tabpanel"], moved: ["tab-pill"] });
+  await step("Back → Lessons", () => page.goBack(), { names: ["wg-tabpanel"] });
   await step("Back → Deck", () => page.goBack(),
     { names: ["wg-content", "wg-mcard"], also: ["::view-transition-group(wg-mcard)"] });
 
@@ -317,11 +329,16 @@ async function main() {
   if (STACK_PANE) await back("Room: seats → rail", "wg-pane");
   await step("Room → Deck", click(".rr-home"), { names: ["wg-content"], also: ["::view-transition-new(wg-topbar)"] });
 
-  /* ---- Module → Quiz → a question → End exam → Back to exam → Module ---- */
-  await start("/m/m1", ".chead");
-  await page.locator(".chead").first().click();
-  await page.waitForTimeout(500);
-  await step("Module → Quiz", click(".kids .item", { hasText: "quiz" }), { names: ["wg-content"], also: ["::view-transition-new(root)"] });
+  /* ---- Module → Quiz → a question → End exam → Back to exam → Module ----
+     THE DOOR IS THE LIBRARY'S QUIZ TILE NOW. This expanded a `.chead` chapter
+     row and clicked `.kids .item`, which is the app's own module screen —
+     and `library.batches` went on for everybody on 2026-10-10, so `/m/m1`
+     draws the ported screen whose tabs are Lessons and Library and which has
+     no chapter accordion at all. The walk waited 25s for `.chead` and died,
+     taking every step after it with it. */
+  await start("/m/m1/library", '.wm-port .tile[aria-label^="Quiz,"]');
+  await step("Module → Quiz", click('.wm-port .tile[aria-label^="Quiz,"]'),
+    { names: ["wg-content"], also: ["::view-transition-new(root)"] });
   await step("Quiz: next question", click(".question__foot .btn--primary"), { none: true, moved: ["question__text"] });
   /* WHAT EACH ENGINE CAN DO WITH A DIALOG. Holding a closing one on screen
      long enough to fade needs `overlay`, which Chromium alone has, and WebKit
@@ -332,17 +349,39 @@ async function main() {
     { none: true, ran: WEBKIT ? ["exam-dialog:opacity"] : ["exam-dialog:opacity", "exam-dialog::backdrop:opacity"] });
   await step("Quiz: Back to exam closes", click(".exam-dialog .btn", { hasText: "Back to exam" }),
     { none: true, ran: WEBKIT ? [] : ["exam-dialog:opacity", "exam-dialog::backdrop:opacity"] });
-  await step("Quiz → Module", click(".up"), { names: ["wg-content"], also: ["::view-transition-new(root)"] });
+  /* LEAVING A PAPER ASKS FIRST, so the way out is two presses. `.up` does
+     not navigate while a paper is open — `examLock` raises the end-exam
+     dialog instead, which is the whole point of it ("nothing leaves one
+     without being asked") — so this step pressed the arrow, got a dialog and
+     measured no transition. It takes "Leave it for now", which is the choice
+     that keeps the attempt and the clock, and it is that press the screen
+     change hangs off. The walk never reached this step before: it died on
+     `.chead` four steps earlier, so the stale expectation was never seen. */
+  await step("Quiz → Module", async () => {
+    await page.locator(".up").click();
+    await page.locator(".exam-dialog").waitFor({ timeout: 8000 });
+    await page.locator(".exam-dialog .btn", { hasText: "Leave it for now" }).click();
+  }, { names: ["wg-content"], also: ["::view-transition-new(root)"] });
 
-  /* ---- Module → Lesson → Up Next lesson → breadcrumb ---- */
-  await start("/m/m1", ".chead");
-  await page.locator(".chead").first().click();
-  await page.waitForTimeout(500);
-  await step("Module → Lesson", click(".kids .item[data-lesson]"), { names: ["wg-content"] });
+  /* ---- Module → Lesson → Up Next lesson → breadcrumb ----
+     ONLY IF THE COURSE HAS A LESSON. It has none — the Lessons tab draws its
+     own "on the way" state — so these five steps have nothing to open. They
+     are skipped and SAID to be skipped, the way the paper steps already are,
+     rather than deleted: the day a lesson is published they walk again with
+     no edit here. */
+  const lessons = (COURSE?.modules || [])
+    .flatMap((m) => m.chapters || []).flatMap((c) => c.lessons || []).length;
+  if (!lessons) {
+    console.log(`skip  Module → Lesson and the four steps after it   `
+      + `no lesson in this course document`);
+  } else {
+  await start("/m/m1/library", '.wm-port .tile[aria-label^="Quiz,"]');
+  await step("Module → Lesson", click(".wp[data-lesson]"), { names: ["wg-content"] });
   await step("Lesson: Notes → Comments", click(".logcard .tab", { hasText: "Comments" }), { none: true, moved: ["tab-pill", "ltab-body"] });
   await step("Lesson: Comments → Notes", click(".logcard .tab", { hasText: "Logbook" }), { none: true, moved: ["tab-pill", "ltab-body"] });
   await step("Lesson → next in its list", click(".next .nx:not([aria-current])"), { names: ["wg-tabpanel", "wg-player"] });
   await step("Lesson → breadcrumb", click(".up"), { names: ["wg-content"] });
+  }
 
   /* ---- Avatar → Bookmarks → Licence → Preferences → Appearance ----
      Settings used to be the first stop here. It is gone: Bookmarks took its

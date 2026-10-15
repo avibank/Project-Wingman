@@ -24,8 +24,21 @@
 -- =============================================================================
 
 alter table pilot_profiles drop constraint if exists pilot_code_shape;
-alter table pilot_profiles
-  add constraint pilot_code_shape check (code is null or code ~ '^[A-Z0-9]{3}$');
+-- SUPERSEDED BY 0039, WHICH WIDENS THIS TO ONE-TO-THREE CHARACTERS — so on a
+-- replay the rows already satisfy 0039 and CANNOT satisfy this, and adding a
+-- constraint VALIDATES the existing rows:
+--
+--   ERROR: check constraint "pilot_code_shape" of relation "pilot_profiles"
+--          is violated by some row (SQLSTATE 23514)
+--
+-- Two accounts hold a code shorter than three (0039's own note). A narrowing
+-- cannot be replayed over data a later migration widened, so this one is
+-- skipped when that happens and 0039 adds the correct shape a few files later.
+-- On a fresh database there are no rows to violate and nothing is skipped.
+do $$ begin
+  alter table pilot_profiles
+    add constraint pilot_code_shape check (code is null or code ~ '^[A-Z0-9]{3}$');
+exception when check_violation then null; end $$;
 
 create or replace function claim_code(uid text, want text)
 returns text

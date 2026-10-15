@@ -225,14 +225,21 @@ export function markBackdrop(before) {
    snapshot the size of the screen instead of 1300px of it, and no size tween
    between two pages of different heights. */
 const CONTENT = [".deck", ".content"];
-const PANELS = [".mcard > .pane", ".profile .panel-swap", ".mscreen.lesson .watch"];
+/* THE PORTED MODULE SCREEN IS A FOURTH PANEL. It is not a `.mscreen` and
+   has no `.mcard`, so when `library.batches` went on for everybody on
+   2026-10-10 three of these selectors stopped matching and the module
+   screen silently left the motion system: no morph in from the deck, no
+   slide between Lessons and Library, no height morph on the card.
+   `test:vt` had been red since, and it is outside `npm run check`. */
+const PANELS = [".mcard > .pane", ".wm-port .card > .pane",
+                ".profile .panel-swap", ".mscreen.lesson .watch"];
 /* A lesson's own list sits inside .watch but does not travel with it, and the
    video is drawn by an overlay outside the page entirely — it moves with the
    panel under a name of its own, on the same keyframes, so the picture stays
    in its frame. */
 const LESSON_LIST = [".mscreen.lesson .watch > .sd"];
 const PLAYER = [".player-layer"];
-const CARD = [".mscreen .mcard"];
+const CARD = [".mscreen .mcard", ".wm-port .card"];
 /* The app bar. It sits above the screen (z-index 20), so a receding screen
    scaled past its own edge used to paint over it; named, it keeps its place in
    the stack. And the Ready Room has none — it takes the whole window — so this
@@ -258,7 +265,7 @@ const shown = (el) => Boolean(el && el.getClientRects().length);
    the two is ever on screen, so they can share a name and the browser tweens
    the box between them. */
 const MCARD_DECK = (code) => `.deck .mod[data-code="${code}"]`;
-const MCARD_HERO = ".mscreen .mhero";
+const MCARD_HERO = ".mscreen .mhero, .wm-port .wrap > .mhero";
 const ALL = [...CONTENT, ...PANELS, ...PANE, ...RAIL, ...DETAIL, ...LESSON_LIST, ...PLAYER, ...CARD, ...TOPBAR,
   ".deck .mod[data-code]", MCARD_HERO];
 
@@ -295,7 +302,11 @@ export function nameLayers(scope) {
        named — as a layer of its own it painted over the tab labels; it slides
        in the page instead (useTabPill), and the card's new picture is live, so
        the slide shows through it. */
-    const card = document.querySelector(CARD[0]);
+    /* EITHER MODULE SCREEN'S CARD. This read `CARD[0]` and nothing else, so
+       adding the ported screen's selector to the list would have been dead
+       weight — the kind of fix that looks right in the diff and changes
+       nothing. */
+    const card = document.querySelector(CARD.join(", "));
     if (card) card.style.viewTransitionName = "wg-card";
     const list = document.querySelector(LESSON_LIST[0]);
     if (list) {

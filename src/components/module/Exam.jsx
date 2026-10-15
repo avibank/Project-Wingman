@@ -15,7 +15,7 @@ import { lockExam, unlockExam } from "../../lib/examLock.js";
 import Leaderboard from "./Leaderboard.jsx";
 import Stamp from "../Stamp.jsx";
 import "./result-stamp.css";
-import { startRun, finishRun, fetchBoard } from "../../lib/board.js";
+import { startRun, finishRun, markProgress, fetchBoard } from "../../lib/board.js";
 /* R1 — the pack's stylesheet, imported once, here, so it arrives with the exam
    chunk rather than on every first paint. `.locked-note` in the app bar is the
    one rule of it in use today; the rest waits for the markup. */
@@ -396,7 +396,19 @@ export default function Exam({
      twice, which was the old row of buttons; a radio group cannot fire that —
      a browser sends no `change` for the option already checked — so here it
      only ever replaces, which is what the approved screen says it does. */
-  const choose = (i) => { put((a) => answer(a, a.at, i)); pop(at); };
+  /* ONE ANSWER IS WHAT COUNTS (0042). Told once per sitting — the ref is
+     this tab's memory of having said it, and the server is idempotent anyway,
+     so a reload that says it twice costs a no-op rather than a wrong date.
+     Fire and forget: answering must not wait on the network. */
+  const toldRef = useRef(false);
+  const choose = (i) => {
+    put((a) => answer(a, a.at, i));
+    pop(at);
+    if (!toldRef.current && runRef.current) {
+      toldRef.current = true;
+      markProgress({ me, runId: runRef.current }).catch(() => {});
+    }
+  };
 
   /* ---------------------------------------------------------------- results */
   const result = useMemo(() => {

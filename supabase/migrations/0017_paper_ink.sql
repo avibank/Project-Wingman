@@ -63,8 +63,14 @@ begin
     execute format('alter table paper_annotations drop constraint %I', c);
   end loop;
 end $$;
-alter table paper_annotations add constraint paper_annotations_kind_check
-  check (kind in ('highlight','underline','strikethrough','note','question','correction'));
+-- SUPERSEDED BY 0018 AND 0020, WHICH ADD four more kinds. Adding a constraint
+-- validates the existing rows, so on a replay a `shape` or `stamp` annotation
+-- — legal since 0020 — cannot satisfy this narrower list. Skipped in that case;
+-- 0020 adds the final list. See 0035 for the argument.
+do $$ begin
+  alter table paper_annotations add constraint paper_annotations_kind_check
+    check (kind in ('highlight','underline','strikethrough','note','question','correction'));
+exception when check_violation then null; end $$;
 
 -- ------------------------------------------------------------------ 3. ink
 create table if not exists paper_ink (
@@ -159,6 +165,9 @@ $$;
 --
 -- When it is convenient, and with nothing calling it:
 --   drop function if exists paper_annotations_for(text, text, timestamptz);
+-- Dropped first: a later migration changes what this returns, and `create
+-- or replace` cannot change a return type (0011 carries the argument).
+drop function if exists paper_marks_for(text, text, timestamptz);
 create or replace function paper_marks_for(uid text, p_paper text, p_since timestamptz default null)
 returns table (
   id uuid, paper_id text, module_code text, paper_version int,

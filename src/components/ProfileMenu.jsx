@@ -29,6 +29,13 @@ const ICON = {
       <path d="M16 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   ),
+  /* A seal: the stamp, as an outline, at the menu's own 20x20. */
+  stamp: (
+    <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="6.6" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="3.4" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  ),
   studio: (
     <svg className="mi" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path d="M4.6 3.4h7.2l3.6 3.6v9.6H4.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -144,6 +151,25 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
      only the fallback for an account whose row has not arrived. */
   const faceName = profile?.real_name || profile?.callsign || label;
 
+  /* THE STAMP IS OPTIONAL, AND THAT IS WHY THIS EXISTS (owner, 2026-10-12).
+     A student is taken to the creator once, when their profile is made, and
+     can close it — so an account can go on indefinitely with no stamp, and
+     then every place a stamp signs for them draws the faint house seal
+     instead. The owner found one that way: "I can see her profile, it doesn't
+     have a stamp."
+
+     It is a REMINDER, not a gate. Nothing is withheld, nothing is counted and
+     nothing is said twice: a dot on the avatar, which is already on every
+     screen, and a row inside the menu that says what it is for. Both go the
+     moment a stamp is issued, and there is nothing to dismiss — a reminder
+     with a Dismiss on it is a reminder you have to nag somebody about twice.
+
+     WAIT FOR THE PROFILE. `profile` is null while the row is in flight, and
+     a nudge shown then would flash on every page load for people who already
+     have a stamp — which is precisely the "bothering them" this must not do. */
+  const hasStamp = Boolean(profile?.stamp_issued_at);
+  const askStamp = isSignedIn && !profileLoading && Boolean(profile) && !hasStamp;
+
   return (
     <span className="menuwrap" ref={wrapRef}>
       <button
@@ -152,7 +178,8 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="account-menu"
-        aria-label="Account menu"
+        aria-label={askStamp ? "Account menu. Your stamp is waiting to be made." : "Account menu"}
+        data-ask={askStamp ? "1" : undefined}
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
       >
         {isSignedIn
@@ -180,6 +207,30 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
           {isAdmin && <span className="admin small">Admin</span>}
           <span className="chev">›</span>
         </button>
+
+        {/* THE INVITATION, under the row it belongs to — the account row IS
+            the licence link, and this is the one thing the licence is still
+            missing.
+
+            FOUR WORDS, AND THE SUPPORTING LINE IS GONE (owner, 2026-10-12:
+            "just have it say make your stamp. That's it. We don't need the
+            extra words"). It carried a second line twice — first about
+            signing work, then about identity in the class — and the second
+            draft was cut as fast as the first. The row is in the account
+            menu, under the student's own name, beside a dot on their own
+            avatar: the context already says whose stamp and where it lives,
+            and a sentence explaining it was the menu arguing with somebody
+            who had not asked a question.
+
+            No count, no "not yet", no date. §10 — an absence is never stated;
+            what is named is the next action. */}
+        {askStamp && (
+          <button role="menuitem" type="button" className="mask" onClick={() => go("licence")}>
+            {ICON.stamp}
+            <span className="mlabel">Make your stamp</span>
+            <span className="chev">›</span>
+          </button>
+        )}
 
         <span className="sep" />
         <button role="menuitem" type="button" onClick={() => go("preferences")}>
@@ -280,6 +331,27 @@ function ProfileMenu({ onNavigate, profile = null, profileLoading = false }) {
           color: var(--active); border-radius: 999px; padding: 3px 9px; font-family: var(--font-mono);
           font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; }
         .admin.small { padding: 2px 7px; font-size: 8.5px; }
+
+        /* ------------------------------------------- the stamp reminder
+           A MARK, SO IT TAKES --active. The three-token rule this repo
+           already measures by: --active for a mark, --active-fill for a
+           fill, --active-text for the accent read as WORDS. The dot is a
+           mark and keeps --active; the row's second line is words and takes
+           --t2, which is the token rr-app.css §6 settled on for exactly this
+           size of quiet prose. */
+        .avbtn { position: relative; }
+        .avbtn[data-ask="1"]::after {
+          content: ""; position: absolute; top: 3px; right: 3px;
+          width: 9px; height: 9px; border-radius: 50%;
+          background: var(--active); border: 2px solid var(--ground);
+        }
+        /* The row is an invitation rather than a destination, so it sits on
+           the raised surface at rest instead of only on hover. One line, so
+           it is an ordinary row in every way but its ground and its icon. */
+        .menu button.mask { background: var(--raised); }
+        .menu button.mask:hover { background: var(--sunk, var(--raised)); }
+        .menu button.mask .mi { color: var(--active); }
+        .menu button.mask .mlabel { font-weight: 600; }
       `}</style>
     </span>
   );
