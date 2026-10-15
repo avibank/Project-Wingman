@@ -138,7 +138,7 @@ export default function LibraryTab({
   /* The ported screen, and what it needs that the shelves never did: how many
      batches the module will have, and the progress store the card counts are
      read out of. */
-  asBatches = false, totalBatches = null, progress = null, currentChapterId = null,
+  asBatches = false, totalBatches = null, mockBatches = 0, progress = null, currentChapterId = null,
   onOpenCards = null, onOpenDownload = null,
   /* The module's own name, for the ported search's empty line, and the door to
      a classmate from a row's stamp strip. */
@@ -242,6 +242,7 @@ export default function LibraryTab({
       <LibraryBatches
         batches={batches}
         total={totalBatches || null}
+        mocks={mockBatches || 0}
         /* The light follows the batch this student last opened (owner,
            2026-10-08), falling back to the module's own current chapter and
            then to the first — never to the last, which is where it used to

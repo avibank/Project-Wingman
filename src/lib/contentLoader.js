@@ -42,6 +42,13 @@ export function loadContent(doc, { strict = false } = {}) {
        so the number is the MODULE's and never `chapters.length`. Null when
        the document does not say, and the strip then draws only what exists. */
     batches: Number.isFinite(m.batches) ? m.batches : null,
+    /* HOW MANY OF THE TRAILING BATCHES ARE MOCK EXAMS — lettered A, B, C…
+       rather than numbered, because they cover the whole subject instead of a
+       slice of it (owner, 2026-10-15). Zero rather than null: every caller
+       does arithmetic with it, and `batchLabel` would have to guard a null at
+       each one. See batchModel.js for why the module owns this and not the
+       chapter. */
+    mocks: Number.isFinite(m.mocks) ? m.mocks : 0,
     papers: (m.papers || []).map((p) => ({
       id: p.id,
       title: p.title,

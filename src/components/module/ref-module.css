@@ -390,7 +390,6 @@
   .ref-mod .demo{font-size:12px}.ref-mod .demo button{padding:7px 10px}
 }
 @media (prefers-reduced-motion:reduce){.ref-mod *{animation:none!important;transition:none!important}}
-
 /* ---- the app's own corrections; see scripts/scope-ref-css.mjs ---- */
 .ref-mod a.lrow{color:inherit;text-decoration:none}
 .ref-mod .dl-list a.paper{color:inherit;text-decoration:none}

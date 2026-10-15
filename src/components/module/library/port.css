@@ -68,6 +68,84 @@
    `position: relative` are doing their job and must not be touched. */
 .app .wm-port .card .route{ top: auto; max-height: none; min-width: auto; flex-direction: row; }
 
+/* AND THE STRIP RESIZES TO HOWEVER MANY WAYPOINTS THERE ARE (2026-10-15).
+   -----------------------------------------------------------------------------
+   Owner: Module 13d grows from ten batches to fifteen, and the route must
+   "resize accordingly. Don't stretch it out. Don't thin it in… It should still
+   fill the space. Just a bit smaller to account for the five added circles."
+
+   The demo was drawn for ten and hard-codes both halves of that: a flat 28px
+   waypoint, and a dashed rule inset by 5% because a tenth of a strip is 10%
+   and half a cell is 5% of it. At fifteen, measured before any of this was
+   written:
+     1280  28px, 20px gaps, clean       620  22px, 12px gaps, clean
+      820  28px, 16px gaps, clean       390  **36px PAST the right edge**
+                                        360  **66px past**, dots touching
+   So it only breaks where there is no room, which is the phone — and it broke
+   by OVERFLOWING rather than by shrinking, because `1fr` is `minmax(auto,1fr)`
+   and that auto floor is the waypoint's own min-content width. Fifteen 22px
+   dots will not fit in 276px however the tracks are shared out.
+
+   THREE THINGS, AND THE FIRST IS WHY THE OTHER TWO CAN WORK. `minmax(0,1fr)`
+   on the inline template lets a track go below its content; the waypoint then
+   sizes itself to the track it is in, down to a floor, keeping 4px of air so
+   the dots never touch; and the dashed rule is worked out from the SAME cell
+   width rather than from a tenth-sized constant, so it starts and ends on the
+   first and last dot at any count.
+
+   `--n` IS SET INLINE BY LibraryBatches, beside the template it already
+   writes, and the sizes are container queries on the strip. The alternative
+   was a ResizeObserver and a JavaScript number: this is the same arithmetic
+   declared once, and it is right during the first paint rather than one frame
+   after it. The font floor is 8px because the label is two characters at its
+   widest ("01") and that is what still fits the circle at 390. */
+.app .wm-port .route{ container-type: inline-size; }
+.app .wm-port .route .wp{
+  /* `100cqi` IS THE CONTAINER'S CONTENT BOX, so the strip's 18px of padding
+     is already out of it. Subtracting it again made every cell 36px narrower
+     than it is and shrank a TEN-batch phone waypoint from 22px to 20px —
+     a screen this change was not asked to touch. Measured, not reasoned. */
+  --cell: calc(100cqi / var(--n, 10));
+  /* THE AIR BETWEEN TWO DOTS IS 2px, WHICH IS THE DEMO'S OWN DENSITY. At 4px
+     a ten-batch strip lost 1.4px off every dot at 360 — the demo leaves 2.6px
+     there, so 4px of enforced air was tighter than the design and changed a
+     screen that was not asked to change. At 2px a ten-batch module is
+     pixel-identical at every width measured, and fifteen get 16.4px on a 390
+     phone instead of 14.4. */
+  --wp-size: clamp(14px, var(--cell) - 2px, var(--wp-max, 28px));
+  width: var(--wp-size);
+  height: auto;
+  aspect-ratio: 1;
+  /* THE LABEL IS A FRACTION OF THE DOT, NOT OF THE CELL, so the two agree the
+     moment the dot stops growing. Keyed off the cell it read 9.44px inside a
+     22px dot at 390 — the dot was at its cap and the font was still tracking
+     a cell that had room to spare. The ratios are the demo's own: 11/28 on a
+     desktop, 10/22 on a phone. */
+  font-size: max(8px, calc(var(--wp-size) * var(--wp-ratio, 0.3929)));
+}
+/* THE CAP IS THE BREAKPOINT'S OWN SIZE, NOT A FLAT 28, and that is what keeps
+   a ten-batch module pixel-identical. The demo's phone block says 22px and
+   10px at 620 and below; a flat cap of 28 overrode it at (0,4,0) against its
+   (0,3,0) and grew every existing waypoint from 22 to 27 — measured, on the
+   course as it ships today, which is not a screen this change was asked to
+   touch. The clamp only ever makes a waypoint SMALLER than its breakpoint
+   says, and only when the count leaves no room. */
+@media (max-width: 620px){
+  .app .wm-port .route .wp{ --wp-max: 22px; --wp-ratio: 0.4545; }
+}
+/* AND THE DASHED RULE IS (0,4,0) FOR THE REASON THE `.card .route` BLOCK
+   ABOVE ALREADY GIVES: this block is emitted above the ported rules, so an
+   equal selector loses the tie on order. Written as `.route::before` it was
+   (0,3,1) against the demo's own (0,3,1) and did nothing at all — the line
+   stayed at the demo's `calc(18px + 5%)`, which is half a cell only when
+   there are exactly ten of them, and at fifteen it started 14px past the
+   first dot. Percentages here resolve against `.route`'s padding box, which
+   is why the 36px comes back off inside this one. */
+.app .wm-port .card .route::before{
+  left: calc(18px + (100% - 36px) / var(--n, 10) / 2);
+  right: calc(18px + (100% - 36px) / var(--n, 10) / 2);
+}
+
 /* AND THE ATTEMPT STRIP SITS ON THE CHEVRON'S LINE (owner, 2026-10-08: "align
    the stamp? and the arrow").
    -----------------------------------------------------------------------------
