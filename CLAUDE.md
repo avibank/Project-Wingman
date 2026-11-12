@@ -201,13 +201,19 @@ with the same correct text.
   **Not yet published** (`npm run publish-course`). `test:bm` was re-run with a
   second module that has content and passes — the module-filter path, which was
   uncoverable until M2 had a chapter, is covered now.
-- **THE DEPLOY FAILED, TWICE, AND THE BUILD WAS CLEAN** (merged as #97). Vercel
-  reported `failure` on the PR's preview AND on main, with no log reachable from
-  here, while a clean `git archive` of the merge commit with `npm ci` and
-  `npm run build` exited 0. That is the same shape as #88. The paper therefore
-  404s live, and **publishing must wait for it**: `publish-course` checks every
-  paper is on the other end by its first bytes and would stop, correctly, on a
-  404 that this app answers with index.html.
+- **VERCEL REJECTS EVERY DEPLOYMENT AT CREATION, and it is not the code**
+  (found 2026-11-12). Every push since 2026-10-15 reports `failure`, and the
+  tell is the timestamps: `pending` and `failure` carry **the same second**,
+  where a build that ran took 15-40s. So no build ever started. Proved by
+  bisecting with probe branches off the last good commit (`5492a82`, green): an
+  EMPTY commit failed, the content document alone failed, the PDF alone failed,
+  and pinning Node 22 and Node 24 changed nothing — while a clean `git archive`
+  build of the merge commit exits 0. That makes it the account or the project
+  (quota, plan, a paused project or a broken Git connection), which the repo
+  cannot fix and which an agent must not change. Read the reason in the Vercel
+  dashboard on the failed deployment. **Until a deploy lands, the paper 404s,
+  and publishing must wait**: `publish-course` checks every paper's first bytes
+  and stops, correctly, on the 404 this app answers with index.html.
 
 **THE IMPORTER IS IN THE REPO NOW** (`scripts/batches/`), where it was a
 one-off before. `lines.mjs` pulls every line out with its x and its height
