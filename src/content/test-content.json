@@ -35711,7 +35711,4873 @@
   {
    "id": "M2",
    "name": "Module 13e",
-   "chapters": []
+   "chapters": [
+    {
+     "id": "M2.V1",
+     "name": "Communication",
+     "cardsName": "Batch 01 · Full Bank · pages 1–117",
+     "lessons": [],
+     "quiz": {
+      "id": "M2.V1.QZ",
+      "name": "Batch 01 · Mock Exam · pages 1–117",
+      "questions": [
+       {
+        "id": "M2.V1.Q1",
+        "question": "Which distance is the short distance field practically gone after?",
+        "options": [
+         "3 to 4 λ",
+         "0.1 λ",
+         "30 to 40 λ"
+        ],
+        "correct": 0,
+        "explain": "This short distance field dissipates very fast and after a distance of 3–4 λ is practically no longer present."
+       },
+       {
+        "id": "M2.V1.Q2",
+        "question": "What does the propagation speed of a wave depend on?",
+        "options": [
+         "The length of the antenna",
+         "The medium used",
+         "The amplitude of the voltage"
+        ],
+        "correct": 1,
+        "explain": "The propagation speed depends on the medium used."
+       },
+       {
+        "id": "M2.V1.Q3",
+        "question": "What happens in a parallel resonant circuit at the resonant frequency f0?",
+        "options": [
+         "iL is greater and the circuit is inductive",
+         "UL and UC cancel, a high current flows",
+         "iL and iC cancel, only iR flows"
+        ],
+        "correct": 2,
+        "explain": "At f0, iL equals iC; being 180° out of phase they cancel each other, and only the current iR due to RP flows."
+       },
+       {
+        "id": "M2.V1.Q4",
+        "question": "What is the minimum a basic radio communication system may consist of?",
+        "options": [
+         "An oscillator and an antenna",
+         "A transmitter and a receiver",
+         "A transmitter, a receiver and a relay"
+        ],
+        "correct": 1,
+        "explain": "A basic radio communication system may consist of only a transmitter and a receiver."
+       },
+       {
+        "id": "M2.V1.Q5",
+        "question": "Which capacities does the inner wire of a coaxial cable have?",
+        "options": [
+         "C10 to ground, no C12 to the shield",
+         "Equal C10 and C20 to ground",
+         "C12 against the shield, no C10 to ground"
+        ],
+        "correct": 2,
+        "explain": "The inner wire has a capacity C12 against the shield, but no capacity C10 to ground."
+       },
+       {
+        "id": "M2.V1.Q6",
+        "question": "What can sporadic-E ionisation enable?",
+        "options": [
+         "Good VHF transmissions over unusual distances",
+         "Removal of the skip zone at night",
+         "Lower ground wave attenuation at LF"
+        ],
+        "correct": 0,
+        "explain": "They are often present in sufficient number and intensity to enable good VHF transmissions over distances not normally possible."
+       },
+       {
+        "id": "M2.V1.Q7",
+        "question": "What gives a Yagi antenna its increased gain in the antenna direction?",
+        "options": [
+         "Superposition of the dipole and parasitic element fields",
+         "The circular polarization of the dipole",
+         "The greater length of the dipole"
+        ],
+        "correct": 0,
+        "explain": "The superposition of the fields of both dipole and parasitic elements results in increased antenna gain in the direction of the antenna."
+       },
+       {
+        "id": "M2.V1.Q8",
+        "question": "What is the ground wave used for?",
+        "options": [
+         "Long-range HF daylight communication only",
+         "Short range at LF with low power, long range at HF with very high power",
+         "Short range at HF with low power, long range at LF with very high power"
+        ],
+        "correct": 2,
+        "explain": "The ground wave is used for short-range communications at high frequencies with low power and for long-range communication at low frequencies with very high power."
+       },
+       {
+        "id": "M2.V1.Q9",
+        "question": "What is characteristic of AC?",
+        "options": [
+         "The current varies in direction but not quantity",
+         "The current varies in quantity but not direction",
+         "The current varies in direction and in quantity"
+        ],
+        "correct": 2,
+        "explain": "The current I varies in direction (polarity) and in quantity over a period of time t."
+       },
+       {
+        "id": "M2.V1.Q10",
+        "question": "How can an antenna of limited length still be brought to resonance?",
+        "options": [
+         "With an L or T shaped tip or an umbrella",
+         "By using a loop instead",
+         "By lengthening the feed line"
+        ],
+        "correct": 0,
+        "explain": "The antenna tip can be L or T shaped or be fitted with an \"umbrella\"."
+       },
+       {
+        "id": "M2.V1.Q11",
+        "question": "What waveform results from superimposing the 1st, 3rd and 5th harmonics?",
+        "options": [
+         "An almost rectangular waveform",
+         "An almost sawtooth waveform",
+         "An almost triangular waveform"
+        ],
+        "correct": 0,
+        "explain": "By superimposing the 1st, 3rd and 5th harmonic, an almost rectangular waveform is obtained."
+       },
+       {
+        "id": "M2.V1.Q12",
+        "question": "Which harmonics are used to build a triangular wave?",
+        "options": [
+         "The even harmonics only",
+         "The odd harmonics",
+         "Both odd and even harmonics"
+        ],
+        "correct": 1,
+        "explain": "For triangular waves the odd harmonics have to be used, just like with the rectangular ones."
+       },
+       {
+        "id": "M2.V1.Q13",
+        "question": "How is a strong unwanted local transmitter suppressed?",
+        "options": [
+         "Series circuit tuned to it as ground leg of a divider",
+         "Parallel circuit tuned to it as ground leg of a divider",
+         "Series circuit tuned to the wanted signal in the line"
+        ],
+        "correct": 0,
+        "explain": "A series resonant circuit tuned to the unwanted signal is used as the ground leg in an antenna voltage divider."
+       },
+       {
+        "id": "M2.V1.Q14",
+        "question": "Which statement about the propagation of electromagnetic waves is correct?",
+        "options": [
+         "They can only travel through air",
+         "They can only travel through a wire or a cable",
+         "No medium is necessary for their propagation"
+        ],
+        "correct": 2,
+        "explain": "No medium is necessary for the propagation of electromagnetic waves."
+       },
+       {
+        "id": "M2.V1.Q15",
+        "question": "What is the sky wave used for in daylight?",
+        "options": [
+         "Short-range low frequency communication",
+         "Long-range high frequency communication",
+         "Line-of-sight UHF communication"
+        ],
+        "correct": 1,
+        "explain": "The sky wave is used for long-range high frequency daylight communication."
+       },
+       {
+        "id": "M2.V1.Q16",
+        "question": "What does a convex dielectric lens with εr > 1 achieve?",
+        "options": [
+         "Centre and edge beams radiate in phase",
+         "Edge beams are absorbed by the lens",
+         "Centre beams radiate before edge beams"
+        ],
+        "correct": 0,
+        "explain": "By using a convex shaped dielectric lens with εr > 1, the beams at the centre and edge radiate in phase."
+       },
+       {
+        "id": "M2.V1.Q17",
+        "question": "How are E and H related in the long distance field of an antenna?",
+        "options": [
+         "90° displaced, holding reactive energy",
+         "In phase, transmitting active energy",
+         "180° out of phase, cancelling out"
+        ],
+        "correct": 1,
+        "explain": "In the long distance field (r > 3–4 λ) E and H fields are in phase and active energy is transmitted."
+       },
+       {
+        "id": "M2.V1.Q18",
+        "question": "What creates a hard reflection on an RF line?",
+        "options": [
+         "A short or an open line",
+         "A small impedance deviation",
+         "A perfectly matched load"
+        ],
+        "correct": 0,
+        "explain": "With RF lines, a short or an open line create a hard reflection while smaller deviations create softer reflections."
+       },
+       {
+        "id": "M2.V1.Q19",
+        "question": "What is antenna gain G?",
+        "options": [
+         "Ratio of the antenna length to the wavelength",
+         "Radiated power gain in a direction over a reference",
+         "Power lost along the antenna feed line"
+        ],
+        "correct": 1,
+        "explain": "The increase in radiated power in a given direction compared to a reference antenna is called antenna gain G."
+       },
+       {
+        "id": "M2.V1.Q20",
+        "question": "What does one complete AC cycle consist of?",
+        "options": [
+         "Two positive alterations",
+         "One positive and one negative alteration",
+         "One positive alteration only"
+        ],
+        "correct": 1,
+        "explain": "Figure 2: 1 cycle = positive alteration + negative alteration. Page 8: the positive and negative half-wave together constitute one AC cycle."
+       },
+       {
+        "id": "M2.V1.Q21",
+        "question": "How is the wavelength λ calculated?",
+        "options": [
+         "λ = c × f",
+         "λ = f / c",
+         "λ = c × T = c / f"
+        ],
+        "correct": 2,
+        "explain": "λ = c × T = c / f [m]."
+       },
+       {
+        "id": "M2.V1.Q22",
+        "question": "What makes the ionosphere appear to have layers?",
+        "options": [
+         "Temperature differences at different heights",
+         "The lines of the earth's magnetic field",
+         "Densities of ionization at different heights"
+        ],
+        "correct": 2,
+        "explain": "Densities of ionization at different heights make the ionosphere appear to have layers."
+       },
+       {
+        "id": "M2.V1.Q23",
+        "question": "How are RF lines differentiated electrically and physically?",
+        "options": [
+         "Electrically shielded/unshielded; physically symmetric/asymmetric",
+         "Electrically symmetric/asymmetric; physically shielded/unshielded",
+         "Electrically matched/mismatched; physically open/shorted"
+        ],
+        "correct": 1,
+        "explain": "Electrically: symmetric and asymmetric. Physically: shielded and unshielded."
+       },
+       {
+        "id": "M2.V1.Q24",
+        "question": "What increases the gain of a horn antenna?",
+        "options": [
+         "Faster widening and a shorter funnel",
+         "A wider flare angle above 40°",
+         "More gradual widening and a longer funnel"
+        ],
+        "correct": 2,
+        "explain": "The more gradually the widening occurs and the greater the funnel length, the greater the gain."
+       },
+       {
+        "id": "M2.V1.Q25",
+        "question": "How is frequency related to the cycle time T?",
+        "options": [
+         "It is equal to T",
+         "It is the reciprocal of T",
+         "It is twice T"
+        ],
+        "correct": 1,
+        "explain": "Frequency is also defined as the reciprocal of the cycle time T: f = 1/T."
+       },
+       {
+        "id": "M2.V1.Q26",
+        "question": "How large can the voltages across L and C be in a series circuit at f0?",
+        "options": [
+         "Much higher than the applied voltage",
+         "Always lower than the applied voltage",
+         "Always equal to the applied voltage"
+        ],
+        "correct": 0,
+        "explain": "The current imax at f0 causes voltages across L and C which can be much higher than the applied voltage U."
+       },
+       {
+        "id": "M2.V1.Q27",
+        "question": "What does the ability of the ionosphere to return a wave to earth depend on?",
+        "options": [
+         "The ground conductivity, the season and the antenna type",
+         "The angle, the frequency and the ion density",
+         "The power, the antenna height and the polarization"
+        ],
+        "correct": 1,
+        "explain": "It depends upon the angle at which the sky wave strikes the ionosphere, the frequency of the transmissions, and ion density."
+       },
+       {
+        "id": "M2.V1.Q28",
+        "question": "What happens to the propagation speed as the density of the medium increases?",
+        "options": [
+         "It stays the same",
+         "It increases",
+         "It decreases"
+        ],
+        "correct": 2,
+        "explain": "The higher the density of the medium the lower the propagation speed will be."
+       },
+       {
+        "id": "M2.V1.Q29",
+        "question": "What is the effect of the end capacitance on the antenna?",
+        "options": [
+         "Lower resonant frequency, longer electrically",
+         "Higher resonant frequency, shorter electrically",
+         "Same resonant frequency, same length"
+        ],
+        "correct": 0,
+        "explain": "The resonant frequency is reduced, i.e. the antenna is electrically \"lengthened\"."
+       },
+       {
+        "id": "M2.V1.Q30",
+        "question": "What is the phase relation in a twin cable acting like a coil?",
+        "options": [
+         "They are in phase",
+         "The current leads the voltage",
+         "The voltage leads the current"
+        ],
+        "correct": 2,
+        "explain": "Coils create a phase shift of 90° between voltage and current. The voltage leads the current."
+       },
+       {
+        "id": "M2.V1.Q31",
+        "question": "How does the field of a λ/4 rod antenna relate to the field of a λ/2 dipole?",
+        "options": [
+         "It is twice the dipole field",
+         "It corresponds to one half of the dipole field",
+         "It is identical to the dipole field"
+        ],
+        "correct": 1,
+        "explain": "The diagram of the field of a λ/4 rod antenna corresponds to one half of the field of a λ/2 dipole."
+       },
+       {
+        "id": "M2.V1.Q32",
+        "question": "How is the current distributed along a wire supplied with voltage?",
+        "options": [
+         "Greatest at the feed point, zero at the end",
+         "Equal along the whole wire",
+         "Zero at the feed point, greatest at the end"
+        ],
+        "correct": 0,
+        "explain": "The current is greatest at the feed point; it is zero at the end of the wire."
+       },
+       {
+        "id": "M2.V1.Q33",
+        "question": "What happens at the end of an open RF line?",
+        "options": [
+         "No current flows, the voltage is at maximum",
+         "Current and voltage are both zero",
+         "Maximum current flows, the voltage is zero"
+        ],
+        "correct": 0,
+        "explain": "With an open line there is no current flow at the end but the voltage reaches its maximum."
+       },
+       {
+        "id": "M2.V1.Q34",
+        "question": "Why are the group 1 rays not returned to earth?",
+        "options": [
+         "Their angle is too close to the horizon",
+         "Their angle is too nearly vertical",
+         "Their frequency is too low"
+        ],
+        "correct": 1,
+        "explain": "The angle at which the group 1 rays strike the ionosphere is too nearly vertical for the rays to be returned to earth."
+       },
+       {
+        "id": "M2.V1.Q35",
+        "question": "What is the frequency range of HF?",
+        "options": [
+         "3 MHz to 30 MHz",
+         "300 kHz to 3 MHz",
+         "30 MHz to 300 MHz"
+        ],
+        "correct": 0,
+        "explain": "HF high frequency: 3 MHz – 30 MHz."
+       },
+       {
+        "id": "M2.V1.Q36",
+        "question": "How does a shorted λ/4 line behave for the supply generator?",
+        "options": [
+         "As a pure inductor",
+         "As a series resonant circuit",
+         "As a parallel resonant circuit"
+        ],
+        "correct": 2,
+        "explain": "A shorted λ/4 (or open λ/2) line has frequency dependent resistive behaviour and behaves as a parallel resonant circuit."
+       },
+       {
+        "id": "M2.V1.Q37",
+        "question": "What happens to a ray that leaves the antenna at an angle greater than the critical angle?",
+        "options": [
+         "It is absorbed by the D layer",
+         "It penetrates the ionosphere",
+         "It returns at a shorter distance"
+        ],
+        "correct": 1,
+        "explain": "Any ray that leaves the antenna at an angle greater than this angle (θ) will penetrate the ionosphere."
+       },
+       {
+        "id": "M2.V1.Q38",
+        "question": "How does the length of a parasitic element decide its function?",
+        "options": [
+         "Shorter than the dipole: director; longer: reflector",
+         "Shorter than the dipole: reflector; longer: director",
+         "Any length acts as a director"
+        ],
+        "correct": 0,
+        "explain": "Parasitic elements shorter than the dipole act as a director while elements longer than the dipole act as a reflector."
+       },
+       {
+        "id": "M2.V1.Q39",
+        "question": "What is an antenna?",
+        "options": [
+         "An amplifier for the received RF signal",
+         "A filter that selects one frequency",
+         "A wave transformer between line energy and free radiation"
+        ],
+        "correct": 2,
+        "explain": "An antenna is a wave transformer for transporting line-bundled electromagnetic energy into free radiation energy (transmitter) or vice versa (receiver)."
+       },
+       {
+        "id": "M2.V1.Q40",
+        "question": "Which are the three most important frequency bands in communication engineering?",
+        "options": [
+         "LF, MF and HF",
+         "VLF, LF and MF",
+         "HF, VHF and UHF"
+        ],
+        "correct": 2,
+        "explain": "The three most important frequency bands are HF, VHF and UHF."
+       }
+      ]
+     },
+     "cards": [
+      {
+       "id": "M2.V1.C001",
+       "question": "What do both transmitting and receiving equipment basically consist of?",
+       "options": [
+        "Antennas, modulators and loudspeakers",
+        "Electronic power supplies, amplifiers and oscillators",
+        "Microphones, mixers and RF lines"
+       ],
+       "correct": 1,
+       "explain": "Both transmitting and receiving equipment consist basically of electronic power supplies, amplifiers and oscillators."
+      },
+      {
+       "id": "M2.V1.C002",
+       "question": "What is the minimum a basic radio communication system may consist of?",
+       "options": [
+        "A transmitter, a receiver and a relay",
+        "An oscillator and an antenna",
+        "A transmitter and a receiver"
+       ],
+       "correct": 2,
+       "explain": "A basic radio communication system may consist of only a transmitter and a receiver."
+      },
+      {
+       "id": "M2.V1.C003",
+       "question": "What is the transmitter stage that places the audio intelligence on the RF signal called?",
+       "options": [
+        "The modulator",
+        "The RF amplifier",
+        "The oscillator"
+       ],
+       "correct": 0,
+       "explain": "The stage required to place the audio intelligence on the RF signal is the modulator."
+      },
+      {
+       "id": "M2.V1.C004",
+       "question": "What converts sonic waves into electrical signals?",
+       "options": [
+        "Loudspeakers",
+        "Oscillators",
+        "Microphones"
+       ],
+       "correct": 2,
+       "explain": "Sonic waves are converted to electrical signals by microphones."
+      },
+      {
+       "id": "M2.V1.C005",
+       "question": "What do loudspeakers convert?",
+       "options": [
+        "Electrical signals into sonic waves",
+        "Sonic waves into electrical signals",
+        "Electrical signals into RF signals"
+       ],
+       "correct": 0,
+       "explain": "Loudspeakers convert electrical signals to sonic waves."
+      },
+      {
+       "id": "M2.V1.C006",
+       "question": "How are the transmitter and the receiver of a basic radio system connected?",
+       "options": [
+        "By the aircraft power supply lines",
+        "By a matched RF line in all cases",
+        "By the medium the waves travel through"
+       ],
+       "correct": 2,
+       "explain": "They are connected by the medium through which the electromagnetic waves travel."
+      },
+      {
+       "id": "M2.V1.C007",
+       "question": "Which statement about the propagation of electromagnetic waves is correct?",
+       "options": [
+        "No medium is necessary for their propagation",
+        "They can only travel through air",
+        "They can only travel through a wire or a cable"
+       ],
+       "correct": 0,
+       "explain": "No medium is necessary for the propagation of electromagnetic waves."
+      },
+      {
+       "id": "M2.V1.C008",
+       "question": "How do the electromagnetic variations get from the transmitting antenna to the receiving antenna?",
+       "options": [
+        "They are propagated through the medium (space)",
+        "They are carried by the power supply lines",
+        "They are conducted through the antenna feeder"
+       ],
+       "correct": 0,
+       "explain": "The electromagnetic variations are propagated through the medium (space) from the transmitting antenna to the receiving antenna."
+      },
+      {
+       "id": "M2.V1.C009",
+       "question": "What are the two broad categories of radio equipment?",
+       "options": [
+        "Antenna and line equipment",
+        "Transmitting and receiving equipment",
+        "Analog and digital equipment"
+       ],
+       "correct": 1,
+       "explain": "Radio equipment can be divided into transmitting equipment and receiving equipment."
+      },
+      {
+       "id": "M2.V1.C010",
+       "question": "What does a transmitter comprise?",
+       "options": [
+        "An oscillator, RF amplifiers and a modulator",
+        "An amplifier, a detector and a loudspeaker",
+        "A microphone, a loudspeaker and an antenna"
+       ],
+       "correct": 0,
+       "explain": "The transmitter comprises an oscillator, RF amplifiers and the modulator stage."
+      },
+      {
+       "id": "M2.V1.C011",
+       "question": "What does the oscillator in a transmitter generate?",
+       "options": [
+        "The modulated audio signal",
+        "A basic radio frequency",
+        "The audio intelligence"
+       ],
+       "correct": 1,
+       "explain": "The oscillator generates a basic radio frequency."
+      },
+      {
+       "id": "M2.V1.C012",
+       "question": "Which of these is named as a medium through which electromagnetic waves can travel?",
+       "options": [
+        "A rubber insulator",
+        "A dry wooden block",
+        "A wave guide"
+       ],
+       "correct": 2,
+       "explain": "Media named: wire, wave guide, coaxial cable, nonconducting fluids or gases, air or vacuum."
+      },
+      {
+       "id": "M2.V1.C013",
+       "question": "Which unit feeds the transmitter in the basic radio system figure?",
+       "options": [
+        "The microphone",
+        "The receiver",
+        "The loudspeaker"
+       ],
+       "correct": 0,
+       "explain": "Figure 1: microphone → transmitter → antennas → receiver → loudspeaker."
+      },
+      {
+       "id": "M2.V1.C014",
+       "question": "What does the receiving antenna convert the received electromagnetic energy into?",
+       "options": [
+        "Sonic waves for the loudspeaker",
+        "A steady direct current",
+        "A flow of alternating RF currents"
+       ],
+       "correct": 2,
+       "explain": "The receiving antenna converts the received energy into a flow of alternating radio frequency currents."
+      },
+      {
+       "id": "M2.V1.C015",
+       "question": "What does the receiver convert the RF current variations into?",
+       "options": [
+        "A new basic radio frequency",
+        "The intelligence in the transmission",
+        "Electromagnetic waves for the antenna"
+       ],
+       "correct": 1,
+       "explain": "The receiver converts these current variations into the intelligence contained in the transmission."
+      },
+      {
+       "id": "M2.V1.C016",
+       "question": "Which types of current are used in communications engineering?",
+       "options": [
+        "DC only",
+        "Both AC and DC",
+        "AC only"
+       ],
+       "correct": 1,
+       "explain": "In communications engineering both AC as well as DC is used."
+      },
+      {
+       "id": "M2.V1.C017",
+       "question": "What is the time for one cycle to complete called?",
+       "options": [
+        "The cycle time T",
+        "The angular frequency ω",
+        "The frequency f"
+       ],
+       "correct": 0,
+       "explain": "The time for one cycle to complete is called cycle time T."
+      },
+      {
+       "id": "M2.V1.C018",
+       "question": "What is the symbol for the period?",
+       "options": [
+        "ω",
+        "f",
+        "T"
+       ],
+       "correct": 2,
+       "explain": "The symbol for period is T."
+      },
+      {
+       "id": "M2.V1.C019",
+       "question": "What unit is the period measured in?",
+       "options": [
+        "Radians per second",
+        "Hertz (Hz)",
+        "Seconds (s)"
+       ],
+       "correct": 2,
+       "explain": "The period is measured in seconds (s)."
+      },
+      {
+       "id": "M2.V1.C020",
+       "question": "What is the frequency of AC?",
+       "options": [
+        "The number of complete cycles in one second",
+        "The number of half-waves in one second",
+        "The time taken for one complete cycle"
+       ],
+       "correct": 0,
+       "explain": "The frequency of AC is the number of complete cycles, i.e. oscillations, in one second."
+      },
+      {
+       "id": "M2.V1.C021",
+       "question": "What does 1 cps equal?",
+       "options": [
+        "1 s",
+        "1 Hz",
+        "1 kHz"
+       ],
+       "correct": 1,
+       "explain": "1 cps = Hz."
+      },
+      {
+       "id": "M2.V1.C022",
+       "question": "What is the formula for angular frequency?",
+       "options": [
+        "ω = 2π × f",
+        "ω = f / 2π",
+        "ω = 2π / f"
+       ],
+       "correct": 0,
+       "explain": "ω = 2π × f."
+      },
+      {
+       "id": "M2.V1.C023",
+       "question": "What is characteristic of AC?",
+       "options": [
+        "The current varies in direction but not quantity",
+        "The current varies in direction and in quantity",
+        "The current varies in quantity but not direction"
+       ],
+       "correct": 1,
+       "explain": "The current I varies in direction (polarity) and in quantity over a period of time t."
+      },
+      {
+       "id": "M2.V1.C024",
+       "question": "How does the polarity and current magnitude change of AC continue?",
+       "options": [
+        "It happens only once at switch-on",
+        "It repeats periodically",
+        "It changes randomly with the load"
+       ],
+       "correct": 1,
+       "explain": "The polarity and current magnitude change then repeats periodically. The same applies to the voltage."
+      },
+      {
+       "id": "M2.V1.C025",
+       "question": "What does one complete AC cycle consist of?",
+       "options": [
+        "One positive alteration only",
+        "Two positive alterations",
+        "One positive and one negative alteration"
+       ],
+       "correct": 2,
+       "explain": "Figure 2: 1 cycle = positive alteration + negative alteration. Page 8: the positive and negative half-wave together constitute one AC cycle."
+      },
+      {
+       "id": "M2.V1.C026",
+       "question": "How is frequency related to the cycle time T?",
+       "options": [
+        "It is equal to T",
+        "It is twice T",
+        "It is the reciprocal of T"
+       ],
+       "correct": 2,
+       "explain": "Frequency is also defined as the reciprocal of the cycle time T: f = 1/T."
+      },
+      {
+       "id": "M2.V1.C027",
+       "question": "What does the rotational speed of the tip of the conductor or the magnet depend on?",
+       "options": [
+        "The diameter of the generator only",
+        "The RPM and the diameter of the generator",
+        "The voltage and the current"
+       ],
+       "correct": 1,
+       "explain": "The rotational speed of the tip depends on the RPM and the diameter of the generator."
+      },
+      {
+       "id": "M2.V1.C028",
+       "question": "How is a sinusoidal voltage represented as a phasor?",
+       "options": [
+        "Length by the amplitude, rotation by the frequency",
+        "Length by the cycle time, rotation by the phase",
+        "Length by the frequency, rotation by the amplitude"
+       ],
+       "correct": 0,
+       "explain": "Its length is given by the amplitude of the voltage while the RPM is determined by the frequency."
+      },
+      {
+       "id": "M2.V1.C029",
+       "question": "How does angular velocity differ from angular frequency?",
+       "options": [
+        "Both of them are vector quantities",
+        "Velocity is a vector, frequency a scalar",
+        "Velocity is a scalar, frequency a vector"
+       ],
+       "correct": 1,
+       "explain": "Angular velocity is a vector quantity, while angular frequency is a scalar quantity."
+      },
+      {
+       "id": "M2.V1.C030",
+       "question": "Where is AC used in power engineering?",
+       "options": [
+        "In battery circuits only",
+        "In the mains supply",
+        "In antenna feeders only"
+       ],
+       "correct": 1,
+       "explain": "AC is the type of current used in the mains supply in the field of power engineering."
+      },
+      {
+       "id": "M2.V1.C031",
+       "question": "What is the abbreviation for alternating current?",
+       "options": [
+        "AC",
+        "RF",
+        "DC"
+       ],
+       "correct": 0,
+       "explain": "The abbreviation for alternating current is AC."
+      },
+      {
+       "id": "M2.V1.C032",
+       "question": "What waveform does every generator containing rotating parts create?",
+       "options": [
+        "A sawtooth AC",
+        "A rectangular AC",
+        "A sinusoidal AC"
+       ],
+       "correct": 2,
+       "explain": "Every generator containing rotating parts will create a sinusoidal AC."
+      },
+      {
+       "id": "M2.V1.C033",
+       "question": "What is the standard waveform for AC?",
+       "options": [
+        "Rectangular",
+        "Triangular",
+        "Sinusoidal"
+       ],
+       "correct": 2,
+       "explain": "The sinusoidal waveform is the standard for AC."
+      },
+      {
+       "id": "M2.V1.C034",
+       "question": "What is the symbol for frequency?",
+       "options": [
+        "T",
+        "f",
+        "ω"
+       ],
+       "correct": 1,
+       "explain": "The symbol for frequency is f."
+      },
+      {
+       "id": "M2.V1.C035",
+       "question": "What unit is frequency measured in?",
+       "options": [
+        "Seconds (s)",
+        "Radians (rad)",
+        "Hertz (Hz)"
+       ],
+       "correct": 2,
+       "explain": "The frequency is measured in hertz (Hz)."
+      },
+      {
+       "id": "M2.V1.C036",
+       "question": "Which units is frequency very often expressed in?",
+       "options": [
+        "kHz, MHz or GHz",
+        "ms, µs or ns",
+        "dB, dBi or dBm"
+       ],
+       "correct": 0,
+       "explain": "Very often frequency is expressed in kHz, MHz or GHz."
+      },
+      {
+       "id": "M2.V1.C037",
+       "question": "How is a sinus typically created?",
+       "options": [
+        "By a straight-line movement",
+        "By a chemical reaction",
+        "By a rotational movement"
+       ],
+       "correct": 2,
+       "explain": "A sinus typically is created by a rotational movement, such as a wire loop rotating in a magnetic field or a magnet rotating in a generator."
+      },
+      {
+       "id": "M2.V1.C038",
+       "question": "Which symbol represents both angular velocity and angular frequency?",
+       "options": [
+        "T",
+        "ω",
+        "f"
+       ],
+       "correct": 1,
+       "explain": "Both are represented by ω."
+      },
+      {
+       "id": "M2.V1.C039",
+       "question": "How does the voltage behave during the positive half-wave?",
+       "options": [
+        "It rises from 0 to +peak and falls back to 0",
+        "It rises from −peak to +peak",
+        "It stays at the positive peak value"
+       ],
+       "correct": 0,
+       "explain": "In the positive half-wave the voltage goes from the 0-reference line up to the positive peak and from +peak down to 0."
+      },
+      {
+       "id": "M2.V1.C040",
+       "question": "How does the voltage behave during the negative half-wave?",
+       "options": [
+        "It rises from −peak to +peak",
+        "It rises from 0 to −peak and falls back to 0",
+        "It stays at the 0-reference line"
+       ],
+       "correct": 1,
+       "explain": "The voltage rises from 0 to a negative peak value and falls from −peak to the 0-reference line."
+      },
+      {
+       "id": "M2.V1.C041",
+       "question": "What happens to the cycle time when the frequency increases?",
+       "options": [
+        "It becomes longer",
+        "It stays the same",
+        "It becomes shorter"
+       ],
+       "correct": 2,
+       "explain": "The higher the frequency the shorter the cycle time; the lower the frequency the longer the cycle time."
+      },
+      {
+       "id": "M2.V1.C042",
+       "question": "What is the unit of frequency expressed in seconds?",
+       "options": [
+        "s⁻¹",
+        "s",
+        "s²"
+       ],
+       "correct": 0,
+       "explain": "[f] = 1/s = s⁻¹."
+      },
+      {
+       "id": "M2.V1.C043",
+       "question": "What does the rotational speed depend on when the length is 1?",
+       "options": [
+        "The diameter only",
+        "The RPM and the voltage",
+        "The RPM only"
+       ],
+       "correct": 2,
+       "explain": "With a length of 1, the rotational speed only depends on the RPM."
+      },
+      {
+       "id": "M2.V1.C044",
+       "question": "How do the formulas for angular velocity and angular frequency compare?",
+       "options": [
+        "They are exactly the same",
+        "Only one of them uses 2π",
+        "They are reciprocals"
+       ],
+       "correct": 0,
+       "explain": "The formula for both angular velocity and angular frequency is the same."
+      },
+      {
+       "id": "M2.V1.C045",
+       "question": "What are multiples of the basic frequency called?",
+       "options": [
+        "Sawtooth waves",
+        "Further harmonic waves",
+        "Basic oscillations"
+       ],
+       "correct": 1,
+       "explain": "Multiples of the basic frequency are further harmonic waves."
+      },
+      {
+       "id": "M2.V1.C046",
+       "question": "What is the sinusoidal wave with the same frequency as a non-sinusoidal wave called?",
+       "options": [
+        "The 3rd harmonic or 2nd overtone",
+        "The 2nd harmonic or 1st overtone",
+        "The basic oscillation or 1st harmonic"
+       ],
+       "correct": 2,
+       "explain": "The sinusoidal wave with the same frequency as the non-sinusoidal wave is called basic oscillation or 1st harmonic."
+      },
+      {
+       "id": "M2.V1.C047",
+       "question": "What waveform results from superimposing the 1st, 3rd and 5th harmonics?",
+       "options": [
+        "An almost sawtooth waveform",
+        "An almost rectangular waveform",
+        "An almost triangular waveform"
+       ],
+       "correct": 1,
+       "explain": "By superimposing the 1st, 3rd and 5th harmonic, an almost rectangular waveform is obtained."
+      },
+      {
+       "id": "M2.V1.C048",
+       "question": "Which harmonics are used to build a triangular wave?",
+       "options": [
+        "The odd harmonics",
+        "Both odd and even harmonics",
+        "The even harmonics only"
+       ],
+       "correct": 0,
+       "explain": "For triangular waves the odd harmonics have to be used, just like with the rectangular ones."
+      },
+      {
+       "id": "M2.V1.C049",
+       "question": "Which harmonics are required for a sawtooth wave?",
+       "options": [
+        "The even harmonics only",
+        "All harmonics, odd and even",
+        "The odd harmonics only"
+       ],
+       "correct": 1,
+       "explain": "For sawtooth waves all harmonics are required, the odd ones and the even ones."
+      },
+      {
+       "id": "M2.V1.C050",
+       "question": "Which other non-sinusoidal waves are possible besides the rectangular wave?",
+       "options": [
+        "Triangular and sawtooth waves",
+        "Sine and cosine waves",
+        "Phasor and vector waves"
+       ],
+       "correct": 0,
+       "explain": "Besides the rectangular type, triangular and sawtooth waves are also possible."
+      },
+      {
+       "id": "M2.V1.C051",
+       "question": "How can non-sinusoidal oscillations be resolved to sine shape?",
+       "options": [
+        "By mathematics or graphic means",
+        "By raising the frequency",
+        "By filtering with a resistor"
+       ],
+       "correct": 0,
+       "explain": "Non-sinusoidal oscillations can be resolved to sinus-shape by mathematics or graphic means."
+      },
+      {
+       "id": "M2.V1.C052",
+       "question": "Which harmonics can a rectangular wave be resolved into?",
+       "options": [
+        "The 1st and 2nd harmonics only",
+        "A finite number of even harmonics",
+        "An infinite number of uneven harmonics"
+       ],
+       "correct": 2,
+       "explain": "Rectangular waves can be resolved to an infinite number of uneven harmonics."
+      },
+      {
+       "id": "M2.V1.C053",
+       "question": "What determines the harmonic numbers and amplitudes?",
+       "options": [
+        "The amplitude of the supply voltage",
+        "The shape of the non-sinusoidal oscillation",
+        "The length of the antenna"
+       ],
+       "correct": 1,
+       "explain": "Harmonic numbers and amplitudes are determined by the shape of the non-sinusoidal oscillation."
+      },
+      {
+       "id": "M2.V1.C054",
+       "question": "What would summing an infinite number of odd harmonics produce?",
+       "options": [
+        "A triangular wave",
+        "A square wave",
+        "A sine wave"
+       ],
+       "correct": 1,
+       "explain": "The red line indicates a square-wave that would result from summating an infinite number of odd harmonics."
+      },
+      {
+       "id": "M2.V1.C055",
+       "question": "How is the amplitude of a harmonic of a rectangular wave calculated?",
+       "options": [
+        "1st harmonic amplitude ÷ harmonic number squared",
+        "1st harmonic amplitude × harmonic number",
+        "1st harmonic amplitude ÷ harmonic number"
+       ],
+       "correct": 2,
+       "explain": "The amplitude of a harmonic is the amplitude of the 1st harmonic divided by the number of the actual harmonic."
+      },
+      {
+       "id": "M2.V1.C056",
+       "question": "How does the harmonic amplitude decrease for a triangular wave?",
+       "options": [
+        "In direct proportion to the harmonic number",
+        "With the cube of the harmonic number",
+        "With the square of the harmonic number"
+       ],
+       "correct": 2,
+       "explain": "For triangular waves the amplitude decreases with the square of the number of the harmonic."
+      },
+      {
+       "id": "M2.V1.C057",
+       "question": "How does the harmonic amplitude decrease for a sawtooth wave?",
+       "options": [
+        "In direct proportion to the harmonic number",
+        "With the square of the harmonic number",
+        "It does not decrease at all"
+       ],
+       "correct": 0,
+       "explain": "For sawtooth waves the amplitude decreases with the number of the harmonic."
+      },
+      {
+       "id": "M2.V1.C058",
+       "question": "Which are the three most important frequency bands in communication engineering?",
+       "options": [
+        "VLF, LF and MF",
+        "HF, VHF and UHF",
+        "LF, MF and HF"
+       ],
+       "correct": 1,
+       "explain": "The three most important frequency bands are HF, VHF and UHF."
+      },
+      {
+       "id": "M2.V1.C059",
+       "question": "What is the frequency range of HF?",
+       "options": [
+        "3 MHz to 30 MHz",
+        "300 kHz to 3 MHz",
+        "30 MHz to 300 MHz"
+       ],
+       "correct": 0,
+       "explain": "HF high frequency: 3 MHz – 30 MHz."
+      },
+      {
+       "id": "M2.V1.C060",
+       "question": "What is the frequency range of VHF?",
+       "options": [
+        "3 MHz to 30 MHz",
+        "300 MHz to 3000 MHz",
+        "30 MHz to 300 MHz"
+       ],
+       "correct": 2,
+       "explain": "VHF very high frequency: 30 MHz – 300 MHz."
+      },
+      {
+       "id": "M2.V1.C061",
+       "question": "What is the frequency range of UHF?",
+       "options": [
+        "3 GHz to 30 GHz",
+        "300 MHz to 3000 MHz",
+        "30 MHz to 300 MHz"
+       ],
+       "correct": 1,
+       "explain": "UHF ultra-high frequency: 300 MHz – 3000 MHz."
+      },
+      {
+       "id": "M2.V1.C062",
+       "question": "Which applications are grouped under communication in the frequency band chart?",
+       "options": [
+        "Data communication, radio and satellite broadcast",
+        "Inductive heating, annealing and melting",
+        "Electro-medicine, drying and heating"
+       ],
+       "correct": 0,
+       "explain": "Figure 7: Communication – Data Communication, Radio Broadcast, Satellite Broadcast."
+      },
+      {
+       "id": "M2.V1.C063",
+       "question": "What speed does a wave propagate with in free space (vacuum)?",
+       "options": [
+        "The speed of sound",
+        "Half the speed of light",
+        "The speed of light c"
+       ],
+       "correct": 2,
+       "explain": "In free space (vacuum) it would propagate with the speed of light c."
+      },
+      {
+       "id": "M2.V1.C064",
+       "question": "How is the wavelength λ calculated?",
+       "options": [
+        "λ = c × T = c / f",
+        "λ = c × f",
+        "λ = f / c"
+       ],
+       "correct": 0,
+       "explain": "λ = c × T = c / f [m]."
+      },
+      {
+       "id": "M2.V1.C065",
+       "question": "What is the approximate speed of light in a vacuum?",
+       "options": [
+        "300 000 km per second",
+        "30 000 km per second",
+        "3 000 000 km per second"
+       ],
+       "correct": 0,
+       "explain": "In a vacuum the speed of light c would be 299 792 km/s or approximately 300 000 km/s."
+      },
+      {
+       "id": "M2.V1.C066",
+       "question": "How are radio frequencies up to 300 GHz divided?",
+       "options": [
+        "Into octave ranges",
+        "Into equal 1 GHz ranges",
+        "Into decadic ranges"
+       ],
+       "correct": 2,
+       "explain": "Radio frequencies up to 300 GHz are divided into decadic ranges."
+      },
+      {
+       "id": "M2.V1.C067",
+       "question": "What is each decade of radio frequencies designated as?",
+       "options": [
+        "A frequency band",
+        "A channel",
+        "A radar band"
+       ],
+       "correct": 0,
+       "explain": "Each decade is designated as a frequency band."
+      },
+      {
+       "id": "M2.V1.C068",
+       "question": "How are the frequencies used for radar technology divided?",
+       "options": [
+        "Into audio frequency bands",
+        "Into special radar bands",
+        "Into decadic bands only"
+       ],
+       "correct": 1,
+       "explain": "The frequencies used for radar technology are divided into special radar bands."
+      },
+      {
+       "id": "M2.V1.C069",
+       "question": "What is the frequency range of VHF COM?",
+       "options": [
+        "108 MHz to 118 MHz",
+        "118 MHz to 137 MHz",
+        "225 MHz to 400 MHz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: VHF Com 118–137 MHz."
+      },
+      {
+       "id": "M2.V1.C070",
+       "question": "What is the frequency range of HF COM?",
+       "options": [
+        "118 MHz to 137 MHz",
+        "3 kHz to 30 kHz",
+        "2 MHz to 30 MHz"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: HF Com 2–30 MHz."
+      },
+      {
+       "id": "M2.V1.C071",
+       "question": "What is the frequency range of UHF COM?",
+       "options": [
+        "962 MHz to 1213 MHz",
+        "225 MHz to 400 MHz",
+        "118 MHz to 137 MHz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: UHF Com 225–400 MHz."
+      },
+      {
+       "id": "M2.V1.C072",
+       "question": "What is the frequency range of the ADF?",
+       "options": [
+        "200 kHz to 1750 kHz",
+        "2 MHz to 30 MHz",
+        "10 kHz to 24 kHz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: ADF 200–1750 kHz."
+      },
+      {
+       "id": "M2.V1.C073",
+       "question": "What frequency is shown for SatCom?",
+       "options": [
+        "4.3 GHz",
+        "9.375 GHz",
+        "1.5 GHz"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: SatCom 1,5 GHz."
+      },
+      {
+       "id": "M2.V1.C074",
+       "question": "What frequency is shown for weather radar?",
+       "options": [
+        "4.3 GHz",
+        "9.375 GHz",
+        "8.8 GHz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: Weather Radar 9,375 GHz."
+      },
+      {
+       "id": "M2.V1.C075",
+       "question": "What frequency range is shown for VLF navigation?",
+       "options": [
+        "10 kHz to 24 kHz",
+        "200 kHz to 1750 kHz",
+        "300 Hz to 3 kHz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: VLF Navigation 10–24 kHz."
+      },
+      {
+       "id": "M2.V1.C076",
+       "question": "What is the identification signal frequency of the DME?",
+       "options": [
+        "1350 Hz",
+        "400 Hz",
+        "1020 Hz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: Identification Signals – DME: 1350 Hz."
+      },
+      {
+       "id": "M2.V1.C077",
+       "question": "What is the identification signal frequency of VOR, ILS and ADF?",
+       "options": [
+        "3000 Hz",
+        "1020 Hz",
+        "1350 Hz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: Identification Signals – VOR, ILS, ADF: 1020 Hz."
+      },
+      {
+       "id": "M2.V1.C078",
+       "question": "What frequency range is shown for voice?",
+       "options": [
+        "3 kHz to 30 kHz",
+        "20 Hz to 20 kHz",
+        "300 Hz to 3 kHz"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: Voice 300 Hz – 3 kHz."
+      },
+      {
+       "id": "M2.V1.C079",
+       "question": "Which tone frequencies are shown for the marker?",
+       "options": [
+        "300, 1020 and 1350 Hz",
+        "1020, 1350 and 3000 Hz",
+        "400, 1300 and 3000 Hz"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: Marker: 400, 1300, 3000 Hz."
+      },
+      {
+       "id": "M2.V1.C080",
+       "question": "What does the propagation speed of a wave depend on?",
+       "options": [
+        "The amplitude of the voltage",
+        "The medium used",
+        "The length of the antenna"
+       ],
+       "correct": 1,
+       "explain": "The propagation speed depends on the medium used."
+      },
+      {
+       "id": "M2.V1.C081",
+       "question": "What happens to the propagation speed as the density of the medium increases?",
+       "options": [
+        "It stays the same",
+        "It increases",
+        "It decreases"
+       ],
+       "correct": 2,
+       "explain": "The higher the density of the medium the lower the propagation speed will be."
+      },
+      {
+       "id": "M2.V1.C082",
+       "question": "What does RF stand for?",
+       "options": [
+        "Reference Frequency",
+        "Radio Frequency (carrier wave)",
+        "Relative Frequency"
+       ],
+       "correct": 1,
+       "explain": "RF = Radio Frequency (carrier wave)."
+      },
+      {
+       "id": "M2.V1.C083",
+       "question": "What does IF stand for?",
+       "options": [
+        "Intermediate Frequency",
+        "Internal Frequency",
+        "Isotropic Frequency"
+       ],
+       "correct": 0,
+       "explain": "IF = Intermediate Frequency."
+      },
+      {
+       "id": "M2.V1.C084",
+       "question": "What does AF stand for?",
+       "options": [
+        "Amplified Frequency",
+        "Antenna Frequency",
+        "Audio Frequency"
+       ],
+       "correct": 2,
+       "explain": "AF = Audio Frequency."
+      },
+      {
+       "id": "M2.V1.C085",
+       "question": "Which radar band covers 5200 MHz to 10 900 MHz?",
+       "options": [
+        "C band",
+        "X band",
+        "S band"
+       ],
+       "correct": 1,
+       "explain": "Radar band table: X 5200–10 900 MHz."
+      },
+      {
+       "id": "M2.V1.C086",
+       "question": "What is the frequency range of the L band?",
+       "options": [
+        "1550 MHz to 5200 MHz",
+        "3900 MHz to 6200 MHz",
+        "390 MHz to 1550 MHz"
+       ],
+       "correct": 2,
+       "explain": "Radar band table: L 390–1550 MHz."
+      },
+      {
+       "id": "M2.V1.C087",
+       "question": "What is the frequency range of the S band?",
+       "options": [
+        "1550 MHz to 5200 MHz",
+        "390 MHz to 1550 MHz",
+        "5200 MHz to 10 900 MHz"
+       ],
+       "correct": 0,
+       "explain": "Radar band table: S 1550–5200 MHz."
+      },
+      {
+       "id": "M2.V1.C088",
+       "question": "What is the frequency range of the C band?",
+       "options": [
+        "3900 MHz to 6200 MHz",
+        "1550 MHz to 5200 MHz",
+        "10 900 MHz to 36 000 MHz"
+       ],
+       "correct": 0,
+       "explain": "Radar band table: C 3900–6200 MHz."
+      },
+      {
+       "id": "M2.V1.C089",
+       "question": "Which radar band covers 10 900 MHz to 36 000 MHz?",
+       "options": [
+        "C band",
+        "X band",
+        "K band"
+       ],
+       "correct": 2,
+       "explain": "Radar band table: K 10 900–36 000 MHz."
+      },
+      {
+       "id": "M2.V1.C090",
+       "question": "Which wavelength does 300 MHz match in the aviation frequencies chart?",
+       "options": [
+        "10 cm",
+        "10 m",
+        "1 m"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: 300 MHz ↔ 1 m."
+      },
+      {
+       "id": "M2.V1.C091",
+       "question": "What is the frequency range of the localizer?",
+       "options": [
+        "108 MHz to 112 MHz",
+        "329.3 MHz to 399.95 MHz",
+        "112 MHz to 118 MHz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: LOC 108–112 MHz."
+      },
+      {
+       "id": "M2.V1.C092",
+       "question": "What frequency range is shown for the VOR?",
+       "options": [
+        "112 MHz to 118 MHz",
+        "118 MHz to 137 MHz",
+        "108 MHz to 112 MHz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: VOR 112–118 MHz."
+      },
+      {
+       "id": "M2.V1.C093",
+       "question": "What is the frequency range of the glide slope?",
+       "options": [
+        "962 MHz to 1213 MHz",
+        "329.3 MHz to 399.95 MHz",
+        "108 MHz to 112 MHz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: GS 329,3–399,95 MHz."
+      },
+      {
+       "id": "M2.V1.C094",
+       "question": "What frequency does the marker beacon use?",
+       "options": [
+        "75 MHz",
+        "108 MHz",
+        "440 MHz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: Marker 75 MHz."
+      },
+      {
+       "id": "M2.V1.C095",
+       "question": "What is the frequency range of the DME?",
+       "options": [
+        "329.3 MHz to 399.95 MHz",
+        "962 MHz to 1213 MHz",
+        "1030 MHz to 1090 MHz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: DME 962–1213 MHz."
+      },
+      {
+       "id": "M2.V1.C096",
+       "question": "Which frequencies does ATC use?",
+       "options": [
+        "962 MHz to 1213 MHz",
+        "4.25 GHz to 4.35 GHz",
+        "1030 MHz to 1090 MHz"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: ATC 1030–1090 MHz."
+      },
+      {
+       "id": "M2.V1.C097",
+       "question": "What frequency range is shown for the LRRA?",
+       "options": [
+        "1.2 GHz to 1.5 GHz",
+        "8.8 GHz to 9.375 GHz",
+        "4.25 GHz to 4.35 GHz"
+       ],
+       "correct": 2,
+       "explain": "Figure 9: LRRA 4,25–4,35 GHz."
+      },
+      {
+       "id": "M2.V1.C098",
+       "question": "What frequency is shown for the Doppler radar?",
+       "options": [
+        "8.8 GHz",
+        "9.375 GHz",
+        "4.3 GHz"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: Doppler Radar 8,8 GHz."
+      },
+      {
+       "id": "M2.V1.C099",
+       "question": "Which frequencies are shown for GPS L1 and L2?",
+       "options": [
+        "L1 1.2 GHz and L2 1.5 GHz",
+        "L1 1.5 GHz and L2 1.2 GHz",
+        "L1 4.3 GHz and L2 1.5 GHz"
+       ],
+       "correct": 1,
+       "explain": "Figure 9: GPS L1: 1,5 GHz; L2: 1,2 GHz."
+      },
+      {
+       "id": "M2.V1.C100",
+       "question": "Which propagation type is listed for HF in the frequency band table?",
+       "options": [
+        "Space wave",
+        "Ground wave",
+        "Sky wave"
+       ],
+       "correct": 2,
+       "explain": "Figure (Radio Frequency Bands): HF – sky wave."
+      },
+      {
+       "id": "M2.V1.C101",
+       "question": "Which propagation type is listed for VHF and UHF?",
+       "options": [
+        "Ground wave",
+        "Space wave",
+        "Sky wave"
+       ],
+       "correct": 1,
+       "explain": "Figure (Radio Frequency Bands): VHF and UHF – space wave."
+      },
+      {
+       "id": "M2.V1.C102",
+       "question": "What general rule of thumb gives the upper limit of each band?",
+       "options": [
+        "Multiply the lower limit by 10",
+        "Multiply the lower limit by 2",
+        "Add 30 MHz to the lower limit"
+       ],
+       "correct": 0,
+       "explain": "General rule of thumb is to multiply by 10 (3 MHz × 10 = 30)."
+      },
+      {
+       "id": "M2.V1.C103",
+       "question": "What wavelength range belongs to the X band?",
+       "options": [
+        "77 cm to 20 cm",
+        "5.8 cm to 2.5 cm",
+        "20 cm to 5.8 cm"
+       ],
+       "correct": 1,
+       "explain": "Radar band table: X wavelength 5,8–2,5 cm."
+      },
+      {
+       "id": "M2.V1.C104",
+       "question": "Which wavelength range matches the HF band?",
+       "options": [
+        "100 m to 10 m",
+        "10 m to 1 m",
+        "1 km to 100 m"
+       ],
+       "correct": 0,
+       "explain": "Figure 9: 3 MHz ↔ 100 m and 30 MHz ↔ 10 m."
+      },
+      {
+       "id": "M2.V1.C105",
+       "question": "Which band is listed as using both ground wave and sky wave?",
+       "options": [
+        "MF",
+        "HF",
+        "VHF"
+       ],
+       "correct": 0,
+       "explain": "Figure (Radio Frequency Bands): Medium (MF) – ground/sky wave."
+      },
+      {
+       "id": "M2.V1.C106",
+       "question": "What speed do radio waves travel at?",
+       "options": [
+        "Approximately the speed of sound",
+        "Approximately the speed of light",
+        "Exactly half the speed of light"
+       ],
+       "correct": 1,
+       "explain": "Radio waves travel at approximately the speed of light."
+      },
+      {
+       "id": "M2.V1.C107",
+       "question": "What is the part of the radio wave that moves outward in contact with the ground called?",
+       "options": [
+        "The sky wave",
+        "The ground wave",
+        "The space wave"
+       ],
+       "correct": 1,
+       "explain": "Part of the wave moves outward in contact with the ground to form the GROUND WAVE."
+      },
+      {
+       "id": "M2.V1.C108",
+       "question": "What is the part of the radio wave that moves upward and outward called?",
+       "options": [
+        "The ground wave",
+        "The surface wave",
+        "The sky wave"
+       ],
+       "correct": 2,
+       "explain": "The rest of the wave moves upward and outward to form the SKY WAVE."
+      },
+      {
+       "id": "M2.V1.C109",
+       "question": "What does wave propagation define?",
+       "options": [
+        "The way waves are transmitted from one end to another",
+        "The rate at which a wave loses energy",
+        "The direction of the electrical field"
+       ],
+       "correct": 0,
+       "explain": "Wave propagation defines the way in which waves are transmitted from an end to another."
+      },
+      {
+       "id": "M2.V1.C110",
+       "question": "Which wave is responsible for most of the daytime broadcast reception?",
+       "options": [
+        "The space wave",
+        "The sky wave",
+        "The ground wave"
+       ],
+       "correct": 2,
+       "explain": "The ground wave is responsible for most of the daytime broadcast reception."
+      },
+      {
+       "id": "M2.V1.C111",
+       "question": "What is the sky wave used for in daylight?",
+       "options": [
+        "Line-of-sight UHF communication",
+        "Short-range low frequency communication",
+        "Long-range high frequency communication"
+       ],
+       "correct": 2,
+       "explain": "The sky wave is used for long-range high frequency daylight communication."
+      },
+      {
+       "id": "M2.V1.C112",
+       "question": "Which frequencies only travel in a direct line?",
+       "options": [
+        "From HF and above",
+        "MF and below",
+        "LF and VLF only"
+       ],
+       "correct": 0,
+       "explain": "High frequencies (from HF and above) only travel in a direct line."
+      },
+      {
+       "id": "M2.V1.C113",
+       "question": "What is the ground wave used for?",
+       "options": [
+        "Long-range HF daylight communication only",
+        "Short range at LF with low power, long range at HF with very high power",
+        "Short range at HF with low power, long range at LF with very high power"
+       ],
+       "correct": 2,
+       "explain": "The ground wave is used for short-range communications at high frequencies with low power and for long-range communication at low frequencies with very high power."
+      },
+      {
+       "id": "M2.V1.C114",
+       "question": "What are radio waves propagated into space considered to be?",
+       "options": [
+        "A direct current flowing through space",
+        "A radiant form of energy like light and heat",
+        "A mechanical vibration of the air"
+       ],
+       "correct": 1,
+       "explain": "Radio waves propagated into space are a radiant form of energy, similar to light and heat."
+      },
+      {
+       "id": "M2.V1.C115",
+       "question": "Which frequencies travel as space waves in a line of sight?",
+       "options": [
+        "MF and lower",
+        "HF only",
+        "VHF and higher"
+       ],
+       "correct": 2,
+       "explain": "Space waves: VHF and higher travel in a Line of Sight (LOS)."
+      },
+      {
+       "id": "M2.V1.C116",
+       "question": "Which frequencies follow the curvature of the earth as ground waves?",
+       "options": [
+        "MF and lower",
+        "VHF and higher",
+        "UHF only"
+       ],
+       "correct": 0,
+       "explain": "Ground waves: MF and lower follow the curvature of the earth."
+      },
+      {
+       "id": "M2.V1.C117",
+       "question": "What does the term attenuation mean?",
+       "options": [
+        "Bend or refract",
+        "Reduce or weaken",
+        "Increase or amplify"
+       ],
+       "correct": 1,
+       "explain": "Attenuation = reduce/weaken; amplification = increase."
+      },
+      {
+       "id": "M2.V1.C118",
+       "question": "How much greater is the conductivity of salt water than that of dry soil?",
+       "options": [
+        "5000 times",
+        "500 times",
+        "50 000 times"
+       ],
+       "correct": 0,
+       "explain": "The conductivity of salt water is 5,000 times as great as that of dry soil."
+      },
+      {
+       "id": "M2.V1.C119",
+       "question": "What is the usual upper limit of the ground wave frequency range?",
+       "options": [
+        "About 300 MHz",
+        "About 30 MHz",
+        "About 2 MHz"
+       ],
+       "correct": 2,
+       "explain": "Ground wave propagation usually lies in the range from kHz to a few MHz (generally up to 2 MHz)."
+      },
+      {
+       "id": "M2.V1.C120",
+       "question": "What is the permissible frequency range for sky wave propagation?",
+       "options": [
+        "300 kHz to 3 MHz",
+        "3 MHz to 30 MHz",
+        "30 MHz to 300 MHz"
+       ],
+       "correct": 1,
+       "explain": "The permissible frequency range for sky wave propagation lies between 3 MHz and 30 MHz."
+      },
+      {
+       "id": "M2.V1.C121",
+       "question": "What does the field pattern of a wave leaving a vertical antenna resemble?",
+       "options": [
+        "A narrow pencil beam",
+        "A huge doughnut lying on the ground",
+        "A figure eight standing upright"
+       ],
+       "correct": 1,
+       "explain": "The field pattern resembles a huge doughnut lying on the ground with the antenna in the hole at the centre."
+      },
+      {
+       "id": "M2.V1.C122",
+       "question": "How is daytime reception from most commercial stations carried?",
+       "options": [
+        "By sporadic-E ionisation",
+        "By the sky wave",
+        "By the ground wave"
+       ],
+       "correct": 2,
+       "explain": "Daytime reception from most commercial stations is carried by the ground wave."
+      },
+      {
+       "id": "M2.V1.C123",
+       "question": "What does the sky wave provide at night?",
+       "options": [
+        "Line-of-sight contacts at UHF",
+        "Long-range contacts at somewhat lower frequencies",
+        "Short-range contacts at higher frequencies"
+       ],
+       "correct": 1,
+       "explain": "At night, the sky wave provides a means for long-range contacts at somewhat lower frequencies."
+      },
+      {
+       "id": "M2.V1.C124",
+       "question": "How does the ground wave lose energy as it travels?",
+       "options": [
+        "It is refracted by the ionosphere",
+        "It is reflected by the sea surface",
+        "It induces eddy currents in the earth"
+       ],
+       "correct": 2,
+       "explain": "The wave induces a voltage in the earth, setting up eddy currents; the energy is absorbed from the ground wave."
+      },
+      {
+       "id": "M2.V1.C125",
+       "question": "What does increasing the frequency do to ground wave attenuation?",
+       "options": [
+        "It rapidly increases it",
+        "It has no effect on it",
+        "It rapidly decreases it"
+       ],
+       "correct": 0,
+       "explain": "Increasing the frequency rapidly increases the attenuation, so ground wave transmission is limited to relatively low frequencies."
+      },
+      {
+       "id": "M2.V1.C126",
+       "question": "Which frequencies do shore-based transmitters use for long-range ground wave transmission?",
+       "options": [
+        "3 MHz to 30 MHz with low power",
+        "18 kHz to 300 kHz with extremely high power",
+        "118 MHz to 137 MHz with low power"
+       ],
+       "correct": 1,
+       "explain": "Shore-base transmitters use frequencies between 18 and 300 kHz with extremely high power."
+      },
+      {
+       "id": "M2.V1.C127",
+       "question": "Why is the ground wave signal strength at a given point nearly constant?",
+       "options": [
+        "The ionosphere does not change",
+        "The transmitter power is regulated",
+        "The earth's electrical properties are fairly constant"
+       ],
+       "correct": 2,
+       "explain": "The electrical properties of the earth along which the surface wave travels are relatively constant."
+      },
+      {
+       "id": "M2.V1.C128",
+       "question": "Where does the ground wave signal strength NOT stay nearly constant?",
+       "options": [
+        "In areas close to the ocean",
+        "In areas with distinct rainy and dry seasons",
+        "In areas at high altitude"
+       ],
+       "correct": 1,
+       "explain": "In localities with distinct rainy and dry seasons the moisture changes the conductivity of the soil."
+      },
+      {
+       "id": "M2.V1.C129",
+       "question": "Why are high power, low frequency transmitters placed close to the ocean?",
+       "options": [
+        "Salt water gives superior surface wave conduction",
+        "Water reflects the sky wave upward",
+        "Sea air reduces ionospheric absorption"
+       ],
+       "correct": 0,
+       "explain": "Because of the superiority of surface wave conduction by salt water."
+      },
+      {
+       "id": "M2.V1.C130",
+       "question": "How does the ground wave oscillate relative to the surface of the earth?",
+       "options": [
+        "Parallel to the surface",
+        "At right angles to the surface",
+        "At the critical angle"
+       ],
+       "correct": 0,
+       "explain": "The waves oscillate parallel to the surface of the earth."
+      },
+      {
+       "id": "M2.V1.C131",
+       "question": "What happens to some of the energy of the sky wave at the ionosphere?",
+       "options": [
+        "It is turned into a ground wave",
+        "It is fully absorbed",
+        "It is refracted back toward the earth"
+       ],
+       "correct": 2,
+       "explain": "Some of the energy of the sky wave is refracted (bent) by the ionosphere so that it comes back toward the earth."
+      },
+      {
+       "id": "M2.V1.C132",
+       "question": "How is some of the sky wave energy lost?",
+       "options": [
+        "Eddy currents set up in the earth",
+        "Dissipation to atmospheric particles",
+        "Reflection from the sea surface"
+       ],
+       "correct": 1,
+       "explain": "Some energy is lost in dissipation to particles of the atmospheric layers."
+      },
+      {
+       "id": "M2.V1.C133",
+       "question": "Which is an advantage of sky wave propagation?",
+       "options": [
+        "It supports large distance propagation",
+        "It needs only small antennas",
+        "It is the same by day and by night"
+       ],
+       "correct": 0,
+       "explain": "Advantages: large distance propagation, high frequency range, less atmospheric attenuation."
+      },
+      {
+       "id": "M2.V1.C134",
+       "question": "Which is a disadvantage of sky wave propagation?",
+       "options": [
+        "Its atmospheric attenuation is high",
+        "Long distances need large antennas",
+        "It only covers short distances"
+       ],
+       "correct": 1,
+       "explain": "Disadvantage: long-distance propagation requires large-sized antennas."
+      },
+      {
+       "id": "M2.V1.C135",
+       "question": "Which applications widely use sky wave propagation?",
+       "options": [
+        "Weather radar and radio altimeter",
+        "Marker beacons and glide slope",
+        "Mobile and satellite communications"
+       ],
+       "correct": 2,
+       "explain": "Sky wave propagation is widely used in mobile and satellite communications."
+      },
+      {
+       "id": "M2.V1.C136",
+       "question": "What does the ground wave induce on the surface of the earth?",
+       "options": [
+        "A wave of half size, same polarity",
+        "A wave of double size, same polarity",
+        "A wave of equal size, opposite polarity"
+       ],
+       "correct": 2,
+       "explain": "Oscillations induce a wave of equal magnitude but opposite polarity on the surface."
+      },
+      {
+       "id": "M2.V1.C137",
+       "question": "Where can a receiver pick up strong sky wave signals?",
+       "options": [
+        "Only inside the ground wave range",
+        "Several hundred miles beyond the ground wave range",
+        "Only directly below the transmitter"
+       ],
+       "correct": 1,
+       "explain": "A receiver near the returning sky wave will receive strong signals even several hundred miles beyond the range of the ground wave."
+      },
+      {
+       "id": "M2.V1.C138",
+       "question": "Why does sky wave transmission vary between day and night?",
+       "options": [
+        "The ionosphere is nearer at night and farther by day",
+        "The ground conductivity changes with daylight",
+        "The transmitter power changes with daylight"
+       ],
+       "correct": 0,
+       "explain": "Due to the presence of the ionosphere near and far during night and day respectively there is variation between day and night."
+      },
+      {
+       "id": "M2.V1.C139",
+       "question": "Where is the ionosphere found?",
+       "options": [
+        "About 400 to 500 miles above the earth",
+        "About 4 to 5 miles above the earth",
+        "About 40 to 50 miles above the earth"
+       ],
+       "correct": 2,
+       "explain": "The ionosphere is found in the rarefied atmosphere approximately 40 to 50 miles above the earth."
+      },
+      {
+       "id": "M2.V1.C140",
+       "question": "Where does the F layer extend?",
+       "options": [
+        "From 90 miles to the ionosphere's upper limit",
+        "From 40 miles up to 50 miles only",
+        "From 50 miles up to 90 miles only"
+       ],
+       "correct": 0,
+       "explain": "The \"F\" layer extends approximately from the 90 mile level to the upper limits of the ionosphere."
+      },
+      {
+       "id": "M2.V1.C141",
+       "question": "What makes the ionosphere appear to have layers?",
+       "options": [
+        "Temperature differences at different heights",
+        "Densities of ionization at different heights",
+        "The lines of the earth's magnetic field"
+       ],
+       "correct": 1,
+       "explain": "Densities of ionization at different heights make the ionosphere appear to have layers."
+      },
+      {
+       "id": "M2.V1.C142",
+       "question": "What effect does the D layer have on radio waves?",
+       "options": [
+        "Little effect, except absorption of energy",
+        "Total reflection of VHF signals",
+        "Strong refraction back to earth"
+       ],
+       "correct": 0,
+       "explain": "Its ionization is low and it has little effect on the propagation of radio waves except for the absorption of energy."
+      },
+      {
+       "id": "M2.V1.C143",
+       "question": "When is the D layer present?",
+       "options": [
+        "Both day and night",
+        "Only during the day",
+        "Only during the night"
+       ],
+       "correct": 1,
+       "explain": "The \"D\" layer is present only during the day."
+      },
+      {
+       "id": "M2.V1.C144",
+       "question": "When does the maximum density of the E layer appear?",
+       "options": [
+        "During early afternoon",
+        "Shortly after sunset",
+        "At about noon local time"
+       ],
+       "correct": 2,
+       "explain": "The maximum density of the \"E\" layer appears at about noon local time."
+      },
+      {
+       "id": "M2.V1.C145",
+       "question": "When is the F2 layer at its greatest density as a rule?",
+       "options": [
+        "Shortly after sunset",
+        "At about noon local time",
+        "During early afternoon hours"
+       ],
+       "correct": 2,
+       "explain": "As a rule, the F2 layer is at its greatest density during early afternoon hours."
+      },
+      {
+       "id": "M2.V1.C146",
+       "question": "What happens to the F1 and F2 layers shortly after sunset?",
+       "options": [
+        "They recombine into a single F layer",
+        "They both disappear completely",
+        "They separate into two parts"
+       ],
+       "correct": 0,
+       "explain": "Shortly after sunset, the F1 and F2 layers recombine into a single F layer."
+      },
+      {
+       "id": "M2.V1.C147",
+       "question": "What are erratic patches of ionized atmosphere at E layer heights called?",
+       "options": [
+        "Critical frequency zones",
+        "D layer absorption",
+        "Sporadic-E ionisation"
+       ],
+       "correct": 2,
+       "explain": "These patches are referred to as Sporadic-E ionisation."
+      },
+      {
+       "id": "M2.V1.C148",
+       "question": "What can strong sporadic ionisations at varying altitudes do?",
+       "options": [
+        "Harm electronic transmissions",
+        "Remove the D layer completely",
+        "Double the critical frequency"
+       ],
+       "correct": 0,
+       "explain": "Sporadic ionisations sometimes appear in considerable strength and actually prove harmful to electronic transmissions."
+      },
+      {
+       "id": "M2.V1.C149",
+       "question": "How do waves behave when they reach the ionosphere?",
+       "options": [
+        "All are reflected back to earth",
+        "Some pass into space, others bend",
+        "All are absorbed by the layers"
+       ],
+       "correct": 1,
+       "explain": "Some waves penetrate and pass entirely through it into space, never to return. Other waves penetrate but bend."
+      },
+      {
+       "id": "M2.V1.C150",
+       "question": "What is the angle made by the group 2 rays called?",
+       "options": [
+        "The skip angle",
+        "The critical angle",
+        "The elevation limit"
+       ],
+       "correct": 1,
+       "explain": "The angle made by the group 2 rays is called the CRITICAL ANGLE for that frequency."
+      },
+      {
+       "id": "M2.V1.C151",
+       "question": "Which angle do the group 3 rays strike the ionosphere at?",
+       "options": [
+        "The smallest angle that still returns to earth",
+        "The largest angle that still returns to earth",
+        "An angle that is too nearly vertical"
+       ],
+       "correct": 0,
+       "explain": "Group 3 rays strike the ionosphere at the smallest angle that will be refracted and still return to the earth."
+      },
+      {
+       "id": "M2.V1.C152",
+       "question": "What is the critical frequency?",
+       "options": [
+        "The frequency at which the D layer absorbs all energy",
+        "The highest frequency sent straight up that still returns",
+        "The lowest frequency sent straight up that still returns"
+       ],
+       "correct": 1,
+       "explain": "The highest frequency that can be sent directly upward and still be refracted back to the earth is called the CRITICAL FREQUENCY."
+      },
+      {
+       "id": "M2.V1.C153",
+       "question": "What does the skip distance measure in the skip zone figure?",
+       "options": [
+        "From the end of the ground wave to point B",
+        "From the transmitter A to the first sky wave return B",
+        "From the ionosphere down to point B"
+       ],
+       "correct": 1,
+       "explain": "Figure 14: Skip Distance runs from A (antenna) to B (where the sky wave returns). Figure text."
+      },
+      {
+       "id": "M2.V1.C154",
+       "question": "What daylight transmission distances does E layer refraction support?",
+       "options": [
+        "Up to 1500 miles",
+        "Up to 15 000 miles",
+        "Up to 150 miles"
+       ],
+       "correct": 0,
+       "explain": "This action is of great importance to daylight transmissions for distances up to 1,500 miles."
+      },
+      {
+       "id": "M2.V1.C155",
+       "question": "What can sporadic-E ionisation enable?",
+       "options": [
+        "Lower ground wave attenuation at LF",
+        "Removal of the skip zone at night",
+        "Good VHF transmissions over unusual distances"
+       ],
+       "correct": 2,
+       "explain": "They are often present in sufficient number and intensity to enable good VHF transmissions over distances not normally possible."
+      },
+      {
+       "id": "M2.V1.C156",
+       "question": "What does the ability of the ionosphere to return a wave to earth depend on?",
+       "options": [
+        "The angle, the frequency and the ion density",
+        "The power, the antenna height and the polarization",
+        "The ground conductivity, the season and the antenna type"
+       ],
+       "correct": 0,
+       "explain": "It depends upon the angle at which the sky wave strikes the ionosphere, the frequency of the transmissions, and ion density."
+      },
+      {
+       "id": "M2.V1.C157",
+       "question": "When will a wave emerge from the ionosphere and return to earth?",
+       "options": [
+        "When the transmitter power is high enough",
+        "When the wave is horizontally polarized",
+        "When frequency, angle and ion density are suitable"
+       ],
+       "correct": 2,
+       "explain": "If the frequency and angle are correct and the ionosphere is sufficiently dense, the wave will return to the earth."
+      },
+      {
+       "id": "M2.V1.C158",
+       "question": "Why are the group 1 rays not returned to earth?",
+       "options": [
+        "Their frequency is too low",
+        "Their angle is too nearly vertical",
+        "Their angle is too close to the horizon"
+       ],
+       "correct": 1,
+       "explain": "The angle at which the group 1 rays strike the ionosphere is too nearly vertical for the rays to be returned to earth."
+      },
+      {
+       "id": "M2.V1.C159",
+       "question": "What happens to a ray that leaves the antenna at an angle greater than the critical angle?",
+       "options": [
+        "It is absorbed by the D layer",
+        "It penetrates the ionosphere",
+        "It returns at a shorter distance"
+       ],
+       "correct": 1,
+       "explain": "Any ray that leaves the antenna at an angle greater than this angle (θ) will penetrate the ionosphere."
+      },
+      {
+       "id": "M2.V1.C160",
+       "question": "What happens to rays at an angle smaller than that of the group 3 rays?",
+       "options": [
+        "They are refracted but do not return to earth",
+        "They return to earth near the transmitter",
+        "They pass straight through the ionosphere"
+       ],
+       "correct": 0,
+       "explain": "At any smaller angle the rays will be refracted but will not return to the earth."
+      },
+      {
+       "id": "M2.V1.C161",
+       "question": "What does the ionosphere contain more of than other parts of the atmosphere?",
+       "options": [
+        "Ozone molecules",
+        "Water vapour",
+        "Positive and negative ions"
+       ],
+       "correct": 2,
+       "explain": "It contains a much higher number of positive and negative ions."
+      },
+      {
+       "id": "M2.V1.C162",
+       "question": "Which altitude are air particles too sparse above for large-scale energy transfer?",
+       "options": [
+        "50 miles",
+        "350 miles",
+        "90 miles"
+       ],
+       "correct": 1,
+       "explain": "At altitudes above 350 miles the particles of air are far too sparse."
+      },
+      {
+       "id": "M2.V1.C163",
+       "question": "What is the altitude of the D layer?",
+       "options": [
+        "Between 40 and 50 miles",
+        "Above 90 miles",
+        "Between 50 and 90 miles"
+       ],
+       "correct": 0,
+       "explain": "The ionized atmosphere between 40 and 50 miles is called the \"D\" layer."
+      },
+      {
+       "id": "M2.V1.C164",
+       "question": "What altitude band contains the E layer?",
+       "options": [
+        "Above 90 miles",
+        "Between 40 and 50 miles",
+        "Between 50 and 90 miles"
+       ],
+       "correct": 2,
+       "explain": "The band of atmosphere between 50 and 90 miles contains the \"E\" layer."
+      },
+      {
+       "id": "M2.V1.C165",
+       "question": "Which altitude does the E layer have its greatest density at?",
+       "options": [
+        "About 150 miles",
+        "About 70 miles",
+        "About 45 miles"
+       ],
+       "correct": 1,
+       "explain": "It is a well defined band with greatest density at an altitude of about 70 miles."
+      },
+      {
+       "id": "M2.V1.C166",
+       "question": "What raises atoms in the ionosphere to a high energy level?",
+       "options": [
+        "The earth's magnetic field",
+        "Lightning in the lower atmosphere",
+        "Solar ultraviolet and particle radiation"
+       ],
+       "correct": 2,
+       "explain": "The negative ions are believed to be atoms raised to a high level by solar bombardment of ultra-violet and particle radiations."
+      },
+      {
+       "id": "M2.V1.C167",
+       "question": "Which factors affect the number of ions in the ionosphere?",
+       "options": [
+        "Earth's rotation, its course round the sun and sunspots",
+        "Transmitter power, antenna height and polarization",
+        "Ground conductivity, rainfall and sea state"
+       ],
+       "correct": 0,
+       "explain": "The rotation of the earth, the annual course of the earth around the sun, and sun spots affect the number of ions."
+      },
+      {
+       "id": "M2.V1.C168",
+       "question": "What does the rate of variation between high and low energy levels depend on?",
+       "options": [
+        "Amount of air, solar radiation strength and the earth's magnetic field",
+        "Transmitter power, frequency and antenna type",
+        "Ground conductivity, humidity and temperature"
+       ],
+       "correct": 0,
+       "explain": "It depends on the amount of air present, the strength of radiation from the sun, and the relation to the earth's magnetic field."
+      },
+      {
+       "id": "M2.V1.C169",
+       "question": "Why are there only a few ions below about 40 miles altitude?",
+       "options": [
+        "The ultraviolet radiation is strongest there",
+        "The rate of return to a normal energy level is high",
+        "The air particles are far too sparse"
+       ],
+       "correct": 1,
+       "explain": "Below about 40 miles only a few ions are present because the rate of return to a normal energy level is high."
+      },
+      {
+       "id": "M2.V1.C170",
+       "question": "How sharp are the dividing lines between the ionosphere layers?",
+       "options": [
+        "There is thought to be no sharp line",
+        "They are sharp only at night",
+        "They are very sharp at all times"
+       ],
+       "correct": 0,
+       "explain": "There is thought to be no sharp dividing line between layers; a demarcation is indicated for discussion."
+      },
+      {
+       "id": "M2.V1.C171",
+       "question": "How does the D layer affect transmissions through daylight zones?",
+       "options": [
+        "It greatly increases their range",
+        "It changes their polarization",
+        "It greatly reduces their field intensity"
+       ],
+       "correct": 2,
+       "explain": "Its presence greatly reduces the field intensity of transmissions that must pass through daylight zones."
+      },
+      {
+       "id": "M2.V1.C172",
+       "question": "When is the E layer strongest?",
+       "options": [
+        "During daylight hours",
+        "Shortly after sunset",
+        "During the night"
+       ],
+       "correct": 0,
+       "explain": "This layer is strongest during daylight hours, and is also present, but much weaker, at night."
+      },
+      {
+       "id": "M2.V1.C173",
+       "question": "How does the F layer change between night and day?",
+       "options": [
+        "It is present only by day",
+        "Two parts at night, one layer by day",
+        "One layer at night, two parts (F1, F2) by day"
+       ],
+       "correct": 2,
+       "explain": "At night only one F layer is present; during the day it often separates into F1 and F2."
+      },
+      {
+       "id": "M2.V1.C174",
+       "question": "Which layers remain at night in the ionosphere figure?",
+       "options": [
+        "D and E",
+        "F and E",
+        "F1 and F2"
+       ],
+       "correct": 1,
+       "explain": "Figures 13: Night shows F and E; Day shows F2, F1, E and D."
+      },
+      {
+       "id": "M2.V1.C175",
+       "question": "What does the ionosphere do as an electronic mirror?",
+       "options": [
+        "It absorbs the whole ground wave",
+        "It changes the wave polarization",
+        "It refracts the sky wave back to earth"
+       ],
+       "correct": 2,
+       "explain": "The ionosphere acts as an electronic mirror and refracts (bends) the sky wave back to the earth."
+      },
+      {
+       "id": "M2.V1.C176",
+       "question": "What does the critical frequency vary with?",
+       "options": [
+        "Ground conductivity and rainfall",
+        "Locality, time, season and sunspots",
+        "Antenna type, polarization, power"
+       ],
+       "correct": 1,
+       "explain": "The critical frequency varies with locality, time of day, season of the year and the sunspot cycle."
+      },
+      {
+       "id": "M2.V1.C177",
+       "question": "What do nomograms and frequency tables predict?",
+       "options": [
+        "The ground wave range for each transmitter",
+        "The Maximum Usable Frequency for each hour and locality",
+        "The skip distance for each antenna type"
+       ],
+       "correct": 1,
+       "explain": "Nomograms and frequency tables predict the Maximum Usable Frequency (MUF) for every hour of the day for every locality."
+      },
+      {
+       "id": "M2.V1.C178",
+       "question": "How are the nomograms and frequency tables prepared?",
+       "options": [
+        "From measured data from stations worldwide",
+        "From the daily sunspot count alone",
+        "From calculations of antenna gain"
+       ],
+       "correct": 0,
+       "explain": "They are prepared from data obtained experimentally from stations scattered all over the world."
+      },
+      {
+       "id": "M2.V1.C179",
+       "question": "What is the skip zone?",
+       "options": [
+        "The area covered by the ground wave alone",
+        "The area beyond the first returning sky wave",
+        "The silent area between ground wave end and first sky wave"
+       ],
+       "correct": 2,
+       "explain": "Between the point where the ground wave is dissipated and the point where the first sky wave returns, no signals will be heard: the SKIP ZONE."
+      },
+      {
+       "id": "M2.V1.C180",
+       "question": "What is multiple-hop transmission?",
+       "options": [
+        "Transmission on several frequencies at once",
+        "Reception of the ground and sky wave together",
+        "Repeated reflection between ionosphere and ground"
+       ],
+       "correct": 2,
+       "explain": "Signals reflected by the ionosphere return to the ground, are reflected again and return to the ionosphere."
+      },
+      {
+       "id": "M2.V1.C181",
+       "question": "Which frequencies can the E layer refract back to earth in the middle of the day?",
+       "options": [
+        "Up to 200 MHz",
+        "Up to 20 MHz",
+        "Up to 2 MHz"
+       ],
+       "correct": 1,
+       "explain": "The ionization of the E layer at midday is sometimes intense enough to refract frequencies up to 20 MHz back to earth."
+      },
+      {
+       "id": "M2.V1.C182",
+       "question": "What happens to the initial angle as the frequency increases?",
+       "options": [
+        "It decreases",
+        "It increases",
+        "It stays the same"
+       ],
+       "correct": 0,
+       "explain": "As the frequency increases, the initial angle decreases."
+      },
+      {
+       "id": "M2.V1.C183",
+       "question": "What happens to the wave at sufficiently high frequencies?",
+       "options": [
+        "It is not returned at any angle",
+        "It is returned only when sent straight up",
+        "It is returned at any angle"
+       ],
+       "correct": 0,
+       "explain": "At sufficiently high frequencies, regardless of the angle, the wave will not be returned to the earth."
+      },
+      {
+       "id": "M2.V1.C184",
+       "question": "When is the skip zone for the lower high frequencies (3 to 9 MHz) greater?",
+       "options": [
+        "At noon",
+        "At night",
+        "In early afternoon"
+       ],
+       "correct": 1,
+       "explain": "The skip zone for the lower high frequencies (3 to 9 MHz) will be greater at night than during the day."
+      },
+      {
+       "id": "M2.V1.C185",
+       "question": "How can skip effects be minimized at night?",
+       "options": [
+        "By using lower frequencies",
+        "By increasing the antenna height",
+        "By using higher frequencies"
+       ],
+       "correct": 0,
+       "explain": "Skip effects can be minimized by utilizing lower frequencies for nighttime communication."
+      },
+      {
+       "id": "M2.V1.C186",
+       "question": "What happens to the skip distance as the frequency decreases?",
+       "options": [
+        "It increases",
+        "It stays the same",
+        "It decreases"
+       ],
+       "correct": 2,
+       "explain": "As a general rule, as the frequency decreases, the skip distance decreases."
+      },
+      {
+       "id": "M2.V1.C187",
+       "question": "What can cause fading with multiple-hop transmission?",
+       "options": [
+        "Signals with different reflections superposing with different phases",
+        "The antenna changing its polarization",
+        "The D layer absorbing the ground wave"
+       ],
+       "correct": 0,
+       "explain": "Multiple-hop may cause fading when transmissions with a different number of reflections superpose with different phases."
+      },
+      {
+       "id": "M2.V1.C188",
+       "question": "What happens to the critical angle and refraction as frequency increases?",
+       "options": [
+        "The angle rises, refraction falls",
+        "Both of them decrease",
+        "Both of them increase"
+       ],
+       "correct": 1,
+       "explain": "Figure 14: Critical angle decreases as frequency increases; refraction decreases as frequency increases."
+      },
+      {
+       "id": "M2.V1.C189",
+       "question": "What does an antenna represent in a radio system?",
+       "options": [
+        "The modulator of the transmitter",
+        "The power supply of the transmitter",
+        "The link between transmitter and receiver"
+       ],
+       "correct": 2,
+       "explain": "It therefore represents the link between transmitter and receiver."
+      },
+      {
+       "id": "M2.V1.C190",
+       "question": "What are antennas always supplied with?",
+       "options": [
+        "DC from the aircraft bus",
+        "AC, typically at high frequencies",
+        "AC at mains frequency"
+       ],
+       "correct": 1,
+       "explain": "Antennas are always supplied with an AC, typically at high frequencies."
+      },
+      {
+       "id": "M2.V1.C191",
+       "question": "What is the typical length of an antenna?",
+       "options": [
+        "2λ",
+        "λ",
+        "λ/4"
+       ],
+       "correct": 2,
+       "explain": "With antennas the typical length is λ/4."
+      },
+      {
+       "id": "M2.V1.C192",
+       "question": "What angle is there between the electrical and the magnetic field?",
+       "options": [
+        "0 degrees",
+        "90 degrees",
+        "180 degrees"
+       ],
+       "correct": 1,
+       "explain": "Every electromagnetic field consists of an electrical and a magnetic field with a 90 degree angle between them."
+      },
+      {
+       "id": "M2.V1.C193",
+       "question": "What are the two most common types of antenna polarization?",
+       "options": [
+        "Horizontal and vertical",
+        "Linear and circular",
+        "Circular and elliptical"
+       ],
+       "correct": 0,
+       "explain": "The two most common polarizations used for antennas are horizontal and vertical."
+      },
+      {
+       "id": "M2.V1.C194",
+       "question": "What is an antenna?",
+       "options": [
+        "An amplifier for the received RF signal",
+        "A filter that selects one frequency",
+        "A wave transformer between line energy and free radiation"
+       ],
+       "correct": 2,
+       "explain": "An antenna is a wave transformer for transporting line-bundled electromagnetic energy into free radiation energy (transmitter) or vice versa (receiver)."
+      },
+      {
+       "id": "M2.V1.C195",
+       "question": "How is the current distributed along a wire supplied with voltage?",
+       "options": [
+        "Greatest at the feed point, zero at the end",
+        "Equal along the whole wire",
+        "Zero at the feed point, greatest at the end"
+       ],
+       "correct": 0,
+       "explain": "The current is greatest at the feed point; it is zero at the end of the wire."
+      },
+      {
+       "id": "M2.V1.C196",
+       "question": "What shape does the current distribution on the wire have?",
+       "options": [
+        "Part of a sine",
+        "A straight line",
+        "A rectangle"
+       ],
+       "correct": 0,
+       "explain": "The current distribution has the shape of a part of a sinus. As the current flows it creates a magnetic field."
+      },
+      {
+       "id": "M2.V1.C197",
+       "question": "What is the phase relation in a twin cable acting like a coil?",
+       "options": [
+        "They are in phase",
+        "The current leads the voltage",
+        "The voltage leads the current"
+       ],
+       "correct": 2,
+       "explain": "Coils create a phase shift of 90° between voltage and current. The voltage leads the current."
+      },
+      {
+       "id": "M2.V1.C198",
+       "question": "Why does hardly any radiation occur from a twin cable?",
+       "options": [
+        "The H and E fields are in phase",
+        "The H and E fields stay directly near the line",
+        "The H and E fields cancel completely"
+       ],
+       "correct": 1,
+       "explain": "With twin cables, the magnetic field H and electrical field E stay directly near the line, so hardly any radiation occurs."
+      },
+      {
+       "id": "M2.V1.C199",
+       "question": "What results from spreading the lines of a twin cable?",
+       "options": [
+        "A loop antenna",
+        "A dipole antenna",
+        "A coaxial cable"
+       ],
+       "correct": 1,
+       "explain": "By spreading the twin cable lines the current and voltage distributions keep their sine shape. The result is a dipole antenna."
+      },
+      {
+       "id": "M2.V1.C200",
+       "question": "What is the field in the vicinity of a transmitting antenna known as?",
+       "options": [
+        "The radiation field",
+        "The long distance field",
+        "The short distance field"
+       ],
+       "correct": 2,
+       "explain": "This field is known as the antenna's short distance field."
+      },
+      {
+       "id": "M2.V1.C201",
+       "question": "What do the displacement currents produce according to Maxwell?",
+       "options": [
+        "A magnetic field",
+        "A static electric charge",
+        "A direct current"
+       ],
+       "correct": 0,
+       "explain": "Through an idea from Maxwell these traverse currents also produce a magnetic field."
+      },
+      {
+       "id": "M2.V1.C202",
+       "question": "What defines the polarization of a radio wave?",
+       "options": [
+        "The direction of the magnetic field",
+        "The direction of the electrical field",
+        "The direction of propagation"
+       ],
+       "correct": 1,
+       "explain": "The polarization of a radio wave is laid down as the direction of the electrical field."
+      },
+      {
+       "id": "M2.V1.C203",
+       "question": "How are aviation navigation and communication signals polarized?",
+       "options": [
+        "Both are vertically polarized",
+        "Navigation vertical, communication horizontal",
+        "Navigation horizontal, communication vertical"
+       ],
+       "correct": 2,
+       "explain": "In aviation: navigation is horizontal polarized; communication is vertical polarized."
+      },
+      {
+       "id": "M2.V1.C204",
+       "question": "Which antennas transmit circular polarized waves?",
+       "options": [
+        "Helical antennas",
+        "Yagi antennas",
+        "Loop antennas"
+       ],
+       "correct": 0,
+       "explain": "Circular polarized waves are transmitted with helical antennas."
+      },
+      {
+       "id": "M2.V1.C205",
+       "question": "What does circular polarization do?",
+       "options": [
+        "It continuously alters its polarization",
+        "It stays vertical at all times",
+        "It stays horizontal at all times"
+       ],
+       "correct": 0,
+       "explain": "Circular polarization continuously alters its polarization."
+      },
+      {
+       "id": "M2.V1.C206",
+       "question": "Where does a λ/2 dipole emit?",
+       "options": [
+        "Equally in all directions in space",
+        "Along its axis, virtually zero at 90°",
+        "At 90° to its axis, virtually zero along its axis"
+       ],
+       "correct": 2,
+       "explain": "A λ/2 dipole emits 90 degrees to its axis. In the direction of the axis, the emission is virtually zero."
+      },
+      {
+       "id": "M2.V1.C207",
+       "question": "Which distance is the short distance field practically gone after?",
+       "options": [
+        "3 to 4 λ",
+        "30 to 40 λ",
+        "0.1 λ"
+       ],
+       "correct": 0,
+       "explain": "This short distance field dissipates very fast and after a distance of 3–4 λ is practically no longer present."
+      },
+      {
+       "id": "M2.V1.C208",
+       "question": "What type of energy does the short distance field contain?",
+       "options": [
+        "No energy",
+        "Reactive energy",
+        "Active energy"
+       ],
+       "correct": 1,
+       "explain": "The short distance field contains therefore reactive energy."
+      },
+      {
+       "id": "M2.V1.C209",
+       "question": "How are E and H related in the long distance field of an antenna?",
+       "options": [
+        "90° displaced, holding reactive energy",
+        "In phase, transmitting active energy",
+        "180° out of phase, cancelling out"
+       ],
+       "correct": 1,
+       "explain": "In the long distance field (r > 3–4 λ) E and H fields are in phase and active energy is transmitted."
+      },
+      {
+       "id": "M2.V1.C210",
+       "question": "How does the sum of the Poynting vector change?",
+       "options": [
+        "It falls in direct proportion to distance only",
+        "It is constant in all directions",
+        "It falls with distance squared and depends on direction"
+       ],
+       "correct": 2,
+       "explain": "The sum of this vector decreases with the square of the distance and is dependent on the antenna's direction."
+      },
+      {
+       "id": "M2.V1.C211",
+       "question": "What does the radiation pattern of an antenna show?",
+       "options": [
+        "The current along the antenna",
+        "The impedance over frequency",
+        "The distribution of radiation in different directions"
+       ],
+       "correct": 2,
+       "explain": "The radiation pattern shows a summary of the radiation distribution in different directions in space."
+      },
+      {
+       "id": "M2.V1.C212",
+       "question": "Why can antenna theory be explained using a transmitting antenna?",
+       "options": [
+        "Both antenna kinds are electrically treated the same way",
+        "Receiving antennas have no fields",
+        "Transmitting antennas are always smaller"
+       ],
+       "correct": 0,
+       "explain": "Transmission and reception antennae can electrically be dealt with the same way."
+      },
+      {
+       "id": "M2.V1.C213",
+       "question": "Why do transmitting and receiving antennas differ mechanically?",
+       "options": [
+        "Because of varying high transmission power",
+        "Because of different frequencies",
+        "Because of different polarizations"
+       ],
+       "correct": 0,
+       "explain": "Mechanical differences are necessary due to varying high transmission power."
+      },
+      {
+       "id": "M2.V1.C214",
+       "question": "Which criteria decide the choice of antenna?",
+       "options": [
+        "Weight, colour, cost and mounting",
+        "Cable length, connector type and voltage",
+        "Frequency range, bandwidth, propagation and polarization"
+       ],
+       "correct": 2,
+       "explain": "Important criteria: frequency range, band width, propagation characteristic, polarization."
+      },
+      {
+       "id": "M2.V1.C215",
+       "question": "Why is the antenna size often determined experimentally?",
+       "options": [
+        "The formulas are unknown",
+        "Antennas are always custom-made",
+        "Surroundings can strongly influence it"
+       ],
+       "correct": 2,
+       "explain": "An exact calculation is seldom possible, as surrounding influences can strongly influence the antenna size."
+      },
+      {
+       "id": "M2.V1.C216",
+       "question": "What determines the strength and direction of the magnetic field around the twin cable?",
+       "options": [
+        "The voltage",
+        "The current",
+        "The insulation"
+       ],
+       "correct": 1,
+       "explain": "The strength of the field is determined by the current and its direction alters with the current."
+      },
+      {
+       "id": "M2.V1.C217",
+       "question": "Where is the voltage highest on the twin cable?",
+       "options": [
+        "Midway along the wires",
+        "At the end of the wires",
+        "At the feed point"
+       ],
+       "correct": 1,
+       "explain": "The voltage is highest at the end of the wires but lowest at the feed point."
+      },
+      {
+       "id": "M2.V1.C218",
+       "question": "Where is the electrical field strongest on the twin cable?",
+       "options": [
+        "At the middle of the cable",
+        "At the feed point",
+        "At the end of the cable"
+       ],
+       "correct": 2,
+       "explain": "The electrical field is strongest at the end of the cable but zero at the feed point."
+      },
+      {
+       "id": "M2.V1.C219",
+       "question": "What happens to the current and voltage distributions when the twin lines are spread?",
+       "options": [
+        "They keep their sine shape",
+        "They become rectangular",
+        "They both become zero"
+       ],
+       "correct": 0,
+       "explain": "The current and voltage distributions do not change; they retain their sinus shape."
+      },
+      {
+       "id": "M2.V1.C220",
+       "question": "Which distance range is the short distance field found within?",
+       "options": [
+        "r < 0.1 λ",
+        "r > 3–4 λ",
+        "r = 1 λ"
+       ],
+       "correct": 0,
+       "explain": "The field near the antenna (r < 0,1λ) is produced directly from the HF current and voltage."
+      },
+      {
+       "id": "M2.V1.C221",
+       "question": "What is the phase relation of H and E in the short distance field?",
+       "options": [
+        "180° displaced",
+        "90° displaced",
+        "In phase"
+       ],
+       "correct": 1,
+       "explain": "In the short distance field H and E fields are 90° displaced."
+      },
+      {
+       "id": "M2.V1.C222",
+       "question": "What does the energy of the radiated electromagnetic field consist of?",
+       "options": [
+        "The energy of the electrical field only",
+        "The energy of the magnetic field only",
+        "The energy of both fields"
+       ],
+       "correct": 2,
+       "explain": "The energy radiated consists of the energy of both the fields."
+      },
+      {
+       "id": "M2.V1.C223",
+       "question": "What gives the direction of propagation of the radiated energy?",
+       "options": [
+        "The Poynting vector S",
+        "The electrical field E",
+        "The magnetic field H"
+       ],
+       "correct": 0,
+       "explain": "The propagation direction of the radiated energy is given as the Poynting vector S."
+      },
+      {
+       "id": "M2.V1.C224",
+       "question": "What is the unit of the Poynting vector?",
+       "options": [
+        "A/m",
+        "V/m",
+        "W/cm²"
+       ],
+       "correct": 2,
+       "explain": "Figure: S = E × H in W (V·A) per cm²."
+      },
+      {
+       "id": "M2.V1.C225",
+       "question": "What polarization does a horizontally aligned dipole transmit?",
+       "options": [
+        "Vertical",
+        "Horizontal",
+        "Circular"
+       ],
+       "correct": 1,
+       "explain": "A horizontally aligned dipole also transmits a horizontally polarized field."
+      },
+      {
+       "id": "M2.V1.C226",
+       "question": "How are home radio and TV signals polarized?",
+       "options": [
+        "Both horizontal",
+        "Radio vertical, TV horizontal",
+        "Radio horizontal, TV vertical"
+       ],
+       "correct": 2,
+       "explain": "With home use antennas the radio signal is horizontal polarized and the TV signal is vertical polarized."
+      },
+      {
+       "id": "M2.V1.C227",
+       "question": "What is the theoretical reference antenna that radiates equally in all directions called?",
+       "options": [
+        "A λ/2 dipole",
+        "An isotropic radiator",
+        "A Marconi antenna"
+       ],
+       "correct": 1,
+       "explain": "Such a theoretical antenna is classified as an isotropic radiator, i.e. spherical radiator."
+      },
+      {
+       "id": "M2.V1.C228",
+       "question": "What shape does the dipole radiation have from a side view?",
+       "options": [
+        "A cardioid",
+        "A circle",
+        "A figure eight"
+       ],
+       "correct": 2,
+       "explain": "From a side view, the dipole emits with the shape of an eight."
+      },
+      {
+       "id": "M2.V1.C229",
+       "question": "What 3D shape is formed by the dipole radiation?",
+       "options": [
+        "A donut",
+        "A cone",
+        "A sphere"
+       ],
+       "correct": 0,
+       "explain": "If the eight rotates around the dipole, the shape of a donut is created."
+      },
+      {
+       "id": "M2.V1.C230",
+       "question": "How does a dipole emit when seen from the top?",
+       "options": [
+        "Equally in all directions",
+        "Only forward and back",
+        "Only along its axis"
+       ],
+       "correct": 0,
+       "explain": "With a top view, the dipole emits in any direction with the same intensity."
+      },
+      {
+       "id": "M2.V1.C231",
+       "question": "How does a receiving dipole's characteristic compare with a transmitting dipole's?",
+       "options": [
+        "It is the reverse",
+        "It is the same",
+        "It is circular"
+       ],
+       "correct": 1,
+       "explain": "With reception antennas the characteristic is the same."
+      },
+      {
+       "id": "M2.V1.C232",
+       "question": "How is the Poynting vector oriented to the E and H fields?",
+       "options": [
+        "Parallel to H",
+        "Parallel to E",
+        "At right angles to both"
+       ],
+       "correct": 2,
+       "explain": "S is at right angles to the direction of the E and H fields (S = E × H)."
+      },
+      {
+       "id": "M2.V1.C233",
+       "question": "What does a Yagi antenna consist of?",
+       "options": [
+        "A dipole plus one or more directors",
+        "A loop plus one or more reflectors",
+        "Two dipoles connected in parallel"
+       ],
+       "correct": 0,
+       "explain": "A Yagi antenna consists of a dipole plus one or more directors."
+      },
+      {
+       "id": "M2.V1.C234",
+       "question": "What are the directors of a Yagi antenna often referred to as?",
+       "options": [
+        "Feed elements",
+        "Parasitic elements",
+        "Active elements"
+       ],
+       "correct": 1,
+       "explain": "These directors often are referred to as parasitic elements."
+      },
+      {
+       "id": "M2.V1.C235",
+       "question": "What is the rod antenna also referred to as?",
+       "options": [
+        "Yagi antenna",
+        "Slot antenna",
+        "Marconi antenna"
+       ],
+       "correct": 2,
+       "explain": "The rod antenna is also referred to as Marconi-Antenna."
+      },
+      {
+       "id": "M2.V1.C236",
+       "question": "What is the loop antenna used for?",
+       "options": [
+        "Transmitting high frequencies",
+        "Receiving long and medium wave",
+        "Receiving UHF signals"
+       ],
+       "correct": 1,
+       "explain": "It is used as a receiver antenna for long and medium wave reception."
+      },
+      {
+       "id": "M2.V1.C237",
+       "question": "Which are examples of surface radiators?",
+       "options": [
+        "The Yagi antenna and the dipole",
+        "The horn antenna and the lens antenna",
+        "The rod antenna and the loop antenna"
+       ],
+       "correct": 1,
+       "explain": "Examples of surface radiators are the Horn Antenna and the Lens Antenna."
+      },
+      {
+       "id": "M2.V1.C238",
+       "question": "What is a horn antenna in effect?",
+       "options": [
+        "A funnel-shaped waveguide",
+        "A short rod with a ground plane",
+        "A coiled wire loop"
+       ],
+       "correct": 0,
+       "explain": "A horn antenna is in effect a funnel shaped waveguide."
+      },
+      {
+       "id": "M2.V1.C239",
+       "question": "What is the impedance of free air?",
+       "options": [
+        "150 Ω, the twin cable value",
+        "50 Ω, the coax standard",
+        "120π, about 377 Ω"
+       ],
+       "correct": 2,
+       "explain": "Free air impedance is 120π, approximately equal to 377 Ω."
+      },
+      {
+       "id": "M2.V1.C240",
+       "question": "Which frequencies are horn antennas mainly used for?",
+       "options": [
+        "Below 30 MHz",
+        "1 GHz and above",
+        "Between 3 MHz and 30 MHz"
+       ],
+       "correct": 1,
+       "explain": "Horn antennas are used mainly for frequencies of 1 GHz and above."
+      },
+      {
+       "id": "M2.V1.C241",
+       "question": "Where is the radiating element of a reflector antenna installed?",
+       "options": [
+        "At the rim of the parabolic reflector",
+        "At the focal point of a parabolic reflector",
+        "Behind the parabolic reflector"
+       ],
+       "correct": 1,
+       "explain": "A radiating element (dipole or horn) is installed at the focal point of a rotational parabolic metallic reflector."
+      },
+      {
+       "id": "M2.V1.C242",
+       "question": "What else is a delay lens antenna known as?",
+       "options": [
+        "A dielectric lens",
+        "A parabolic lens",
+        "A metal plate lens"
+       ],
+       "correct": 0,
+       "explain": "These are sometimes known as a dielectric lens."
+      },
+      {
+       "id": "M2.V1.C243",
+       "question": "Which dipole types are compared in the slot antenna figure?",
+       "options": [
+        "Yagi and Marconi dipole",
+        "Electrical dipole and magnetic dipole",
+        "Folded dipole and loop"
+       ],
+       "correct": 1,
+       "explain": "Figure 29: Electrical Dipole and Magnetic Dipole."
+      },
+      {
+       "id": "M2.V1.C244",
+       "question": "How symmetric is the field of a dipole antenna?",
+       "options": [
+        "It is perfectly symmetric",
+        "It is not symmetric at all",
+        "It is symmetric only at night"
+       ],
+       "correct": 0,
+       "explain": "The field of a dipole antenna is perfectly symmetric."
+      },
+      {
+       "id": "M2.V1.C245",
+       "question": "Why is the loop antenna especially suitable as a Direction-Finding antenna?",
+       "options": [
+        "Because of its directional characteristic",
+        "Because of its very high gain",
+        "Because of its circular polarization"
+       ],
+       "correct": 0,
+       "explain": "Because of its directional characteristic, it is especially suitable as a DF-Antenna."
+      },
+      {
+       "id": "M2.V1.C246",
+       "question": "Which use is the loop antenna NOT suitable for?",
+       "options": [
+        "As a receiving antenna",
+        "As a direction-finding antenna",
+        "As a transmitting antenna"
+       ],
+       "correct": 2,
+       "explain": "It is NOT suitable as a transmitting antenna."
+      },
+      {
+       "id": "M2.V1.C247",
+       "question": "What does the funnel shape of a horn antenna act as?",
+       "options": [
+        "A filter for unwanted frequencies",
+        "An amplifier for the waveguide signal",
+        "A transformer between waveguide and free-air impedance"
+       ],
+       "correct": 2,
+       "explain": "The funnel shape acts as a transformer, converting the impedance of the wave guide into the impedance of the free air."
+      },
+      {
+       "id": "M2.V1.C248",
+       "question": "What is needed to achieve high antenna gain and a high degree of bunching?",
+       "options": [
+        "Large apertures, small flare angles, long lengths",
+        "Short lengths, small apertures, wide angles",
+        "Small apertures, wide flare angles, short lengths"
+       ],
+       "correct": 0,
+       "explain": "To achieve high gain and bunching, large apertures, small flare angles and large overall lengths are necessary."
+      },
+      {
+       "id": "M2.V1.C249",
+       "question": "How can low bunching in short horn antennas be overcome?",
+       "options": [
+        "By using lens and reflector antennas",
+        "By using a longer coaxial cable",
+        "By using circular polarization"
+       ],
+       "correct": 0,
+       "explain": "Low bunching in short horn antennas can be overcome by using lens and reflector antennas as phase correcting systems."
+      },
+      {
+       "id": "M2.V1.C250",
+       "question": "What does the focusing angle θ of a reflector antenna depend on?",
+       "options": [
+        "The power and the feed line length",
+        "The polarization and the reflector colour",
+        "The frequency and the reflector diameter"
+       ],
+       "correct": 2,
+       "explain": "The focusing angle θ depends upon the applied frequency and the reflector diameter."
+      },
+      {
+       "id": "M2.V1.C251",
+       "question": "What is the slot antenna equivalent to?",
+       "options": [
+        "A λ/4 rod on a ground plane",
+        "The magnetic equivalent of the electrical dipole",
+        "The electrical equivalent of the loop"
+       ],
+       "correct": 1,
+       "explain": "The slot antenna is the magnetic equivalent to the electrical dipole."
+      },
+      {
+       "id": "M2.V1.C252",
+       "question": "What gives a Yagi antenna its increased gain in the antenna direction?",
+       "options": [
+        "The greater length of the dipole",
+        "Superposition of the dipole and parasitic element fields",
+        "The circular polarization of the dipole"
+       ],
+       "correct": 1,
+       "explain": "The superposition of the fields of both dipole and parasitic elements results in increased antenna gain in the direction of the antenna."
+      },
+      {
+       "id": "M2.V1.C253",
+       "question": "How does the length of a parasitic element decide its function?",
+       "options": [
+        "Any length acts as a director",
+        "Shorter than the dipole: reflector; longer: director",
+        "Shorter than the dipole: director; longer: reflector"
+       ],
+       "correct": 2,
+       "explain": "Parasitic elements shorter than the dipole act as a director while elements longer than the dipole act as a reflector."
+      },
+      {
+       "id": "M2.V1.C254",
+       "question": "How does the field of a λ/4 rod antenna relate to the field of a λ/2 dipole?",
+       "options": [
+        "It corresponds to one half of the dipole field",
+        "It is twice the dipole field",
+        "It is identical to the dipole field"
+       ],
+       "correct": 0,
+       "explain": "The diagram of the field of a λ/4 rod antenna corresponds to one half of the field of a λ/2 dipole."
+      },
+      {
+       "id": "M2.V1.C255",
+       "question": "What does the induced voltage U0 of a loop antenna depend on?",
+       "options": [
+        "Wire diameter, frequency and polarization",
+        "Loop shape, cable length and power",
+        "Loop area, number of windings and angle θ"
+       ],
+       "correct": 2,
+       "explain": "U0 depends on the loop area, the number of windings and the angle θ between the loop plane and the transmitter."
+      },
+      {
+       "id": "M2.V1.C256",
+       "question": "What increases the gain of a horn antenna?",
+       "options": [
+        "A wider flare angle above 40°",
+        "Faster widening and a shorter funnel",
+        "More gradual widening and a longer funnel"
+       ],
+       "correct": 2,
+       "explain": "The more gradually the widening occurs and the greater the funnel length, the greater the gain."
+      },
+      {
+       "id": "M2.V1.C257",
+       "question": "What does a convex dielectric lens with εr > 1 achieve?",
+       "options": [
+        "Centre beams radiate before edge beams",
+        "Centre and edge beams radiate in phase",
+        "Edge beams are absorbed by the lens"
+       ],
+       "correct": 1,
+       "explain": "By using a convex shaped dielectric lens with εr > 1, the beams at the centre and edge radiate in phase."
+      },
+      {
+       "id": "M2.V1.C258",
+       "question": "How do the beams leave a delay lens with the correct delay?",
+       "options": [
+        "At the same time and in parallel",
+        "At different times and diverging",
+        "At the same time and converging"
+       ],
+       "correct": 0,
+       "explain": "With the correct delay, all beams leave the lens at the same time, they are in parallel."
+      },
+      {
+       "id": "M2.V1.C259",
+       "question": "Which antenna types are shown as examples on the antenna types page?",
+       "options": [
+        "Horn, slot, Yagi-Uda and patch",
+        "Dish, helix, whip and wire",
+        "Loop, rod, umbrella and T"
+       ],
+       "correct": 0,
+       "explain": "Example antenna types: horn antenna, slot antenna, Yagi-Uda antenna and rectangular patch antenna."
+      },
+      {
+       "id": "M2.V1.C260",
+       "question": "What does a loop antenna consist of?",
+       "options": [
+        "A dipole with parasitic elements",
+        "One or more square or round wire windings",
+        "A funnel-shaped waveguide"
+       ],
+       "correct": 1,
+       "explain": "The loop antenna consists of one or more square or round shaped wire windings."
+      },
+      {
+       "id": "M2.V1.C261",
+       "question": "What is the slot antenna also referred to as?",
+       "options": [
+        "An electrical dipole",
+        "A magnetic dipole",
+        "A Marconi antenna"
+       ],
+       "correct": 1,
+       "explain": "This antenna is also referred to as a magnetic dipole."
+      },
+      {
+       "id": "M2.V1.C262",
+       "question": "How is a slot antenna formed?",
+       "options": [
+        "By a short rod on a ground plane",
+        "By a coil of wire with several turns",
+        "By a slot in a metal sheet or waveguide"
+       ],
+       "correct": 2,
+       "explain": "It is formed by a slot in a sufficiently sized metal sheet or by a slot in a waveguide."
+      },
+      {
+       "id": "M2.V1.C263",
+       "question": "What happens to the parasitic elements when the Yagi dipole transmits?",
+       "options": [
+        "They absorb all the energy",
+        "They are excited and transmit too",
+        "They block the dipole's field"
+       ],
+       "correct": 1,
+       "explain": "The dipole excites the parasitic elements which then also start transmitting."
+      },
+      {
+       "id": "M2.V1.C264",
+       "question": "What creates the phase shift between the dipole and the parasitic elements?",
+       "options": [
+        "The polarization of the dipole",
+        "The distance to the dipole",
+        "The length of the feed line"
+       ],
+       "correct": 1,
+       "explain": "Due to the distance to the dipole a phase shift is created."
+      },
+      {
+       "id": "M2.V1.C265",
+       "question": "What happens to the Yagi antenna gain on the sides?",
+       "options": [
+        "It is unchanged",
+        "It is increased",
+        "It is reduced"
+       ],
+       "correct": 2,
+       "explain": "On the sides, the antenna gain is reduced as the fields cancel out each other at least partially."
+      },
+      {
+       "id": "M2.V1.C266",
+       "question": "How does a Yagi antenna behave when used for reception?",
+       "options": [
+        "The effects are reversed",
+        "It has no gain",
+        "The same effects apply"
+       ],
+       "correct": 2,
+       "explain": "The same effects apply if the Yagi Antenna is used for reception."
+      },
+      {
+       "id": "M2.V1.C267",
+       "question": "What element spacing is shown in the Yagi figure?",
+       "options": [
+        "0.15 λ",
+        "0.5 λ",
+        "1 λ"
+       ],
+       "correct": 0,
+       "explain": "Figure: spacing 0.15 λ."
+      },
+      {
+       "id": "M2.V1.C268",
+       "question": "What happens if the plane has finite conductivity?",
+       "options": [
+        "The field changes accordingly",
+        "The field stays fully symmetric",
+        "The field doubles in strength"
+       ],
+       "correct": 0,
+       "explain": "In case the plane comes with a finite conductivity, the field would change accordingly."
+      },
+      {
+       "id": "M2.V1.C269",
+       "question": "Where is the rod antenna used?",
+       "options": [
+        "Where very high gain is needed",
+        "Where circular polarization is needed",
+        "Where the antenna must be as small as possible"
+       ],
+       "correct": 2,
+       "explain": "The rod antenna is used wherever the mechanical dimensions must be as small as possible."
+      },
+      {
+       "id": "M2.V1.C270",
+       "question": "Which component of the field induces the voltage in a loop antenna?",
+       "options": [
+        "The electrical component",
+        "The magnetic component",
+        "The Poynting vector"
+       ],
+       "correct": 1,
+       "explain": "The loop can be seen as a coil in which a voltage is induced by the magnetic components of the field."
+      },
+      {
+       "id": "M2.V1.C271",
+       "question": "How do surface radiators differ from wire antennas?",
+       "options": [
+        "A surface is also involved in radiation",
+        "They do not radiate at all",
+        "They use only a thin wire"
+       ],
+       "correct": 0,
+       "explain": "In surface radiators not only a thin wire but also a surface is involved in the radiations."
+      },
+      {
+       "id": "M2.V1.C272",
+       "question": "What do the flare angles of a horn antenna depend on?",
+       "options": [
+        "Frequency and power only",
+        "Polarization and gain",
+        "Height, width and length of the horn"
+       ],
+       "correct": 2,
+       "explain": "The flare angles depend on the height, width and length of the horn antenna."
+      },
+      {
+       "id": "M2.V1.C273",
+       "question": "What does the propagation velocity of a wave in a lens depend on?",
+       "options": [
+        "The permittivity εr",
+        "The polarization",
+        "The reflector diameter"
+       ],
+       "correct": 0,
+       "explain": "The propagation velocity of an electromagnetic wave depends on εr."
+      },
+      {
+       "id": "M2.V1.C274",
+       "question": "How are the reflected waves of a reflector antenna in the aperture plane?",
+       "options": [
+        "90° out of phase",
+        "180° out of phase",
+        "In phase"
+       ],
+       "correct": 2,
+       "explain": "The reflected waves are in phase in the aperture plane."
+      },
+      {
+       "id": "M2.V1.C275",
+       "question": "How many beams does a dish antenna produce compared with a lens antenna?",
+       "options": [
+        "Dish: multiple beams; lens: single beam",
+        "Dish: single beam; lens: multiple beams",
+        "Both produce multiple beams"
+       ],
+       "correct": 1,
+       "explain": "Dish: single direction, single beam. Lens: multiple direction, multiple beams."
+      },
+      {
+       "id": "M2.V1.C276",
+       "question": "Which principle do lens antennas use?",
+       "options": [
+        "The diverging lens, to spread the energy",
+        "The converging lens, to collimate energy into plane waves",
+        "The parabolic mirror, to reflect the energy"
+       ],
+       "correct": 1,
+       "explain": "Lens antennas use the principle of the converging lens to collimate incident divergent energy into plane waves."
+      },
+      {
+       "id": "M2.V1.C277",
+       "question": "What length is a Yagi director compared with the λ/2 dipole?",
+       "options": [
+        "λ/4",
+        "λ/2 + 5 %",
+        "λ/2 − 5 %"
+       ],
+       "correct": 2,
+       "explain": "Figure: Director λ/2 − 5 %, Reflector λ/2 + 5 %."
+      },
+      {
+       "id": "M2.V1.C278",
+       "question": "What length is a Yagi reflector compared with the λ/2 dipole?",
+       "options": [
+        "λ/2 + 5 %",
+        "λ",
+        "λ/2 − 5 %"
+       ],
+       "correct": 0,
+       "explain": "Figure: Reflector λ/2 + 5 %."
+      },
+      {
+       "id": "M2.V1.C279",
+       "question": "What happens to the field above a perfectly conductive plane placed in the middle of a dipole?",
+       "options": [
+        "It stays the same, even without the lower half",
+        "It doubles in strength above the plane",
+        "It disappears completely above the plane"
+       ],
+       "correct": 0,
+       "explain": "The field above such a plane would not change, even if the lower half of the dipole was removed."
+      },
+      {
+       "id": "M2.V1.C280",
+       "question": "When is the maximum voltage induced in a loop antenna?",
+       "options": [
+        "Loop plane at 90° to the propagation",
+        "Loop plane parallel to the ground",
+        "Loop plane in line with the propagation"
+       ],
+       "correct": 2,
+       "explain": "The maximum voltage is induced when the loop plane matches the direction of propagation."
+      },
+      {
+       "id": "M2.V1.C281",
+       "question": "Which horn dimensions give favourable focusing?",
+       "options": [
+        "Flare angle of 90°, length equal to λ",
+        "Flare angle under 40°, length and width large to λ",
+        "Flare angle over 40°, length and width small to λ"
+       ],
+       "correct": 1,
+       "explain": "Favourable focusing results when the flare angle is less than 40° and L and A are large compared to λ."
+      },
+      {
+       "id": "M2.V1.C282",
+       "question": "Which beams are delayed most by a delay lens?",
+       "options": [
+        "Beams that hit the lens centre",
+        "Beams that hit the lens edge",
+        "All beams equally"
+       ],
+       "correct": 0,
+       "explain": "Beams that hit the lens in the centre are delayed more than beams that hit the outer areas."
+      },
+      {
+       "id": "M2.V1.C283",
+       "question": "Why does a wave undergo retardation in a delay lens?",
+       "options": [
+        "The lens reduces the frequency",
+        "The lens medium increases the electrical path length",
+        "The lens reflects part of the wave"
+       ],
+       "correct": 1,
+       "explain": "Due to the medium of the lens, the electrical path length is increased and the wave undergoes retardation."
+      },
+      {
+       "id": "M2.V1.C284",
+       "question": "What polarization does a vertically installed slot antenna produce?",
+       "options": [
+        "Circular",
+        "Horizontal",
+        "Vertical"
+       ],
+       "correct": 1,
+       "explain": "The electrical field in the slot runs horizontally, so a vertical slot antenna produces a horizontally polarized wave."
+      },
+      {
+       "id": "M2.V1.C285",
+       "question": "What does the lobe width indicate?",
+       "options": [
+        "The bandwidth of an antenna",
+        "The impedance of an antenna",
+        "The directivity of an antenna"
+       ],
+       "correct": 2,
+       "explain": "Lobe width is an indication of the directivity of an antenna."
+      },
+      {
+       "id": "M2.V1.C286",
+       "question": "What is the usual reference antenna for antenna gain?",
+       "options": [
+        "An isotropic antenna",
+        "A Yagi antenna",
+        "A λ/4 rod antenna"
+       ],
+       "correct": 0,
+       "explain": "The reference antenna is usually an isotropic antenna."
+      },
+      {
+       "id": "M2.V1.C287",
+       "question": "What unit is antenna gain normally given in?",
+       "options": [
+        "Ohms",
+        "Decibels",
+        "Watts"
+       ],
+       "correct": 1,
+       "explain": "Normally, antenna gain is given in decibels."
+      },
+      {
+       "id": "M2.V1.C288",
+       "question": "What is the effect of concentrating the radiation in one direction?",
+       "options": [
+        "Lower field strength there for the same power",
+        "No change in field strength",
+        "Greater field strength there for the same power"
+       ],
+       "correct": 2,
+       "explain": "The more the radiation is concentrated in a certain direction, the greater the field strength in this direction for a given transmitter power."
+      },
+      {
+       "id": "M2.V1.C289",
+       "question": "What is antenna gain G?",
+       "options": [
+        "Power lost along the antenna feed line",
+        "Ratio of the antenna length to the wavelength",
+        "Radiated power gain in a direction over a reference"
+       ],
+       "correct": 2,
+       "explain": "The increase in radiated power in a given direction compared to a reference antenna is called antenna gain G."
+      },
+      {
+       "id": "M2.V1.C290",
+       "question": "How is antenna gain gauged?",
+       "options": [
+        "In comparison to the receiver noise",
+        "In comparison to a reference source",
+        "In comparison to the feed line loss"
+       ],
+       "correct": 1,
+       "explain": "Antenna gain is a performance indicator gauged in comparison to a reference source."
+      },
+      {
+       "id": "M2.V1.C291",
+       "question": "How is an antenna tuned mechanically?",
+       "options": [
+        "Its length is adjusted to the wavelength",
+        "Its feed line is shortened",
+        "Its polarization is changed"
+       ],
+       "correct": 0,
+       "explain": "For this purpose mechanical tuning is possible; the antenna length is adjusted to the wave length."
+      },
+      {
+       "id": "M2.V1.C292",
+       "question": "How can an antenna of limited length still be brought to resonance?",
+       "options": [
+        "By using a loop instead",
+        "With an L or T shaped tip or an umbrella",
+        "By lengthening the feed line"
+       ],
+       "correct": 1,
+       "explain": "The antenna tip can be L or T shaped or be fitted with an \"umbrella\"."
+      },
+      {
+       "id": "M2.V1.C293",
+       "question": "How must the length of an antenna be adjusted when it is tuned?",
+       "options": [
+        "Only mechanically to the power",
+        "Only electrically to the polarization",
+        "Mechanically or electrically to the frequency"
+       ],
+       "correct": 2,
+       "explain": "Whenever an antenna is to be tuned, its length must be adjusted to the frequency either via mechanical means or electrically."
+      },
+      {
+       "id": "M2.V1.C294",
+       "question": "What diagram shows the ohmic resistance and reactance of an antenna over frequency?",
+       "options": [
+        "The locus",
+        "The radiation pattern",
+        "The resonance curve"
+       ],
+       "correct": 0,
+       "explain": "The locus is a diagram indicating the ohmic resistance and the reactance of the antenna over the frequency."
+      },
+      {
+       "id": "M2.V1.C295",
+       "question": "What must the reactance be to tune the antenna to the desired frequency?",
+       "options": [
+        "Zero",
+        "Equal to R",
+        "Maximum"
+       ],
+       "correct": 0,
+       "explain": "In order to tune the antenna to the frequency desired the reactance must be zero."
+      },
+      {
+       "id": "M2.V1.C296",
+       "question": "What tunes the antenna over the frequency range shown in the locus figure?",
+       "options": [
+        "The power amplifier",
+        "The HF coupler",
+        "The radio altimeter"
+       ],
+       "correct": 1,
+       "explain": "Figure: Frequency Range tuned by HF Coupler."
+      },
+      {
+       "id": "M2.V1.C297",
+       "question": "What is the effect of the end capacitance on the antenna?",
+       "options": [
+        "Higher resonant frequency, shorter electrically",
+        "Lower resonant frequency, longer electrically",
+        "Same resonant frequency, same length"
+       ],
+       "correct": 1,
+       "explain": "The resonant frequency is reduced, i.e. the antenna is electrically \"lengthened\"."
+      },
+      {
+       "id": "M2.V1.C298",
+       "question": "What does the locus show on its X-axis and Y-axis?",
+       "options": [
+        "X: ohmic resistance; Y: reactance",
+        "X: frequency; Y: gain",
+        "X: reactance; Y: ohmic resistance"
+       ],
+       "correct": 0,
+       "explain": "On the X-axis the ohmic resistance is indicated, on the Y-axis the reactance."
+      },
+      {
+       "id": "M2.V1.C299",
+       "question": "What angle does the lobe width give?",
+       "options": [
+        "Apex angle where power falls to half",
+        "Angle of maximum radiated power",
+        "Angle where the radiation is zero"
+       ],
+       "correct": 0,
+       "explain": "It indicates the apex angle at which the radiated power has reduced to half of its maximum value."
+      },
+      {
+       "id": "M2.V1.C300",
+       "question": "What is the minimum received power within the lobe width of a receiving antenna?",
+       "options": [
+        "0.25 PE max",
+        "0.707 PE max",
+        "0.5 PE max"
+       ],
+       "correct": 2,
+       "explain": "At no point within the lobe width is the received power less than 0,5 PE max."
+      },
+      {
+       "id": "M2.V1.C301",
+       "question": "Which dB point is the lobe width equivalent to?",
+       "options": [
+        "The 3 dB point",
+        "The 10 dB point",
+        "The 6 dB point"
+       ],
+       "correct": 0,
+       "explain": "This value is equivalent to the 3 dB point with respect to the main direction."
+      },
+      {
+       "id": "M2.V1.C302",
+       "question": "What is the effect of using a directional antenna?",
+       "options": [
+        "The same as reducing the frequency",
+        "The same as increasing transmitter power",
+        "The same as using a longer feed line"
+       ],
+       "correct": 1,
+       "explain": "The use of a directional antenna has the same effect as an increase in transmitter power."
+      },
+      {
+       "id": "M2.V1.C303",
+       "question": "Which antennas are often used as reference antennas in practice?",
+       "options": [
+        "Loop antennas",
+        "λ/4 rods",
+        "λ/2 dipoles"
+       ],
+       "correct": 2,
+       "explain": "In practice, λ/2-dipole antennas are often used as reference antennas."
+      },
+      {
+       "id": "M2.V1.C304",
+       "question": "What is the antenna boresight?",
+       "options": [
+        "The axis of maximum gain",
+        "The axis of zero radiation",
+        "The axis of the feed line"
+       ],
+       "correct": 0,
+       "explain": "Boresight is the axis of maximum gain / maximum radiated power."
+      },
+      {
+       "id": "M2.V1.C305",
+       "question": "What beamwidth typically gives decent coverage at one metre in compliance testing?",
+       "options": [
+        "90 degrees",
+        "3 degrees",
+        "30 degrees"
+       ],
+       "correct": 2,
+       "explain": "Typically, a 30-degree beamwidth provides decent coverage at one metre away."
+      },
+      {
+       "id": "M2.V1.C306",
+       "question": "What is the gain of an isotropic antenna?",
+       "options": [
+        "3 dBi",
+        "1.64 dBi",
+        "0 dBi"
+       ],
+       "correct": 2,
+       "explain": "An isotropic antenna transmits/receives uniformly in all directions, exhibiting a gain of 0 dBi."
+      },
+      {
+       "id": "M2.V1.C307",
+       "question": "What is the gain of a λ/2 dipole compared to an isotropic antenna?",
+       "options": [
+        "1.64",
+        "3.0",
+        "1.0"
+       ],
+       "correct": 0,
+       "explain": "In free space the λ/2-dipole has an antenna gain of 1.64 compared to the isotropic antenna."
+      },
+      {
+       "id": "M2.V1.C308",
+       "question": "Why must a long wave antenna be shorter than λ/4?",
+       "options": [
+        "Long wave antennas need high gain",
+        "Long wave wavelengths can be several kilometres",
+        "Long wave needs circular polarization"
+       ],
+       "correct": 1,
+       "explain": "For long wave frequencies wavelengths can be several kilometres long, so the antenna length must be less than λ/4."
+      },
+      {
+       "id": "M2.V1.C309",
+       "question": "How is the end capacitance CE connected relative to the antenna capacitance CA?",
+       "options": [
+        "In series, giving a smaller total capacitance",
+        "It replaces CA completely",
+        "In parallel, giving a larger total capacitance"
+       ],
+       "correct": 2,
+       "explain": "The conductors at the tips act as an end capacitance CE parallel to CA, resulting in a larger total capacitance."
+      },
+      {
+       "id": "M2.V1.C310",
+       "question": "How is an antenna that is too short for f1 tuned?",
+       "options": [
+        "With a capacitor in series",
+        "With an inductor in parallel",
+        "With an inductor in series"
+       ],
+       "correct": 2,
+       "explain": "f1: antenna too short, tuned by an inductor in series; the antenna is lengthened."
+      },
+      {
+       "id": "M2.V1.C311",
+       "question": "How is an antenna that is too long for f2 tuned?",
+       "options": [
+        "With a capacitor in parallel",
+        "With a capacitor in series",
+        "With an inductor in series"
+       ],
+       "correct": 1,
+       "explain": "f2: antenna too long, shortened by a capacitor in series."
+      },
+      {
+       "id": "M2.V1.C312",
+       "question": "How is an antenna that is too short for f3 tuned?",
+       "options": [
+        "With a capacitor in parallel",
+        "With an inductor in parallel",
+        "With a capacitor in series"
+       ],
+       "correct": 0,
+       "explain": "f3: antenna too short, lengthened by a capacitor in parallel."
+      },
+      {
+       "id": "M2.V1.C313",
+       "question": "How is an antenna that is too long for f4 tuned?",
+       "options": [
+        "With a capacitor in parallel",
+        "With an inductor in series",
+        "With an inductor in parallel"
+       ],
+       "correct": 2,
+       "explain": "f4: antenna too long, shortened by an inductor in parallel."
+      },
+      {
+       "id": "M2.V1.C314",
+       "question": "What are radio frequency lines required for?",
+       "options": [
+        "Transferring RF energy with as little loss as possible",
+        "Generating the basic radio frequency",
+        "Converting RF energy into free radiation"
+       ],
+       "correct": 0,
+       "explain": "Radio frequency lines are required for the transfer of RF energy with as little loss as possible."
+      },
+      {
+       "id": "M2.V1.C315",
+       "question": "Which are other applications of RF lines?",
+       "options": [
+        "Polarization, focusing and filtering",
+        "Resonant circuits, resistance transformation and matching",
+        "Modulation, detection and amplification"
+       ],
+       "correct": 1,
+       "explain": "Other applications: tuned resonant circuits, resistance transformation, matching between symmetric and asymmetric circuits."
+      },
+      {
+       "id": "M2.V1.C316",
+       "question": "What type of line is a coaxial cable?",
+       "options": [
+        "An unshielded line",
+        "An asymmetric line",
+        "A symmetric line"
+       ],
+       "correct": 1,
+       "explain": "An asymmetric line where a tubular conductor shields a concentric inner line is called co-axial cable."
+      },
+      {
+       "id": "M2.V1.C317",
+       "question": "What impedance do typical symmetric twin cables start at?",
+       "options": [
+        "About 150 Ω",
+        "About 50 Ω",
+        "About 377 Ω"
+       ],
+       "correct": 0,
+       "explain": "Typical impedances of symmetric twin cables start at approx. 150 Ω."
+      },
+      {
+       "id": "M2.V1.C318",
+       "question": "What is the matching principle known as in electrical engineering?",
+       "options": [
+        "Thomson's oscillation formula",
+        "Kirchhoff's first law",
+        "Power transfer theorem or Jacobi's Law"
+       ],
+       "correct": 2,
+       "explain": "In electrical engineering this principle is known as power transfer theorem or Jacobi's Law."
+      },
+      {
+       "id": "M2.V1.C319",
+       "question": "How are RF lines differentiated electrically and physically?",
+       "options": [
+        "Electrically symmetric/asymmetric; physically shielded/unshielded",
+        "Electrically matched/mismatched; physically open/shorted",
+        "Electrically shielded/unshielded; physically symmetric/asymmetric"
+       ],
+       "correct": 0,
+       "explain": "Electrically: symmetric and asymmetric. Physically: shielded and unshielded."
+      },
+      {
+       "id": "M2.V1.C320",
+       "question": "What are the features of a symmetric cable?",
+       "options": [
+        "A shield around a concentric inner line",
+        "One line grounded, one line at RF potential",
+        "Equal capacity to ground, equal and opposite RF signals"
+       ],
+       "correct": 2,
+       "explain": "In a symmetric cable both lines have equal capacity to ground (C10 = C20), and the RF signals have equal amplitude and opposite polarity."
+      },
+      {
+       "id": "M2.V1.C321",
+       "question": "What are the features of an asymmetric cable?",
+       "options": [
+        "Both lines with equal capacity to ground",
+        "One line at RF potential, the other grounded",
+        "Both lines at equal RF potential"
+       ],
+       "correct": 1,
+       "explain": "The asymmetric cable has one line on RF potential and the other line grounded."
+      },
+      {
+       "id": "M2.V1.C322",
+       "question": "What determines the electrical data of RF lines?",
+       "options": [
+        "The physical construction and the dielectric",
+        "The applied frequency and power",
+        "The antenna type and polarization"
+       ],
+       "correct": 0,
+       "explain": "The electrical data of RF lines are determined by the physical construction and the type of insulation (dielectric) material."
+      },
+      {
+       "id": "M2.V1.C323",
+       "question": "What determines the ratio of ix and ux on a line?",
+       "options": [
+        "The series and parallel resistance",
+        "The length of the line",
+        "The line inductance L' and capacity C'"
+       ],
+       "correct": 2,
+       "explain": "Line inductance L' and capacity C' determine the ratio of ix and ux."
+      },
+      {
+       "id": "M2.V1.C324",
+       "question": "How is the impedance of a cable generally calculated?",
+       "options": [
+        "Z0 = √(C/L)",
+        "Z0 = √(L/C)",
+        "Z0 = L × C"
+       ],
+       "correct": 1,
+       "explain": "In general, the impedance of a cable is calculated as Z0 = √(L/C)."
+      },
+      {
+       "id": "M2.V1.C325",
+       "question": "What are the disadvantages of coax cables with Teflon or polyethylene dielectric?",
+       "options": [
+        "Lower dampening, higher voltage rating, higher power",
+        "High price and difficult handling",
+        "Higher dampening, lower voltage rating, lower power"
+       ],
+       "correct": 2,
+       "explain": "Their disadvantages are the higher dampening, lower voltage ratings and the lower maximum power that can be forwarded."
+      },
+      {
+       "id": "M2.V1.C326",
+       "question": "What is required to transfer as much energy as possible from transmitter to antenna?",
+       "options": [
+        "The transmitter and antenna impedances must match",
+        "The line must be as long as possible",
+        "The antenna must be longer than λ"
+       ],
+       "correct": 0,
+       "explain": "The impedances of transmitter and antenna must match."
+      },
+      {
+       "id": "M2.V1.C327",
+       "question": "What is created when an antenna with a non-matching impedance is connected to an RF line?",
+       "options": [
+        "A sky wave",
+        "A standing wave",
+        "A matched line"
+       ],
+       "correct": 1,
+       "explain": "In case an antenna with a non-matching impedance is connected to a RF line, a standing wave is created."
+      },
+      {
+       "id": "M2.V1.C328",
+       "question": "What does the standing wave ratio indicate?",
+       "options": [
+        "The physical length of the RF line",
+        "The antenna-to-line impedance difference",
+        "The power radiated by the antenna"
+       ],
+       "correct": 1,
+       "explain": "The SWR indicates how much the impedance of the antenna differs from the impedance of the line (or transmitter)."
+      },
+      {
+       "id": "M2.V1.C329",
+       "question": "What does an SWR of 1 mean?",
+       "options": [
+        "Identical impedances, maximum power transfer",
+        "Open line, no power transfer",
+        "Shorted line, maximum reflection"
+       ],
+       "correct": 0,
+       "explain": "A ratio of 1 means that the impedances are identical; we have maximum power transfer."
+      },
+      {
+       "id": "M2.V1.C330",
+       "question": "What is the SWR of an open or shorted line?",
+       "options": [
+        "0",
+        "1",
+        "Infinite"
+       ],
+       "correct": 2,
+       "explain": "With open or shortened lines the ratio is infinite."
+      },
+      {
+       "id": "M2.V1.C331",
+       "question": "Which two kinds of reflection are shown in the standing wave figure?",
+       "options": [
+        "Ground and sky reflection",
+        "Opposite phase and in-phase reflection",
+        "Hard and soft absorption"
+       ],
+       "correct": 1,
+       "explain": "Figure: Opposite Phase Reflection and In-Phase Reflection."
+      },
+      {
+       "id": "M2.V1.C332",
+       "question": "What appears on a shorted or open-ended line?",
+       "options": [
+        "No current and no voltage",
+        "Large standing waves for current and voltage",
+        "A perfectly matched load"
+       ],
+       "correct": 1,
+       "explain": "With a shorted or open ended line large standing waves for current and voltage appear."
+      },
+      {
+       "id": "M2.V1.C333",
+       "question": "Why is one line capacity (C20) to ground missing in an asymmetric cable?",
+       "options": [
+        "Ground itself is the conductor",
+        "The line is too short",
+        "The line is shielded"
+       ],
+       "correct": 0,
+       "explain": "One line capacity (C20) to ground is missing because ground itself is the conductor."
+      },
+      {
+       "id": "M2.V1.C334",
+       "question": "Which capacities does the inner wire of a coaxial cable have?",
+       "options": [
+        "C10 to ground, no C12 to the shield",
+        "Equal C10 and C20 to ground",
+        "C12 against the shield, no C10 to ground"
+       ],
+       "correct": 2,
+       "explain": "The inner wire has a capacity C12 against the shield, but no capacity C10 to ground."
+      },
+      {
+       "id": "M2.V1.C335",
+       "question": "What creates a hard reflection on an RF line?",
+       "options": [
+        "A short or an open line",
+        "A small impedance deviation",
+        "A perfectly matched load"
+       ],
+       "correct": 0,
+       "explain": "With RF lines, a short or an open line create a hard reflection while smaller deviations create softer reflections."
+      },
+      {
+       "id": "M2.V1.C336",
+       "question": "What happens at the end of an open RF line?",
+       "options": [
+        "Maximum current flows, the voltage is zero",
+        "Current and voltage are both zero",
+        "No current flows, the voltage is at maximum"
+       ],
+       "correct": 2,
+       "explain": "With an open line there is no current flow at the end but the voltage reaches its maximum."
+      },
+      {
+       "id": "M2.V1.C337",
+       "question": "What happens at the end of a shorted RF line?",
+       "options": [
+        "No current flows, the voltage is at maximum",
+        "Current and voltage are both at maximum",
+        "Maximum current flows, the voltage is zero"
+       ],
+       "correct": 2,
+       "explain": "With a shortened line the maximum current flows at the end but the voltage is zero."
+      },
+      {
+       "id": "M2.V1.C338",
+       "question": "How does a shorted λ/4 line behave for the supply generator?",
+       "options": [
+        "As a series resonant circuit",
+        "As a parallel resonant circuit",
+        "As a pure inductor"
+       ],
+       "correct": 1,
+       "explain": "A shorted λ/4 (or open λ/2) line has frequency dependent resistive behaviour and behaves as a parallel resonant circuit."
+      },
+      {
+       "id": "M2.V1.C339",
+       "question": "How does an open-ended λ/4 line behave for the supply generator?",
+       "options": [
+        "As a series resonant circuit",
+        "As a parallel resonant circuit",
+        "As a pure capacitor"
+       ],
+       "correct": 0,
+       "explain": "With an open ended λ/4 line (or shorted λ/2 line) the line segment behaves as a series resonant circuit."
+      },
+      {
+       "id": "M2.V1.C340",
+       "question": "What impedances are common for coaxial cables?",
+       "options": [
+        "377 Ω",
+        "150 Ω to 300 Ω",
+        "50 Ω to 75 Ω"
+       ],
+       "correct": 2,
+       "explain": "Lower impedances are possible with co-axial cables where 50–75 Ω are common."
+      },
+      {
+       "id": "M2.V1.C341",
+       "question": "What is the standard impedance of coaxial power cables in modern installations?",
+       "options": [
+        "50 Ω",
+        "75 Ω",
+        "150 Ω"
+       ],
+       "correct": 0,
+       "explain": "The standard impedance of coaxial power cables in modern installations is 50 Ω."
+      },
+      {
+       "id": "M2.V1.C342",
+       "question": "What are the advantages of coax cables with Teflon or polyethylene dielectric?",
+       "options": [
+        "Low dampening and high power",
+        "Easy to handle and reasonably priced",
+        "High voltage rating"
+       ],
+       "correct": 1,
+       "explain": "They are easy to handle and can be produced at a reasonable price."
+      },
+      {
+       "id": "M2.V1.C343",
+       "question": "Which values does every line have per unit length?",
+       "options": [
+        "Only the line capacity C'",
+        "L', C', series and parallel resistance",
+        "Only the line inductance L'"
+       ],
+       "correct": 1,
+       "explain": "Every line has an inductance L', a capacity C', a series resistance and a parallel resistance per length unit."
+      },
+      {
+       "id": "M2.V1.C344",
+       "question": "Which line values can be ignored in most practical cases?",
+       "options": [
+        "Series and parallel resistance",
+        "Line inductance and capacity",
+        "Line capacity C' alone"
+       ],
+       "correct": 0,
+       "explain": "For most practical cases, the series resistance of the copper and the parallel resistance of the insulation can be ignored."
+      },
+      {
+       "id": "M2.V1.C345",
+       "question": "What determines the line impedance Z0?",
+       "options": [
+        "The power applied to the line",
+        "U/I ratio of an infinitely long line",
+        "The physical length of the line"
+       ],
+       "correct": 1,
+       "explain": "The voltage/current ratio of an infinitely long line determines the line impedance (Z0 = ux/ix)."
+      },
+      {
+       "id": "M2.V1.C346",
+       "question": "What does Z0 depend on?",
+       "options": [
+        "The applied frequency only",
+        "The cable's materials and dimensions",
+        "The transmitter power only"
+       ],
+       "correct": 1,
+       "explain": "Z0 depends on L and C, so it depends on the materials and the physical dimensions of the cable."
+      },
+      {
+       "id": "M2.V1.C347",
+       "question": "What must the HF lines between transmitter and antenna have?",
+       "options": [
+        "A matching impedance throughout",
+        "The lowest possible impedance",
+        "The highest possible impedance"
+       ],
+       "correct": 0,
+       "explain": "With HF, the lines must also have a matching impedance so that a constant impedance is found from transmitter to antenna."
+      },
+      {
+       "id": "M2.V1.C348",
+       "question": "What load resistance gives a matched RF line?",
+       "options": [
+        "RL = 0",
+        "RL = 2 Z0",
+        "RL = Z0"
+       ],
+       "correct": 2,
+       "explain": "Figure: matched when RL = Z0."
+      },
+      {
+       "id": "M2.V1.C349",
+       "question": "Which materials reflect waves well in the pond example?",
+       "options": [
+        "Soft materials like clay",
+        "Soft materials like sand",
+        "Hard materials like concrete"
+       ],
+       "correct": 2,
+       "explain": "Hard materials like concrete reflect pretty well while soft materials like sand or clay absorb a part of the energy."
+      },
+      {
+       "id": "M2.V1.C350",
+       "question": "What happens when the reflected wave meets the initial wave?",
+       "options": [
+        "They superpose, amplify or cancel",
+        "They both stop at that point",
+        "They pass with no effect at all"
+       ],
+       "correct": 0,
+       "explain": "The reflected wave runs back and both waves superpose; they may amplify or cancel out."
+      },
+      {
+       "id": "M2.V1.C351",
+       "question": "What does a greater SWR indicate?",
+       "options": [
+        "A better match of impedances",
+        "Smaller impedance deviation",
+        "Greater impedance deviation"
+       ],
+       "correct": 2,
+       "explain": "The greater the ratio the greater the deviation between both the impedances."
+      },
+      {
+       "id": "M2.V1.C352",
+       "question": "How is the SWR calculated from voltage?",
+       "options": [
+        "E minimum ÷ E maximum",
+        "E maximum ÷ E minimum",
+        "E maximum × E minimum"
+       ],
+       "correct": 1,
+       "explain": "SWR = Emax / Emin = Imax / Imin."
+      },
+      {
+       "id": "M2.V1.C353",
+       "question": "How is the SWR worked out from the load and line impedances?",
+       "options": [
+        "Zload − Z0, whichever is greater",
+        "Zload × Z0, whichever is greater",
+        "Zload ÷ Z0 or Z0 ÷ Zload, whichever is greater"
+       ],
+       "correct": 2,
+       "explain": "SWR = Zload / Z0 or Z0 / Zload, whichever is greater."
+      },
+      {
+       "id": "M2.V1.C354",
+       "question": "What damage can a very high voltage on an RF line cause?",
+       "options": [
+        "Arcing and sparking in the dielectric",
+        "Loss of polarization",
+        "Burned spots from heating"
+       ],
+       "correct": 0,
+       "explain": "A very high voltage can create arcing and sparking in the dielectric, causing damage to the dielectric."
+      },
+      {
+       "id": "M2.V1.C355",
+       "question": "What damage can a very high current on an RF line cause?",
+       "options": [
+        "A change of impedance only",
+        "Heated spots, burns or small fires",
+        "Arcing in the dielectric"
+       ],
+       "correct": 1,
+       "explain": "A very high current can create massively heated-up spots half a wavelength apart, causing burned spots or even small fires."
+      },
+      {
+       "id": "M2.V1.C356",
+       "question": "Which spacing does in-phase superposition occur at on a hard-reflecting line?",
+       "options": [
+        "Every full wavelength",
+        "Every quarter wavelength",
+        "Every half wavelength"
+       ],
+       "correct": 2,
+       "explain": "The hard reflection creates in-phase superposition of both waves in distances of half a wave length."
+      },
+      {
+       "id": "M2.V1.C357",
+       "question": "How does an open λ/2 line behave for the supply generator?",
+       "options": [
+        "As a parallel resonant circuit",
+        "As a series resonant circuit",
+        "As a matched load"
+       ],
+       "correct": 0,
+       "explain": "A shorted λ/4 line or an open λ/2 line behaves as a parallel resonant circuit."
+      },
+      {
+       "id": "M2.V1.C358",
+       "question": "Where are the current node and voltage loop at the input of a line acting as a parallel resonant circuit?",
+       "options": [
+        "Current node and voltage loop at the input",
+        "Both nodes at the input",
+        "Current loop and voltage node at the input"
+       ],
+       "correct": 0,
+       "explain": "The current standing wave at the input has the node and the voltage standing wave the loop."
+      },
+      {
+       "id": "M2.V1.C359",
+       "question": "What does a mechanical oscillator consist of?",
+       "options": [
+        "A spring and a resistor only",
+        "A mass and a return force",
+        "A coil and a capacitor"
+       ],
+       "correct": 1,
+       "explain": "Mechanical oscillators consist of a mass which can be displaced against a return force (spring or the earth's gravitational force – pendulum)."
+      },
+      {
+       "id": "M2.V1.C360",
+       "question": "What do electric oscillator systems consist of?",
+       "options": [
+        "Resistors and diodes",
+        "Transformers and resistors",
+        "Inductors and capacitors"
+       ],
+       "correct": 2,
+       "explain": "Electric oscillator systems consist of inductors and capacitors."
+      },
+      {
+       "id": "M2.V1.C361",
+       "question": "What is the bandwidth B of a resonant circuit?",
+       "options": [
+        "The frequency range where the curve drops to a set value each side of the peak",
+        "The total range of frequencies the circuit can pass",
+        "The frequency at the peak of the resonance curve"
+       ],
+       "correct": 0,
+       "explain": "Bandwidth B is the frequency range within which the resonance curve drops to a specified value on either side of the peak."
+      },
+      {
+       "id": "M2.V1.C362",
+       "question": "What are resonant circuits used for?",
+       "options": [
+        "Generation of a steady DC voltage",
+        "Selective amplification, muting, transformation",
+        "Rectification of AC into DC voltage"
+       ],
+       "correct": 1,
+       "explain": "Resonant circuits are used for selective amplification, muting, or transformation of their frequencies."
+      },
+      {
+       "id": "M2.V1.C363",
+       "question": "How is energy stored in an LC oscillator?",
+       "options": [
+        "Inductor as voltage, capacitor as a magnetic field",
+        "Both as heat in the resistor",
+        "Inductor as a magnetic field, capacitor as voltage"
+       ],
+       "correct": 2,
+       "explain": "At the inductor the current is stored by means of a magnetic field; the capacitor stores it in form of voltage."
+      },
+      {
+       "id": "M2.V1.C364",
+       "question": "What happens in a series resonant circuit at the resonant frequency f0?",
+       "options": [
+        "XL = XC, iL and iC cancel, only iR flows",
+        "XL > XC and the circuit is inductive",
+        "XL = XC, UL and UC cancel, high current limited by RS"
+       ],
+       "correct": 2,
+       "explain": "At f0, XL = XC, UL equals UC; being 180° out of phase they cancel and a high current flows which is only limited by RS."
+      },
+      {
+       "id": "M2.V1.C365",
+       "question": "What determines the bandwidth?",
+       "options": [
+        "The quality factor Q",
+        "The applied voltage",
+        "The resistor value only"
+       ],
+       "correct": 0,
+       "explain": "Bandwidth is determined by the quality factor Q."
+      },
+      {
+       "id": "M2.V1.C366",
+       "question": "What is selectivity?",
+       "options": [
+        "Passing the widest band of frequencies",
+        "Suppressing frequencies other than the resonant one",
+        "Raising the resonant frequency"
+       ],
+       "correct": 1,
+       "explain": "Selectivity is the ability of a resonant circuit to suppress other than the 1st resonant frequency, thus suppressing other radio stations."
+      },
+      {
+       "id": "M2.V1.C367",
+       "question": "How large can the voltages across L and C be in a series circuit at f0?",
+       "options": [
+        "Always equal to the applied voltage",
+        "Much higher than the applied voltage",
+        "Always lower than the applied voltage"
+       ],
+       "correct": 1,
+       "explain": "The current imax at f0 causes voltages across L and C which can be much higher than the applied voltage U."
+      },
+      {
+       "id": "M2.V1.C368",
+       "question": "What happens in a parallel resonant circuit at the resonant frequency f0?",
+       "options": [
+        "UL and UC cancel, a high current flows",
+        "iL is greater and the circuit is inductive",
+        "iL and iC cancel, only iR flows"
+       ],
+       "correct": 2,
+       "explain": "At f0, iL equals iC; being 180° out of phase they cancel each other, and only the current iR due to RP flows."
+      },
+      {
+       "id": "M2.V1.C369",
+       "question": "How is a strong unwanted local transmitter suppressed?",
+       "options": [
+        "Series circuit tuned to the wanted signal in the line",
+        "Series circuit tuned to it as ground leg of a divider",
+        "Parallel circuit tuned to it as ground leg of a divider"
+       ],
+       "correct": 1,
+       "explain": "A series resonant circuit tuned to the unwanted signal is used as the ground leg in an antenna voltage divider."
+      },
+      {
+       "id": "M2.V1.C370",
+       "question": "How is one desired frequency boosted at the receiver input?",
+       "options": [
+        "Series circuit tuned to it as ground leg of a divider",
+        "Parallel circuit tuned to the unwanted signal",
+        "Parallel circuit tuned to it as ground leg of a divider"
+       ],
+       "correct": 2,
+       "explain": "A parallel resonant circuit tuned to the desired frequency is used as ground leg of an antenna voltage divider."
+      },
+      {
+       "id": "M2.V1.C371",
+       "question": "What are oscillating and resonant systems used for?",
+       "options": [
+        "Storing DC energy for long periods",
+        "Generating, amplifying or damping periodic processes",
+        "Converting AC voltage into DC voltage"
+       ],
+       "correct": 1,
+       "explain": "They are used for generation and selective amplification or damping of periodic processes."
+      },
+      {
+       "id": "M2.V1.C372",
+       "question": "How does the impedance of a resistor change with frequency?",
+       "options": [
+        "It stays constant",
+        "It falls non-linearly",
+        "It rises in proportion"
+       ],
+       "correct": 0,
+       "explain": "A resistor is independent of frequency; its impedance is constant."
+      },
+      {
+       "id": "M2.V1.C373",
+       "question": "Why does energy travel back and forth between inductor and capacitor?",
+       "options": [
+        "They delay voltage against current",
+        "They both behave as pure resistors",
+        "They are fed from a DC source"
+       ],
+       "correct": 0,
+       "explain": "Inductors and capacitors create a time delay between voltage and current, so the energy travels between them."
+      },
+      {
+       "id": "M2.V1.C374",
+       "question": "What determines the frequency of a mechanical pendulum?",
+       "options": [
+        "The amplitude only",
+        "The external force",
+        "The mass and the length l"
+       ],
+       "correct": 2,
+       "explain": "The frequency is determined by the magnitude of the mass and the length l."
+      },
+      {
+       "id": "M2.V1.C375",
+       "question": "What happens to the sum of potential and kinetic energy in a pendulum without losses?",
+       "options": [
+        "It increases",
+        "It decreases",
+        "It stays constant"
+       ],
+       "correct": 2,
+       "explain": "In a system without friction or other losses, their sum is constant at any instant."
+      },
+      {
+       "id": "M2.V1.C376",
+       "question": "How is energy introduced into an LC oscillator?",
+       "options": [
+        "A magnet is moved near the coil",
+        "An external voltage charges the capacitor",
+        "A resistor is placed in series"
+       ],
+       "correct": 1,
+       "explain": "Energy is introduced by an external voltage which sets up an electric field in the capacitor."
+      },
+      {
+       "id": "M2.V1.C377",
+       "question": "What determines the frequency of an LC oscillator?",
+       "options": [
+        "The switch position",
+        "The dimensions of L and C",
+        "The applied voltage"
+       ],
+       "correct": 1,
+       "explain": "The process is repeated with a frequency determined by the dimensions of L and C."
+      },
+      {
+       "id": "M2.V1.C378",
+       "question": "What is Thomson's oscillation formula?",
+       "options": [
+        "f0 = 1 / (2π√(LC))",
+        "f0 = √(L/C) / 2π",
+        "f0 = 2π√(LC)"
+       ],
+       "correct": 0,
+       "explain": "The undamped oscillator frequency: f0 = 1 / (2π √(L C))."
+      },
+      {
+       "id": "M2.V1.C379",
+       "question": "Which mechanical energy matches the magnetic field energy in the oscillator figure?",
+       "options": [
+        "Heat energy",
+        "Potential energy",
+        "Kinetic energy"
+       ],
+       "correct": 2,
+       "explain": "Figure: electrical ↔ potential; magnetic ↔ kinetic."
+      },
+      {
+       "id": "M2.V1.C380",
+       "question": "What represents the losses of L and C in a series resonant circuit?",
+       "options": [
+        "RS",
+        "RP",
+        "XL"
+       ],
+       "correct": 0,
+       "explain": "Losses of L and C are shown combined in RS."
+      },
+      {
+       "id": "M2.V1.C381",
+       "question": "What does the geometric sum of UL, UC and UR equal in a series circuit?",
+       "options": [
+        "The applied voltage U",
+        "The current i",
+        "Zero at all times"
+       ],
+       "correct": 0,
+       "explain": "Their geometric sum is equal to the applied voltage U (2nd law of Kirchhoff)."
+      },
+      {
+       "id": "M2.V1.C382",
+       "question": "When is the impedance Z of a series resonant circuit lowest?",
+       "options": [
+        "Below f0",
+        "Above f0",
+        "At f0"
+       ],
+       "correct": 2,
+       "explain": "Z is lowest at f0 because XL and XC cancel each other."
+      },
+      {
+       "id": "M2.V1.C383",
+       "question": "What is the phase angle between U and i in a series circuit at resonance?",
+       "options": [
+        "+90 degrees",
+        "Zero degrees",
+        "−90 degrees"
+       ],
+       "correct": 1,
+       "explain": "As RS is a real load, the phase angle between U and i is zero degrees."
+      },
+      {
+       "id": "M2.V1.C384",
+       "question": "What represents the losses of L and C in a parallel resonant circuit?",
+       "options": [
+        "RS",
+        "XC",
+        "RP"
+       ],
+       "correct": 2,
+       "explain": "Losses of L and C are represented by the parallel resistor Rp."
+      },
+      {
+       "id": "M2.V1.C385",
+       "question": "What does the total current equal in a parallel circuit?",
+       "options": [
+        "The geometric sum of the branch currents",
+        "The current in the capacitor only",
+        "Zero at all frequencies"
+       ],
+       "correct": 0,
+       "explain": "The current i is the geometric sum of the individual currents (1st law of Kirchhoff)."
+      },
+      {
+       "id": "M2.V1.C386",
+       "question": "What does the impedance Z of a parallel circuit equal at resonance?",
+       "options": [
+        "Zero",
+        "RP",
+        "XL + XC"
+       ],
+       "correct": 1,
+       "explain": "The apparent resistance Z equals RP at the resonant frequency."
+      },
+      {
+       "id": "M2.V1.C387",
+       "question": "How does the impedance of an inductor change with frequency?",
+       "options": [
+        "It stays constant",
+        "It rises in proportion",
+        "It falls non-linearly"
+       ],
+       "correct": 1,
+       "explain": "The impedance of an inductor is proportional to the frequency."
+      },
+      {
+       "id": "M2.V1.C388",
+       "question": "How does the impedance of a capacitor change as frequency increases?",
+       "options": [
+        "It stays constant",
+        "It increases in proportion",
+        "It decreases, not linearly"
+       ],
+       "correct": 2,
+       "explain": "For a capacitor its impedance decreases (though not linearly) as the frequency increases."
+      },
+      {
+       "id": "M2.V1.C389",
+       "question": "What is the frequency at which XL = XC called?",
+       "options": [
+        "The resonant frequency fR",
+        "The cut-off frequency",
+        "The critical frequency"
+       ],
+       "correct": 0,
+       "explain": "At the intersection, XL = XC; that frequency is called the resonant frequency fR."
+      },
+      {
+       "id": "M2.V1.C390",
+       "question": "Which level is the normal bandwidth measured at?",
+       "options": [
+        "−6 dB (0.5)",
+        "−10 dB (0.1)",
+        "−3 dB (0.707)"
+       ],
+       "correct": 2,
+       "explain": "Normally, this is −3 dB (1/√2 = 0.707) from the peak value 1 (0 dB)."
+      },
+      {
+       "id": "M2.V1.C391",
+       "question": "What must be done if a bandwidth other than −3 dB is used?",
+       "options": [
+        "Nothing, it is standard",
+        "It must be specified",
+        "It must be doubled"
+       ],
+       "correct": 1,
+       "explain": "Any other than the normal bandwidth of −3 dB must be specified."
+      },
+      {
+       "id": "M2.V1.C392",
+       "question": "How is the bandwidth worked out from the quality factor Q?",
+       "options": [
+        "B = Q / f0",
+        "B = f0 / Q",
+        "B = f0 × Q"
+       ],
+       "correct": 1,
+       "explain": "Bandwidth B = f0 / Q."
+      },
+      {
+       "id": "M2.V1.C393",
+       "question": "What happens to other frequencies when a series circuit suppresses one signal?",
+       "options": [
+        "They are not affected",
+        "They are boosted",
+        "They are also shorted to ground"
+       ],
+       "correct": 0,
+       "explain": "The unwanted frequency is shorted to ground, but all other frequencies are unaffected."
+      },
+      {
+       "id": "M2.V1.C394",
+       "question": "What happens at the desired frequency with a parallel circuit used for boosting?",
+       "options": [
+        "The signal is shorted to ground",
+        "Impedance and output voltage are high",
+        "Impedance and output are both zero"
+       ],
+       "correct": 1,
+       "explain": "Unwanted frequencies are shorted; only at the desired frequency the impedance and therefore the output voltage is high."
+      },
+      {
+       "id": "M2.V1.C395",
+       "question": "When does the magnetic field in the LC oscillator reach maximum strength?",
+       "options": [
+        "When the voltage is zero",
+        "When the voltage is maximum",
+        "When the switch is open"
+       ],
+       "correct": 0,
+       "explain": "The magnetic field reaches its maximum strength when the voltage is 0."
+      },
+      {
+       "id": "M2.V1.C396",
+       "question": "What charges the capacitor with reversed polarity in an LC oscillator?",
+       "options": [
+        "Voltage induced by the coil's field",
+        "The external voltage source",
+        "The losses in the resistor"
+       ],
+       "correct": 0,
+       "explain": "The magnetic field induces a voltage in the coil which charges the capacitor with reversed polarity."
+      },
+      {
+       "id": "M2.V1.C397",
+       "question": "How does a series resonant circuit behave below and above f0?",
+       "options": [
+        "Resistive at all frequencies",
+        "Below inductive, above capacitive",
+        "Below capacitive, above inductive"
+       ],
+       "correct": 2,
+       "explain": "Below f0, UC is greater: capacitive. Above f0, UL is greater: inductive."
+      },
+      {
+       "id": "M2.V1.C398",
+       "question": "How does a parallel resonant circuit behave below and above f0?",
+       "options": [
+        "Below inductive, above capacitive",
+        "Below capacitive, above inductive",
+        "Resistive at all frequencies"
+       ],
+       "correct": 0,
+       "explain": "Below f0, iL is greater: inductive. Above f0, iC is greater: capacitive."
+      },
+      {
+       "id": "M2.V1.C399",
+       "question": "What is the trade-off of a high selectivity?",
+       "options": [
+        "It has no trade-off",
+        "It comes at the cost of bandwidth",
+        "It comes at the cost of gain"
+       ],
+       "correct": 1,
+       "explain": "In general a high selectivity is desirable but this is typically on the cost of the bandwidth."
+      },
+      {
+       "id": "M2.V1.C400",
+       "question": "What does a large Q factor do to the resonance curve?",
+       "options": [
+        "Makes it gradual",
+        "Makes it flat",
+        "Makes it sharp"
+       ],
+       "correct": 2,
+       "explain": "Figure 44: Large Q factor makes the characteristic sharp; small Q makes it gradual."
+      }
+     ],
+     "batch": 1,
+     "ref": "13.4",
+     "pages": "1–117"
+    }
+   ],
+   "downloads": [
+    {
+     "id": "M2.V1.DL1",
+     "title": "Batch 01 · Full Bank · pages 1–117",
+     "file": "downloads/M13e-Batch-1-Full-Bank-pages-1-117.pdf",
+     "pages": 74
+    }
+   ]
   },
   {
    "id": "M3",
