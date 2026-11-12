@@ -201,19 +201,38 @@ with the same correct text.
   **Not yet published** (`npm run publish-course`). `test:bm` was re-run with a
   second module that has content and passes — the module-filter path, which was
   uncoverable until M2 had a chapter, is covered now.
-- **VERCEL REJECTS EVERY DEPLOYMENT AT CREATION, and it is not the code**
-  (found 2026-11-12). Every push since 2026-10-15 reports `failure`, and the
-  tell is the timestamps: `pending` and `failure` carry **the same second**,
-  where a build that ran took 15-40s. So no build ever started. Proved by
-  bisecting with probe branches off the last good commit (`5492a82`, green): an
-  EMPTY commit failed, the content document alone failed, the PDF alone failed,
-  and pinning Node 22 and Node 24 changed nothing — while a clean `git archive`
-  build of the merge commit exits 0. That makes it the account or the project
-  (quota, plan, a paused project or a broken Git connection), which the repo
-  cannot fix and which an agent must not change. Read the reason in the Vercel
-  dashboard on the failed deployment. **Until a deploy lands, the paper 404s,
-  and publishing must wait**: `publish-course` checks every paper's first bytes
-  and stops, correctly, on the 404 this app answers with index.html.
+- **VERCEL REJECTED EVERY DEPLOYMENT BECAUSE A PAUSED SUPABASE RESOURCE WAS
+  ATTACHED TO THE PROJECT, and it was not the code** (found and fixed
+  2026-11-12; every push from 2026-10-16 failed, last green `5492a82`). The
+  Vercel deployment page says it once you open it: *"One or more integration
+  resources failed to provision for this deployment"*, at a "Provisioning
+  Integrations" step that fails in about a second. The log is NOT reachable by
+  `npx vercel inspect` without a login, and the commit status says only
+  "Deployment has failed" — the tell from outside is that `pending` and
+  `failure` carry **the same second**, where a build that ran took 15-40s.
+  Bisected before that was known: an EMPTY commit failed, the content alone, the
+  PDF alone, and Node 22/24 pins changed nothing, while a clean `git archive`
+  build exits 0.
+  - **The resource is "ProjectWingman" (Supabase Free Plan, project
+    `sumuzpzkjsozslwifazp`)**, installed through the Billed-via-Vercel Supabase
+    integration on 2026-08-14. It is **NOT the app's database** — that is
+    `rpfgxxcpfrgajlkpoyes`, and the live bundle contains that id and never the
+    other. The app reads only `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` /
+    `VITE_CLERK_PUBLISHABLE_KEY`, which are set separately; the thirteen
+    Production-only variables the integration injected (`POSTGRES_*`,
+    `SUPABASE_*`) are read by nothing, and the repo has no `api/`, middleware or
+    edge code that could.
+  - **It was unpaused** in the Supabase dashboard (resumable until 2027-11-24;
+    restoring took under a minute). **That will recur**: a Free project pauses
+    after inactivity, and a paused one blocks every deploy again. The durable
+    fix is to disconnect the resource from `project-wingman` (Vercel → Storage →
+    the resource → Connected Projects), which leaves the Supabase project in the
+    account and can be undone. It was offered and not taken.
+  - **A manual Redeploy in Vercel asks for an emailed 6-digit code**, which an
+    agent cannot and should not supply; a push to `main` deploys without it.
+  - **Until a deploy lands the paper 404s, and publishing waits**:
+    `publish-course` checks every paper's first bytes and stops, correctly, on
+    the 404 this app answers with index.html.
 
 **THE IMPORTER IS IN THE REPO NOW** (`scripts/batches/`), where it was a
 one-off before. `lines.mjs` pulls every line out with its x and its height
