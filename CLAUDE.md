@@ -175,6 +175,33 @@ was not run and must not be.
 **400 quiz questions, 2,616 cards, 10 papers** — the same 400 questions, and
 332 fewer cards: every batch came back trimmed. The previous set was 2,948.
 
+**MODULE 13e BATCH 1 WENT IN ON 2026-11-12, FROM A THIRD DOCUMENT SHAPE**: a
+PDF **and a JSON sidecar** for each of Exam, Full Bank and Study Cards
+(`M13e-01-*-pages-1-117`). `scripts/m13e/import.mjs` reads the JSON, so nothing
+is classified by x or height and the 8.5pt-trap family cannot recur; the PDF is
+only the paper, whose page count is read from the file. Chapter **`M2.V1`**
+(`M2.V*` has never existed — `M2.01`-`M2.03` and `M2.P1`-`M2.P7` have), name
+"Communication", ref 13.4, pages 1–117, batch 1: **quiz 40** (the Exam,
+14/13/13), **cards 400** (the Full Bank, 134/133/133, the same multiple-choice
+shape 13d's Full Sets became), paper 74pp. The importer refuses on a count
+mismatch, a duplicate id, an answer that indexes nothing, or an exam stem or
+answer that disagrees with the bank — all 40 exam questions are in the bank
+with the same correct text.
+- **THE 74 STUDY CARDS ARE NOT IMPORTED, and that is a decision waiting for the
+  owner.** They are front/back; a card here draws its back from
+  `options[correct]` and `contentSchema` demands two options at least, so a
+  front/back card has no home without inventing wrong answers (which this
+  project does not do) or a new card shape (which is a screen).
+- Two explanations carried the author's "(See conflict note.)" — a pointer to a
+  note students never see. Exactly that parenthetical was removed from Q112 and
+  Q135; nothing else was edited.
+- `module.batches` is left unset on M2 so the strip falls back to the chapter
+  count rather than asserting how many batches 13e will have. No M2 progress
+  can exist for ids that never did, so there is no reset and no epoch change.
+  **Not yet published** (`npm run publish-course`) and the browser suites have
+  not been re-run with a second module that has content — `test:bm` now sees
+  one for the first time (its second-module path was uncoverable until now).
+
 **THE IMPORTER IS IN THE REPO NOW** (`scripts/batches/`), where it was a
 one-off before. `lines.mjs` pulls every line out with its x and its height
 through the repo's own pinned pdf.js; `import.mjs` classifies by that geometry
