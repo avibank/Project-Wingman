@@ -198,9 +198,16 @@ with the same correct text.
 - `module.batches` is left unset on M2 so the strip falls back to the chapter
   count rather than asserting how many batches 13e will have. No M2 progress
   can exist for ids that never did, so there is no reset and no epoch change.
-  **Not yet published** (`npm run publish-course`) and the browser suites have
-  not been re-run with a second module that has content — `test:bm` now sees
-  one for the first time (its second-module path was uncoverable until now).
+  **Not yet published** (`npm run publish-course`). `test:bm` was re-run with a
+  second module that has content and passes — the module-filter path, which was
+  uncoverable until M2 had a chapter, is covered now.
+- **THE DEPLOY FAILED, TWICE, AND THE BUILD WAS CLEAN** (merged as #97). Vercel
+  reported `failure` on the PR's preview AND on main, with no log reachable from
+  here, while a clean `git archive` of the merge commit with `npm ci` and
+  `npm run build` exited 0. That is the same shape as #88. The paper therefore
+  404s live, and **publishing must wait for it**: `publish-course` checks every
+  paper is on the other end by its first bytes and would stop, correctly, on a
+  404 that this app answers with index.html.
 
 **THE IMPORTER IS IN THE REPO NOW** (`scripts/batches/`), where it was a
 one-off before. `lines.mjs` pulls every line out with its x and its height
