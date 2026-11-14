@@ -38,11 +38,11 @@ export const NOTICE_KEY = "pw-notice";
  * stacked on a module screen is a screen about notices.
  */
 export const NOTICE = {
-  id: "batches-on-the-way-2026-11",
+  id: "batches-as-i-study-2026-11",
   /* Said in two parts so the strip can bold the first and quieten the second
      without the component having to split a sentence. */
-  lead: "New batches are coming.",
-  rest: "They will appear as I get through them.",
+  lead: "Batches go up as I finish studying.",
+  rest: "Come back for the next one.",
 };
 
 /**
