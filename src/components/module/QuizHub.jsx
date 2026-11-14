@@ -58,7 +58,7 @@ export const gradeOf = (pct) =>
 const R = 42, CIRC = 2 * Math.PI * R;
 
 /* A scalloped seal in a metal's tone: a seat on the podium nobody holds yet. */
-function Seal({ size, tone }) {
+function Seal({ size, tone, label = null }) {
   const n = 28, r1 = size / 2 - 1.5, r2 = r1 - size * 0.05;
   let d = "";
   for (let i = 0; i < n * 2; i++) {
@@ -69,6 +69,10 @@ function Seal({ size, tone }) {
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
       <path d={`${d}Z`} fill={tone} fillOpacity=".16" stroke={tone} strokeWidth="1.4" />
       <circle cx={size / 2} cy={size / 2} r={r2 - size * 0.07} fill="none" stroke={tone} strokeWidth="1.2" strokeDasharray="2 2.4" />
+      {label && (
+        <text x="50%" y="50%" dy=".35em" textAnchor="middle" fontFamily="var(--font-mono)" fontWeight="600"
+              fontSize={size * 0.27} fill={tone}>{label}</text>
+      )}
     </svg>
   );
 }
@@ -156,7 +160,7 @@ export default function QuizHub({
       <div className="qh-who" style={{ "--d": d }}>
         {pos === 1 && !mine
           ? <span className="qh-seal qh-mine"><Stamp stamp={null} size={size} rot={-4} on={false} /></span>
-          : <span className="qh-seal"><Seal size={size} tone={tone} /></span>}
+          : <span className="qh-seal"><Seal size={size} tone={tone} label={ord(pos)} /></span>}
       </div>
     );
   };
@@ -214,7 +218,7 @@ export default function QuizHub({
           {[2, 1, 3].map((pos) => (
             <div key={pos} className={`qh-pcol qh-p${pos}${runs[pos - 1]?.isYou ? " qh-you" : ""}`}>
               {seat(pos)}
-              <div className="qh-block" style={{ "--d": pos === 1 ? ".05s" : pos === 2 ? ".18s" : ".3s" }}><b>{pos}</b></div>
+              <div className="qh-block" style={{ "--d": pos === 1 ? ".05s" : pos === 2 ? ".18s" : ".3s" }}><b>{pos}<sup>{ord(pos).slice(String(pos).length)}</sup></b></div>
             </div>
           ))}
         </div>
@@ -226,13 +230,14 @@ export default function QuizHub({
           return (
             <div key={n} className={`qh-dot${p ? " qh-on" : ""}${p?.isYou ? " qh-you" : ""}`} style={{ "--k": n - 4 }}>
               <span className="qh-c">
+                {!p && <span className="qh-ord">{ord(n)}</span>}
                 {p && (
                   <button type="button" className="qh-hit is-inline" onClick={() => tap(p)} aria-label={`${p.callsign}, place ${n}`}>
                     <Stamp stamp={stampOf(p.profile)} size={36} rot={tilt(n)} on={!!p.profile?.stamp_issued_at} />
                   </button>
                 )}
               </span>
-              <span className="qh-n">{n}</span>
+              <span className="qh-n" style={p ? undefined : { visibility: "hidden" }}>{ord(n)}</span>
             </div>
           );
         })}
@@ -324,6 +329,8 @@ export default function QuizHub({
         .qhub .qh-dot .qh-c { width: clamp(36px, 9.5vw, 46px); height: clamp(36px, 9.5vw, 46px); border-radius: 50%; display: grid; place-items: center; background: var(--ground); border: 1.5px dashed var(--line); }
         .qhub .qh-dot.qh-on .qh-c { border: 1.5px solid var(--line); background: var(--panel); }
         .qhub .qh-dot.qh-you .qh-c { border-color: var(--active); box-shadow: 0 0 0 3px color-mix(in oklab, var(--active) 22%, transparent); }
+        .qhub .qh-ord { font: 600 11px var(--font-mono); color: var(--t2); }
+        .qhub .qh-block sup { font-size: .38em; margin-left: 2px; vertical-align: super; letter-spacing: 0; }
         .qhub .qh-dot .qh-n { font: 600 10.5px var(--font-mono); color: var(--t2); }
         .qhub .qh-dot:first-child:not(.qh-on) .qh-c { border-color: color-mix(in oklab, var(--active) 60%, var(--line)); }
 
