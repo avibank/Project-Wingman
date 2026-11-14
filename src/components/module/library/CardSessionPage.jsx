@@ -35,7 +35,7 @@ import { useSavesState } from "../../../features/bookmarks/useSaves.js";
 import { isSaved, findSave, addSave, removeSave } from "../../../features/bookmarks/savesStore.js";
 import { BmLink } from "../../../features/bookmarks/nav.jsx";
 
-export default function CardSessionPage({ moduleId, chapter, onClose }) {
+export default function CardSessionPage({ moduleId, chapter, onClose, onHome }) {
   const ch = Number(chapter);
   const progress = useUserProgress();
   useSavesState();
@@ -106,6 +106,7 @@ export default function CardSessionPage({ moduleId, chapter, onClose }) {
       onMissed={(id) => { markSeen(progress, id); markGot(progress, id, false); }}
       onToggleSave={keep}
       onClose={onClose}
+      onHome={onHome}
     />
   );
 }

@@ -188,6 +188,30 @@ download and is not loaded as cards). The importer refuses on a count
 mismatch, a duplicate id, an answer that indexes nothing, or an exam stem or
 answer that disagrees with the bank — all 40 exam questions are in the bank
 with the same correct text.
+- **13e BATCH 1 CAME AGAIN ON 2026-11-14, REVISED, AND WENT IN UNDER THE SAME
+  IDS** (owner: "the new and improved docs… I just want to change the content of
+  the exams"). Same six filenames, same `scripts/m13e/import.mjs`: the exam is
+  **36 of 40 questions changed (20 stems, 13 option sets, 28 explanations) and
+  ZERO answers**; the cards are **26** (were 74); the bank is **324** (was 400)
+  and the paper **60pp** (was 74). Reusing `M2.V1` was CHECKED rather than
+  assumed — read off the live database, 0 board runs, 0 completions, 0 saves and
+  0 progress documents mentioning `M2.V1` — so no reset and `STORAGE_EPOCH` stays
+  5; an in-flight paper is refused by `quiz.js`'s question hash anyway. **If a
+  student ever has attempted a batch, the same replacement needs a reset**: the
+  ids are positional.
+  - **Three things went in beside it**: the card session has an arrow back to the
+    module and the Wingman wordmark (top right) home, because its overlay covers
+    the app bar; a module with no declared `batches` draws the route strip from
+    the batches that have landed (13e reads 1 and grows); and the one-time
+    banner (`lib/notice.js`, id `batches-on-the-way-2026-11`) says new batches
+    are coming rather than that quizzes were reworked.
+  - **TWO CARD BUGS, BOTH OF THE "DEMO REBUILT IT, REACT KEPT IT" KIND.** The
+    flying clone was appended to `document.body`, outside the `.app .wm-port`
+    scope every rule for it lives under, so it was static and off-screen and the
+    card seemed to vanish for 640ms; and the 240ms sink on a set switch used
+    `fill: forwards` and was never cancelled, so the next set's card (the SAME
+    node) stayed at opacity 0, blank on Missed and blank coming back. `test:cards`
+    asserts both now (135 → 145), proved by planting each.
 - **STUDY CARDS ARE OPEN-ENDED FROM HERE ON, AND 13d'S ARE LEFT AS THEY WERE**
   (owner, 2026-11-14: "keep the appearance and how they work but cater them to
   feature open ended questions from now on, keep a older version simply to

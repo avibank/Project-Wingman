@@ -241,7 +241,10 @@ export default function LibraryTab({
     return (
       <LibraryBatches
         batches={batches}
-        total={totalBatches || null}
+        /* A module that has not said how many batches it will have still draws
+           the strip, one waypoint per batch that has landed: 13e reads 1 today
+           and grows as the owner feeds the next (owner, 2026-11-14). */
+        total={totalBatches || Math.max(0, ...batches.map((b) => b.n || 0)) || null}
         mocks={mockBatches || 0}
         /* The light follows the batch this student last opened (owner,
            2026-10-08), falling back to the module's own current chapter and

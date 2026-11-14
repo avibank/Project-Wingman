@@ -85,7 +85,7 @@ export default function CardSession({
   seen = {}, got = {}, saved = new Set(),
   /* §7's write-backs. Each is called with a card id as it happens, so nothing
      has to be reconciled at the door — closing the session writes nothing. */
-  onGot, onMissed, onToggleSave, onClose,
+  onGot, onMissed, onToggleSave, onClose, onHome,
 }) {
   const byId = useMemo(() => {
     const m = new Map();
@@ -328,8 +328,14 @@ export default function CardSession({
     const deal = () => { setSess((s) => startMode(s, mode, sets)); setFlipped(false); };
     const fc = fcRef.current;
     if (!fc || reduced()) { deal(); return; }
-    fc.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(18px) scale(.94)", opacity: 0 }],
-      { duration: 240, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards" }).onfinish = deal;
+    /* `fill: forwards` holds the sunk, transparent end state on the element, and
+       React keeps this SAME node for the next set (the demo rebuilt it with
+       innerHTML, which discarded the fill). Left standing, the freshly dealt card
+       was invisible: blank on Missed and blank again coming back. It is cancelled
+       the moment the deal has happened. */
+    const sink = fc.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(18px) scale(.94)", opacity: 0 }],
+      { duration: 240, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards" });
+    sink.onfinish = () => { deal(); requestAnimationFrame(() => sink.cancel()); };
   }, [sets]);
 
   /* ------------------------------------------------------------ the sheet */
@@ -427,6 +433,27 @@ export default function CardSession({
     <div className={`deck ${shown ? "show" : ""}`} ref={deckRef}
          role="dialog" aria-modal="true" aria-label={name}>
       <div className="table">
+        {/* THE WAY OUT, in the corner where the app bar would be: the wordmark
+            (top right, clear of the set picker on a phone) goes home and the arrow goes back to the module
+            the set was opened from (owner, 2026-11-14). This overlay covers the
+            real app bar, so without them the only exits were a small X on the
+            card and Escape. Inline-styled from tokens: the port's sheet is
+            generated from the demo and has no such control. */}
+        <button type="button" data-dk="module" onClick={close} aria-label="Back to the module"
+                style={{ position: "absolute", top: 12, left: 12, zIndex: 8, width: 44, height: 44, borderRadius: "50%",
+                         display: "grid", placeItems: "center", border: "1px solid var(--line)",
+                         background: "var(--panel)", color: "var(--t2)", cursor: "pointer" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
+        {onHome && (
+          <button type="button" data-dk="home" onClick={onHome} aria-label="Wingman — go to the Flight Deck"
+                  style={{ position: "absolute", top: 12, right: 12, zIndex: 8, height: 44, padding: "0 12px",
+                           borderRadius: 999, border: "1px solid var(--line)", background: "var(--panel)",
+                           color: "var(--t1)", cursor: "pointer", font: "600 15px/1 var(--font-ui)", letterSpacing: ".01em" }}>
+            Wingman
+          </button>
+        )}
         {/* THE SET PICKER. A stack until it is opened; the current set is on
             top and the other two slide out either side of it. */}
         <div className={`setpick ${menu ? "open" : ""}`} role="group" aria-label="Which cards">
