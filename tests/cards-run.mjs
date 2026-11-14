@@ -244,6 +244,16 @@ try {
   ok(name, "switching set keeps the Not yet deck", sw.no === s.no, `${s.no} -> ${sw.no}`);
   ok(name, "and deals the set that was picked", /^Missed/.test(sw.sets[0] || ""), sw.sets.join(" / "));
 
+  /* A switch must leave the dealt card SHOWING — its sink animation held the
+     card at opacity 0 and it was blank on Missed and blank again going back. */
+  const shown = () => pg.evaluate(() => { const fc = document.querySelector(".wm-port .fc"); return fc ? Number(getComputedStyle(fc).opacity) : -1; });
+  ok(name, "the card dealt by Missed is visible, not blank", (await shown()) === 1 && sw.cardSeen === true, `opacity ${await shown()}`);
+  await tap(pg, '.wm-port [data-dk="sets"]', '.wm-port [data-dk="sets"]');
+  await pg.waitForTimeout(500);
+  await tap(pg, '.wm-port [data-mode="all"]', '.wm-port [data-mode="all"]');
+  await pg.waitForTimeout(1100);
+  ok(name, "and switching back to All shows its card too", (await shown()) === 1 && (await state(pg)).cardSeen === true, `opacity ${await shown()}`);
+
   /* ------------------------------------------------------- the bookmark */
   const was = (await state(pg)).saved;
   await tap(pg, ".wm-port .fc .cbtn.sv", ".wm-port .fc .cbtn.sv");

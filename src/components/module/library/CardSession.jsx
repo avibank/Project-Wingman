@@ -328,8 +328,14 @@ export default function CardSession({
     const deal = () => { setSess((s) => startMode(s, mode, sets)); setFlipped(false); };
     const fc = fcRef.current;
     if (!fc || reduced()) { deal(); return; }
-    fc.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(18px) scale(.94)", opacity: 0 }],
-      { duration: 240, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards" }).onfinish = deal;
+    /* `fill: forwards` holds the sunk, transparent end state on the element, and
+       React keeps this SAME node for the next set (the demo rebuilt it with
+       innerHTML, which discarded the fill). Left standing, the freshly dealt card
+       was invisible: blank on Missed and blank again coming back. It is cancelled
+       the moment the deal has happened. */
+    const sink = fc.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(18px) scale(.94)", opacity: 0 }],
+      { duration: 240, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards" });
+    sink.onfinish = () => { deal(); requestAnimationFrame(() => sink.cancel()); };
   }, [sets]);
 
   /* ------------------------------------------------------------ the sheet */
