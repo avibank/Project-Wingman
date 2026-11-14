@@ -182,25 +182,66 @@ is classified by x or height and the 8.5pt-trap family cannot recur; the PDF is
 only the paper, whose page count is read from the file. Chapter **`M2.V1`**
 (`M2.V*` has never existed — `M2.01`-`M2.03` and `M2.P1`-`M2.P7` have), name
 "Communication", ref 13.4, pages 1–117, batch 1: **quiz 40** (the Exam,
-14/13/13), **cards 400** (the Full Bank, 134/133/133, the same multiple-choice
-shape 13d's Full Sets became), paper 74pp. The importer refuses on a count
+14/13/13), **cards 74, OPEN-ENDED** (the Study Cards, a front and a back with the
+author's own answer), paper 74pp (the 400-question Full Bank, which is the
+download and is not loaded as cards). The importer refuses on a count
 mismatch, a duplicate id, an answer that indexes nothing, or an exam stem or
 answer that disagrees with the bank — all 40 exam questions are in the bank
 with the same correct text.
-- **THE 74 STUDY CARDS ARE NOT IMPORTED, and that is a decision waiting for the
-  owner.** They are front/back; a card here draws its back from
-  `options[correct]` and `contentSchema` demands two options at least, so a
-  front/back card has no home without inventing wrong answers (which this
-  project does not do) or a new card shape (which is a screen).
+- **STUDY CARDS ARE OPEN-ENDED FROM HERE ON, AND 13d'S ARE LEFT AS THEY WERE**
+  (owner, 2026-11-14: "keep the appearance and how they work but cater them to
+  feature open ended questions from now on, keep a older version simply to
+  power module 13d"). A card is now EITHER `{ question, options, correct,
+  explain }` (multiple choice, **all of 13d's 2,616**) or `{ id, front, back }`
+  (open-ended, **all 74 of 13e's**), decided per card by `isOpenCard` in
+  `src/lib/openCard.js` — the one place that says what one is. It was not a new
+  screen: `CardSession` already worked on plain `{ q, a }` strings, so the whole
+  change is a normaliser (`asQuestion` gives an open card `open` and
+  `answerText`, with `options: []` and `answerIndex: -1` so nothing that maps
+  over options can throw), `checkCard` in the schema, and the three places that
+  draw a back — the session, `StudyPad` and, through it, the pile. The look, the
+  flip, Got it / Not yet, the missed pile and Bookmarks are unchanged.
+  - **`back` MARKS A KEY TERM WITH `**double asterisks**`**, which is the
+    author's own convention (the document's note), drawn by `Rich` as `<strong>`
+    and never as HTML, so a card cannot inject markup. Measured live: the term
+    is bold and no asterisk leaks.
+  - **The 400-question Full Bank is the PAPER ONLY now.** The first import
+    loaded it as cards, because the front/back cards had nowhere to stand; with
+    somewhere for them, loading 400 multiple-choice questions as "study cards"
+    would have contradicted the request. It is one `downloads` entry away from
+    being a card set again if that is ever wanted.
+  - **The Studio keeps up.** A NEW study card is open-ended (a front and a back
+    box), a new quiz question is still multiple choice, an open card is never
+    called broken for lacking options and a blank one is never let through, and
+    **an open card cannot be copied into the quiz** — it has no answers to choose
+    between — which is said out loud rather than made into a broken question.
+    A docx imported onto the cards tab still produces multiple-choice cards.
+  - **THE FIRST VERSION OF ITS OWN TEST PROVED NOTHING, and was caught by its
+    output.** `check-cards`' `ok` is `(what, good, detail)` and the other suites'
+    is `(group, what, cond)`; written in the second shape, every assertion passed
+    on a truthy MESSAGE and printed `open (true)`. Rewritten, then proved by
+    planting: a blanked back, a schema that stopped checking sides, and a 13d card
+    turned open-ended each fail it. The honest run then found a real hole — the
+    schema's `isStr` accepts `"  "`, so a card whose answer was a space flipped
+    over to nothing — fixed by trimming in `checkCard`.
+  - `check:cards` is **48 assertions**, `check:studio` **53**; `test:cards` is
+    still **134** and unchanged, which is the proof 13d's cards were not touched.
 - Two explanations carried the author's "(See conflict note.)" — a pointer to a
   note students never see. Exactly that parenthetical was removed from Q112 and
   Q135; nothing else was edited.
 - `module.batches` is left unset on M2 so the strip falls back to the chapter
   count rather than asserting how many batches 13e will have. No M2 progress
   can exist for ids that never did, so there is no reset and no epoch change.
-  **Not yet published** (`npm run publish-course`). `test:bm` was re-run with a
-  second module that has content and passes — the module-filter path, which was
-  uncoverable until M2 had a chapter, is covered now.
+  `test:bm` was re-run with a second module that has content and passes — the
+  module-filter path, uncoverable until M2 had a chapter, is covered now.
+  - **PUBLISH FROM A CHECKOUT THAT MATCHES `origin/main`.** `publish-course`
+    publishes the `test-content.json` of the checkout it runs in. On 2026-11-14 it
+    was run from the main checkout while that was four commits behind, and
+    published **version 17 without Module 13e**: the read-back said 15 chapters ·
+    600 questions · 15 papers where 16 · 640 · 16 was expected, and the paper
+    check only covered the 15 papers that checkout knew about. No harm — it was
+    the same content as version 16 — but it is the quiet way to publish nothing.
+    Check the read-back against what you meant to ship.
 - **VERCEL REJECTED EVERY DEPLOYMENT BECAUSE A PAUSED SUPABASE RESOURCE WAS
   ATTACHED TO THE PROJECT, and it was not the code** (found and fixed
   2026-11-12; every push from 2026-10-16 failed, last green `5492a82`). The

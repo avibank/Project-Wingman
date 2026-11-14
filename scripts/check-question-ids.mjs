@@ -18,6 +18,7 @@
 // It reads the content document itself, not the loader's output, because the
 // loader is the thing that papers over a missing id.
 import { readFileSync } from "node:fs";
+import { isOpenCard } from "../src/lib/openCard.js";
 
 const DOCS = [
   ["src/content/test-content.json", JSON.parse(readFileSync(new URL("../src/content/test-content.json", import.meta.url), "utf8"))],
@@ -50,7 +51,8 @@ function allQuestions() {
         const cs = Array.isArray(c.cards) ? c.cards : [];
         for (let i = 0; i < cs.length; i++) {
           const q = cs[i];
-          out.push({ file, where: `${m.id} ${c.id} card #${i + 1}`, id: q.id, stem: q.question, options: q.options, answer: q.correct });
+          out.push({ file, where: `${m.id} ${c.id} card #${i + 1}`, id: q.id, stem: isOpenCard(q) ? q.front : q.question,
+                     options: q.options, answer: q.correct, open: isOpenCard(q), back: q.back });
         }
       }
     }
@@ -74,7 +76,11 @@ for (const q of allQuestions()) {
   if (!q.id || typeof q.id !== "string") problems.push(`no stable id — ${said}`);
   else if (seen.has(q.id)) problems.push(`id "${q.id}" is used twice — ${said}, and ${seen.get(q.id)}`);
   else seen.set(q.id, said);
-  if (!Array.isArray(q.options) || !(q.answer >= 0 && q.answer < q.options.length)) {
+  if (q.open) {
+    /* AN OPEN-ENDED CARD (openCard.js) HAS NO OPTIONS TO INDEX: what it must
+       have is a front and a back that say something. */
+    if (!String(q.stem ?? "").trim() || !String(q.back ?? "").trim()) problems.push(`open card needs a front and a back — ${said}`);
+  } else if (!Array.isArray(q.options) || !(q.answer >= 0 && q.answer < q.options.length)) {
     problems.push(`no valid answer — ${said}`);
   }
 }

@@ -50,7 +50,9 @@ export default function CardSessionPage({ moduleId, chapter, onClose }) {
   const cards = useMemo(() => questions.map((q) => ({
     id: q.id,
     q: q.stem,
-    a: (q.options || [])[q.answerIndex] ?? "",
+    /* An open-ended card carries its own answer; a multiple-choice one's is
+       the option its key points at. */
+    a: q.open ? (q.answerText ?? "") : (q.options || [])[q.answerIndex] ?? "",
   })), [questions]);
 
   const seen = seenMap(progress);

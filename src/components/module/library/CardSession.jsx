@@ -40,6 +40,7 @@
    ========================================================================= */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Rich from "../../Rich.jsx";
 import {
   missedIds, startMode, answer as answerCard, currentId, isDone, place,
   fanOf, miniFan, pickOrder, slideOf, FLICK_PX, VERDICT_PX,
@@ -470,7 +471,7 @@ export default function CardSession({
                   </div>
                   <div className="face back">
                     {corner}<span className="no">{at.at} / {at.of}</span>
-                    <h3>{card?.a}</h3><span className="sheen" />
+                    <h3><Rich text={card?.a} /></h3><span className="sheen" />
                   </div>
                 </div>
               </div>
@@ -507,7 +508,7 @@ export default function CardSession({
                 return (
                   <li key={`${cid}-${k}`}>
                     <small>No. {String(n).padStart(4, "0")}</small>
-                    <b>{c?.q}</b><span>{c?.a}</span>
+                    <b>{c?.q}</b><span><Rich text={c?.a} /></span>
                   </li>
                 );
               })}

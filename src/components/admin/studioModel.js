@@ -1,3 +1,4 @@
+import { isOpenCard } from "../../lib/openCard.js";
 /* =============================================================================
    THE STUDIO'S MODEL — everything about the course document that is not a
    screen. Exam.jsx and quiz.js already split this way, for the reason given
@@ -35,9 +36,12 @@ export function nextId(chapter, kind, taken) {
   return `${prefix}${Date.now()}`;
 }
 
-export const emptyQuestion = (chapter, kind) => ({
-  id: nextId(chapter, kind), question: "", options: ["", "", ""], correct: 0, explain: "",
-});
+/* A NEW STUDY CARD IS OPEN-ENDED (owner, 2026-11-14: "moving on its all open
+   ended"): a front and a back, no options. A new QUIZ question is still
+   multiple-choice, because a paper is. */
+export const emptyQuestion = (chapter, kind) => (kind === "cards"
+  ? { id: nextId(chapter, kind), front: "", back: "" }
+  : { id: nextId(chapter, kind), question: "", options: ["", "", ""], correct: 0, explain: "" });
 
 /** Questions copied into the other exercise, with ids re-issued.
  *
@@ -49,7 +53,10 @@ export const emptyQuestion = (chapter, kind) => ({
  *  be the same id twice and would fail the build. */
 export function copiedInto(chapter, kind, picked) {
   const taken = idsIn(chapter);
-  return picked.map((q) => {
+  /* AN OPEN-ENDED CARD CANNOT BECOME A QUIZ QUESTION: it has no options to
+     choose between, and inventing some is exactly what the card shape exists to
+     avoid. The caller says so out loud; this just never makes a broken one. */
+  return picked.filter((q) => kind === "cards" || !isOpenCard(q)).map((q) => {
     const id = nextId(chapter, kind, taken);
     taken.add(id);
     return { ...clone(q), id };
@@ -77,7 +84,7 @@ export function askedFor(query) {
  *  the stem, every answer, the reason, and the id. The id is in there because
  *  it is what a bookmark, a caution pile and a bug report all name. */
 export function searchHit(q, words) {
-  const hay = [q.id, q.question, ...(q.options || []), q.explain || ""].join(" ").toLowerCase();
+  const hay = [q.id, q.question, q.front, q.back, ...(q.options || []), q.explain || ""].join(" ").toLowerCase();
   return words.every((w) => hay.includes(w));
 }
 
@@ -112,6 +119,11 @@ export function faultList(doc) {
       if (!q.id) say("no id");
       else if (seen.has(q.id)) say(`${q.id} is used twice`);
       else seen.set(q.id, at);
+      if (kind === "cards" && isOpenCard(q)) {
+        if (!String(q.front || "").trim()) say("no question");
+        if (!String(q.back || "").trim()) say("no answer");
+        continue;
+      }
       if (!String(q.question || "").trim()) say("no question");
       if ((q.options || []).filter((o) => String(o).trim()).length < 2) say("needs at least two answers");
       if (!(q.correct >= 0 && q.correct < (q.options || []).length)) say("no right answer chosen");

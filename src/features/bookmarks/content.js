@@ -33,6 +33,7 @@
 import { useSyncExternalStore } from "react";
 import { path as routePath } from "../../lib/routes.js";
 import { track as fire } from "./track.js";
+import { isOpenCard } from '../../lib/openCard.js';
 
 let app = {
   doc: null,                      // the loaded content document, or null
@@ -82,9 +83,15 @@ const asQuestion = (q, m, c, n, fromCards = false) => ({
   moduleId: m.code,
   chapter: n,
   chapterId: c.id,
-  stem: q.question,
-  options: q.options || [],
-  answerIndex: q.correct,
+  /* AN OPEN-ENDED CARD (openCard.js) HAS A FRONT AND A BACK AND NO OPTIONS.
+     `open` and `answerText` carry it; `options` stays an empty array and
+     `answerIndex` -1 so nothing that still maps over a multiple-choice card's
+     options can throw on one. */
+  stem: isOpenCard(q) ? q.front : q.question,
+  options: isOpenCard(q) ? [] : (q.options || []),
+  answerIndex: isOpenCard(q) ? -1 : q.correct,
+  open: isOpenCard(q) || undefined,
+  answerText: isOpenCard(q) ? q.back : undefined,
   explanation: q.explain || undefined,
   lessonId: q.lessonId || undefined,
   fromCards: fromCards || undefined,
