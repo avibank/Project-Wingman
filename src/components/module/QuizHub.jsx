@@ -127,7 +127,7 @@ export default function QuizHub({
   const [peek, setPeek] = useState(null);
   const tap = (p) => {
     if (!p) return;
-    if (p.score != null) setPeek(p);
+    if (p.score != null) setPeek((cur) => (cur && cur.id === p.id ? null : p));
     else if (!p.isYou) onOpenPerson?.({ userId: p.userId, name: p.callsign });
   };
   useEffect(() => {
@@ -202,7 +202,7 @@ export default function QuizHub({
             <div className="qh-mid">
               {mine
                 ? <>{mine.score}<small>/{mine.total || total}</small></>
-                : <Stamp stamp={null} size={76} rot={0} on={false} />}
+                : <Stamp stamp={null} size={98} rot={0} on={false} />}
             </div>
           </div>
           <div className="qh-tiles">
@@ -243,6 +243,31 @@ export default function QuizHub({
         })}
       </div>
 
+      {/* THE PEEK IS A PANEL IN THE PAGE, not a window over it: nothing is frozen
+          or dimmed, the board stays in view and a second tap on the same stamp
+          (or the close mark) puts it away. */}
+      {peek && (
+        <section className="qh-peek" aria-label={`${peek.callsign}'s attempt`}>
+          <Stamp stamp={stampOf(peek.profile)} size={52} rot={-4} on={!!peek.profile?.stamp_issued_at} />
+          <div className="qh-pbody">
+            <b className="qh-pn">{peek.callsign}</b>
+            <div className="qh-tiles">
+              <div className="qh-tile"><b>{peek.score}/{peek.total || total}</b><span>Score</span></div>
+              <div className="qh-tile qh-accent"><b>{gradeOf(Math.round((peek.score / (peek.total || total || 1)) * 100))}</b><span>Grade</span></div>
+              <div className="qh-tile"><b>{mmss(peek.seconds)}</b><span>Time</span></div>
+            </div>
+            {!peek.isYou && onOpenPerson && (
+              <button type="button" className="qh-prof" onClick={() => onOpenPerson({ userId: peek.userId, name: peek.callsign })}>
+                View profile
+              </button>
+            )}
+          </div>
+          <button type="button" className="qh-x is-inline" onClick={() => setPeek(null)} aria-label="Close">
+            <Icon d="M6 6l12 12M18 6L6 18" />
+          </button>
+        </section>
+      )}
+
       <div className="qhub__go">
         <button type="button" className="qhub__start" data-hub="start" onClick={onStart}>
           {resuming ? "Pick up where you left off" : "Start the quiz"}
@@ -254,28 +279,6 @@ export default function QuizHub({
           </button>
         )}
       </div>
-
-      {peek && (
-        <div className="qh-scrim" onClick={() => setPeek(null)}>
-          <div className="qh-peek" role="dialog" aria-modal="true" aria-label={`${peek.callsign}'s attempt`} onClick={(e) => e.stopPropagation()}>
-            <Stamp stamp={stampOf(peek.profile)} size={64} rot={-4} on={!!peek.profile?.stamp_issued_at} />
-            <b className="qh-pn">{peek.callsign}</b>
-            <div className="qh-tiles">
-              <div className="qh-tile"><b>{peek.score}/{peek.total || total}</b><span>Score</span></div>
-              <div className="qh-tile qh-accent"><b>{gradeOf(Math.round((peek.score / (peek.total || total || 1)) * 100))}</b><span>Grade</span></div>
-              <div className="qh-tile"><b>{mmss(peek.seconds)}</b><span>Time</span></div>
-            </div>
-            {!peek.isYou && onOpenPerson && (
-              <button type="button" className="qh-prof" onClick={() => { setPeek(null); onOpenPerson({ userId: peek.userId, name: peek.callsign }); }}>
-                View profile
-              </button>
-            )}
-            <button type="button" className="qh-x is-inline" onClick={() => setPeek(null)} aria-label="Close">
-              <Icon d="M6 6l12 12M18 6L6 18" />
-            </button>
-          </div>
-        </div>
-      )}
 
       <style>{`
         .qhub { --gold: #e7b94f; --silver: #aeb8c9; --bronze: #d99a68;
@@ -347,11 +350,11 @@ export default function QuizHub({
         .qhub .qh-eye::after { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
         .qhub .qh-eye:hover { background: var(--raised); color: var(--t1); }
         .qhub .qh-eye[aria-pressed="true"] { color: var(--active-text, var(--active)); }
-        .qhub .qh-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgb(6 10 18 / .55); }
-        .qhub .qh-peek { position: relative; display: grid; justify-items: center; gap: 12px; width: min(380px, 100%); padding: 24px 16px 18px; border: 1px solid var(--line); border-radius: 20px; background: var(--ground); box-shadow: 0 20px 60px rgb(0 0 0 / .4); animation: qhDrop .35s cubic-bezier(.2, 1.2, .3, 1) both; }
+        .qhub .qh-peek { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px 40px 14px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); animation: qhSlide .3s both; }
+        .qhub .qh-pbody { display: grid; gap: 10px; min-width: 0; }
         .qhub .qh-pn { font: 600 18px var(--font-ui); color: var(--t1); }
-        .qhub .qh-peek .qh-tiles { width: 100%; }
-        .qhub .qh-prof { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 14px; background: var(--raised); color: var(--t1); font: 500 15px var(--font-ui); cursor: pointer; }
+        .qhub .qh-peek .qh-tile { height: 60px; }
+        .qhub .qh-prof { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 14px; background: var(--raised); color: var(--t1); font: 500 15px var(--font-ui); cursor: pointer; }
         .qhub .qh-prof:hover { border-color: var(--active); }
         .qhub .qh-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--t3); cursor: pointer; }
         .qhub .qh-x svg { width: 15px; height: 15px; }
