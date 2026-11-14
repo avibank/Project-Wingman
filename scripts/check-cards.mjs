@@ -135,6 +135,13 @@ console.log("\nopen-ended cards");
   ok("open · 13e's cards are all open-ended", m2.length > 0 && m2.every((c) => isOpenCard(c)));
   ok("open · and every back says something", m2.every((c) => String(c.back).trim().length > 0 && String(c.front).trim().length > 0));
   ok("open · no card was given options it did not have", m2.every((c) => !("options" in c) && !("correct" in c)));
+
+  /* THE FLYER LIVES IN THE SESSION'S SCOPE. Every rule that styles it is
+     `.app .wm-port .flyer`; appended to <body> it was position:static, below
+     the fold and invisible, and the card seemed to vanish and pause. */
+  const sess = readFileSync(new URL("../src/components/module/library/CardSession.jsx", import.meta.url), "utf8");
+  ok("flyer · is not appended to document.body", !/document\.body\.append\(\s*fl\s*\)/.test(sess));
+  ok("flyer · goes inside the .wm-port scope", /closest\("\.wm-port"\)/.test(sess) && /append\(fl\)/.test(sess));
 }
 
 console.log(`\ncards model: ${pass} passed, ${fails.length} failed`);

@@ -2682,7 +2682,11 @@ function AppInner() {
         else if (what === "quiz" && lesson) go(routePath.chapter(code, lesson.chapter.id, "quiz"));
       }}
     />
-    <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
+    {/* Not over the study-card session: it is a full-screen table with a deck in
+        each bottom corner, and the pill sat on the left one (owner, 2026-11-14). */}
+    {!(typeof window !== "undefined" && /\/library\/cards\//.test(window.location.pathname)) && (
+      <ReportProblem route={typeof window !== "undefined" ? window.location.pathname : route.name} />
+    )}
     {/* The app's one toast, and Bookmarks is what it was built for: a save has
         to be undoable and a failure has to say so, and neither can wait for a
         screen. Mounted once here rather than per screen, so a toast raised on

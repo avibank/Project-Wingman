@@ -244,7 +244,18 @@ export default function CardSession({
     const back = document.createElement("div");
     back.className = "fside b cardback";
     fl.append(front, back);
-    document.body.append(fl);
+    /* INTO THE SESSION'S OWN SCOPE, NOT THE BODY. Every rule that styles the
+       flyer — `position: fixed`, its z-index, the rounded corners, the two
+       faces, the back's gradient — is `.app .wm-port .flyer`, because the port's
+       sheet is prefixed with that scope. The demo's CSS was global, so appending
+       to <body> worked there; here a clone on the body matches NONE of it and is
+       `position: static`, which parks it at the bottom of the page, 900px down
+       and out of the window, while `fc` below is already hidden. The card then
+       simply vanished for the 640ms of its own flight and the next one arrived —
+       "the old animation of the card going into the deck is missing" and "a slight
+       pause after each swipe" were this one line. `.wm-port` is a plain wrapper
+       with no transform, so a fixed child still positions against the window. */
+    (fc.closest(".wm-port") || document.body).append(fl);
     fc.style.visibility = "hidden";
     const s = (target.width * 0.5) / r.width;
     const dx = target.left + target.width / 2 - (r.left + r.width / 2);

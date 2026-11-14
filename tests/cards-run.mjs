@@ -152,7 +152,15 @@ try {
   /* --------------------------------------------------- three ways to sort */
   const first = (await state(pg)).question;
   await tap(pg, '.wm-port [data-dk="yes"]', '.wm-port [data-dk="yes"]');
-  await pg.waitForTimeout(1100);
+  await pg.waitForTimeout(200);
+  const fly = await pg.evaluate(() => {
+    const f = document.querySelector(".wm-port .flyer");
+    if (!f) return null;
+    const r = f.getBoundingClientRect();
+    return { pos: getComputedStyle(f).position, inView: r.bottom > 0 && r.top < innerHeight && r.width > 0 };
+  });
+  ok(name, "the card flies to the deck, in view and fixed", fly && fly.pos === "fixed" && fly.inView, JSON.stringify(fly));
+  await pg.waitForTimeout(900);
   s = await state(pg);
   ok(name, "the Got it button sorts the card", s.yes === 1 && s.counter === `2 / ${total}`, `yes=${s.yes} at ${s.counter}`);
   ok(name, "and the next card is a different one", s.question !== first);
