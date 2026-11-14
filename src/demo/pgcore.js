@@ -244,7 +244,7 @@ export const RPC = {
     const row = {
       id: uuid(), user_id: b.uid, module_code: b.p_module || null,
       chapter_id: b.p_chapter || null, quiz_id: b.p_quiz, total: b.p_total,
-      score: null, callsign: null, code: null, hidden: false,
+      score: null, callsign: null, code: null, hidden: true,
       started_at: new Date().toISOString(), submitted_at: null,
     };
     s.quiz_runs.push(row);
@@ -370,8 +370,8 @@ export const RPC = {
         callsign: (r.callsign || "").trim() || "Someone",
         code: (r.code || "").trim() || "---",
         /* a hidden attempt's numbers stay with its owner (0044) */
-        score: r.hidden && r.user_id !== b.uid ? null : r.score, total: r.total,
-        seconds: r.hidden && r.user_id !== b.uid ? null : secs(r), hidden: Boolean(r.hidden),
+        score: r.hidden && r.user_id !== b.uid && !b.p_admin ? null : r.score, total: r.total,
+        seconds: r.hidden && r.user_id !== b.uid && !b.p_admin ? null : secs(r), hidden: Boolean(r.hidden),
         is_you: r.user_id === b.uid, runs_total: sorted.length,
         stamp_shape: p.stamp_shape ?? null, stamp_code: p.stamp_code ?? null,
         stamp_rim: p.stamp_rim ?? null, stamp_ring: p.stamp_ring ?? null,

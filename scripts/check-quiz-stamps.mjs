@@ -239,9 +239,12 @@ ok("answers", "the brief itself is in the repo, beside the pack it came with",
      /createPortal/.test(hub) && /peekAt/.test(hub) && !/qh-scrim/.test(hub));
   ok("hub", "the study cards button goes to the cards route by chapter NUMBER",
      /routePath\.cards\(moduleCode, cardsNo\)/.test(hub) && /cardsNo=\{chapterNo/.test(read("../src/components/module/QuizPage.jsx")));
-  ok("hub", "an admin's attempts start hidden, everybody else's visible",
-     /hideByDefault \? setRunHidden/.test(read("../src/components/module/Exam.jsx"))
-     && /hideByDefault=\{isAdmin\}/.test(read("../src/App.jsx")));
+  ok("hub", "grades are private by default, and an admin asks for the unmasked board",
+     /alter column hidden set default true/.test(read("../supabase/migrations/0045_grades_private_by_default.sql"))
+     && /p_admin/.test(read("../src/lib/board.js"))
+     && /fetchBoard\(\{ me, quizId, limit: 50, admin \}\)/.test(hub)
+     && /fetchBoard\(\{ me, quizId: id, admin \}\)/.test(read("../src/components/module/Exam.jsx"))
+     && /admin=\{isAdmin\}/.test(read("../src/App.jsx")));
   ok("hub", "the eye hides it, and the server is what withholds it (0044)",
      /setRunHidden/.test(hub) && /hidden and not is_you then null/.test(read("../supabase/migrations/0044_hide_my_attempt.sql")));
   ok("hub", "the client sorts nothing and never computes a time", !/\.sort\(/.test(hub) && !/Date\.parse/.test(hub));

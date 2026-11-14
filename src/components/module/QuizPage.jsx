@@ -28,7 +28,7 @@ import "./lesson.css";
    written on every question so the Flight Deck can offer to put you back. */
 export default function QuizPage({
   minimums, module: mod, chapter, chapterNo = null, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
-  me = null, myStamp, onOpenPerson = null, hideByDefault = false,
+  me = null, myStamp, onOpenPerson = null, admin = false,
  }) {
   /* THE HUB COMES FIRST (owner, 2026-11-14) and the paper starts from its
      button. Nothing opens a run until then. The header comment above describes
@@ -79,6 +79,7 @@ export default function QuizPage({
             hasCards
             resuming={(run?.at || 0) > 0}
             me={me}
+            admin={admin}
             onOpenPerson={onOpenPerson}
             onStart={() => setEntered(true)}
           />
@@ -121,7 +122,7 @@ export default function QuizPage({
                board is the only thing here that needs an identity. */
             me={me}
             myStamp={myStamp}
-            hideByDefault={hideByDefault}
+            admin={admin}
             chapterId={chapter.id}
             onDone={(t) => {
               // FIRST ATTEMPT ONLY counts. A retake is a fresh sitting and must
