@@ -337,8 +337,15 @@ async function main() {
      no chapter accordion at all. The walk waited 25s for `.chead` and died,
      taking every step after it with it. */
   await start("/m/m1/library", '.wm-port .tile[aria-label^="Quiz,"]');
+  /* The quiz opens on its hub, which shares the app's ground, so the root does
+     not dissolve here any more — that only happens when the backdrop really
+     changes, and that is the hub's Start press (an in-screen swap, below). */
   await step("Module → Quiz", click('.wm-port .tile[aria-label^="Quiz,"]'),
-    { names: ["wg-content"], also: ["::view-transition-new(root)"] });
+    { names: ["wg-content"] });
+  /* A quiz opens on its HUB now; the paper starts from its button. That swap
+     is inside the screen, not a navigation, so it is a plain press. */
+  await page.locator('[data-hub="start"]').click();
+  await page.locator(".question__foot .btn--primary").waitFor({ timeout: 8000 });
   await step("Quiz: next question", click(".question__foot .btn--primary"), { none: true, moved: ["question__text"] });
   /* WHAT EACH ENGINE CAN DO WITH A DIALOG. Holding a closing one on screen
      long enough to fade needs `overlay`, which Chromium alone has, and WebKit

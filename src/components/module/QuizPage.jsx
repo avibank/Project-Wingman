@@ -1,5 +1,7 @@
 import { ChevronLeft } from "lucide-react";
+import { useState } from "react";
 import Exam from "./Exam.jsx";
+import QuizHub from "./QuizHub.jsx";
 import { useExamLock } from "../../lib/examLock.js";
 import { upFrom } from "../../lib/lessonSurface.js";
 import "./module.css";
@@ -28,6 +30,11 @@ export default function QuizPage({
   minimums, module: mod, chapter, chapterNo = null, state, onBack, onScore, onAnswers, onRun, onOpenLesson,
   me = null, myStamp,
  }) {
+  /* THE HUB COMES FIRST (owner, 2026-11-14) and the paper starts from its
+     button. Nothing opens a run until then. The header comment above describes
+     the screen that used to be skipped; this is the one that replaced that
+     decision, and it is a different screen from the old cover. */
+  const [entered, setEntered] = useState(false);
   const run = state?.run?.[chapter.id] || null;
   const score = state?.quiz?.[chapter.id];
   const up = upFrom({ kind: "quiz", moduleId: mod?.code || mod?.id, moduleName: mod?.name })?.label;
@@ -60,7 +67,21 @@ export default function QuizPage({
           Found by measuring the live screen against the reference. The exam
           brings its own typography and wants none of this. */}
       <div className="qwrap">
-        {chapter.questions?.length ? (
+        {chapter.questions?.length && !entered ? (
+          <QuizHub
+            title={chapter.quizName || `${chapter.title} quiz`}
+            eyebrow={[mod?.name, chapter.title].filter(Boolean).join(" · ")}
+            quizId={chapter.quizId || chapter.id}
+            total={chapter.questions.length}
+            moduleCode={mod?.code || mod?.id || null}
+            chapterId={chapter.id}
+            hasCards
+            resuming={(run?.at || 0) > 0}
+            me={me}
+            myStamp={myStamp}
+            onStart={() => setEntered(true)}
+          />
+        ) : chapter.questions?.length ? (
           <Exam
             key={chapter.id}
             quizId={chapter.quizId || chapter.id}
