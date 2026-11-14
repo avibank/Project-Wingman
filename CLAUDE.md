@@ -226,8 +226,11 @@ with the same correct text.
     `quiz_leaderboard` returning NULL score and seconds for a hidden run that is
     not yours. Rank, callsign and stamp still show. On by default (nothing is
     hidden until pressed). Tapping a person shows their numbers, or opens the
-    profile sheet when they are hidden. Run 0044 AFTER the deploy: an old client
-    ignores `hidden`, and the new one tolerates its absence.
+    profile sheet when they are hidden. **0044 HAS BEEN RUN LIVE** (2026-11-14, by the owner from the main checkout:
+    the classifier refused an agent's attempt, and `.env.local` lives in the main
+    checkout, not the worktrees). Verified over the anon path: `quiz_leaderboard`
+    answers and `set_run_hidden` is callable. An admin's attempts start hidden
+    (`hideByDefault={isAdmin}` in Exam); everyone else's start visible.
   - **Every test that opens a quiz presses Start first** (`[data-hub="start"]`);
     `test:exam`, `test:vt` and `test:bm` do it, and `test:vt`'s Module → Quiz
     step no longer expects the root to dissolve (the backdrop changes at Start,
