@@ -963,7 +963,9 @@ try {
     expect(`${w}: a card set that does not exist lands on a screen with a way on`,
       await lands(/^\/m\/m1$/), at());
     expect(`${w}: and that screen offers its own way back`,
-      (await page.locator("a,button").filter({ hasText: "Flight Deck" }).count()) >= 1);
+      /* The back control is an arrow with no word beside it (owner, 2026-11-14), so
+         it is found by what it is called to a screen reader. */
+      (await page.getByRole("button", { name: /Flight Deck/ }).count()) >= 1);
 
     await page.close();
   }
