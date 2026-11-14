@@ -131,7 +131,6 @@ export default function LibraryBatches({
 
   /* How many batches the module will have, and which is next to land. */
   const last = open.length ? Math.max(...open.map((b) => b.n)) : 0;
-  const soonCount = Math.max(0, (total || open.length) - open.length);
   const next = total && last < total ? last + 1 : null;
 
   const go = (n) => {
@@ -255,9 +254,6 @@ export default function LibraryBatches({
               </div>
             )}
           </div>
-          {!query && soonCount > 1 && (
-            <div className="more">{soonCount - 1} more batches on the way.</div>
-          )}
 
           {/* INVITE YOUR CLASS, and this is its only door (2026-10-11). Crew's
               empty state was the last one and Crew is gone — what Crew drew is
