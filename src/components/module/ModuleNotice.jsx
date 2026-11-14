@@ -58,10 +58,10 @@ export default function ModuleNotice() {
           position: relative;
           /* Tucked under the title: the screen's own 22px gap is more than a
              quiet reminder needs. */
-          margin: -8px auto 0; padding: 9px 26px;
+          margin: -8px auto 0 0; padding: 9px 32px 9px 14px;
           max-height: 90px; overflow: hidden;
           transition: opacity .28s ease, max-height .3s ease, margin .3s ease, padding .3s ease, transform .3s ease;
-          /* Only as wide as its words, centred over the card. */
+          /* Only as wide as its words, on the left under the title. */
           width: fit-content; max-width: 100%;
           /* SOFT AMBER (owner, 2026-11-14), a fixed hue rather than the livery's
              so a notice reads as a notice in every livery. A tint of amber over
@@ -75,7 +75,7 @@ export default function ModuleNotice() {
         .modnote--out { opacity: 0; max-height: 0; margin-top: -22px; padding-block: 0; transform: translateY(-4px); }
         .app.theme-light .modnote { --amber: oklch(.7 .14 72); }
         .modnote__i { color: var(--amber); flex: none; justify-self: center; }
-        .modnote__t { margin: 0; min-width: 0; font-size: 13px; line-height: 1.45; text-align: center; text-wrap: balance; }
+        .modnote__t { margin: 0; min-width: 0; font-size: 13px; line-height: 1.45; text-align: left; text-wrap: balance; }
         .modnote__t b, .modnote__t span { display: block; }
         /* THE QUIET HALF TAKES --t2, NOT --t3. --t3 is right for a 10px
            uppercase mark; this is a sentence read as words, and the pairs this
