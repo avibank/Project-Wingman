@@ -992,6 +992,8 @@ try {
        would be testing a REMOVE. Derived, not named: this read `M1.03` until
        2026-10-13, and that chapter has not existed since 2026-10-08. */
     await page.goto(`${BASE}/m/m1/${FIX.freeCh.c.id}/quiz?uid=student_one`);
+    /* A quiz opens on its hub; the paper starts from the button. */
+    await page.locator('[data-hub="start"]').click({ timeout: 15000 });
     await page.locator(".exam-save").waitFor({ timeout: 15000 });
     want("the question under test starts unsaved",
       (await page.locator(".exam-save").getAttribute("aria-pressed")) === "false");

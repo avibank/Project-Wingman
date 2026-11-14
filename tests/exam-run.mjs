@@ -46,6 +46,13 @@ const NOISE = /WebSocket|realtime|ERR_CONNECTION_REFUSED|Failed to load resource
 const chapterOf = (doc) => doc.modules[0].chapters.find((c) => (c.questions || []).length)
   || doc.modules[0].chapters[0];
 const CHAPTER = chapterOf(loadContent(fixture)).id;
+/* A QUIZ OPENS ON ITS HUB (owner, 2026-11-14): the paper starts from a button.
+   Every walk here wants the paper, so each address is followed by that press.
+   Harmless when the paper is already up. */
+const pastHub = async (pg) => {
+  const b = pg.locator('[data-hub="start"]');
+  if (await b.count().catch(() => 0) || await b.waitFor({ timeout: 4000 }).then(() => true, () => false)) await b.click();
+};
 const QUIZ_URL = `${BASE}/m/m1/${CHAPTER}/quiz?uid=student_one`;
 
 let failures = 0;
@@ -287,7 +294,7 @@ try {
         page.on("console", (m) => {
           if (m.type() === "error" && !NOISE.test(m.text())) errors.push(`${tag}: ${m.text().slice(0, 160)}`);
         });
-        await page.goto(QUIZ_URL);
+        await page.goto(QUIZ_URL); await pastHub(page);
         await page.locator(".exam-frame .question__text").waitFor({ timeout: 15000 });
         /* One answer in and a step on, so every state the grid can be in is on
            screen to be audited: answered, current, and the rest. */
@@ -344,7 +351,7 @@ try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await prefs({ "pw-livery": "sky", "pw-variant-pin": "day", "pw-finish": "aurora" });
-    await page.goto(QUIZ_URL);
+    await page.goto(QUIZ_URL); await pastHub(page);
     await page.locator(".exam-frame .question__text").waitFor({ timeout: 15000 });
     const worn = await page.evaluate(() => {
       const app = document.querySelector(".app");
@@ -365,7 +372,7 @@ try {
     page.on("pageerror", (e) => errors.push(`controls: ${String(e).slice(0, 160)}`));
     page.on("console", (m) => { if (m.type() === "error" && !NOISE.test(m.text())) errors.push(`controls: ${m.text().slice(0, 160)}`); });
     await page.addInitScript(() => localStorage.clear());
-    await page.goto(QUIZ_URL);
+    await page.goto(QUIZ_URL); await pastHub(page);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     const cells = page.locator(".qcell");
     const settle = (ms = 220) => page.waitForTimeout(ms);
@@ -527,6 +534,7 @@ try {
        screen have changed under this walk twice already. */
     await page.getByRole("tab", { name: /Library/i }).first().click();
     await page.locator('button[aria-label^="Quiz,"]').first().click({ timeout: 15000 });
+    await pastHub(page);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     /* The row clicked is whichever quiz the Library lists first, which is not
        necessarily CHAPTER. Come back to THIS paper's address, not to the
@@ -579,7 +587,7 @@ try {
       await page.locator("dialog button", { hasText: /Back to exam/i }).click();
       await page.waitForTimeout(300);
     } else {
-      await page.goto(thisPaper);
+      await page.goto(thisPaper); await pastHub(page);
       await page.locator(".question__text").waitFor({ timeout: 15000 });
     }
 
@@ -598,7 +606,7 @@ try {
       await page.waitForTimeout(1200);
       expect("leaving puts the bar back and marks nothing",
         (await page.evaluate(() => document.documentElement.dataset.screen)) === undefined);
-      await page.goto(thisPaper);
+      await page.goto(thisPaper); await pastHub(page);
       await page.locator(".question__text").waitFor({ timeout: 15000 });
       const back = {
         url: await page.evaluate(() => location.pathname),
@@ -632,7 +640,7 @@ try {
       localStorage.clear();
       localStorage.setItem(key, value);
     }, [`wingman.attempt.${chapter.quizId}`, JSON.stringify(seeded)]);
-    await page.goto(QUIZ_URL);
+    await page.goto(QUIZ_URL); await pastHub(page);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     expect("the clock comes back where it was left", (await page.locator(".exam-timer__value").textContent()) === "00:02");
     expect("and its last minute is marked", (await page.locator(".exam-timer").getAttribute("class")).includes("is-low"));
@@ -672,7 +680,7 @@ try {
       localStorage.clear();
       localStorage.setItem(key, value);
     }, [`wingman.attempt.${chapter.quizId}`, JSON.stringify(attemptWith(c.right))]);
-    await page.goto(QUIZ_URL);
+    await page.goto(QUIZ_URL); await pastHub(page);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     await page.locator(".exam-bar .btn", { hasText: "End exam" }).click();
     await page.locator(".exam-dialog .btn", { hasText: "End and mark" }).click();
@@ -756,7 +764,7 @@ try {
     await page.addInitScript(([key, value]) => {
       localStorage.clear(); localStorage.setItem(key, value);
     }, [`wingman.attempt.${chapter.quizId}`, JSON.stringify(blank)]);
-    await page.goto(QUIZ_URL);
+    await page.goto(QUIZ_URL); await pastHub(page);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     await page.locator(".exam-bar .btn", { hasText: "End exam" }).click();
     await page.locator(".exam-dialog .btn", { hasText: "End and mark" }).click();
@@ -778,7 +786,7 @@ try {
     await page.addInitScript(([key, value]) => {
       localStorage.clear(); localStorage.setItem(key, value);
     }, [`wingman.attempt.${chapter.quizId}`, JSON.stringify(attemptWith(CALM_RIGHT))]);
-    await page.goto(QUIZ_URL);
+    await page.goto(QUIZ_URL); await pastHub(page);
     await page.locator(".question__text").waitFor({ timeout: 15000 });
     await page.locator(".exam-bar .btn", { hasText: "End exam" }).click();
     await page.locator(".exam-dialog .btn", { hasText: "End and mark" }).click();

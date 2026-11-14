@@ -220,5 +220,27 @@ ok("answers", "and yours is pinned first in the Library line, in the SQL",
 ok("answers", "the brief itself is in the repo, beside the pack it came with",
    /Rule 4 — in the Library, up to eleven finishers/.test(brief));
 
+/* THE QUIZ HUB (owner, 2026-11-14): a quiz opens on a hub, not on the paper. */
+{
+  const hub = read("../src/components/module/QuizHub.jsx");
+  const page = read("../src/components/module/QuizPage.jsx");
+  ok("hub", "a quiz opens on the hub, and the paper starts from its button",
+     /!entered \?\s*\(\s*<QuizHub/.test(page) && /onStart=\{\(\) => setEntered\(true\)\}/.test(page));
+  ok("hub", "the hub opens no run: it does not import startRun or finishRun",
+     !/startRun|finishRun|markProgress/.test(hub));
+  ok("hub", "only the top ten ever appear", /export const TOP = 10/.test(hub) && /\.slice\(0, TOP\)/.test(hub));
+  ok("hub", "the podium and seven dots cover one to ten", /\[2, 1, 3\]/.test(hub) && /\[4, 5, 6, 7, 8, 9, 10\]/.test(hub));
+  ok("hub", "nobody's score is drawn on the board: the score is only in the dial",
+     (hub.match(/\.score/g) || []).length === (hub.match(/mine\.score/g) || []).length);
+  ok("hub", "the client sorts nothing and never computes a time", !/\.sort\(/.test(hub) && !/Date\.parse/.test(hub));
+  ok("hub", "an empty board is seals and your own stamp, not a spinner or a skeleton",
+     /function Seal/.test(hub) && !/shimmer|skeleton|spinner/i.test(hub.replace(/\/\*[\s\S]*?\*\//g, "")));
+  /* the owner's scale, read off the source rather than imported (the module draws JSX) */
+  const scale = [[0, "F"], [74, "F"], [75, "B-"], [79, "B-"], [80, "B"], [84, "B"], [85, "B+"], [89, "B+"], [90, "A-"], [93, "A-"], [94, "A"], [100, "A"]];
+  const fn = new Function("pct", hub.match(/export const gradeOf = \(pct\) =>\s*([\s\S]*?);\n/)[1].replace(/^/, "return "));
+  ok("hub", "the grade scale is the owner's, at every boundary", scale.every(([p2, g]) => fn(p2) === g),
+     scale.filter(([p2, g]) => fn(p2) !== g).map(([p2]) => p2).join(","));
+}
+
 console.log(`\nquiz-stamps: ${pass} passed, ${fails.length} failed`);
 process.exit(fails.length ? 1 : 0);
