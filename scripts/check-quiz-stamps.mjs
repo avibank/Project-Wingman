@@ -234,8 +234,11 @@ ok("answers", "the brief itself is in the repo, beside the pack it came with",
      (hub.match(/\.score/g) || []).length === (hub.match(/(mine|peek|p)\.score/g) || []).length
      && !/runs\[[^\]]*\]\.score/.test(hub));
   ok("hub", "tapping somebody shows their numbers, or their profile when they are hidden",
-     /if \(p\.score != null\) setPeek\(/.test(hub) && /onOpenPerson\?\.\(/.test(hub));
-  ok("hub", "the peek is a panel in the page, not a window that dims it", !/qh-scrim|position: fixed/.test(hub));
+     /if \(p\.score != null\)/.test(hub) && /setPeek\(/.test(hub) && /onOpenPerson\?\.\(/.test(hub));
+  ok("hub", "the peek floats by the pressed stamp, portalled so nothing traps it",
+     /createPortal/.test(hub) && /peekAt/.test(hub) && !/qh-scrim/.test(hub));
+  ok("hub", "the study cards button goes to the cards route by chapter NUMBER",
+     /routePath\.cards\(moduleCode, cardsNo\)/.test(hub) && /cardsNo=\{chapterNo/.test(read("../src/components/module/QuizPage.jsx")));
   ok("hub", "an admin's attempts start hidden, everybody else's visible",
      /hideByDefault \? setRunHidden/.test(read("../src/components/module/Exam.jsx"))
      && /hideByDefault=\{isAdmin\}/.test(read("../src/App.jsx")));
