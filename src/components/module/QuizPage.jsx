@@ -78,7 +78,6 @@ export default function QuizPage({
             hasCards
             resuming={(run?.at || 0) > 0}
             me={me}
-            myStamp={myStamp}
             onStart={() => setEntered(true)}
           />
         ) : chapter.questions?.length ? (
