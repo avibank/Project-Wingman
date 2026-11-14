@@ -234,7 +234,11 @@ ok("answers", "the brief itself is in the repo, beside the pack it came with",
      (hub.match(/\.score/g) || []).length === (hub.match(/(mine|peek|p)\.score/g) || []).length
      && !/runs\[[^\]]*\]\.score/.test(hub));
   ok("hub", "tapping somebody shows their numbers, or their profile when they are hidden",
-     /if \(p\.score != null\) setPeek\(p\)/.test(hub) && /onOpenPerson\?\.\(/.test(hub));
+     /if \(p\.score != null\) setPeek\(/.test(hub) && /onOpenPerson\?\.\(/.test(hub));
+  ok("hub", "the peek is a panel in the page, not a window that dims it", !/qh-scrim|position: fixed/.test(hub));
+  ok("hub", "an admin's attempts start hidden, everybody else's visible",
+     /hideByDefault \? setRunHidden/.test(read("../src/components/module/Exam.jsx"))
+     && /hideByDefault=\{isAdmin\}/.test(read("../src/App.jsx")));
   ok("hub", "the eye hides it, and the server is what withholds it (0044)",
      /setRunHidden/.test(hub) && /hidden and not is_you then null/.test(read("../supabase/migrations/0044_hide_my_attempt.sql")));
   ok("hub", "the client sorts nothing and never computes a time", !/\.sort\(/.test(hub) && !/Date\.parse/.test(hub));

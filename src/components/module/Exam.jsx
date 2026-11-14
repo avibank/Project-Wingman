@@ -15,7 +15,7 @@ import { lockExam, unlockExam } from "../../lib/examLock.js";
 import Leaderboard from "./Leaderboard.jsx";
 import Stamp from "../Stamp.jsx";
 import "./result-stamp.css";
-import { startRun, finishRun, markProgress, fetchBoard } from "../../lib/board.js";
+import { startRun, finishRun, markProgress, fetchBoard, setRunHidden } from "../../lib/board.js";
 /* R1 — the pack's stylesheet, imported once, here, so it arrives with the exam
    chunk rather than on every first paint. `.locked-note` in the app bar is the
    one rule of it in use today; the rest waits for the markup. */
@@ -159,6 +159,9 @@ export default function Exam({
   /* The student's own stamp, for the head of the result (the quiz-stamps
      brief, Rule 2). Null until they have issued one. */
   myStamp = null,
+  /* An admin's attempts start hidden from others (owner, 2026-11-14); everyone
+     else's start visible. The eye on the hub flips either. */
+  hideByDefault = false,
 }) {
   /* A lesson id is not a name. Without this, "where these came from" reads as
      a row of ids, which is a worse answer than no list at all. */
@@ -330,7 +333,9 @@ export default function Exam({
     /* The time and the name are decided there, not here — then the board is
        asked for, once, with the sitting already on it. */
     if (me && runRef.current) {
-      finishRun({ me, runId: runRef.current, score: s.right })
+      const run = runRef.current;
+      finishRun({ me, runId: run, score: s.right })
+        .then(() => (hideByDefault ? setRunHidden({ me, runId: run, hidden: true }) : null))
         .then(() => fetchBoard({ me, quizId: id }))
         .then((b) => setBoard(b))
         .catch(() => {});
@@ -338,7 +343,7 @@ export default function Exam({
     if (calm()) { setPhase("done"); return; }
     setLeaving(true);
     setTimeout(() => { setLeaving(false); setPhase("done"); }, 280);
-  }, [attempt, quiz, paper, put, onAnswers, onDone, id, calm, me]);
+  }, [attempt, quiz, paper, put, onAnswers, onDone, id, calm, me, hideByDefault]);
 
   /* The clock. One second at a time, only while the paper is open, and the
      paper hands itself in at zero exactly as if End and mark had been
