@@ -41,8 +41,9 @@ import { stampOf } from "../../../lib/stamp.js";
 import { fetchFinishers } from "../../../lib/board.js";
 import { tilt } from "../Leaderboard.jsx";
 
-export const ROW_STAMP_PX = 26;
-export const POP_STAMP_PX = 44;
+/* 26 in the demo; 40 so the mark can be read (owner, 2026-11-14). */
+export const ROW_STAMP_PX = 40;
+export const POP_STAMP_PX = 56;
 export const PHONE_CAP = 6;
 
 const phone = () => (typeof matchMedia === "function" && matchMedia("(max-width:620px)").matches);

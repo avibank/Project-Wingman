@@ -100,7 +100,7 @@ function RouteRow({ lesson, chapter, done, here, pct, onOpen, stamp, tilts }) {
             which is §4's rule and means a row is never blank. */}
         {done ? (
           <span className="imp" title={stamp ? "Your stamp" : "Finished"}>
-            <Stamp stamp={stamp} size={46} rot={tilts?.[lesson.id] ?? stampTilt(stamp?.seed || 1, lesson.id)}
+            <Stamp stamp={stamp} size={56} rot={tilts?.[lesson.id] ?? stampTilt(stamp?.seed || 1, lesson.id)}
                    label={stamp ? `Signed off with your stamp` : "Finished"} />
           </span>
         ) : here ? <span className="resume">Resume</span>

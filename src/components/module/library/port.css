@@ -615,3 +615,15 @@
    still hold. */
 @media (max-width:430px){.app .wm-port .stage{zoom:.9}}
 @media (max-width:380px){.app .wm-port .stage{zoom:.74}}
+
+/* ---- THE ATTEMPT STAMPS, LARGER AND LAID LIKE A DECK (owner, 2026-11-14) ----
+   40px instead of the demo's 26 so a stamp can be read. They overlap at the
+   edges the way a hand of cards does, each one tucked a little under the next
+   (the later stamp is on top), with a soft shadow so the edge of the one above
+   reads. The row's head is 68px, so the strip is recentred: 40 + 2 x 3 of its
+   own padding = 46, and (68 - 46) / 2 = 11 from the top. */
+.app .wm-port .row .crew{top:11px}
+.app .wm-port .crew .cs{margin-left:-14px}
+.app .wm-port .crew .cs:first-child{margin-left:0}
+.app .wm-port .crew .cs svg{filter:drop-shadow(-2px 0 3px oklch(0 0 0 / .4))}
+.app .wm-port .ghoststamp{width:40px;height:40px}

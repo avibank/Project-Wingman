@@ -48,7 +48,7 @@ const SCOPES = [
 const Mark = ({ p }) => (
   <span className="rr-who">
     <span className="rr-cs">{p.callsign}</span>
-    <Stamp stamp={stampOf(p.profile)} size={22} rot={stampTilt(p.profile?.stamp_seed, p.user_id)}
+    <Stamp stamp={stampOf(p.profile)} size={30} rot={stampTilt(p.profile?.stamp_seed, p.user_id)}
            on={Boolean(p.profile?.stamp_issued_at)} />
   </span>
 );

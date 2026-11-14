@@ -99,7 +99,7 @@ const QUIZ = (
    · A PERSON WITH NO STAMP YET draws the un-inked outline, the licence's own
      "not yet" mark (owner, on the brief's open question 1). */
 const STAMP_CAP = 11;
-const LIB_STAMP_PX = 36;
+const LIB_STAMP_PX = 46;
 
 function FinisherLine({ found }) {
   const people = found?.people || [];

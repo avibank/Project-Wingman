@@ -167,7 +167,7 @@ console.log("\nwhere it shows");
      same two facts, against the design that replaced it. */
   const row = read("src/components/module/RouteTab.jsx");
   ok("a finished lesson carries the pilot's drawn stamp",
-     /<Stamp stamp=\{stamp\}/.test(row) && /size=\{46\}/.test(row));
+     /<Stamp stamp=\{stamp\}/.test(row) && /size=\{56\}/.test(row));
   /* The angle is the ANGLE THAT SIGN-OFF WAS MADE AT, stored beside the flag
      when the button was pressed (signoff.js), because it is a fact about that
      press rather than a function of anything. A derived one is the fallback,

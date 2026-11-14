@@ -96,7 +96,7 @@ export default function SignOff({ armed, stamped, onApply, onVoid, when, stamp =
             onClick={press}>
       <span className={`sc${pressing ? " press" : ""}`}>
         {stamped
-          ? <Stamp stamp={stamp} size={34} rot={tilt} />
+          ? <Stamp stamp={stamp} size={46} rot={tilt} />
           : <Seal state={state} />}
       </span>
     </button>
