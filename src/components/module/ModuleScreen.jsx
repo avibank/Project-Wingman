@@ -257,19 +257,18 @@ export default function ModuleScreen({
               other end of the Deck → Module morph: the deck's module card
               travels into this heading, and with no element to name the morph
               stopped running here when the port became everybody's screen. */}
-          <div className="mhero">
-            <button type="button" className="back" onClick={onBack}>
-              &lsaquo; {upFrom({ kind: "module" })?.label}
+          <div className="mhero" style={{ display: "block", padding: 0 }}>
+            {/* JUST THE ARROW AND THE NAME (owner, 2026-11-14): no "Flight Deck"
+                word beside the arrow and no line of counts under the title. The
+                destination is still said, to a screen reader. */}
+            <button type="button" className="back" onClick={onBack}
+                    style={{ display: "grid", placeItems: "center", width: 40, height: 40, padding: 0,
+                             borderRadius: "50%", border: "1px solid var(--line)", background: "var(--panel)" }}
+                    aria-label={`Back to ${upFrom({ kind: "module" })?.label || "the Flight Deck"}`}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
             </button>
             <h1>{mod.name}</h1>
-            <p className="sub">
-              {chapters.length || papers.length
-                ? (
-                  <button type="button" className="sub-go is-inline"
-                          onClick={() => onTab("library")}>{sub}</button>
-                )
-                : sub}
-            </p>
           </div>
           {/* BOTH BRANCHES DRAW IT. See ModuleNotice's header: a notice on
               only the ported screen would vanish the day `library.batches`

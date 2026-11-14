@@ -274,7 +274,9 @@ const BUNDLES = [
     from: "reference/06-library-lessons-cards.html (its whole style block)",
     src: [() => REF("06-library-lessons-cards.html")],
     cuts: PORT_CUTS,
-    vars: PORT_VARS },
+    vars: PORT_VARS,
+    /* The app's one correction to the demo's phone layout. */
+    tail: HAND("port.tail.css") },
 
   { root: ".ref-lic", out: "src/components/licence/ref-licence.css",
     from: "01-tokens-and-base.css + 02-licence-card.css + 03-stamp-creator.css + 04-account-and-preferences.css",

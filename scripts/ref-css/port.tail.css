@@ -1,0 +1,9 @@
+/* ---- the app's own correction to the demo's phone layout; see scripts/scope-ref-css.mjs ----
+   THE THUMBNAILS OVERFLOW THEIR TILES ON A PHONE. The demo's three drawings
+   are 92px wide and its phone block leaves a tile about 77px at 360 and 86 at
+   390, so the quiz sheet ran into the Cards tile (measured: tile 57-134, drawing
+   64-156). Scaling the stage with `zoom` brings the drawing inside its tile at
+   both and changes nothing from 431px up, which is where the demo's own numbers
+   still hold. */
+@media (max-width:430px){.app .wm-port .stage{zoom:.9}}
+@media (max-width:380px){.app .wm-port .stage{zoom:.74}}

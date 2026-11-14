@@ -27,12 +27,8 @@ export default function ModuleNotice() {
 
   return (
     <div className="modnote" role="status">
-      <svg className="modnote__i" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="8.4" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M12 7.9v4.6M12 15.6v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
       <p className="modnote__t">
-        <b>{notice.lead}</b> <span>{notice.rest}</span>
+        <b>{notice.lead}</b><span>{notice.rest}</span>
       </p>
       <button type="button" className="modnote__x is-inline"
               aria-label="Dismiss this notice"
@@ -46,9 +42,10 @@ export default function ModuleNotice() {
         .modnote {
           /* The icon column is as wide as the dismiss control, so the words sit
              truly centred between them. */
-          display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px;
-          gap: 12px; align-items: center;
-          margin: 16px 0 0; padding: 18px 14px;
+          position: relative;
+          margin: 14px auto 0; padding: 9px 26px;
+          /* Only as wide as its words, centred over the card. */
+          width: fit-content; max-width: 100%;
           /* SOFT AMBER (owner, 2026-11-14), a fixed hue rather than the livery's
              so a notice reads as a notice in every livery. A tint of amber over
              the panel, with the filled top edge this app uses for "live". */
@@ -60,7 +57,8 @@ export default function ModuleNotice() {
         }
         .app.theme-light .modnote { --amber: oklch(.7 .14 72); }
         .modnote__i { color: var(--amber); flex: none; justify-self: center; }
-        .modnote__t { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.6; text-align: center; text-wrap: balance; }
+        .modnote__t { margin: 0; min-width: 0; font-size: 13px; line-height: 1.45; text-align: center; text-wrap: balance; }
+        .modnote__t b, .modnote__t span { display: block; }
         /* THE QUIET HALF TAKES --t2, NOT --t3. --t3 is right for a 10px
            uppercase mark; this is a sentence read as words, and the pairs this
            repo has already measured under 4.5:1 were all of exactly that
@@ -68,8 +66,8 @@ export default function ModuleNotice() {
         .modnote__t b { font-weight: 600; color: var(--t1); }
         .modnote__t span { color: var(--t2); }
         .modnote__x {
-          position: relative; display: grid; place-items: center;
-          width: 30px; height: 30px; min-height: 0; padding: 0;
+          position: absolute; top: 3px; right: 3px; display: grid; place-items: center;
+          width: 24px; height: 24px; min-height: 0; padding: 0;
           border: 0; border-radius: 8px; background: none;
           color: var(--t3); cursor: pointer; transition: background .14s, color .14s;
         }
@@ -84,10 +82,6 @@ export default function ModuleNotice() {
           content: ""; position: absolute; left: 50%; top: 50%;
           transform: translate(-50%, -50%);
           width: max(100%, var(--tap, 44px)); height: max(100%, var(--tap, 44px));
-        }
-        @media (max-width: 560px) {
-          .modnote { align-items: start; padding-top: 12px; }
-          .modnote__i, .modnote__x { margin-top: 1px; }
         }
         .app.smooth-air .modnote__x { transition: none; }
       `}</style>
